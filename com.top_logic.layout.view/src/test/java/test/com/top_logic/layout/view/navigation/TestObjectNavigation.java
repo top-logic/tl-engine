@@ -24,6 +24,7 @@ import com.top_logic.layout.view.navigation.DisplayTarget;
 import com.top_logic.layout.view.navigation.DisplayTargets;
 import com.top_logic.layout.view.navigation.ObjectNavigation;
 import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.ShowDisplay;
 import com.top_logic.layout.view.navigation.ShowObjectAction;
 import com.top_logic.layout.view.navigation.ShowStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
@@ -258,14 +259,14 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 	 * Displaying the given view with the shown object in its {@link #ITEM_CHANNEL}.
 	 */
 	private static ShowStep itemShow(String viewRef) {
-		return new ShowStep(viewRef, false, null, null, List.of(new Binding(ITEM_CHANNEL, null)));
+		return new ShowStep(viewRef, ShowDisplay.IN_PLACE, null, null, List.of(new Binding(ITEM_CHANNEL, null)));
 	}
 
 	/**
 	 * Displaying the given view, which receives nothing.
 	 */
 	private static ShowStep plainShow(String viewRef) {
-		return new ShowStep(viewRef, false, null, null, List.of());
+		return new ShowStep(viewRef, ShowDisplay.IN_PLACE, null, null, List.of());
 	}
 
 	private TLObject newObject() {

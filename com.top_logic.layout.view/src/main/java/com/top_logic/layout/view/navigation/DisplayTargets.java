@@ -229,6 +229,10 @@ public final class DisplayTargets {
 	 */
 	private static int nearness(DisplayTarget target, MountPath nearest, ViewMounts mounts) {
 		ShowStep first = target.first();
+		if (first.topLevel()) {
+			// Leaves the window's display altogether, so it is the farthest place there is.
+			return UNMOUNTED_NEARNESS;
+		}
 		if (first.dialog()) {
 			return DIALOG_NEARNESS;
 		}

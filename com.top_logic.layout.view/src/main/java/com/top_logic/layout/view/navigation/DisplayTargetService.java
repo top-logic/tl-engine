@@ -214,8 +214,8 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		/** Configuration name for {@link #getView()}. */
 		String VIEW = "view";
 
-		/** Configuration name for {@link #isDialog()}. */
-		String DIALOG = "dialog";
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -237,12 +237,18 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		String getView();
 
 		/**
-		 * Whether to display the view as a dialog on top of the current display, rather than within
-		 * it.
+		 * How the view is displayed: where it is displayed within the window (the default), as a
+		 * dialog on top of the current display, or as the window's new root view.
+		 *
+		 * <p>
+		 * A view displayed as a dialog or as the new root view must be the last one displayed, since
+		 * nothing can be displayed after it. A new root view must be an entry point of the
+		 * application and receives no {@link #getBindings() bindings}, see
+		 * {@link ShowDisplay#TOP_LEVEL}.
+		 * </p>
 		 */
-		@Name(DIALOG)
-		@BooleanDefault(false)
-		boolean isDialog();
+		@Name(DISPLAY)
+		ShowDisplay getDisplay();
 
 		/**
 		 * The label the displayed view is announced with, e.g. in a breadcrumb or as a dialog

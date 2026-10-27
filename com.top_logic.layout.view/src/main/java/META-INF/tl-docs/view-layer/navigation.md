@@ -94,15 +94,16 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
   <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
 </target>
 <target type="Contacts:PersonContact">
-  <show view="projects/contact-dialog.view.xml" dialog="true"><bind channel="contact"/></show>
+  <show view="projects/contact-dialog.view.xml" display="dialog"><bind channel="contact"/></show>
 </target>
 ```
 
-A `<show>` entry is carried out in one of three ways, decided by how its view is reached. Where it is looked for is decided first: **within the view the show before it displayed**, and only if it sits nowhere in there, within the window as a whole. A frame the preceding show pushed onto a tile stack is therefore descended into, although the frame itself is part of no statically scanned mount path.
+A `<show>` entry is carried out in one of the ways below, chosen by its `display` (`ShowDisplay`) and, for the default `display="in-place"`, by how its view is reached. Where it is looked for is decided first: **within the view the show before it displayed**, and only if it sits nowhere in there, within the window as a whole. A frame the preceding show pushed onto a tile stack is therefore descended into, although the frame itself is part of no statically scanned mount path.
 
 - **Mounted view** (reachable through sidebar items, tabs, `<view-ref>`, `<adaptive-detail>` panes or the initial view of a `<tile-stack>` — from the view the show before it displayed, or else from the root view): the mount is revealed and the bindings are written to the view's channels in declared order.
 - **Unmounted view**: it is a drill-down frame, pushed onto the tile stack that hosts the previously shown view (the bindings become the frame's channel values, exactly like `<navigate-push bind-input-to=…>`). A chain of such entries rebuilds a drill-down path; frames already on the stack with the same view and values are kept (pop to the longest matching prefix, push the rest), so the frames a target pushes must use the same view refs and channel names as the user's own drill-down.
-- **`dialog="true"`**: the view is opened as a dialog with the bindings as initial channel values (the same seam as `<open-dialog>`). It must be the last entry.
+- **`display="dialog"`**: the view is opened as a dialog with the bindings as initial channel values (the same seam as `<open-dialog>`). It must be the last entry.
+- **`display="top-level"`**: the window loads the view as its new root view, replacing everything it displayed (a page change to `/view/<view>`, sent as a `PageNavigationEvent` like the one a logout sends). The view must be an entry point of the application (see **What a URL may load** below), takes no bindings — the new page starts with fresh channels — and must be the last entry; each of these is a configuration error. Unsaved changes are not asked about here: the command running the show decides that, like any command, by its `check-dirty`. A target whose first view is displayed this way is the farthest candidate when several targets compete.
 
 A reveal can show views and write channels and nothing else, so revealing a tab — or any other keyed place — inside a frame a preceding show pushed works by naming a view that sits on it: the content of the tab gets a view file of its own, and a `<show>` for that file both brings the tab up and receives the bindings. That file is reachable from no root view, which is exactly why it is found within the frame.
 
@@ -119,7 +120,16 @@ Every control that shows one of several children implements `com.top_logic.layou
 ### Entry points
 
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the object it processes — the default argument, or the one `value` names (see [commands](doc:view-layer/commands#actions-processing-one-value-value)); no object does nothing, a selection of exactly one object shows that object. `<generic-command inputs="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
-- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `dialog`, `label`, `label-expr` — and each `<bind expr>` (as the `label-expr`) is a script of the chain: it uses the arguments of the chain as variables without declaring them (see [named arguments](doc:view-layer/commands#scripts-use-the-arguments-as-variables)), and a `<bind>` without `expr` receives the value the action processes — the default argument, or the one `value` names. The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog.
+- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `display`, `label`, `label-expr` — and each `<bind expr>` (as the `label-expr`) is a script of the chain: it uses the arguments of the chain as variables without declaring them (see [named arguments](doc:view-layer/commands#scripts-use-the-arguments-as-variables)), and a `<bind>` without `expr` receives the value the action processes — the default argument, or the one `value` names. The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog, or loaded as the window's new root view. The last one leads from a page to another entry point the page does not contain, e.g. from the login page to a page anonymous visitors may browse:
+
+```xml
+<button appearance="link">
+  <action class="com.top_logic.layout.view.command.GenericViewCommand">
+    <label><en>Browse anonymously</en><de>Anonym stöbern</de></label>
+    <show-view view="browse.view.xml" display="top-level"/>
+  </action>
+</button>
+```
 
   ```xml
   <generic-command inputs="searchInput as term">

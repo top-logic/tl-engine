@@ -13,16 +13,20 @@ import java.util.function.Supplier;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.layout.view.command.ActionScript;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.navigation.Binding;
@@ -30,6 +34,7 @@ import com.top_logic.layout.view.navigation.DisplayTarget;
 import com.top_logic.layout.view.navigation.DisplayTargetService;
 import com.top_logic.layout.view.navigation.DisplayTargets;
 import com.top_logic.layout.view.navigation.MountPath;
+import com.top_logic.layout.view.navigation.ShowDisplay;
 import com.top_logic.layout.view.navigation.ShowStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
 import com.top_logic.model.TLClass;
@@ -51,6 +56,9 @@ public class TestDisplayTargetService extends TestCase {
 	private static final String TILE = "mounts-tile.view.xml";
 
 	private static final String ORPHAN = "mounts-orphan.view.xml";
+
+	/** The default view of the application, an entry point without further configuration. */
+	private static final String DEFAULT_VIEW = "app.view.xml";
 
 	private TLModelImpl _model;
 
@@ -103,7 +111,7 @@ public class TestDisplayTargetService extends TestCase {
 		DisplayTarget viaTile = target(_special, false, TILE);
 		DisplayTarget viaOrphan = target(_special, false, ORPHAN);
 		DisplayTarget viaDialog = new DisplayTarget(_special, false,
-			List.of(new ShowStep(ORPHAN, true, null, null, List.of())));
+			List.of(new ShowStep(ORPHAN, ShowDisplay.DIALOG, null, null, List.of())));
 		DisplayTargets targets = targets(viaRoot, viaTile, viaOrphan, viaDialog);
 
 		MountPath fromShared = mount(SHARED, 0);
@@ -130,9 +138,9 @@ public class TestDisplayTargetService extends TestCase {
 	 */
 	public void testDeclarationOrderDecidesLast() {
 		DisplayTarget first = new DisplayTarget(_special, false,
-			List.of(new ShowStep(SHARED, false, null, null, List.of(new Binding("item", null)))));
+			List.of(new ShowStep(SHARED, ShowDisplay.IN_PLACE, null, null, List.of(new Binding("item", null)))));
 		DisplayTarget second = new DisplayTarget(_special, false,
-			List.of(new ShowStep(SHARED, false, null, null, List.of(new Binding("filter", null)))));
+			List.of(new ShowStep(SHARED, ShowDisplay.IN_PLACE, null, null, List.of(new Binding("filter", null)))));
 		DisplayTargets targets = targets(first, second);
 
 		assertEquals(List.of(first, second), targets.resolve(_special, null));
@@ -181,10 +189,10 @@ public class TestDisplayTargetService extends TestCase {
 		ActionScript identity = (context, arguments, additional) -> arguments.get(DisplayTargetService.OBJECT);
 		ResKey fixed = ResKey.text("Fixed");
 
-		assertEquals(fixed, new ShowStep(SHARED, false, fixed, null, List.of()).labelFor(shownArguments("Shown")));
+		assertEquals(fixed, new ShowStep(SHARED, ShowDisplay.IN_PLACE, fixed, null, List.of()).labelFor(shownArguments("Shown")));
 		assertEquals(ResKey.text("Shown"),
-			new ShowStep(SHARED, false, fixed, identity, List.of()).labelFor(shownArguments("Shown")));
-		assertNull(new ShowStep(SHARED, false, null, null, List.of()).labelFor(shownArguments("Shown")));
+			new ShowStep(SHARED, ShowDisplay.IN_PLACE, fixed, identity, List.of()).labelFor(shownArguments("Shown")));
+		assertNull(new ShowStep(SHARED, ShowDisplay.IN_PLACE, null, null, List.of()).labelFor(shownArguments("Shown")));
 	}
 
 	/**
@@ -192,7 +200,7 @@ public class TestDisplayTargetService extends TestCase {
 	 */
 	public void testMissingChannelIsReported() {
 		DisplayTargets targets = targets(new DisplayTarget(_special, false,
-			List.of(new ShowStep(SHARED, false, null, null,
+			List.of(new ShowStep(SHARED, ShowDisplay.IN_PLACE, null, null,
 				List.of(new Binding("item", null), new Binding("noSuchChannel", null))))));
 
 		BufferingProtocol log = new BufferingProtocol();
@@ -211,7 +219,7 @@ public class TestDisplayTargetService extends TestCase {
 	 */
 	public void testUnreadableViewIsNotChecked() {
 		DisplayTargets targets = targets(new DisplayTarget(_special, false,
-			List.of(new ShowStep("does-not-exist.view.xml", false, null, null, List.of(new Binding("item", null))))));
+			List.of(new ShowStep("does-not-exist.view.xml", ShowDisplay.IN_PLACE, null, null, List.of(new Binding("item", null))))));
 
 		BufferingProtocol log = new BufferingProtocol();
 		targets.checkBindings(log, viewRef -> null);
@@ -241,7 +249,7 @@ public class TestDisplayTargetService extends TestCase {
 
 		DisplayTargetService.ShowConfig outer = target.getShows().get(0);
 		assertEquals(SHARED, outer.getView());
-		assertFalse(outer.isDialog());
+		assertEquals(ShowDisplay.IN_PLACE, outer.getDisplay());
 		assertNull(outer.getLabel());
 		assertNotNull("The view is named after the object it displays.", outer.getLabelExpr());
 		assertEquals(1, outer.getBindings().size());
@@ -251,10 +259,74 @@ public class TestDisplayTargetService extends TestCase {
 
 		DisplayTargetService.ShowConfig inner = target.getShows().get(1);
 		assertEquals(ORPHAN, inner.getView());
-		assertTrue(inner.isDialog());
+		assertEquals(ShowDisplay.DIALOG, inner.getDisplay());
 		assertNotNull(inner.getLabel());
 		assertNull("A fixed label needs no expression.", inner.getLabelExpr());
 		assertNotNull(inner.getBindings().get(0).getExpr());
+	}
+
+	/**
+	 * A view displayed as the window's new root view must be an entry point of the application.
+	 */
+	public void testTopLevelViewIsEntryPoint() {
+		ShowStep step = ShowStep.fromConfig(showConfig(DEFAULT_VIEW, ShowDisplay.TOP_LEVEL),
+			DisplayTargetService.OBJECT_SCOPE);
+		assertTrue(step.topLevel());
+		assertEquals(DEFAULT_VIEW, step.viewRef());
+
+		try {
+			ShowStep.fromConfig(showConfig(SHARED, ShowDisplay.TOP_LEVEL), DisplayTargetService.OBJECT_SCOPE);
+			fail("A view that is no entry point cannot be the window's new root view.");
+		} catch (ConfigurationError expected) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * The channels of a view displayed as the window's new root view receive no values.
+	 */
+	public void testTopLevelTakesNoBindings() {
+		try {
+			ShowStep.fromConfig(showConfig(DEFAULT_VIEW, ShowDisplay.TOP_LEVEL, "item"),
+				DisplayTargetService.OBJECT_SCOPE);
+			fail("A new root view starts with fresh channels.");
+		} catch (ConfigurationError expected) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * Nothing can be displayed after a view displayed as the window's new root view.
+	 */
+	public void testTopLevelIsLast() {
+		List<ShowStep> steps = ShowStep.fromConfigs(
+			List.of(showConfig(SHARED, ShowDisplay.IN_PLACE), showConfig(DEFAULT_VIEW, ShowDisplay.TOP_LEVEL)),
+			DisplayTargetService.OBJECT_SCOPE);
+		assertEquals(2, steps.size());
+
+		try {
+			ShowStep.fromConfigs(
+				List.of(showConfig(DEFAULT_VIEW, ShowDisplay.TOP_LEVEL), showConfig(SHARED, ShowDisplay.IN_PLACE)),
+				DisplayTargetService.OBJECT_SCOPE);
+			fail("The page displaying the new root view replaces everything displayed after it.");
+		} catch (ConfigurationError expected) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * A configured view to display, with bindings for the given channels.
+	 */
+	private static DisplayTargetService.ShowConfig showConfig(String view, ShowDisplay display, String... channels) {
+		DisplayTargetService.ShowConfig config = TypedConfiguration.newConfigItem(DisplayTargetService.ShowConfig.class);
+		config.update(config.descriptor().getProperty(DisplayTargetService.ShowConfig.VIEW), view);
+		config.update(config.descriptor().getProperty(DisplayTargetService.ShowConfig.DISPLAY), display);
+		for (String channel : channels) {
+			DisplayTargetService.BindConfig bind = TypedConfiguration.newConfigItem(DisplayTargetService.BindConfig.class);
+			bind.update(bind.descriptor().getProperty(DisplayTargetService.BindConfig.CHANNEL), channel);
+			config.getBindings().add(bind);
+		}
+		return config;
 	}
 
 	/**
@@ -268,7 +340,7 @@ public class TestDisplayTargetService extends TestCase {
 	 * A target displaying the given view, with no bindings.
 	 */
 	private static DisplayTarget target(TLType type, boolean isDefault, String viewRef) {
-		return new DisplayTarget(type, isDefault, List.of(new ShowStep(viewRef, false, null, null, List.of())));
+		return new DisplayTarget(type, isDefault, List.of(new ShowStep(viewRef, ShowDisplay.IN_PLACE, null, null, List.of())));
 	}
 
 	private DisplayTargets targets(DisplayTarget... targets) {
@@ -285,9 +357,12 @@ public class TestDisplayTargetService extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module.
+	 * Test suite requiring the {@link TypeIndex} module, and the {@link ApplicationConfig} that names
+	 * the entry points a view displayed as the window's new root view is checked against.
 	 */
-	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestDisplayTargetService.class, TypeIndex.Module.INSTANCE);
+	public static Test suite() throws ModuleException {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestDisplayTargetService.class, TypeIndex.Module.INSTANCE,
+				ApplicationConfig.Module.INSTANCE));
 	}
 }

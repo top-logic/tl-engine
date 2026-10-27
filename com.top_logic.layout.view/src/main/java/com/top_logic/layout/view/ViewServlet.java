@@ -794,6 +794,20 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * Whether the given view file is loaded as the root view of a window: the
+	 * {@link ViewConfig#getDefaultView() default view} or one of the
+	 * {@link ViewConfig#getEntryPoints() entry points}.
+	 *
+	 * @param config
+	 *        The configuration of the application's views.
+	 * @param view
+	 *        Path of the view file, relative to {@link ViewLoader#VIEW_BASE_PATH}.
+	 */
+	public static boolean isEntryPoint(ViewConfig config, String view) {
+		return view.equals(config.getDefaultView()) || entryPoint(config, view) != null;
+	}
+
+	/**
 	 * Whether the given view file is an entry point a session that belongs to no account is shown.
 	 */
 	private static boolean isAnonymousEntryPoint(ViewConfig config, String view) {

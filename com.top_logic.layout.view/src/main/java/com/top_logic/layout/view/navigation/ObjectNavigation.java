@@ -15,9 +15,11 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ActionArguments;
@@ -242,6 +244,14 @@ public final class ObjectNavigation {
 			}
 
 			ShowStep show = _shows.get(index);
+			if (show.topLevel()) {
+				if (index != _shows.size() - 1) {
+					throw new TopLogicException(I18NConstants.ERROR_TOP_LEVEL_IS_NOT_LAST__VIEW.fill(show.viewRef()));
+				}
+				showTopLevel(show);
+				step(index + 1);
+				return;
+			}
 			if (show.dialog()) {
 				if (index != _shows.size() - 1) {
 					throw new TopLogicException(I18NConstants.ERROR_DIALOG_IS_NOT_LAST__VIEW.fill(show.viewRef()));
@@ -420,6 +430,14 @@ public final class ObjectNavigation {
 		/**
 		 * Opens the given view as a dialog, carrying the values its bindings compute.
 		 */
+		/**
+		 * Lets the window load the view of the given step as its new root view.
+		 */
+		private void showTopLevel(ShowStep show) {
+			_origin.getSSEQueue().enqueue(PageNavigationEvent.create()
+				.setUrl(_origin.getContextPath() + ViewServlet.ROOT_PATH + show.viewRef()));
+		}
+
 		private void openDialog(ShowStep show) {
 			Map<String, Object> channelValues = new LinkedHashMap<>();
 			for (Binding binding : show.bindings()) {

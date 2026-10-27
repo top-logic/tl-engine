@@ -42,8 +42,8 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  *
  * <p>
  * The view is reached wherever it is displayed: the containers on the way to it are opened, or it
- * is drilled down to as a frame of the surrounding stack, or - with {@code dialog} - opened as a
- * dialog. Each binding is a script over the arguments of the chain, which it uses as variables
+ * is drilled down to as a frame of the surrounding stack, or - with {@link ShowDisplay
+ * display} - opened as a dialog or loaded as the window's new root view. Each binding is a script over the arguments of the chain, which it uses as variables
  * without declaring them, like every script of the chain (see
  * {@link com.top_logic.layout.view.command.ActionScript}); a binding without an expression receives
  * the value the action processes itself. The same holds for the {@code label-expr}.

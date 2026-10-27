@@ -707,7 +707,7 @@
 					</target>
 					<target type="Contacts:PersonContact">
 						<show
-							dialog="true"
+							display="dialog"
 							view="projects/contact-dialog.view.xml"
 						>
 							<bind channel="contact"/>

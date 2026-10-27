@@ -37,6 +37,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_DIALOG_IS_NOT_LAST__VIEW;
 
 	/**
+	 * @en The view ''{0}'' is displayed as the new root view of the window, so nothing can be
+	 *     displayed after it.
+	 */
+	public static ResKey1 ERROR_TOP_LEVEL_IS_NOT_LAST__VIEW;
+
+	/**
+	 * @en The view ''{0}'' is displayed as the new root view of the window, so its channels cannot
+	 *     receive values.
+	 */
+	public static ResKey1 ERROR_TOP_LEVEL_WITH_BINDINGS__VIEW;
+
+	/**
+	 * @en The view ''{0}'' cannot be displayed as the new root view of the window: it is no entry
+	 *     point of the application.
+	 */
+	public static ResKey1 ERROR_TOP_LEVEL_NO_ENTRY_POINT__VIEW;
+
+	/**
 	 * @en The view ''{0}'' is displayed as a drilled-down frame, but nothing here holds a stack of
 	 *     them.
 	 */

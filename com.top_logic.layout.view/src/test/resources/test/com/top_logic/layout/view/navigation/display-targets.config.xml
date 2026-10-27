@@ -10,7 +10,7 @@
 				<bind channel="item"/>
 			</show>
 			<show view="mounts-orphan.view.xml"
-				dialog="true"
+				display="dialog"
 			>
 				<label>
 					<en>Detail</en>

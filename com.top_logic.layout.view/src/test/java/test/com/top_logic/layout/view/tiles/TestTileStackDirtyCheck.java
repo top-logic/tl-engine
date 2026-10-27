@@ -57,6 +57,7 @@ import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.layout.view.navigation.Binding;
 import com.top_logic.layout.view.navigation.ObjectNavigation;
+import com.top_logic.layout.view.navigation.ShowDisplay;
 import com.top_logic.layout.view.navigation.ShowStep;
 import com.top_logic.layout.view.tiles.ReactTileStackControl;
 import com.top_logic.layout.view.tiles.TileFrame;
@@ -401,7 +402,7 @@ public class TestTileStackDirtyCheck extends TestCase {
 	 * Displaying the form frame with the shown object, named by nothing of its own.
 	 */
 	private static ShowStep formShow() {
-		return new ShowStep(FORM_VIEW, false, null, null, List.of(new Binding(EDITED, null)));
+		return new ShowStep(FORM_VIEW, ShowDisplay.IN_PLACE, null, null, List.of(new Binding(EDITED, null)));
 	}
 
 	/**

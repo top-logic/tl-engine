@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.view.channel.InputScript;
@@ -52,6 +53,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
@@ -71,6 +73,7 @@ import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDragConfig;
+import com.top_logic.layout.view.table.TableExportCommand;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -89,11 +92,13 @@ import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.TLContext;
 
 /**
@@ -172,6 +177,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getDrag()}. */
 		String DRAG = "drag";
+
+		/** Configuration name for {@link #getExport()}. */
+		String EXPORT = "export";
 
 		/**
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
@@ -393,6 +401,28 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(DRAG)
 		TableDragConfig getDrag();
+
+		/**
+		 * The export of this table to Excel, offered as a command in the toolbar of the element the
+		 * table is displayed in, as the first command of its group.
+		 *
+		 * <p>
+		 * The export holds what the user sees: the displayed columns in their order and the
+		 * displayed rows - filtered, searched, sorted and grouped as the table is. A column is left
+		 * out by {@code export="false"} on its declaration, and its cells are written by the
+		 * declaration's {@code export-renderer}. Unset (default), the table offers no export.
+		 * </p>
+		 *
+		 * <p>
+		 * The groups of a grouped table and the levels of a {@link TreeTableElement tree table} are
+		 * written as an outline of the sheet. A tree table whose rows can all be expanded
+		 * ({@link TreeStructureConfig#getCanExpandAll()}, the default) exports its whole tree, the
+		 * rows below a closed row collapsed in the outline. A tree that cannot be expanded
+		 * completely exports only the rows it displays.
+		 * </p>
+		 */
+		@Name(EXPORT)
+		TableExportCommand.Config getExport();
 	}
 
 	/**
@@ -674,6 +704,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
 	private final ViewCommand.Config _onActivateConfig;
 
+	/** The instantiated {@link Config#getExport()} command, {@code null} for a table not exported. */
+	private final TableExportCommand _export;
+
 	/**
 	 * A {@link PresetConfig} with its criterion expressions compiled.
 	 *
@@ -738,6 +771,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
 		_onActivate = ViewCommands.instantiate(context, onActivate, config.getOnActivateAs());
+
+		TableExportCommand.Config export = config.getExport();
+		_export = export == null ? null : new TableExportCommand(export);
 	}
 
 	/**
@@ -928,6 +964,55 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 		table.view().setDeclaredFilters(declaredFilters(table.columns(), table.declaredNames(), inputValues));
 		return true;
+	}
+
+	/**
+	 * Contributes the {@link Config#getExport() export} command to the enclosing command scope - the
+	 * toolbar of the element the table is displayed in - for as long as the table is displayed.
+	 *
+	 * @param control
+	 *        The control displaying the table.
+	 * @param view
+	 *        The table as it is displayed when the export runs.
+	 * @param renderers
+	 *        The export renderers of the columns displayed when the export runs; asked for only
+	 *        then, since the columns of a row-edit table change with the edit mode.
+	 * @param inputChannels
+	 *        The table's input channels, whose values the download name is computed from.
+	 */
+	protected final void contributeExportCommand(ViewContext context, ReactControl control,
+			Supplier<? extends TableView<?>> view, Supplier<Map<String, ExcelCellRenderer>> renderers,
+			List<ViewChannel> inputChannels) {
+		if (_export == null) {
+			return;
+		}
+		CommandScope scope = context.getScope(CommandScope.class);
+		if (scope == null) {
+			_log.info("The <" + Config.EXPORT + "> of a <" + tagName() + "> needs an enclosing element with a "
+				+ "toolbar, e.g. a <panel>, to be offered.");
+			return;
+		}
+		ViewCommand bound = _export.bind(view, renderers, () -> ChannelInputs.arguments(inputChannels));
+		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, _export.getConfig());
+		control.addAttachListener(() -> {
+			model.attach(context.getModelScope());
+			// The export of the table itself is the primary command of the export group, ahead of
+			// further exports the enclosing element offers.
+			scope.addCommandFirst(model);
+		});
+		control.addDetachListener(() -> {
+			scope.removeCommand(model);
+			model.detach();
+		});
+	}
+
+	/**
+	 * The tag this element is configured with, for messages about its configuration.
+	 */
+	private String tagName() {
+		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
+		TagName tag = configInterface.getAnnotation(TagName.class);
+		return tag != null ? tag.value() : configInterface.getSimpleName();
 	}
 
 	/**

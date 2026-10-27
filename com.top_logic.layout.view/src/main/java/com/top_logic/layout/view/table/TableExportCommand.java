@@ -73,15 +73,16 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The command exporting a &lt;table&gt; to Excel, configured as the table's
- * {@link com.top_logic.layout.view.element.TableElement.Config#getExport() export}.
+ * The command exporting a &lt;table&gt; or a &lt;tree-table&gt; to Excel, configured as the table's
+ * {@link AbstractTableElement.Config#getExport() export}.
  *
  * <p>
  * The export holds what the user sees: the displayed columns in their order - without the ones that
  * hold an action rather than data, and without those declared {@code export="false"} - and the
  * displayed rows, filtered, searched and sorted as the table is. A grouped table is written with its
- * groups as an outline of the sheet. Every cell is written from the typed value of its column, by
- * the column's {@link ColumnExportConfig#getExportRenderer() export renderer}.
+ * groups as an outline of the sheet, a tree table with its levels. Every cell is written from the
+ * typed value of its column, by the column's {@link ColumnExportConfig#getExportRenderer() export
+ * renderer}.
  * </p>
  *
  * <p>
@@ -294,8 +295,8 @@ public class TableExportCommand implements ViewCommand {
 	 *
 	 * <p>
 	 * The export exports the table it belongs to, so it is configured as the
-	 * {@link com.top_logic.layout.view.element.TableElement.Config#getExport() export} of a
-	 * &lt;table&gt;, which creates it through {@link #TableExportCommand(Config)}. Configured
+	 * {@link AbstractTableElement.Config#getExport() export} of a &lt;table&gt; or a
+	 * &lt;tree-table&gt;, which creates it through {@link #TableExportCommand(Config)}. Configured
 	 * anywhere else - among the commands of a panel, say - it has no table to export, which is
 	 * reported when the configuration is read rather than when the button is pressed.
 	 * </p>
@@ -304,8 +305,8 @@ public class TableExportCommand implements ViewCommand {
 	public TableExportCommand(InstantiationContext context, Config config) {
 		this(config);
 		context.error("The table export can only be configured as <"
-			+ com.top_logic.layout.view.element.TableElement.Config.EXPORT
-			+ "> of a <table>, not as a command of its own.");
+			+ AbstractTableElement.Config.EXPORT
+			+ "> of a <table> or a <tree-table>, not as a command of its own.");
 	}
 
 	/**

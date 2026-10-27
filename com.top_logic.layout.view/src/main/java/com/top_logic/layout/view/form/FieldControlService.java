@@ -108,7 +108,8 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The field model of an attribute follows the same order, see
- * {@link #createModel(TLObject, TLStructuredTypePart, FormControl, PolymorphicConfiguration)}: the
+ * {@link #createModel(TLObject, TLStructuredTypePart, FormControl, PolymorphicConfiguration) the
+ * creation of a field model}: the
  * control the display asks for decides whether the attribute is edited by selecting from options
  * before the attribute's annotation, its type and its structure do.
  * </p>

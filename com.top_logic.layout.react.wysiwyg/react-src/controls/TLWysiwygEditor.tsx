@@ -14,7 +14,7 @@ import {
   ObjectMention, MentionList, useMentions, mentionConfigs, CMD_MENTION, ARG_TRIGGER, ARG_QUERY, STATE_MENTIONS,
   STATE_MENTION_OPTIONS,
 } from './mentions';
-import { ObjectLink, TL_OBJECT } from './ObjectLink';
+import { FollowObjectLinks, ObjectLink, objectLinkAt } from './ObjectLink';
 import type { MentionAnswer } from './mentions';
 import './TLWysiwygEditor.css';
 
@@ -148,6 +148,14 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   /** The sequence number of the insertion carried out last, so that none is carried out twice. */
   const insertedSeqRef = React.useRef(0);
 
+  // Leads to the object an object link names, in displayed content and, with Ctrl (Cmd) held, in
+  // the edited text. The editor reaches it through a reference, as it is created once.
+  const followLink = React.useCallback((href: string) => {
+    sendCommand(CMD_SHOW_OBJECT_LINK, { [ARG_HREF]: href });
+  }, [sendCommand]);
+  const followLinkRef = React.useRef(followLink);
+  followLinkRef.current = followLink;
+
   // Reports the given text and remembers it as the current one.
   const reportValue = React.useCallback((html: string) => {
     currentHtmlRef.current = html;
@@ -177,6 +185,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       // The link extension carries the CSS class of an anchor, which is what tells an object link
       // from an ordinary one, through parsing and rendering alike.
       ObjectLink.configure({ openOnClick: false }),
+      FollowObjectLinks.configure({ follow: (href: string) => followLinkRef.current(href) }),
       ObjectMention,
       ...mentions.extensions,
       Image.configure({ allowBase64: true, inline: true }),
@@ -325,21 +334,13 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   // Object links in displayed content lead to the object they name; every other anchor keeps
   // its normal behavior.
   const handleContentClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const anchor = (e.target as HTMLElement | null)?.closest('a');
-    if (!anchor || !e.currentTarget.contains(anchor) || !anchor.classList.contains(TL_OBJECT)) {
+    const anchor = objectLinkAt(e.currentTarget, e.nativeEvent);
+    if (anchor === null) {
       return;
     }
     e.preventDefault();
-    sendCommand(CMD_SHOW_OBJECT_LINK, { [ARG_HREF]: anchor.getAttribute('href') || '' });
-  }, [sendCommand]);
-
-  // In the edited text, a click places the cursor; with Ctrl (Cmd) held, an object link leads to
-  // the object it names, as in displayed content.
-  const handleEditClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.ctrlKey || e.metaKey) {
-      handleContentClick(e);
-    }
-  }, [handleContentClick]);
+    followLink(anchor.getAttribute('href') || '');
+  }, [followLink]);
 
   // Cleanup debounce on unmount.
   React.useEffect(() => {
@@ -385,7 +386,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
           onBlur={handleSourceBlur}
         />
       )}
-      <EditorContent editor={editor} hidden={sourceMode} onClick={handleEditClick} />
+      <EditorContent editor={editor} hidden={sourceMode} />
       {mentions.list !== null && !sourceMode && (
         <MentionList {...mentions.list} aria-labelledby={labelledBy} />
       )}

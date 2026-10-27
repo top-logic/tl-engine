@@ -243,6 +243,22 @@ public class DeviceLoginProvider extends AbstractConfiguredInstance<DeviceLoginP
 	}
 
 	/**
+	 * Whether the client credentials are available now, if the client authenticates at the
+	 * authorization server.
+	 *
+	 * <p>
+	 * Whether a user completes the device login is not known in advance, a pending login is
+	 * reported by {@link #authenticate(RequestAuthentication)}.
+	 * </p>
+	 *
+	 * @see OAuthClient#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _client.isAvailable();
+	}
+
+	/**
 	 * Waits before the next poll of the token endpoint during a device login.
 	 *
 	 * @param millis

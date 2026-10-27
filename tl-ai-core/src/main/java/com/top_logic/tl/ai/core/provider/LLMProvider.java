@@ -24,4 +24,19 @@ public interface LLMProvider {
 	 * @throws ProviderException on API errors, network errors, or authentication failures
 	 */
 	void stream(ProviderRequest request, StreamHandler handler) throws ProviderException;
+
+	/**
+	 * Whether this provider can authenticate a request now.
+	 *
+	 * <p>
+	 * Asked before each request a run would send, so that a provider without its credentials is
+	 * never called - its failure would say nothing about the model - and is called as soon as they
+	 * are provided.
+	 * </p>
+	 *
+	 * @see LLMProviderConfig#isAvailable()
+	 */
+	default boolean isAvailable() {
+		return true;
+	}
 }

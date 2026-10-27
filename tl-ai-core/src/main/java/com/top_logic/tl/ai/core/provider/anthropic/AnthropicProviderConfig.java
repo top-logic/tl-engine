@@ -100,9 +100,7 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		return _config;
 	}
 
-	/**
-	 * The credentials authenticating the requests to the API of this provider.
-	 */
+	@Override
 	public CredentialProvider getCredentials() {
 		return _credentials;
 	}

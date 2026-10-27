@@ -18,6 +18,7 @@ import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -30,6 +31,7 @@ import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.annotation.ConfigType;
+import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.model.DefaultModelFactory;
 import com.top_logic.element.model.ModelCopy;
 import com.top_logic.element.model.ModelResolver;
@@ -38,6 +40,7 @@ import com.top_logic.element.model.diff.compare.CreateModelPatch;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.export.ModelConfigExtractor;
+import com.top_logic.element.model.i18n.I18NAttributeStorageMapping;
 import com.top_logic.element.model.migration.model.DeleteTLModuleProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
 import com.top_logic.knowledge.service.KBUtils;
@@ -58,6 +61,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.access.IdentityMapping;
 import com.top_logic.model.config.ModelPartConfig;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -373,6 +377,29 @@ public class TestModelPatch extends AbstractModelPatchTest {
 
 		assertEmpty(createPatch(left, right));
 		assertEqualsConfig(right, left);
+	}
+
+	public void testUpgradeLog() {
+		TLModel left = loadModelTransient("test-upgrade-log-left.model.xml");
+		TLModel right = loadModelTransient("test-upgrade-log-right.model.xml");
+
+		BufferingProtocol log = new BufferingProtocol();
+		ApplyModelPatch.applyPatch(log, left, TransientObjectFactory.INSTANCE, createPatch(left, right));
+		log.checkErrors();
+
+		assertEmpty(createPatch(left, right));
+		assertContainsInfo(log,
+			"Changing type of reference 'm0:A#r' from 'm0:B' to 'm0:I', existing values are kept.");
+		assertContainsInfo(log,
+			"Changing type of reference 'm0:A#s' from 'm0:B' to 'm0:C', existing values are kept, "
+				+ "but values that are not of type 'm0:C' no longer match the reference.");
+		assertContainsInfo(log, "Updating storage mapping of 'm0:D' from '"
+			+ I18NAttributeStorageMapping.class.getName() + "' to '" + DirectMapping.class.getName() + "'.");
+	}
+
+	private void assertContainsInfo(BufferingProtocol log, String expected) {
+		assertTrue("Missing '" + expected + "' in: " + log.getInfos(),
+			log.getInfos().stream().anyMatch(info -> info.contains(expected)));
 	}
 
 	public void testCopy() {

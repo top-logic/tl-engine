@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, tooltipProps, useTabList } from 'tl-react-bridge';
+import { React, useI18N, usePart, tooltipProps, useTabList, TabStrip } from 'tl-react-bridge';
 import ColorPalette, { COLOR_DRAG_TYPE } from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { PickerPopover } from '../picker/PickerPopover';
@@ -215,14 +215,14 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
       onClose={onCancel}
     >
       <div className="tl-tabs tl-picker__tabs">
-        <div className="tl-tabs__list" role="tablist" onKeyDown={list.onListKeyDown}>
+        <TabStrip selected={tab} onKeyDown={list.onListKeyDown}>
           <button {...list.tabProps('palette', { controls: panel.id })} className="tl-tabs__tab tl-type-body">
             {i18n['js.colorInput.paletteTab']}
           </button>
           <button {...list.tabProps('mixer', { controls: panel.id })} className="tl-tabs__tab tl-type-body">
             {i18n['js.colorInput.mixerTab']}
           </button>
-        </div>
+        </TabStrip>
         <div {...panel} hidden={false} className="tl-tabs__panel">
           <div className="tl-stack tl-stack--row tl-stack--gap-default">
             {/* Left: the content of the tab; both stay mounted, so the mixer keeps its hue */}

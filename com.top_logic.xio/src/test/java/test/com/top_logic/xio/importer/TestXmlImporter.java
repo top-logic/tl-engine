@@ -292,6 +292,76 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("forward", n2.tValueByName("note"));
 	}
 
+	public void testUnlessKnownUpdate() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter14-UnlessKnownUpdate.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter14-UnlessKnownUpdate.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test14");
+		TLClass itemType = (TLClass) module.getType("Item");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+		TLObject e1 = germanItem(container, itemType, "e1", "Eins", "de");
+		TLObject c1 = germanChild(e1, itemType, "c1", "Schritt eins");
+		TLObject e2 = germanItem(container, itemType, "e2", "Zwei", "de,en");
+		TLObject c2 = germanChild(e2, itemType, "c2", "Schritt zwei");
+		TLObject e3 = germanItem(container, itemType, "e3", "Drei", "de");
+		TLObject c3 = germanChild(e3, itemType, "c3", "Schritt drei");
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter14-UnlessKnownUpdate.data.xml").getStream()), container);
+
+		// Only the unknown item is added.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(4, elements.size());
+		assertSame(e1, elements.get(0));
+		assertSame(e2, elements.get(1));
+		assertSame(e3, elements.get(2));
+
+		// The condition holds: The known item and its known child get the translation of the
+		// language of the import. An unknown child of a known item is not created.
+		assertTranslations(Map.of(Locale.GERMAN, "Eins", Locale.ENGLISH, "One"), e1.tValueByName("name"));
+		assertEquals(List.of(c1), e1.tValueByName("children"));
+		assertTranslations(Map.of(Locale.GERMAN, "Schritt eins", Locale.ENGLISH, "Step one"),
+			c1.tValueByName("text"));
+
+		// The condition does not hold: The known item is skipped with its content.
+		assertTranslations(Map.of(Locale.GERMAN, "Zwei"), e2.tValueByName("name"));
+		assertEquals(List.of(c2), e2.tValueByName("children"));
+		assertTranslations(Map.of(Locale.GERMAN, "Schritt zwei"), c2.tValueByName("text"));
+
+		// An update without condition is applied, content it does not consume is skipped.
+		assertTranslations(Map.of(Locale.GERMAN, "Drei", Locale.ENGLISH, "Three"), e3.tValueByName("name"));
+		assertEquals(List.of(c3), e3.tValueByName("children"));
+		assertTranslations(Map.of(Locale.GERMAN, "Schritt drei"), c3.tValueByName("text"));
+
+		// An unknown item is created with its content.
+		TLObject n1 = elements.get(3);
+		assertEquals("n1", n1.tValueByName("extId"));
+		assertTranslations(Map.of(Locale.ENGLISH, "New"), n1.tValueByName("name"));
+		List<? extends TLObject> n1Children = list(n1.tValueByName("children"));
+		assertEquals(1, n1Children.size());
+		assertEquals("n1c1", n1Children.get(0).tValueByName("extId"));
+		assertTranslations(Map.of(Locale.ENGLISH, "New step"), n1Children.get(0).tValueByName("text"));
+	}
+
+	private TLObject germanItem(TLObject container, TLClass itemType, String extId, String name, String languages) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(itemType, null, null, null);
+		result.tUpdateByName("extId", extId);
+		result.tUpdateByName("name", ResKey.builder().add(Locale.GERMAN, name).build());
+		result.tUpdateByName("languages", languages);
+		container.tAddByName("elements", result);
+		return result;
+	}
+
+	private TLObject germanChild(TLObject parent, TLClass itemType, String extId, String text) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(itemType, null, null, null);
+		result.tUpdateByName("extId", extId);
+		result.tUpdateByName("text", ResKey.builder().add(Locale.GERMAN, text).build());
+		parent.tAddByName("children", result);
+		return result;
+	}
+
 	public void testUnresolvedReported() throws XMLStreamException, IOException {
 		BufferingProtocol importLog = new BufferingProtocol();
 		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),

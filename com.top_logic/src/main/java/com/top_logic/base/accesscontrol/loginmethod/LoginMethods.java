@@ -33,6 +33,10 @@ public class LoginMethods {
 	/**
 	 * All external login methods currently offered by the registered providers.
 	 *
+	 * <p>
+	 * A method that is not {@link LoginMethod#isAvailable() available} now is left out.
+	 * </p>
+	 *
 	 * @return A possibly empty, never {@code null} list, in provider registration order.
 	 */
 	public static List<LoginMethod> all() {
@@ -47,7 +51,24 @@ public class LoginMethods {
 		for (PolymorphicConfiguration<? extends LoginMethodProvider> providerConfig : providerConfigs) {
 			LoginMethodProvider provider = context.getInstance(providerConfig);
 			if (provider != null) {
-				result.addAll(provider.getLoginMethods());
+				result.addAll(available(provider.getLoginMethods()));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The given login methods that are {@link LoginMethod#isAvailable() available} now.
+	 *
+	 * @param methods
+	 *        The methods to choose from.
+	 * @return A new list of the available methods in the given order.
+	 */
+	public static List<LoginMethod> available(List<? extends LoginMethod> methods) {
+		List<LoginMethod> result = new ArrayList<>(methods.size());
+		for (LoginMethod method : methods) {
+			if (method.isAvailable()) {
+				result.add(method);
 			}
 		}
 		return result;

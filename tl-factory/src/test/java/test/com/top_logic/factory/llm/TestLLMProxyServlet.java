@@ -27,6 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
@@ -41,7 +42,11 @@ import com.sun.net.httpserver.HttpServer;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Logger.LogEntry;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.listener.Listener;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.llm.LLMAdmission;
 import com.top_logic.factory.llm.LLMProxy;
 import com.top_logic.factory.llm.LLMProxyHandler;
@@ -207,7 +212,11 @@ public class TestLLMProxyServlet extends TestCase {
 	}
 
 	private static LLMUpstream upstreamAt(String baseUrl) {
-		return new LLMUpstream(baseUrl, API_KEY, PROVIDER_VERSION, Duration.ofSeconds(2), Duration.ofSeconds(20),
+		return upstreamAt(baseUrl, request -> request.setHeader(LLMProxyHandler.X_API_KEY, API_KEY));
+	}
+
+	private static LLMUpstream upstreamAt(String baseUrl, CredentialProvider credentials) {
+		return new LLMUpstream(baseUrl, credentials, PROVIDER_VERSION, Duration.ofSeconds(2), Duration.ofSeconds(20),
 			Map.of());
 	}
 
@@ -426,6 +435,47 @@ public class TestLLMProxyServlet extends TestCase {
 		HttpResponse<String> response =
 			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(503, response.statusCode());
+	}
+
+	/**
+	 * Credentials of the provider that are not available (e.g. an unset API key) are answered with
+	 * 503; nothing is forwarded.
+	 */
+	public void testCredentialsNotAvailable() throws Exception {
+		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		_upstreamConfig = upstreamAt(_upstreamConfig.baseUrl(), request -> {
+			throw new I18NRuntimeException(ResKey.text("API key not set."));
+		});
+
+		HttpResponse<String> response =
+			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals(503, response.statusCode());
+		assertTrue(_received.isEmpty());
+		assertFalse("The failure is logged.", _logged.isEmpty());
+	}
+
+	/**
+	 * A 401 of the upstream makes the credentials drop what they cached.
+	 */
+	public void testUnauthorizedInvalidatesCredentials() throws Exception {
+		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 401, "{}");
+		AtomicInteger invalidated = new AtomicInteger();
+		_upstreamConfig = upstreamAt(_upstreamConfig.baseUrl(), new CredentialProvider() {
+			@Override
+			public void authenticate(RequestAuthentication request) {
+				request.setHeader(LLMProxyHandler.X_API_KEY, API_KEY);
+			}
+
+			@Override
+			public void invalidate() {
+				invalidated.incrementAndGet();
+			}
+		});
+
+		HttpResponse<String> response =
+			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals(401, response.statusCode());
+		assertEquals(1, invalidated.get());
 	}
 
 	/**

@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
@@ -35,8 +36,7 @@ import de.haumacher.msgbuf.json.JsonReader;
  * {@link BedrockConverseRequestBuilder}.</p>
  *
  * <p>The base URL is mandatory — no default is provided because the caller supplies the
- * gateway or regional AWS endpoint. Authentication uses the default Bearer scheme inherited
- * from {@link AbstractStreamingProvider}.</p>
+ * gateway or regional AWS endpoint.</p>
  *
  * <p>Thread-safe: a single instance handles concurrent streams.</p>
  */
@@ -55,35 +55,35 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	/**
 	 * Creates a {@link BedrockConverseProvider} with a shared default {@link HttpClient}.
 	 *
-	 * @param apiKey
-	 *        The API key forwarded as {@code Authorization: Bearer}. May be {@code null}.
+	 * @param credentials
+	 *        Authentication of the requests to the Bedrock endpoint.
 	 * @param baseUrl
 	 *        The provider base URL (e.g. {@code https://bedrock-runtime.us-east-1.amazonaws.com}).
 	 *        Mandatory — no default.
 	 */
-	public BedrockConverseProvider(String apiKey, String baseUrl) {
-		this(apiKey, baseUrl, defaultHttpClient());
+	public BedrockConverseProvider(CredentialProvider credentials, String baseUrl) {
+		this(credentials, baseUrl, defaultHttpClient());
 	}
 
 	/**
 	 * Creates a {@link BedrockConverseProvider} with a caller-supplied {@link HttpClient}.
 	 *
-	 * @param apiKey
-	 *        The API key. May be {@code null}.
+	 * @param credentials
+	 *        Authentication of the requests to the Bedrock endpoint.
 	 * @param baseUrl
 	 *        The provider base URL. Mandatory.
 	 * @param httpClient
 	 *        The HTTP client to use.
 	 */
-	public BedrockConverseProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		super(apiKey, baseUrl, httpClient);
+	public BedrockConverseProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient) {
+		super(credentials, baseUrl, httpClient);
 	}
 
 	/**
 	 * Creates a {@link BedrockConverseProvider} with configurable timeouts and custom headers.
 	 *
-	 * @param apiKey
-	 *        The API key. May be {@code null}.
+	 * @param credentials
+	 *        Authentication of the requests to the Bedrock endpoint.
 	 * @param baseUrl
 	 *        The provider base URL. Mandatory.
 	 * @param connectTimeoutSeconds
@@ -93,10 +93,10 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	 * @param customHeaders
 	 *        Additional HTTP headers applied after all provider-specific headers.
 	 */
-	public BedrockConverseProvider(String apiKey, String baseUrl,
+	public BedrockConverseProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds,
 			Map<String, String> customHeaders) {
-		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+		super(credentials, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 	}
 

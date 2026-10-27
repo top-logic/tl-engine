@@ -8,11 +8,14 @@ package com.top_logic.services.jms.activemq;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.services.jms.JMSClient;
 
 import jakarta.jms.ConnectionFactory;
@@ -92,10 +95,22 @@ public class ActiveMQClient extends JMSClient {
 
 		/**
 		 * The password to the given user name.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the password by its secret name, so that the password is
+		 * not part of the configuration, e.g. <code>&lt;password name="MQ_PASSWORD"/&gt;</code>,
+		 * which the default secret store reads from the environment variable of that name holding
+		 * the plain password. An attribute value is an encrypted password, or a plain password
+		 * with the prefix <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The password is read each time a connection to the message queue server is opened.
+		 * </p>
 		 */
-		@Encrypted
 		@Name(PASSWORD)
-		String getPassword();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getPassword();
 	}
 
 	/**
@@ -124,6 +139,11 @@ public class ActiveMQClient extends JMSClient {
 	}
 
 	/**
+	 * Source of {@link Config#getPassword()}, <code>null</code> if no password is configured.
+	 */
+	private final SecretSource _password;
+
+	/**
 	 * Creates a {@link ActiveMQClient} from configuration.
 	 * 
 	 * @param config
@@ -131,6 +151,7 @@ public class ActiveMQClient extends JMSClient {
 	 */
 	public ActiveMQClient(InstantiationContext context, Config<?> config) {
 		super(context, config);
+		_password = context.getInstance(config.getPassword());
 	}
 
 	/**
@@ -144,7 +165,7 @@ public class ActiveMQClient extends JMSClient {
 		String url = config.getURLScheme().toString().toLowerCase() + "://" + config.getHost() + ":" + config.getPort();
 		ActiveMQConnectionFactory amqcf = new ActiveMQConnectionFactory(url);
 		amqcf.setUser(config.getUser());
-		amqcf.setPassword(config.getPassword());
+		amqcf.setPassword(secret(_password));
 		return amqcf;
 	}
 }

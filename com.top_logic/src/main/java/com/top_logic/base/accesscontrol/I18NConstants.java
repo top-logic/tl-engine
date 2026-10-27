@@ -132,9 +132,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey PWD_CHANGE_SUBMIT;
 
-	@CustomKey("logout.messages.errorauthenticate.ntlm")
-	public static ResKey ERROR_NTLM_AUTHEMTICATION_FAILED;
-
 	@CustomKey("com.top_logic.base.accesscontrol.BasicAuthenticationServlet.noAuthorizationSent.redirectText")
 	public static ResKey ERROR_BASIC_AUTHENTICATION_FAILED;
 
@@ -216,6 +213,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CalledFromJSP
 	public static ResKey UNKNOWN_ACCOUNT_LOGIN;
+
+	/**
+	 * @en The login with the external identity provider failed. Please try again or contact your
+	 *     administrator.
+	 */
+	public static ResKey ERROR_EXTERNAL_LOGIN_FAILED;
 
 	static {
 		initConstants(I18NConstants.class);

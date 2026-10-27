@@ -7,21 +7,26 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
+import com.top_logic.base.accesscontrol.ExternalLoginFailure;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactAlertControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -31,13 +36,26 @@ import com.top_logic.util.Resources;
 
 /**
  * {@link UIElement} that renders one redirect button per external {@link LoginMethod} contributed
- * through {@link LoginMethods} (e.g. SSO providers).
+ * through {@link LoginMethods} (e.g. SSO providers), above them the message of an external login
+ * that failed.
  *
  * <p>
  * Each button is a full-page browser redirect to the method's
  * {@link LoginMethod#getInitiationUrl(String) initiation URL}, returning to the page the visitor
  * asked for. Renders nothing when no login method is configured, so it can be placed in any login
  * view unconditionally.
+ * </p>
+ *
+ * <p>
+ * The buttons are determined each time the element is rendered, also when a reloaded page renders
+ * the control tree its window keeps, so that only the methods {@link LoginMethod#isAvailable()
+ * available} at that moment are offered.
+ * </p>
+ *
+ * <p>
+ * A failed external login returns to the login page; the {@link ExternalLoginFailure} reported for
+ * the session is shown by the next rendering as error, until the visitor closes it or a later
+ * failure replaces it.
  * </p>
  */
 public class LoginMethodsElement implements UIElement {
@@ -55,35 +73,135 @@ public class LoginMethodsElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final Supplier<? extends List<? extends LoginMethod>> _methods;
+
+	private final Supplier<ResKey> _failures;
+
 	/**
 	 * Creates a new {@link LoginMethodsElement} from configuration.
 	 */
 	@CalledByReflection
 	public LoginMethodsElement(InstantiationContext context, Config config) {
-		_cssClass = config.getCssClass();
+		this(config.getCssClass(), LoginMethods::all,
+			() -> ExternalLoginFailure.take(SessionTimeoutNoticeElement.currentSession()));
+	}
+
+	/**
+	 * Creates a {@link LoginMethodsElement}.
+	 *
+	 * @param cssClass
+	 *        The CSS class of the stack of buttons, or <code>null</code>.
+	 * @param methods
+	 *        The login methods to offer, asked each time the buttons are rendered.
+	 * @param failures
+	 *        The message of an external login that failed since it was asked last, asked (and
+	 *        thereby consumed) each time the element is written; <code>null</code> if none failed.
+	 */
+	public LoginMethodsElement(String cssClass, Supplier<? extends List<? extends LoginMethod>> methods,
+			Supplier<ResKey> failures) {
+		_cssClass = cssClass;
+		_methods = methods;
+		_failures = failures;
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		String returnTo = returnPath(context);
+		LoginMethodsControl result = new LoginMethodsControl(context, _methods, _failures);
+		result.setCssClass(_cssClass);
+		return result;
+	}
 
-		List<LoginMethod> methods = LoginMethods.all();
-		List<ReactControl> buttons = new ArrayList<>(methods.size());
-		for (LoginMethod method : methods) {
+	/**
+	 * Stack of the buttons of the login methods available when it is rendered.
+	 *
+	 * <p>
+	 * A window keeps its control tree across page reloads, so the buttons are not fixed when the
+	 * control is created: a login method that becomes available or unavailable later - e.g. when the
+	 * secret of an identity provider is provided or removed - shows up or disappears with the next
+	 * rendering, without restarting the application.
+	 * </p>
+	 */
+	private static class LoginMethodsControl extends ReactStackControl {
+
+		private final ViewContext _context;
+
+		private final Supplier<? extends List<? extends LoginMethod>> _methods;
+
+		/**
+		 * The message of a failed external login, the first child, hidden until a failure is
+		 * reported.
+		 */
+		private final ReactAlertControl _failure;
+
+		/**
+		 * The IDs of the methods and the return path the current buttons were built for,
+		 * <code>null</code> before the first rendering.
+		 */
+		private List<String> _builtFor;
+
+		private final Supplier<ResKey> _failures;
+
+		LoginMethodsControl(ViewContext context, Supplier<? extends List<? extends LoginMethod>> methods,
+				Supplier<ResKey> failures) {
+			super(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.STRETCH, false, List.of());
+			_context = context;
+			_methods = methods;
+			_failures = failures;
+			_failure = new ReactAlertControl(context);
+			_failure.setClosable(true);
+			setChildren(List.of(_failure));
+		}
+
+		@Override
+		protected void onBeforeWrite() {
+			super.onBeforeWrite();
+
+			// Asked at every write, also when the control is written as part of an update of its
+			// parent: a reported failure is shown until the visitor closes it, never hidden here.
+			ResKey failure = _failures.get();
+			if (failure != null) {
+				_failure.hide();
+				_failure.show(Variant.ERROR, null, Resources.getInstance().getString(failure));
+			}
+
+			String returnTo = returnPath(_context);
+			List<? extends LoginMethod> methods = _methods.get();
+			List<String> builtFor = new ArrayList<>(methods.size() + 1);
+			builtFor.add(returnTo);
+			for (LoginMethod method : methods) {
+				builtFor.add(method.getId());
+			}
+			if (builtFor.equals(_builtFor)) {
+				return;
+			}
+
+			List<ReactControl> previous = childControls();
+			List<ReactControl> children = new ArrayList<>(methods.size() + 1);
+			children.add(_failure);
+			for (LoginMethod method : methods) {
+				children.add(createButton(method, returnTo));
+			}
+			setChildren(children);
+			for (ReactControl button : previous) {
+				if (button != _failure) {
+					button.cleanupTree();
+				}
+			}
+			_builtFor = builtFor;
+		}
+
+		private ReactButtonControl createButton(LoginMethod method, String returnTo) {
 			String label = Resources.getInstance().getString(method.getLabel());
-			ReactButtonControl button = new ReactButtonControl(context, label, ctx -> HandlerResult.DEFAULT_RESULT);
+			ReactButtonControl button = new ReactButtonControl(_context, label, ctx -> HandlerResult.DEFAULT_RESULT);
 			// Navigate the browser directly to the external login (no server/SSE round-trip).
 			button.setNavigateUrl(method.getInitiationUrl(returnTo));
 			ThemeImage icon = method.getIcon();
 			if (icon != null) {
 				button.setImage(icon);
 			}
-			buttons.add(button);
+			return button;
 		}
-		ReactStackControl result = new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT,
-			StackAlign.STRETCH, false, buttons);
-		result.setCssClass(_cssClass);
-		return result;
+
 	}
 
 	/**

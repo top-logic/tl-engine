@@ -172,7 +172,7 @@ public class TestPac4jLoginMethod extends TestCase {
 	}
 
 	private static Pac4jLoginMethod loginMethod() {
-		return new Pac4jLoginMethod(CLIENT, ResKey.text(CLIENT), null);
+		return new Pac4jLoginMethod(CLIENT, ResKey.text(CLIENT), null, context -> null);
 	}
 
 	private static OidcProfile profile(String clientName) {

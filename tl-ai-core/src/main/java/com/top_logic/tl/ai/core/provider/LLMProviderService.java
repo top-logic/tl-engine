@@ -30,10 +30,12 @@ import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -85,6 +87,7 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  * @see AgentFactory
  * @see #catalog()
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("LLM providers")
 @ServiceCategory.Of(AICategory.class)
 public class LLMProviderService extends ConfiguredManagedClass<LLMProviderService.Config<?>> {
@@ -869,6 +872,17 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			return null;
 		}
 		return _providerConfigs.get(exposedBy.get(0));
+	}
+
+	/**
+	 * The started provider with the given name.
+	 *
+	 * @param providerName
+	 *        The name of the provider in {@link Config#getProviders()}.
+	 * @return The provider, {@code null} if none of that name is configured.
+	 */
+	public LLMProviderConfig getProvider(String providerName) {
+		return _providerConfigs == null ? null : _providerConfigs.get(providerName);
 	}
 
 	/**

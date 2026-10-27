@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.client.authentication;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
 
 import com.top_logic.service.openapi.client.registry.impl.call.uri.UriBuilder;
 
@@ -40,6 +41,12 @@ public class CombinedSecurityEnhancer implements SecurityEnhancer {
 	public void enhanceRequest(HttpClient client, ClassicHttpRequest request) {
 		_first.enhanceRequest(client, request);
 		_second.enhanceRequest(client, request);
+	}
+
+	@Override
+	public void handleResponse(HttpResponse response) {
+		_first.handleResponse(response);
+		_second.handleResponse(response);
 	}
 
 	@Override

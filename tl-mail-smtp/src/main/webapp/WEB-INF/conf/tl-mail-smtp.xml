@@ -10,7 +10,6 @@
         <entry name="%SMTP_PORT%"		value="${env:smtp_port:-1}" comment="Port of SMTP server, -1 means default port."/>
         <entry name="%SMTP_LOOKUP_MX%"  value="${env:smtp_lookup_mx:false}" comment="Set this true, if the given SMTP is a DNS entry."/>
 		<entry name="%SMTP_USER%"		value="${env:smtp_user:}" comment="User name for login to the SMTP server."/>
-		<entry name="%SMTP_PASS%"		value="${env:smtp_pass:}" comment="Password for SMTP server login."/>
 		<entry name="%SMTP_TIMEOUT%"    value="${env:smtp_timeout:60000}" />
 		<entry name="%SMTP_CONNECTION_TIMEOUT%"	value="${env:smtp_connection_timeout:60000}" />
 

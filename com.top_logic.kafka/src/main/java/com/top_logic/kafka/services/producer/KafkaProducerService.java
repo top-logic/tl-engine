@@ -18,8 +18,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.kafka.services.common.TopicChecker;
@@ -29,6 +31,7 @@ import com.top_logic.kafka.services.common.TopicChecker;
  *
  * @author <a href="mailto:tgi@top-logic.com">tgi</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("Kafka producers")
 @ServiceCategory.Of(InterfacesCategory.class)
 public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerService.Config> {

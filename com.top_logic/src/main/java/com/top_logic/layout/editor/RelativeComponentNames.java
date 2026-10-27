@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.tree.model.BusinessObjectTreeModel;
@@ -46,6 +47,11 @@ public class RelativeComponentNames extends Function1<OptionModel<ComponentName>
 	@Override
 	public OptionModel<ComponentName> apply(ComponentName root) {
 		if (root == null) {
+			if (_contextComponent == null) {
+				// The edited configuration does not belong to a component, e.g. the configuration of
+				// a command in the configuration of a service.
+				return new LazyListOptionModel<>(Collections::emptyList);
+			}
 			return new DefaultTreeOptionModel<>(createTreeModel(_contextComponent.getName()));
 		} else {
 			return new DefaultTreeOptionModel<>(createTreeModel(root));

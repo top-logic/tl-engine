@@ -83,6 +83,8 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 
 	private boolean _multipleBranches;
 
+	private boolean _branchLast;
+
     /**
      * Generate Structure with given name and size.
      *
@@ -535,8 +537,15 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 	}
 
 	@Override
+	public boolean branchLast() {
+		return _branchLast;
+	}
+
+	@Override
 	public MetaObject resolve(TypeContext context) throws DataObjectException {
 		resolveAttributes(context);
+		// Must be known before resolving the indices, since it determines their column order.
+		_branchLast = context.branchLast();
 		resolveIndices();
 		_multipleBranches = context.multipleBranches();
 		return this;

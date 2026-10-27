@@ -253,6 +253,12 @@ public class H2Helper extends DBHelper {
 		return false;
 	}
 
+	@Override
+	public boolean seeksInListOnFirstIndexColumnOnly() {
+		// H2 uses an IN list as index condition only for the first column of the index.
+		return true;
+	}
+
 	/**
 	 * Create a valid SQL statement to drop an index.
 	 * 

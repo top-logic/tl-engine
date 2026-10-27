@@ -26,6 +26,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.PaneInformation;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import test.com.top_logic.base.office.ZipGaps;
@@ -235,7 +236,8 @@ public class TestTableViewExcelExport extends BasicTestCase {
 
 	/**
 	 * Writes a group as a bold header row heading its members in the outline of the sheet; the
-	 * members of a collapsed group are exported as hidden rows.
+	 * members of a collapsed group are exported as visible rows of the outline, and no group is
+	 * marked as collapsed.
 	 */
 	public void testGrouping() throws IOException {
 		DefaultTableView<Ticket> view = view();
@@ -255,12 +257,13 @@ public class TestTableViewExcelExport extends BasicTestCase {
 			assertEquals(0, sheet.getRow(1).getOutlineLevel());
 			for (int n = 2; n <= 3; n++) {
 				assertEquals(1, sheet.getRow(n).getOutlineLevel());
-				assertTrue("Member of a collapsed group must be hidden.", sheet.getRow(n).getZeroHeight());
 			}
 			assertEquals("open (3)", text(sheet, 4, 0));
 			for (int n = 5; n <= 7; n++) {
 				assertEquals(1, sheet.getRow(n).getOutlineLevel());
-				assertFalse(sheet.getRow(n).getZeroHeight());
+			}
+			for (int n = 1; n <= 7; n++) {
+				assertVisibleNotCollapsed(sheet.getRow(n), n);
 			}
 			assertEquals("open", text(sheet, 5, 1));
 			assertFalse(sheet.getRowSumsBelow());
@@ -445,8 +448,8 @@ public class TestTableViewExcelExport extends BasicTestCase {
 	}
 
 	/**
-	 * Writes the descendants of a collapsed tree node as rows the outline hides, at their depth -
-	 * nothing is left out for being collapsed.
+	 * Writes the descendants of a collapsed tree node as visible rows of the outline, at their depth,
+	 * with no row marked as collapsed - nothing is left out for being collapsed.
 	 */
 	public void testCollapsedTreeNodes() throws IOException {
 		record Node(String name, List<Node> children) {
@@ -490,10 +493,9 @@ public class TestTableViewExcelExport extends BasicTestCase {
 				List.of(text(sheet, 1, 0), text(sheet, 2, 0), text(sheet, 3, 0), text(sheet, 4, 0),
 					text(sheet, 5, 0), text(sheet, 6, 0)));
 			int[] levels = { 0, 1, 2, 1, 0, 1 };
-			boolean[] hidden = { false, false, true, false, false, true };
 			for (int n = 0; n < levels.length; n++) {
 				assertEquals("Level of row " + (n + 1), levels[n], sheet.getRow(n + 1).getOutlineLevel());
-				assertEquals("Hidden row " + (n + 1), hidden[n], sheet.getRow(n + 1).getZeroHeight());
+				assertVisibleNotCollapsed(sheet.getRow(n + 1), n + 1);
 			}
 		}
 	}
@@ -517,6 +519,16 @@ public class TestTableViewExcelExport extends BasicTestCase {
 		workbook.close();
 		byte[] content = buffer.toByteArray();
 		return () -> new ByteArrayInputStream(content);
+	}
+
+	/**
+	 * Asserts that the given row of a written workbook is visible and heads no collapsed outline
+	 * group.
+	 */
+	private static void assertVisibleNotCollapsed(Row row, int index) {
+		assertFalse("Row " + index + " must be visible.", row.getZeroHeight());
+		assertFalse("Row " + index + " must not be marked collapsed.",
+			((XSSFRow) row).getCTRow().isSetCollapsed() && ((XSSFRow) row).getCTRow().getCollapsed());
 	}
 
 	private static Sheet sheet(TableViewExcelExport export, DefaultTableView<?> view) throws IOException {

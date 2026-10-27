@@ -15,7 +15,7 @@ import com.top_logic.tool.export.ExcelCellRenderer;
 /**
  * How a declared column takes part in an export of its table.
  *
- * @see com.top_logic.layout.view.element.TableElement.Config#getExport()
+ * @see com.top_logic.layout.view.element.AbstractTableElement.Config#getExport()
  */
 @Abstract
 public interface ColumnExportConfig extends ConfigurationItem {

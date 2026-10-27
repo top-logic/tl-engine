@@ -22,6 +22,7 @@ import com.top_logic.knowledge.service.FlexDataManagerFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
+import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 
 /**
  * {@link JournalManager} that writes to tables with flex data schema.
@@ -58,6 +59,22 @@ public class FlexJournalManager extends JournalManager {
 	public static class JournalTypes implements TypeProvider {
 
 		/**
+		 * Primary key attributes of the journal tables following the branch column.
+		 */
+		private static final String[] JOURNAL_KEY_ATTRIBUTES = {
+			AbstractFlexDataManager.TYPE,
+			AbstractFlexDataManager.IDENTIFIER,
+			AbstractFlexDataManager.REV_MAX,
+			AbstractFlexDataManager.ATTRIBUTE,
+		};
+
+		/**
+		 * Number of leading {@link #JOURNAL_KEY_ATTRIBUTES} stored in compressed format: all but the
+		 * last one.
+		 */
+		private static final int JOURNAL_COMPRESSED_KEY_ATTRIBUTES = JOURNAL_KEY_ATTRIBUTES.length - 1;
+
+		/**
 		 * Creates a new {@link JournalTypes}.
 		 */
 		@CalledByReflection
@@ -69,20 +86,24 @@ public class FlexJournalManager extends JournalManager {
 		public void createTypes(Log log, MOFactory typeFactory, MORepository typeRepository) {
 			try {
 				typeRepository.addMetaObject(
-					AbstractFlexDataManager.createFlexDataType(
-						FlexDataChangeEntryJournal.JOURNAL_PRE_VALUE_TYPE_NAME, null,
+					createJournalType(FlexDataChangeEntryJournal.JOURNAL_PRE_VALUE_TYPE_NAME,
 						typeRepository.multipleBranches()));
 			} catch (DuplicateTypeException ex) {
 				log.error("Journal pre-value type already exists.", ex);
 			}
 			try {
 				typeRepository.addMetaObject(
-					AbstractFlexDataManager.createFlexDataType(
-						FlexDataChangeEntryJournal.JOURNAL_POST_VALUE_TYPE_NAME, null,
+					createJournalType(FlexDataChangeEntryJournal.JOURNAL_POST_VALUE_TYPE_NAME,
 						typeRepository.multipleBranches()));
 			} catch (DuplicateTypeException ex) {
 				log.error("Journal post-value type already exists.", ex);
 			}
+		}
+
+		private static MOKnowledgeItemImpl createJournalType(String typeName, boolean multipleBranches) {
+			// The journal tables keep the branch in front of their key independent of the type system.
+			return AbstractFlexDataManager.createFlexDataType(typeName, null, multipleBranches, false,
+				JOURNAL_COMPRESSED_KEY_ATTRIBUTES, JOURNAL_KEY_ATTRIBUTES);
 		}
 
 	}

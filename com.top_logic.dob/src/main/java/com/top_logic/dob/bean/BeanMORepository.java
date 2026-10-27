@@ -155,4 +155,9 @@ public class BeanMORepository implements MORepository  {
 	public boolean multipleBranches() {
 		return false;
 	}
+
+	@Override
+	public boolean branchLast() {
+		return false;
+	}
 }

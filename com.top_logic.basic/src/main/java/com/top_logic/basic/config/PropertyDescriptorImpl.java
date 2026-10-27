@@ -2358,6 +2358,51 @@ public abstract class PropertyDescriptorImpl
 		setHasMandatoryAnnotation(false);
 	}
 
+	/**
+	 * The part of the state of this {@link PropertyDescriptor} that
+	 * {@link #setConfiguredDefault(Object, boolean)} changes.
+	 *
+	 * @see #setDefaultState(DefaultState)
+	 */
+	DefaultState getDefaultState() {
+		return new DefaultState(_defaultSpec, computedDefaultValue, _isDefaultShared, _localExplicitDefault,
+			_explicitDefault, _hasMandatoryAnnotation, _hasLocalMandatoryAnnotation);
+	}
+
+	/**
+	 * Restores a state retrieved by {@link #getDefaultState()}.
+	 */
+	void setDefaultState(DefaultState state) {
+		_defaultSpec = state.defaultSpec();
+		computedDefaultValue = state.computedDefaultValue();
+		_isDefaultShared = state.isDefaultShared();
+		_localExplicitDefault = state.localExplicitDefault();
+		_explicitDefault = state.explicitDefault();
+		_hasMandatoryAnnotation = state.hasMandatoryAnnotation();
+		_hasLocalMandatoryAnnotation = state.hasLocalMandatoryAnnotation();
+	}
+
+	/**
+	 * Takes over the default of the given super property, as if this {@link PropertyDescriptor}
+	 * declared no default and no mandatory annotation of its own.
+	 */
+	void inheritDefaultState(PropertyDescriptorImpl superProperty) {
+		setDefaultState(new DefaultState(superProperty._defaultSpec, UNRESOLVED_DEFAULT,
+			superProperty._isDefaultShared, false, superProperty._explicitDefault,
+			superProperty._hasMandatoryAnnotation, false));
+	}
+
+	/**
+	 * Snapshot of the state that describes the default value of a {@link PropertyDescriptorImpl}.
+	 *
+	 * @see PropertyDescriptorImpl#getDefaultState()
+	 */
+	record DefaultState(DefaultSpec defaultSpec, Object computedDefaultValue, boolean isDefaultShared,
+			boolean localExplicitDefault, boolean explicitDefault, boolean hasMandatoryAnnotation,
+			boolean hasLocalMandatoryAnnotation) {
+		// Pure value.
+	}
+
 	@Override
 	public void checkMandatory(Log protocol, ConfigurationItem config) {
 		if (!isMandatory()) {

@@ -390,6 +390,7 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	protected void shutDown() {
 		ReloadableManager.getInstance().removeReloadable(this);
 		internalShutDown();
+		ConfigDescriptionResolver.resetConfiguredDefaults();
 		super.shutDown();
 	}
 

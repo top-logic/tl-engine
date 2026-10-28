@@ -22,14 +22,18 @@ import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyTemplate;
+import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -39,6 +43,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.select.EnterTextArguments;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
@@ -50,13 +55,21 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.SelectControlProvider;
+import com.top_logic.layout.view.form.SelectControlProvider.FreeEntryConfig;
+import com.top_logic.layout.view.form.TLFreeEntry;
+import com.top_logic.layout.view.form.TextInputControlProvider;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Tests a select field accepting {@link SelectControlProvider.Config#hasFreeEntry() free entry}:
- * a text the user enters chooses the option of that label or becomes a value of its own.
+ * Tests a select field accepting free entry, by the {@link TLFreeEntry} annotation of the edited
+ * attribute or by the {@link SelectControlProvider.Config#getFreeEntry() setting of the field}: a
+ * text the user enters chooses the option of that label or becomes a value of its own.
  */
 @SuppressWarnings("javadoc")
 public class TestSelectFreeEntry extends AbstractModelAccessTest {
@@ -67,14 +80,37 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 	/** The options of the field without attribute. */
 	private static final List<String> COLORS = List.of("red", "green", "blue");
 
+	/** Name of the {@link #PROJECT} text attribute annotated with {@link TLFreeEntry}. */
+	private static final String PLACE = "place";
+
+	/** Name of the {@link #PROJECT} whole number attribute annotated with {@link TLFreeEntry}. */
+	private static final String COUNT = "count";
+
+	/**
+	 * Name of the {@link #PROJECT} reference to a {@link #CATEGORY} annotated with
+	 * {@link TLFreeEntry} creating a category named by the entered text.
+	 */
+	private static final String TOPIC = "topic";
+
+	/** A select with the free entry the edited attribute says. */
+	private static final String SELECT = "<input-control/>";
+
 	/** A select accepting the entered text as its value. */
-	private static final String FREE_TEXT = "<input-control " + SelectControlProvider.Config.FREE_ENTRY + "='true'/>";
+	private static final String FREE_TEXT =
+		"<input-control><" + SelectControlProvider.Config.FREE_ENTRY + "/></input-control>";
+
+	/** A select accepting no free entry, whatever the edited attribute says. */
+	private static final String NO_FREE_ENTRY = "<input-control><" + SelectControlProvider.Config.FREE_ENTRY + " "
+		+ FreeEntryConfig.ENABLED + "='false'/></input-control>";
 
 	/** A select creating a new category named by the entered text. */
-	private static final String CREATE_CATEGORY = "<input-control " + SelectControlProvider.Config.FREE_ENTRY
-		+ "='true' " + SelectControlProvider.Config.CREATE + "='new(`" + qualified(CATEGORY)
-		+ "`, transient: true)..set(`" + qualified(CATEGORY) + "#" + NAME + "`, $"
-		+ SelectControlProvider.Config.TEXT_VARIABLE + ")'/>";
+	private static final String CREATE_CATEGORY = createCategory("$" + FreeEntryConfig.TEXT_VARIABLE);
+
+	private static String createCategory(String nameExpr) {
+		return "<input-control><" + SelectControlProvider.Config.FREE_ENTRY + " " + FreeEntryConfig.CREATE + "='new(`"
+			+ qualified(CATEGORY) + "`, transient: true)..set(`" + qualified(CATEGORY) + "#" + NAME + "`, "
+			+ nameExpr + ")'/></input-control>";
+	}
 
 	private FormControl _form;
 
@@ -268,7 +304,190 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 			messages.add(entry.getMessage());
 		}
 		assertTrue(messages.toString(), messages.stream().anyMatch(m -> m.contains(CATEGORY_REF)
-			&& m.contains(SelectControlProvider.Config.CREATE)));
+			&& m.contains(FreeEntryConfig.CREATE)));
+	}
+
+	/**
+	 * The text form of the free entry setting of a field is a nested element, read into the
+	 * setting.
+	 */
+	public void testFreeEntryConfigParses() throws Exception {
+		SelectControlProvider.Config config = readConfig(NO_FREE_ENTRY);
+		assertNotNull(config.getFreeEntry());
+		assertFalse(config.getFreeEntry().isEnabled());
+
+		FreeEntryConfig create = readConfig(CREATE_CATEGORY).getFreeEntry();
+		assertTrue(create.isEnabled());
+		assertNotNull(create.getCreate());
+
+		assertNull(readConfig(SELECT).getFreeEntry());
+	}
+
+	/** The annotation of a text attribute lets a field without a setting of its own take a text. */
+	public void testAnnotationOnText() throws Exception {
+		becomeUser(_root);
+		createField(PLACE);
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+		assertTrue(control.hasFreeEntry());
+
+		assertSuccess(enter(control, " Berlin "));
+		assertEquals("Berlin", single(control));
+	}
+
+	/** The function of the annotation makes the value of a reference from the entered text. */
+	public void testAnnotationCreatesObject() throws Exception {
+		becomeUser(_root);
+		createField(TOPIC);
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+		assertTrue(control.hasFreeEntry());
+
+		assertSuccess(enter(control, "Fresh"));
+		TLObject created = (TLObject) value(control);
+		assertTrue("The new object is kept in the form until it is stored.", created.tTransient());
+		assertEquals("Fresh", created.tValueByName(NAME));
+
+		assertSuccess(enter(control, "Category"));
+		assertSame("A text matching an option chooses the option.", _category, value(control));
+	}
+
+	/**
+	 * An attribute taking free entry without options of its own offers the values it holds.
+	 */
+	public void testAnnotatedTextOffersItsValues() throws Exception {
+		becomeUser(_root);
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			_project.tUpdateByName(PLACE, "Hamburg");
+			tx.commit();
+		}
+		createField(PLACE);
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+
+		assertNotNull("The value of the attribute is offered.", offeredId(control, "Hamburg"));
+	}
+
+	/** A control the field names wins over the select the annotation asks for. */
+	public void testFieldControlOverridesAnnotation() throws Exception {
+		becomeUser(_root);
+		createField(PLACE, readControlConfig(
+			"<input-control class='" + TextInputControlProvider.class.getName() + "'/>"));
+		assertTrue(_form.enterEditMode());
+		ReactControl control = _field.getInnerControl();
+		assertFalse("A text input edits the field, but is: " + control, control instanceof ReactDropdownSelectControl);
+	}
+
+	/**
+	 * A field switching free entry on without a script of its own makes the value by the function
+	 * of the annotation.
+	 */
+	public void testFieldKeepsAnnotationFunction() throws Exception {
+		becomeUser(_root);
+		createField(TOPIC, FREE_TEXT);
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+
+		assertSuccess(enter(control, "Fresh"));
+		TLObject created = (TLObject) value(control);
+		assertTrue(created.tTransient());
+		assertEquals("Fresh", created.tValueByName(NAME));
+	}
+
+	/** A field switches off the free entry the annotation of the edited attribute grants. */
+	public void testFieldSwitchesOffAnnotation() throws Exception {
+		becomeUser(_root);
+		createField(PLACE, NO_FREE_ENTRY);
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+		assertFalse(control.hasFreeEntry());
+
+		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_NO_FREE_ENTRY, enter(control, "Berlin"));
+	}
+
+	/** The script of a field makes the value instead of the function of the annotation. */
+	public void testFieldCreateOverridesAnnotation() throws Exception {
+		becomeUser(_root);
+		createField(TOPIC, createCategory("\"by field\""));
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+
+		assertSuccess(enter(control, "Fresh"));
+		assertEquals("by field", ((TLObject) value(control)).tValueByName(NAME));
+	}
+
+	/**
+	 * A whole number attribute reads the entered text as number, and refuses a text that is no
+	 * whole number.
+	 */
+	public void testNumberFromText() throws Exception {
+		becomeUser(_root);
+		createField(COUNT);
+		assertTrue(_form.enterEditMode());
+		ReactDropdownSelectControl control = input();
+		assertTrue(control.hasFreeEntry());
+
+		assertSuccess(enter(control, "42"));
+		assertEquals(Long.valueOf(42), single(control));
+
+		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_INVALID_NUMBER__VALUE, enter(control, "abc"));
+		assertEquals(Long.valueOf(42), single(control));
+	}
+
+	/**
+	 * A number read from the entered text that equals an option chooses that option, whatever the
+	 * label of the option looks like.
+	 */
+	public void testNumberMatchingOptionChoosesIt() throws Exception {
+		ReactContext context =
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		SelectControlProvider provider = (SelectControlProvider) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(readConfig(FREE_TEXT));
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, List.of(1000L, 2000L), false);
+		ReactDropdownSelectControl control = (ReactDropdownSelectControl) provider.createControl(context,
+			FieldSpec.of(Long.class, "Amount"), model);
+
+		assertSuccess(enter(control, "2000"));
+		assertEquals(Long.valueOf(2000), single(control));
+		control.executeCommand("loadOptions", Map.of());
+		assertEquals("The option is offered once.", 2,
+			((List<?>) control.scriptingScalarState().get(DropdownSelectState.OPTIONS__PROP)).size());
+	}
+
+	/**
+	 * The annotation fits an attribute whose values are read from a text, and any attribute when it
+	 * has a function making the value.
+	 */
+	public void testAnnotationChecksTarget() {
+		TLFreeEntry plain = part(PROJECT, PLACE).getAnnotation(TLFreeEntry.class);
+		assertNull(plain.checkTarget(part(PROJECT, PLACE)));
+		assertNull(plain.checkTarget(part(PROJECT, COUNT)));
+		assertNull(plain.checkTarget(part(PROJECT, KEYWORDS)));
+		assertNotNull(plain.checkTarget(part(PROJECT, CATEGORY_REF)));
+		assertNotNull(plain.checkTarget(part(PROJECT, APPROVED)));
+
+		TLFreeEntry create = part(PROJECT, TOPIC).getAnnotation(TLFreeEntry.class);
+		assertNull(create.checkTarget(part(PROJECT, CATEGORY_REF)));
+	}
+
+	/**
+	 * Loading a model rejects the annotation without function on a reference, and keeps it with a
+	 * function.
+	 */
+	public void testModelRejectsAnnotation() {
+		BufferingProtocol log = new BufferingProtocol();
+		TLModel model = new TLModelImpl();
+		try {
+			DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
+				ClassRelativeBinaryContent.withSuffix(TestSelectFreeEntry.class, "rejected.model.xml"));
+		} catch (RuntimeException ex) {
+			// The protocol aborts on the error reported.
+		}
+		assertTrue(log.getErrors().toString(), log.getErrors().stream()
+			.anyMatch(m -> m.contains("testFreeEntryRejected:X#withoutCreate is not allowed")
+				&& m.contains(TLFreeEntry.CREATE)));
+		assertFalse(log.getErrors().toString(),
+			log.getErrors().stream().anyMatch(m -> m.contains("withCreate is not allowed")));
 	}
 
 	private static HandlerResult enter(ReactControl control, String text) {
@@ -327,14 +546,24 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 		return (ReactDropdownSelectControl) provider.createControl(context, FieldSpec.of(String.class, "Color"), model);
 	}
 
+	/** A field of the given attribute without a control of its own. */
+	private void createField(String attribute) throws Exception {
+		createField(attribute, (PolymorphicConfiguration<? extends ReactFieldControlProvider>) null);
+	}
+
 	private void createField(String attribute, String configXml) throws Exception {
+		createField(attribute, readConfig(configXml));
+	}
+
+	private void createField(String attribute, PolymorphicConfiguration<? extends ReactFieldControlProvider> control)
+			throws Exception {
 		_form = new FormControl(new DefaultReactContext("", "test", new SSEUpdateQueue(),
 			new ReactWindowRegistry("test")), _project, "no model", NoTokenHandling.INSTANCE);
 		ViewChannel input = new DefaultViewChannel("input");
 		input.set(_project);
 		_form.setInputChannel(input);
 		_field = new AttributeFieldControl(_form.getReactContext(), _form, _form, attribute, null, false, null, null,
-			readConfig(configXml));
+			control);
 		_field.createChromeControl();
 		_form.attach();
 	}
@@ -343,6 +572,20 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 		ReactControl result = _field.getInnerControl();
 		assertTrue("A select edits the field, but is: " + result, result instanceof ReactDropdownSelectControl);
 		return (ReactDropdownSelectControl) result;
+	}
+
+	/** The configuration of the control the given XML declares by its class. */
+	@SuppressWarnings("unchecked")
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> readControlConfig(String xml)
+			throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestSelectFreeEntry.class);
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap("input-control",
+			TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class));
+		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
+		reader.setSource(CharacterContents.newContent(xml));
+		Object result = reader.read();
+		context.checkErrors();
+		return (PolymorphicConfiguration<? extends ReactFieldControlProvider>) result;
 	}
 
 	/** The provider configuration the given XML declares. */

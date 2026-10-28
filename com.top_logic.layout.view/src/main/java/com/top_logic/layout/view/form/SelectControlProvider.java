@@ -39,10 +39,10 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
@@ -82,9 +82,10 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * A list that opens on demand can accept {@link Config#hasFreeEntry() free entry}: the user picks
- * an option or types a text that becomes the value, or from which the {@link Config#getCreate()
- * create} script makes the value - a new keyword named by the text, say.
+ * A list that opens on demand accepts free entry where the edited attribute is annotated with
+ * {@link TLFreeEntry} or the field {@link Config#getFreeEntry() configures it}: the user picks an
+ * option or types a text that becomes the value, or from which a script makes the value - a new
+ * keyword named by the text, say.
  * </p>
  *
  * @implNote What the field asks for is read from {@link FieldSpec#getSelectDisplay()},
@@ -112,17 +113,8 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		/** Configuration name for {@link #hasFilter()}. */
 		String FILTER = "filter";
 
-		/** Configuration name for {@link #hasFreeEntry()}. */
+		/** Configuration name for {@link #getFreeEntry()}. */
 		String FREE_ENTRY = "free-entry";
-
-		/** Configuration name for {@link #getCreate()}. */
-		String CREATE = "create";
-
-		/** Name of the variable holding the entered text in the {@link #getCreate()} script. */
-		String TEXT_VARIABLE = "text";
-
-		/** Name of the variable holding the edited object in the {@link #getCreate()} script. */
-		String SELF_VARIABLE = "self";
 
 		@Override
 		@ClassDefault(SelectControlProvider.class)
@@ -220,23 +212,16 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		boolean hasFilter();
 
 		/**
-		 * Whether the user may enter a text that is none of the options, instead of choosing one.
+		 * Whether and how this field lets the user enter a text that is none of the options,
+		 * deviating from what the {@link TLFreeEntry} annotation of the edited attribute says.
 		 *
 		 * <p>
-		 * For a value that is mostly one of a known set but now and then a new one: the keywords of
-		 * a document, the tags of a task, the place of a meeting. The user types into the list
-		 * that opens on demand; a text matching the label of an option, ignoring case, chooses that
-		 * option, any other text becomes a value of its own. A field holding several values adds it
-		 * to them, a field holding one value takes it as its value. A text entered twice yields one
-		 * value, not two.
-		 * </p>
-		 *
-		 * <p>
-		 * The value a text becomes is the result of the {@link #getCreate() create} script. Without
-		 * a script, only an attribute holding texts accepts free entry, and the text itself becomes
-		 * the value; for any other attribute, free entry is switched off and an error is logged. The
-		 * values of an attribute stored as one comma separated text cannot contain a comma: such a
-		 * text is refused.
+		 * Without this setting, the field accepts free entry where the edited attribute is
+		 * annotated with {@link TLFreeEntry}, making the value as the annotation says. The setting
+		 * overrides what it states: it switches free entry on - also for a field that edits no
+		 * attribute, or an attribute without the annotation - or {@link FreeEntryConfig#isEnabled()
+		 * off}, and makes the value by its own {@link FreeEntryConfig#getCreate() script}; without
+		 * a script of its own, the function of the annotation makes the value.
 		 * </p>
 		 *
 		 * <p>
@@ -245,17 +230,52 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		 * </p>
 		 */
 		@Name(FREE_ENTRY)
-		boolean hasFreeEntry();
+		FreeEntryConfig getFreeEntry();
+	}
+
+	/**
+	 * Free entry of a single field, see {@link TLFreeEntry} for what free entry does.
+	 *
+	 * <p>
+	 * The {@link #getCreate() script} making the value follows the conventions of a view: it sees
+	 * the values of the {@link #getInputs() inputs} and the entered text as variables.
+	 * </p>
+	 */
+	public interface FreeEntryConfig extends NamedInputs {
+
+		/** Configuration name for {@link #isEnabled()}. */
+		String ENABLED = "enabled";
+
+		/** Configuration name for {@link #getCreate()}. */
+		String CREATE = "create";
+
+		/** Name of the variable holding the entered text in the {@link #getCreate()} script. */
+		String TEXT_VARIABLE = "text";
+
+		/** Name of the variable holding the edited object in the {@link #getCreate()} script. */
+		String SELF_VARIABLE = "self";
 
 		/**
-		 * The value a text the user entered becomes, where the field accepts {@link #hasFreeEntry()
-		 * free entry}.
+		 * Whether the field accepts free entry.
 		 *
 		 * <p>
-		 * A TL-Script expression using the variables {@code $text}, the entered text without
-		 * leading and trailing white space, and {@code $self}, the edited object (nothing where the
-		 * field edits no attribute of an object), without declaring them. Typically it creates a
-		 * new object named by the text, which becomes the value of a reference:
+		 * Switched off, the field offers its options only, although the edited attribute is
+		 * annotated with {@link TLFreeEntry}.
+		 * </p>
+		 */
+		@Name(ENABLED)
+		@BooleanDefault(true)
+		boolean isEnabled();
+
+		/**
+		 * The value a text the user entered becomes.
+		 *
+		 * <p>
+		 * A TL-Script expression using the values of the {@link #getInputs() inputs} and the
+		 * variables {@code $text}, the entered text without leading and trailing white space, and
+		 * {@code $self}, the edited object (nothing where the field edits no attribute of an
+		 * object), without declaring them. Typically it creates a new object named by the text,
+		 * which becomes the value of a reference:
 		 * </p>
 		 *
 		 * <pre>
@@ -271,8 +291,10 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		 * </p>
 		 *
 		 * <p>
-		 * Without a script, the text itself becomes the value, which suits an attribute holding
-		 * texts only.
+		 * Without a script, the {@link TLFreeEntry#getCreate() function of the annotation} of the
+		 * edited attribute makes the value; without either, the text is read as a value of the
+		 * field's type, which works for strings, numbers and points in time only. For a field of
+		 * any other type, free entry is switched off and an error is logged.
 		 * </p>
 		 */
 		@Name(CREATE)
@@ -292,10 +314,16 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 	private final boolean _filter;
 
-	private final boolean _freeEntry;
+	/**
+	 * Whether the field accepts free entry; {@code null} where the {@link TLFreeEntry} annotation
+	 * of the edited attribute decides.
+	 *
+	 * @see Config#getFreeEntry()
+	 */
+	private final Boolean _freeEntry;
 
 	/**
-	 * The compiled {@link Config#getCreate()} script, {@code null} for none.
+	 * The compiled {@link FreeEntryConfig#getCreate()} script, {@code null} for none.
 	 */
 	private final QueryExecutor _create;
 
@@ -314,7 +342,7 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_orientation = null;
 		_order = null;
 		_filter = true;
-		_freeEntry = false;
+		_freeEntry = null;
 		_create = null;
 		_createInputs = List.of();
 	}
@@ -329,10 +357,17 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_orientation = config.getOrientation();
 		_order = config.getOrder();
 		_filter = config.hasFilter();
-		_freeEntry = config.hasFreeEntry();
-		_create = InputScript.compile(config, Config.CREATE);
-		_createInputs = _create == null ? List.of()
-			: InputScript.inputs(config, config.descriptor().getProperty(Config.CREATE));
+		FreeEntryConfig freeEntry = config.getFreeEntry();
+		if (freeEntry == null) {
+			_freeEntry = null;
+			_create = null;
+			_createInputs = List.of();
+		} else {
+			_freeEntry = Boolean.valueOf(freeEntry.isEnabled());
+			_create = freeEntry.isEnabled() ? InputScript.compile(freeEntry, FreeEntryConfig.CREATE) : null;
+			_createInputs = _create == null ? List.of()
+				: InputScript.inputs(freeEntry, freeEntry.descriptor().getProperty(FreeEntryConfig.CREATE));
+		}
 	}
 
 	/**
@@ -372,15 +407,6 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	}
 
 	/**
-	 * Whether the user may enter a text that is none of the options.
-	 *
-	 * @see Config#hasFreeEntry()
-	 */
-	public boolean hasFreeEntry() {
-		return _freeEntry;
-	}
-
-	/**
 	 * A selection is made on one control, however many options it accepts.
 	 *
 	 * <p>
@@ -413,7 +439,7 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		if (!_filter) {
 			control.setFilter(false);
 		}
-		if (_freeEntry && display == SelectDisplay.DROPDOWN) {
+		if (display == SelectDisplay.DROPDOWN) {
 			Function<String, Object> textToValue = textToValue(context, field, model);
 			if (textToValue != null) {
 				control.setFreeEntry(textToValue);
@@ -423,19 +449,35 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	}
 
 	/**
-	 * The function making the value of the given field from a text the user entered, see
-	 * {@link Config#hasFreeEntry()}, or {@code null} where the field cannot accept free entry.
+	 * The function making the value of the given field from a text the user entered, or
+	 * {@code null} where the field accepts no free entry.
+	 *
+	 * <p>
+	 * The {@link Config#getFreeEntry() setting of the field} overrides what it states, the
+	 * {@link TLFreeEntry} annotation of the edited attribute decides the rest: free entry is on
+	 * where the field switches it on, or where the field says nothing and the attribute is
+	 * annotated. The value is made by the script of the field, or else by the function of the
+	 * annotation, or else by reading the text as a value of the field's type.
+	 * </p>
 	 */
 	private Function<String, Object> textToValue(ReactContext context, FieldSpec field, FieldModel model) {
 		TLStructuredTypePart part = model instanceof AttributeFieldModel attribute ? attribute.getPart() : null;
+		TLFreeEntry annotation = part == null ? null : part.getAnnotation(TLFreeEntry.class);
+		boolean enabled = _freeEntry != null ? _freeEntry.booleanValue() : annotation != null;
+		if (!enabled) {
+			return null;
+		}
 		Function<String, Object> conversion;
 		if (_create != null) {
 			conversion = createScript(context, model);
-		} else if (holdsText(part, field)) {
-			conversion = text -> text;
+		} else if (annotation != null && annotation.getCreate() != null) {
+			conversion = createFunction(annotation.getCreate(), model);
 		} else {
-			Logger.error("The field '" + fieldName(part, field) + "' cannot accept free entry: its values are no texts,"
-				+ " and no '" + Config.CREATE + "' script makes a value from an entered text.",
+			conversion = TextConversion.conversion(part, field);
+		}
+		if (conversion == null) {
+			Logger.error("The field '" + fieldName(part, field) + "' cannot accept free entry: its values cannot be"
+				+ " read from a text, and no '" + FreeEntryConfig.CREATE + "' script makes a value from an entered text.",
 				SelectControlProvider.class);
 			return null;
 		}
@@ -457,13 +499,40 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		} else if (context instanceof ViewContext viewContext) {
 			inputs = ChannelInputs.resolve(viewContext, _createInputs);
 		} else {
-			throw new IllegalStateException("A select whose '" + Config.CREATE
+			throw new IllegalStateException("A select whose '" + FreeEntryConfig.CREATE
 				+ "' script reads the values of channels must be created in a view, but is created in: " + context);
 		}
-		return text -> {
-			TLObject self = model instanceof AttributeFieldModel attribute ? attribute.getObject() : null;
-			return _create.execute(ChannelInputs.arguments(inputs, text, self));
+		return text -> _create.execute(ChannelInputs.arguments(inputs, text, editedObject(model)));
+	}
+
+	/**
+	 * The {@link TLFreeEntry#getCreate() function of the annotation} as function of the entered
+	 * text, evaluated for the object the given model edits at the time of the entry.
+	 *
+	 * <p>
+	 * The function is compiled when a text is entered for the first time: most fields are edited
+	 * without one.
+	 * </p>
+	 */
+	private static Function<String, Object> createFunction(Expr create, FieldModel model) {
+		return new Function<>() {
+			private QueryExecutor _executor;
+
+			@Override
+			public Object apply(String text) {
+				if (_executor == null) {
+					_executor = QueryExecutor.compile(create);
+				}
+				return _executor.execute(text, editedObject(model));
+			}
 		};
+	}
+
+	/**
+	 * The object the given model edits an attribute of, {@code null} for none.
+	 */
+	private static TLObject editedObject(FieldModel model) {
+		return model instanceof AttributeFieldModel attribute ? attribute.getObject() : null;
 	}
 
 	/**
@@ -475,20 +544,6 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 			throw new TopLogicException(I18NConstants.ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT.fill(text));
 		}
 		return value;
-	}
-
-	/**
-	 * Whether the values of the field are texts, which an entered text can be taken as.
-	 *
-	 * @param part
-	 *        The edited attribute, deciding by its type; {@code null} where the field edits no
-	 *        attribute, and the value type of the field decides.
-	 */
-	private static boolean holdsText(TLStructuredTypePart part, FieldSpec field) {
-		if (part != null) {
-			return part.getType() instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.STRING;
-		}
-		return field.getValueType() == String.class;
 	}
 
 	private static String fieldName(TLStructuredTypePart part, FieldSpec field) {

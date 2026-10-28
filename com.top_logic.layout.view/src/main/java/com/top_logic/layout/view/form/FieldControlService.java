@@ -912,7 +912,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	/**
 	 * The Java type of the values of the given model type, which decides the control editing them.
 	 */
-	private static Class<?> valueType(TLType type) {
+	static Class<?> valueType(TLType type) {
 		if (type instanceof TLPrimitive primitive) {
 			StorageMapping<?> storage = primitive.getStorageMapping();
 			if (storage != null) {
@@ -1249,16 +1249,17 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * <ol>
 	 * <li>the control the field names,</li>
 	 * <li>the {@link TLInputControl} annotation of the attribute,</li>
+	 * <li>the {@link TLFreeEntry} annotation of the attribute, which makes it a select,</li>
 	 * <li>the control configured for the attribute's type,</li>
 	 * <li>the structure of the attribute: an enumeration, a reference, an enum datatype, or a
 	 * TL-Script options annotation.</li>
 	 * </ol>
 	 * <p>
-	 * A {@link SelectControlProvider} in the first three steps makes the attribute a select, any
+	 * A {@link SelectControlProvider} in the first four steps makes the attribute a select, any
 	 * other control a plain field, whatever the structure says. The options of a select are the
 	 * ones of the provider's option source, of the attribute's options annotation, or of its
-	 * structure; an attribute that offers none of these - a text selected by a control named for
-	 * the field - offers no options.
+	 * structure; an attribute that offers none of these offers the values it holds where it takes
+	 * free entry, and no options otherwise - a text selected by a control named for the field.
 	 * </p>
 	 *
 	 * <p>
@@ -1305,7 +1306,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The control the field names, {@code null} for none.
 	 */
 	private OptionSource selectOptionSource(TLStructuredTypePart part, ReactFieldControlProvider fieldControl) {
-		// 1. Control of the field, 2. control annotation, or 3. configured control by type.
+		// 1. Control of the field, 2. control annotation, 3. free entry, or 4. configured control by
+		// type.
 		ReactFieldControlProvider configured = configuredProvider(part, fieldControl);
 		if (configured instanceof SelectControlProvider select) {
 			return optionSourceFor(part, select);
@@ -1315,7 +1317,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return null;
 		}
 
-		// 4. Structural select (enumeration, reference, enum datatype, options generator).
+		// 5. Structural select (enumeration, reference, enum datatype, options generator).
 		if (AttributeOptions.isStructuralSelect(part)) {
 			return (self, overlays, dependencies) -> AttributeOptions.optionsFor(self, part, overlays, dependencies);
 		}
@@ -1341,15 +1343,40 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				AttributeOptions.toList(configured.getOptions(SimpleEditContext.createContext(self, part))));
 		}
 		if (!AttributeOptions.isStructuralSelect(part)) {
-			return NO_OPTIONS;
+			return hasFreeEntry(part) ? currentValues(part) : NO_OPTIONS;
 		}
 		return (self, overlays, dependencies) -> AttributeOptions.optionsFor(self, part, overlays, dependencies);
 	}
 
 	/**
+	 * Whether the given attribute is annotated with {@link TLFreeEntry}.
+	 */
+	private static boolean hasFreeEntry(TLStructuredTypePart part) {
+		return part.getAnnotation(TLFreeEntry.class) != null;
+	}
+
+	/**
+	 * The {@link OptionSource} offering the values the edited object holds in the given attribute,
+	 * for an attribute taking free entry that has no options of its own.
+	 */
+	private static OptionSource currentValues(TLStructuredTypePart part) {
+		return (self, overlays, dependencies) -> {
+			Object value = self == null ? null : self.tValue(part);
+			if (value == null) {
+				return Collections.emptyList();
+			}
+			if (value instanceof Collection<?> values) {
+				return new ArrayList<>(values);
+			}
+			return Collections.singletonList(value);
+		};
+	}
+
+	/**
 	 * The control configured for the given attribute: the one the field names, or, where it names
 	 * none, the one the {@link TLInputControl} annotation of the attribute names, or, where it has
-	 * none, the one configured for its type. {@code null} where none of them names a control.
+	 * none, a select for an attribute annotated with {@link TLFreeEntry}, or, for any other, the one
+	 * configured for its type. {@code null} where none of them names a control.
 	 *
 	 * @param fieldControl
 	 *        The control the field names, {@code null} for none.
@@ -1362,6 +1389,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
 		if (annotation != null) {
 			return _context.getInstance(annotation.getImpl());
+		}
+		if (hasFreeEntry(part)) {
+			return _selectProvider;
 		}
 		return byType(part.getType());
 	}

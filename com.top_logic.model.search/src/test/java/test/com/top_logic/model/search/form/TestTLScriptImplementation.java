@@ -126,6 +126,20 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * Interface whose method properties are named by {@link Name} annotations.
+	 */
+	public interface Renamed {
+		@Name("label")
+		String getName(Object x);
+
+		@Name("unary")
+		Object call(Object x);
+
+		@Name("binary")
+		Object call(Object x, Object y);
+	}
+
+	/**
 	 * Interface with an overloaded abstract method.
 	 */
 	public interface Overloaded {
@@ -215,6 +229,8 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 
 		String OVERLOADED = "overloaded";
 
+		String RENAMED = "renamed";
+
 		String COMPARATOR = "comparator";
 
 		String SETTINGS = "settings";
@@ -267,6 +283,9 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 
 		@Name(OVERLOADED)
 		PolymorphicConfiguration<Overloaded> getOverloaded();
+
+		@Name(RENAMED)
+		PolymorphicConfiguration<Renamed> getRenamed();
 
 		@Name(COMPARATOR)
 		PolymorphicConfiguration<Comparator<Object>> getComparator();
@@ -476,6 +495,26 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 		Multi multi = instance(a.getMulti());
 		assertEquals("a", multi.name(null));
 		assertTrue(multi.isEmpty(null));
+	}
+
+	public void testAnnotatedMethodNames() throws Exception {
+		A a = read("<a><renamed label=\"x -> 'n' + $x\" unary='x -> $x + 1' binary='x -> y -> $x * $y'/></a>");
+		Renamed renamed = instance(a.getRenamed());
+		assertEquals("n1", renamed.getName(1));
+		assertEquals(3, ((Number) renamed.call(2)).intValue());
+		assertEquals(6, ((Number) renamed.call(2, 3)).intValue());
+
+		A element = read("<a><renamed>"
+			+ "<label>x -> 'n' + $x</label>"
+			+ "<unary>x -> $x + 1</unary>"
+			+ "<binary>x -> y -> $x * $y</binary>"
+			+ "</renamed></a>");
+		assertEquals(a, element);
+
+		String xml = toXML(a);
+		assertTrue(xml, xml.contains("<renamed "));
+		assertTrue(xml, xml.contains("binary="));
+		assertEquals(a, read(xml));
 	}
 
 	public void testDefaultMethodOverride() throws ConfigurationException {

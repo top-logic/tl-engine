@@ -11,6 +11,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 
@@ -31,7 +33,10 @@ import com.top_logic.basic.reflect.JavaTypeUtil;
  * The {@link #getPropertyName() property name} is the method name in hyphenated form, see
  * {@link ConfigurationDescriptorBuilder#getDefaultConfigurationName(String)}:
  * <code>supportsModel</code> becomes <code>supports-model</code>, <code>getModel</code> becomes
- * <code>get-model</code>.
+ * <code>get-model</code>. A {@link Name} annotation of the method sets another property name, like
+ * for a property of a configuration interface. If several declarations of the method in the
+ * interface hierarchy are annotated, the declaration of the most specific interface (the first
+ * one in the order of {@link #getMethodProperties(Class, Collection)}) determines the name.
  * </p>
  *
  * <p>
@@ -63,7 +68,8 @@ import com.top_logic.basic.reflect.JavaTypeUtil;
  * </p>
  *
  * <ul>
- * <li>one of its abstract methods is overloaded, i.e. another method has the same name, or one of
+ * <li>one of its abstract methods is overloaded with the same property name, i.e. another method
+ * has the same name and no {@link Name} annotation gives them different property names, or one of
  * its abstract methods is generic (declares type parameters), or</li>
  * <li>methods with different names have the same property name (e.g. <code>getUrl</code> and
  * <code>getURL</code>), or</li>
@@ -234,12 +240,17 @@ public final class MethodProperty {
 		}
 
 		Map<List<Object>, Method> methods = new LinkedHashMap<>();
+		Map<List<Object>, String> annotatedNames = new HashMap<>();
 		for (Class<?> declaringInterface : hierarchy(type)) {
 			for (Method method : declaringInterface.getDeclaredMethods()) {
 				if (!isInstanceMethod(method) || JavaTypeUtil.isObjectMethod(method)) {
 					continue;
 				}
 				List<Object> signature = JavaTypeUtil.getResolvedSignature(type, method);
+				Name name = method.getAnnotation(Name.class);
+				if (name != null) {
+					annotatedNames.putIfAbsent(signature, name.value());
+				}
 				Method before = methods.get(signature);
 				if (before == null || JavaTypeUtil.isMoreSpecific(method, before)) {
 					methods.put(signature, method);
@@ -253,7 +264,10 @@ public final class MethodProperty {
 			Method abstractMethod = abstractMethods.get(signature);
 			boolean isAbstract = abstractMethod != null;
 			Method method = isAbstract ? abstractMethod : entry.getValue();
-			String propertyName = ConfigurationDescriptorBuilder.getDefaultConfigurationName(method.getName());
+			String propertyName = annotatedNames.get(signature);
+			if (propertyName == null) {
+				propertyName = ConfigurationDescriptorBuilder.getDefaultConfigurationName(method.getName());
+			}
 			byName.computeIfAbsent(propertyName, x -> new ArrayList<>())
 				.add(new MethodProperty(propertyName, method, isAbstract, signature));
 		}

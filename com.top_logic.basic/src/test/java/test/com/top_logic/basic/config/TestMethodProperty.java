@@ -26,6 +26,7 @@ import com.top_logic.basic.config.ConfigurationDescriptorBuilder;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.I18NConstants;
 import com.top_logic.basic.config.MethodProperty;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.util.ResKey;
 
@@ -99,6 +100,30 @@ public class TestMethodProperty extends TestCase {
 		default Object other(Object x, Object y) {
 			return y;
 		}
+	}
+
+	public interface Renamed {
+		@Name("label")
+		Object getName();
+
+		@Name("unary")
+		Object call(Object x);
+
+		@Name("binary")
+		Object call(Object x, Object y);
+	}
+
+	public interface RenamedRedeclaration extends Renamed {
+		@Override
+		@Name("title")
+		String getName();
+	}
+
+	public interface RenamedClash {
+		Object getName();
+
+		@Name("get-name")
+		Object name();
 	}
 
 	public interface GenericAbstract {
@@ -319,6 +344,27 @@ public class TestMethodProperty extends TestCase {
 	public void testOverloadedDefaults() throws ConfigurationException {
 		assertEquals("Overloaded default methods keep their Java implementation.", List.of("call"),
 			names(MethodProperty.getMethodProperties(OverloadedDefaults.class, RESERVED)));
+	}
+
+	public void testAnnotatedNames() throws ConfigurationException {
+		Map<String, MethodProperty> properties = byName(MethodProperty.getMethodProperties(Renamed.class, RESERVED));
+		assertEquals("Overloaded methods with different annotated names are implementable.",
+			Set.of("label", "unary", "binary"), properties.keySet());
+		assertEquals("getName", properties.get("label").getMethod().getName());
+		assertEquals(1, properties.get("unary").getMethod().getParameterCount());
+		assertEquals(2, properties.get("binary").getMethod().getParameterCount());
+	}
+
+	public void testAnnotatedNameOfRedeclaration() throws ConfigurationException {
+		List<MethodProperty> properties = MethodProperty.getMethodProperties(RenamedRedeclaration.class, RESERVED);
+		Map<String, MethodProperty> byName = byName(properties);
+		assertEquals("The name of the most specific declaration applies.", Set.of("title", "unary", "binary"),
+			byName.keySet());
+		assertEquals(String.class, byName.get("title").getMethod().getReturnType());
+	}
+
+	public void testAnnotatedNameClash() {
+		assertError(RenamedClash.class, I18NConstants.ERROR_METHOD_PROPERTY_CLASH__INTERFACE_PROPERTY_METHODS.getKey());
 	}
 
 	public void testGenericAbstract() {

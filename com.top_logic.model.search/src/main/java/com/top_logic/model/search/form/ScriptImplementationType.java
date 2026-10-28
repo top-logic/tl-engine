@@ -36,7 +36,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * <p>
  * A TL-Script implementation of an interface <code>F</code> is configured with one property per
- * method of <code>F</code>, named after the method in hyphenated form:
+ * method of <code>F</code>, named after the method in hyphenated form, or by a
+ * {@link com.top_logic.basic.config.annotation.Name} annotation of the method. Each method is given
+ * as element or as attribute, like any other configuration property:
  * </p>
  *
  * <pre>
@@ -44,6 +46,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *     &lt;get-model&gt;...&lt;/get-model&gt;
  *     &lt;supports-model&gt;...&lt;/supports-model&gt;
  * &lt;/builder&gt;
+ *
+ * &lt;builder get-model="..." supports-model="..."/&gt;
  * </pre>
  *
  * <p>

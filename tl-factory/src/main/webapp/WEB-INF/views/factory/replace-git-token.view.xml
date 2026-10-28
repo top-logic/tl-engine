@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog replacing the access token of a git connection of a tenant: the form edits the transient
+	input in "model", the connection and the new token, entered in a masked field. Replacing stores
+	the new token in the secret store of the installation and removes the previous one
+	(factoryReplaceGitToken); the token is never shown again.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window width="460px">
+		<title>
+			<en>Replace access token</en>
+			<de>Token ersetzen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="connection"/>
+			<field attribute="token">
+				<label>
+					<en>New access token</en>
+					<de>Neues Zugangstoken</de>
+				</label>
+			</field>
+			<commands>
+				<generic-command key="ENTER"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Replace</en>
+						<de>Ersetzen</de>
+					</label>
+					<store-form-state/>
+					<execute-script function="factoryReplaceGitToken($model.get(`tl.factory.input:NewGitToken#connection`), $model.get(`tl.factory.input:GitToken#token`))"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

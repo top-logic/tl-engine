@@ -390,6 +390,17 @@
 							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler"
 						/>
 					</class>
+					<!--
+						The initial password of the account root of the application of a workspace logs
+						into that application with all rights: only who works on the project reads it, not
+						a reader.
+					-->
+					<part name="tl.factory:Workspace#initialPassword">
+						<grant
+							operation="Read"
+							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler"
+						/>
+					</part>
 				</security-config>
 			</instance>
 		</config>

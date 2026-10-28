@@ -183,6 +183,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_UNKNOWN_REPOSITORY__REFERENCE;
 
 	/**
+	 * @en The access token of the git connection may not create repositories in "{0}". Enter an
+	 *     existing repository, or choose another git connection.
+	 */
+	public static ResKey1 ERROR_NO_NEW_REPOSITORY__OWNER;
+
+	/**
+	 * @en It is unknown whether the access token of the git connection may create repositories in
+	 *     "{0}": {1} Enter an existing repository, or choose another git connection.
+	 */
+	public static ResKey2 ERROR_NEW_REPOSITORY_UNKNOWN__OWNER_PROBLEM;
+
+	/**
 	 * @en The workspace has no access to the git hosting service: the workspace proxy is switched
 	 *     off or has no git route.
 	 */

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The selected project of the control application with its workspace: the project's settings, the
-	link to its repository on the git hosting service, its CI job with the last CI build, the address
+	The selected project of the control application with its workspace: the project's settings, its
+	git connection, the link to its repository on the git hosting service with a warning when the
+	default branch of the repository is not protected, its CI job with the last CI build, the address
 	of its running application, a warning when the workspace runs an outdated image, and the state and
 	the output of the last operation on the workspace.
 	
-	The embedding view (factory/projects.view.xml) binds all six channels; it computes the workspace
+	The embedding view (factory/projects.view.xml) binds the six input channels; it computes the workspace
 	and the values derived from it once for this content and for its commands, and shows this content
 	in its project panel.
 -->
@@ -18,6 +19,33 @@
 		<channel name="previewLink"/>
 		<channel name="repositoryLink"/>
 		<channel name="ciBuild"/>
+		<!-- The git connection of the project with its kind, empty for a project without one. -->
+		<derived-channel name="gitConnection"
+			inputs="project"
+			observed-types="tl.factory:Project, tl.factory:GitConnection"
+		>
+			<expr><![CDATA[{
+	connection = $project.get(`tl.factory:Project#gitConnection`);
+	if($connection == null, null, {
+		kind = if(factoryGitBuiltIn($connection), #('built-in'@en, 'eingebaut'@de), #('own connection of the tenant'@en, 'eigene Verbindung des Mandanten'@de));
+		{{{<p>{#('Git connection'@en, 'Git-Verbindung'@de)}: {$connection.get(`tl.factory:GitConnection#name`)} ({$kind})</p>}}};
+	});
+}]]></expr>
+		</derived-channel>
+		<!--
+			Whether the creation of the workspace tried to protect the default branch of the repository
+			and skipped it, because the access token of the git connection may not administer the
+			repository; false while the attempt is still to come (branchProtected is empty).
+		-->
+		<derived-channel name="branchUnprotected"
+			inputs="project"
+			observed-types="tl.factory:Project"
+		>
+			<expr><![CDATA[{
+	isProtected = $project.get(`tl.factory:Project#branchProtected`);
+	$isProtected != null && !$isProtected;
+}]]></expr>
+		</derived-channel>
 	</channels>
 	<inset>
 		<form
@@ -29,7 +57,22 @@
 			<field attribute="artifactId"/>
 			<field attribute="engineVersion"/>
 		</form>
+		<html input="gitConnection"/>
 		<html input="repositoryLink"/>
+		<alert
+			inputs="branchUnprotected"
+			severity="warning"
+			visible-if="$branchUnprotected == true"
+		>
+			<title>
+				<en>Branch not protected</en>
+				<de>Branch nicht geschützt</de>
+			</title>
+			<message>
+				<en>The access token of the git connection may not administer the repository, so its default branch is not protected: force pushes are possible, and the protected files (Jenkinsfile, deploy/**) can be changed without review. Protect the branch on the git hosting service, or use a git connection whose token may administer the repository.</en>
+				<de>Das Token der Git-Verbindung darf das Repository nicht verwalten, daher ist sein Default-Branch nicht geschützt: Force-Pushes sind möglich, und die geschützten Dateien (Jenkinsfile, deploy/**) können ohne Review geändert werden. Den Branch im Git-Hosting-Dienst schützen oder eine Git-Verbindung verwenden, deren Token das Repository verwalten darf.</de>
+			</message>
+		</alert>
 		<html input="ciBuild"/>
 		<html input="previewLink"/>
 		<alert

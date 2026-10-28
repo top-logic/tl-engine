@@ -293,10 +293,11 @@
 					<!--
 						Whether the default branch of the repository is protected against force pushes and
 						changes of the protected files; false if the access token of the git connection may
-						not administer the repository. Empty before the first workspace has the sources.
+						not administer the repository. Empty (a tri-state value) until the creation of the
+						first workspace has tried to protect the branch.
 					-->
 					<property name="branchProtected"
-						type="tl.core:Boolean"
+						type="tl.core:Tristate"
 					>
 						<annotations>
 							<create-visibility value="hidden"/>
@@ -484,10 +485,11 @@
 	</module>
 
 	<!--
-		The input of the dialogs managing the tenants and their members. Their objects are created
-		transiently with new(..., transient: true) and never stored: the functions of
-		com.top_logic.factory.tenant.TenantMembers create the accounts and memberships from them. No
-		table is declared, and the module is marked internal in the access configuration.
+		The input of the dialogs managing the tenants, their members and their git connections. Their
+		objects are created transiently with new(..., transient: true) and never stored: the
+		functions of com.top_logic.factory.tenant.TenantMembers create the accounts and memberships
+		from them, those of com.top_logic.factory.git.GitConnections the git connections. No table is
+		declared, and the module is marked internal in the access configuration.
 	-->
 	<module name="tl.factory.input">
 		<types>
@@ -560,6 +562,115 @@
 						mandatory="true"
 						type="tl.core:String"
 					/>
+				</attributes>
+			</class>
+
+			<!-- The server and owner of a git connection of a tenant to create or change. -->
+			<class name="GitConnectionData"
+				abstract="true"
+			>
+				<generalizations>
+					<generalization type="tl.model:TLObject"/>
+				</generalizations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The type of the git hosting service, one of the registered provider types. -->
+					<property name="providerType"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<default-value>
+								<default-by-expression value="ctx -> factoryGitProviderTypes().firstElement()"/>
+							</default-value>
+							<options>
+								<options-by-expression function="self -> factoryGitProviderTypes()"/>
+							</options>
+						</annotations>
+					</property>
+					<property name="url"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="owner"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				An access token of a git connection, entered in a masked input and handed to the
+				secret store only.
+			-->
+			<class name="GitToken"
+				abstract="true"
+			>
+				<generalizations>
+					<generalization type="tl.model:TLObject"/>
+				</generalizations>
+				<attributes>
+					<property name="token"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+							</input-control>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+
+			<!-- A new git connection of a tenant: its server, owner and access token. -->
+			<class name="NewGitConnection">
+				<generalizations>
+					<generalization type="GitConnectionData"/>
+					<generalization type="GitToken"/>
+				</generalizations>
+				<annotations>
+					<id-column value="name"/>
+				</annotations>
+			</class>
+
+			<!-- The changed server and owner of a git connection of a tenant. -->
+			<class name="ChangedGitConnection">
+				<generalizations>
+					<generalization type="GitConnectionData"/>
+				</generalizations>
+				<annotations>
+					<id-column value="name"/>
+				</annotations>
+				<attributes>
+					<reference name="connection"
+						mandatory="true"
+						type="tl.factory:GitConnection"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!-- The new access token of a git connection of a tenant. -->
+			<class name="NewGitToken">
+				<generalizations>
+					<generalization type="GitToken"/>
+				</generalizations>
+				<attributes>
+					<reference name="connection"
+						mandatory="true"
+						type="tl.factory:GitConnection"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
 				</attributes>
 			</class>
 

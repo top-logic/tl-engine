@@ -145,6 +145,12 @@ public class GiteaHostingProvider implements GitHostingProvider {
 	private static final String OP_CREATE_ORGANIZATION = "orgCreate";
 
 	/**
+	 * Name of the request creating a repository in the namespace of the user of the token in error
+	 * messages, the operation of the Gitea API.
+	 */
+	private static final String OP_CREATE_USER_REPOSITORY = "createCurrentUserRepo";
+
+	/**
 	 * Name of the request reading the user of the token in error messages, the operation of the
 	 * Gitea API.
 	 */
@@ -258,6 +264,16 @@ public class GiteaHostingProvider implements GitHostingProvider {
 	 * {@link I18NConstants#ERROR_PERMISSION_DENIED__REPOSITORY}), otherwise the problem is
 	 * {@link I18NConstants#ERROR_OWNER_NOT_FOUND__OWNER}. A token without the scope
 	 * {@code read:user} gets {@link I18NConstants#ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM}.
+	 *
+	 * <p>
+	 * The permissions of the user do not tell the scopes of the token, and Gitea does not show a
+	 * token its own scopes. Where creating is allowed by the permissions, the creation request is
+	 * therefore {@link #checkScopes(Request, String) sent without a name}: Gitea checks the scopes
+	 * of the token before the content, so it answers 403 naming the missing scope (e.g.
+	 * {@code write:user} for the namespace of the user), or 422 for the missing name, which creates
+	 * nothing. A missing scope is reported as
+	 * {@link I18NConstants#ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM} with Gitea's message.
+	 * </p>
 	 */
 	@Override
 	public GitCapabilities capabilities() {
@@ -273,15 +289,23 @@ public class GiteaHostingProvider implements GitHostingProvider {
 			return GitCapabilities.unknown(failure(ex, OP_GET_USER, owner).getErrorKey());
 		}
 		if (_owner.equalsIgnoreCase(login)) {
-			return GitCapabilities.ALL;
+			return withScopes(GitCapabilities.ALL,
+				checkScopes(() -> _users.createCurrentUserRepo(new CreateRepoOption()), OP_CREATE_USER_REPOSITORY));
 		}
 		try {
 			OrganizationPermissions permissions = call(() -> _organizations.orgGetUserPermissions(login, _owner));
-			return new GitCapabilities(isTrue(permissions.getCanCreateRepository()),
+			GitCapabilities granted = new GitCapabilities(isTrue(permissions.getCanCreateRepository()),
 				isTrue(permissions.getIsOwner()) || isTrue(permissions.getIsAdmin()), null);
+			if (!granted.createRepositories()) {
+				return granted;
+			}
+			return withScopes(granted,
+				checkScopes(() -> _organizations.createOrgRepo(_owner, new CreateRepoOption()), OP_CREATE_REPOSITORY));
 		} catch (ApiException ex) {
 			if (ex.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-				return _createOwner ? GitCapabilities.ALL
+				return _createOwner
+					? withScopes(GitCapabilities.ALL,
+						checkScopes(() -> _organizations.orgCreate(new CreateOrgOption()), OP_CREATE_ORGANIZATION))
 					: GitCapabilities.unknown(I18NConstants.ERROR_OWNER_NOT_FOUND__OWNER.fill(_owner));
 			}
 			if (ex.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
@@ -289,6 +313,41 @@ public class GiteaHostingProvider implements GitHostingProvider {
 					.fill(_baseUrl, String.valueOf(errorMessage(ex))));
 			}
 			return GitCapabilities.unknown(failure(ex, OP_GET_USER, owner).getErrorKey());
+		}
+	}
+
+	/**
+	 * The given capabilities, or unknown ones with the given problem of the scopes of the token.
+	 */
+	private static GitCapabilities withScopes(GitCapabilities capabilities, ResKey scopeProblem) {
+		return scopeProblem == null ? capabilities : GitCapabilities.unknown(scopeProblem);
+	}
+
+	/**
+	 * Sends a creation request without content to learn whether the scopes of the token allow it,
+	 * without creating anything: Gitea checks the scopes before the content of the request.
+	 *
+	 * @param request
+	 *        The creation request, whose content lacks the mandatory name.
+	 * @param operation
+	 *        The name of the request in an error message.
+	 * @return The problem, {@code null} if the scopes of the token allow the request (Gitea
+	 *         refuses the content only).
+	 */
+	private ResKey checkScopes(Request<?> request, String operation) {
+		try {
+			call(request);
+			// Not to be expected without a name; Gitea accepted the scopes all the same.
+			return null;
+		} catch (ApiException ex) {
+			if (ex.getCode() == HTTP_UNPROCESSABLE) {
+				return null;
+			}
+			if (ex.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+				return I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM
+					.fill(_baseUrl, String.valueOf(errorMessage(ex)));
+			}
+			return failure(ex, operation, new RepositoryName(_owner, "")).getErrorKey();
 		}
 	}
 

@@ -5,8 +5,10 @@
 	context of the tenant of the user in "tenant", and starts building its workspace in the background;
 	the new project is written to "selection". The project belongs to the tenant of the user; a user
 	of no tenant, an operator, chooses the tenant.
-	With git hosting, an existing repository can be entered, which the workspace clones; without
-	one, the workspace creates the repository of the project.
+	With git hosting, the dialog shows the git connection of the project, and an existing repository
+	can be entered, which the workspace clones; without one, the workspace creates the repository of
+	the project, which the constraint of the repository refuses if the access token of the connection
+	may not create repositories (factoryCheckRepository).
 -->
 <view>
 	<channels>
@@ -39,12 +41,19 @@
 				expr="factoryGitHosting()"
 				input="model"
 			>
+				<field attribute="gitConnection"/>
 				<field attribute="repository">
 					<label>
 						<en>Existing repository</en>
 						<de>Bestehendes Repository</de>
 					</label>
 				</field>
+				<alert severity="info">
+					<message>
+						<en>Enter an existing repository of the git connection to work on it, or leave the field empty: the first workspace then creates a new repository. If the access token of the git connection may not create repositories, the field asks for an existing repository.</en>
+						<de>Ein bestehendes Repository der Git-Verbindung eingeben, um daran zu arbeiten, oder das Feld leer lassen: Der erste Workspace legt dann ein neues Repository an. Darf das Token der Git-Verbindung keine Repositorys anlegen, verlangt das Feld ein bestehendes Repository.</de>
+					</message>
+				</alert>
 			</visible-if>
 			<commands>
 				<generic-command key="ENTER"

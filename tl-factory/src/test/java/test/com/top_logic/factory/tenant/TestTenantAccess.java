@@ -269,6 +269,22 @@ public class TestTenantAccess extends BasicTestCase {
 			FactoryModel.PROJECT_WORKSPACE)));
 	}
 
+	/**
+	 * The initial password of the application of a workspace logs into it as root, so only the
+	 * members working on the project and the operators read it.
+	 */
+	public void testInitialPasswordNotForReaders() {
+		TLStructuredTypePart password = part(_workspaceA.tType().getName(), FactoryModel.WORKSPACE_INITIAL_PASSWORD);
+		for (Person person : List.of(_adminA, _developerA, _operator)) {
+			assertTrue(person.getName(), rights().isAllowed(person, _workspaceA, password, READ));
+		}
+		assertFalse("A reader reads the workspace but not the password.",
+			rights().isAllowed(_readerA, _workspaceA, password, READ));
+		assertTrue(allowed(_readerA, _workspaceA, READ));
+		assertFalse(rights().isAllowed(_developerB, _workspaceA, password, READ));
+		assertFalse(rights().isAllowed(_noTenant, _workspaceA, password, READ));
+	}
+
 	public void testOperationsNeedWrite() {
 		for (Person person : List.of(_readerA, _developerB)) {
 			try {

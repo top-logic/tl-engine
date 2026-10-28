@@ -6,6 +6,7 @@
 package test.com.top_logic.factory.gitea;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Test;
@@ -50,6 +51,8 @@ public class TestGiteaHostingProvider extends TestCase {
 	private static final String PLAIN_USER = "plain-user";
 
 	private static final String OTHER_USER = "other-user";
+
+	private static final String SCOPED_USER = "scoped-user";
 
 	private static GiteaTestServer _server;
 
@@ -244,6 +247,44 @@ public class TestGiteaHostingProvider extends TestCase {
 		assertNotNull(capabilities.problem());
 		assertEquals(I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM.getKey(),
 			capabilities.problem().plain().getKey());
+	}
+
+	/**
+	 * A token without the scope write:user may not create repositories in the namespace of its
+	 * user although the user may: the capabilities cannot tell it and name the missing scope instead
+	 * of claiming the right.
+	 */
+	public void testCapabilitiesWithoutWriteUserScope() throws Exception {
+		String token = _server.createUser(SCOPED_USER, "write:repository,read:user");
+		GiteaHostingProvider provider = _server.provider(SCOPED_USER, token, false);
+		GitCapabilities capabilities = provider.capabilities();
+		assertFalse(capabilities.createRepositories());
+		assertProblemNamesScope(capabilities, "write:user");
+		try {
+			provider.createRepository("refused", null);
+			fail("A token without write:user created a repository of its user.");
+		} catch (TopLogicException expected) {
+			// Gitea refuses it, as the capabilities say.
+		}
+	}
+
+	/**
+	 * A token of an owner of the organization without the scope write:organization may not create
+	 * repositories there: the capabilities name the missing scope.
+	 */
+	public void testCapabilitiesWithoutOrganizationScope() throws Exception {
+		String token = _server.accessToken(ADMIN, "no-organization", "read:organization,write:repository,read:user");
+		GitCapabilities capabilities = provider(token).capabilities();
+		assertFalse(capabilities.createRepositories());
+		assertProblemNamesScope(capabilities, "write:organization");
+	}
+
+	private static void assertProblemNamesScope(GitCapabilities capabilities, String scope) {
+		assertNotNull("Not determinable.", capabilities.problem());
+		assertEquals(I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM.getKey(),
+			capabilities.problem().plain().getKey());
+		String text = String.valueOf(Arrays.asList(capabilities.problem().arguments()));
+		assertTrue("The problem names the scope " + scope + ": " + text, text.contains(scope));
 	}
 
 	/**

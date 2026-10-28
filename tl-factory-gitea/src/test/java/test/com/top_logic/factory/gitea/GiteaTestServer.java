@@ -328,10 +328,39 @@ public final class GiteaTestServer implements AutoCloseable {
 	 * @return The access token.
 	 */
 	public String createUser(String name) throws InterruptedException {
+		return createUser(name, FULL_SCOPES + ",write:user");
+	}
+
+	/**
+	 * Creates a user of this server who is no administrator, with an access token of the given
+	 * scopes.
+	 *
+	 * @param name
+	 *        The name of the user.
+	 * @param scopes
+	 *        The scopes of the token, separated by commas, e.g. {@code write:repository,read:user}.
+	 * @return The access token.
+	 */
+	public String createUser(String name, String scopes) throws InterruptedException {
 		gitea("admin", "user", "create", "--username", name, "--password", name + "-password-1",
 			"--email", name + "@example.com", "--must-change-password=false");
-		return gitea("admin", "user", "generate-access-token", "--username", name, "--token-name", "full",
-			"--scopes", FULL_SCOPES + ",write:user", "--raw").trim();
+		return accessToken(name, "full", scopes);
+	}
+
+	/**
+	 * Creates another access token of a user of this server.
+	 *
+	 * @param user
+	 *        The name of the user, e.g. {@link #ADMIN}.
+	 * @param tokenName
+	 *        The name of the token, unique among the tokens of the user.
+	 * @param scopes
+	 *        The scopes of the token, separated by commas.
+	 * @return The access token.
+	 */
+	public String accessToken(String user, String tokenName, String scopes) throws InterruptedException {
+		return gitea("admin", "user", "generate-access-token", "--username", user, "--token-name", tokenName,
+			"--scopes", scopes, "--raw").trim();
 	}
 
 	/**

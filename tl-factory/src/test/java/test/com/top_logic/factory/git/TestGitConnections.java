@@ -36,6 +36,7 @@ import com.top_logic.factory.git.GitHostingService;
 import com.top_logic.factory.git.GitRoute;
 import com.top_logic.factory.git.I18NConstants;
 import com.top_logic.factory.git.RepositoryName;
+import com.top_logic.factory.git.RepositorySource;
 import com.top_logic.factory.project.FactoryFunctions;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.WorkspaceStatus;
@@ -46,6 +47,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -391,6 +393,43 @@ public class TestGitConnections extends BasicTestCase {
 		Map<String, Object> builtIn = as(_developerB, () -> FactoryFunctions.gitCapabilities(builtIn(), null));
 		assertEquals("The organization of the tenant of the user.", GitConnections.ownerFor(builtIn(), _tenantB),
 			builtIn.get(FactoryFunctions.GIT_OWNER));
+	}
+
+	public void testOwner() {
+		TLObject connection = createOwn(_adminA, "Own A");
+		assertEquals(OWN_OWNER, as(_developerB, () -> FactoryFunctions.gitOwner(connection, null)));
+		assertEquals("The organization of the tenant of the user.", GitConnections.ownerFor(builtIn(), _tenantB),
+			as(_developerB, () -> FactoryFunctions.gitOwner(builtIn(), null)));
+		assertEquals("The organization of the given tenant.", GitConnections.ownerFor(builtIn(), _tenantA),
+			as(_operator, () -> FactoryFunctions.gitOwner(builtIn(), _tenantA)));
+		assertNull("No tenant, no organization on a built-in connection.",
+			as(_operator, () -> FactoryFunctions.gitOwner(builtIn(), null)));
+	}
+
+	public void testNewRepositoryCheck() {
+		TLObject connection = createOwn(_adminA, "Own A");
+		RecordingGitHostingProvider provider =
+			(RecordingGitHostingProvider) GitConnections.provider(connection, _tenantA);
+		assertNull(RepositorySource.checkNewRepository(provider));
+
+		provider.setCapabilities(new GitCapabilities(false, true, null));
+		assertEquals(I18NConstants.ERROR_NO_NEW_REPOSITORY__OWNER.fill(OWN_OWNER),
+			RepositorySource.checkNewRepository(provider));
+
+		ResKey problem = I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM.fill(OWN_URL, "denied");
+		provider.setCapabilities(GitCapabilities.unknown(problem));
+		assertEquals(I18NConstants.ERROR_NEW_REPOSITORY_UNKNOWN__OWNER_PROBLEM.fill(OWN_OWNER, problem),
+			RepositorySource.checkNewRepository(provider));
+	}
+
+	public void testCreatingProject() {
+		TLObject draft = as(_developerA, () -> TransientObjectFactory.INSTANCE.createObject(FactoryModel.projectType()));
+		assertTrue("A draft.", GitConnections.isCreating(draft));
+		assertTrue("A form editing a draft.", GitConnections.isCreating(new TLObjectOverlay(draft)));
+
+		TLObject stored = inTransaction(() -> created(project(_tenantA, "creating", null)));
+		assertFalse("A stored project.", GitConnections.isCreating(stored));
+		assertFalse("A form editing a stored project.", GitConnections.isCreating(new TLObjectOverlay(stored)));
 	}
 
 	public void testProjectConnectionCheck() {

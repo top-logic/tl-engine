@@ -381,6 +381,33 @@ public class RepositorySource implements ApplicationSource {
 	}
 
 	/**
+	 * Checks that a hosting service may create the repository of a new project, for a project
+	 * entering no existing repository.
+	 *
+	 * @param hosting
+	 *        The hosting service the repository is to be created on.
+	 * @return The problem, {@code null} if the credentials of the connection may create
+	 *         repositories in its {@link GitHostingProvider#getOwner() owner}.
+	 * @see GitHostingProvider#capabilities()
+	 */
+	public static ResKey checkNewRepository(GitHostingProvider hosting) {
+		GitCapabilities capabilities;
+		try {
+			capabilities = hosting.capabilities();
+		} catch (TopLogicException ex) {
+			capabilities = GitCapabilities.unknown(ex.getErrorKey());
+		}
+		if (capabilities.createRepositories()) {
+			return null;
+		}
+		if (capabilities.problem() != null) {
+			return I18NConstants.ERROR_NEW_REPOSITORY_UNKNOWN__OWNER_PROBLEM.fill(hosting.getOwner(),
+				capabilities.problem());
+		}
+		return I18NConstants.ERROR_NO_NEW_REPOSITORY__OWNER.fill(hosting.getOwner());
+	}
+
+	/**
 	 * Whether the repository has no refs yet, e.g. because a run failed before its first push.
 	 */
 	private static boolean isEmpty(Context context, String remote, Map<String, String> env)

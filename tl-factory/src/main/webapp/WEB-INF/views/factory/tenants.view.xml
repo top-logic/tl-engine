@@ -2,7 +2,8 @@
 
 <!--
 	The tenants of the control application, for the operators: a list of all tenants, beside it the
-	selected tenant with its members (factory/members.view.xml). "Create tenant" creates a tenant
+	selected tenant with its members (factory/members.view.xml) and the git connections it may use
+	(factory/git-connections.view.xml) in two tabs. "Create tenant" creates a tenant
 	with the account of its first administrator (factory/create-tenant.view.xml); a tenant without
 	members and projects can be deleted.
 -->
@@ -122,12 +123,38 @@
 									size="75"
 									unit="%"
 								>
-									<view-ref view="factory/members.view.xml">
-										<bind
-											channel="tenant"
-											to="tenant"
-										/>
-									</view-ref>
+									<tab-bar active-tab="members">
+										<tab id="members"
+											icon="css:bi bi-people"
+											route="none"
+										>
+											<label>
+												<en>Members</en>
+												<de>Mitglieder</de>
+											</label>
+											<view-ref view="factory/members.view.xml">
+												<bind
+													channel="tenant"
+													to="tenant"
+												/>
+											</view-ref>
+										</tab>
+										<tab id="git-connections"
+											icon="css:bi bi-git"
+											route="none"
+										>
+											<label>
+												<en>Git connections</en>
+												<de>Git-Verbindungen</de>
+											</label>
+											<view-ref view="factory/git-connections.view.xml">
+												<bind
+													channel="tenant"
+													to="tenant"
+												/>
+											</view-ref>
+										</tab>
+									</tab-bar>
 								</pane>
 							</panes>
 						</split-panel>
@@ -140,8 +167,8 @@
 									<de>Kein Mandant ausgewählt</de>
 								</title>
 								<message>
-									<en>Select a tenant to see its members.</en>
-									<de>Einen Mandanten auswählen, um seine Mitglieder zu sehen.</de>
+									<en>Select a tenant to see its members and git connections.</en>
+									<de>Einen Mandanten auswählen, um seine Mitglieder und Git-Verbindungen zu sehen.</de>
 								</message>
 							</alert>
 						</inset>

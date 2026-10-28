@@ -494,12 +494,14 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * Checks the existing repository entered for a new project.
+	 * Checks the existing repository entered for a new project, or, if none is entered, that the
+	 * git connection of a project being created may create its repository.
 	 *
 	 * <p>
 	 * A repository the project has recorded - with the {@link FactoryModel#PROJECT_REPOSITORY_URL
 	 * page} the hosting service reported for it - is not checked again: the hosting service is not
-	 * asked when the recorded repository is stored.
+	 * asked when the recorded repository is stored. Whether a repository may be created is asked
+	 * only while the project {@link GitConnections#isCreating(TLObject) is being created}.
 	 * </p>
 	 *
 	 * @param project
@@ -507,16 +509,26 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * @param reference
 	 *        The repository as the user enters it: its full name {@code owner/name}, its clone
 	 *        URL or the URL of one of its pages; empty for a repository to create.
-	 * @return The problem with the reference, {@code null} if it is empty, names an existing
-	 *         repository on the git connection of the project, is recorded, or the project has no
+	 * @return The problem with the reference, {@code null} if it names an existing repository on
+	 *         the git connection of the project, is recorded, is empty and the connection may
+	 *         create repositories or the project is not being created, or if the project has no
 	 *         available git connection.
+	 * @see RepositorySource#checkReference(GitHostingProvider, String)
+	 * @see RepositorySource#checkNewRepository(GitHostingProvider)
 	 */
 	public ResKey checkRepository(TLObject project, String reference) {
 		if (project != null && FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL) != null) {
 			return null;
 		}
 		GitHostingProvider hosting = getGitHosting(project);
-		return hosting == null ? null : RepositorySource.checkReference(hosting, reference);
+		if (hosting == null) {
+			return null;
+		}
+		if (reference == null || reference.isBlank()) {
+			return project != null && GitConnections.isCreating(project)
+				? RepositorySource.checkNewRepository(hosting) : null;
+		}
+		return RepositorySource.checkReference(hosting, reference);
 	}
 
 	/**

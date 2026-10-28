@@ -372,14 +372,15 @@ public class GitConnections {
 	}
 
 	/**
-	 * Whether the given object is a project being created: the form object or transient draft of
-	 * a new project.
+	 * Whether the given object is a project being created: the transient draft of a new project,
+	 * a form object editing such a draft, or a form object creating a project.
 	 */
-	private static boolean isCreating(TLObject project) {
-		if (project instanceof TLFormObjectBase form) {
-			return form.getEditedObject() == null;
+	public static boolean isCreating(TLObject project) {
+		TLObject edited = TLFormObjectBase.editedObject(project);
+		if (edited instanceof TLFormObjectBase form) {
+			return form.isCreate();
 		}
-		return project.tTransient();
+		return edited.tTransient();
 	}
 
 	/**

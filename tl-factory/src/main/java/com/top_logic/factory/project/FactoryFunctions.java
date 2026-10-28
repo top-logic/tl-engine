@@ -382,6 +382,23 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The organization or user the repositories of a tenant are created in on a git connection:
+	 * the owner of a connection of a tenant, the organization of the tenant on a built-in
+	 * connection.
+	 *
+	 * @param connection
+	 *        The connection.
+	 * @param tenant
+	 *        The tenant; empty for the tenant of the current user.
+	 * @return The owner; nothing on a built-in connection for a user of no tenant.
+	 */
+	@Label("Owner on a git connection")
+	@SideEffectFree
+	public static String gitOwner(@Mandatory TLObject connection, TLObject tenant) {
+		return GitConnections.ownerFor(connection, tenant == null ? currentTenant() : tenant);
+	}
+
+	/**
 	 * Whether a git connection is a built-in connection of the installation, offered to every
 	 * tenant and changed only by its configuration.
 	 *
@@ -513,22 +530,24 @@ public class FactoryFunctions extends TLScriptFunctions {
 
 	/**
 	 * Checks the existing repository entered for a new project on the git hosting service of its
-	 * git connection.
+	 * git connection; without one, that the access token of the connection may create the
+	 * repository of the new project.
 	 *
 	 * @param project
 	 *        The project the repository is entered for.
 	 * @param value
 	 *        The full name of the repository (owner/name), its clone URL or the URL of one of its
 	 *        pages; empty for a repository the control application creates.
-	 * @return The message describing what is wrong with the value; nothing if the value is empty
-	 *         or names a repository the access token of the connection can read, if the project has
-	 *         recorded its repository already, or if the project has no available git connection or
-	 *         the workspace service is not running.
+	 * @return The message describing what is wrong with the value; nothing if the value names a
+	 *         repository the access token of the connection can read, if it is empty and the
+	 *         access token may create repositories, if the project has recorded its repository
+	 *         already, or if the project has no available git connection or the workspace service
+	 *         is not running.
 	 */
 	@Label("Check a repository")
 	@SideEffectFree
 	public static ResKey checkRepository(TLObject project, String value) {
-		if (value == null || value.isBlank() || !ProjectWorkspaces.Module.INSTANCE.isActive()) {
+		if (!ProjectWorkspaces.Module.INSTANCE.isActive()) {
 			return null;
 		}
 		return ProjectWorkspaces.getInstance().checkRepository(project, value);

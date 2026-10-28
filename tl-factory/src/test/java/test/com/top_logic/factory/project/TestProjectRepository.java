@@ -230,12 +230,15 @@ public class TestProjectRepository extends BasicTestCase {
 
 	/**
 	 * If the credentials of the git connection may not administer the repository, the branch is not
-	 * protected: the output has a warning, the project records the unprotected branch, the
+	 * protected: the output has a warning, the project records the unprotected branch (empty, not
+	 * false, before the attempt), the
 	 * application is built anyway, and the agent is told no protected files.
 	 */
 	public void testBranchNotProtected() throws Exception {
 		_hosting.setCanAdminister(false);
 		TLObject project = project("unprotected", null);
+		assertNull("Undecided before the workspace tried to protect the branch.",
+			project.tValueByName(FactoryModel.PROJECT_BRANCH_PROTECTED));
 		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
 		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
 		assertEquals(List.of(RecordingGitHostingProvider.CREATE + " unprotected"), _hosting.calls());

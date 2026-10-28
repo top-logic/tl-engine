@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The git connections a tenant may host the repositories of its projects on: first the built-in
+	connections of the installation, with the organization of the tenant on their server, then the
+	own connections of the tenant. For each connection, what its access token may do for the tenant,
+	asked from the git hosting service.
+	
+	Whoever may change the tenant - an administrator of the tenant or an operator - creates own
+	connections with an access token (factory/create-git-connection.view.xml), changes them
+	(factory/change-git-connection.view.xml), replaces their token (factory/replace-git-token.view.xml)
+	and deletes them (GitConnections). A built-in connection is changed by the configuration of the
+	installation only. The other members see the list only. An access token is entered in a masked
+	field and never shown again.
+	
+	The embedding view binds the tenant: the tenant of the user (factory/my-git-connections.view.xml)
+	or the tenant an operator selects (factory/tenants.view.xml).
+-->
+<view>
+	<channels>
+		<channel name="tenant"/>
+		<channel name="connection"/>
+	</channels>
+	<panel>
+		<title>
+			<en>Git connections</en>
+			<de>Git-Verbindungen</de>
+		</title>
+		<commands>
+			<generic-command name="createGitConnection"
+				image="css:bi bi-plus-lg"
+				inputs="tenant"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Create connection</en>
+					<de>Verbindung anlegen</de>
+				</label>
+				<executability>
+					<null-input-hidden/>
+					<model-access operation="Write"/>
+				</executability>
+				<execute-script function="new(`tl.factory.input:NewGitConnection`, transient: true)">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="factory/create-git-connection.view.xml"
+						>
+							<bind
+								channel="tenant"
+								to="tenant"
+							/>
+							<bind
+								channel="selection"
+								to="connection"
+							/>
+						</open-dialog>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command name="changeGitConnection"
+				clique="edit"
+				image="css:bi bi-pencil"
+				inputs="tenant, connection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Edit</en>
+					<de>Bearbeiten</de>
+				</label>
+				<executability>
+					<null-input-hidden/>
+					<model-access operation="Write"/>
+					<disabled-if expr="if($connection == null, #('Select a connection.'@en, 'Eine Verbindung auswählen.'@de), if(factoryGitBuiltIn($connection), #('A built-in connection is changed by the configuration of the installation only.'@en, 'Eine eingebaute Verbindung wird nur durch die Konfiguration der Installation geändert.'@de), null))"/>
+				</executability>
+				<execute-script>
+					<function><![CDATA[new(`tl.factory.input:ChangedGitConnection`, transient: true)
+	..set(`tl.factory.input:ChangedGitConnection#connection`, $connection)
+	..set(`tl.factory.input:GitConnectionData#name`, $connection.get(`tl.factory:GitConnection#name`))
+	..set(`tl.factory.input:GitConnectionData#providerType`, $connection.get(`tl.factory:GitConnection#providerType`))
+	..set(`tl.factory.input:GitConnectionData#url`, $connection.get(`tl.factory:GitConnection#url`))
+	..set(`tl.factory.input:GitConnectionData#owner`, $connection.get(`tl.factory:GitConnection#owner`))]]></function>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="factory/change-git-connection.view.xml"
+						/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command name="replaceGitToken"
+				clique="edit"
+				image="css:bi bi-key"
+				inputs="tenant, connection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Replace token</en>
+					<de>Token ersetzen</de>
+				</label>
+				<executability>
+					<null-input-hidden/>
+					<model-access operation="Write"/>
+					<disabled-if expr="if($connection == null, #('Select a connection.'@en, 'Eine Verbindung auswählen.'@de), if(factoryGitBuiltIn($connection), #('The access token of a built-in connection is configured in the installation.'@en, 'Das Zugangstoken einer eingebauten Verbindung ist in der Installation konfiguriert.'@de), null))"/>
+				</executability>
+				<execute-script function="new(`tl.factory.input:NewGitToken`, transient: true)..set(`tl.factory.input:NewGitToken#connection`, $connection)">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="factory/replace-git-token.view.xml"
+						/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command name="deleteGitConnection"
+				clique="delete"
+				image="css:bi bi-trash"
+				inputs="tenant, connection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
+				</label>
+				<executability>
+					<null-input-hidden/>
+					<model-access operation="Write"/>
+					<disabled-if expr="if($connection == null, #('Select a connection.'@en, 'Eine Verbindung auswählen.'@de), if(factoryGitBuiltIn($connection), #('A built-in connection is removed from the configuration of the installation only.'@en, 'Eine eingebaute Verbindung wird nur aus der Konfiguration der Installation entfernt.'@de), null))"/>
+				</executability>
+				<confirm expr="#('Delete the git connection {0} and its access token?'@en, 'Die Git-Verbindung {0} und ihr Zugangstoken löschen?'@de).fill($connection)"/>
+				<execute-script function="factoryDeleteGitConnection($connection)"/>
+				<write-channel name="connection"
+					clear="true"
+				/>
+			</generic-command>
+		</commands>
+		<table
+			observed-types="tl.factory:GitConnection"
+			personalization-key="tl-factory-git-connections"
+			selection="connection"
+			types="tl.factory:GitConnection"
+		>
+			<columns>
+				<column attribute="name"/>
+				<computed-column name="kind">
+					<label>
+						<en>Kind</en>
+						<de>Art</de>
+					</label>
+					<value>if(factoryGitBuiltIn($row), #('built-in'@en, 'eingebaut'@de), #('own'@en, 'eigene'@de))</value>
+				</computed-column>
+				<column attribute="providerType"/>
+				<column attribute="url"/>
+				<computed-column name="owner"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Owner</en>
+						<de>Eigentümer</de>
+					</label>
+					<tooltip>#('The organization or user the repositories of the tenant are created in.'@en, 'Die Organisation oder der Benutzer, in der die Repositorys des Mandanten angelegt werden.'@de)</tooltip>
+					<inputs>
+						<input channel="tenant"/>
+					</inputs>
+					<value>factoryGitOwner($row, $tenant)</value>
+				</computed-column>
+				<computed-column name="rights">
+					<label>
+						<en>Rights of the token</en>
+						<de>Rechte des Tokens</de>
+					</label>
+					<inputs>
+						<input channel="tenant"/>
+					</inputs>
+					<value><![CDATA[{
+	rights = factoryGitCapabilities($row, $tenant);
+	yes = #('yes'@en, 'ja'@de);
+	no = #('no'@en, 'nein'@de);
+	if($rights['problem'] != null, $rights['problem'],
+		#('Create repositories: {0}, protect branches: {1}'@en, 'Repositories anlegen: {0}, Branches schützen: {1}'@de)
+			.fill(if($rights['createRepositories'], $yes, $no), if($rights['protectBranches'], $yes, $no)));
+}]]></value>
+				</computed-column>
+			</columns>
+			<inputs>
+				<input channel="tenant"/>
+			</inputs>
+			<rows>concat(factoryGitConnections($tenant).filter(c -&gt; factoryGitBuiltIn($c)), factoryOwnGitConnections($tenant))</rows>
+		</table>
+	</panel>
+</view>

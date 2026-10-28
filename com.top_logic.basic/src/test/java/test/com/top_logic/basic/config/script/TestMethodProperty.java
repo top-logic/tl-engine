@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.basic.config;
+package test.com.top_logic.basic.config.script;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -24,9 +24,9 @@ import test.com.top_logic.basic.BasicTestSetup;
 
 import com.top_logic.basic.config.ConfigurationDescriptorBuilder;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.I18NConstants;
-import com.top_logic.basic.config.MethodProperty;
+import com.top_logic.basic.config.script.I18NConstants;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.script.MethodProperty;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.util.ResKey;
 

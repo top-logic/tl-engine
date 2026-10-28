@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.model.search.form;
+package com.top_logic.model.search.script;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -15,17 +15,23 @@ import com.top_logic.basic.config.ConfigBuilder;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueProvider;
-import com.top_logic.basic.config.MethodProperty;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.ScriptImplementationProvider;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.script.MethodProperty;
+import com.top_logic.basic.config.script.ScriptImplementationProvider;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.layout.ScriptFunction0;
 import com.top_logic.layout.ScriptFunction4;
 import com.top_logic.layout.form.values.edit.ScriptImplementationLabels;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.form.ScriptFunction0Impl;
+import com.top_logic.model.search.form.ScriptFunction1Impl;
+import com.top_logic.model.search.form.ScriptFunction2Impl;
+import com.top_logic.model.search.form.ScriptFunction3Impl;
+import com.top_logic.model.search.form.ScriptFunction4Impl;
+import com.top_logic.model.search.form.WithExpression;
 
 /**
  * {@link ScriptImplementationProvider} implementing configured interfaces with TL-Script.

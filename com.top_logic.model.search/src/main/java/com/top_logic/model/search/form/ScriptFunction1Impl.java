@@ -20,6 +20,8 @@ import com.top_logic.layout.ScriptFunction1;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.ValueConverter;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.script.ScriptImplementation;
+import com.top_logic.model.search.script.WithImplementedType;
 
 /**
  * {@link Function1} which executes a configured {@link Expr}.

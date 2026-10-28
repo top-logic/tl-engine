@@ -9,8 +9,8 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.ScriptImplementationProvider;
-import com.top_logic.basic.config.ScriptImplementations;
+import com.top_logic.basic.config.script.ScriptImplementationProvider;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 

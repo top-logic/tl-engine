@@ -3,7 +3,17 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.basic.config;
+package com.top_logic.basic.config.script;
+
+import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationValueProvider;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyDescriptorImpl;
+import com.top_logic.basic.config.TypedConfiguration;
 
 /**
  * Format of a {@link PolymorphicConfiguration} property that is implemented either by a Java class
@@ -24,7 +34,8 @@ package com.top_logic.basic.config;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-final class ScriptImplementationFormat extends AbstractConfigurationValueProvider<PolymorphicConfiguration<?>> {
+@FrameworkInternal
+public final class ScriptImplementationFormat extends AbstractConfigurationValueProvider<PolymorphicConfiguration<?>> {
 
 	private final PropertyDescriptor _property;
 
@@ -39,7 +50,7 @@ final class ScriptImplementationFormat extends AbstractConfigurationValueProvide
 	 *        The provider that {@link ScriptImplementationProvider#supports(PropertyDescriptor)
 	 *        supports} the given property.
 	 */
-	ScriptImplementationFormat(PropertyDescriptor property, ScriptImplementationProvider provider) {
+	public ScriptImplementationFormat(PropertyDescriptor property, ScriptImplementationProvider provider) {
 		super(PolymorphicConfiguration.class);
 		_property = property;
 		_provider = provider;
@@ -56,7 +67,7 @@ final class ScriptImplementationFormat extends AbstractConfigurationValueProvide
 	 * @return Whether the given format is a {@link ScriptImplementationFormat} and the given text
 	 *         is empty or a class name.
 	 */
-	static boolean isImplementationClass(ConfigurationValueProvider<?> format, CharSequence text) {
+	public static boolean isImplementationClass(ConfigurationValueProvider<?> format, CharSequence text) {
 		return format instanceof ScriptImplementationFormat
 			&& (text.toString().trim().isEmpty() || ScriptImplementations.isClassName(text));
 	}

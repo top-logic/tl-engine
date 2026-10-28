@@ -3,13 +3,13 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.model.search.form;
+package com.top_logic.model.search.script;
 
 import java.lang.reflect.Type;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.ScriptImplementationProvider;
+import com.top_logic.basic.config.script.ScriptImplementationProvider;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.basic.config;
+package com.top_logic.basic.config.script;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,6 +13,14 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.config.ConfigBuilder;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.DefaultConfigConstructorScheme;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyDescriptorImpl;
 
 /**
  * Access to the {@link ScriptImplementationProvider} and to the decisions the configuration

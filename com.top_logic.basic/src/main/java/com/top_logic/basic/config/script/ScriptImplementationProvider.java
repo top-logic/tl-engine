@@ -3,11 +3,18 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.basic.config;
+package com.top_logic.basic.config.script;
 
 import java.lang.reflect.Method;
 import java.util.ServiceLoader;
 
+import com.top_logic.basic.config.ConfigBuilder;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 
 /**
@@ -39,7 +46,7 @@ import com.top_logic.basic.reflect.JavaTypeUtil;
  *
  * <p>
  * The provider is found through the {@link ServiceLoader} mechanism (a resource
- * <code>META-INF/services/com.top_logic.basic.config.ScriptImplementationProvider</code> naming the
+ * <code>META-INF/services/com.top_logic.basic.config.script.ScriptImplementationProvider</code> naming the
  * implementation class), because configurations are read before any application service is
  * started. There is at most one provider. Without a provider, all configuration properties are
  * implemented in Java only.

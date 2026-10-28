@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.model.search.form;
+package test.com.top_logic.model.search.script;
 
 import java.io.StringWriter;
 import java.lang.reflect.Proxy;
@@ -33,7 +33,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorConfig;
 import com.top_logic.basic.config.PropertyKind;
-import com.top_logic.basic.config.ScriptImplementations;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -57,11 +57,11 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.I18NConstants;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
 import com.top_logic.model.search.form.ScriptFunction2Impl;
-import com.top_logic.model.search.form.ScriptImplementation;
-import com.top_logic.model.search.form.ScriptImplementationType;
-import com.top_logic.model.search.form.TLScriptImplementationProvider;
+import com.top_logic.model.search.script.ScriptImplementation;
+import com.top_logic.model.search.script.ScriptImplementationType;
+import com.top_logic.model.search.script.TLScriptImplementationProvider;
 import com.top_logic.model.search.form.WithExpression;
-import com.top_logic.model.search.form.WithImplementedType;
+import com.top_logic.model.search.script.WithImplementedType;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 

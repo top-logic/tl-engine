@@ -83,28 +83,4 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_INVALID_DEFAULT_VALUE_FOR_TYPE__TYPE___VALUE;
 
-	/**
-	 * @en The interface {0} cannot be implemented by a script: Its abstract method ''{1}'' is
-	 *     overloaded.
-	 */
-	public static ResKey2 ERROR_OVERLOADED_SCRIPT_METHOD__INTERFACE_METHOD;
-
-	/**
-	 * @en The interface {0} cannot be implemented by a script: Its abstract method ''{1}'' declares
-	 *     type parameters.
-	 */
-	public static ResKey2 ERROR_GENERIC_SCRIPT_METHOD__INTERFACE_METHOD;
-
-	/**
-	 * @en The interface {0} cannot be implemented by a script: The methods {2} have the same
-	 *     property name ''{1}''.
-	 */
-	public static ResKey3 ERROR_METHOD_PROPERTY_CLASH__INTERFACE_PROPERTY_METHODS;
-
-	/**
-	 * @en The interface {0} cannot be implemented by a script: The property name ''{1}'' of the
-	 *     method ''{2}'' is reserved for another property of the script configuration.
-	 */
-	public static ResKey3 ERROR_RESERVED_METHOD_PROPERTY__INTERFACE_PROPERTY_METHOD;
-
 }

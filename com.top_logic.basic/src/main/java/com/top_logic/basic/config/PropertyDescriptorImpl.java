@@ -63,6 +63,9 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.config.script.ScriptImplementationFormat;
+import com.top_logic.basic.config.script.ScriptImplementationProvider;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.generate.CodeUtil;
@@ -916,9 +919,11 @@ public abstract class PropertyDescriptorImpl
 	/**
 	 * Whether this property accepts values implemented by a script.
 	 *
+	 * @see ScriptImplementations#acceptsScript(PropertyDescriptor)
 	 * @see ScriptImplementationProvider#supports(PropertyDescriptor)
 	 */
-	boolean acceptsScript() {
+	@FrameworkInternal
+	public boolean acceptsScript() {
 		return _acceptsScript;
 	}
 	

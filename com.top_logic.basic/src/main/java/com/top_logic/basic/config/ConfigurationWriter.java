@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagUtil;
 

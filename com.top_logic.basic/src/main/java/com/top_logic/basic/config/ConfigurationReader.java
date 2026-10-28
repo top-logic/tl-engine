@@ -33,6 +33,8 @@ import com.top_logic.basic.col.ArrayStack;
 import com.top_logic.basic.col.Stack;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.annotation.GlobalKey;
+import com.top_logic.basic.config.script.ScriptImplementationFormat;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.FileBasedBinaryContent;

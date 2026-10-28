@@ -12,9 +12,9 @@ import java.util.regex.Pattern;
 
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.MethodProperty;
+import com.top_logic.basic.config.script.MethodProperty;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.ScriptImplementations;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;

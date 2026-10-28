@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.basic.config;
+package test.com.top_logic.basic.config.script;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,16 +34,17 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.ScriptImplementationProvider;
-import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
+import com.top_logic.basic.config.script.ScriptImplementationProvider;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.JavaTypeUtil;
+import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
 /**
  * Test case for configuration properties that are implemented either in Java or by a script of a

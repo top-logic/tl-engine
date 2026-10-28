@@ -201,18 +201,12 @@
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
+					frame="deliverables"
 					inputs="project"
-					view="projects/deliverables.view.xml"
 				>
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
-						<value>
-							<en>Deliverables</en>
-							<de>Liefergegenstände</de>
-						</value>
-					</frame-label>
 				</action>
 			</tile>
 			<!--

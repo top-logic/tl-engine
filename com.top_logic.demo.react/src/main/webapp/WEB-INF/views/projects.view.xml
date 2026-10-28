@@ -7,13 +7,14 @@
 	pushes exactly the same frame and lands in the drill-down the user already has.
 	
 	The <frame> declarations are nested the way the user drills down: the cockpit of a project
-	(project) is pushed from the overview, the milestone list (milestones) and the notes (notes)
-	from the cockpit, the tickets of a milestone (milestone) from the milestone list, and one ticket
+	(project) is pushed from the overview, the milestone list (milestones), the notes (notes) and the
+	deliverables (deliverables) from the cockpit, the tickets of a milestone (milestone) from the milestone list, and one ticket
 	(ticket) from the tickets of its milestone. A push naming a frame that does not follow the one
 	it is displayed in is an error when that frame is built.
 	
 	The declarations put the drill-down path into the address bar, one route per frame:
-	project/<id> for the cockpit, milestones and notes for the lists the cockpit tiles open,
+	project/<id> for the cockpit, milestones, notes and deliverables for the lists the cockpit tiles
+	open,
 	milestone/<id> for the tickets of a milestone and ticket/<id> for one ticket, each id the
 	objectId of the object. The lists take their project from the cockpit frame below them (a
 	<param> naming no placeholder of the route), so the address names the project once. A ticket
@@ -106,6 +107,18 @@
 						<value>
 							<en>Notes</en>
 							<de>Notizen</de>
+						</value>
+					</label>
+				</frame>
+				<frame id="deliverables"
+					route="deliverables"
+					view="projects/deliverables.view.xml"
+				>
+					<param name="project"/>
+					<label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Deliverables</en>
+							<de>Liefergegenstände</de>
 						</value>
 					</label>
 				</frame>

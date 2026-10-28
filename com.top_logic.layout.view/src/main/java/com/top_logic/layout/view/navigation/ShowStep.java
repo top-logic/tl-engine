@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
 import com.top_logic.layout.view.tiles.TileLabelProvider;
 import com.top_logic.layout.view.command.ActionArguments;
@@ -96,7 +97,7 @@ public record ShowStep(String viewRef, String frame, boolean dialog, ResKey labe
 	 * @return The step displaying that view.
 	 */
 	public static ShowStep fromConfig(ShowConfig config, ActionScope scope) {
-		String view = config.getView();
+		ViewRef view = config.getView();
 		String frame = config.getFrame();
 		if ((view == null) == (frame == null)) {
 			throw new ConfigurationError("The display step at " + config.location() + " names either a '"
@@ -106,7 +107,7 @@ public record ShowStep(String viewRef, String frame, boolean dialog, ResKey labe
 			throw new ConfigurationError("The display step at " + config.location() + " names the frame '"
 				+ frame + "', which is not displayed as a dialog.");
 		}
-		return new ShowStep(view == null ? null : ViewLoader.viewRef(view), frame, config.isDialog(),
+		return new ShowStep(view == null ? null : ViewLoader.viewRef(view.getPath()), frame, config.isDialog(),
 			config.getLabel(), compile(config.getLabelExpr(), scope), Binding.fromConfigs(config.getBindings(), scope));
 	}
 

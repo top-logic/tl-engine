@@ -250,7 +250,7 @@ public final class FrameRoute {
 	public static FrameRoute create(InstantiationContext context, FrameRouteConfig config) {
 		String route = config.getRoute();
 		List<String> placeholders =
-			route == null ? List.of() : RoutePattern.compile(route, config.getView()).paramNames();
+			route == null ? List.of() : RoutePattern.compile(route, config.getView().getPath()).paramNames();
 		Map<String, Function<Object, String>> toUrl = new HashMap<>();
 		Map<String, Function<String, Object>> fromUrl = new HashMap<>();
 		List<String> pathParams = new ArrayList<>();
@@ -278,7 +278,7 @@ public final class FrameRoute {
 		}
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getLabel();
 		TileLabelProvider label = labelConfig != null ? context.getInstance(labelConfig) : null;
-		return new FrameRoute(config.getId(), config.getView(), route, toUrl, fromUrl, pathParams, label,
+		return new FrameRoute(config.getId(), config.getView().getPath(), route, toUrl, fromUrl, pathParams, label,
 			config.getFinalTitle());
 	}
 

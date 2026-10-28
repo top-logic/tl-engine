@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
@@ -80,6 +81,7 @@ public class NavigatePushCommand implements ViewCommand {
 	 * Configuration for {@link NavigatePushCommand}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@TypeIcon("css:bi bi-box-arrow-right")
 	public interface Config extends ViewCommand.Config {
 
 		/** Configuration tag of a {@link NavigatePushCommand}. */

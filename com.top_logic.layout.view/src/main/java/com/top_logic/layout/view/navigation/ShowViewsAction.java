@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.Continuation;
@@ -89,6 +90,7 @@ public class ShowViewsAction extends ArgumentsViewAction {
 		@EntryTag(SHOW)
 		@DefaultContainer
 		@Mandatory
+		@TreeProperty
 		List<ShowConfig> getShows();
 	}
 

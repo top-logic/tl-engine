@@ -21,6 +21,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -37,6 +38,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
@@ -242,7 +245,8 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		 */
 		@Name(VIEW)
 		@Nullable
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 
 		/**
 		 * The {@link com.top_logic.layout.view.tiles.FrameRouteConfig#getId() id} of the frame
@@ -431,7 +435,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 	 * The places the application's views are displayed at, seen from its root view.
 	 */
 	private static ViewMounts applicationMounts() {
-		return ViewMounts.forRootView(ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView());
+		return ViewMounts.forRootView(ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().getPath());
 	}
 
 	/**

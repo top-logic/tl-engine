@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -50,6 +51,7 @@ public class GroupItemElement implements SidebarItemElement {
 	 * Configuration for {@link GroupItemElement}.
 	 */
 	@TagName("group")
+	@TypeIcon("css:bi bi-folder2")
 	public interface Config extends SidebarItemConfig, WithAccessControl {
 
 		@Override

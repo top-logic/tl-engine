@@ -13,6 +13,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -25,6 +26,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -32,9 +34,15 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * A {@link ViewCommand} that opens the View Designer in a new browser window.
  *
  * <p>
- * Loads the designer view from {@code /WEB-INF/views/designer.view.xml}, builds the
- * {@link DesignTreeNode} tree from the application's default root view, and opens it in a new window
- * via the {@link ReactWindowRegistry}.
+ * Loads the designer view from {@code /WEB-INF/views/designer.view.xml}, starts a
+ * {@link DesignSession} at the application's default root view, and opens it in a new window via
+ * the {@link ReactWindowRegistry}.
+ * </p>
+ *
+ * <p>
+ * The designer view finds the session in the channel {@value #SESSION_CHANNEL}, and the path of
+ * the files from the root view to the file shown, as list of {@link com.top_logic.layout.view.ViewRef}s,
+ * in the channel {@value #PATH_CHANNEL}.
  * </p>
  *
  * @implNote The window is opened through
@@ -44,6 +52,15 @@ public class OpenDesignerCommand implements ViewCommand {
 
 	/** Path to the designer view definition. */
 	private static final String DESIGNER_VIEW_PATH = ViewLoader.VIEW_BASE_PATH + "designer.view.xml";
+
+	/** Name of the channel holding the {@link DesignSession} of the designer window. */
+	public static final String SESSION_CHANNEL = "designSession";
+
+	/** Name of the channel holding the {@link DesignSession#bindPath(ViewChannel) path} of the session. */
+	public static final String PATH_CHANNEL = "designPath";
+
+	/** Name of the channel holding the {@link ReactContext} of the main application window. */
+	public static final String APP_CONTEXT_CHANNEL = "appContext";
 
 	/**
 	 * Configuration for {@link OpenDesignerCommand}.
@@ -89,32 +106,32 @@ public class OpenDesignerCommand implements ViewCommand {
 			// Create isolated ViewContext for the designer window.
 			ViewContext designerContext = new DefaultViewContext(windowContext, DESIGNER_VIEW_PATH);
 
-			// Build the design tree from the application's default root view.
-			String rootViewPath = ViewLoader.VIEW_BASE_PATH
-				+ ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
+			// Start the session at the application's default root view.
+			String rootViewPath =
+				ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
+			DesignSession session = new DesignSession(rootViewPath);
+			// Fail with the problem of the root view rather than with an empty designer.
+			session.getCurrentTree();
 
-			DesignTreeNode designTree;
-			try {
-				designTree = new DesignTreeBuilder().build(rootViewPath);
-			} catch (ConfigurationException ex) {
-				throw new RuntimeException("Failed to build design tree from: " + rootViewPath, ex);
-			}
+			DefaultViewChannel sessionChannel = new DefaultViewChannel(SESSION_CHANNEL);
+			sessionChannel.set(session);
+			designerContext.registerChannel(SESSION_CHANNEL, sessionChannel);
 
-			// Register the design tree as a channel in the designer context.
-			DefaultViewChannel designTreeChannel = new DefaultViewChannel("designTree");
-			designTreeChannel.set(designTree);
-			designerContext.registerChannel("designTree", designTreeChannel);
+			DefaultViewChannel pathChannel = new DefaultViewChannel(PATH_CHANNEL);
+			Registration pathBinding = session.bindPath(pathChannel);
+			designerContext.registerChannel(PATH_CHANNEL, pathChannel);
 
 			// Pass the main application window's ViewContext so the designer can
 			// trigger hot-reload after saving.
-			DefaultViewChannel appContextChannel = new DefaultViewChannel("appContext");
+			DefaultViewChannel appContextChannel = new DefaultViewChannel(APP_CONTEXT_CHANNEL);
 			appContextChannel.set(context);
-			designerContext.registerChannel("appContext", appContextChannel);
+			designerContext.registerChannel(APP_CONTEXT_CHANNEL, appContextChannel);
 
 			// Build the control tree from the designer view.
 			ReactControl designer = (ReactControl) designerView.createControl(designerContext);
-			ObservingChannels.observeWhileDisplayed(designer, List.of(designTreeChannel, appContextChannel),
-				designerContext);
+			designer.addCleanupAction(pathBinding::dispose);
+			ObservingChannels.observeWhileDisplayed(designer,
+				List.of(sessionChannel, pathChannel, appContextChannel), designerContext);
 			return designer;
 		};
 

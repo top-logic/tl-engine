@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.listener.Registration;
@@ -212,6 +213,72 @@ public interface TreeSelectionDisplay {
 					}
 				}
 				return result;
+			}
+		};
+	}
+
+	/**
+	 * The given display, handing a selection of certain nodes to a handler instead of to its
+	 * listeners.
+	 *
+	 * <p>
+	 * When the selection made in the display holds a node the handler takes over, the handler is
+	 * called with that node, and the selection does not reach the
+	 * {@link #addSelectionListener(Listener) listeners}. The handler typically answers by displaying
+	 * other content and selecting a node of it, which the listeners then learn about. This is what a
+	 * tree needs whose node leads somewhere else - a link to other content - instead of being an
+	 * object to work on.
+	 * </p>
+	 *
+	 * @param display
+	 *        The display to decorate.
+	 * @param handler
+	 *        Called with a selected node, answers whether it took over the selection.
+	 */
+	static TreeSelectionDisplay intercepting(TreeSelectionDisplay display, Predicate<DefaultTreeUINode> handler) {
+		List<Listener> listeners = new ArrayList<>();
+		Listener dispatch = selection -> {
+			for (DefaultTreeUINode node : selection) {
+				if (handler.test(node)) {
+					return;
+				}
+			}
+			for (Listener listener : new ArrayList<>(listeners)) {
+				listener.selectionChanged(selection);
+			}
+		};
+		// A single listener on the decorated display, so that the handler sees each selection once,
+		// however many listeners are registered here.
+		Registration[] inner = { null };
+		return new TreeSelectionDisplay() {
+			@Override
+			public Set<Object> getSelectedObjects() {
+				return display.getSelectedObjects();
+			}
+
+			@Override
+			public boolean canDisplaySeveral() {
+				return display.canDisplaySeveral();
+			}
+
+			@Override
+			public void showSelection(Set<DefaultTreeUINode> nodes, boolean reveal) {
+				display.showSelection(nodes, reveal);
+			}
+
+			@Override
+			public Registration addSelectionListener(Listener listener) {
+				listeners.add(listener);
+				if (inner[0] == null) {
+					inner[0] = display.addSelectionListener(dispatch);
+				}
+				return Registration.onDispose(() -> {
+					listeners.remove(listener);
+					if (listeners.isEmpty() && inner[0] != null) {
+						inner[0].dispose();
+						inner[0] = null;
+					}
+				});
 			}
 		};
 	}

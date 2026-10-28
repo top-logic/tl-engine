@@ -1,0 +1,33 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ *
+ * The rows of the view designer's design tree. Each row carries the class of the kind of its node
+ * (DesignNodeKind): the view a file starts with is bold, a property group is muted, a link to
+ * another view file takes the link colour and a view that cannot be loaded the error colour.
+ */
+
+.tl-design-node--view-file {
+	font-weight: 600;
+}
+
+.tl-design-node--group {
+	color: var(--tl-text-secondary);
+	font-style: italic;
+}
+
+/* The text of a label clips its overflow to end with an ellipsis. The slant of an italic last glyph
+   reaches past the end of its advance, so the text keeps room for it inside its own box: the
+   ellipsis still cuts a long label, but no longer the slant of a short one. */
+.tl-design-node--group .tl-field-value__text {
+	padding-inline-end: 0.2em;
+}
+
+.tl-design-node--link {
+	color: var(--tl-text-link);
+}
+
+.tl-design-node--error {
+	color: var(--tl-status-error-text);
+}

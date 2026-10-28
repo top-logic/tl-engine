@@ -16,6 +16,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -66,6 +68,7 @@ public class TileElement implements UIElement {
 	 * Configuration for {@link TileElement}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@TypeIcon("css:bi bi-postcard")
 	public interface Config extends UIElement.Config, WithAccessControl {
 
 		/** Configuration tag of a {@link TileElement}. */
@@ -122,6 +125,7 @@ public class TileElement implements UIElement {
 		@Name(CONTENT)
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends UIElement> getContent();
 
 		/**
@@ -146,6 +150,7 @@ public class TileElement implements UIElement {
 		@Name(ACTION)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getAction();
 
 		/**

@@ -17,7 +17,9 @@
 								<option name="serverName" value="%DB2_HOST%" />
 								<option name="portNumber" value="%DB2_PORT%" />
 								<option name="user" value="%DB2_USER%" />
-								<encrypted-option name="password" value="%DB2_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="db2_passwd"/>
+								</encrypted-option>
 							</options>
 						</data-source>
 					</pool>
@@ -34,7 +36,9 @@
 								<option name="serverName" value="%DB2_HOST%" />
 								<option name="portNumber" value="%DB2_PORT%" />
 								<option name="user" value="%DB2_USER%" />
-								<encrypted-option name="password" value="%DB2_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="db2_passwd"/>
+								</encrypted-option>
 							</options>
 						</data-source>
 					</pool>
@@ -51,7 +55,9 @@
 								<option name="serverName" value="%DB2_HOST%" />
 								<option name="portNumber" value="%DB2_PORT%" />
 								<option name="user" value="%DB2_USER%" />
-								<encrypted-option name="password" value="%DB2_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="db2_passwd"/>
+								</encrypted-option>
 							</options>
 						</data-source>
 					</pool>

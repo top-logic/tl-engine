@@ -7,6 +7,29 @@
 		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
 			<instance class="test.com.top_logic.basic.TestingConnectionPoolRegistryAccess" />
 		</config>
+
+		<!-- Passwords of the test databases (test-with-*.xml); a variable of the same name, e.g. set by the build server, takes precedence. -->
+		<config service-class="com.top_logic.basic.credential.SecretStoreService">
+			<instance class="com.top_logic.basic.credential.SecretStoreService">
+				<store class="com.top_logic.basic.credential.ChainSecretStore">
+					<stores>
+						<env-store/>
+						<literal-store>
+							<secrets>
+								<secret name="h2_passwd" value="unencrypted:password"/>
+								<secret name="db2_passwd" value="unencrypted:passwd"/>
+								<secret name="mssql_passwd" value="unencrypted:password"/>
+								<secret name="mysql_passwd" value="unencrypted:passwd"/>
+								<secret name="oracle_passwd" value="unencrypted:passwd"/>
+								<secret name="oracle12_passwd" value="unencrypted:passwd"/>
+								<secret name="oracle19_passwd" value="unencrypted:passwd"/>
+								<secret name="postgresql_passwd" value="unencrypted:passwd"/>
+							</secrets>
+						</literal-store>
+					</stores>
+				</store>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

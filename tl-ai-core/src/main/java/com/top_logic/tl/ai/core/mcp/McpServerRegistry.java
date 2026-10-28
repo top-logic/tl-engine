@@ -24,8 +24,10 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -47,6 +49,7 @@ import io.modelcontextprotocol.spec.McpSchema;
  * @see McpTool
  * @see McpClientConnection
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @ServiceCategory.Of(AICategory.class)
 public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.Config<?>> {
 

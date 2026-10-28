@@ -9,12 +9,15 @@ package com.top_logic.element.boundsec.manager.coverage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -54,16 +57,25 @@ import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.AccessRevoke;
+import com.top_logic.model.annotate.security.AccessRule;
+import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
+import com.top_logic.model.security.SecurityConfigurationService.TLPartAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
 import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
 
 /**
@@ -556,6 +568,285 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
+	 * The name of the access rights entry of the given attribute.
+	 *
+	 * <p>
+	 * An attribute is configured by its definition, so an override of an attribute shares the
+	 * entry of the attribute it overrides.
+	 * </p>
+	 */
+	public static String entryName(TLStructuredTypePart attribute) {
+		return TLModelUtil.qualifiedName(attribute.getDefinition());
+	}
+
+	/**
+	 * The grants and revocations the stored configuration defines for the model element with the
+	 * given name, in the order they are applied.
+	 *
+	 * <p>
+	 * The stored rules are applied after those of the underlying configuration layers, so they
+	 * decide what is in effect once the stored definition is applied.
+	 * </p>
+	 *
+	 * @param name
+	 *        The name of the access rights entry: the qualified name of a type, a module, an
+	 *        attribute (see {@link #entryName(TLStructuredTypePart)}) or a singleton.
+	 * @return A snapshot of the stored rules, empty when there are none.
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public List<AccessRule> storedRules(String name) throws ConfigurationException {
+		SecurityConfigurationService.Config config = storedGrantsConfig(readGrantsFile());
+		ModelAccessRights entry = config == null ? null : config.getSecurityConfig().get(name);
+		return entry == null ? Collections.emptyList() : List.copyOf(entry.getGrants());
+	}
+
+	/**
+	 * The grants and revocations the underlying configuration layers define, by the name of the
+	 * access rights entry they belong to.
+	 *
+	 * <p>
+	 * These are the rules the stored rules of an entry are appended to. Reading them parses the
+	 * configuration of the application, so a caller asking for several entries reads them once.
+	 * </p>
+	 *
+	 * @return The rules of every entry of the underlying layers, in the order they are applied.
+	 * @throws ConfigurationException
+	 *         When the configuration cannot be parsed.
+	 */
+	public Map<String, List<AccessRule>> baseRules() throws ConfigurationException {
+		ModuleConfiguration entry = baseApplicationConfig(_grantsFile).getServices().get(SecurityConfigurationService.class);
+		Map<String, List<AccessRule>> result = new HashMap<>();
+		if (entry != null && entry.getInstance() instanceof SecurityConfigurationService.Config base) {
+			for (ModelAccessRights rights : base.getSecurityConfig().values()) {
+				result.put(rights.getName(), List.copyOf(rights.getGrants()));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Drops the stored rules for the given role and operation on the given type, so that the
+	 * underlying configuration layers decide about the grant again.
+	 *
+	 * <p>
+	 * An entry left without any setting is dropped, and the file when nothing is left in it.
+	 * </p>
+	 *
+	 * @throws IOException
+	 *         When the file cannot be written.
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public void dropStoredGrant(TLClass type, BoundCommandGroup operation, BoundedRole role)
+			throws IOException, ConfigurationException {
+		editStoredRules(TLModelUtil.qualifiedName(type), TLClassAccessRights.class,
+			rules -> dropRole(rules, operation, role));
+	}
+
+	/**
+	 * Drops the stored rules for the given role and operation on the given attribute.
+	 *
+	 * @see #dropStoredGrant(TLClass, BoundCommandGroup, BoundedRole)
+	 */
+	public void dropStoredGrant(TLStructuredTypePart attribute, BoundCommandGroup operation, BoundedRole role)
+			throws IOException, ConfigurationException {
+		editStoredRules(entryName(attribute), TLPartAccessRights.class, rules -> dropRole(rules, operation, role));
+	}
+
+	/**
+	 * Drops all stored rules of the given operation on the given attribute, so that the underlying
+	 * configuration layers decide about it again.
+	 *
+	 * @see #dropStoredGrant(TLClass, BoundCommandGroup, BoundedRole)
+	 */
+	public void dropStoredRules(TLStructuredTypePart attribute, BoundCommandGroup operation)
+			throws IOException, ConfigurationException {
+		editStoredRules(entryName(attribute), TLPartAccessRights.class,
+			rules -> rules.removeIf(rule -> isFor(rule, operation)));
+	}
+
+	/**
+	 * Grants the given operation on the given type to the given role, or revokes it.
+	 *
+	 * <p>
+	 * The stored entry of the type is left with a single rule for the role and the operation: a
+	 * grant, or a revocation that takes away the role whatever the underlying configuration layers
+	 * and the generalizations of the type grant. The rule applies to the type alone, not to its
+	 * specializations. An operation implied by another one stays held by the roles holding the
+	 * implying operation, a revocation does not take it away.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type the operation is performed on.
+	 * @param operation
+	 *        The operation, applying to the type.
+	 * @param role
+	 *        The role to grant the operation to or to revoke it from.
+	 * @param granted
+	 *        Whether to grant the operation.
+	 * @throws IOException
+	 *         When the file cannot be written.
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public void setGranted(TLClass type, BoundCommandGroup operation, BoundedRole role, boolean granted)
+			throws IOException, ConfigurationException {
+		editStoredRules(TLModelUtil.qualifiedName(type), TLClassAccessRights.class,
+			rules -> setRule(rules, operation, role, granted));
+	}
+
+	/**
+	 * Grants the given operation on the given attribute to the given role, or revokes it.
+	 *
+	 * <p>
+	 * An attribute with a grant of an operation restricts the operation to the roles granted it on
+	 * the attribute. Granting it to a role therefore restricts the attribute, if it was not
+	 * restricted before. A role the operation is revoked from may no longer perform it on the
+	 * attribute, also if it is the last one; {@link #dropAttributeGrants(TLStructuredTypePart, BoundCommandGroup)}
+	 * lifts the restriction instead.
+	 * </p>
+	 *
+	 * @see #setGranted(TLClass, BoundCommandGroup, BoundedRole, boolean)
+	 */
+	public void setGranted(TLStructuredTypePart attribute, BoundCommandGroup operation, BoundedRole role,
+			boolean granted) throws IOException, ConfigurationException {
+		editStoredRules(entryName(attribute), TLPartAccessRights.class,
+			rules -> setRule(rules, operation, role, granted));
+	}
+
+	/**
+	 * Lifts the restriction of the given operation on the given attribute: the operation is decided
+	 * by the rights on the object again, whatever the underlying configuration layers grant on the
+	 * attribute.
+	 *
+	 * <p>
+	 * The stored rules of the operation are replaced by a revocation without roles, which drops
+	 * the grants of the attribute for the operation.
+	 * </p>
+	 *
+	 * @throws IOException
+	 *         When the file cannot be written.
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public void dropAttributeGrants(TLStructuredTypePart attribute, BoundCommandGroup operation)
+			throws IOException, ConfigurationException {
+		editStoredRules(entryName(attribute), TLPartAccessRights.class, rules -> {
+			rules.removeIf(rule -> isFor(rule, operation));
+			rules.add(newRule(AccessRevoke.class, operation, null));
+		});
+	}
+
+	/**
+	 * Changes the stored rules of the access rights entry with the given name, creating the entry
+	 * when it is not stored yet.
+	 */
+	private void editStoredRules(String name, Class<? extends ModelAccessRights> entryType,
+			Consumer<List<AccessRule>> change) throws IOException, ConfigurationException {
+		ApplicationConfig.Config appConfig = readGrantsFile();
+		Map<String, ModelAccessRights> stored = grantsConfig(appConfig).getSecurityConfig();
+		ModelAccessRights entry = stored.get(name);
+		if (entry == null) {
+			entry = TypedConfiguration.newConfigItem(entryType);
+			entry.setName(name);
+			stored.put(name, entry);
+		}
+		change.accept(entry.getGrants());
+		if (isEmpty(entry, ModelAccessRights.NAME_ATTRIBUTE)) {
+			// The entry no longer adds anything to the underlying layers.
+			stored.remove(name);
+		}
+		SecurityConfigurationService.Config service = grantsConfig(appConfig);
+		if (stored.isEmpty() && isEmpty(service, PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME)) {
+			appConfig.getServices().remove(SecurityConfigurationService.class);
+		}
+		if (isEmpty(appConfig)) {
+			// Nothing is stored any more.
+			_grantsFile.delete();
+			return;
+		}
+		writeGrantsFile(appConfig);
+	}
+
+	/**
+	 * Whether the given configuration sets nothing but the given properties: every other property
+	 * is unset, or an empty collection.
+	 */
+	private static boolean isEmpty(ConfigurationItem item, String... ignored) {
+		Set<String> ignoredNames = Set.of(ignored);
+		for (PropertyDescriptor property : item.descriptor().getProperties()) {
+			if (ignoredNames.contains(property.getPropertyName()) || !item.valueSet(property)) {
+				continue;
+			}
+			Object value = item.value(property);
+			if (value instanceof Collection<?> collection && collection.isEmpty()) {
+				continue;
+			}
+			if (value instanceof Map<?, ?> map && map.isEmpty()) {
+				continue;
+			}
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Takes the given role out of every rule of the given operation, dropping a rule left without
+	 * roles.
+	 */
+	private static void dropRole(List<AccessRule> rules, BoundCommandGroup operation, BoundedRole role) {
+		for (Iterator<AccessRule> it = rules.iterator(); it.hasNext();) {
+			AccessRule rule = it.next();
+			if (!isFor(rule, operation)) {
+				continue;
+			}
+			boolean removed = rule.getRoles().removeIf(config -> role.getName().equals(config.getName()));
+			if (removed && rule.getRoles().isEmpty()) {
+				it.remove();
+			}
+		}
+	}
+
+	/**
+	 * Takes the given role out of every rule of the given operation and adds a single rule
+	 * granting or revoking it.
+	 *
+	 * <p>
+	 * A rule left without roles is dropped: a revocation without roles would revoke the operation
+	 * from every role, and a grant without roles would deny an attribute to everybody.
+	 * </p>
+	 */
+	private static void setRule(List<AccessRule> rules, BoundCommandGroup operation, BoundedRole role,
+			boolean granted) {
+		dropRole(rules, operation, role);
+		rules.add(newRule(granted ? AccessGrant.class : AccessRevoke.class, operation, role));
+	}
+
+	private static boolean isFor(AccessRule rule, BoundCommandGroup operation) {
+		return rule.getOperation() != null && operation.getID().equals(rule.getOperation().id());
+	}
+
+	/**
+	 * A new rule of the given kind for the given operation and role.
+	 *
+	 * @param role
+	 *        The role of the rule, <code>null</code> for a rule without roles.
+	 */
+	private static AccessRule newRule(Class<? extends AccessRule> kind, BoundCommandGroup operation,
+			BoundedRole role) {
+		AccessRule result = TypedConfiguration.newConfigItem(kind);
+		result.update(result.descriptor().getProperty(AccessRule.OPERATION),
+			new CommandGroupReference(operation.getID()));
+		if (role != null) {
+			RoleConfig roleConfig = TypedConfiguration.newConfigItem(RoleConfig.class);
+			roleConfig.setName(role.getName());
+			result.getRoles().add(roleConfig);
+		}
+		return result;
+	}
+
+	/**
 	 * Marks the given type as used by the application's own code only, or drops that mark.
 	 *
 	 * <p>
@@ -768,20 +1059,7 @@ public class SecurityDefinitionEditor {
 	 * the application without {@link #getAccessManagerFile()}.
 	 */
 	private ElementAccessManager.Config baseConfig() throws ConfigurationException {
-		List<BinaryContent> layers = new ArrayList<>();
-		for (BinaryContent layer : XMLProperties.Module.INSTANCE.config().getTypedConfigs()) {
-			if (!isAccessManagerFile(layer)) {
-				layers.add(layer);
-			}
-		}
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			InAppServiceConfigStore.APPLICATION_TAG,
-			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
-		ConfigurationReader reader =
-			new ConfigurationReader(new DefaultInstantiationContext(new BufferingProtocol()), descriptors);
-		ApplicationConfig.Config config = (ApplicationConfig.Config) reader.setSources(layers)
-			.setVariableExpander(AliasManager.getInstance().getExpander())
-			.read();
+		ApplicationConfig.Config config = baseApplicationConfig(_accessManagerFile);
 		ModuleConfiguration entry = config.getServices().get(AccessManager.class);
 		if (entry == null || !(entry.getInstance() instanceof ElementAccessManager.Config base)) {
 			// The underlying layers define no rules.
@@ -791,16 +1069,36 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * Whether the given configuration layer is {@link #getAccessManagerFile()}.
+	 * The application configuration of the configuration layers without the given stored file.
 	 */
-	private boolean isAccessManagerFile(BinaryContent layer) {
+	private static ApplicationConfig.Config baseApplicationConfig(File storedFile) throws ConfigurationException {
+		List<BinaryContent> layers = new ArrayList<>();
+		for (BinaryContent layer : XMLProperties.Module.INSTANCE.config().getTypedConfigs()) {
+			if (!isFile(layer, storedFile)) {
+				layers.add(layer);
+			}
+		}
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			InAppServiceConfigStore.APPLICATION_TAG,
+			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
+		ConfigurationReader reader =
+			new ConfigurationReader(new DefaultInstantiationContext(new BufferingProtocol()), descriptors);
+		return (ApplicationConfig.Config) reader.setSources(layers)
+			.setVariableExpander(AliasManager.getInstance().getExpander())
+			.read();
+	}
+
+	/**
+	 * Whether the given configuration layer is the given file.
+	 */
+	private static boolean isFile(BinaryContent layer, File storedFile) {
 		if (!(layer instanceof FileBasedBinaryData file)) {
 			return false;
 		}
 		try {
-			return file.getFile().getCanonicalFile().equals(_accessManagerFile.getCanonicalFile());
+			return file.getFile().getCanonicalFile().equals(storedFile.getCanonicalFile());
 		} catch (IOException ex) {
-			return file.getFile().getAbsoluteFile().equals(_accessManagerFile.getAbsoluteFile());
+			return file.getFile().getAbsoluteFile().equals(storedFile.getAbsoluteFile());
 		}
 	}
 

@@ -5,9 +5,7 @@
  */
 package com.top_logic.service.openapi.client.authentication;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -38,19 +36,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_NO_OPEN_ID_CONFIGURATION__AUTHENTICATION_NAME;
 
 	/**
-	 * @en Failed to acquire access token: {0} {1}: {2}
+	 * @en Authentication "{0}" has no client secret to request an access token with.
 	 */
-	public static ResKey3 ERROR_NO_TOKEN_GENERATED__STATUS_CODE__CODE__DESCRIPTION;
-
-	/**
-	 * @en Error sending token request.
-	 */
-	public static ResKey ERROR_SENDING_TOKEN_REQUEST;
-
-	/**
-	 * @en Error parsing response from token request.
-	 */
-	public static ResKey ERROR_PARSING_TOKEN_RESPONSE;
+	public static ResKey1 ERROR_NO_CLIENT_SECRET__AUTHENTICATION_NAME;
 
     static {
         initConstants(I18NConstants.class);

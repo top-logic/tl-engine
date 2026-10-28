@@ -7,13 +7,21 @@
  * Access control for the declarative view system.
  *
  * <p>
- * Security scopes are defined centrally in the {@link com.top_logic.layout.view.security.SecurityScopeService}
- * (a tree of {@code id}/{@code label} entries with grouping labels) and referenced from removable UI
- * units (nav-items, tabs, tiles) via an {@code <access-control>} reference. A unit guarded by an
- * inaccessible scope is omitted entirely. Units without an {@code <access-control>} are always shown.
+ * The decisions are made by the model access rights (the grants of the
+ * {@link com.top_logic.model.security.SecurityConfigurationService}). UI units (navigation items,
+ * sidebar groups, tabs, accordion sections, tiles) declare with an
+ * {@link com.top_logic.layout.view.security.AccessControl} which operation is checked on which
+ * object, and a command declares in its
+ * {@link com.top_logic.layout.view.command.ViewCommand.Config#getAccess() access} the operations
+ * it performs ({@link com.top_logic.layout.view.security.OperationAccess}) and the objects it
+ * creates ({@link com.top_logic.layout.view.security.CreateAccess}). Units and operations share
+ * the {@link com.top_logic.layout.view.security.OperationCheck}.
+ * {@link com.top_logic.layout.view.security.ModelAccessPolicy} maps a decision to hiding or
+ * disabling.
  * </p>
  *
- * @see com.top_logic.layout.view.security.SecurityScopeService
  * @see com.top_logic.layout.view.security.AccessControl
+ * @see com.top_logic.layout.view.security.UnitAccess
+ * @see com.top_logic.layout.view.security.SecuredObject
  */
 package com.top_logic.layout.view.security;

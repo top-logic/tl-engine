@@ -255,6 +255,31 @@ public class MultiFileManager extends FileManager {
 				throw new IOException("Cannot delete directory resources: " + resourceName);
 			}
 			Files.delete(file);
+			refresh(resourceName);
+		}
+	}
+
+	@Override
+	public void refresh(String resourceName) {
+		if (resolveDirect(resourceName) != null) {
+			return;
+		}
+
+		FileSystemCache cache = FileSystemCache.getCache();
+		if (!cache.isCaching()) {
+			return;
+		}
+
+		String path = relative(normalize(resourceName));
+		if (!path.startsWith(ModuleLayoutConstants.WEB_INF_DIR)) {
+			return;
+		}
+
+		// The resource may have been written or deleted in any of the overlaid paths.
+		for (Path root : paths()) {
+			if (inDefaultFileSystem(root)) {
+				cache.refresh(root.resolve(path));
+			}
 		}
 	}
 

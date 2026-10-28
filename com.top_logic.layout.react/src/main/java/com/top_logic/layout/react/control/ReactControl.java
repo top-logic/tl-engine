@@ -243,6 +243,16 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		_viewSource = viewSource;
 	}
 
+	/**
+	 * The source file of the view whose root this control is.
+	 *
+	 * @return The full view path, or {@code null} if this control is no view root.
+	 * @see #setViewSource(String)
+	 */
+	public String getViewSource() {
+		return _viewSource;
+	}
+
 	@Override
 	public String getID() {
 		return _id;

@@ -18,6 +18,9 @@ import java.util.concurrent.TimeoutException;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
@@ -35,6 +38,7 @@ import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -71,11 +75,13 @@ import com.top_logic.util.model.ModelService;
  * the test KB with a minimal system prompt — no tools, no skills, no MCP servers — so
  * the test exercises only the agent loop + provider streaming. The model is resolved
  * via {@code AgentRuntimeService} (default model). {@link #tearDown()} removes the
- * agent again. Real LLM calls are made — running this test consumes API credits.</p>
+ * agent again. Real LLM calls are made — running this test consumes API credits. Without the key
+ * of any provider, the test is reported as skipped.</p>
  *
  * @see AgentFactory
  * @see com.top_logic.tl.ai.core.agent.TransactionScope
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestConcurrentAgents extends BasicTestCase {
 
 	/** Default number of parallel agent runs when {@value #CONCURRENCY_PROPERTY} is not set. */
@@ -143,6 +149,8 @@ public class TestConcurrentAgents extends BasicTestCase {
 	 * Runs {@value #AGENT_NAME} N times in parallel and asserts every run succeeds.
 	 */
 	public void testRunConcurrent() throws Exception {
+		Assume.assumeTrue("No AI provider has its key, set e.g. tl_anthropic_api_key.",
+			LLMProviderService.getInstance().defaultTarget() != null);
 		int parallelCount = Integer.getInteger(CONCURRENCY_PROPERTY, DEFAULT_PARALLEL_COUNT);
 		long timeoutSeconds = Long.getLong(TIMEOUT_SECONDS_PROPERTY, DEFAULT_TIMEOUT_SECONDS);
 

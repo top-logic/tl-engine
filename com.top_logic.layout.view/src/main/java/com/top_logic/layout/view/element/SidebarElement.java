@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -54,8 +56,8 @@ import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.WithFinalTitle;
 import com.top_logic.layout.view.security.AccessChecks;
-import com.top_logic.layout.view.security.AccessControl;
-import com.top_logic.layout.view.security.SecurityScope;
+import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
@@ -76,6 +78,7 @@ public class SidebarElement implements UIElement {
 	 * Configuration for {@link SidebarElement}.
 	 */
 	@TagName("sidebar")
+	@TypeIcon("css:bi bi-layout-sidebar")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -296,6 +299,51 @@ public class SidebarElement implements UIElement {
 		 *        What connects an item to the control displaying it.
 		 */
 		void addBinding(Consumer<ReactSidebarControl> binding);
+
+		/**
+		 * The access checks of the groups enclosing the items built at this site, outermost first.
+		 *
+		 * <p>
+		 * The content of a navigation item is displayed only as far as each of them allows, see
+		 * {@link #guardedBy(UnitAccess)}.
+		 * </p>
+		 */
+		default List<UnitAccess> guards() {
+			return Collections.emptyList();
+		}
+
+		/**
+		 * The site for the items of a group with the given access check.
+		 *
+		 * @param access
+		 *        The access check of the group, {@code null} for a group without one.
+		 * @return A site adding the given check to the {@link #guards()} of this site.
+		 */
+		default ItemSite guardedBy(UnitAccess access) {
+			if (access == null) {
+				return this;
+			}
+			ItemSite outer = this;
+			List<UnitAccess> guards = new ArrayList<>(guards());
+			guards.add(access);
+			List<UnitAccess> allGuards = Collections.unmodifiableList(guards);
+			return new ItemSite() {
+				@Override
+				public ViewContext contentContext(ViewContext itemContext, String itemKey) {
+					return outer.contentContext(itemContext, itemKey);
+				}
+
+				@Override
+				public void addBinding(Consumer<ReactSidebarControl> binding) {
+					outer.addBinding(binding);
+				}
+
+				@Override
+				public List<UnitAccess> guards() {
+					return allGuards;
+				}
+			};
+		}
 	}
 
 	/**
@@ -323,6 +371,7 @@ public class SidebarElement implements UIElement {
 	 * A navigation item with content.
 	 */
 	@TagName("nav-item")
+	@TypeIcon("css:bi bi-link-45deg")
 	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithFinalTitle {
 
 		@Override
@@ -418,6 +467,7 @@ public class SidebarElement implements UIElement {
 	 * A separator line between sidebar items.
 	 */
 	@TagName("separator")
+	@TypeIcon("css:bi bi-dash-lg")
 	public interface SeparatorConfig extends SidebarItemConfig {
 
 		@Override
@@ -444,7 +494,7 @@ public class SidebarElement implements UIElement {
 
 		private final boolean _finalTitle;
 
-		private final AccessControl _accessControl;
+		private final UnitAccess _access;
 
 		private final List<UIElement> _children;
 
@@ -460,7 +510,7 @@ public class SidebarElement implements UIElement {
 			_badgeRef = config.getBadge();
 			_hidden = config.getHidden();
 			_finalTitle = config.getFinalTitle();
-			_accessControl = config.getAccessControl();
+			_access = UnitAccess.create(context, config.getAccessControl());
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
@@ -473,7 +523,7 @@ public class SidebarElement implements UIElement {
 
 		@Override
 		public SidebarItem createSidebarItem(ViewContext context, ItemSite site) {
-			if (!AccessChecks.isAccessible(_accessControl)) {
+			if (!AccessChecks.isOffered(_access)) {
 				// Access denied for the current user: omit the navigation item entirely.
 				return null;
 			}
@@ -482,15 +532,19 @@ public class SidebarElement implements UIElement {
 			// The item lies within the scope enclosing the sidebar, so what a form of the item
 			// holds unsaved is held unsaved there as well.
 			DirtyChannel dirtyChannel = new DirtyChannel(context.getDirtyChannel());
-			SecurityScope scope = AccessChecks.resolveScope(_accessControl);
+			List<UnitAccess> guards = new ArrayList<>(site.guards());
+			if (_access != null) {
+				guards.add(_access);
+			}
 			NavigationItem item = new NavigationItem(_id, label, _icon,
-				() -> createContent(_children, itemContext, dirtyChannel, scope), dirtyChannel);
+				() -> createContent(_children, itemContext, dirtyChannel, guards), dirtyChannel);
 			String effectiveRoute = resolveRoute(_route, _id);
 			if (effectiveRoute != null) {
 				item.withRoute(effectiveRoute);
 				item.withFinalTitle(_finalTitle);
 			}
 			item.withHidden(_hidden);
+			withholdWhileDenied(item, _access, context, site);
 			if (_badgeRef != null) {
 				bindBadge(context, site, item);
 			}
@@ -525,6 +579,36 @@ public class SidebarElement implements UIElement {
 			String text = ValueLabel.label(value);
 			return text == null || text.isEmpty() ? null : text;
 		}
+	}
+
+	/**
+	 * Leaves the entry of the given item out of the sidebar while its access check fails on its
+	 * object, if the item is {@link com.top_logic.layout.view.security.DeniedUnitDisplay#HIDE
+	 * hidden} then.
+	 *
+	 * <p>
+	 * Used by navigation items and groups alike. An open navigation item whose entry is left out
+	 * stays open: its content shows the "no access" placeholder.
+	 * </p>
+	 *
+	 * @param item
+	 *        The item built.
+	 * @param access
+	 *        The access check of the item, {@code null} for an item without one.
+	 * @param context
+	 *        The context the sidebar is built in.
+	 * @param site
+	 *        The site the item is built at, binding the item to the sidebar control.
+	 */
+	public static void withholdWhileDenied(SidebarItem item, UnitAccess access, ViewContext context,
+			ItemSite site) {
+		UnitHiding hiding = AccessChecks.hiding(access, context);
+		if (hiding == null) {
+			return;
+		}
+		item.setWithheld(hiding.isHidden());
+		site.addBinding(
+			sidebar -> hiding.bind(sidebar, hidden -> sidebar.setItemWithheld(item.getId(), hidden.booleanValue())));
 	}
 
 	/** Value for the {@code route} attribute that explicitly disables routing. */
@@ -795,13 +879,29 @@ public class SidebarElement implements UIElement {
 		return ContentControls.toControl(elements, context.childContext(segment));
 	}
 
+	/**
+	 * Creates the content of a navigation item.
+	 *
+	 * @param guards
+	 *        The access checks of the enclosing groups and of the item itself, outermost first. The
+	 *        content is displayed as far as each of them allows, and sees the object of the
+	 *        innermost one as its {@link com.top_logic.layout.view.security.SecuredObject}.
+	 */
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
-			DirtyChannel dirtyChannel, SecurityScope scope) {
-		ViewContext baseContext = context.childContext("sidebar-item");
-		// Establish the nav-item's security scope so command rules in its content default to it.
-		ViewContext itemContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
+			DirtyChannel dirtyChannel, List<UnitAccess> guards) {
+		ViewContext itemContext = context.childContext("sidebar-item");
 		itemContext.setDirtyChannel(dirtyChannel);
 
-		return ContentControls.toControl(elements, itemContext);
+		return guarded(elements, itemContext, guards, 0);
+	}
+
+	private static ReactControl guarded(List<UIElement> elements, ViewContext context, List<UnitAccess> guards,
+			int index) {
+		if (index == guards.size()) {
+			return ContentControls.toControl(elements, context);
+		}
+		UnitAccess access = guards.get(index);
+		return AccessChecks.guard(access, AccessChecks.contentContext(access, context),
+			inner -> guarded(elements, inner, guards, index + 1));
 	}
 }

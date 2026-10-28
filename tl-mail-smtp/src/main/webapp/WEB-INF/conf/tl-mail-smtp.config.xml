@@ -23,11 +23,11 @@
 				lookup-mx-record="%SMTP_LOOKUP_MX%"
 				port="%SMTP_PORT%"
 				user="%SMTP_USER%"
-				password="%SMTP_PASS%"
 				
 				mail-domain="%MAIL_DOMAIN%"
 				from-address="%MAIL_SENDER%"
 			>
+				<password name="smtp_pass"/>
 				<options>
 					<option name="mail.transport.protocol" value="%SMTP_PROTOCOL%" />
 					<option name="mail.smtp.starttls.enable" value="%SMTP_STARTTLS%" />

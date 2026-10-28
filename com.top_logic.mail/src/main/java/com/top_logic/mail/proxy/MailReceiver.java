@@ -32,7 +32,9 @@ import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -40,6 +42,8 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.func.IfTrue;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.mail.base.imap.IMAPMailFolder;
@@ -123,12 +127,29 @@ public class MailReceiver implements ConnectionListener {
 
 		/**
 		 * The password for {@link #getUser()}.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the password by its secret name, so that the password is
+		 * not part of the configuration, e.g. <code>&lt;password name="imap_pass"/&gt;</code>,
+		 * which the default secret store reads from the environment variable of that name holding
+		 * the plain password. An attribute value is an encrypted password, or a plain password
+		 * with the prefix <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The password is read each time a connection to the mail server is opened. A password its
+		 * source does not hold, e.g. an unset named secret, is sent empty.
+		 * </p>
 		 */
 		@Name(PASSWORD)
-		@Encrypted
-		@Nullable
+		@Format(SecretSourceFormat.class)
 		@DynamicMandatory(fun = IfTrue.class, args = @Ref(ACTIVATED))
-		String getPassword();
+		PolymorphicConfiguration<? extends SecretSource> getPassword();
+
+		/**
+		 * @see #getPassword()
+		 */
+		void setPassword(PolymorphicConfiguration<? extends SecretSource> value);
 
 		/**
 		 * Additional options to pass when opening a connection to the mail server.
@@ -155,8 +176,15 @@ public class MailReceiver implements ConnectionListener {
 
 	private ServerConfig _config;
 
-	MailReceiver(ServerConfig config) {
+	/**
+	 * Source of {@link ServerConfig#getPassword()}, <code>null</code> if no password is
+	 * configured.
+	 */
+	private final SecretSource _password;
+
+	MailReceiver(InstantiationContext context, ServerConfig config) {
 		_config = config;
+		_password = context.getInstance(config.getPassword());
 	}
 
     /** 
@@ -793,6 +821,15 @@ public class MailReceiver implements ConnectionListener {
 	 * @throws MessagingException
 	 *         When closing store fails.
 	 */
+	/**
+	 * The current value of the configured password, the empty string if none is configured or its
+	 * source does not hold it (e.g. the named secret is not set for a server without login).
+	 */
+	private String password() {
+		String password = _password == null ? null : _password.lookup();
+		return password == null ? StringServices.EMPTY_STRING : password;
+	}
+
 	private Store initStore() throws NoSuchProviderException, MessagingException {
 		resetSession();
 		_store = getSession().getStore();
@@ -800,7 +837,7 @@ public class MailReceiver implements ConnectionListener {
 			String server = _config.getServer();
 			int port = _config.getPort();
 			String user = _config.getUser();
-			String passwd = _config.getPassword();
+			String passwd = password();
 			try {
 				_store.connect(server, port, user, passwd);
 			} catch (MessagingException ex) {

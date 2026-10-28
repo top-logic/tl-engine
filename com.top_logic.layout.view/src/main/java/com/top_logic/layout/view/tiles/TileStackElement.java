@@ -15,15 +15,20 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
@@ -82,6 +87,7 @@ public class TileStackElement implements UIElement {
 	 * Configuration for {@link TileStackElement}.
 	 */
 	@TagName("tile-stack")
+	@TypeIcon("css:bi bi-stack")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -121,8 +127,10 @@ public class TileStackElement implements UIElement {
 		 * {@code /WEB-INF/views/}.
 		 */
 		@Name(INITIAL)
+		@Label("Initial view")
 		@Mandatory
-		String getInitial();
+		@Format(ViewRefFormat.class)
+		ViewRef getInitial();
 
 		/**
 		 * Name under which every mounted frame sees the path channel of this stack.
@@ -170,12 +178,13 @@ public class TileStackElement implements UIElement {
 		 */
 		@Name(FRAMES)
 		@DefaultContainer
+		@TreeProperty
 		List<FrameRouteConfig> getFrames();
 	}
 
 	private final ChannelRef _pathRef;
 
-	private final String _initialViewRef;
+	private final ViewRef _initialView;
 
 	private final String _bindPathTo;
 
@@ -191,7 +200,7 @@ public class TileStackElement implements UIElement {
 	@CalledByReflection
 	public TileStackElement(InstantiationContext context, Config config) {
 		_pathRef = config.getPath();
-		_initialViewRef = config.getInitial();
+		_initialView = config.getInitial();
 		_bindPathTo = config.getBindPathTo();
 		_bindings = config.getBindings();
 		_frameRoutes = config.getFrames().stream()
@@ -202,7 +211,7 @@ public class TileStackElement implements UIElement {
 
 	@Override
 	public List<ChildGroup> getChildGroups() {
-		return List.of(ChildGroup.view(Config.INITIAL, _initialViewRef));
+		return List.of(ChildGroup.view(Config.INITIAL, _initialView));
 	}
 
 	@Override
@@ -217,7 +226,7 @@ public class TileStackElement implements UIElement {
 			sharedChannels.put(binding.getChannel(), context.resolveChannel(binding.getTo()));
 		}
 		ReactTileStackControl result =
-			new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, sharedChannels);
+			new ReactTileStackControl(context, this, pathChannel, scope, _initialView, sharedChannels);
 		result.setCssClass(_cssClass);
 		return result;
 	}

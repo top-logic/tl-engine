@@ -201,9 +201,9 @@ graded by another judge compare with nothing graded by the pinned one. A judge t
 or answers something unreadable fails the expectation; it never passes it.
 
 ```bash
-export tl_openai_api_key="unencrypted:..."     # the arm
-export tl_anthropic_api_key="unencrypted:..."  # the pinned judge
-export tl_brave_api_key="unencrypted:..."      # the workers' web search
+export tl_openai_api_key="..."                 # the arm
+export tl_anthropic_api_key="..."              # the pinned judge
+export tl_brave_api_key="..."                  # the workers' web search
 mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.research.e2e=true -Dtest=TestResearchEval
 ```
 

@@ -6,6 +6,7 @@
 
 package com.top_logic.model.security;
 
+import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.thread.ThreadContext;
@@ -39,6 +40,23 @@ public interface ModelAccessRights {
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+	/**
+	 * The roles granted the given command group on the given type before the rules of the access
+	 * rights entry of the type itself are applied: those the generalizations of the type pass on,
+	 * and those the entry of its module grants.
+	 *
+	 * <p>
+	 * Applying the rules of the type's own entry to this set in order yields the roles granted the
+	 * command group on the type, without the roles holding it through an implying operation. An
+	 * editor of that entry computes from it what a changed rule sequence grants.
+	 * </p>
+	 *
+	 * @return An empty set for an implementation without rule sequences.
+	 */
+	default Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Whether objects of the given type are not access controlled at all.
@@ -151,6 +169,54 @@ public interface ModelAccessRights {
 	 */
 	default boolean hasSingletonRights(TLClass type) {
 		return false;
+	}
+
+	/**
+	 * The operations that apply to the objects of the given type.
+	 *
+	 * <p>
+	 * Only an operation applying to a type can be granted on it. The
+	 * {@link ApplicableOperations#BUILT_IN built-in operations} apply to every type; any other
+	 * operation applies to a type when the type, one of its generalizations or its module declares
+	 * it. The result also tells which operations imply which others.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects.
+	 *
+	 * @implSpec An implementation without operation declarations answers
+	 *           {@link ApplicableOperations#BUILT_IN_ONLY} for every type.
+	 *
+	 * @see #getObjectOperations(TLObject)
+	 */
+	default ApplicableOperations getOperations(TLClass type) {
+		return ApplicableOperations.BUILT_IN_ONLY;
+	}
+
+	/**
+	 * Whether the given operation applies to the objects of the given type.
+	 *
+	 * @see #getOperations(TLClass)
+	 */
+	default boolean appliesTo(TLClass type, BoundCommandGroup operation) {
+		return getOperations(type).appliesTo(operation);
+	}
+
+	/**
+	 * The operations that apply to the given object.
+	 *
+	 * <p>
+	 * For a module singleton, these are the {@link #getOperations(TLClass) operations of its type}
+	 * plus those declared for the singleton itself. For any other object, these are the operations
+	 * of its type.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object. An object whose type is no {@link TLClass} has the
+	 *        {@link ApplicableOperations#BUILT_IN built-in operations} only.
+	 */
+	default ApplicableOperations getObjectOperations(TLObject object) {
+		return object.tType() instanceof TLClass type ? getOperations(type) : ApplicableOperations.BUILT_IN_ONLY;
 	}
 
 	/**

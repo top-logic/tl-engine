@@ -116,9 +116,9 @@ public interface Config extends JMSClient.Config {
     /**
      * The password to the given user name.
      */
-    @Encrypted
     @Name(PASSWORD)
-    String getPassword();
+    @Format(SecretSourceFormat.class)
+    PolymorphicConfiguration&lt;? extends SecretSource&gt; getPassword();
 }</code></pre>
 
 <p>Wie in obigem Beispiel zu sehen, können die Optionen der Konfiguration verschiedene Typen haben und erhalten durch die Annotation <code class="hljs inlineCode">@Name()</code> ihren Konfigurations-Namen als String. Dieser wird dazu verwendet der Konfiguration einen übersetzbaren Namen und auf Wunsch auch einen Tooltip zu geben.</p>
@@ -136,8 +136,11 @@ public interface Config extends JMSClient.Config {
 <p>Nach der Konfiguration benötigt die Klasse noch einen Konstruktor und muss die Abstrakte Methode <code class="hljs inlineCode">setupConnectionFactory</code> implementieren.</p>
 
 <pre>
-<code class="language-java">public ActiveMQClient(InstantiationContext context, Config config) {
+<code class="language-java">private final SecretSource _password;
+
+public ActiveMQClient(InstantiationContext context, Config config) {
     super(context, config);
+    _password = context.getInstance(config.getPassword());
 }
 
 @Override
@@ -146,9 +149,11 @@ public ConnectionFactory setupConnectionFactory() {
     String url = config.getURLScheme().toString().toLowerCase() + "://" + config.getHost() + ":" + config.getPort();
     ActiveMQConnectionFactory amqcf = new ActiveMQConnectionFactory(url);
     amqcf.setUser(config.getUser());
-    amqcf.setPassword(config.getPassword());
+    amqcf.setPassword(secret(_password));
     return amqcf;
 }</code></pre>
+
+<p>Das Passwort ist eine <code class="hljs inlineCode">SecretSource</code> (Geheimnisquelle): Es wird als Verweis auf eine Umgebungsvariable (<code class="hljs inlineCode">&lt;password name="MQ_PASSWORD"/&gt;</code>), als Datei oder als verschlüsselter Attributwert konfiguriert. Die Methode <code class="hljs inlineCode">setupConnectionFactory</code> wird für jede Verbindung aufgerufen, das Passwort wird also im Moment des Verbindens gelesen.</p>
 
 <p>Hier müssen nun alle Einstellungen vorgenommen werden, die das gewählte MQ System benötigt, um eine <code class="hljs inlineCode">ConnectionFactory</code> zu erstellen. Diese muss zurückgegeben werden, damit eine Verbindung zu dem MQ System aufgebaut werden kann.</p>
 

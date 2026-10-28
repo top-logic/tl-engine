@@ -30,6 +30,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.Resources;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.Transaction;
@@ -622,7 +623,8 @@ public class TestTileStackDirtyCheck extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestTileStackDirtyCheck.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 
 }

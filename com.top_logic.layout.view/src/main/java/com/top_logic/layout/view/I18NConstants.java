@@ -123,6 +123,26 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DESIGNER_ADD_DIALOG_TYPE;
 
 	/**
+	 * @en Opens the view "{0}" in the designer.
+	 */
+	public static ResKey1 DESIGNER_VIEW_LINK__PATH;
+
+	/**
+	 * @en Invalid view: {0}
+	 */
+	public static ResKey1 DESIGNER_INVALID_VIEW__PATH;
+
+	/**
+	 * @en The referenced view "{0}" cannot be loaded: {1}
+	 */
+	public static ResKey2 DESIGNER_INVALID_VIEW__PATH_DETAILS;
+
+	/**
+	 * @en The view "{0}" cannot be opened in the designer: {1}
+	 */
+	public static ResKey2 ERROR_OPEN_VIEW_FAILED__PATH_DETAILS;
+
+	/**
 	 * @en Edit Layout
 	 */
 	public static ResKey DASHBOARD_EDIT;

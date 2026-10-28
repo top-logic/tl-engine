@@ -8,7 +8,7 @@
 					<azure name="pac4j-azure">
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<scope>%PAC_SCOPE%</scope>
-						<secret>%PAC_SECRET%</secret>
+						<secret name="tl_pac_secret"/>
 						<tenant>%PAC_AZURE_TENANT%</tenant>
 						<client-authentication-method>%PAC_CLIENT_AUTHENTICATION_METHOD%</client-authentication-method>
 						<custom-params>

@@ -20,6 +20,7 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.element.TabBarElement;
 import com.top_logic.layout.view.element.TabBarElement.TabConfig;
 
@@ -110,7 +111,8 @@ public class TestSavedViewIsLoadable extends TestCase {
 		ViewElement.Config view = TypedConfiguration.newConfigItem(ViewElement.Config.class);
 		com.top_logic.layout.view.ReferenceElement.Config reference =
 			TypedConfiguration.newConfigItem(com.top_logic.layout.view.ReferenceElement.Config.class);
-		reference.update(reference.descriptor().getProperty("view"), "other.view.xml");
+		reference.update(reference.descriptor().getProperty(com.top_logic.layout.view.ReferenceElement.Config.VIEW),
+			new ViewRef("other.view.xml"));
 		// An added but unfilled binding: "channel" and "to" are mandatory.
 		reference.getBindings()
 			.add(TypedConfiguration.newConfigItem(com.top_logic.layout.view.channel.ChannelBindingConfig.class));

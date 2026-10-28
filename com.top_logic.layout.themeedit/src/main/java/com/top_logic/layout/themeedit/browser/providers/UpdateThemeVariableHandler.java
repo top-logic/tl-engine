@@ -91,6 +91,7 @@ public class UpdateThemeVariableHandler extends AbstractCommandHandler {
 		ThemeSettings.Config themeSettingsConfig = createUpdatedThemeSettings(setting, topLevelThemeSettings);
 
 		writeThemeSettings(topLevelThemeSettings, themeSettingsConfig);
+		FileManager.getInstance().refresh(ThemeUtil.getThemeSettingsPath(setting.getThemeId()));
 	}
 
 	private ThemeSettings.Config createUpdatedThemeSettings(ThemeSetting themeSetting, File destinationFile) {

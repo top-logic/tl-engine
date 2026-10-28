@@ -1,0 +1,3 @@
+# The provider keys and the local settings of a gateway installation.
+/secrets/
+/.env

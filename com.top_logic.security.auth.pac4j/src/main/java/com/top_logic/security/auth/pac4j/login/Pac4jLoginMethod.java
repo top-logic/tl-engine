@@ -24,6 +24,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 import com.top_logic.security.auth.pac4j.servlet.Pac4jUserTokens;
 import com.top_logic.util.AbstractTopLogicServlet;
@@ -56,6 +57,8 @@ public class Pac4jLoginMethod implements LoginMethod {
 
 	private final ThemeImage _icon;
 
+	private final ClientConfigurator _configurator;
+
 	/**
 	 * Creates a {@link Pac4jLoginMethod}.
 	 *
@@ -66,11 +69,15 @@ public class Pac4jLoginMethod implements LoginMethod {
 	 *        The user-visible label.
 	 * @param icon
 	 *        An optional icon, or {@code null}.
+	 * @param configurator
+	 *        The configurator of the client, deciding whether this method is
+	 *        {@link #isAvailable() available}.
 	 */
-	public Pac4jLoginMethod(String clientName, ResKey label, ThemeImage icon) {
+	public Pac4jLoginMethod(String clientName, ResKey label, ThemeImage icon, ClientConfigurator configurator) {
 		_clientName = clientName;
 		_label = label;
 		_icon = icon;
+		_configurator = configurator;
 	}
 
 	@Override
@@ -86,6 +93,16 @@ public class Pac4jLoginMethod implements LoginMethod {
 	@Override
 	public ThemeImage getIcon() {
 		return _icon;
+	}
+
+	/**
+	 * Whether the client can be used now.
+	 *
+	 * @see ClientConfigurator#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _configurator.isAvailable();
 	}
 
 	@Override

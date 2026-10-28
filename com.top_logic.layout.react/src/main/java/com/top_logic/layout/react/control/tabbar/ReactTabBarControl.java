@@ -74,20 +74,10 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	public ReactTabBarControl(ReactContext context, Object model, List<TabDefinition> tabDefinitions, String initialActiveTabId) {
 		super(context, model, REACT_MODULE);
 		_tabDefinitions = new ArrayList<>(tabDefinitions);
-		_activeTabId = initialActiveTabId != null ? initialActiveTabId : tabDefinitions.get(0).getId();
+		String initial = initialActiveTabId != null ? initialActiveTabId : tabDefinitions.get(0).getId();
+		_activeTabId = findTab(initial).isHidden() ? nearestVisible(initial) : initial;
 
-		// Build the static tab list for the React component.
-		List<Map<String, Object>> tabList = new ArrayList<>();
-		for (TabDefinition tab : _tabDefinitions) {
-			Map<String, Object> tabInfo = new HashMap<>();
-			tabInfo.put(TabBarState.Tab.ID__PROP, tab.getId());
-			tabInfo.put(TabBarState.Tab.LABEL__PROP, tab.getLabel());
-			if (tab.getIcon() != null) {
-				tabInfo.put(TabBarState.Tab.ICON__PROP, tab.getIcon());
-			}
-			tabList.add(tabInfo);
-		}
-		putState(TabBarState.TABS__PROP, tabList);
+		putState(TabBarState.TABS__PROP, tabStates());
 		putState(TabBarState.ACTIVE_TAB_ID__PROP, _activeTabId);
 		// activeContent is null until this tab bar is attached (or written) - see onAttach().
 	}
@@ -150,6 +140,81 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 */
 	public String getActiveTabId() {
 		return _activeTabId;
+	}
+
+	/**
+	 * The description of the tabs for the client, in the order of the strip.
+	 */
+	private List<Map<String, Object>> tabStates() {
+		List<Map<String, Object>> tabList = new ArrayList<>();
+		for (TabDefinition tab : _tabDefinitions) {
+			Map<String, Object> tabInfo = new HashMap<>();
+			tabInfo.put(TabBarState.Tab.ID__PROP, tab.getId());
+			tabInfo.put(TabBarState.Tab.LABEL__PROP, tab.getLabel());
+			if (tab.getIcon() != null) {
+				tabInfo.put(TabBarState.Tab.ICON__PROP, tab.getIcon());
+			}
+			if (tab.isHidden()) {
+				tabInfo.put(TabBarState.Tab.HIDDEN__PROP, Boolean.TRUE);
+			}
+			tabList.add(tabInfo);
+		}
+		return tabList;
+	}
+
+	/**
+	 * Whether the tab with the given ID is left out of the strip.
+	 */
+	public boolean isTabHidden(String tabId) {
+		return findTab(tabId).isHidden();
+	}
+
+	/**
+	 * Leaves the tab with the given ID out of the strip, or shows it again.
+	 *
+	 * <p>
+	 * The tab keeps its content. Hiding the selected tab selects the nearest visible tab - the next
+	 * one in the strip, or the previous one at its end. Showing a tab again does not select it: the
+	 * selection the user has made in the meantime stays.
+	 * </p>
+	 *
+	 * @param tabId
+	 *        The ID of the tab.
+	 * @param hidden
+	 *        Whether the tab is left out.
+	 */
+	public void setTabHidden(String tabId, boolean hidden) {
+		TabDefinition tab = findTab(tabId);
+		if (tab.isHidden() == hidden) {
+			return;
+		}
+		tab.withHidden(hidden);
+		putState(TabBarState.TABS__PROP, tabStates());
+		if (hidden && tabId.equals(_activeTabId)) {
+			String next = nearestVisible(tabId);
+			if (!next.equals(tabId)) {
+				selectTab(next);
+			}
+		}
+	}
+
+	/**
+	 * The ID of the visible tab nearest to the given one: the first visible tab after it, else the
+	 * last visible tab before it; the given tab itself when no other tab is visible.
+	 */
+	private String nearestVisible(String tabId) {
+		int index = _tabDefinitions.indexOf(findTab(tabId));
+		for (int n = index + 1; n < _tabDefinitions.size(); n++) {
+			if (!_tabDefinitions.get(n).isHidden()) {
+				return _tabDefinitions.get(n).getId();
+			}
+		}
+		for (int n = index - 1; n >= 0; n--) {
+			if (!_tabDefinitions.get(n).isHidden()) {
+				return _tabDefinitions.get(n).getId();
+			}
+		}
+		return tabId;
 	}
 
 	/**

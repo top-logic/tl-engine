@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<dashboard id="cockpit">
+		<tile id="guarded"
+			width="half"
+		>
+			<access-control
+				inputs="object"
+				object="$object"
+				operation="Read"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</tile>
+		<tile id="open"
+			width="half"
+		>
+			<panel/>
+		</tile>
+	</dashboard>
+</view>

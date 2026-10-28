@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
@@ -51,6 +52,7 @@ public class ImageElement implements UIElement {
 	 * Configuration for {@link ImageElement}.
 	 */
 	@TagName("image")
+	@TypeIcon("css:bi bi-image")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getInput()}. */

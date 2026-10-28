@@ -18,7 +18,9 @@
 							<options>
 								<option name="URL" value="jdbc:mysql://%MYSQL_HOST%:%MYSQL_PORT%/%MYSQL_SCHEMA%" />
 								<option name="user" value="%MYSQL_USER%" />
-								<encrypted-option name="password" value="%MYSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mysql_passwd"/>
+								</encrypted-option>
 								
 								<option name="characterEncoding" value="utf-8" />
 								<option name="characterSetResults" value="utf-8" />
@@ -44,7 +46,9 @@
 							<options>
 								<option name="URL" value="jdbc:mysql://%MYSQL_HOST%:%MYSQL_PORT%/%MYSQL_SCHEMA_TEST_UNIT%" />
 								<option name="user" value="%MYSQL_USER%" />
-								<encrypted-option name="password" value="%MYSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mysql_passwd"/>
+								</encrypted-option>
 								
 								<option name="characterEncoding" value="utf-8" />
 								<option name="characterSetResults" value="utf-8" />
@@ -68,7 +72,9 @@
 							<options>
 								<option name="URL" value="jdbc:mysql://%MYSQL_HOST%:%MYSQL_PORT%/%MYSQL_SCHEMA_TEST_MIGRATION%" />
 								<option name="user" value="%MYSQL_USER%" />
-								<encrypted-option name="password" value="%MYSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mysql_passwd"/>
+								</encrypted-option>
 								
 								<option name="characterEncoding" value="utf-8" />
 								<option name="characterSetResults" value="utf-8" />

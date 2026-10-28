@@ -72,12 +72,9 @@
 								<en>Generate samples</en>
 								<de>Beispiele erzeugen</de>
 							</label>
-							<executability>
-								<model-access
-									operation="Create"
-									type="demo.react:Demo"
-								/>
-							</executability>
+							<access>
+								<create type="demo.react:Demo"/>
+							</access>
 							<with-transaction>
 								<execute-script function="count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, 'Sample ' + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
 							</with-transaction>

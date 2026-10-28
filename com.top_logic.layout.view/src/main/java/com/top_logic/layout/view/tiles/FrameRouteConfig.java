@@ -9,11 +9,14 @@ import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.routing.WithFinalTitle;
 
 /**
@@ -81,7 +84,8 @@ public interface FrameRouteConfig extends WithFinalTitle {
 	 */
 	@Name(VIEW)
 	@Mandatory
-	String getView();
+	@Format(ViewRefFormat.class)
+	ViewRef getView();
 
 	/**
 	 * Pattern of the URL segments the frame occupies.

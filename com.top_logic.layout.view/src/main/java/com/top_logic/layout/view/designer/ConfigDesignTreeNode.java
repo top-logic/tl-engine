@@ -15,6 +15,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigTagName;
+import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.util.Resources;
 
 /**
@@ -78,6 +80,10 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 
 	@Override
 	public String getLabel() {
+		if (isViewFileRoot()) {
+			// A view read from a file of its own is named by that file.
+			return ViewLoader.viewRef(getSourceFile());
+		}
 		ConfigurationDescriptor descriptor = _config.descriptor();
 		for (String propName : LABEL_PROPERTIES) {
 			PropertyDescriptor property = descriptor.getProperty(propName);
@@ -91,6 +97,16 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether this node is the view of a file, not part of the file of its parent.
+	 */
+	public boolean isViewFileRoot() {
+		String sourceFile = getSourceFile();
+		DesignTreeNode parent = getParent();
+		return _config instanceof ViewElement.Config && sourceFile != null
+			&& (parent == null || !sourceFile.equals(parent.getSourceFile()));
 	}
 
 	/**

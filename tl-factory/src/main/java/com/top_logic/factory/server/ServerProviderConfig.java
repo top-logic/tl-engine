@@ -9,16 +9,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.factory.ci.CIService;
-import com.top_logic.factory.git.GitHostingService;
 
 /**
  * Configuration of a provider that talks to a server at a {@link #getBaseUrl() base URL}, e.g. a
- * git hosting service or a CI server.
+ * CI server.
  *
  * <p>
  * A provider configured without base URL is switched off: a service holding such a provider, e.g.
- * {@link GitHostingService} or {@link CIService}, does not create it and is disabled, as if no
- * provider were configured (see {@link #isSwitchedOn(PolymorphicConfiguration)}). This lets an
+ * {@link CIService}, does not create it and is disabled, as if no provider were configured (see {@link #isSwitchedOn(PolymorphicConfiguration)}). This lets an
  * application configure the provider with its settings taken from the environment and switch it on
  * by setting the URL of the server alone.
  * </p>

@@ -223,8 +223,30 @@ public class TestProjectRepository extends BasicTestCase {
 		assertFalse("The branch is protected after the push.", _protectedAtPush);
 		assertTrue("The branch is protected before the build.", _protectedAtBuild);
 		assertFalse("The token of the push is revoked after it.", _admittedAtBuild);
+		assertEquals(Boolean.TRUE, project.tValueByName(FactoryModel.PROJECT_BRANCH_PROTECTED));
 		assertFalse("No token in the container.",
 			_provider.created(FactoryModel.getWorkspaceId(workspace)).getEnv().containsKey(ProxyTokens.ENV_PROXY_TOKEN));
+	}
+
+	/**
+	 * If the credentials of the git connection may not administer the repository, the branch is not
+	 * protected: the output has a warning, the project records the unprotected branch, the
+	 * application is built anyway, and the agent is told no protected files.
+	 */
+	public void testBranchNotProtected() throws Exception {
+		_hosting.setCanAdminister(false);
+		TLObject project = project("unprotected", null);
+		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
+		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
+		assertEquals(List.of(RecordingGitHostingProvider.CREATE + " unprotected"), _hosting.calls());
+		assertEquals(Boolean.FALSE, project.tValueByName(FactoryModel.PROJECT_BRANCH_PROTECTED));
+		assertTrue(log(workspace), log(workspace).contains(RepositorySource.WARNING
+			+ "The access token of the git connection may not administer the repository "
+			+ RecordingGitHostingProvider.DEFAULT_OWNER + "/unprotected"));
+		assertTrue("Built anyway.", steps().contains("build"));
+		String instructions = new com.top_logic.factory.agent.StoredConversation(
+			commit(() -> FactoryModel.createConversation(workspace, "A task."))).instructions();
+		assertFalse(instructions, instructions.contains("protected files"));
 	}
 
 	/**
@@ -370,12 +392,15 @@ public class TestProjectRepository extends BasicTestCase {
 	}
 
 	/**
-	 * Without git hosting, the application is generated in the workspace only.
+	 * Without git connection, the application is generated in the workspace only.
 	 */
 	public void testNoGitHosting() throws Exception {
 		TestingProjectWorkspaces.setGitHosting(null);
-		assertFalse(ProjectWorkspaces.getInstance().isGitHostingEnabled());
 		TLObject project = project("no-hosting", null);
+		commit(() -> {
+			project.tUpdateByName(FactoryModel.PROJECT_GIT_CONNECTION, null);
+			return null;
+		});
 		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
 		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
 		assertEquals(List.of("generate", "build"), steps());

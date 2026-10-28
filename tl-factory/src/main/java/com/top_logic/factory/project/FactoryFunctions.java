@@ -18,6 +18,10 @@ import com.top_logic.factory.agent.AgentTasks;
 import com.top_logic.factory.ci.CIBuild;
 import com.top_logic.factory.ci.CIBuildStart;
 import com.top_logic.factory.ci.ProjectCI;
+import com.top_logic.factory.git.GitCapabilities;
+import com.top_logic.factory.git.GitConnections;
+import com.top_logic.factory.git.GitConnections.OwnConnection;
+import com.top_logic.factory.git.GitHostingService;
 import com.top_logic.factory.tenant.TenantMembers;
 import com.top_logic.factory.tenant.TenantMembers.NewAccount;
 import com.top_logic.factory.tenant.TenantRole;
@@ -33,8 +37,9 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * TL-Script functions managing the workspaces of the projects of the control application and the
- * members of its tenants, and telling the tenant and the projects of the current user.
+ * TL-Script functions managing the workspaces of the projects of the control application, the
+ * members of its tenants and their git connections, and telling the tenant and the projects of the
+ * current user.
  *
  * <p>
  * The functions changing a project, its workspace or its CI job require the right to write the
@@ -78,6 +83,30 @@ public class FactoryFunctions extends TLScriptFunctions {
 
 	/** Key of the dictionary of {@link #lastBuild(TLObject)}: why the CI server cannot be asked. */
 	public static final String BUILD_ERROR = "error";
+
+	/**
+	 * Key of the dictionary of {@link #gitCapabilities(TLObject, TLObject)}: whether the access
+	 * token may create repositories.
+	 */
+	public static final String GIT_CREATE_REPOSITORIES = "createRepositories";
+
+	/**
+	 * Key of the dictionary of {@link #gitCapabilities(TLObject, TLObject)}: whether the access
+	 * token may protect the branches of the repositories.
+	 */
+	public static final String GIT_PROTECT_BRANCHES = "protectBranches";
+
+	/**
+	 * Key of the dictionary of {@link #gitCapabilities(TLObject, TLObject)}: the organization or
+	 * user the repositories of the tenant are created in.
+	 */
+	public static final String GIT_OWNER = "owner";
+
+	/**
+	 * Key of the dictionary of {@link #gitCapabilities(TLObject, TLObject)}: why the rights could
+	 * not be determined.
+	 */
+	public static final String GIT_PROBLEM = "problem";
 
 	/**
 	 * The TopLogic version a new project builds its application on, unless it chooses another one.
@@ -290,18 +319,201 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Whether the projects have repositories on a git hosting service.
+	 * Whether a new project of the current user has a git connection to choose, on which its
+	 * repository lives.
 	 *
-	 * @return Whether git hosting is switched on.
+	 * @return Whether the tenant of the current user (for a user of no tenant: the installation)
+	 *         offers a git connection.
 	 */
 	@Label("Git hosting enabled")
 	@SideEffectFree
 	public static boolean gitHosting() {
-		return ProjectWorkspaces.getInstance().isGitHostingEnabled();
+		return !GitConnections.choices(currentTenant()).isEmpty();
 	}
 
 	/**
-	 * Checks the existing repository entered for a new project on the git hosting service.
+	 * The names of the types of git hosting services a git connection may be of, e.g. "gitea".
+	 *
+	 * @return The registered types.
+	 */
+	@Label("Git provider types")
+	@SideEffectFree
+	public static List<String> gitProviderTypes() {
+		GitHostingService service = GitHostingService.getInstanceOrNull();
+		return service == null ? List.of() : service.getProviderTypeNames();
+	}
+
+	/**
+	 * The git connections a new project of a tenant may live on: the built-in connections of the
+	 * installation, then the connections of the tenant.
+	 *
+	 * @param tenant
+	 *        The tenant; empty for the tenant of the current user.
+	 * @return The connections, objects of <code>tl.factory:GitConnection</code>.
+	 */
+	@Label("Git connections of a new project")
+	@SideEffectFree
+	public static List<TLObject> gitConnections(TLObject tenant) {
+		return GitConnections.choices(tenant == null ? currentTenant() : tenant);
+	}
+
+	/**
+	 * The git connection a new project of the current user lives on unless another one is chosen.
+	 *
+	 * @return The first of the git connections of a new project, nothing if there is none.
+	 */
+	@Label("Default git connection")
+	@SideEffectFree
+	public static TLObject defaultGitConnection() {
+		return GitConnections.defaultChoice(currentTenant());
+	}
+
+	/**
+	 * The git connections a tenant created itself, with access tokens of its own.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @return The connections, by name.
+	 */
+	@Label("Git connections of a tenant")
+	@SideEffectFree
+	public static List<TLObject> ownGitConnections(TLObject tenant) {
+		return tenant == null ? List.of() : GitConnections.ownConnections(tenant);
+	}
+
+	/**
+	 * Whether a git connection is a built-in connection of the installation, offered to every
+	 * tenant and changed only by its configuration.
+	 *
+	 * @param connection
+	 *        The connection.
+	 * @return Whether it is built in.
+	 */
+	@Label("Built-in git connection")
+	@SideEffectFree
+	public static boolean gitBuiltIn(@Mandatory TLObject connection) {
+		return GitConnections.isBuiltIn(connection);
+	}
+
+	/**
+	 * Checks the git connection of a new project: one of the git connections of a new project of
+	 * its tenant, if there are any.
+	 *
+	 * @param project
+	 *        The project being created.
+	 * @param value
+	 *        The chosen connection.
+	 * @return The message describing what is wrong, nothing if the connection is fine.
+	 */
+	@Label("Check a git connection")
+	@SideEffectFree
+	public static ResKey checkGitConnection(TLObject project, TLObject value) {
+		return GitConnections.checkProjectConnection(project, value);
+	}
+
+	/**
+	 * What the access token of a git connection may do, asked from the git hosting service.
+	 *
+	 * @param connection
+	 *        The connection.
+	 * @param tenant
+	 *        The tenant whose repositories are created; empty for the tenant of the current user.
+	 *        On a built-in connection, every tenant has an organization of its own.
+	 * @return A dictionary: whether the token may create repositories ("createRepositories") and
+	 *         protect their branches ("protectBranches"), the organization or user the repositories
+	 *         are created in ("owner"), and why the rights could not be determined ("problem", only
+	 *         then).
+	 */
+	@Label("Rights of a git connection")
+	@SideEffectFree
+	public static Map<String, Object> gitCapabilities(@Mandatory TLObject connection, TLObject tenant) {
+		TLObject owner = tenant == null ? currentTenant() : tenant;
+		GitCapabilities capabilities = GitConnections.capabilities(connection, owner);
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(GIT_CREATE_REPOSITORIES, Boolean.valueOf(capabilities.createRepositories()));
+		result.put(GIT_PROTECT_BRANCHES, Boolean.valueOf(capabilities.protectBranches()));
+		result.put(GIT_OWNER, GitConnections.ownerFor(connection, owner));
+		if (capabilities.problem() != null) {
+			result.put(GIT_PROBLEM, capabilities.problem());
+		}
+		return result;
+	}
+
+	/**
+	 * Creates a git connection of a tenant with its access token. Only a user who may change the
+	 * tenant (an administrator of the tenant or an operator) may do so. The token is kept in the
+	 * secret store of the installation, never in the model, and is not shown again.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @param name
+	 *        The display name of the connection.
+	 * @param providerType
+	 *        The type of the git hosting service, one of the git provider types.
+	 * @param url
+	 *        The URL of the server.
+	 * @param owner
+	 *        The organization or user the repositories live in.
+	 * @param token
+	 *        The access token.
+	 * @return The new connection.
+	 */
+	@Label("Create a git connection")
+	public static TLObject createGitConnection(@Mandatory TLObject tenant, @Mandatory String name,
+			@Mandatory String providerType, @Mandatory String url, @Mandatory String owner, @Mandatory String token) {
+		return GitConnections.create(tenant, new OwnConnection(name, providerType, url, owner), token);
+	}
+
+	/**
+	 * Changes a git connection of a tenant. Only a user who may change the tenant may do so; type,
+	 * URL and owner stay as they are while projects live on the connection.
+	 *
+	 * @param connection
+	 *        The connection of a tenant.
+	 * @param name
+	 *        The display name.
+	 * @param providerType
+	 *        The type of the git hosting service.
+	 * @param url
+	 *        The URL of the server.
+	 * @param owner
+	 *        The organization or user the repositories live in.
+	 */
+	@Label("Change a git connection")
+	public static void updateGitConnection(@Mandatory TLObject connection, @Mandatory String name,
+			@Mandatory String providerType, @Mandatory String url, @Mandatory String owner) {
+		GitConnections.update(connection, new OwnConnection(name, providerType, url, owner));
+	}
+
+	/**
+	 * Replaces the access token of a git connection of a tenant. Only a user who may change the
+	 * tenant may do so.
+	 *
+	 * @param connection
+	 *        The connection of a tenant.
+	 * @param token
+	 *        The new access token.
+	 */
+	@Label("Replace the access token of a git connection")
+	public static void replaceGitToken(@Mandatory TLObject connection, @Mandatory String token) {
+		GitConnections.replaceToken(connection, token);
+	}
+
+	/**
+	 * Deletes a git connection of a tenant and its access token. Only a user who may change the
+	 * tenant may do so, and only while no project lives on the connection.
+	 *
+	 * @param connection
+	 *        The connection of a tenant.
+	 */
+	@Label("Delete a git connection")
+	public static void deleteGitConnection(@Mandatory TLObject connection) {
+		GitConnections.delete(connection);
+	}
+
+	/**
+	 * Checks the existing repository entered for a new project on the git hosting service of its
+	 * git connection.
 	 *
 	 * @param project
 	 *        The project the repository is entered for.
@@ -309,9 +521,9 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 *        The full name of the repository (owner/name), its clone URL or the URL of one of its
 	 *        pages; empty for a repository the control application creates.
 	 * @return The message describing what is wrong with the value; nothing if the value is empty
-	 *         or names a repository the control application can read, if the project has recorded
-	 *         its repository already, or if git hosting is switched off or the workspace service is
-	 *         not running.
+	 *         or names a repository the access token of the connection can read, if the project has
+	 *         recorded its repository already, or if the project has no available git connection or
+	 *         the workspace service is not running.
 	 */
 	@Label("Check a repository")
 	@SideEffectFree
@@ -423,8 +635,8 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Why no CI build of a project can be started: CI or git hosting is switched off, or the
-	 * project has no repository.
+	 * Why no CI build of a project can be started: CI is switched off, the project is not on a
+	 * built-in git connection or has no repository.
 	 *
 	 * @param project
 	 *        The project, empty for none.

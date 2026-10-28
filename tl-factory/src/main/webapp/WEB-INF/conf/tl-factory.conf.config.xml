@@ -41,9 +41,12 @@
 		</config>
 
 		<!--
-			The git hosting service of the project repositories, switched off: an installation configures
-			a provider, e.g. the GiteaHostingProvider of the module tl-factory-gitea. The default branch of
-			every project repository is protected with the protected files.
+			The git hosting services of the project repositories: no provider type and no built-in
+			connection here. A module supporting a kind of hosting service registers its type under
+			provider-types, e.g. "gitea" of the module tl-factory-gitea; an installation adds its
+			built-in connections under connections, which every tenant may choose; the administrators of
+			a tenant add connections of their own. The default branch of every project repository is
+			protected with the protected files, if the access token of its connection may do so.
 		-->
 		<config service-class="com.top_logic.factory.git.GitHostingService">
 			<instance class="com.top_logic.factory.git.GitHostingService"
@@ -71,8 +74,8 @@
 			The workspace proxy: the workspaces reach services through its routes, which add the
 			credentials of the control application to their requests; no workspace container gets
 			one. The LLM route adds the API key of the named provider of the LLMProviderService, the git
-			route the credentials of the GitHostingService for the repository of the project of a
-			workspace; without a git hosting provider, it answers every request with 404. The git route
+			route the credentials of the git connection of the project of a workspace for its repository;
+			without repository or available git connection, it answers every request with 404. The git route
 			also gives every git process in a workspace the identity its commits are made with. The CI
 			route lets the agent start and follow the builds of the CI job of its project; without a CI
 			provider, it answers every request with 404.
@@ -181,7 +184,9 @@
 			(tl.factory.Entwickler) works on the projects, a reader (tl.factory.Leser) sees the tenant and
 			its projects. A workspace is a part of its project and an agent conversation a part of its
 			workspace, both decided by their container. The account of a member inherits the roles held
-			on its tenant, so that the members of a tenant see each other.
+			on its tenant, so that the members of a tenant see each other. A git connection inherits the
+			roles held on the tenants it is offered to (its own tenant, or every tenant for a built-in
+			connection), so that their members read it.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -282,6 +287,20 @@
 							<step attribute="tl.factory:Project#tenant"/>
 						</path>
 					</rule>
+					<rule id="SecRootForGitConnection"
+						inherit="true"
+						meta-element="tl.factory:GitConnection"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule id="TenantsForGitConnection"
+						inherit="true"
+						meta-element="tl.factory:GitConnection"
+					>
+						<path>
+							<step attribute="tl.factory:GitConnection#tenants"/>
+						</path>
+					</rule>
 				</security-parents>
 			</instance>
 		</config>
@@ -318,6 +337,30 @@
 							inherit="true"
 							operation="Read"
 							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
+						/>
+					</class>
+					<!--
+						The members of the tenants a git connection is offered to read it. The connections
+						of a tenant are created, changed and deleted by the functions managing them
+						(com.top_logic.factory.git.GitConnections), which check the right to write the
+						tenant; the built-in connections follow the configuration of the installation.
+					-->
+					<class name="tl.factory:GitConnection">
+						<grant
+							operation="Read"
+							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
+						/>
+						<grant
+							operation="Write"
+							roles="tl.factory.Operator"
+						/>
+						<grant
+							operation="Create"
+							roles="tl.factory.Operator"
+						/>
+						<grant
+							operation="Delete"
+							roles="tl.factory.Operator"
 						/>
 					</class>
 					<!-- The input of the dialogs managing the tenants, never stored. -->

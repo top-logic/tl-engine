@@ -13,8 +13,10 @@
 # access token for the control application and a read token for Jenkins, and the Jenkins
 # administrator with an API token. The credentials are generated and written to the secret folder of
 # the developer (tl_devel_secrets_dir, default ~/.top-logic/secrets), where the control application
-# reads tl_factory_gitea_token and tl_factory_jenkins_token. See the developer article
-# factory/index, section "Local setup".
+# reads tl_factory_gitea_token and tl_factory_jenkins_token. The folder also gets the key of the
+# database secret store of the control application, tl_secret_store_key, if it has none; it is
+# never replaced or removed, since the access tokens the tenants entered are unreadable without it.
+# See the developer article factory/index, section "Local setup".
 
 set -eu
 
@@ -33,12 +35,20 @@ SCM_CREDENTIALS=tl-factory-gitea
 SECRETS="${tl_devel_secrets_dir:-${HOME}/.top-logic/secrets}"
 GITEA_TOKEN_FILE="${SECRETS}/tl_factory_gitea_token"
 JENKINS_TOKEN_FILE="${SECRETS}/tl_factory_jenkins_token"
+SECRET_STORE_KEY_FILE="${SECRETS}/tl_secret_store_key"
+# Scopes of the access token of the control application, see the developer article factory/git-hosting.
+GITEA_TOKEN_SCOPES=write:organization,write:repository,read:user
 # The credentials of this setup only: Gitea, and Jenkins as environment of its container.
 GITEA_STATE="${SECRETS}/tl_factory_devel_gitea.env"
 JENKINS_STATE="${SECRETS}/tl_factory_devel_jenkins.env"
 
 random_hex() {
 	od -An -tx1 -N16 /dev/urandom | tr -d ' \n'
+}
+
+# A random AES key of 256 bits in Base64.
+random_key() {
+	head -c 32 /dev/urandom | base64 | tr -d '\n'
 }
 
 # Writes a file readable by the developer only.
@@ -81,6 +91,10 @@ up() {
 	mkdir -p "${SECRETS}"
 	chmod 700 "${SECRETS}"
 
+	if [ ! -f "${SECRET_STORE_KEY_FILE}" ]; then
+		write_secret "${SECRET_STORE_KEY_FILE}" "$(random_key)"
+	fi
+
 	GITEA_PASSWORD=
 	GITEA_TOKEN=
 	GITEA_READ_TOKEN=
@@ -107,11 +121,12 @@ up() {
 		curl -fsS -o /dev/null -u "${GITEA_ADMIN}:${GITEA_PASSWORD}" -H 'Content-Type: application/json' \
 			-d "{\"username\": \"${GITEA_ORG}\"}" "${GITEA_URL}api/v1/orgs"
 	fi
-	# Scopes of the control application, see the developer article factory/git-hosting.
+	# A token without one of the scopes (an older setup lacks read:user) is replaced.
 	if [ -z "${GITEA_TOKEN}" ] || [ "$(api_status -H "Authorization: token ${GITEA_TOKEN}" \
-			"${GITEA_URL}api/v1/orgs/${GITEA_ORG}")" != 200 ]; then
+			"${GITEA_URL}api/v1/orgs/${GITEA_ORG}")" != 200 ] || [ "$(api_status \
+			-H "Authorization: token ${GITEA_TOKEN}" "${GITEA_URL}api/v1/user")" != 200 ]; then
 		GITEA_TOKEN="$(gitea admin user generate-access-token --username "${GITEA_ADMIN}" \
-			--token-name "tl-factory-$(date +%s)" --scopes write:organization,write:repository --raw)"
+			--token-name "tl-factory-$(date +%s)" --scopes "${GITEA_TOKEN_SCOPES}" --raw)"
 	fi
 	# Jenkins only clones.
 	if [ -z "${GITEA_READ_TOKEN}" ] || [ "$(api_status -H "Authorization: token ${GITEA_READ_TOKEN}" \
@@ -148,6 +163,7 @@ TL_JENKINS_SCM_PASSWORD=${GITEA_READ_TOKEN}
 Gitea:   ${GITEA_URL} (user ${GITEA_ADMIN}, password ${GITEA_PASSWORD})
 Jenkins: ${JENKINS_URL} (user ${JENKINS_ADMIN}, password ${TL_JENKINS_ADMIN_PASSWORD})
 Tokens:  ${GITEA_TOKEN_FILE}, ${JENKINS_TOKEN_FILE}
+Key of the secret store: ${SECRET_STORE_KEY_FILE}
 
 Environment of tl-factory-app:
   export tl_factory_gitea_url=${GITEA_URL}

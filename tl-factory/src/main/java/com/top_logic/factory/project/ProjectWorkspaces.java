@@ -42,6 +42,7 @@ import com.top_logic.factory.ci.CIPipeline;
 import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.ci.ProjectCI;
+import com.top_logic.factory.git.GitConnections;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitHostingService;
 import com.top_logic.factory.git.GitRoute;
@@ -203,6 +204,11 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	@Override
 	protected void startUp() {
 		super.startUp();
+		try {
+			GitConnections.synchronizeBuiltIn();
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to synchronize the built-in git connections.", ex, ProjectWorkspaces.class);
+		}
 		_workers = Executors.newCachedThreadPool(DaemonThreadFactory.daemonThreadFactory());
 		_workers.execute(() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::reconcile));
 		long interval = getConfig().getApplicationCheckInterval();
@@ -253,19 +259,23 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * </p>
 	 *
 	 * <p>
-	 * With {@link GitHostingService git hosting}, the sources live in the
-	 * {@link FactoryModel#PROJECT_REPOSITORY repository of the project} (see
-	 * {@link RepositorySource}): a project without repository gets one, created with the generated
-	 * application as its first commit; the repository of a project that has one - entered when the
-	 * project was created, or created for an earlier workspace - is cloned. Without git hosting,
-	 * the application is generated in the workspace only.
+	 * With a {@link FactoryModel#PROJECT_GIT_CONNECTION git connection}, the sources live in the
+	 * {@link FactoryModel#PROJECT_REPOSITORY repository of the project} on the hosting service of
+	 * the connection (see {@link RepositorySource}): a project without repository gets one in the
+	 * owner of the connection, created with the generated application as its first commit; the
+	 * repository of a project that has one - entered when the project was created, or created for
+	 * an earlier workspace - is cloned. Whether its default branch could be protected is recorded in
+	 * {@link FactoryModel#PROJECT_BRANCH_PROTECTED}. Without git connection, the application is
+	 * generated in the workspace only; a git connection that is not available fails the
+	 * creation.
 	 * </p>
 	 *
 	 * <p>
-	 * With {@link CIService CI} in addition, a new application gets the pipeline definition in its
-	 * first commit, and the CI job of the repository is set up and builds the application once the
-	 * branch is protected (see {@link CIPipeline}); a failure of the CI server is only a warning in
-	 * the output of the operation.
+	 * With {@link CIService CI} in addition and a {@link GitConnections#isBuiltIn(TLObject) built-in}
+	 * git connection, a new application gets the pipeline definition in its first commit, and the
+	 * CI job of the repository is set up and builds the application once the branch is protected
+	 * (see {@link CIPipeline}); a failure of the CI server is only a warning in the output of the
+	 * operation.
 	 * </p>
 	 *
 	 * @param project
@@ -321,25 +331,35 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	/**
 	 * Where the sources of the application of the given project come from.
 	 *
-	 * @return The {@link RepositorySource} of the repository of the project if git hosting is
-	 *         {@link #getGitHosting() switched on}, {@code null} for the default, the archetype.
+	 * @return The {@link RepositorySource} of the repository of the project if it has a
+	 *         {@link #getGitHosting(TLObject) git hosting service}, {@code null} for the default,
+	 *         the archetype.
+	 * @throws TopLogicException
+	 *         If the git connection of the project is not available.
 	 */
 	protected ApplicationSource applicationSource(TLObject project) {
-		GitHostingProvider hosting = getGitHosting();
+		GitHostingProvider hosting = getGitHosting(project);
 		if (hosting == null) {
+			TLObject connection = FactoryModel.getGitConnection(project);
+			if (connection != null) {
+				throw new TopLogicException(
+					com.top_logic.factory.git.I18NConstants.ERROR_CONNECTION_UNAVAILABLE__CONNECTION.fill(connection));
+			}
 			return null;
 		}
 		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
 		GitRoute route = proxy == null ? null : proxy.getRoute(GitRoute.class);
 		String routeUrl = route == null ? null : proxy.getRouteUrl(route);
-		CIProvider ci = getCI();
+		CIProvider ci = getCI(project);
 		String name = FactoryModel.getString(project, FactoryModel.PROJECT_NAME);
 		CIPipeline pipeline = ci == null ? null
 			: new CIPipeline(ci, pipelineTemplate(), name, job -> commit(() -> FactoryModel.setCIJob(project, job)));
 		return new RepositorySource(hosting, proxy, routeUrl,
 			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY), name,
 			ProjectCI.withPipelineFile(getConfiguredProtectedFiles(), ci),
-			repository -> commit(() -> FactoryModel.setRepository(project, repository)), pipeline);
+			repository -> commit(() -> FactoryModel.setRepository(project, repository)),
+			protection -> commit(() -> project.tUpdateByName(FactoryModel.PROJECT_BRANCH_PROTECTED, protection)),
+			pipeline);
 	}
 
 	/**
@@ -351,6 +371,18 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 */
 	protected CIProvider getCI() {
 		return CIService.configuredProvider();
+	}
+
+	/**
+	 * The CI server building the application of the given project: the {@link #getCI() CI server}
+	 * for a project on a {@link GitConnections#isBuiltIn(TLObject) built-in} git connection.
+	 *
+	 * @return The provider, {@code null} if CI is switched off or the project is not on a built-in
+	 *         connection.
+	 */
+	protected CIProvider getCI(TLObject project) {
+		TLObject connection = FactoryModel.getGitConnection(project);
+		return connection != null && GitConnections.isBuiltIn(connection) ? getCI() : null;
 	}
 
 	/**
@@ -379,7 +411,14 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * @see ProjectCI#unavailable(CIProvider, GitHostingProvider, TLObject)
 	 */
 	public ResKey ciUnavailable(TLObject project) {
-		return ProjectCI.unavailable(getCI(), getGitHosting(), project);
+		if (project == null) {
+			return ProjectCI.unavailable(getCI(), null, null);
+		}
+		CIProvider ci = getCI(project);
+		if (ci == null && getCI() != null) {
+			return com.top_logic.factory.ci.I18NConstants.ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT.fill(project);
+		}
+		return ProjectCI.unavailable(ci, getGitHosting(project), project);
 	}
 
 	/**
@@ -396,7 +435,11 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * @see ProjectCI#startBuild(CIProvider, GitHostingProvider, TLObject, java.util.function.Consumer)
 	 */
 	public CIBuildStart startBuild(TLObject project) {
-		return ProjectCI.startBuild(getCI(), getGitHosting(), project, job -> commitInRequest(() -> {
+		ResKey problem = ciUnavailable(project);
+		if (problem != null) {
+			throw new TopLogicException(problem);
+		}
+		return ProjectCI.startBuild(getCI(project), getGitHosting(project), project, job -> commitInRequest(() -> {
 			FactoryModel.setCIJob(project, job);
 			return null;
 		}));
@@ -410,29 +453,22 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * @see ProjectCI#lastBuild(CIProvider, TLObject)
 	 */
 	public CIBuild lastBuild(TLObject project) {
-		return ProjectCI.lastBuild(getCI(), project);
+		return ProjectCI.lastBuild(project == null ? null : getCI(project), project);
 	}
 
 	/**
-	 * The git hosting service the repositories of the projects are on.
+	 * The git hosting service the repository of the given project is on.
 	 *
-	 * @implSpec The provider of the {@link GitHostingService}.
+	 * @implSpec The {@link GitConnections#projectProvider(TLObject) provider of the git connection}
+	 *           of the project.
 	 *
-	 * @return The provider, {@code null} if git hosting is switched off.
+	 * @param project
+	 *        The project, or the form object creating one; {@code null} for none.
+	 * @return The provider, {@code null} without project, if the project has no git connection or
+	 *         its connection is not available.
 	 */
-	protected GitHostingProvider getGitHosting() {
-		if (!GitHostingService.Module.INSTANCE.isActive()) {
-			return null;
-		}
-		GitHostingService service = GitHostingService.getInstance();
-		return service.isEnabled() ? service.getProvider() : null;
-	}
-
-	/**
-	 * Whether the projects have repositories on a git hosting service.
-	 */
-	public boolean isGitHostingEnabled() {
-		return getGitHosting() != null;
+	protected GitHostingProvider getGitHosting(TLObject project) {
+		return project == null ? null : GitConnections.projectProvider(project);
 	}
 
 	/**
@@ -472,13 +508,14 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *        The repository as the user enters it: its full name {@code owner/name}, its clone
 	 *        URL or the URL of one of its pages; empty for a repository to create.
 	 * @return The problem with the reference, {@code null} if it is empty, names an existing
-	 *         repository, is recorded, or git hosting is switched off.
+	 *         repository on the git connection of the project, is recorded, or the project has no
+	 *         available git connection.
 	 */
 	public ResKey checkRepository(TLObject project, String reference) {
 		if (project != null && FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL) != null) {
 			return null;
 		}
-		GitHostingProvider hosting = getGitHosting();
+		GitHostingProvider hosting = getGitHosting(project);
 		return hosting == null ? null : RepositorySource.checkReference(hosting, reference);
 	}
 

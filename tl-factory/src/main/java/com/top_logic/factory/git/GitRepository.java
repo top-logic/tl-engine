@@ -20,6 +20,17 @@ public final class GitRepository {
 
 	private final String _defaultBranch;
 
+	private final boolean _canAdminister;
+
+	/**
+	 * Creates a {@link GitRepository} whose settings the credentials may administer.
+	 *
+	 * @see #GitRepository(RepositoryName, String, String, String, boolean)
+	 */
+	public GitRepository(RepositoryName name, String cloneUrl, String webUrl, String defaultBranch) {
+		this(name, cloneUrl, webUrl, defaultBranch, true);
+	}
+
 	/**
 	 * Creates a {@link GitRepository}.
 	 *
@@ -31,12 +42,16 @@ public final class GitRepository {
 	 *        See {@link #getWebUrl()}.
 	 * @param defaultBranch
 	 *        See {@link #getDefaultBranch()}.
+	 * @param canAdminister
+	 *        See {@link #canAdminister()}.
 	 */
-	public GitRepository(RepositoryName name, String cloneUrl, String webUrl, String defaultBranch) {
+	public GitRepository(RepositoryName name, String cloneUrl, String webUrl, String defaultBranch,
+			boolean canAdminister) {
 		_name = Objects.requireNonNull(name);
 		_cloneUrl = Objects.requireNonNull(cloneUrl);
 		_webUrl = Objects.requireNonNull(webUrl);
 		_defaultBranch = Objects.requireNonNull(defaultBranch);
+		_canAdminister = canAdminister;
 	}
 
 	/**
@@ -82,6 +97,15 @@ public final class GitRepository {
 		return _defaultBranch;
 	}
 
+	/**
+	 * Whether the credentials of the {@link GitHostingProvider} that reported the repository may
+	 * administer it, e.g. {@link GitHostingProvider#protectBranch(GitRepository, String, java.util.List)
+	 * protect its branches}.
+	 */
+	public boolean canAdminister() {
+		return _canAdminister;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) {
@@ -92,7 +116,7 @@ public final class GitRepository {
 		}
 		GitRepository other = (GitRepository) obj;
 		return _name.equals(other._name) && _cloneUrl.equals(other._cloneUrl) && _webUrl.equals(other._webUrl)
-			&& _defaultBranch.equals(other._defaultBranch);
+			&& _defaultBranch.equals(other._defaultBranch) && _canAdminister == other._canAdminister;
 	}
 
 	@Override

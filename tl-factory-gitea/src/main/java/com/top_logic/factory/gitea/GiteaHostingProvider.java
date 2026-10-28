@@ -10,65 +10,60 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.basic.config.annotation.defaults.LongDefault;
-import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.credential.CredentialProvider;
-import com.top_logic.basic.credential.HeaderCredentials;
-import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.git.GitCapabilities;
+import com.top_logic.factory.git.GitConnectionSettings;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitRepository;
-import com.top_logic.factory.server.ServerProviderConfig;
 import com.top_logic.factory.git.I18NConstants;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.factory.gitea.client.ApiClient;
 import com.top_logic.factory.gitea.client.ApiException;
 import com.top_logic.factory.gitea.client.api.OrganizationApi;
 import com.top_logic.factory.gitea.client.api.RepositoryApi;
+import com.top_logic.factory.gitea.client.api.UserApi;
 import com.top_logic.factory.gitea.client.model.CreateBranchProtectionOption;
+import com.top_logic.factory.gitea.client.model.CreateOrgOption;
 import com.top_logic.factory.gitea.client.model.CreateRepoOption;
 import com.top_logic.factory.gitea.client.model.EditBranchProtectionOption;
+import com.top_logic.factory.gitea.client.model.OrganizationPermissions;
+import com.top_logic.factory.gitea.client.model.Permission;
 import com.top_logic.factory.gitea.client.model.Repository;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link GitHostingProvider} of a <a href="https://about.gitea.com/">Gitea</a> server.
+ * {@link GitHostingProvider} of one git connection to a <a href="https://about.gitea.com/">Gitea</a>
+ * server, created by the {@link GiteaProviderType}.
  *
  * <p>
- * The repositories are created in the organization {@link Config#getOwner()} of the Gitea at
- * {@link Config#getBaseUrl()}. The requests are authenticated by the configured
- * {@link Config#getCredentials() credentials}; without them, with the access token in the secret
- * {@link #TOKEN_SECRET}, sent with the scheme {@link #TOKEN_SCHEME}.
+ * The repositories are created in the {@link GitConnectionSettings#owner() owner} of the
+ * connection: an organization, or the user of the access token. An organization the provider
+ * {@link GitConnectionSettings#createOwner() creates itself} is created on the first creation of a
+ * repository, private and owned by the user of the token. The requests are authenticated by the
+ * {@link GitConnectionSettings#credentials() credentials} of the connection, usually an access
+ * token sent with the scheme {@link #TOKEN_SCHEME}.
  * </p>
  *
  * <p>
- * Git's smart HTTP protocol reaches a repository at its clone URL below the base URL,
+ * Git's smart HTTP protocol reaches a repository at its clone URL below the URL of the server,
  * authenticated with the same credentials.
  * </p>
  *
  * <h2>The access token</h2>
  *
  * <p>
- * The token needs the scopes {@code write:organization} (creating a repository in the
- * organization) and {@code write:repository} (reading repositories, protecting branches). Its user
- * must be allowed to create repositories in the organization and to administer them, e.g. as
- * member of its team <i>Owners</i>.
+ * The token needs the scopes {@code write:organization} (creating a repository or an organization),
+ * {@code write:repository} (reading repositories, protecting branches) and {@code read:user}
+ * (telling the {@link #capabilities() rights} of the token); for repositories in the namespace of
+ * its user also {@code write:user}. Its user must be allowed to create repositories in the
+ * organization and to administer them, e.g. as member of its team <i>Owners</i>; a user without the
+ * right to administer a repository gets it {@link GitRepository#canAdminister() reported}, and its
+ * branches stay unprotected.
  * </p>
  *
  * <h2>Branch protection</h2>
@@ -89,9 +84,9 @@ import com.top_logic.util.error.TopLogicException;
  * branch protection: an administrator of the repository ({@code block_admin_merge_override} off).
  * Such a merge ignores the required approvals; Gitea's own check of the pull request reports the
  * changed protected files to every other user.</li>
- * <li>Every other pull request needs {@link Config#getRequiredApprovals()} approvals and no
- * rejecting review ({@code block_on_rejected_reviews}); an approval is dismissed by a new commit
- * ({@code dismiss_stale_approvals}).</li>
+ * <li>Every other pull request needs {@link GiteaProviderType.Config#getRequiredApprovals()}
+ * approvals and no rejecting review ({@code block_on_rejected_reviews}); an approval is dismissed by
+ * a new commit ({@code dismiss_stale_approvals}).</li>
  * </ul>
  *
  * <p>
@@ -103,109 +98,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @implNote The clone URL of git's smart HTTP protocol is {@link #gitUrl(RepositoryName)}.
  */
-public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostingProvider.Config<?>>
-		implements GitHostingProvider {
-
-	/**
-	 * Configuration of {@link GiteaHostingProvider}.
-	 */
-	public interface Config<I extends GiteaHostingProvider> extends ServerProviderConfig<I> {
-
-		/**
-		 * Configuration property name of {@link #getOwner()}.
-		 */
-		String OWNER = "owner";
-
-		/**
-		 * Configuration property name of {@link #getCredentials()}.
-		 */
-		String CREDENTIALS = "credentials";
-
-		/**
-		 * Configuration property name of {@link #getTimeout()}.
-		 */
-		String TIMEOUT = "timeout";
-
-		/**
-		 * Configuration property name of {@link #getRequiredApprovals()}.
-		 */
-		String REQUIRED_APPROVALS = "required-approvals";
-
-		/**
-		 * The URL of the Gitea server, e.g. {@code https://git.example.com/}.
-		 *
-		 * <p>
-		 * The URL under which the web interface is served, i.e. the {@code ROOT_URL} of the
-		 * server. The REST API is expected below it, at {@value GiteaHostingProvider#API_PATH}.
-		 * </p>
-		 *
-		 * <p>
-		 * Empty switches the provider off, see {@link ServerProviderConfig}.
-		 * </p>
-		 *
-		 * @see #BASE_URL
-		 */
-		@Override
-		@Name(BASE_URL)
-		@Nullable
-		String getBaseUrl();
-
-		/**
-		 * The organization the repositories are created in.
-		 *
-		 * @see #OWNER
-		 */
-		@Name(OWNER)
-		@Mandatory
-		String getOwner();
-
-		/**
-		 * How the requests to Gitea are authenticated.
-		 *
-		 * <p>
-		 * If not set, with the access token in the secret {@link GiteaHostingProvider#TOKEN_SECRET},
-		 * sent with the scheme {@link GiteaHostingProvider#TOKEN_SCHEME}.
-		 * </p>
-		 *
-		 * @see #CREDENTIALS
-		 */
-		@Name(CREDENTIALS)
-		@Nullable
-		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
-
-		/**
-		 * How long a connection to Gitea and each request may take.
-		 *
-		 * @see #TIMEOUT
-		 */
-		@Name(TIMEOUT)
-		@Format(MillisFormat.class)
-		@LongDefault(30 * 1000)
-		long getTimeout();
-
-		/**
-		 * The number of approvals a pull request to a protected branch needs.
-		 *
-		 * @see #REQUIRED_APPROVALS
-		 * @see GiteaHostingProvider#protectBranch(GitRepository, String, List)
-		 */
-		@Name(REQUIRED_APPROVALS)
-		@IntDefault(1)
-		int getRequiredApprovals();
-
-	}
-
-	/**
-	 * Name of the secret holding the Gitea access token, if no {@link Config#getCredentials()
-	 * credentials} are configured.
-	 *
-	 * <p>
-	 * The secret is fetched from the secret storage of the installation (see
-	 * {@link NamedSecretSource}), by default from the system property or environment variable of
-	 * this name.
-	 * </p>
-	 */
-	public static final String TOKEN_SECRET = "tl_factory_gitea_token";
+public class GiteaHostingProvider implements GitHostingProvider {
 
 	/**
 	 * Authentication scheme of a Gitea access token in the {@link CredentialProvider#AUTHORIZATION}
@@ -214,7 +107,7 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 	public static final String TOKEN_SCHEME = "token";
 
 	/**
-	 * Path of the REST API below the {@link Config#getBaseUrl() base URL}.
+	 * Path of the REST API below the URL of the server.
 	 */
 	public static final String API_PATH = "api/v1";
 
@@ -246,6 +139,18 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 	private static final String OP_CREATE_REPOSITORY = "createOrgRepo";
 
 	/**
+	 * Name of the request creating an organization in error messages, the operation of the Gitea
+	 * API.
+	 */
+	private static final String OP_CREATE_ORGANIZATION = "orgCreate";
+
+	/**
+	 * Name of the request reading the user of the token in error messages, the operation of the
+	 * Gitea API.
+	 */
+	private static final String OP_GET_USER = "userGetCurrent";
+
+	/**
 	 * Name of the request reading a repository in error messages, the operation of the Gitea API.
 	 */
 	private static final String OP_GET_REPOSITORY = "repoGet";
@@ -263,6 +168,12 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 
 	private final String _baseUrl;
 
+	private final String _owner;
+
+	private final boolean _createOwner;
+
+	private final int _requiredApprovals;
+
 	private final CredentialProvider _credentials;
 
 	private final ApiClient _client;
@@ -271,60 +182,56 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 
 	private final OrganizationApi _organizations;
 
+	private final UserApi _users;
+
 	/**
-	 * Creates a {@link GiteaHostingProvider} from configuration.
+	 * Creates a {@link GiteaHostingProvider}.
 	 *
-	 * @param context
-	 *        The context for instantiating the credentials.
-	 * @param config
-	 *        The configuration.
+	 * @param settings
+	 *        The server, owner and credentials of the connection; the URL of the server is the URL
+	 *        under which its web interface is served, its {@code ROOT_URL}, with the REST API at
+	 *        {@value #API_PATH} below it.
+	 * @param timeout
+	 *        How long a connection to Gitea and each request may take.
+	 * @param requiredApprovals
+	 *        The number of approvals a pull request to a protected branch needs.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_INVALID_BASE_URL__URL} if the URL is no URL of a
+	 *         server.
 	 */
-	@CalledByReflection
-	public GiteaHostingProvider(InstantiationContext context, Config<?> config) {
-		super(context, config);
-		_baseUrl = withSlash(Objects.toString(config.getBaseUrl(), "").strip());
+	public GiteaHostingProvider(GitConnectionSettings settings, Duration timeout, int requiredApprovals) {
+		_baseUrl = withSlash(settings.url().strip());
 		URI apiUri;
 		try {
 			apiUri = URI.create(_baseUrl).resolve(API_PATH);
 		} catch (IllegalArgumentException ex) {
-			throw new ConfigurationError(I18NConstants.ERROR_INVALID_BASE_URL__URL.fill(config.getBaseUrl()), ex);
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_BASE_URL__URL.fill(settings.url()), ex);
 		}
 		if (apiUri.getScheme() == null || apiUri.getHost() == null) {
-			throw new ConfigurationError(I18NConstants.ERROR_INVALID_BASE_URL__URL.fill(config.getBaseUrl()));
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_BASE_URL__URL.fill(settings.url()));
 		}
+		_owner = settings.owner();
+		_createOwner = settings.createOwner();
+		_requiredApprovals = requiredApprovals;
+		_credentials = settings.credentials();
 
-		PolymorphicConfiguration<? extends CredentialProvider> credentials = config.getCredentials();
-		if (credentials == null) {
-			credentials = defaultCredentials();
-		}
-		_credentials = context.getInstance(credentials);
-
-		Duration timeout = Duration.ofMillis(config.getTimeout());
 		_client = new ApiClient(HttpClient.newBuilder().connectTimeout(timeout),
 			ApiClient.createDefaultObjectMapper(), apiUri.toString());
 		_client.setReadTimeout(timeout);
 		_client.setRequestInterceptor(request -> _credentials.authenticate(RequestAuthentication.of(request)));
 		_repositories = new RepositoryApi(_client);
 		_organizations = new OrganizationApi(_client);
-	}
-
-	/**
-	 * The credentials sending the access token in the secret {@link #TOKEN_SECRET}.
-	 */
-	private static PolymorphicConfiguration<? extends CredentialProvider> defaultCredentials() {
-		NamedSecretSource.Config token = TypedConfiguration.newConfigItem(NamedSecretSource.Config.class);
-		token.setName(TOKEN_SECRET);
-		return HeaderCredentials.config(CredentialProvider.AUTHORIZATION, TOKEN_SCHEME, token);
+		_users = new UserApi(_client);
 	}
 
 	@Override
 	public String getOwner() {
-		return getConfig().getOwner();
+		return _owner;
 	}
 
 	/**
-	 * The {@link Config#getBaseUrl() base URL} followed by owner, name and
-	 * {@link RepositoryName#GIT_SUFFIX}, the clone URL of Gitea.
+	 * The URL of the server followed by owner, name and {@link RepositoryName#GIT_SUFFIX}, the
+	 * clone URL of Gitea.
 	 */
 	@Override
 	public String gitUrl(RepositoryName repository) {
@@ -332,15 +239,68 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 	}
 
 	/**
-	 * The {@link Config#getCredentials() credentials} of the API requests: Gitea (checked with
-	 * 28.2.0) accepts an access token for git over HTTP as {@code Authorization: token <token>} as
-	 * well, besides as bearer token and as password of basic authentication.
+	 * The credentials of the API requests: Gitea (checked with 28.2.0) accepts an access token for
+	 * git over HTTP as {@code Authorization: token <token>} as well, besides as bearer token and as
+	 * password of basic authentication.
 	 */
 	@Override
 	public CredentialProvider gitCredentials() {
 		return _credentials;
 	}
 
+	/**
+	 * Asks Gitea for the user of the token and its permissions in the owner: in its own namespace,
+	 * it may create and administer repositories; in an organization, it may create repositories as
+	 * the permissions of the organization tell ({@code can_create_repository}), and administer them
+	 * as owner or administrator of the organization. An organization that does not exist is fully
+	 * accessible if the provider creates it (Gitea does not tell it from a private organization the
+	 * user cannot see, whose creation then fails with
+	 * {@link I18NConstants#ERROR_PERMISSION_DENIED__REPOSITORY}), otherwise the problem is
+	 * {@link I18NConstants#ERROR_OWNER_NOT_FOUND__OWNER}. A token without the scope
+	 * {@code read:user} gets {@link I18NConstants#ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM}.
+	 */
+	@Override
+	public GitCapabilities capabilities() {
+		RepositoryName owner = new RepositoryName(_owner, "");
+		String login;
+		try {
+			login = call(() -> _users.userGetCurrent()).getLogin();
+		} catch (ApiException ex) {
+			if (ex.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+				return GitCapabilities.unknown(I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM
+					.fill(_baseUrl, String.valueOf(errorMessage(ex))));
+			}
+			return GitCapabilities.unknown(failure(ex, OP_GET_USER, owner).getErrorKey());
+		}
+		if (_owner.equalsIgnoreCase(login)) {
+			return GitCapabilities.ALL;
+		}
+		try {
+			OrganizationPermissions permissions = call(() -> _organizations.orgGetUserPermissions(login, _owner));
+			return new GitCapabilities(isTrue(permissions.getCanCreateRepository()),
+				isTrue(permissions.getIsOwner()) || isTrue(permissions.getIsAdmin()), null);
+		} catch (ApiException ex) {
+			if (ex.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+				return _createOwner ? GitCapabilities.ALL
+					: GitCapabilities.unknown(I18NConstants.ERROR_OWNER_NOT_FOUND__OWNER.fill(_owner));
+			}
+			if (ex.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+				return GitCapabilities.unknown(I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM
+					.fill(_baseUrl, String.valueOf(errorMessage(ex))));
+			}
+			return GitCapabilities.unknown(failure(ex, OP_GET_USER, owner).getErrorKey());
+		}
+	}
+
+	private static boolean isTrue(Boolean value) {
+		return Boolean.TRUE.equals(value);
+	}
+
+	/**
+	 * Creates the repository in the organization of the owner, or - if there is no such
+	 * organization and the owner is the user of the token - in the namespace of the user. An
+	 * organization the provider creates itself is created first if it does not exist.
+	 */
 	@Override
 	public GitRepository createRepository(String name, String description) {
 		RepositoryName fullName = new RepositoryName(getOwner(), name);
@@ -349,23 +309,81 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 			.description(description)
 			._private(Boolean.TRUE)
 			.autoInit(Boolean.FALSE);
+		if (_createOwner) {
+			ensureOrganization(fullName);
+		}
 		try {
 			return toRepository(call(() -> _organizations.createOrgRepo(getOwner(), option)));
 		} catch (ApiException ex) {
-			switch (ex.getCode()) {
-				case HTTP_CONFLICT:
-					throw new TopLogicException(
-						I18NConstants.ERROR_REPOSITORY_EXISTS__REPOSITORY
-							.fill(fullName.getFullName()));
-				case HTTP_UNPROCESSABLE:
-					throw new TopLogicException(
-						I18NConstants.ERROR_INVALID_REPOSITORY_NAME__NAME.fill(name));
-				case HttpURLConnection.HTTP_NOT_FOUND:
-					throw new TopLogicException(
-						I18NConstants.ERROR_OWNER_NOT_FOUND__OWNER.fill(getOwner()));
-				default:
-					throw failure(ex, OP_CREATE_REPOSITORY, fullName);
+			if (ex.getCode() == HttpURLConnection.HTTP_NOT_FOUND && isOwnerTheUser()) {
+				return createUserRepository(fullName, option);
 			}
+			throw createFailure(ex, fullName, name);
+		}
+	}
+
+	private GitRepository createUserRepository(RepositoryName fullName, CreateRepoOption option) {
+		try {
+			return toRepository(call(() -> _users.createCurrentUserRepo(option)));
+		} catch (ApiException ex) {
+			throw createFailure(ex, fullName, fullName.getName());
+		}
+	}
+
+	/**
+	 * Whether the owner is the user of the token; {@code false} if Gitea does not tell.
+	 */
+	private boolean isOwnerTheUser() {
+		try {
+			return _owner.equalsIgnoreCase(call(() -> _users.userGetCurrent()).getLogin());
+		} catch (ApiException ex) {
+			return false;
+		}
+	}
+
+	/**
+	 * Creates the organization of the owner, private, unless it exists.
+	 */
+	private void ensureOrganization(RepositoryName fullName) {
+		try {
+			call(() -> _organizations.orgGet(_owner));
+			return;
+		} catch (ApiException ex) {
+			if (ex.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+				throw failure(ex, OP_CREATE_ORGANIZATION, fullName);
+			}
+		}
+		try {
+			call(() -> _organizations.orgCreate(new CreateOrgOption()
+				.username(_owner)
+				.visibility(CreateOrgOption.VisibilityEnum.PRIVATE)));
+		} catch (ApiException ex) {
+			if (ex.getCode() != HTTP_UNPROCESSABLE) {
+				throw failure(ex, OP_CREATE_ORGANIZATION, fullName);
+			}
+			// The name is taken: created concurrently, or an organization the user cannot see.
+			try {
+				call(() -> _organizations.orgGet(_owner));
+			} catch (ApiException notVisible) {
+				throw new TopLogicException(I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(fullName.getFullName()));
+			}
+		}
+	}
+
+	/**
+	 * The exception reporting a failed creation of a repository.
+	 */
+	private TopLogicException createFailure(ApiException ex, RepositoryName fullName, String name) {
+		switch (ex.getCode()) {
+			case HTTP_CONFLICT:
+				return new TopLogicException(
+					I18NConstants.ERROR_REPOSITORY_EXISTS__REPOSITORY.fill(fullName.getFullName()));
+			case HTTP_UNPROCESSABLE:
+				return new TopLogicException(I18NConstants.ERROR_INVALID_REPOSITORY_NAME__NAME.fill(name));
+			case HttpURLConnection.HTTP_NOT_FOUND:
+				return new TopLogicException(I18NConstants.ERROR_OWNER_NOT_FOUND__OWNER.fill(getOwner()));
+			default:
+				return failure(ex, OP_CREATE_REPOSITORY, fullName);
 		}
 	}
 
@@ -402,7 +420,7 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 			.blockAdminMergeOverride(Boolean.FALSE)
 			.protectedFilePatterns(String.join(PATTERN_SEPARATOR, protectedFiles))
 			.unprotectedFilePatterns("")
-			.requiredApprovals(Long.valueOf(getConfig().getRequiredApprovals()))
+			.requiredApprovals(Long.valueOf(_requiredApprovals))
 			.blockOnRejectedReviews(Boolean.TRUE)
 			.dismissStaleApprovals(Boolean.TRUE);
 		try {
@@ -514,8 +532,10 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 		if (name == null) {
 			name = new RepositoryName(repository.getOwner().getLogin(), repository.getName());
 		}
+		Permission permissions = repository.getPermissions();
+		boolean canAdminister = permissions == null || isTrue(permissions.getAdmin());
 		return new GitRepository(name, repository.getCloneUrl(), repository.getHtmlUrl(),
-			repository.getDefaultBranch());
+			repository.getDefaultBranch(), canAdminister);
 	}
 
 	private static String withSlash(String url) {

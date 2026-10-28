@@ -94,6 +94,83 @@
 				</attributes>
 			</class>
 
+			<!--
+				A git hosting service the repositories of projects live on: the type of the server, its
+				URL, and the organization or user the repositories are created in. A built-in
+				connection (without tenant) is configured in the installation and offered to every
+				tenant; each tenant gets an organization of its own on it, named by the owner and the
+				tenant. A connection of a tenant is created by its administrators with an access token,
+				which is kept in the secret store of the installation under the hidden secret name.
+				Connections are changed through the functions of com.top_logic.factory.git.GitConnections
+				only.
+			-->
+			<class name="GitConnection">
+				<annotations>
+					<main-properties properties="name,providerType,url,owner,tenant"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The type of the git hosting service, one of the registered provider types. -->
+					<property name="providerType"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<options-by-expression function="self -> factoryGitProviderTypes()"/>
+							</options>
+						</annotations>
+					</property>
+					<property name="url"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!--
+						The organization or user the repositories are created in; for a built-in
+						connection the start of the names of the organizations of the tenants.
+					-->
+					<property name="owner"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The tenant that created the connection, empty for a built-in connection. -->
+					<reference name="tenant"
+						kind="forwards"
+						type="Tenant"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+					<!--
+						The tenants whose members may choose the connection: its tenant, or every tenant
+						for a built-in connection. Its members read the connection.
+					-->
+					<reference name="tenants"
+						kind="forwards"
+						multiple="true"
+						type="Tenant"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+					<!-- The name of the secret holding the access token of a connection of a tenant. -->
+					<property name="secretName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+
 			<!-- A TopLogic application managed by the control application. -->
 			<class name="Project">
 				<annotations>
@@ -127,6 +204,32 @@
 							<options>
 								<options-by-expression function="self -> {t = factoryCurrentTenant(); if($t == null, all(`tl.factory:Tenant`), [$t]);}"/>
 							</options>
+						</annotations>
+					</reference>
+					<!--
+						The git connection the repository of the project lives on, chosen when the project
+						is created among the built-in connections and those of its tenant; read-only
+						afterwards. Empty for a project without repository, when there is no connection to
+						choose.
+					-->
+					<reference name="gitConnection"
+						kind="forwards"
+						type="GitConnection"
+					>
+						<annotations>
+							<create-visibility value="editable"/>
+							<visibility value="read-only"/>
+							<default-value>
+								<default-by-expression value="ctx -> factoryDefaultGitConnection()"/>
+							</default-value>
+							<options>
+								<options-by-expression function="self -> factoryGitConnections($self.get(`tl.factory:Project#tenant`))"/>
+							</options>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckGitConnection($object, $value)</check>
+								</constraint-by-expression>
+							</constraints>
 						</annotations>
 					</reference>
 					<property name="groupId"
@@ -185,6 +288,19 @@
 									<check>value -&gt; object -&gt; factoryCheckRepository($object, $value)</check>
 								</constraint-by-expression>
 							</constraints>
+						</annotations>
+					</property>
+					<!--
+						Whether the default branch of the repository is protected against force pushes and
+						changes of the protected files; false if the access token of the git connection may
+						not administer the repository. Empty before the first workspace has the sources.
+					-->
+					<property name="branchProtected"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
 						</annotations>
 					</property>
 					<!-- The page of the repository in the web interface of the git hosting service. -->

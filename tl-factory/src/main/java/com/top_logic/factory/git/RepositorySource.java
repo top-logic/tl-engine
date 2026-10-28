@@ -58,7 +58,10 @@ import com.top_logic.util.error.TopLogicException;
  * names one, the same TopLogic version (see {@link Pom}).</li>
  * <li>Then the default branch is {@link GitHostingProvider#protectBranch(GitRepository, String,
  * List) protected} with the protected files - after the first push, which a hosting service may
- * reject for a protected branch.</li>
+ * reject for a protected branch. If the credentials of the git connection may not
+ * {@link GitRepository#canAdminister() administer} the repository, the branch stays unprotected and
+ * the output gets a {@link #WARNING warning} instead. Whether the branch is protected is recorded
+ * for the project.</li>
  * </ol>
  *
  * <p>
@@ -164,6 +167,8 @@ public class RepositorySource implements ApplicationSource {
 
 	private final Consumer<GitRepository> _record;
 
+	private final Consumer<Boolean> _recordProtection;
+
 	private final Pipeline _pipeline;
 
 	/**
@@ -203,6 +208,24 @@ public class RepositorySource implements ApplicationSource {
 	 */
 	public RepositorySource(GitHostingProvider hosting, ProxyTokens tokens, String routeUrl, String reference,
 			String description, List<String> protectedFiles, Consumer<GitRepository> record, Pipeline pipeline) {
+		this(hosting, tokens, routeUrl, reference, description, protectedFiles, record, protection -> {
+			// Not recorded.
+		}, pipeline);
+	}
+
+	/**
+	 * Creates a {@link RepositorySource} that records whether the default branch is protected.
+	 *
+	 * @param recordProtection
+	 *        Stores whether the default branch of the repository is protected, in a transaction of
+	 *        its own; called once the protection is set or skipped.
+	 *
+	 * @see #RepositorySource(GitHostingProvider, ProxyTokens, String, String, String, List, Consumer,
+	 *      Pipeline)
+	 */
+	public RepositorySource(GitHostingProvider hosting, ProxyTokens tokens, String routeUrl, String reference,
+			String description, List<String> protectedFiles, Consumer<GitRepository> record,
+			Consumer<Boolean> recordProtection, Pipeline pipeline) {
 		_hosting = Objects.requireNonNull(hosting, "hosting");
 		_tokens = tokens;
 		_routeUrl = routeUrl;
@@ -210,6 +233,7 @@ public class RepositorySource implements ApplicationSource {
 		_description = description;
 		_protectedFiles = List.copyOf(protectedFiles);
 		_record = Objects.requireNonNull(record, "record");
+		_recordProtection = Objects.requireNonNull(recordProtection, "recordProtection");
 		_pipeline = pipeline;
 	}
 
@@ -256,9 +280,18 @@ public class RepositorySource implements ApplicationSource {
 				checkPipeline(context, repository);
 			}
 		}
-		context.step("Protecting the branch " + branch + " of " + repository.getFullName() + ", protected files "
-			+ String.join(", ", _protectedFiles));
-		_hosting.protectBranch(repository, branch, _protectedFiles);
+		if (repository.canAdminister()) {
+			context.step("Protecting the branch " + branch + " of " + repository.getFullName() + ", protected files "
+				+ String.join(", ", _protectedFiles));
+			_hosting.protectBranch(repository, branch, _protectedFiles);
+			_recordProtection.accept(Boolean.TRUE);
+		} else {
+			context.step(WARNING + "The access token of the git connection may not administer the repository "
+				+ repository.getFullName() + ", the branch " + branch
+				+ " stays unprotected. Protect it in the git hosting service against force pushes and changes of "
+				+ String.join(", ", _protectedFiles) + ".");
+			_recordProtection.accept(Boolean.FALSE);
+		}
 		if (_pipeline != null) {
 			setUpPipeline(context, repository);
 		}
@@ -331,7 +364,7 @@ public class RepositorySource implements ApplicationSource {
 	 *        The full name of the repository, its clone URL or the URL of one of its pages; empty
 	 *        for none.
 	 * @return The problem with the reference, {@code null} if it is empty or names a repository
-	 *         the control application can read.
+	 *         the credentials of the connection can read.
 	 */
 	public static ResKey checkReference(GitHostingProvider hosting, String reference) {
 		if (reference == null || reference.isBlank()) {

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
@@ -45,8 +44,8 @@ import com.top_logic.model.TLObject;
 
 /**
  * {@link ProxyRoute} of the {@link WorkspaceProxyService workspace proxy} to the repository of the
- * project of a workspace on the git hosting service, without a credential of the hosting service in
- * the workspace.
+ * project of a workspace on the git hosting service of its git connection, without a credential of
+ * the hosting service in the workspace.
  *
  * <p>
  * The route passes git's smart HTTP protocol through to the {@link GitHostingProvider}, unchanged
@@ -62,10 +61,11 @@ import com.top_logic.model.TLObject;
  *
  * <p>
  * The repository must be the one of the project of the workspace the token of the request was
- * issued for, compared without regard to case.
- * Every other request - another path or method, the repository of another project, a workspace
- * without repository - and every request while no hosting provider is configured, is answered with
- * 404, not telling whether a repository exists.
+ * issued for, compared without regard to case; the request goes to the provider of the git
+ * connection of the project (see {@link #workspaceTarget(String)}). Every other request - another
+ * path or method, the repository of another project, a workspace without repository or whose
+ * project has no available git connection - is answered with 404, not telling whether a repository
+ * exists.
  * </p>
  *
  * <p>
@@ -75,7 +75,7 @@ import com.top_logic.model.TLObject;
  * the token of the client, cookies, or headers the hosting service might trust
  * from the address of the control application (e.g. the user header of an authenticating reverse
  * proxy). The request is authenticated with the {@link GitHostingProvider#gitCredentials()
- * credentials of the control application}. Status, headers and body of the answer are passed back
+ * credentials of the git connection}. Status, headers and body of the answer are passed back
  * as they come, except cookies and hop-by-hop headers.
  * </p>
  *
@@ -342,9 +342,7 @@ public class GitRoute implements ProxyRoute {
 
 	private final String _path;
 
-	private final Supplier<? extends GitHostingProvider> _provider;
-
-	private final Function<String, RepositoryName> _repositoryOfWorkspace;
+	private final Function<String, Target> _targetOfWorkspace;
 
 	private final Duration _connectTimeout;
 
@@ -357,8 +355,30 @@ public class GitRoute implements ProxyRoute {
 	private HttpClient _client;
 
 	/**
-	 * Creates a {@link GitRoute} from configuration, forwarding to the provider of the
-	 * {@link GitHostingService} and admitting the repositories of the stored projects.
+	 * The repository a workspace has access to and the provider of the git connection it lives on.
+	 *
+	 * @param provider
+	 *        The provider whose {@link GitHostingProvider#gitUrl(RepositoryName) git URL} and
+	 *        {@link GitHostingProvider#gitCredentials() credentials} the requests go to.
+	 * @param repository
+	 *        The repository of the project of the workspace.
+	 */
+	public record Target(GitHostingProvider provider, RepositoryName repository) {
+
+		/**
+		 * The target of the given repository on the given provider.
+		 *
+		 * @return The target, {@code null} if one of both is missing.
+		 */
+		public static Target of(GitHostingProvider provider, RepositoryName repository) {
+			return provider == null || repository == null ? null : new Target(provider, repository);
+		}
+	}
+
+	/**
+	 * Creates a {@link GitRoute} from configuration, admitting each workspace to the repository of
+	 * its stored project on the git connection of the project, see
+	 * {@link #workspaceTarget(String)}.
 	 *
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -366,20 +386,18 @@ public class GitRoute implements ProxyRoute {
 	 *        The configuration.
 	 */
 	public GitRoute(InstantiationContext context, Config<?> config) {
-		this(config.getPath(), GitRoute::configuredProvider, GitRoute::workspaceRepository,
-			Duration.ofMillis(config.getConnectTimeout()), Duration.ofMillis(config.getResponseTimeout()),
-			config.getUserName(), config.getUserEmail());
+		this(config.getPath(), GitRoute::workspaceTarget, Duration.ofMillis(config.getConnectTimeout()),
+			Duration.ofMillis(config.getResponseTimeout()), config.getUserName(), config.getUserEmail());
 	}
 
 	/**
 	 * Creates a {@link GitRoute} that sets no commit identity.
 	 *
-	 * @see #GitRoute(String, Supplier, Function, Duration, Duration, String, String)
+	 * @see #GitRoute(String, Function, Duration, Duration, String, String)
 	 */
-	public GitRoute(String path, Supplier<? extends GitHostingProvider> provider,
-			Function<String, RepositoryName> repositoryOfWorkspace, Duration connectTimeout,
+	public GitRoute(String path, Function<String, Target> targetOfWorkspace, Duration connectTimeout,
 			Duration responseTimeout) {
-		this(path, provider, repositoryOfWorkspace, connectTimeout, responseTimeout, null, null);
+		this(path, targetOfWorkspace, connectTimeout, responseTimeout, null, null);
 	}
 
 	/**
@@ -387,12 +405,10 @@ public class GitRoute implements ProxyRoute {
 	 *
 	 * @param path
 	 *        See {@link #getPath()}.
-	 * @param provider
-	 *        Supplier of the hosting service asked for each request; it may supply {@code null}
-	 *        when none is configured, which answers requests with 404.
-	 * @param repositoryOfWorkspace
-	 *        The repository a workspace has access to, by the ID of the workspace; {@code null} for
-	 *        none.
+	 * @param targetOfWorkspace
+	 *        The repository a workspace has access to and the provider it is reached through, by
+	 *        the ID of the workspace; {@code null} for a workspace without repository or without
+	 *        available git connection, whose requests are answered with 404.
 	 * @param connectTimeout
 	 *        See {@link Config#getConnectTimeout()}.
 	 * @param responseTimeout
@@ -402,12 +418,10 @@ public class GitRoute implements ProxyRoute {
 	 * @param userEmail
 	 *        See {@link Config#getUserEmail()}; {@code null} for none.
 	 */
-	public GitRoute(String path, Supplier<? extends GitHostingProvider> provider,
-			Function<String, RepositoryName> repositoryOfWorkspace, Duration connectTimeout,
+	public GitRoute(String path, Function<String, Target> targetOfWorkspace, Duration connectTimeout,
 			Duration responseTimeout, String userName, String userEmail) {
 		_path = path;
-		_provider = provider;
-		_repositoryOfWorkspace = repositoryOfWorkspace;
+		_targetOfWorkspace = targetOfWorkspace;
 		_connectTimeout = connectTimeout;
 		_responseTimeout = responseTimeout;
 		_userName = blankToNull(userName);
@@ -503,19 +517,15 @@ public class GitRoute implements ProxyRoute {
 			notFound(exchange);
 			return;
 		}
-		GitHostingProvider provider = _provider.get();
-		if (provider == null) {
-			notFound(exchange);
-			return;
-		}
-		RepositoryName repository = _repositoryOfWorkspace.apply(admission.workspaceId());
+		Target target = _targetOfWorkspace.apply(admission.workspaceId());
+		RepositoryName repository = target == null ? null : target.repository();
 		if (!request.repository().matches(repository)) {
 			Logger.info("Git proxy: refused access of workspace '" + admission.workspaceId() + "' to '"
 				+ request.repository() + "', its repository is '" + repository + "'.", GitRoute.class);
 			notFound(exchange);
 			return;
 		}
-		forward(provider, repository, request, exchange);
+		forward(target.provider(), repository, request, exchange);
 	}
 
 	@Override
@@ -635,29 +645,22 @@ public class GitRoute implements ProxyRoute {
 	}
 
 	/**
-	 * The provider of the running {@link GitHostingService}, {@code null} if it is not running or
-	 * has none.
-	 */
-	private static GitHostingProvider configuredProvider() {
-		if (!GitHostingService.Module.INSTANCE.isActive()) {
-			return null;
-		}
-		GitHostingService service = GitHostingService.getInstance();
-		return service.isEnabled() ? service.getProvider() : null;
-	}
-
-	/**
-	 * The repository of the project of the stored workspace with the given ID.
+	 * The repository of the project of the stored workspace with the given ID, and the provider of
+	 * the git connection of the project.
 	 *
-	 * @return The repository, {@code null} if there is no such workspace or its project has no
-	 *         repository.
+	 * @return The target, {@code null} if there is no such workspace, its project has no
+	 *         repository, or the git connection of the project is not available.
+	 * @see GitConnections#projectProvider(TLObject)
 	 */
-	public static RepositoryName workspaceRepository(String workspaceId) {
-		return ThreadContext.<RepositoryName, RuntimeException, RuntimeException> inSystemContext(GitRoute.class,
-			() -> {
-				TLObject workspace = FactoryModel.findWorkspace(workspaceId);
-				return workspace == null ? null : FactoryModel.getRepository(FactoryModel.getProject(workspace));
-			});
+	public static Target workspaceTarget(String workspaceId) {
+		return ThreadContext.<Target, RuntimeException, RuntimeException> inSystemContext(GitRoute.class, () -> {
+			TLObject workspace = FactoryModel.findWorkspace(workspaceId);
+			if (workspace == null) {
+				return null;
+			}
+			TLObject project = FactoryModel.getProject(workspace);
+			return Target.of(GitConnections.projectProvider(project), FactoryModel.getRepository(project));
+		});
 	}
 
 	/**

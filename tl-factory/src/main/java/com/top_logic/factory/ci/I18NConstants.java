@@ -23,6 +23,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_CI;
 
 	/**
+	 * @en The CI server builds only projects on a built-in git connection; "{0}" is on a git
+	 *     connection of its tenant.
+	 */
+	public static ResKey1 ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT;
+
+	/**
 	 * @en The project "{0}" has no repository on the git hosting service.
 	 */
 	public static ResKey1 ERROR_NO_REPOSITORY__PROJECT;

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.factory.git.GitCapabilities;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.I18NConstants;
@@ -71,6 +72,10 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 
 	private final List<String> _calls = new ArrayList<>();
 
+	private GitCapabilities _capabilities = GitCapabilities.ALL;
+
+	private boolean _canAdminister = true;
+
 	/**
 	 * Creates a {@link RecordingGitHostingProvider} with the owner {@link #DEFAULT_OWNER}.
 	 */
@@ -128,12 +133,33 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 		return _owner;
 	}
 
+	@Override
+	public synchronized GitCapabilities capabilities() {
+		return _capabilities;
+	}
+
+	/**
+	 * Sets what {@link #capabilities()} reports.
+	 */
+	public synchronized void setCapabilities(GitCapabilities capabilities) {
+		_capabilities = capabilities;
+	}
+
+	/**
+	 * Sets whether the credentials may administer the repositories created or added from now on,
+	 * see {@link GitRepository#canAdminister()}; a protection of a repository they may not
+	 * administer fails.
+	 */
+	public synchronized void setCanAdminister(boolean canAdminister) {
+		_canAdminister = canAdminister;
+	}
+
 	/**
 	 * Adds an existing repository of any owner, as if it had been created on the hosting service
 	 * by someone else.
 	 */
 	public synchronized GitRepository addRepository(String owner, String name) {
-		GitRepository repository = repository(new RepositoryName(owner, name));
+		GitRepository repository = repository(new RepositoryName(owner, name), _canAdminister);
 		_repositories.put(repository.getName(), repository);
 		return repository;
 	}
@@ -145,7 +171,7 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 		if (_repositories.containsKey(fullName)) {
 			throw new TopLogicException(I18NConstants.ERROR_REPOSITORY_EXISTS__REPOSITORY.fill(fullName.getFullName()));
 		}
-		GitRepository repository = repository(fullName);
+		GitRepository repository = repository(fullName, _canAdminister);
 		_repositories.put(fullName, repository);
 		return repository;
 	}
@@ -160,9 +186,14 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 	@Override
 	public synchronized void protectBranch(GitRepository repository, String branch, List<String> protectedFiles) {
 		_calls.add(PROTECT + " " + repository.getFullName() + " " + branch);
-		if (!_repositories.containsKey(repository.getName())) {
+		GitRepository stored = _repositories.get(repository.getName());
+		if (stored == null) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_REPOSITORY_NOT_FOUND__REPOSITORY.fill(repository.getFullName()));
+		}
+		if (!stored.canAdminister()) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(repository.getFullName()));
 		}
 		_protections.put(protectionKey(repository, branch), List.copyOf(protectedFiles));
 	}
@@ -194,9 +225,9 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 		return repository.getFullName() + ':' + branch;
 	}
 
-	private static GitRepository repository(RepositoryName name) {
+	private static GitRepository repository(RepositoryName name, boolean canAdminister) {
 		String webUrl = BASE_URL + name.getFullName();
-		return new GitRepository(name, webUrl + RepositoryName.GIT_SUFFIX, webUrl, DEFAULT_BRANCH);
+		return new GitRepository(name, webUrl + RepositoryName.GIT_SUFFIX, webUrl, DEFAULT_BRANCH, canAdminister);
 	}
 
 }

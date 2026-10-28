@@ -49,10 +49,12 @@ the environment:
 | `tl_factory_jenkins_scm_credentials` | *(empty)* | `scm-credentials-id`, the Jenkins credential the jobs check out with; empty for none. |
 | `tl_factory_jenkins_token` | - | The API token of the user, a [named secret](doc:credentials/secret-stores) read by the default `credentials`. |
 
-Like a git hosting provider, a provider whose `base-url` is empty is switched off: `CIService`
-does not create it and is disabled as without provider (`ServerProviderConfig.isSwitchedOn`, see
-[git hosting](doc:factory/git-hosting#configuration)). CI needs git hosting: without it, no
-project has a repository to build.
+Like a built-in git connection without URL, a provider whose `base-url` is empty is switched off:
+`CIService` does not create it and is disabled as without provider (`ServerProviderConfig.isSwitchedOn`).
+CI needs git hosting: without it, no project has a repository to build. It builds the projects on a
+[built-in git connection](doc:factory/git-hosting#git-connections) only, whose repositories the SCM
+credential of the CI server reads; a project on a git connection of its tenant has no CI job
+(`ProjectWorkspaces.getCI(project)`, `ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT`).
 
 | Property of `CIService` | Default | Meaning |
 |---|---|---|
@@ -144,8 +146,8 @@ The project panel of `projects.view.xml` has two commands and the detail view a 
 - **Start CI build** (`startBuild`, TL-Script `factoryStartBuild($project)`) runs `ensureJob` - a
   missing job is created, its configuration corrected -, records the job if it changed, starts a
   build and shows which (`BUILD_STARTED__NUMBER_JOB`, or `BUILD_QUEUED__JOB` while it waits for an
-  executor). It is disabled with the reason of `factoryCiUnavailable($project)`: CI or git hosting
-  switched off, or the project has no repository.
+  executor). It is disabled with the reason of `factoryCiUnavailable($project)`: CI switched off, the project
+  not on a built-in git connection, or without repository.
 - **Refresh CI build** asks the CI server again for the last build.
 - The channel `ciBuild` shows the job as link to its page and the last build - number with link,
   state, start time, duration - from `factoryLastBuild($project)`, a dictionary with the keys
@@ -261,7 +263,9 @@ mvn test -DskipTests=false -pl tl-factory-jenkins -Dtest=test.com.top_logic.fact
 `TestProjectCI` of `tl-factory-jenkins` runs the creation flow of a new project end to end against
 an external Gitea and Jenkins, e.g. the [local setup](doc:factory#local-setup): it starts
 `GitHostingService` and `CIService` from the configuration of the modules - the environment
-variables and secrets of the control application -, creates a Docker workspace whose new
+variables and secrets of the control application -, takes a provider of the Gitea type for
+`tl_factory_gitea_url`, the organization `tl_factory_gitea_owner` (default `tl-factory`) and the
+token `tl_factory_gitea_token`, creates a Docker workspace whose new
 application is pushed with the default `Jenkinsfile` to a new repository through the git route of
 a workspace proxy on the host, and waits for the first build of its job, which must end `SUCCESS`
 (`mvn -B verify` of the generated application); the end of the console is printed. It runs only

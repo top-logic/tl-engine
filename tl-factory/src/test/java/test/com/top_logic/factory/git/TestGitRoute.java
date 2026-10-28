@@ -158,8 +158,9 @@ public class TestGitRoute extends TestCase {
 		_provider = new RecordingGitHostingProvider(OWNER,
 			"http://" + LOOPBACK + ":" + _upstream.getAddress().getPort() + "/", credentials);
 		Map<String, RepositoryName> repositories = Map.of(WS_ALPHA, ALPHA, WS_BETA, BETA);
-		_route = new GitRoute(GitRoute.DEFAULT_PATH, () -> _providerConfigured ? _provider : null,
-			repositories::get, Duration.ofSeconds(5), Duration.ofMinutes(2));
+		_route = new GitRoute(GitRoute.DEFAULT_PATH,
+			workspace -> _providerConfigured ? GitRoute.Target.of(_provider, repositories.get(workspace)) : null,
+			Duration.ofSeconds(5), Duration.ofMinutes(2));
 
 		WorkspaceProxy proxy = new WorkspaceProxy() {
 			@Override

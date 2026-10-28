@@ -16,13 +16,12 @@ import java.util.function.Supplier;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.git.GitConnections;
 import com.top_logic.factory.project.FactoryAccess;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.ModelAccessRights;
@@ -77,7 +76,8 @@ public class TenantMembers {
 	}
 
 	/**
-	 * Creates a tenant with its first administrator.
+	 * Creates a tenant with its first administrator; the built-in git connections are offered to
+	 * the new tenant.
 	 *
 	 * @param name
 	 *        The name of the tenant, unique among the tenants.
@@ -98,6 +98,7 @@ public class TenantMembers {
 			tenant.tUpdateByName(FactoryModel.TENANT_NAME, name);
 			Person account = createAccount(administrator);
 			setRole(tenant, account, TenantRole.ADMINISTRATOR);
+			GitConnections.offerBuiltIn(tenant);
 			return tenant;
 		});
 	}
@@ -301,15 +302,11 @@ public class TenantMembers {
 	/**
 	 * Runs the given modification without access checks in a transaction of its own, committed
 	 * with the given message.
+	 *
+	 * @see FactoryAccess#commitUnchecked(ResKey, Supplier)
 	 */
 	private static <T> T modify(ResKey message, Supplier<T> modification) {
-		return ThreadContext.<T, RuntimeException, RuntimeException> withoutSecurityChecks(() -> {
-			try (Transaction tx = kb().beginTransaction(message)) {
-				T result = modification.get();
-				tx.commit();
-				return result;
-			}
-		});
+		return FactoryAccess.commitUnchecked(message, modification);
 	}
 
 	private static KnowledgeBase kb() {

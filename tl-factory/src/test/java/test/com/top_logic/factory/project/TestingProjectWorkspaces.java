@@ -10,6 +10,7 @@ import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.model.TLObject;
 
 /**
  * {@link ProjectWorkspaces} of the tests, working on the {@link ApplicationWorkspaces} a test
@@ -46,16 +47,16 @@ public class TestingProjectWorkspaces extends ProjectWorkspaces {
 	}
 
 	/**
-	 * Sets the git hosting service the repositories of the projects are on, {@code null} for that
-	 * of the {@link com.top_logic.factory.git.GitHostingService}.
+	 * Sets the git hosting service the repositories of all projects are on, {@code null} for the
+	 * one of the git connection of each project.
 	 */
 	public static void setGitHosting(GitHostingProvider gitHosting) {
 		_gitHosting = gitHosting;
 	}
 
 	/**
-	 * Sets the CI server building the applications of the projects, {@code null} for that of the
-	 * {@link com.top_logic.factory.ci.CIService}.
+	 * Sets the CI server building the applications of all projects, {@code null} for that of the
+	 * {@link com.top_logic.factory.ci.CIService} for the projects on a built-in git connection.
 	 */
 	public static void setCI(CIProvider ci) {
 		_ci = ci;
@@ -68,9 +69,15 @@ public class TestingProjectWorkspaces extends ProjectWorkspaces {
 	}
 
 	@Override
-	protected GitHostingProvider getGitHosting() {
+	protected CIProvider getCI(TLObject project) {
+		CIProvider ci = _ci;
+		return ci != null ? ci : super.getCI(project);
+	}
+
+	@Override
+	protected GitHostingProvider getGitHosting(TLObject project) {
 		GitHostingProvider gitHosting = _gitHosting;
-		return gitHosting != null ? gitHosting : super.getGitHosting();
+		return gitHosting != null ? gitHosting : super.getGitHosting(project);
 	}
 
 	@Override

@@ -18,6 +18,25 @@
 
 	<services>
 		<!--
+			The built-in git connection of the installation, configured from the environment: a Gitea
+			server offered to every tenant, switched off as long as tl_factory_gitea_url is empty. Each
+			tenant gets an organization of its own there, named by the owner and the tenant. The requests
+			are authenticated with the access token in the secret tl_factory_gitea_token.
+		-->
+		<config service-class="com.top_logic.factory.git.GitHostingService">
+			<instance class="com.top_logic.factory.git.GitHostingService">
+				<connections>
+					<connection name="gitea"
+						owner="%FACTORY_GITEA_OWNER%"
+						provider-type="gitea"
+						token-secret="tl_factory_gitea_token"
+						url="%FACTORY_GITEA_URL%"
+					/>
+				</connections>
+			</instance>
+		</config>
+
+		<!--
 			The provider whose API key the workspace proxy adds to the LLM requests of the workspaces
 			(the LLM route of the WorkspaceProxyService, provider "anthropic"); the key is read from the
 			environment variable tl_anthropic_api_key. It exposes no models: the control application runs

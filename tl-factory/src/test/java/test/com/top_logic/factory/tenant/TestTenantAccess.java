@@ -566,7 +566,7 @@ public class TestTenantAccess extends BasicTestCase {
 				findings.isEmpty());
 		}
 		assertEquals(Set.of(FactoryModel.tenantType(), FactoryModel.projectType(), FactoryModel.workspaceType(),
-			FactoryModel.conversationType()), analysed);
+			FactoryModel.conversationType(), FactoryModel.gitConnectionType()), analysed);
 	}
 
 	/**

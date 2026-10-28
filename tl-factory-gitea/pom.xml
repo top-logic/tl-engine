@@ -127,11 +127,11 @@
               <modelPackage>${gitea.client.package}.model</modelPackage>
               <invokerPackage>${gitea.client.package}</invokerPackage>
 
-              <!-- Only the operations the provider and its test use. -->
-              <apisToGenerate>Repository,Organization</apisToGenerate>
-              <openapiNormalizer>FILTER=operationId:createOrgRepo|orgCreate|repoGet|repoGetBranchProtection|repoCreateBranchProtection|repoEditBranchProtection</openapiNormalizer>
+              <!-- Only the operations the provider and its tests use. -->
+              <apisToGenerate>Repository,Organization,User</apisToGenerate>
+              <openapiNormalizer>FILTER=operationId:createOrgRepo|createCurrentUserRepo|orgCreate|orgGet|orgGetUserPermissions|userGetCurrent|repoAddCollaborator|repoGet|repoGetBranchProtection|repoCreateBranchProtection|repoEditBranchProtection</openapiNormalizer>
               <!-- The models of these operations, with all models they refer to. -->
-              <modelsToGenerate>BranchProtection,CreateBranchProtectionOption,CreateOrgOption,CreateRepoOption,EditBranchProtectionOption,ExternalTracker,ExternalWiki,InternalTracker,Organization,Permission,RepoTransfer,Repository,Team,User</modelsToGenerate>
+              <modelsToGenerate>AddCollaboratorOption,BranchProtection,CreateBranchProtectionOption,CreateOrgOption,CreateRepoOption,EditBranchProtectionOption,ExternalTracker,ExternalWiki,InternalTracker,Organization,OrganizationPermissions,Permission,RepoTransfer,Repository,Team,User</modelsToGenerate>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <generateApiDocumentation>false</generateApiDocumentation>

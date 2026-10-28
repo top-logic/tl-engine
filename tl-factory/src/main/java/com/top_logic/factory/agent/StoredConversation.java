@@ -5,6 +5,8 @@
  */
 package com.top_logic.factory.agent;
 
+import java.util.List;
+
 import com.top_logic.factory.ci.CIRoute;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.git.RepositoryName;
@@ -80,18 +82,22 @@ public class StoredConversation implements ConversationTarget {
 	/**
 	 * For a project with a {@link FactoryModel#PROJECT_REPOSITORY repository}, that the work of the
 	 * agent reaches the application only by commit and push, see
-	 * {@link RepositorySource#agentInstructions(String, java.util.List)}; with {@link CIService CI}
+	 * {@link RepositorySource#agentInstructions(String, java.util.List)}, naming the protected files
+	 * unless the default branch is {@link FactoryModel#PROJECT_BRANCH_PROTECTED known to be
+	 * unprotected}; with {@link CIService CI}
 	 * and the {@link CIRoute} in the workspace proxy, how it builds the application on the CI
 	 * server, see {@link CIRoute#agentInstructions()}.
 	 */
 	@Override
 	public String instructions() {
-		RepositoryName repository = FactoryModel.getRepository(FactoryModel.getProject(workspace()));
+		TLObject project = FactoryModel.getProject(workspace());
+		RepositoryName repository = FactoryModel.getRepository(project);
 		if (repository == null) {
 			return null;
 		}
-		String result =
-			RepositorySource.agentInstructions(repository.getFullName(), ProjectWorkspaces.getProtectedFiles());
+		boolean unprotected = Boolean.FALSE.equals(project.tValueByName(FactoryModel.PROJECT_BRANCH_PROTECTED));
+		String result = RepositorySource.agentInstructions(repository.getFullName(),
+			unprotected ? List.of() : ProjectWorkspaces.getProtectedFiles());
 		if (hasCIRoute()) {
 			result = result + " " + CIRoute.agentInstructions();
 		}

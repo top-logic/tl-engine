@@ -34,12 +34,15 @@ import com.top_logic.factory.ci.CIJob;
 import com.top_logic.factory.ci.CIPipeline;
 import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIService;
+import com.top_logic.factory.git.GitConnectionSettings;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitHostingService;
+import com.top_logic.factory.git.GitProviderType;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.GitRoute;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.factory.git.RepositorySource;
+import com.top_logic.factory.gitea.GiteaProviderType;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.proxy.ProxyAdmission;
 import com.top_logic.factory.proxy.ProxyTokens;
@@ -58,7 +61,11 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
  *
  * <p>
  * {@link GitHostingService} and {@link CIService} are started from the configuration of the
- * modules, i.e. from the same environment variables and secrets as the control application. A Docker
+ * modules, i.e. from the same environment variables and secrets as the control application; the
+ * repository lives on a connection of the Gitea type to the Gitea at {@value #ENV_GITEA_URL}, in
+ * the organization {@value #ENV_GITEA_OWNER} (default {@value #DEFAULT_GITEA_OWNER}), authenticated
+ * with the token in the secret {@link GiteaProviderType#TOKEN_SECRET}, as the built-in connection
+ * of {@code tl-factory-app} does. A Docker
  * workspace generates a new application, pushes it with the default pipeline definition to a new
  * repository through the {@link GitRoute git route} of a workspace proxy on the host, protects the
  * branch, sets up the CI job and starts its first build; the test waits for that build and expects
@@ -93,10 +100,20 @@ public class TestProjectCI extends TestCase {
 	public static final String ENABLE_PROPERTY = "tl.factory.integration";
 
 	/**
-	 * Environment variable with the URL of the Gitea, read by the configuration of
-	 * {@link GitHostingService} of {@code tl-factory-gitea}.
+	 * Environment variable with the URL of the Gitea, read by the configuration of the built-in
+	 * git connection of {@code tl-factory-app}.
 	 */
 	public static final String ENV_GITEA_URL = "tl_factory_gitea_url";
+
+	/**
+	 * Environment variable with the organization the repository is created in.
+	 */
+	public static final String ENV_GITEA_OWNER = "tl_factory_gitea_owner";
+
+	/**
+	 * Default of {@link #ENV_GITEA_OWNER}, the organization of the local development setup.
+	 */
+	public static final String DEFAULT_GITEA_OWNER = "tl-factory";
 
 	/**
 	 * Environment variable with the URL of the Jenkins, read by the configuration of
@@ -164,11 +181,16 @@ public class TestProjectCI extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		assertTrue("Git hosting is switched on by " + ENV_GITEA_URL + ".", GitHostingService.getInstance().isEnabled());
+		GitProviderType gitea = GitHostingService.getInstance().getProviderType(GiteaProviderType.NAME);
+		assertNotNull("The Gitea type is registered by tl-factory-gitea.", gitea);
 		assertTrue("CI is switched on by " + ENV_JENKINS_URL + ".", CIService.getInstance().isEnabled());
-		_hosting = GitHostingService.getInstance().getProvider();
+		String owner = System.getenv(ENV_GITEA_OWNER);
+		_hosting = gitea.createProvider(new GitConnectionSettings(System.getenv(ENV_GITEA_URL),
+			owner == null || owner.isBlank() ? DEFAULT_GITEA_OWNER : owner,
+			gitea.tokenCredentials(GiteaProviderType.TOKEN_SECRET), false));
 		_ci = CIService.getInstance().getProvider();
-		_route = new GitRoute(GitRoute.DEFAULT_PATH, () -> _hosting, _repositories::get, Duration.ofSeconds(10),
+		_route = new GitRoute(GitRoute.DEFAULT_PATH,
+			workspace -> GitRoute.Target.of(_hosting, _repositories.get(workspace)), Duration.ofSeconds(10),
 			Duration.ofMinutes(10), USER_NAME, USER_EMAIL);
 		WorkspaceProxy proxy = new WorkspaceProxy() {
 			@Override

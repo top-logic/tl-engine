@@ -11,12 +11,15 @@ import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Access to a git hosting service holding the repositories of the projects.
+ * Access to a git hosting service holding the repositories of the projects, through one git
+ * connection.
  *
  * <p>
- * A provider creates repositories in one configured {@link #getOwner() owner} (an organization or
- * user of the hosting service) and authenticates its requests with the credentials of the control
- * application.
+ * A provider creates repositories in one {@link #getOwner() owner} (an organization or user of the
+ * hosting service) and authenticates its requests with the credentials of its connection. It is
+ * created by the {@link GitProviderType} of the hosting service for the
+ * {@link GitConnectionSettings settings} of a connection, see
+ * {@link GitHostingService#provider(GitConnectionKey)}.
  * </p>
  *
  * <p>
@@ -38,11 +41,26 @@ public interface GitHostingProvider {
 	String getOwner();
 
 	/**
+	 * What the credentials may do in the {@link #getOwner() owner}, as the hosting service tells.
+	 *
+	 * <p>
+	 * An owner the provider {@link GitConnectionSettings#createOwner() creates itself} and that does
+	 * not exist yet is reported as fully accessible: the credentials creating it administer it.
+	 * </p>
+	 *
+	 * @return The capabilities; if the hosting service cannot be asked, capabilities with the
+	 *         {@link GitCapabilities#problem() problem}.
+	 */
+	GitCapabilities capabilities();
+
+	/**
 	 * Creates an empty, private repository of the {@link #getOwner() owner}.
 	 *
 	 * <p>
 	 * The repository has no commit; its {@link GitRepository#getDefaultBranch() default branch} is
-	 * created by the first push to it.
+	 * created by the first push to it. An owner the provider
+	 * {@link GitConnectionSettings#createOwner() creates itself} is created first if it does not
+	 * exist.
 	 * </p>
 	 *
 	 * @param name

@@ -46,7 +46,6 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.credential.CredentialProvider;
@@ -54,7 +53,9 @@ import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.factory.git.GitConnectionSettings;
 import com.top_logic.factory.gitea.GiteaHostingProvider;
+import com.top_logic.factory.gitea.GiteaProviderType;
 import com.top_logic.factory.gitea.client.ApiClient;
 import com.top_logic.factory.gitea.client.Configuration;
 import com.top_logic.factory.gitea.client.api.OrganizationApi;
@@ -105,7 +106,10 @@ public final class GiteaTestServer implements AutoCloseable {
 
 	private static final String ADMIN_PASSWORD = "factory-admin-password";
 
-	private static final String FULL_SCOPES = "write:organization,write:repository";
+	/**
+	 * The scopes of the access token of a git connection to Gitea.
+	 */
+	public static final String FULL_SCOPES = "write:organization,write:repository,read:user";
 
 	private static final String READ_SCOPES = "read:organization,read:repository";
 
@@ -315,32 +319,61 @@ public final class GiteaTestServer implements AutoCloseable {
 	}
 
 	/**
+	 * Creates a user of this server who is no administrator, with an access token of the
+	 * {@link #FULL_SCOPES} and {@code write:user}, which creating a repository in the namespace of
+	 * the user needs.
+	 *
+	 * @param name
+	 *        The name of the user.
+	 * @return The access token.
+	 */
+	public String createUser(String name) throws InterruptedException {
+		gitea("admin", "user", "create", "--username", name, "--password", name + "-password-1",
+			"--email", name + "@example.com", "--must-change-password=false");
+		return gitea("admin", "user", "generate-access-token", "--username", name, "--token-name", "full",
+			"--scopes", FULL_SCOPES + ",write:user", "--raw").trim();
+	}
+
+	/**
 	 * A provider of the organization {@link #ORG} of this server, authenticated with the given
-	 * token, or with the default credentials if {@code null}.
+	 * token, or with the token in the secret {@link GiteaProviderType#TOKEN_SECRET} if
+	 * {@code null}.
 	 */
 	public GiteaHostingProvider provider(String token) {
 		return provider(_baseUrl, token);
 	}
 
 	/**
-	 * A provider of the organization {@link #ORG} of the server at the given URL, authenticated
-	 * with the given token, or with the default credentials if {@code null}.
+	 * A provider of the given owner on this server, authenticated with the given token.
+	 *
+	 * @param createOwner
+	 *        See {@link GitConnectionSettings#createOwner()}.
 	 */
-	public static GiteaHostingProvider provider(String baseUrl, String token) {
-		GiteaHostingProvider.Config<?> config = TypedConfiguration.newConfigItem(GiteaHostingProvider.Config.class);
-		TypedConfigUtil.setProperty(config, GiteaHostingProvider.Config.BASE_URL, baseUrl);
-		TypedConfigUtil.setProperty(config, GiteaHostingProvider.Config.OWNER, ORG);
-		TypedConfigUtil.setProperty(config, GiteaHostingProvider.Config.TIMEOUT, 10000L);
-		if (token != null) {
-			TypedConfigUtil.setProperty(config, GiteaHostingProvider.Config.CREDENTIALS, credentials(token));
-		}
-		return (GiteaHostingProvider) TypedConfigUtil.createInstance(config);
+	public GiteaHostingProvider provider(String owner, String token, boolean createOwner) {
+		return provider(_baseUrl, owner, token, createOwner);
 	}
 
-	private static PolymorphicConfiguration<? extends CredentialProvider> credentials(String token) {
+	/**
+	 * A provider of the organization {@link #ORG} of the server at the given URL, authenticated
+	 * with the given token, or with the token in the secret {@link GiteaProviderType#TOKEN_SECRET}
+	 * if {@code null}.
+	 */
+	public static GiteaHostingProvider provider(String baseUrl, String token) {
+		return provider(baseUrl, ORG, token, false);
+	}
+
+	private static GiteaHostingProvider provider(String baseUrl, String owner, String token, boolean createOwner) {
+		CredentialProvider credentials =
+			token == null ? GiteaProviderType.credentials(GiteaProviderType.TOKEN_SECRET) : credentials(token);
+		return new GiteaHostingProvider(new GitConnectionSettings(baseUrl, owner, credentials, createOwner),
+			Duration.ofSeconds(10), 1);
+	}
+
+	private static CredentialProvider credentials(String token) {
 		LiteralSecretSource.Config secret = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
 		secret.setValue(token);
-		return HeaderCredentials.config(CredentialProvider.AUTHORIZATION, GiteaHostingProvider.TOKEN_SCHEME, secret);
+		return TypedConfigUtil.createInstance(
+			HeaderCredentials.config(CredentialProvider.AUTHORIZATION, GiteaHostingProvider.TOKEN_SCHEME, secret));
 	}
 
 	/**

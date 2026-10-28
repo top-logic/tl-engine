@@ -110,6 +110,59 @@ public class FactoryModel {
 	/** Attribute of a {@link #PROJECT}: its {@link #WORKSPACE}, a composition. */
 	public static final String PROJECT_WORKSPACE = "workspace";
 
+	/**
+	 * Attribute of a {@link #PROJECT}: the {@link #GIT_CONNECTION} its repository lives on.
+	 */
+	public static final String PROJECT_GIT_CONNECTION = "gitConnection";
+
+	/**
+	 * Attribute of a {@link #PROJECT}: whether the default branch of its repository is protected,
+	 * empty before the first workspace has the sources in it.
+	 */
+	public static final String PROJECT_BRANCH_PROTECTED = "branchProtected";
+
+	/**
+	 * Name of the type of a git connection: a server of a git hosting service, the owner the
+	 * repositories live in, and the credentials, see {@link com.top_logic.factory.git.GitConnections}.
+	 */
+	public static final String GIT_CONNECTION = "GitConnection";
+
+	/** Attribute of a {@link #GIT_CONNECTION}: its display name. */
+	public static final String GIT_CONNECTION_NAME = "name";
+
+	/**
+	 * Attribute of a {@link #GIT_CONNECTION}: the name of the
+	 * {@link com.top_logic.factory.git.GitProviderType} of its server.
+	 */
+	public static final String GIT_CONNECTION_PROVIDER_TYPE = "providerType";
+
+	/** Attribute of a {@link #GIT_CONNECTION}: the URL of its server. */
+	public static final String GIT_CONNECTION_URL = "url";
+
+	/**
+	 * Attribute of a {@link #GIT_CONNECTION}: the organization or user the repositories live in;
+	 * for a built-in connection the start of the names of the organizations of the tenants.
+	 */
+	public static final String GIT_CONNECTION_OWNER = "owner";
+
+	/**
+	 * Attribute of a {@link #GIT_CONNECTION}: the {@link #TENANT} owning it, empty for a built-in
+	 * connection of the installation.
+	 */
+	public static final String GIT_CONNECTION_TENANT = "tenant";
+
+	/**
+	 * Attribute of a {@link #GIT_CONNECTION}: the tenants whose members may choose it for a
+	 * project.
+	 */
+	public static final String GIT_CONNECTION_TENANTS = "tenants";
+
+	/**
+	 * Attribute of a {@link #GIT_CONNECTION} of a tenant: the name of the secret holding its access
+	 * token.
+	 */
+	public static final String GIT_CONNECTION_SECRET_NAME = "secretName";
+
 	/** Attribute of a {@link #WORKSPACE}: the identifier of its container. */
 	public static final String WORKSPACE_ID = "workspaceId";
 
@@ -184,6 +237,20 @@ public class FactoryModel {
 	 */
 	public static TLClass tenantType() {
 		return (TLClass) TLModelUtil.findType(MODULE, TENANT);
+	}
+
+	/**
+	 * The type of a git connection.
+	 */
+	public static TLClass gitConnectionType() {
+		return (TLClass) TLModelUtil.findType(MODULE, GIT_CONNECTION);
+	}
+
+	/**
+	 * The {@link #GIT_CONNECTION} of the given project, {@code null} for none.
+	 */
+	public static TLObject getGitConnection(TLObject project) {
+		return (TLObject) project.tValueByName(PROJECT_GIT_CONNECTION);
 	}
 
 	/**

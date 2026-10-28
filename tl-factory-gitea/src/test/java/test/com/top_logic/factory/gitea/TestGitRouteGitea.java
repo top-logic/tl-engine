@@ -87,7 +87,8 @@ public class TestGitRouteGitea extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_provider = _server.provider(_server.token());
-		_route = new GitRoute(GitRoute.DEFAULT_PATH, () -> _provider, _repositories::get, Duration.ofSeconds(10),
+		_route = new GitRoute(GitRoute.DEFAULT_PATH,
+			workspace -> GitRoute.Target.of(_provider, _repositories.get(workspace)), Duration.ofSeconds(10),
 			Duration.ofMinutes(5));
 		WorkspaceProxy proxy = new WorkspaceProxy() {
 			@Override

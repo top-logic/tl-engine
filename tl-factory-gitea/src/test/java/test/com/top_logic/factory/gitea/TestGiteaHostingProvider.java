@@ -14,11 +14,16 @@ import junit.framework.TestCase;
 import test.com.top_logic.factory.gitea.GiteaTestServer.ExecResult;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.git.GitCapabilities;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.I18NConstants;
 import com.top_logic.factory.gitea.GiteaHostingProvider;
+import com.top_logic.factory.gitea.GiteaProviderType;
+import com.top_logic.factory.gitea.client.api.OrganizationApi;
 import com.top_logic.factory.gitea.client.api.RepositoryApi;
+import com.top_logic.factory.gitea.client.model.AddCollaboratorOption;
 import com.top_logic.factory.gitea.client.model.BranchProtection;
+import com.top_logic.factory.gitea.client.model.Organization;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -41,6 +46,10 @@ public class TestGiteaHostingProvider extends TestCase {
 	private static final String BRANCH = GiteaTestServer.BRANCH;
 
 	private static final List<String> PROTECTED = List.of("Jenkinsfile", "deploy/**");
+
+	private static final String PLAIN_USER = "plain-user";
+
+	private static final String OTHER_USER = "other-user";
 
 	private static GiteaTestServer _server;
 
@@ -154,21 +163,21 @@ public class TestGiteaHostingProvider extends TestCase {
 	}
 
 	/**
-	 * The default credentials send the token from the secret
-	 * {@link GiteaHostingProvider#TOKEN_SECRET}.
+	 * The credentials of the type send the token from the named secret, here
+	 * {@link GiteaProviderType#TOKEN_SECRET}.
 	 */
 	public void testDefaultCredentials() {
-		String before = System.getProperty(GiteaHostingProvider.TOKEN_SECRET);
-		System.setProperty(GiteaHostingProvider.TOKEN_SECRET, _server.token());
+		String before = System.getProperty(GiteaProviderType.TOKEN_SECRET);
+		System.setProperty(GiteaProviderType.TOKEN_SECRET, _server.token());
 		try {
 			GiteaHostingProvider provider = provider(null);
 			GitRepository created = provider.createRepository("default-credentials", null);
 			assertEquals(created, provider.findRepository(created.getFullName()));
 		} finally {
 			if (before == null) {
-				System.clearProperty(GiteaHostingProvider.TOKEN_SECRET);
+				System.clearProperty(GiteaProviderType.TOKEN_SECRET);
 			} else {
-				System.setProperty(GiteaHostingProvider.TOKEN_SECRET, before);
+				System.setProperty(GiteaProviderType.TOKEN_SECRET, before);
 			}
 		}
 	}
@@ -190,6 +199,79 @@ public class TestGiteaHostingProvider extends TestCase {
 		GiteaHostingProvider provider = provider(_server.readToken());
 		assertErrorKey(I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(ORG + "/read-only"),
 			() -> provider.createRepository("read-only", null));
+	}
+
+	/**
+	 * The token of the administrator, who created the organization, may create and administer its
+	 * repositories.
+	 */
+	public void testCapabilitiesOfAdministrator() {
+		assertEquals(GitCapabilities.ALL, provider(_server.token()).capabilities());
+		GitRepository repository = provider(_server.token()).createRepository("administered", null);
+		assertTrue(repository.canAdminister());
+	}
+
+	/**
+	 * The token of a user who is no member of the organization may do nothing there, everything in
+	 * the namespace of the user; a repository of the organization the user may only write to is
+	 * reported as not administrable, and protecting its branch is refused.
+	 */
+	public void testCapabilitiesOfPlainUser() throws Exception {
+		String token = _server.createUser(PLAIN_USER);
+		assertEquals(GitCapabilities.NONE, provider(token).capabilities());
+		assertEquals(GitCapabilities.ALL, _server.provider(PLAIN_USER, token, false).capabilities());
+
+		GitRepository shared = provider(_server.token()).createRepository("shared", null);
+		new RepositoryApi(_server.client(_server.token())).repoAddCollaborator(ORG, "shared", PLAIN_USER,
+			new AddCollaboratorOption().permission(AddCollaboratorOption.PermissionEnum.WRITE));
+		GitRepository seen = provider(token).findRepository(shared.getFullName());
+		assertNotNull("The collaborator reads the repository.", seen);
+		assertFalse("A collaborator with write access does not administer it.", seen.canAdminister());
+		assertErrorKey(I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(shared.getFullName()),
+			() -> provider(token).protectBranch(seen, BRANCH, PROTECTED));
+
+		GitRepository own = _server.provider(PLAIN_USER, token, false).createRepository("own", null);
+		assertEquals("In the namespace of the user.", PLAIN_USER + "/own", own.getFullName());
+		assertTrue(own.canAdminister());
+	}
+
+	/**
+	 * A token without the scope read:user cannot tell its rights.
+	 */
+	public void testCapabilitiesWithoutUserScope() {
+		GitCapabilities capabilities = provider(_server.readToken()).capabilities();
+		assertFalse(capabilities.createRepositories());
+		assertNotNull(capabilities.problem());
+		assertEquals(I18NConstants.ERROR_CAPABILITIES_UNKNOWN__SERVICE_PROBLEM.getKey(),
+			capabilities.problem().plain().getKey());
+	}
+
+	/**
+	 * A provider creating its owner creates a private organization of the user of the token with
+	 * the first repository, then the repository in it; before, the owner counts as fully
+	 * accessible.
+	 */
+	public void testOrganizationCreated() throws Exception {
+		String owner = ORG + "-tenant-1";
+		GiteaHostingProvider provider = _server.provider(owner, _server.token(), true);
+		assertEquals(GitCapabilities.ALL, provider.capabilities());
+		assertErrorKey(I18NConstants.ERROR_OWNER_NOT_FOUND__OWNER.fill(owner),
+			() -> _server.provider(owner, _server.token(), false).createRepository("not-yet", null));
+
+		GitRepository created = provider.createRepository("app", null);
+		assertEquals(owner + "/app", created.getFullName());
+		assertTrue(created.canAdminister());
+		Organization organization = new OrganizationApi(_server.client(_server.token())).orgGet(owner);
+		assertEquals(Organization.VisibilityEnum.PRIVATE, organization.getVisibility());
+		assertEquals(GitCapabilities.ALL, provider.capabilities());
+		assertEquals("The organization is used again.", owner + "/second",
+			provider.createRepository("second", null).getFullName());
+
+		String plain = _server.createUser(OTHER_USER);
+		assertNull("Another user does not see the repositories of the organization.",
+			provider(plain).findRepository(created.getFullName()));
+		assertErrorKey(I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(owner + "/intruder"),
+			() -> _server.provider(owner, plain, true).createRepository("intruder", null));
 	}
 
 	/**

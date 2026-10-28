@@ -138,7 +138,8 @@ public class TestRepositoryWorkspaces extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_hosting = _server.provider(_server.token());
-		_route = new GitRoute(GitRoute.DEFAULT_PATH, () -> _hosting, _repositories::get, Duration.ofSeconds(10),
+		_route = new GitRoute(GitRoute.DEFAULT_PATH,
+			workspace -> GitRoute.Target.of(_hosting, _repositories.get(workspace)), Duration.ofSeconds(10),
 			Duration.ofMinutes(10), USER_NAME, USER_EMAIL);
 		WorkspaceProxy proxy = new WorkspaceProxy() {
 			@Override

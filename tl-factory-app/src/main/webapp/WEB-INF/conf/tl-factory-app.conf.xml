@@ -2,5 +2,8 @@
 
 <!-- Main configuration file of the control application. -->
 <root>
-	<alias/>
+	<alias>
+		<entry name="%FACTORY_GITEA_URL%" value="${env:tl_factory_gitea_url:}" comment="URL of the Gitea server of the built-in git connection, its ROOT_URL; empty switches the built-in connection off."/>
+		<entry name="%FACTORY_GITEA_OWNER%" value="${env:tl_factory_gitea_owner:tl-factory}" comment="Start of the names of the organizations of the tenants on the Gitea server of the built-in git connection."/>
+	</alias>
 </root>

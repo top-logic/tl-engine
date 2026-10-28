@@ -5,6 +5,12 @@
  */
 package com.top_logic.factory.project;
 
+import java.util.function.Supplier;
+
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.ModelAccessRights;
@@ -47,6 +53,32 @@ public class FactoryAccess {
 	 */
 	public static void checkWrite(Person user, TLObject object) {
 		TLContextManager.inPersonContext(user, () -> checkWrite(object));
+	}
+
+	/**
+	 * Runs a modification whose rights the caller has checked, without access checks, in a
+	 * transaction of its own committed with the given message.
+	 *
+	 * <p>
+	 * For an operation that is allowed to a user who holds no right on every object it changes,
+	 * e.g. an administrator of a tenant creating the account of a member. The current user stays
+	 * the author of the changes.
+	 * </p>
+	 *
+	 * @param message
+	 *        The commit message.
+	 * @param modification
+	 *        The modification.
+	 * @return The result of the modification.
+	 */
+	public static <T> T commitUnchecked(ResKey message, Supplier<T> modification) {
+		return ThreadContext.<T, RuntimeException, RuntimeException> withoutSecurityChecks(() -> {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(message)) {
+				T result = modification.get();
+				tx.commit();
+				return result;
+			}
+		});
 	}
 
 }

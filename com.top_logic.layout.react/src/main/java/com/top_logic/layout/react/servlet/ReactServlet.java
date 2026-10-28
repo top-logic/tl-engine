@@ -481,8 +481,29 @@ public class ReactServlet extends TopLogicServlet {
 					break;
 			}
 		} catch (Exception ex) {
+			if (!isValid(session)) {
+				// The session ended while the request ran, e.g. a command removed the account and with
+				// it all of its sessions: whatever read the session afterwards failed. The window is
+				// stale like any window of an ended session, and reloads.
+				Logger.info("Session ended while handling React request " + pathInfo + ": " + ex.getMessage(),
+					ReactServlet.class);
+				sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "Session ended.");
+				return;
+			}
 			Logger.error("Error handling React request: " + pathInfo, ex, ReactServlet.class);
 			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal error.");
+		}
+	}
+
+	/**
+	 * Whether the given session has not been invalidated.
+	 */
+	private static boolean isValid(HttpSession session) {
+		try {
+			session.getCreationTime();
+			return true;
+		} catch (IllegalStateException ex) {
+			return false;
 		}
 	}
 
@@ -648,8 +669,11 @@ public class ReactServlet extends TopLogicServlet {
 
 		DisplayContext displayContext = window.displayContext();
 		SubsessionHandler rootHandler = window.rootHandler();
+		// Taken before the command runs: a command may end the session (e.g. by removing its
+		// account), which then can no longer be read.
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
-		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+		try (Interaction interaction = registry.beginInteraction()) {
 			// Capture the step for the script recorder before the command runs: the address is computed
 			// against the current (pre-command) tree — exactly the state a replay resolves it against.
 			recordCommand(queue, control, commandName, arguments);
@@ -669,7 +693,7 @@ public class ReactServlet extends TopLogicServlet {
 
 			// Synthesize model events so that observable models receive changes
 			// from this command before the interaction delivers its updates.
-			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+			registry.synthesizeModelEvents(windowName);
 
 			if (!result.isSuccess()) {
 				// Show error in snackbar instead of returning HTTP 500.

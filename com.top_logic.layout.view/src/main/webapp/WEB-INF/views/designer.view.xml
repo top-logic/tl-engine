@@ -2,7 +2,8 @@
 
 <view xmlns="http://www.top-logic.com/ns/view/1.0">
 	<channels>
-		<channel name="designTree"/>
+		<channel name="designSession"/>
+		<channel name="designPath"/>
 		<channel name="selectedNode"/>
 	</channels>
 
@@ -13,8 +14,8 @@
 		</title>
 		<commands>
 			<save-design
-				design-tree="designTree"
 				placement="TOOLBAR"
+				session="designSession"
 			>
 				<label>
 					<en>Apply</en>
@@ -22,9 +23,8 @@
 				</label>
 			</save-design>
 			<revert-design
-				design-tree="designTree"
 				placement="TOOLBAR"
-				selection="selectedNode"
+				session="designSession"
 			>
 				<label>
 					<en>Revert</en>
@@ -32,17 +32,17 @@
 				</label>
 			</revert-design>
 			<select-view
-				design-tree="designTree"
 				placement="TOOLBAR"
 				selection="selectedNode"
+				session="designSession"
 			>
 				<label>
 					<en>Select view</en>
 					<de>Sicht auswählen</de>
 				</label>
 				<tooltip>
-					<en>Pick a view in the main window to select it here.</en>
-					<de>Eine Sicht im Hauptfenster anklicken, um sie hier auszuwählen.</de>
+					<en>Pick a view in the main window to open it here.</en>
+					<de>Eine Sicht im Hauptfenster anklicken, um sie hier zu öffnen.</de>
 				</tooltip>
 			</select-view>
 		</commands>
@@ -57,10 +57,15 @@
 					size="40"
 					unit="%"
 				>
-					<design-tree
-						input="designTree"
-						selection="selectedNode"
-					/>
+					<panel fill="true">
+						<title-content>
+							<breadcrumb path="designPath"/>
+						</title-content>
+						<design-tree
+							selection="selectedNode"
+							session="designSession"
+						/>
+					</panel>
 				</pane>
 				<pane
 					size="60"

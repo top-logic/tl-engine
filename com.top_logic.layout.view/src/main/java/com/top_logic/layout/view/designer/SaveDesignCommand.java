@@ -48,8 +48,8 @@ import com.top_logic.util.error.TopLogicException;
  * {@link com.top_logic.layout.view.UIElement.Config} trees back to {@code .view.xml} files.
  *
  * <p>
- * Reads the root {@link DesignTreeNode} from the configured channel, traverses the tree to collect
- * all unique source files, and writes each modified {@link com.top_logic.layout.view.ViewElement.Config} back to disk. The
+ * Reads the {@link DesignSession} from the configured channel and writes the view of every file
+ * opened in it that was modified back to disk, the files not shown at the moment included. The
  * {@link com.top_logic.layout.view.ViewLoader} cache auto-invalidates via timestamps on next
  * access.
  * </p>
@@ -62,20 +62,20 @@ public class SaveDesignCommand implements ViewCommand {
 	@TagName("save-design")
 	public interface Config extends ViewCommand.Config {
 
-		/** Configuration name for {@link #getDesignTree()}. */
-		String DESIGN_TREE = "design-tree";
+		/** Configuration name for {@link #getSession()}. */
+		String SESSION = "session";
 
 		@Override
 		@ClassDefault(SaveDesignCommand.class)
 		Class<? extends ViewCommand> getImplementationClass();
 
 		/**
-		 * Reference to the channel containing the root {@link DesignTreeNode}.
+		 * Reference to the channel containing the {@link DesignSession}.
 		 */
-		@Name(DESIGN_TREE)
+		@Name(SESSION)
 		@Mandatory
 		@Format(ChannelRefFormat.class)
-		ChannelRef getDesignTree();
+		ChannelRef getSession();
 	}
 
 	private final Config _config;
@@ -90,17 +90,14 @@ public class SaveDesignCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		// Resolve the design tree root from the configured channel.
 		ViewContext viewContext = (ViewContext) context;
-		ViewChannel designTreeChannel = viewContext.resolveChannel(_config.getDesignTree());
-		DesignTreeNode root = (DesignTreeNode) designTreeChannel.get();
-		if (root == null) {
+		ViewChannel sessionChannel = viewContext.resolveChannel(_config.getSession());
+		if (!(sessionChannel.get() instanceof DesignSession session)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		// Collect only dirty source files and their root ViewElement.Config.
-		Map<String, ViewElement.Config> fileConfigs = new LinkedHashMap<>();
-		collectDirtySourceFiles(root, fileConfigs);
+		// Only the modified files, of all files opened in the session.
+		Map<String, ViewElement.Config> fileConfigs = session.getDirtyViews();
 
 		if (fileConfigs.isEmpty()) {
 			return HandlerResult.DEFAULT_RESULT;
@@ -121,10 +118,12 @@ public class SaveDesignCommand implements ViewCommand {
 		for (Map.Entry<String, String> entry : contents.entrySet()) {
 			writeViewFile(entry.getKey(), entry.getValue());
 		}
+		session.markSaved(contents.keySet());
 
 		// Trigger hot-reload in the main application window.
-		if (viewContext.hasChannel("appContext")) {
-			ViewChannel appContextChannel = viewContext.resolveChannel(new ChannelRef("appContext"));
+		if (viewContext.hasChannel(OpenDesignerCommand.APP_CONTEXT_CHANNEL)) {
+			ViewChannel appContextChannel =
+				viewContext.resolveChannel(new ChannelRef(OpenDesignerCommand.APP_CONTEXT_CHANNEL));
 			Object appContextValue = appContextChannel.get();
 			com.top_logic.basic.Logger.info(
 				"SaveDesign: appContext type=" + (appContextValue != null ? appContextValue.getClass().getName() : "null")
@@ -176,21 +175,6 @@ public class SaveDesignCommand implements ViewCommand {
 		} catch (ConfigurationException ex) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS.fill(viewPath, ex.getMessage()), ex);
-		}
-	}
-
-	/**
-	 * Traverses the design tree and maps each dirty source file to its root
-	 * {@link com.top_logic.layout.view.ViewElement.Config}. Only files containing dirty nodes are
-	 * included. After collection, dirty flags on included nodes are cleared.
-	 */
-	private void collectDirtySourceFiles(DesignTreeNode node, Map<String, ViewElement.Config> fileConfigs) {
-		if (node.isDirty() && node instanceof ConfigDesignTreeNode configNode
-				&& configNode.getConfig() instanceof ViewElement.Config viewConfig) {
-			fileConfigs.put(node.getSourceFile(), viewConfig);
-		}
-		for (DesignTreeNode child : node.getChildren()) {
-			collectDirtySourceFiles(child, fileConfigs);
 		}
 	}
 

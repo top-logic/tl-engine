@@ -38,6 +38,7 @@ import com.top_logic.layout.view.element.ContentSectionConfig;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
 import com.top_logic.layout.view.element.SplitPanelElement.PaneConfig;
 import com.top_logic.layout.view.element.SwitchElement.CaseConfig;
+import com.top_logic.layout.view.tiles.FrameContentConfig;
 import com.top_logic.layout.view.wizard.WizardStepSource;
 
 /**
@@ -106,9 +107,13 @@ public class TestElementListsKeyed extends TestCase {
 						problems.add(name + ": entries have an id, but the list is keyed by '"
 							+ key.getPropertyName() + "'.");
 					} else if (key.getAnnotation(GlobalKey.class) == null
-						&& !WizardStepSource.Config.class.isAssignableFrom(entryType)) {
+						&& !WizardStepSource.Config.class.isAssignableFrom(entryType)
+						&& !FrameContentConfig.class.isAssignableFrom(entryType)) {
 						// The id of a wizard step is the value of the wizard's step channel; two
-						// wizards of one view may well have a step of the same name.
+						// wizards of one view may well have a step of the same name. Likewise, the
+						// id of a frame declaration is the name the views of its tile stack push
+						// the frame by; two stacks of one view displaying the same views declare
+						// frames of the same names.
 						problems.add(name + ": the id of the entries is not a global key, so a"
 							+ " referencing element cannot address an entry.");
 					}

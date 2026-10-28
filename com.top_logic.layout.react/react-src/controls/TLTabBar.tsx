@@ -24,7 +24,8 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TabBarStateJson>>();
   const sendCommand = useTLCommand();
   const fillClass = useFill(true);
-  const tabs = (state.tabs ?? []) as TabInfo[];
+  // A hidden tab is left out of the strip; the server never keeps it selected while another is visible.
+  const tabs = ((state.tabs ?? []) as TabInfo[]).filter(tab => !tab.hidden);
   const activeTabId = state.activeTabId;
   const ids = tabs.map(tab => tab.id);
 

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -26,7 +27,7 @@ import com.top_logic.layout.view.element.SidebarElement.ItemSite;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemElement;
 import com.top_logic.layout.view.security.AccessChecks;
-import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.UnitAccess;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.util.Resources;
 
@@ -50,6 +51,7 @@ public class GroupItemElement implements SidebarItemElement {
 	 * Configuration for {@link GroupItemElement}.
 	 */
 	@TagName("group")
+	@TypeIcon("css:bi bi-folder2")
 	public interface Config extends SidebarItemConfig, WithAccessControl {
 
 		@Override
@@ -110,7 +112,7 @@ public class GroupItemElement implements SidebarItemElement {
 
 	private final boolean _expanded;
 
-	private final AccessControl _accessControl;
+	private final UnitAccess _access;
 
 	private final List<SidebarItemElement> _items;
 
@@ -123,7 +125,7 @@ public class GroupItemElement implements SidebarItemElement {
 		_label = config.getLabel();
 		_icon = config.getIcon();
 		_expanded = config.getExpanded();
-		_accessControl = config.getAccessControl();
+		_access = UnitAccess.create(context, config.getAccessControl());
 		_items = new ArrayList<>();
 		for (SidebarItemConfig itemConfig : config.getItems()) {
 			_items.add(context.getInstance(itemConfig));
@@ -141,13 +143,15 @@ public class GroupItemElement implements SidebarItemElement {
 
 	@Override
 	public SidebarItem createSidebarItem(ViewContext context, ItemSite site) {
-		if (!AccessChecks.isAccessible(_accessControl)) {
+		if (!AccessChecks.isOffered(_access)) {
 			// Access denied for the current user: the group and everything in it is omitted.
 			return null;
 		}
-		List<SidebarItem> children = SidebarElement.createItems(_items, context, site);
+		List<SidebarItem> children = SidebarElement.createItems(_items, context, site.guardedBy(_access));
 		String label = Resources.getInstance().getString(_label);
-		return new GroupItem(_id, label, _icon, children, _expanded);
+		GroupItem result = new GroupItem(_id, label, _icon, children, _expanded);
+		SidebarElement.withholdWhileDenied(result, _access, context, site);
+		return result;
 	}
 
 }

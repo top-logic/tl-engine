@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -56,9 +57,11 @@ import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
@@ -382,7 +385,11 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	private ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldSpec field,
 			FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
 		// The attribute's annotations include the type-level default via the VALUE_TYPE strategy.
-		return createFieldControl(context, part.getType(), part, field, model, control);
+		ReactControl result = createFieldControl(context, part.getType(), part, field, model, control);
+		if (model instanceof AttributeSelectFieldModel select) {
+			select.observeWhileDisplayed(result);
+		}
+		return result;
 	}
 
 	/**
@@ -1186,6 +1193,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * </p>
 	 *
 	 * <p>
+	 * The options of an attribute referring to a {@link TLClass} follow the instances of that class
+	 * while the field is displayed: an instance created later is offered, a deleted one no longer
+	 * is, see {@link AttributeSelectFieldModel#observeWhileDisplayed(ReactControl)}.
+	 * </p>
+	 *
+	 * <p>
 	 * A {@link TLStructuredTypePart#isDerived() derived} attribute is never edited, so it is offered
 	 * no options: its select model only displays the value. Either model computes a derived value
 	 * over the form's edits, see {@link AttributeFieldModel}.
@@ -1202,11 +1215,19 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		OptionSource optionSource = selectOptionSource(part);
 		if (optionSource != null) {
 			if (part.isDerived()) {
-				optionSource = NO_OPTIONS;
+				return new AttributeSelectFieldModel(object, part, form, NO_OPTIONS);
 			}
-			return new AttributeSelectFieldModel(object, part, form, optionSource);
+			return new AttributeSelectFieldModel(object, part, form, optionSource, observedTypes(part));
 		}
 		return new AttributeFieldModel(object, part, form);
+	}
+
+	/**
+	 * The types whose object changes compute the options of the given attribute again: the class
+	 * the attribute refers to, none for a value of any other type.
+	 */
+	private static Set<TLStructuredType> observedTypes(TLStructuredTypePart part) {
+		return part.getType() instanceof TLClass target ? Set.of(target) : Set.of();
 	}
 
 	/**

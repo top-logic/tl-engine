@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -33,6 +34,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.CoverageStatus;
+import com.top_logic.element.boundsec.manager.coverage.OperationUse;
+import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
@@ -105,7 +108,7 @@ import com.top_logic.util.Resources;
  * empty.
  * </p>
  *
- * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by its
+ * @implNote The rows come from {@link #analysisRows()}; a row is keyed by its
  *           module or type, since every analysis yields fresh {@link TypeCoverage} instances and
  *           the selection and the opened modules are to survive a refresh. The type and role
  *           columns are built by the {@link ColumnProviderService} from the model types of their
@@ -113,6 +116,12 @@ import com.top_logic.util.Resources;
  *           attributes does.
  */
 public class SecurityCoverageTable implements UIElement {
+
+	/**
+	 * The node grouping the findings that belong to no analyzed type, see
+	 * {@link SecurityCoverageAnalysis#getUnattachedFindings()}.
+	 */
+	public static final Object UNATTACHED = new NamedConstant("unattachedFindings");
 
 	/** Id of the column showing the analyzed type. */
 	public static final String COLUMN_TYPE = "type";
@@ -394,8 +403,8 @@ public class SecurityCoverageTable implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<Column<Object, ?>> columns = new ArrayList<>();
-		columns.add(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE, TL_MODEL_PART_TYPE, false,
-			row -> row instanceof TypeCoverage coverage ? coverage.type() : row, 300));
+		columns.add(withUnattachedLabels(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE,
+			TL_MODEL_PART_TYPE, false, row -> isModelRow(row) ? modelValue(row) : null, 300)));
 		columns.add(statusColumn());
 		columns.add(objectColumn(COLUMN_READ_ROLES, I18NConstants.COVERAGE_COLUMN_READ_ROLES, BoundedRole.ROLE_TYPE,
 			true, ofType(SecurityCoverageTable::readRoles), 230));
@@ -406,7 +415,7 @@ public class SecurityCoverageTable implements UIElement {
 		columns.add(textColumn(COLUMN_ACCESS_PARENT, I18NConstants.COVERAGE_COLUMN_ACCESS_PARENT,
 			ofType(SecurityCoverageTable::accessParent), 260));
 		columns.add(textColumn(COLUMN_FINDINGS, I18NConstants.COVERAGE_COLUMN_FINDINGS,
-			ofType(SecurityCoverageTable::findings), 460));
+			SecurityCoverageTable::findingsText, 460));
 
 		ViewChannel dataChannel = _inputRef != null ? context.resolveChannel(_inputRef) : null;
 		CoverageTree tree = new CoverageTree();
@@ -415,7 +424,7 @@ public class SecurityCoverageTable implements UIElement {
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, SortSpec.NONE, Set.of(COLUMN_FINDINGS));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
-		Set<TLModule> opened = new HashSet<>();
+		Set<Object> opened = new HashSet<>();
 		openNew(view, tree, opened);
 		TableViewControl<Object> control = new TableViewControl<>(context, view, true);
 
@@ -464,11 +473,14 @@ public class SecurityCoverageTable implements UIElement {
 	 * Opens the modules of the given tree that were not displayed before, so that every module shows
 	 * its types when it appears.
 	 */
-	private static void openNew(DefaultTableView<Object> view, CoverageTree tree, Set<TLModule> opened) {
+	private static void openNew(DefaultTableView<Object> view, CoverageTree tree, Set<Object> opened) {
 		for (TLModule module : tree.modules()) {
 			if (opened.add(module)) {
 				view.setExpanded(module, true);
 			}
+		}
+		if (tree.roots().contains(UNATTACHED) && opened.add(UNATTACHED)) {
+			view.setExpanded(UNATTACHED, true);
 		}
 	}
 
@@ -478,10 +490,12 @@ public class SecurityCoverageTable implements UIElement {
 	 *
 	 * <p>
 	 * A node is the {@link TLModule} or {@link TLClass} itself, which stays the same object across
-	 * analyses; the row displayed for a type is its current {@link TypeCoverage}.
+	 * analyses; the row displayed for a type is its current {@link TypeCoverage}. The findings that
+	 * belong to no analyzed type follow the modules as the children of the node
+	 * {@link SecurityCoverageTable#UNATTACHED}; each of them is its own row.
 	 * </p>
 	 */
-	private static final class CoverageTree implements TreeStructure<Object, Object> {
+	public static final class CoverageTree implements TreeStructure<Object, Object> {
 
 		private List<TLModule> _modules = List.of();
 
@@ -489,13 +503,21 @@ public class SecurityCoverageTable implements UIElement {
 
 		private Map<TLClass, TypeCoverage> _coverages = Map.of();
 
+		private List<Object> _unattached = List.of();
+
 		/**
-		 * Replaces the tree by the given analyzed types.
+		 * Replaces the tree by the given rows: analyzed types and unattached findings, see
+		 * {@link SecurityCoverageTable#analysisRows()}.
 		 */
-		void update(List<?> rows) {
+		public void update(List<?> rows) {
 			Map<TLModule, List<Object>> types = new HashMap<>();
 			Map<TLClass, TypeCoverage> coverages = new HashMap<>();
+			List<Object> unattached = new ArrayList<>();
 			for (Object row : rows) {
+				if (row instanceof CoverageFinding finding) {
+					unattached.add(finding);
+					continue;
+				}
 				TypeCoverage coverage = (TypeCoverage) row;
 				TLClass type = coverage.type();
 				coverages.put(type, coverage);
@@ -506,6 +528,7 @@ public class SecurityCoverageTable implements UIElement {
 			_modules = modules;
 			_types = types;
 			_coverages = coverages;
+			_unattached = unattached;
 		}
 
 		/**
@@ -518,23 +541,34 @@ public class SecurityCoverageTable implements UIElement {
 		/**
 		 * The analysis of the given node if it is a type, else <code>null</code>.
 		 */
-		TypeCoverage coverage(Object node) {
+		public TypeCoverage coverage(Object node) {
 			return node instanceof TLClass type ? _coverages.get(type) : null;
 		}
 
+		/**
+		 * The modules, followed by the {@link SecurityCoverageTable#UNATTACHED group} of the
+		 * unattached findings when there are any.
+		 */
 		@Override
 		public List<Object> roots() {
-			return new ArrayList<>(_modules);
+			List<Object> result = new ArrayList<>(_modules);
+			if (!_unattached.isEmpty()) {
+				result.add(UNATTACHED);
+			}
+			return result;
 		}
 
 		@Override
 		public List<Object> children(Object node) {
+			if (node == UNATTACHED) {
+				return _unattached;
+			}
 			return node instanceof TLModule module ? _types.getOrDefault(module, List.of()) : List.of();
 		}
 
 		@Override
 		public boolean isLeaf(Object node) {
-			return !(node instanceof TLModule);
+			return !(node instanceof TLModule) && node != UNATTACHED;
 		}
 
 		@Override
@@ -627,6 +661,10 @@ public class SecurityCoverageTable implements UIElement {
 			show(node == null || module != null ? null : coverages.apply(node));
 			if (_module != null) {
 				_module.set(module);
+			}
+			if (node instanceof CoverageFinding finding && _findings != null) {
+				// A finding belonging to no type is described by itself.
+				_findings.set(findingsHtml(List.of(finding)));
 			}
 		}
 
@@ -865,11 +903,94 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The analyzed types held by the channel value, or a fresh analysis when the channel is unset.
+	 * The rows held by the channel value, or a fresh analysis when the channel is unset.
+	 *
+	 * @see #analysisRows()
 	 */
 	private static List<Object> rows(Object value) {
-		List<?> rows = value instanceof List<?> list ? list : SecurityCoverageCheck.getInstance().analyze();
-		return new ArrayList<>(rows);
+		return value instanceof List<?> list ? new ArrayList<>(list) : analysisRows();
+	}
+
+	/**
+	 * A fresh analysis as the rows of this table: the {@link TypeCoverage} of every analyzed type,
+	 * followed by the {@link CoverageFinding}s that belong to no analyzed type
+	 * ({@link SecurityCoverageAnalysis#getUnattachedFindings()}), which the table shows in a group
+	 * of their own.
+	 *
+	 * <p>
+	 * This is the value a command refreshing the table writes to its {@link Config#getInput() input
+	 * channel}.
+	 * </p>
+	 */
+	public static List<Object> analysisRows() {
+		SecurityCoverageAnalysis analysis = SecurityCoverageCheck.getInstance().newAnalysis();
+		List<Object> result = new ArrayList<>(analysis.analyze());
+		result.addAll(analysis.getUnattachedFindings());
+		return result;
+	}
+
+	/**
+	 * Whether the given row stands for a part of the model: an analyzed type or a module.
+	 */
+	private static boolean isModelRow(Object row) {
+		return row instanceof TypeCoverage || row instanceof TLModule;
+	}
+
+	/**
+	 * The model part the given {@link #isModelRow(Object) model row} stands for.
+	 */
+	private static Object modelValue(Object row) {
+		return row instanceof TypeCoverage coverage ? coverage.type() : row;
+	}
+
+	/**
+	 * The given column, showing the label of the group of the unattached findings and the places
+	 * of each of these findings in the rows that stand for no part of the model.
+	 */
+	private static <V> Column<Object, V> withUnattachedLabels(Column<Object, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				String label = unattachedLabel(row);
+				return label != null ? CellContent.text(label) : super.renderCell(row);
+			}
+
+			@Override
+			public String searchText(Object row) {
+				String label = unattachedLabel(row);
+				return label != null ? label : super.searchText(row);
+			}
+		};
+	}
+
+	/**
+	 * The text the type column shows for a row standing for no part of the model: the label of the
+	 * {@link #UNATTACHED group} of the unattached findings, or the places of such a finding.
+	 *
+	 * @return <code>null</code> for a {@link #isModelRow(Object) model row}.
+	 */
+	private static String unattachedLabel(Object row) {
+		if (row == UNATTACHED) {
+			return Resources.getInstance().getString(I18NConstants.COVERAGE_UNATTACHED_GROUP);
+		}
+		if (row instanceof CoverageFinding finding) {
+			return users(finding);
+		}
+		return null;
+	}
+
+	/**
+	 * The text of the findings column: the messages of the findings of a type, the message of an
+	 * unattached finding, nothing for a module.
+	 */
+	private static String findingsText(Object row) {
+		if (row instanceof TypeCoverage) {
+			return findings(row);
+		}
+		if (row instanceof CoverageFinding finding) {
+			return Resources.getInstance().getString(finding.getMessage());
+		}
+		return null;
 	}
 
 	/**
@@ -1031,8 +1152,19 @@ public class SecurityCoverageTable implements UIElement {
 		if (delegation != null) {
 			html.append("<p>").append(TagUtil.encodeXML(resources.getString(delegation))).append("</p>");
 		}
+		html.append(findingsHtml(coverage.findings()));
+		return html.toString();
+	}
+
+	/**
+	 * The given findings as an HTML list with one entry per problem, the ways to solve it nested
+	 * underneath.
+	 */
+	private static String findingsHtml(List<CoverageFinding> findings) {
+		Resources resources = Resources.getInstance();
+		StringBuilder html = new StringBuilder();
 		html.append("<ul>");
-		for (CoverageFinding finding : coverage.findings()) {
+		for (CoverageFinding finding : findings) {
 			ResKey problem = problem(finding);
 			if (problem == null) {
 				continue;
@@ -1040,7 +1172,7 @@ public class SecurityCoverageTable implements UIElement {
 			html.append("<li>");
 			html.append(TagUtil.encodeXML(resources.getString(problem)));
 			html.append("<ul>");
-			for (ResKey solution : solutions(coverage, finding)) {
+			for (ResKey solution : solutions(finding)) {
 				html.append("<li>").append(TagUtil.encodeXML(resources.getString(solution))).append("</li>");
 			}
 			html.append("</ul>");
@@ -1078,17 +1210,33 @@ public class SecurityCoverageTable implements UIElement {
 			case NO_ROLE_SOURCE -> I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 			case NO_READ_GRANT -> I18NConstants.COVERAGE_PROBLEM_NO_READ_GRANT;
 			case DEAD_GRANT -> I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES.fill(
-				finding.getOperation().getID(),
+				finding.getOperationLabel(),
 				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
 			case SHADOWED_RULES -> I18NConstants.COVERAGE_PROBLEM_SHADOWED_RULES__RULES
 				.fill(String.join(VALUE_SEPARATOR, finding.getRuleIds()));
+			case UNGRANTED_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNGRANTED_OPERATION__OPERATION
+				.fill(finding.getOperationLabel());
+			case INAPPLICABLE_OPERATION -> I18NConstants.COVERAGE_PROBLEM_INAPPLICABLE_OPERATION__OPERATION_USERS
+				.fill(finding.getOperationLabel(), users(finding));
+			case UNKNOWN_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNKNOWN_OPERATION__OPERATION_USERS
+				.fill(finding.getOperationLabel(), users(finding));
+			case UNCHECKED_GRANT -> I18NConstants.COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES.fill(
+				finding.getOperationLabel(),
+				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
 		};
+	}
+
+	/**
+	 * The places of the application a finding about an operation lists.
+	 */
+	private static String users(CoverageFinding finding) {
+		return finding.getUses().stream().map(OperationUse::user).collect(Collectors.joining(VALUE_SEPARATOR));
 	}
 
 	/**
 	 * The ways to solve the problem the given finding reports, the most specific one first.
 	 */
-	private static List<ResKey> solutions(TypeCoverage coverage, CoverageFinding finding) {
+	private static List<ResKey> solutions(CoverageFinding finding) {
 		List<ResKey> solutions = new ArrayList<>();
 		switch (finding.getKind()) {
 			case NO_ROLE_SOURCE -> {
@@ -1108,6 +1256,21 @@ public class SecurityCoverageTable implements UIElement {
 			case SHADOWED_RULES -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT);
+			}
+			case UNGRANTED_OPERATION -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_GRANT_OPERATION);
+			}
+			case INAPPLICABLE_OPERATION -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_DECLARE_OPERATION);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHECK_OTHER_OPERATION);
+			}
+			case UNKNOWN_OPERATION -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REGISTER_OPERATION);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHECK_OTHER_OPERATION);
+			}
+			case UNCHECKED_GRANT -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_ADD_CHECK);
 			}
 		}
 		return solutions;

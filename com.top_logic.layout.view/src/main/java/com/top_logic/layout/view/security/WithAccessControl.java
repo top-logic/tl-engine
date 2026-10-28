@@ -10,15 +10,15 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 
 /**
- * Configuration mixin adding an optional {@link AccessControl} reference to a removable UI unit.
+ * Configuration mixin adding an optional {@link AccessControl} to a UI unit.
  *
  * <p>
- * Securable element configurations (nav-item, tab, tile) extend this interface so that the same
- * {@code <access-control>} declaration and the same enforcement code ({@link AccessChecks}) apply
- * uniformly across all of them.
+ * Securable element configurations (nav-item, sidebar group, tab, accordion section, tile) extend
+ * this interface so that the same {@code <access-control>} declaration and the same enforcement code
+ * ({@link AccessChecks}) apply uniformly across all of them.
  * </p>
  *
- * @see AccessChecks#isAccessible(WithAccessControl)
+ * @see UnitAccess
  */
 public interface WithAccessControl extends ConfigurationItem {
 
@@ -29,6 +29,7 @@ public interface WithAccessControl extends ConfigurationItem {
 	 * The access control guarding this UI unit.
 	 *
 	 * @return {@code null} when the unit is not access controlled (always shown).
+	 * @see AccessControl
 	 */
 	@Name(ACCESS_CONTROL)
 	@Nullable

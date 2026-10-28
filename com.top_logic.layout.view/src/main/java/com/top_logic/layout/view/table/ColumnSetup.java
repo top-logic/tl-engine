@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.top_logic.basic.StringServices;
@@ -224,6 +225,52 @@ public record ColumnSetup(
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
+	}
+
+	/**
+	 * The runtime column for this descriptor in a table whose cells are edited in place: as
+	 * {@link #buildColumn()}, but a cell of a row the {@link #editing()} offers the edit on shows
+	 * the control the value is entered with, and writes an entered value at once.
+	 *
+	 * <p>
+	 * Only a column writing a computed value back through an update function is edited in place
+	 * ({@link ValueCellEditing}): an attribute column edits the object itself, which is done in a
+	 * form, where the edit is buffered until it is saved. A cell of a row the edit is not offered
+	 * on shows a value it has with the same control, read-only, and an empty cell as the column
+	 * displays it. The cell keeps the tooltip and the cell class the column computes.
+	 * </p>
+	 *
+	 * @param written
+	 *        Called with the row after a value of its cell was written, e.g. to build the cells
+	 *        whose values may follow the written one again.
+	 */
+	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written) {
+		Column<Object, ?> column = buildColumn();
+		if (!(editing instanceof ValueCellEditing valueEditing)) {
+			return column;
+		}
+		return inPlace(column, valueEditing, written);
+	}
+
+	private static <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
+			Consumer<Object> written) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				CellContent content = super.renderCell(row);
+				CellControlFactory factory;
+				if (editing.canEdit(row)) {
+					factory = context -> editing.createControl(context, row,
+						editing.createInPlaceModel(row, () -> written.accept(row)));
+				} else if (editing.value(row) != null) {
+					// A value the row does not offer to edit is shown by the same control, disabled.
+					factory = context -> editing.createControl(context, row, editing.createReadOnlyModel(row));
+				} else {
+					return content;
+				}
+				return CellContent.withTooltip(new CellContent.Raw(factory), content.tooltip());
+			}
+		};
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
@@ -51,9 +53,11 @@ import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.form.AttributeFieldModel;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
@@ -93,6 +97,13 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * A text received from the client is stored only if it passes the application's HTML safety check
  * ({@link SafeHTML}), see {@link #setCheckHtml(boolean)}.
+ * </p>
+ *
+ * <p>
+ * An editor {@link #setMentions(List) with mentions} tells the client their trigger characters in
+ * {@link #MENTIONS}. While a mention is typed, the client asks for the objects matching the text
+ * typed after the trigger with the command {@link MentionArguments#COMMAND}, sending nothing but
+ * the trigger and that text, and receives them in {@link #MENTION_OPTIONS}.
  * </p>
  */
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
@@ -159,6 +170,55 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	public static final String SOURCE_EDITING = "sourceEditing";
 
+	/**
+	 * State listing the {@link #setMentions(List) mentions} the editor offers, each an object
+	 * holding {@link #MENTION_TRIGGER} and {@link #MENTION_PRESENTATION}; absent for an editor
+	 * offering none.
+	 */
+	public static final String MENTIONS = "mentions";
+
+	/** Field of a {@link #MENTIONS} entry holding the trigger character of the mention. */
+	public static final String MENTION_TRIGGER = "trigger";
+
+	/**
+	 * Field of a {@link #MENTIONS} entry holding the {@link MentionPresentation#getExternalName()
+	 * external name} of the presentation of a reference inserted by the mention.
+	 */
+	public static final String MENTION_PRESENTATION = "presentation";
+
+	/**
+	 * State holding the answer to the last {@link MentionArguments#COMMAND} command, an object
+	 * holding {@link #OPTIONS_TRIGGER}, {@link #OPTIONS_QUERY} and {@link #OPTIONS_ENTRIES}.
+	 *
+	 * <p>
+	 * The trigger and the query the answer is computed for are part of it, so that the client can
+	 * tell an outdated answer from the one to the text currently typed.
+	 * </p>
+	 */
+	public static final String MENTION_OPTIONS = "mentionOptions";
+
+	/** Field of {@link #MENTION_OPTIONS} holding the trigger character the answer is for. */
+	public static final String OPTIONS_TRIGGER = "trigger";
+
+	/** Field of {@link #MENTION_OPTIONS} holding the query the answer is for. */
+	public static final String OPTIONS_QUERY = "query";
+
+	/**
+	 * Field of {@link #MENTION_OPTIONS} listing the objects offered, each an object holding
+	 * {@link #ENTRY_LABEL} and {@link #ENTRY_LINK}.
+	 */
+	public static final String OPTIONS_ENTRIES = "entries";
+
+	/** Field of an {@link #OPTIONS_ENTRIES} entry holding the label of the object. */
+	public static final String ENTRY_LABEL = "label";
+
+	/**
+	 * Field of an {@link #OPTIONS_ENTRIES} entry holding the destination of a link to the object,
+	 * the {@link TLObjectLinkUtil#getLinkDestination(TLObject, String) href} of an
+	 * {@link TLObjectLinkUtil#TL_OBJECT object link}.
+	 */
+	public static final String ENTRY_LINK = "link";
+
 	/** Path of the download URLs the images are served under by {@link #getDownloadData(String)}. */
 	private static final String DATA_PATH = "/react-api/data?";
 
@@ -187,6 +247,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	/** Whether the text received from the client is checked, see {@link #setCheckHtml(boolean)}. */
 	private boolean _checkHtml = true;
+
+	/** The mentions the editor offers by their trigger characters, see {@link #setMentions(List)}. */
+	private Map<String, Mention> _mentions = Map.of();
 
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
@@ -386,6 +449,99 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	public void setCheckHtml(boolean checkHtml) {
 		_checkHtml = checkHtml;
+	}
+
+	/**
+	 * The ways of referring to objects the editor offers by typing a trigger character.
+	 *
+	 * @see #setMentions(List)
+	 */
+	public Collection<Mention> getMentions() {
+		return _mentions.values();
+	}
+
+	/**
+	 * Sets the ways of referring to objects the editor offers by typing a trigger character.
+	 *
+	 * @param mentions
+	 *        The mentions, each with a trigger character of its own. A mention whose trigger an
+	 *        earlier one uses is ignored.
+	 */
+	public void setMentions(List<Mention> mentions) {
+		Map<String, Mention> byTrigger = new LinkedHashMap<>();
+		List<Map<String, Object>> announced = new ArrayList<>();
+		for (Mention mention : mentions) {
+			if (byTrigger.putIfAbsent(mention.getTrigger(), mention) != null) {
+				Logger.warn("Ignoring a second mention with the trigger '" + mention.getTrigger() + "'.",
+					ReactWysiwygControl.class);
+				continue;
+			}
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put(MENTION_TRIGGER, mention.getTrigger());
+			entry.put(MENTION_PRESENTATION, mention.getPresentation().getExternalName());
+			announced.add(entry);
+		}
+		_mentions = byTrigger;
+
+		Object tx = beginUpdate();
+		putState(MENTIONS, announced.isEmpty() ? null : announced);
+		putState(MENTION_OPTIONS, null);
+		commitUpdate(tx);
+	}
+
+	/**
+	 * Handles the command {@link MentionArguments#COMMAND}: computes the objects the mention with
+	 * the given trigger offers for the given query and sends them to the client in
+	 * {@link #MENTION_OPTIONS}, together with the trigger and query they are computed for.
+	 *
+	 * <p>
+	 * Computing the objects leaves the value of the field alone. A trigger of no mention of the
+	 * editor is answered with no objects. When the function of the mention fails, the client
+	 * receives no objects and the failure is reported.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = MentionArguments.COMMAND, technical = true)
+	HandlerResult handleMention(MentionArguments args) {
+		String trigger = args.getTrigger();
+		String query = args.getQuery() == null ? "" : args.getQuery();
+
+		List<Map<String, Object>> entries = new ArrayList<>();
+		HandlerResult result = HandlerResult.DEFAULT_RESULT;
+		Mention mention = trigger == null ? null : _mentions.get(trigger);
+		if (mention != null) {
+			try {
+				for (TLObject object : mention.options(editedObject(), query)) {
+					Map<String, Object> entry = new LinkedHashMap<>();
+					entry.put(ENTRY_LABEL, MetaLabelProvider.INSTANCE.getLabel(object));
+					entry.put(ENTRY_LINK, TLObjectLinkUtil.getLinkDestination(object, null));
+					entries.add(entry);
+				}
+			} catch (RuntimeException ex) {
+				Logger.error("Failed to compute the objects for the mention '" + trigger + query + "'.", ex,
+					ReactWysiwygControl.class);
+				entries.clear();
+				result = HandlerResult.error(I18NConstants.ERROR_MENTION_FAILED);
+			}
+		}
+
+		Map<String, Object> answer = new LinkedHashMap<>();
+		answer.put(OPTIONS_TRIGGER, trigger);
+		answer.put(OPTIONS_QUERY, query);
+		answer.put(OPTIONS_ENTRIES, entries);
+		putState(MENTION_OPTIONS, answer);
+		return result;
+	}
+
+	/**
+	 * The object the edited text is an attribute of, {@code null} for a field editing no attribute
+	 * of an object.
+	 */
+	private Object editedObject() {
+		FieldModel model = getFieldModel();
+		if (model instanceof I18NLocalizedFieldModel localized) {
+			model = localized.getDelegate();
+		}
+		return model instanceof AttributeFieldModel attributeModel ? attributeModel.getObject() : null;
 	}
 
 	private void initShadowCopy() {

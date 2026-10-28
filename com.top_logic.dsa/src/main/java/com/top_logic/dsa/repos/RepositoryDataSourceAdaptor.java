@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -20,6 +21,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResourceCleaner;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.bean.BeanDataObject;
 import com.top_logic.dsa.DataSourceAdaptor;
@@ -491,7 +493,8 @@ public class RepositoryDataSourceAdaptor extends AbstractDataSourceAdaptor {
         /** The kind of change. */
         private int kindOfChange;
 
-        private boolean alreadyNotified;        
+        /** Whether the data changed event was already fired. */
+        private final AtomicBoolean alreadyNotified = new AtomicBoolean();
 
         // Constructors
 
@@ -509,21 +512,21 @@ public class RepositoryDataSourceAdaptor extends AbstractDataSourceAdaptor {
 			super(aStream);
             this.entryName      = anEntryName;
             this.kindOfChange   = kindOfDataChange;
+
+			RepositoryDataSourceAdaptor adaptor = RepositoryDataSourceAdaptor.this;
+			AtomicBoolean notified = alreadyNotified;
+			ResourceCleaner.register(this, () -> reportLeak(adaptor, anEntryName, notified));
         }
             
         // Public methods
 
-        @Override
-		public void finalize() throws Throwable {
-            if (!this.alreadyNotified) {
-                Logger.error("Stream for " + entryName + " in " + 
-                    RepositoryDataSourceAdaptor.this + " was not closed",
-                    RepositoryDataSourceAdaptor.this);
-                this.alreadyNotified = true;
-                // Notification won work here anymore ...   
-            }
-            super.finalize();
-        }
+		private static void reportLeak(RepositoryDataSourceAdaptor adaptor, String entryName,
+				AtomicBoolean notified) {
+			if (!notified.get()) {
+				Logger.error("Stream for " + entryName + " in " + adaptor + " was not closed", adaptor);
+				// Notification won't work here anymore ...
+			}
+		}
 
         /**
          * Close the stream and fires an data changed event, when closing
@@ -539,8 +542,7 @@ public class RepositoryDataSourceAdaptor extends AbstractDataSourceAdaptor {
 
 			super.close();
 
-            if (!this.alreadyNotified) {
-                this.alreadyNotified = true;
+            if (this.alreadyNotified.compareAndSet(false, true)) {
 				fireDataChanged(new DataChangeEvent(this, kindOfChange, this.getSourceName()));
             }
         }

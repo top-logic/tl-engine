@@ -15,16 +15,26 @@
 	row height, so the table resolves its height against the tile and scrolls inside it
 	instead of growing the page with its rows.
 	
-	The diagram, the Build steps table and the Details form share the selectedNode channel:
-	clicking a node in the diagram marks its row in Build steps and shows it in Details, and
-	picking a row in Build steps shows that step in Details and marks its node in the diagram
-	- when the step belongs to the product the diagram draws; a step of another product is
-	shown in Details while the diagram has no node to mark for it.
+	The diagram and the Build steps table share the selectedNode channel, both in
+	selection-mode="multi": clicking a node in the diagram marks its row in Build steps, and
+	picking rows in Build steps marks their nodes in the diagram - when the steps belong to
+	the product the diagram draws; a step of another product stays selected while the
+	diagram has no node to mark for it. A click with Ctrl (or Shift) in the diagram adds a
+	node to the selection and keeps the selected steps of other products, a click without a
+	modifier replaces the whole selection. Dragging with Ctrl held draws a rectangle and adds
+	every node inside it to the selection.
+	
+	The Details form shows the selected step through the derived channel detailNode, which
+	has a value only while exactly one step is selected.
 -->
 <view>
 	<channels>
 		<channel name="selectedProduct"/>
 		<channel name="selectedNode"/>
+		<derived-channel name="detailNode"
+			expr="$selectedNode.size() == 1 ? $selectedNode.singleElement() : null"
+			inputs="selectedNode"
+		/>
 	</channels>
 	<dashboard id="flow-diagram">
 		<tile id="products"
@@ -55,7 +65,10 @@
 					<en>Construction Plan</en>
 					<de>Bauplan</de>
 				</title>
-				<flow-diagram selection="selectedNode">
+				<flow-diagram
+					selection="selectedNode"
+					selection-mode="multi"
+				>
 					<inputs>
 						<input
 							as="product"
@@ -170,6 +183,7 @@ $parts.isEmpty()
 				</title>
 				<table
 					selection="selectedNode"
+					selection-mode="multi"
 					types="test.flowchart:FlowNode"
 				>
 					<columns>
@@ -189,7 +203,7 @@ $parts.isEmpty()
 					<de>Details</de>
 				</title>
 				<form
-					input="selectedNode"
+					input="detailNode"
 					with-inset="true"
 				>
 					<field attribute="name"/>

@@ -15,7 +15,13 @@
       <view-ref view="nav-item.view.xml" />
     </tab>
     <tab id="stack">
-      <tile-stack initial="nav-home.view.xml" path="navPath" />
+      <tile-stack initial="nav-home.view.xml" path="navPath">
+        <frame id="frame" view="nav-frame.view.xml">
+          <frame id="orphan" view="nav-orphan.view.xml">
+            <param name="item" />
+          </frame>
+        </frame>
+      </tile-stack>
     </tab>
   </tab-bar>
 </view>

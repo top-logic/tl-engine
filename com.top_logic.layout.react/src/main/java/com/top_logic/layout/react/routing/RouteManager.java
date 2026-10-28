@@ -87,6 +87,12 @@ public final class RouteManager {
 
 	private boolean _suppressNotifications;
 
+	/**
+	 * The number of {@link #beginNavigation() navigations} open. While there is one, no URL change
+	 * is reported.
+	 */
+	private int _navigationDepth;
+
 	private String _lastNotifiedUrl;
 
 	/**
@@ -476,21 +482,97 @@ public final class RouteManager {
 	 * ends, and {@link #finishAdoption()} reports what it composes then.
 	 * </p>
 	 *
+	 * <p>
+	 * The change is applied as a {@link #beginNavigation() navigation} of its own, which ends when the
+	 * change returns, normally or with an exception: what the display composes then is reported
+	 * either way, because the display shows what the change got to apply.
+	 * </p>
+	 *
 	 * @param displayChange
 	 *        The change to apply.
 	 */
 	public void navigate(Runnable displayChange) {
-		boolean before = _suppressNotifications;
-		_suppressNotifications = true;
+		Navigation navigation = beginNavigation();
 		try {
 			displayChange.run();
 		} finally {
-			_suppressNotifications = before;
+			navigation.end();
 		}
-		if (_adopting) {
-			return;
+	}
+
+	/**
+	 * Begins a change of the display that navigates and may take several steps to apply.
+	 *
+	 * <p>
+	 * The same as {@link #navigate(Runnable)}, for a change that does not complete within one call:
+	 * displaying an object opens container after container on the way to it, and may wait in between
+	 * for the user to decide about unsaved changes. Until the returned navigation
+	 * {@link Navigation#end() ends}, no URL change is reported; once it ends, the URL the display
+	 * composes then is reported as one history entry - nothing, where the display composes the URL
+	 * the client shows already, and a replacement, where only the query changed.
+	 * </p>
+	 *
+	 * <p>
+	 * Navigations nest: one begun while another is open - a container exchanging its content as a
+	 * step of an object display - reports nothing when it ends, and the outermost one reports what
+	 * all of them changed together.
+	 * </p>
+	 *
+	 * <p>
+	 * A URL {@link #adoptUrl(String) adopted} while a navigation is open - the user moving back in
+	 * the browser history while the navigation waits for an answer - is adopted as if no navigation
+	 * were open, except that the participants report nothing of their own on the way:
+	 * {@link #finishAdoption()} reports what the display composes then, as a replacement of the URL
+	 * the client moved to, including what the open navigation changed up to that point, because the
+	 * address bar has to name what is displayed. The navigation stays open; when it ends, what it
+	 * changed after the adoption becomes a history entry of its own.
+	 * </p>
+	 *
+	 * @return The navigation, to be {@link Navigation#end() ended} on every way the change completes,
+	 *         fails or is given up - an open navigation keeps every later change of the display from
+	 *         reaching the address bar.
+	 */
+	public Navigation beginNavigation() {
+		_navigationDepth++;
+		return new Navigation();
+	}
+
+	/**
+	 * A change of the display that navigates, begun by {@link RouteManager#beginNavigation()}.
+	 */
+	public final class Navigation {
+
+		private boolean _ended;
+
+		Navigation() {
+			// Created by the manager only.
 		}
-		notifyUrlChange(false);
+
+		/**
+		 * Ends this navigation, reporting the URL the display composes now as one history entry if
+		 * no other navigation is open any more.
+		 *
+		 * <p>
+		 * Ending a navigation that has ended already does nothing, so that every way a change can end
+		 * may end it without knowing whether another one did.
+		 * </p>
+		 */
+		public void end() {
+			if (_ended) {
+				return;
+			}
+			_ended = true;
+			_navigationDepth--;
+			if (_navigationDepth > 0) {
+				return;
+			}
+			if (_adopting) {
+				// The display settles into the URL the client shows; finishAdoption() reports what it
+				// composes once it is complete.
+				return;
+			}
+			notifyUrlChange(false);
+		}
 	}
 
 	/**
@@ -523,7 +605,9 @@ public final class RouteManager {
 		_pendingUrl = null;
 		_pendingQuery = Map.of();
 		resetUnnamedRoutes();
-		notifyUrlChange(true);
+		// Reported even while a navigation is open: the client moved to the URL adopted, and the
+		// address bar has to name the display that URL arrived at.
+		reportUrl(true);
 		_adopting = false;
 		_activatedWhileAdopting.clear();
 		_registeredWhileAdopting.clear();
@@ -880,6 +964,17 @@ public final class RouteManager {
 	}
 
 	private void notifyUrlChange(boolean replace) {
+		if (_navigationDepth > 0) {
+			// Part of a navigation that reports the URL the display arrives at once it ends.
+			return;
+		}
+		reportUrl(replace);
+	}
+
+	/**
+	 * Tells the client the URL the display composes, unless it shows that URL already.
+	 */
+	private void reportUrl(boolean replace) {
 		if (_suppressNotifications) {
 			return;
 		}

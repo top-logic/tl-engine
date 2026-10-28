@@ -12,33 +12,32 @@ Ticket: #29108. Branch: `CWS/CWS_29108_port_admin_uis_to_react`.
 Bring the operator- and administrator-facing tooling that today only exists in
 the legacy layout UI into the React view layer, reusing the existing
 declarative building blocks (`<table>`, `<form>`, `<split-panel>`, `<window>`,
-`<tab-bar>`, command/action chains, `SecurityMatrixElement`). Access-control
-administration (Accounts, Groups, Roles, Permissions) is already done and is
-the template to follow.
+`<tab-bar>`, command/action chains). Access-control administration (Accounts,
+Groups, Roles, Coverage) is already done and is the template to follow.
 
 ## Integration points (verified)
 
 - **Admin hub:** `com.top_logic.layout.view/.../views/admin/admin.view.xml` is
   an outer `<tab-bar>` whose tabs are admin *sections*. Today it holds one
   section, `access-control`, whose inner tab-bar holds Accounts / Groups /
-  Roles / Permissions. **New sections are added as sibling tabs of
+  Roles / Coverage. **New sections are added as sibling tabs of
   `access-control`** (e.g. `monitoring`, `system`, `model`), each with its own
   inner tab-bar of views.
 - **Reachability:** the demo's `app.view.xml` exposes the hub via a
   `<nav-item id="administration" route="none">` gated by
-  `<access-control scope="administration"/>` (root sees it unconditionally). No
+  `<access-control operation="Administration"/>` (root sees it unconditionally). No
   new wiring is needed to surface additional sections — they appear inside the
   hub automatically.
 - **Per-view access control:** gate sensitive sections/views with
-  `<access-control scope="…"/>` and a `SecurityScope` registered via
-  `SecurityScopeService` (see `technicalDemoConf.config.xml` for the pattern).
+  `<access-control operation="…"/>`, the operation declared and granted in the
+  `<security-config>` (see the view-layer article `view-layer/app-shell`).
 - **Reusable building blocks:** master/detail via `<split-panel>`+`<pane>`;
   list via `<table>` (rows from a TL-Script query, columns from model
   attributes, sort/filter/width-personalization); detail via `<form>`+`<field>`;
   creation via `<window>` dialogs; multi-step ops via `<generic-command>` +
   `<execute-script>`/`<with-transaction>`/`<write-channel>`/`<confirm>`. Bespoke
   cells via `CellContent.Raw` + a `CellControlFactory`. App-specific widgets
-  (like `SecurityMatrixElement`) are `UIElement`s referenced by `class=`.
+  are `UIElement`s referenced by `class=`.
 
 ## Triage (final, per owner's decisions)
 

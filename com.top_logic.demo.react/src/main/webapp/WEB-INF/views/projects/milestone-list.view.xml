@@ -8,7 +8,9 @@
 	The toolbar creates a milestone in the project and deletes the selected one; the table observes
 	milestones, so both are reflected in the rows without a reload.
 	The toolbar also approves the selected milestone through the privileged script
-	approveMilestone, enabled only for a user allowed to call it.
+	approveMilestone. Its access declares the operation "Approve" on the project of the
+	milestone, the check the script makes as well, so the command is enabled only for a user
+	allowed to call it.
 	
 	This view is reachable from no root view, so a display target revealing a milestone finds it
 	within the frame the target pushed before it.
@@ -86,9 +88,14 @@
 					<en>Approve</en>
 					<de>Freigeben</de>
 				</label>
+				<access>
+					<operation name="Approve"
+						object="$milestone.container()"
+						type="tl.demo.projectManagement:ProjectScope"
+					/>
+				</access>
 				<executability>
 					<null-input-disabled/>
-					<disabled-if expr="if(canCall(approveMilestone($milestone)), null, #('You may not approve this milestone.'@en, 'Sie dürfen diesen Meilenstein nicht freigeben.'@de))"/>
 				</executability>
 				<with-transaction>
 					<execute-script function="approveMilestone($milestone)"/>
@@ -111,13 +118,8 @@
 			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="milestone"
-				view="projects/tickets.view.xml"
-			>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="$milestone.get(`tl.demo.projectManagement:Milestone#name`)"
-					inputs="milestone"
-				/>
-			</on-activate>
+				frame="milestone"
+			/>
 		</table>
 	</panel>
 </view>

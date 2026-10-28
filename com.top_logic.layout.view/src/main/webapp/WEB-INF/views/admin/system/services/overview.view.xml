@@ -198,7 +198,7 @@
 			<rows>serviceList($services)</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="module"
-				view="admin/system/services/service-detail.view.xml"
+				frame="service"
 			/>
 		</table>
 	</panel>

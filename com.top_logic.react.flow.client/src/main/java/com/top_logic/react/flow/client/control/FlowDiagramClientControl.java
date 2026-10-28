@@ -174,6 +174,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private DragHandler _dragHandler;
 
+	private SelectionRectangle _selectionRectangle;
+
 	private EventListener _panningSVG;
 	private EventListener _startDraggingSVG;
 	private EventListener _dropSVG;
@@ -350,8 +352,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_startDraggingSVG = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
-				// If our DragHandler owns this gesture, suppress the native drag (pan).
-				if (_dragHandler != null && _dragHandler.isActive()) {
+				// If our DragHandler or a selection rectangle owns this gesture, suppress the native
+				// drag (pan).
+				if ((_dragHandler != null && _dragHandler.isActive())
+					|| (_selectionRectangle != null && _selectionRectangle.isStarted())) {
 					evt.preventDefault();
 					return;
 				}
@@ -463,6 +467,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private void setupDragListeners() {
 		_dragHandler = new DragHandler(this, _svg);
+		_selectionRectangle = new SelectionRectangle(this, _svg);
 
 		Element svgElement = Js.cast(_svg.getElement());
 
@@ -472,6 +477,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 				PointerEvent pe = (PointerEvent) evt;
 				// Only handle left mouse button (button 0).
 				if (pe.button != 0) {
+					return;
+				}
+				if (_selectionRectangle.onDown(pe)) {
+					// Ctrl+drag draws a selection rectangle, Ctrl+click is left to the elements.
 					return;
 				}
 				Element target = (Element) pe.target;
@@ -492,7 +501,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 			@Override
 			public void handleEvent(Event evt) {
 				PointerEvent pe = (PointerEvent) evt;
-				if (_dragHandler.isActive()) {
+				if (_selectionRectangle.onMove(pe)) {
+					pe.stopPropagation();
+					pe.preventDefault();
+				} else if (_dragHandler.isActive()) {
 					_dragHandler.onMove(pe.clientX, pe.clientY);
 					pe.stopPropagation();
 					pe.preventDefault();
@@ -508,6 +520,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_pointerUp = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
+				if (_selectionRectangle.onUp((PointerEvent) evt)) {
+					evt.stopPropagation();
+					evt.preventDefault();
+					return;
+				}
 				if (!_dragHandler.isActive()) {
 					return;
 				}
@@ -1124,6 +1141,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Cancel active drag if any.
 		if (_dragHandler != null && _dragHandler.isActive()) {
 			_dragHandler.cancel();
+		}
+		if (_selectionRectangle != null) {
+			_selectionRectangle.cancel();
 		}
 
 		// Clean up global listeners.

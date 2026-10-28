@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -41,6 +42,7 @@ public class AvatarElement implements UIElement {
 	 * Configuration for {@link AvatarElement}.
 	 */
 	@TagName("avatar")
+	@TypeIcon("css:bi bi-person-circle")
 	public interface Config extends UIElement.Config {
 
 		@Override

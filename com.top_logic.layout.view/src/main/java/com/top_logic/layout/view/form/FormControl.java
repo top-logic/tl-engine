@@ -16,7 +16,9 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -124,6 +126,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private ViewExecutabilityRule _editRule = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 
+	private BoundCommandGroup _editOperation = SimpleBoundCommandGroup.WRITE;
+
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
@@ -221,6 +225,20 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Sets the operation the current user needs on the displayed object to edit it.
+	 *
+	 * @param operation
+	 *        The operation, {@link SimpleBoundCommandGroup#WRITE} by default; {@code null} for an
+	 *        operation that is not registered, which refuses editing.
+	 *
+	 * @see #editPermission()
+	 */
+	public void setEditOperation(BoundCommandGroup operation) {
+		_editOperation = operation;
+		fireFormStateChanged();
+	}
+
+	/**
 	 * Whether the current user may edit the displayed object here.
 	 *
 	 * <p>
@@ -233,8 +251,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * <p>
 	 * The permission combines the {@link #setEditRule(ViewExecutabilityRule) configured rule} with
-	 * the model right to write the displayed object, see
-	 * {@link ModelAccessPolicy#onEdit(TLObject)}: editing is offered only where both allow it. Of two
+	 * the {@link #setEditOperation(BoundCommandGroup) edit operation} on the displayed object, see
+	 * {@link ModelAccessPolicy#onEdit(BoundCommandGroup, TLObject)}: editing is offered only where
+	 * both allow it. Of two
 	 * refusals, the stronger one wins (a hidden command beats a disabled one, see
 	 * {@link ExecutableState#combine(ExecutableState)}); of two equally strong refusals, the one of
 	 * the model right gives the reason. A transient draft (e.g. of a create dialog) is not refused
@@ -246,7 +265,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			// Nothing to edit, and a deleted object has no rights to ask for.
 			return _editRule.isExecutable(getCurrentObject());
 		}
-		ExecutableState right = ModelAccessPolicy.onEdit(_currentObject);
+		ExecutableState right = _editOperation == null
+			? ExecutableState.NOT_EXEC_HIDDEN
+			: ModelAccessPolicy.onEdit(_editOperation, _currentObject);
 		return right.combine(_editRule.isExecutable(getCurrentObject()));
 	}
 

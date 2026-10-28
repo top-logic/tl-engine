@@ -14,8 +14,8 @@ import com.top_logic.react.flow.data.Widget;
  *
  * <p>
  * Both {@link SelectableBox} and {@link GraphEdge} support selection (have {@code selected} +
- * {@code clickHandler}). This utility provides type-safe access to the {@code selected} flag on
- * either type.
+ * {@code clickHandler}), an edge only if it is {@link GraphEdge#isSelectable() selectable}. This
+ * utility provides type-safe access to the {@code selected} flag on either type.
  * </p>
  */
 public class SelectionUtil {
@@ -32,16 +32,20 @@ public class SelectionUtil {
 	}
 
 	/**
-	 * Whether the given widget can be selected at all.
+	 * Whether the user can select the given widget.
 	 *
 	 * <p>
-	 * Only a widget that can be selected carries a selection: {@link #setSelected(Widget, boolean)}
-	 * has nothing to write on any other, and {@link #isSelected(Widget)} answers
-	 * <code>false</code> for it whatever the diagram's selection says.
+	 * A {@link SelectableBox} can always be selected, a {@link GraphEdge} only if it is marked
+	 * {@link GraphEdge#isSelectable() selectable}, no other widget at all. A widget that cannot be
+	 * selected takes no part in the selection of the diagram: it is never marked as selected, neither
+	 * by the user nor for a selected user object it carries.
 	 * </p>
 	 */
 	public static boolean isSelectable(Widget widget) {
-		return widget instanceof SelectableBox || widget instanceof GraphEdge;
+		if (widget instanceof GraphEdge) {
+			return ((GraphEdge) widget).isSelectable();
+		}
+		return widget instanceof SelectableBox;
 	}
 
 	/**

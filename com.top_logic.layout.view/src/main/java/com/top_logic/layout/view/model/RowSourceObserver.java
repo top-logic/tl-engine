@@ -18,6 +18,7 @@ import java.util.function.Function;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -226,6 +227,28 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 		registerTypeListeners();
 		registerChannelListeners();
 		catchUp();
+	}
+
+	/**
+	 * Observes while the given control is displayed: begins the observation on the
+	 * {@link com.top_logic.layout.react.ReactContext#getModelScope() model scope} of the control
+	 * whenever it is {@link ReactControl#addAttachListener(Runnable) attached}, and stops it whenever
+	 * it is {@link ReactControl#addDetachListener(Runnable) detached}.
+	 *
+	 * <p>
+	 * A control that is not displayed - the inactive child of a tab bar, a field of a hidden part of
+	 * a form - does not follow the model, and catches up with it as soon as it is displayed again,
+	 * see {@link #attach(ModelScope)}.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control displaying the elements.
+	 * @return This instance, for call chaining.
+	 */
+	public RowSourceObserver<R> observeWhileAttached(ReactControl control) {
+		control.addAttachListener(() -> attach(control.getReactContext().getModelScope()));
+		control.addDetachListener(this::detach);
+		return this;
 	}
 
 	/**

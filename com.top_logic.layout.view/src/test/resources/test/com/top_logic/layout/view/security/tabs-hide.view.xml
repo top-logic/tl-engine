@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<tab-bar active-tab="guarded">
+		<tabs>
+			<tab id="guarded">
+				<access-control
+					inputs="object"
+					object="$object"
+					operation="Read"
+					type="TestViewModelAccess:Project"
+				/>
+				<panel/>
+			</tab>
+			<tab id="open">
+				<panel/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

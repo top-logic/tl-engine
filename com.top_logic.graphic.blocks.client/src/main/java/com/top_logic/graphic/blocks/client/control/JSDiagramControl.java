@@ -58,6 +58,7 @@ import elemental2.dom.HTMLDivElement;
 import elemental2.dom.HTMLDocument;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
+import elemental2.dom.PointerEvent;
 import elemental2.dom.ResizeObserver;
 import elemental2.dom.ResizeObserverCallback;
 import elemental2.dom.ResizeObserverEntry;
@@ -65,6 +66,7 @@ import elemental2.dom.Response;
 import elemental2.dom.WheelEvent;
 import elemental2.promise.Promise;
 import jsinterop.annotations.JsFunction;
+import jsinterop.base.Js;
 
 /**
  * Client-side logic of a flow diagram control.
@@ -132,7 +134,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 	}
 
-	private OMSVGDocument _svgDoc;
+	OMSVGDocument _svgDoc;
 
 	private Element _control;
 
@@ -142,7 +144,9 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private Scope _scope;
 
-	private Diagram _diagram;
+	Diagram _diagram;
+
+	private SelectionRectangle _selectionRectangle;
 
 	final SubIdGenerator _nextId;
 
@@ -210,6 +214,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 		_svgDoc = OMSVGParser.currentDocument();
 		_svg = _svgDoc.getElementById(controlElement().getId() + SVG_ID_SUFFIX);
+		setupSelectionRectangle();
 
 		Promise<Response> response = DomGlobal.window.fetch(contentUrl);
 		response
@@ -296,6 +301,12 @@ public class JSDiagramControl extends AbstractJSControl
 		EventListener startDraggingSVG = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
+				if (_selectionRectangle.isStarted()) {
+					// Ctrl+drag draws a selection rectangle instead of panning.
+					evt.preventDefault();
+					return;
+				}
+
 				DragEvent event = (DragEvent) evt;
 				dragStartX = event.clientX;
 				dragStartY = event.clientY;
@@ -851,8 +862,45 @@ public class JSDiagramControl extends AbstractJSControl
 				String id = _nextId.createId();
 				svgElement.setId(id);
 				((Widget) model).setClientId(id);
+				attachWidget(svgElement.getElement(), model);
 			}
 		};
+	}
+
+	/**
+	 * Attaches a model widget to the DOM element drawing it, as a JS property for fast lookup.
+	 */
+	private static native void attachWidget(com.google.gwt.dom.client.Element element, Object widget) /*-{
+		element.__tlWidget = widget;
+	}-*/;
+
+	/**
+	 * The model widget attached to the given DOM element, or {@code null}.
+	 */
+	static native Object getAttachedWidget(Element element) /*-{
+		return element.__tlWidget || null;
+	}-*/;
+
+	/**
+	 * Lets the user select boxes by a rectangle drawn with {@code Ctrl} held.
+	 */
+	private void setupSelectionRectangle() {
+		_selectionRectangle = new SelectionRectangle(this, _svg);
+
+		Element svgElement = Js.cast(_svg.getElement());
+		svgElement.addEventListener("pointerdown", evt -> _selectionRectangle.onDown((PointerEvent) evt));
+		svgElement.addEventListener("pointermove", evt -> {
+			if (_selectionRectangle.onMove((PointerEvent) evt)) {
+				evt.stopPropagation();
+				evt.preventDefault();
+			}
+		});
+		svgElement.addEventListener("pointerup", evt -> {
+			if (_selectionRectangle.onUp((PointerEvent) evt)) {
+				evt.stopPropagation();
+				evt.preventDefault();
+			}
+		});
 	}
 
 	private int getEventY(MouseEvent<?> event) {

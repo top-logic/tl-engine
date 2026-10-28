@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.annotation.InApp;
@@ -17,6 +19,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
@@ -29,6 +32,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.WithFinalTitle;
+import com.top_logic.layout.view.security.UnitHiding;
 
 /**
  * UIElement that wraps {@link ReactTabBarControl}.
@@ -46,6 +50,7 @@ public class TabBarElement implements UIElement {
 	 * Configuration for {@link TabBarElement}.
 	 */
 	@TagName("tab-bar")
+	@TypeIcon("css:bi bi-signpost-split")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -136,6 +141,7 @@ public class TabBarElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		RevealPath here = RevealPath.of(context);
 		List<TabDefinition> tabDefs = new ArrayList<>();
+		Map<String, UnitHiding> hidings = new LinkedHashMap<>();
 		for (TabEntry entry : _tabs) {
 			ContentSection section = entry._section();
 			if (!section.isAccessible()) {
@@ -153,6 +159,11 @@ public class TabBarElement implements UIElement {
 			if (section.getIcon() != null) {
 				tabDef.withIcon(section.getIcon());
 			}
+			UnitHiding hiding = section.hiding(context);
+			if (hiding != null) {
+				tabDef.withHidden(hiding.isHidden());
+				hidings.put(section.getId(), hiding);
+			}
 			String effectiveRoute = SidebarElement.resolveRoute(entry._route(), section.getId());
 			if (effectiveRoute != null) {
 				tabDef.withRoute(effectiveRoute);
@@ -163,6 +174,7 @@ public class TabBarElement implements UIElement {
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
 		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
 		tabBar.setCssClass(_cssClass);
+		hidings.forEach((id, hiding) -> hiding.bind(tabBar, hidden -> tabBar.setTabHidden(id, hidden)));
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {

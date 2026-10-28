@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -282,6 +283,7 @@ public class DataListElement implements UIElement {
 		 */
 		@Name(COMMANDS)
 		@EntryTag("command")
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
@@ -305,6 +307,7 @@ public class DataListElement implements UIElement {
 		 */
 		@Name(ROW_COMMANDS)
 		@EntryTag("command")
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewCommand>> getRowCommands();
 
 		/**

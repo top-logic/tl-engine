@@ -36,8 +36,12 @@
 		<!-- gwt-dev itself has an internal duplication in its class path. -->		
 		<skipDependencyCheck>true</skipDependencyCheck>
 
+		<!--
+			GWT does not support source levels above Java 17. The gwt-maven-plugin takes its "sourceLevel"
+			from this property.
+		-->
 		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.target>21</maven.compiler.target>
 
 		<!--
 			Number of workers each GWT compilation uses to compile its permutations (parameter "localWorkers"

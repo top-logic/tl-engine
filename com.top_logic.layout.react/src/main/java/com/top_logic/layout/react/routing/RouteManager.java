@@ -57,8 +57,16 @@ import com.top_logic.util.Resources;
  * Together with the URL, the manager composes the {@link #currentTitle() title} of the page it
  * names, from the {@link RoutingParticipant#activeRouteLabel() labels} of the same participants -
  * except those a participant around them keeps out of the title, see
- * {@link #setTitlingParticipants(Supplier)} - and reports it with every URL change. A change of the title alone - the display renames what it shows
- * without moving away from it - is reported as a replacement of the URL the client shows already.
+ * {@link #setTitlingParticipants(Supplier)} - and reports it with every URL change. A change of the
+ * title alone - the display renames what it shows without moving away from it - is reported as a
+ * replacement of the URL the client shows already.
+ * </p>
+ *
+ * <p>
+ * The routes of the participants address the inside of one page. A page that is not the
+ * application's default one is named by a {@link #setPagePath(String) page path} in front of them,
+ * which every URL the manager reports or answers carries and every URL it is handed is expected to
+ * carry - the URL as the client shows it. A URL naming another page addresses nothing of this one.
  * </p>
  *
  * @see RoutingParticipant
@@ -75,6 +83,15 @@ public final class RouteManager {
 	/** Separates the name of a query parameter from its value. */
 	private static final char VALUE_SEPARATOR = '=';
 
+	/** Separates the segments of a URL path from each other. */
+	private static final char PATH_SEPARATOR = '/';
+
+	/**
+	 * The path naming the page whose display the participants form, empty for the application's
+	 * default page.
+	 */
+	private String _pagePath = "";
+
 	private final List<RoutingParticipant> _participants = new ArrayList<>();
 
 	private final RouteChangeListener _internalListener = this::onParticipantRouteChange;
@@ -86,6 +103,12 @@ public final class RouteManager {
 	private RouteUrlChangeHandler _urlChangeHandler;
 
 	private boolean _suppressNotifications;
+
+	/**
+	 * The number of {@link #beginNavigation() navigations} open. While there is one, no URL change
+	 * is reported.
+	 */
+	private int _navigationDepth;
 
 	private String _lastNotifiedUrl;
 
@@ -255,6 +278,30 @@ public final class RouteManager {
 	}
 
 	/**
+	 * Sets the path naming the page whose display the participants form.
+	 *
+	 * <p>
+	 * A page that is not the application's default one is addressed by a path of its own - the view
+	 * file it displays - in front of the routes of its participants. The {@link #currentUrl() current
+	 * URL} starts with this path, followed by the composed routes, and a URL the client hands over -
+	 * to {@link #adoptUrl(String)}, {@link #holdUrl(String)} or {@link #navigateToRoute(String)} - is
+	 * resolved from behind it. A URL that does not start with it names another page, and none of its
+	 * routes and parameters are offered to the display of this one.
+	 * </p>
+	 *
+	 * <p>
+	 * Set before a URL is taken up, because the URL is interpreted against it.
+	 * </p>
+	 *
+	 * @param viewFile
+	 *        The path naming the page (without leading slash, may consist of several segments), empty
+	 *        or {@code null} for the application's default page.
+	 */
+	public void setPagePath(String viewFile) {
+		_pagePath = viewFile == null ? "" : viewFile;
+	}
+
+	/**
 	 * Begins adopting the URL the client displays.
 	 *
 	 * <p>
@@ -279,9 +326,15 @@ public final class RouteManager {
 	 * resolved and to every one that registers while the adoption runs.
 	 * </p>
 	 *
+	 * <p>
+	 * A URL is taken up behind the {@link #setPagePath(String) page path}. A URL naming another page
+	 * is adopted as the empty route: nothing of it is offered to the display, which returns to the
+	 * state without a route and reports the URL it composes then.
+	 * </p>
+	 *
 	 * @param url
-	 *        The URL the client displays (without leading slash, with its query string), empty for
-	 *        none.
+	 *        The URL the client displays (without leading slash, with the page path and the query
+	 *        string), empty for none.
 	 */
 	public void adoptUrl(String url) {
 		_lastNotifiedUrl = url;
@@ -290,9 +343,10 @@ public final class RouteManager {
 		// where that URL is the one the client shows already.
 		_lastNotifiedTitle = "";
 
-		int queryStart = url == null ? -1 : url.indexOf(QUERY_START);
-		_pendingUrl = queryStart < 0 ? url : url.substring(0, queryStart);
-		_pendingQuery = queryStart < 0 ? Map.of() : parseQuery(url.substring(queryStart + 1));
+		String route = routeOf(url);
+		int queryStart = route.indexOf(QUERY_START);
+		_pendingUrl = queryStart < 0 ? route : route.substring(0, queryStart);
+		_pendingQuery = queryStart < 0 ? Map.of() : parseQuery(route.substring(queryStart + 1));
 		_holding = false;
 		_heldUrl = "";
 		_adopting = true;
@@ -322,8 +376,8 @@ public final class RouteManager {
 	 * </p>
 	 *
 	 * @param url
-	 *        The URL the client displays (without leading slash, with its query string), empty for
-	 *        none.
+	 *        The URL the client displays (without leading slash, with the page path and the query
+	 *        string), empty for none.
 	 */
 	public void holdUrl(String url) {
 		String held = url == null ? "" : url;
@@ -436,8 +490,12 @@ public final class RouteManager {
 	 * refused the URL, with {@link #cancelAdoption()}.
 	 * </p>
 	 *
+	 * <p>
+	 * The URL is resolved behind the {@link #setPagePath(String) page path}, like an adopted one.
+	 * </p>
+	 *
 	 * @param url
-	 *        The target URL (without leading slash).
+	 *        The target URL (without leading slash, with the page path).
 	 */
 	public void navigateToRoute(String url) {
 		// The browser already displays this URL (it changed by popstate); adopting it is not a
@@ -476,21 +534,97 @@ public final class RouteManager {
 	 * ends, and {@link #finishAdoption()} reports what it composes then.
 	 * </p>
 	 *
+	 * <p>
+	 * The change is applied as a {@link #beginNavigation() navigation} of its own, which ends when the
+	 * change returns, normally or with an exception: what the display composes then is reported
+	 * either way, because the display shows what the change got to apply.
+	 * </p>
+	 *
 	 * @param displayChange
 	 *        The change to apply.
 	 */
 	public void navigate(Runnable displayChange) {
-		boolean before = _suppressNotifications;
-		_suppressNotifications = true;
+		Navigation navigation = beginNavigation();
 		try {
 			displayChange.run();
 		} finally {
-			_suppressNotifications = before;
+			navigation.end();
 		}
-		if (_adopting) {
-			return;
+	}
+
+	/**
+	 * Begins a change of the display that navigates and may take several steps to apply.
+	 *
+	 * <p>
+	 * The same as {@link #navigate(Runnable)}, for a change that does not complete within one call:
+	 * displaying an object opens container after container on the way to it, and may wait in between
+	 * for the user to decide about unsaved changes. Until the returned navigation
+	 * {@link Navigation#end() ends}, no URL change is reported; once it ends, the URL the display
+	 * composes then is reported as one history entry - nothing, where the display composes the URL
+	 * the client shows already, and a replacement, where only the query changed.
+	 * </p>
+	 *
+	 * <p>
+	 * Navigations nest: one begun while another is open - a container exchanging its content as a
+	 * step of an object display - reports nothing when it ends, and the outermost one reports what
+	 * all of them changed together.
+	 * </p>
+	 *
+	 * <p>
+	 * A URL {@link #adoptUrl(String) adopted} while a navigation is open - the user moving back in
+	 * the browser history while the navigation waits for an answer - is adopted as if no navigation
+	 * were open, except that the participants report nothing of their own on the way:
+	 * {@link #finishAdoption()} reports what the display composes then, as a replacement of the URL
+	 * the client moved to, including what the open navigation changed up to that point, because the
+	 * address bar has to name what is displayed. The navigation stays open; when it ends, what it
+	 * changed after the adoption becomes a history entry of its own.
+	 * </p>
+	 *
+	 * @return The navigation, to be {@link Navigation#end() ended} on every way the change completes,
+	 *         fails or is given up - an open navigation keeps every later change of the display from
+	 *         reaching the address bar.
+	 */
+	public Navigation beginNavigation() {
+		_navigationDepth++;
+		return new Navigation();
+	}
+
+	/**
+	 * A change of the display that navigates, begun by {@link RouteManager#beginNavigation()}.
+	 */
+	public final class Navigation {
+
+		private boolean _ended;
+
+		Navigation() {
+			// Created by the manager only.
 		}
-		notifyUrlChange(false);
+
+		/**
+		 * Ends this navigation, reporting the URL the display composes now as one history entry if
+		 * no other navigation is open any more.
+		 *
+		 * <p>
+		 * Ending a navigation that has ended already does nothing, so that every way a change can end
+		 * may end it without knowing whether another one did.
+		 * </p>
+		 */
+		public void end() {
+			if (_ended) {
+				return;
+			}
+			_ended = true;
+			_navigationDepth--;
+			if (_navigationDepth > 0) {
+				return;
+			}
+			if (_adopting) {
+				// The display settles into the URL the client shows; finishAdoption() reports what it
+				// composes once it is complete.
+				return;
+			}
+			notifyUrlChange(false);
+		}
 	}
 
 	/**
@@ -523,7 +657,9 @@ public final class RouteManager {
 		_pendingUrl = null;
 		_pendingQuery = Map.of();
 		resetUnnamedRoutes();
-		notifyUrlChange(true);
+		// Reported even while a navigation is open: the client moved to the URL adopted, and the
+		// address bar has to name the display that URL arrived at.
+		reportUrl(true);
 		_adopting = false;
 		_activatedWhileAdopting.clear();
 		_registeredWhileAdopting.clear();
@@ -600,13 +736,18 @@ public final class RouteManager {
 	 * </p>
 	 *
 	 * <p>
+	 * The path starts with the {@link #setPagePath(String) page path}, where one is set, so that the
+	 * URL names the page as well as the routes inside it.
+	 * </p>
+	 *
+	 * <p>
 	 * A {@link #holdUrl(String) held} URL is answered as it is: the display composing nothing of it
 	 * is not the application it addresses, and the address the user asked for is what the client
 	 * shows.
 	 * </p>
 	 *
-	 * @return The composed URL (without leading slash, with its query string), or empty string if no
-	 *         segments are active.
+	 * @return The composed URL (without leading slash, with the page path and the query string), or
+	 *         empty string if neither a page path is set nor segments are active.
 	 *
 	 * @see #setDisplayedParticipants(Supplier)
 	 */
@@ -615,7 +756,7 @@ public final class RouteManager {
 			return _heldUrl;
 		}
 
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(_pagePath);
 		Map<String, String> query = new LinkedHashMap<>();
 		for (RoutingParticipant participant : composingParticipants()) {
 			RouteSegment segment = participant.activeRouteSegment();
@@ -624,7 +765,7 @@ public final class RouteManager {
 			}
 			if (!segment.path().isEmpty()) {
 				if (sb.length() > 0) {
-					sb.append('/');
+					sb.append(PATH_SEPARATOR);
 				}
 				sb.append(segment.path());
 			}
@@ -632,6 +773,39 @@ public final class RouteManager {
 		}
 		appendQuery(sb, query);
 		return sb.toString();
+	}
+
+	/**
+	 * The part of the given URL behind the {@link #setPagePath(String) page path}: the routes of the
+	 * participants and the query string.
+	 *
+	 * @param url
+	 *        A URL as the client shows it, {@code null} for none.
+	 * @return The routes and query of the URL, empty for a URL that names another page or none.
+	 */
+	private String routeOf(String url) {
+		if (url == null) {
+			return "";
+		}
+		if (_pagePath.isEmpty()) {
+			return url;
+		}
+		if (!url.startsWith(_pagePath)) {
+			return "";
+		}
+		int end = _pagePath.length();
+		if (end == url.length()) {
+			return "";
+		}
+		char next = url.charAt(end);
+		if (next == PATH_SEPARATOR) {
+			return url.substring(end + 1);
+		}
+		if (next == QUERY_START) {
+			return url.substring(end);
+		}
+		// A path that merely begins like the page path names another page.
+		return "";
 	}
 
 	/**
@@ -880,6 +1054,17 @@ public final class RouteManager {
 	}
 
 	private void notifyUrlChange(boolean replace) {
+		if (_navigationDepth > 0) {
+			// Part of a navigation that reports the URL the display arrives at once it ends.
+			return;
+		}
+		reportUrl(replace);
+	}
+
+	/**
+	 * Tells the client the URL the display composes, unless it shows that URL already.
+	 */
+	private void reportUrl(boolean replace) {
 		if (_suppressNotifications) {
 			return;
 		}

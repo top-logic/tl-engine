@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -74,6 +75,7 @@ public class AdaptiveDetailElement implements UIElement {
 	 * Configuration for {@link AdaptiveDetailElement}.
 	 */
 	@TagName("adaptive-detail")
+	@TypeIcon("css:bi bi-layout-text-sidebar-reverse")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getSelection()}. */

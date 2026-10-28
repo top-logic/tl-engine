@@ -414,6 +414,15 @@
 						<de>Kalender</de>
 					</label>
 				</nav-item>
+				<nav-item id="live-options"
+					icon="css:bi bi-ui-radios"
+				>
+					<view-ref view="demo/live-options-demo.view.xml"/>
+					<label>
+						<en>Live options</en>
+						<de>Mitlaufende Auswahl</de>
+					</label>
+				</nav-item>
 				<nav-item id="dnd-demo"
 					icon="css:bi bi-arrows-move"
 				>

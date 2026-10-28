@@ -86,6 +86,27 @@ public interface Translator {
 	String translate(String text, String sourceLanguage, String targetLanguage);
 
 	/**
+	 * Translates the given text to the given target language, detecting the language of the given
+	 * text automatically.
+	 *
+	 * <p>
+	 * In contrast to {@link #translate(String, String)}, the detected source language is reported
+	 * together with the translation. The default implementation does not know the detected language
+	 * and reports <code>null</code> as {@link DetectedTranslation#sourceLanguage()}.
+	 * </p>
+	 *
+	 * @param text
+	 *        The text to translate.
+	 * @param targetLanguage
+	 *        The requested target language.
+	 * @return The text translated to the given target language together with the detected
+	 *         language of the given text.
+	 */
+	default DetectedTranslation translateDetecting(String text, String targetLanguage) {
+		return new DetectedTranslation(translate(text, null, targetLanguage), null, targetLanguage);
+	}
+
+	/**
 	 * Lists supported languages.
 	 */
 	List<String> getSupportedLanguages();

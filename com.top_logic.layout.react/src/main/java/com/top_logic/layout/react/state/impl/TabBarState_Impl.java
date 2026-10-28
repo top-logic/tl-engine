@@ -15,6 +15,8 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 
 		private String _icon = "";
 
+		private boolean _hidden = false;
+
 		/**
 		 * Creates a {@link Tab_Impl} instance.
 		 *
@@ -73,6 +75,22 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 		}
 
 		@Override
+		public final boolean isHidden() {
+			return _hidden;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.TabBarState.Tab setHidden(boolean value) {
+			internalSetHidden(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #isHidden()} without chain call utility. */
+		protected final void internalSetHidden(boolean value) {
+			_hidden = value;
+		}
+
+		@Override
 		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 			writeContent(out);
 		}
@@ -86,6 +104,8 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 			out.value(getLabel());
 			out.name(ICON__PROP);
 			out.value(getIcon());
+			out.name(HIDDEN__PROP);
+			out.value(isHidden());
 		}
 
 		@Override
@@ -94,6 +114,7 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 				case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case HIDDEN__PROP: setHidden(in.nextBoolean()); break;
 				default: super.readField(in, field);
 			}
 		}

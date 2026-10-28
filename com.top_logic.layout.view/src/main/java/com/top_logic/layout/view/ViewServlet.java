@@ -50,6 +50,7 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
+import com.top_logic.layout.react.routing.RouteEncoding;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
@@ -82,7 +83,15 @@ import com.top_logic.util.TopLogicServlet;
  * the default view and the views the application registers as {@link ViewConfig#getEntryPoints()}
  * can be named here; any other view file is answered with
  * {@link HttpServletResponse#SC_NOT_FOUND}.</li>
+ * <li>{@code /view/<windowName>/some.view.xml/<route>} - Renders a specific view and resolves the
+ * route inside it.</li>
  * </ul>
+ *
+ * <p>
+ * The view file of an entry point other than the default view is part of every URL of its page:
+ * the {@link RouteManager#setPagePath(String) page path} the routes inside the page follow. The
+ * default view is addressed without one, by the routes alone.
+ * </p>
  *
  * <p>
  * <b>Login view:</b> An application that configures a {@link ViewConfig#getLoginView() login
@@ -115,6 +124,12 @@ public class ViewServlet extends TopLogicServlet {
 	 * The ending by which a path names a view file rather than a route.
 	 */
 	private static final String VIEW_FILE_SUFFIX = ".view.xml";
+
+	/** Separates the segments of the path of a URL. */
+	private static final char PATH_SEPARATOR = '/';
+
+	/** Separates the query string from the path of a URL. */
+	private static final char QUERY_START = '?';
 
 	/**
 	 * Attribute of the page body carrying the token of the rendered page, which the page reports
@@ -167,19 +182,19 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String routePath = extractRoutePath(rawPathInfo(request), windowName);
-		if (routePath == null) {
+		String address = extractAddress(rawPathInfo(request), windowName);
+		if (address == null) {
 			// Entered without naming a page, so the user's own choice of where to begin applies.
 			// A URL that does name one - a route, or the view file of an entry point - asks for that
 			// page and is never overridden.
-			routePath = StartPage.get();
+			address = startPage();
 		} else {
 			String query = request.getQueryString();
 			if (query != null && !query.isEmpty()) {
 				// The query belongs to the route: it carries the values that refine what the named page
 				// shows - a filter term, a sorting - and the display takes them up together with the
 				// path. Raw, because a query travels percent-encoded and the routing decodes it.
-				routePath = routePath + '?' + query;
+				address = address + QUERY_START + query;
 			}
 		}
 
@@ -189,7 +204,7 @@ public class ViewServlet extends TopLogicServlet {
 		// command does - on a reload, while the report of the page just unloaded detaches the same
 		// tree. The trees are therefore only touched within an interaction.
 		try (Interaction interaction = windowRegistry.beginInteraction()) {
-			displayWindow(request, response, subSession, windowRegistry, windowName, pathInfo, routePath);
+			displayWindow(request, response, subSession, windowRegistry, windowName, address);
 
 			// The client of the rendered page connects within seconds. One that never does - the tab
 			// was closed while the page loaded - leaves a window that is torn down like one whose
@@ -216,14 +231,15 @@ public class ViewServlet extends TopLogicServlet {
 	 *        The registry of the session's windows.
 	 * @param windowName
 	 *        The name of the window whose page is requested.
-	 * @param pathInfo
-	 *        The path of the request, naming the view to display.
-	 * @param routePath
-	 *        The route requested by the URL.
+	 * @param address
+	 *        The URL requested for the window, as the client shows it: the view file naming the page
+	 *        if any, the route inside it and the query, without leading slash; {@code null} where it
+	 *        names no page.
 	 */
 	private void displayWindow(HttpServletRequest request, HttpServletResponse response,
 			TLSubSessionContext subSession, ReactWindowRegistry windowRegistry, String windowName,
-			String pathInfo, String routePath) throws IOException {
+			String address) throws IOException {
+		PageAddress page = PageAddress.parse(address);
 		// Collect the windows whose page was unloaded and did not come back within the grace period.
 		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
@@ -250,7 +266,7 @@ public class ViewServlet extends TopLogicServlet {
 			// The provider and the model of a window never change, so a tree it already has always
 			// fits - unlike a view, which has to be the same one.
 			if (displayed != null && !rebuildRequested) {
-				renderAgain(request, response, displayed, sseQueue, routePath, false);
+				renderAgain(request, response, displayed, sseQueue, "", page.route(), false);
 				return;
 			}
 			if (displayed != null) {
@@ -262,7 +278,9 @@ public class ViewServlet extends TopLogicServlet {
 
 			ReactContext baseContext = new DefaultReactContext(
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
-			wireRouteManager(baseContext, sseQueue, routePath, false);
+			// The window displays what its provider creates, not a view a URL may name: only the route
+			// is taken up.
+			wireRouteManager(baseContext, sseQueue, "", page.route(), false);
 			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 			// The window's overlays report the results of their commands - a menu selection, say - to
 			// the window snackbar.
@@ -284,12 +302,33 @@ public class ViewServlet extends TopLogicServlet {
 		// Which account the session belongs to decides what is displayed, so it is read where the
 		// session context is installed and handed to the decision as a value.
 		boolean anonymous = TLContext.isAnonymous();
-		ViewResolution resolution = resolveView(viewConfig, pathInfo, anonymous);
+		String viewFile = page.decodedViewFile();
+		ViewResolution resolution = resolveNamedView(viewConfig, viewFile, anonymous);
 		String viewPath = resolution.viewPath();
 		boolean loginView = resolution.loginView();
 		if (viewPath == null) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
 			return;
+		}
+
+		String pagePath;
+		String url;
+		if (loginView) {
+			// The login view stands in for the page the URL names: the URL is held as the client
+			// shows it, view file included, so that the page reloaded after the login is the one the
+			// visitor asked for.
+			pagePath = "";
+			url = address;
+		} else if (viewFile == null || isDefaultView(viewConfig, viewFile)) {
+			// The default view is addressed by its routes alone, also where the URL names its file:
+			// the address bar is corrected to that form by what the display reports.
+			pagePath = "";
+			url = page.route();
+		} else {
+			// In the form the client shows and sends the URLs of the page, which is what the page
+			// path has to lead.
+			pagePath = page.viewFile();
+			url = address;
 		}
 
 		ViewElement view;
@@ -307,7 +346,7 @@ public class ViewServlet extends TopLogicServlet {
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && !rebuildRequested && rendered != null
 			&& rendered.matches(viewPath, view, locale)) {
-			renderAgain(request, response, displayed, sseQueue, routePath, loginView);
+			renderAgain(request, response, displayed, sseQueue, pagePath, url, loginView);
 			return;
 		}
 		if (displayed != null) {
@@ -320,7 +359,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(baseContext, sseQueue, routePath, loginView);
+		wireRouteManager(baseContext, sseQueue, pagePath, url, loginView);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		// The window's overlays report the results of their commands - a menu selection, say - to
 		// the window snackbar.
@@ -332,7 +371,6 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
-		content.setViewSource(viewPath);
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
@@ -352,21 +390,24 @@ public class ViewServlet extends TopLogicServlet {
 	 * the rendering below contains.
 	 * </p>
 	 *
-	 * @param routePath
-	 *        The route requested by the URL, adopted by the tree while it is rendered (a deep link
-	 *        entered in an existing tab).
+	 * @param pagePath
+	 *        The page path of the displayed page - see
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
+	 * @param url
+	 *        The URL requested, adopted by the tree while it is rendered (a deep link entered in an
+	 *        existing tab).
 	 * @param loginView
-	 *        Whether the tree is the application's login view, which keeps the requested route
-	 *        instead of taking it up - see
-	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, boolean)}.
+	 *        Whether the tree is the application's login view, which keeps the requested URL instead
+	 *        of taking it up - see
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
-			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath, boolean loginView)
-			throws IOException {
+			ReactControl rootControl, SSEUpdateQueue sseQueue, String pagePath, String url,
+			boolean loginView) throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
 		sseQueue.setRootControl(rootControl);
-		wireRouteManager(context, sseQueue, routePath, loginView);
+		wireRouteManager(context, sseQueue, pagePath, url, loginView);
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -530,19 +571,15 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Extracts the route path from the URL (everything after the window name segment, excluding the
-	 * view file name).
+	 * Extracts the address of the requested page from the URL: everything after the window name
+	 * segment.
 	 *
 	 * <p>
-	 * For URL {@code /v1a2b3c/property/42}, returns {@code "property/42"}. The window name is
-	 * always the first segment, and the route is everything after it that is not a view file name
-	 * (i.e. does not end with {@code .view.xml}).
-	 * </p>
-	 *
-	 * <p>
-	 * A URL naming a view file names the page itself, and the route inside that page is empty: it
-	 * asks for the view it names rather than for the page the user last chose, and the query
-	 * refining what that view shows belongs to it.
+	 * For URL {@code /v1a2b3c/property/42}, returns {@code "property/42"}, for
+	 * {@code /v1a2b3c/demo/x.view.xml/property/42} {@code "demo/x.view.xml/property/42"} - the form in
+	 * which the client shows the URL, and which {@link PageAddress#parse(String)} splits into the
+	 * view file and the route inside it. A URL naming a view file names a page, even with an empty
+	 * route: it asks for the view it names rather than for the page the user last chose.
 	 * </p>
 	 *
 	 * @param pathInfo
@@ -550,10 +587,9 @@ public class ViewServlet extends TopLogicServlet {
 	 *        {@link #rawPathInfo(HttpServletRequest)}.
 	 * @param windowName
 	 *        The window name occupying the first segment.
-	 * @return The route path without leading slash, empty where the URL names the page by its view
-	 *         file, or {@code null} where the URL names no page at all.
+	 * @return The address without leading slash, or {@code null} where the URL names no page at all.
 	 */
-	private String extractRoutePath(String pathInfo, String windowName) {
+	private String extractAddress(String pathInfo, String windowName) {
 		if (pathInfo == null || windowName == null) {
 			return null;
 		}
@@ -568,11 +604,32 @@ public class ViewServlet extends TopLogicServlet {
 		if (afterWindow.isEmpty()) {
 			return null;
 		}
-		if (afterWindow.endsWith(VIEW_FILE_SUFFIX)) {
-			// The view file names the page; the route within it is empty.
-			return "";
-		}
 		return afterWindow;
+	}
+
+	/**
+	 * The address of the page the current user starts on, or {@code null} where they have chosen
+	 * none.
+	 *
+	 * <p>
+	 * A start page is the URL of a page the user displayed, view file included. A start page naming
+	 * a view the application no longer offers as an entry point is no page to begin on, and the
+	 * application is entered as if none were chosen.
+	 * </p>
+	 *
+	 * @see StartPage
+	 */
+	private static String startPage() {
+		String stored = StartPage.get();
+		if (stored == null) {
+			return null;
+		}
+		String viewFile = PageAddress.parse(stored).decodedViewFile();
+		ViewConfig config = ApplicationConfig.getInstance().getConfig(ViewConfig.class);
+		if (viewFile != null && !isEntryPoint(config, viewFile)) {
+			return null;
+		}
+		return stored;
 	}
 
 	/**
@@ -652,26 +709,34 @@ public class ViewServlet extends TopLogicServlet {
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
-	 * Hands the route manager the URL the loaded page displays (for deep-link resolution) and
-	 * installs a URL change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the
-	 * route manager on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet}
-	 * can look it up for handling {@code navigateToRoute} commands.
+	 * Hands the route manager the page path and the URL the loaded page displays (for deep-link
+	 * resolution) and installs a URL change handler that pushes {@link RouteChangeEvent}s via SSE.
+	 * Also stores the route manager on the SSE queue so that
+	 * {@link com.top_logic.layout.react.servlet.ReactServlet} can look it up for handling
+	 * {@code navigateToRoute} commands.
 	 * </p>
 	 *
+	 * @param pagePath
+	 *        The view file of an entry point that is not the default view, which every URL of the
+	 *        page starts with - see {@link RouteManager#setPagePath(String)}; empty for the default
+	 *        view.
+	 * @param url
+	 *        The URL to take up, starting with the page path; {@code null} for none.
 	 * @param loginView
 	 *        Whether the page displays the application's login view. Such a page is not the
-	 *        application the URL addresses, so it takes the URL up not at all: the route is
+	 *        application the URL addresses, so it takes the URL up not at all: the URL is
 	 *        {@link RouteManager#holdUrl(String) held}, which keeps the address the visitor asked
 	 *        for while they log in.
 	 */
-	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath,
-			boolean loginView) {
+	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String pagePath,
+			String url, boolean loginView) {
 		RouteManager routeManager = context.getRouteManager();
 		if (routeManager == null) {
 			return;
 		}
 
-		String requestedRoute = routePath == null ? "" : routePath;
+		routeManager.setPagePath(pagePath);
+		String requestedRoute = url == null ? "" : url;
 		if (loginView) {
 			routeManager.holdUrl(requestedRoute);
 		} else {
@@ -682,9 +747,9 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		routeManager.setApplicationTitle(applicationTitle());
-		routeManager.setUrlChangeHandler((url, title, replace) -> {
+		routeManager.setUrlChangeHandler((changedUrl, title, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
-				.setUrl(url)
+				.setUrl(changedUrl)
 				.setTitle(title)
 				.setReplace(replace);
 			sseQueue.enqueue(event);
@@ -743,20 +808,31 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param config
 	 *        The application's view configuration, naming the views a URL may load.
 	 * @param pathInfo
-	 *        The path below the servlet, its first segment the window name.
+	 *        The path below the servlet, its first segment the window name, decoded as
+	 *        {@link HttpServletRequest#getPathInfo()} delivers it.
 	 * @param anonymous
 	 *        Whether the session belongs to no account.
 	 * @return What the request displays - see {@link ViewResolution}.
 	 */
 	public static ViewResolution resolveView(ViewConfig config, String pathInfo, boolean anonymous) {
-		String namedView = namedView(pathInfo);
+		return resolveNamedView(config, namedView(pathInfo), anonymous);
+	}
+
+	/**
+	 * Resolves the view a request displays from the view file its URL names.
+	 *
+	 * @param namedView
+	 *        The view file the URL names, {@code null} where it names none.
+	 * @see #resolveView(ViewConfig, String, boolean)
+	 */
+	private static ViewResolution resolveNamedView(ViewConfig config, String namedView, boolean anonymous) {
 		if (anonymous && hasLoginView(config) && !isAnonymousEntryPoint(config, namedView)) {
-			return new ViewResolution(ViewLoader.VIEW_BASE_PATH + config.getLoginView(), true);
+			return new ViewResolution(config.getLoginView().fullPath(), true);
 		}
 		if (namedView == null) {
-			return new ViewResolution(ViewLoader.VIEW_BASE_PATH + config.getDefaultView(), false);
+			return new ViewResolution(config.getDefaultView().fullPath(), false);
 		}
-		if (!namedView.equals(config.getDefaultView()) && entryPoint(config, namedView) == null) {
+		if (!isEntryPoint(config, namedView)) {
 			return new ViewResolution(null, false);
 		}
 		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false);
@@ -766,22 +842,96 @@ public class ViewServlet extends TopLogicServlet {
 	 * The view file the given path names, or {@code null} where it names none.
 	 *
 	 * <p>
-	 * Everything after the window name that does not end in {@link #VIEW_FILE_SUFFIX} is a route
-	 * path handled by the {@link RouteManager} and names no view of its own.
+	 * The path after the window name names a view where it starts with a view file - see
+	 * {@link PageAddress#parse(String)}. Everything else is a route path handled by the
+	 * {@link RouteManager} inside the default view.
 	 * </p>
 	 *
 	 * @param pathInfo
 	 *        The path below the servlet, its first segment the window name, e.g.
-	 *        {@code /v1a2b3c/}, {@code /v1a2b3c/app.view.xml} or {@code /v1a2b3c/config-editor}.
+	 *        {@code /v1a2b3c/}, {@code /v1a2b3c/app.view.xml}, {@code /v1a2b3c/demo/x.view.xml/a/b}
+	 *        or {@code /v1a2b3c/config-editor}.
 	 */
 	private static String namedView(String pathInfo) {
 		String path = pathInfo.substring(1);
-		int slashIdx = path.indexOf('/');
-		if (slashIdx < 0 || slashIdx >= path.length() - 1) {
+		int slashIdx = path.indexOf(PATH_SEPARATOR);
+		if (slashIdx < 0) {
 			return null;
 		}
-		String remainder = path.substring(slashIdx + 1);
-		return remainder.endsWith(VIEW_FILE_SUFFIX) ? remainder : null;
+		return PageAddress.parse(path.substring(slashIdx + 1)).viewFile();
+	}
+
+	/**
+	 * Whether the given view file may be named by a URL: the default view or a registered entry
+	 * point.
+	 */
+	private static boolean isEntryPoint(ViewConfig config, String view) {
+		return isDefaultView(config, view) || entryPoint(config, view) != null;
+	}
+
+	/**
+	 * Whether the given view file is the {@link ViewConfig#getDefaultView() default view}.
+	 */
+	private static boolean isDefaultView(ViewConfig config, String view) {
+		return view.equals(config.getDefaultView().getPath());
+	}
+
+	/**
+	 * The page and the route inside it that an address of the view application names.
+	 *
+	 * <p>
+	 * An address is the part of a URL after {@link #ROOT_PATH} and the window name, as the client
+	 * shows it. It names a view where it starts with a view file: a path ending in
+	 * {@link #VIEW_FILE_SUFFIX}, followed by the end of the address, a {@link #PATH_SEPARATOR} and
+	 * the route inside the page, or the query. The view file may consist of several segments.
+	 * </p>
+	 *
+	 * @param viewFile
+	 *        The view file the address names, relative to {@link ViewLoader#VIEW_BASE_PATH}, in the
+	 *        percent-encoded form of the address, or {@code null} where it names none and the route
+	 *        is one of the default view.
+	 * @param route
+	 *        The route inside the page, without leading slash, with the query; empty for none.
+	 */
+	public record PageAddress(String viewFile, String route) {
+
+		/**
+		 * The {@link #viewFile()} as the configuration names it, its percent-escapes decoded, or
+		 * {@code null} where the address names no view file.
+		 */
+		public String decodedViewFile() {
+			return viewFile == null ? null : RouteEncoding.decodeSegment(viewFile);
+		}
+
+		/**
+		 * Splits the given address into the view file it names and the route behind it.
+		 *
+		 * @param address
+		 *        The address without leading slash, with the query; {@code null} for none.
+		 */
+		public static PageAddress parse(String address) {
+			if (address == null) {
+				return new PageAddress(null, "");
+			}
+			int queryStart = address.indexOf(QUERY_START);
+			int pathEnd = queryStart < 0 ? address.length() : queryStart;
+			int suffix = address.indexOf(VIEW_FILE_SUFFIX);
+			while (suffix >= 0) {
+				int fileEnd = suffix + VIEW_FILE_SUFFIX.length();
+				if (fileEnd > pathEnd) {
+					break;
+				}
+				if (fileEnd == pathEnd) {
+					return new PageAddress(address.substring(0, fileEnd), address.substring(fileEnd));
+				}
+				if (address.charAt(fileEnd) == PATH_SEPARATOR) {
+					return new PageAddress(address.substring(0, fileEnd), address.substring(fileEnd + 1));
+				}
+				// Only a segment ending in the suffix names a file.
+				suffix = address.indexOf(VIEW_FILE_SUFFIX, suffix + 1);
+			}
+			return new PageAddress(null, address);
+		}
 	}
 
 	/**
@@ -789,8 +939,7 @@ public class ViewServlet extends TopLogicServlet {
 	 * {@link ViewConfig#getLoginView() login view} instead of showing itself.
 	 */
 	private static boolean hasLoginView(ViewConfig config) {
-		String loginView = config.getLoginView();
-		return loginView != null && !loginView.isEmpty();
+		return config.getLoginView() != null;
 	}
 
 	/**
@@ -810,7 +959,7 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static ViewConfig.EntryPoint entryPoint(ViewConfig config, String view) {
 		for (ViewConfig.EntryPoint entryPoint : config.getEntryPoints()) {
-			if (view.equals(entryPoint.getView())) {
+			if (view.equals(entryPoint.getView().getPath())) {
 				return entryPoint;
 			}
 		}

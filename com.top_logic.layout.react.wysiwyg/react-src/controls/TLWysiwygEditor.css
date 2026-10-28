@@ -39,3 +39,17 @@
 .ProseMirror.resize-cursor {
   cursor: col-resize;
 }
+
+/* A reference to an object presented as a chip: the label on a subtle pill, in the edited text and
+   in the view alike. Selected, it is marked with the focus ring. */
+.tl-prose a.tlObject[data-mention] {
+  padding-inline: var(--tl-space-2xs);
+  border-radius: var(--corner-radius);
+  background: var(--tl-surface-brand-subtle);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ProseMirror a.tlObject[data-mention].ProseMirror-selectednode {
+  outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+}

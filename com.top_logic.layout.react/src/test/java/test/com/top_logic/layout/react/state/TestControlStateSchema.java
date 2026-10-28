@@ -459,7 +459,7 @@ public class TestControlStateSchema extends TestCase {
 	public void testAccordionKeys() {
 		ReactAccordionControl control = new ReactAccordionControl(createContext(), null, List.of(
 			new AccordionSection("a", "A", this::toggle).withExpanded(true).withIcon("css:fas fa-home")
-				.withActions(toggle()),
+				.withActions(toggle()).withHidden(true),
 			new AccordionSection("b", "B", this::toggle)), true);
 		// Creates the content of the expanded section.
 		control.attach();

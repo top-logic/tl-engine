@@ -39,6 +39,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRule;
+import com.top_logic.model.annotate.security.OperationDeclaration;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
@@ -158,6 +159,27 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 								<module name="%s"
 									internal="true"
 								/>
+							</security-config>
+						</instance>
+					</config>
+				</services>
+			</application>
+			""";
+
+	/**
+	 * The access rights of the underlying configuration layers, a type declaring an operation.
+	 */
+	private static final String BASE_OPERATIONS = """
+			<application>
+				<services>
+					<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+						<instance class="com.top_logic.model.security.SecurityConfigurationService">
+							<security-config>
+								<class name="%s">
+									<operations>
+										<operation name="publish"/>
+									</operations>
+								</class>
 							</security-config>
 						</instance>
 					</config>
@@ -387,6 +409,36 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertEquals(ORPHAN, onlyEntry.getName());
 	}
 
+	/**
+	 * The operations declared for a type are stored with the entry, and the declarations of the
+	 * stored file are appended to those of the underlying configuration layers.
+	 */
+	public void testOperationDeclarationsRoundTrip() throws Exception {
+		TLClass orphan = type(ORPHAN);
+		TLClassAccessRights entry = _editor.editableAccessRights(orphan);
+		assertEquals(Collections.emptyList(), entry.getOperations());
+		entry.getOperations().add(newOperation(SimpleBoundCommandGroup.FINISH_NAME, SimpleBoundCommandGroup.WRITE_NAME));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.FINISH_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(orphan);
+		assertEquals(1, stored.getOperations().size());
+		OperationDeclaration operation = stored.getOperations().get(0);
+		assertEquals(SimpleBoundCommandGroup.FINISH_NAME, operation.getName().id());
+		assertEquals(SimpleBoundCommandGroup.WRITE_NAME, operation.getImpliedBy().id());
+		assertEquals("Storing the declarations keeps the grants of the entry.", 1, stored.getGrants().size());
+
+		_editor.setInternal(orphan, true);
+		assertEquals("Storing a mark keeps the declarations of the entry.", 1,
+			_editor.editableAccessRights(orphan).getOperations().size());
+
+		ModelAccessRights merged = grantsConfig(overlay(BASE_OPERATIONS.formatted(ORPHAN), _editor.getGrantsFile()))
+			.getSecurityConfig().get(ORPHAN);
+		assertEquals("The declarations of both configuration layers are kept.",
+			List.of("publish", SimpleBoundCommandGroup.FINISH_NAME),
+			((TLClassAccessRights) merged).getOperations().stream().map(o -> o.getName().id()).toList());
+	}
+
 	public void testEditShowsTheMarkOfTheBaseConfiguration() throws Exception {
 		TLModule module = type(IN_INTERNAL_MODULE).getModule();
 		TLModuleAccessRights entry = _editor.editableAccessRights(module);
@@ -554,6 +606,13 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		RoleConfig roleConfig = TypedConfiguration.newConfigItem(RoleConfig.class);
 		roleConfig.setName(role);
 		result.getRoles().add(roleConfig);
+		return result;
+	}
+
+	private static OperationDeclaration newOperation(String operation, String impliedBy) {
+		OperationDeclaration result = TypedConfiguration.newConfigItem(OperationDeclaration.class);
+		result.setName(new CommandGroupReference(operation));
+		result.setImpliedBy(new CommandGroupReference(impliedBy));
 		return result;
 	}
 

@@ -195,6 +195,31 @@
 					display="chips"
 				/>
 			</value-input>
+			<value-input
+				type="tl.model:TLModule"
+				value="term"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				observed-types="tl.model:TLModule"
+				options="all(`tl.model:TLModule`)"
+				value="term"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				options="all(`tl.model:TLModule`)"
+				value="term"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
 		</children>
 	</panel>
 </view>

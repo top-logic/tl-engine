@@ -1241,6 +1241,139 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that a page loaded under its page path reports that path, not the empty URL, when the
+	 * title of its display is reported.
+	 */
+	public void testPagePathSurvivesTitle() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		rm.setPagePath(PAGE);
+		List<Delivery> deliveries = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> deliveries.add(new Delivery(url, title, replace)));
+
+		rm.adoptUrl(PAGE);
+		MockParticipant view = labelled("Browse");
+		rm.register(view);
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertEquals(PAGE, rm.currentUrl());
+		assertEquals(List.of(new Delivery(PAGE, "Browse – Demo", true)), deliveries);
+
+		view.rename("Browse all");
+		assertEquals(new Delivery(PAGE, "Browse all – Demo", true), deliveries.get(deliveries.size() - 1));
+	}
+
+	/**
+	 * Tests that the routes inside a page follow its page path, and that a deep link into the page is
+	 * resolved from behind it.
+	 */
+	public void testPagePathRoute() {
+		RouteManager rm = new RouteManager();
+		rm.setPagePath(PAGE);
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+
+		rm.adoptUrl(PAGE + "/property/42");
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/property/:id", "detail")));
+		rm.register(sidebar);
+		rm.finishAdoption();
+
+		assertEquals("detail", sidebar.lastActivation().itemId());
+		assertEquals("42", sidebar.lastActivation().params().get("id"));
+		assertEquals(PAGE + "/property/42", rm.currentUrl());
+		assertEquals("The client already shows the adopted URL.", List.of(), urls);
+
+		sidebar.simulateNavigation("explore", Map.of());
+		assertEquals(List.of(PAGE + "/explore"), urls);
+	}
+
+	/**
+	 * Tests that a URL the client moves to within the history of a page is resolved from behind its
+	 * page path.
+	 */
+	public void testPagePathNavigateToRoute() {
+		RouteManager rm = new RouteManager();
+		rm.setPagePath(PAGE);
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		assertEquals(PAGE + "/explore", rm.currentUrl());
+
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+		rm.navigateToRoute(PAGE + "/listings");
+		rm.finishAdoption();
+
+		assertEquals("listings", sidebar.lastActivation().itemId());
+		assertEquals(PAGE + "/listings", rm.currentUrl());
+		assertEquals("The client already shows the URL it moved to.", List.of(), urls);
+	}
+
+	/**
+	 * Tests that the query of a page addressed by its page path alone is offered to the
+	 * participants and composed behind the page path.
+	 */
+	public void testPagePathQuery() {
+		RouteManager rm = new RouteManager();
+		rm.setPagePath(PAGE);
+		QueryParticipant filter = new QueryParticipant("q");
+		rm.register(filter);
+
+		rm.adoptUrl(PAGE + "?q=x%20y");
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertEquals(Map.of("q", "x y"), filter.activatedQuery());
+		assertEquals(PAGE + "?q=x+y", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a URL naming another page offers nothing of it to the display, which reports the URL
+	 * of its own page.
+	 */
+	public void testPagePathOtherPage() {
+		RouteManager rm = new RouteManager();
+		rm.setPagePath(PAGE);
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		QueryParticipant filter = new QueryParticipant("q");
+		rm.register(sidebar);
+		rm.register(filter);
+
+		rm.navigateToRoute(PAGE + "x/explore?q=a");
+		rm.finishAdoption();
+		rm.navigateToRoute("explore?q=a");
+		rm.finishAdoption();
+
+		assertNull(sidebar.lastActivation());
+		assertNull(filter.activatedQuery());
+		assertEquals(PAGE, rm.currentUrl());
+		assertEquals(List.of(PAGE, PAGE), urls);
+	}
+
+	/**
+	 * Tests that a page path is held with the URL, as the client shows it.
+	 */
+	public void testPagePathHeld() {
+		RouteManager rm = new RouteManager();
+		rm.setPagePath(PAGE);
+		rm.holdUrl(PAGE + "/explore");
+		assertEquals(PAGE + "/explore", rm.currentUrl());
+	}
+
+	/**
+	 * The page path of a page in the tests, consisting of several segments.
+	 */
+	private static final String PAGE = "demo/browse.view.xml";
+
+	/**
 	 * The suite of tests.
 	 *
 	 * <p>

@@ -306,6 +306,7 @@ public class ViewServlet extends TopLogicServlet {
 		ViewResolution resolution = resolveNamedView(viewConfig, viewFile, anonymous);
 		String viewPath = resolution.viewPath();
 		boolean loginView = resolution.loginView();
+		boolean holdUrl = resolution.holdsUrl();
 		if (viewPath == null) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
 			return;
@@ -347,7 +348,7 @@ public class ViewServlet extends TopLogicServlet {
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && !rebuildRequested && rendered != null
 			&& rendered.matches(viewPath, view, locale, user)) {
-			renderAgain(request, response, displayed, sseQueue, pagePath, url, loginView);
+			renderAgain(request, response, displayed, sseQueue, pagePath, url, holdUrl);
 			return;
 		}
 		if (displayed != null) {
@@ -360,7 +361,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(baseContext, sseQueue, pagePath, url, loginView);
+		wireRouteManager(baseContext, sseQueue, pagePath, url, holdUrl);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		// The window's overlays report the results of their commands - a menu selection, say - to
 		// the window snackbar.
@@ -397,18 +398,18 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param url
 	 *        The URL requested, adopted by the tree while it is rendered (a deep link entered in an
 	 *        existing tab).
-	 * @param loginView
-	 *        Whether the tree is the application's login view, which keeps the requested URL instead
-	 *        of taking it up - see
+	 * @param holdUrl
+	 *        Whether the page keeps the requested URL instead of taking it up - the login view, and
+	 *        an entry point other than the default view. See
 	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
 			ReactControl rootControl, SSEUpdateQueue sseQueue, String pagePath, String url,
-			boolean loginView) throws IOException {
+			boolean holdUrl) throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
 		sseQueue.setRootControl(rootControl);
-		wireRouteManager(context, sseQueue, pagePath, url, loginView);
+		wireRouteManager(context, sseQueue, pagePath, url, holdUrl);
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -723,14 +724,13 @@ public class ViewServlet extends TopLogicServlet {
 	 *        view.
 	 * @param url
 	 *        The URL to take up, starting with the page path; {@code null} for none.
-	 * @param loginView
-	 *        Whether the page displays the application's login view. Such a page is not the
-	 *        application the URL addresses, so it takes the URL up not at all: the URL is
-	 *        {@link RouteManager#holdUrl(String) held}, which keeps the address the visitor asked
-	 *        for while they log in.
+	 * @param holdUrl
+	 *        Whether the page takes the URL up not at all, but {@link RouteManager#holdUrl(String)
+	 *        holds} it. The login view is not the page the URL addresses, and an entry point other
+	 *        than the default view has no route: both keep the address that was asked for.
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String pagePath,
-			String url, boolean loginView) {
+			String url, boolean holdUrl) {
 		RouteManager routeManager = context.getRouteManager();
 		if (routeManager == null) {
 			return;
@@ -738,7 +738,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		routeManager.setPagePath(pagePath);
 		String requestedRoute = url == null ? "" : url;
-		if (loginView) {
+		if (holdUrl) {
 			routeManager.holdUrl(requestedRoute);
 		} else {
 			// Unconditionally, an empty route included: a freshly loaded page displays what its URL
@@ -765,9 +765,10 @@ public class ViewServlet extends TopLogicServlet {
 	 * <p>
 	 * Which view is displayed and whether that view is the application's login view are one
 	 * decision, made by {@link ViewServlet#resolveView(ViewConfig, String, boolean)}: the login
-	 * view stands in for the page the URL names, while every other view <em>is</em> that page -
-	 * which is what decides whether the requested route is
-	 * {@link RouteManager#adoptUrl(String) adopted} or {@link RouteManager#holdUrl(String) held}.
+	 * view stands in for the page the URL names, while every other view <em>is</em> that page.
+	 * The login view, and an entry point other than the default view, keep the requested URL
+	 * ({@link #holdsUrl()}); a route and the default view are
+	 * {@link RouteManager#adoptUrl(String) adopted}.
 	 * </p>
 	 *
 	 * @param viewPath
@@ -776,9 +777,24 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param loginView
 	 *        Whether the displayed view is the {@link ViewConfig#getLoginView() login view} shown
 	 *        in place of the page the URL names.
+	 * @param entryPoint
+	 *        Whether the displayed view is an entry point other than the
+	 *        {@link ViewConfig#getDefaultView() default view}.
 	 */
-	public record ViewResolution(String viewPath, boolean loginView) {
-		// Pure result of the resolution.
+	public record ViewResolution(String viewPath, boolean loginView, boolean entryPoint) {
+
+		/**
+		 * Whether the page keeps the URL it was requested with.
+		 *
+		 * <p>
+		 * The login view is not the page the URL addresses. An entry point other than the default
+		 * view is that page, but no route describes it: its address is its view file and the query
+		 * it was called with, which a route taken up from the display would replace.
+		 * </p>
+		 */
+		public boolean holdsUrl() {
+			return loginView || entryPoint;
+		}
 	}
 
 	/**
@@ -828,15 +844,16 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static ViewResolution resolveNamedView(ViewConfig config, String namedView, boolean anonymous) {
 		if (anonymous && hasLoginView(config) && !isAnonymousEntryPoint(config, namedView)) {
-			return new ViewResolution(config.getLoginView().fullPath(), true);
+			return new ViewResolution(config.getLoginView().fullPath(), true, false);
 		}
 		if (namedView == null) {
-			return new ViewResolution(config.getDefaultView().fullPath(), false);
+			return new ViewResolution(config.getDefaultView().fullPath(), false, false);
 		}
 		if (!isEntryPoint(config, namedView)) {
-			return new ViewResolution(null, false);
+			return new ViewResolution(null, false, false);
 		}
-		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false);
+		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false,
+			!isDefaultView(config, namedView));
 	}
 
 	/**

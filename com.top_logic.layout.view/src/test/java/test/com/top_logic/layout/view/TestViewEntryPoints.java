@@ -132,8 +132,24 @@ public class TestViewEntryPoints extends TestCase {
 
 		ViewResolution resolution = ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, ANONYMOUS);
 		assertEquals(VISITOR_VIEW_PATH, resolution.viewPath());
-		// The page is the one the URL names, so its address is taken up rather than held.
 		assertFalse(resolution.loginView());
+	}
+
+	/**
+	 * The address of an entry point is its view file and the query it was called with, which no
+	 * route describes: the URL is held, so that a reload shows the page again. A route of the
+	 * application, and the default view named by its file, are taken up.
+	 */
+	public void testAnEntryPointKeepsItsAddress() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+		addEntryPoint(config, VISITOR_VIEW, true);
+
+		assertTrue(ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, ANONYMOUS).holdsUrl());
+		assertTrue(ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, NAMED).holdsUrl());
+		assertTrue(ViewServlet.resolveView(config, "/w1/demo/x.view.xml", NAMED).holdsUrl());
+		assertFalse(ViewServlet.resolveView(config, "/w1/some/route", NAMED).holdsUrl());
+		assertFalse(ViewServlet.resolveView(config, "/w1/", NAMED).holdsUrl());
+		assertFalse(ViewServlet.resolveView(config, "/w1/app.view.xml", NAMED).holdsUrl());
 	}
 
 	/**

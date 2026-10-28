@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Choices that follow the model while they are displayed.
+	
+	The left pane lists the appointment categories with commands to create and delete one. The right
+	pane offers a category in two ways: a <value-input> of the category type without an options
+	expression, and the form field of the reference Appointment#category. A category created or
+	deleted on the left is offered respectively no longer offered by both at once, without a new
+	login - also while the form is being edited.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="category"/>
+		<channel name="chosenCategory"/>
+		<channel name="appointment"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				size="40"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Categories</en>
+						<de>Kategorien</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New category</en>
+								<de>Neue Kategorie</de>
+							</label>
+							<create-transient type="demo.calendar:AppointmentCategory">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-appointment-category.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="category"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							inputs="category"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<delete-object/>
+							<write-channel name="category"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.calendar:AppointmentCategory"
+						selection="category"
+						types="demo.calendar:AppointmentCategory"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="color"/>
+						</columns>
+						<rows>all(`demo.calendar:AppointmentCategory`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<stack
+					direction="column"
+					gap="default"
+				>
+					<panel with-inset="true">
+						<title>
+							<en>Choice by type</en>
+							<de>Auswahl nach Typ</de>
+						</title>
+						<text>
+							<label>
+								<en>The input offers the instances of the category type. A category created or deleted on the left appears in respectively disappears from its options at once.</en>
+								<de>Die Eingabe bietet die Instanzen des Kategorie-Typs an. Eine links angelegte oder gelöschte Kategorie erscheint sofort in ihren Optionen bzw. verschwindet daraus.</de>
+							</label>
+						</text>
+						<fields max-columns="1">
+							<value-input
+								type="demo.calendar:AppointmentCategory"
+								value="chosenCategory"
+							>
+								<label>
+									<en>Category</en>
+									<de>Kategorie</de>
+								</label>
+							</value-input>
+						</fields>
+					</panel>
+					<panel with-inset="true">
+						<title>
+							<en>Field of a reference</en>
+							<de>Feld einer Referenz</de>
+						</title>
+						<text>
+							<label>
+								<en>Choose an appointment and edit it: the field "Category" offers the categories, including those created on the left after the form was opened.</en>
+								<de>Wählen Sie einen Termin und bearbeiten Sie ihn: Das Feld "Kategorie" bietet die Kategorien an, auch die nach dem Öffnen des Formulars links angelegten.</de>
+							</label>
+						</text>
+						<fields max-columns="1">
+							<value-input
+								type="demo.calendar:Appointment"
+								value="appointment"
+							>
+								<label>
+									<en>Appointment</en>
+									<de>Termin</de>
+								</label>
+							</value-input>
+						</fields>
+						<form
+							input="appointment"
+							max-columns="1"
+						>
+							<field attribute="name"/>
+							<field attribute="category"/>
+						</form>
+					</panel>
+				</stack>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

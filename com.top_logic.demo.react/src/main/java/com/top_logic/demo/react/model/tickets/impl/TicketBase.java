@@ -36,6 +36,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String COMMENTS_ATTR = "comments";
 
 	/**
+	 * Part <code>estimate</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Long</code> in configuration.
+	 * </p>
+	 */
+	String ESTIMATE_ATTR = "estimate";
+
+	/**
 	 * Part <code>headline</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -167,6 +176,20 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 */
 	default void removeComment(com.top_logic.demo.react.model.tickets.Comment oldValue) {
 		tRemoveByName(COMMENTS_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #ESTIMATE_ATTR}.
+	 */
+	default Long getEstimate() {
+		return (Long) tValueByName(ESTIMATE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ESTIMATE_ATTR}.
+	 */
+	default void setEstimate(Long newValue) {
+		tUpdateByName(ESTIMATE_ATTR, newValue);
 	}
 
 	/**

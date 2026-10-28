@@ -83,6 +83,13 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Ticket#ESTIMATE_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getEstimateTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.ESTIMATE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Ticket#HEADLINE_ATTR} of {@link Ticket}.
 	 */
 	public static com.top_logic.model.TLProperty getHeadlineTicketAttr() {
@@ -146,10 +153,31 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Keyword#CATALOG_ATTR} of {@link Keyword}.
+	 */
+	public static com.top_logic.model.TLReference getCatalogKeywordAttr() {
+		return (com.top_logic.model.TLReference) getKeywordType().getPart(Keyword.CATALOG_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Keyword#NAME_ATTR} of {@link Keyword}.
 	 */
 	public static com.top_logic.model.TLProperty getNameKeywordAttr() {
 		return (com.top_logic.model.TLProperty) getKeywordType().getPart(Keyword.NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link KeywordCatalog} type.
+	 */
+	public static com.top_logic.model.TLClass getKeywordCatalogType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_MODULE).getType(KeywordCatalog.KEYWORD_CATALOG_TYPE);
+	}
+
+	/**
+	 * Lookup {@link KeywordCatalog#NAME_ATTR} of {@link KeywordCatalog}.
+	 */
+	public static com.top_logic.model.TLProperty getNameKeywordCatalogAttr() {
+		return (com.top_logic.model.TLProperty) getKeywordCatalogType().getPart(KeywordCatalog.NAME_ATTR);
 	}
 
 	/**
@@ -302,6 +330,22 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	public static final String KO_NAME_KEYWORD = com.top_logic.demo.react.model.tickets.impl.KeywordBase.TABLE_NAME;
 
 	/**
+	 * Name of type <code>KeywordCatalog</code> in module {@link #DEMO_TICKETS_MODULE}.
+	 * 
+	 * @deprecated Use {@link KeywordCatalog#KEYWORD_CATALOG_TYPE}.
+	 */
+	@Deprecated
+	public static final String KEYWORD_CATALOG_NODE = KeywordCatalog.KEYWORD_CATALOG_TYPE;
+
+	/**
+	 * Storage table name of {@link #KEYWORD_CATALOG_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.react.model.tickets.impl.KeywordCatalogBase#TABLE_NAME}.
+	 */
+	@Deprecated
+	public static final String KO_NAME_KEYWORD_CATALOG = com.top_logic.demo.react.model.tickets.impl.KeywordCatalogBase.TABLE_NAME;
+
+	/**
 	 * Name of type <code>Comment</code> in module {@link #DEMO_TICKETS_MODULE}.
 	 * 
 	 * @deprecated Use {@link Comment#COMMENT_TYPE}.
@@ -360,6 +404,20 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 */
 	public final Keyword createKeyword() {
 		return createKeyword(null);
+	}
+
+	/**
+	 * Create an instance of {@link KeywordCatalog} type.
+	 */
+	public final KeywordCatalog createKeywordCatalog(com.top_logic.model.TLObject context) {
+		return (KeywordCatalog) createObject(getKeywordCatalogType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link KeywordCatalog} type.
+	 */
+	public final KeywordCatalog createKeywordCatalog() {
+		return createKeywordCatalog(null);
 	}
 
 	/**

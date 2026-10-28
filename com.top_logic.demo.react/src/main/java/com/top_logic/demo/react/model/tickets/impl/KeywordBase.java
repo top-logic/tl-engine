@@ -18,6 +18,15 @@ public interface KeywordBase extends com.top_logic.model.TLNamed {
 	String KEYWORD_TYPE = "Keyword";
 
 	/**
+	 * Part <code>catalog</code> of <code>Keyword</code>
+	 * 
+	 * <p>
+	 * Declared as <code>demo.tickets:KeywordCatalog</code> in configuration.
+	 * </p>
+	 */
+	String CATALOG_ATTR = "catalog";
+
+	/**
 	 * Part <code>name</code> of <code>Keyword</code>
 	 * 
 	 * <p>
@@ -30,5 +39,19 @@ public interface KeywordBase extends com.top_logic.model.TLNamed {
 	 * Name of the table storing {@link #KEYWORD_TYPE} objects.
 	 */
 	String TABLE_NAME = "GenericObject";
+
+	/**
+	 * Getter for part {@link #CATALOG_ATTR}.
+	 */
+	default com.top_logic.demo.react.model.tickets.KeywordCatalog getCatalog() {
+		return (com.top_logic.demo.react.model.tickets.KeywordCatalog) tValueByName(CATALOG_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CATALOG_ATTR}.
+	 */
+	default void setCatalog(com.top_logic.demo.react.model.tickets.KeywordCatalog newValue) {
+		tUpdateByName(CATALOG_ATTR, newValue);
+	}
 
 }

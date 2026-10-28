@@ -1019,7 +1019,7 @@
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
-				<version>33.7.2-android</version>
+				<version>33.7.2-jre</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.librepdf</groupId>

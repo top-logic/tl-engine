@@ -1,22 +1,23 @@
 ---
-description: Read before configuring or working on the CI of the control application (the build of the project repositories on a CI server) - CIService with its optional provider and pipeline-template, CIProvider (pipelineFile, ensureJob, startBuild with the queue, lastBuild, console bounded to its end) and its value types CIJob, CIBuild, CIBuildState, CIBuildStart, CIConsole, the test double RecordingCIProvider, the CI job of a project (tl.factory:Project ciJob and ciJobUrl), how a workspace sets it up (the Jenkinsfile in the first commit of a new application from /WEB-INF/factory/ci/Jenkinsfile, the warning for an adopted repository without one, ensureJob and the first build after protectBranch, a CI failure only a warning, CIPipeline as RepositorySource.Pipeline, the pipeline file added to the protected files), the CI route of the workspace proxy (CIRoute at /ci with POST /builds, GET /builds/last, GET /builds/<n>/log, max-log-size, TL_FACTORY_CI_URL, the agent instructions with curl), the views (factoryCiUnavailable, factoryStartBuild, factoryLastBuild, the commands Start CI build and Refresh CI build, the ciBuild channel), the Jenkins implementation JenkinsCIProvider of the module tl-factory-jenkins (its configuration from the environment variables tl_factory_jenkins_url, tl_factory_jenkins_user, tl_factory_jenkins_folder and tl_factory_jenkins_scm_credentials, switched off by an empty base-url through ServerProviderConfig, base-url, user, the secret tl_factory_jenkins_token, credentials, folder, scm-credentials-id, script-path, job-template pipeline-job.xml with its placeholders, timeout, queue-wait, the JSON API, createItem and config.xml, build and the queue item, progressiveText with X-Text-Size and the console notes, no CSRF crumb with an API token), the Jenkins-side prerequisites (user and permissions, SCM credential, agent with JDK and Maven, plugins), its integration test against a Jenkins container next to a Gitea (JenkinsTestServer, TestJenkinsCIProvider, src/test/docker/jenkins with Dockerfile and its targets ci and devel, plugins.txt and the init script tl-factory.groovy with the TL_JENKINS_* variables), the end-to-end test TestProjectCI of a new project and its first build against an external Gitea and Jenkins and updating Jenkins and its plugins (Renovate).
+description: Read before configuring or working on the CI of the control application (the build of the project repositories on a CI server) - CIService with its optional provider and pipeline-template, CIProvider (pipelineFile, ensureJob, startBuild with the queue, lastBuild, console bounded to its end) and its value types CIJob, CIBuild, CIBuildState, CIBuildStart, CIConsole, the test double RecordingCIProvider, the CI job of a project (tl.factory:Project ciJob and ciJobUrl), CI as opt-in per project (no CI with the creation of a workspace; Set up CI with ProjectWorkspaces.setUpCI and ProjectCI.setUp: the Jenkinsfile from /WEB-INF/factory/ci/Jenkinsfile committed with GitHostingProvider.commitFile unless the repository has one, the protection extended by the pipeline file if the token may administer the repository, ensureJob and the first build, the retry after a failure, ciSetUpUnavailable and its reasons; the pipeline file protected only with a CI job, ProjectWorkspaces.protectedFiles, withPipelineFile, withoutPipelineFile), the CI route of the workspace proxy (CIRoute at /ci with POST /builds, GET /builds/last, GET /builds/<n>/log, max-log-size, TL_FACTORY_CI_URL, the agent instructions with curl), the views (factoryCiEnabled, factoryCiSetUpUnavailable, factorySetUpCI, factoryCiUnavailable, factoryStartBuild, factoryLastBuild, the commands Set up CI, Start CI build and Refresh CI build, the ciBuild channel), the Jenkins implementation JenkinsCIProvider of the module tl-factory-jenkins (its configuration from the environment variables tl_factory_jenkins_url, tl_factory_jenkins_user, tl_factory_jenkins_folder and tl_factory_jenkins_scm_credentials, switched off by an empty base-url through ServerProviderConfig, base-url, user, the secret tl_factory_jenkins_token, credentials, folder, scm-credentials-id, script-path, job-template pipeline-job.xml with its placeholders, timeout, queue-wait, the JSON API, createItem and config.xml, build and the queue item, progressiveText with X-Text-Size and the console notes, no CSRF crumb with an API token), the Jenkins-side prerequisites (user and permissions, SCM credential, agent with JDK and Maven, plugins), its integration test against a Jenkins container next to a Gitea (JenkinsTestServer, TestJenkinsCIProvider, src/test/docker/jenkins with Dockerfile and its targets ci and devel, plugins.txt and the init script tl-factory.groovy with the TL_JENKINS_* variables), the end-to-end test TestProjectCI of a new project, the set up of its CI and its first build against an external Gitea and Jenkins and updating Jenkins and its plugins (Renovate).
 order: 40
 ---
 
 # CI
 
-The application of a project can be built by a CI server: every project repository on the [git
-hosting service](doc:factory/git-hosting) gets a job there, which builds its default branch with
-the pipeline definition in the repository. The service `CIService` holds the provider of the CI
-server; without a provider, CI is off and the control application works as without it.
+The application of a project can be built by a CI server: a project whose CI is set up has a job
+there, which builds the default branch of its repository on the [git hosting
+service](doc:factory/git-hosting) with the pipeline definition in the repository. Developing an
+application needs no CI: a new project gets neither a pipeline definition nor a job; a user sets up
+its CI when it is wanted (*Set up CI*). The service `CIService` holds the provider of the CI server;
+without a provider, CI is off and the control application works as without it.
 
 | Class | Role |
 |---|---|
 | `CIProvider` | Platform-neutral access to the CI server: the path of the pipeline definition (`pipelineFile`), the job of a repository (`ensureJob`, create or update), a build (`startBuild`), the last build (`lastBuild`), the end of the console output of a build (`console`). |
 | `CIJob`, `CIBuild`, `CIBuildState`, `CIBuildStart`, `CIConsole` | The values of the operations: the job (name, page), a build (number, state, page, start time, duration), its state (`RUNNING`, `SUCCESS`, `FAILURE`, `UNSTABLE`, `ABORTED`, `NOT_BUILT`), a started build (number, or only the queue reference while it waits for an executor), the console output (text, whether it was cut). |
-| `CIService` | Service holding the configured provider (`isEnabled()`, `getProvider()` fails with `ERROR_NO_CI` without one) and the pipeline template of a new application. |
-| `CIPipeline` | The `RepositorySource.Pipeline` of a workspace: the pipeline definition in the first commit, the job set up after the branch protection. |
-| `ProjectCI` | The operations on a stored project: why no build can be started, start a build, the last build. |
+| `CIService` | Service holding the configured provider (`isEnabled()`, `getProvider()` fails with `ERROR_NO_CI` without one) and the pipeline template a repository gets when its CI is set up. |
+| `ProjectCI` | The operations on a stored project: why its CI cannot be set up (`setUpUnavailable`), setting it up (`setUp`, with the outcome `ProjectCI.Setup`), why no build can be started (`unavailable`), start a build, the last build, the protected files with and without the pipeline file (`withPipelineFile`, `withoutPipelineFile`). |
 | `CIRoute` | The route of the workspace proxy through which the agent builds its application, see [the CI route](#the-ci-route). |
 | `JenkinsCIProvider` | The implementation for Jenkins, in the module `tl-factory-jenkins`. |
 | `RecordingCIProvider` | Test double in the tests of `tl-factory`: jobs and builds in memory, the calls recorded, builds finished and consoles set by the test. |
@@ -53,13 +54,13 @@ Like a built-in git connection without URL, a provider whose `base-url` is empty
 `CIService` does not create it and is disabled as without provider (`ServerProviderConfig.isSwitchedOn`).
 CI needs git hosting: without it, no project has a repository to build. It builds the projects on a
 [built-in git connection](doc:factory/git-hosting#git-connections) only, whose repositories the SCM
-credential of the CI server reads; a project on a git connection of its tenant has no CI job
-(`ProjectWorkspaces.getCI(project)`, `ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT`).
+credential of the CI server reads; the CI of a project on a git connection of its tenant cannot be
+set up (`ProjectWorkspaces.getCI(project)`, `ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT`).
 
 | Property of `CIService` | Default | Meaning |
 |---|---|---|
 | `provider` | none: CI off | The CI server. |
-| `pipeline-template` | `/WEB-INF/factory/ci/Jenkinsfile` | Web application resource whose content a new application gets as its pipeline definition. An application overrides the default by a resource of the same path, or names another one. |
+| `pipeline-template` | `/WEB-INF/factory/ci/Jenkinsfile` | Web application resource whose content a repository without pipeline definition gets when the CI of its project is set up. An application overrides the default by a resource of the same path, or names another one. |
 
 | Property of `JenkinsCIProvider` | Default | Meaning |
 |---|---|---|
@@ -105,13 +106,17 @@ rejected again, it fails with `ERROR_CI_AUTHENTICATION_FAILED__SERVICE`. Neither
 
 ## The pipeline definition
 
-A new application gets the content of `pipeline-template` as `pipelineFile()` (`Jenkinsfile`) in its
-first commit. The default, `tl-factory/src/main/webapp/WEB-INF/factory/ci/Jenkinsfile`, is a
-declarative pipeline with one stage running `mvn -B verify`, keeping 20 builds and no concurrent
-ones. The pipeline file is a protected file: `ProjectWorkspaces.getProtectedFiles()` adds
-`pipelineFile()` to `protected-files` of `GitHostingService` if it is not listed literally (the
-default `Jenkinsfile, deploy/**` lists it), so neither the agent nor the control application
-changes it after the first commit, only a reviewed pull request.
+When the CI of a project is set up, a repository without pipeline definition gets the content of
+`pipeline-template` as `pipelineFile()` (`Jenkinsfile`). The default,
+`tl-factory/src/main/webapp/WEB-INF/factory/ci/Jenkinsfile`, is a declarative pipeline with one
+stage running `mvn -B verify`, keeping 20 builds and no concurrent ones.
+
+The pipeline file of a project with CI job is a protected file, so neither the agent nor the
+control application changes it, only a reviewed pull request; before, it is not protected, so that
+setting up the CI can commit it. `ProjectWorkspaces.protectedFiles(project, ci)` - the files a
+workspace protects the default branch with and the agent is told - is `protected-files` of
+`GitHostingService` (default `deploy/**`) without `pipelineFile()` (`ProjectCI.withoutPipelineFile`,
+even if it is listed there) and, for a project with CI job, with it (`ProjectCI.withPipelineFile`).
 
 ## The CI job of a project
 
@@ -119,41 +124,61 @@ changes it after the first commit, only a reviewed pull request.
 (`FactoryModel.getCIJob`), and `ciJobUrl`, its page; both are read-only and set by the control
 application (`FactoryModel.setCIJob`).
 
-### How a workspace sets it up
+### Setting up the CI
 
-With CI switched on, `ProjectWorkspaces.create` gives the `RepositorySource` of the workspace a
-`CIPipeline` (`RepositorySource.Pipeline`). In addition to the steps of [git
-hosting](doc:factory/git-hosting#how-a-project-gets-its-repository):
+Creating a workspace sets up no CI: the first commit of a new application has no pipeline
+definition, the default branch is protected without the pipeline file, and the CI server is not
+contacted. *Set up CI* (`ProjectWorkspaces.setUpCI`, TL-Script `factorySetUpCI($project)`) does it
+later, through the APIs of the hosting service and the CI server, never through the working tree of
+the workspace, which belongs to the agent (`ProjectCI.setUp`):
 
-| Case | CI steps |
-|---|---|
-| New application | After the generation, the pipeline file is written into the application (`sh -c RepositorySource.WRITE_FILE`, the content in the environment variable `TL_FACTORY_FILE_CONTENT`) and becomes part of the first commit. |
-| Cloned repository | The repository keeps its own pipeline file. Without one, the output of the operation gets the warning *The repository ... has no CI pipeline Jenkinsfile*; its builds fail until a reviewed pull request adds one. |
-| Both | After `protectBranch`: `ensureJob(repository, project name)`, the job is recorded on the project in a transaction of its own, and the first build is started (`startBuild`). The output names the job and the build. |
+1. The pipeline file is committed to the default branch with the message
+   `ProjectCI.PIPELINE_COMMIT_MESSAGE` (`GitHostingProvider.commitFile`), unless the branch has one -
+   e.g. an adopted repository with a pipeline of its own, which is kept.
+2. If the token of the git connection may administer the repository (`GitRepository.canAdminister`),
+   the default branch is protected with the protected files and the pipeline file
+   (`protectBranch`), and `Project#branchProtected` is set; otherwise the protection and
+   `branchProtected` stay as they are, and the message of the command says that the pipeline file
+   is not protected (`CI_SET_UP_UNPROTECTED__JOB_BUILD_FILE`).
+3. `ensureJob(repository, project name)` creates the job, it is recorded on the project in a
+   transaction of its own, and its first build is started (`startBuild`); the message names the job
+   and the build (`CI_SET_UP__JOB_BUILD`).
 
-A failure of the CI server in these steps - not reachable, credentials rejected, a missing
-permission - is a line `Warning: Setting up the CI job failed, ...` in the output of the operation,
-never a workspace in state `ERROR`: coding does not depend on the CI server. The job is then set up
-by the next *Start CI build*.
+A failure in a step - the hosting service or the CI server not reachable, credentials rejected, a
+missing permission - ends the command with its message. The steps can be repeated, so a retry
+completes a set up that failed: a committed pipeline file is kept, the protection is replaced, an
+existing job is reused (`ensureJob` creates the job and its folders if they are missing and
+replaces the configuration of an existing one). A set up that failed only at the first build
+leaves the job recorded; *Start CI build* starts it.
 
-`ensureJob` is idempotent: it creates the job and its folders if they are missing and replaces the
-configuration of an existing job, so it also corrects a job changed in Jenkins.
+`ProjectWorkspaces.ciSetUpUnavailable` (TL-Script `factoryCiSetUpUnavailable($project)`) tells why
+the CI of a project cannot be set up: CI switched off (`ERROR_NO_CI`), the project not on a
+built-in git connection (`ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT`), without repository
+(`ERROR_NO_REPOSITORY__PROJECT`), its repository without the application - no workspace has pushed
+or cloned it yet, `branchProtected` is empty (`ERROR_NO_SOURCES__PROJECT`) - or a CI job already
+(`ERROR_HAS_CI_JOB__PROJECT`). Setting up the CI needs the right to write the project.
 
 ### The project and its views
 
-The project panel of `projects.view.xml` has two commands and the detail view a line for CI:
+The project panel of `projects.view.xml` has three commands and the detail view a line for CI:
 
-- **Start CI build** (`startBuild`, TL-Script `factoryStartBuild($project)`) runs `ensureJob` - a
-  missing job is created, its configuration corrected -, records the job if it changed, starts a
-  build and shows which (`BUILD_STARTED__NUMBER_JOB`, or `BUILD_QUEUED__JOB` while it waits for an
-  executor). It is disabled with the reason of `factoryCiUnavailable($project)`: CI switched off, the project
-  not on a built-in git connection, or without repository.
-- **Refresh CI build** asks the CI server again for the last build.
+- **Set up CI** (`setUpCI`) is shown while CI is switched on (`factoryCiEnabled()`) and the selected
+  project has no CI job, disabled with the reason of `factoryCiSetUpUnavailable($project)`, e.g.
+  for a project on a git connection of its tenant. It asks for confirmation, sets up the CI and
+  shows the message.
+- **Start CI build** (`startBuild`, TL-Script `factoryStartBuild($project)`) is shown for a project
+  with CI job. It runs `ensureJob` - a job the CI server lost is created again, its configuration
+  corrected -, records the job if it changed, starts a build and shows which
+  (`BUILD_STARTED__NUMBER_JOB`, or `BUILD_QUEUED__JOB` while it waits for an executor). It is
+  disabled with the reason of `factoryCiUnavailable($project)`, e.g. CI switched off since.
+- **Refresh CI build**, shown for a project with CI job, asks the CI server again for the last
+  build.
 - The channel `ciBuild` shows the job as link to its page and the last build - number with link,
   state, start time, duration - from `factoryLastBuild($project)`, a dictionary with the keys
   `number`, `state`, `stateLabel`, `url`, `startTime`, `durationSeconds`, or only `error` if the CI
-  server cannot be asked. It is computed when the project is selected or changes and when one of
-  the commands writes the channel `ciRefresh`; nothing polls the CI server in the background.
+  server cannot be asked; nothing for a project without CI job. It is computed when the project is
+  selected or changes and when one of the commands writes the channel `ciRefresh`; nothing polls
+  the CI server in the background.
 
 ## The CI route
 
@@ -176,8 +201,10 @@ of every route: the token of the agent process, as bearer token, from the accept
 its rate limit.
 
 A workspace container gets the URL of the route in `TL_FACTORY_CI_URL` (`CIRoute.ENV_CI_URL`, no
-secret). With CI switched on and a CI route in the proxy, `StoredConversation.instructions()` adds
-`CIRoute.agentInstructions()` to what the agent is told:
+secret). For a project with CI job, with CI switched on and a CI route in the proxy,
+`StoredConversation.projectInstructions` adds `CIRoute.agentInstructions()` to what the agent is
+told; the instructions are computed for every launch of the agent, so it learns about the CI with
+its next message after the set up:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $TL_FACTORY_PROXY_TOKEN" "$TL_FACTORY_CI_URL/builds"
@@ -230,10 +257,13 @@ is why the provider asks for the size first.
 `TestCIRoute` of `tl-factory` checks the route against a `RecordingCIProvider` on a
 `WorkspaceProxyListener`: the three requests and their JSON, a queued build, the bounded console
 with its mark, 404 for other requests, for a workspace without job and with CI off, the token
-check, and 502 for a failing CI server. `TestProjectRepository` checks the creation flow with CI
-(the pipeline file in the first commit of a new application, none written for an adopted
-repository and the warning without one, `ensureJob` and the first build after the protection, a
-failing CI server only a warning) and the functions of the views.
+check, and 502 for a failing CI server. `TestProjectRepository` checks that creating a workspace
+sets up no CI and protects without the pipeline file, setting up the CI (the pipeline file
+committed before it is protected, kept in a repository that has one, the job recorded and its
+first build, the retry after a failing CI server, an unprotected pipeline file when the token may
+not administer the repository, the refusals without CI, repository, application or built-in
+connection), the protected files and agent instructions with and without CI job, and the functions
+of the views. `TestTenantAccess` checks that a reader may not set up the CI.
 
 `TestJenkinsCIProvider` of `tl-factory-jenkins` runs against a real Jenkins (`JenkinsTestServer`):
 the test builds the target `ci` of the image context `tl-factory-jenkins/src/test/docker/jenkins` -
@@ -266,8 +296,9 @@ an external Gitea and Jenkins, e.g. the [local setup](doc:factory#local-setup): 
 variables and secrets of the control application -, takes a provider of the Gitea type for
 `tl_factory_gitea_url`, the organization `tl_factory_gitea_owner` (default `tl-factory`) and the
 token `tl_factory_gitea_token`, creates a Docker workspace whose new
-application is pushed with the default `Jenkinsfile` to a new repository through the git route of
-a workspace proxy on the host, and waits for the first build of its job, which must end `SUCCESS`
+application is pushed to a new repository through the git route of a workspace proxy on the host,
+sets up its CI with `ProjectCI.setUp` (the default `Jenkinsfile` committed through the API of
+Gitea, the protection extended, the job created), and waits for the first build of its job, which must end `SUCCESS`
 (`mvn -B verify` of the generated application); the end of the console is printed. It runs only
 with `-Dtl.factory.integration=true`, `tl_factory_gitea_url` and `tl_factory_jenkins_url` set and a
 Docker daemon, and leaves a repository and a job of a new name behind:

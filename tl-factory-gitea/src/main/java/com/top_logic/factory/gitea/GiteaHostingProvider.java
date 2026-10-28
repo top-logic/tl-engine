@@ -8,7 +8,9 @@ package com.top_logic.factory.gitea;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,6 +30,7 @@ import com.top_logic.factory.gitea.client.api.OrganizationApi;
 import com.top_logic.factory.gitea.client.api.RepositoryApi;
 import com.top_logic.factory.gitea.client.api.UserApi;
 import com.top_logic.factory.gitea.client.model.CreateBranchProtectionOption;
+import com.top_logic.factory.gitea.client.model.CreateFileOptions;
 import com.top_logic.factory.gitea.client.model.CreateOrgOption;
 import com.top_logic.factory.gitea.client.model.CreateRepoOption;
 import com.top_logic.factory.gitea.client.model.EditBranchProtectionOption;
@@ -94,6 +97,17 @@ import com.top_logic.util.error.TopLogicException;
  * push creating it: Gitea rejects the push that creates a branch whose rule has protected file
  * patterns ("cannot find the start commit"), so the first push into an empty repository has to
  * happen before.
+ * </p>
+ *
+ * <h2>Committing a file</h2>
+ *
+ * <p>
+ * {@link #commitFile(GitRepository, String, String, String, String)} uses the contents API of
+ * Gitea: it asks for the file on the branch ({@code repoGetContents}) and creates it if it is
+ * missing ({@code repoCreateFile}), committed by the user of the token. Gitea applies the protection
+ * of the branch to such a commit as to a push: a protected file cannot be created this way. Gitea
+ * updates a repository after a push from a queue; until it has processed the first push, its
+ * contents API fails (checked with 28.2.0: status 500) on the repository it still takes for empty.
  * </p>
  *
  * @implNote The clone URL of git's smart HTTP protocol is {@link #gitUrl(RepositoryName)}.
@@ -166,6 +180,16 @@ public class GiteaHostingProvider implements GitHostingProvider {
 	 * creating the rule.
 	 */
 	private static final String OP_PROTECT_BRANCH = "repoCreateBranchProtection";
+
+	/**
+	 * Name of the request committing a file in error messages, the operation of the Gitea API.
+	 */
+	private static final String OP_CREATE_FILE = "repoCreateFile";
+
+	/**
+	 * Name of the request reading a file in error messages, the operation of the Gitea API.
+	 */
+	private static final String OP_GET_CONTENTS = "repoGetContents";
 
 	/**
 	 * Status of an {@link ApiException} without answer of the server.
@@ -499,6 +523,52 @@ public class GiteaHostingProvider implements GitHostingProvider {
 				default:
 					throw failure(ex, OP_PROTECT_BRANCH, name);
 			}
+		}
+	}
+
+	@Override
+	public boolean commitFile(GitRepository repository, String branch, String path, String content, String message) {
+		RepositoryName name = repository.getName();
+		if (hasFile(name, branch, path)) {
+			return false;
+		}
+		CreateFileOptions file = new CreateFileOptions()
+			.branch(branch)
+			.content(Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8)))
+			.message(message);
+		try {
+			call(() -> _repositories.repoCreateFile(name.getOwner(), name.getName(), path, file));
+			return true;
+		} catch (ApiException ex) {
+			switch (ex.getCode()) {
+				case HttpURLConnection.HTTP_NOT_FOUND:
+					throw new TopLogicException(
+						I18NConstants.ERROR_REPOSITORY_NOT_FOUND__REPOSITORY.fill(name.getFullName()));
+				case HTTP_UNPROCESSABLE:
+					// Gitea refuses a file that exists, e.g. one created concurrently.
+					if (hasFile(name, branch, path)) {
+						return false;
+					}
+					throw failure(ex, OP_CREATE_FILE, name);
+				default:
+					throw failure(ex, OP_CREATE_FILE, name);
+			}
+		}
+	}
+
+	/**
+	 * Whether the given branch has a file at the given path; {@code false} also if the branch or
+	 * the repository does not exist.
+	 */
+	private boolean hasFile(RepositoryName name, String branch, String path) {
+		try {
+			call(() -> _repositories.repoGetContents(name.getOwner(), name.getName(), path, branch));
+			return true;
+		} catch (ApiException ex) {
+			if (ex.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+				return false;
+			}
+			throw failure(ex, OP_GET_CONTENTS, name);
 		}
 	}
 

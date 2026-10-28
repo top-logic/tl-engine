@@ -298,6 +298,13 @@ public class TestTenantAccess extends BasicTestCase {
 					ex.getErrorKey());
 			}
 			try {
+				as(person, () -> FactoryFunctions.setUpCI(_projectA));
+				fail(person.getName() + " may not set up the CI.");
+			} catch (TopLogicException ex) {
+				assertEquals(com.top_logic.factory.project.I18NConstants.ERROR_NO_WRITE_ACCESS__OBJECT.fill(_projectA),
+					ex.getErrorKey());
+			}
+			try {
 				as(person, () -> FactoryFunctions.createConversation(_workspaceA, "Another task."));
 				fail(person.getName() + " may not give the agent a task.");
 			} catch (TopLogicException ex) {

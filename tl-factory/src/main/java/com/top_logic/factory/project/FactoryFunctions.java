@@ -654,8 +654,53 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Whether a CI server is configured, so that the CI of a project can be set up.
+	 *
+	 * @return Whether CI is switched on.
+	 */
+	@Label("CI enabled")
+	@SideEffectFree
+	public static boolean ciEnabled() {
+		return ProjectWorkspaces.Module.INSTANCE.isActive() && ProjectWorkspaces.getInstance().isCIEnabled();
+	}
+
+	/**
+	 * Why the CI of a project cannot be set up: CI is switched off, the project is not on a
+	 * built-in git connection, has no repository, its repository has no application yet (no
+	 * workspace has been created), or it has a CI job already.
+	 *
+	 * @param project
+	 *        The project, empty for none.
+	 * @return The reason, nothing if the CI can be set up.
+	 */
+	@Label("CI set up unavailable")
+	@SideEffectFree
+	public static ResKey ciSetUpUnavailable(TLObject project) {
+		if (!ProjectWorkspaces.Module.INSTANCE.isActive()) {
+			return com.top_logic.factory.ci.I18NConstants.ERROR_NO_CI;
+		}
+		return ProjectWorkspaces.getInstance().ciSetUpUnavailable(project);
+	}
+
+	/**
+	 * Sets up the CI of a project: commits the default pipeline definition to the default branch
+	 * of its repository unless the repository has one, extends the protection of the branch by the
+	 * pipeline file, creates the CI job of the project and starts its first build.
+	 *
+	 * @param project
+	 *        A project on a built-in git connection whose repository has the application and which
+	 *        has no CI job.
+	 * @return The message telling what was set up.
+	 */
+	@Label("Set up CI")
+	public static ResKey setUpCI(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
+		return ProjectWorkspaces.getInstance().setUpCI(project).message();
+	}
+
+	/**
 	 * Why no CI build of a project can be started: CI is switched off, the project is not on a
-	 * built-in git connection or has no repository.
+	 * built-in git connection, has no repository or no CI job.
 	 *
 	 * @param project
 	 *        The project, empty for none.
@@ -672,10 +717,11 @@ public class FactoryFunctions extends TLScriptFunctions {
 
 	/**
 	 * Starts a build of the application of a project on the CI server. The CI job of the project is
-	 * created first if it does not exist, and set to build the repository of the project.
+	 * created again if it no longer exists on the CI server, and set to build the repository of the
+	 * project.
 	 *
 	 * @param project
-	 *        A project with repository.
+	 *        A project with repository and CI job.
 	 * @return The message telling which build was started.
 	 */
 	@Label("Start a CI build")

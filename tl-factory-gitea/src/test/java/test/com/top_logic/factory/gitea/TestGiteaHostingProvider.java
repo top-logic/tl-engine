@@ -166,6 +166,46 @@ public class TestGiteaHostingProvider extends TestCase {
 	}
 
 	/**
+	 * A file committed through the API lands on top of the default branch, also in a directory; a
+	 * file that exists is kept. After the branch is protected with the file, a push changing it is
+	 * rejected, and a protected file cannot be committed through the API either.
+	 */
+	public void testCommitFile() throws Exception {
+		GiteaHostingProvider provider = provider(_server.token());
+		GitRepository repository = provider.createRepository("commit-file", null);
+		String remote = "http://" + ADMIN + ":" + _server.token() + "@localhost:" + GITEA_PORT + "/" + ORG
+			+ "/commit-file.git";
+		assertSucceeded("Clone.", _server.git("rm -rf /tmp/commit-file && git clone -q " + remote
+			+ " /tmp/commit-file && cd /tmp/commit-file"
+			+ " && git config user.email test@example.com && git config user.name Test"
+			+ " && git symbolic-ref HEAD refs/heads/" + BRANCH
+			+ " && echo one > README.md && git add README.md && git commit -qm one && git push -q origin " + BRANCH));
+		provider.protectBranch(repository, BRANCH, List.of("deploy/**"));
+		awaitNotEmpty("commit-file");
+
+		assertTrue(provider.commitFile(repository, BRANCH, "Jenkinsfile", "pipeline { }\n", "Add the CI pipeline"));
+		assertTrue(provider.commitFile(repository, BRANCH, "ci/build.groovy", "build\n", "Add a nested file"));
+		assertFalse("Kept.", provider.commitFile(repository, BRANCH, "Jenkinsfile", "other\n", "Again"));
+		assertSucceeded("Pull.", _server.git("cd /tmp/commit-file && git pull -q origin " + BRANCH));
+		assertEquals("pipeline { }", _server.git("cat /tmp/commit-file/Jenkinsfile").out().strip());
+		assertEquals("build", _server.git("cat /tmp/commit-file/ci/build.groovy").out().strip());
+		assertEquals("Add the CI pipeline",
+			_server.git("cd /tmp/commit-file && git log -1 --format=%s -- Jenkinsfile").out().strip());
+
+		provider.protectBranch(repository, BRANCH, List.of("deploy/**", "Jenkinsfile"));
+		ExecResult change = _server.git("cd /tmp/commit-file && echo changed > Jenkinsfile"
+			+ " && git commit -qam change && git push origin " + BRANCH);
+		assertTrue("Push changing the protected Jenkinsfile accepted.", change.exitCode() != 0);
+		assertTrue(change.err(), change.err().contains("protected from changing file"));
+		assertErrorKey(I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(repository.getFullName()),
+			() -> provider.commitFile(repository, BRANCH, "deploy/app.yaml", "x\n", "Add a protected file"));
+
+		assertErrorKey(I18NConstants.ERROR_REPOSITORY_NOT_FOUND__REPOSITORY.fill(ORG + "/missing"),
+			() -> provider.commitFile(new GitRepository(new com.top_logic.factory.git.RepositoryName(ORG, "missing"),
+				repository.getCloneUrl(), repository.getWebUrl(), BRANCH), BRANCH, "Jenkinsfile", "x", "Missing"));
+	}
+
+	/**
 	 * The credentials of the type send the token from the named secret, here
 	 * {@link GiteaProviderType#TOKEN_SECRET}.
 	 */
@@ -327,6 +367,20 @@ public class TestGiteaHostingProvider extends TestCase {
 		} catch (TopLogicException ex) {
 			assertEquals(I18NConstants.ERROR_SERVICE_UNREACHABLE__SERVICE_PROBLEM.getKey(),
 				ex.getErrorKey().plain().getKey());
+		}
+	}
+
+	/**
+	 * Waits until Gitea has processed the first push to the given repository of the organization:
+	 * it updates the repository from a queue, and until then its contents API fails on a
+	 * repository it still takes for empty.
+	 */
+	private static void awaitNotEmpty(String name) throws Exception {
+		RepositoryApi api = new RepositoryApi(_server.client(_server.token()));
+		long deadline = System.currentTimeMillis() + 30_000;
+		while (Boolean.TRUE.equals(api.repoGet(ORG, name).getEmpty())) {
+			assertTrue("Gitea still takes " + name + " for empty.", System.currentTimeMillis() < deadline);
+			Thread.sleep(100);
 		}
 	}
 

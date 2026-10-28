@@ -15,9 +15,11 @@
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
 	and state while they run. The source channel "commits" brings these commits to the window as
 	soon as they are made, so the list, the state and the output follow the operation without a
-	click. The commands are offered according to the state of the selected workspace. The last CI
-	build is asked from the CI server when the project is selected or "Start CI build" or "Refresh CI
-	build" asks for it, not in the background.
+	click. The commands are offered according to the state of the selected workspace. A project gets
+	no CI with its workspace: "Set up CI" sets it up for a project without CI job; "Start CI build",
+	"Refresh CI build" and the CI job in the details are shown only for a project with one. The last
+	CI build is asked from the CI server when the project is selected or a CI command asks for it,
+	not in the background.
 -->
 <view>
 	<channels>
@@ -103,6 +105,15 @@
 	if($url == null, null, {{{<p>{#('Repository'@en, 'Repository'@de)}: <a href="{$url}" target="_blank" rel="noopener">{$name}</a></p>}}});
 }]]></expr>
 		</derived-channel>
+		<!--
+			Why the CI of the selected project cannot be set up, empty when it can: what "Set up CI" says
+			while it is disabled.
+		-->
+		<derived-channel name="ciSetUpUnavailable"
+			expr="factoryCiSetUpUnavailable($project)"
+			inputs="project"
+			observed-types="tl.factory:Project"
+		/>
 		<!--
 			Why no CI build of the selected project can be started, empty when one can: what
 			"Start CI build" says while it is disabled.
@@ -349,6 +360,37 @@
 					</title>
 					<!-- Commands about the agent of the selected workspace and the CI build of the project. -->
 					<commands>
+						<!--
+							Offered while CI is switched on and the selected project has no CI job; disabled with the
+							reason while its CI cannot be set up, e.g. for a project on a git connection of its
+							tenant or one whose repository has no application yet.
+						-->
+						<generic-command name="setUpCI"
+							image="css:bi bi-gear-wide-connected"
+							inputs="project, ciSetUpUnavailable"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Set up CI</en>
+								<de>CI einrichten</de>
+							</label>
+							<executability>
+								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) == null &amp;&amp; factoryCiEnabled()"/>
+								<disabled-if expr="$ciSetUpUnavailable"/>
+								<model-access operation="Write"/>
+							</executability>
+							<confirm expr="#('Set up the CI of {0}? The repository gets the default pipeline definition unless it has one, the pipeline file is protected, and the CI job is created and builds the application.'@en, 'Die CI von {0} einrichten? Das Repository erhält die Standard-Pipeline-Definition, sofern es keine hat, die Pipeline-Datei wird geschützt, und der CI-Job wird angelegt und baut die Anwendung.'@de).fill($project)"/>
+							<execute-script function="factorySetUpCI($project)">
+								<with-result>
+									<notify expr="$result"/>
+								</with-result>
+							</execute-script>
+							<execute-script function="now()">
+								<with-result>
+									<write-channel name="ciRefresh"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
 						<generic-command name="startBuild"
 							image="css:bi bi-hammer"
 							inputs="project, ciUnavailable"
@@ -359,7 +401,7 @@
 								<de>CI-Build starten</de>
 							</label>
 							<executability>
-								<visible-if expr="$project != null"/>
+								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) != null"/>
 								<disabled-if expr="$ciUnavailable"/>
 								<model-access operation="Write"/>
 							</executability>

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or working on the git hosting of the control application (the repositories of the projects on a hosting service, per git connection) - git connections (tl.factory:GitConnection with name, providerType, url, owner, tenant, tenants, secretName; Project#gitConnection and Project#branchProtected), built-in connections of the installation (connections of GitHostingService, synchronized at startup by GitConnections.synchronizeBuiltIn, an organization per tenant by GitConnections.tenantOwner, created on first use) and own connections of a tenant (GitConnections.create/update/replaceToken/delete with the access token in the writable secret store under a generated name, refused while projects use it, the TL-Script functions factoryCreateGitConnection, factoryUpdateGitConnection, factoryReplaceGitToken, factoryDeleteGitConnection, factoryGitConnections, factoryOwnGitConnections, factoryDefaultGitConnection, factoryCheckGitConnection, factoryGitCapabilities, factoryGitProviderTypes, factoryGitBuiltIn, factoryGitOwner), who reads and changes connections (role parent GitConnection#tenants, grants), the provider types (GitProviderType registered under provider-types, GitConnectionSettings, GitConnectionKey, GitHostingService.provider and forget), GitHostingProvider (capabilities with GitCapabilities, createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, gitUrl, gitCredentials), GitRepository with canAdminister, the repository of a project (tl.factory:Project repository and repositoryUrl) and how a workspace gets it (RepositorySource as ApplicationSource of ApplicationWorkspaces.create: create, record, generate and initial push before protectBranch, the protection skipped with a warning and branchProtected false when the token may not administer the repository, clone of an existing or adopted repository with the pom.xml check of artifactId and tl.version, retry after a failed run, cleanup and deletion keeping the repository, factoryGitHosting and factoryCheckRepository of the create form with checkNewRepository, the views of the connections (factory/git-connections.view.xml and its dialogs, my-git-connections.view.xml, the tab in tenants.view.xml) and of the project, the agent instructions with --append-system-prompt), the protected-files of GitHostingService and the commit identity user-name / user-email of the GitRoute, the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through to the provider of the connection of the project - GitRoute.Target, workspaceTarget, info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test doubles RecordingGitHostingProvider, RecordingGitProviderType and MemorySecretStore, the Gitea type GiteaProviderType of the module tl-factory-gitea (name gitea, timeout, required-approvals from tl_factory_gitea_required_approvals) with GiteaHostingProvider (the scopes of its access token write:organization, write:repository, read:user, the capabilities from userGetCurrent and orgGetUserPermissions with the scopes of the token checked by a creation request without name, the organization created with orgCreate, the namespace of the user, the built-in connection of tl-factory-app from tl_factory_gitea_url, tl_factory_gitea_owner and the secret tl_factory_gitea_token), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGiteaSwitch, TestGitRouteGitea with the git command line, TestRepositoryWorkspaces with Docker workspaces), TestGitConnections, TestProjectRepository, and updating Gitea.
+description: Read before configuring or working on the git hosting of the control application (the repositories of the projects on a hosting service, per git connection) - git connections (tl.factory:GitConnection with name, providerType, url, owner, tenant, tenants, secretName; Project#gitConnection and Project#branchProtected), built-in connections of the installation (connections of GitHostingService, synchronized at startup by GitConnections.synchronizeBuiltIn, an organization per tenant by GitConnections.tenantOwner, created on first use) and own connections of a tenant (GitConnections.create/update/replaceToken/delete with the access token in the writable secret store under a generated name, refused while projects use it, the TL-Script functions factoryCreateGitConnection, factoryUpdateGitConnection, factoryReplaceGitToken, factoryDeleteGitConnection, factoryGitConnections, factoryOwnGitConnections, factoryDefaultGitConnection, factoryCheckGitConnection, factoryGitCapabilities, factoryGitProviderTypes, factoryGitBuiltIn, factoryGitOwner), who reads and changes connections (role parent GitConnection#tenants, grants), the provider types (GitProviderType registered under provider-types, GitConnectionSettings, GitConnectionKey, GitHostingService.provider and forget), GitHostingProvider (capabilities with GitCapabilities, createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, commitFile through the API without a clone, gitUrl, gitCredentials), GitRepository with canAdminister, the repository of a project (tl.factory:Project repository and repositoryUrl) and how a workspace gets it (RepositorySource as ApplicationSource of ApplicationWorkspaces.create: create, record, generate and initial push before protectBranch, the protection skipped with a warning and branchProtected false when the token may not administer the repository, clone of an existing or adopted repository with the pom.xml check of artifactId and tl.version, retry after a failed run, cleanup and deletion keeping the repository, factoryGitHosting and factoryCheckRepository of the create form with checkNewRepository, the views of the connections (factory/git-connections.view.xml and its dialogs, my-git-connections.view.xml, the tab in tenants.view.xml) and of the project, the agent instructions with --append-system-prompt), the protected-files of GitHostingService and the commit identity user-name / user-email of the GitRoute, the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through to the provider of the connection of the project - GitRoute.Target, workspaceTarget, info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test doubles RecordingGitHostingProvider, RecordingGitProviderType and MemorySecretStore, the Gitea type GiteaProviderType of the module tl-factory-gitea (name gitea, timeout, required-approvals from tl_factory_gitea_required_approvals) with GiteaHostingProvider (the scopes of its access token write:organization, write:repository, read:user, the capabilities from userGetCurrent and orgGetUserPermissions with the scopes of the token checked by a creation request without name, the organization created with orgCreate, the namespace of the user, the built-in connection of tl-factory-app from tl_factory_gitea_url, tl_factory_gitea_owner and the secret tl_factory_gitea_token), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), commitFile with repoGetContents and repoCreateFile, the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGiteaSwitch, TestGitRouteGitea with the git command line, TestRepositoryWorkspaces with Docker workspaces), TestGitConnections, TestProjectRepository, and updating Gitea.
 order: 30
 ---
 
@@ -16,7 +16,7 @@ works without repositories.
 | `GitConnections` | The git connections in the model (`tl.factory:GitConnection`): the built-in connections of the installation, the own connections of the tenants with their access tokens, the choices of a new project, and the provider of a connection, see [git connections](#git-connections). |
 | `GitHostingService` | Service holding the registered `GitProviderType`s, the built-in connections of the installation and one `GitHostingProvider` per connection in use; the protected files. |
 | `GitProviderType` | A kind of hosting service, registered by name: creates the provider of a connection (`createProvider(GitConnectionSettings)`) and the credentials sending an access token kept in a named secret (`tokenCredentials`). |
-| `GitHostingProvider` | Platform-neutral access to the hosting service of one connection: what its credentials may do (`capabilities`), create a repository of its owner, find an existing repository, protect a branch; the URL and the credentials of git's smart HTTP protocol (`gitUrl`, `gitCredentials`) for the git route. |
+| `GitHostingProvider` | Platform-neutral access to the hosting service of one connection: what its credentials may do (`capabilities`), create a repository of its owner, find an existing repository, protect a branch, commit a new file to a branch without a clone (`commitFile`, e.g. the pipeline file when the [CI](doc:factory/ci#setting-up-the-ci) of a project is set up); the URL and the credentials of git's smart HTTP protocol (`gitUrl`, `gitCredentials`) for the git route. |
 | `GitRepository` | A repository: full name (`owner/name`), HTTP clone URL, web URL, default branch, and whether the credentials may administer it (`canAdminister`). |
 | `RepositoryName` | Owner and name of a repository; `parse` reads what a user enters - `owner/name`, the clone URL, the URL of a page of the repository, an SSH clone URL - against the base URL of the service. |
 | `GitRoute` | The route of the workspace proxy through which a workspace fetches from and pushes to the repository of its project, see [the git route](#the-git-route). |
@@ -221,7 +221,7 @@ branch, or replaces the settings of an existing one. `GiteaHostingProvider` sets
 |---|---|
 | `enable_push` | on, without push allowlist: every user with write access may push |
 | `enable_force_push` | off |
-| `protected_file_patterns` | the patterns joined by `;`, e.g. `Jenkinsfile;deploy/**` |
+| `protected_file_patterns` | the patterns joined by `;`, e.g. `deploy/**;Jenkinsfile` |
 | `unprotected_file_patterns` | none |
 | `block_admin_merge_override` | off, without bypass allowlist |
 | `required_approvals` | `required-approvals` |
@@ -240,6 +240,12 @@ Gitea then enforces on the branch:
 - Every other pull request needs `required-approvals` approvals and no rejecting review; a new
   commit dismisses the approvals.
 - Any other push that adds commits on top of the branch is accepted.
+
+A protected file cannot be committed through the contents API of Gitea either, so a file to be
+protected is committed first: `commitFile(repository, branch, path, content, message)` asks Gitea
+for the file on the branch (`repoGetContents`) and creates it if it is missing (`repoCreateFile`,
+committed by the user of the token, the content Base64-encoded); a file that exists is kept and
+the call answers `false`.
 
 Protect a branch after the push that creates it. Gitea (checked with 28.2.0) rejects the push
 creating a branch whose rule has protected file patterns - the pre-receive hook fails with
@@ -343,14 +349,15 @@ adopts the repository by entering it instead.
 **The agent.** For a project with repository, `StoredConversation.instructions()` tells the coding
 agent (`RepositorySource.agentInstructions`, passed by `ClaudeCodeHarness` as
 `--append-system-prompt`) that its work reaches the application only by commit and push to the
-default branch, that it must not force push, and which files are protected; with
-[CI](doc:factory/ci#the-ci-route), also how it builds the application on the CI server.
+default branch, that it must not force push, and which files are protected
+(`ProjectWorkspaces.protectedFiles`); for a project with a [CI](doc:factory/ci#the-ci-route) job,
+also how it builds the application on the CI server.
 
 ### Protected files and commit identity
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `protected-files` of `GitHostingService` (`%FACTORY_GIT_PROTECTED_FILES%`, environment `tl_factory_git_protected_files`) | `Jenkinsfile, deploy/**` | Glob patterns of the files no push to the default branch of a project repository may change; with [CI](doc:factory/ci#the-pipeline-definition), the pipeline file of the CI server is added if it is not listed. |
+| `protected-files` of `GitHostingService` (`%FACTORY_GIT_PROTECTED_FILES%`, environment `tl_factory_git_protected_files`) | `deploy/**` | Glob patterns of the files no push to the default branch of a project repository may change; the pipeline file of the CI server is protected only for a project whose [CI](doc:factory/ci#the-pipeline-definition) is set up, and is added then, even if it is not listed. |
 | `user-name` of `GitRoute` (`%FACTORY_GIT_USER_NAME%`, `tl_factory_git_user_name`) | `TopLogic Factory` | Author and committer name of the commits made in a workspace; empty for none. |
 | `user-email` of `GitRoute` (`%FACTORY_GIT_USER_EMAIL%`, `tl_factory_git_user_email`) | `tl-factory@localhost` | Author and committer e-mail address; empty for none. |
 
@@ -513,7 +520,9 @@ an administrator and two access tokens with `gitea admin user create` /
 its own through `GiteaTestServer.suite(testClass, ...)`.
 
 - `TestGiteaHostingProvider` checks creating, finding and protecting repositories, the errors,
-  what the protection enforces on real pushes, the capabilities of the administrator's token, of a
+  what the protection enforces on real pushes, committing a file through the API (on top of the
+  default branch, also in a directory, kept when it exists, refused for a protected file and a
+  missing repository, a push changing it rejected once it is protected), the capabilities of the administrator's token, of a
   token of a plain user (created by `GiteaTestServer.createUser`: nothing in the organization,
   everything in its own namespace, a repository it may only write to not administrable and its
   protection refused) and of a token without `read:user`, and the organization a provider creates
@@ -531,8 +540,9 @@ its own through `GiteaTestServer.suite(testClass, ...)`.
   Docker workspaces that reach a `GitRoute` on the host as `host.docker.internal`
   (`extra-hosts=host.docker.internal:host-gateway`, the listener on `0.0.0.0`): the first workspace
   creates the repository, pushes the generated application with the configured identity and
-  protects the branch; a workspace created anew clones the same commit, and a push of the agent's
-  environment changing the `Jenkinsfile` is refused while another one passes; a second project
+  protects the branch; the `Jenkinsfile` is committed through the API and protected, as setting up
+  the CI does; a workspace created anew clones that commit, and a push of the agent's environment
+  changing the `Jenkinsfile` is refused while another one passes; a second project
   adopting the repository by its clone URL clones it.
 
 `TestProjectRepository` of `tl-factory` checks the steps of all cases against a
@@ -552,8 +562,8 @@ Without a reachable Docker daemon, run without the build's system property (e.g.
 without `-Dtl.factory.gitea.image=gitea/gitea:<version>`), or - for `TestGitRouteGitea` - without
 `git` on the path, the suite is empty. `TestGitRoute` and `TestGitRouteServlet` of `tl-factory`
 test the route against a fake hosting service. `TestGiteaSwitch` checks that an empty `base-url`
-switches git hosting off. The whole creation flow of a new project with its CI build against an
-external Gitea and Jenkins is `TestProjectCI` of `tl-factory-jenkins`, see [the tests of
+switches git hosting off. The whole flow of a new project and the set up of its CI with its first
+build against an external Gitea and Jenkins is `TestProjectCI` of `tl-factory-jenkins`, see [the tests of
 CI](doc:factory/ci#the-tests).
 
 ```bash

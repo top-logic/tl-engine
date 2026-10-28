@@ -7,6 +7,7 @@ package com.top_logic.factory.agent;
 
 import java.util.List;
 
+import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIRoute;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.git.RepositoryName;
@@ -80,37 +81,57 @@ public class StoredConversation implements ConversationTarget {
 	}
 
 	/**
-	 * For a project with a {@link FactoryModel#PROJECT_REPOSITORY repository}, that the work of the
-	 * agent reaches the application only by commit and push, see
-	 * {@link RepositorySource#agentInstructions(String, java.util.List)}, naming the protected files
-	 * unless the default branch is {@link FactoryModel#PROJECT_BRANCH_PROTECTED known to be
-	 * unprotected}; with {@link CIService CI}
-	 * and the {@link CIRoute} in the workspace proxy, how it builds the application on the CI
-	 * server, see {@link CIRoute#agentInstructions()}.
+	 * The {@link #projectInstructions(TLObject, CIProvider, boolean) instructions} of the project of
+	 * the workspace, with the {@link CIService CI server} of the installation.
 	 */
 	@Override
 	public String instructions() {
-		TLObject project = FactoryModel.getProject(workspace());
+		return projectInstructions(FactoryModel.getProject(workspace()), CIService.configuredProvider(),
+			hasCIRoute());
+	}
+
+	/**
+	 * What the agent working on the given project is told in addition to its instructions.
+	 *
+	 * <p>
+	 * For a project with a {@link FactoryModel#PROJECT_REPOSITORY repository}, that the work of the
+	 * agent reaches the application only by commit and push, see
+	 * {@link RepositorySource#agentInstructions(String, java.util.List)}, naming the
+	 * {@link ProjectWorkspaces#protectedFiles(TLObject, CIProvider) protected files of the project}
+	 * unless the default branch is {@link FactoryModel#PROJECT_BRANCH_PROTECTED known to be
+	 * unprotected}; for a project with a {@link FactoryModel#PROJECT_CI_JOB CI job}, with a CI
+	 * server and the {@link CIRoute} in the workspace proxy, how it builds the application on the
+	 * CI server, see {@link CIRoute#agentInstructions()}.
+	 * </p>
+	 *
+	 * @param project
+	 *        The project.
+	 * @param ci
+	 *        The CI server, {@code null} if CI is switched off.
+	 * @param ciRoute
+	 *        Whether the workspace proxy has a {@link CIRoute}.
+	 * @return The instructions, {@code null} for a project without repository.
+	 */
+	public static String projectInstructions(TLObject project, CIProvider ci, boolean ciRoute) {
 		RepositoryName repository = FactoryModel.getRepository(project);
 		if (repository == null) {
 			return null;
 		}
 		boolean unprotected = Boolean.FALSE.equals(project.tValueByName(FactoryModel.PROJECT_BRANCH_PROTECTED));
 		String result = RepositorySource.agentInstructions(repository.getFullName(),
-			unprotected ? List.of() : ProjectWorkspaces.getProtectedFiles());
-		if (hasCIRoute()) {
+			unprotected ? List.of() : ProjectWorkspaces.protectedFiles(project, ci));
+		if (ci != null && ciRoute && FactoryModel.getCIJob(project) != null) {
 			result = result + " " + CIRoute.agentInstructions();
 		}
 		return result;
 	}
 
 	/**
-	 * Whether a CI server is configured and the running workspace proxy has a {@link CIRoute}.
+	 * Whether the running workspace proxy has a {@link CIRoute}.
 	 */
 	private static boolean hasCIRoute() {
 		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
-		return CIService.configuredProvider() != null && proxy != null && proxy.isEnabled()
-			&& proxy.getRoute(CIRoute.class) != null;
+		return proxy != null && proxy.isEnabled() && proxy.getRoute(CIRoute.class) != null;
 	}
 
 	@Override

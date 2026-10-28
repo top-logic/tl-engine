@@ -51,9 +51,10 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
  *
  * <p>
  * The first workspace creates the repository, pushes the generated application to its default
- * branch and protects it; a workspace created anew for the same project clones it; a second
- * project adopting the repository by its clone URL clones it as well. Every workspace builds its
- * application.
+ * branch and protects it; then a pipeline file is committed through the API of Gitea and protected,
+ * as setting up the CI of the project does; a workspace created anew for the same project clones
+ * it, and its agent cannot change the pipeline file; a second project adopting the repository by
+ * its clone URL clones it as well. Every workspace builds its application.
  * </p>
  *
  * <p>
@@ -102,7 +103,9 @@ public class TestRepositoryWorkspaces extends TestCase {
 
 	private static final String USER_EMAIL = "factory-it@example.com";
 
-	private static final List<String> PROTECTED_FILES = List.of("Jenkinsfile", "deploy/**");
+	private static final List<String> PROTECTED_FILES = List.of("deploy/**");
+
+	private static final String PIPELINE_FILE = "Jenkinsfile";
 
 	/**
 	 * Directory of the bare repositories in the Gitea container.
@@ -210,7 +213,7 @@ public class TestRepositoryWorkspaces extends TestCase {
 	public void testCreateCleanupAdopt() throws Exception {
 		// A project without repository.
 		String first = workspaceId();
-		RepositorySource created = source(first, null);
+		RepositorySource created = source(first, null, PROTECTED_FILES);
 		create(first, created);
 		RepositoryName name = _repositories.get(first);
 		assertEquals(new RepositoryName(GiteaTestServer.ORG, ARTIFACT_ID), name);
@@ -231,16 +234,25 @@ public class TestRepositoryWorkspaces extends TestCase {
 		assertEquals(String.join(";", PROTECTED_FILES), protection.getProtectedFilePatterns());
 		assertEquals(Boolean.FALSE, protection.getEnableForcePush());
 
-		// The workspace is removed and created anew: the repository is cloned.
+		// The CI of the project is set up: the pipeline file is committed, then protected.
+		assertTrue(_hosting.commitFile(repository, BRANCH, PIPELINE_FILE, "pipeline { }\n", "Add the CI pipeline"));
+		List<String> withPipeline = List.of(PROTECTED_FILES.get(0), PIPELINE_FILE);
+		_hosting.protectBranch(repository, BRANCH, withPipeline);
+		assertFalse("Committed once.", _hosting.commitFile(repository, BRANCH, PIPELINE_FILE, "other", "Again"));
+		head = giteaHead(name);
+
+		// The workspace is removed and created anew: the repository is cloned, and the branch protected
+		// with the pipeline file, as for a project with CI job.
 		_applications.remove(first);
 		String second = workspaceId();
-		create(second, source(second, name.getFullName()));
+		create(second, source(second, name.getFullName(), withPipeline));
 		assertEquals("The clone has the pushed application.", head, head(second));
 
 		// The agent pushes through the proxy; the protected files are refused.
+		assertEquals("The clone has the committed pipeline.", "pipeline { }", output(second, "cat", PIPELINE_FILE).strip());
 		ExecResult jenkins = agentGit(second, "echo pipeline > Jenkinsfile && git add Jenkinsfile"
 			+ " && git commit -q -m pipeline && git push origin HEAD");
-		assertTrue("Push changing the Jenkinsfile accepted.", jenkins.exitCode() != 0);
+		assertTrue("Push changing the Jenkinsfile accepted: " + jenkins.err() + jenkins.out(), jenkins.exitCode() != 0);
 		assertTrue(jenkins.err() + jenkins.out(), (jenkins.err() + jenkins.out()).contains("protected"));
 		ExecResult change = agentGit(second, "git reset -q --hard HEAD~1 && echo change >> README.md"
 			+ " && git add README.md && git commit -q -m change && git push origin HEAD");
@@ -251,15 +263,15 @@ public class TestRepositoryWorkspaces extends TestCase {
 
 		// A second project adopts the repository by its clone URL.
 		String third = workspaceId();
-		RepositorySource adopted = source(third, repository.getCloneUrl());
+		RepositorySource adopted = source(third, repository.getCloneUrl(), withPipeline);
 		create(third, adopted);
 		assertEquals("Recorded under its full name.", name, _repositories.get(third));
 		assertEquals(changed, head(third));
 	}
 
-	private RepositorySource source(String workspaceId, String reference) {
+	private RepositorySource source(String workspaceId, String reference, List<String> protectedFiles) {
 		return new RepositorySource(_hosting, _tokens, _proxyRoot + GitRoute.DEFAULT_PATH, reference,
-			"Repository integration test", PROTECTED_FILES,
+			"Repository integration test", protectedFiles,
 			repository -> _repositories.put(workspaceId, repository.getName()));
 	}
 

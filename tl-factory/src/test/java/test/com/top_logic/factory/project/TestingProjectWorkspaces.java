@@ -55,8 +55,9 @@ public class TestingProjectWorkspaces extends ProjectWorkspaces {
 	}
 
 	/**
-	 * Sets the CI server building the applications of all projects, {@code null} for that of the
-	 * {@link com.top_logic.factory.ci.CIService} for the projects on a built-in git connection.
+	 * Sets the CI server of the installation, {@code null} for that of the
+	 * {@link com.top_logic.factory.ci.CIService}; it builds the applications of the projects on a
+	 * built-in git connection.
 	 */
 	public static void setCI(CIProvider ci) {
 		_ci = ci;
@@ -66,12 +67,6 @@ public class TestingProjectWorkspaces extends ProjectWorkspaces {
 	protected CIProvider getCI() {
 		CIProvider ci = _ci;
 		return ci != null ? ci : super.getCI();
-	}
-
-	@Override
-	protected CIProvider getCI(TLObject project) {
-		CIProvider ci = _ci;
-		return ci != null ? ci : super.getCI(project);
 	}
 
 	@Override

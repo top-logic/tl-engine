@@ -8,6 +8,7 @@ package com.top_logic.factory.ci;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -32,6 +33,34 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The project "{0}" has no repository on the git hosting service.
 	 */
 	public static ResKey1 ERROR_NO_REPOSITORY__PROJECT;
+
+	/**
+	 * @en The repository of the project "{0}" has no application yet; create the workspace of the
+	 *     project first.
+	 */
+	public static ResKey1 ERROR_NO_SOURCES__PROJECT;
+
+	/**
+	 * @en The project "{0}" has no CI job; set up its CI first.
+	 */
+	public static ResKey1 ERROR_NO_CI_JOB__PROJECT;
+
+	/**
+	 * @en The project "{0}" has a CI job already.
+	 */
+	public static ResKey1 ERROR_HAS_CI_JOB__PROJECT;
+
+	/**
+	 * @en CI set up with the CI job "{0}". {1}
+	 */
+	public static ResKey2 CI_SET_UP__JOB_BUILD;
+
+	/**
+	 * @en CI set up with the CI job "{0}". {1} The access token of the git connection may not
+	 *     administer the repository, so the pipeline file {2} is not protected; protect it on the
+	 *     git hosting service.
+	 */
+	public static ResKey3 CI_SET_UP_UNPROTECTED__JOB_BUILD_FILE;
 
 	/**
 	 * @en The CI server {0} cannot be reached: {1}

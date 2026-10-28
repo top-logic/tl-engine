@@ -23,7 +23,6 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.proxy.ProcessToken;
 import com.top_logic.factory.proxy.ProxyTokens;
@@ -65,11 +64,8 @@ import com.top_logic.util.error.TopLogicException;
  * </ol>
  *
  * <p>
- * With a {@link Pipeline CI pipeline}, the first commit of a new application also has the
- * {@link Pipeline#file() pipeline definition}; a cloned repository keeps its own, one without gets
- * a warning in the output. After the protection, the pipeline {@link Pipeline#setUp(GitRepository,
- * Consumer) sets up} the CI job of the repository. A failure of the CI is a warning in the output
- * only: the workspace is created without it, and the job can be set up later.
+ * The source does not involve a CI server: a project gets its CI job later, see
+ * {@link com.top_logic.factory.ci.ProjectCI#setUp}.
  * </p>
  *
  * <p>
@@ -132,22 +128,6 @@ public class RepositorySource implements ApplicationSource {
 
 	private static final String PATH_SEPARATOR = "/";
 
-	private static final String SHELL = "sh";
-
-	private static final String SHELL_COMMAND = "-c";
-
-	/**
-	 * Environment variable holding the content of the file {@link #WRITE_FILE} writes.
-	 */
-	public static final String ENV_FILE_CONTENT = "TL_FACTORY_FILE_CONTENT";
-
-	/**
-	 * Shell script writing the content of {@link #ENV_FILE_CONTENT} to the file named by its first
-	 * argument, creating its directory.
-	 */
-	public static final String WRITE_FILE =
-		"mkdir -p \"$(dirname \"$1\")\" && printf '%s' \"$" + ENV_FILE_CONTENT + "\" > \"$1\"";
-
 	/**
 	 * Prefix of a line of the output of a step that failed without failing the workspace.
 	 */
@@ -168,8 +148,6 @@ public class RepositorySource implements ApplicationSource {
 	private final Consumer<GitRepository> _record;
 
 	private final Consumer<Boolean> _recordProtection;
-
-	private final Pipeline _pipeline;
 
 	/**
 	 * Creates a {@link RepositorySource}.
@@ -195,22 +173,9 @@ public class RepositorySource implements ApplicationSource {
 	 */
 	public RepositorySource(GitHostingProvider hosting, ProxyTokens tokens, String routeUrl, String reference,
 			String description, List<String> protectedFiles, Consumer<GitRepository> record) {
-		this(hosting, tokens, routeUrl, reference, description, protectedFiles, record, null);
-	}
-
-	/**
-	 * Creates a {@link RepositorySource} whose repository is built by a CI pipeline.
-	 *
-	 * @param pipeline
-	 *        The CI pipeline of the repository, {@code null} for none.
-	 *
-	 * @see #RepositorySource(GitHostingProvider, ProxyTokens, String, String, String, List, Consumer)
-	 */
-	public RepositorySource(GitHostingProvider hosting, ProxyTokens tokens, String routeUrl, String reference,
-			String description, List<String> protectedFiles, Consumer<GitRepository> record, Pipeline pipeline) {
 		this(hosting, tokens, routeUrl, reference, description, protectedFiles, record, protection -> {
 			// Not recorded.
-		}, pipeline);
+		});
 	}
 
 	/**
@@ -220,12 +185,11 @@ public class RepositorySource implements ApplicationSource {
 	 *        Stores whether the default branch of the repository is protected, in a transaction of
 	 *        its own; called once the protection is set or skipped.
 	 *
-	 * @see #RepositorySource(GitHostingProvider, ProxyTokens, String, String, String, List, Consumer,
-	 *      Pipeline)
+	 * @see #RepositorySource(GitHostingProvider, ProxyTokens, String, String, String, List, Consumer)
 	 */
 	public RepositorySource(GitHostingProvider hosting, ProxyTokens tokens, String routeUrl, String reference,
 			String description, List<String> protectedFiles, Consumer<GitRepository> record,
-			Consumer<Boolean> recordProtection, Pipeline pipeline) {
+			Consumer<Boolean> recordProtection) {
 		_hosting = Objects.requireNonNull(hosting, "hosting");
 		_tokens = tokens;
 		_routeUrl = routeUrl;
@@ -234,7 +198,6 @@ public class RepositorySource implements ApplicationSource {
 		_protectedFiles = List.copyOf(protectedFiles);
 		_record = Objects.requireNonNull(record, "record");
 		_recordProtection = Objects.requireNonNull(recordProtection, "recordProtection");
-		_pipeline = pipeline;
 	}
 
 	/**
@@ -268,17 +231,11 @@ public class RepositorySource implements ApplicationSource {
 					.setWorkingDir(ApplicationWorkspaces.SOURCE_PATH));
 			} else {
 				context.generate();
-				if (_pipeline != null) {
-					addPipeline(context);
-				}
 				initialPush(context, env, remote, branch);
 			}
 		}
 		if (cloned) {
 			checkPom(context, repository);
-			if (_pipeline != null) {
-				checkPipeline(context, repository);
-			}
 		}
 		if (repository.canAdminister()) {
 			context.step("Protecting the branch " + branch + " of " + repository.getFullName() + ", protected files "
@@ -291,46 +248,6 @@ public class RepositorySource implements ApplicationSource {
 				+ " stays unprotected. Protect it in the git hosting service against force pushes and changes of "
 				+ String.join(", ", _protectedFiles) + ".");
 			_recordProtection.accept(Boolean.FALSE);
-		}
-		if (_pipeline != null) {
-			setUpPipeline(context, repository);
-		}
-	}
-
-	/**
-	 * Writes the pipeline definition into the generated application.
-	 */
-	private void addPipeline(Context context) throws InterruptedException {
-		String file = _pipeline.file();
-		context.step("Adding the CI pipeline " + file);
-		context.run(ExecCommand.of(SHELL, SHELL_COMMAND, WRITE_FILE, SHELL, context.appDir() + PATH_SEPARATOR + file)
-			.putEnv(ENV_FILE_CONTENT, _pipeline.content()));
-	}
-
-	/**
-	 * Warns if the cloned repository has no pipeline definition.
-	 */
-	private void checkPipeline(Context context, GitRepository repository) throws InterruptedException {
-		String file = _pipeline.file();
-		if (context.exec(ExecCommand.of(TEST, IS_FILE, context.appDir() + PATH_SEPARATOR + file),
-			ExecOutput.NONE) != 0) {
-			context.step(WARNING + "The repository " + repository.getFullName() + " has no CI pipeline " + file
-				+ "; its CI builds fail until a reviewed pull request adds one.");
-		}
-	}
-
-	/**
-	 * Sets up the CI job of the repository; a failure is a warning only.
-	 */
-	private void setUpPipeline(Context context, GitRepository repository) {
-		try {
-			_pipeline.setUp(repository, context::step);
-		} catch (RuntimeException ex) {
-			Logger.warn("Setting up the CI job of " + repository.getFullName() + " failed.", ex,
-				RepositorySource.class);
-			String message = ex.getMessage();
-			context.step(WARNING + "Setting up the CI job failed, the workspace is created without it: "
-				+ (message == null || message.isEmpty() ? ex.getClass().getName() : message));
 		}
 	}
 
@@ -485,40 +402,6 @@ public class RepositorySource implements ApplicationSource {
 				.append(") is rejected; leave them unchanged.");
 		}
 		return result.toString();
-	}
-
-	/**
-	 * The CI pipeline building the repository of a {@link RepositorySource}.
-	 */
-	public interface Pipeline {
-
-		/**
-		 * The path of the pipeline definition relative to the root of the repository, e.g.
-		 * {@code Jenkinsfile}.
-		 */
-		String file();
-
-		/**
-		 * The pipeline definition the first commit of a new application gets.
-		 */
-		String content();
-
-		/**
-		 * Makes sure the CI job of the repository exists and builds it.
-		 *
-		 * <p>
-		 * Called after the default branch of the repository has its sources and is protected.
-		 * </p>
-		 *
-		 * @param repository
-		 *        The repository.
-		 * @param progress
-		 *        Receiver of progress lines naming the steps.
-		 * @throws RuntimeException
-		 *         If the CI server fails; the {@link RepositorySource} reports it as a warning.
-		 */
-		void setUp(GitRepository repository, Consumer<String> progress);
-
 	}
 
 	/**

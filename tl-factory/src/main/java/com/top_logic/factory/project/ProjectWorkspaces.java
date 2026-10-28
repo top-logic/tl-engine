@@ -38,13 +38,13 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.WorkspaceAgentService;
 import com.top_logic.factory.ci.CIBuild;
 import com.top_logic.factory.ci.CIBuildStart;
-import com.top_logic.factory.ci.CIPipeline;
 import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.ci.ProjectCI;
 import com.top_logic.factory.git.GitConnections;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitHostingService;
+import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.GitRoute;
 import com.top_logic.factory.git.RepositorySource;
 import com.top_logic.factory.proxy.WorkspaceProxyService;
@@ -264,18 +264,16 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * the connection (see {@link RepositorySource}): a project without repository gets one in the
 	 * owner of the connection, created with the generated application as its first commit; the
 	 * repository of a project that has one - entered when the project was created, or created for
-	 * an earlier workspace - is cloned. Whether its default branch could be protected is recorded in
-	 * {@link FactoryModel#PROJECT_BRANCH_PROTECTED}. Without git connection, the application is
-	 * generated in the workspace only; a git connection that is not available fails the
-	 * creation.
+	 * an earlier workspace - is cloned. The default branch is protected with the
+	 * {@link #protectedFiles(TLObject, CIProvider) protected files of the project}; whether it could be
+	 * protected is recorded in {@link FactoryModel#PROJECT_BRANCH_PROTECTED}. Without git
+	 * connection, the application is generated in the workspace only; a git connection that is not
+	 * available fails the creation.
 	 * </p>
 	 *
 	 * <p>
-	 * With {@link CIService CI} in addition and a {@link GitConnections#isBuiltIn(TLObject) built-in}
-	 * git connection, a new application gets the pipeline definition in its first commit, and the
-	 * CI job of the repository is set up and builds the application once the branch is protected
-	 * (see {@link CIPipeline}); a failure of the CI server is only a warning in the output of the
-	 * operation.
+	 * Creating a workspace sets up no CI: neither a pipeline definition nor a CI job, see
+	 * {@link #setUpCI(TLObject)}.
 	 * </p>
 	 *
 	 * @param project
@@ -350,16 +348,12 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
 		GitRoute route = proxy == null ? null : proxy.getRoute(GitRoute.class);
 		String routeUrl = route == null ? null : proxy.getRouteUrl(route);
-		CIProvider ci = getCI(project);
 		String name = FactoryModel.getString(project, FactoryModel.PROJECT_NAME);
-		CIPipeline pipeline = ci == null ? null
-			: new CIPipeline(ci, pipelineTemplate(), name, job -> commit(() -> FactoryModel.setCIJob(project, job)));
 		return new RepositorySource(hosting, proxy, routeUrl,
 			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY), name,
-			ProjectCI.withPipelineFile(getConfiguredProtectedFiles(), ci),
+			protectedFiles(project, getCI()),
 			repository -> commit(() -> FactoryModel.setRepository(project, repository)),
-			protection -> commit(() -> project.tUpdateByName(FactoryModel.PROJECT_BRANCH_PROTECTED, protection)),
-			pipeline);
+			protection -> commit(() -> project.tUpdateByName(FactoryModel.PROJECT_BRANCH_PROTECTED, protection)));
 	}
 
 	/**
@@ -386,14 +380,14 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * Whether the projects have CI jobs.
+	 * Whether a CI server is configured, so that the CI of a project can be set up.
 	 */
 	public boolean isCIEnabled() {
 		return getCI() != null;
 	}
 
 	/**
-	 * The pipeline definition of a new application.
+	 * The pipeline definition a repository gets when the CI of its project is set up.
 	 *
 	 * @see CIService#pipelineTemplate()
 	 */
@@ -407,30 +401,102 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	/**
 	 * Why no CI build of the given project can be started now.
 	 *
-	 * @return The reason, {@code null} if a build can be started.
+	 * @return The reason, {@code null} if a build can be started: the project has a CI job.
 	 * @see ProjectCI#unavailable(CIProvider, GitHostingProvider, TLObject)
 	 */
 	public ResKey ciUnavailable(TLObject project) {
-		if (project == null) {
-			return ProjectCI.unavailable(getCI(), null, null);
+		ResKey connectionProblem = ciConnectionProblem(project);
+		if (connectionProblem != null) {
+			return connectionProblem;
 		}
-		CIProvider ci = getCI(project);
-		if (ci == null && getCI() != null) {
-			return com.top_logic.factory.ci.I18NConstants.ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT.fill(project);
-		}
-		return ProjectCI.unavailable(ci, getGitHosting(project), project);
+		return ProjectCI.unavailable(project == null ? getCI() : getCI(project), getGitHosting(project), project);
 	}
 
 	/**
-	 * Makes sure the CI job of the given project exists and builds its repository, records it on
-	 * the project in a transaction of its own, and starts a build.
+	 * Why the CI of the given project cannot be set up now.
+	 *
+	 * @return The reason, {@code null} if it can be set up: CI is switched on, the project is on a
+	 *         {@link GitConnections#isBuiltIn(TLObject) built-in} git connection, has a repository
+	 *         with the application in it and no CI job yet.
+	 * @see ProjectCI#setUpUnavailable(CIProvider, GitHostingProvider, TLObject)
+	 * @see #setUpCI(TLObject)
+	 */
+	public ResKey ciSetUpUnavailable(TLObject project) {
+		ResKey connectionProblem = ciConnectionProblem(project);
+		if (connectionProblem != null) {
+			return connectionProblem;
+		}
+		return ProjectCI.setUpUnavailable(project == null ? getCI() : getCI(project), getGitHosting(project),
+			project);
+	}
+
+	/**
+	 * Whether the given project is on a git connection the CI server does not build.
+	 *
+	 * @return The reason, {@code null} if CI is switched off or the project is {@code null} or on a
+	 *         {@link GitConnections#isBuiltIn(TLObject) built-in} git connection.
+	 */
+	private ResKey ciConnectionProblem(TLObject project) {
+		if (project != null && getCI(project) == null && getCI() != null) {
+			return com.top_logic.factory.ci.I18NConstants.ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT.fill(project);
+		}
+		return null;
+	}
+
+	/**
+	 * Sets up the CI of the given project: commits the pipeline definition to the default branch of
+	 * its repository unless the branch has one, extends the protection of the branch by the pipeline
+	 * file, creates the CI job, records it on the project and starts its first build.
+	 *
+	 * <p>
+	 * Must be called outside of a transaction: the job and the protection of the branch are
+	 * recorded in transactions of their own, as soon as they are set up. A set up that fails can be
+	 * repeated while the project has no CI job; one that failed starting the first build leaves the
+	 * job recorded, and the build is started by {@link #startBuild(TLObject)}.
+	 * </p>
+	 *
+	 * @param project
+	 *        A project whose CI can be set up, see {@link #ciSetUpUnavailable(TLObject)}.
+	 * @return What was done.
+	 * @see ProjectCI#setUp(CIProvider, GitHostingProvider, GitRepository, String, List, String,
+	 *      java.util.function.Consumer, java.util.function.Consumer)
+	 */
+	public ProjectCI.Setup setUpCI(TLObject project) {
+		ResKey problem = ciSetUpUnavailable(project);
+		if (problem != null) {
+			throw new TopLogicException(problem);
+		}
+		CIProvider ci = getCI(project);
+		GitHostingProvider hosting = getGitHosting(project);
+		String fullName = FactoryModel.getRepository(project).getFullName();
+		GitRepository repository = hosting.findRepository(fullName);
+		if (repository == null) {
+			throw new TopLogicException(
+				com.top_logic.factory.git.I18NConstants.ERROR_UNKNOWN_REPOSITORY__REFERENCE.fill(fullName));
+		}
+		return ProjectCI.setUp(ci, hosting, repository, pipelineTemplate(),
+			ProjectCI.withoutPipelineFile(getConfiguredProtectedFiles(), ci),
+			FactoryModel.getString(project, FactoryModel.PROJECT_NAME),
+			job -> commitInRequest(() -> {
+				FactoryModel.setCIJob(project, job);
+				return null;
+			}),
+			protection -> commitInRequest(() -> {
+				project.tUpdateByName(FactoryModel.PROJECT_BRANCH_PROTECTED, protection);
+				return null;
+			}));
+	}
+
+	/**
+	 * Makes sure the CI job of the given project, which has one, exists and builds its repository,
+	 * records it on the project in a transaction of its own if it changed, and starts a build.
 	 *
 	 * <p>
 	 * Must be called outside of a transaction.
 	 * </p>
 	 *
 	 * @param project
-	 *        A project with repository.
+	 *        A project with repository and CI job.
 	 * @return The started build.
 	 * @see ProjectCI#startBuild(CIProvider, GitHostingProvider, TLObject, java.util.function.Consumer)
 	 */
@@ -472,13 +538,21 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * The protected files of the default branch of a project repository: the configured ones and,
-	 * with {@link CIService CI}, the {@link CIProvider#pipelineFile() pipeline file}.
+	 * The protected files of the default branch of the repository of the given project: the
+	 * configured ones and, for a project with a {@link FactoryModel#PROJECT_CI_JOB CI job}, the
+	 * {@link CIProvider#pipelineFile() pipeline file} of the CI server; without CI job, the
+	 * pipeline file is not protected, so that it can be committed when the CI of the project is set
+	 * up.
 	 *
+	 * @param project
+	 *        The project.
+	 * @param ci
+	 *        The CI server, {@code null} if CI is switched off.
 	 * @see GitHostingService#getProtectedFiles()
 	 */
-	public static List<String> getProtectedFiles() {
-		return ProjectCI.withPipelineFile(getConfiguredProtectedFiles(), CIService.configuredProvider());
+	public static List<String> protectedFiles(TLObject project, CIProvider ci) {
+		List<String> withoutCI = ProjectCI.withoutPipelineFile(getConfiguredProtectedFiles(), ci);
+		return FactoryModel.getCIJob(project) == null ? withoutCI : ProjectCI.withPipelineFile(withoutCI, ci);
 	}
 
 	/**

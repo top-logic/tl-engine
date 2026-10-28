@@ -19,8 +19,8 @@ import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link GitHostingProvider} without hosting service: it keeps the repositories and their branch
- * protections in memory and records the calls.
+ * {@link GitHostingProvider} without hosting service: it keeps the repositories, their branch
+ * protections and the files committed through it in memory and records the calls.
  *
  * <p>
  * The repositories live at {@link #BASE_URL}; their default branch is {@link #DEFAULT_BRANCH}.
@@ -60,6 +60,11 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 	 */
 	public static final String PROTECT = "protect";
 
+	/**
+	 * Entry of {@link #calls()} for {@link #commitFile(GitRepository, String, String, String, String)}.
+	 */
+	public static final String COMMIT_FILE = "commit-file";
+
 	private final String _owner;
 
 	private final String _gitBaseUrl;
@@ -69,6 +74,8 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 	private final Map<RepositoryName, GitRepository> _repositories = new LinkedHashMap<>();
 
 	private final Map<String, List<String>> _protections = new LinkedHashMap<>();
+
+	private final Map<String, Map<String, String>> _files = new LinkedHashMap<>();
 
 	private final List<String> _calls = new ArrayList<>();
 
@@ -196,6 +203,47 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 				I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(repository.getFullName()));
 		}
 		_protections.put(protectionKey(repository, branch), List.copyOf(protectedFiles));
+	}
+
+	/**
+	 * Adds the file to the {@link #files(GitRepository, String) files} of the branch; a file of a
+	 * protected path fails like the hosting service rejects it.
+	 */
+	@Override
+	public synchronized boolean commitFile(GitRepository repository, String branch, String path, String content,
+			String message) {
+		_calls.add(COMMIT_FILE + " " + repository.getFullName() + " " + branch + " " + path);
+		if (!_repositories.containsKey(repository.getName())) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_REPOSITORY_NOT_FOUND__REPOSITORY.fill(repository.getFullName()));
+		}
+		Map<String, String> files = _files.computeIfAbsent(protectionKey(repository, branch), key -> new LinkedHashMap<>());
+		if (files.containsKey(path)) {
+			return false;
+		}
+		List<String> protection = protection(repository, branch);
+		if (protection != null && protection.contains(path)) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_PERMISSION_DENIED__REPOSITORY.fill(repository.getFullName()));
+		}
+		files.put(path, content);
+		return true;
+	}
+
+	/**
+	 * Adds a file to a branch, as if it had been pushed by someone else.
+	 */
+	public synchronized void addFile(GitRepository repository, String branch, String path, String content) {
+		_files.computeIfAbsent(protectionKey(repository, branch), key -> new LinkedHashMap<>()).put(path, content);
+	}
+
+	/**
+	 * The files of the given branch {@link #commitFile(GitRepository, String, String, String, String)
+	 * committed} through this provider or {@link #addFile(GitRepository, String, String, String)
+	 * added}, by path, with their content.
+	 */
+	public synchronized Map<String, String> files(GitRepository repository, String branch) {
+		return new LinkedHashMap<>(_files.getOrDefault(protectionKey(repository, branch), Map.of()));
 	}
 
 	/**

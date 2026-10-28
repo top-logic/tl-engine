@@ -12,8 +12,8 @@ import com.top_logic.util.error.TopLogicException;
  * Access to a CI server building the applications of the projects.
  *
  * <p>
- * Every project with a repository on the git hosting service has one job on the CI server, which
- * builds the default branch of the repository with the {@link #pipelineFile() pipeline definition}
+ * Every project whose CI is set up (see {@link ProjectCI}) has one job on the CI server, which
+ * builds the default branch of its repository with the {@link #pipelineFile() pipeline definition}
  * in its root. The CI server clones the repository itself, with a credential of its own; the
  * control application never passes a git credential to it. The provider authenticates its requests
  * with the credentials of the control application.

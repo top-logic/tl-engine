@@ -69,8 +69,8 @@
 				<de>Branch nicht geschützt</de>
 			</title>
 			<message>
-				<en>The access token of the git connection may not administer the repository, so its default branch is not protected: force pushes are possible, and the protected files (Jenkinsfile, deploy/**) can be changed without review. Protect the branch on the git hosting service, or use a git connection whose token may administer the repository.</en>
-				<de>Das Token der Git-Verbindung darf das Repository nicht verwalten, daher ist sein Default-Branch nicht geschützt: Force-Pushes sind möglich, und die geschützten Dateien (Jenkinsfile, deploy/**) können ohne Review geändert werden. Den Branch im Git-Hosting-Dienst schützen oder eine Git-Verbindung verwenden, deren Token das Repository verwalten darf.</de>
+				<en>The access token of the git connection may not administer the repository, so its default branch is not protected: force pushes are possible, and the protected files (e.g. deploy/**, with CI the pipeline file) can be changed without review. Protect the branch on the git hosting service, or use a git connection whose token may administer the repository.</en>
+				<de>Das Token der Git-Verbindung darf das Repository nicht verwalten, daher ist sein Default-Branch nicht geschützt: Force-Pushes sind möglich, und die geschützten Dateien (z. B. deploy/**, mit CI die Pipeline-Datei) können ohne Review geändert werden. Den Branch im Git-Hosting-Dienst schützen oder eine Git-Verbindung verwenden, deren Token das Repository verwalten darf.</de>
 			</message>
 		</alert>
 		<html input="ciBuild"/>

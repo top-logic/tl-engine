@@ -31,9 +31,9 @@ import com.top_logic.factory.ci.CIBuild;
 import com.top_logic.factory.ci.CIBuildState;
 import com.top_logic.factory.ci.CIConsole;
 import com.top_logic.factory.ci.CIJob;
-import com.top_logic.factory.ci.CIPipeline;
 import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIService;
+import com.top_logic.factory.ci.ProjectCI;
 import com.top_logic.factory.git.GitConnectionSettings;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitHostingService;
@@ -66,9 +66,12 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
  * the organization {@value #ENV_GITEA_OWNER} (default {@value #DEFAULT_GITEA_OWNER}), authenticated
  * with the token in the secret {@link GiteaProviderType#TOKEN_SECRET}, as the built-in connection
  * of {@code tl-factory-app} does. A Docker
- * workspace generates a new application, pushes it with the default pipeline definition to a new
- * repository through the {@link GitRoute git route} of a workspace proxy on the host, protects the
- * branch, sets up the CI job and starts its first build; the test waits for that build and expects
+ * workspace generates a new application and pushes it to a new repository through the
+ * {@link GitRoute git route} of a workspace proxy on the host, which protects the branch without
+ * CI. Then the CI of the project is set up ({@link ProjectCI#setUp(CIProvider, GitHostingProvider,
+ * GitRepository, String, List, String, java.util.function.Consumer, java.util.function.Consumer)}):
+ * the default pipeline definition is committed through the API of Gitea, the protection extended
+ * by it, the CI job created and its first build started; the test waits for that build and expects
  * it to succeed. The end of its console output is printed.
  * </p>
  *
@@ -255,8 +258,9 @@ public class TestProjectCI extends TestCase {
 	}
 
 	/**
-	 * A new project gets a repository with the generated application and the default pipeline
-	 * definition, a CI job, and a first build of the default pipeline that succeeds.
+	 * A new project gets a repository with the generated application; setting up its CI commits
+	 * the default pipeline definition, creates a CI job, and its first build of the default pipeline
+	 * succeeds.
 	 */
 	public void testNewProjectBuilds() throws Exception {
 		// A letter first: each part of the artifact ID becomes a name of the Java package.
@@ -266,18 +270,27 @@ public class TestProjectCI extends TestCase {
 		assertNull(ProjectWorkspaces.checkArtifactId(artifactId));
 		GitHostingService hostingService = GitHostingService.getInstance();
 		CIService ciService = CIService.getInstance();
-		CIPipeline pipeline = new CIPipeline(_ci, ciService.pipelineTemplate(), "CI integration test " + artifactId,
-			job -> _job = job);
+		List<String> protectedFiles = ProjectCI.withoutPipelineFile(hostingService.getProtectedFiles(), _ci);
 		RepositorySource source = new RepositorySource(_hosting, _tokens, _proxyRoot + GitRoute.DEFAULT_PATH, null,
-			"CI integration test", hostingService.getProtectedFiles(),
-			repository -> _repositories.put(workspaceId, repository.getName()), pipeline);
+			"CI integration test", protectedFiles,
+			repository -> _repositories.put(workspaceId, repository.getName()));
 
-		String log = create(workspaceId, artifactId, source);
+		create(workspaceId, artifactId, source);
 		GitRepository repository = _hosting.findRepository(_repositories.get(workspaceId).getFullName());
 		assertNotNull("Repository created.", repository);
 		System.out.println("Repository: " + repository.getWebUrl());
-		assertNotNull("CI job set up: " + log, _job);
+		assertNull("No CI job before the set up.", _job);
+
+		ProjectCI.Setup setup = ProjectCI.setUp(_ci, _hosting, repository, ciService.pipelineTemplate(),
+			protectedFiles, "CI integration test " + artifactId, job -> _job = job, protection -> {
+				// Not recorded.
+			});
+		assertTrue("The new repository gets the default pipeline.", setup.pipelineAdded());
+		assertTrue("The token administers the repository.", setup.pipelineProtected());
+		assertEquals(setup.job(), _job);
 		System.out.println("CI job: " + _job.webUrl());
+		assertFalse("The pipeline is committed once.", _hosting.commitFile(repository,
+			repository.getDefaultBranch(), _ci.pipelineFile(), ciService.pipelineTemplate(), "Again"));
 
 		CIBuild build = awaitBuild(_job.name());
 		CIConsole console = _ci.console(_job.name(), build.number(), CONSOLE_BYTES);

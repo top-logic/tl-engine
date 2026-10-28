@@ -32,7 +32,8 @@ import com.top_logic.util.error.TopLogicException;
  * CI is optional: without a {@link Config#getProvider() provider}, or with one switched off by an
  * empty {@link ServerProviderConfig#getBaseUrl() base URL}, the service is {@link #isEnabled()
  * disabled}, the projects have no CI job, and creating and working in a
- * workspace does not involve a CI server.
+ * workspace does not involve a CI server. With a provider, a project gets its CI job when a user
+ * sets up its CI, see {@link ProjectCI}.
  * </p>
  *
  * <p>
@@ -81,8 +82,9 @@ public class CIService extends ConfiguredManagedClass<CIService.Config<?>> {
 		PolymorphicConfiguration<? extends CIProvider> getProvider();
 
 		/**
-		 * The web application resource whose content a new application gets as its pipeline
-		 * definition, the {@link CIProvider#pipelineFile() pipeline file} of its first commit.
+		 * The web application resource whose content a repository gets as its pipeline
+		 * definition, the {@link CIProvider#pipelineFile() pipeline file}, when the CI of its
+		 * project is set up and the repository has none.
 		 *
 		 * <p>
 		 * An application overrides the default by a resource of the same path in its own web
@@ -141,8 +143,8 @@ public class CIService extends ConfiguredManagedClass<CIService.Config<?>> {
 	}
 
 	/**
-	 * The pipeline definition of a new application, the content of the
-	 * {@link Config#getPipelineTemplate() template}.
+	 * The pipeline definition a repository without one gets when the CI of its project is set
+	 * up, the content of the {@link Config#getPipelineTemplate() template}.
 	 *
 	 * @throws TopLogicException
 	 *         With {@link I18NConstants#ERROR_MISSING_TEMPLATE__NAME} if the template cannot be

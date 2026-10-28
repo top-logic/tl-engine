@@ -128,6 +128,38 @@ public interface GitHostingProvider {
 	void protectBranch(GitRepository repository, String branch, List<String> protectedFiles);
 
 	/**
+	 * Commits a new file to a branch of a repository through the hosting service, without a clone,
+	 * unless the branch has a file at the given path.
+	 *
+	 * <p>
+	 * The commit is made on top of the branch by the user of the credentials. A file the branch has
+	 * at the path is left unchanged, so the call can be repeated. A file the branch protects (see
+	 * {@link #protectBranch(GitRepository, String, List)}) cannot be added this way.
+	 * </p>
+	 *
+	 * @param repository
+	 *        The repository.
+	 * @param branch
+	 *        The name of the branch. It must have a commit: in a repository without commits, a
+	 *        hosting service may create the branch with the file as its only content.
+	 * @param path
+	 *        The path of the file relative to the root of the repository, with {@code /} separating
+	 *        its directories, e.g. {@code Jenkinsfile} or {@code ci/build.groovy}.
+	 * @param content
+	 *        The content of the file, stored encoded in UTF-8.
+	 * @param message
+	 *        The message of the commit.
+	 * @return Whether the file was committed; {@code false} if the branch already has a file at
+	 *         the path.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_REPOSITORY_NOT_FOUND__REPOSITORY} if the repository or
+	 *         the branch does not exist, with {@link I18NConstants#ERROR_PERMISSION_DENIED__REPOSITORY}
+	 *         if the credentials may not write the repository or the protection of the branch
+	 *         rejects the change.
+	 */
+	boolean commitFile(GitRepository repository, String branch, String path, String content, String message);
+
+	/**
 	 * The URL git's smart HTTP protocol reaches the given repository at, without a slash at its
 	 * end, e.g. {@code https://git.example.com/my-org/my-app.git}.
 	 *

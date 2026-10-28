@@ -339,7 +339,7 @@ then.
 | `tl_factory_proxy_servlet` | `false` | Whether the proxy also answers in the web application, at the paths of `WorkspaceProxyServlet` (`/llm-proxy/`). |
 | `tl_factory_proxy_rate_limit` | `120` | Requests per minute a token may make; `0` for no limit. |
 | `tl_factory_proxy_allowed_sources` | *(empty)* | Comma separated client addresses the workspace proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [accepted sources](#accepted-sources). |
-| `tl_factory_git_protected_files` | `Jenkinsfile, deploy/**` | Comma separated glob patterns of the files of a project repository no push to its default branch may change, see [git hosting](doc:factory/git-hosting#protected-files-and-commit-identity). |
+| `tl_factory_git_protected_files` | `deploy/**` | Comma separated glob patterns of the files of a project repository no push to its default branch may change; the pipeline file is added once the CI of the project is set up, see [git hosting](doc:factory/git-hosting#protected-files-and-commit-identity). |
 | `tl_factory_git_user_name` / `tl_factory_git_user_email` | `TopLogic Factory` / `tl-factory@localhost` | Author and committer of the commits made in the workspaces, by the agent and the control application; empty for none. |
 | `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the LLM route of the proxy uses. |
 | `tl_factory_agent_model` | *(empty)* | Model the coding agent works with, e.g. `claude-sonnet-4-6` or `sonnet`; empty for the default of Claude Code. |
@@ -808,4 +808,4 @@ export tl_factory_proxy_allowed_sources=workspace-network
 `tl_factory_proxy_address` is the gateway of the default bridge (`docker network inspect bridge`).
 The agent of a workspace needs an Anthropic API key in `tl_anthropic_api_key` in addition; creating
 projects and workspaces, their repositories and CI builds work without. `TestProjectCI` runs the
-creation of a new project with its first build against the setup, see [the tests](doc:factory/ci#the-tests).
+creation of a new project, the set up of its CI and its first build against the setup, see [the tests](doc:factory/ci#the-tests).

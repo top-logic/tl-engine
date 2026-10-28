@@ -56,8 +56,9 @@
 
 		<!--
 			The CI server building the applications of the projects, switched off: an installation
-			configures a provider, e.g. the JenkinsCIProvider of the module tl-factory-jenkins. A new
-			application gets the pipeline-template as its pipeline definition.
+			configures a provider, e.g. the JenkinsCIProvider of the module tl-factory-jenkins. Setting up
+			the CI of a project gives its repository the pipeline-template as its pipeline definition,
+			unless it has one.
 		-->
 		<config service-class="com.top_logic.factory.ci.CIService">
 			<instance class="com.top_logic.factory.ci.CIService"/>

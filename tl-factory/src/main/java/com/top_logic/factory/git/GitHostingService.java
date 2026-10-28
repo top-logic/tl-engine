@@ -120,6 +120,11 @@ public class GitHostingService extends ConfiguredManagedClass<GitHostingService.
 		 * a path segment, {@code **} across segments.
 		 * </p>
 		 *
+		 * <p>
+		 * The pipeline file of the CI server is protected in addition for a project whose CI is
+		 * set up, and not before, even if it is listed here: setting up the CI commits it.
+		 * </p>
+		 *
 		 * @see #PROTECTED_FILES
 		 * @see GitHostingProvider#protectBranch(GitRepository, String, List)
 		 */
@@ -233,7 +238,7 @@ public class GitHostingService extends ConfiguredManagedClass<GitHostingService.
 	/**
 	 * Default of {@link Config#getProtectedFiles()}.
 	 */
-	public static final String DEFAULT_PROTECTED_FILES = "Jenkinsfile, deploy/**";
+	public static final String DEFAULT_PROTECTED_FILES = "deploy/**";
 
 	private final Map<String, GitProviderType> _types = new LinkedHashMap<>();
 

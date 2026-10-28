@@ -219,7 +219,9 @@ the checks decide on the main argument of the command and combine with the comma
 like its own checks:
 
 - `<create-transient>` and `<persist-transient>`: the creation in their container, the check of a
-  `<create>`;
+  `<create>`. An empty container channel means a creation without container: without `reference`
+  it is checked against the security root (refused → hidden), with `reference` there is nothing to
+  add the object to and the command is disabled;
 - `<delete-object>`: `Delete` on every processed object, plus the delete veto;
 - `<link-element>` and `<remove-element>`: the `<link-access>` and `<remove-access>` the enclosing
   `<object-list>` declares, with the same `<operation>` and `<create>` checks over the inputs of the

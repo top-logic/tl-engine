@@ -35,10 +35,12 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * The rules decide on the main argument of the command, and display a refusal as derived by
  * {@link ModelAccessPolicy}. An operation on the processed object(s) is checked on every element of
- * a collection, and without an object the command is disabled. A creation whose container channel
- * is empty, or without a created type, is nothing to check: the rule answers executable, so that it
- * composes with a rule like {@link NullInputDisabled} deciding about a missing input. A container
- * that is no single object is refused, the action creates in one container only.
+ * a collection, and without an object the command is disabled. A creation without a created type is
+ * nothing to check: the rule answers executable, so that it composes with a rule like
+ * {@link NullInputDisabled} deciding about a missing input. A creation whose container channel is
+ * empty creates its object without container and is checked as such; with a reference, there is no
+ * object to add the created one to, which disables the command. A container that is no single
+ * object is refused, the action creates in one container only.
  * </p>
  */
 public final class IntrinsicAccessRules {
@@ -97,9 +99,12 @@ public final class IntrinsicAccessRules {
 	 * <li>With a container, the creation is checked in the context of the container and, with a
 	 * reference, together with the right to write that reference of the container, see
 	 * {@link ModelAccessPolicy#onCreate(TLClass, Set, TLStructuredTypePart, Object)}, the check of
-	 * a {@link CreateAccess} as well. An empty container channel is nothing to check.</li>
+	 * a {@link CreateAccess} as well.</li>
 	 * <li>Without a container, the creation is checked against the security root, see
-	 * {@link ModelAccessPolicy#onCreateWithoutContext(TLClass, Set)}.</li>
+	 * {@link ModelAccessPolicy#onCreateWithoutContext(TLClass, Set)}. An empty container channel
+	 * without reference is checked the same way, the object is created without container.</li>
+	 * <li>An empty container channel with a reference leaves nothing to add the created object to,
+	 * the command is disabled.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -180,6 +185,13 @@ public final class IntrinsicAccessRules {
 			if (_containerRef != null) {
 				return inContainer(input);
 			}
+			return withoutContainer(input);
+		}
+
+		/**
+		 * Checks the creation of an object without container against the security root.
+		 */
+		private ExecutableState withoutContainer(Object input) {
 			TLClass type;
 			if (_typeRef != null) {
 				type = type();
@@ -196,8 +208,12 @@ public final class IntrinsicAccessRules {
 		private ExecutableState inContainer(Object input) {
 			Object containerValue = _containerChannel != null ? _containerChannel.get() : null;
 			if (containerValue == null) {
-				// Nothing to check.
-				return ExecutableState.EXECUTABLE;
+				if (_reference != null) {
+					// No object to add the created one to.
+					return ExecutableState.NO_EXEC_NO_MODEL;
+				}
+				// The object is created without container.
+				return withoutContainer(input);
 			}
 			if (!(containerValue instanceof TLObject container)) {
 				// The action creates in a single container only.

@@ -36,11 +36,18 @@ import com.top_logic.basic.config.annotation.TagName;
  * configuration.
  * </p>
  * 
+ * <p>
+ * Annotated at the implementation interface of polymorphic properties (the type parameter of
+ * their {@link PolymorphicConfiguration} type), the annotation sets the default implementation
+ * class for all properties holding configurations of that interface, which do not declare an
+ * {@link ImplementationClassDefault} themselves.
+ * </p>
+ * 
  * @since 5.8.0
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Target(ElementType.METHOD)
+@Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @TagName("implementation-class-default")
 public @interface ImplementationClassDefault {

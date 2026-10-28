@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.AbstractProviderStreamTest;
 import com.top_logic.tl.ai.core.provider.ProviderException;
@@ -24,7 +25,7 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 	static class TestableProvider extends ChatCompletionsProvider {
 		/** */
 		TestableProvider() {
-			super("test-key", "https://example.test");
+			super(FixedCredentials.NONE, "https://example.test");
 		}
 
 		/** */

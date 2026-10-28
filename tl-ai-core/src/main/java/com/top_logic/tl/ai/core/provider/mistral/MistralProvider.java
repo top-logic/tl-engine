@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
@@ -33,24 +34,24 @@ public class MistralProvider extends ChatCompletionsProvider {
 	private static final String DEFAULT_BASE_URL = "https://api.mistral.ai";
 
 	/** Creates a {@link MistralProvider}. */
-	public MistralProvider(String apiKey) {
-		this(apiKey, DEFAULT_BASE_URL);
+	public MistralProvider(CredentialProvider credentials) {
+		this(credentials, DEFAULT_BASE_URL);
 	}
 
 	/** Creates a {@link MistralProvider}. */
-	public MistralProvider(String apiKey, String baseUrl) {
-		this(apiKey, baseUrl, defaultHttpClient());
+	public MistralProvider(CredentialProvider credentials, String baseUrl) {
+		this(credentials, baseUrl, defaultHttpClient());
 	}
 
 	/** Creates a {@link MistralProvider}. */
-	public MistralProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		super(apiKey, baseUrl, httpClient);
+	public MistralProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient) {
+		super(credentials, baseUrl, httpClient);
 	}
 
 	/** Creates a {@link MistralProvider} with configurable timeouts and headers. */
-	public MistralProvider(String apiKey, String baseUrl,
+	public MistralProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
-		super(apiKey, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders);
+		super(credentials, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders);
 	}
 
 	/**

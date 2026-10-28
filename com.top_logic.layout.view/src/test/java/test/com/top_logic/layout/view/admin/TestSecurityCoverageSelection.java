@@ -9,10 +9,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.TLTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
+import com.top_logic.element.boundsec.manager.coverage.OperationUse;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.layout.view.admin.SecurityCoverageTable;
+import com.top_logic.layout.view.admin.SecurityCoverageTable.CoverageTree;
 import com.top_logic.layout.view.admin.SecurityCoverageTable.Detail;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -27,6 +37,12 @@ import com.top_logic.model.util.TLModelUtil;
  */
 @SuppressWarnings("javadoc")
 public class TestSecurityCoverageSelection extends TestCase {
+
+	/** Name of an operation no command group is registered for. */
+	private static final String UNKNOWN_OPERATION = "TestNoSuchOperation";
+
+	/** The place checking {@link #UNKNOWN_OPERATION}. */
+	private static final String PLACE = "test/unattached.view.xml:7";
 
 	private TLModule _module;
 
@@ -112,8 +128,68 @@ public class TestSecurityCoverageSelection extends TestCase {
 		assertNull("Nothing selected.", internal.get());
 	}
 
+	/**
+	 * The findings belonging to no analyzed type follow the modules in a group of their own.
+	 */
+	public void testUnattachedFindingsFormTheirOwnGroup() {
+		CoverageFinding finding = unattachedFinding();
+		CoverageTree tree = new CoverageTree();
+		tree.update(List.of(_row, finding));
+
+		assertEquals(List.of(_module, SecurityCoverageTable.UNATTACHED), tree.roots());
+		assertEquals(List.of(_type), tree.children(_module));
+		assertEquals(List.of(finding), tree.children(SecurityCoverageTable.UNATTACHED));
+		assertFalse(tree.isLeaf(SecurityCoverageTable.UNATTACHED));
+		assertTrue(tree.isLeaf(finding));
+		assertSame("A finding is the row of its own node.", finding, tree.businessObject(finding));
+	}
+
+	public void testNoGroupWithoutUnattachedFindings() {
+		CoverageTree tree = new CoverageTree();
+		tree.update(List.of(_row));
+
+		assertEquals(List.of(_module), tree.roots());
+	}
+
+	/**
+	 * A selected unattached finding is described by its problem and its solutions, and no type or
+	 * module is selected along with it.
+	 */
+	public void testSelectedUnattachedFinding() {
+		ViewChannel findings = new DefaultViewChannel("findings");
+		Detail detail = new Detail(_selection, _typeChannel, null, null, findings, null, _moduleChannel);
+		CoverageFinding finding = unattachedFinding();
+
+		detail.show(_type, rows());
+		detail.show(finding, rows());
+
+		assertNull(_selection.get());
+		assertNull(_typeChannel.get());
+		assertNull(_moduleChannel.get());
+		String html = (String) findings.get();
+		assertNotNull("The finding is described.", html);
+		assertTrue(html, html.contains(UNKNOWN_OPERATION));
+		assertTrue("The place checking the operation is named: " + html, html.contains(PLACE));
+
+		detail.show(null, rows());
+		assertNull(findings.get());
+	}
+
+	private static CoverageFinding unattachedFinding() {
+		OperationUse use = OperationUse.onUnknown(OperationUse.Kind.COMMAND, UNKNOWN_OPERATION, PLACE);
+		return CoverageFinding.unknownOperation(null, UNKNOWN_OPERATION, List.of(use));
+	}
+
 	private Function<Object, TypeCoverage> rows() {
 		return Map.of(_type, _row)::get;
+	}
+
+	/**
+	 * Test suite requiring the {@link ResourcesModule}, which writes the description of a finding.
+	 */
+	public static Test suite() throws ModuleException {
+		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(TestSecurityCoverageSelection.class,
+			TypeIndex.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.basic.translation;
 
+import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,22 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.tools.resources.translate.ConnectionAuthentication;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.tools.resources.translate.deepl.DeepLTranslator;
 import com.top_logic.tools.resources.translate.deepl.DeepLTranslator.Builder;
 
 /**
  * A {@link TranslationService} working with the <i>DeepL</i> API.
+ *
+ * <p>
+ * The {@link Config#getApiKey() API key} is sent in the header {@link DeepLTranslator#AUTHORIZATION}
+ * with the scheme {@link DeepLTranslator#AUTH_SCHEME}. Each request is authenticated at the moment
+ * it is sent; an answer <code>401 Unauthorized</code> invalidates the credentials and the request
+ * is sent once more with fresh ones.
+ * </p>
  *
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
  */
@@ -107,11 +118,18 @@ public class DeepLTranslationService extends TranslationService<DeepLTranslation
 		}
 	}
 
+	/** The name of the service, in messages. */
+	private static final String LABEL = "DeepL";
+
+	private final CredentialProvider _credentials;
+
 	/**
 	 * Creates a new {@link DeepLTranslationService}.
 	 */
 	public DeepLTranslationService(InstantiationContext context, Config config) {
 		super(context, config);
+		_credentials = CredentialProvider.create(context, LABEL, config.getCredentials(), config.getApiKey(),
+			DeepLTranslator.AUTHORIZATION, DeepLTranslator.AUTH_SCHEME);
 	}
 
 	@Override
@@ -120,7 +138,17 @@ public class DeepLTranslationService extends TranslationService<DeepLTranslation
 
 		Builder builder = new DeepLTranslator.Builder();
 		builder.setApiHost(config.getApiHost());
-		builder.setApiKey(config.getApiKey());
+		builder.setAuthentication(new ConnectionAuthentication() {
+			@Override
+			public void authenticate(HttpURLConnection connection) {
+				_credentials.authenticate(RequestAuthentication.of(connection));
+			}
+
+			@Override
+			public void invalidate() {
+				_credentials.invalidate();
+			}
+		});
 		builder.setIgnoreTags(config.getIgnoreTags());
 		builder.setNonSplittingTags(config.getNonSplittingTags());
 		builder.setOutlineDetection(config.getOutlineDetection());

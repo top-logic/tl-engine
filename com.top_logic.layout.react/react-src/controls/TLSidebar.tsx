@@ -6,7 +6,7 @@ import {
 import type { TLCellProps } from 'tl-react-bridge';
 import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from 'tl-react-bridge';
 
-const { useCallback, useState, useEffect, useRef } = React;
+const { useCallback, useMemo, useState, useEffect, useRef } = React;
 
 const I18N_KEYS = {
   'js.sidebar.ariaLabel': 'Sidebar navigation',
@@ -19,6 +19,8 @@ interface SidebarItemBase {
   type: string;
   label?: string;
   icon?: string;
+  /** Not drawn, together with what it contains; an open navigation item stays open nevertheless. */
+  hidden?: boolean;
 }
 
 interface NavItem extends SidebarItemBase {
@@ -52,6 +54,15 @@ interface GroupItemInfo extends SidebarItemBase {
 }
 
 type SidebarItemData = NavItem | CommandItemInfo | HeaderItemInfo | SeparatorItemInfo | GroupItemInfo;
+
+/** The items to draw: an item marked hidden is left out, within a group as well. */
+function drawnItems(items: SidebarItemData[]): SidebarItemData[] {
+  return items
+    .filter(item => !item.hidden)
+    .map(item => item.type === 'group'
+      ? { ...item, children: drawnItems((item as GroupItemInfo).children) }
+      : item);
+}
 
 /* ---------- Keyboard helpers ---------- */
 
@@ -375,7 +386,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const compact = useDisplayClass() === 'compact';
 
-  const items = (state.items as SidebarItemData[]) ?? [];
+  const items = useMemo(() => drawnItems((state.items as SidebarItemData[]) ?? []), [state.items]);
   const activeItemId = state.activeItemId as string;
   const persistedCollapsed = state.collapsed as boolean;
   const drawerOpen = state.drawerOpen as boolean;

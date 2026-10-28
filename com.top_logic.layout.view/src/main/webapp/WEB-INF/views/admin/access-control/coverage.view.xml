@@ -9,7 +9,9 @@
 	to the selectedInternal and selectedWithoutSecurity channels (the findings column starts hidden).
 	Those channels are written again whenever the rows are, so the detail describes the analysis
 	the table shows. A selected module is written to the selectedModule channel, and the channels of
-	a type are empty then.
+	a type are empty then. The findings that belong to no analyzed type - operation uses not
+	declaring the type they check - follow the modules in a group of their own; a selected one of
+	them is written to the selectedFindings channel alone.
 	
 	The detail side holds two panels, one above the other: the findings of the selected type, and
 	the rules in effect for it. Each is a panel of its own because the rule table is a filling
@@ -356,8 +358,8 @@
 									</inset>
 								</visible-if>
 								<visible-if
-									expr="$selection != null"
-									input="selection"
+									expr="$selectedFindings != null"
+									input="selectedFindings"
 								>
 									<inset>
 										<html input="selectedFindings"/>

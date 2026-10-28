@@ -17,6 +17,7 @@ import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.credential.oauth.OAuthServerConfig;
 import com.top_logic.service.openapi.common.authentication.openid.OpenIDUtils;
 
 /**
@@ -85,6 +86,14 @@ public class OpenIDURIProvider extends AbstractConfiguredInstance<OpenIDURIProvi
 	@Override
 	public URI getTokenEndpointURI() {
 		return initMetaData().getTokenEndpointURI();
+	}
+
+	/**
+	 * Configures the issuer, whose discovery document names the token endpoint.
+	 */
+	@Override
+	public void initTokenEndpoint(OAuthServerConfig server) {
+		server.setIssuer(getConfig().getOpenIDIssuer().toExternalForm());
 	}
 
 	@Override

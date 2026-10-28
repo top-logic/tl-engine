@@ -21,6 +21,15 @@
 		<config interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$CConfig">
 			<property name="string" value="configuredStringDefault"/>
 		</config>
+		<config interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$FunctionConfig">
+			<property name="class" value="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$FunctionImpl"/>
+		</config>
 	</defaults>
+
+	<configs>
+		<config config:interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$FunctionHolder">
+			<function expression="x -> $x"/>
+		</config>
+	</configs>
 
 </application>

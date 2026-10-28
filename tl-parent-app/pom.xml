@@ -31,7 +31,7 @@
 		<deployAspects>local</deployAspects>
 		<licenseExcludedGroups>^com\.top-logic(?:\..*)?</licenseExcludedGroups>
 		<javadocOutput>${project.build.directory}/javadoc</javadocOutput>
-		<tl.app.metaConfAddons>db-jndi.xml</tl.app.metaConfAddons>
+		<tl.app.metaConfAddons.db>db-jndi.xml</tl.app.metaConfAddons.db>
 		<tl.app.buildQualifier>${maven.build.timestamp}</tl.app.buildQualifier>
 		
 		<!-- The HTTP port where the development-mode application is started. -->
@@ -131,7 +131,7 @@
 			<id>with-h2</id>
 			
 			<properties>
-				<tl.app.metaConfAddons>db-h2.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-h2.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -149,7 +149,7 @@
 			<id>with-mysql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-mysql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-mysql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -163,7 +163,7 @@
 			<id>with-oracle</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-oracle.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-oracle.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -177,7 +177,7 @@
 			<id>with-postgresql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-postgresql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-postgresql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -191,7 +191,7 @@
 			<id>with-db2</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-db2.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-db2.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -206,7 +206,7 @@
 			<id>with-mssql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-mssql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-mssql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -214,6 +214,80 @@
 					<groupId>com.top-logic</groupId>
 					<artifactId>ext-com.microsoft-sqlserver-jdbc</artifactId>
 					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<!--
+			Profiles enabling a login or user source in the final application WAR. Each one adds its own
+			property tl.app.metaConfAddons.<name>, so that they can be combined with each other and with a
+			database profile. The settings and secrets of the enabled features are read from the environment.
+		-->
+		<profile>
+			<!-- Login and user synchronization with an LDAP directory (ldap_url, ldap_credential, ...). -->
+			<id>with-ldap</id>
+
+			<properties>
+				<tl.app.metaConfAddons.ldap>ldapConf.xml</tl.app.metaConfAddons.ldap>
+			</properties>
+		</profile>
+		<profile>
+			<!-- Login with a Keycloak realm (tl_pac_keycloak_base_uri, tl_pac_keycloak_realm, tl_pac_client_id, tl_pac_secret). -->
+			<id>with-openid-keycloak</id>
+
+			<properties>
+				<tl.app.metaConfAddons.pac4j-keycloak>pac4j-keycloak.xml</tl.app.metaConfAddons.pac4j-keycloak>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-security-auth-pac4j</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<!-- Login with Microsoft Entra ID (tl_pac_azure_tenant, tl_pac_client_id, tl_pac_secret). -->
+			<id>with-openid-azure</id>
+
+			<properties>
+				<tl.app.metaConfAddons.pac4j-azure>pac4j-azure.xml</tl.app.metaConfAddons.pac4j-azure>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-security-auth-pac4j</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<!-- Login with a Google account (tl_pac_client_id, tl_pac_secret). -->
+			<id>with-openid-google</id>
+
+			<properties>
+				<tl.app.metaConfAddons.pac4j-google>pac4j-google.xml</tl.app.metaConfAddons.pac4j-google>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-security-auth-pac4j</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<!-- Login with any OpenID Connect provider (tl_pac_discovery_uri, tl_pac_client_id, tl_pac_secret). -->
+			<id>with-openid-generic</id>
+
+			<properties>
+				<tl.app.metaConfAddons.pac4j-generic>pac4j-generic.xml</tl.app.metaConfAddons.pac4j-generic>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-security-auth-pac4j</artifactId>
 				</dependency>
 			</dependencies>
 		</profile>

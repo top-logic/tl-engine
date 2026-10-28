@@ -30,7 +30,7 @@
 		</config>
 		<!--
 			The roles of this application: the administrator role that may open the administration
-			area, granted in security.xml; the account reader and user roles that the role rules below
+			area, granted the operation "Administration" on the security root below; the account reader and user roles that the role rules below
 			give to the members of the "users" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
 			on that project only; the project manager role that a role rule below gives to the members
@@ -57,6 +57,7 @@
 		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 				<group name="Approve" type="write"/>
+				<group name="ShowPlanning" type="read"/>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
@@ -76,6 +77,22 @@
 						<implementation>{
 							$milestone.set(`tl.demo.projectManagement:Milestone#approved`, true);
 							$milestone;
+						}</implementation>
+					</privileged-script>
+					<!--
+						Approves several milestones at once, which may belong to different projects: the
+						caller must hold "Approve" on the project of every milestone.
+					-->
+					<privileged-script name="approveMilestones"
+						command-group="Approve"
+						security-object="$milestones.map(m -> $m.container())"
+					>
+						<parameters>
+							<parameter name="milestones"/>
+						</parameters>
+						<implementation>{
+							$milestones.foreach(m -> $m.set(`tl.demo.projectManagement:Milestone#approved`, true));
+							$milestones;
 						}</implementation>
 					</privileged-script>
 					<!--
@@ -261,8 +278,16 @@
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
 
-						A member approves a milestone of P1 with the "Approve" command of the milestone list
-						(the privileged script approveMilestone), a ticket watcher cannot.
+						A member or an administrator of P1 approves a milestone of P1 with the "Approve"
+						command of the milestone list (the privileged script approveMilestone), a ticket
+						watcher cannot. The "Approve" command of the tree demo approves all selected
+						milestones (the privileged script approveMilestones): selecting milestones of P1
+						and P2 disables it for an account that is a member of P1 only.
+
+						The "Planning" tile of the project cockpit needs the operation "ShowPlanning" on
+						the project, which only its administrators hold: a member of the project sees
+						the "no access" placeholder in its place. The "Approvals" tile needs the same
+						operation, and is not displayed at all to a member.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -287,6 +312,10 @@
 						/>
 					</module>
 					<class name="tl.demo.projectManagement:ProjectScope">
+						<operations>
+							<operation name="Approve"/>
+							<operation name="ShowPlanning"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -294,12 +323,28 @@
 						/>
 						<grant
 							operation="Approve"
-							roles="demo.react.ProjectMember"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="ShowPlanning"
+							roles="demo.react.ProjectAdmin"
 						/>
 						<grant
 							inherit="true"
 							operation="Create"
 							roles="demo.react.ProjectManager"
+						/>
+					</class>
+					<!--
+						The deliverables of a project are of one of three kinds. A project administrator
+						creates every kind, by the module grant above; a project member creates
+						specifications only. The deliverables take the project roles by the role rules
+						below, so they decide for themselves rather than through the project.
+					-->
+					<class name="tl.demo.projectManagement:Specification">
+						<grant
+							operation="Create"
+							roles="demo.react.ProjectMember"
 						/>
 					</class>
 					<part name="tl.demo.projectManagement:ProjectScope#members">
@@ -443,6 +488,13 @@
 							roles="demo.react.ChartReader"
 						/>
 					</class>
+					<!-- The administrator role opens the administration area. -->
+					<singleton name="SecurityStructure#ROOT">
+						<grant
+							operation="Administration"
+							roles="demo.react.Administrator"
+						/>
+					</singleton>
 				</security-config>
 			</instance>
 		</config>
@@ -520,6 +572,32 @@
 							<path>
 								<step
 									attribute="tl.demo.projectManagement:ProjectScope#tickets"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="MembersOnDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.ProjectMember"
+							source-role="demo.react.ProjectMember"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#deliverables"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="AdminsOnDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.ProjectAdmin"
+							source-role="demo.react.ProjectAdmin"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#deliverables"
 									inverse="true"
 								/>
 							</path>

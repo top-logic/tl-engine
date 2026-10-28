@@ -31,6 +31,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ValueCellEditing;
 import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -122,6 +123,33 @@ public class TestColumnSetup extends TestCase {
 		assertFalse(suppressed.buildColumn().exportable());
 		assertTrue("A column kept out of exports is still offered for display.",
 			suppressed.buildColumn().selectable());
+	}
+
+	/**
+	 * A column edited in place shows the control of its values in every row that has a value: an
+	 * editable one where the row offers the edit, a read-only one where it does not. An empty cell
+	 * of a row not offering the edit is displayed as the column displays it.
+	 */
+	public void testInPlaceCells() {
+		String editable = "editable";
+		String fixed = "fixed";
+		ValueCellEditing editing = new ValueCellEditing(ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), (row, value) -> {
+				// Not written by this test.
+			}, row -> ((Map<?, ?>) row).get(editable) != null);
+		ColumnSetup setup = new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, editing, null, null,
+			false);
+		Column<Object, ?> column = setup.buildInPlaceColumn(row -> {
+			// Nothing to refresh.
+		});
+
+		assertTrue("An editable cell shows its control.",
+			column.renderCell(Map.of(ATTRIBUTE, fixed, editable, "yes")) instanceof CellContent.Raw);
+		assertTrue("A value the row does not offer to edit is shown by the same control, read-only.",
+			column.renderCell(Map.of(ATTRIBUTE, fixed)) instanceof CellContent.Raw);
+		assertFalse("An empty cell of a row not offering the edit keeps the display of the column.",
+			column.renderCell(Map.of()) instanceof CellContent.Raw);
 	}
 
 	private static ColumnSetup exported(ColumnExport export) {

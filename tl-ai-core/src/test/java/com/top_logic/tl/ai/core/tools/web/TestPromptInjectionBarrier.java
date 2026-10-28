@@ -22,6 +22,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
@@ -276,7 +277,7 @@ public class TestPromptInjectionBarrier extends TestCase {
 		AgentParams params = new AgentParams("claude-haiku-4-5-20251001",
 			"You are a helpful assistant. Use tools when appropriate. Be concise.", 5, 1024);
 		AgentResult result = new AgentLoop(params, new AnthropicMessagesProvider(
-			PromptInjectionE2e.apiKey()), tools).run(conversation, event -> {
+			FixedCredentials.anthropic(PromptInjectionE2e.apiKey())), tools).run(conversation, event -> {
 				// Nothing to observe: the tools record what ran.
 			});
 

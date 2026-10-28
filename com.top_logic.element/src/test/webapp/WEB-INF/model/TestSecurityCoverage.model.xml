@@ -138,6 +138,30 @@
 				<!-- Neither a role source nor a container. -->
 				<class name="Orphan"/>
 
+				<!-- Role rule and read grant, declares an operation no role is granted. -->
+				<class name="WithOperations">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<property name="label"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Grants an operation of its own, which another declared operation is implied by. -->
+				<class name="GrantedOperation"/>
+
+				<!-- Role rule and read grant, declares an operation implied by Read. -->
+				<class name="ImpliedOperation">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Contained in one composition: delegates to its container by default. -->
 				<class name="SingleContained"/>
 

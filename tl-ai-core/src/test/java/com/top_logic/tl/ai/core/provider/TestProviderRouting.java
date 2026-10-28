@@ -216,17 +216,15 @@ public class TestProviderRouting extends TestCase {
 	}
 
 	/**
-	 * An agent with neither an override nor a default model is named in the failure.
+	 * An agent with neither an override nor a default model runs on the first model of the first
+	 * available provider, qualified by that provider.
 	 */
-	public void testAgentWithoutAnyModelIsReportedByName() {
-		start(null, null, overrides(), provider("a1", A1_URL, MODEL));
+	public void testAgentWithoutAnyModelRunsOnTheFirstProvider() {
+		start(null, null, overrides(), provider("a1", A1_URL, MODEL, OTHER_MODEL), provider("a2", A2_URL, MODEL));
 
-		try {
-			_runtime.resolveModelAssignment("analyst");
-			fail("Expected the missing model to be reported.");
-		} catch (IllegalStateException ex) {
-			assertContains(ex.getMessage(), "analyst");
-		}
+		AgentModelAssignment assignment = _runtime.resolveModelAssignment("analyst");
+		assertEquals(MODEL, assignment.model());
+		assertEquals("Qualified, since another provider exposes the same model.", "a1", assignment.provider());
 	}
 
 	/**
@@ -410,7 +408,7 @@ public class TestProviderRouting extends TestCase {
 		result.setName(name);
 		set(result, LLMProviderConfig.Config.BASE_URL, baseUrl);
 		set(result, LLMProviderConfig.Config.MODELS, List.of(models));
-		set(result, AnthropicProviderConfig.Config.API_KEY, "unencrypted:test");
+		set(result, AnthropicProviderConfig.Config.API_KEY, FixedCredentials.secret("test"));
 		return result;
 	}
 

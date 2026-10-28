@@ -184,7 +184,7 @@ public class VisibleIfElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_input.getChannel());
 		ReactSwitchControl result = new ReactSwitchControl(context, input, List.of(_case), List.of(),
-			ObservedTypes.resolve(_observedTypeRefs));
+			ObservedTypes.resolve(_observedTypeRefs), false);
 		result.setCssClass(_cssClass);
 		return result;
 	}

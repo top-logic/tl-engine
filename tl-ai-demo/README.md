@@ -13,14 +13,21 @@ registrations, two sponsors and invoices on both sides of the budget.
 ```bash
 mvn -pl tl-chat,tl-chat-classic -am -DskipTests install   # the chat bundle must exist before the app starts
 cd tl-ai-demo
-tl_anthropic_api_key="unencrypted:$ANTHROPIC_API_KEY" mvn tl:resolve compile exec:java
+tl_anthropic_api_key="$ANTHROPIC_API_KEY" mvn tl:resolve compile exec:java
 ```
 
 Then open <http://localhost:8080/tl-ai-demo/>. Pass `-Dtl.port=…` to use another port.
 
-The `%ANTHROPIC_API_KEY%` placeholder in the `LLMProviderService` configuration resolves from the environment
-variable `tl_anthropic_api_key`; the `unencrypted:` prefix is what marks the value as a literal
-rather than an encrypted one.
+The demo configures no LLM providers of its own: it runs on the providers `tl-ai-core` ships
+(`anthropic`, `openai`, `mistral`, `xai`). Each reads its key from the secret of the same name -
+`tl_anthropic_api_key`, `tl_openai_api_key`, `tl_mistral_api_key`, `tl_xai_api_key`, by default the
+environment variable holding the plain key - at each request, so the configuration never holds a key. A
+provider whose key is not set is inactive; the chat runs on the first model of the first provider with a
+key, or on the model in `tl_ai_default_model`. Without any key, a chat message is answered with the
+names of the secrets that are missing. The vector index reads `tl_mistral_api_key` when it starts;
+without it, the vector index is disabled and the application starts anyway. The chapter
+[AI](../tl-ai-core/src/main/java/META-INF/tl-docs/ai/index.md) describes the variables of the models
+and how an application changes the providers.
 
 The first start creates the H2 database under `tmp/` and prints the initial password of the `root`
 account to the console:
@@ -121,7 +128,7 @@ search and read the web, and answers with one report whose statements link to th
 workers read (`tl-ai-core/doc/deep-research.md`).
 
 `WEB-INF/conf/research.config.xml`, on in `metaConf.txt`, supplies what that needs: Brave as search
-engine, with the key in the environment variable `tl_brave_api_key` (prefix `unencrypted:`), and a
+engine, with the plain key in the environment variable `tl_brave_api_key`, and a
 `<background-allowlist>` with `model.read`, `data.read` and `egress` - without it a spawned subagent
 reaches no tool at all. The allowlist also bounds the scheduled task above. Turn the aspect off when
 you turn on the security test bed, whose allowlist keeps `egress` out on purpose.

@@ -373,6 +373,30 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	/**
+	 * Draws the item with the given ID, or leaves it out.
+	 *
+	 * <p>
+	 * The item stays part of the sidebar: an open navigation item that is withheld stays open and
+	 * keeps displaying its content.
+	 * </p>
+	 *
+	 * @param itemId
+	 *        The ID of the item, also of an item within a group.
+	 * @param withheld
+	 *        Whether the item is left out.
+	 *
+	 * @see SidebarItem#setWithheld(boolean)
+	 */
+	public void setItemWithheld(String itemId, boolean withheld) {
+		SidebarItem item = findItem(itemId);
+		if (item == null || item.isWithheld() == withheld) {
+			return;
+		}
+		item.setWithheld(withheld);
+		refreshItems();
+	}
+
+	/**
 	 * Re-serializes the item list - merging the group expansion states tracked here - and pushes it
 	 * to the client.
 	 *

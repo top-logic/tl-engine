@@ -117,4 +117,10 @@ public class FileManagerOverlay extends FileManagerDelegate {
 		super.delete(resourceName);
 	}
 
+	@Override
+	public void refresh(String resourceName) {
+		_overlay.refresh(resourceName);
+		super.refresh(resourceName);
+	}
+
 }

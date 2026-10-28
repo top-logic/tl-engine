@@ -48,7 +48,9 @@ final class ChatCapabilities {
 	 * Filtered by the agent security policy. The agents and the MCP servers listed are exactly the
 	 * ones a run of this account would accept; the models are the ones it may choose with <em>some</em>
 	 * agent it may run, and each carries {@link ModelOptionDto#isGrantedToRole()} so that a client can
-	 * narrow the list to the agent the user has actually selected. An agent whose <em>own</em> model or
+	 * narrow the list to the agent the user has actually selected; a model is listed only while one of
+	 * its providers has its credentials ({@link LLMProviderService#isServable(String)}). An agent whose
+	 * <em>own</em> model or
 	 * whose <em>own</em> server is denied to the account is dropped: it cannot run for it at all. The
 	 * refusal itself stays where it belongs - {@code AgentFactory} decides, and this list only keeps
 	 * the menu honest.
@@ -102,6 +104,11 @@ final class ChatCapabilities {
 			// asked with no agent's own model, which is exactly the difference.
 			Set<String> granted = new LinkedHashSet<>(allowed(access, configured, Set.of(), true));
 			for (String modelId : allowed(access, configured, assignedModels, true)) {
+				if (!llm.isServable(modelId)) {
+					// Its provider has no credentials now: a run chosen on it would be refused. Asked
+					// with each request, so a key provided later offers the model without a restart.
+					continue;
+				}
 				ModelOptionDto dto = ModelOptionDto.create().setId(modelId)
 					.setGrantedToRole(granted.contains(modelId));
 				String provider = llm.getProviderId(modelId);

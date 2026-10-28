@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 
 /**
  * {@link ViewAction} that removes the chain's current input value through the enclosing
@@ -51,6 +52,15 @@ public class RemoveElementAction implements ViewAction {
 	@CalledByReflection
 	public RemoveElementAction(InstantiationContext context, Config config) {
 		// No configuration state.
+	}
+
+	/**
+	 * The access checks the enclosing list declares for removing the processed element, see
+	 * {@link ObjectListElement.Config#getRemoveAccess()}, applied to the main argument of the command.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return new ListAccessRule(ObjectListScope::removeAccess);
 	}
 
 	@Override

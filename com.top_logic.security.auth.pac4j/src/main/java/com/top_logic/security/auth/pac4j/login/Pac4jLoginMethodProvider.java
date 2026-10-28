@@ -24,7 +24,8 @@ import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
  * Reads the static client configuration
  * ({@link com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory.Config#getClients()}), so it
  * works regardless of whether the runtime clients have been instantiated, and yields nothing when
- * the pac4j module is inactive.
+ * the pac4j module is inactive. Each method asks the {@link ClientConfigurator} of its client
+ * whether it is available.
  * </p>
  */
 public class Pac4jLoginMethodProvider implements LoginMethodProvider {
@@ -41,13 +42,13 @@ public class Pac4jLoginMethodProvider implements LoginMethodProvider {
 		if (!Pac4jConfigFactory.Module.INSTANCE.isActive()) {
 			return Collections.emptyList();
 		}
-		Map<String, ClientConfigurator.Config<? extends ClientConfigurator>> clients =
-			Pac4jConfigFactory.getInstance().getConfig().getClients();
+		Pac4jConfigFactory<?> factory = Pac4jConfigFactory.getInstance();
+		Map<String, ClientConfigurator.Config<? extends ClientConfigurator>> clients = factory.getConfig().getClients();
 		List<LoginMethod> result = new ArrayList<>(clients.size());
 		for (ClientConfigurator.Config<? extends ClientConfigurator> client : clients.values()) {
 			String name = client.getName();
 			ResKey label = client.getLabel() != null ? client.getLabel() : ResKey.text(name);
-			result.add(new Pac4jLoginMethod(name, label, client.getIcon()));
+			result.add(new Pac4jLoginMethod(name, label, client.getIcon(), factory.getClientConfigurator(name)));
 		}
 		return result;
 	}

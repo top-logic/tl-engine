@@ -31,6 +31,9 @@ public interface TabBarState extends com.top_logic.layout.react.state.ControlSta
 		/** @see #getIcon() */
 		String ICON__PROP = "icon";
 
+		/** @see #isHidden() */
+		String HIDDEN__PROP = "hidden";
+
 		/**
 		 * The ID of the tab.
 		 */
@@ -60,6 +63,18 @@ public interface TabBarState extends com.top_logic.layout.react.state.ControlSta
 		 * @see #getIcon()
 		 */
 		com.top_logic.layout.react.state.TabBarState.Tab setIcon(String value);
+
+		/**
+		 * Whether the tab is left out of the strip, e.g. because the current user may not see it
+		 * for the object displayed. A hidden tab is never the {@link TabBarState#getActiveTabId()}
+		 * while another tab is visible.
+		 */
+		boolean isHidden();
+
+		/**
+		 * @see #isHidden()
+		 */
+		com.top_logic.layout.react.state.TabBarState.Tab setHidden(boolean value);
 
 		/** Reads a new instance from the given reader. */
 		static com.top_logic.layout.react.state.TabBarState.Tab readTab(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

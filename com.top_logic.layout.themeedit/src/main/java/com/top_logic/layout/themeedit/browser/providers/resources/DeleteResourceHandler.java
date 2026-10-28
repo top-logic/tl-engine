@@ -60,6 +60,11 @@ public class DeleteResourceHandler extends AbstractCommandHandler {
 				}
 			}
 
+			FileManager fileManager = FileManager.getInstance();
+			for (String resourcePath : resourcePaths) {
+				fileManager.refresh(resourcePath);
+			}
+
 			component.invalidate();
 		}
 

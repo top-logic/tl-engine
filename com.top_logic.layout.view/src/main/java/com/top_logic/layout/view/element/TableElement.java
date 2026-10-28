@@ -281,6 +281,11 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
 				+ "> nor <" + DropConfig.TAG_NAME + ">.");
 		}
+		if (config.getRowEdit() != RowEditPolicy.NONE && config.getEditInPlace()) {
+			// A row-edit table buffers its edits in the form, an edit in place writes at once.
+			context.error("A <table> with '" + Config.ROW_EDIT + "' is not edited in place ('"
+				+ Config.EDIT_IN_PLACE + "').");
+		}
 	}
 
 	@Override

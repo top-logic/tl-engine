@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <objects>
+	<resolvers>
+		<resolver type="tl.accounts:Person">
+			<impl class="com.top_logic.model.instance.importer.resolver.AccountResolver"/>
+		</resolver>
+	</resolvers>
 	<object id="10"
 		type="Contacts:PersonContact"
 	>
@@ -65,6 +70,11 @@
 		<attribute name="budget"
 			value="80000.0"
 		/>
+		<attribute name="members">
+			<global-ref id="root"
+				kind="tl.accounts:Person"
+			/>
+		</attribute>
 		<attribute name="milestones">
 			<object id="6"
 				type="tl.demo.projectManagement:Milestone"
@@ -137,6 +147,11 @@
 		<attribute name="budget"
 			value="120000.0"
 		/>
+		<attribute name="members">
+			<global-ref id="root"
+				kind="tl.accounts:Person"
+			/>
+		</attribute>
 		<attribute name="milestones">
 			<object id="3"
 				type="tl.demo.projectManagement:Milestone"

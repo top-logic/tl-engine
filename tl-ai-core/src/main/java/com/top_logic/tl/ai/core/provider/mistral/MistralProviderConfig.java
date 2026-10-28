@@ -77,6 +77,11 @@ public class MistralProviderConfig implements LLMProviderConfig {
 	}
 
 	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
+	}
+
+	@Override
 	public LLMProvider createProvider() {
 		return new MistralProvider(
 			_credentials, ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl()),

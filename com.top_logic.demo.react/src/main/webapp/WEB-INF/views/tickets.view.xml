@@ -270,12 +270,9 @@ lists start filled.
 									<en>Generate samples</en>
 									<de>Beispiele erzeugen</de>
 								</label>
-								<executability>
-									<model-access
-										operation="Create"
-										type="demo.tickets:Ticket"
-									/>
-								</executability>
+								<access>
+									<create type="demo.tickets:Ticket"/>
+								</access>
 								<with-transaction>
 									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; categories = ['Bug', 'Feature', 'Question']; tags = [['backend'], ['ui', 'urgent'], []]; estimates = [2, 4, 8, 16]; catalogs = ['Technik', 'Fachlich'].map(n -> all(`demo.tickets:KeywordCatalog`).filter(c -> $c.get(`demo.tickets:KeywordCatalog#name`) == $n).firstElement()); keywords = [['Performance', 0], ['Usability', 1], ['Security', 0]].map(e -> { n = $e[0]; existing = all(`demo.tickets:Keyword`).filter(k -> $k.get(`demo.tickets:Keyword#name`) == $n).firstElement(); k = if($existing == null, new(`demo.tickets:Keyword`)..set(`demo.tickets:Keyword#name`, $n), $existing); $k.set(`demo.tickets:Keyword#catalog`, $catalogs[$e[1]]); $k; }); other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#category`, $categories[$i % 3]); $t.set(`demo.tickets:Ticket#tags`, $tags[$i % 3]); $t.set(`demo.tickets:Ticket#estimate`, $estimates[$i % 4]); $t.set(`demo.tickets:Ticket#keywords`, if($i % 2 == 0, [$keywords[$i % 3]], [])); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
@@ -725,6 +722,18 @@ lists start filled.
 							new-element-channel="newComment"
 							remove="$comment.delete()"
 						>
+							<link-access>
+								<create
+									in="$ticket"
+									reference="demo.tickets:Ticket#comments"
+								/>
+							</link-access>
+							<remove-access>
+								<operation name="Delete"
+									object="$comment"
+									type="demo.tickets:Comment"
+								/>
+							</remove-access>
 							<item>
 								<view-ref view="tickets/comment.view.xml">
 									<bind

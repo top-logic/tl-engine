@@ -457,3 +457,21 @@ describe('the draft after a send', () => {
     expect(published[published.length - 1]).toBe('')
   })
 })
+
+describe('the model menu', () => {
+  const models = [{ id: 'claude-sonnet-4-6', provider: 'anthropic' }]
+
+  function trigger(): HTMLElement | null {
+    return mounted!.container.querySelector<HTMLElement>('.model-trigger')
+  }
+
+  it('is offered while there is a model to choose', async () => {
+    await mount({ models, model: 'claude-sonnet-4-6' })
+    expect(trigger()).not.toBeNull()
+  })
+
+  it('stays away while no model is offered, e.g. no provider has its credentials', async () => {
+    await mount({ models: [] })
+    expect(trigger()).toBeNull()
+  })
+})

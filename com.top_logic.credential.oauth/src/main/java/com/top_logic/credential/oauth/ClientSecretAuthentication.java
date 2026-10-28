@@ -149,4 +149,14 @@ public class ClientSecretAuthentication extends AbstractConfiguredInstance<Clien
 		throw new IllegalStateException("Unknown method: " + getConfig().getMethod());
 	}
 
+	/**
+	 * Whether the client secret is available now.
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _secret.isAvailable();
+	}
+
 }

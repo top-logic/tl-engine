@@ -3,7 +3,7 @@
 <!--
 	Second frame of the project drill-down: the cockpit of the project the frame was opened for.
 	
-	The cockpit is a dashboard of three tiles. The Project tile displays the project and nothing
+	The cockpit is a dashboard of tiles. The Project tile displays the project and nothing
 	else; it spans two rows, so all fields of the project fit without scrolling. The Milestones and
 	Notes tiles are entry points: pressing one pushes the frame listing that collection, announced
 	by a label of its own. The engine marks such a tile only by how it answers the user, so each of
@@ -13,6 +13,15 @@
 	the first note through the card's own button lifts the refusal, because the action observes the
 	project. The create buttons inside the cards answer a press themselves, so they open their
 	dialog instead of pushing the list behind the tile.
+	
+	The Deliverables tile pushes the list of the deliverables of the project, where a deliverable of
+	a kind the user chooses is created (see projects/deliverables.view.xml).
+	
+	The Planning tile lists the due dates and approvals of the milestones. It is guarded by the
+	operation "ShowPlanning" on the project, which only the administrators of the project hold, so
+	a member of the project sees the "no access" placeholder in its place (denied="placeholder").
+	The Approvals tile is guarded the same way, but with the default denied="hide": a member of
+	the project does not see it at all, and the grid closes the gap.
 	
 	The milestone channel carries what the create dialog reports back: the milestone it created,
 	which the milestone list picks up when the Milestones tile is pressed.
@@ -27,6 +36,10 @@
 		/>
 		<derived-channel name="noteCount"
 			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
+			inputs="project"
+		/>
+		<derived-channel name="deliverableCount"
+			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#deliverables`).size())"
 			inputs="project"
 		/>
 	</channels>
@@ -109,19 +122,13 @@
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
+					frame="milestones"
 					inputs="project"
 					observed-types="tl.demo.projectManagement:ProjectScope"
-					view="projects/milestone-list.view.xml"
 				>
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
-						<value>
-							<en>Milestones</en>
-							<de>Meilensteine</de>
-						</value>
-					</frame-label>
 				</action>
 			</tile>
 			<tile id="notes"
@@ -170,20 +177,101 @@
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
+					frame="notes"
 					inputs="project"
 					observed-types="tl.demo.projectManagement:ProjectScope"
-					view="projects/notes.view.xml"
 				>
 					<executability>
 						<disabled-if expr="if($project == null || $project.get(`tl.demo.projectManagement:ProjectScope#notes`).isEmpty(), #('The project has no notes.'@en, 'Das Projekt hat keine Notizen.'@de))"/>
 					</executability>
-					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
-						<value>
-							<en>Notes</en>
-							<de>Notizen</de>
-						</value>
-					</frame-label>
 				</action>
+			</tile>
+			<tile id="deliverables"
+				width="quarter"
+			>
+				<card>
+					<title>
+						<en>Deliverables</en>
+						<de>Liefergegenstände</de>
+					</title>
+					<header-content>
+						<theme-icon image="css:bi bi-chevron-right"/>
+					</header-content>
+					<text input="deliverableCount"/>
+				</card>
+				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+					bind-input-to="project"
+					frame="deliverables"
+					inputs="project"
+				>
+					<executability>
+						<null-input-disabled/>
+					</executability>
+				</action>
+			</tile>
+			<!--
+				The progress of the approvals is part of the planning as well. The tile demonstrates
+				the default denied="hide": a member of the project does not see the tile at all, and the
+				Planning tile takes its place next to the Project tile.
+			-->
+			<tile id="approvals"
+				width="half"
+			>
+				<access-control
+					inputs="project"
+					object="$project"
+					operation="ShowPlanning"
+					type="tl.demo.projectManagement:ProjectScope"
+				/>
+				<panel>
+					<title>
+						<en>Approvals</en>
+						<de>Freigaben</de>
+					</title>
+					<progress
+						done="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#milestones`).filter(m -> $m.get(`tl.demo.projectManagement:Milestone#approved`)).size())"
+						input="project"
+						label="#('Approved milestones'@en, 'Freigegebene Meilensteine'@de)"
+						observed-types="tl.demo.projectManagement:Milestone"
+						total="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
+					/>
+				</panel>
+			</tile>
+			<!--
+				The planning of the project is shown to the administrators of the project alone, who
+				hold the operation "ShowPlanning" on it. The tile demonstrates the placeholder: a
+				member of the project sees a "no access" placeholder in place of the tile's content.
+			-->
+			<tile id="planning"
+				width="half"
+			>
+				<access-control
+					denied="placeholder"
+					inputs="project"
+					object="$project"
+					operation="ShowPlanning"
+					type="tl.demo.projectManagement:ProjectScope"
+				/>
+				<panel>
+					<title>
+						<en>Planning</en>
+						<de>Planung</de>
+					</title>
+					<table
+						observed-types="tl.demo.projectManagement:Milestone"
+						types="tl.demo.projectManagement:Milestone"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="dueDate"/>
+							<column attribute="approved"/>
+						</columns>
+						<inputs>
+							<input channel="project"/>
+						</inputs>
+						<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+					</table>
+				</panel>
 			</tile>
 		</dashboard>
 	</panel>

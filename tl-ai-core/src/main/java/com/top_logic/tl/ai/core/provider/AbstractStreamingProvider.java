@@ -205,6 +205,16 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		}
 	}
 
+	/**
+	 * Whether the credentials of this provider are available now.
+	 *
+	 * @see CredentialProvider#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _credentials.isAvailable();
+	}
+
 	// --- Abstract methods (subclass must implement) ---
 
 	/**

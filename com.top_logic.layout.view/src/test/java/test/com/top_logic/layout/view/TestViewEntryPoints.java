@@ -13,6 +13,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.ViewConfig;
+import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.layout.view.ViewServlet.ViewResolution;
 
@@ -188,7 +189,7 @@ public class TestViewEntryPoints extends TestCase {
 	private ViewConfig withLoginView(ViewConfig config) {
 		config.update(
 			TypedConfiguration.getConfigurationDescriptor(ViewConfig.class).getProperty(ViewConfig.LOGIN_VIEW),
-			LOGIN_VIEW);
+			new ViewRef(LOGIN_VIEW));
 		return config;
 	}
 
@@ -205,7 +206,7 @@ public class TestViewEntryPoints extends TestCase {
 		entryPoint.update(
 			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
 				.getProperty(ViewConfig.EntryPoint.VIEW),
-			view);
+			new ViewRef(view));
 		entryPoint.update(
 			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
 				.getProperty(ViewConfig.EntryPoint.ANONYMOUS),

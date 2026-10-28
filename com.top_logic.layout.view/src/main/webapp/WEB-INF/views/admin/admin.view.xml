@@ -58,12 +58,12 @@
 							</label>
 							<view-ref view="admin/access-control/roles.view.xml"/>
 						</tab>
-						<tab id="permissions">
+						<tab id="grants">
 							<label>
-								<en>Permissions</en>
-								<de>Berechtigungen</de>
+								<en>Grants</en>
+								<de>Rechte</de>
 							</label>
-							<view-ref view="admin/access-control/permissions.view.xml"/>
+							<view-ref view="admin/access-control/grants.view.xml"/>
 						</tab>
 						<tab id="coverage">
 							<label>

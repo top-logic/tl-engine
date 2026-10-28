@@ -9,6 +9,10 @@ import java.util.Set;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelI18N;
+import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
  * The relation leading from an object to its access parent: the object whose access definition
@@ -49,5 +53,22 @@ public interface AccessParentFunction {
 	 * Short description of the relation for the coverage display.
 	 */
 	ResKey getLabel();
+
+	/**
+	 * The label of the type owning the given reference, its name where it has no label, for a
+	 * {@link #getLabel() label} naming the reference.
+	 */
+	static ResKey ownerLabel(TLReference reference) {
+		TLType owner = reference.getOwner();
+		return ResKey.fallback(TLModelNamingConvention.getTypeLabelKey(owner), ResKey.text(owner.getName()));
+	}
+
+	/**
+	 * The label of the given reference, its name where it has no label, for a
+	 * {@link #getLabel() label} naming the reference.
+	 */
+	static ResKey referenceLabel(TLReference reference) {
+		return ResKey.fallback(TLModelI18N.getI18nKeyWithoutFallback(reference), ResKey.text(reference.getName()));
+	}
 
 }

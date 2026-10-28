@@ -842,6 +842,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	public Void visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
 		TLPrimitive target = (TLPrimitive) TLModelUtil.findType(getModel(), diff.getType());
 		StorageMapping<?> storageMapping = createInstance(diff.getStorageMapping());
+		StorageMapping<?> oldMapping = target.getStorageMapping();
+		log().info("Updating storage mapping of '" + diff.getType() + "' from '"
+			+ (oldMapping == null ? null : oldMapping.getClass().getName()) + "' to '"
+			+ storageMapping.getClass().getName() + "'.");
 		target.setStorageMapping(storageMapping);
 		if (createProcessors()) {
 			UpdateTLDataTypeProcessor.Config config = newConfigItem(UpdateTLDataTypeProcessor.Config.class);
@@ -990,7 +994,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				log().error("Configured type " + type + " is not a " + TLType.class.getName());
 				return;
 			}
-			((TLTypePart) part).setType((TLType) type);
+			TLTypePart typePart = (TLTypePart) part;
+			logTypeChange(typePart, typePart.getType(), (TLType) type);
+			typePart.setType((TLType) type);
 		});
 
 		if (createProcessors()) {
@@ -1007,6 +1013,29 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			addProcessor(config);
 		}
 		return null;
+	}
+
+	/**
+	 * Reports the change of the type of the given part.
+	 *
+	 * <p>
+	 * Changing the type only changes the model, the values of the part are kept as they are. When
+	 * the old type is not a specialization of the new one, values may no longer match the new type,
+	 * which is reported as warning.
+	 * </p>
+	 */
+	private void logTypeChange(TLTypePart part, TLType oldType, TLType newType) {
+		String kind = part instanceof TLReference ? "reference" : "attribute";
+		String message = "Changing type of " + kind + " '" + TLModelUtil.qualifiedName(part) + "' from '"
+			+ (oldType == null ? null : TLModelUtil.qualifiedName(oldType)) + "' to '"
+			+ TLModelUtil.qualifiedName(newType) + "', existing values are kept";
+		if (oldType instanceof TLStructuredType && newType instanceof TLStructuredType
+			&& !TLModelUtil.isGeneralization((TLStructuredType) newType, (TLStructuredType) oldType)) {
+			log().info(message + ", but values that are not of type '" + TLModelUtil.qualifiedName(newType)
+				+ "' no longer match the " + kind + ".", Log.WARN);
+		} else {
+			log().info(message + ".");
+		}
 	}
 
 	@Override

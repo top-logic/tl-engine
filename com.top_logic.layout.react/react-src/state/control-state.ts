@@ -855,6 +855,13 @@ export namespace TabBarStateJson {
 		 * The icon of the tab, the encoded form of a theme image.
 		 */
 		icon: string;
+
+		/**
+		 * Whether the tab is left out of the strip, e.g. because the current user may not see it
+		 * for the object displayed. A hidden tab is never the {@link TabBarStateJson.activeTabId}
+		 * while another tab is visible.
+		 */
+		hidden: boolean;
 	}
 }
 
@@ -905,6 +912,12 @@ export namespace AccordionStateJson {
 		 * Whether the body of the section is displayed.
 		 */
 		expanded: boolean;
+
+		/**
+		 * Whether the section is left out of the accordion, header included, e.g. because the
+		 * current user may not see it for the object displayed.
+		 */
+		hidden: boolean;
 
 		/**
 		 * The actions displayed at the end of the header of the section, a toolbar for instance.

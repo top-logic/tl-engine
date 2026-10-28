@@ -430,6 +430,230 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that a navigation carried out in several steps, each changing a route, reports one history
+	 * entry with the URL the display arrives at.
+	 */
+	public void testNavigationOverStepsReportsOneHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/people", "people")));
+		MockParticipant selection = new MockParticipant(List.of(
+			RoutePattern.compile("/:id", "id")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.register(selection);
+
+		rm.setUrlChangeHandler((url, title, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		RouteManager.Navigation navigation = rm.beginNavigation();
+		sidebar.simulateNavigation("people", Map.of());
+		selection.simulateNavigation("id", Map.of("id", "2240"));
+		assertEquals("Nothing is reported while the navigation is open.", List.of(), urls);
+		navigation.end();
+
+		assertEquals(List.of("people/2240"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
+
+	/**
+	 * Tests that navigations begun within another one report nothing when they end, and the
+	 * outermost one reports what all of them changed.
+	 */
+	public void testNestedNavigationsReportOnce() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/people", "people")));
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/contact", "contact")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setUrlChangeHandler((url, title, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		RouteManager.Navigation outer = rm.beginNavigation();
+		rm.navigate(() -> sidebar.simulateNavigation("people", Map.of()));
+		RouteManager.Navigation inner = rm.beginNavigation();
+		tabs.simulateNavigation("contact", Map.of());
+		rm.register(tabs);
+		inner.end();
+		assertEquals("An inner navigation reports nothing.", List.of(), urls);
+		outer.end();
+
+		assertEquals(List.of("people/contact"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
+
+	/**
+	 * Tests that a navigation arriving where the display started reports nothing.
+	 */
+	public void testNavigationWithoutChangeReportsNothing() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/people", "people")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+		rm.adoptUrl("explore");
+		rm.finishAdoption();
+
+		RouteManager.Navigation navigation = rm.beginNavigation();
+		sidebar.simulateNavigation("people", Map.of());
+		sidebar.simulateNavigation("explore", Map.of());
+		navigation.end();
+
+		assertEquals(List.of(), urls);
+	}
+
+	/**
+	 * Tests that ending a navigation a second time neither reports again nor ends a navigation
+	 * around it.
+	 */
+	public void testEndingNavigationTwiceReportsOnce() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/people", "people"),
+			RoutePattern.compile("/projects", "projects")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+
+		RouteManager.Navigation outer = rm.beginNavigation();
+		RouteManager.Navigation inner = rm.beginNavigation();
+		sidebar.simulateNavigation("people", Map.of());
+		inner.end();
+		inner.end();
+		assertEquals("The outer navigation is still open.", List.of(), urls);
+
+		outer.end();
+		assertEquals(List.of("people"), urls);
+
+		sidebar.simulateNavigation("projects", Map.of());
+		outer.end();
+		assertEquals("A change after the navigation is a navigation of its own.",
+			List.of("people", "projects"), urls);
+	}
+
+	/**
+	 * Tests that a navigation ended by a failing display change reports what the change got to
+	 * apply, and leaves later changes reported.
+	 */
+	public void testFailingNavigationReportsWhatItApplied() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/people", "people")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+
+		try {
+			rm.navigate(() -> {
+				sidebar.simulateNavigation("people", Map.of());
+				throw new IllegalStateException("Expected failure.");
+			});
+			fail("The failure must reach the caller.");
+		} catch (IllegalStateException ex) {
+			// Expected.
+		}
+		assertEquals(List.of("people"), urls);
+
+		sidebar.simulateNavigation("explore", Map.of());
+		assertEquals(List.of("people", "explore"), urls);
+	}
+
+	/**
+	 * Tests that a URL adopted while a navigation is open is reported as a replacement once the
+	 * adoption finishes, and that what the navigation changes afterwards becomes a history entry when
+	 * it ends.
+	 */
+	public void testAdoptionWhileNavigationIsOpen() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/people", "people")));
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/contact", "contact")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.setUrlChangeHandler((url, title, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		RouteManager.Navigation navigation = rm.beginNavigation();
+		sidebar.simulateNavigation("people", Map.of());
+
+		// The user moves back in the browser history while the navigation waits.
+		rm.navigateToRoute("explore");
+		assertEquals("Nothing is reported while the adoption runs.", List.of(), urls);
+		rm.finishAdoption();
+		assertEquals("explore", rm.currentUrl());
+		assertEquals("The adopted URL is what the display composes, so nothing is corrected.",
+			List.of(), urls);
+
+		// The navigation goes on after the adoption.
+		tabs.simulateNavigation("contact", Map.of());
+		rm.register(tabs);
+		assertEquals("The navigation is still open.", List.of(), urls);
+		navigation.end();
+
+		assertEquals(List.of("explore/contact"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
+
+	/**
+	 * Tests that the adoption of a URL while a navigation is open reports the display it arrives at,
+	 * including what the navigation changed up to then, as a replacement.
+	 */
+	public void testAdoptionWhileNavigationIsOpenCorrectsAddressBar() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/contact", "contact")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.setUrlChangeHandler((url, title, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		RouteManager.Navigation navigation = rm.beginNavigation();
+		tabs.simulateNavigation("contact", Map.of());
+		rm.register(tabs);
+
+		rm.navigateToRoute("explore");
+		rm.finishAdoption();
+		assertEquals(List.of("explore/contact"), urls);
+		assertEquals(List.of(Boolean.TRUE), replaceFlags);
+
+		navigation.end();
+		assertEquals("Ending the navigation reports nothing that the adoption reported.",
+			List.of("explore/contact"), urls);
+	}
+
+	/**
 	 * Tests that a freshly loaded page is told the URL its display composes, even though an earlier
 	 * page of the same window was already shown that URL.
 	 */

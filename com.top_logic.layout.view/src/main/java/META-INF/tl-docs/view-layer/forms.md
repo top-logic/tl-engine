@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -38,6 +38,16 @@ datatype are offered as given, the options of an expression (`<value-input optio
 order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetical-order` says
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
+
+The options of a `<field>` of a reference follow the model while the field is displayed: an instance
+of the class the reference points to that is created, changed or deleted - by this user in another
+view, or by another user - computes the options again (`AttributeSelectFieldModel#observeWhileDisplayed`,
+the `RowSourceObserver` begun when the input control is attached and stopped when it is detached).
+An object created after the form was built is offered without a new login, also where an
+`options-by-expression` annotation selects among the instances of that class, and a deleted one is
+no longer offered. The options are computed for the object the form shows - its overlay while the
+form is edited - and the selected value stays as it is. A field of an enumeration does not observe
+the model.
 
 ```xml
 <field attribute="priority">
@@ -254,6 +264,45 @@ library draws it in its own style.
 </field>
 ```
 
+**Mentions in a formatted text** — `WysiwygControlProvider`, option `<mentions>`: each `<mention>`
+refers to objects by a `trigger` character of its own, such as `@` or `#`. Typing the trigger at the
+start of a word starts the mention, the text typed after it is the query; the TL-Script function
+`options` with the signature `self -> query -> objects` computes the objects offered for it. `self`
+is the edited object (empty in a field editing no attribute of an object), the result a single
+object or a list of objects, shown by their labels in the order given - the function alone filters
+by the query and limits the number. The editor detects trigger and query itself and asks the server,
+after a short pause in typing, with these two alone; ordinary typing asks nothing. ArrowUp and
+ArrowDown move through the list, Enter or a click inserts the active object, Escape closes the list.
+The object is stored as an object link `<a class="tlObject" href="…">label</a>`; `presentation`
+decides how the editor shows it: `chip` (the default) is a unit removed as a whole, its text not
+editable, stored with the trigger in the attribute `data-mention`; `link` is an ordinary link whose
+text is edited like the text around it. A click on an object link of the displayed text leads to the
+object, Ctrl+click (Cmd+click) does so while editing. The list is the part `Listbox`, as for the
+suggestions of a text. The project demo offers the members of a ticket's project under `@`:
+
+```xml
+<property name="description" type="tl.model.wysiwyg:Html">
+	<annotations>
+		<input-control>
+			<impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
+				<mentions>
+					<mention presentation="chip" trigger="@">
+						<options><![CDATA[self -> query -> {
+	project = if($self == null, null, $self.container());
+	if($project == null, [],
+		$project.get(`tl.demo.projectManagement:ProjectScope#members`)
+			.filter(person -> $person.label().stringContains($query))
+			.sort(comparator(person -> $person.label().toLowerCase()))
+			.subList(0, 10))
+}]]></options>
+					</mention>
+				</mentions>
+			</impl>
+		</input-control>
+	</annotations>
+</property>
+```
+
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:
 
 1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)
@@ -377,6 +426,8 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
+**A new object shows its create visibility.** While the form displays a new object that is not stored yet - the transient draft of a create dialog (`<create-transient>`) or an edit overlay of it - a field follows the `<create-visibility>` of its attribute instead of its `<visibility>` (hidden, read-only, editable, mandatory; without a create visibility the visibility applies), as in the classic user interface: an attribute that is `read-only` but `<create-visibility value="editable"/>` is entered in the create dialog and read-only once stored. A `<dynamic-visibility>` of the attribute takes precedence over both (`AttributeFieldControl`).
+
 ## Normalizing an entered value
 
 An attribute annotated with `<value-normalizer>` (`TLValueNormalizer`) brings an entered value into its canonical form before it reaches the form's overlay: a code is trimmed, a rule is printed in its canonical notation. The annotation lists normalizers, applied in the given order, each one to the result of the one before. The field shows the canonical form once the input is left. A value a normalizer cannot canonicalize - a rule text that does not parse - stays as it was typed, and the constraints of the attribute report it.
@@ -430,7 +481,7 @@ Four actions work on the edit session of the form they run in:
 - `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and results in the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts of its `<with-result>` and after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
 - `<leave-edit-mode/>` (`LeaveEditModeAction`) ends the edit session without storing or dropping anything. A form that still holds unsaved changes refuses: the chain aborts and the form stays in edit mode with its input.
 - `<discard-form-state/>` (`DiscardFormStateAction`) drops the input and ends the edit session.
-- `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission, the right to write the object and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. A form already in edit mode keeps its session.
+- `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission: the `edit-operation` of the form on the object (`Write` by default, see [the operation check of a command](doc:view-layer/access-control#operations-on-objects-operation)) and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. The action brings the edit permission as its own rule, so a command running it is hidden or disabled like the form's own Edit button. A form already in edit mode keeps its session.
 
 A save that post-processes the stored values stores them and runs its script over the stored object in one transaction, and leaves the edit mode after it:
 

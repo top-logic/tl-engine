@@ -8,8 +8,6 @@ package com.top_logic.basic.db.sql;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import com.top_logic.basic.Logger;
-
 /**
  * {@link Batch} that bases on a given {@link Statement}.
  * 
@@ -21,9 +19,6 @@ public abstract class AbstractStatementBatch<T extends Statement> implements Bat
 	 * @see AbstractStatementBatch#AbstractStatementBatch(Statement)
 	 */
 	protected final T _statement;
-
-	/** whether this Batch was closed */
-	private boolean _closed;
 
 	/**
 	 * Creates a {@link AbstractStatementBatch} which delivers operations to an
@@ -48,25 +43,7 @@ public abstract class AbstractStatementBatch<T extends Statement> implements Bat
 
 	@Override
 	public void close() throws SQLException {
-		_closed = true;
-		doClose();
-	}
-
-	private void doClose() throws SQLException {
 		_statement.close();
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		try {
-			if (!_closed) {
-				doClose();
-
-				Logger.warn("Resource leak detected: Batch was not closed.", AbstractStatementBatch.class);
-			}
-		} finally {
-			super.finalize();
-		}
 	}
 
 }

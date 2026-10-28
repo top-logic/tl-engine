@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
@@ -103,6 +104,7 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 		@Key(UIElement.Config.ID)
 		@Name(TITLE_CONTENT)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<UIElement.Config> getTitleContent();
 
 		/**

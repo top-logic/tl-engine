@@ -30,8 +30,8 @@ import test.com.top_logic.factory.agent.KeyBundle;
 import test.com.top_logic.factory.agent.MemoryConversation;
 import test.com.top_logic.factory.agent.MemoryTokens;
 
-import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 

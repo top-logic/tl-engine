@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link CredentialProvider} sending a user name and password with HTTP basic authentication (RFC
@@ -100,6 +101,26 @@ public class BasicCredentials extends AbstractConfiguredInstance<BasicCredential
 	@Override
 	public void authenticate(RequestAuthentication request) {
 		request.setHeader(AUTHORIZATION, basicAuthorization(getConfig().getUser(), _password.getSecret()));
+	}
+
+	/**
+	 * Whether the password is available now.
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _password.isAvailable();
+	}
+
+	/**
+	 * Where the password is taken from.
+	 *
+	 * @see SecretSource#reference()
+	 */
+	@Override
+	public ResKey reference() {
+		return _password.reference();
 	}
 
 	/**

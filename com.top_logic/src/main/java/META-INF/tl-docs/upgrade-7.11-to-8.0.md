@@ -285,6 +285,9 @@ Add a config file (registered in the app's `metaConf.txt`):
 				<grant operation="Delete" roles="Manager"                 inherit="true"/>
 			</module>
 			<class name="myapp:Order">
+				<operations>                          <!-- custom operations are declared -->
+					<operation name="Approve"/>
+				</operations>
 				<grant operation="Approve" roles="Manager, Approver"/>
 			</class>
 			<part name="myapp:Customer#salary">      <!-- attribute grants restrict -->
@@ -296,7 +299,10 @@ Add a config file (registered in the app's `metaConf.txt`):
 </config>
 ```
 
-Rules: `operation` is a `BoundCommandGroup`; module/type grants are additive (union), `<part>` grants
+Rules: `operation` is a `BoundCommandGroup` that applies to the type: a built-in one (`Read`,
+`Write`, `Create`, `Delete`, `Discover`, `Export`) or one declared in the `<operations>` of the type,
+a generalization or the module (a grant of an undeclared operation is a startup error, see
+[Operations](doc:access-configuration#operations-which-operations-apply-to-a-type)); module/type grants are additive (union), `<part>` grants
 restrict, `inherit="true"` propagates to subtypes; roles must exist (3.1), an unknown role is a
 startup error. Since #29564 grants are an ordered list: use `<revoke operation=... roles=.../>` to
 remove a framework role and `config:override="true"` on `<class>` to replace the whole list. Starting

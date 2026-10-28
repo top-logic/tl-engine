@@ -837,6 +837,13 @@ message TabBarState extends ControlState {
 		 * The icon of the tab, the encoded form of a theme image.
 		 */
 		string icon;
+
+		/**
+		 * Whether the tab is left out of the strip, e.g. because the current user may not see it
+		 * for the object displayed. A hidden tab is never the {@link TabBarState#activeTabId}
+		 * while another tab is visible.
+		 */
+		bool hidden;
 	}
 
 	/**
@@ -890,6 +897,12 @@ message AccordionState extends ControlState {
 		 * Whether the body of the section is displayed.
 		 */
 		bool expanded;
+
+		/**
+		 * Whether the section is left out of the accordion, header included, e.g. because the
+		 * current user may not see it for the object displayed.
+		 */
+		bool hidden;
 
 		/**
 		 * The actions displayed at the end of the header of the section, a toolbar for instance.

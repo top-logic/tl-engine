@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
@@ -16,6 +17,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.reveal.ChildRevealer;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -23,6 +25,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.OpenDialogAction;
+import com.top_logic.layout.view.tiles.FrameRoute;
 import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.layout.view.tiles.TileStackScope;
 import com.top_logic.model.TLObject;
@@ -36,8 +39,10 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The {@link DisplayTarget} of the object's type decides which views display it. Each of them is
  * brought into view in turn - by opening the containers on the way to the place it is mounted at, by
- * drilling down into a stack of frames, or by opening a dialog - and then receives the values its
- * {@link ShowStep#bindings() bindings} compute from the object. A request that names the views
+ * drilling down into a stack of frames to the {@link ShowStep#frame() frame} it names, or by opening
+ * a dialog - and then receives the values its {@link ShowStep#bindings() bindings} compute from the
+ * object. The frames of consecutive steps follow the frame graph of the stack, from its initial
+ * view on. A request that names the views
  * itself is carried out the same way, with whatever value the bindings are applied to.
  * </p>
  *
@@ -53,6 +58,12 @@ import com.top_logic.util.error.TopLogicException;
  * on the way may hold unsaved changes and veto: the user is then asked how to proceed, and the
  * display continues once they answered - which is why the caller hands over a {@link Continuation}
  * rather than being returned to.
+ * </p>
+ *
+ * <p>
+ * However many containers open and channels change on the way, the display is one
+ * {@link RouteManager#beginNavigation() navigation}: the browser history gains one entry, for the
+ * place the display ends at, and none for the places it passes through.
  * </p>
  */
 public final class ObjectNavigation {
@@ -216,6 +227,12 @@ public final class ObjectNavigation {
 
 		private boolean _mountsResolved;
 
+		/**
+		 * The navigation this display is carried out as, open from {@link #start()} until the display
+		 * completes, fails or is given up. {@code null} where the window has no routing.
+		 */
+		private RouteManager.Navigation _navigation;
+
 		Display(ViewContext origin, MountPath hint, Supplier<ViewMounts> declaredMounts, List<ShowStep> shows,
 				ActionArguments arguments, Continuation continuation) {
 			_origin = origin;
@@ -229,7 +246,36 @@ public final class ObjectNavigation {
 		}
 
 		void start() {
-			step(0);
+			RouteManager routes = _origin.getRouteManager();
+			_navigation = routes == null ? null : routes.beginNavigation();
+			proceed(() -> step(0));
+		}
+
+		/**
+		 * Carries out the given part of the display, ending its navigation where the part fails.
+		 *
+		 * <p>
+		 * A part that suspends the display at a question about unsaved changes returns normally and
+		 * leaves the navigation open: the display continues, or is given up, once the user answered.
+		 * </p>
+		 */
+		private void proceed(Runnable part) {
+			try {
+				part.run();
+			} catch (Throwable ex) {
+				// What the display changed before it failed is displayed and reported.
+				endNavigation();
+				throw ex;
+			}
+		}
+
+		/**
+		 * Ends the navigation this display is carried out as, reporting the place it arrived at.
+		 */
+		private void endNavigation() {
+			if (_navigation != null) {
+				_navigation.end();
+			}
 		}
 
 		/**
@@ -237,11 +283,18 @@ public final class ObjectNavigation {
 		 */
 		private void step(int index) {
 			if (index >= _shows.size()) {
+				// The display is complete before whatever the caller continues with: that is no part of
+				// the place the object is displayed at.
+				endNavigation();
 				_continuation.resume(_arguments.value());
 				return;
 			}
 
 			ShowStep show = _shows.get(index);
+			if (show.frame() != null) {
+				drillDown(show, index);
+				return;
+			}
 			if (show.dialog()) {
 				if (index != _shows.size() - 1) {
 					throw new TopLogicException(I18NConstants.ERROR_DIALOG_IS_NOT_LAST__VIEW.fill(show.viewRef()));
@@ -253,8 +306,7 @@ public final class ObjectNavigation {
 
 			List<Place> places = places(show);
 			if (places.isEmpty()) {
-				drillDown(show, index);
-				return;
+				throw new TopLogicException(I18NConstants.ERROR_VIEW_NOT_DISPLAYED__VIEW.fill(show.viewRef()));
 			}
 			Place place = nearest(places);
 			reveal(show, place.steps(), 0, place.start(), () -> display(show, place, index));
@@ -349,8 +401,17 @@ public final class ObjectNavigation {
 		}
 
 		/**
-		 * Drills the surrounding stack down to the given view, then continues with the view after
-		 * it.
+		 * Drills the surrounding stack down to the frame the given step names, then continues with
+		 * the step after it.
+		 *
+		 * <p>
+		 * The frame must follow the frame of the drill-down step before - for the first one, the
+		 * initial view of the stack - in the frame graph of the stack, and the bindings name every
+		 * one of its parameters. They become the parameters of the frame, so that it is the frame a
+		 * push of the user puts on the path. A binding naming another channel of the frame view is
+		 * written into the displayed frame afterwards, as for a view revealed where it is displayed
+		 * - the row a list frame selects, for instance.
+		 * </p>
 		 *
 		 * <p>
 		 * The frames already showing what is wanted stay as they are, so that a display request
@@ -364,14 +425,36 @@ public final class ObjectNavigation {
 		private void drillDown(ShowStep show, int index) {
 			TileStackScope stack = _current.getScope(TileStackScope.class);
 			if (stack == null) {
-				throw new TopLogicException(I18NConstants.ERROR_NO_TILE_STACK__VIEW.fill(show.viewRef()));
+				throw new TopLogicException(I18NConstants.ERROR_NO_TILE_STACK__VIEW.fill(show.describe()));
+			}
+			FrameRoute declaration = stack.declaration(show.frame());
+			if (declaration == null) {
+				throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_FRAME__FRAME.fill(show.frame()));
+			}
+			FrameRoute below = _frames.isEmpty() ? stack.root()
+				: stack.declaration(_frames.get(_frames.size() - 1).getFrameId());
+			if (below == null || !below.successors().contains(declaration)) {
+				throw new TopLogicException(I18NConstants.ERROR_FRAME_NOT_SUCCESSOR__FRAME_BELOW.fill(show.frame(),
+					below == null ? "?" : below.describe()));
 			}
 
+			Set<String> expected = declaration.paramNames();
 			Map<String, Object> params = new LinkedHashMap<>();
+			List<Binding> channelBindings = new ArrayList<>();
 			for (Binding binding : show.bindings()) {
-				params.put(binding.channel(), binding.evaluate(_arguments));
+				if (expected.contains(binding.channel())) {
+					params.put(binding.channel(), binding.evaluate(_arguments));
+				} else {
+					channelBindings.add(binding);
+				}
 			}
-			TileFrame wanted = new TileFrame(show.viewRef(), show.labelFor(_arguments), params);
+			if (!params.keySet().equals(expected)) {
+				throw new TopLogicException(I18NConstants.ERROR_FRAME_PARAMETERS__FRAME_GIVEN_EXPECTED
+					.fill(show.frame(), params.keySet(), expected));
+			}
+			ShowStep channels = new ShowStep(declaration.viewRef(), false, null, null, channelBindings);
+			TileFrame wanted =
+				new TileFrame(declaration.id(), declaration.viewRef(), show.labelFor(_arguments), params);
 
 			List<TileFrame> current = stack.getPath();
 			int position = _frames.size();
@@ -384,37 +467,41 @@ public final class ObjectNavigation {
 			}
 
 			if (sharedFrames(current, _frames) == _frames.size()) {
-				enterFrame(stack, show);
-				step(index + 1);
+				enterFrame(stack, channels, index);
 				return;
 			}
 			guarded(() -> {
 				int common = sharedFrames(stack.getPath(), _frames);
 				stack.replaceFrom(common, _frames.subList(common, _frames.size()));
-			}, () -> {
-				enterFrame(stack, show);
-				step(index + 1);
-			});
+			}, () -> enterFrame(stack, channels, index));
 		}
 
 		/**
-		 * Continues within the frame the given view was drilled down to, so that the show after it
-		 * is looked for inside that frame.
+		 * Continues within the frame that was drilled down to, so that the show after it is looked
+		 * for inside that frame: writes the given bindings into the channels of the frame view, then
+		 * continues with the step after the given one.
 		 *
 		 * <p>
 		 * The view displayed so far stays the one to continue from while the stack does not say
 		 * where its frames sit, or while the frame has not announced itself.
 		 * </p>
+		 *
+		 * @param channels
+		 *        The frame view, with the bindings of the drill-down step that are no parameters of
+		 *        the frame.
 		 */
-		private void enterFrame(TileStackScope stack, ShowStep show) {
+		private void enterFrame(TileStackScope stack, ShowStep channels, int index) {
 			RevealPath place = stack.framePlace(_frames.size() - 1);
-			if (place == null || _registry == null) {
+			ViewContext frame = place == null || _registry == null ? null : _registry.getView(channels.viewRef(), place);
+			if (frame == null) {
+				if (!channels.bindings().isEmpty()) {
+					throw new TopLogicException(I18NConstants.ERROR_VIEW_NOT_DISPLAYED__VIEW.fill(channels.viewRef()));
+				}
+				step(index + 1);
 				return;
 			}
-			ViewContext frame = _registry.getView(show.viewRef(), place);
-			if (frame != null) {
-				displayed(show.viewRef(), frame);
-			}
+			displayed(channels.viewRef(), frame);
+			bind(channels, frame, 0, () -> step(index + 1));
 		}
 
 		/**
@@ -446,16 +533,23 @@ public final class ObjectNavigation {
 				DialogManager dialogs = _origin.getDialogManager();
 				if (dialogs == null) {
 					// Nothing can ask the user, and displaying the object would silently discard
-					// what they entered.
+					// what they entered. What earlier steps displayed is displayed nevertheless.
+					endNavigation();
 					_continuation.abort();
 					return;
 				}
 				DirtyConfirmDialogControl.openDialog(_origin, dialogs, veto.getDirtyHandlers(),
-					() -> guarded(step, onDone),
+					() -> proceed(() -> guarded(step, onDone)),
 					() -> {
-						Runnable rollback = veto.getRollback();
-						if (rollback != null) {
-							rollback.run();
+						try {
+							Runnable rollback = veto.getRollback();
+							if (rollback != null) {
+								rollback.run();
+							}
+						} finally {
+							// The display stops where the user declined to go on, and what earlier
+							// steps displayed is where the user is now.
+							endNavigation();
 						}
 						_continuation.abort();
 					});

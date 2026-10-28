@@ -11,8 +11,9 @@
 	- The services channel holds the ServiceSnapshot the overview table displays. It is bound into
 	every frame, so that a command of the detail frame (save, reset, restart) writes a new snapshot
 	the covered overview frame shows when the user comes back to it.
-	- The <frame> declaration puts the detail frame into the address bar as
-	.../service/<implementation class name>, and names its crumb by the service label.
+	- The <frame id="service"> declaration is the detail frame the overview pushes (frame="service").
+	It puts the frame into the address bar as .../service/<implementation class name>, and names
+	its crumb by the service label.
 -->
 <view>
 	<channels>
@@ -41,7 +42,7 @@
 					to="services"
 				/>
 			</bindings>
-			<frame
+			<frame id="service"
 				route="service/:module"
 				view="admin/system/services/service-detail.view.xml"
 			>

@@ -84,10 +84,10 @@ public class CompileJSP {
 	};
 
 	/** Version of the java code contained on the JSP's. */
-	public static final String SOURCE_CODE_VERSION = "1.8";
+	public static final String SOURCE_CODE_VERSION = "21";
 
 	/** Version of VM to compile JSP's for. */
-	public static final String TARGET_VM_VERSION = "1.8";
+	public static final String TARGET_VM_VERSION = "21";
 
 	/**
 	 * Constant indicating that jsp's in subfolders must also be tested.

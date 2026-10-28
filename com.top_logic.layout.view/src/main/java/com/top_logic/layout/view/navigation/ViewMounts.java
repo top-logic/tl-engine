@@ -241,7 +241,7 @@ public final class ViewMounts {
 				}
 
 				if (group instanceof ChildGroup.EmbeddedView embedded) {
-					addView(embedded.viewPath(), groupPath);
+					addView(embedded.view().getPath(), groupPath);
 				} else if (group instanceof ChildGroup.Elements elements) {
 					for (UIElement child : elements.children()) {
 						addElement(child, groupPath);

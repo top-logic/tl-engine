@@ -293,7 +293,7 @@ public class TestAppShellOverlay extends TestCase {
 
 	private static List<String> views(List<UIElement.Config> elements) {
 		return elements.stream()
-			.map(element -> ((ReferenceElement.Config) element).getView())
+			.map(element -> ((ReferenceElement.Config) element).getView().getPath())
 			.collect(Collectors.toList());
 	}
 

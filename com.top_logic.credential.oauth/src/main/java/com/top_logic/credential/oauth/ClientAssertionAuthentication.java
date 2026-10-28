@@ -121,4 +121,14 @@ public class ClientAssertionAuthentication extends AbstractConfiguredInstance<Cl
 			getConfig().getAssertionType(), _assertion.getSecret());
 	}
 
+	/**
+	 * Whether the assertion is available now.
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _assertion.isAvailable();
+	}
+
 }

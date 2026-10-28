@@ -3,9 +3,10 @@
 <!--
 	Choices that follow the model while they are displayed.
 	
-	The left pane lists the appointment categories with commands to create and delete one. The right
-	pane offers a category in two ways: a <value-input> of the category type without an options
-	expression, and the form field of the reference Appointment#category. A category created or
+	The left pane lists the appointment categories with commands to create and delete one, the middle
+	pane the appointments. The right pane offers a category in two ways: a <value-input> of the
+	category type without an options expression, and the form field of the reference
+	Appointment#category of the appointment selected in the middle. A category created or
 	deleted on the left is offered respectively no longer offered by both at once, without a new
 	login - also while the form is being edited.
 -->
@@ -22,7 +23,7 @@
 	>
 		<panes>
 			<pane
-				size="40"
+				size="30"
 				unit="%"
 			>
 				<panel>
@@ -88,7 +89,32 @@
 				</panel>
 			</pane>
 			<pane
-				size="60"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Appointments</en>
+						<de>Termine</de>
+					</title>
+					<table
+						observed-types="demo.calendar:Appointment"
+						selection="appointment"
+						types="demo.calendar:Appointment"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column
+								attribute="start"
+								sort="ASC"
+							/>
+						</columns>
+						<rows>all(`demo.calendar:Appointment`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="40"
 				unit="%"
 			>
 				<stack
@@ -125,21 +151,10 @@
 						</title>
 						<text>
 							<label>
-								<en>Choose an appointment and click "Edit". While the form is open, create a category on the left: you can pick it in the appointment's "Category" field right away, without closing and reopening the form. (If there is no appointment yet, create one in the calendar demo.)</en>
-								<de>Wählen Sie einen Termin und klicken Sie auf „Bearbeiten“. Legen Sie dann, während das Formular offen ist, links eine Kategorie an: Sie können sie sofort im Feld „Kategorie“ des Termins auswählen, ohne das Formular zu schließen und neu zu öffnen. (Gibt es noch keinen Termin, legen Sie einen in der Kalender-Demo an.)</de>
+								<en>Click an appointment in the table "Appointments"; its form appears below. Click "Edit" and, while the form is open, create a category on the left: you can pick it in the form's "Category" field right away. (If there is no appointment yet, create one in the calendar demo first.)</en>
+								<de>Klicken Sie in der Tabelle „Termine“ auf einen Termin; darunter erscheint sein Formular. Klicken Sie auf „Bearbeiten“ und legen Sie, während das Formular offen ist, links eine Kategorie an: Sie können sie sofort im Feld „Kategorie“ des Formulars auswählen. (Gibt es noch keinen Termin, legen Sie zuerst in der Kalender-Demo einen an.)</de>
 							</label>
 						</text>
-						<fields max-columns="1">
-							<value-input
-								type="demo.calendar:Appointment"
-								value="appointment"
-							>
-								<label>
-									<en>Appointment</en>
-									<de>Termin</de>
-								</label>
-							</value-input>
-						</fields>
 						<form
 							input="appointment"
 							max-columns="1"

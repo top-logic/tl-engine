@@ -60,6 +60,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * The static visibility of the attribute is its create visibility
+ * ({@link DisplayAnnotations#getCreateVisibility(com.top_logic.model.TLModelPart)}) while the
+ * displayed object is a new one that is not stored yet - a transient object or an overlay of one,
+ * e.g. the draft of a create dialog -, and its visibility otherwise. A dynamic {@link ModeSelector}
+ * of the attribute takes precedence over both.
+ * </p>
+ *
+ * <p>
  * The field lives exactly as long as its {@link #createChromeControl() chrome}: disposing the chrome
  * deregisters the field from the {@link FormModel} and releases its model, so a form that outlives
  * the field (e.g. a field inside a switch or a visible-if within the form) no longer reaches it.
@@ -208,7 +216,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 
 		TLStructuredTypePart part = resolvePart(current);
-		if (part == null || DisplayAnnotations.isHidden(part) || !isReadable(current, part)) {
+		if (part == null || isHidden(current, part) || !isReadable(current, part)) {
 			// Attribute not supported by this object's type, or its value must not be shown to the
 			// user - hide the field.
 			_innerControl = newPlaceholder();
@@ -284,7 +292,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		TLStructuredTypePart part = resolvePart(current);
 
-		if (part == null || DisplayAnnotations.isHidden(part)) {
+		if (part == null || isHidden(current, part)) {
 			// Attribute not supported by this object's type - hide field.
 			hideField();
 			return;
@@ -471,9 +479,29 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	/**
+	 * Whether the attribute is hidden by its static visibility on the given object: its create
+	 * visibility on a {@link #isNewObject(TLObject) new object}.
+	 */
+	private static boolean isHidden(TLObject object, TLStructuredTypePart part) {
+		return isNewObject(object) ? DisplayAnnotations.isHiddenInCreate(part) : DisplayAnnotations.isHidden(part);
+	}
+
+	/**
+	 * Whether the given object is a new object that is not stored yet: a transient object, or an
+	 * overlay (of overlays) of one. An overlay of a stored object edits that object.
+	 */
+	private static boolean isNewObject(TLObject object) {
+		TLObject base = object;
+		while (base instanceof TLObjectOverlay overlay) {
+			base = overlay.getBase();
+		}
+		return base != null && base.tTransient();
+	}
+
+	/**
 	 * Computes and applies the effective visibility, editability and mandatory state of the field,
 	 * honoring a dynamic {@link ModeSelector} (recording its dependencies) and otherwise the static
-	 * visibility annotations.
+	 * visibility annotations, the create visibility on a {@link #isNewObject(TLObject) new object}.
 	 *
 	 * <p>
 	 * The mode {@link FormVisibility#DISABLED} makes the field non-editable and, while the form is
@@ -534,9 +562,15 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				break;
 			case DEFAULT:
 			default:
-				visible = !DisplayAnnotations.isHidden(part);
-				editable = DisplayAnnotations.isEditable(part);
-				mandatory = DisplayAnnotations.isMandatory(part);
+				if (isNewObject(_formModel.getCurrentObject())) {
+					visible = !DisplayAnnotations.isHiddenInCreate(part);
+					editable = DisplayAnnotations.isEditableInCreate(part);
+					mandatory = DisplayAnnotations.isMandatoryInCreate(part);
+				} else {
+					visible = !DisplayAnnotations.isHidden(part);
+					editable = DisplayAnnotations.isEditable(part);
+					mandatory = DisplayAnnotations.isMandatory(part);
+				}
 				break;
 		}
 		boolean editing = editMode && !_forceReadonly;

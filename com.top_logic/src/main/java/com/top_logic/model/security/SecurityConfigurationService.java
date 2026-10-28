@@ -11,16 +11,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -55,6 +60,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AccessRightsConfig;
 import com.top_logic.model.annotate.security.AccessRevoke;
 import com.top_logic.model.annotate.security.AccessRule;
+import com.top_logic.model.annotate.security.OperationDeclaration;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.SingletonMapping;
 import com.top_logic.model.config.TLModelPartMapping;
@@ -67,7 +73,6 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -115,11 +120,40 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
+	 * Base configuration of an entry declaring the operations that apply to its objects.
+	 *
+	 * @see ApplicableOperations
+	 */
+	@Abstract
+	public interface WithOperations extends ConfigurationItem {
+
+		/** Configuration name for {@link #getOperations()}. */
+		String OPERATIONS = "operations";
+
+		/**
+		 * The operations that apply to the objects of the configured element, in addition to the
+		 * {@link ApplicableOperations#BUILT_IN built-in operations}.
+		 *
+		 * <p>
+		 * An operation declared for a {@link TLClass} applies to the class and all its
+		 * specializations; one declared for a {@link TLModule} applies to every class of the module
+		 * and their specializations; one declared for a module singleton applies to that singleton.
+		 * Only an operation that applies may be granted. The declarations of all configuration
+		 * layers are appended.
+		 * </p>
+		 */
+		@Name(OPERATIONS)
+		@EntryTag(OperationDeclaration.TAG_NAME)
+		List<OperationDeclaration> getOperations();
+
+	}
+
+	/**
 	 * Base configuration for access rights on all objects of a {@link TLClass}, or of all
 	 * {@link TLClass}es of a {@link TLModule}.
 	 */
 	@Abstract
-	public interface TypeBasedAccessRights extends ModelAccessRights {
+	public interface TypeBasedAccessRights extends ModelAccessRights, WithOperations {
 
 		/** Configuration name for {@link #isWithoutSecurity()}. */
 		String WITHOUT_SECURITY = "without-security";
@@ -212,6 +246,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		TLClassAccessRights.WITHOUT_SECURITY,
 		TLClassAccessRights.INTERNAL,
 		TLClassAccessRights.ACCESS_PARENT,
+		TLClassAccessRights.OPERATIONS,
 		TLClassAccessRights.GRANTS
 	})
 	@Label("Class based access rights")
@@ -290,10 +325,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@TagName("singleton")
 	@DisplayOrder({
 		TLSingletonAccessRights.NAME_ATTRIBUTE,
+		TLSingletonAccessRights.OPERATIONS,
 		TLSingletonAccessRights.GRANTS
 	})
 	@Label("Singleton access rights")
-	public static interface TLSingletonAccessRights extends ModelAccessRights {
+	public static interface TLSingletonAccessRights extends ModelAccessRights, WithOperations {
 
 		@Options(fun = AllSingletons.class, mapping = SingletonMapping.class)
 		@Override
@@ -328,6 +364,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		TLModuleAccessRights.NAME_ATTRIBUTE,
 		TLModuleAccessRights.WITHOUT_SECURITY,
 		TLModuleAccessRights.INTERNAL,
+		TLModuleAccessRights.OPERATIONS,
 		TLModuleAccessRights.GRANTS
 	})
 	@Label("Module based access rights")
@@ -344,6 +381,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private Map<TLStructuredTypePart, Map<BoundCommandGroup, Set<BoundedRole>>> _typePartRights = new HashMap<>();
 
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
+
+	/**
+	 * The rights of every type before the rules of its own entry are applied.
+	 *
+	 * @see #getInheritedRoles(TLClass, BoundCommandGroup)
+	 */
+	private final Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _inheritedClassRights = new HashMap<>();
 
 	/**
 	 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of a class: the
@@ -402,6 +446,33 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/** The types whose objects are held in a composition, indexed to the types of the containers. */
 	private Map<TLClass, Set<TLClass>> _containerTypes = new HashMap<>();
 
+	/**
+	 * The operations applying to the classes with declarations of their own, of a generalization
+	 * or of their module.
+	 *
+	 * @see #getOperations(TLClass)
+	 */
+	private final Map<TLClass, ApplicableOperations> _classOperations = new HashMap<>();
+
+	/**
+	 * The operations applying to the singletons with declarations of their own.
+	 *
+	 * @see #getObjectOperations(TLObject)
+	 */
+	private final Map<TLObject, ApplicableOperations> _singletonOperations = new HashMap<>();
+
+	/**
+	 * The operations declared for a module, each mapped to the operations declared to imply it.
+	 */
+	private final Map<TLModule, Map<BoundCommandGroup, Set<BoundCommandGroup>>> _moduleDeclarations =
+		new HashMap<>();
+
+	/**
+	 * The roles a singleton with operations of its own holds an operation by, because they are
+	 * granted an operation implying it, see {@link #getRoles(TLObject, BoundCommandGroup)}.
+	 */
+	private final Map<TLObject, Map<BoundCommandGroup, Set<BoundedRole>>> _singletonImpliedRights = new HashMap<>();
+
 	private CommandGroupRegistry _commandGroups;
 
 	private TLModel _applicationModel;
@@ -421,11 +492,30 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 		indexContainerTypes();
 
+		Map<ModelAccessRights, TLObject> modelParts = new LinkedHashMap<>();
+		Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations = new HashMap<>();
+		Map<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> singletonDeclarations = new HashMap<>();
+		for (ModelAccessRights modelConf : config.getSecurityConfig().values()) {
+			TLObject modelPart = TLModelUtil.resolveQualifiedName(_applicationModel, modelConf.getName());
+			modelParts.put(modelConf, modelPart);
+			if (modelConf instanceof TLClassAccessRights conf && modelPart instanceof TLClass clazz) {
+				declareOperations(context, conf, classDeclarations.computeIfAbsent(clazz, unused -> new HashMap<>()));
+			} else if (modelConf instanceof TLModuleAccessRights conf && modelPart instanceof TLModule module) {
+				declareOperations(context, conf, _moduleDeclarations.computeIfAbsent(module, unused -> new HashMap<>()));
+			} else if (modelConf instanceof TLSingletonAccessRights conf && modelPart != null) {
+				declareOperations(context, conf,
+					singletonDeclarations.computeIfAbsent(modelPart, unused -> new HashMap<>()));
+			}
+		}
+		computeOperations(classDeclarations, singletonDeclarations);
+		checkImplications(context, classDeclarations, singletonDeclarations);
+
 		Map<TLClass, List<ResolvedRule>> classRules = new HashMap<>();
 		Map<TLModule, List<ResolvedRule>> moduleRules = new HashMap<>();
 		Map<TLClass, AccessParentFunction> explicitParents = new HashMap<>();
-		for (ModelAccessRights modelConf : config.getSecurityConfig().values()) {
-			TLObject modelPart = TLModelUtil.resolveQualifiedName(_applicationModel, modelConf.getName());
+		for (Map.Entry<ModelAccessRights, TLObject> entry : modelParts.entrySet()) {
+			ModelAccessRights modelConf = entry.getKey();
+			TLObject modelPart = entry.getValue();
 			if (modelConf instanceof TLClassAccessRights conf) {
 				handleTLClass(context, modelPart, conf, classRules, explicitParents);
 			} else if (modelConf instanceof TLSingletonAccessRights conf) {
@@ -441,7 +531,212 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_internalTypes = origins(_declaredInternal);
 		computeClassRights(classRules, moduleRules);
 		computeDiscoverRoles();
+		applyImplications();
 		inheritAccessParents(explicitParents);
+	}
+
+	/**
+	 * Resolves the operations the given entry declares and enters them into the given
+	 * declarations, reporting an operation that does not exist or is
+	 * {@link ApplicableOperations#BUILT_IN built-in}.
+	 *
+	 * @param declarations
+	 *        The declarations of the configured element, each operation mapped to the operations
+	 *        declared to imply it.
+	 */
+	private void declareOperations(InstantiationContext context, WithOperations config,
+			Map<BoundCommandGroup, Set<BoundCommandGroup>> declarations) {
+		String name = ((ModelAccessRights) config).getName();
+		for (OperationDeclaration declaration : config.getOperations()) {
+			BoundCommandGroup operation = declaration.getName().resolve(_commandGroups);
+			if (operation == null) {
+				context.error("The command group " + declaration.getName().id() + " declared as operation for "
+					+ name + " does not exist.");
+				continue;
+			}
+			if (ApplicableOperations.isBuiltIn(operation)) {
+				context.error("The operation " + operation.getID() + " declared for " + name
+					+ " is built-in: it applies to every type and cannot be declared.");
+				continue;
+			}
+			Set<BoundCommandGroup> implying = declarations.computeIfAbsent(operation, unused -> new HashSet<>());
+			if (declaration.getImpliedBy() != null) {
+				BoundCommandGroup impliedBy = declaration.getImpliedBy().resolve(_commandGroups);
+				if (impliedBy == null) {
+					context.error("The command group " + declaration.getImpliedBy().id() + " implying the operation "
+						+ operation.getID() + " for " + name + " does not exist.");
+					continue;
+				}
+				implying.add(impliedBy);
+			}
+		}
+	}
+
+	/**
+	 * Computes the operations applying to every class and to every singleton with declarations of
+	 * its own.
+	 */
+	private void computeOperations(Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations,
+			Map<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> singletonDeclarations) {
+		Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> merged = new HashMap<>();
+		Set<TLClass> types = new HashSet<>(TLModelUtil.getAllGlobalClasses(_applicationModel));
+		types.addAll(classDeclarations.keySet());
+		for (TLClass type : types) {
+			Map<BoundCommandGroup, Set<BoundCommandGroup>> declared = mergeOperations(type, classDeclarations, merged);
+			if (!declared.isEmpty()) {
+				_classOperations.put(type, new ApplicableOperations(declared));
+			}
+		}
+		for (Map.Entry<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> entry : singletonDeclarations
+			.entrySet()) {
+			TLObject singleton = entry.getKey();
+			Map<BoundCommandGroup, Set<BoundCommandGroup>> declared = new HashMap<>();
+			if (singleton.tType() instanceof TLClass type) {
+				addDeclarations(declared, mergeOperations(type, classDeclarations, merged));
+			}
+			addDeclarations(declared, entry.getValue());
+			_singletonOperations.put(singleton, new ApplicableOperations(declared));
+		}
+	}
+
+	/**
+	 * The operations declared for the given type, its generalizations and their modules.
+	 */
+	private Map<BoundCommandGroup, Set<BoundCommandGroup>> mergeOperations(TLClass type,
+			Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations,
+			Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> merged) {
+		Map<BoundCommandGroup, Set<BoundCommandGroup>> result = merged.get(type);
+		if (result != null) {
+			return result;
+		}
+		result = new HashMap<>();
+		// Guards against a cyclic generalization hierarchy.
+		merged.put(type, result);
+		for (TLClass generalization : type.getGeneralizations()) {
+			addDeclarations(result, mergeOperations(generalization, classDeclarations, merged));
+		}
+		addDeclarations(result, _moduleDeclarations.getOrDefault(type.getModule(), Collections.emptyMap()));
+		addDeclarations(result, classDeclarations.getOrDefault(type, Collections.emptyMap()));
+		return result;
+	}
+
+	private static void addDeclarations(Map<BoundCommandGroup, Set<BoundCommandGroup>> declarations,
+			Map<BoundCommandGroup, Set<BoundCommandGroup>> added) {
+		for (Map.Entry<BoundCommandGroup, Set<BoundCommandGroup>> entry : added.entrySet()) {
+			declarations.computeIfAbsent(entry.getKey(), unused -> new HashSet<>()).addAll(entry.getValue());
+		}
+	}
+
+	/**
+	 * Reports an operation implying a declared one that does not apply where the declaration is
+	 * made, and implications forming a cycle.
+	 */
+	private void checkImplications(InstantiationContext context,
+			Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations,
+			Map<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> singletonDeclarations) {
+		for (Map.Entry<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> entry : classDeclarations.entrySet()) {
+			checkImplyingApply(context, TLModelUtil.qualifiedName(entry.getKey()), entry.getValue(),
+				getOperations(entry.getKey())::appliesTo);
+		}
+		for (Map.Entry<TLModule, Map<BoundCommandGroup, Set<BoundCommandGroup>>> entry : _moduleDeclarations
+			.entrySet()) {
+			checkImplyingApply(context, TLModelUtil.qualifiedName(entry.getKey()), entry.getValue(),
+				moduleOperations(entry.getKey()));
+		}
+		for (Map.Entry<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> entry : singletonDeclarations
+			.entrySet()) {
+			checkImplyingApply(context, String.valueOf(entry.getKey()), entry.getValue(),
+				getObjectOperations(entry.getKey())::appliesTo);
+		}
+
+		Set<BoundCommandGroup> reported = new HashSet<>();
+		checkCycles(context, _classOperations, reported);
+		checkCycles(context, _singletonOperations, reported);
+	}
+
+	private static void checkImplyingApply(InstantiationContext context, String name,
+			Map<BoundCommandGroup, Set<BoundCommandGroup>> declarations, Predicate<BoundCommandGroup> applies) {
+		for (Map.Entry<BoundCommandGroup, Set<BoundCommandGroup>> entry : declarations.entrySet()) {
+			for (BoundCommandGroup implying : entry.getValue()) {
+				if (!applies.test(implying)) {
+					context.error("The operation " + implying.getID() + " implying the operation "
+						+ entry.getKey().getID() + " for " + name + " does not apply to " + name + ".");
+				}
+			}
+		}
+	}
+
+	private static void checkCycles(InstantiationContext context, Map<?, ApplicableOperations> operations,
+			Set<BoundCommandGroup> reported) {
+		for (Map.Entry<?, ApplicableOperations> entry : operations.entrySet()) {
+			ApplicableOperations applicable = entry.getValue();
+			for (BoundCommandGroup operation : applicable.getOperations()) {
+				if (applicable.isCyclic(operation) && reported.add(operation)) {
+					context.error("The operation " + operation.getID() + " is implied by itself on " + label(entry.getKey())
+						+ ": its implied-by declarations form a cycle.");
+				}
+			}
+		}
+	}
+
+	private static String label(Object modelPart) {
+		return modelPart instanceof TLModelPart part ? TLModelUtil.qualifiedName(part) : String.valueOf(modelPart);
+	}
+
+	/**
+	 * The operations a grant of a {@link TLModuleAccessRights module entry} may name: the
+	 * {@link ApplicableOperations#BUILT_IN built-in operations} and those declared for the module.
+	 */
+	private Predicate<BoundCommandGroup> moduleOperations(TLModule module) {
+		Map<BoundCommandGroup, Set<BoundCommandGroup>> declared =
+			_moduleDeclarations.getOrDefault(module, Collections.emptyMap());
+		return operation -> ApplicableOperations.isBuiltIn(operation) || declared.containsKey(operation);
+	}
+
+	/**
+	 * Adds to the rights of every type and singleton the roles holding an operation because they
+	 * are granted an operation implying it.
+	 */
+	private void applyImplications() {
+		for (Map.Entry<TLClass, ApplicableOperations> entry : _classOperations.entrySet()) {
+			TLClass type = entry.getKey();
+			Map<BoundCommandGroup, Set<BoundedRole>> implied =
+				impliedRights(entry.getValue(), operation -> getAllowedRoles(type, operation));
+			if (!implied.isEmpty()) {
+				addRights(_expandedClassRights.computeIfAbsent(type, unused -> new HashMap<>()), implied);
+			}
+		}
+		for (Map.Entry<TLObject, ApplicableOperations> entry : _singletonOperations.entrySet()) {
+			TLObject singleton = entry.getKey();
+			Map<BoundCommandGroup, Set<BoundedRole>> implied =
+				impliedRights(entry.getValue(), operation -> getGrantedRoles(singleton, operation));
+			if (!implied.isEmpty()) {
+				_singletonImpliedRights.put(singleton, implied);
+			}
+		}
+	}
+
+	/**
+	 * The roles holding an operation because they are granted an operation implying it.
+	 *
+	 * @param roles
+	 *        The roles granted an operation, without implications.
+	 */
+	private static Map<BoundCommandGroup, Set<BoundedRole>> impliedRights(ApplicableOperations operations,
+			Function<BoundCommandGroup, Set<BoundedRole>> roles) {
+		Map<BoundCommandGroup, Set<BoundedRole>> result = new HashMap<>();
+		for (BoundCommandGroup operation : operations.getOperations()) {
+			for (BoundCommandGroup implying : operations.getImplying(operation)) {
+				if (implying == operation) {
+					continue;
+				}
+				Set<BoundedRole> granted = roles.apply(implying);
+				if (!granted.isEmpty()) {
+					result.computeIfAbsent(operation, unused -> new HashSet<>()).addAll(granted);
+				}
+			}
+		}
+		return result;
 	}
 
 	private void computeDiscoverRoles() {
@@ -531,7 +826,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (config.isInternal()) {
 			_declaredInternal.add(module);
 		}
-		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
+		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>())
+			.addAll(resolveRules(context, config, moduleOperations(module)));
 	}
 
 	private void handleTLPart(InstantiationContext context, TLObject part, TLPartAccessRights config) {
@@ -539,7 +835,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			context.error("The configured part " + part + " is not a structured type part.");
 			return;
 		}
-		applyRules(resolveRules(context, config),
+		Predicate<BoundCommandGroup> applies = typePart.getOwner() instanceof TLClass owner
+			? getOperations(owner)::appliesTo
+			: ApplicableOperations::isBuiltIn;
+		applyRules(resolveRules(context, config, applies),
 			_typePartRights.computeIfAbsent(typePart.getDefinition(), unused -> new HashMap<>()));
 	}
 
@@ -550,7 +849,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			context.error("The configured singleton " + singleton + " is not a singleton.");
 			return;
 		}
-		applyRules(resolveRules(context, config),
+		applyRules(resolveRules(context, config, getObjectOperations(singleton)::appliesTo),
 			_singletonRights.computeIfAbsent(singleton, unused -> new HashMap<>()));
 	}
 
@@ -575,7 +874,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			}
 			resolveAccessParent(context, clazz, accessParent, explicitParents);
 		}
-		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
+		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>())
+			.addAll(resolveRules(context, config, getOperations(clazz)::appliesTo));
 	}
 
 	/**
@@ -732,9 +1032,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	/**
 	 * Resolves the operation and the roles of each configured rule against the application,
-	 * reporting a configuration error for an operation or role that does not exist.
+	 * reporting a configuration error for an operation or role that does not exist, and for an
+	 * operation that does not apply to the configured element.
+	 *
+	 * @param applies
+	 *        Whether an operation applies to the configured element, see
+	 *        {@link #getOperations(TLClass)}.
 	 */
-	private List<ResolvedRule> resolveRules(InstantiationContext context, ModelAccessRights config) {
+	private List<ResolvedRule> resolveRules(InstantiationContext context, ModelAccessRights config,
+			Predicate<BoundCommandGroup> applies) {
 		KnowledgeBase kb = _applicationModel.tKnowledgeBase();
 		List<ResolvedRule> result = new ArrayList<>();
 		for (AccessRule rule : config.getGrants()) {
@@ -742,6 +1048,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			if (operation == null) {
 				context.error("The command group " + rule.getOperation().id() + " in configuration for "
 						+ config.getName() + " does not exist.");
+				continue;
+			}
+			if (!applies.test(operation)) {
+				context.error("The operation " + operation.getID() + " in configuration for " + config.getName()
+					+ " does not apply there: declare it with <" + OperationDeclaration.TAG_NAME + " "
+					+ OperationDeclaration.NAME + "=\"" + operation.getID() + "\"/> in the <"
+					+ WithOperations.OPERATIONS + "> of the type, of a generalization or of the module.");
 				continue;
 			}
 			Set<BoundedRole> roles = new HashSet<>();
@@ -843,6 +1156,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			addRights(inheritable, inherited);
 		}
 		applyRules(moduleRules.getOrDefault(type.getModule(), Collections.emptyList()), effective, inheritable);
+		Map<BoundCommandGroup, Set<BoundedRole>> inherited = new HashMap<>();
+		addRights(inherited, effective);
+		_inheritedClassRights.put(type, inherited);
 		applyRules(classRules.getOrDefault(type, Collections.emptyList()), effective, inheritable);
 
 		if (!effective.isEmpty()) {
@@ -887,8 +1203,27 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * Returns the roles required to perform the given command group on the given object, taking
 	 * singleton-specific rules into account before falling back to type-level rules.
+	 *
+	 * <p>
+	 * A singleton with operations of its own additionally admits the roles granted an operation
+	 * implying the given one.
+	 * </p>
 	 */
-	private Set<? extends BoundRole> getRoles(TLObject object, BoundCommandGroup group) {
+	private Set<BoundedRole> getRoles(TLObject object, BoundCommandGroup group) {
+		Set<BoundedRole> implied = _singletonImpliedRights.getOrDefault(object, Collections.emptyMap()).get(group);
+		if (implied == null) {
+			return getGrantedRoles(object, group);
+		}
+		Set<BoundedRole> result = new HashSet<>(getGrantedRoles(object, group));
+		result.addAll(implied);
+		return result;
+	}
+
+	/**
+	 * The roles granted the given command group on the given object, without the implications of
+	 * the operations of a singleton.
+	 */
+	private Set<BoundedRole> getGrantedRoles(TLObject object, BoundCommandGroup group) {
 		Map<BoundCommandGroup, Set<BoundedRole>> singletonRights =
 			_singletonRights.getOrDefault(object, Collections.emptyMap());
 		if (!singletonRights.isEmpty()) {
@@ -914,9 +1249,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return getAllowedRoles(clazz, group);
 	}
 
+	@Override
+	public ApplicableOperations getOperations(TLClass type) {
+		return _classOperations.getOrDefault(type, ApplicableOperations.BUILT_IN_ONLY);
+	}
+
+	@Override
+	public ApplicableOperations getObjectOperations(TLObject object) {
+		ApplicableOperations singletonOperations = _singletonOperations.get(object);
+		if (singletonOperations != null) {
+			return singletonOperations;
+		}
+		return object.tType() instanceof TLClass type ? getOperations(type) : ApplicableOperations.BUILT_IN_ONLY;
+	}
+
 	/**
 	 * @implNote For a type {@link #isWithoutSecurity(TLClass) without security}, the result is the
 	 *           configured (typically empty) set of roles, which must not be mistaken for a denial.
+	 *           The roles granted an operation implying the given one on the type are included.
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
@@ -924,6 +1274,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return _discoverRoles.getOrDefault(type, Collections.emptySet());
 		}
 		return _expandedClassRights
+			.getOrDefault(type, Collections.emptyMap())
+			.getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return _inheritedClassRights
 			.getOrDefault(type, Collections.emptyMap())
 			.getOrDefault(commandGroup, Collections.emptySet());
 	}
@@ -1107,15 +1464,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				// The relation leads nowhere: nobody decides for the object, so nobody may access it.
 				return false;
 			}
-			if (!(parentObject instanceof BoundObject) || !isCommitted(parentObject)) {
+			if (!CheckedObjects.isStored(parentObject)) {
 				// The parent is not access controlled, or it is being built in the current
 				// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
 				// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
 				return true;
 			}
-			return decide(cache, person, parentObject, operationOnParent(commandGroup));
+			if (decide(cache, person, parentObject, operationOnParent(commandGroup))) {
+				return true;
+			}
+			// An operation implying the requested one on the object, checked on the parent as well.
+			for (BoundCommandGroup implying : getObjectOperations(instance).getImplying(commandGroup)) {
+				if (implying != commandGroup && decide(cache, person, parentObject, operationOnParent(implying))) {
+					return true;
+				}
+			}
+			return false;
 		}
-		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
+		Set<BoundedRole> roles = getRoles(instance, commandGroup);
 		return accessManager().hasRole(person, (BoundObject) instance, roles);
 	}
 
@@ -1283,8 +1649,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * An object deleted in a committed transaction still counts as committed here; the access
 	 * checks deny it before, see {@link #isDeleted(TLObject)}.
 	 * </p>
+	 *
+	 * <p>
+	 * Unlike {@link CheckedObjects#isStored(TLObject)}, an object that is no {@link BoundObject}
+	 * counts as committed: walking the access parents of an object to be created stops at the first
+	 * committed object, access controlled or not.
+	 * </p>
 	 */
-	private static boolean isCommitted(TLObject object) {
+	static boolean isCommitted(TLObject object) {
 		if (object == null || object.tTransient()) {
 			return false;
 		}
@@ -1365,12 +1737,23 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		decisions.put(commandGroup, null);
 		boolean result;
 		if (getAccessParent(type) != null) {
-			BoundCommandGroup parentOperation = operationOnParent(commandGroup);
 			Set<TLClass> parentTypes = getAccessParentTypes(type);
 			// Unknown parent types (a computed access parent): the type-level check is a pre-filter
 			// only, the check of each object follows the relation.
-			result = parentTypes == null || parentTypes.stream()
-				.anyMatch(parentType -> isAccessibleType(parentType, person, parentOperation, securityRoot, memo));
+			result = parentTypes == null;
+			if (!result) {
+				// The operation itself or one implying it on the type, checked on the parent types.
+				Set<BoundCommandGroup> operations = new HashSet<>(getOperations(type).getImplying(commandGroup));
+				operations.add(commandGroup);
+				for (BoundCommandGroup operation : operations) {
+					BoundCommandGroup parentOperation = operationOnParent(operation);
+					if (parentTypes.stream().anyMatch(
+						parentType -> isAccessibleType(parentType, person, parentOperation, securityRoot, memo))) {
+						result = true;
+						break;
+					}
+				}
+			}
 		} else {
 			Set<BoundedRole> roles = getAllowedRoles(type, commandGroup);
 			result = !roles.isEmpty() && accessManager().hasRole(person, securityRoot, roles);

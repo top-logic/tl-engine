@@ -45,6 +45,7 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.PasswordInputControlProvider;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
  * Tests parsing and instantiation of {@link FormElement} and {@link FieldElement}.
@@ -312,6 +313,7 @@ public class TestFormElement extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestFormElement.class,
-				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 }

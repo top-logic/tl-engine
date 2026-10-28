@@ -35,6 +35,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.util.TLContext;
 
 /**
@@ -197,6 +198,7 @@ public class DashboardElement implements UIElement {
 		List<TileElement> ordered = applyPersonalOrder(_tiles);
 		List<TileElement> accessible = new ArrayList<>(ordered.size());
 		List<Tile> reactTiles = new ArrayList<>(ordered.size());
+		Map<String, UnitHiding> hidings = new LinkedHashMap<>();
 		for (TileElement t : ordered) {
 			if (!t.isAccessible()) {
 				// Access denied for the current user: omit the tile entirely.
@@ -205,14 +207,21 @@ public class DashboardElement implements UIElement {
 			accessible.add(t);
 			Boolean stored = visibility.get(t.getId());
 			boolean visible = stored != null ? stored.booleanValue() : defaultVisibility(t);
-			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), visible,
-				() -> createTileContent(context, t)));
+			Tile tile = new Tile(t.getId(), t.getWidth(), t.getRowSpan(), visible,
+				() -> createTileContent(context, t));
+			UnitHiding hiding = t.hiding(context);
+			if (hiding != null) {
+				tile.withWithheld(hiding.isHidden());
+				hidings.put(t.getId(), hiding);
+			}
+			reactTiles.add(tile);
 		}
 		ReactDashboardControl control = new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles,
 			personalizable ? this::storePersonalOrder : null,
 			personalizable ? (tileId, visible) -> storePersonalVisibility(tileId, visible.booleanValue()) : null);
 
 		control.setCssClass(_cssClass);
+		hidings.forEach((id, hiding) -> hiding.bind(control, hidden -> control.setTileWithheld(id, hidden)));
 		if (personalizable) {
 			contributeEditCommands(context, control, accessible);
 		}

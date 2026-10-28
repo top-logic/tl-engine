@@ -5,18 +5,26 @@
  */
 package com.top_logic.layout.view.list;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ObservableRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -39,6 +47,12 @@ public class ObjectListScope {
 
 	private Runnable _newElementReset;
 
+	private ActionScope _accessScope = ActionScope.NONE;
+
+	private ViewExecutabilityRule _linkAccess = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+
+	private ViewExecutabilityRule _removeAccess = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+
 	/**
 	 * Creates an {@link ObjectListScope}.
 	 *
@@ -56,6 +70,92 @@ public class ObjectListScope {
 		_inputs = inputs;
 		_link = link;
 		_remove = remove;
+	}
+
+	/**
+	 * Installs the access checks of the list.
+	 *
+	 * @param scope
+	 *        The names of the arguments the checks decide over: the inputs of the list followed by
+	 *        the element, which is the default argument.
+	 * @param linkAccess
+	 *        The checks of linking an element, see {@link ObjectListElement.Config#getLinkAccess()}.
+	 * @param removeAccess
+	 *        The checks of removing an element, see
+	 *        {@link ObjectListElement.Config#getRemoveAccess()}.
+	 */
+	public void initAccess(ActionScope scope, ViewExecutabilityRule linkAccess,
+			ViewExecutabilityRule removeAccess) {
+		_accessScope = scope;
+		_linkAccess = linkAccess;
+		_removeAccess = removeAccess;
+	}
+
+	/**
+	 * The rule deciding whether the given element may be linked, see
+	 * {@link ObjectListElement.Config#getLinkAccess()}.
+	 *
+	 * <p>
+	 * The rule decides over the element given to {@link ViewExecutabilityRule#isExecutable(Object)}
+	 * together with the current values of the inputs of the list, and reports a new value of an
+	 * input as a change.
+	 * </p>
+	 */
+	public ViewExecutabilityRule linkAccess() {
+		return access(_linkAccess);
+	}
+
+	/**
+	 * The rule deciding whether the given element may be removed, see
+	 * {@link ObjectListElement.Config#getRemoveAccess()} and {@link #linkAccess()}.
+	 */
+	public ViewExecutabilityRule removeAccess() {
+		return access(_removeAccess);
+	}
+
+	private ViewExecutabilityRule access(ViewExecutabilityRule checks) {
+		if (checks == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			return checks;
+		}
+		return new ElementAccess(checks);
+	}
+
+	/**
+	 * Applies the access checks of the list to an element and the current values of the inputs.
+	 */
+	private final class ElementAccess implements ViewExecutabilityRule, ObservableRule {
+
+		private final ViewExecutabilityRule _checks;
+
+		ElementAccess(ViewExecutabilityRule checks) {
+			_checks = checks;
+		}
+
+		@Override
+		public ExecutableState isExecutable(Object element) {
+			List<Object> values = new ArrayList<>(_inputs.size() + 1);
+			for (ViewChannel input : _inputs) {
+				values.add(DeletedObjects.withoutDeleted(input.get()));
+			}
+			values.add(element);
+			return _checks.isExecutableFor(
+				ActionArguments.of(_accessScope.names(), values, _accessScope.defaultName()));
+		}
+
+		@Override
+		public Runnable observe(Runnable revalidate) {
+			List<Registration> registrations = new ArrayList<>(_inputs.size());
+			for (ViewChannel input : _inputs) {
+				registrations.add(input.addListener((sender, oldValue, newValue) -> revalidate.run()));
+			}
+			Runnable checks = _checks instanceof ObservableRule observable ? observable.observe(revalidate) : null;
+			return () -> {
+				registrations.forEach(Registration::dispose);
+				if (checks != null) {
+					checks.run();
+				}
+			};
+		}
 	}
 
 	/**

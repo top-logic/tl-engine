@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -25,6 +26,8 @@ import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
+import com.top_logic.layout.view.security.AccessCheck;
+import com.top_logic.layout.view.security.CommandAccess;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -78,6 +81,9 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getKey()}. */
 		String KEY = "key";
+
+		/** Configuration name for {@link #getAccess()}. */
+		String ACCESS = "access";
 
 		/**
 		 * The programmatic name of this command.
@@ -179,6 +185,32 @@ public interface ViewCommand {
 		@Nullable
 		@Format(KeyStrokeFormat.class)
 		KeyStroke getKey();
+
+		/**
+		 * What this command does in the model, checked in the model access rights of the current
+		 * user: the operations it performs on objects ({@code <operation>}) and the objects it
+		 * creates ({@code <create>}).
+		 *
+		 * <p>
+		 * The grants deciding the checks are those of the model access rights; the command only
+		 * states what is checked. All checks must pass. A command the user can never pass a check
+		 * of is hidden; otherwise, the first failing check disables it, giving the refusal as its
+		 * reason. The checks decide both the state of the button and whether a dispatched command
+		 * is executed.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;access&gt;
+		 *   &lt;operation name="Approve" object="$milestones.map(m -&gt; $m.container())"
+		 *     type="tl.demo.projectManagement:ProjectScope"/&gt;
+		 *   &lt;create type="demo.tickets:Comment" in="$ticket" reference="demo.tickets:Ticket#comments"/&gt;
+		 * &lt;/access&gt;
+		 * </pre>
+		 *
+		 * @see CommandAccess
+		 */
+		@Name(ACCESS)
+		List<PolymorphicConfiguration<? extends AccessCheck>> getAccess();
 
 		/**
 		 * The name of the value the trigger of this command supplies.

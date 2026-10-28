@@ -24,6 +24,9 @@
 			<instance>
 				<security-config>
 					<class name="TestViewModelAccess:Project">
+						<operations>
+							<operation name="Finish"/>
+						</operations>
 						<!-- The responsible may do everything with a project. -->
 						<grant
 							operation="Read"
@@ -81,6 +84,26 @@
 					<class name="TestViewModelAccess:Item">
 						<access-parent>
 							<container/>
+						</access-parent>
+					</class>
+					<!--
+						The deliverables of a project decide for themselves: the responsible creates
+						specs, no role creates plans or archive entries.
+					-->
+					<class name="TestViewModelAccess:Deliverable">
+						<access-parent>
+							<self/>
+						</access-parent>
+					</class>
+					<class name="TestViewModelAccess:Spec">
+						<grant
+							operation="Create"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</class>
+					<class name="TestViewModelAccess:Archive">
+						<access-parent>
+							<self/>
 						</access-parent>
 					</class>
 					<class name="TestViewModelAccess:Category">

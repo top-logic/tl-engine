@@ -77,6 +77,11 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 	}
 
 	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
+	}
+
+	@Override
 	public LLMProvider createProvider() {
 		return new OpenAIResponsesProvider(
 			_credentials, resolveBaseUrl(),

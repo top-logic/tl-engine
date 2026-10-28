@@ -74,6 +74,15 @@ public class TestChatRunAccess extends BasicTestCase {
 	/** The model the test application assigns to every agent. */
 	private static final String ASSIGNED_MODEL = "test-assigned-model";
 
+	/** The agent the test application assigns {@link #GATED_MODEL}. */
+	private static final String GATED_AGENT = "TestGatedAgent";
+
+	/** The model of a provider whose key is the secret {@link #GATED_KEY}. */
+	private static final String GATED_MODEL = "test-gated-model";
+
+	/** The secret holding the key of the provider of {@link #GATED_MODEL}, set only by a test. */
+	private static final String GATED_KEY = "test_chat_gated_api_key";
+
 	/** A second configured model, which is therefore a choice rather than the agent's own. */
 	private static final String OTHER_MODEL = "test-other-model";
 
@@ -148,6 +157,37 @@ public class TestChatRunAccess extends BasicTestCase {
 
 		assertTrue(body, body.contains(ASSIGNED_MODEL));
 		assertFalse("The model no role grants must not be offered: " + body, body.contains(OTHER_MODEL));
+	}
+
+	/**
+	 * A model whose provider has no key is not offered, and is offered as soon as the key is
+	 * provided - without a restart, because the list is computed for each request.
+	 *
+	 * <p>
+	 * {@link #GATED_MODEL} is the own model of {@link #GATED_AGENT}, so nothing but its provider's
+	 * missing key keeps it out of the menu.
+	 * </p>
+	 */
+	public void testCapabilitiesOffersNoModelWhoseProviderHasNoKey() throws Exception {
+		assertNull(System.getProperty(GATED_KEY));
+		assertNull(System.getenv(GATED_KEY));
+		assertTrue("The model is configured, and only its key is missing.",
+			LLMProviderService.getInstance().getConfiguredModelNames().contains(GATED_MODEL));
+
+		String without = capabilities();
+		assertTrue("The agent itself is still offered: " + without,
+			without.contains("\"name\":\"" + GATED_AGENT + "\""));
+		assertFalse("A model whose provider has no key must not be offered: " + without,
+			without.contains("\"id\":\"" + GATED_MODEL + "\""));
+
+		System.setProperty(GATED_KEY, "sk-test-gated");
+		try {
+			String with = capabilities();
+			assertTrue("Once its provider has its key, the model is offered: " + with,
+				with.contains("\"id\":\"" + GATED_MODEL + "\""));
+		} finally {
+			System.clearProperty(GATED_KEY);
+		}
 	}
 
 	/** An agent that carries a display name is offered under it, with its identifier beside it. */

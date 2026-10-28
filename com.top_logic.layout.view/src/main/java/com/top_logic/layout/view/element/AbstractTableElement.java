@@ -154,6 +154,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		/** Configuration name for {@link #getFixedColumns()}. */
 		String FIXED_COLUMNS = "fixed-columns";
 
+		/** Configuration name for {@link #getEditInPlace()}. */
+		String EDIT_IN_PLACE = "edit-in-place";
+
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
@@ -216,6 +219,23 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(FIXED_COLUMNS)
 		int getFixedColumns();
+
+		/**
+		 * Whether the cells of the columns declaring an <code>update</code> are edited right in the
+		 * displayed table, without a form.
+		 *
+		 * <p>
+		 * A cell of such a column shows the control its value is entered with in every row its
+		 * <code>can-update</code> offers the edit on. An entered value is written at once by the
+		 * <code>update</code> script, in a transaction of its own, and the cells of the table are
+		 * built again, so that values following the written one are shown. This suits a matrix of
+		 * settings - a checkbox per row and column - whose every click is a change of its own. A
+		 * column over an attribute is not edited in place: an object is edited in a form, where
+		 * the edits are saved together.
+		 * </p>
+		 */
+		@Name(EDIT_IN_PLACE)
+		boolean getEditInPlace();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -895,13 +915,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		List<ColumnSetup> setups =
 			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
+		// The activation button and the cells edited in place reach the table control through
+		// this holder, since the control is built from the view over these very columns.
+		ControlActivation activate = new ControlActivation();
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
-			columns.add(setup.buildColumn());
+			columns.add(_config.getEditInPlace() ? setup.buildInPlaceColumn(activate::rowWritten) : setup.buildColumn());
 		}
-		// The activation button activates its row through the table control, but the control is
-		// built from the view over these very columns - the button reaches it once it exists.
-		ControlActivation activate = new ControlActivation();
 		columns.addAll(this.<Object> rowCommandColumns(activation, activate));
 		S source = sourceFactory.apply(columns);
 		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
@@ -1375,7 +1395,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * A table's columns exist before its control: the control is built from the view over them.
 	 * The activation button sits in one of these columns and needs the control; it gets this
 	 * activation, which reaches the control once {@link #bind(TableViewControl) bound}. A button
-	 * is pressed only in a rendered table, so the control is bound by then.
+	 * is pressed only in a rendered table, so the control is bound by then. A cell edited in place
+	 * reaches the control the same way to have its row built again.
 	 * </p>
 	 */
 	private static final class ControlActivation implements Function<Object, HandlerResult> {
@@ -1387,6 +1408,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		void bind(TableViewControl<Object> control) {
 			_control = control;
+		}
+
+		/**
+		 * Builds the cells of the table again, after a value of a cell of the given row was written
+		 * in place: a cell of this or of another row may show a value following the written one.
+		 */
+		void rowWritten(Object row) {
+			_control.refreshData();
 		}
 
 		@Override

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -42,10 +42,12 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    interaction, if it was made before (see [Caching](#caching-of-decisions)).
 3. A type marked `without-security` is not checked at all.
 4. A type with an access parent asks the object the relation leads to, with the same operation, or
-   with `Write` in place of `Create` and `Delete`. The parent may delegate further. An object whose
+   with `Write` in place of `Create` and `Delete`; an operation [implying](#operations-which-operations-apply-to-a-type)
+   the requested one on the type is asked as well. The parent may delegate further. An object whose
    relation leads nowhere (no container, an empty reference) is denied, as is one whose chain of
    access parents runs in a cycle.
-5. The roles granted the operation on the object's type are looked up (for a module singleton, the
+5. The roles granted the operation, or an operation implying it, on the object's type are looked
+   up (for a module singleton, the
    singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
    grants and by the rights on the attributes and compositions of its type).
 6. `AccessManager.hasRole(person, object, roles)` decides whether the user holds one of them on the
@@ -70,6 +72,14 @@ instead of replacing them.
 <config service-class="com.top_logic.model.security.SecurityConfigurationService">
 	<instance>
 		<security-config>
+			<!-- An operation of the application, declared on the type it applies to. -->
+			<class name="tl.demo.projectManagement:ProjectScope">
+				<operations>
+					<operation name="Show" implied-by="Read"/>
+					<operation name="Approve"/>
+				</operations>
+				<grant operation="Approve" roles="demo.react.ProjectMember"/>
+			</class>
 			<!-- Grants on one class. -->
 			<class name="tl.accounts:Person">
 				<grant inherit="true" operation="Read" roles="PersonalProfile"/>
@@ -116,10 +126,11 @@ instead of replacing them.
 </config>
 ```
 
-- `operation` is a command group id: `Read`, `Write`, `Create`, `Delete`, `Export`, … (see
-  `SimpleBoundCommandGroup`). The operation `Discover` is implied by every other right on the
-  object or one of its attributes, so it is rarely granted on its own; see
-  [the Discover specification](doc:access-discover-spec).
+- `operation` is a command group id that applies to the type: one of the built-in operations
+  `Read`, `Write`, `Create`, `Delete`, `Discover`, `Export`, or an operation declared for the type,
+  see [Operations](#operations-which-operations-apply-to-a-type). The operation `Discover` is
+  implied by every other right on the object or one of its attributes, so it is rarely granted on
+  its own; see [the Discover specification](doc:access-discover-spec).
 - `roles` is a comma separated list of role names (`InitialRolesManager` declares roles).
 - `<grant>` adds roles, `<revoke>` takes them away again, in the order the rules appear.
 - `inherit="true"` passes the rule on to the specializations of the type. The rights of a type are
@@ -127,7 +138,58 @@ instead of replacing them.
   rules.
 
 A custom operation can also authorize a configured TL-Script function as a whole, see
-[privileged TL-Script functions](doc:access-privileged-scripts).
+[privileged TL-Script functions](doc:access-privileged-scripts). The UI units of the React view
+layer (navigation items, tabs, sections, tiles) name the operation they check and the object they
+check it on with `<access-control>` and are decided by these grants as well (article
+`view-layer/access-control` of the module `com.top_logic.layout.view`). The operation `Administration` of the
+engine's administration views is declared on the security root (`<singleton
+name="SecurityStructure#ROOT">`) and granted there.
+
+### Operations: which operations apply to a type
+
+An operation is a command group with a global name: `Approve` on a project and `Approve` on a
+device is the same operation, the grants on the two types decide separately. Only an operation
+that **applies** to a type may be granted on it:
+
+- The built-in operations `Read`, `Write`, `Create`, `Delete`, `Discover` and `Export` apply to
+  every type without a declaration (`ApplicableOperations.BUILT_IN`).
+- Any other operation applies where an `<operation name="..."/>` entry in the `<operations>` of a
+  `<class>`, `<module>` or `<singleton>` entry declares it. A class declaration applies to the
+  class and all its specializations, a module declaration to every class of the module and their
+  specializations, a singleton declaration to that singleton object (in addition to the operations
+  of its type).
+- The declarations of all configuration layers are appended, like the grants.
+- The operation must be a command group of the `CommandGroupRegistry` and needs labels
+  `commandGroup.<Name>` and `commandGroup.<Name>.tooltip` in a resource bundle of the application.
+- A type with an access parent may declare operations, too (it still has no grants): a custom
+  operation on such a type is checked as the same operation on the parent, so it must apply to the
+  parent type as well, unless it is implied by an operation the parent has.
+
+**`implied-by="X"`**: whoever holds the operation `X` on an object also holds the declared
+operation on it. This generalizes "every right implies `Discover`": an application that grants
+nothing beyond the model rights declares `<operation name="Show" implied-by="Read"/>`, and a
+later explicit `<grant operation="Show" .../>` changes no view. Implications are transitive
+(`Inspect` implied by `Show`, `Show` implied by `Read`: a reader holds `Inspect`); several
+declarations of the same operation add their implying operations. The implied roles count
+everywhere a grant counts: `isAllowed`, `getAllowedRoles(TLClass, BoundCommandGroup)`,
+`getAccessibleTypes`, the checks on a singleton and the coverage check. For a type with an access
+parent, the implying operation is checked on the parent.
+
+**Configuration errors**, reported when the service starts:
+
+- a `<grant>` or `<revoke>` of an operation that does not apply to the type of the entry (for a
+  `<module>` entry: neither built-in nor declared for the module; for a `<part>` entry: not applying
+  to the owner of the attribute; for a `<singleton>` entry: not applying to the singleton),
+- an `implied-by` naming an operation that does not apply where the declaration is made,
+- `implied-by` declarations forming a cycle (also one combining class and module declarations),
+- a declaration of a built-in operation, and an operation or `implied-by` naming a command group
+  that does not exist.
+
+In Java, `ModelAccessRights.getOperations(TLClass)` (and `getObjectOperations(TLObject)`, which
+includes the declarations of a singleton) returns the `ApplicableOperations` of a type:
+`appliesTo(operation)`, `getOperations()`, `getImpliedBy(operation)` (declared) and
+`getImplying(operation)` (transitive). `ModelAccessRights.appliesTo(TLClass, BoundCommandGroup)` is
+the short form.
 
 ### The two marks
 
@@ -330,13 +392,40 @@ module not listed in its `excluded-modules` and reports, per type:
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
 | dead grant | an operation is granted to roles that no rule can deliver on the type or its role parents; the grant never takes effect | add a rule delivering the role, or grant a delivered role |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |
+| ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
+| inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
+| unknown operation | such a place checks an operation that is no registered command group | register the command group, or check another one |
+| unchecked grant | an operation declared for the application (not a built-in one) is granted on the type, but no view unit, command, form or privileged script checks it - nor an operation it implies - on objects of the type; the grant has no effect | remove the grant, or add the check that should use it |
+
+The places checking an operation are reported to the check by the `OperationUseProvider`s of its
+`operation-uses`: `com.top_logic.layout.view` contributes the `OperationUseIndex`, which scans the
+`*.view.xml` files (`<access-control>`, the `<access>` of commands, `<form edit-operation>`) and the
+privileged scripts of the configured TL-Script functions (see the section "Administration of
+grants" of the article `view-layer/access-control` of that module). A place
+naming the type it checks is checked against that type and its concrete specializations; a type
+delegating to an access parent is not checked for applicability. A place not declaring its type (a
+privileged script, a form, a command whose unit lies in another view file) is only checked for an
+unknown operation; such findings belong to no type and are reported by
+`SecurityCoverageAnalysis.getUnattachedFindings()`.
+
+A grant of an operation counts as checked on a type when a place checks the operation itself, or an
+operation it implies (holding an operation means holding every operation it implies; an operation
+implying a built-in one is always in use, since the model access rights check the built-in
+operations on every access), on objects of the type: on the type or one of its generalizations, on a
+type whose objects delegate to an access parent of the type, on the security root when the root is of
+the type, or without declaring the checked type at all - a place that does not declare its type
+(privileged script, form, command outside a unit of its view file) counts as checking every type, so
+that it never causes an unchecked-grant finding. Grants of built-in operations are never reported.
+The unchecked grants are only reported when the places checking an operation are known, i.e. when a
+module contributes an `OperationUseProvider` (as `com.top_logic.layout.view` does).
 
 A type is **covered** when it has a role source and at least one role may read it, **delegated**
 when it has an access parent (whether the parent is accessible is reported with the parent's type),
 **exempt** when it is internal or without security, **incomplete** otherwise.
 
-- At startup the findings are logged at INFO (`log-findings="false"` switches the log off, not the
-  analysis).
+- At startup the findings of the access definition are logged at INFO (`log-findings="false"`
+  switches the log off, not the analysis); the places checking an operation are read on demand, so
+  their findings appear in the admin hub and in `TestSecurityCoverage`, not in the startup log.
 - In the React admin hub (Administration → Access control → Coverage) the same analysis is a table
   with a findings detail; the "Access parent" column shows what a delegating type delegates to.
   Its commands edit the definition: role parent and role rules, the grants, marks and access parent
@@ -346,6 +435,13 @@ when it has an access parent (whether the parent is accessible is reported with 
   and only then does the table show the change. An access parent the underlying configuration
   sets is dropped - by a mark, or by removing it in the dialog - by storing `<self/>`, written with
   `config:override="true"`, since an access parent left out would leave that one in effect.
+- The grants of a type are edited as a matrix in Administration → Access control → Grants: a row
+  per role a user can hold on the type (`SecurityCoverageAnalysis.getHoldableRoles`), a column per
+  operation applying to it (see the section "Administration of grants" of the article
+  `view-layer/access-control`). A changed
+  cell is stored as a single `<grant>` or `<revoke>` of the role in the entry of the type
+  (`SecurityDefinitionEditor.setGranted`), not inherited by its specializations, and takes effect
+  with "Apply configuration".
 - An application makes the check part of its test suite with `test-security-coverage="true"` in
   the `ElementTestCollector` global test configuration; `TestSecurityCoverage` then fails on every
-  incomplete type.
+  incomplete type and on every finding belonging to no type.

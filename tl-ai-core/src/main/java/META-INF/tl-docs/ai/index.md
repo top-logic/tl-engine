@@ -1,5 +1,5 @@
 ---
-description: Read before adding AI agents to a TopLogic application or working on the AI modules (tl-ai-core, tl-ai-tool-api, tl-chat, tl-ai-mcp-server, tl-ai-a2a, tl-ai-views, tl-ai-vector-index, tl-ai-index, tl-ai-eval) - which module provides what, the provider API keys (tl_openai_api_key, tl_anthropic_api_key, ...), LLMProviderService in tl-ai-core.conf.config.xml, and where each topic of the chapter is.
+description: Read before adding AI agents to a TopLogic application or working on the AI modules (tl-ai-core, tl-ai-tool-api, tl-chat, tl-ai-mcp-server, tl-ai-a2a, tl-ai-views, tl-ai-vector-index, tl-ai-index, tl-ai-eval) - which module provides what, the LLM providers tl-ai-core ships (anthropic, openai, mistral, xai) with their API key secrets (tl_anthropic_api_key, tl_openai_api_key, tl_mistral_api_key, tl_xai_api_key), the model variables (tl_<provider>_models, tl_ai_default_model), inactive providers without a key, overriding the providers of LLMProviderService, and where each topic of the chapter is.
 order: 50
 ---
 
@@ -32,37 +32,52 @@ The module dependency order is `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-
 
 ## Configuring the LLM providers
 
-The providers are configured on `LLMProviderService` (service editor: *LLM providers*). `tl-ai-core` ships `tl-ai-core.conf.config.xml` with the four services an agent run reads its configuration from and an empty provider list; an application names its providers in its own configuration, typically in `WEB-INF/autoconf/com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml`:
+The providers are configured on `LLMProviderService` (service editor: *LLM providers*). `tl-ai-core` ships them in `tl-ai-core.conf.config.xml`, so an application that only needs the public APIs configures nothing and provides the keys:
+
+| Provider | Class | API key (secret) | Models (variable) | Models without the variable |
+|---|---|---|---|---|
+| `anthropic` | `AnthropicProviderConfig` | `tl_anthropic_api_key` | `tl_anthropic_models` | `claude-sonnet-4-6,claude-opus-4-7,claude-haiku-4-5` |
+| `openai` | `OpenAIProviderConfig` | `tl_openai_api_key` | `tl_openai_models` | `gpt-5.5,gpt-5.4-mini` |
+| `mistral` | `MistralProviderConfig` | `tl_mistral_api_key` | `tl_mistral_models` | `mistral-medium-latest,mistral-small-latest` |
+| `xai` | `XAIProviderConfig` | `tl_xai_api_key` | `tl_xai_models` | `grok-4.3,grok-4-1-fast` |
+
+```bash
+export tl_anthropic_api_key="sk-ant-..."
+export tl_openai_models="gpt-5.5"           # optional: other models, comma separated
+export tl_ai_default_model="gpt-5.5"        # optional: the model the agents run on
+```
+
+The API keys are named secrets: the shipped providers carry `<api-key name="tl_anthropic_api_key"/>` and so on, a `NamedSecretSource`, which fetches the secret of that name at each request from the secret store of the installation (see [secret stores](doc:credentials/secret-stores)). The default store reads the system property or environment variable of that name, which holds the plain key; in development the key can also be a file of that name in `~/.top-logic/secrets` ([development secrets](doc:credentials/secret-stores#development-secrets)). The model variables are read once at startup, through the aliases `%ANTHROPIC_MODELS%`, `%OPENAI_MODELS%`, `%MISTRAL_MODELS%` and `%XAI_MODELS%` of `tl-ai-core.conf.xml`.
+
+A provider whose key is not set is **inactive**: the application starts, the provider is never called, the chat does not offer its models, failover passes over it, and a run that needs a model of it is refused with a message naming the missing secret. A key provided later is used from the next run on, without a restart. The agents run on `default-model` of `AgentRuntimeService`, which the variable `tl_ai_default_model` sets (alias `%AI_DEFAULT_MODEL%`); left empty, each run takes the first model of the first available provider, in the order of the table. Without any key, a chat message is answered with the names of the secrets that would make a provider available. [Providers and failover](doc:ai/providers#the-shipped-providers) describes the rule.
+
+An application changes the providers in its own configuration of `LLMProviderService`, typically in `WEB-INF/autoconf/com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml`. The providers are keyed by name: an entry of a shipped name merges into the shipped one (what it sets wins), an entry of another name is added.
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService" config:override="true">
+<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 	<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 		<providers>
+			<!-- Other models for the shipped provider; its key stays tl_anthropic_api_key. -->
 			<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
 				name="anthropic"
 				models="claude-haiku-4-5-20251001,claude-sonnet-4-6"
-			>
-				<api-key name="tl_anthropic_api_key"/>
-			</provider>
-			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig" name="openai">
-				<api-key name="tl_openai_api_key"/>
-			</provider>
+			/>
+			<!-- An additional provider. -->
+			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
+				name="local"
+				base-url="http://localhost:8000"
+				models="qwen3-32b"
+			/>
 		</providers>
-		<model-catalog/>
 	</instance>
 </config>
 ```
 
-The API keys are named secrets: an `<api-key>` element without `class` attribute is a `NamedSecretSource`, which fetches the secret of that name at each request from the secret store of the installation (see [secret stores](doc:credentials/secret-stores)). The default store reads the system property or environment variable of that name, which holds the plain key:
+`<providers config:override="true">` replaces the shipped list by the application's own, for an application that must not offer the public providers; `config:override="true"` on the `<config service-class="...">` element replaces the whole service configuration, the model catalog included, which is also what the Service Editor writes when it saves the service. Since a shipped provider exposes its models also without a key, an unqualified model that an additional provider exposes too is ambiguous and refuses the start of `AgentRuntimeService`: name the provider (`default-provider`, `provider` of an agent override) or replace the list.
 
-```bash
-export tl_openai_api_key="sk-..."
-export tl_anthropic_api_key="sk-ant-..."
-```
+This is the recommended form of a key, because the configuration then holds the name of the secret, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. The chapter [secrets and credentials](doc:credentials) describes all forms a key can take and where it can come from.
 
-This is the recommended form, because the configuration then holds the name of the secret, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. A secret that is not available does not stop the application; only a request of that provider fails. The chapter [secrets and credentials](doc:credentials) describes all forms a key can take and where it can come from.
-
-The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` therefore hold the plain key. `tl-ai-core.conf.xml` still defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` for them, for applications whose configuration references the aliases: an alias is read as an encrypted value, so such an application either writes `api-key="unencrypted:%ANTHROPIC_API_KEY%"` (the variable holding the plain key) or, better, replaces the alias by the `<api-key>` element above ([migration](doc:credentials/migration)).
+The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` hold the plain key. `tl-ai-core.conf.xml` also defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` for them, for applications whose configuration references the aliases: an alias is read as an encrypted value, so such an application either writes `api-key="unencrypted:%ANTHROPIC_API_KEY%"` (the variable holding the plain key) or, better, replaces the alias by the `<api-key>` element above ([migration](doc:credentials/migration)).
 
 A key given directly in the configuration is an `api-key` attribute. It is an encrypted configuration value, so a key in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key: `api-key="unencrypted:sk-..."`.
 

@@ -15,6 +15,20 @@
 							ordered="true"
 							type="Child"
 						/>
+						<reference name="parts"
+							composite="true"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+						<reference name="bagChildren"
+							bag="true"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.model:TLObject"/>

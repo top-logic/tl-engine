@@ -162,7 +162,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		this.checkBasicValue(object, attribute, aValue);
 
 		BidiMap<KnowledgeItem, KnowledgeAssociation> links = AbstractWrapper.resolveLinks(object, _liveQuery);
-		if (linkTo(links, toStorageObject(aValue)) != null) {
+		if (LinkStorageUtil.linkTo(links, toStorageObject(aValue)) != null) {
 			throw new IllegalArgumentException("'" + aValue + "' is already used and must not be added again to '"
 				+ this + "'");
 		}
@@ -191,7 +191,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		// Remove value
 		try {
 			KnowledgeAssociation link =
-				linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(aValue));
+				LinkStorageUtil.linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(aValue));
 			DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 			AttributeOperations.touch(object, attribute);
 		} catch (Exception ex) {
@@ -219,7 +219,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 
 		// Check if the value exists in the current collection
 		BidiMap<KnowledgeItem, KnowledgeAssociation> links = AbstractWrapper.resolveLinks(object, _liveQuery);
-		if (linkTo(links, toStorageObject(aValue)) == null) {
+		if (LinkStorageUtil.linkTo(links, toStorageObject(aValue)) == null) {
 			throw new IllegalArgumentException("Given value is not used and therefore cannot be removed from " + this);
 		}
 
@@ -236,18 +236,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		if (entry == null) {
 			return false;
 		}
-		return linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(entry)) != null;
-	}
-
-	/**
-	 * The link in the given live link map that points to the given storage value, or
-	 * <code>null</code> if there is none.
-	 */
-	private static KnowledgeAssociation linkTo(Map<KnowledgeItem, KnowledgeAssociation> links, Object storageValue) {
-		if (!(storageValue instanceof TLObject)) {
-			return null;
-		}
-		return links.get(((TLObject) storageValue).tHandle());
+		return LinkStorageUtil.linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(entry)) != null;
 	}
 
 	@Override

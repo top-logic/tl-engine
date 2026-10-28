@@ -23,6 +23,8 @@
 #   git config merge.tl-properties.driver 'f=tools/git/merge-properties.sh; if test -f $f; then sh $f %O %A %B %P; else git merge-file %A %O %B; fi'
 #
 # The registered command falls back to the text merge in a checkout of a branch without this script.
+# The same two patterns in "$(git rev-parse --git-common-dir)/info/attributes" make the driver apply
+# to branches whose .gitattributes does not name it yet.
 # .gitattributes assigns the driver to the files (merge=tl-properties). Without the registration,
 # Git uses its text merge for them.
 #

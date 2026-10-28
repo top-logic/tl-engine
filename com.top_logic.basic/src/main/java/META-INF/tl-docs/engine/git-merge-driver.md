@@ -28,6 +28,15 @@ git config merge.tl-properties.driver 'f=tools/git/merge-properties.sh; if test 
 
 Git runs the driver in the top-level directory of the worktree, so the relative path finds the script of the checked-out branch. In a checkout of a branch that does not contain the script yet, the command falls back to the text merge. Without that fallback, the missing script would make Git report a conflict with the file left at the own side and without conflict markers. Every merge then uses the driver: `git merge`, `git pull`, `git rebase`, `git cherry-pick` and `git merge-tree`. On Windows, Git for Windows provides `sh`, `awk` and `sort`.
 
+Git takes the attributes of a merge from the checked-out side. A branch that was created before `.gitattributes` named the driver therefore merges master as text, until its first master merge brings in that `.gitattributes`. Repeating the two entries in the attributes of the clone makes the driver apply to every branch. The file `info/attributes` in the Git directory is shared by all worktrees:
+
+```bash
+cat >> "$(git rev-parse --git-common-dir)/info/attributes" <<'EOF'
+**/META-INF/messages_*.properties merge=tl-properties
+**/WEB-INF/conf/resources/*.properties merge=tl-properties
+EOF
+```
+
 To check the registration, run `git config --get merge.tl-properties.driver`. With the driver registered, `git merge-tree --write-tree --name-only origin/master <branch>` lists only real conflicts, and no longer the bundles that merely received keys on both sides.
 
 ## Installing the driver for Gitea

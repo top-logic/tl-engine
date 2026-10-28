@@ -97,13 +97,13 @@
 				>
 					<panel with-inset="true">
 						<title>
-							<en>Choice by type</en>
-							<de>Auswahl nach Typ</de>
+							<en>Choose a category</en>
+							<de>Kategorie auswählen</de>
 						</title>
 						<text>
 							<label>
-								<en>The input offers the instances of the category type. A category created or deleted on the left appears in respectively disappears from its options at once.</en>
-								<de>Die Eingabe bietet die Instanzen des Kategorie-Typs an. Eine links angelegte oder gelöschte Kategorie erscheint sofort in ihren Optionen bzw. verschwindet daraus.</de>
+								<en>Create a category on the left with "New category", then open the selection below: the new category is there right away, without logging in again. Delete it on the left and it is gone from the selection just as quickly.</en>
+								<de>Legen Sie links mit „Neue Kategorie“ eine Kategorie an und öffnen Sie dann die Auswahl unten: Die neue Kategorie steht sofort zur Auswahl, ohne neue Anmeldung. Löschen Sie sie links wieder, ist sie ebenso schnell aus der Auswahl verschwunden.</de>
 							</label>
 						</text>
 						<fields max-columns="1">
@@ -120,13 +120,13 @@
 					</panel>
 					<panel with-inset="true">
 						<title>
-							<en>Field of a reference</en>
-							<de>Feld einer Referenz</de>
+							<en>Edit an appointment</en>
+							<de>Termin bearbeiten</de>
 						</title>
 						<text>
 							<label>
-								<en>Choose an appointment and edit it: the field "Category" offers the categories, including those created on the left after the form was opened.</en>
-								<de>Wählen Sie einen Termin und bearbeiten Sie ihn: Das Feld "Kategorie" bietet die Kategorien an, auch die nach dem Öffnen des Formulars links angelegten.</de>
+								<en>Choose an appointment and click "Edit". While the form is open, create a category on the left: you can pick it in the appointment's "Category" field right away, without closing and reopening the form. (If there is no appointment yet, create one in the calendar demo.)</en>
+								<de>Wählen Sie einen Termin und klicken Sie auf „Bearbeiten“. Legen Sie dann, während das Formular offen ist, links eine Kategorie an: Sie können sie sofort im Feld „Kategorie“ des Termins auswählen, ohne das Formular zu schließen und neu zu öffnen. (Gibt es noch keinen Termin, legen Sie einen in der Kalender-Demo an.)</de>
 							</label>
 						</text>
 						<fields max-columns="1">

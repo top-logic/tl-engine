@@ -37,13 +37,15 @@ import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.translation.DeepLTranslationService;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tools.resources.translate.DetectedTranslation;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.tools.resources.translate.deepl.DeepLTranslator;
 
 /**
  * Tests how {@link DeepLTranslationService} authenticates its requests against a mock DeepL API:
  * with the <code>api-key</code> shorthand, with configured <code>credentials</code>, and once more
- * with fresh credentials after a rejection.
+ * with fresh credentials after a rejection. Tests additionally the report of the detected source
+ * language.
  */
 @SuppressWarnings("javadoc")
 public class TestDeepLTranslationService extends AbstractTypedConfigurationTestCase {
@@ -60,8 +62,8 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 
 	private static final String TRANSLATION = "Hallo";
 
-	private static final String TRANSLATION_OK =
-		"{\"translations\":[{\"detected_source_language\":\"EN\",\"text\":\"" + TRANSLATION + "\"}]}";
+	/** The source language the {@link MockApi} reports as detected by default. */
+	private static final String DETECTED_LANGUAGE = "EN";
 
 	public interface Config extends ConfigurationItem {
 
@@ -96,6 +98,9 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 
 		final List<String> _authorizations = new CopyOnWriteArrayList<>();
 
+		/** The source language reported as detected, in the upper case form of the DeepL API. */
+		volatile String _detectedLanguage = DETECTED_LANGUAGE;
+
 		/**
 		 * @param status
 		 *        Status of the answer to the request with the given index, starting with 0.
@@ -112,12 +117,17 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 			String authorization = exchange.getRequestHeaders().getFirst(DeepLTranslator.AUTHORIZATION);
 			_authorizations.add(authorization == null ? "" : authorization);
 			int code = status.apply(index);
-			byte[] body = (code == 200 ? TRANSLATION_OK : "{\"message\":\"denied\"}").getBytes(StandardCharsets.UTF_8);
+			byte[] body = (code == 200 ? translationOk() : "{\"message\":\"denied\"}").getBytes(StandardCharsets.UTF_8);
 			exchange.getResponseHeaders().add("Content-Type", "application/json");
 			exchange.sendResponseHeaders(code, body.length);
 			try (OutputStream out = exchange.getResponseBody()) {
 				out.write(body);
 			}
+		}
+
+		private String translationOk() {
+			return "{\"translations\":[{\"detected_source_language\":\"" + _detectedLanguage + "\",\"text\":\""
+				+ TRANSLATION + "\"}]}";
 		}
 
 		String origin() {
@@ -246,6 +256,45 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 			assertEquals(TRANSLATION, ((ExposedService) getInstance(reread.getService())).translator()
 				.translate("Hello", "en", "de"));
 		}
+	}
+
+	/** An English text to translate to English is reported as English. */
+	public void testDetectEnglish() throws Exception {
+		try (MockApi api = new MockApi(index -> 200)) {
+			DetectedTranslation translation = service(api, "api-key='unencrypted:attribute-key'", "").translator()
+				.translateDetecting("Hello", "en");
+
+			assertEquals(new DetectedTranslation(TRANSLATION, "en", "en"), translation);
+		}
+	}
+
+	/** A German text to translate to English is translated and reported as German. */
+	public void testDetectGerman() throws Exception {
+		try (MockApi api = new MockApi(index -> 200)) {
+			api._detectedLanguage = "DE";
+			DetectedTranslation translation = service(api, "api-key='unencrypted:attribute-key'", "").translator()
+				.translateDetecting("Hallo", "en");
+
+			assertEquals(new DetectedTranslation(TRANSLATION, "de", "en"), translation);
+		}
+	}
+
+	/** A {@link Translator} not reporting the detected language reports it as unknown. */
+	public void testDetectDefault() {
+		Translator translator = new Translator() {
+			@Override
+			public String translate(String text, String sourceLanguage, String targetLanguage) {
+				assertNull(sourceLanguage);
+				return text + " [" + targetLanguage + "]";
+			}
+
+			@Override
+			public List<String> getSupportedLanguages() {
+				return List.of("de", "en");
+			}
+		};
+
+		assertEquals(new DetectedTranslation("Hallo [en]", null, "en"), translator.translateDetecting("Hallo", "en"));
 	}
 
 	private static String environmentApiKey() {

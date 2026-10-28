@@ -25,6 +25,18 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 .tlSelected .tlSelectionMarker { display: initial; }
 
 /*
+ * The rectangle drawn while dragging with Ctrl held, selecting the elements inside it. Only shown
+ * on the screen, it never takes a pointer event itself.
+ */
+.tlSelectionRectangle {
+	fill: var(--tl-surface-brand-subtle);
+	fill-opacity: 0.5;
+	stroke: var(--tl-border-interactive);
+	stroke-dasharray: 4 2;
+	pointer-events: none;
+}
+
+/*
  * The fixed parts of a Gantt chart: the row labels at the side, the time axis at the top and the
  * corner between them. The model paints their backdrop white, which an exported PDF keeps; on the
  * screen it is the surface of the panel, in either mode. A label the model gives no color of its

@@ -217,6 +217,9 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		/** Configuration name for {@link #getView()}. */
 		String VIEW = "view";
 
+		/** Configuration name for {@link #getFrame()}. */
+		String FRAME = "frame";
+
 		/** Configuration name for {@link #isDialog()}. */
 		String DIALOG = "dialog";
 
@@ -234,11 +237,36 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 
 		/**
 		 * Path of the view file to display, relative to the application's view directory.
+		 *
+		 * <p>
+		 * A view displayed somewhere in the window - or within the view the entry before displayed
+		 * - is revealed where it is displayed. Either this or {@link #getFrame() frame} is given.
+		 * </p>
 		 */
 		@Name(VIEW)
-		@Mandatory
+		@Nullable
 		@Format(ViewRefFormat.class)
 		ViewRef getView();
+
+		/**
+		 * The {@link com.top_logic.layout.view.tiles.FrameRouteConfig#getId() id} of the frame
+		 * declaration to drill down to, in the
+		 * {@link com.top_logic.layout.view.tiles.TileStackElement tile stack} holding the view the
+		 * entry before displayed.
+		 *
+		 * <p>
+		 * The frames of consecutive entries follow the frame graph of the stack: the first names a
+		 * declaration directly inside the stack, each further one a successor of the declaration
+		 * before. The {@link #getBindings() bindings} name every parameter of the frame and become
+		 * its parameters, so that the frame is the one a push of the user puts on the path; a
+		 * binding naming another channel of the frame view is written into the displayed frame,
+		 * e.g. the row a list frame selects. Either this or {@link #getView() view} is given; a frame
+		 * is not displayed as a {@link #isDialog() dialog}.
+		 * </p>
+		 */
+		@Name(FRAME)
+		@Nullable
+		String getFrame();
 
 		/**
 		 * Whether to display the view as a dialog on top of the current display, rather than within

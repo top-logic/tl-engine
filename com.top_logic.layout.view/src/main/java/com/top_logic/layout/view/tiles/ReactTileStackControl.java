@@ -188,7 +188,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		installRouteParticipant();
 
 		DirtyChannel initialDirty = frameDirtyChannel();
-		_frameControls.add(buildFrame(_initialViewPath, Map.of(), TileStackElement.Config.INITIAL, initialDirty));
+		_frameControls.add(buildFrame(_scope.root(), _initialViewPath, Map.of(), TileStackElement.Config.INITIAL,
+			initialDirty));
 		_frameDirty.add(initialDirty);
 		publishFrames();
 		updateFrames();
@@ -275,8 +276,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 			DirtyChannel dirty = frameDirtyChannel();
 			ReactControl control;
 			try {
-				control = buildFrame(ViewLoader.VIEW_BASE_PATH + frame.getViewRef(), frame.getParams(), frameKey(i),
-					dirty);
+				control = buildFrame(_scope.declaration(frame.getFrameId()),
+					ViewLoader.VIEW_BASE_PATH + frame.getViewRef(), frame.getParams(), frameKey(i), dirty);
 			} catch (RuntimeException ex) {
 				Logger.error("Failed to build tile frame.", ex, ReactTileStackControl.class);
 				break;
@@ -369,8 +370,15 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	/**
 	 * Creates the control of one frame: the view at the given path, in a child context carrying the
 	 * given params as channels and reporting unsaved changes to the given dirty channel.
+	 *
+	 * <p>
+	 * The context carries the declaration the frame is built for as its {@link FrameRoute} scope, so
+	 * that a {@link NavigatePushCommand push} displayed in the frame is checked against the
+	 * declarations that may follow it while the frame is built.
+	 * </p>
 	 */
-	private ReactControl buildFrame(String viewPath, Map<String, Object> params, String key, DirtyChannel dirty) {
+	private ReactControl buildFrame(FrameRoute declaration, String viewPath, Map<String, Object> params, String key,
+			DirtyChannel dirty) {
 		ViewElement frameView;
 		try {
 			frameView = ViewLoader.getOrLoadView(viewPath);
@@ -385,6 +393,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		}
 		frameContext.setDirtyChannel(dirty);
 		frameContext = frameContext.withScope(TileStackScope.class, _scope)
+			.withScope(FrameRoute.class, declaration)
 			.withScope(RevealPath.class, _here.append(_element, key));
 
 		for (Map.Entry<String, ViewChannel> shared : _sharedChannels.entrySet()) {
@@ -419,7 +428,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 * </p>
 	 */
 	private void installRouteParticipant() {
-		if (_scope.frameRoutes().isEmpty()) {
+		if (!_scope.hasAddresses()) {
 			// The stack declares no addressable frame: its path is display state only.
 			return;
 		}

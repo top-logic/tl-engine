@@ -7,16 +7,18 @@ package com.top_logic.layout.view.tiles;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -26,36 +28,46 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.ViewRef;
-import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * {@link ViewCommand} that pushes a new {@link TileFrame} onto the enclosing {@link TileStackScope
  * tile stack}.
  *
  * <p>
- * Resolves the target stack from the {@link ViewContext} - the command must be
- * executed from within a frame that was mounted by a {@link TileStackElement &lt;tile-stack&gt;}.
- * Captured at execution time: the command's main argument (mapped onto a named
- * channel of the new frame, if {@link Config#getBindInputTo() bind-input-to} is set) and the
- * current value of every channel referenced by a {@code <bind>}.
+ * Resolves the target stack from the {@link ViewContext} - the command must be executed from within
+ * a frame that was mounted by a {@link TileStackElement &lt;tile-stack&gt;}. The frame is named by
+ * the {@link Config#getFrame() id} of its {@link FrameRouteConfig &lt;frame&gt;} declaration in that
+ * stack, which supplies the view, the parameters and the label of the frame. Captured at execution
+ * time: the command's main argument (mapped onto a named channel of the new frame, if
+ * {@link Config#getBindInputTo() bind-input-to} is set) and the current value of every channel
+ * referenced by a {@code <bind>}.
  * </p>
  *
  * <p>
- * Example - drilling into a product detail view from a button next to a product table:
+ * The push is checked when the frame displaying it is built: it must name a
+ * {@link FrameRouteConfig#getSuccessors() successor} of the declaration that frame was built for -
+ * a declaration directly inside the stack for a push from its initial view - and hand over exactly
+ * the {@link FrameRoute#paramNames() parameters} of the named frame, no more and no less. A
+ * violation is a {@link ConfigurationError} that fails the build of the frame.
+ * </p>
+ *
+ * <p>
+ * Example - drilling into a product detail frame from a button next to a product table:
  * </p>
  *
  * <pre>
  * &lt;button&gt;
  *   &lt;action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
- *     view="products/detail.view.xml"
+ *     frame="product"
  *     inputs="selectedProduct"
- *     bind-input-to="product"
- *     frame-label="product.detail.crumb"/&gt;
+ *     bind-input-to="product"/&gt;
  *   &lt;label&gt;&lt;en&gt;Open&lt;/en&gt;&lt;/label&gt;
  * &lt;/button&gt;
  * </pre>
@@ -79,8 +91,8 @@ public class NavigatePushCommand implements ViewCommand {
 		@ClassDefault(NavigatePushCommand.class)
 		Class<? extends ViewCommand> getImplementationClass();
 
-		/** Configuration name for {@link #getView()}. */
-		String VIEW = "view";
+		/** Configuration name for {@link #getFrame()}. */
+		String FRAME = "frame";
 
 		/** Configuration name for {@link #getBindings()}. */
 		String BINDINGS = "bindings";
@@ -92,12 +104,17 @@ public class NavigatePushCommand implements ViewCommand {
 		String FRAME_LABEL = "frame-label";
 
 		/**
-		 * Path of the view file to mount as the new frame, relative to {@code /WEB-INF/views/}.
+		 * The {@link FrameRouteConfig#getId() id} of the declaration of the frame to push, in the
+		 * stack the command is displayed in.
+		 *
+		 * <p>
+		 * The declaration must be a {@link FrameRouteConfig#getSuccessors() successor} of the one the
+		 * frame displaying the command was built for.
+		 * </p>
 		 */
-		@Name(VIEW)
+		@Name(FRAME)
 		@Mandatory
-		@Format(ViewRefFormat.class)
-		ViewRef getView();
+		String getFrame();
 
 		/**
 		 * Channel bindings from the calling scope to the new frame's channels.
@@ -107,6 +124,11 @@ public class NavigatePushCommand implements ViewCommand {
 		 * push time and stores it under {@link ChannelBindingConfig#getChannel()} in the pushed
 		 * {@link TileFrame#getParams() frame params}. The mounted view's channel of that name
 		 * receives the captured value as its initial state.
+		 * </p>
+		 *
+		 * <p>
+		 * Together with {@link #getBindInputTo() bind-input-to}, the bindings name exactly the
+		 * {@link FrameRoute#paramNames() parameters} of the pushed frame.
 		 * </p>
 		 */
 		@Name(BINDINGS)
@@ -144,7 +166,9 @@ public class NavigatePushCommand implements ViewCommand {
 		PolymorphicConfiguration<? extends TileLabelProvider> getFrameLabel();
 	}
 
-	private final ViewRef _view;
+	private final String _frame;
+
+	private final String _location;
 
 	private final List<ChannelBindingConfig> _bindings;
 
@@ -157,7 +181,8 @@ public class NavigatePushCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public NavigatePushCommand(InstantiationContext context, Config config) {
-		_view = config.getView();
+		_frame = config.getFrame();
+		_location = String.valueOf(config.location());
 		_bindings = config.getBindings();
 		_bindInputTo = config.getBindInputTo();
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getFrameLabel();
@@ -186,7 +211,83 @@ public class NavigatePushCommand implements ViewCommand {
 		}
 
 		ResKey label = _frameLabel != null ? _frameLabel.compute(viewContext) : null;
-		scope.push(_view.getPath(), label, Collections.unmodifiableMap(params));
+		scope.push(_frame, label, Collections.unmodifiableMap(params));
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * A rule that checks the push against the frame declarations of the stack it is displayed in,
+	 * once it is built there.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return new PushCheck();
+	}
+
+	/**
+	 * The names of the frame parameters the push hands over.
+	 */
+	private Set<String> handedOver() {
+		Set<String> result = new LinkedHashSet<>();
+		if (_bindInputTo != null) {
+			result.add(_bindInputTo);
+		}
+		for (ChannelBindingConfig binding : _bindings) {
+			result.add(binding.getChannel());
+		}
+		return result;
+	}
+
+	/**
+	 * Checks the push in the given context.
+	 *
+	 * @throws ConfigurationError
+	 *         If the push names no successor of the declaration the frame displaying it was built
+	 *         for, or does not hand over exactly the parameters of the frame it names.
+	 */
+	void check(ViewContext context) {
+		TileStackScope stack = context.getScope(TileStackScope.class);
+		FrameRoute here = context.getScope(FrameRoute.class);
+		if (stack == null || here == null) {
+			// Displayed outside of a stack, e.g. in a preview of the frame view: nothing to push onto.
+			return;
+		}
+		FrameRoute target = stack.declaration(_frame);
+		if (target == null) {
+			throw new ConfigurationError("The " + Config.TAG_NAME + " at " + _location + " names the frame '"
+				+ _frame + "', which the tile stack does not declare; declared are "
+				+ stack.declarations().stream().map(FrameRoute::id).toList() + ".");
+		}
+		if (!here.successors().contains(target)) {
+			throw new ConfigurationError("The " + Config.TAG_NAME + " at " + _location + " in "
+				+ here.describe() + " names the frame '" + _frame
+				+ "', which is no successor of that declaration; its successors are "
+				+ here.successors().stream().map(FrameRoute::id).toList() + ".");
+		}
+		Set<String> handedOver = handedOver();
+		Set<String> expected = target.paramNames();
+		if (!handedOver.equals(expected)) {
+			throw new ConfigurationError("The " + Config.TAG_NAME + " at " + _location + " in "
+				+ here.describe() + " hands over the parameters " + handedOver + " to " + target.describe()
+				+ ", which holds the parameters " + expected + ": a push binds exactly the parameters of"
+				+ " the frame it names.");
+		}
+	}
+
+	/**
+	 * The {@link #getIntrinsicRule() intrinsic rule} of the push, checking it where it is built and
+	 * allowing it from then on.
+	 */
+	private final class PushCheck implements ViewExecutabilityRule, ContextDependentRule {
+
+		@Override
+		public void bind(ViewContext context) {
+			check(context);
+		}
+
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			return ExecutableState.EXECUTABLE;
+		}
 	}
 }

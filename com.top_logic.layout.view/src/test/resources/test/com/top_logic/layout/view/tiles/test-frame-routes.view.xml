@@ -9,7 +9,7 @@
 			initial="tiles/overview.view.xml"
 			path="navPath"
 		>
-			<frame
+			<frame id="person"
 				final-title="true"
 				route="person/:person"
 				view="tiles/person-detail.view.xml"
@@ -23,7 +23,7 @@
 					inputs="person"
 				/>
 			</frame>
-			<frame
+			<frame id="note"
 				route="note"
 				view="tiles/note.view.xml"
 			/>

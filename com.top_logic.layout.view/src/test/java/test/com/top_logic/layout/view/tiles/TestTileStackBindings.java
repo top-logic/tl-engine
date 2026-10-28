@@ -46,6 +46,7 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.tiles.FrameRoute;
 import com.top_logic.layout.view.tiles.TileStackElement;
 import com.top_logic.layout.view.tiles.TileStackScope;
 import com.top_logic.model.listen.ModelScope;
@@ -62,6 +63,9 @@ public class TestTileStackBindings extends TestCase {
 
 	/** The view of every frame, the initial one and the pushed ones. */
 	private static final String FRAME_VIEW = "bindings-frame.view.xml";
+
+	/** The id of the declaration of the pushed frame. */
+	private static final String FRAME = "frame";
 
 	/** The channel holding the path of the stack. */
 	private static final String PATH = "navPath";
@@ -139,7 +143,8 @@ public class TestTileStackBindings extends TestCase {
 		root.attach();
 		root.write(new TagWriter());
 
-		_scope = new TileStackScope(channel(_outer, PATH));
+		_scope = new TileStackScope(channel(_outer, PATH),
+			List.of(new FrameRoute(FRAME, FRAME_VIEW, null, Map.of(), Map.of(), null)));
 	}
 
 	@Override
@@ -155,7 +160,7 @@ public class TestTileStackBindings extends TestCase {
 	 * pushed one.
 	 */
 	public void testBoundChannelIsTheEnclosingOne() {
-		_scope.push(FRAME_VIEW, ResKey.text("pushed"), Map.of());
+		_scope.push(FRAME, ResKey.text("pushed"), Map.of());
 		assertEquals("The initial and the pushed frame are displayed.", 2, ContextProbe.CONTEXTS.size());
 
 		ViewChannel outer = channel(_outer, SHARED);
@@ -173,7 +178,7 @@ public class TestTileStackBindings extends TestCase {
 		channel(_outer, SHARED).set("outside");
 		assertEquals("outside", channel(initial, SHARED).get());
 
-		_scope.push(FRAME_VIEW, ResKey.text("pushed"), Map.of());
+		_scope.push(FRAME, ResKey.text("pushed"), Map.of());
 		ViewContext pushed = ContextProbe.CONTEXTS.get(1);
 		assertEquals("A pushed frame sees the current value.", "outside", channel(pushed, SHARED).get());
 
@@ -185,7 +190,7 @@ public class TestTileStackBindings extends TestCase {
 
 	/** A channel that is not bound is a channel of its own in every view declaring it. */
 	public void testUnboundChannelIsNotShared() {
-		_scope.push(FRAME_VIEW, ResKey.text("pushed"), Map.of());
+		_scope.push(FRAME, ResKey.text("pushed"), Map.of());
 		ViewContext initial = ContextProbe.CONTEXTS.get(0);
 		ViewContext pushed = ContextProbe.CONTEXTS.get(1);
 		ViewChannel outer = channel(_outer, PRIVATE);

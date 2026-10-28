@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -170,6 +170,45 @@ library draws it in its own style.
 }]]></suggestions>
 	</input-control>
 </field>
+```
+
+**Mentions in a formatted text** — `WysiwygControlProvider`, option `<mentions>`: each `<mention>`
+refers to objects by a `trigger` character of its own, such as `@` or `#`. Typing the trigger at the
+start of a word starts the mention, the text typed after it is the query; the TL-Script function
+`options` with the signature `self -> query -> objects` computes the objects offered for it. `self`
+is the edited object (empty in a field editing no attribute of an object), the result a single
+object or a list of objects, shown by their labels in the order given - the function alone filters
+by the query and limits the number. The editor detects trigger and query itself and asks the server,
+after a short pause in typing, with these two alone; ordinary typing asks nothing. ArrowUp and
+ArrowDown move through the list, Enter or a click inserts the active object, Escape closes the list.
+The object is stored as an object link `<a class="tlObject" href="…">label</a>`; `presentation`
+decides how the editor shows it: `chip` (the default) is a unit removed as a whole, its text not
+editable, stored with the trigger in the attribute `data-mention`; `link` is an ordinary link whose
+text is edited like the text around it. A click on an object link of the displayed text leads to the
+object, Ctrl+click (Cmd+click) does so while editing. The list is the part `Listbox`, as for the
+suggestions of a text. The project demo offers the members of a ticket's project under `@`:
+
+```xml
+<property name="description" type="tl.model.wysiwyg:Html">
+	<annotations>
+		<input-control>
+			<impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
+				<mentions>
+					<mention presentation="chip" trigger="@">
+						<options><![CDATA[self -> query -> {
+	project = if($self == null, null, $self.container());
+	if($project == null, [],
+		$project.get(`tl.demo.projectManagement:ProjectScope#members`)
+			.filter(person -> $person.label().stringContains($query))
+			.sort(comparator(person -> $person.label().toLowerCase()))
+			.subList(0, 10))
+}]]></options>
+					</mention>
+				</mentions>
+			</impl>
+		</input-control>
+	</annotations>
+</property>
 ```
 
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:

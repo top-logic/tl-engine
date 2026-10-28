@@ -122,19 +122,13 @@
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
+					frame="milestones"
 					inputs="project"
 					observed-types="tl.demo.projectManagement:ProjectScope"
-					view="projects/milestone-list.view.xml"
 				>
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
-						<value>
-							<en>Milestones</en>
-							<de>Meilensteine</de>
-						</value>
-					</frame-label>
 				</action>
 			</tile>
 			<tile id="notes"
@@ -183,19 +177,13 @@
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
+					frame="notes"
 					inputs="project"
 					observed-types="tl.demo.projectManagement:ProjectScope"
-					view="projects/notes.view.xml"
 				>
 					<executability>
 						<disabled-if expr="if($project == null || $project.get(`tl.demo.projectManagement:ProjectScope#notes`).isEmpty(), #('The project has no notes.'@en, 'Das Projekt hat keine Notizen.'@de))"/>
 					</executability>
-					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
-						<value>
-							<en>Notes</en>
-							<de>Notizen</de>
-						</value>
-					</frame-label>
 				</action>
 			</tile>
 			<tile id="deliverables"
@@ -213,18 +201,12 @@
 				</card>
 				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
+					frame="deliverables"
 					inputs="project"
-					view="projects/deliverables.view.xml"
 				>
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
-						<value>
-							<en>Deliverables</en>
-							<de>Liefergegenstände</de>
-						</value>
-					</frame-label>
 				</action>
 			</tile>
 			<!--

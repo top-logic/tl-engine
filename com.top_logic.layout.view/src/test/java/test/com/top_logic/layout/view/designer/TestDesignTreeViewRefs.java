@@ -35,7 +35,6 @@ import com.top_logic.layout.view.designer.DesignTreeNodes;
 import com.top_logic.layout.view.designer.ErrorDesignTreeNode;
 import com.top_logic.layout.view.designer.ViewLinkDesignTreeNode;
 import com.top_logic.layout.view.designer.VirtualDesignTreeNode;
-import com.top_logic.layout.view.element.AbstractTableElement;
 import com.top_logic.layout.view.element.ButtonElement;
 import com.top_logic.layout.view.tiles.FrameRouteConfig;
 import com.top_logic.layout.view.tiles.NavigatePushCommand;
@@ -102,7 +101,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 		view("b-root.view.xml",
 			"<channels><channel name='navPath'/></channels>"
 				+ "<tile-stack initial='b-initial.view.xml' path='navPath'>"
-				+ "<frame route='detail' view='b-frame.view.xml'/>"
+				+ "<frame id='detail' route='detail' view='b-frame.view.xml'/>"
 				+ "</tile-stack>");
 		view("b-initial.view.xml", "<panel title='Initial'/>");
 		view("b-frame.view.xml", "<panel title='Frame'/>");
@@ -120,8 +119,11 @@ public class TestDesignTreeViewRefs extends TestCase {
 		assertEquals(1, framesGroup.getChildren().size());
 		DesignTreeNode frame = framesGroup.getChildren().get(0);
 		assertTrue(configOf(frame) instanceof FrameRouteConfig);
-		assertEquals("The frame view is the frame's only child.", 1, frame.getChildren().size());
-		link(frame.getChildren().get(0), "b-frame.view.xml");
+		DesignTreeNode viewGroup = group(frame, FrameRouteConfig.VIEW);
+		assertEquals(1, viewGroup.getChildren().size());
+		link(viewGroup.getChildren().get(0), "b-frame.view.xml");
+		assertNotNull("The entries of a frame can be edited.",
+			group(frame, FrameRouteConfig.CONTENTS).getChildContainer());
 
 		assertNotNull("A frame can be added.", AddChildCommand.execute(framesGroup, null));
 		assertEquals(2, ((TileStackElement.Config) configOf(stack)).getFrames().size());
@@ -129,23 +131,31 @@ public class TestDesignTreeViewRefs extends TestCase {
 	}
 
 	/**
-	 * A view pushed from the activation command of a table is a link below that command.
+	 * The view of a frame declaration nested in another one is a link below the nested declaration,
+	 * which is an entry of the enclosing declaration.
 	 */
-	public void testNavigatePushInTableIsLink() throws Exception {
+	public void testNestedFrameIsLink() throws Exception {
 		view("c-root.view.xml",
-			"<table><rows>list()</rows>"
-				+ "<on-activate class='" + NavigatePushCommand.class.getName() + "' view='c-pushed.view.xml'/>"
-				+ "</table>");
-		view("c-pushed.view.xml", "<panel title='Pushed'/>");
+			"<channels><channel name='navPath'/></channels>"
+				+ "<tile-stack initial='c-initial.view.xml' path='navPath'>"
+				+ "<frame id='outer' route='outer' view='c-outer.view.xml'>"
+				+ "<frame id='inner' route='inner' view='c-inner.view.xml'/>"
+				+ "</frame>"
+				+ "</tile-stack>");
+		view("c-initial.view.xml", "<panel title='Initial'/>");
+		view("c-outer.view.xml", "<panel title='Outer'/>");
+		view("c-inner.view.xml", "<panel title='Inner'/>");
 
 		DesignTreeNode root = build("c-root.view.xml");
 
-		DesignTreeNode pushed = linkTo(root, "c-pushed.view.xml");
-		assertTrue("The pushed view is shown below its command.",
-			configOf(pushed.getParent()) instanceof NavigatePushCommand.Config);
-		DesignTreeNode group = pushed.getParent().getParent();
-		assertTrue(group instanceof VirtualDesignTreeNode);
-		assertEquals(AbstractTableElement.Config.ON_ACTIVATE, group.getProperty().getPropertyName());
+		DesignTreeNode inner = linkTo(root, "c-inner.view.xml");
+		DesignTreeNode declaration = inner.getParent().getParent();
+		assertTrue("The nested frame view is shown below its declaration.",
+			configOf(declaration) instanceof FrameRouteConfig);
+		assertEquals("inner", ((FrameRouteConfig) configOf(declaration)).getId());
+		DesignTreeNode contents = declaration.getParent();
+		assertEquals(FrameRouteConfig.CONTENTS, contents.getProperty().getPropertyName());
+		assertEquals("outer", ((FrameRouteConfig) configOf(contents.getParent())).getId());
 	}
 
 	/**

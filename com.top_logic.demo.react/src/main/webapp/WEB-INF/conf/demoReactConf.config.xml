@@ -694,14 +694,18 @@
 			listed here is offered as a link; following it reveals the views below in order and
 			hands each of them the values its bindings compute.
 			
-			The frames a target pushes carry the same channel values and the same labels as the
-			frames the user's own drill-down pushes, so a target leading into a drill-down the user
+			The frames a target pushes carry the same channel values as the frames the user's own
+			drill-down pushes, and both are named by the label the project drill-down declares for
+			the frame view (projects.view.xml), so a target leading into a drill-down the user
 			already has leaves it untouched.
 			
-			Each view is looked for within the view shown before it, and a view that the drill-down
-			reaches by pushing a frame is named as its own step: the milestone list sits behind the
-			Milestones tile of the project cockpit, so it is a frame after the cockpit frame, and
-			its label is the one that tile pushes with.
+			Each view is looked for within the view shown before it, and a frame the drill-down
+			reaches by pushing it is named as its own step by the id of its <frame> declaration
+			(frame="..."), following the nesting of the declarations: the milestone list sits behind
+			the Milestones tile of the project cockpit, so it is the frame milestones after the frame
+			project. The bindings of such a step name the parameters of the frame; a further binding
+			(the milestone of the milestone list) is written into the frame view, where it selects the
+			row.
 		-->
 		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
 			<instance>
@@ -718,19 +722,13 @@
 								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="$object.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
-							view="projects/milestones.view.xml"
-						>
+						<show frame="project">
 							<bind
 								channel="project"
 								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="#('Milestones'@en, 'Meilensteine'@de)"
-							view="projects/milestone-list.view.xml"
-						>
+						<show frame="milestones">
 							<bind
 								channel="project"
 								expr="$object.container()"
@@ -745,19 +743,13 @@
 								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="$object.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
-							view="projects/milestones.view.xml"
-						>
+						<show frame="project">
 							<bind
 								channel="project"
 								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="#('Milestones'@en, 'Meilensteine'@de)"
-							view="projects/milestone-list.view.xml"
-						>
+						<show frame="milestones">
 							<bind
 								channel="project"
 								expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`).container()"
@@ -767,19 +759,13 @@
 								expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`)"
 							/>
 						</show>
-						<show
-							label-expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#name`)"
-							view="projects/tickets.view.xml"
-						>
+						<show frame="milestone">
 							<bind
 								channel="milestone"
 								expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`)"
 							/>
 						</show>
-						<show
-							label-expr="$object.get(`tl.demo.projectManagement:Ticket#title`)"
-							view="projects/ticket-detail.view.xml"
-						>
+						<show frame="ticket">
 							<bind channel="ticket"/>
 						</show>
 					</target>
@@ -796,8 +782,8 @@
 							<bind channel="selectedPerson"/>
 						</show>
 						<show
+							frame="person"
 							label-expr="$object.get(`tl.accounts:Person#name`)"
-							view="demo/tiles-demo/person-detail.view.xml"
 						>
 							<bind channel="person"/>
 						</show>

@@ -171,7 +171,9 @@ public final class DisplayTargets {
 	public void checkBindings(Log log, Function<String, Set<String>> channelsOfView) {
 		for (DisplayTarget target : _targets) {
 			for (ShowStep show : target.shows()) {
-				if (show.bindings().isEmpty()) {
+				if (show.bindings().isEmpty() || show.viewRef() == null) {
+					// The parameters of a frame are checked against its declaration when it is drilled
+					// down to: which stack declares it is known only there.
 					continue;
 				}
 				Set<String> declared = channelsOfView.apply(show.viewRef());
@@ -231,6 +233,9 @@ public final class DisplayTargets {
 		ShowStep first = target.first();
 		if (first.dialog()) {
 			return DIALOG_NEARNESS;
+		}
+		if (first.viewRef() == null) {
+			return UNMOUNTED_NEARNESS;
 		}
 		List<MountPath> paths = mounts == null ? List.of() : mounts.getMounts(first.viewRef());
 		if (paths.isEmpty()) {

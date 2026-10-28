@@ -46,6 +46,10 @@ public class RelativeComponentNames extends Function1<OptionModel<ComponentName>
 
 	@Override
 	public OptionModel<ComponentName> apply(ComponentName root) {
+		if (_ml == null) {
+			// There is no layout to choose a component from, e.g. in a React application.
+			return new LazyListOptionModel<>(Collections::emptyList);
+		}
 		if (root == null) {
 			if (_contextComponent == null) {
 				// The edited configuration does not belong to a component, e.g. the configuration of

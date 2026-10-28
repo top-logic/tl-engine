@@ -22,8 +22,9 @@
 #   git config include.path ../tools/git/gitconfig
 #
 # The included gitconfig registers the driver; its command falls back to the text merge in a
-# checkout of a branch without this script. The same two patterns in "$(git rev-parse --git-common-dir)/info/attributes" make the driver apply
-# to branches whose .gitattributes does not name it yet.
+# checkout of a branch without this script. The same two patterns in
+# "$(git rev-parse --git-common-dir)/info/attributes" make the driver apply to branches whose
+# .gitattributes does not name it yet.
 # .gitattributes assigns the driver to the files (merge=tl-properties). Without the registration,
 # Git uses its text merge for them.
 #

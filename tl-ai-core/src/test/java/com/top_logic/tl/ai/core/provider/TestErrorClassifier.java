@@ -25,8 +25,9 @@ public class TestErrorClassifier extends TestCase {
 		assertEquals(Kind.OVERLOADED, ErrorClassifier.classifyByStatus(500));
 		assertEquals(Kind.OVERLOADED, ErrorClassifier.classifyByStatus(503));
 		assertEquals(Kind.OVERLOADED, ErrorClassifier.classifyByStatus(529));
-		// Not part of the shared fallback: these are provider-specific in Anthropic only.
-		assertEquals(Kind.INVALID_REQUEST, ErrorClassifier.classifyByStatus(402));
+		// Payment Required: what Mistral answers for an account whose payment failed.
+		assertEquals(Kind.BILLING, ErrorClassifier.classifyByStatus(402));
+		// Not part of the shared fallback: provider-specific in Anthropic only.
 		assertEquals(Kind.INVALID_REQUEST, ErrorClassifier.classifyByStatus(413));
 		assertEquals(Kind.INVALID_REQUEST, ErrorClassifier.classifyByStatus(400));
 		assertEquals(Kind.INVALID_REQUEST, ErrorClassifier.classifyByStatus(404));
@@ -37,7 +38,7 @@ public class TestErrorClassifier extends TestCase {
 		assertEquals(Kind.AUTHENTICATION, ErrorClassifier.classify(null, 401, null));
 		assertEquals(Kind.RATE_LIMITED, ErrorClassifier.classify("whatever", 429, Map.of()));
 		assertEquals(Kind.OVERLOADED, ErrorClassifier.classify(null, 500, null));
-		assertEquals(Kind.INVALID_REQUEST, ErrorClassifier.classify(null, 402, null));
+		assertEquals(Kind.BILLING, ErrorClassifier.classify(null, 402, null));
 	}
 
 	/** The OpenAI code map wins over the status; unknown codes fall back to status. */

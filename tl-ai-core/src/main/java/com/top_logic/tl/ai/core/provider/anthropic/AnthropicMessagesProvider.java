@@ -312,7 +312,7 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	 * Classifies an Anthropic API error using the {@code error.type} string and HTTP status code.
 	 * The type field is authoritative; the status code is the fallback. Beyond the shared
 	 * {@link ErrorClassifier#classifyByStatus(int) status fallback}, Anthropic additionally maps
-	 * {@code 402} to billing and {@code 413} to a context-window overflow.
+	 * {@code 413} to a context-window overflow.
 	 */
 	static ProviderException.Kind classifyError(String errorType, int statusCode) {
 		ProviderException.Kind byType = ERROR_TYPE_MAP.get(errorType);
@@ -320,7 +320,6 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 			return byType;
 		}
 		return switch (statusCode) {
-			case 402 -> ProviderException.Kind.BILLING;
 			case 413 -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
 			default -> ErrorClassifier.classifyByStatus(statusCode);
 		};

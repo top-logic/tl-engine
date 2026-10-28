@@ -34,6 +34,7 @@ import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.I18NCategory;
+import com.top_logic.tools.resources.translate.DetectedTranslation;
 import com.top_logic.tools.resources.translate.Translator;
 
 /**
@@ -223,6 +224,26 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		handleTranslationSize(text);
 		try {
 			return _translator.translate(text, sourceLanguage, targetLanguage);
+		} catch (Exception ex) {
+			throw new I18NRuntimeException(I18NConstants.HTTP_REQUEST_ERROR__REASON.fill(ex.getMessage()), ex);
+		}
+	}
+
+	/**
+	 * Translates the given text to the target language, detecting the language of the given text
+	 * automatically.
+	 *
+	 * @return The translation together with the detected source language, <code>null</code> as
+	 *         source language for an empty text or if the translator does not report it.
+	 */
+	@Override
+	public DetectedTranslation translateDetecting(String text, String targetLanguage) {
+		if (StringServices.isEmpty(text)) {
+			return new DetectedTranslation(StringServices.EMPTY_STRING, null, targetLanguage);
+		}
+		handleTranslationSize(text);
+		try {
+			return _translator.translateDetecting(text, targetLanguage);
 		} catch (Exception ex) {
 			throw new I18NRuntimeException(I18NConstants.HTTP_REQUEST_ERROR__REASON.fill(ex.getMessage()), ex);
 		}

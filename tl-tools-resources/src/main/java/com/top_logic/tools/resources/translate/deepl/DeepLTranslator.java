@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.top_logic.tools.resources.translate.ConnectionAuthentication;
+import com.top_logic.tools.resources.translate.DetectedTranslation;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.tools.resources.translate.deepl.protocol.Glossaries;
 import com.top_logic.tools.resources.translate.deepl.protocol.Glossary;
@@ -419,11 +420,23 @@ public class DeepLTranslator implements Translator {
 
 	@Override
 	public String translate(String text, String sourceLanguage, String targetLanguage) {
-		String json;
+		return getTranslationText(requestTranslation(text, sourceLanguage, targetLanguage));
+	}
+
+	@Override
+	public DetectedTranslation translateDetecting(String text, String targetLanguage) {
+		List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> tuples =
+			requestTranslation(text, null, targetLanguage);
+		String detected = tuples.isEmpty() ? null : tuples.get(0).getDetectedSourceLanguage();
+		return new DetectedTranslation(getTranslationText(tuples),
+			isEmpty(detected) ? null : normalizeLanguage(detected), targetLanguage);
+	}
+
+	private List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> requestTranslation(String text,
+			String sourceLanguage, String targetLanguage) {
 		try {
 			URL url = buildTranslateURL(sourceLanguage, targetLanguage);
-			json = request(url, text);
-			return getTranslationFromJSONString(json);
+			return parseTranslationResult(request(url, text));
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}
@@ -522,8 +535,8 @@ public class DeepLTranslator implements Translator {
 		return Glossaries.readGlossaries(json(result));
 	}
 
-	private String getTranslationFromJSONString(String json) throws IOException {
-		List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> tuples = parseTranslationResult(json);
+	private static String getTranslationText(
+			List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> tuples) {
 		StringBuilder translation = new StringBuilder();
 		for (com.top_logic.tools.resources.translate.deepl.protocol.Translation tuple : tuples) {
 			String translatedText = tuple.getText();

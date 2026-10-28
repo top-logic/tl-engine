@@ -19,14 +19,15 @@ The result is sorted by key in byte order, the order of the generated files. On 
 
 ## Registering the driver in a clone
 
-Once per clone, in its top-level directory. The configuration of a clone holds for all its worktrees:
+Git never reads the command of a merge driver from the repository content, only from a Git configuration. The repository therefore keeps the driver's settings in the file `tools/git/gitconfig`, and a clone includes that file into its configuration. Once per clone, in the top-level directory of its main checkout:
 
 ```bash
-git config merge.tl-properties.name "TopLogic resource bundle merge"
-git config merge.tl-properties.driver 'f=tools/git/merge-properties.sh; if test -f $f; then sh $f %O %A %B %P; else git merge-file %A %O %B; fi'
+git config include.path ../tools/git/gitconfig
 ```
 
-Git runs the driver in the top-level directory of the worktree, so the relative path finds the script of the checked-out branch. In a checkout of a branch that does not contain the script yet, the command falls back to the text merge. Without that fallback, the missing script would make Git report a conflict with the file left at the own side and without conflict markers. Every merge then uses the driver: `git merge`, `git pull`, `git rebase`, `git cherry-pick` and `git merge-tree`. On Windows, Git for Windows provides `sh`, `awk` and `sort`.
+Git resolves the relative path against the directory of the configuration file, the Git directory `.git`, so the include reads `tools/git/gitconfig` of the main checkout. The configuration of a clone holds for all its worktrees, so they read the same file. A change of the driver's settings takes effect with the next pull of the main checkout, without a new registration. As long as the branch checked out there does not contain the file, Git finds nothing to include and merges the bundles as text.
+
+The registered command runs `tools/git/merge-properties.sh`. Git runs the driver in the top-level directory of the worktree, so the relative path finds the script of the checked-out branch. In a checkout of a branch that does not contain the script yet, the command falls back to the text merge. Without that fallback, the missing script would make Git report a conflict with the file left at the own side and without conflict markers. Every merge then uses the driver: `git merge`, `git pull`, `git rebase`, `git cherry-pick` and `git merge-tree`. On Windows, Git for Windows provides `sh`, `awk` and `sort`.
 
 Git takes the attributes of a merge from the checked-out side. A branch that was created before `.gitattributes` named the driver therefore merges master as text, until its first master merge brings in that `.gitattributes`. Repeating the two entries in the attributes of the clone makes the driver apply to every branch. The file `info/attributes` in the Git directory is shared by all worktrees:
 

@@ -22,7 +22,7 @@ Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTest
 
 **IMPORTANT**: Always build from the project root using `-pl <module-dir>`, never by `cd`-ing into a module directory. The build uses a workspace-local Maven repository; generate it once per workspace with `.claude/scripts/local-m2.sh`. Never use the global Maven repository (`~/.m2/repository`) and never pass `-Dmaven.repo.local=$HOME/.m2/repository` — each workspace has its own local repo.
 
-**Merge driver for resource bundles**: register the driver `tl-properties` once per clone (two `git config` lines, see [engine/git-merge-driver.md](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/git-merge-driver.md)). It merges `messages_*.properties` and `WEB-INF/conf/resources/*.properties` key by key, so two branches that add different keys no longer conflict.
+**Merge driver for resource bundles**: register the driver `tl-properties` once per clone (`git config include.path ../tools/git/gitconfig` in the main checkout, see [engine/git-merge-driver.md](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/git-merge-driver.md)). It merges `messages_*.properties` and `WEB-INF/conf/resources/*.properties` key by key, so two branches that add different keys no longer conflict.
 
 ### Refreshing the Workspace After a Branch Switch
 

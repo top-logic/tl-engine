@@ -18,8 +18,13 @@ import com.top_logic.factory.agent.AgentTasks;
 import com.top_logic.factory.ci.CIBuild;
 import com.top_logic.factory.ci.CIBuildStart;
 import com.top_logic.factory.ci.ProjectCI;
+import com.top_logic.factory.tenant.TenantMembers;
+import com.top_logic.factory.tenant.TenantMembers.NewAccount;
+import com.top_logic.factory.tenant.TenantRole;
 import com.top_logic.factory.tenant.Tenants;
 import com.top_logic.factory.workspace.WorkspaceService;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -28,8 +33,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * TL-Script functions managing the workspaces of the projects of the control application, and
- * telling the tenant and the projects of the current user.
+ * TL-Script functions managing the workspaces of the projects of the control application and the
+ * members of its tenants, and telling the tenant and the projects of the current user.
  *
  * <p>
  * The functions changing a project, its workspace or its CI job require the right to write the
@@ -124,6 +129,134 @@ public class FactoryFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static ResKey checkTenantMembers(TLObject tenant, Object members) {
 		return Tenants.checkMembers(tenant, members);
+	}
+
+	/**
+	 * Creates a tenant with the account of its first administrator. Only a user who may create
+	 * tenants (an operator) may do so.
+	 *
+	 * @param name
+	 *        The name of the tenant, unique among the tenants.
+	 * @param login
+	 *        The login name of the administrator.
+	 * @param firstName
+	 *        The first name of the administrator.
+	 * @param lastName
+	 *        The last name of the administrator.
+	 * @param email
+	 *        The e-mail address of the administrator.
+	 * @param password
+	 *        The initial password of the administrator.
+	 * @return The new tenant.
+	 */
+	@Label("Create a tenant")
+	public static TLObject createTenant(@Mandatory String name, @Mandatory String login, String firstName,
+			String lastName, String email, String password) {
+		return TenantMembers.createTenant(name, new NewAccount(login, firstName, lastName, email, password));
+	}
+
+	/**
+	 * Creates a member of a tenant with a new account. Only a user who may change the tenant (an
+	 * administrator of the tenant or an operator) may do so.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @param role
+	 *        The role of the member, a classifier of <code>tl.factory:TenantRole</code>.
+	 * @param login
+	 *        The login name of the new account, used by no other account.
+	 * @param firstName
+	 *        The first name of the member.
+	 * @param lastName
+	 *        The last name of the member.
+	 * @param email
+	 *        The e-mail address of the member.
+	 * @param password
+	 *        The initial password of the member.
+	 * @return The account of the new member.
+	 */
+	@Label("Create a member of a tenant")
+	public static Person createMember(@Mandatory TLObject tenant, @Mandatory TLClassifier role,
+			@Mandatory String login, String firstName, String lastName, String email, String password) {
+		return TenantMembers.createMember(tenant, TenantRole.fromClassifier(role),
+			new NewAccount(login, firstName, lastName, email, password));
+	}
+
+	/**
+	 * Changes the role of a member of a tenant. Only a user who may change the tenant may do so; the
+	 * last administrator of a tenant keeps the role.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @param member
+	 *        The account of a member of the tenant.
+	 * @param role
+	 *        The new role of the member, a classifier of <code>tl.factory:TenantRole</code>.
+	 */
+	@Label("Change the role of a member")
+	public static void changeMemberRole(@Mandatory TLObject tenant, @Mandatory Person member,
+			@Mandatory TLClassifier role) {
+		TenantMembers.changeRole(tenant, member, TenantRole.fromClassifier(role));
+	}
+
+	/**
+	 * Removes a member from a tenant and deletes the account of the member. Only a user who may
+	 * change the tenant may do so; nobody removes himself or the last administrator.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @param member
+	 *        The account of a member of the tenant.
+	 */
+	@Label("Remove a member")
+	public static void removeMember(@Mandatory TLObject tenant, @Mandatory Person member) {
+		TenantMembers.removeMember(tenant, member);
+	}
+
+	/**
+	 * The members of a tenant in any of its roles.
+	 *
+	 * @param tenant
+	 *        The tenant, empty for none.
+	 * @return The accounts of the members, none without tenant.
+	 */
+	@Label("Members of a tenant")
+	@SideEffectFree
+	public static List<Person> members(TLObject tenant) {
+		return tenant == null ? List.of() : TenantMembers.members(tenant);
+	}
+
+	/**
+	 * The role of a member in a tenant.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @param member
+	 *        The account of a member.
+	 * @return The role, a classifier of <code>tl.factory:TenantRole</code>; nothing if the account
+	 *         is no member of the tenant.
+	 */
+	@Label("Role of a member")
+	@SideEffectFree
+	public static TLClassifier memberRole(TLObject tenant, Person member) {
+		if (tenant == null || member == null) {
+			return null;
+		}
+		TenantRole role = TenantMembers.roleOf(tenant, member);
+		return role == null ? null : role.classifier();
+	}
+
+	/**
+	 * The e-mail address of an account.
+	 *
+	 * @param account
+	 *        The account.
+	 * @return The e-mail address, nothing if the account has none.
+	 */
+	@Label("E-mail of an account")
+	@SideEffectFree
+	public static String email(Person account) {
+		return account == null ? null : TenantMembers.email(account);
 	}
 
 	/**

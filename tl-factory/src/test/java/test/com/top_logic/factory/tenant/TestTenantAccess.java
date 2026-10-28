@@ -20,6 +20,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.config.ConfigurationException;
@@ -35,6 +36,9 @@ import com.top_logic.factory.project.FactoryFunctions;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.WorkspaceStatus;
 import com.top_logic.factory.tenant.I18NConstants;
+import com.top_logic.factory.tenant.TenantMembers;
+import com.top_logic.factory.tenant.TenantMembers.NewAccount;
+import com.top_logic.factory.tenant.TenantRole;
 import com.top_logic.factory.tenant.Tenants;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -65,8 +69,9 @@ import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test of the access to the tenants of the control application, their projects and the
- * workspaces of the projects, with the access configuration of the module.
+ * Test of the access to the tenants of the control application, their members, their projects and
+ * the workspaces of the projects, with the access configuration of the module, and of the
+ * management of the members of a tenant.
  *
  * <p>
  * Tenant A has an administrator, a developer and a reader; tenant B a developer. The operator holds
@@ -75,6 +80,8 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestTenantAccess extends BasicTestCase {
+
+	private static final String PASSWORD = "Initial-Pass-2026";
 
 	private static final String OPERATOR_ROLE = "tl.factory.Operator";
 
@@ -89,6 +96,9 @@ public class TestTenantAccess extends BasicTestCase {
 	private final List<TLObject> _created = new ArrayList<>();
 
 	private final List<Person> _persons = new ArrayList<>();
+
+	/** The login names of the accounts the tests create through {@link TenantMembers}. */
+	private final List<String> _logins = new ArrayList<>();
 
 	private Person _adminA;
 
@@ -153,6 +163,12 @@ public class TestTenantAccess extends BasicTestCase {
 					object.tDelete();
 				}
 			}
+			for (String login : _logins) {
+				Person person = Person.byName(login);
+				if (person != null) {
+					_persons.add(person);
+				}
+			}
 			for (Person person : _persons) {
 				Group group = person.getRepresentativeGroup();
 				person.tDelete();
@@ -163,6 +179,7 @@ public class TestTenantAccess extends BasicTestCase {
 		});
 		_created.clear();
 		_persons.clear();
+		_logins.clear();
 		super.tearDown();
 	}
 
@@ -335,6 +352,205 @@ public class TestTenantAccess extends BasicTestCase {
 		List<?> all = list(as(_operator, () -> projects.execute()));
 		assertTrue("The operator sees the projects of all tenants.",
 			all.contains(_projectA) && all.contains(_projectB));
+	}
+
+	public void testMembersSeeEachOther() {
+		for (Person member : List.of(_adminA, _developerA, _readerA)) {
+			assertTrue(member.getName(), allowed(member, _developerA, READ));
+			assertTrue(member.getName(), allowed(member, _adminA, READ));
+		}
+		assertTrue(allowed(_operator, _developerA, READ));
+		assertFalse("The accounts of another tenant are invisible.", allowed(_developerB, _developerA, READ));
+		assertFalse(allowed(_developerB, _adminA, READ));
+		assertFalse(allowed(_noTenant, _developerA, READ));
+		assertFalse("A member reads the accounts of the tenant only.", allowed(_adminA, _developerA, WRITE));
+	}
+
+	public void testCreateMember() {
+		Person member = (Person) as(_adminA,
+			() -> TenantMembers.createMember(_tenantA, TenantRole.DEVELOPER, newAccount("tenantNewMember")));
+		assertEquals(member, Person.byName("tenantNewMember"));
+		assertEquals(Set.of(_tenantA), Tenants.tenantsOf(member));
+		assertEquals(TenantRole.DEVELOPER, TenantMembers.roleOf(_tenantA, member));
+		assertTrue(TenantMembers.members(_tenantA).contains(member));
+		assertTrue("The member logs in with the initial password.", member.getAuthenticationDevice()
+			.authentify(LoginCredentials.fromUserAndPassword(member, PASSWORD.toCharArray())));
+		assertFalse(member.getAuthenticationDevice()
+			.authentify(LoginCredentials.fromUserAndPassword(member, "wrong".toCharArray())));
+		assertTrue("The new developer works on the projects of the tenant.", allowed(member, _projectA, WRITE));
+		assertFalse(allowed(member, _projectB, READ));
+		assertTrue("The administrator sees the new member.", allowed(_adminA, member, READ));
+		assertFalse(allowed(_developerB, member, READ));
+	}
+
+	public void testOperatorCreatesMember() {
+		Person member = (Person) as(_operator,
+			() -> TenantMembers.createMember(_tenantB, TenantRole.ADMINISTRATOR, newAccount("tenantNewAdminB")));
+		assertEquals(TenantRole.ADMINISTRATOR, TenantMembers.roleOf(_tenantB, member));
+		assertTrue(allowed(member, _tenantB, WRITE));
+	}
+
+	public void testManageOtherTenantRefused() {
+		assertNoWriteAccess(_tenantB,
+			() -> TenantMembers.createMember(_tenantB, TenantRole.DEVELOPER, newAccount("tenantIntruder")));
+		assertNull("No account was created.", Person.byName("tenantIntruder"));
+		assertNoWriteAccess(_tenantB, () -> {
+			TenantMembers.changeRole(_tenantB, _developerB, TenantRole.READER);
+			return null;
+		});
+		assertNoWriteAccess(_tenantB, () -> {
+			TenantMembers.removeMember(_tenantB, _developerB);
+			return null;
+		});
+		assertEquals(TenantRole.DEVELOPER, TenantMembers.roleOf(_tenantB, _developerB));
+		assertTrue(_developerB.tValid());
+	}
+
+	public void testDeveloperCannotManageMembers() {
+		for (Person person : List.of(_developerA, _readerA)) {
+			try {
+				as(person, () -> TenantMembers.createMember(_tenantA, TenantRole.READER, newAccount("tenantNotCreated")));
+				fail(person.getName() + " may not create members.");
+			} catch (TopLogicException ex) {
+				assertEquals(com.top_logic.factory.project.I18NConstants.ERROR_NO_WRITE_ACCESS__OBJECT.fill(_tenantA),
+					ex.getErrorKey());
+			}
+			try {
+				as(person, () -> {
+					TenantMembers.changeRole(_tenantA, _readerA, TenantRole.ADMINISTRATOR);
+					return null;
+				});
+				fail(person.getName() + " may not change roles.");
+			} catch (TopLogicException ex) {
+				assertEquals(com.top_logic.factory.project.I18NConstants.ERROR_NO_WRITE_ACCESS__OBJECT.fill(_tenantA),
+					ex.getErrorKey());
+			}
+		}
+		assertNull(Person.byName("tenantNotCreated"));
+		assertEquals(TenantRole.READER, TenantMembers.roleOf(_tenantA, _readerA));
+	}
+
+	public void testLoginInUse() {
+		try {
+			as(_adminA, () -> TenantMembers.createMember(_tenantA, TenantRole.READER, newAccount("tenantDeveloperB")));
+			fail("The login name is used by an account of another tenant.");
+		} catch (TopLogicException ex) {
+			assertEquals(com.top_logic.knowledge.wrap.person.I18NConstants.ERROR_DUPLICATE_ACCOUNT_NAME__NAME
+				.fill("tenantDeveloperB"), ex.getErrorKey());
+		}
+		assertEquals(Set.of(_tenantB), Tenants.tenantsOf(_developerB));
+	}
+
+	public void testChangeRole() {
+		as(_adminA, () -> {
+			TenantMembers.changeRole(_tenantA, _developerA, TenantRole.READER);
+			return null;
+		});
+		assertEquals(TenantRole.READER, TenantMembers.roleOf(_tenantA, _developerA));
+		assertFalse("A reader only reads.", allowed(_developerA, _projectA, WRITE));
+		assertTrue(allowed(_developerA, _projectA, READ));
+
+		try {
+			as(_adminA, () -> {
+				TenantMembers.changeRole(_tenantA, _adminA, TenantRole.DEVELOPER);
+				return null;
+			});
+			fail("The last administrator keeps the role.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_LAST_ADMINISTRATOR__TENANT.fill(_tenantA), ex.getErrorKey());
+		}
+		try {
+			as(_adminA, () -> {
+				TenantMembers.changeRole(_tenantA, _developerB, TenantRole.READER);
+				return null;
+			});
+			fail("A member of another tenant is not changed.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_NOT_A_MEMBER__USER_TENANT.fill(_developerB, _tenantA), ex.getErrorKey());
+		}
+	}
+
+	public void testRemoveMember() {
+		Person member = (Person) as(_adminA,
+			() -> TenantMembers.createMember(_tenantA, TenantRole.DEVELOPER, newAccount("tenantRemoved")));
+		assertTrue(allowed(member, _projectA, WRITE));
+		as(_adminA, () -> {
+			TenantMembers.removeMember(_tenantA, member);
+			return null;
+		});
+		assertFalse(TenantMembers.members(_tenantA).contains(member));
+		assertNull("The account of the member is deleted.", Person.byName("tenantRemoved"));
+		assertNull(Group.getGroupByName(kb(), "tenantRemoved"));
+
+		try {
+			as(_adminA, () -> {
+				TenantMembers.removeMember(_tenantA, _adminA);
+				return null;
+			});
+			fail("Nobody removes himself.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_REMOVE_SELF, ex.getErrorKey());
+		}
+		try {
+			as(_operator, () -> {
+				TenantMembers.removeMember(_tenantA, _adminA);
+				return null;
+			});
+			fail("The last administrator is not removed.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_LAST_ADMINISTRATOR__TENANT.fill(_tenantA), ex.getErrorKey());
+		}
+		assertTrue(_adminA.tValid());
+	}
+
+	public void testCreateTenant() {
+		TLObject tenant = (TLObject) as(_operator, () -> TenantMembers.createTenant("Tenant C", newAccount("tenantAdminC")));
+		_created.add(tenant);
+		Person administrator = Person.byName("tenantAdminC");
+		assertEquals(TenantRole.ADMINISTRATOR, TenantMembers.roleOf(tenant, administrator));
+		assertTrue(allowed(administrator, tenant, WRITE));
+		assertFalse(allowed(administrator, _tenantA, READ));
+
+		try {
+			as(_adminA, () -> TenantMembers.createTenant("Tenant D", newAccount("tenantAdminD")));
+			fail("Only an operator creates a tenant.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_NO_TENANT_CREATION, ex.getErrorKey());
+		}
+		assertNull(Person.byName("tenantAdminD"));
+	}
+
+	public void testMemberScriptFunctions() throws ConfigurationException {
+		QueryExecutor members = script("t -> factoryMembers($t)");
+		assertEquals(Set.of(_adminA, _developerA, _readerA),
+			new HashSet<>(list(as(_readerA, () -> members.execute(_tenantA)))));
+		assertEquals("A script sees only the accounts the user may read.", List.of(),
+			list(as(_developerB, () -> members.execute(_tenantA))));
+		QueryExecutor role = script("t -> p -> factoryMemberRole($t, $p)");
+		assertEquals(TenantRole.READER.classifier(), as(_adminA, () -> role.execute(_tenantA, _readerA)));
+		assertNull(as(_operator, () -> role.execute(_tenantA, _developerB)));
+
+		QueryExecutor create = script(
+			"t -> factoryCreateMember($t, `tl.factory:TenantRole#READER`, 'tenantScripted', 'Ada', 'Lovelace', 'ada@example.com', '"
+				+ PASSWORD + "')");
+		Person member = (Person) as(_adminA, () -> create.execute(_tenantA));
+		_logins.add("tenantScripted");
+		assertEquals(TenantRole.READER, TenantMembers.roleOf(_tenantA, member));
+	}
+
+	private void assertNoWriteAccess(TLObject tenant, Supplier<Object> job) {
+		try {
+			as(_adminA, job);
+			fail("The administrator of tenant A may not manage the members of " + tenant + ".");
+		} catch (TopLogicException ex) {
+			assertEquals(com.top_logic.factory.project.I18NConstants.ERROR_NO_WRITE_ACCESS__OBJECT.fill(tenant),
+				ex.getErrorKey());
+		}
+	}
+
+	private NewAccount newAccount(String login) {
+		_logins.add(login);
+		return new NewAccount(login, "First", "Last", login + "@example.com", PASSWORD);
 	}
 
 	public void testCoverage() {

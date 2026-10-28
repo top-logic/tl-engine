@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The tenants of the control application, for the operators: a list of all tenants, beside it the
+	selected tenant with its members (factory/members.view.xml). "Create tenant" creates a tenant
+	with the account of its first administrator (factory/create-tenant.view.xml); a tenant without
+	members and projects can be deleted.
+-->
+<view>
+	<channels>
+		<channel name="tenant"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="240"
+				size="35"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Tenants</en>
+						<de>Mandanten</de>
+					</title>
+					<commands>
+						<generic-command name="createTenant"
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Create tenant</en>
+								<de>Mandant anlegen</de>
+							</label>
+							<executability>
+								<model-access
+									operation="Create"
+									type="tl.factory:Tenant"
+								/>
+							</executability>
+							<execute-script function="new(`tl.factory.input:NewTenant`, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="factory/create-tenant.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="tenant"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command name="deleteTenant"
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="tenant"
+							observed-types="tl.factory:Project"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete tenant</en>
+								<de>Mandant löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if(factoryMembers($tenant).size() > 0, #('Remove the members of the tenant first.'@en, 'Zuerst die Mitglieder des Mandanten entfernen.'@de), if($tenant.referers(`tl.factory:Project#tenant`).size() > 0, #('Delete the projects of the tenant first.'@en, 'Zuerst die Projekte des Mandanten löschen.'@de), null))"/>
+							</executability>
+							<confirm expr="#('Delete tenant {0}?'@en, 'Mandant {0} löschen?'@de).fill($tenant)"/>
+							<delete-object/>
+							<write-channel name="tenant"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.factory:Tenant"
+						personalization-key="tl-factory-tenants"
+						selection="tenant"
+						types="tl.factory:Tenant"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="administrators"/>
+						</columns>
+						<rows>all(`tl.factory:Tenant`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="65"
+				unit="%"
+			>
+				<switch input="tenant">
+					<case test="$tenant != null">
+						<split-panel orientation="vertical">
+							<panes>
+								<pane
+									size="25"
+									unit="%"
+								>
+									<panel>
+										<title>
+											<en>Tenant</en>
+											<de>Mandant</de>
+										</title>
+										<form
+											input="tenant"
+											with-inset="true"
+										>
+											<edit-executability>
+												<model-access operation="Write"/>
+											</edit-executability>
+											<field attribute="name"/>
+										</form>
+									</panel>
+								</pane>
+								<pane
+									size="75"
+									unit="%"
+								>
+									<view-ref view="factory/members.view.xml">
+										<bind
+											channel="tenant"
+											to="tenant"
+										/>
+									</view-ref>
+								</pane>
+							</panes>
+						</split-panel>
+					</case>
+					<default>
+						<inset>
+							<alert severity="info">
+								<title>
+									<en>No tenant selected</en>
+									<de>Kein Mandant ausgewählt</de>
+								</title>
+								<message>
+									<en>Select a tenant to see its members.</en>
+									<de>Einen Mandanten auswählen, um seine Mitglieder zu sehen.</de>
+								</message>
+							</alert>
+						</inset>
+					</default>
+				</switch>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -22,6 +22,16 @@
 			</enum>
 
 			<!--
+				The role of a member in a tenant, one per reference of the tenant holding its members.
+				Mirrors com.top_logic.factory.tenant.TenantRole.
+			-->
+			<enum name="TenantRole">
+				<classifier name="ADMINISTRATOR"/>
+				<classifier name="DEVELOPER"/>
+				<classifier name="READER"/>
+			</enum>
+
+			<!--
 				A company developing its applications in the control application: it owns its projects.
 				Its members hold the roles of the tenant by the references they are in: an administrator
 				manages the members, a developer works on the projects, a reader sees them. A user is a
@@ -352,6 +362,108 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+				</attributes>
+			</class>
+		</types>
+	</module>
+
+	<!--
+		The input of the dialogs managing the tenants and their members. Their objects are created
+		transiently with new(..., transient: true) and never stored: the functions of
+		com.top_logic.factory.tenant.TenantMembers create the accounts and memberships from them. No
+		table is declared, and the module is marked internal in the access configuration.
+	-->
+	<module name="tl.factory.input">
+		<types>
+			<!-- The login data and the name of an account to create. -->
+			<class name="Account"
+				abstract="true"
+			>
+				<generalizations>
+					<generalization type="tl.model:TLObject"/>
+				</generalizations>
+				<attributes>
+					<property name="login"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="firstName"
+						type="tl.core:String"
+					/>
+					<property name="lastName"
+						type="tl.core:String"
+					/>
+					<property name="email"
+						type="tl.core:String"
+					/>
+					<property name="password"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+							</input-control>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+
+			<!-- A new member of a tenant: its account and its role in the tenant. -->
+			<class name="NewMember">
+				<generalizations>
+					<generalization type="Account"/>
+				</generalizations>
+				<annotations>
+					<id-column value="login"/>
+				</annotations>
+				<attributes>
+					<reference name="role"
+						mandatory="true"
+						type="tl.factory:TenantRole"
+					>
+						<annotations>
+							<default-value>
+								<default-by-expression value="ctx -> `tl.factory:TenantRole#DEVELOPER`"/>
+							</default-value>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!-- A new tenant: its name and the account of its first administrator. -->
+			<class name="NewTenant">
+				<generalizations>
+					<generalization type="Account"/>
+				</generalizations>
+				<annotations>
+					<id-column value="tenantName"/>
+				</annotations>
+				<attributes>
+					<property name="tenantName"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+				</attributes>
+			</class>
+
+			<!-- The new role of a member of a tenant. -->
+			<class name="MemberRole">
+				<generalizations>
+					<generalization type="tl.model:TLObject"/>
+				</generalizations>
+				<attributes>
+					<reference name="member"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+					<reference name="role"
+						mandatory="true"
+						type="tl.factory:TenantRole"
+					/>
 				</attributes>
 			</class>
 		</types>

@@ -145,6 +145,24 @@
 			</instance>
 		</config>
 
+		<!--
+			The page of the tenants, for the operators: with no roles assigned, it is shown to the
+			technical super user (root) only; the security administration assigns it to further roles,
+			e.g. tl.factory.Operator.
+		-->
+		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
+			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
+				<scopes>
+					<scope id="tl.factory.tenants">
+						<label>
+							<en>Tenants</en>
+							<de>Mandanten</de>
+						</label>
+					</scope>
+				</scopes>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
@@ -162,7 +180,8 @@
 			(tl.factory.Verwalter) manages the tenant and works on its projects, a developer
 			(tl.factory.Entwickler) works on the projects, a reader (tl.factory.Leser) sees the tenant and
 			its projects. A workspace is a part of its project and an agent conversation a part of its
-			workspace, both decided by their container.
+			workspace, both decided by their container. The account of a member inherits the roles held
+			on its tenant, so that the members of a tenant see each other.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -218,6 +237,43 @@
 					>
 						<singleton module="SecurityStructure"/>
 					</rule>
+					<!--
+						A member of a tenant sees the accounts of the other members: an account inherits
+						the roles held on the tenant it is a member of.
+					-->
+					<rule id="TenantForAdministrator"
+						inherit="true"
+						meta-element="tl.accounts:Person"
+					>
+						<path>
+							<step
+								attribute="tl.factory:Tenant#administrators"
+								inverse="true"
+							/>
+						</path>
+					</rule>
+					<rule id="TenantForDeveloper"
+						inherit="true"
+						meta-element="tl.accounts:Person"
+					>
+						<path>
+							<step
+								attribute="tl.factory:Tenant#developers"
+								inverse="true"
+							/>
+						</path>
+					</rule>
+					<rule id="TenantForReader"
+						inherit="true"
+						meta-element="tl.accounts:Person"
+					>
+						<path>
+							<step
+								attribute="tl.factory:Tenant#readers"
+								inverse="true"
+							/>
+						</path>
+					</rule>
 					<rule id="TenantForFactoryProject"
 						inherit="true"
 						meta-element="tl.factory:Project"
@@ -252,6 +308,22 @@
 							roles="tl.factory.Operator"
 						/>
 					</class>
+					<!--
+						The members of a tenant read the accounts of its members; the accounts are
+						created, changed and deleted by the functions managing the members
+						(com.top_logic.factory.tenant.TenantMembers).
+					-->
+					<class name="tl.accounts:Person">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
+						/>
+					</class>
+					<!-- The input of the dialogs managing the tenants, never stored. -->
+					<module name="tl.factory.input"
+						internal="true"
+					/>
 					<!--
 						The developers and administrators of a tenant create, change and delete its
 						projects, its readers see them. The workspaces and agent conversations follow

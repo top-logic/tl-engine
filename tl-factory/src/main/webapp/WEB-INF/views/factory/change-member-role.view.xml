@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog changing the role of a member of the tenant in "tenant": the form edits the transient
+	input in "model", the member and the new role, which replaces the roles the member held in the
+	tenant (factoryChangeMemberRole). The role is chosen anew: a script cannot preset a classifier for
+	a user who may not discover the classifiers of the model.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="tenant"/>
+	</channels>
+	<window width="420px">
+		<title>
+			<en>Change role</en>
+			<de>Rolle ändern</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="member"/>
+			<field attribute="role"/>
+			<commands>
+				<generic-command key="ENTER"
+					inputs="model, tenant"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Change</en>
+						<de>Ändern</de>
+					</label>
+					<store-form-state/>
+					<execute-script function="factoryChangeMemberRole($tenant, $model.get(`tl.factory.input:MemberRole#member`), $model.get(`tl.factory.input:MemberRole#role`))"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -699,6 +699,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_EMPTY;
 
 	/**
+	 * @en Rows of the table
+	 */
+	@CustomKey("js.table.rows")
+	public static ResKey JS_TABLE_ROWS;
+
+	/**
 	 * @en Freeze up to here
 	 */
 	@CustomKey("js.table.freezeUpTo")

@@ -32,9 +32,36 @@ public class FactoryModel {
 	public static final String MODULE = "tl.factory";
 
 	/**
+	 * Name of the type of a tenant: a company owning projects, whose members hold the roles of the
+	 * tenant by the {@link #TENANT_MEMBERS references} they are in.
+	 */
+	public static final String TENANT = "Tenant";
+
+	/** Attribute of a {@link #TENANT}: its name, unique among the tenants. */
+	public static final String TENANT_NAME = "name";
+
+	/** Attribute of a {@link #TENANT}: the accounts managing its members. */
+	public static final String TENANT_ADMINISTRATORS = "administrators";
+
+	/** Attribute of a {@link #TENANT}: the accounts working on its projects. */
+	public static final String TENANT_DEVELOPERS = "developers";
+
+	/** Attribute of a {@link #TENANT}: the accounts reading its projects. */
+	public static final String TENANT_READERS = "readers";
+
+	/**
+	 * The attributes of a {@link #TENANT} holding its members, one per role: {@link #TENANT_ADMINISTRATORS},
+	 * {@link #TENANT_DEVELOPERS} and {@link #TENANT_READERS}.
+	 */
+	public static final List<String> TENANT_MEMBERS = List.of(TENANT_ADMINISTRATORS, TENANT_DEVELOPERS, TENANT_READERS);
+
+	/**
 	 * Name of the type of a project.
 	 */
 	public static final String PROJECT = "Project";
+
+	/** Attribute of a {@link #PROJECT}: the {@link #TENANT} owning it. */
+	public static final String PROJECT_TENANT = "tenant";
 
 	/**
 	 * Name of the type of the workspace of a project.
@@ -150,6 +177,20 @@ public class FactoryModel {
 	 */
 	public static TLClass workspaceType() {
 		return (TLClass) TLModelUtil.findType(MODULE, WORKSPACE);
+	}
+
+	/**
+	 * The type of a tenant.
+	 */
+	public static TLClass tenantType() {
+		return (TLClass) TLModelUtil.findType(MODULE, TENANT);
+	}
+
+	/**
+	 * The {@link #TENANT} owning the given project, {@code null} for none.
+	 */
+	public static TLObject getTenant(TLObject project) {
+		return (TLObject) project.tValueByName(PROJECT_TENANT);
 	}
 
 	/**

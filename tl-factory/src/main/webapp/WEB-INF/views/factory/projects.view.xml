@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The projects of the control application and their workspaces: a list of the projects with the
+	The projects of the control application and their workspaces: a list of the projects of the tenant
+	of the user - of all tenants for an operator - with the
 	state of each workspace and the address of its running application, and beside it the selected
 	project with the link to its repository, its CI job and last CI build, its workspace and the output
 	of the last operation on it (factory/project-detail.view.xml).
@@ -20,6 +21,13 @@
 -->
 <view>
 	<channels>
+		<!--
+			The tenant of the user, empty for an operator: a project created here belongs to it, and it
+			is the context the right to create the project is checked in.
+		-->
+		<channel name="tenant">
+			<init>factoryCurrentTenant()</init>
+		</channel>
 		<channel name="project"/>
 		<source-channel name="commits"
 			update-interval="1000"
@@ -161,7 +169,10 @@
 								<en>Create application</en>
 								<de>Anwendung anlegen</de>
 							</label>
-							<create-transient type="tl.factory:Project">
+							<create-transient
+								container="tenant"
+								type="tl.factory:Project"
+							>
 								<with-result>
 									<open-dialog
 										bind-input-to="model"
@@ -170,6 +181,10 @@
 										<bind
 											channel="selection"
 											to="project"
+										/>
+										<bind
+											channel="tenant"
+											to="tenant"
 										/>
 									</open-dialog>
 								</with-result>
@@ -187,6 +202,7 @@
 							</label>
 							<executability>
 								<visible-if expr="$project != null &amp;&amp; $workspace == null"/>
+								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryCreateWorkspace($project)"/>
 						</generic-command>
@@ -203,6 +219,7 @@
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('Neither the workspace nor its application is stopped.'@en, 'Weder der Workspace noch seine Anwendung ist gestoppt.'@de))"/>
+								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryStart($project)"/>
 						</generic-command>
@@ -219,6 +236,7 @@
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
+								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryStop($project)"/>
 						</generic-command>
@@ -235,6 +253,7 @@
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
+								<model-access operation="Write"/>
 							</executability>
 							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
 							<execute-script function="factoryUpdate($project)"/>
@@ -252,6 +271,7 @@
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
+								<model-access operation="Write"/>
 							</executability>
 							<confirm expr="#('Remove the workspace of {0} with its container, sources and database? The project is kept.'@en, 'Den Workspace von {0} mit Container, Quellen und Datenbank entfernen? Das Projekt bleibt erhalten.'@de).fill($project)"/>
 							<execute-script function="factoryCleanup($project)"/>
@@ -285,6 +305,7 @@
 					>
 						<columns>
 							<column attribute="name"/>
+							<column attribute="tenant"/>
 							<column attribute="artifactId"/>
 							<column attribute="engineVersion"/>
 							<computed-column name="status"
@@ -306,7 +327,7 @@
 								<value>$row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#previewUrl`)</value>
 							</computed-column>
 						</columns>
-						<rows>all(`tl.factory:Project`)</rows>
+						<rows>factoryProjects()</rows>
 						<row-class><![CDATA[{
 	status = $row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`);
 	if($status == `tl.factory:WorkspaceStatus#ERROR`, 'tl-status-error',
@@ -340,6 +361,7 @@
 							<executability>
 								<visible-if expr="$project != null"/>
 								<disabled-if expr="$ciUnavailable"/>
+								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryStartBuild($project)">
 								<with-result>
@@ -382,6 +404,7 @@
 							<executability>
 								<visible-if expr="$workspace != null"/>
 								<disabled-if expr="$agentUnavailable"/>
+								<model-access operation="Write"/>
 							</executability>
 							<create-transient type="tl.factory:AgentConversation">
 								<with-result>

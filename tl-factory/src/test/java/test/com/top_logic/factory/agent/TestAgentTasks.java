@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.factory.tenant.TestTenants;
 
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
@@ -84,7 +85,7 @@ public class TestAgentTasks extends BasicTestCase {
 		_previousPerson = subSession.getPerson();
 		subSession.setPerson(_owner);
 		_project = commit(() -> {
-			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
+			TLObject result = TestTenants.newProject();
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Agent tasks test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, "agent-tasks-test");

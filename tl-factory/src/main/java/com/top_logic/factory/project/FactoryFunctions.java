@@ -7,6 +7,7 @@ package com.top_logic.factory.project;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
@@ -17,15 +18,23 @@ import com.top_logic.factory.agent.AgentTasks;
 import com.top_logic.factory.ci.CIBuild;
 import com.top_logic.factory.ci.CIBuildStart;
 import com.top_logic.factory.ci.ProjectCI;
+import com.top_logic.factory.tenant.Tenants;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * TL-Script functions managing the workspaces of the projects of the control application.
+ * TL-Script functions managing the workspaces of the projects of the control application, and
+ * telling the tenant and the projects of the current user.
+ *
+ * <p>
+ * The functions changing a project, its workspace or its CI job require the right to write the
+ * project (or the workspace, which is decided by its project).
+ * </p>
  *
  * <p>
  * The functions starting an operation on a workspace return as soon as the operation is started;
@@ -74,6 +83,47 @@ public class FactoryFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static String engineVersion() {
 		return WorkspaceService.getInstance().getApplications().getConfig().getEngineVersion();
+	}
+
+	/**
+	 * The tenant of the current user.
+	 *
+	 * @return The tenant the current user is a member of, nothing for a user of no tenant, e.g. an
+	 *         operator.
+	 */
+	@Label("Tenant of the current user")
+	@SideEffectFree
+	public static TLObject currentTenant() {
+		return Tenants.tenantOf(TLContext.currentUser());
+	}
+
+	/**
+	 * The projects the current user works with: all projects for a user who may read every project
+	 * (an operator), the projects of the tenant of the current user otherwise, none for a user of no
+	 * tenant.
+	 *
+	 * @return The projects.
+	 */
+	@Label("Projects of the current user")
+	@SideEffectFree
+	public static List<TLObject> projects() {
+		return Tenants.projects(TLContext.currentUser());
+	}
+
+	/**
+	 * Checks the members of a tenant in one of its roles: a user is a member of one tenant only.
+	 *
+	 * @param tenant
+	 *        The tenant.
+	 * @param members
+	 *        The users to become members of the tenant.
+	 * @return The message naming the user who is a member of another tenant and that tenant,
+	 *         nothing if there is none.
+	 */
+	@Label("Check the members of a tenant")
+	@SideEffectFree
+	public static ResKey checkTenantMembers(TLObject tenant, Object members) {
+		return Tenants.checkMembers(tenant, members);
 	}
 
 	/**
@@ -149,6 +199,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Create the workspace of a project")
 	public static TLObject createWorkspace(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
 		return ProjectWorkspaces.getInstance().create(project);
 	}
 
@@ -160,6 +211,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Start the workspace of a project")
 	public static void start(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
 		ProjectWorkspaces.getInstance().start(project);
 	}
 
@@ -172,6 +224,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Stop the workspace of a project")
 	public static void stop(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
 		ProjectWorkspaces.getInstance().stop(project);
 	}
 
@@ -185,6 +238,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Update the workspace of a project")
 	public static void update(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
 		ProjectWorkspaces.getInstance().update(project);
 	}
 
@@ -231,6 +285,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Create an agent conversation")
 	public static TLObject createConversation(@Mandatory TLObject workspace, @Mandatory String task) {
+		FactoryAccess.checkWrite(workspace);
 		return AgentTasks.createConversation(workspace, task);
 	}
 
@@ -261,6 +316,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Start a CI build")
 	public static ResKey startBuild(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
 		CIBuildStart build = ProjectWorkspaces.getInstance().startBuild(project);
 		return ProjectCI.startedMessage(build, FactoryModel.getCIJob(project));
 	}
@@ -311,6 +367,7 @@ public class FactoryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Remove the workspace of a project")
 	public static void cleanup(@Mandatory TLObject project) {
+		FactoryAccess.checkWrite(project);
 		ProjectWorkspaces.getInstance().cleanup(project);
 	}
 

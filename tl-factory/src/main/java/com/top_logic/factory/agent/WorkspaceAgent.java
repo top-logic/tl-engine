@@ -131,6 +131,7 @@ public class WorkspaceAgent implements ConversationBackend {
 
 	@Override
 	public String send(BackendTurn turn, AgentEventListener sink, CancellationToken cancel) throws Exception {
+		_conversation.checkContinue(turn.owner());
 		AgentProcess process = begin();
 		boolean spent = false;
 		try {

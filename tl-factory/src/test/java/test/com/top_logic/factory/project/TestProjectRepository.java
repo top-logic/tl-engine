@@ -21,6 +21,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.factory.ci.RecordingCIProvider;
 import test.com.top_logic.factory.git.RecordingGitHostingProvider;
+import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 import test.com.top_logic.knowledge.KBSetup;
 
@@ -727,7 +728,7 @@ public class TestProjectRepository extends BasicTestCase {
 	 */
 	private TLObject project(String artifactId, String repository, String repositoryUrl) {
 		TLObject project = commit(() -> {
-			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
+			TLObject result = TestTenants.newProject();
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Repository test " + artifactId);
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, GROUP_ID);
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, artifactId);

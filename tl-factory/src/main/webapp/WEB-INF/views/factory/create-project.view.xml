@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Dialog creating a project: the form edits the draft in "model". Creating stores the project and
-	starts building its workspace in the background; the new project is written to "selection".
+	Dialog creating a project: the form edits the draft in "model". Creating stores the project in the
+	context of the tenant of the user in "tenant", and starts building its workspace in the background;
+	the new project is written to "selection". The project belongs to the tenant of the user; a user
+	of no tenant, an operator, chooses the tenant.
 	With git hosting, an existing repository can be entered, which the workspace clones; without
 	one, the workspace creates the repository of the project.
 -->
@@ -10,6 +12,7 @@
 	<channels>
 		<channel name="model"/>
 		<channel name="selection"/>
+		<channel name="tenant"/>
 	</channels>
 	<window width="520px">
 		<title>
@@ -23,6 +26,12 @@
 			with-inset="true"
 		>
 			<field attribute="name"/>
+			<visible-if
+				expr="$tenant == null"
+				input="tenant"
+			>
+				<field attribute="tenant"/>
+			</visible-if>
 			<field attribute="groupId"/>
 			<field attribute="artifactId"/>
 			<field attribute="engineVersion"/>
@@ -47,7 +56,7 @@
 						<de>Anlegen</de>
 					</label>
 					<store-form-state/>
-					<persist-transient>
+					<persist-transient container="tenant">
 						<with-result as="project">
 							<write-channel name="selection"
 								value="project"

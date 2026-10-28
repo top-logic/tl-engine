@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 import test.com.top_logic.knowledge.KBSetup;
 
@@ -95,7 +96,7 @@ public class TestWorkspaceApplicationState extends BasicTestCase {
 		TestingProjectWorkspaces.setApplications(new ApplicationWorkspaces(
 			WorkspaceService.getInstance().getApplications().getConfig(), _provider));
 		_project = commit(() -> {
-			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
+			TLObject result = TestTenants.newProject();
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Application state test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, ARTIFACT_ID);

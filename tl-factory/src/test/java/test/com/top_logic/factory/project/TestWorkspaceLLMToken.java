@@ -13,6 +13,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
@@ -61,7 +62,7 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_project = commit(() -> {
-			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
+			TLObject result = TestTenants.newProject();
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "LLM token test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, "llm-token-test");

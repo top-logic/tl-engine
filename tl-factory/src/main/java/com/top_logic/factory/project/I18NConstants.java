@@ -22,6 +22,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMMIT_WORKSPACE;
 
 	/**
+	 * @en You may not change "{0}".
+	 */
+	public static ResKey1 ERROR_NO_WRITE_ACCESS__OBJECT;
+
+	/**
 	 * @en The project "{0}" already has a workspace.
 	 */
 	public static ResKey1 ERROR_HAS_WORKSPACE__PROJECT;

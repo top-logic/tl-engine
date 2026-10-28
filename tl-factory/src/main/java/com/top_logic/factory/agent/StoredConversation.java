@@ -9,12 +9,14 @@ import com.top_logic.factory.ci.CIRoute;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.factory.git.RepositorySource;
+import com.top_logic.factory.project.FactoryAccess;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 
 /**
@@ -48,6 +50,15 @@ public class StoredConversation implements ConversationTarget {
 
 	private TLObject workspace() {
 		return FactoryModel.getConversationWorkspace(_conversation);
+	}
+
+	/**
+	 * A user continues a conversation if the user may write it, that is the project of its
+	 * workspace.
+	 */
+	@Override
+	public void checkContinue(Person user) {
+		FactoryAccess.checkWrite(user, _conversation);
 	}
 
 	@Override

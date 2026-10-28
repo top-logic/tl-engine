@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.factory.agent.ConversationTarget;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * A {@link ConversationTarget} kept in memory, recording the session IDs stored.
@@ -65,6 +66,14 @@ public class MemoryConversation implements ConversationTarget {
 	@Override
 	public String sessionId() {
 		return _sessionId;
+	}
+
+	/**
+	 * Every user may continue a conversation of a test.
+	 */
+	@Override
+	public void checkContinue(Person user) {
+		// Not access controlled.
 	}
 
 	@Override

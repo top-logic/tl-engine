@@ -21,16 +21,104 @@
 				<classifier name="UNKNOWN"/>
 			</enum>
 
+			<!--
+				A company developing its applications in the control application: it owns its projects.
+				Its members hold the roles of the tenant by the references they are in: an administrator
+				manages the members, a developer works on the projects, a reader sees them. A user is a
+				member of one tenant at most, in one or several of these roles.
+			-->
+			<class name="Tenant">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<constraints>
+								<unique/>
+							</constraints>
+						</annotations>
+					</property>
+					<reference name="administrators"
+						kind="forwards"
+						multiple="true"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckTenantMembers($object, $value)</check>
+								</constraint-by-expression>
+							</constraints>
+						</annotations>
+					</reference>
+					<reference name="developers"
+						kind="forwards"
+						multiple="true"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckTenantMembers($object, $value)</check>
+								</constraint-by-expression>
+							</constraints>
+						</annotations>
+					</reference>
+					<reference name="readers"
+						kind="forwards"
+						multiple="true"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckTenantMembers($object, $value)</check>
+								</constraint-by-expression>
+							</constraints>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
 			<!-- A TopLogic application managed by the control application. -->
 			<class name="Project">
 				<annotations>
-					<main-properties properties="name,groupId,artifactId,engineVersion,workspace"/>
+					<main-properties properties="name,tenant,groupId,artifactId,engineVersion,workspace"/>
 				</annotations>
 				<attributes>
 					<property name="name"
 						mandatory="true"
 						type="tl.core:String"
 					/>
+					<!--
+						The tenant owning the project. A new project belongs to the tenant of the user
+						creating it; a user of no tenant, an operator, chooses one. Read-only once the
+						project is stored.
+					-->
+					<reference name="tenant"
+						kind="forwards"
+						mandatory="true"
+						type="Tenant"
+					>
+						<annotations>
+							<create-visibility value="editable"/>
+							<visibility value="read-only"/>
+							<default-value>
+								<default-by-expression value="ctx -> factoryCurrentTenant()"/>
+							</default-value>
+							<!--
+								The tenant of the user, all tenants the user may see for a user of no
+								tenant.
+							-->
+							<options>
+								<options-by-expression function="self -> {t = factoryCurrentTenant(); if($t == null, all(`tl.factory:Tenant`), [$t]);}"/>
+							</options>
+						</annotations>
+					</reference>
 					<property name="groupId"
 						mandatory="true"
 						type="tl.core:String"

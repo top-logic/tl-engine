@@ -7,7 +7,9 @@ package com.top_logic.layout.view.element;
 
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.layout.view.channel.InputScript;
@@ -56,9 +58,9 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -68,6 +70,10 @@ import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.FormModelListener;
+import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
@@ -108,6 +114,14 @@ import com.top_logic.util.Resources;
  * instances of the type, or whatever the {@link Config#getOptions() options expression} computes.
  * With {@link Config#getMultiple() multiple} set, the channel holds a collection of such values
  * instead of a single one.
+ * </p>
+ *
+ * <p>
+ * While the input is displayed, its options follow the model: an object of one of the
+ * {@link Config#getObservedTypes() observed types} that is created, and an offered option that is
+ * changed or deleted, compute the options again, as does a change of one of the
+ * {@link Config#getInputs() inputs}. The instances of a class are therefore offered as they are now,
+ * an object created after the input was built included.
  * </p>
  *
  * <p>
@@ -180,6 +194,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getOptionOrder()}. */
 		String OPTION_ORDER = "option-order";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
 
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
@@ -263,7 +280,9 @@ public class ValueInputElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * The options are computed again whenever one of the input channels changes.
+		 * While the input is displayed, the options are computed again whenever one of the input
+		 * channels changes, an object of one of the {@link #getObservedTypes() observed types} is
+		 * created, or an offered option is changed or deleted.
 		 * </p>
 		 */
 		@Name(OPTIONS)
@@ -291,6 +310,22 @@ public class ValueInputElement implements UIElement {
 		@Nullable
 		@NullDefault
 		OptionOrder getOptionOrder();
+
+		/**
+		 * Types whose object changes (create / update / delete) compute the {@link #getOptions()
+		 * options} again while the input is displayed, so that an object created after the input
+		 * was built is offered, and a deleted one is no longer.
+		 *
+		 * <p>
+		 * When empty, the {@link #getType() type} of the value is observed if it is a class: the
+		 * instances of the class are offered as they are now, also by an options expression that
+		 * selects among them. An options expression computing its options from objects of other
+		 * types names those types here.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * Whether the channel holds a collection of values rather than a single one.
@@ -539,6 +574,8 @@ public class ValueInputElement implements UIElement {
 
 	private final List<InputRef> _inputRefs;
 
+	private final List<TLModelPartRef> _observedTypes;
+
 	private final OptionOrder _optionOrder;
 
 	private final boolean _multiple;
@@ -586,6 +623,7 @@ public class ValueInputElement implements UIElement {
 		_typeRef = config.getType();
 		_options = InputScript.compile(config, Config.OPTIONS);
 		_inputRefs = config.getInputs();
+		_observedTypes = config.getObservedTypes();
 		_optionOrder = config.getOptionOrder();
 		_multiple = config.getMultiple();
 		_mandatory = config.getMandatory();
@@ -615,7 +653,7 @@ public class ValueInputElement implements UIElement {
 		TLType type = _typeRef.resolveType();
 
 		List<ViewChannel> optionInputs = ChannelInputs.resolve(context, _inputRefs);
-		List<?> options = options(type, optionInputs);
+		List<?> options = options(type, ChannelInputs.arguments(optionInputs));
 
 		AbstractFieldModel field = options == null
 			? new AbstractFieldModel(null)
@@ -654,8 +692,8 @@ public class ValueInputElement implements UIElement {
 			input.addCleanupAction(() -> field.removeListener(mandatoryCheck));
 		}
 
-		if (_options != null && !optionInputs.isEmpty()) {
-			followOptions(type, optionInputs, (SelectFieldModel) field, input);
+		if (options != null) {
+			followOptions(type, optionInputs, options, (SelectFieldModel) field, input);
 		}
 
 		if (_submitCommand != null) {
@@ -840,28 +878,53 @@ public class ValueInputElement implements UIElement {
 	}
 
 	/**
-	 * Recomputes the options whenever one of the option inputs changes, so that a selection offered
-	 * for what the view currently shows stays in step with it.
+	 * Computes the options again whenever one of the option inputs changes, an object of one of the
+	 * {@link Config#getObservedTypes() observed types} is created, or an offered option is changed
+	 * or deleted, so that a selection stays in step with what the view shows and with the model.
+	 *
+	 * <p>
+	 * The options are observed only while the input is displayed: the observation begins when the
+	 * input control is attached and stops when it is detached. The input control, not a chrome
+	 * around it, carries the observation, so that the options it is handed reach a control that
+	 * already follows them.
+	 * </p>
 	 */
-	private void followOptions(TLType type, List<ViewChannel> optionInputs, SelectFieldModel field,
-			ReactControl input) {
-		ChannelListener listener = (sender, oldValue, newValue) -> field.setOptions(options(type, optionInputs));
-		for (ViewChannel channel : optionInputs) {
-			Registration registration = channel.addListener(listener);
-			input.addCleanupAction(registration::dispose);
+	private void followOptions(TLType type, List<ViewChannel> optionInputs, List<?> options,
+			SelectFieldModel field, ReactControl input) {
+		new RowSourceObserver<>(
+			new ArrayList<Object>(options),
+			args -> options(type, args),
+			observedTypes(type),
+			optionInputs,
+			field::setOptions).observeWhileAttached(input);
+	}
+
+	/**
+	 * The types whose object changes compute the options again: the configured
+	 * {@link Config#getObservedTypes() observed types}, or the type of the value where none is
+	 * configured and the value is an instance of a class.
+	 */
+	private Set<TLStructuredType> observedTypes(TLType type) {
+		if (!_observedTypes.isEmpty()) {
+			return ObservedTypes.resolve(_observedTypes);
 		}
+		return type instanceof TLClass classType ? Set.of(classType) : Set.of();
 	}
 
 	/**
 	 * The values to choose from, or {@code null} if the value is entered rather than chosen.
+	 *
+	 * @param inputValues
+	 *        The values of the option inputs, in declaration order; an object that was deleted is
+	 *        passed on as nothing.
 	 */
-	private List<?> options(TLType type, List<ViewChannel> optionInputs) {
+	private List<?> options(TLType type, Object[] inputValues) {
 		if (_options == null) {
 			return AttributeOptions.optionsFor(type);
 		}
-		Object[] args = new Object[optionInputs.size()];
+		Object[] args = new Object[inputValues.length];
 		for (int n = 0, cnt = args.length; n < cnt; n++) {
-			args[n] = optionInputs.get(n).get();
+			args[n] = DeletedObjects.withoutDeleted(inputValues[n]);
 		}
 		return SearchExpression.asList(_options.execute(args));
 	}

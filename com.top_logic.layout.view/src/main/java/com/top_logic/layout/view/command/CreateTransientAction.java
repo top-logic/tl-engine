@@ -38,8 +38,10 @@ import com.top_logic.model.util.TLModelPartRef;
  * user may create an object of the type. Without a {@link Config#getContainer() container}, that is
  * checked against the security root, and a refused command is hidden. With a container, it is
  * checked in the context of the container and, with a {@link Config#getReference() reference},
- * together with the right to write that reference; a refused command is disabled. The reference
- * serves this check only. The dialog receives the container through the bindings of the
+ * together with the right to write that reference; a refused command is disabled. An empty
+ * container channel creates the draft without container, which is checked like a creation without
+ * container; with a reference, it leaves nothing to add the object to and disables the command. The
+ * reference serves this check only. The dialog receives the container through the bindings of the
  * {@link OpenDialogAction}. See {@link IntrinsicAccessRules} for how a refusal is displayed.
  * </p>
  *

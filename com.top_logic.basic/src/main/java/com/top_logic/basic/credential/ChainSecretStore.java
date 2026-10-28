@@ -32,6 +32,14 @@ import com.top_logic.basic.util.ResKey;
  *   &lt;/stores&gt;
  * &lt;/store&gt;
  * </pre>
+ *
+ * <p>
+ * Secrets are written to the first of the stores that is writable (see
+ * {@link #getWritableStore()}), with the {@link Config#getPrefix() prefix} of this store. A
+ * writable store is therefore placed at the end of the chain: the read-only stores in front of it
+ * take precedence for the names they hold, and a secret the application writes cannot shadow
+ * them.
+ * </p>
  */
 @Label("Several secret stores")
 public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Config> {
@@ -67,6 +75,8 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 
 	private final List<SecretStore> _stores;
 
+	private final WritableSecretStore _writable;
+
 	/**
 	 * Creates a {@link ChainSecretStore} from configuration.
 	 *
@@ -78,6 +88,26 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 	public ChainSecretStore(InstantiationContext context, Config config) {
 		super(context, config);
 		_stores = TypedConfiguration.getInstanceListReadOnly(context, config.getStores());
+		_writable = createWritable();
+	}
+
+	private WritableSecretStore createWritable() {
+		for (SecretStore store : _stores) {
+			WritableSecretStore writable = store.getWritableStore();
+			if (writable != null) {
+				return getConfig().getPrefix() == null ? writable : new PrefixedStore(writable);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The writable store of the first of the {@link Config#getStores() stores} that has one, with
+	 * the {@link Config#getPrefix() prefix} of this store put in front of each name.
+	 */
+	@Override
+	public WritableSecretStore getWritableStore() {
+		return _writable;
 	}
 
 	@Override
@@ -94,6 +124,40 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 	@Override
 	protected ResKey missing(String key) {
 		return I18NConstants.ERROR_SECRET_UNDEFINED__NAME.fill(key);
+	}
+
+	/**
+	 * View of a writable store of the chain that puts the prefix of the chain in front of each
+	 * name, so that a written secret is found under the name the chain is asked for.
+	 */
+	private final class PrefixedStore implements WritableSecretStore {
+
+		private final WritableSecretStore _inner;
+
+		PrefixedStore(WritableSecretStore inner) {
+			_inner = inner;
+		}
+
+		@Override
+		public String lookup(String name) {
+			return _inner.lookup(key(name));
+		}
+
+		@Override
+		public String getSecret(String name) {
+			return _inner.getSecret(key(name));
+		}
+
+		@Override
+		public void store(String name, String secret) {
+			_inner.store(key(name), secret);
+		}
+
+		@Override
+		public boolean remove(String name) {
+			return _inner.remove(key(name));
+		}
+
 	}
 
 }

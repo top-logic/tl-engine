@@ -1970,6 +1970,7 @@
 			            <declaration resource="webinf://kbase/UnitMeta.xml" />
 			            <declaration resource="webinf://kbase/LayoutMeta.xml" /> 
 			            <declaration resource="webinf://kbase/TemplateLayoutMeta.xml" /> 
+			            <declaration resource="webinf://kbase/SecretMeta.xml" />
 					</declarations>
 					<schemas>
 						<schema name="lock" resource="schema://lock.schema.xml"/>

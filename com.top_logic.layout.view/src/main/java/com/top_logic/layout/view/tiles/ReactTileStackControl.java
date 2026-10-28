@@ -21,10 +21,12 @@ import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
@@ -279,6 +281,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 					dirty);
 			} catch (RuntimeException ex) {
 				Logger.error("Failed to build tile frame.", ex, ReactTileStackControl.class);
+				ViewMessages.error(getReactContext(),
+					I18NConstants.ERROR_DISPLAYING_VIEW__PATH.fill(frame.getViewRef()));
 				break;
 			}
 			_frames.add(frame);
@@ -296,6 +300,12 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		publishFrames();
 
 		dropped.forEach(ContentControls::retire);
+
+		if (_frames.size() < path.size()) {
+			// A frame could not be built. The path is shortened to the frames displayed, otherwise
+			// every later navigation would try to build the failing frame again before its own.
+			_scope.popTo(_frames.size());
+		}
 	}
 
 	/**

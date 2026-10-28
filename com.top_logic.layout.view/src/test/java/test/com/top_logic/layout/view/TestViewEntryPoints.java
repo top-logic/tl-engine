@@ -15,6 +15,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewServlet;
+import com.top_logic.layout.view.ViewServlet.PageAddress;
 import com.top_logic.layout.view.ViewServlet.ViewResolution;
 
 /**
@@ -180,6 +181,57 @@ public class TestViewEntryPoints extends TestCase {
 		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/some/route", ANONYMOUS));
 		assertEquals("/WEB-INF/views/demo/x.view.xml", viewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
 		assertNull(viewPath(config, "/w1/other.view.xml", ANONYMOUS));
+	}
+
+	/**
+	 * A route behind the view file of an entry point is a route inside that page, and the view is
+	 * the one the file names.
+	 */
+	public void testRouteBehindEntryPoint() {
+		ViewConfig config = newConfig("demo/x.view.xml");
+
+		assertEquals("/WEB-INF/views/demo/x.view.xml", viewPath(config, "/w1/demo/x.view.xml/a/b", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/app.view.xml/a", NAMED));
+		assertNull(viewPath(config, "/w1/other.view.xml/a", NAMED));
+		assertEquals("A segment merely containing the suffix names no file.", DEFAULT_VIEW_PATH,
+			viewPath(config, "/w1/demo/x.view.xmlish/a", NAMED));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(withLoginView(config), "/w1/demo/x.view.xml/a", ANONYMOUS));
+	}
+
+	/**
+	 * An address is split into the view file it starts with and the route behind it, the query
+	 * staying with the route.
+	 */
+	public void testPageAddress() {
+		assertEquals(new PageAddress(null, ""), PageAddress.parse(null));
+		assertEquals(new PageAddress(null, "a/b?q=1"), PageAddress.parse("a/b?q=1"));
+		assertEquals(new PageAddress("demo/x.view.xml", ""), PageAddress.parse("demo/x.view.xml"));
+		assertEquals(new PageAddress("demo/x.view.xml", "a/b"), PageAddress.parse("demo/x.view.xml/a/b"));
+		assertEquals(new PageAddress("demo/x.view.xml", "?q=1"), PageAddress.parse("demo/x.view.xml?q=1"));
+		assertEquals(new PageAddress("x.view.xml", "a?q=1"), PageAddress.parse("x.view.xml/a?q=1"));
+		assertEquals(new PageAddress("x.view.xml", "b.view.xml"), PageAddress.parse("x.view.xml/b.view.xml"));
+		assertEquals(new PageAddress(null, "a.view.xmlish/b"), PageAddress.parse("a.view.xmlish/b"));
+		assertEquals("A file name in the query names no page.", new PageAddress(null, "a?v=x.view.xml"),
+			PageAddress.parse("a?v=x.view.xml"));
+	}
+
+	/**
+	 * A view file whose name needs escaping is named by its escapes in the address the client
+	 * shows, and by its characters in the configuration and in a decoded path.
+	 */
+	public void testEscapedEntryPoint() {
+		ViewConfig config = newConfig("demo/Über sicht+.view.xml");
+
+		PageAddress page = PageAddress.parse("demo/%C3%9Cber%20sicht+.view.xml/a%20b?q=1");
+		assertEquals("The address keeps the form the client shows.", "demo/%C3%9Cber%20sicht+.view.xml",
+			page.viewFile());
+		assertEquals("a%20b?q=1", page.route());
+		assertEquals("A plus is no escaped space in a path.", "demo/Über sicht+.view.xml",
+			page.decodedViewFile());
+		assertNull(PageAddress.parse("a/b").decodedViewFile());
+
+		assertEquals("/WEB-INF/views/demo/Über sicht+.view.xml",
+			viewPath(config, "/w1/demo/Über sicht+.view.xml/a b", NAMED));
 	}
 
 	private static String viewPath(ViewConfig config, String pathInfo, boolean anonymous) {

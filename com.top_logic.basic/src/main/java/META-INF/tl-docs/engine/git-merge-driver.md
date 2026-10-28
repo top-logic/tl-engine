@@ -34,13 +34,13 @@ To check the registration, run `git config --get merge.tl-properties.driver`. Wi
 
 Gitea merges a pull request with Git in a temporary repository and reads the merge drivers from its own Git configuration. Installing the driver there lets the merge button merge a pull request whose only conflicts are in the bundles:
 
-1. Copy `tools/git/merge-properties.sh` to a path outside the repositories that the Gitea user can read. With the Docker image, that is a path in the data volume, for example `/data/gitea/merge-properties.sh`. Gitea runs the driver with its own `sh`, `awk`, `sort` and `git`; the Alpine-based image provides them through BusyBox.
+1. Copy `tools/git/merge-properties.sh` to a path outside the repositories that the Gitea user can read. For a package installation that is, for example, `/var/lib/gitea/merge-properties.sh`; with the Docker image, a path in the data volume such as `/data/gitea/merge-properties.sh`. The driver runs with the `sh`, `awk`, `sort` and `git` of the server. In the Alpine-based Docker image, BusyBox provides the first three.
 2. Register the driver in the section `[git.config]` of `app.ini`. Gitea writes these entries into the Git configuration that it uses for all its Git commands:
 
    ```ini
    [git.config]
    merge.tl-properties.name = TopLogic resource bundle merge
-   merge.tl-properties.driver = sh /data/gitea/merge-properties.sh %O %A %B %P
+   merge.tl-properties.driver = sh /var/lib/gitea/merge-properties.sh %O %A %B %P
    ```
 
 3. Restart Gitea.

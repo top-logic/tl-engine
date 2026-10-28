@@ -211,9 +211,14 @@
 								<en>Create workspace</en>
 								<de>Workspace anlegen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<visible-if expr="$project != null &amp;&amp; $workspace == null"/>
-								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryCreateWorkspace($project)"/>
 						</generic-command>
@@ -227,10 +232,15 @@
 								<en>Start</en>
 								<de>Starten</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('Neither the workspace nor its application is stopped.'@en, 'Weder der Workspace noch seine Anwendung ist gestoppt.'@de))"/>
-								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryStart($project)"/>
 						</generic-command>
@@ -244,10 +254,15 @@
 								<en>Stop</en>
 								<de>Stoppen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
-								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryStop($project)"/>
 						</generic-command>
@@ -261,10 +276,15 @@
 								<en>Update workspace</en>
 								<de>Workspace aktualisieren</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
-								<model-access operation="Write"/>
 							</executability>
 							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
 							<execute-script function="factoryUpdate($project)"/>
@@ -279,10 +299,15 @@
 								<en>Clean up</en>
 								<de>Aufräumen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
-								<model-access operation="Write"/>
 							</executability>
 							<confirm expr="#('Remove the workspace of {0} with its container, sources and database? The project is kept.'@en, 'Den Workspace von {0} mit Container, Quellen und Datenbank entfernen? Das Projekt bleibt erhalten.'@de).fill($project)"/>
 							<execute-script function="factoryCleanup($project)"/>
@@ -374,10 +399,15 @@
 								<en>Set up CI</en>
 								<de>CI einrichten</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) == null &amp;&amp; factoryCiEnabled()"/>
 								<disabled-if expr="$ciSetUpUnavailable"/>
-								<model-access operation="Write"/>
 							</executability>
 							<confirm expr="#('Set up the CI of {0}? The repository gets the default pipeline definition unless it has one, the pipeline file is protected, and the CI job is created and builds the application.'@en, 'Die CI von {0} einrichten? Das Repository erhält die Standard-Pipeline-Definition, sofern es keine hat, die Pipeline-Datei wird geschützt, und der CI-Job wird angelegt und baut die Anwendung.'@de).fill($project)"/>
 							<execute-script function="factorySetUpCI($project)">
@@ -400,10 +430,15 @@
 								<en>Start CI build</en>
 								<de>CI-Build starten</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$project"
+									type="tl.factory:Project"
+								/>
+							</access>
 							<executability>
 								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) != null"/>
 								<disabled-if expr="$ciUnavailable"/>
-								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="factoryStartBuild($project)">
 								<with-result>
@@ -443,10 +478,15 @@
 								<en>Give a task</en>
 								<de>Auftrag erteilen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$workspace"
+									type="tl.factory:Workspace"
+								/>
+							</access>
 							<executability>
 								<visible-if expr="$workspace != null"/>
 								<disabled-if expr="$agentUnavailable"/>
-								<model-access operation="Write"/>
 							</executability>
 							<create-transient type="tl.factory:AgentConversation">
 								<with-result>

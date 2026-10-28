@@ -40,9 +40,14 @@
 						<en>New conversation</en>
 						<de>Neue Unterhaltung</de>
 					</label>
+					<access>
+						<operation name="Write"
+							object="$workspace"
+							type="tl.factory:Workspace"
+						/>
+					</access>
 					<executability>
 						<disabled-if expr="$agentUnavailable"/>
-						<model-access operation="Write"/>
 					</executability>
 					<create-transient type="tl.factory:AgentConversation">
 						<with-result>

@@ -35,12 +35,9 @@
 								<en>Create tenant</en>
 								<de>Mandant anlegen</de>
 							</label>
-							<executability>
-								<model-access
-									operation="Create"
-									type="tl.factory:Tenant"
-								/>
-							</executability>
+							<access>
+								<create type="tl.factory:Tenant"/>
+							</access>
 							<execute-script function="new(`tl.factory.input:NewTenant`, transient: true)">
 								<with-result>
 									<open-dialog
@@ -112,9 +109,6 @@
 											input="tenant"
 											with-inset="true"
 										>
-											<edit-executability>
-												<model-access operation="Write"/>
-											</edit-executability>
 											<field attribute="name"/>
 										</form>
 									</panel>

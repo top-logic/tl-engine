@@ -30,9 +30,14 @@
 					<en>Create member</en>
 					<de>Mitglied anlegen</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 				</executability>
 				<execute-script function="new(`tl.factory.input:NewMember`, transient: true)">
 					<with-result>
@@ -62,9 +67,14 @@
 					<en>Change role</en>
 					<de>Rolle ändern</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 					<disabled-if expr="if($member == null, #('Select a member.'@en, 'Ein Mitglied auswählen.'@de), null)"/>
 				</executability>
 				<execute-script function="new(`tl.factory.input:MemberRole`, transient: true)..set(`tl.factory.input:MemberRole#member`, $member)">
@@ -91,9 +101,14 @@
 					<en>Remove member</en>
 					<de>Mitglied entfernen</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 					<disabled-if expr="if($member == null, #('Select a member.'@en, 'Ein Mitglied auswählen.'@de), if($member == currentUser(), #('You cannot remove yourself from the tenant.'@en, 'Sie können sich nicht selbst aus dem Mandanten entfernen.'@de), null))"/>
 				</executability>
 				<confirm expr="#('Remove {0} from the tenant {1}? The account is deleted.'@en, '{0} aus dem Mandanten {1} entfernen? Das Konto wird gelöscht.'@de).fill($member, $tenant)"/>

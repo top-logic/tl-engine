@@ -36,9 +36,14 @@
 					<en>Create connection</en>
 					<de>Verbindung anlegen</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 				</executability>
 				<execute-script function="new(`tl.factory.input:NewGitConnection`, transient: true)">
 					<with-result>
@@ -68,9 +73,14 @@
 					<en>Edit</en>
 					<de>Bearbeiten</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 					<disabled-if expr="if($connection == null, #('Select a connection.'@en, 'Eine Verbindung auswählen.'@de), if(factoryGitBuiltIn($connection), #('A built-in connection is changed by the configuration of the installation only.'@en, 'Eine eingebaute Verbindung wird nur durch die Konfiguration der Installation geändert.'@de), null))"/>
 				</executability>
 				<execute-script>
@@ -98,9 +108,14 @@
 					<en>Replace token</en>
 					<de>Token ersetzen</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 					<disabled-if expr="if($connection == null, #('Select a connection.'@en, 'Eine Verbindung auswählen.'@de), if(factoryGitBuiltIn($connection), #('The access token of a built-in connection is configured in the installation.'@en, 'Das Zugangstoken einer eingebauten Verbindung ist in der Installation konfiguriert.'@de), null))"/>
 				</executability>
 				<execute-script function="new(`tl.factory.input:NewGitToken`, transient: true)..set(`tl.factory.input:NewGitToken#connection`, $connection)">
@@ -122,9 +137,14 @@
 					<en>Delete</en>
 					<de>Löschen</de>
 				</label>
+				<access>
+					<operation name="Write"
+						object="$tenant"
+						type="tl.factory:Tenant"
+					/>
+				</access>
 				<executability>
 					<null-input-hidden/>
-					<model-access operation="Write"/>
 					<disabled-if expr="if($connection == null, #('Select a connection.'@en, 'Eine Verbindung auswählen.'@de), if(factoryGitBuiltIn($connection), #('A built-in connection is removed from the configuration of the installation only.'@en, 'Eine eingebaute Verbindung wird nur aus der Konfiguration der Installation entfernt.'@de), null))"/>
 				</executability>
 				<confirm expr="#('Delete the git connection {0} and its access token?'@en, 'Die Git-Verbindung {0} und ihr Zugangstoken löschen?'@de).fill($connection)"/>

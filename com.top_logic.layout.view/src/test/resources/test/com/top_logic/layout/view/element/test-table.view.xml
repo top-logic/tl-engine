@@ -90,6 +90,7 @@
 			<column attribute="active"/>
 			<column
 				attribute="owner"
+				compact="false"
 				readonly="true"
 			/>
 			<computed-column name="total"

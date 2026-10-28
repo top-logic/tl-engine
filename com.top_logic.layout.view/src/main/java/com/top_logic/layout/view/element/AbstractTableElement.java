@@ -940,6 +940,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
+		control.setHiddenWhenCompact(ColumnDeclarations.hiddenWhenCompact(declarations));
 		if (_config.getDrag() != null) {
 			installDragSource(context, control);
 		}

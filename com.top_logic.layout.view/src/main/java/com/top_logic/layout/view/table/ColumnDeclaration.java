@@ -68,6 +68,18 @@ public interface ColumnDeclaration {
 	}
 
 	/**
+	 * The names of the columns this declaration contributes that the table leaves out in the
+	 * compact display, on a phone.
+	 *
+	 * <p>
+	 * Empty (default) for a declaration whose columns are shown on a phone as well.
+	 * </p>
+	 */
+	default List<String> hiddenWhenCompact() {
+		return List.of();
+	}
+
+	/**
 	 * The columns this declaration contributes, in display order.
 	 *
 	 * <p>

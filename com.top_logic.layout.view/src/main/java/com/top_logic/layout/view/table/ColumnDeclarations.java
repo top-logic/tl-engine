@@ -125,6 +125,20 @@ public class ColumnDeclarations {
 	}
 
 	/**
+	 * The names of the columns the given declarations leave out in the compact display, see
+	 * {@link ColumnDeclaration#hiddenWhenCompact()}.
+	 *
+	 * @see com.top_logic.layout.react.control.table.TableViewControl#setHiddenWhenCompact(Set)
+	 */
+	public static Set<String> hiddenWhenCompact(List<ColumnDeclaration> declarations) {
+		Set<String> result = new LinkedHashSet<>();
+		for (ColumnDeclaration declaration : declarations) {
+			result.addAll(declaration.hiddenWhenCompact());
+		}
+		return result;
+	}
+
+	/**
 	 * The columns the given declarations contribute, in display order.
 	 */
 	public static List<ColumnSetup> resolve(List<ColumnDeclaration> declarations, ColumnResolution scope) {

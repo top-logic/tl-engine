@@ -88,7 +88,7 @@
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"
 					>
-						<access-control scope="administration"/>
+						<access-control operation="Administration"/>
 						<view-ref view="admin/admin.view.xml"/>
 						<label>
 							<en>Administration</en>

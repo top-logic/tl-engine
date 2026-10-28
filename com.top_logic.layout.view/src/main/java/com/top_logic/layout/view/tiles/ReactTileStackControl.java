@@ -27,6 +27,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.ViewMessages;
+import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
@@ -143,9 +144,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 *        The channel holding the {@code List<TileFrame>} path.
 	 * @param scope
 	 *        The {@link TileStackScope} installed into each frame so that nested commands can push.
-	 * @param initialViewRef
-	 *        View path (relative to {@code /WEB-INF/views/}) of the frame shown when the path is
-	 *        empty.
+	 * @param initialView
+	 *        The view of the frame shown when the path is empty.
 	 * @param sharedChannels
 	 *        Channels of the enclosing view that every frame sees, by the name it sees them under -
 	 *        e.g. {@code pathChannel} under the name given by
@@ -153,14 +153,14 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 *        a copy.
 	 */
 	public ReactTileStackControl(ViewContext parent, TileStackElement element, ViewChannel pathChannel,
-			TileStackScope scope, String initialViewRef, Map<String, ViewChannel> sharedChannels) {
+			TileStackScope scope, ViewRef initialView, Map<String, ViewChannel> sharedChannels) {
 		super(parent, null, REACT_MODULE);
 		_parentContext = parent;
 		_element = element;
 		_here = RevealPath.of(parent);
 		_pathChannel = pathChannel;
 		_scope = scope;
-		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
+		_initialViewPath = initialView.fullPath();
 		_sharedChannels = sharedChannels;
 
 		Registration pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> exchangeFrames());

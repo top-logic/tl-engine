@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -262,6 +263,7 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	@Name(ACTIONS)
 	@DefaultContainer
 	@Options(fun = AllInAppImplementations.class)
+	@TreeProperty
 	List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 
 }

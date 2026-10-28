@@ -45,8 +45,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.InterfacesCategory;
@@ -84,6 +86,7 @@ import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandl
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @ServiceExtensionPoint(SearchBuilder.Module.class)
 @Label("TL-Script functions for external APIs")
 @ServiceCategory.Of(InterfacesCategory.class)
@@ -171,8 +174,9 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		super.startUp();
 
 		HashMap<String, ServiceMethodBuilder> builders = new HashMap<>();
+		Map<String, SecurityEnhancer> enhancers = new HashMap<>();
 		for (Entry<String, MethodDefinition> method : getConfig().getMethodDefinitions().entrySet()) {
-			builders.put(method.getKey(), createBuilder(method.getValue()));
+			builders.put(method.getKey(), createBuilder(method.getValue(), enhancers));
 		}
 		_builders = builders;
 		_builders.values().forEach(ServiceMethodBuilder::init);
@@ -205,7 +209,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		return HttpClients.custom();
 	}
 
-	private ServiceMethodBuilder createBuilder(MethodDefinition method) {
+	private ServiceMethodBuilder createBuilder(MethodDefinition method, Map<String, SecurityEnhancer> enhancers) {
 		String methodName = method.getName();
 		String baseUrl = method.getBaseUrl();
 		List<ParameterDefinition> parameters = method.getParameters();
@@ -243,7 +247,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 		String httpMethod = method.getHttpMethod().name();
 
-		SecurityEnhancer enhancer = securityEnhancer(method);
+		SecurityEnhancer enhancer = securityEnhancer(method, enhancers);
 
 		CallHandler handler = new CallHandler() {
 
@@ -269,6 +273,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(createClientBuilder()).build()) {
 					enhancer.enhanceRequest(httpclient, request);
 					return httpclient.execute(request, _requestContext, response -> {
+						enhancer.handleResponse(response);
 						try {
 							return _responseHandler.handle(method, call, response);
 						} catch (RuntimeException ex) {
@@ -446,13 +451,24 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		return TypedConfigUtil.createInstance(factory).create(methodSpec);
 	}
 
-	private SecurityEnhancer securityEnhancer(MethodDefinition method) {
+	/**
+	 * The {@link SecurityEnhancer} for the authentications of the given method.
+	 *
+	 * @param enhancers
+	 *        The {@link SecurityEnhancer}s created so far by authentication name. All methods using
+	 *        the same authentication share its enhancer, e.g. its cached access token.
+	 */
+	private SecurityEnhancer securityEnhancer(MethodDefinition method, Map<String, SecurityEnhancer> enhancers) {
 		SecurityEnhancer enhancer = NoSecurityEnhancement.INSTANCE;
 		for (String authenticationName : method.getAuthentication()) {
-			ClientAuthentication.Config<?> authentication = getConfig().getAuthentications().get(authenticationName);
-			enhancer = enhancer.andThen(TypedConfigUtil.createInstance(authentication).createSecurityEnhancer(this));
+			enhancer = enhancer.andThen(enhancers.computeIfAbsent(authenticationName, this::createSecurityEnhancer));
 		}
 		return enhancer;
+	}
+
+	private SecurityEnhancer createSecurityEnhancer(String authenticationName) {
+		ClientAuthentication.Config<?> authentication = getConfig().getAuthentications().get(authenticationName);
+		return TypedConfigUtil.createInstance(authentication).createSecurityEnhancer(this);
 	}
 
 	@Override

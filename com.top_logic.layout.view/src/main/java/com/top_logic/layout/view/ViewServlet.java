@@ -332,7 +332,6 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
-		content.setViewSource(viewPath);
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
@@ -751,12 +750,12 @@ public class ViewServlet extends TopLogicServlet {
 	public static ViewResolution resolveView(ViewConfig config, String pathInfo, boolean anonymous) {
 		String namedView = namedView(pathInfo);
 		if (anonymous && hasLoginView(config) && !isAnonymousEntryPoint(config, namedView)) {
-			return new ViewResolution(ViewLoader.VIEW_BASE_PATH + config.getLoginView(), true);
+			return new ViewResolution(config.getLoginView().fullPath(), true);
 		}
 		if (namedView == null) {
-			return new ViewResolution(ViewLoader.VIEW_BASE_PATH + config.getDefaultView(), false);
+			return new ViewResolution(config.getDefaultView().fullPath(), false);
 		}
-		if (!namedView.equals(config.getDefaultView()) && entryPoint(config, namedView) == null) {
+		if (!namedView.equals(config.getDefaultView().getPath()) && entryPoint(config, namedView) == null) {
 			return new ViewResolution(null, false);
 		}
 		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false);
@@ -789,8 +788,7 @@ public class ViewServlet extends TopLogicServlet {
 	 * {@link ViewConfig#getLoginView() login view} instead of showing itself.
 	 */
 	private static boolean hasLoginView(ViewConfig config) {
-		String loginView = config.getLoginView();
-		return loginView != null && !loginView.isEmpty();
+		return config.getLoginView() != null;
 	}
 
 	/**
@@ -810,7 +808,7 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static ViewConfig.EntryPoint entryPoint(ViewConfig config, String view) {
 		for (ViewConfig.EntryPoint entryPoint : config.getEntryPoints()) {
-			if (view.equals(entryPoint.getView())) {
+			if (view.equals(entryPoint.getView().getPath())) {
 				return entryPoint;
 			}
 		}

@@ -34,9 +34,13 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -47,6 +51,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * @author <a href=mailto:kbu@top-logic.com>Karsten Buch</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 public class LDAPAccessService {
 
 	/**
@@ -153,6 +158,12 @@ public class LDAPAccessService {
 	 */
 	private ServiceProviderInfo _spi;
 
+	/**
+	 * Source of {@link Config#getMasterCredential()}, <code>null</code> if no master credential is
+	 * configured.
+	 */
+	private final SecretSource _masterCredential;
+
 	/** The connections to LDAP currently not used. */
 	private final List _unusedConnections = new ArrayList();
 
@@ -163,7 +174,12 @@ public class LDAPAccessService {
 	 *        Configuration for this {@link LDAPAccessService}.
 	 */
 	public LDAPAccessService(String deviceId, Config config, LDAPAuthenticationAccessDevice securityDevice) {
-		_spi = ServiceProviderInfo.createFromConfig(deviceId, config);
+		_spi = ServiceProviderInfo.createFromConfig(config);
+		_masterCredential =
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config.getMasterCredential());
+		if (_masterCredential == null) {
+			Logger.warn("Given Credentials for LDAP Access were empty for Device " + deviceId, LDAPAccessService.class);
+		}
 		deviceID = deviceId;
 		_securityDevice = securityDevice;
 		parseNestedGroups = config.isParseNestedGroups();
@@ -195,13 +211,26 @@ public class LDAPAccessService {
 		mappings = new HashMap();
 	}
 
+	/**
+	 * The connection parameters of this service without {@link ServiceProviderInfo#KEY_CREDENTIALS
+	 * credentials}.
+	 */
 	protected ServiceProviderInfo getServiceProviderInfo() {
 		return this._spi;
 	}
 
 	/**
+	 * The current value of the {@link Config#getMasterCredential() master credential}, the empty
+	 * string if none is configured.
+	 */
+	protected String getMasterCredential() {
+		return _masterCredential == null ? StringServices.EMPTY_STRING : _masterCredential.getSecret();
+	}
+
+	/**
 	 * Tries to create a LDAP context. To build this, this method uses the data coming from
-	 * {@link #getServiceProviderInfo()}.
+	 * {@link #getServiceProviderInfo()} and the current {@link #getMasterCredential() master
+	 * credential}.
 	 * 
 	 * While trying the hostname of serviceproviderinfo is resolved into the IPs using DNS, then all
 	 * of the IPs beeing configured for this hostname are tried until a context is created
@@ -212,8 +241,7 @@ public class LDAPAccessService {
 	 *         If creation fails.
 	 */
 	protected DirContext createContext() throws NamingException {
-		// get copy of the the provider infos
-		return createContext(getServiceProviderInfo());
+		return createContext(getServiceProviderInfo().withCredentials(getMasterCredential()));
 	}
 
 	/**
@@ -326,7 +354,8 @@ public class LDAPAccessService {
 	}
 
 	/**
-	 * a copy of the own ServiceProiderInfo
+	 * A copy of the own {@link ServiceProviderInfo} without {@link ServiceProviderInfo#KEY_CREDENTIALS
+	 * credentials}.
 	 */
 	public ServiceProviderInfo getCopyOfSPI() {
 		return new ServiceProviderInfo(getServiceProviderInfo());

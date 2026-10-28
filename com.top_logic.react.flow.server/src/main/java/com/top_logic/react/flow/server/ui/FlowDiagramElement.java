@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.form.values.edit.ValueModel;
@@ -62,6 +63,7 @@ public class FlowDiagramElement implements UIElement {
 	 * Configuration for {@link FlowDiagramElement}.
 	 */
 	@TagName("flow-diagram")
+	@TypeIcon("css:bi bi-bezier2")
 	public interface Config extends UIElement.Config, Inputs {
 
 		@Override

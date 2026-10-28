@@ -6,6 +6,5 @@
         <entry name="%ORACLE12_PORT%" value="${env:oracle12_port:1521}" />
         <entry name="%ORACLE12_NAME%" value="${env:oracle12_name:pdbora1}" />
         <entry name="%ORACLE12_USER%" value="${env:oracle12_user:user}"/>
-        <entry name="%ORACLE12_PASSWD%" value="${env:oracle12_passwd:unencrypted:passwd}"/>
 	</alias>
 </root>

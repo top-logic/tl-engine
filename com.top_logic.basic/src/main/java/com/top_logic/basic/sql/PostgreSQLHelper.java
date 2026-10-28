@@ -439,6 +439,14 @@ public class PostgreSQLHelper extends DBHelper {
 		buffer.append(" COLLATE \"C\"");
 	}
 
+	/**
+	 * PostgreSQL drops a primary key by the name of its constraint.
+	 */
+	@Override
+	public String dropPrimaryKey(String tableName, String constraintName) {
+		return alterTable(tableName) + "DROP CONSTRAINT " + columnRef(constraintName);
+	}
+
 	@Override
 	public void appendDropIndex(Appendable sql, String idxName, String tableName) throws IOException {
 		sql.append("DROP INDEX ");

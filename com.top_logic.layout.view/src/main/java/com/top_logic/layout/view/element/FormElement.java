@@ -22,6 +22,7 @@ import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -30,8 +31,10 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
@@ -70,7 +73,11 @@ import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
@@ -90,6 +97,7 @@ public class FormElement extends ContainerElement {
 	 * Configuration for {@link FormElement}.
 	 */
 	@TagName("form")
+	@TypeIcon("css:bi bi-ui-checks")
 	public interface Config extends ContainerElement.Config, FormLayoutOptions, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
@@ -124,6 +132,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getEditExecutability()}. */
 		String EDIT_EXECUTABILITY = "edit-executability";
+
+		/** Configuration name for {@link #getEditOperation()}. */
+		String EDIT_OPERATION = "edit-operation";
 
 		/** Configuration name for {@link #getSaveActions()}. */
 		String SAVE_ACTIONS = "save-action";
@@ -238,6 +249,27 @@ public class FormElement extends ContainerElement {
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
+		 * The operation the current user needs on the displayed object to edit it.
+		 *
+		 * <p>
+		 * The name of a command group: {@code Write} by default, or an operation declared for the
+		 * type of the displayed object in the {@code <security-config>}. The operation is checked
+		 * on the displayed object like an
+		 * {@link com.top_logic.layout.view.security.OperationAccess operation in the access of a
+		 * command}: a user who can never hold it on the type of the object does not see the Edit
+		 * button, a user refused on the object sees it disabled with the refusal as its reason.
+		 * The draft of a create dialog (a transient object) is always editable.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getEditExecutability() edit rules} decide in addition.
+		 * </p>
+		 */
+		@Name(EDIT_OPERATION)
+		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
+		CommandGroupReference getEditOperation();
+
+		/**
 		 * Rules deciding whether this form offers editing its object.
 		 *
 		 * <p>
@@ -248,11 +280,10 @@ public class FormElement extends ContainerElement {
 		 * </p>
 		 *
 		 * <p>
-		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
-		 * command group on the enclosing security scope; a
+		 * The rules decide in addition to the {@link #getEditOperation() edit operation}. A
 		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
 		 * displayed object, which it sees as a variable named after the {@link #getInput() input}
-		 * channel of the form. Without a rule, every user who sees the form may edit it.
+		 * channel of the form.
 		 * </p>
 		 */
 		@Name(EDIT_EXECUTABILITY)
@@ -355,8 +386,26 @@ public class FormElement extends ContainerElement {
 			}
 		}
 
+		if (SecurityConfigurationService.Module.INSTANCE.isActive() && config.getEditOperation().resolve() == null) {
+			context.error("The '" + Config.EDIT_OPERATION + "' '" + config.getEditOperation().id()
+				+ "' of a form is no registered command group.");
+		}
+
 		_saveActions = ViewActions.instantiate(context, config.getSaveActions(), ActionScope.NONE);
 		_cancelActions = ViewActions.instantiate(context, config.getCancelActions(), ActionScope.NONE);
+	}
+
+	/**
+	 * The {@link Config#getEditOperation() edit operation}, {@code null} (reported) when no such
+	 * command group is registered.
+	 */
+	private BoundCommandGroup editOperation() {
+		BoundCommandGroup result = _config.getEditOperation().resolve();
+		if (result == null) {
+			Logger.error("The '" + Config.EDIT_OPERATION + "' '" + _config.getEditOperation().id()
+				+ "' of a form is no registered command group; editing is refused.", FormElement.class);
+		}
+		return result;
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -397,6 +446,7 @@ public class FormElement extends ContainerElement {
 		formControl.setInputChannel(inputChannel);
 		formControl.setEditRule(
 			ViewExecutabilityRules.build(_config.getEditExecutability(), context, editScope(_config)));
+		formControl.setEditOperation(editOperation());
 
 		ChannelRef editModeRef = _config.getEditMode();
 		if (editModeRef != null) {

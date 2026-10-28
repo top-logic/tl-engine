@@ -233,6 +233,10 @@ class CreateStatementBuilder extends DefaultDBSchemaVisitor<Void, CreateStatemen
 
 	@Override
 	public Void visitIndex(DBIndex model, Phase arg) throws WrappedIOException {
+		if (arg != Phase.IndexCreation) {
+			// An index given as top-level part is visited in all phases.
+			return null;
+		}
 		try {
 			buffer.append("CREATE ");
 			if (model.isUnique()) {

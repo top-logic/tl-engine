@@ -102,7 +102,7 @@ public class DropColumnProcessor extends AbstractConfiguredInstance<DropColumnPr
 			if (getConfig().getUpdateData()) {
 				SchemaSetup setup =
 					new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, persistentSchema);
-				MORepository repository = setup.createMORepository(DefaultMOFactory.INSTANCE);
+				MORepository repository = setup.createMORepository(context.getSQLDialect(), DefaultMOFactory.INSTANCE);
 				MOClass specifiedType = (MOClass) repository.getMetaObject(typeName);
 
 				for (MetaObject type : repository.getMetaObjects()) {

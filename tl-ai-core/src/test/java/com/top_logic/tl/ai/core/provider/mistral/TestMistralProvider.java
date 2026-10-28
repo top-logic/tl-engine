@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -38,7 +39,7 @@ public class TestMistralProvider extends TestCase {
 			return;
 		}
 
-		MistralProvider provider = new MistralProvider(apiKey);
+		MistralProvider provider = new MistralProvider(FixedCredentials.bearer(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -103,7 +104,7 @@ public class TestMistralProvider extends TestCase {
 			return;
 		}
 
-		MistralProvider provider = new MistralProvider(apiKey);
+		MistralProvider provider = new MistralProvider(FixedCredentials.bearer(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -164,7 +165,7 @@ public class TestMistralProvider extends TestCase {
 			return;
 		}
 
-		MistralProvider provider = new MistralProvider(apiKey);
+		MistralProvider provider = new MistralProvider(FixedCredentials.bearer(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),

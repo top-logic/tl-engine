@@ -16,8 +16,10 @@ import com.top_logic.layout.configedit.ConfigChildren;
  * A node in the design tree.
  *
  * <p>
- * Concrete subclasses are {@link ConfigDesignTreeNode} (a node bound to a {@link ConfigurationItem})
- * and {@link VirtualDesignTreeNode} (a virtual property group node).
+ * Concrete subclasses are {@link ConfigDesignTreeNode} (a node bound to a {@link ConfigurationItem}),
+ * {@link VirtualDesignTreeNode} (a virtual property group node), {@link ViewLinkDesignTreeNode} (a
+ * reference to another view file) and {@link ErrorDesignTreeNode} (a referenced
+ * view that cannot be loaded).
  * </p>
  */
 public abstract class DesignTreeNode {

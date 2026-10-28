@@ -373,7 +373,7 @@ public class TestTileFrameRouteParticipant extends TestCase {
 		assertEquals(2, stack.getFrames().size());
 
 		FrameRouteConfig personFrame = stack.getFrames().get(0);
-		assertEquals("tiles/person-detail.view.xml", personFrame.getView());
+		assertEquals("tiles/person-detail.view.xml", personFrame.getView().getPath());
 		assertEquals("person/:person", personFrame.getRoute());
 		assertEquals(1, personFrame.getParams().size());
 		FrameParamConfig param = personFrame.getParams().get(0);

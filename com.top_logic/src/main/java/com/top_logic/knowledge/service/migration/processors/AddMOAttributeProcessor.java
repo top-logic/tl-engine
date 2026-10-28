@@ -123,7 +123,7 @@ public abstract class AddMOAttributeProcessor
 		addNewAttribute(log, tableDefinition);
 		
 		SchemaSetup setup = new SchemaSetup(instantiationContext(), currentSchema);
-		MORepository allTypes = setup.createMORepository(DefaultMOFactory.INSTANCE);
+		MORepository allTypes = setup.createMORepository(context.getSQLDialect(), DefaultMOFactory.INSTANCE);
 
 		if (config.getUpdateData()) {
 			AttributeConfig attribute = config.getAttribute();

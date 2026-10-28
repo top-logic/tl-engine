@@ -83,7 +83,7 @@ public class TestAPIKeySecretsOrder extends TestCase {
 		ServerAPIKeySecret beforeSecret = (ServerAPIKeySecret) before.get(0);
 		ServerAPIKeySecret afterSecret = (ServerAPIKeySecret) after.get(0);
 		assertEquals(beforeSecret.getDomain(), afterSecret.getDomain());
-		assertEquals(beforeSecret.getAPIKey(), afterSecret.getAPIKey());
+		assertEquals(apiKey(beforeSecret), apiKey(afterSecret));
 		assertEquals(beforeSecret.getUserId(), afterSecret.getUserId());
 	}
 
@@ -99,7 +99,7 @@ public class TestAPIKeySecretsOrder extends TestCase {
 		assertEquals(1, secrets.size());
 		ServerAPIKeySecret secret = (ServerAPIKeySecret) secrets.get(0);
 		assertEquals(DOMAIN, secret.getDomain());
-		assertEquals(API_KEY, secret.getAPIKey());
+		assertEquals(API_KEY, apiKey(secret));
 
 		// Resolve the authenticator as the server does for an operation.
 		OperationByMethod operation = config.getPaths().get(0).getOperations().values().iterator().next();
@@ -110,6 +110,10 @@ public class TestAPIKeySecretsOrder extends TestCase {
 		Authenticator authenticator = TypedConfigUtil.createInstance(authentication).createAuthenticator(secrets);
 
 		assertNull(authenticator.authenticate(request(API_KEY), null));
+	}
+
+	private static String apiKey(ServerAPIKeySecret secret) {
+		return TypedConfigUtil.createInstance(secret.getAPIKey()).getSecret();
 	}
 
 	private static OpenApiServer.Config<?> parse(String content) throws ConfigurationException {

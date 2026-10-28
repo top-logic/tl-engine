@@ -113,4 +113,9 @@ public class DefaultTypeSystem extends AbstractTypeSystem implements TypeSystem 
 		return true;
 	}
 
+	@Override
+	public boolean branchLast() {
+		return false;
+	}
+
 }

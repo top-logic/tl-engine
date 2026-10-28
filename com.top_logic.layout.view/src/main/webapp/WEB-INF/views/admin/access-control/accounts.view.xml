@@ -73,9 +73,14 @@
 								<en>Reset password</en>
 								<de>Passwort zurücksetzen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $selectedAccount)">
 								<with-result>
@@ -100,9 +105,14 @@
 								<en>Expire password</en>
 								<de>Passwort ablaufen lassen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access operation="Write"/>
 							</executability>
 							<expire-password/>
 						</generic-command>
@@ -120,9 +130,14 @@
 								<en>Require MFA (enroll)</en>
 								<de>MFA verlangen (Einrichtung)</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access operation="Write"/>
 							</executability>
 							<enable-mfa/>
 						</generic-command>
@@ -152,9 +167,6 @@
 						input="selectedAccount"
 						with-inset="true"
 					>
-						<edit-executability>
-							<model-access operation="Write"/>
-						</edit-executability>
 						<field attribute="name"/>
 						<field attribute="firstName"/>
 						<field attribute="lastName"/>

@@ -85,9 +85,9 @@
 				server="%IMAP_SERVER%"
 				port="%IMAP_PORT%"
 				user="%IMAP_USER%"
-				password="%IMAP_PASS%"
 				activated="%IMAP_ACTIVE%"
 			>
+				<password name="imap_pass"/>
 				<options>
 					<option name="mail.store.protocol" value="%IMAP_PROTOCOL%"/>
 					<option name="mail.imap.starttls.enable" value="%IMAP_STARTTLS%"/>

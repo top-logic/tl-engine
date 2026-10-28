@@ -19,6 +19,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -79,6 +81,7 @@ public class WithTransactionAction implements ViewAction {
 	 * Configuration for {@link WithTransactionAction}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@TypeIcon("css:bi bi-database")
 	public interface Config extends PolymorphicConfiguration<WithTransactionAction>, WithCommitMessage,
 			WithResultActions, ActionScopeDefinition {
 
@@ -106,6 +109,7 @@ public class WithTransactionAction implements ViewAction {
 		@Name(ACTIONS)
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 
 		/**

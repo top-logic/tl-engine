@@ -21,7 +21,6 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.XMLProperties;
-import com.top_logic.basic.config.ApplicationConfig.Config.Defaults;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -84,8 +83,20 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 		Map<Class<? extends ManagedClass>, ModuleConfiguration> getServices();
 
 		/**
-		 * The configured defaults for the configuration interfaces.
+		 * @see #getDefaults()
 		 */
+		String DEFAULTS = "defaults";
+
+		/**
+		 * The configured defaults for the configuration interfaces.
+		 * 
+		 * <p>
+		 * The defaults are applied before the rest of the application configuration is read, so
+		 * they also apply to the {@link #getServices() services} and {@link #getConfigs() configs}
+		 * of the application configuration itself.
+		 * </p>
+		 */
+		@Name(DEFAULTS)
 		@EntryTag("config")
 		@Key(Defaults.INTERFACE)
 		@Subtypes({})
@@ -157,11 +168,6 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	private volatile InstantiationContext _serviceStartupContext;
 
 	/**
-	 * Configured defaults configurations indexed by their configuration interface.
-	 */
-	private Map<Class<?>, Defaults> _defaults;
-
-	/**
 	 * Creates a new ApplicationConfig form the given configuration.
 	 * 
 	 * @param applicationConfiguration
@@ -191,7 +197,6 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 		_serviceStartupContext = context;
 		installConfigs(applicationConfiguration);
 		installServiceConfigurations(context, applicationConfiguration);
-		_defaults = applicationConfiguration.getDefaults();
 	}
 
 	private void installServiceConfigurations(InstantiationContext context, Config configuration) {
@@ -402,7 +407,6 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 
 		internalShutDown();
 		init(context, newConfig);
-		internalStartUp();
 	}
 
 	/**
@@ -416,18 +420,14 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	@Override
 	protected void startUp() {
 		super.startUp();
-		internalStartUp();
 		ReloadableManager.getInstance().addReloadable(this);
-	}
-
-	private void internalStartUp() {
-		ConfigDescriptionResolver.adaptConfiguredDefaults(_defaults);
 	}
 
 	@Override
 	protected void shutDown() {
 		ReloadableManager.getInstance().removeReloadable(this);
 		internalShutDown();
+		ConfigDescriptionResolver.resetConfiguredDefaults();
 		super.shutDown();
 	}
 
@@ -483,6 +483,7 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 			try {
 				Protocol protocol = new LogProtocol(ApplicationConfig.class);
 				InstantiationContext context = new DefaultInstantiationContext(protocol);
+				ConfigDescriptionResolver.adaptConfiguredDefaults(config.getDefaults());
 				ApplicationConfig impl = createImplementation(context, config);
 				check(protocol);
 
@@ -538,10 +539,45 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 
 			context.info("Loading config files: " + typedConfigList);
 
-			ConfigurationReader reader = new ConfigurationReader(context, configDescriptor());
 			VariableExpander expander = AliasManager.getInstance().getExpander();
+			applyConfiguredDefaults(typedConfigList, expander);
+
+			ConfigurationReader reader = new ConfigurationReader(context, configDescriptor());
 			ConfigurationItem config = reader.setSources(typedConfigList).setVariableExpander(expander).read();
 			return (Config) config;
+		}
+
+		/**
+		 * Reads only the {@link Config#getDefaults() defaults} sections of the given configuration
+		 * files and applies them.
+		 * 
+		 * <p>
+		 * This must happen before the complete configuration is read: The defaults may change how
+		 * the services and configs of the application configuration are parsed, e.g. by
+		 * configuring the implementation class of a polymorphic configuration.
+		 * </p>
+		 * 
+		 * <p>
+		 * Errors are not reported here, because the complete configuration contains the same
+		 * defaults sections and reports them when it is read afterwards. In case of errors no
+		 * defaults are applied.
+		 * </p>
+		 */
+		private static void applyConfiguredDefaults(List<BinaryContent> typedConfigList, VariableExpander expander) {
+			BufferingProtocol protocol = new BufferingProtocol();
+			ConfigurationReader reader =
+				new ConfigurationReader(new DefaultInstantiationContext(protocol), configDescriptor());
+			reader.setTopLevelFilter(Config.DEFAULTS::equals);
+			Config defaultsOnly;
+			try {
+				defaultsOnly = (Config) reader.setSources(typedConfigList).setVariableExpander(expander).read();
+			} catch (ConfigurationException ex) {
+				return;
+			}
+			if (protocol.hasErrors()) {
+				return;
+			}
+			ConfigDescriptionResolver.adaptConfiguredDefaults(defaultsOnly.getDefaults());
 		}
 
 		private static Map<String, ConfigurationDescriptor> configDescriptor() {

@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -75,6 +76,7 @@ public class WindowElement extends CommandScopeElement {
 	 * Configuration for {@link WindowElement}.
 	 */
 	@TagName("window")
+	@TypeIcon("css:bi bi-window-stack")
 	public interface Config extends CommandScopeElement.Config {
 
 		@Override

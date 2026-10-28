@@ -126,7 +126,7 @@ public final class FrameRoute {
 		}
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getLabel();
 		TileLabelProvider label = labelConfig != null ? context.getInstance(labelConfig) : null;
-		return new FrameRoute(config.getView(), config.getRoute(), toUrl, fromUrl, label,
+		return new FrameRoute(config.getView().getPath(), config.getRoute(), toUrl, fromUrl, label,
 			config.getFinalTitle());
 	}
 

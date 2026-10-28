@@ -183,16 +183,17 @@
 				     service, and the query leaves the application. Without one, webSearch is not
 				     offered to any agent. Configure exactly one search engine to enable webSearch.
 				     Both engines wait out a rate limit (HTTP 429) for at most 20 seconds per retry.
-				     Examples:
+				     The API key is best referenced by the variable holding it (with the plain key), so
+				     that it is not part of the configuration. Examples:
 
 				Tavily:
 				<search-engine class="com.top_logic.tl.ai.core.tools.web.TavilySearchEngine">
-					<api-key>YOUR_TAVILY_API_KEY</api-key>
+					<api-key name="tl_tavily_api_key"/>
 				</search-engine>
 
 				Brave:
 				<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
-					<api-key>YOUR_BRAVE_API_KEY</api-key>
+					<api-key name="tl_brave_api_key"/>
 				</search-engine>
 				-->
 
@@ -372,22 +373,68 @@
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 				<!--
-					Which models exist and how to reach them. An application names its providers in
-					<providers>, the metadata of a model models.dev does not know in
-					<model-catalog><model-overrides>, and where a run goes when its model cannot answer in
+					Which models exist and how to reach them.
+
+					The four public providers are configured here. Each reads its API key from the
+					secret store, by the secret name in <api-key> - by default the environment variable
+					or system property of that name, holding the plain key - and takes its models from
+					the variable tl_<provider>_models (comma separated, through the aliases of
+					tl-ai-core.conf.xml, which also give the models used when it is not set). A provider
+					whose key is not set is inactive: it is never called, failover passes over it, and a
+					run that needs it says which secret is missing. Without a default-model of
+					AgentRuntimeService, a run uses the first model of the first available provider in
+					the order given here.
+
+					An application changes a provider in its own configuration of this service: the
+					providers are keyed by name, so an entry <provider name="openai" models="..."/> merges
+					into the one here, and an entry of another name is added. <providers
+					config:override="true"> replaces the whole list by the application's own.
+
+					The metadata of a model models.dev does not know goes into
+					<model-catalog><model-overrides>, where a run goes when its model cannot answer into
 					<failover>. The empty catalog element switches the catalog on: the bundled copy of
 					models.dev at the start, the current one loaded in the background after it.
 					fetch-remote-catalog="false" keeps the bundled copy and sends no request.
 				-->
+				<providers>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						models="%ANTHROPIC_MODELS%"
+						name="anthropic"
+					>
+						<api-key name="tl_anthropic_api_key"/>
+					</provider>
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+						models="%OPENAI_MODELS%"
+						name="openai"
+					>
+						<api-key name="tl_openai_api_key"/>
+					</provider>
+					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
+						models="%MISTRAL_MODELS%"
+						name="mistral"
+					>
+						<api-key name="tl_mistral_api_key"/>
+					</provider>
+					<provider class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
+						models="%XAI_MODELS%"
+						name="xai"
+					>
+						<api-key name="tl_xai_api_key"/>
+					</provider>
+				</providers>
 				<model-catalog/>
 			</instance>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
+				default-model="%AI_DEFAULT_MODEL%"
+			>
 				<!--
-					Which agent runs how. An application names the model its agents run on
-					(default-model, and default-provider when two providers expose it), per agent in
+					Which agent runs how. The model the agents run on is default-model, taken from the
+					variable tl_ai_default_model; left empty, a run uses the first model of the first
+					available provider of LLMProviderService. An application names its own model there
+					(and default-provider when two providers expose it), per agent in
 					<agent-overrides>, the turn limit of an agent that names none (max-turns, 60 when
 					unset), the agent a chat starts with (chat-entry-point) and, if it needs one, its own
 					<security-context>. Every model named here must be exposed by a provider of
@@ -3102,9 +3149,9 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						/>
 					</factory>
 					<factory name="gitea">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"
-						/>
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory">
+							<tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"/>
+						</implementation>
 					</factory>
 					<factory name="html-pages">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"

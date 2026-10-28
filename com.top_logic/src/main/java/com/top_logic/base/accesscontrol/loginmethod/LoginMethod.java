@@ -84,4 +84,19 @@ public interface LoginMethod {
 		return null;
 	}
 
+	/**
+	 * Whether this method can be used now.
+	 *
+	 * <p>
+	 * Asked each time the login methods are listed, so that a method whose prerequisites are
+	 * missing - e.g. the client secret of an identity provider - is not offered until they are
+	 * provided, without restarting the application.
+	 * </p>
+	 *
+	 * @see LoginMethods#available(java.util.List)
+	 */
+	default boolean isAvailable() {
+		return true;
+	}
+
 }

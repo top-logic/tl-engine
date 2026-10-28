@@ -78,6 +78,7 @@ public class UploadResource extends AbstractCommandHandler {
 		resourceFile.getParentFile().mkdirs();
 		resourceFile.createNewFile();
 		FileUtilities.copyToFile(uploadForm.getData(), resourceFile);
+		fileManager.refresh(resourcePath);
 
 		return resourcePath;
 	}

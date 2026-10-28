@@ -111,8 +111,37 @@ public interface ActionScript {
 	 *         If the script declares a parameter, see {@link ViewScripts}.
 	 */
 	static ActionScript compile(Expr script, ActionScope scope, List<InputRef> inputs, String... additional) {
+		return of(ViewScripts.compile(script, variables(scope, inputs, List.of(additional))), scope, inputs);
+	}
+
+	/**
+	 * Compiles a script of an action instantiated in the given scope that is evaluated without the
+	 * access rights of the current user (see {@link QueryExecutor#disableSecurity()}), e.g. a script
+	 * computing the objects an access check decides on: an object the user may not even see is
+	 * refused by the check instead of vanishing from the result.
+	 *
+	 * @see #compile(Expr, ActionScope, List, String...)
+	 */
+	static ActionScript compileWithoutSecurity(Expr script, ActionScope scope) {
+		QueryExecutor executor = ViewScripts.compile(script, variables(scope, List.of(), List.of()));
+		executor.disableSecurity();
+		return of(executor, scope, List.of());
+	}
+
+	/**
+	 * The {@link ActionScript} evaluating the given compiled script, e.g. one whose security checks
+	 * are {@link QueryExecutor#disableSecurity() disabled}.
+	 *
+	 * @param executor
+	 *        The script, compiled with the {@link #variables(ActionScope, List, List) variables} of
+	 *        the given scope and inputs, followed by the additional ones.
+	 * @param scope
+	 *        The scope the action is instantiated in.
+	 * @param inputs
+	 *        The inputs of the action itself.
+	 */
+	private static ActionScript of(QueryExecutor executor, ActionScope scope, List<InputRef> inputs) {
 		List<String> scopeNames = scope.names();
-		QueryExecutor executor = ViewScripts.compile(script, variables(scope, inputs, List.of(additional)));
 		return (context, arguments, additionalValues) -> {
 			List<Object> args = arguments.values(scopeNames);
 			if (!inputs.isEmpty()) {

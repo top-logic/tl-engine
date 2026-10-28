@@ -30,6 +30,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -138,6 +139,7 @@ public class KanbanBoardElement implements UIElement {
 	 * Configuration for {@link KanbanBoardElement}.
 	 */
 	@TagName(TAG_NAME)
+	@TypeIcon("css:bi bi-kanban")
 	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, ElementAsConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
@@ -375,6 +377,7 @@ public class KanbanBoardElement implements UIElement {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<KanbanDropConfig> getDrops();
 
 		/**

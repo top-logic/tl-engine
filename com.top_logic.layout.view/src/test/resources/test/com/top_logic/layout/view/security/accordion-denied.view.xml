@@ -5,7 +5,7 @@
 		<section id="guarded"
 			label="Guarded"
 		>
-			<access-control scope="administration"/>
+			<access-control operation="Administration"/>
 			<panel/>
 		</section>
 		<section id="open"

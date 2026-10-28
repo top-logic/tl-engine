@@ -23,7 +23,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
@@ -567,8 +566,8 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * A fresh analysis of the access definition.
 	 */
-	private static List<TypeCoverage> analyze() {
-		return SecurityCoverageCheck.getInstance().analyze();
+	private static List<Object> analyze() {
+		return SecurityCoverageTable.analysisRows();
 	}
 
 	/**

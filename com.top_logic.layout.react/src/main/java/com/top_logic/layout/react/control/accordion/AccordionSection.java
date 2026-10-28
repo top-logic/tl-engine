@@ -32,6 +32,8 @@ public class AccordionSection {
 
 	private ReactControl _actions;
 
+	private boolean _hidden;
+
 	/**
 	 * Creates a new {@link AccordionSection} that is initially collapsed.
 	 *
@@ -128,6 +130,27 @@ public class AccordionSection {
 	 */
 	public AccordionSection withActions(ReactControl actions) {
 		_actions = actions;
+		return this;
+	}
+
+	/**
+	 * Whether this section is left out of the accordion when the accordion is built.
+	 *
+	 * @see ReactAccordionControl#setSectionHidden(String, boolean)
+	 */
+	public boolean isHidden() {
+		return _hidden;
+	}
+
+	/**
+	 * Sets whether this section is left out of the accordion when the accordion is built.
+	 *
+	 * @param hidden
+	 *        {@code true} to leave the section out, header included.
+	 * @return This instance for fluent chaining.
+	 */
+	public AccordionSection withHidden(boolean hidden) {
+		_hidden = hidden;
 		return this;
 	}
 

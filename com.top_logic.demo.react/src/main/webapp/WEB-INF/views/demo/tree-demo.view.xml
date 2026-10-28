@@ -33,7 +33,8 @@
 	opened stay open. The node of an object written to "selected" is found the same way, by walking
 	up from it instead of searching the whole tree.
 	
-	The five commands show that in the five shapes a model change takes:
+	The five commands below show that in the five shapes a model change takes; a sixth one,
+	"Approve", approves all selected milestones at once, see its comment:
 	- "New milestone" creates a milestone in the selected scope through a dialog and writes it to
 	"selected". The tree has no node for it while the dialog closes, and reveals and selects it
 	as soon as the create arrives.
@@ -53,9 +54,10 @@
 	ticket. With <null-input-disabled/> that is the whole of "enabled for such a selection".
 	
 	On top of that, the model access rights of the user decide: <create-transient> and
-	<delete-object> bring the rule for the creation and the deletion they perform, and the script
-	creating a ticket declares its creation with a <model-access> rule.
-
+	<delete-object> bring the rule for the creation and the deletion they perform, and the command
+	running the script creating a ticket declares the creation in its <access>: a ticket created
+	in the scope of the milestone and added to its tickets.
+	
 	The same objects are displayed twice, in the tabs "Tree" and "Tree table": a <tree-table> with
 	the root, children and parents of the tree and with the name, due date and approval as columns.
 	Both bind the "selected" channel, so the commands work on the selection of either, and an object
@@ -64,7 +66,7 @@
 	tab not shown follows the model as well: a name or due date changed in the details form beside
 	the tabs, while the tree table is in the hidden tab, shows in its columns as soon as the tab is
 	opened again, and when its selected object is deleted meanwhile, the row it hung in is selected.
-
+	
 	The details form edits the single selected object: the name, due date and approval of a
 	milestone, the title of a ticket, the name of a scope.
 -->
@@ -93,6 +95,11 @@
 		<derived-channel name="selectedTicket"
 			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:Ticket`), $selectedSingle, null)"
 			inputs="selectedSingle"
+		/>
+		<!-- The selected milestones while the selection consists of milestones only, of any projects. -->
+		<derived-channel name="selectedMilestones"
+			expr="{ milestones = $selected.filter(n -> $n.instanceOf(`tl.demo.projectManagement:Milestone`)); if(!$milestones.isEmpty() &amp;&amp; $milestones.size() == $selected.size(), $milestones, null); }"
+			inputs="selected"
 		/>
 	</channels>
 	<split-panel
@@ -160,12 +167,14 @@
 								<en>New ticket</en>
 								<de>Neues Ticket</de>
 							</label>
+							<access>
+								<create
+									in="$milestone.container()"
+									reference="tl.demo.projectManagement:ProjectScope#tickets"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access
-									operation="Create"
-									type="tl.demo.projectManagement:Ticket"
-								/>
 							</executability>
 							<with-transaction>
 								<commitMessage>
@@ -224,6 +233,34 @@
 								<with-result>
 									<write-channel name="selected"/>
 								</with-result>
+							</with-transaction>
+						</generic-command>
+						<!--
+							Approves all selected milestones, which may belong to different projects. The access
+							requires the operation "Approve" on the project of every selected milestone, the check
+							the privileged script approveMilestones makes as well: a selection reaching into a
+							project the user may not approve in disables the command and names the refusal.
+						-->
+						<generic-command
+							image="css:bi bi-patch-check"
+							inputs="selectedMilestones as milestones"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Approve</en>
+								<de>Freigeben</de>
+							</label>
+							<access>
+								<operation name="Approve"
+									object="$milestones.map(m -> $m.container())"
+									type="tl.demo.projectManagement:ProjectScope"
+								/>
+							</access>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="approveMilestones($milestones)"/>
 							</with-transaction>
 						</generic-command>
 						<!-- <delete-object/> deletes a single object as well as a set of them. -->

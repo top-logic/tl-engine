@@ -19,7 +19,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.security.ModelAccessRule;
+import com.top_logic.layout.view.security.IntrinsicAccessRules;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -60,7 +60,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * The action brings its executability: the command is offered only where the user may create the
  * object. The created type is the {@link Config#getType() type}, when given; otherwise the type of
  * the {@link Config#getReference() reference}, or the type of the command input - the draft, when
- * the command's input is the dialog's model channel. See {@link ModelAccessRule} for how a refusal
+ * the command's input is the dialog's model channel. See {@link IntrinsicAccessRules} for how a refusal
  * is displayed.
  * </p>
  *
@@ -153,7 +153,7 @@ public class PersistTransientAction implements ViewAction {
 	 */
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
-		return ModelAccessRule.creation(_config.getType(), _config.getContainer(), _config.getReference());
+		return IntrinsicAccessRules.creation(_config.getType(), _config.getContainer(), _config.getReference());
 	}
 
 	@Override

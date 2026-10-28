@@ -5,6 +5,22 @@
 		<annotations>
 			<display-group value="demo"/>
 		</annotations>
+		<class name="Deliverable"
+			abstract="true"
+		>
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<id-column value="name"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
 		<class name="Milestone">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -140,7 +156,29 @@
 						<change-subtree include="false"/>
 					</annotations>
 				</reference>
+				<reference name="deliverables"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Deliverable"
+				/>
 			</attributes>
+		</class>
+		<class name="Prototype">
+			<generalizations>
+				<generalization type="Deliverable"/>
+			</generalizations>
+		</class>
+		<class name="Report">
+			<generalizations>
+				<generalization type="Deliverable"/>
+			</generalizations>
+		</class>
+		<class name="Specification">
+			<generalizations>
+				<generalization type="Deliverable"/>
+			</generalizations>
 		</class>
 		<class name="Ticket">
 			<generalizations>

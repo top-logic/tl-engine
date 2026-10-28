@@ -23,6 +23,8 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ObservableRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.list.ObjectListElement.Layout;
 import com.top_logic.layout.view.model.ItemSelectionBinding;
@@ -98,6 +100,17 @@ public class ObjectListItems {
 
 	/** Channel holding the transient element the new-element template edits. */
 	private DefaultViewChannel _newElementChannel;
+
+	/**
+	 * The {@link ObjectListScope#linkAccess() link access} of the list, deciding whether the
+	 * new-element content is displayed.
+	 */
+	private ViewExecutabilityRule _linkAccess = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+
+	/**
+	 * Stops following the {@link #_linkAccess link access}, {@code null} while not followed.
+	 */
+	private Runnable _linkAccessObservation;
 
 	private ReactControl _emptyTextControl;
 
@@ -206,6 +219,7 @@ public class ObjectListItems {
 		_newElementChannel = new DefaultViewChannel(_newElementChannelName);
 		resetNewElement();
 		scope.initNewElementReset(this::resetNewElement);
+		followLinkAccess(scope.linkAccess());
 
 		// A change of the inputs discards the draft, so the unsaved changes of the new-element
 		// content are reported when an input channel is asked, before it is written.
@@ -226,6 +240,48 @@ public class ObjectListItems {
 			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);
 			_newElementControls.add(control);
 		}
+	}
+
+	/**
+	 * Follows the link access of the list while it is displayed: a change of what it answers shows
+	 * or withdraws the new-element content.
+	 */
+	private void followLinkAccess(ViewExecutabilityRule linkAccess) {
+		_linkAccess = linkAccess;
+		if (!(linkAccess instanceof ObservableRule observable)) {
+			return;
+		}
+		_display.addAttachListener(() -> {
+			if (_linkAccessObservation == null) {
+				_linkAccessObservation = observable.observe(this::updateDisplay);
+			}
+			updateDisplay();
+		});
+		Runnable stop = () -> {
+			if (_linkAccessObservation != null) {
+				_linkAccessObservation.run();
+				_linkAccessObservation = null;
+			}
+		};
+		_display.addDetachListener(stop);
+		_display.addCleanupAction(stop);
+	}
+
+	/**
+	 * Whether the new-element content is displayed: every input holds a value, and the
+	 * {@link ObjectListElement.Config#getLinkAccess() link access} allows linking the element
+	 * being composed.
+	 *
+	 * <p>
+	 * A user who may not link an element in the current context does not see the content composing
+	 * one, as a UI unit the user may not see is hidden: there is nothing the content could submit.
+	 * </p>
+	 */
+	private boolean showsNewElement() {
+		if (_newElementChannel == null || !InputValues.complete(InputValues.of(_inputs))) {
+			return false;
+		}
+		return _linkAccess.isExecutable(_newElementChannel.get()).isExecutable();
 	}
 
 	/**
@@ -280,31 +336,39 @@ public class ObjectListItems {
 			_elements.setChildren(items);
 		}
 
-		// Only the elements are arranged; what is shown in addition to them follows the arrangement
-		// as a whole.
-		List<ReactControl> displayed = new ArrayList<>();
-		displayed.add(_elements);
-
 		if (items.isEmpty() && _emptyText != null) {
 			if (_emptyTextControl == null) {
 				_emptyTextControl =
 					new ReactTextControl(_templateContext, Resources.getInstance().getString(_emptyText));
 			}
-			displayed.add(_emptyTextControl);
 		} else if (_emptyTextControl != null) {
 			_emptyTextControl.cleanupTree();
 			_emptyTextControl = null;
 		}
 
-		if (InputValues.complete(inputValues)) {
-			displayed.addAll(_newElementControls);
-		}
-
-		_display.setChildren(displayed);
+		updateDisplay();
 
 		if (_selectionBinding != null) {
 			_selectionBinding.refreshed();
 		}
+	}
+
+	/**
+	 * Arranges the display: the elements, the empty text, and the new-element content where it is
+	 * {@link #showsNewElement() shown}.
+	 */
+	private void updateDisplay() {
+		// Only the elements are arranged; what is shown in addition to them follows the arrangement
+		// as a whole.
+		List<ReactControl> displayed = new ArrayList<>();
+		displayed.add(_elements);
+		if (_emptyTextControl != null) {
+			displayed.add(_emptyTextControl);
+		}
+		if (showsNewElement()) {
+			displayed.addAll(_newElementControls);
+		}
+		_display.setChildren(displayed);
 	}
 
 }

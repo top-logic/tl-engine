@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.SimpleBinaryDataValue;
@@ -40,6 +41,7 @@ public class DownloadElement implements UIElement {
 	 * Configuration for {@link DownloadElement}.
 	 */
 	@TagName("download")
+	@TypeIcon("css:bi bi-download")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getInput()}. */

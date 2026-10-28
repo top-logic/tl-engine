@@ -36,6 +36,18 @@
 				new-element-channel="newComment"
 				remove="$comment.delete()"
 			>
+				<link-access>
+					<create
+						in="$ticket"
+						reference="demo.tickets:Ticket#comments"
+					/>
+				</link-access>
+				<remove-access>
+					<operation name="Delete"
+						object="$comment"
+						type="demo.tickets:Comment"
+					/>
+				</remove-access>
 				<item>
 					<view-ref view="tickets/comment.view.xml">
 						<bind

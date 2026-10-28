@@ -65,6 +65,18 @@
 							ordered="true"
 							type="Step"
 						/>
+						<reference name="deliverables"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Deliverable"
+						/>
+						<reference name="archive"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Archive"
+						/>
 					</attributes>
 				</class>
 
@@ -195,6 +207,57 @@
 							type="tl.accounts:Person"
 						/>
 					</attributes>
+				</class>
+
+				<class name="Deliverable"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+
+				<class name="Spec">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Deliverable"/>
+					</generalizations>
+				</class>
+
+				<class name="Plan">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Deliverable"/>
+					</generalizations>
+				</class>
+
+				<class name="Archive"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+
+				<class name="ArchiveEntry">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Archive"/>
+					</generalizations>
+				</class>
+
+				<class name="Empty"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
 				</class>
 			</types>
 		</module>

@@ -16,6 +16,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -30,8 +32,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.security.AccessChecks;
-import com.top_logic.layout.view.security.AccessControl;
-import com.top_logic.layout.view.security.SecurityScope;
+import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.util.Resources;
 import java.util.List;
@@ -66,6 +68,7 @@ public class TileElement implements UIElement {
 	 * Configuration for {@link TileElement}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@TypeIcon("css:bi bi-postcard")
 	public interface Config extends UIElement.Config, WithAccessControl {
 
 		/** Configuration tag of a {@link TileElement}. */
@@ -122,6 +125,7 @@ public class TileElement implements UIElement {
 		@Name(CONTENT)
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends UIElement> getContent();
 
 		/**
@@ -146,6 +150,7 @@ public class TileElement implements UIElement {
 		@Name(ACTION)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getAction();
 
 		/**
@@ -181,7 +186,7 @@ public class TileElement implements UIElement {
 
 	private final int _rowSpan;
 
-	private final AccessControl _accessControl;
+	private final UnitAccess _access;
 
 	private final UIElement _content;
 
@@ -204,7 +209,7 @@ public class TileElement implements UIElement {
 		_id = config.getId();
 		_width = config.getWidth();
 		_rowSpan = Math.max(1, config.getRowSpan());
-		_accessControl = config.getAccessControl();
+		_access = UnitAccess.create(context, config.getAccessControl());
 		_content = context.getInstance(config.getContent());
 		_cssClass = config.getCssClass();
 		PolymorphicConfiguration<? extends ViewCommand> actionConfig = config.getAction();
@@ -218,11 +223,24 @@ public class TileElement implements UIElement {
 	 * Whether this tile is accessible to the current user.
 	 *
 	 * <p>
-	 * A tile guarded by an inaccessible {@link AccessControl} is omitted from the dashboard.
+	 * A tile whose access control the user can never satisfy is omitted from the dashboard, see
+	 * {@link AccessChecks#isOffered(UnitAccess)}.
 	 * </p>
 	 */
 	public boolean isAccessible() {
-		return AccessChecks.isAccessible(_accessControl);
+		return AccessChecks.isOffered(_access);
+	}
+
+	/**
+	 * Whether this tile is currently withheld from the dashboard, see
+	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 *
+	 * @param context
+	 *        The context the dashboard is displayed in.
+	 * @return {@code null} when this tile is never withheld this way.
+	 */
+	public UnitHiding hiding(ViewContext context) {
+		return AccessChecks.hiding(_access, context);
 	}
 
 	/** The stable tile id. */
@@ -274,9 +292,9 @@ public class TileElement implements UIElement {
 	 * Creates the inner control of this tile.
 	 */
 	public ReactControl createContentControl(ViewContext context) {
-		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
-		ViewContext contentContext = scope != null ? context.withScope(SecurityScope.class, scope) : context;
-		ReactControl inner = (ReactControl) _content.createControl(contentContext);
+		ViewContext contentContext = AccessChecks.contentContext(_access, context);
+		ReactControl inner =
+			AccessChecks.guard(_access, contentContext, ctx -> (ReactControl) _content.createControl(ctx));
 		if (_cssClass != null) {
 			// A tile displays itself through its content, so the class of the tile goes on the control
 			// of that content. It is written only when the tile declares one, so that the content

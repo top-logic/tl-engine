@@ -8,7 +8,6 @@ package com.top_logic.layout.view.security;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
-import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -17,9 +16,14 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Created view security scopes.
+	 * @en No access
 	 */
-	public static ResKey CREATING_SECURITY_SCOPES;
+	public static ResKey NO_ACCESS_TITLE;
+
+	/**
+	 * @en You may not see this content.
+	 */
+	public static ResKey ERROR_NO_ACCESS;
 
 	/**
 	 * @en You may not view this object.
@@ -70,16 +74,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en You may not create an object of type "{0}" here.
 	 */
 	public static ResKey1 ERROR_CREATE_TYPE_DENIED__TYPE;
-
-	/**
-	 * @en Granted command group "{0}" to role "{1}" on "{2}".
-	 */
-	public static ResKey3 GRANTED_COMMAND_GROUP__GROUP_ROLE_SCOPE;
-
-	/**
-	 * @en Revoked command group "{0}" from role "{1}" on "{2}".
-	 */
-	public static ResKey3 REVOKED_COMMAND_GROUP__GROUP_ROLE_SCOPE;
 
 	static {
 		initConstants(I18NConstants.class);

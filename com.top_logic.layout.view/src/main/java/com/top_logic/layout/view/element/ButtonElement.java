@@ -14,6 +14,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
@@ -51,6 +53,7 @@ public class ButtonElement implements UIElement {
 	 * Configuration for {@link ButtonElement}.
 	 */
 	@TagName("button")
+	@TypeIcon("css:bi bi-cursor")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -76,6 +79,7 @@ public class ButtonElement implements UIElement {
 		@Name(ACTION)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getAction();
 
 		/**

@@ -54,12 +54,9 @@
 								<en>Upload</en>
 								<de>Hochladen</de>
 							</label>
-							<executability>
-								<model-access
-									operation="Create"
-									type="demo.documents:Document"
-								/>
-							</executability>
+							<access>
+								<create type="demo.documents:Document"/>
+							</access>
 							<with-transaction>
 								<commitMessage>
 									<en>Uploaded document {0}.</en>

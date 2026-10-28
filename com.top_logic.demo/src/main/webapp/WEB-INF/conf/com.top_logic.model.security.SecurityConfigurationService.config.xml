@@ -15,16 +15,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -36,16 +26,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -62,16 +42,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -83,16 +53,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -109,16 +69,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -130,16 +80,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -168,16 +108,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -189,16 +119,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -215,16 +135,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -236,16 +146,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -262,16 +162,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -283,16 +173,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -309,16 +189,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -330,16 +200,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -362,16 +222,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -383,16 +233,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -415,16 +255,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -440,16 +270,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Create"
 							roles="SecurityStructure.superuser"
 						/>
@@ -461,16 +281,6 @@
 						<grant
 							inherit="true"
 							operation="Write"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
 						<grant
@@ -493,16 +303,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
 						<grant
@@ -565,6 +365,9 @@
 						/>
 					</part>
 					<class name="DemoTypes:DemoTypes.A">
+						<operations>
+							<operation name="PromoteAdmin"/>
+						</operations>
 						<!--
 							Only an administrator may promote the responsible person of an A to an administrator
 							(privileged script makeResponsibleAdmin). The operation must not be granted to
@@ -584,16 +387,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -605,16 +398,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -631,16 +414,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -652,16 +425,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -684,16 +447,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -705,16 +458,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -731,16 +474,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -752,16 +485,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -787,16 +510,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -808,16 +521,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -840,16 +543,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -861,16 +554,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -887,16 +570,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -908,16 +581,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -934,16 +597,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -955,16 +608,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -981,16 +624,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1002,16 +635,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1031,16 +654,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1052,16 +665,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1078,16 +681,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1099,16 +692,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1134,16 +717,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1155,16 +728,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1181,16 +744,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1202,16 +755,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1228,16 +771,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1249,16 +782,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1275,16 +798,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1296,16 +809,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1322,16 +825,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1343,16 +836,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1369,16 +852,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1390,16 +863,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1419,16 +882,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1440,16 +893,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1466,16 +909,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1487,16 +920,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1513,16 +936,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1534,16 +947,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1566,16 +969,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1587,16 +980,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1616,16 +999,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1637,16 +1010,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1666,16 +1029,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1687,16 +1040,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1716,16 +1059,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1737,16 +1070,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1763,16 +1086,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="SecurityStructure.superuser"
 						/>
@@ -1784,16 +1097,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="SecurityStructure.superuser"
 						/>
 						<grant
@@ -1810,16 +1113,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
@@ -1831,16 +1124,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
 						<grant
@@ -1857,16 +1140,6 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Finish"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
 							operation="Export"
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
@@ -1878,16 +1151,6 @@
 						<grant
 							inherit="true"
 							operation="Delete"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
 						<grant

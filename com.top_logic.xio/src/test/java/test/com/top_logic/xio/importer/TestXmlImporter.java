@@ -580,6 +580,43 @@ public class TestXmlImporter extends TestCase {
 		assertTranslations(Map.of(Locale.ENGLISH, "English", Locale.GERMAN, "Deutsch"), a3.tValueByName("other"));
 	}
 
+	public void testLanguageDefaultAndEmptyValues() throws XMLStreamException, IOException {
+		TLObject root = importXml(
+			"testXmlImporter10-Language.model.xml",
+			"testXmlImporter10-Language-defaults.importer.xml",
+			"testXmlImporter10-Language-defaults.data.xml");
+
+		List<? extends TLObject> as = list(root.tValueByName("as"));
+		assertEquals(3, as.size());
+
+		// Without a language in the input, the default language is used.
+		TLObject a1 = as.get(0);
+		assertTranslations(Map.of(Locale.GERMAN, "Eins"), a1.tValueByName("label"));
+		assertTranslations(Map.of(Locale.FRENCH, "Texte", Locale.ENGLISH, "Text"), a1.tValueByName("text"));
+		// Empty and blank values are not stored, not even for the fallback language.
+		assertNull(a1.tValueByName("fixed"));
+		assertNull(a1.tValueByName("other"));
+
+		// A language from the input wins over the default language.
+		TLObject a2 = as.get(1);
+		assertTranslations(Map.of(Locale.ENGLISH, "Two"), a2.tValueByName("label"));
+
+		// An empty value without a language is skipped without error.
+		TLObject a3 = as.get(2);
+		assertNull(a3.tValueByName("label"));
+		assertNull(a3.tValueByName("other"));
+	}
+
+	public void testDefaultLanguageWithFixedLanguage() {
+		String errors = assertInvalidImporter("testXmlImporter10-Language-default-fixed.importer.xml");
+		assertTrue(errors, errors.contains("must not be given together"));
+	}
+
+	public void testInvalidDefaultLanguage() {
+		String errors = assertInvalidImporter("testXmlImporter10-Language-default-invalid.importer.xml");
+		assertTrue(errors, errors.contains("Invalid language"));
+	}
+
 	private static void assertTranslations(Map<Locale, String> expected, Object resKey) {
 		assertEquals(expected, ((LiteralKey) resKey).getTranslations());
 	}

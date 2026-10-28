@@ -688,7 +688,7 @@ public class ValueInputElement implements UIElement {
 		}
 
 		if (options != null) {
-			followOptions(context, type, optionInputs, options, (SelectFieldModel) field, input);
+			followOptions(type, optionInputs, options, (SelectFieldModel) field, input);
 		}
 
 		if (_submitCommand != null) {
@@ -884,16 +884,14 @@ public class ValueInputElement implements UIElement {
 	 * already follows them.
 	 * </p>
 	 */
-	private void followOptions(ViewContext context, TLType type, List<ViewChannel> optionInputs, List<?> options,
+	private void followOptions(TLType type, List<ViewChannel> optionInputs, List<?> options,
 			SelectFieldModel field, ReactControl input) {
-		RowSourceObserver<Object> observer = new RowSourceObserver<>(
-			new ArrayList<>(options),
+		new RowSourceObserver<>(
+			new ArrayList<Object>(options),
 			args -> options(type, args),
 			observedTypes(type),
 			optionInputs,
-			field::setOptions);
-		input.addAttachListener(() -> observer.attach(context.getModelScope()));
-		input.addDetachListener(observer::detach);
+			field::setOptions).observeWhileAttached(input);
 	}
 
 	/**

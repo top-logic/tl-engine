@@ -39,6 +39,16 @@ order it computes (unless the `<value-input>` states an `option-order` of its ow
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
 
+The options of a `<field>` of a reference follow the model while the field is displayed: an instance
+of the class the reference points to that is created, changed or deleted - by this user in another
+view, or by another user - computes the options again (`AttributeSelectFieldModel#observeWhileDisplayed`,
+the `RowSourceObserver` begun when the input control is attached and stopped when it is detached).
+An object created after the form was built is offered without a new login, also where an
+`options-by-expression` annotation selects among the instances of that class, and a deleted one is
+no longer offered. The options are computed for the object the form shows - its overlay while the
+form is edited - and the selected value stays as it is. A field of an enumeration does not observe
+the model.
+
 ```xml
 <field attribute="priority">
 	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"

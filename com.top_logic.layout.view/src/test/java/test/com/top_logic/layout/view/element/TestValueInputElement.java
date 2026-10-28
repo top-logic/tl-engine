@@ -18,8 +18,9 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.view.model.CommittedModelChanges;
+import test.com.top_logic.layout.view.model.CommittedModelChanges.ScopedReactContext;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -33,7 +34,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.format.DateStyle;
 import com.top_logic.basic.format.TimeFormatDefinition;
-import com.top_logic.basic.Protocol;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -42,11 +42,6 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.config.annotation.ConfigType;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.mig.html.layout.AssociationEndRelevance;
-import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
 import com.top_logic.element.meta.form.constraint.I18NConstants;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
@@ -1200,16 +1195,16 @@ public class TestValueInputElement extends TestCase {
 	 * displayed, and no longer offers it once it is deleted.
 	 */
 	public void testTheInstancesOfAClassFollowTheModel() throws Exception {
-		GlobalModelEventForwarder scope = modelScope();
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
 		ReactFormFieldControl input = observedInput(scope, MODULE_INSTANCES);
 		input.attach();
 		assertFalse("The module does not exist yet.", offeredLabels(input).contains(CREATED_MODULE));
 
-		TLModule module = createModule(scope);
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
 		assertTrue("A created instance is offered at once: " + offeredLabels(input),
 			offeredLabels(input).contains(CREATED_MODULE));
 
-		deleteModule(scope, module);
+		CommittedModelChanges.deleteModule(scope, module);
 		assertFalse("A deleted instance is no longer offered.", offeredLabels(input).contains(CREATED_MODULE));
 	}
 
@@ -1218,12 +1213,12 @@ public class TestValueInputElement extends TestCase {
 	 * meanwhile as soon as it is displayed again.
 	 */
 	public void testAHiddenInputCatchesUpWhenDisplayedAgain() throws Exception {
-		GlobalModelEventForwarder scope = modelScope();
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
 		ReactFormFieldControl input = observedInput(scope, MODULE_INSTANCES);
 		input.attach();
 		input.detach();
 
-		TLModule module = createModule(scope);
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
 		try {
 			assertFalse("A hidden input offers what it offered when it was left.",
 				offeredLabels(input).contains(CREATED_MODULE));
@@ -1232,7 +1227,7 @@ public class TestValueInputElement extends TestCase {
 			assertTrue("The input displayed again offers the instance created while it was hidden.",
 				offeredLabels(input).contains(CREATED_MODULE));
 		} finally {
-			deleteModule(scope, module);
+			CommittedModelChanges.deleteModule(scope, module);
 		}
 	}
 
@@ -1241,20 +1236,20 @@ public class TestValueInputElement extends TestCase {
 	 * again when such an object is created; without the type observed, it does not.
 	 */
 	public void testAnOptionsExpressionFollowsTheObservedTypes() throws Exception {
-		GlobalModelEventForwarder scope = modelScope();
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
 		ReactFormFieldControl observed = observedInput(scope, OBSERVED_MODULE_OPTIONS);
 		ReactFormFieldControl unobserved = observedInput(scope, UNOBSERVED_MODULE_OPTIONS);
 		observed.attach();
 		unobserved.attach();
 
-		TLModule module = createModule(scope);
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
 		try {
 			assertTrue("An object of an observed type computes the options again: " + offeredLabels(observed),
 				offeredLabels(observed).contains(CREATED_MODULE));
 			assertFalse("An object of a type nobody observes changes no options.",
 				offeredLabels(unobserved).contains(CREATED_MODULE));
 		} finally {
-			deleteModule(scope, module);
+			CommittedModelChanges.deleteModule(scope, module);
 		}
 	}
 
@@ -1274,45 +1269,6 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("An input without a label is the field control itself, but is " + control,
 			control instanceof ReactFormFieldControl);
 		return (ReactFormFieldControl) control;
-	}
-
-	/**
-	 * A scope delivering the changes committed to the knowledge base from now on, on each
-	 * {@link GlobalModelEventForwarder#synthesizeModelEvents()}.
-	 */
-	private static GlobalModelEventForwarder modelScope() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Protocol log = new AssertProtocol(TestValueInputElement.class.getName());
-		AssociationEndRelevance relevance = MapBasedAssociationEndRelevance.newAssociationEndRelevance(log,
-			Collections.emptyMap(), kb.getMORepository());
-		log.checkErrors();
-		return new GlobalModelEventForwarder(kb, kb.getUpdateChain(), relevance);
-	}
-
-	/**
-	 * Creates the module {@link #CREATED_MODULE} in a committed transaction, and delivers the
-	 * creation to the given scope.
-	 */
-	private static TLModule createModule(GlobalModelEventForwarder scope) {
-		TLModule result;
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			result = TLModelUtil.addModule(ModelService.getApplicationModel(), CREATED_MODULE);
-			tx.commit();
-		}
-		scope.synthesizeModelEvents();
-		return result;
-	}
-
-	/**
-	 * Deletes the given module in a committed transaction, and delivers the deletion to the given
-	 * scope.
-	 */
-	private static void deleteModule(GlobalModelEventForwarder scope, TLModule module) {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			module.tDelete();
-			tx.commit();
-		}
-		scope.synthesizeModelEvents();
 	}
 
 	/**
@@ -1365,24 +1321,6 @@ public class TestValueInputElement extends TestCase {
 		@Override
 		public ModelScope getModelScope() {
 			return null;
-		}
-	}
-
-	/**
-	 * React context of a window observing the model in a given {@link ModelScope}.
-	 */
-	private static final class ScopedReactContext extends DefaultReactContext {
-
-		private final ModelScope _scope;
-
-		ScopedReactContext(ModelScope scope) {
-			super("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
-			_scope = scope;
-		}
-
-		@Override
-		public ModelScope getModelScope() {
-			return _scope;
 		}
 	}
 

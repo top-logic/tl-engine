@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -90,6 +91,7 @@ public class AccordionElement implements UIElement {
 	 * Configuration for {@link AccordionElement}.
 	 */
 	@TagName("accordion")
+	@TypeIcon("css:bi bi-chevron-bar-expand")
 	public interface Config extends UIElement.Config {
 
 		@Override

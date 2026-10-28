@@ -54,7 +54,7 @@ public record ShowStep(String viewRef, boolean dialog, ResKey label, ActionScrip
 	 * @return The step displaying that view.
 	 */
 	public static ShowStep fromConfig(ShowConfig config, ActionScope scope) {
-		return new ShowStep(ViewLoader.viewRef(config.getView()), config.isDialog(), config.getLabel(),
+		return new ShowStep(ViewLoader.viewRef(config.getView().getPath()), config.isDialog(), config.getLabel(),
 			compile(config.getLabelExpr(), scope), Binding.fromConfigs(config.getBindings(), scope));
 	}
 

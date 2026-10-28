@@ -23,6 +23,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.RegExpUtil;
 import com.top_logic.layout.form.model.FieldModel;
@@ -79,6 +80,7 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<ViewCommand.Config> getCommands();
 
 		/**

@@ -20,7 +20,7 @@ import java.util.List;
  *
  * <p>
  * The content is either a list of nested {@link UIElement}s ({@link Elements}) or the reference to
- * another view file ({@link EmbeddedView}). A reference is reported by its path only: whoever
+ * another view file ({@link EmbeddedView}). A reference is reported as {@link ViewRef} only: whoever
  * traverses the element tree decides how a view file is resolved.
  * </p>
  */
@@ -51,11 +51,10 @@ public sealed interface ChildGroup {
 	 *
 	 * @param key
 	 *        See {@link ChildGroup#key()}.
-	 * @param viewPath
-	 *        Path of the referenced view file, relative to {@link ViewLoader#VIEW_BASE_PATH}, as
-	 *        written in the configuration.
+	 * @param view
+	 *        The referenced view file, as written in the configuration.
 	 */
-	record EmbeddedView(String key, String viewPath) implements ChildGroup {
+	record EmbeddedView(String key, ViewRef view) implements ChildGroup {
 		// Pure data.
 	}
 
@@ -98,12 +97,12 @@ public sealed interface ChildGroup {
 	/**
 	 * A reference to another view file, displayed as part of its container.
 	 *
-	 * @param viewPath
-	 *        See {@link EmbeddedView#viewPath()}.
+	 * @param view
+	 *        See {@link EmbeddedView#view()}.
 	 * @return The group.
 	 */
-	static ChildGroup view(String viewPath) {
-		return new EmbeddedView(NO_KEY, viewPath);
+	static ChildGroup view(ViewRef view) {
+		return new EmbeddedView(NO_KEY, view);
 	}
 
 	/**
@@ -111,11 +110,11 @@ public sealed interface ChildGroup {
 	 *
 	 * @param key
 	 *        See {@link ChildGroup#key()}.
-	 * @param viewPath
-	 *        See {@link EmbeddedView#viewPath()}.
+	 * @param view
+	 *        See {@link EmbeddedView#view()}.
 	 * @return The group.
 	 */
-	static ChildGroup view(String key, String viewPath) {
-		return new EmbeddedView(key, viewPath);
+	static ChildGroup view(String key, ViewRef view) {
+		return new EmbeddedView(key, view);
 	}
 }

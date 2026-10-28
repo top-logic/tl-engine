@@ -150,20 +150,14 @@
 		</config>
 
 		<!--
-			The page of the tenants, for the operators: with no roles assigned, it is shown to the
-			technical super user (root) only; the security administration assigns it to further roles,
-			e.g. tl.factory.Operator.
+			The page of the tenants is shown to the users holding the operation "ManageTenants" on the
+			security root: the operators (granted below) and the technical super user (root).
 		-->
-		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
-			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
-				<scopes>
-					<scope id="tl.factory.tenants">
-						<label>
-							<en>Tenants</en>
-							<de>Mandanten</de>
-						</label>
-					</scope>
-				</scopes>
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+				<group name="ManageTenants"
+					type="write"
+				/>
 			</instance>
 		</config>
 
@@ -309,6 +303,16 @@
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
 				<security-config>
+					<!-- The operators manage the tenants (the page of the tenants). -->
+					<singleton name="SecurityStructure#ROOT">
+						<operations>
+							<operation name="ManageTenants"/>
+						</operations>
+						<grant
+							operation="ManageTenants"
+							roles="tl.factory.Operator"
+						/>
+					</singleton>
 					<!-- The operators create and delete tenants, their administrators manage them. -->
 					<class name="tl.factory:Tenant">
 						<grant

@@ -69,7 +69,7 @@
 				config:reference="system-separator"
 				icon="css:bi bi-buildings"
 			>
-				<access-control scope="tl.factory.tenants"/>
+				<access-control operation="ManageTenants"/>
 				<view-ref view="factory/tenants.view.xml"/>
 				<label>
 					<en>Tenants</en>

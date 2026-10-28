@@ -205,6 +205,47 @@ public class TestListStorage extends BasicTestCase {
 		assertEquals(emptyList(), getChildren());
 	}
 
+	/**
+	 * Checks {@link TLObject#tContains(TLStructuredTypePart, Object)} within the transaction after
+	 * adds and after a remove, and after the commit.
+	 */
+	public void testContains() {
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+		TLObject absent = _children.get(2);
+
+		assertFalse(containsChild(a));
+		assertFalse(containsChild(null));
+
+		inTransaction(() -> {
+			addChild(a);
+			assertTrue(containsChild(a));
+			assertFalse(containsChild(b));
+
+			addChild(b);
+			assertTrue(containsChild(a));
+			assertTrue(containsChild(b));
+			assertFalse(containsChild(absent));
+		});
+		assertEquals(List.of(a, b), getChildren());
+		assertTrue(containsChild(a));
+		assertTrue(containsChild(b));
+		assertFalse(containsChild(absent));
+		assertFalse("A value that is no element type instance is not contained.", containsChild("a"));
+		assertFalse(containsChild(null));
+
+		inTransaction(() -> {
+			removeChild(a);
+			assertFalse(containsChild(a));
+			assertTrue(containsChild(b));
+		});
+		assertFalse(containsChild(a));
+		assertTrue(containsChild(b));
+
+		inTransaction(() -> setChildren(emptyList()));
+		assertFalse(containsChild(b));
+	}
+
 	private void assertFastEnough(String operation, Runnable setList) {
 		StopWatch cpuWatch = StopWatch.createStartedThreadCpuWatch();
 		StopWatch wallWatch = StopWatch.createStartedWatch();
@@ -225,6 +266,18 @@ public class TestListStorage extends BasicTestCase {
 
 	private List<?> getChildren() {
 		return (List<?>) _parent.tValueByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME);
+	}
+
+	private boolean containsChild(Object child) {
+		return _parent.tContainsByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
+	}
+
+	private void addChild(TLObject child) {
+		_parent.tAddByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
+	}
+
+	private void removeChild(TLObject child) {
+		_parent.tRemoveByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
 	}
 
 	private void setChildren(List<TLObject> children) {

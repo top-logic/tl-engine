@@ -227,6 +227,19 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	}
 
 	/**
+	 * Looks up the given value by its {@link TLObject#tHandle() handle} in the indexed live link
+	 * map of the object, at constant cost per element (see
+	 * {@link AbstractWrapper#resolveLinks(TLObject, com.top_logic.knowledge.service.db2.AbstractAssociationQuery)}).
+	 */
+	@Override
+	public boolean containsAttributeValue(TLObject object, TLStructuredTypePart attribute, Object entry) {
+		if (entry == null) {
+			return false;
+		}
+		return linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(entry)) != null;
+	}
+
+	/**
 	 * The link in the given live link map that points to the given storage value, or
 	 * <code>null</code> if there is none.
 	 */

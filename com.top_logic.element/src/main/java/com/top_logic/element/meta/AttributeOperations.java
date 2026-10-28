@@ -283,6 +283,24 @@ public class AttributeOperations {
 	}
 
 	/**
+	 * Whether the values of the given attribute of the given object contain the given value.
+	 *
+	 * <p>
+	 * In a {@link TracingScope}, the value is read (and the read is traced) through the scope's
+	 * overlays. Otherwise, the storage of the attribute answers the lookup.
+	 * </p>
+	 *
+	 * @see StorageImplementation#containsAttributeValue(TLObject, TLStructuredTypePart, Object)
+	 */
+	public static boolean containsAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue) {
+		if (TracingScope.current() != null) {
+			return TLModelUtil.containsValue(getAttributeValue(object, attribute), aValue);
+		}
+		checkAlive(object, attribute);
+		return getStorageImplementation(object, attribute).containsAttributeValue(object, attribute, aValue);
+	}
+
+	/**
 	 * The (potentially) overridden version of the given attribute in the context of the given
 	 * object.
 	 * 

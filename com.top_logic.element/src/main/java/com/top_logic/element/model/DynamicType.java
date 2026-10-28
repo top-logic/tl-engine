@@ -85,4 +85,9 @@ public abstract class DynamicType extends PersistentType {
 		PersistentObjectImpl.removeValue(this, part, value);
 	}
 
+	@Override
+	public boolean tContains(TLStructuredTypePart part, Object value) {
+		return PersistentObjectImpl.containsValue(this, part, value);
+	}
+
 }

@@ -1287,6 +1287,25 @@ public class SSEUpdateQueue {
 		_windowRegistry = registry;
 	}
 
+	/**
+	 * The sub-session of the browser window this queue serves, or {@code null} if it has none.
+	 *
+	 * <p>
+	 * That is the sub-session the window's session context holds under the window's name. A queue
+	 * without {@link #setWindowContext(String, TLSessionContext, ReactWindowRegistry) window context}
+	 * - not served to a window yet - or one that is {@link #shutdown() shut down} has none, and so
+	 * has a window whose sub-session was removed from its session.
+	 * </p>
+	 */
+	public TLSubSessionContext getWindowSubSession() {
+		TLSessionContext sessionCtx = _sessionContext;
+		String windowName = _windowName;
+		if (sessionCtx == null || windowName == null) {
+			return null;
+		}
+		return sessionCtx.getSubSession(windowName);
+	}
+
 	private synchronized void ensureHeartbeat() {
 		if (_shutdown) {
 			// A queue that is torn down is never revived, not by a client that reconnects late.
@@ -1604,13 +1623,9 @@ public class SSEUpdateQueue {
 	 */
 	private boolean synthesizeModelEventsIfPossible() {
 		ReactWindowRegistry registry = _windowRegistry;
-		TLSessionContext sessionCtx = _sessionContext;
 		String windowName = _windowName;
-		if (registry == null || sessionCtx == null || windowName == null) {
-			return true;
-		}
-		TLSubSessionContext subSession = sessionCtx.getSubSession(windowName);
-		if (subSession == null) {
+		TLSubSessionContext subSession = getWindowSubSession();
+		if (registry == null || subSession == null) {
 			return true;
 		}
 		return ThreadContextManager.inContext(subSession, () -> {

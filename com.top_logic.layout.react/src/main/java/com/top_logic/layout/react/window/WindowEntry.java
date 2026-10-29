@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.window;
 
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -177,6 +178,20 @@ public class WindowEntry {
 	 */
 	public SSEUpdateQueue getQueue() {
 		return _queue;
+	}
+
+	/**
+	 * The sub-session this window displays, or {@code null} if it displays none.
+	 *
+	 * <p>
+	 * A window displays the sub-session its session context holds under the window's name, once its
+	 * page was served, see {@link SSEUpdateQueue#getWindowSubSession()}. A tree rendered for no
+	 * browser window in a sub-session borrowed from a window - a view rendered headlessly to check
+	 * it - does not make that sub-session one of another window.
+	 * </p>
+	 */
+	public TLSubSessionContext getSubSession() {
+		return _queue.getWindowSubSession();
 	}
 
 	/**

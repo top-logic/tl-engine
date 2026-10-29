@@ -4,8 +4,8 @@
 	Dialog to add an attribute to the selected type. The form edits a transient NewAttribute model
 	(bound to the model channel by the opening command): the attribute name, value type and cardinality
 	(mandatory / multiple). The primary command stores the form state, runs the ModelEditAction in
-	CREATE_ATTRIBUTE mode inside a transaction (adding the property to the type derived from the
-	container channel), writes the new attribute to the selection channel bound to the parent view,
+	CREATE_ATTRIBUTE mode inside a transaction (adding a property or, for a class or enumeration value
+	type, a reference to the type derived from the container channel), writes the new attribute to the selection channel bound to the parent view,
 	bumps the reload channel so the diagram re-reads its module, and closes the dialog.
 -->
 <view>

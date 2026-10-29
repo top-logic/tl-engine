@@ -9,10 +9,13 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.layout.form.values.edit.AllInAppImplementations;
-import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.element.layout.meta.ValueTypeModel;
+import com.top_logic.layout.form.values.edit.TargetTypeInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.annotate.DefaultStrategy;
 import com.top_logic.model.annotate.DefaultStrategy.Strategy;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
@@ -39,10 +42,20 @@ public interface TLInputControl extends TLAttributeAnnotation, TLTypeAnnotation 
 
 	/**
 	 * The control provider implementation.
+	 *
+	 * <p>
+	 * Offered are the controls that edit values of the annotated attribute's value type, or of the
+	 * annotated type itself.
+	 * </p>
+	 *
+	 * @implNote The annotated attribute or type is reached as the {@link ValueTypeModel} the
+	 *           annotation is edited in, see {@link TargetTypeInAppImplementations}.
 	 */
 	@Mandatory
 	@DefaultContainer
-	@Options(fun = AllInAppImplementations.class)
+	@Options(fun = TargetTypeInAppImplementations.class, args = {
+		@Ref(steps = { @Step(ANNOTATED), @Step(type = ValueTypeModel.class, value = ValueTypeModel.RESOLVED_TYPE) }),
+		@Ref(steps = { @Step(ANNOTATED), @Step(type = ValueTypeModel.class, value = ValueTypeModel.TYPE_KIND) }) })
 	PolymorphicConfiguration<? extends ReactFieldControlProvider> getImpl();
 
 	/** @see #getImpl() */

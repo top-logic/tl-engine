@@ -688,8 +688,6 @@ public class ModelResolver {
 				orig = null;
 			}
 
-			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
-
 			HistoryType historyType;
 			DeletionPolicy deletionPolicy;
 			boolean composite;
@@ -708,13 +706,6 @@ public class ModelResolver {
 
 			boolean isCurrent = historyType == HistoryType.CURRENT;
 
-			// Add source end
-			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, type);
-			sourceEnd.setMultiple(!composite);
-			sourceEnd.setAggregate(composite);
-			sourceEnd.setAbstract(referenceConfig.isAbstract());
-			
-			// Create destination end
 			TLType targetType;
 			try {
 				targetType = lookupAttributeType(type, referenceConfig);
@@ -724,7 +715,10 @@ public class ModelResolver {
 					ex);
 				return;
 			}
-			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceName, targetType);
+
+			TLAssociationEnd destEnd = TLModelUtil.addForwardReferenceEnd(type, referenceName, targetType, composite);
+			TLAssociationEnd sourceEnd = TLModelUtil.getOtherEnd(destEnd);
+			sourceEnd.setAbstract(referenceConfig.isAbstract());
 
 			if (isCurrent) {
 				// Only current references may be composites
@@ -732,7 +726,6 @@ public class ModelResolver {
 			} else {
 				destEnd.setComposite(false);
 			}
-			destEnd.setAggregate(false);
 			destEnd.setNavigate(canNavigate);
 			destEnd.setHistoryType(historyType);
 			destEnd.setDeletionPolicy(deletionPolicy);

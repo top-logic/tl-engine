@@ -6,8 +6,10 @@
 package com.top_logic.layout.view.form;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -20,6 +22,8 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -49,6 +53,9 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *           is {@link #isLarge(FieldSpec) large}: where it has no room, its first line stands for
  *           it.
  */
+@Label("Text input")
+@InApp
+@TargetType(TLTypeKind.STRING)
 public class TextInputControlProvider implements ReactFieldControlProvider {
 
 	/**

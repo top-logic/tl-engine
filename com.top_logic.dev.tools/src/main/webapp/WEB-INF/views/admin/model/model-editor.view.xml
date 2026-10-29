@@ -3,7 +3,8 @@
 <!--
 	Model editor (admin hub, Model section). A master/detail editor over the application model:
 	the module table (left) selects a module; the class diagram (center) shows and selects the
-	module's types and their attributes; the detail form (bottom) edits whichever of the two is
+	module's types and their attributes (references between the module's types as edges, references to
+	types of other modules as attribute lines); the detail form (bottom) edits whichever of the two is
 	selected - the model element, or the module itself while the diagram has no selection. The
 	toolbars create and delete modules, types and attributes through the ModelEditAction; the reload
 	channel is bumped after a diagram-affecting mutation so the diagram re-reads the (unchanged)
@@ -22,6 +23,14 @@
 		<derived-channel name="selectedDetail"
 			expr="ifElse($selectedPart != null, $selectedPart, $selectedModule)"
 			inputs="selectedPart, selectedModule"
+		/>
+		<!--
+			The association end implementing the selected reference. A reference reads its cardinality
+			from its end, so the cardinality of a reference is edited there.
+		-->
+		<derived-channel name="selectedEnd"
+			expr="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLReference`) ? $selectedPart.get(`tl.model:TLReference#end`) : null"
+			inputs="selectedPart"
 		/>
 	</channels>
 	<split-panel
@@ -261,10 +270,15 @@
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
 	enums = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLEnumeration`));
 	classNameSet = $classes.indexBy(c -> $c.get(`tl.model:TLNamedPart#name`));
+	enumNameSet = $enums.indexBy(e -> $e.get(`tl.model:TLNamedPart#name`));
 
 	classNodes = $classes.map(c -> {
 		props = $c.get(`tl.model:TLStructuredType#localParts`)
-			.filter(p -> $p.instanceOf(`tl.model:TLProperty`));
+			.filter(p -> $p.instanceOf(`tl.model:TLProperty`) || {
+				targetName = $p.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`);
+				$p.instanceOf(`tl.model:TLReference`)
+					&& $classNameSet[$targetName] == null && $enumNameSet[$targetName] == null
+			});
 		allGens = $c.get(`tl.model:TLClass#generalizations`);
 		externalGens = $allGens
 			.filter(g -> $classNameSet[$g.get(`tl.model:TLNamedPart#name`)] == null)
@@ -431,6 +445,53 @@
 											/>
 										</form>
 									</panel>
+								</case>
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLReference`)">
+									<stack>
+										<panel>
+											<title>
+												<en>Reference</en>
+												<de>Referenz</de>
+											</title>
+											<form
+												input="selectedDetail"
+												with-inset="true"
+												withEditMode="true"
+											>
+												<field attribute="name"/>
+												<field
+													attribute="annotations"
+													full-line="true"
+												/>
+											</form>
+										</panel>
+										<panel>
+											<title>
+												<en>Cardinality</en>
+												<de>Kardinalität</de>
+											</title>
+											<form
+												input="selectedEnd"
+												with-inset="true"
+												withEditMode="true"
+											>
+												<field attribute="mandatory"/>
+												<field attribute="multiple"/>
+												<!-- The diagram shows the cardinality at the edge of the reference. -->
+												<save-action>
+													<with-transaction>
+														<store-form-state/>
+													</with-transaction>
+													<execute-script function="now()">
+														<with-result>
+															<write-channel name="reload"/>
+														</with-result>
+													</execute-script>
+													<leave-edit-mode/>
+												</save-action>
+											</form>
+										</panel>
+									</stack>
 								</case>
 								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLStructuredTypePart`)">
 									<panel>

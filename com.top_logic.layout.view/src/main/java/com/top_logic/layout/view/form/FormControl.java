@@ -684,7 +684,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	public void executeApply() {
-		if (!_editMode || _overlay == null || (!_overlay.isDirty() && !hasParticipantChanges())) {
+		if (!_editMode || _overlay == null) {
+			return;
+		}
+		commitPendingInput();
+		if (!_overlay.isDirty() && !hasParticipantChanges()) {
 			return;
 		}
 
@@ -702,6 +706,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * method. It runs in this order:
 	 * </p>
 	 * <ol>
+	 * <li>Lets all participants {@link FormParticipant#commitPendingInput() commit} input not yet
+	 * part of their values.</li>
 	 * <li>{@link #validateOrThrow() Validates} all participants.</li>
 	 * <li>{@link #checkWriteRights() Checks the write rights} of all changes.</li>
 	 * <li>For a persistent base object, opens a KB transaction and lets every participant
@@ -729,11 +735,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
 	 * @throws TopLogicException
-	 *         If any participant reports a validation error, or if the current user is not allowed
-	 *         to write one of the changes, see {@link #checkWriteRights()}. In that case nothing is
-	 *         stored.
+	 *         If a participant could not commit its pending input, if any participant reports a
+	 *         validation error, or if the current user is not allowed to write one of the changes,
+	 *         see {@link #checkWriteRights()}. In that case nothing is stored.
 	 */
 	public TLObject executeStoreState() {
+		commitPendingInput();
 		validateOrThrow();
 
 		if (_overlay == null) {
@@ -785,11 +792,43 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
+		commitPendingInput();
 		if (_overlay.isDirty() || hasParticipantChanges()) {
 			executeStoreState();
 		}
 
 		exitEditMode();
+	}
+
+	/**
+	 * Lets all participants {@link FormParticipant#commitPendingInput() commit} the input they hold
+	 * that is not yet part of their values.
+	 *
+	 * <p>
+	 * Runs before the form decides whether anything changed: input that exists only as pending
+	 * input changes nothing yet, and the form would otherwise leave edit mode and drop it. Every
+	 * participant is asked, also after one refused, so that every problem is shown at once.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If a participant could not commit all of its input. The input then stays in place
+	 *         and the form in edit mode.
+	 */
+	private void commitPendingInput() {
+		TopLogicException refusal = null;
+		for (FormParticipant participant : new ArrayList<>(_participants)) {
+			try {
+				participant.commitPendingInput();
+			} catch (TopLogicException ex) {
+				if (refusal == null) {
+					refusal = ex;
+				}
+			}
+		}
+		if (refusal != null) {
+			fireValidityChanged();
+			throw refusal;
+		}
 	}
 
 	private boolean hasParticipantChanges() {

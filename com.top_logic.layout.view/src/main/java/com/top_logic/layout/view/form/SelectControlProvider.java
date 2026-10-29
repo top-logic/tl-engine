@@ -11,9 +11,11 @@ import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -91,6 +93,8 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote What the field asks for is read from {@link FieldSpec#getSelectDisplay()},
  *           {@link FieldSpec#getSelectOrientation()} and {@link FieldSpec#getOptionOrder()}.
  */
+@Label("Selection")
+@InApp
 public class SelectControlProvider implements ReactFieldControlProvider {
 
 	/**

@@ -74,6 +74,11 @@ public interface AttributedObject extends Wrapper {
 	}
 
 	@Override
+	default boolean tContains(TLStructuredTypePart part, Object value) {
+		return PersistentObjectImpl.containsValue(this, part, value);
+	}
+
+	@Override
 	default void generateFullText(FullTextBuBuffer buffer) {
 		PersistentObjectImpl.generateFullText(buffer, this);
 	}

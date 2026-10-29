@@ -26,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
@@ -91,6 +92,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * lost network leave such a queue behind. The heartbeat reports it to its
  * {@link ReactWindowRegistry}, which tears the window down once the client has been gone for
  * {@link ReactWindowRegistry#DISCONNECT_GRACE_MILLIS}, see {@link #checkAbandoned(long)}.
+ * </p>
+ *
+ * <p>
+ * <b>Commits of other threads.</b> A commit that reaches the model listeners of the window is
+ * delivered to its client without a request of the window, see {@link #requestModelSync(long)}.
  * </p>
  */
 public class SSEUpdateQueue {
@@ -158,11 +164,17 @@ public class SSEUpdateQueue {
 	/** The highest number that was dropped from {@link #_written} before a poll read it. Guarded by {@code this}. */
 	private long _droppedUnread;
 
-	/** Whether the client polls instead of reading a stream. Guarded by {@code this}. */
-	private boolean _polling;
+	/**
+	 * Whether the client polls instead of reading a stream. Written while holding {@code this},
+	 * volatile for {@link #hasClient(long)}.
+	 */
+	private volatile boolean _polling;
 
-	/** When the client last polled. Guarded by {@code this}. */
-	private long _lastPoll;
+	/**
+	 * When the client last polled. Written while holding {@code this}, volatile for
+	 * {@link #hasClient(long)}.
+	 */
+	private volatile long _lastPoll;
 
 	/**
 	 * When the event stream of a client that does not poll was lost, {@code 0} while it is
@@ -172,8 +184,11 @@ public class SSEUpdateQueue {
 	 */
 	private long _streamLostAt;
 
-	/** The poll waiting for the next event, {@code null} if none. Guarded by {@code this}. */
-	private WaitingPoll _waitingPoll;
+	/**
+	 * The poll waiting for the next event, {@code null} if none. Written while holding
+	 * {@code this}, volatile for {@link #hasClient(long)}.
+	 */
+	private volatile WaitingPoll _waitingPoll;
 
 	/** The token polls carry instead of the session cookie, created with the first poll. */
 	private volatile String _pollToken;
@@ -213,6 +228,31 @@ public class SSEUpdateQueue {
 	private volatile boolean _shutdown;
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
+
+	/**
+	 * Guards the state of the model synchronization, see {@link #requestModelSync(long)}.
+	 *
+	 * <p>
+	 * A lock of its own, so that a committing thread requesting a synchronization never waits for a
+	 * {@link #flush()} writing to a slow client.
+	 * </p>
+	 */
+	private final Object _syncLock = new Object();
+
+	/** The scheduled model synchronization that has not started yet, or {@code null}. */
+	private ScheduledFuture<?> _syncTask;
+
+	/** Whether a model synchronization is running. */
+	private boolean _syncRunning;
+
+	/** Whether the running model synchronization is to be followed by another one. */
+	private boolean _syncAgain;
+
+	/** When the last model synchronization started, in milliseconds. */
+	private long _lastSyncStart;
+
+	/** The interval of the last {@link #requestModelSync(long) request}, in milliseconds. */
+	private long _syncInterval;
 
 	private volatile String _windowName;
 
@@ -1172,8 +1212,9 @@ public class SSEUpdateQueue {
 		return false;
 	}
 	/**
-	 * Shuts down this queue, cancelling the heartbeat, closing the connection, and clearing all
-	 * state.
+	 * Shuts down this queue, cancelling the heartbeat and a pending
+	 * {@link #requestModelSync(long) model synchronization}, closing the connection, and clearing
+	 * all state.
 	 *
 	 * <p>
 	 * The queue lets go of everything of its window: the controls, the
@@ -1186,6 +1227,12 @@ public class SSEUpdateQueue {
 	 */
 	public void shutdown() {
 		_shutdown = true;
+		synchronized (_syncLock) {
+			if (_syncTask != null) {
+				_syncTask.cancel(false);
+				_syncTask = null;
+			}
+		}
 		synchronized (this) {
 			if (_heartbeatTask != null) {
 				_heartbeatTask.cancel(false);
@@ -1239,6 +1286,25 @@ public class SSEUpdateQueue {
 		_windowName = windowName;
 		_sessionContext = sessionContext;
 		_windowRegistry = registry;
+	}
+
+	/**
+	 * The sub-session of the browser window this queue serves, or {@code null} if it has none.
+	 *
+	 * <p>
+	 * That is the sub-session the window's session context holds under the window's name. A queue
+	 * without {@link #setWindowContext(String, TLSessionContext, ReactWindowRegistry) window context}
+	 * - not served to a window yet - or one that is {@link #shutdown() shut down} has none, and so
+	 * has a window whose sub-session was removed from its session.
+	 * </p>
+	 */
+	public TLSubSessionContext getWindowSubSession() {
+		TLSessionContext sessionCtx = _sessionContext;
+		String windowName = _windowName;
+		if (sessionCtx == null || windowName == null) {
+			return null;
+		}
+		return sessionCtx.getSubSession(windowName);
 	}
 
 	private synchronized void ensureHeartbeat() {
@@ -1330,7 +1396,32 @@ public class SSEUpdateQueue {
 		ensureHeartbeat();
 	}
 
-	/** Whether a client polls and was heard of recently. Called while holding the lock. */
+	/**
+	 * Whether a client is present at the given time: its event stream is connected, or it polls and
+	 * was heard of recently.
+	 *
+	 * <p>
+	 * This is when the {@link #sendHeartbeat() heartbeat} synthesizes the model events of the
+	 * window.
+	 * </p>
+	 *
+	 * <p>
+	 * Reads the client state without taking the lock of this queue, which a {@link #flush()} holds
+	 * while it writes to the client, so that a committing thread never waits for the network. The
+	 * answer may therefore be slightly stale.
+	 * </p>
+	 *
+	 * @param now
+	 *        The current time in milliseconds.
+	 */
+	public boolean hasClient(long now) {
+		return _connection != null || isPollingClientAlive(now);
+	}
+
+	/**
+	 * Whether a client polls and was heard of recently. Exact while holding the lock, see
+	 * {@link #hasClient(long)} otherwise.
+	 */
 	private boolean isPollingClientAlive(long now) {
 		return _polling && (_waitingPoll != null || now - _lastPoll < POLL_ORPHAN_MILLIS);
 	}
@@ -1340,9 +1431,10 @@ public class SSEUpdateQueue {
 	 *
 	 * <p>
 	 * Expires the downloads that were not fetched in time. While a client is present, synthesizes
-	 * the model events of the window, see {@link #synthesizeModelEventsIfPossible()}, writes the
-	 * heartbeat message to its stream and flushes the queue. While the client is gone, reports its
-	 * absence, see {@link #checkAbandoned(long)}.
+	 * the model events of the window and delivers the pending events, unless another thread's
+	 * interaction holds the window, see {@link #deliverModelEventsIfPossible()}, and writes the
+	 * heartbeat message to its stream. While the client is gone, reports its absence, see
+	 * {@link #checkAbandoned(long)}.
 	 * </p>
 	 */
 	public void sendHeartbeat() {
@@ -1354,14 +1446,12 @@ public class SSEUpdateQueue {
 			polled = isPollingClientAlive(now);
 		}
 		if (conn != null) {
-			synthesizeModelEventsIfPossible();
+			deliverModelEventsIfPossible();
 			writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
-			flush();
 		} else if (polled) {
 			// No heartbeat for a polling client - a poll ends by itself - but the model events of
 			// the window are synthesized as for a stream.
-			synthesizeModelEventsIfPossible();
-			flush();
+			deliverModelEventsIfPossible();
 		}
 		if (clientGoneSince(now) != 0) {
 			checkAbandoned(now);
@@ -1417,41 +1507,150 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Synthesizes the model events of this queue's window in its sub-session.
+	 * Requests that the model events of this queue's window are synthesized and delivered to its
+	 * client soon, because a commit reaches the listeners of the window's model scope.
 	 *
 	 * <p>
-	 * The events are synthesized within an {@link Interaction}, like every other change of the
-	 * window's controls, so that a commit is never delivered to a control tree that a request is
-	 * building or changing. The heartbeat does not wait for that request: while another thread holds
-	 * the session's interaction, nothing is synthesized. The commit is delivered at the end of that
-	 * interaction, or by the next heartbeat.
+	 * The request is served on the {@link SchedulerService}, never on the calling thread, which is
+	 * typically the thread that made the commit. A synchronization synthesizes the model events of
+	 * the window and delivers the pending events of this queue, see
+	 * {@link #deliverModelEventsIfPossible()}. Synchronizations of a window start at most once per
+	 * interval:
 	 * </p>
+	 * <ul>
+	 * <li>A request when the last synchronization started at least the given interval ago is served
+	 * at once.</li>
+	 * <li>A request within the interval is served the interval after the last synchronization
+	 * started.</li>
+	 * <li>Requests while a synchronization is scheduled are served by that synchronization.</li>
+	 * <li>A request while a synchronization runs is served by another synchronization the interval
+	 * after it started, since the running one may have missed its commit.</li>
+	 * <li>A synchronization that finds the window busy - another thread holds the session's
+	 * {@link Interaction} - is repeated the interval after it started.</li>
+	 * </ul>
 	 *
 	 * <p>
-	 * A queue without window context, or whose window has no sub-session, synthesizes nothing.
+	 * May be called by any thread concurrently. A queue that is {@link #shutdown() shut down}, or a
+	 * queue outside a running application without a {@link SchedulerService}, ignores the request.
 	 * </p>
+	 *
+	 * @param intervalMillis
+	 *        The minimum time between the starts of two synchronizations of this window, in
+	 *        milliseconds.
 	 */
-	private void synthesizeModelEventsIfPossible() {
+	public void requestModelSync(long intervalMillis) {
+		if (_shutdown) {
+			return;
+		}
+		if (!SchedulerService.Module.INSTANCE.isActive()) {
+			// No scheduler outside a running application, e.g. in a test of the queue alone.
+			return;
+		}
+		synchronized (_syncLock) {
+			_syncInterval = intervalMillis;
+			if (_syncRunning) {
+				_syncAgain = true;
+				return;
+			}
+			if (_syncTask != null) {
+				// Served by the scheduled synchronization.
+				return;
+			}
+			scheduleModelSync();
+		}
+	}
+
+	/**
+	 * Schedules the next model synchronization, the {@link #_syncInterval} after the last one
+	 * started. Called while holding {@link #_syncLock}.
+	 */
+	private void scheduleModelSync() {
+		if (_shutdown) {
+			return;
+		}
+		long delay = Math.max(0, _lastSyncStart + _syncInterval - System.currentTimeMillis());
+		_syncTask = SchedulerService.getInstance().schedule(this::runModelSync, delay, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * Runs a model synchronization scheduled by {@link #requestModelSync(long)}.
+	 */
+	private void runModelSync() {
+		synchronized (_syncLock) {
+			_syncTask = null;
+			if (_shutdown) {
+				return;
+			}
+			_syncRunning = true;
+			_syncAgain = false;
+			_lastSyncStart = System.currentTimeMillis();
+		}
+		boolean synchronizedModel = true;
+		try {
+			synchronizedModel = deliverModelEventsIfPossible();
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to deliver the model events of window '" + _windowName + "'.", ex,
+				SSEUpdateQueue.class);
+		} finally {
+			synchronized (_syncLock) {
+				_syncRunning = false;
+				if (_syncAgain || !synchronizedModel) {
+					_syncAgain = false;
+					scheduleModelSync();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Synthesizes the model events of this queue's window in its sub-session and delivers the
+	 * pending events of this queue.
+	 *
+	 * <p>
+	 * Both happen within an {@link Interaction}, like every other change of the window's controls:
+	 * a commit is never delivered to a control tree that a request is building or changing, and the
+	 * events are delivered when the interaction closes, see {@link DeliveryScope}. This does not
+	 * wait for that request: while another thread holds the session's interaction, nothing is
+	 * synthesized and nothing is written, since the events that interaction holds back are only
+	 * delivered once it knows which controls stay displayed. The commit is delivered by the next
+	 * request of the window, by the next heartbeat, or by repeating a
+	 * {@link #requestModelSync(long) synchronization}.
+	 * </p>
+	 *
+	 * <p>
+	 * A window without sub-session - its page was never rendered - synthesizes nothing. A queue
+	 * without window context has no interaction to wait for and is flushed directly.
+	 * </p>
+	 *
+	 * @return {@code false} if the window was busy, so that nothing was synthesized or delivered
+	 *         although there may be something to; {@code true} otherwise.
+	 */
+	private boolean deliverModelEventsIfPossible() {
 		ReactWindowRegistry registry = _windowRegistry;
-		TLSessionContext sessionCtx = _sessionContext;
 		String windowName = _windowName;
-		if (registry == null || sessionCtx == null || windowName == null) {
-			return;
+		if (registry == null) {
+			flush();
+			return true;
 		}
-		TLSubSessionContext subSession = sessionCtx.getSubSession(windowName);
-		if (subSession == null) {
-			return;
-		}
-		ThreadContextManager.inContext(subSession, () -> {
+		TLSubSessionContext subSession = getWindowSubSession();
+		Supplier<Boolean> deliver = () -> {
 			try (Interaction interaction = registry.tryBeginInteraction(0)) {
 				if (interaction == null) {
-					// The window is busy: the interaction holding it synthesizes at its end, or the
-					// next heartbeat does.
-					return;
+					// The window is busy.
+					return false;
 				}
-				registry.synthesizeModelEvents(windowName);
+				if (subSession != null) {
+					registry.synthesizeModelEvents(windowName);
+				}
+				// Delivered when the interaction closes, together with what was synthesized.
+				DeliveryScope.current().collect(this);
+				return true;
 			}
-		});
+		};
+		if (subSession == null) {
+			return deliver.get();
+		}
+		return ThreadContextManager.inContext(subSession, deliver::get);
 	}
 
 	/**

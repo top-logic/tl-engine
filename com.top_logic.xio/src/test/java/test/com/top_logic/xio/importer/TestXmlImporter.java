@@ -249,6 +249,65 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("old-e3", e3.tValueByName("name"));
 	}
 
+	public void testResolveExistingPartitions() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter15-ResolveExistingPartitions.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter15-ResolveExistingPartitions.model.xml");
+
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test15");
+		TLClass containerType = (TLClass) module.getType("Container");
+		TLClass itemType = (TLClass) module.getType("Item");
+
+		TLObject container = TransientObjectFactory.INSTANCE.createObject(containerType, null, null, null);
+		container.tUpdateByName("partitions", "");
+		TLObject p1a = existingItem(container, itemType, "P1_a");
+		TLObject p1b = existingItem(container, itemType, "P1_b");
+		TLObject p2a = existingItem(container, itemType, "P2_a");
+		TLObject p3x = existingItem(container, itemType, "P3_x");
+
+		ModelBinding binding = new TransientModelBinding(model, false);
+		importer.importModel(binding,
+			new StreamSource(resource("testXmlImporter15-ResolveExistingPartitions.data.xml").getStream()),
+			container);
+
+		// The existing objects are computed once per referenced partition, also for a partition
+		// without objects. The partition of an ID with an empty partition key is not computed, nor
+		// is a partition that is not referenced.
+		assertEquals("P1,P2,Q,", container.tValueByName("partitions"));
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(9, elements.size());
+
+		// Joined with the existing object instead of creating a new one, and linked only once.
+		assertSame(p1a, elements.get(0));
+		assertEquals("updated-a", p1a.tValueByName("name"));
+		assertSame(p1b, elements.get(1));
+		assertEquals("old-P1_b", p1b.tValueByName("name"));
+		assertSame(p2a, elements.get(2));
+		assertSame(p3x, elements.get(3));
+
+		// Unknown IDs create new objects, references resolve to existing objects of their
+		// partition.
+		TLObject p2n = elements.get(4);
+		assertEquals("P2_n", p2n.tValueByName("extId"));
+		assertSame(p2a, p2n.tValueByName("other"));
+
+		TLObject p1c = elements.get(5);
+		assertEquals("P1_c", p1c.tValueByName("extId"));
+		assertSame(p1b, p1c.tValueByName("other"));
+
+		TLObject z = elements.get(6);
+		assertEquals("_z", z.tValueByName("extId"));
+		assertEquals("new-z", z.tValueByName("name"));
+
+		TLObject q1 = elements.get(7);
+		assertEquals("Q_1", q1.tValueByName("extId"));
+		TLObject q2 = elements.get(8);
+		assertEquals("Q_2", q2.tValueByName("extId"));
+		assertSame(q1, q2.tValueByName("other"));
+	}
+
 	public void testUnlessKnownAndIgnoreUnresolved() throws XMLStreamException, IOException {
 		Protocol log = new AssertProtocol();
 		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),

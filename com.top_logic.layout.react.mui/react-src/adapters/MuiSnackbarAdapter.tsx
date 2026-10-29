@@ -1,11 +1,11 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, registerTransientOverlay } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
 import Snackbar from '@mui/material/Snackbar';
 import type { SnackbarCloseReason } from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-const { useCallback } = React;
+const { useCallback, useEffect, useState } = React;
 
 /** Command dismissing the message shown. */
 const CMD_DISMISS = 'dismiss';
@@ -49,6 +49,10 @@ const I18N_KEYS = {
  * <li>hidden → nothing is rendered; the configured CSS class → className of the `Snackbar`.</li>
  * </ul>
  *
+ * <p>While shown, the `Snackbar` is a transient overlay (registerTransientOverlay): floating
+ * actions it would cover move aside. The element is the one of the message shown, which is a new
+ * one for each generation.</p>
+ *
  * <p>The close button of the `Alert` dismisses the message at once, as the close button of
  * TLSnackbar does. A click beside the message and Escape leave it standing, as with TLSnackbar.</p>
  */
@@ -64,6 +68,16 @@ const MuiSnackbarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_DISMISS, { [ARG_GENERATION]: generation });
   }, [sendCommand, generation]);
 
+  // The element of the Snackbar: a new one for the message of each generation.
+  const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const shown = state.hidden !== true && state.visible === true;
+  useEffect(() => {
+    if (!shown || element == null) {
+      return;
+    }
+    return registerTransientOverlay(element);
+  }, [shown, element]);
+
   const handleClose = useCallback((_event: unknown, reason: SnackbarCloseReason) => {
     if (reason === REASON_TIMEOUT) {
       dismiss();
@@ -78,6 +92,7 @@ const MuiSnackbarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <Snackbar
       key={generation}
+      ref={setElement}
       id={controlId}
       className={rootClassName(state)}
       open={state.visible === true}

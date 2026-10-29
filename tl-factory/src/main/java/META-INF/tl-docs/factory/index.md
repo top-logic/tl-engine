@@ -413,9 +413,9 @@ In the Docker provider:
 An operation is started from a command: the function stores the state the operation is in and
 returns; a worker thread of `ProjectWorkspaces` runs the operation in a system context. Its output
 is collected and committed at most every `log-flush-interval` milliseconds, only the last
-`max-log-size` characters are kept. The view `factory/projects.view.xml` follows these commits
-through a source channel fed by `CommitSource` (see
-[channels fed by a server-side source](doc:view-layer/channels#channels-fed-by-a-server-side-source-source-channel)).
+`max-log-size` characters are kept. The view `factory/projects.view.xml` follows these commits by
+itself: the engine delivers a commit of the worker thread to every window displaying the changed
+objects within the `sync-interval` of `WindowModelEventService`.
 Only one operation runs on a workspace at a time.
 
 *Clean up* removes the container and the volumes of a workspace and the workspace object; the

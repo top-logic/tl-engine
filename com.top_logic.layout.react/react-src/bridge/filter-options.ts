@@ -18,3 +18,16 @@ export function filterOptions<T extends { label: string }>(options: readonly T[]
   }
   return options.filter((option) => option.label.toLowerCase().includes(term));
 }
+
+/**
+ * Whether the given option is the one a typed text names: its label equals the text, ignoring case
+ * and the blanks around the text. The server matches an entered text against the options the same
+ * way (`ReactDropdownSelectControl`, command `enterText`).
+ *
+ * @param option The option.
+ * @param text The typed text.
+ */
+export function labelMatches(option: { label: string }, text: string): boolean {
+  const term = text.trim().toLowerCase();
+  return term !== '' && option.label.toLowerCase() === term;
+}

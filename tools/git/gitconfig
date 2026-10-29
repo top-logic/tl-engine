@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+#
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+#
+# Git configuration of the engine repository, included into a clone's configuration once with
+#
+#   git config include.path ../tools/git/gitconfig
+#
+# See the article engine/git-merge-driver.
+
+# Merge driver for the resource bundles, see merge-properties.sh. Git runs it in the top-level
+# directory of the worktree; in a checkout of a branch without the script, it falls back to the text
+# merge.
+[merge "tl-properties"]
+	name = TopLogic resource bundle merge
+	driver = "f=tools/git/merge-properties.sh; if test -f $f; then sh $f %O %A %B %P; else git merge-file %A %O %B; fi"

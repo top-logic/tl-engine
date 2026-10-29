@@ -21,7 +21,7 @@
     </dependency>
     <!--
       The view layer is not optional: every dependent that loads this module's
-      application configuration resolves AgentViewRefreshService, and that class
+      application configuration resolves ChatWindowService, and that class
       needs ReactWindowRegistry from tl-layout-react. tl-layout-view pulls
       tl-layout-react in, but the React controls in `view/` use it directly, so it
       is declared here as well.

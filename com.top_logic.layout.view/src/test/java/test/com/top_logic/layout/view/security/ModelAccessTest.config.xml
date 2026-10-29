@@ -106,6 +106,17 @@
 							<self/>
 						</access-parent>
 					</class>
+					<!--
+						The milestones of a project and the notes of a category have no configuration:
+						as composition parts without a role source, they are decided by their
+						container.
+					-->
+					<!-- A remark is decided by an access parent whose type is not known statically. -->
+					<class name="TestViewModelAccess:Remark">
+						<access-parent>
+							<script expr="r -> $r.container()"/>
+						</access-parent>
+					</class>
 					<class name="TestViewModelAccess:Category">
 						<!-- A category may only be read, by its reader. -->
 						<grant

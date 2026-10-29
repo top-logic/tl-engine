@@ -6,11 +6,13 @@
 package com.top_logic.layout.react.window;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
@@ -887,6 +889,85 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		for (WindowEntry entry : registry._windows.values()) {
 			requestReload(entry.getQueue());
 		}
+	}
+
+	/**
+	 * Performs the given action for every window of every live session.
+	 *
+	 * <p>
+	 * May be called from any thread. A window opened or torn down concurrently may or may not be
+	 * visited.
+	 * </p>
+	 *
+	 * @param action
+	 *        The action to perform for each window.
+	 */
+	public static void forEachWindow(Consumer<? super WindowEntry> action) {
+		for (ReactWindowRegistry registry : REGISTRIES_BY_SESSION_ID.values()) {
+			registry._windows.values().forEach(action);
+		}
+	}
+
+	/**
+	 * The sub-sessions displayed by the browser windows of all live sessions.
+	 *
+	 * <p>
+	 * May be called from any thread, see {@link #forEachWindow(Consumer)}. A caller looking for the
+	 * windows of a certain user filters the result by {@link TLSubSessionContext#getPerson()}.
+	 * </p>
+	 *
+	 * @return A snapshot, one entry per window that displays a sub-session, see
+	 *         {@link WindowEntry#getSubSession()}.
+	 */
+	public static List<TLSubSessionContext> windowSubSessions() {
+		List<TLSubSessionContext> result = new ArrayList<>();
+		forEachWindow(entry -> {
+			TLSubSessionContext subSession = entry.getSubSession();
+			if (subSession != null) {
+				result.add(subSession);
+			}
+		});
+		return result;
+	}
+
+	/**
+	 * The registry holding the browser window that displays the given sub-session, or {@code null}
+	 * if no live window displays it.
+	 *
+	 * <p>
+	 * May be called from any thread.
+	 * </p>
+	 *
+	 * @see #windowDisplaying(TLSubSessionContext)
+	 */
+	public static ReactWindowRegistry registryDisplaying(TLSubSessionContext subSession) {
+		if (subSession == null) {
+			return null;
+		}
+		for (ReactWindowRegistry registry : REGISTRIES_BY_SESSION_ID.values()) {
+			if (registry.windowDisplaying(subSession) != null) {
+				return registry;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The name of the window of this registry that displays the given sub-session, or {@code null}
+	 * if none does.
+	 *
+	 * @see WindowEntry#getSubSession()
+	 */
+	public String windowDisplaying(TLSubSessionContext subSession) {
+		if (subSession == null) {
+			return null;
+		}
+		for (WindowEntry entry : _windows.values()) {
+			if (entry.getSubSession() == subSession) {
+				return entry.getWindowId();
+			}
+		}
+		return null;
 	}
 
 	/**

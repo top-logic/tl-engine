@@ -33,10 +33,7 @@
 			gap="default"
 		>
 			<column weight="2">
-				<card
-					padding="compact"
-					variant="outlined"
-				>
+				<card variant="outlined">
 					<title>
 						<en>The wide column</en>
 						<de>Die breite Spalte</de>
@@ -60,10 +57,7 @@
 						</label>
 					</text>
 				</card>
-				<card
-					padding="compact"
-					variant="outlined"
-				>
+				<card variant="outlined">
 					<title>
 						<en>Below it in the same column</en>
 						<de>Darunter in derselben Spalte</de>
@@ -83,10 +77,7 @@
 				</card>
 			</column>
 			<column>
-				<card
-					padding="compact"
-					variant="outlined"
-				>
+				<card variant="outlined">
 					<title>
 						<en>Status</en>
 						<de>Status</de>
@@ -104,10 +95,7 @@
 						</label>
 					</text>
 				</card>
-				<card
-					padding="compact"
-					variant="outlined"
-				>
+				<card variant="outlined">
 					<title>
 						<en>Links</en>
 						<de>Verweise</de>
@@ -119,10 +107,7 @@
 						</label>
 					</text>
 				</card>
-				<card
-					padding="compact"
-					variant="outlined"
-				>
+				<card variant="outlined">
 					<title>
 						<en>Note</en>
 						<de>Hinweis</de>

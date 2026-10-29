@@ -10,6 +10,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.thread.ThreadContext;
@@ -130,7 +131,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
 
 	@Override
-	public void readInfo() throws RepositoryException {
+	public synchronized void readInfo() throws RepositoryException {
 		DataInputStream theStream = null;
 
         try {
@@ -147,7 +148,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
     
 	@Override
-	public void writeInfo() throws RepositoryException {
+	public synchronized void writeInfo() throws RepositoryException {
 	    DataOutputStream dout = null;
 	    try {
 			LeafObject   theFile   = revDir.createLeafObject(AbstractRepository.VERSIONFILE);
@@ -177,8 +178,13 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
         
 	}
 
-	protected void readInfo(DataInputStream aStream) throws IOException {
-		numVersions  = aStream.readInt();
+	protected synchronized void readInfo(DataInputStream aStream) throws IOException {
+		int storedVersions = aStream.readInt();
+		if (storedVersions != numVersions) {
+			// Another repository on the same storage has checked in or deleted a version.
+			versions = null;
+		}
+		numVersions  = storedVersions;
 		author       = aStream.readUTF();
 		deleted      = aStream.readBoolean();
 		locked       = aStream.readBoolean();
@@ -195,7 +201,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 		}
 	}
 
-	protected byte[] getInfoString() throws IOException {
+	protected synchronized byte[] getInfoString() throws IOException {
 		ByteArrayOutputStream theStream = new ByteArrayOutputStream();
 
 		try {
@@ -219,7 +225,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	}
 
 	@Override
-	public boolean isDeleted() throws RepositoryException {
+	public synchronized boolean isDeleted() throws RepositoryException {
 		if (getIsEntry()) {
     		if (numVersions == 0) 
 	    	    readInfo();
@@ -230,7 +236,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	}
 
 	@Override
-	public boolean isLocked() throws RepositoryException {
+	public synchronized boolean isLocked() throws RepositoryException {
 		if (getIsEntry()) {
 			if (numVersions == 0) 
 	    	    readInfo();
@@ -241,7 +247,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	}
 
     @Override
-	public boolean isInUpdate() throws RepositoryException {
+	public synchronized boolean isInUpdate() throws RepositoryException {
         if (getIsEntry()) {
             if (numVersions == 0) 
                 readInfo();
@@ -252,7 +258,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
 
 	@Override
-	public String getAuthor () throws RepositoryException {
+	public synchronized String getAuthor () throws RepositoryException {
 	    if (numVersions == 0) 
             readInfo();
 	    
@@ -260,7 +266,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }														
 
 	@Override
-	public String getLocker () throws RepositoryException {
+	public synchronized String getLocker () throws RepositoryException {
 	    if (numVersions == 0) 
 	        readInfo();
 	    
@@ -268,7 +274,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	}														
 
     @Override
-	public int getNumVersions (String aUser) throws RepositoryException  {
+	public synchronized int getNumVersions (String aUser) throws RepositoryException  {
         if (numVersions == 0)
             readInfo();
         
@@ -283,7 +289,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
 
     @Override
-	public int getNumVersions () throws RepositoryException  {
+	public synchronized int getNumVersions () throws RepositoryException  {
         if (numVersions == 0)
             readInfo();
         
@@ -306,7 +312,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
 
 	@Override
-	public int getVersions () throws RepositoryException  {
+	public synchronized int getVersions () throws RepositoryException  {
         if (numVersions == 0)
             readInfo();
 	    
@@ -314,7 +320,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	}
 
 	@Override
-	public VersionInfo getLastVersionInfo () throws RepositoryException  {
+	public synchronized VersionInfo getLastVersionInfo () throws RepositoryException  {
         return getVersionInfo(getVersions());
 	}
 
@@ -364,16 +370,21 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
      * @return VersionInfo for given revision number
      */
 	@Override
-	public VersionInfo getVersionInfo(int revision) throws RepositoryException {
-        int num = getVersions();
-        if (versions == null)
-            versions = createVersionInfos(num);
-        
-        return versions[revision - 1];
+	public synchronized VersionInfo getVersionInfo(int revision) throws RepositoryException {
+        if (versions != null)
+            return versions[revision - 1];
+
+        BaseVersionInfo[] result = createVersionInfos(getVersions());
+        // A revision being checked in has no file yet; an incomplete array is not cached, so
+        // that the revision becomes visible once its file is written.
+        if (!Arrays.asList(result).contains(null))
+            versions = result;
+
+        return result[revision - 1];
 	}
     
 	@Override
-	public int newRevision(String forUser) throws RepositoryException {
+	public synchronized int newRevision(String forUser) throws RepositoryException {
         
         assert !inUpdate : "Must not make new Revision in Update";
         
@@ -389,8 +400,23 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
         return numVersions;
     }
 
+	/**
+	 * Updates the cached state after the given revision has been written as deletion marker.
+	 * 
+	 * @param user
+	 *        The user who deleted the entry.
+	 * @param revision
+	 *        The number of the revision that marks the entry as deleted.
+	 */
+	public synchronized void markDeleted(String user, int revision) {
+		numVersions = revision; // set new Version number
+		author = user; // and new author
+		versions = null; // invalidate old Versions Info
+		deleted = true; // Mark current Version as deleted
+	}
+
 	@Override
-	public int lock(String forUser) throws RepositoryException {
+	public synchronized int lock(String forUser) throws RepositoryException {
         assert !inUpdate : "Must not Lock when inUpdate";
         
         locked      = true;     // set lock flag
@@ -401,7 +427,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
 
 	@Override
-	public int unlock() throws RepositoryException {
+	public synchronized int unlock() throws RepositoryException {
         locallyUnlock();
         writeInfo();             // Write back the whole thing
         
@@ -410,7 +436,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     }
 
 	@Override
-	public void locallyUnlock() {
+	public synchronized void locallyUnlock() {
 		locked       = false;    // set lock flag
         locker       = null;
 		inUpdate = false; // Implicitly release locked version

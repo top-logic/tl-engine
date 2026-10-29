@@ -13,13 +13,12 @@
 	agent (factory/assign-task.view.xml).
 	
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
-	and state while they run. The source channel "commits" brings these commits to the window as
-	soon as they are made, so the list, the state and the output follow the operation without a
-	click. The commands are offered according to the state of the selected workspace. A project gets
-	no CI with its workspace: "Set up CI" sets it up for a project without CI job; "Start CI build",
-	"Refresh CI build" and the CI job in the details are shown only for a project with one. The last
-	CI build is asked from the CI server when the project is selected or a CI command asks for it,
-	not in the background.
+	and state while they run. The engine brings these commits to the window, so the list, the state
+	and the output follow the operation without a click. The commands are offered according to the
+	state of the selected workspace. A project gets no CI with its workspace: "Set up CI" sets it up
+	for a project without CI job; "Start CI build", "Refresh CI build" and the CI job in the details
+	are shown only for a project with one. The last CI build is asked from the CI server when the
+	project is selected or a CI command asks for it, not in the background.
 -->
 <view>
 	<channels>
@@ -31,13 +30,6 @@
 			<init>factoryCurrentTenant()</init>
 		</channel>
 		<channel name="project"/>
-		<source-channel name="commits"
-			update-interval="1000"
-		>
-			<source class="com.top_logic.layout.view.channel.CommitSource"
-				types="tl.factory:Project, tl.factory:Workspace"
-			/>
-		</source-channel>
 		<derived-channel name="workspace"
 			expr="$project.get(`tl.factory:Project#workspace`)"
 			inputs="project"

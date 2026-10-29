@@ -135,15 +135,16 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	 *
 	 * <p>
 	 * Linking is idempotent: An object that is imported multiple times (e.g. an object that joins a
-	 * duplicate) is linked only once.
+	 * duplicate) is linked only once. Membership is checked with
+	 * {@link TLObject#tContains(TLStructuredTypePart, Object)}, which does not need to read the
+	 * whole reference.
 	 * </p>
 	 */
 	@Override
 	public void addValue(ImportPart handler, Object obj, String part, Object element) {
 		TLObject self = (TLObject) obj;
 		TLStructuredTypePart referencePart = self.tType().getPartOrFail(part);
-		Object currentValue = self.tValue(referencePart);
-		if (currentValue instanceof Collection<?> collection && collection.contains(element)) {
+		if (self.tContains(referencePart, element)) {
 			return;
 		}
 		checkNotContainedElsewhere(self, referencePart, element);

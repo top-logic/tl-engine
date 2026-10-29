@@ -22,6 +22,8 @@ Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTest
 
 **IMPORTANT**: Always build from the project root using `-pl <module-dir>`, never by `cd`-ing into a module directory. The build uses a workspace-local Maven repository; generate it once per workspace with `.claude/scripts/local-m2.sh`. Never use the global Maven repository (`~/.m2/repository`) and never pass `-Dmaven.repo.local=$HOME/.m2/repository` — each workspace has its own local repo.
 
+**Merge driver for resource bundles**: register the driver `tl-properties` once per clone (`git config include.path ../tools/git/gitconfig` in the main checkout, see [engine/git-merge-driver.md](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/git-merge-driver.md)). It merges `messages_*.properties` and `WEB-INF/conf/resources/*.properties` key by key, so two branches that add different keys no longer conflict.
+
 ### Refreshing the Workspace After a Branch Switch
 
 Switching branches or pulling can leave stale jars in the local Maven repo (installed artifacts older than — or built from a different branch than — the current sources). A full rebuild is expensive; detect and rebuild only the stale modules:
@@ -217,7 +219,7 @@ external/JS identifiers.
 
 After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done:
 
-1. **Ensure the feature is accessible in `com.top_logic.demo`** — if it is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+1. **Ensure the feature is accessible in a demo app** — `com.top_logic.demo` for a feature of the classic UI, `com.top_logic.demo.react` for a feature of the React UI (`tl-demo` has no React UI). If it is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
 2. **Start the demo app** using the `tl-app` skill.
 3. **Verify the feature** by navigating to it, interacting with it, and checking it behaves as expected. **Delegate the browser interaction loop to a sub-agent** so its hundreds of round-trips don't re-bill the main thread's context on every turn — see the `tl-app` skill's "Verifying in the browser" section for the sub-agent brief and the snapshot-vs-screenshot guidance.
 4. **Only then report the work as complete.**
@@ -226,7 +228,7 @@ After implementing a UI feature or fix, always verify it manually in a running a
 
 ### Demo App Credentials
 
-The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [the demo apps article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/demo-apps.md).
+The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demo `tl-demo-react` at `/view/`) and scripted-test notes, see [the demo apps article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/demo-apps.md).
 
 ### Version Management
 
@@ -284,19 +286,19 @@ mvn exec:java@migrate-ticket28336
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
 - **com.top_logic.element/** - Element management
-- **com.top_logic.demo/** - Legacy demo application (`tl-demo`). The classic
-  layout UI plus a React view layer mounted at `/view/`. Depends directly on the
-  legacy `graphic.blocks.*` diagram stack, so it also serves those modules'
-  webapp resources (e.g. `/style/tl-flow-core.css`).
+- **com.top_logic.demo/** - Legacy demo application (`tl-demo`) with the classic
+  layout UI only. It does not depend on `com.top_logic.layout.react` /
+  `com.top_logic.layout.view` and has no React view layer (removed in #29409), so
+  neither the React UI nor services of those modules are available in it. Depends
+  directly on the legacy `graphic.blocks.*` diagram stack, so it also serves those
+  modules' webapp resources (e.g. `/style/tl-flow-core.css`).
 - **com.top_logic.demo.react/** - React-only demo application (`tl-demo-react`),
   built purely on the `com.top_logic.layout.view` `.view.xml` layer and served at
   `/view/`. This is the successor test bed for React UI features (see its
   `TRIAGE.md`). It does **not** depend on the legacy `graphic.blocks.*` modules;
   the React flow diagram is provided by the copied, self-contained
-  `com.top_logic.react.flow.*` modules. When verifying a React UI feature, run
-  this app, not `tl-demo` — a feature that works under `tl-demo` may still be
-  broken here if it relies on a legacy webapp resource that only `tl-demo`
-  happens to serve.
+  `com.top_logic.react.flow.*` modules. Verify React UI features in this app;
+  `tl-demo` has no React UI.
 - **tl-ai-\*/, tl-chat/, tl-chat-classic/** - The AI modules: `tl-ai-tool-api` (tool
   contracts), `tl-ai-core` (agent loop, LLM providers, tools, MCP client, delegation,
   TL-Script bindings), `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-chat` (React chat UI),

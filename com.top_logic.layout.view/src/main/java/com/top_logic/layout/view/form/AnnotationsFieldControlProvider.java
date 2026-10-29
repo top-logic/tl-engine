@@ -309,7 +309,29 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		// qualified name and, as the type spec, the qualified name of the part's value type.
 		fill(surroundings.formModel(), surroundings.annotations(), qualifiedNameOf(owner),
 			typeSpecOf(owner));
+		// An attribute's value type is resolved in the model of the type defining the attribute,
+		// as TLStructuredTypePartFormBuilder sets it up in initFormModel(). Without it, the part
+		// model answers no ValueTypeModel#getResolvedType(), and an option function offering
+		// what fits the attribute's values - the implementations of its input control, say - finds
+		// nothing that fits.
+		if (surroundings.formModel() instanceof TLStructuredTypePartFormBuilder.EditModel partForm
+			&& owner instanceof TLStructuredTypePart part) {
+			partForm.setContextType(part.getOwner());
+		}
 		return surroundings;
+	}
+
+	/**
+	 * The configuration holding the annotations of the given model element, built and filled as
+	 * this provider builds it to edit them.
+	 *
+	 * <p>
+	 * Public so that a test can check what an annotation added to it reaches through
+	 * {@link TLAnnotation#getAnnotated()}, for a real model element.
+	 * </p>
+	 */
+	public static AnnotatedConfig<? extends TLAnnotation> annotationContainerFor(TLObject owner) {
+		return surroundingsFor(owner).annotations();
 	}
 
 	/**

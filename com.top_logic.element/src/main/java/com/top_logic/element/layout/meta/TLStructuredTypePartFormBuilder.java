@@ -31,7 +31,6 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.And;
-import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.func.Not;
 import com.top_logic.basic.util.ResKey;
@@ -54,7 +53,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
-import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.config.FullQualifiedName;
 import com.top_logic.model.config.PartNameConstraints;
 import com.top_logic.model.config.TypeRef;
@@ -144,7 +142,8 @@ public class TLStructuredTypePartFormBuilder extends
 	 * Base edit properties of all {@link TLStructuredTypePart} configuration.
 	 */
 	@Abstract
-	public interface PartModel extends ConfigPart, PartConfig, TypedPartAspect, Internationalized, FullQualifiedName {
+	public interface PartModel
+			extends ConfigPart, PartConfig, TypedPartAspect, Internationalized, FullQualifiedName, ValueTypeModel {
 
 		/**
 		 * @see #getEditModel()
@@ -165,16 +164,6 @@ public class TLStructuredTypePartFormBuilder extends
 		 * @see #getMultipleAndNew()
 		 */
 		String MULTIPLE_AND_NEW = "multipleAndNew";
-
-		/**
-		 * @see #getResolvedType()
-		 */
-		String RESOLVED_TYPE = "resolved-type";
-
-		/**
-		 * @see #getTypeKind()
-		 */
-		String TYPE_KIND = "type-kind";
 
 		@Override
 		@Hidden(false)
@@ -241,6 +230,7 @@ public class TLStructuredTypePartFormBuilder extends
 		/**
 		 * The resolved version of {@link #getTypeSpec()}
 		 */
+		@Override
 		@Name(RESOLVED_TYPE)
 		@InstanceFormat
 		@Hidden
@@ -265,28 +255,6 @@ public class TLStructuredTypePartFormBuilder extends
 			@Ref(MULTIPLE_AND_NEW) })
 		@Override
 		boolean isBag();
-
-		/**
-		 * Kind of this part model used to limit the set of annotations that can be applied.
-		 */
-		@Name(TYPE_KIND)
-		@Derived(fun = ResolveTypeKind.class, args = @Ref(RESOLVED_TYPE))
-		@Hidden
-		TLTypeKind getTypeKind();
-
-		/**
-		 * Function resolving the {@link TLTypeKind} for a given {@link TLType}.
-		 */
-		class ResolveTypeKind extends Function1<TLTypeKind, TLType> {
-			@Override
-			public TLTypeKind apply(TLType type) {
-				if (type != null) {
-					return TLTypeKind.getTLTypeKind(type);
-				}
-
-				return null;
-			}
-		}
 
 		/**
 		 * Function resolving a textual type description in the context of some {@link TLModelPart}.

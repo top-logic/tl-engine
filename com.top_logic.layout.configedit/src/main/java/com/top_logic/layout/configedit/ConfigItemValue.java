@@ -70,6 +70,11 @@ public final class ConfigItemValue implements ConfigCollection {
 	}
 
 	@Override
+	public ConfigurationItem container() {
+		return _parentConfig;
+	}
+
+	@Override
 	public boolean isKeyed() {
 		return false;
 	}

@@ -216,6 +216,11 @@ public final class ConfigCollectionValue implements ConfigCollection {
 		return _property.isOrdered() || _property.kind() == PropertyKind.MAP;
 	}
 
+	@Override
+	public ConfigurationItem container() {
+		return _parentConfig;
+	}
+
 	/** Whether the collection is indexed by a property of its entries. */
 	@Override
 	public boolean isKeyed() {

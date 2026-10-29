@@ -14,6 +14,8 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.basic.config.container.ConfigPartUtilInternal;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.Labels;
 
@@ -166,6 +168,7 @@ public final class ConfigPendingEntries {
 
 	/** Starts a new pending entry for the given, freshly created item. */
 	public PendingEntry start(ConfigurationItem entry) {
+		attach(entry);
 		PendingEntry pending = new PendingEntry(entry);
 		_entries.add(pending);
 		_onChanged.accept(entry);
@@ -230,6 +233,8 @@ public final class ConfigPendingEntries {
 	private ResKey commit(PendingEntry pending) {
 		ConfigurationItem entry = pending._entry;
 		_entries.remove(pending);
+		// Joining the collection makes it the entry's container for real.
+		detach(entry);
 		_value.add(entry);
 		checkKeys();
 		_onChanged.accept(entry);
@@ -307,6 +312,7 @@ public final class ConfigPendingEntries {
 	 */
 	public void discard(PendingEntry pending) {
 		_entries.remove(pending);
+		detach(pending._entry);
 		checkKeys();
 		_onChanged.accept(null);
 	}
@@ -326,8 +332,38 @@ public final class ConfigPendingEntries {
 	 *        The item of the newly picked type, with whatever was already filled in carried over.
 	 */
 	public void replaceEntry(PendingEntry pending, ConfigurationItem replacement) {
+		detach(pending._entry);
+		attach(replacement);
 		pending._entry = replacement;
 		_onChanged.accept(replacement);
+	}
+
+	/**
+	 * Gives the given pending entry the collection's {@link ConfigCollection#container() container}
+	 * as its own, before it is part of the collection.
+	 *
+	 * <p>
+	 * A pending entry is filled in as any other entry: its options, derived values and constraints
+	 * are computed while it is pending. Whatever of these navigates outwards from the entry - an
+	 * annotation's option function asking the annotated element, say - would find nothing, and
+	 * offer something else than once the entry is confirmed.
+	 * </p>
+	 */
+	private void attach(ConfigurationItem entry) {
+		ConfigurationItem container = _value.container();
+		if (container != null && entry instanceof ConfigPart part && part.container() == null) {
+			ConfigPartUtilInternal.initContainer(part, container);
+		}
+	}
+
+	/**
+	 * Takes back what {@link #attach(ConfigurationItem)} gave the given entry.
+	 */
+	private void detach(ConfigurationItem entry) {
+		ConfigurationItem container = _value.container();
+		if (container != null && entry instanceof ConfigPart part && part.container() == container) {
+			ConfigPartUtilInternal.clearContainer(part);
+		}
 	}
 
 }

@@ -104,6 +104,22 @@ public interface ConfigCollection {
 	boolean hasEntryWithKey(Object key);
 
 	/**
+	 * The configuration the elements of this collection are parts of, or {@code null} where they
+	 * are part of none.
+	 *
+	 * <p>
+	 * An element joining the collection gets it as its
+	 * {@link com.top_logic.basic.config.container.ConfigPart#container() container}. An entry
+	 * that is still {@link ConfigPendingEntries pending} gets it in advance, so that what it
+	 * computes from its surroundings - its options, derived values and constraints - is the same
+	 * while it is filled in as once it is part of the collection.
+	 * </p>
+	 */
+	default ConfigurationItem container() {
+		return null;
+	}
+
+	/**
 	 * Whether the collection holds as many elements as it can, so that none can be added.
 	 */
 	default boolean isFull() {

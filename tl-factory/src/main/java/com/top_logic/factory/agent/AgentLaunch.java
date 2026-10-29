@@ -5,12 +5,6 @@
  */
 package com.top_logic.factory.agent;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import com.top_logic.factory.proxy.ProxyTokens;
-
 /**
  * What an {@link AgentHarness} needs to start an agent process.
  *
@@ -19,35 +13,16 @@ import com.top_logic.factory.proxy.ProxyTokens;
  * @param resumeSessionId
  *        The session ID of the conversation the process continues, {@code null} for a new
  *        conversation.
- * @param env
- *        The environment variables of the process, e.g. its token for the workspace proxy (see
- *        {@link ProxyTokens#processEnv(String)}); passed to the process only, in the environment
- *        of its command, never to the container.
- * @param instructions
- *        What the agent is told in addition to the instructions of its harness, see
- *        {@link ConversationTarget#instructions()}; {@code null} for nothing.
+ * @param token
+ *        The token the process presents to the LLM proxy; passed to the process only, in the
+ *        environment of its command.
  */
-public record AgentLaunch(String workingDir, String resumeSessionId, Map<String, String> env, String instructions) {
-
-	/**
-	 * Creates an {@link AgentLaunch}.
-	 */
-	public AgentLaunch {
-		env = env == null ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(env));
-	}
-
-	/**
-	 * Creates an {@link AgentLaunch} without additional instructions.
-	 */
-	public AgentLaunch(String workingDir, String resumeSessionId, Map<String, String> env) {
-		this(workingDir, resumeSessionId, env, null);
-	}
+public record AgentLaunch(String workingDir, String resumeSessionId, String token) {
 
 	@Override
 	public String toString() {
-		// Never the values of the environment: they carry the token.
-		return "AgentLaunch[workingDir=" + workingDir + ", resumeSessionId=" + resumeSessionId + ", env="
-			+ env.keySet() + ", instructions=" + (instructions != null) + "]";
+		// Never the token.
+		return "AgentLaunch[workingDir=" + workingDir + ", resumeSessionId=" + resumeSessionId + "]";
 	}
 
 }

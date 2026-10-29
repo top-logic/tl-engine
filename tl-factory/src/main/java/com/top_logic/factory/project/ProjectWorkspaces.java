@@ -6,7 +6,6 @@
 package com.top_logic.factory.project;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -18,11 +17,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import javax.lang.model.SourceVersion;
-
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -36,24 +32,11 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.WorkspaceAgentService;
-import com.top_logic.factory.ci.CIBuild;
-import com.top_logic.factory.ci.CIBuildStart;
-import com.top_logic.factory.ci.CIJob;
-import com.top_logic.factory.ci.CIProvider;
-import com.top_logic.factory.ci.CIService;
-import com.top_logic.factory.ci.ProjectCI;
-import com.top_logic.factory.git.GitConnections;
-import com.top_logic.factory.git.GitHostingProvider;
-import com.top_logic.factory.git.GitHostingService;
-import com.top_logic.factory.git.GitRepository;
-import com.top_logic.factory.git.GitRoute;
-import com.top_logic.factory.git.RepositorySource;
-import com.top_logic.factory.proxy.WorkspaceProxyService;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.WorkspaceState;
 import com.top_logic.factory.workspace.app.ApplicationFailedException;
-import com.top_logic.factory.workspace.app.ApplicationSource;
 import com.top_logic.factory.workspace.app.ApplicationSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
@@ -91,9 +74,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	SchedulerService.Module.class,
 	SecureRandomService.Module.class,
-	WorkspaceProxyService.Module.class,
-	GitHostingService.Module.class,
-	CIService.Module.class,
+	LLMProxyService.Module.class,
 })
 @ServiceCategory.Of(DevelopmentCategory.class)
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
@@ -163,22 +144,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	private static final Pattern GROUP_ID = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*");
 
 	/**
-	 * Allowed Maven artifact of an application, which is also a segment of the context path of the
+	 * Allowed Maven artifact of an application, which is also the context path of the
 	 * application and the start of the workspace identifier.
 	 */
 	private static final Pattern ARTIFACT_ID = Pattern.compile("[a-z][a-z0-9-]*");
-
-	/**
-	 * Separator of the names of a Maven group, which are the names of the Java package of an
-	 * application.
-	 */
-	private static final String GROUP_ID_SEPARATOR = ".";
-
-	/**
-	 * Separator of the parts of a Maven artifact, each of which becomes a name of the Java package
-	 * of an application.
-	 */
-	private static final String ARTIFACT_ID_SEPARATOR = "-";
 
 	private static final String WORKSPACE_ID_SEPARATOR = "-";
 
@@ -205,14 +174,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	@Override
 	protected void startUp() {
 		super.startUp();
-		try {
-			GitConnections.synchronizeBuiltIn();
-		} catch (RuntimeException ex) {
-			Logger.error("Failed to synchronize the built-in git connections.", ex, ProjectWorkspaces.class);
-		}
 		_workers = Executors.newCachedThreadPool(DaemonThreadFactory.daemonThreadFactory());
 		_workers.execute(() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::reconcile));
-		_workers.execute(() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::refreshLinks));
 		long interval = getConfig().getApplicationCheckInterval();
 		if (interval > 0) {
 			_applicationCheck = SchedulerService.getInstance().scheduleWithFixedDelay(
@@ -256,26 +219,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * <p>
 	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password},
 	 * which the application in it sets for its account {@code root}. If the
-	 * {@link WorkspaceProxyService workspace proxy} is switched on, the container gets what its
-	 * routes need to find it, e.g. their URLs, in its environment.
-	 * </p>
-	 *
-	 * <p>
-	 * With a {@link FactoryModel#PROJECT_GIT_CONNECTION git connection}, the sources live in the
-	 * {@link FactoryModel#PROJECT_REPOSITORY repository of the project} on the hosting service of
-	 * the connection (see {@link RepositorySource}): a project without repository gets one in the
-	 * owner of the connection, created with the generated application as its first commit; the
-	 * repository of a project that has one - entered when the project was created, or created for
-	 * an earlier workspace - is cloned. The default branch is protected with the
-	 * {@link #protectedFiles(TLObject, CIProvider) protected files of the project}; whether it could be
-	 * protected is recorded in {@link FactoryModel#PROJECT_BRANCH_PROTECTED}. Without git
-	 * connection, the application is generated in the workspace only; a git connection that is not
-	 * available fails the creation.
-	 * </p>
-	 *
-	 * <p>
-	 * Creating a workspace sets up no CI: neither a pipeline definition nor a CI job, see
-	 * {@link #setUpCI(TLObject)}.
+	 * {@link LLMProxyService LLM proxy} is switched on, the container gets the URL of the proxy in
+	 * its environment.
 	 * </p>
 	 *
 	 * @param project
@@ -312,299 +257,16 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 		TLObject workspace = created.workspace();
 		ApplicationSpec spec = created.spec();
-		ApplicationSource source = applicationSource(project);
-		if (source != null) {
-			spec.setSource(source);
-		}
-		run(workspace, "Creating the workspace of application " + groupId + ":" + artifactId + " " + version + ".", log -> {
+		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
 			WorkspaceInfo info = getApplications().create(spec, log);
 			log.update(w -> {
 				w.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
 				FactoryModel.setStatus(w, WorkspaceStatus.STARTING);
 				FactoryModel.setEndpoint(w, port(info), null);
 			});
-			awaitApplication(log, workspaceId, spec.getContextPath());
+			awaitApplication(log, workspaceId, artifactId);
 		});
 		return workspace;
-	}
-
-	/**
-	 * Where the sources of the application of the given project come from.
-	 *
-	 * @return The {@link RepositorySource} of the repository of the project if it has a
-	 *         {@link #getGitHosting(TLObject) git hosting service}, {@code null} for the default,
-	 *         the archetype.
-	 * @throws TopLogicException
-	 *         If the git connection of the project is not available.
-	 */
-	protected ApplicationSource applicationSource(TLObject project) {
-		GitHostingProvider hosting = getGitHosting(project);
-		if (hosting == null) {
-			TLObject connection = FactoryModel.getGitConnection(project);
-			if (connection != null) {
-				throw new TopLogicException(
-					com.top_logic.factory.git.I18NConstants.ERROR_CONNECTION_UNAVAILABLE__CONNECTION.fill(connection));
-			}
-			return null;
-		}
-		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
-		GitRoute route = proxy == null ? null : proxy.getRoute(GitRoute.class);
-		String routeUrl = route == null ? null : proxy.getRouteUrl(route);
-		String name = FactoryModel.getString(project, FactoryModel.PROJECT_NAME);
-		return new RepositorySource(hosting, proxy, routeUrl,
-			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY), name,
-			protectedFiles(project, getCI()),
-			repository -> commit(() -> FactoryModel.setRepository(project, repository)),
-			protection -> commit(() -> project.tUpdateByName(FactoryModel.PROJECT_BRANCH_PROTECTED, protection)));
-	}
-
-	/**
-	 * The CI server building the applications of the projects.
-	 *
-	 * @implSpec The provider of the {@link CIService}.
-	 *
-	 * @return The provider, {@code null} if CI is switched off.
-	 */
-	protected CIProvider getCI() {
-		return CIService.configuredProvider();
-	}
-
-	/**
-	 * The CI server building the application of the given project: the {@link #getCI() CI server}
-	 * for a project on a {@link GitConnections#isBuiltIn(TLObject) built-in} git connection.
-	 *
-	 * @return The provider, {@code null} if CI is switched off or the project is not on a built-in
-	 *         connection.
-	 */
-	protected CIProvider getCI(TLObject project) {
-		TLObject connection = FactoryModel.getGitConnection(project);
-		return connection != null && GitConnections.isBuiltIn(connection) ? getCI() : null;
-	}
-
-	/**
-	 * Whether a CI server is configured, so that the CI of a project can be set up.
-	 */
-	public boolean isCIEnabled() {
-		return getCI() != null;
-	}
-
-	/**
-	 * The pipeline definition a repository gets when the CI of its project is set up.
-	 *
-	 * @see CIService#pipelineTemplate()
-	 */
-	private static String pipelineTemplate() {
-		if (!CIService.Module.INSTANCE.isActive()) {
-			return CIService.readResource(CIService.DEFAULT_PIPELINE_TEMPLATE);
-		}
-		return CIService.getInstance().pipelineTemplate();
-	}
-
-	/**
-	 * Why no CI build of the given project can be started now.
-	 *
-	 * @return The reason, {@code null} if a build can be started: the project has a CI job.
-	 * @see ProjectCI#unavailable(CIProvider, GitHostingProvider, TLObject)
-	 */
-	public ResKey ciUnavailable(TLObject project) {
-		ResKey connectionProblem = ciConnectionProblem(project);
-		if (connectionProblem != null) {
-			return connectionProblem;
-		}
-		return ProjectCI.unavailable(project == null ? getCI() : getCI(project), getGitHosting(project), project);
-	}
-
-	/**
-	 * Why the CI of the given project cannot be set up now.
-	 *
-	 * @return The reason, {@code null} if it can be set up: CI is switched on, the project is on a
-	 *         {@link GitConnections#isBuiltIn(TLObject) built-in} git connection, has a repository
-	 *         with the application in it and no CI job yet.
-	 * @see ProjectCI#setUpUnavailable(CIProvider, GitHostingProvider, TLObject)
-	 * @see #setUpCI(TLObject)
-	 */
-	public ResKey ciSetUpUnavailable(TLObject project) {
-		ResKey connectionProblem = ciConnectionProblem(project);
-		if (connectionProblem != null) {
-			return connectionProblem;
-		}
-		return ProjectCI.setUpUnavailable(project == null ? getCI() : getCI(project), getGitHosting(project),
-			project);
-	}
-
-	/**
-	 * Whether the given project is on a git connection the CI server does not build.
-	 *
-	 * @return The reason, {@code null} if CI is switched off or the project is {@code null} or on a
-	 *         {@link GitConnections#isBuiltIn(TLObject) built-in} git connection.
-	 */
-	private ResKey ciConnectionProblem(TLObject project) {
-		if (project != null && getCI(project) == null && getCI() != null) {
-			return com.top_logic.factory.ci.I18NConstants.ERROR_CI_NEEDS_BUILT_IN_CONNECTION__PROJECT.fill(project);
-		}
-		return null;
-	}
-
-	/**
-	 * Sets up the CI of the given project: commits the pipeline definition to the default branch of
-	 * its repository unless the branch has one, extends the protection of the branch by the pipeline
-	 * file, creates the CI job, records it on the project and starts its first build.
-	 *
-	 * <p>
-	 * Must be called outside of a transaction: the job and the protection of the branch are
-	 * recorded in transactions of their own, as soon as they are set up. A set up that fails can be
-	 * repeated while the project has no CI job; one that failed starting the first build leaves the
-	 * job recorded, and the build is started by {@link #startBuild(TLObject)}.
-	 * </p>
-	 *
-	 * @param project
-	 *        A project whose CI can be set up, see {@link #ciSetUpUnavailable(TLObject)}.
-	 * @return What was done.
-	 * @see ProjectCI#setUp(CIProvider, GitHostingProvider, GitRepository, String, List, String,
-	 *      java.util.function.Consumer, java.util.function.Consumer)
-	 */
-	public ProjectCI.Setup setUpCI(TLObject project) {
-		ResKey problem = ciSetUpUnavailable(project);
-		if (problem != null) {
-			throw new TopLogicException(problem);
-		}
-		CIProvider ci = getCI(project);
-		GitHostingProvider hosting = getGitHosting(project);
-		String fullName = FactoryModel.getRepository(project).getFullName();
-		GitRepository repository = hosting.findRepository(fullName);
-		if (repository == null) {
-			throw new TopLogicException(
-				com.top_logic.factory.git.I18NConstants.ERROR_UNKNOWN_REPOSITORY__REFERENCE.fill(fullName));
-		}
-		return ProjectCI.setUp(ci, hosting, repository, pipelineTemplate(),
-			ProjectCI.withoutPipelineFile(getConfiguredProtectedFiles(), ci),
-			FactoryModel.getString(project, FactoryModel.PROJECT_NAME),
-			job -> commitInRequest(() -> {
-				FactoryModel.setCIJob(project, job);
-				return null;
-			}),
-			protection -> commitInRequest(() -> {
-				project.tUpdateByName(FactoryModel.PROJECT_BRANCH_PROTECTED, protection);
-				return null;
-			}));
-	}
-
-	/**
-	 * Makes sure the CI job of the given project, which has one, exists and builds its repository,
-	 * records it on the project in a transaction of its own if it changed, and starts a build.
-	 *
-	 * <p>
-	 * Must be called outside of a transaction.
-	 * </p>
-	 *
-	 * @param project
-	 *        A project with repository and CI job.
-	 * @return The started build.
-	 * @see ProjectCI#startBuild(CIProvider, GitHostingProvider, TLObject, java.util.function.Consumer)
-	 */
-	public CIBuildStart startBuild(TLObject project) {
-		ResKey problem = ciUnavailable(project);
-		if (problem != null) {
-			throw new TopLogicException(problem);
-		}
-		return ProjectCI.startBuild(getCI(project), getGitHosting(project), project, job -> commitInRequest(() -> {
-			FactoryModel.setCIJob(project, job);
-			return null;
-		}));
-	}
-
-	/**
-	 * The last build of the CI job of the given project.
-	 *
-	 * @return The build, {@code null} if CI is switched off, the project has no CI job or the job
-	 *         has no build.
-	 * @see ProjectCI#lastBuild(CIProvider, TLObject)
-	 */
-	public CIBuild lastBuild(TLObject project) {
-		return ProjectCI.lastBuild(project == null ? null : getCI(project), project);
-	}
-
-	/**
-	 * The git hosting service the repository of the given project is on.
-	 *
-	 * @implSpec The {@link GitConnections#projectProvider(TLObject) provider of the git connection}
-	 *           of the project.
-	 *
-	 * @param project
-	 *        The project, or the form object creating one; {@code null} for none.
-	 * @return The provider, {@code null} without project, if the project has no git connection or
-	 *         its connection is not available.
-	 */
-	protected GitHostingProvider getGitHosting(TLObject project) {
-		return project == null ? null : GitConnections.projectProvider(project);
-	}
-
-	/**
-	 * The protected files of the default branch of the repository of the given project: the
-	 * configured ones and, for a project with a {@link FactoryModel#PROJECT_CI_JOB CI job}, the
-	 * {@link CIProvider#pipelineFile() pipeline file} of the CI server; without CI job, the
-	 * pipeline file is not protected, so that it can be committed when the CI of the project is set
-	 * up.
-	 *
-	 * @param project
-	 *        The project.
-	 * @param ci
-	 *        The CI server, {@code null} if CI is switched off.
-	 * @see GitHostingService#getProtectedFiles()
-	 */
-	public static List<String> protectedFiles(TLObject project, CIProvider ci) {
-		List<String> withoutCI = ProjectCI.withoutPipelineFile(getConfiguredProtectedFiles(), ci);
-		return FactoryModel.getCIJob(project) == null ? withoutCI : ProjectCI.withPipelineFile(withoutCI, ci);
-	}
-
-	/**
-	 * The protected files configured for the default branch of a project repository.
-	 *
-	 * @see GitHostingService#getProtectedFiles()
-	 */
-	private static List<String> getConfiguredProtectedFiles() {
-		if (!GitHostingService.Module.INSTANCE.isActive()) {
-			return TypedConfiguration.newConfigItem(GitHostingService.Config.class).getProtectedFiles();
-		}
-		return GitHostingService.getInstance().getProtectedFiles();
-	}
-
-	/**
-	 * Checks the existing repository entered for a new project, or, if none is entered, that the
-	 * git connection of a project being created may create its repository.
-	 *
-	 * <p>
-	 * A repository the project has recorded - with the {@link FactoryModel#PROJECT_REPOSITORY_URL
-	 * page} the hosting service reported for it - is not checked again: the hosting service is not
-	 * asked when the recorded repository is stored. Whether a repository may be created is asked
-	 * only while the project {@link GitConnections#isCreating(TLObject) is being created}.
-	 * </p>
-	 *
-	 * @param project
-	 *        The project, {@code null} for none.
-	 * @param reference
-	 *        The repository as the user enters it: its full name {@code owner/name}, its clone
-	 *        URL or the URL of one of its pages; empty for a repository to create.
-	 * @return The problem with the reference, {@code null} if it names an existing repository on
-	 *         the git connection of the project, is recorded, is empty and the connection may
-	 *         create repositories or the project is not being created, or if the project has no
-	 *         available git connection.
-	 * @see RepositorySource#checkReference(GitHostingProvider, String)
-	 * @see RepositorySource#checkNewRepository(GitHostingProvider)
-	 */
-	public ResKey checkRepository(TLObject project, String reference) {
-		if (project != null && FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL) != null) {
-			return null;
-		}
-		GitHostingProvider hosting = getGitHosting(project);
-		if (hosting == null) {
-			return null;
-		}
-		if (reference == null || reference.isBlank()) {
-			return project != null && GitConnections.isCreating(project)
-				? RepositorySource.checkNewRepository(hosting) : null;
-		}
-		return RepositorySource.checkReference(hosting, reference);
 	}
 
 	/**
@@ -629,11 +291,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * transaction of its own, without creating its container.
 	 *
 	 * <p>
-	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}
-	 * and the {@link FactoryModel#WORKSPACE_CONTEXT_PATH context path} of the
-	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern}. The password, the
-	 * context path and, if the {@link WorkspaceProxyService workspace proxy} is switched on, the
-	 * URLs of its routes are in the environment of the returned {@link NewWorkspace#spec() spec}.
+	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
+	 * The password and, if the {@link LLMProxyService LLM proxy} is switched on, the URL of the
+	 * proxy are in the environment of the returned {@link NewWorkspace#spec() spec}.
 	 * </p>
 	 *
 	 * @param project
@@ -643,31 +303,23 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 */
 	public static NewWorkspace commitNewWorkspace(TLObject project, String workspaceId) {
 		String initialPassword = SecureRandomService.getInstance().getRandomString();
-		ApplicationSpec spec = applicationSpec(project, workspaceId, initialPassword);
-		TLObject workspace = commitInRequest(() -> {
-			TLObject result =
-				FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING);
-			result.tUpdateByName(FactoryModel.WORKSPACE_CONTEXT_PATH, spec.getContextPath());
-			return result;
-		});
-		return new NewWorkspace(workspace, spec);
+		TLObject workspace = commitInRequest(
+			() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
+		return new NewWorkspace(workspace, applicationSpec(project, workspaceId, initialPassword));
 	}
 
 	/**
-	 * The description of the application of a workspace, with the context path of the
-	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern} and the environment
-	 * its container gets.
+	 * The description of the application of a workspace, with the environment its container gets.
 	 */
 	private static ApplicationSpec applicationSpec(TLObject project, String workspaceId, String initialPassword) {
-		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
 		ApplicationSpec spec = new ApplicationSpec(workspaceId,
-			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID), artifactId)
+			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID),
+			FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID))
 			.setEngineVersion(FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION))
-			.setInitialPassword(initialPassword)
-			.setContextPath(applications().contextPath(workspaceId, artifactId));
-		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
-		if (proxy != null) {
-			spec.putEnv(proxy.containerEnv());
+			.setInitialPassword(initialPassword);
+		LLMProxyService llmProxy = LLMProxyService.getInstance();
+		if (llmProxy != null) {
+			spec.putEnv(llmProxy.containerEnv());
 		}
 		return spec;
 	}
@@ -678,8 +330,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *
 	 * <p>
 	 * The container gets the {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password} of
-	 * the workspace and, if the {@link WorkspaceProxyService workspace proxy} is switched on, the
-	 * current URLs of its routes.
+	 * the workspace and, if the {@link LLMProxyService LLM proxy} is switched on, its current URL.
 	 * A workspace that was running is started again and waited for like by
 	 * {@link #start(TLObject)}.
 	 * </p>
@@ -694,20 +345,21 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		WorkspaceUpdate update = existing == null ? null : prepareUpdate(existing);
 		TLObject workspace = begin(project, WorkspaceStatus.UPDATING, WorkspaceStatus.values());
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
+		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
 		run(workspace, "Updating the workspace to the current image.", log -> {
 			boolean wasRunning =
 				getApplications().getProvider().status(workspaceId).getState() == WorkspaceState.RUNNING;
 			WorkspaceInfo info = getApplications().update(update.spec(), log);
 			log.line("Container created on image " + info.getImage() + ".");
 			log.update(w -> {
-				recordUpdate(w, update.spec(), info);
+				recordUpdate(w, info);
 				FactoryModel.setStatus(w, wasRunning ? WorkspaceStatus.STARTING : WorkspaceStatus.of(info.getState()));
 				FactoryModel.setEndpoint(w, null, null);
 			});
 			if (wasRunning) {
 				WorkspaceInfo started = getApplications().start(workspaceId);
 				log.update(w -> FactoryModel.setEndpoint(w, port(started), null));
-				awaitApplication(log, workspaceId, update.spec().getContextPath());
+				awaitApplication(log, workspaceId, artifactId);
 			}
 		});
 	}
@@ -730,10 +382,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Describes the container of an updated workspace without storing anything.
 	 *
 	 * <p>
-	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}; its
-	 * context path is the one of the {@link ApplicationWorkspaces.Config#getContextPath()
-	 * configured pattern}, which {@link #recordUpdate(TLObject, ApplicationSpec, WorkspaceInfo)}
-	 * stores.
+	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
 	 * </p>
 	 *
 	 * @param workspace
@@ -748,20 +397,15 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 
 	/**
 	 * Stores in the current transaction that the container of a workspace was created anew: the
-	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container and the
-	 * {@link FactoryModel#WORKSPACE_CONTEXT_PATH context path} it serves the application under.
+	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container.
 	 *
 	 * @param workspace
 	 *        The stored workspace.
-	 * @param spec
-	 *        The application the container was created anew for, see
-	 *        {@link #prepareUpdate(TLObject)}.
 	 * @param info
 	 *        The workspace in its new container.
 	 */
-	public static void recordUpdate(TLObject workspace, ApplicationSpec spec, WorkspaceInfo info) {
+	public static void recordUpdate(TLObject workspace, WorkspaceInfo info) {
 		workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
-		workspace.tUpdateByName(FactoryModel.WORKSPACE_CONTEXT_PATH, spec.getContextPath());
 	}
 
 	/**
@@ -783,42 +427,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * Whether the application of a workspace is not reached through the preview route of the
-	 * control application with the context path its container was created with, but is after an
-	 * {@link #update(TLObject) update}, which creates the container with the context path of the
-	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern}.
-	 *
-	 * <p>
-	 * This is a workspace whose container has no recorded context path, or one of another
-	 * pattern.
-	 * </p>
-	 *
-	 * @see #previewUrl(TLObject)
-	 */
-	public static boolean isContextPathOutdated(TLObject workspace) {
-		if (previewUrl(workspace) != null) {
-			return false;
-		}
-		ApplicationWorkspaces applications = applications();
-		String workspaceId = FactoryModel.getWorkspaceId(workspace);
-		String artifactId = FactoryModel.getString(FactoryModel.getProject(workspace), FactoryModel.PROJECT_ARTIFACT_ID);
-		String current;
-		try {
-			current = applications.contextPath(workspaceId, artifactId);
-		} catch (TopLogicException ex) {
-			// The configured pattern gives no valid context path, an update cannot help.
-			return false;
-		}
-		return applications.previewUrl(workspaceId, current) != null;
-	}
-
-	/**
 	 * Checks the Maven group of an application.
-	 *
-	 * <p>
-	 * The group is the start of the Java package of the application, so its names must be Java
-	 * identifiers, none a reserved word.
-	 * </p>
 	 *
 	 * @return The problem with the given value, {@code null} if it is valid.
 	 */
@@ -826,46 +435,17 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		if (groupId == null || !GROUP_ID.matcher(groupId).matches()) {
 			return I18NConstants.ERROR_INVALID_GROUP_ID__VALUE.fill(groupId);
 		}
-		return checkKeywords(groupId, GROUP_ID_SEPARATOR);
+		return null;
 	}
 
 	/**
 	 * Checks the Maven artifact of an application.
-	 *
-	 * <p>
-	 * The artifact is a segment of the context path of the application, the name of its repository
-	 * and CI job and the start of the workspace identifier, so it must not be one of the segments a
-	 * context path cannot have. The archetype derives the end of the Java package
-	 * and the module name of the application from it, a name for each part between dashes: each
-	 * part must start with a letter and must not be a reserved word of Java.
-	 * </p>
 	 *
 	 * @return The problem with the given value, {@code null} if it is valid.
 	 */
 	public static ResKey checkArtifactId(String artifactId) {
 		if (artifactId == null || !ARTIFACT_ID.matcher(artifactId).matches()) {
 			return I18NConstants.ERROR_INVALID_ARTIFACT_ID__VALUE.fill(artifactId);
-		}
-		if (ApplicationWorkspaces.RESERVED_SEGMENTS.contains(artifactId)
-			|| ApplicationWorkspaces.RESERVED_FIRST_SEGMENT.equals(artifactId)) {
-			return I18NConstants.ERROR_ARTIFACT_ID_RESERVED__VALUE.fill(artifactId);
-		}
-		for (String part : artifactId.split(ARTIFACT_ID_SEPARATOR, -1)) {
-			if (part.isEmpty()) {
-				return I18NConstants.ERROR_ARTIFACT_ID_EMPTY_PART__VALUE.fill(artifactId);
-			}
-			if (!Character.isLetter(part.charAt(0))) {
-				return I18NConstants.ERROR_ARTIFACT_ID_PART_STARTS_WITH_DIGIT__VALUE_PART.fill(artifactId, part);
-			}
-		}
-		return checkKeywords(artifactId, ARTIFACT_ID_SEPARATOR);
-	}
-
-	private static ResKey checkKeywords(String value, String separator) {
-		for (String part : value.split(Pattern.quote(separator))) {
-			if (SourceVersion.isKeyword(part, SourceVersion.latest())) {
-				return I18NConstants.ERROR_JAVA_KEYWORD__VALUE_PART.fill(value, part);
-			}
 		}
 		return null;
 	}
@@ -889,7 +469,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		TLObject workspace = begin(project, WorkspaceStatus.STARTING, WorkspaceStatus.STOPPED, WorkspaceStatus.CREATED,
 			WorkspaceStatus.APP_STOPPED, WorkspaceStatus.UNKNOWN);
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
-		String contextPath = FactoryModel.getContextPath(workspace);
+		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
 		run(workspace, "Starting the workspace.", log -> {
 			WorkspaceInfo current = getApplications().getProvider().status(workspaceId);
 			if (current.getState() == WorkspaceState.RUNNING) {
@@ -905,7 +485,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 				WorkspaceInfo info = getApplications().start(workspaceId);
 				log.update(w -> FactoryModel.setEndpoint(w, port(info), null));
 			}
-			awaitApplication(log, workspaceId, contextPath);
+			awaitApplication(log, workspaceId, artifactId);
 		});
 	}
 
@@ -936,9 +516,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * then the workspace itself; the project is kept.
 	 *
 	 * <p>
-	 * The agents working in the workspace are stopped and the tokens the
-	 * {@link WorkspaceProxyService workspace proxy} issued for the workspace are revoked first; the
-	 * agent conversations are removed with the workspace.
+	 * The agents working in the workspace are stopped and the tokens the {@link LLMProxyService LLM
+	 * proxy} issued for the workspace are revoked first; the agent conversations are removed with the
+	 * workspace.
 	 * </p>
 	 *
 	 * @param project
@@ -952,9 +532,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			if (agents != null) {
 				agents.stopAll(workspaceId);
 			}
-			WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
-			if (proxy != null) {
-				proxy.revokeAll(workspaceId);
+			LLMProxyService llmProxy = LLMProxyService.getInstance();
+			if (llmProxy != null) {
+				llmProxy.revokeAll(workspaceId);
 			}
 			WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
 			if (info.getState() != WorkspaceState.MISSING || !info.getVolumes().isEmpty()) {
@@ -1034,24 +614,22 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 	}
 
-	private void awaitApplication(WorkspaceLog log, String workspaceId, String contextPath)
+	private void awaitApplication(WorkspaceLog log, String workspaceId, String artifactId)
 			throws InterruptedException {
 		log.line("Waiting for the application to answer.");
 		log.flush();
 		String url;
 		try {
-			url = getApplications().awaitApplication(workspaceId, contextPath, log);
+			url = getApplications().awaitApplication(workspaceId, artifactId, log);
 		} catch (ApplicationFailedException ex) {
 			applicationStopped(log, workspaceId, ex);
 			return;
 		}
 		WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
-		String previewUrl = getApplications().previewUrl(workspaceId, contextPath);
-		log.line(previewUrl != null ? "Application running at " + previewUrl
-			: "Application running at " + url + ", not reachable through the control application before the workspace is updated.");
+		log.line("Application running at " + url);
 		log.update(w -> {
 			FactoryModel.setStatus(w, WorkspaceStatus.RUNNING);
-			FactoryModel.setEndpoint(w, port(info), previewUrl);
+			FactoryModel.setEndpoint(w, port(info), url);
 		});
 	}
 
@@ -1088,10 +666,6 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 	}
 
-	private static String projectName(TLObject project) {
-		return FactoryModel.getString(project, FactoryModel.PROJECT_NAME);
-	}
-
 	private static String message(Throwable ex) {
 		String message = ex.getMessage();
 		return message == null || message.isEmpty() ? ex.getClass().getName() : message;
@@ -1120,7 +694,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 		try {
 			Map<String, WorkspaceReconciliation.Outcome> outcomes =
-				new WorkspaceReconciliation(getApplications().getProvider(), ProjectWorkspaces::previewUrl,
+				new WorkspaceReconciliation(getApplications().getProvider(), ProjectWorkspaces::applicationUrl,
 					this::applicationState).reconcile(stored);
 			commit(() -> {
 				for (Map.Entry<String, WorkspaceReconciliation.Outcome> entry : outcomes.entrySet()) {
@@ -1148,108 +722,6 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * Updates the pages of the repositories and CI jobs recorded on the projects
-	 * ({@link FactoryModel#PROJECT_REPOSITORY_URL}, {@link FactoryModel#PROJECT_CI_JOB_URL}) to the
-	 * URLs the git hosting services and the CI server report now.
-	 *
-	 * <p>
-	 * A page is recorded when the repository or the job of a project is created or looked up. The
-	 * services report their pages below the URL they are configured with for their users, e.g.
-	 * the {@code ROOT_URL} of Gitea or the Jenkins URL; when an operator changes it, the recorded
-	 * pages are brought in line by this refresh, which runs in the background after every start of
-	 * the service. A project whose service cannot be asked, or no longer knows its repository or
-	 * job, keeps its pages; the problem is logged.
-	 * </p>
-	 *
-	 * @return The number of projects whose pages were updated.
-	 */
-	public int refreshLinks() {
-		int updated = 0;
-		for (TLObject project : FactoryModel.allProjects()) {
-			String repositoryUrl = currentRepositoryUrl(project);
-			String jobUrl = currentJobUrl(project);
-			if (repositoryUrl != null || jobUrl != null) {
-				commit(() -> {
-					if (repositoryUrl != null) {
-						project.tUpdateByName(FactoryModel.PROJECT_REPOSITORY_URL, repositoryUrl);
-					}
-					if (jobUrl != null) {
-						project.tUpdateByName(FactoryModel.PROJECT_CI_JOB_URL, jobUrl);
-					}
-				});
-				updated++;
-			}
-		}
-		if (updated > 0) {
-			Logger.info("Updated the links of " + updated + " projects to the URLs the services report.",
-				ProjectWorkspaces.class);
-		}
-		return updated;
-	}
-
-	/**
-	 * The page of the recorded repository of the given project as its hosting service reports it.
-	 *
-	 * @return The page, {@code null} if it is the recorded one or cannot be told.
-	 */
-	private String currentRepositoryUrl(TLObject project) {
-		String recorded = FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL);
-		if (recorded == null) {
-			// No repository, or an entered one that has not been looked up yet.
-			return null;
-		}
-		try {
-			GitHostingProvider hosting = getGitHosting(project);
-			if (hosting == null) {
-				return null;
-			}
-			String fullName = FactoryModel.getRepository(project).getFullName();
-			GitRepository repository = hosting.findRepository(fullName);
-			if (repository == null) {
-				Logger.warn("The repository " + fullName + " of project " + projectName(project)
-					+ " is not found on its git hosting service; its link stays " + recorded + ".",
-					ProjectWorkspaces.class);
-				return null;
-			}
-			return recorded.equals(repository.getWebUrl()) ? null : repository.getWebUrl();
-		} catch (RuntimeException ex) {
-			Logger.warn("Failed to refresh the link of the repository of project " + projectName(project) + ": "
-				+ message(ex), ProjectWorkspaces.class);
-			return null;
-		}
-	}
-
-	/**
-	 * The page of the CI job of the given project as the CI server reports it.
-	 *
-	 * @return The page, {@code null} if it is the recorded one or cannot be told.
-	 */
-	private String currentJobUrl(TLObject project) {
-		String name = FactoryModel.getCIJob(project);
-		if (name == null) {
-			return null;
-		}
-		try {
-			CIProvider ci = getCI(project);
-			if (ci == null) {
-				return null;
-			}
-			CIJob job = ci.findJob(name);
-			String recorded = FactoryModel.getString(project, FactoryModel.PROJECT_CI_JOB_URL);
-			if (job == null) {
-				Logger.warn("The CI job " + name + " of project " + projectName(project)
-					+ " is not found on the CI server; its link stays " + recorded + ".", ProjectWorkspaces.class);
-				return null;
-			}
-			return job.webUrl().equals(recorded) ? null : job.webUrl();
-		} catch (RuntimeException ex) {
-			Logger.warn("Failed to refresh the link of the CI job of project " + projectName(project) + ": "
-				+ message(ex), ProjectWorkspaces.class);
-			return null;
-		}
-	}
-
-	/**
 	 * Updates the stored states of the workspaces whose container runs to the states of their
 	 * applications, see {@link Config#getApplicationCheckInterval()}.
 	 */
@@ -1273,9 +745,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 					Logger.info("The application of workspace " + id + " is " + state + ".", ProjectWorkspaces.class);
 				} else if (stored == WorkspaceStatus.APP_STOPPED && state == ApplicationState.RUNNING) {
 					WorkspaceInfo info = getApplications().getProvider().status(id);
+					String url = info.hasHostPort() ? applicationUrl(info) : null;
 					commit(() -> {
 						FactoryModel.setStatus(workspace, WorkspaceStatus.RUNNING);
-						FactoryModel.setEndpoint(workspace, port(info), info.hasHostPort() ? previewUrl(workspace) : null);
+						FactoryModel.setEndpoint(workspace, port(info), url);
 					});
 					Logger.info("The application of workspace " + id + " runs again.", ProjectWorkspaces.class);
 				}
@@ -1304,24 +777,16 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		return text == null ? "" : text;
 	}
 
-	/**
-	 * The URL under which a browser opens the application of the given running workspace, see
-	 * {@link #previewUrl(TLObject)}.
-	 */
-	private static String previewUrl(WorkspaceInfo info) {
-		TLObject workspace = FactoryModel.findWorkspace(info.getWorkspaceId());
-		return workspace == null ? null : previewUrl(workspace);
-	}
-
-	/**
-	 * The URL under which a browser opens the application of the given workspace through the
-	 * preview route of the control application, {@code null} if its context path is not below
-	 * the route.
-	 *
-	 * @see ApplicationWorkspaces#previewUrl(String, String)
-	 */
-	public static String previewUrl(TLObject workspace) {
-		return applications().previewUrl(FactoryModel.getWorkspaceId(workspace), FactoryModel.getContextPath(workspace));
+	private static String applicationUrl(WorkspaceInfo info) {
+		String id = info.getWorkspaceId();
+		for (TLObject workspace : FactoryModel.allWorkspaces()) {
+			if (id.equals(FactoryModel.getWorkspaceId(workspace))) {
+				String artifactId =
+					FactoryModel.getString(FactoryModel.getProject(workspace), FactoryModel.PROJECT_ARTIFACT_ID);
+				return ApplicationWorkspaces.applicationUrl(info, artifactId);
+			}
+		}
+		return info.getPreviewUrl();
 	}
 
 	/**

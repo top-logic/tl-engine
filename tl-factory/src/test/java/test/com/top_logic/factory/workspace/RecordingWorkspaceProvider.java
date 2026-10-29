@@ -251,7 +251,8 @@ public class RecordingWorkspaceProvider implements WorkspaceProvider {
 		String id = spec.getWorkspaceId();
 		boolean published = state == WorkspaceState.RUNNING && _hostPort != WorkspaceInfo.NO_PORT;
 		WorkspaceInfo info = new WorkspaceInfo(id, state, "container-" + id + "-" + _created.size(), spec.getImage(),
-			published ? _hostPort : WorkspaceInfo.NO_PORT, volumes(id));
+			published ? _hostPort : WorkspaceInfo.NO_PORT, published ? "http://localhost:" + _hostPort + "/" : null,
+			volumes(id));
 		_workspaces.put(id, info);
 		return info;
 	}

@@ -173,6 +173,13 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		String NETWORK = "network";
 
 		/**
+		 * Configuration property name of {@link #getPublicHost()}.
+		 *
+		 * @see #getPublicHost()
+		 */
+		String PUBLIC_HOST = "public-host";
+
+		/**
 		 * Configuration property name of {@link #getHostPortMin()}.
 		 *
 		 * @see #getHostPortMin()
@@ -314,6 +321,20 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		String getNetwork();
 
 		/**
+		 * Host name of the daemon host under which a browser reaches the published ports.
+		 *
+		 * <p>
+		 * The {@link WorkspaceInfo#getPreviewUrl() preview URL} of a workspace is built from this
+		 * name and the host port.
+		 * </p>
+		 *
+		 * @see #PUBLIC_HOST
+		 */
+		@Name(PUBLIC_HOST)
+		@StringDefault("localhost")
+		String getPublicHost();
+
+		/**
 		 * The lowest port of the daemon host a workspace port is published on.
 		 *
 		 * @see #HOST_PORT_MIN
@@ -401,12 +422,12 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		 * The address of the daemon host the port of a workspace is published on.
 		 *
 		 * <p>
-		 * The control application reaches the applications of the workspaces at this address; the
-		 * browsers open them through its preview route, not through the published ports. The default, the loopback address, keeps the ports on the
-		 * daemon host. A control application that does not run on the daemon host itself, e.g. in
-		 * a container, names an address of the daemon host it reaches; empty publishes the ports on
-		 * all addresses of the host. A rootful Docker daemon publishes ports past the firewall
-		 * rules of the host (UFW), so the address is the restriction that holds.
+		 * The default, the loopback address, makes the applications of the workspaces reachable
+		 * from the daemon host only. A server publishing them to the browsers of its users names
+		 * the address of the interface they are to be reached on, e.g. the one a reverse proxy
+		 * forwards to; empty publishes them on all addresses of the host. A rootful Docker daemon
+		 * publishes ports past the firewall rules of the host (UFW), so the address is the
+		 * restriction that holds.
 		 * </p>
 		 *
 		 * @see #HOST_IP
@@ -486,9 +507,9 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	}
 
 	/**
-	 * Addresses of {@link Config#getHostIp()} that publish a port on all addresses of the host.
+	 * The loopback address of the daemon host, the default {@link Config#getHostIp()}.
 	 */
-	private static final Set<String> WILDCARD_ADDRESSES = Set.of("", "0.0.0.0", "::", "[::]");
+	public static final String LOOPBACK_ADDRESS = "127.0.0.1";
 
 	/**
 	 * Default of {@link Config#getMemoryLimit()}: {@code 8g}.
@@ -680,21 +701,6 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			.connectionTimeout(Duration.ofSeconds(config.getConnectTimeout()))
 			.build();
 		return DockerClientImpl.getInstance(clientConfig, httpClient);
-	}
-
-	/**
-	 * The {@link Config#getHostIp() address the ports are published on}, the loopback address if
-	 * they are published on all addresses.
-	 *
-	 * <p>
-	 * The daemon host is the host of this application: the ports are published on an address of
-	 * it.
-	 * </p>
-	 */
-	@Override
-	public String publishedAddress() {
-		String hostIp = getConfig().getHostIp() == null ? "" : getConfig().getHostIp().strip();
-		return WILDCARD_ADDRESSES.contains(hostIp) ? LOOPBACK_ADDRESS : hostIp;
 	}
 
 	@Override
@@ -1296,8 +1302,10 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		if (state == WorkspaceState.RUNNING) {
 			hostPort = hostPort(container);
 		}
+		String previewUrl = hostPort == WorkspaceInfo.NO_PORT ? null
+			: "http://" + getConfig().getPublicHost() + ":" + hostPort + "/";
 		return new WorkspaceInfo(workspaceId, state, container.getId(), container.getConfig().getImage(), hostPort,
-			volumeNames(findVolumes(workspaceId)));
+			previewUrl, volumeNames(findVolumes(workspaceId)));
 	}
 
 	private int hostPort(InspectContainerResponse container) {

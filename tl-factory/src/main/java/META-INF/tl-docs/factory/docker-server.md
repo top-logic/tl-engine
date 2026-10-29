@@ -1,5 +1,5 @@
 ---
-description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, the resource limits per workspace with the delegation of the cgroup controllers (Delegate=cpu cpuset io memory pids), the published ports on one host address, recreating the workspace network for its isolation, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including the port of the workspace proxy, TLS and which accepted sources of the workspace proxy fit.
+description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, the resource limits per workspace with the delegation of the cgroup controllers (Delegate=cpu cpuset io memory pids), the published ports on one host address, recreating the workspace network for its isolation, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including the port of the LLM proxy, TLS and which accepted sources of the LLM proxy fit.
 order: 10
 ---
 
@@ -137,7 +137,7 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
    ```bash
    docker run ... \
      -v /run/user/<uid>/docker.sock:/var/run/docker.sock \
-     -e tl_factory_host_ip=<internal address of the server> \
+     -e tl_factory_public_host=<name of the server> \
      <image of tl-factory-app>
    ```
 
@@ -146,11 +146,9 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
 
 4. **Ports.** The workspaces publish their applications on the server in the range
    `tl_factory_host_port_min`..`tl_factory_host_port_max` (default 20000-20999), on the address
-   `tl_factory_host_ip`. Its default `127.0.0.1` keeps them on the server, but is the control
-   application's container itself for the control application; set it explicitly, to an internal
-   address of the server the control application's container reaches - the browsers open the
-   previews through the [preview route](doc:factory#the-preview-route) of the control application,
-   behind its login -, never to all addresses of a server reachable from the internet. A rootful daemon
+   `tl_factory_host_ip`. Its default `127.0.0.1` keeps them on the server; set it explicitly, to
+   the internal address a reverse proxy forwards to - which puts the previews behind the login it
+   demands -, never to all addresses of a server reachable from the internet. A rootful daemon
    publishes ports by DNAT rules that come before the firewall of the host - UFW does not block
    them -, so this address is the restriction that holds.
 
@@ -164,22 +162,20 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
 Control application and workspaces run on two different daemons, so they share no Docker network.
 They reach each other through ports published on the server:
 
-- The control application reaches a started application - waiting for it, forwarding its
-  [preview route](doc:factory#the-preview-route) - at the published port on `tl_factory_host_ip`,
-  `http://<tl_factory_host_ip>:<host port>/...`; that address must be reachable from inside the
-  control application's container. The browsers open the applications through the control
-  application only.
+- The control application reaches a started application under its preview URL
+  `http://<tl_factory_public_host>:<host port>/...`. The server's name must resolve to the server
+  from inside the control application's container as well.
 - A workspace reaches the control application under the URL the control application is published
   at, with the server's name, e.g. `http://<name of the server>:<published port>/`.
 
-The workspace proxy of the control application listens on a port of its own
+The LLM proxy of the control application listens on a port of its own
 ([the port of the proxy](doc:factory#the-port-of-the-proxy), default `8091`). Publish it from the
 control application's container on an internal address of the server only, e.g.
 `-p 10.0.0.5:8091:8091`, never on all addresses, and give the workspaces
-`tl_factory_proxy_url=http://10.0.0.5:8091`. The proxy sees a request of a workspace
+`tl_factory_llm_proxy_url=http://10.0.0.5:8091/llm-proxy`. The proxy sees a request of a workspace
 coming from the server's gateway or from the userland proxy of the daemon that publishes the port,
 not from the workspace network, and the same for all workspaces. Its `allowed-sources` therefore
-stay empty in this setup (`tl_factory_proxy_allowed_sources`, see
+stay empty in this setup (`tl_factory_llm_allowed_sources`, see
 [accepted sources](doc:factory#accepted-sources)), and the binding of a token to its first source
 address only refuses addresses other than that gateway
 ([token checks](doc:factory#token-checks)): the address the port is published on, the token and
@@ -222,7 +218,6 @@ cgroup v2 (`docker info` reports `Cgroup Version: 2`).
 
 For the strongest isolation the workspaces run on a VM of their own. Its daemon is reached over
 `tcp://<VM>:2376` with TLS client certificates (property `tls-cert-path` of the provider), and
-`tl_factory_host_ip` is the address of the VM the workspaces publish their ports on, which the
-control application reaches. Control application and workspaces reach each other as
+`tl_factory_public_host` names the VM. Control application and workspaces reach each other as
 described for the rootless daemon, through ports published on the VM and on the server of the
 control application.

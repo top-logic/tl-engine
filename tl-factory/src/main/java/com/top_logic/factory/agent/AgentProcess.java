@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.factory.proxy.ProxyTokens;
+import com.top_logic.factory.llm.LLMTokens;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
@@ -72,7 +72,7 @@ final class AgentProcess {
 
 	private final Instant _tokenExpires;
 
-	private final ProxyTokens _tokens;
+	private final LLMTokens _tokens;
 
 	private final AgentProtocol _protocol;
 
@@ -80,7 +80,7 @@ final class AgentProcess {
 
 	private volatile boolean _ended;
 
-	private AgentProcess(String workspaceId, String token, Instant tokenExpires, ProxyTokens tokens,
+	private AgentProcess(String workspaceId, String token, Instant tokenExpires, LLMTokens tokens,
 			AgentProtocol protocol) {
 		_workspaceId = workspaceId;
 		_token = token;
@@ -109,7 +109,7 @@ final class AgentProcess {
 	 *        Runs the thread waiting for the end of the process.
 	 */
 	static AgentProcess start(WorkspaceProvider provider, String workspaceId, ExecCommand command, String token,
-			ProxyTokens tokens, AgentProtocol protocol, Executor watchers) {
+			LLMTokens tokens, AgentProtocol protocol, Executor watchers) {
 		AgentProcess result = new AgentProcess(workspaceId, token, tokens.expiresAt(token), tokens, protocol);
 		try {
 			result._process = provider.startExec(workspaceId, command, result.new Output());

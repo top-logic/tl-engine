@@ -15,7 +15,6 @@ import junit.framework.TestSuite;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.factory.tenant.TestTenants;
 
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
@@ -30,10 +29,10 @@ import com.top_logic.factory.agent.AgentTasks;
 import com.top_logic.factory.agent.I18NConstants;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.WorkspaceAgentService;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.WorkspaceStatus;
-import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -85,7 +84,7 @@ public class TestAgentTasks extends BasicTestCase {
 		_previousPerson = subSession.getPerson();
 		subSession.setPerson(_owner);
 		_project = commit(() -> {
-			TLObject result = TestTenants.newProject();
+			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Agent tasks test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, "agent-tasks-test");
@@ -241,7 +240,7 @@ public class TestAgentTasks extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				SecureRandomService.Module.INSTANCE,
 				WorkspaceService.Module.INSTANCE,
-				WorkspaceProxyService.Module.INSTANCE,
+				LLMProxyService.Module.INSTANCE,
 				WorkspaceAgentService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ToolRegistryService.Module.INSTANCE,

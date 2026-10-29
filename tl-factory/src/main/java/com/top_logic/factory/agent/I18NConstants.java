@@ -22,8 +22,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_WORKSPACE_NOT_RUNNING__WORKSPACE;
 
 	/**
-	 * @en The agents of the workspaces have no access to a language model: the workspace proxy of
-	 *     the control application is switched off.
+	 * @en The agents of the workspaces have no access to a language model: the LLM proxy of the
+	 *     control application is switched off.
 	 */
 	public static ResKey ERROR_NO_LLM_ACCESS;
 
@@ -59,8 +59,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMMIT_CONVERSATION;
 
 	/**
-	 * @en The workspace proxy of the control application refused the access of the agent (HTTP
-	 *     {0}). The next message starts the agent anew with a new token.
+	 * @en The LLM proxy of the control application refused the access of the agent (HTTP {0}). The
+	 *     next message starts the agent anew with a new token.
 	 */
 	public static ResKey1 ERROR_LLM_ACCESS_REFUSED__STATUS;
 

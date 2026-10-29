@@ -9,12 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.factory.ci.CIJob;
-import com.top_logic.factory.git.GitRepository;
-import com.top_logic.factory.git.RepositoryName;
-import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -34,36 +29,9 @@ public class FactoryModel {
 	public static final String MODULE = "tl.factory";
 
 	/**
-	 * Name of the type of a tenant: a company owning projects, whose members hold the roles of the
-	 * tenant by the {@link #TENANT_MEMBERS references} they are in.
-	 */
-	public static final String TENANT = "Tenant";
-
-	/** Attribute of a {@link #TENANT}: its name, unique among the tenants. */
-	public static final String TENANT_NAME = "name";
-
-	/** Attribute of a {@link #TENANT}: the accounts managing its members. */
-	public static final String TENANT_ADMINISTRATORS = "administrators";
-
-	/** Attribute of a {@link #TENANT}: the accounts working on its projects. */
-	public static final String TENANT_DEVELOPERS = "developers";
-
-	/** Attribute of a {@link #TENANT}: the accounts reading its projects. */
-	public static final String TENANT_READERS = "readers";
-
-	/**
-	 * The attributes of a {@link #TENANT} holding its members, one per role: {@link #TENANT_ADMINISTRATORS},
-	 * {@link #TENANT_DEVELOPERS} and {@link #TENANT_READERS}.
-	 */
-	public static final List<String> TENANT_MEMBERS = List.of(TENANT_ADMINISTRATORS, TENANT_DEVELOPERS, TENANT_READERS);
-
-	/**
 	 * Name of the type of a project.
 	 */
 	public static final String PROJECT = "Project";
-
-	/** Attribute of a {@link #PROJECT}: the {@link #TENANT} owning it. */
-	public static final String PROJECT_TENANT = "tenant";
 
 	/**
 	 * Name of the type of the workspace of a project.
@@ -87,83 +55,8 @@ public class FactoryModel {
 	/** Attribute of a {@link #PROJECT}: the TopLogic version its application is built on. */
 	public static final String PROJECT_ENGINE_VERSION = "engineVersion";
 
-	/**
-	 * Attribute of a {@link #PROJECT}: the {@link RepositoryName#getFullName() full name} of its
-	 * repository on the git hosting service.
-	 */
-	public static final String PROJECT_REPOSITORY = "repository";
-
-	/**
-	 * Attribute of a {@link #PROJECT}: the {@link GitRepository#getWebUrl() page} of its repository
-	 * on the git hosting service.
-	 */
-	public static final String PROJECT_REPOSITORY_URL = "repositoryUrl";
-
-	/**
-	 * Attribute of a {@link #PROJECT}: the {@link CIJob#name() name} of its job on the CI server.
-	 */
-	public static final String PROJECT_CI_JOB = "ciJob";
-
-	/**
-	 * Attribute of a {@link #PROJECT}: the {@link CIJob#webUrl() page} of its job on the CI server.
-	 */
-	public static final String PROJECT_CI_JOB_URL = "ciJobUrl";
-
 	/** Attribute of a {@link #PROJECT}: its {@link #WORKSPACE}, a composition. */
 	public static final String PROJECT_WORKSPACE = "workspace";
-
-	/**
-	 * Attribute of a {@link #PROJECT}: the {@link #GIT_CONNECTION} its repository lives on.
-	 */
-	public static final String PROJECT_GIT_CONNECTION = "gitConnection";
-
-	/**
-	 * Attribute of a {@link #PROJECT}: whether the default branch of its repository is protected,
-	 * empty before the first workspace has the sources in it.
-	 */
-	public static final String PROJECT_BRANCH_PROTECTED = "branchProtected";
-
-	/**
-	 * Name of the type of a git connection: a server of a git hosting service, the owner the
-	 * repositories live in, and the credentials, see {@link com.top_logic.factory.git.GitConnections}.
-	 */
-	public static final String GIT_CONNECTION = "GitConnection";
-
-	/** Attribute of a {@link #GIT_CONNECTION}: its display name. */
-	public static final String GIT_CONNECTION_NAME = "name";
-
-	/**
-	 * Attribute of a {@link #GIT_CONNECTION}: the name of the
-	 * {@link com.top_logic.factory.git.GitProviderType} of its server.
-	 */
-	public static final String GIT_CONNECTION_PROVIDER_TYPE = "providerType";
-
-	/** Attribute of a {@link #GIT_CONNECTION}: the URL of its server. */
-	public static final String GIT_CONNECTION_URL = "url";
-
-	/**
-	 * Attribute of a {@link #GIT_CONNECTION}: the organization or user the repositories live in;
-	 * for a built-in connection the start of the names of the organizations of the tenants.
-	 */
-	public static final String GIT_CONNECTION_OWNER = "owner";
-
-	/**
-	 * Attribute of a {@link #GIT_CONNECTION}: the {@link #TENANT} owning it, empty for a built-in
-	 * connection of the installation.
-	 */
-	public static final String GIT_CONNECTION_TENANT = "tenant";
-
-	/**
-	 * Attribute of a {@link #GIT_CONNECTION}: the tenants whose members may choose it for a
-	 * project.
-	 */
-	public static final String GIT_CONNECTION_TENANTS = "tenants";
-
-	/**
-	 * Attribute of a {@link #GIT_CONNECTION} of a tenant: the name of the secret holding its access
-	 * token.
-	 */
-	public static final String GIT_CONNECTION_SECRET_NAME = "secretName";
 
 	/** Attribute of a {@link #WORKSPACE}: the identifier of its container. */
 	public static final String WORKSPACE_ID = "workspaceId";
@@ -185,12 +78,6 @@ public class FactoryModel {
 	 * {@link com.top_logic.factory.workspace.WorkspaceInfo#getImage()}.
 	 */
 	public static final String WORKSPACE_IMAGE = "image";
-
-	/**
-	 * Attribute of a {@link #WORKSPACE}: the context path its application is served under, see
-	 * {@link #getContextPath(TLObject)}.
-	 */
-	public static final String WORKSPACE_CONTEXT_PATH = "contextPath";
 
 	/** Attribute of a {@link #WORKSPACE}: the output of its last operation. */
 	public static final String WORKSPACE_LOG = "log";
@@ -241,34 +128,6 @@ public class FactoryModel {
 	}
 
 	/**
-	 * The type of a tenant.
-	 */
-	public static TLClass tenantType() {
-		return (TLClass) TLModelUtil.findType(MODULE, TENANT);
-	}
-
-	/**
-	 * The type of a git connection.
-	 */
-	public static TLClass gitConnectionType() {
-		return (TLClass) TLModelUtil.findType(MODULE, GIT_CONNECTION);
-	}
-
-	/**
-	 * The {@link #GIT_CONNECTION} of the given project, {@code null} for none.
-	 */
-	public static TLObject getGitConnection(TLObject project) {
-		return (TLObject) project.tValueByName(PROJECT_GIT_CONNECTION);
-	}
-
-	/**
-	 * The {@link #TENANT} owning the given project, {@code null} for none.
-	 */
-	public static TLObject getTenant(TLObject project) {
-		return (TLObject) project.tValueByName(PROJECT_TENANT);
-	}
-
-	/**
 	 * The type of a conversation with the coding agent of a workspace.
 	 */
 	public static TLClass conversationType() {
@@ -311,13 +170,6 @@ public class FactoryModel {
 	}
 
 	/**
-	 * All projects stored in the application.
-	 */
-	public static List<TLObject> allProjects() {
-		return new ArrayList<>(MetaElementUtil.getAllInstancesOf(projectType(), TLObject.class));
-	}
-
-	/**
 	 * All workspaces stored in the application.
 	 */
 	public static List<TLObject> allWorkspaces() {
@@ -353,9 +205,12 @@ public class FactoryModel {
 	 * @return The workspace, {@code null} if there is none.
 	 */
 	public static TLObject findWorkspace(String workspaceId) {
-		List<TLObject> found =
-			AttributeOperations.instancesWithValue(workspaceType(), WORKSPACE_ID, workspaceId, TLObject.class);
-		return found.isEmpty() ? null : found.get(0);
+		for (TLObject workspace : allWorkspaces()) {
+			if (workspaceId.equals(getWorkspaceId(workspace))) {
+				return workspace;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -373,46 +228,6 @@ public class FactoryModel {
 	}
 
 	/**
-	 * The repository of the given project on the git hosting service.
-	 *
-	 * @return Its full name, {@code null} if the project has none.
-	 */
-	public static RepositoryName getRepository(TLObject project) {
-		return RepositoryName.fromFullName(getString(project, PROJECT_REPOSITORY));
-	}
-
-	/**
-	 * Sets the repository of the given project in the current transaction.
-	 *
-	 * @param repository
-	 *        The repository on the git hosting service, {@code null} for none.
-	 */
-	public static void setRepository(TLObject project, GitRepository repository) {
-		project.tUpdateByName(PROJECT_REPOSITORY, repository == null ? null : repository.getFullName());
-		project.tUpdateByName(PROJECT_REPOSITORY_URL, repository == null ? null : repository.getWebUrl());
-	}
-
-	/**
-	 * The {@link CIJob#name() name} of the job of the given project on the CI server.
-	 *
-	 * @return The name, {@code null} if the project has no job.
-	 */
-	public static String getCIJob(TLObject project) {
-		return getString(project, PROJECT_CI_JOB);
-	}
-
-	/**
-	 * Sets the CI job of the given project in the current transaction.
-	 *
-	 * @param job
-	 *        The job on the CI server, {@code null} for none.
-	 */
-	public static void setCIJob(TLObject project, CIJob job) {
-		project.tUpdateByName(PROJECT_CI_JOB, job == null ? null : job.name());
-		project.tUpdateByName(PROJECT_CI_JOB_URL, job == null ? null : job.webUrl());
-	}
-
-	/**
 	 * Reads a text attribute of a project or workspace.
 	 */
 	public static String getString(TLObject object, String attribute) {
@@ -424,22 +239,6 @@ public class FactoryModel {
 	 */
 	public static String getWorkspaceId(TLObject workspace) {
 		return getString(workspace, WORKSPACE_ID);
-	}
-
-	/**
-	 * The context path the application of the given workspace is served under.
-	 *
-	 * @return The stored {@link #WORKSPACE_CONTEXT_PATH}; for a workspace without one, whose
-	 *         container was created before workspaces recorded it, the artifact of its project,
-	 *         the context path such a container serves its application under.
-	 * @see com.top_logic.factory.workspace.app.ApplicationSpec#getContextPath()
-	 */
-	public static String getContextPath(TLObject workspace) {
-		String stored = getString(workspace, WORKSPACE_CONTEXT_PATH);
-		if (stored != null && !stored.isEmpty()) {
-			return stored;
-		}
-		return ApplicationWorkspaces.defaultContextPath(getString(getProject(workspace), PROJECT_ARTIFACT_ID));
 	}
 
 	/**

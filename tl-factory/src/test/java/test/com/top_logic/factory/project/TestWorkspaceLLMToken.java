@@ -13,20 +13,15 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.factory.ci.CIRoute;
-import com.top_logic.factory.git.GitRoute;
-import com.top_logic.factory.llm.LLMRoute;
+import com.top_logic.factory.llm.LLMAdmission;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.ProjectWorkspaces.NewWorkspace;
-import com.top_logic.factory.proxy.ProxyAdmission;
-import com.top_logic.factory.proxy.TokenGrants;
-import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -35,7 +30,7 @@ import com.top_logic.tl.ai.core.access.SecretTokens;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test of the tokens of the workspace proxy against a knowledge base: a token issued for a stored
+ * Test of the tokens of the LLM proxy against a knowledge base: a token issued for a stored
  * workspace is valid until it is revoked, its lifetime ends or its workspace is removed.
  */
 public class TestWorkspaceLLMToken extends BasicTestCase {
@@ -45,10 +40,7 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	 */
 	private static final String SOURCE = "172.30.0.5";
 
-	/**
-	 * The URL of the LLM route: the proxy URL of the test configuration and the path of the route.
-	 */
-	private static final String PROXY_URL = "http://workspace-proxy.test" + LLMRoute.DEFAULT_PATH;
+	private static final String PROXY_URL = "http://llm-proxy.test/llm-proxy";
 
 	private static final String WORKSPACE_ID = "llm-token-test-1";
 
@@ -56,13 +48,13 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 
 	private TLObject _workspace;
 
-	private WorkspaceProxyService _proxy;
+	private LLMProxyService _proxy;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_project = commit(() -> {
-			TLObject result = TestTenants.newProject();
+			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "LLM token test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, "llm-token-test");
@@ -71,9 +63,9 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 		});
 		NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(_project, WORKSPACE_ID);
 		_workspace = created.workspace();
-		assertEquals(PROXY_URL, created.spec().getEnv().get(LLMRoute.ENV_BASE_URL));
-		assertNull("The container gets no token.", created.spec().getEnv().get(LLMRoute.ENV_AUTH_TOKEN));
-		_proxy = WorkspaceProxyService.getInstance();
+		assertEquals(PROXY_URL, created.spec().getEnv().get(LLMProxyService.ENV_BASE_URL));
+		assertNull("The container gets no token.", created.spec().getEnv().get(LLMProxyService.ENV_AUTH_TOKEN));
+		_proxy = LLMProxyService.getInstance();
 	}
 
 	@Override
@@ -90,24 +82,13 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	}
 
 	/**
-	 * The proxy of the application configuration has the LLM route, the git route and the CI route,
-	 * also with the proxy settings of the test configuration.
-	 */
-	public void testLLMRouteConfigured() {
-		assertEquals(3, _proxy.routes().size());
-		assertEquals(LLMRoute.DEFAULT_PATH, _proxy.getRoute(LLMRoute.class).getPath());
-		assertEquals(GitRoute.DEFAULT_PATH, _proxy.getRoute(GitRoute.class).getPath());
-		assertEquals(CIRoute.DEFAULT_PATH, _proxy.getRoute(CIRoute.class).getPath());
-	}
-
-	/**
 	 * An issued token is valid, another well-formed one is not, a revoked one no longer.
 	 */
 	public void testIssueAndRevoke() {
 		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		assertTrue(admitted(token));
 		assertFalse("Another well-formed token.",
-			admitted(SecretTokens.newToken(TokenGrants.TOKEN_PREFIX)));
+			admitted(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
 
 		String other = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		_proxy.revoke(token);
@@ -162,7 +143,7 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 
 	/**
 	 * The tests of this class, with a knowledge base holding the model of the control application
-	 * and the workspace proxy switched on by the test configuration.
+	 * and the LLM proxy switched on by the test configuration.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(
@@ -172,14 +153,14 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 				SecureRandomService.Module.INSTANCE,
 				// The default engine version of a new project; starting it contacts no container platform.
 				WorkspaceService.Module.INSTANCE,
-				WorkspaceProxyService.Module.INSTANCE));
+				LLMProxyService.Module.INSTANCE));
 	}
 
 	/**
 	 * Whether the proxy admits a request with the given token.
 	 */
 	private boolean admitted(String token) {
-		return _proxy.admit(token, SOURCE).status() == ProxyAdmission.Status.ADMITTED;
+		return _proxy.admit(token, SOURCE).status() == LLMAdmission.Status.ADMITTED;
 	}
 
 }

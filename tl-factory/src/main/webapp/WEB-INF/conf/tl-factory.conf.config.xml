@@ -6,10 +6,8 @@
 			<instance>
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
-					<module key="com.top_logic.factory.git.GitHostingService$Module" value="true"/>
-					<module key="com.top_logic.factory.ci.CIService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
-					<module key="com.top_logic.factory.proxy.WorkspaceProxyService$Module" value="true"/>
+					<module key="com.top_logic.factory.llm.LLMProxyService$Module" value="true"/>
 					<module key="com.top_logic.factory.agent.WorkspaceAgentService$Module" value="true"/>
 				</modules>
 			</instance>
@@ -20,6 +18,7 @@
 				<provider class="com.top_logic.factory.workspace.docker.DockerWorkspaceProvider"
 					docker-host="%FACTORY_DOCKER_HOST%"
 					network="%FACTORY_DOCKER_NETWORK%"
+					public-host="%FACTORY_PUBLIC_HOST%"
 					host-port-min="%FACTORY_HOST_PORT_MIN%"
 					host-port-max="%FACTORY_HOST_PORT_MAX%"
 					cpu-limit="%FACTORY_WORKSPACE_CPUS%"
@@ -30,8 +29,6 @@
 					pids-limit="%FACTORY_WORKSPACE_PIDS%"
 				/>
 				<applications
-					application-origin="%FACTORY_APPLICATION_ORIGIN%"
-					context-path="%FACTORY_CONTEXT_PATH%"
 					engine-version="%FACTORY_ENGINE_VERSION%"
 					image-repository="%FACTORY_IMAGE_REPOSITORY%"
 					repository-url="%FACTORY_REPOSITORY_URL%"
@@ -39,30 +36,6 @@
 					build-timeout="%FACTORY_BUILD_TIMEOUT%"
 				/>
 			</instance>
-		</config>
-
-		<!--
-			The git hosting services of the project repositories: no provider type and no built-in
-			connection here. A module supporting a kind of hosting service registers its type under
-			provider-types, e.g. "gitea" of the module tl-factory-gitea; an installation adds its
-			built-in connections under connections, which every tenant may choose; the administrators of
-			a tenant add connections of their own. The default branch of every project repository is
-			protected with the protected files, if the access token of its connection may do so.
-		-->
-		<config service-class="com.top_logic.factory.git.GitHostingService">
-			<instance class="com.top_logic.factory.git.GitHostingService"
-				protected-files="%FACTORY_GIT_PROTECTED_FILES%"
-			/>
-		</config>
-
-		<!--
-			The CI server building the applications of the projects, switched off: an installation
-			configures a provider, e.g. the JenkinsCIProvider of the module tl-factory-jenkins. Setting up
-			the CI of a project gives its repository the pipeline-template as its pipeline definition,
-			unless it has one.
-		-->
-		<config service-class="com.top_logic.factory.ci.CIService">
-			<instance class="com.top_logic.factory.ci.CIService"/>
 		</config>
 
 		<config service-class="com.top_logic.factory.project.ProjectWorkspaces">
@@ -73,35 +46,19 @@
 		</config>
 
 		<!--
-			The workspace proxy: the workspaces reach services through its routes, which add the
-			credentials of the control application to their requests; no workspace container gets
-			one. The LLM route adds the API key of the named provider of the LLMProviderService, the git
-			route the credentials of the git connection of the project of a workspace for its repository;
-			without repository or available git connection, it answers every request with 404. The git route
-			also gives every git process in a workspace the identity its commits are made with. The CI
-			route lets the agent start and follow the builds of the CI job of its project; without a CI
-			provider, it answers every request with 404.
+			The LLM proxy of the workspaces: the API key of the named provider of the
+			LLMProviderService is added to their requests, no workspace container gets it.
 		-->
-		<config service-class="com.top_logic.factory.proxy.WorkspaceProxyService">
-			<instance class="com.top_logic.factory.proxy.WorkspaceProxyService"
-				allowed-sources="%FACTORY_PROXY_ALLOWED_SOURCES%"
-				listen-address="%FACTORY_PROXY_ADDRESS%"
-				listen-port="%FACTORY_PROXY_PORT%"
-				proxy-url="%FACTORY_PROXY_URL%"
-				rate-limit="%FACTORY_PROXY_RATE_LIMIT%"
-				servlet-enabled="%FACTORY_PROXY_SERVLET%"
-			>
-				<routes>
-					<route class="com.top_logic.factory.llm.LLMRoute"
-						provider="%FACTORY_LLM_PROVIDER%"
-					/>
-					<route class="com.top_logic.factory.git.GitRoute"
-						user-email="%FACTORY_GIT_USER_EMAIL%"
-						user-name="%FACTORY_GIT_USER_NAME%"
-					/>
-					<route class="com.top_logic.factory.ci.CIRoute"/>
-				</routes>
-			</instance>
+		<config service-class="com.top_logic.factory.llm.LLMProxyService">
+			<instance class="com.top_logic.factory.llm.LLMProxyService"
+				allowed-sources="%FACTORY_LLM_ALLOWED_SOURCES%"
+				listen-address="%FACTORY_LLM_PROXY_ADDRESS%"
+				listen-port="%FACTORY_LLM_PROXY_PORT%"
+				provider="%FACTORY_LLM_PROVIDER%"
+				proxy-url="%FACTORY_LLM_PROXY_URL%"
+				rate-limit="%FACTORY_LLM_RATE_LIMIT%"
+				servlet-enabled="%FACTORY_LLM_PROXY_SERVLET%"
+			/>
 		</config>
 
 		<!--
@@ -150,18 +107,6 @@
 			</instance>
 		</config>
 
-		<!--
-			The page of the tenants is shown to the users holding the operation "ManageTenants" on the
-			security root: the operators (granted below) and the technical super user (root).
-		-->
-		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
-			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
-				<group name="ManageTenants"
-					type="write"
-				/>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
@@ -171,131 +116,26 @@
 		</config>
 
 		<!--
-			The access to the tenants, their projects and the workspaces of the projects. The operators
-			of the control application manage all of them: the role tl.factory.Operator, held on the
-			security root, is passed on to every tenant and every project by the role parent rules
-			below. The members of a tenant hold the role of the reference of the tenant they are in, on
-			the tenant and, by the role parent rule of a project, on its projects: an administrator
-			(tl.factory.Verwalter) manages the tenant and works on its projects, a developer
-			(tl.factory.Entwickler) works on the projects, a reader (tl.factory.Leser) sees the tenant and
-			its projects. A workspace is a part of its project and an agent conversation a part of its
-			workspace, both decided by their container. The account of a member inherits the roles held
-			on its tenant, so that the members of a tenant see each other. A git connection inherits the
-			roles held on the tenants it is offered to (its own tenant, or every tenant for a built-in
-			connection), so that their members read it.
+			The operators of the control application manage all projects and their workspaces: the
+			role tl.factory.Operator, held on the security root, is passed on to every project by the
+			role parent rule below. A workspace is a part of its project and decided by it.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
 				<roles>
 					<role name="tl.factory.Operator"/>
-					<role name="tl.factory.Verwalter"/>
-					<role name="tl.factory.Entwickler"/>
-					<role name="tl.factory.Leser"/>
 				</roles>
 			</instance>
 		</config>
 
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
-				<role-rules>
-					<rules>
-						<rule id="TenantAdministrators"
-							meta-element="tl.factory:Tenant"
-							role="tl.factory.Verwalter"
-						>
-							<path>
-								<step attribute="tl.factory:Tenant#administrators"/>
-							</path>
-						</rule>
-						<rule id="TenantDevelopers"
-							meta-element="tl.factory:Tenant"
-							role="tl.factory.Entwickler"
-						>
-							<path>
-								<step attribute="tl.factory:Tenant#developers"/>
-							</path>
-						</rule>
-						<rule id="TenantReaders"
-							meta-element="tl.factory:Tenant"
-							role="tl.factory.Leser"
-						>
-							<path>
-								<step attribute="tl.factory:Tenant#readers"/>
-							</path>
-						</rule>
-					</rules>
-				</role-rules>
 				<security-parents>
-					<rule id="SecRootForFactoryTenant"
-						inherit="true"
-						meta-element="tl.factory:Tenant"
-					>
-						<singleton module="SecurityStructure"/>
-					</rule>
 					<rule id="SecRootForFactoryProject"
 						inherit="true"
 						meta-element="tl.factory:Project"
 					>
 						<singleton module="SecurityStructure"/>
-					</rule>
-					<!--
-						A member of a tenant sees the accounts of the other members: an account inherits
-						the roles held on the tenant it is a member of.
-					-->
-					<rule id="TenantForAdministrator"
-						inherit="true"
-						meta-element="tl.accounts:Person"
-					>
-						<path>
-							<step
-								attribute="tl.factory:Tenant#administrators"
-								inverse="true"
-							/>
-						</path>
-					</rule>
-					<rule id="TenantForDeveloper"
-						inherit="true"
-						meta-element="tl.accounts:Person"
-					>
-						<path>
-							<step
-								attribute="tl.factory:Tenant#developers"
-								inverse="true"
-							/>
-						</path>
-					</rule>
-					<rule id="TenantForReader"
-						inherit="true"
-						meta-element="tl.accounts:Person"
-					>
-						<path>
-							<step
-								attribute="tl.factory:Tenant#readers"
-								inverse="true"
-							/>
-						</path>
-					</rule>
-					<rule id="TenantForFactoryProject"
-						inherit="true"
-						meta-element="tl.factory:Project"
-					>
-						<path>
-							<step attribute="tl.factory:Project#tenant"/>
-						</path>
-					</rule>
-					<rule id="SecRootForGitConnection"
-						inherit="true"
-						meta-element="tl.factory:GitConnection"
-					>
-						<singleton module="SecurityStructure"/>
-					</rule>
-					<rule id="TenantsForGitConnection"
-						inherit="true"
-						meta-element="tl.factory:GitConnection"
-					>
-						<path>
-							<step attribute="tl.factory:GitConnection#tenants"/>
-						</path>
 					</rule>
 				</security-parents>
 			</instance>
@@ -304,109 +144,28 @@
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
 				<security-config>
-					<!-- The operators manage the tenants (the page of the tenants). -->
-					<singleton name="SecurityStructure#ROOT">
-						<operations>
-							<operation name="ManageTenants"/>
-						</operations>
-						<grant
-							operation="ManageTenants"
-							roles="tl.factory.Operator"
-						/>
-					</singleton>
-					<!-- The operators create and delete tenants, their administrators manage them. -->
-					<class name="tl.factory:Tenant">
-						<grant
-							operation="Read"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
-						/>
-						<grant
-							operation="Write"
-							roles="tl.factory.Operator, tl.factory.Verwalter"
-						/>
-						<grant
-							operation="Create"
-							roles="tl.factory.Operator"
-						/>
-						<grant
-							operation="Delete"
-							roles="tl.factory.Operator"
-						/>
-					</class>
-					<!--
-						The members of a tenant read the accounts of its members; the accounts are
-						created, changed and deleted by the functions managing the members
-						(com.top_logic.factory.tenant.TenantMembers).
-					-->
-					<class name="tl.accounts:Person">
+					<module name="tl.factory">
 						<grant
 							inherit="true"
 							operation="Read"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
-						/>
-					</class>
-					<!--
-						The members of the tenants a git connection is offered to read it. The connections
-						of a tenant are created, changed and deleted by the functions managing them
-						(com.top_logic.factory.git.GitConnections), which check the right to write the
-						tenant; the built-in connections follow the configuration of the installation.
-					-->
-					<class name="tl.factory:GitConnection">
-						<grant
-							operation="Read"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
+							roles="tl.factory.Operator"
 						/>
 						<grant
+							inherit="true"
 							operation="Write"
 							roles="tl.factory.Operator"
 						/>
 						<grant
+							inherit="true"
 							operation="Create"
 							roles="tl.factory.Operator"
 						/>
 						<grant
+							inherit="true"
 							operation="Delete"
 							roles="tl.factory.Operator"
 						/>
-					</class>
-					<!-- The input of the dialogs managing the tenants, never stored. -->
-					<module name="tl.factory.input"
-						internal="true"
-					/>
-					<!--
-						The developers and administrators of a tenant create, change and delete its
-						projects, its readers see them. The workspaces and agent conversations follow
-						their project.
-					-->
-					<class name="tl.factory:Project">
-						<grant
-							operation="Read"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler, tl.factory.Leser"
-						/>
-						<grant
-							operation="Write"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler"
-						/>
-						<grant
-							operation="Create"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler"
-						/>
-						<grant
-							operation="Delete"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler"
-						/>
-					</class>
-					<!--
-						The initial password of the account root of the application of a workspace logs
-						into that application with all rights: only who works on the project reads it, not
-						a reader.
-					-->
-					<part name="tl.factory:Workspace#initialPassword">
-						<grant
-							operation="Read"
-							roles="tl.factory.Operator, tl.factory.Verwalter, tl.factory.Entwickler"
-						/>
-					</part>
+					</module>
 				</security-config>
 			</instance>
 		</config>

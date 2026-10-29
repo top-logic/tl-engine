@@ -15,7 +15,6 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 import test.com.top_logic.knowledge.KBSetup;
 
@@ -23,10 +22,10 @@ import com.sun.net.httpserver.HttpServer;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.WorkspaceStatus;
-import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.WorkspaceService;
@@ -96,7 +95,7 @@ public class TestWorkspaceApplicationState extends BasicTestCase {
 		TestingProjectWorkspaces.setApplications(new ApplicationWorkspaces(
 			WorkspaceService.getInstance().getApplications().getConfig(), _provider));
 		_project = commit(() -> {
-			TLObject result = TestTenants.newProject();
+			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Application state test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, ARTIFACT_ID);
@@ -265,7 +264,7 @@ public class TestWorkspaceApplicationState extends BasicTestCase {
 				SchedulerService.Module.INSTANCE,
 				// The configuration of the workspace image; starting it contacts no container platform.
 				WorkspaceService.Module.INSTANCE,
-				WorkspaceProxyService.Module.INSTANCE,
+				LLMProxyService.Module.INSTANCE,
 				ProjectWorkspaces.Module.INSTANCE));
 	}
 

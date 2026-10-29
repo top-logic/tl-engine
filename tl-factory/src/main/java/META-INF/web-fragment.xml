@@ -6,37 +6,17 @@
   <name>tl-factory</name>
 
   <!--
-    The workspace proxy of the workspace containers in the web application, mapped to the paths of
-    its routes (the LLM route: LLMRoute.DEFAULT_PATH, the git route: GitRoute.DEFAULT_PATH, the CI route: CIRoute.DEFAULT_PATH). It answers only if servlet-enabled of the
-    WorkspaceProxyService is set; by default the proxy listens on a port of its own instead. The
-    servlet authenticates the requests itself by the token of a workspace.
+    The LLM proxy of the workspace containers (LLMProxyHandler.PATH) in the web application. It answers
+    only if servlet-enabled of the LLMProxyService is set; by default the proxy listens on a port of its
+    own instead. The servlet authenticates the requests itself by the token of a workspace.
   -->
   <servlet>
-    <servlet-name>WorkspaceProxyServlet</servlet-name>
-    <servlet-class>com.top_logic.factory.proxy.WorkspaceProxyServlet</servlet-class>
-    <async-supported>true</async-supported>
+    <servlet-name>LLMProxyServlet</servlet-name>
+    <servlet-class>com.top_logic.factory.llm.LLMProxyServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>
-    <servlet-name>WorkspaceProxyServlet</servlet-name>
+    <servlet-name>LLMProxyServlet</servlet-name>
     <url-pattern>/llm-proxy/*</url-pattern>
-    <url-pattern>/git/*</url-pattern>
-    <url-pattern>/ci/*</url-pattern>
-  </servlet-mapping>
-
-  <!--
-    The preview route: the reverse proxy to the applications of the workspaces, mapped to
-    ApplicationWorkspaces.PREVIEW_PATH. It lets a request pass only for a user logged into the
-    control application who may read the project of the workspace.
-  -->
-  <servlet>
-    <servlet-name>PreviewServlet</servlet-name>
-    <servlet-class>com.top_logic.factory.preview.PreviewServlet</servlet-class>
-    <async-supported>true</async-supported>
-  </servlet>
-
-  <servlet-mapping>
-    <servlet-name>PreviewServlet</servlet-name>
-    <url-pattern>/preview/*</url-pattern>
   </servlet-mapping>
 </web-fragment>

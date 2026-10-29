@@ -6,25 +6,16 @@
 package test.com.top_logic.factory.project;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.factory.ci.CIProvider;
-import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
-import com.top_logic.model.TLObject;
 
 /**
  * {@link ProjectWorkspaces} of the tests, working on the {@link ApplicationWorkspaces} a test
- * sets with {@link #setApplications(ApplicationWorkspaces)}, the git hosting service it sets
- * with {@link #setGitHosting(GitHostingProvider)} and the CI server it sets with
- * {@link #setCI(CIProvider)}.
+ * sets with {@link #setApplications(ApplicationWorkspaces)}.
  */
 public class TestingProjectWorkspaces extends ProjectWorkspaces {
 
 	private static volatile ApplicationWorkspaces _applications;
-
-	private static volatile GitHostingProvider _gitHosting;
-
-	private static volatile CIProvider _ci;
 
 	/**
 	 * Creates a {@link TestingProjectWorkspaces} from configuration.
@@ -44,35 +35,6 @@ public class TestingProjectWorkspaces extends ProjectWorkspaces {
 	 */
 	public static void setApplications(ApplicationWorkspaces applications) {
 		_applications = applications;
-	}
-
-	/**
-	 * Sets the git hosting service the repositories of all projects are on, {@code null} for the
-	 * one of the git connection of each project.
-	 */
-	public static void setGitHosting(GitHostingProvider gitHosting) {
-		_gitHosting = gitHosting;
-	}
-
-	/**
-	 * Sets the CI server of the installation, {@code null} for that of the
-	 * {@link com.top_logic.factory.ci.CIService}; it builds the applications of the projects on a
-	 * built-in git connection.
-	 */
-	public static void setCI(CIProvider ci) {
-		_ci = ci;
-	}
-
-	@Override
-	protected CIProvider getCI() {
-		CIProvider ci = _ci;
-		return ci != null ? ci : super.getCI();
-	}
-
-	@Override
-	protected GitHostingProvider getGitHosting(TLObject project) {
-		GitHostingProvider gitHosting = _gitHosting;
-		return gitHosting != null ? gitHosting : super.getGitHosting(project);
 	}
 
 	@Override

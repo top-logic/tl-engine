@@ -13,7 +13,6 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.chat.backend.ConversationBackend;
@@ -24,10 +23,10 @@ import com.top_logic.factory.agent.StoredConversation;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.WorkspaceAgentService;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.ProjectWorkspaces.NewWorkspace;
-import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -57,7 +56,7 @@ public class TestAgentConversationResolver extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_project = commit(() -> {
-			TLObject result = TestTenants.newProject();
+			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Agent resolver test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
 			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, ARTIFACT_ID);
@@ -166,7 +165,7 @@ public class TestAgentConversationResolver extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				SecureRandomService.Module.INSTANCE,
 				WorkspaceService.Module.INSTANCE,
-				WorkspaceProxyService.Module.INSTANCE,
+				LLMProxyService.Module.INSTANCE,
 				WorkspaceAgentService.Module.INSTANCE));
 	}
 

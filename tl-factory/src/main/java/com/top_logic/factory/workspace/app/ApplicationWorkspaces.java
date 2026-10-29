@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -45,8 +44,7 @@ import com.top_logic.util.error.TopLogicException;
  * All workspaces run the image built from the {@link #imageContext(String) workspace image
  * context}. The entry script of the image keeps the container alive until the application is built
  * (the file {@link #BUILT_MARKER} exists in the source volume), and from then on supervises the
- * application on the {@link WorkspaceSpec#getContainerPort() container port}, under the
- * {@link #contextPath(ApplicationSpec) context path} of the workspace. Starting and stopping
+ * application on the {@link WorkspaceSpec#getContainerPort() container port}. Starting and stopping
  * the workspace therefore starts and stops the application; in between, the
  * {@link #APP_CONTROL_COMMAND} stops and restarts it without ending the container. Its source,
  * database and Maven repository survive in the volumes of the workspace:
@@ -122,20 +120,6 @@ public class ApplicationWorkspaces {
 		String BUILD_TIMEOUT = "build-timeout";
 
 		/**
-		 * Configuration property name of {@link #getContextPath()}.
-		 *
-		 * @see #getContextPath()
-		 */
-		String CONTEXT_PATH = "context-path";
-
-		/**
-		 * Configuration property name of {@link #getApplicationOrigin()}.
-		 *
-		 * @see #getApplicationOrigin()
-		 */
-		String APPLICATION_ORIGIN = "application-origin";
-
-		/**
 		 * Name of the workspace image without tag.
 		 *
 		 * <p>
@@ -191,60 +175,6 @@ public class ApplicationWorkspaces {
 		@Name(BUILD_TIMEOUT)
 		@IntDefault(1800)
 		int getBuildTimeout();
-
-		/**
-		 * Pattern of the context path the application of a workspace is served under.
-		 *
-		 * <p>
-		 * The placeholder <code>{context}</code> stands for the context path of the control
-		 * application (empty if it is served at the root), <code>{workspace}</code> for the
-		 * identifier of the workspace and <code>{artifact}</code> for the artifact of the
-		 * application. The result must start with a slash and may have several segments, each of
-		 * letters, digits, <code>.</code>, <code>_</code>, <code>~</code> and <code>-</code>; no
-		 * segment may be <code>view</code> or <code>servlet</code>, and the first one not
-		 * <code>admin</code>. A workspace keeps the context path its container was created with
-		 * until it is updated.
-		 * </p>
-		 *
-		 * <p>
-		 * The default is the path of the workspace below the preview route
-		 * <code>/preview</code> of the control application, which forwards the path of a request
-		 * unchanged, so that the application serves the path the browser shows. A workspace whose
-		 * context path is not below the preview route of its own identifier is not reached
-		 * through the route. The same path also answers on the published port of the workspace.
-		 * </p>
-		 *
-		 * @see #CONTEXT_PATH
-		 * @see ApplicationWorkspaces#contextPath(String, String, String, String)
-		 * @see ApplicationWorkspaces#update(ApplicationSpec, ExecOutput)
-		 * @see com.top_logic.factory.preview.PreviewServlet
-		 */
-		@Name(CONTEXT_PATH)
-		@StringDefault(DEFAULT_CONTEXT_PATH)
-		String getContextPath();
-
-		/**
-		 * The origin (scheme, host and port, e.g. {@code https://factory.example.com}) under which
-		 * a browser reaches the applications of the workspaces, empty if it is not known.
-		 *
-		 * <p>
-		 * The applications get it as their external URL, the variable
-		 * {@value ApplicationWorkspaces#ENV_HOST}; without it, an application takes
-		 * {@code http://localhost:} followed by its port in the container.
-		 * </p>
-		 *
-		 * <p>
-		 * <b>Note:</b> An application started in development mode requests the path
-		 * {@code /admin/stop} of the origin on every start to stop an instance running before. The
-		 * origin must answer this request with a status other than 200, e.g. 404: a 200 with the
-		 * body {@code OK} stops the server answering there, a 200 with another body keeps the
-		 * application from starting ("Port is occupied").
-		 * </p>
-		 *
-		 * @see #APPLICATION_ORIGIN
-		 */
-		@Name(APPLICATION_ORIGIN)
-		String getApplicationOrigin();
 
 	}
 
@@ -310,71 +240,6 @@ public class ApplicationWorkspaces {
 	 * Environment variable of the entry script giving the port the application listens on.
 	 */
 	public static final String ENV_PORT = "TL_FACTORY_PORT";
-
-	/**
-	 * Environment variable of the entry script giving the context path the application is served
-	 * under.
-	 *
-	 * @see #contextPath(ApplicationSpec)
-	 */
-	public static final String ENV_CONTEXT_PATH = "TL_FACTORY_CONTEXT_PATH";
-
-	/**
-	 * Environment variable giving a TopLogic application its external URL.
-	 *
-	 * @see Config#getApplicationOrigin()
-	 */
-	public static final String ENV_HOST = "tl_host";
-
-	/**
-	 * Placeholder in the {@link Config#getContextPath() pattern of the context path} replaced by
-	 * the context path of the control application, empty if it is served at the root.
-	 *
-	 * @see com.top_logic.basic.AliasManager#APP_CONTEXT
-	 */
-	public static final String CONTEXT_PLACEHOLDER = "{context}";
-
-	/**
-	 * Placeholder in the {@link Config#getContextPath() pattern of the context path} replaced by
-	 * the identifier of the workspace.
-	 */
-	public static final String WORKSPACE_PLACEHOLDER = "{workspace}";
-
-	/**
-	 * Placeholder in the {@link Config#getContextPath() pattern of the context path} replaced by
-	 * the artifact of the application.
-	 */
-	public static final String ARTIFACT_PLACEHOLDER = "{artifact}";
-
-	/**
-	 * Path of the preview route below the context of the control application, see
-	 * {@link com.top_logic.factory.preview.PreviewServlet}.
-	 */
-	public static final String PREVIEW_PATH = "/preview";
-
-	/**
-	 * Default of {@link Config#getContextPath()}: the path of the workspace below the
-	 * {@link #PREVIEW_PATH preview route} of the control application.
-	 */
-	public static final String DEFAULT_CONTEXT_PATH =
-		CONTEXT_PLACEHOLDER + PREVIEW_PATH + "/" + WORKSPACE_PLACEHOLDER + "/" + ARTIFACT_PLACEHOLDER;
-
-	/**
-	 * Segments no context path may have: the client of a TopLogic application finds its routes at
-	 * the first segment {@code view} or {@code servlet} of a URL.
-	 */
-	public static final Set<String> RESERVED_SEGMENTS = Set.of("view", "servlet");
-
-	/**
-	 * First segment no context path may have: the development server of an application serves its
-	 * administration (the stop of a running instance) there.
-	 */
-	public static final String RESERVED_FIRST_SEGMENT = "admin";
-
-	/**
-	 * Allowed segment of a context path.
-	 */
-	private static final Pattern CONTEXT_PATH_SEGMENT = Pattern.compile("[A-Za-z0-9_~-][A-Za-z0-9._~-]*");
 
 	/**
 	 * Environment variable with arguments Maven adds to every invocation.
@@ -581,14 +446,6 @@ public class ApplicationWorkspaces {
 
 	private static final String PATH_SEPARATOR = "/";
 
-	private static final String HTTP_SCHEME = "http://";
-
-	private static final char PORT_SEPARATOR = ':';
-
-	private static final char IPV6_START = '[';
-
-	private static final char IPV6_END = ']';
-
 	private static final long POLL_MILLIS = 2000;
 
 	private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
@@ -605,8 +462,6 @@ public class ApplicationWorkspaces {
 
 	private final WorkspaceProvider _provider;
 
-	private final String _controlContextPath;
-
 	private final Object _imageLock = new Object();
 
 	private final Map<String, Object> _releaseLocks = new ConcurrentHashMap<>();
@@ -622,34 +477,8 @@ public class ApplicationWorkspaces {
 	 *        The provider the workspaces are created by.
 	 */
 	public ApplicationWorkspaces(Config config, WorkspaceProvider provider) {
-		this(config, provider, "");
-	}
-
-	/**
-	 * Creates {@link ApplicationWorkspaces}.
-	 *
-	 * @param config
-	 *        The configuration.
-	 * @param provider
-	 *        The provider the workspaces are created by.
-	 * @param controlContextPath
-	 *        The context path of the control application, empty if it is served at the root;
-	 *        replaces the {@link #CONTEXT_PLACEHOLDER} of the {@link Config#getContextPath()
-	 *        pattern of the context path}.
-	 */
-	public ApplicationWorkspaces(Config config, WorkspaceProvider provider, String controlContextPath) {
 		_config = config;
 		_provider = provider;
-		_controlContextPath = controlContextPath;
-	}
-
-	/**
-	 * The context path of the control application, empty if it is served at the root.
-	 *
-	 * @see #ApplicationWorkspaces(Config, WorkspaceProvider, String)
-	 */
-	public String getControlContextPath() {
-		return _controlContextPath;
 	}
 
 	/**
@@ -667,14 +496,12 @@ public class ApplicationWorkspaces {
 	}
 
 	/**
-	 * Creates a workspace with a TopLogic application, builds the application and lets the
-	 * workspace run it.
+	 * Creates a workspace with a TopLogic application generated from the archetype, builds the
+	 * application and lets the workspace run it.
 	 *
 	 * <p>
-	 * The sources of the application come from the {@link ApplicationSpec#getSource() source} of
-	 * the spec, by default they are generated from the archetype. The method returns as soon as the
-	 * application is built; the application is starting then. Use
-	 * {@link #awaitApplication(String, String)} to wait until it answers. If a step fails, the
+	 * The method returns as soon as the application is built; the application is starting then.
+	 * Use {@link #awaitApplication(String, String)} to wait until it answers. If a step fails, the
 	 * workspace is left as it is for inspection.
 	 * </p>
 	 *
@@ -694,7 +521,9 @@ public class ApplicationWorkspaces {
 		_provider.create(workspaceSpec(spec, image, releaseVolume));
 		_provider.start(workspaceId);
 
-		spec.getSource().provide(new SourceContext(spec, version, progress));
+		step(progress, "Generating application " + spec.getGroupId() + ":" + spec.getArtifactId() + " " + version);
+		run(workspaceId, generateCommand(version, spec.getGroupId(), spec.getArtifactId()).setWorkingDir(SOURCE_PATH)
+			.setTimeout(buildTimeout()), progress);
 
 		step(progress, "Building application");
 		run(workspaceId, ExecCommand.of("mvn", "-B", "install").setWorkingDir(appDir).setTimeout(buildTimeout()),
@@ -931,7 +760,8 @@ public class ApplicationWorkspaces {
 	 * @param workspaceId
 	 *        The workspace whose application is waited for.
 	 * @param contextPath
-	 *        The context path of the application, see {@link #contextPath(ApplicationSpec)}.
+	 *        The context path of the application, its {@link ApplicationSpec#getArtifactId()
+	 *        artifact}.
 	 * @param progress
 	 *        Receiver of the end of the log of an application that failed.
 	 * @return The URL of the application.
@@ -974,176 +804,15 @@ public class ApplicationWorkspaces {
 	}
 
 	/**
-	 * The URL under which this application reaches the application with the given context path in
-	 * a running workspace: at the {@link WorkspaceProvider#publishedAddress() address the ports are
-	 * published on} and the {@link WorkspaceInfo#getHostPort() host port} of the workspace.
-	 *
-	 * <p>
-	 * This URL is for the control application talking to the container, e.g. waiting for the
-	 * application. A browser opens the application through the preview route, see
-	 * {@link #previewUrl(String, String)}.
-	 * </p>
-	 *
-	 * @param workspace
-	 *        The running workspace.
-	 * @param contextPath
-	 *        The context path of the application, see {@link #contextPath(ApplicationSpec)}.
+	 * The URL of the application with the given context path in a running workspace.
 	 */
-	public String applicationUrl(WorkspaceInfo workspace, String contextPath) {
-		if (!workspace.hasHostPort()) {
+	public static String applicationUrl(WorkspaceInfo workspace, String contextPath) {
+		String previewUrl = workspace.getPreviewUrl();
+		if (previewUrl == null) {
 			throw new IllegalArgumentException("Workspace has no published port: " + workspace);
 		}
-		return applicationUrl(_provider.publishedAddress(), workspace.getHostPort(), contextPath);
-	}
-
-	/**
-	 * The URL of the application with the given context path listening on the given address and
-	 * port.
-	 *
-	 * @param address
-	 *        The address the port is published on, see {@link WorkspaceProvider#publishedAddress()}.
-	 * @param port
-	 *        The host port of the workspace.
-	 * @param contextPath
-	 *        The context path of the application.
-	 * @return The {@link #origin(String, int) origin} followed by the context path and a slash.
-	 */
-	public static String applicationUrl(String address, int port, String contextPath) {
-		String path = contextPath.startsWith(PATH_SEPARATOR) ? contextPath : PATH_SEPARATOR + contextPath;
-		return origin(address, port) + path + PATH_SEPARATOR;
-	}
-
-	/**
-	 * The origin of an application listening on the given address and port.
-	 */
-	public static String origin(String address, int port) {
-		boolean ipv6 = address.indexOf(PORT_SEPARATOR) >= 0 && address.charAt(0) != IPV6_START;
-		String host = ipv6 ? IPV6_START + address + IPV6_END : address;
-		return HTTP_SCHEME + host + PORT_SEPARATOR + port;
-	}
-
-	/**
-	 * The URL under which a browser opens the application of a workspace: the path of the
-	 * application below the {@link #PREVIEW_PATH preview route} of the control application.
-	 *
-	 * @param workspaceId
-	 *        The identifier of the workspace.
-	 * @param contextPath
-	 *        The context path the application of the workspace is served under.
-	 * @return The path-absolute URL, {@code null} if the application is not reached through the
-	 *         preview route.
-	 * @see #previewUrl(String, String, String)
-	 */
-	public String previewUrl(String workspaceId, String contextPath) {
-		return previewUrl(_controlContextPath, workspaceId, contextPath);
-	}
-
-	/**
-	 * The URL under which a browser opens the application of a workspace through the
-	 * {@link #PREVIEW_PATH preview route} of the control application.
-	 *
-	 * <p>
-	 * The route forwards the requests below {@code <control context>/preview/<workspace>} that are
-	 * below the context path of the application of the workspace, unchanged. So the application is
-	 * reached through it only if its context path is that path of the route or below it; a context
-	 * path of another pattern is not, until the workspace is updated.
-	 * </p>
-	 *
-	 * @param controlContextPath
-	 *        The context path of the control application, empty if it is served at the root.
-	 * @param workspaceId
-	 *        The identifier of the workspace.
-	 * @param contextPath
-	 *        The context path the application of the workspace is served under.
-	 * @return The context path followed by a slash, a path-absolute URL that needs no origin;
-	 *         {@code null} if the application is not reached through the preview route.
-	 */
-	public static String previewUrl(String controlContextPath, String workspaceId, String contextPath) {
-		if (contextPath == null) {
-			return null;
-		}
-		String route = controlContextPath + PREVIEW_PATH + PATH_SEPARATOR + workspaceId;
-		if (!contextPath.equals(route) && !contextPath.startsWith(route + PATH_SEPARATOR)) {
-			return null;
-		}
-		return contextPath + PATH_SEPARATOR;
-	}
-
-	/**
-	 * The context path the application of the given spec is served under: the
-	 * {@link ApplicationSpec#getContextPath() one of the spec}, or the one of the
-	 * {@link Config#getContextPath() configured pattern}.
-	 */
-	public String contextPath(ApplicationSpec spec) {
-		String given = spec.getContextPath();
-		return given != null ? given : contextPath(spec.getWorkspaceId(), spec.getArtifactId());
-	}
-
-	/**
-	 * The context path of the {@link Config#getContextPath() configured pattern} for the
-	 * application with the given artifact in the given workspace, below the
-	 * {@link #getControlContextPath() context path of the control application}.
-	 *
-	 * @see #contextPath(String, String, String, String)
-	 */
-	public String contextPath(String workspaceId, String artifactId) {
-		return contextPath(_config.getContextPath(), _controlContextPath, workspaceId, artifactId);
-	}
-
-	/**
-	 * The context path of the given pattern for the application with the given artifact in the
-	 * given workspace.
-	 *
-	 * @param pattern
-	 *        The pattern, see {@link Config#getContextPath()}.
-	 * @param controlContextPath
-	 *        The context path of the control application, empty if it is served at the root,
-	 *        replacing {@link #CONTEXT_PLACEHOLDER}.
-	 * @param workspaceId
-	 *        The identifier of the workspace, replacing {@link #WORKSPACE_PLACEHOLDER}.
-	 * @param artifactId
-	 *        The artifact of the application, replacing {@link #ARTIFACT_PLACEHOLDER}.
-	 * @return The context path: a slash followed by segments separated by slashes, each of
-	 *         letters, digits, {@code .}, {@code _}, {@code ~} and {@code -}, not starting with
-	 *         {@code .}, none of the {@link #RESERVED_SEGMENTS} and not starting with the
-	 *         {@link #RESERVED_FIRST_SEGMENT}.
-	 * @throws TopLogicException
-	 *         If the result is no such context path.
-	 */
-	public static String contextPath(String pattern, String controlContextPath, String workspaceId,
-			String artifactId) {
-		String result = pattern
-			.replace(CONTEXT_PLACEHOLDER, controlContextPath)
-			.replace(WORKSPACE_PLACEHOLDER, workspaceId)
-			.replace(ARTIFACT_PLACEHOLDER, artifactId);
-		if (!isValidContextPath(result)) {
-			throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTEXT_PATH__PATH_PATTERN.fill(result, pattern));
-		}
-		return result;
-	}
-
-	/**
-	 * The context path of an application that is served under its artifact, the default of a
-	 * TopLogic application in development mode.
-	 */
-	public static String defaultContextPath(String artifactId) {
-		return PATH_SEPARATOR + artifactId;
-	}
-
-	private static boolean isValidContextPath(String contextPath) {
-		if (!contextPath.startsWith(PATH_SEPARATOR)) {
-			return false;
-		}
-		String[] segments = contextPath.substring(PATH_SEPARATOR.length()).split(PATH_SEPARATOR, -1);
-		if (segments[0].equals(RESERVED_FIRST_SEGMENT)) {
-			return false;
-		}
-		for (String segment : segments) {
-			if (!CONTEXT_PATH_SEGMENT.matcher(segment).matches() || RESERVED_SEGMENTS.contains(segment)) {
-				return false;
-			}
-		}
-		return true;
+		return (previewUrl.endsWith(PATH_SEPARATOR) ? previewUrl : previewUrl + PATH_SEPARATOR) + contextPath
+			+ PATH_SEPARATOR;
 	}
 
 	/**
@@ -1320,14 +989,9 @@ public class ApplicationWorkspaces {
 			.addVolume(new VolumeMount(AGENT_SESSIONS_VOLUME, AGENT_SESSIONS_PATH))
 			.putEnv(ENV_MAVEN_ARGS, String.join(" ", workspaceMavenArgs()))
 			.putEnv(ENV_APP_DIR, appDir(spec))
-			.putEnv(ENV_CONTEXT_PATH, contextPath(spec))
 			.putEnv(ENV_BUILT_MARKER, builtMarker())
 			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
 			.putEnv(ENV_BROWSER, BROWSER_NONE);
-		String origin = _config.getApplicationOrigin();
-		if (origin != null && !origin.isEmpty()) {
-			workspace.putEnv(ENV_HOST, origin);
-		}
 		String initialPassword = spec.getInitialPassword();
 		if (initialPassword != null) {
 			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
@@ -1388,89 +1052,6 @@ public class ApplicationWorkspaces {
 
 	private static String xmlText(String value) {
 		return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-	}
-
-	/**
-	 * The {@link ApplicationSource.Context} of an application being created.
-	 */
-	private final class SourceContext implements ApplicationSource.Context {
-
-		private final ApplicationSpec _spec;
-
-		private final String _version;
-
-		private final ExecOutput _progress;
-
-		SourceContext(ApplicationSpec spec, String version, ExecOutput progress) {
-			_spec = spec;
-			_version = version;
-			_progress = progress;
-		}
-
-		@Override
-		public ApplicationSpec spec() {
-			return _spec;
-		}
-
-		@Override
-		public String engineVersion() {
-			return _version;
-		}
-
-		@Override
-		public String appDir() {
-			return ApplicationWorkspaces.appDir(_spec);
-		}
-
-		@Override
-		public Duration commandTimeout() {
-			return buildTimeout();
-		}
-
-		@Override
-		public void step(String message) {
-			ApplicationWorkspaces.step(_progress, message);
-		}
-
-		@Override
-		public void run(ExecCommand command) throws InterruptedException {
-			ApplicationWorkspaces.this.run(_spec.getWorkspaceId(), command, _progress);
-		}
-
-		@Override
-		public String output(ExecCommand command) throws InterruptedException {
-			StringBuilder stdout = new StringBuilder();
-			OutputTail tail = new OutputTail(new ExecOutput() {
-				@Override
-				public void stdout(String text) {
-					stdout.append(text);
-				}
-
-				@Override
-				public void stderr(String text) {
-					_progress.stderr(text);
-				}
-			});
-			int exitCode = _provider.exec(_spec.getWorkspaceId(), command, tail);
-			if (exitCode != 0) {
-				throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__WORKSPACE_COMMAND_CODE_OUTPUT
-					.fill(_spec.getWorkspaceId(), command.toString(), exitCode, tail.toString()));
-			}
-			return stdout.toString();
-		}
-
-		@Override
-		public int exec(ExecCommand command, ExecOutput output) throws InterruptedException {
-			return _provider.exec(_spec.getWorkspaceId(), command, output);
-		}
-
-		@Override
-		public void generate() throws InterruptedException {
-			step("Generating application " + _spec.getGroupId() + ":" + _spec.getArtifactId() + " " + _version);
-			run(generateCommand(_version, _spec.getGroupId(), _spec.getArtifactId()).setWorkingDir(SOURCE_PATH)
-				.setTimeout(buildTimeout()));
-		}
-
 	}
 
 	/**

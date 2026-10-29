@@ -15,17 +15,17 @@ import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
 
 /**
- * The Anthropic Messages API the {@link LLMRoute} forwards the requests of the workspaces
+ * The Anthropic Messages API the {@link LLMProxyServlet} forwards the requests of the workspaces
  * to, with the credentials it adds to them.
  *
  * @param baseUrl
  *        The URL of the API without the version path, e.g. {@code https://api.anthropic.com}.
  * @param credentials
  *        The credentials of the provider, e.g. its API key sent as
- *        {@link LLMRoute#X_API_KEY}. They are read for each request, so that a rotated key
+ *        {@link LLMProxyHandler#X_API_KEY}. They are read for each request, so that a rotated key
  *        is used without restart.
  * @param version
- *        The {@link LLMRoute#ANTHROPIC_VERSION} sent when the client sends none.
+ *        The {@link LLMProxyHandler#ANTHROPIC_VERSION} sent when the client sends none.
  * @param connectTimeout
  *        How long to wait for a connection to the API.
  * @param requestTimeout

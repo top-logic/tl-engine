@@ -6,7 +6,7 @@
 package com.top_logic.factory.agent;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.factory.proxy.WorkspaceProxyService;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -34,7 +34,7 @@ public final class AgentTasks {
 	 *
 	 * <p>
 	 * The agent works in a workspace whose container runs and has the agent tools, i.e. runs the
-	 * current workspace image, and needs the workspace proxy of the control application for its LLM access. The application
+	 * current workspace image, and needs the LLM proxy of the control application. The application
 	 * of the workspace need not run: the agent is needed most when it does not start.
 	 * </p>
 	 *
@@ -48,7 +48,7 @@ public final class AgentTasks {
 		if (WorkspaceAgentService.getInstance() == null) {
 			return I18NConstants.ERROR_NO_AGENT_SERVICE;
 		}
-		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
+		LLMProxyService proxy = LLMProxyService.getInstance();
 		if (proxy == null || !proxy.isEnabled()) {
 			return I18NConstants.ERROR_NO_LLM_ACCESS;
 		}

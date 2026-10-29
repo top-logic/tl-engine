@@ -2,8 +2,7 @@
 
 <!--
 	The control application in the application shell of tl-layout-view: a same-path overlay naming
-	the application and placing the project management, the members and the git connections of the
-	tenant of the user and, for the operators, the tenants of tl-factory before the system section of
+	the application and placing the project management of tl-factory before the system section of
 	the sidebar.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
@@ -37,43 +36,6 @@
 				<label>
 					<en>Projects</en>
 					<de>Projekte</de>
-				</label>
-			</nav-item>
-			<!-- The members of the tenant of the user. -->
-			<nav-item id="members"
-				config:position="before"
-				config:reference="system-separator"
-				icon="css:bi bi-people"
-			>
-				<view-ref view="factory/my-tenant.view.xml"/>
-				<label>
-					<en>Members</en>
-					<de>Mitglieder</de>
-				</label>
-			</nav-item>
-			<!-- The git connections of the tenant of the user. -->
-			<nav-item id="git-connections"
-				config:position="before"
-				config:reference="system-separator"
-				icon="css:bi bi-git"
-			>
-				<view-ref view="factory/my-git-connections.view.xml"/>
-				<label>
-					<en>Git connections</en>
-					<de>Git-Verbindungen</de>
-				</label>
-			</nav-item>
-			<!-- All tenants with their members and git connections, for the operators. -->
-			<nav-item id="tenants"
-				config:position="before"
-				config:reference="system-separator"
-				icon="css:bi bi-buildings"
-			>
-				<access-control operation="ManageTenants"/>
-				<view-ref view="factory/tenants.view.xml"/>
-				<label>
-					<en>Tenants</en>
-					<de>Mandanten</de>
 				</label>
 			</nav-item>
 		</items>

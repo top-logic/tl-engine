@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, the published address, label-based ownership), before changing how a browser opens the application of a workspace (its context path {context}/preview/{workspace}/{artifact} with tl_factory_context_path, Workspace#contextPath and previewUrl, the preview route PreviewServlet with PreviewRoute and StoredPreviewWorkspaces: the access check by the session of the control application, the forwarded paths, the session cookie removed, asynchronous streaming, Update workspace for a context path outside the route, tl_factory_application_origin), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to services of the control application's environment through the workspace proxy or adding a route to it (WorkspaceProxyService, its routes, ProxyRoute, WorkspaceProxyHandler with the dispatch by path, the token as bearer token or basic-auth password, ProxyForwarding with the streamed request body, proxy-url) or the git route (GitRoute at /git, see factory/git-hosting) or the CI route (CIRoute at /ci, see factory/ci) or the Anthropic API (LLMRoute at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN and TL_FACTORY_PROXY_TOKEN with issue/revoke/processEnv/issueProcessToken and max-token-lifetime, the git configuration of the routes (gitConfig, GitEnvironment), allowed-sources with workspace-network, the port of its own (WorkspaceProxyListener, listen-address, listen-port), WorkspaceProxyServlet with servlet-enabled, TLS for the proxy, the token checks (TokenGrants, rate-limit with 429 and Retry-After, binding to the first source address), tl_factory_proxy_url, tl_factory_proxy_allowed_sources), before hardening or changing the limits of the workspace containers (memory-limit, cpu-limit, pids-limit, CapDrop ALL, no-new-privileges, host-ip, isolate-workspaces with enable_icc, recreating the workspace network, tl_factory_host_ip, tl_factory_workspace_*), before running the control application on Windows (WSL2), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root, no command as root), and before updating its tool versions or the base image digest or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab), and before running the whole loop on one machine with the local development setup tl-factory-app/devel (compose.yaml with Gitea and Jenkins, tl-factory-devel.sh up / down / reset, the generated credentials in ~/.top-logic/secrets with the key tl_secret_store_key of the database secret store of deploy/local, the clone URLs with insteadOf, the environment of tl-factory-app).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, the port of its own (LLMProxyListener, LLMProxyHandler, listen-address, listen-port, servlet-enabled), TLS for the proxy, the token checks (TokenGrants, rate-limit with 429 and Retry-After, binding to the first source address), tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before hardening or changing the limits of the workspace containers (memory-limit, cpu-limit, pids-limit, CapDrop ALL, no-new-privileges, host-ip, isolate-workspaces with enable_icc, recreating the workspace network, tl_factory_host_ip, tl_factory_workspace_*), before running the control application on Windows (WSL2), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root, no command as root), and before updating its tool versions or the base image digest or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
 ---
 
 # Control application (tl-factory)
@@ -15,9 +15,8 @@ gets access to the container platform itself.
   background operations and the views. Another application embeds the control application by
   depending on it and linking the view `factory/projects.view.xml` from its shell.
 - **`tl-factory-app`** is the runnable application: `tl-factory` in the React view shell, with the
-  login page in front of it (`root` / `root1234` on a fresh database) and the items *Projects*,
-  *Members* and *Git connections* in the sidebar, and *Tenants* for the operators (see
-  [tenants](doc:factory/tenants)).
+  login page in front of it (`root` / `root1234` on a fresh database) and the item *Projects* in
+  the sidebar.
 
 ## Building blocks
 
@@ -26,29 +25,16 @@ gets access to the container platform itself.
 | `WorkspaceProvider` | Platform-neutral lifecycle of a workspace container: create, start, stop, remove, create anew on another image (`recreate`), status, list, cleanup, commands in the container, the log of its main process, image build, shared volumes. |
 | `DockerWorkspaceProvider` | The implementation on the Docker Engine API. |
 | `WorkspaceService` | Service holding the configured provider and the `ApplicationWorkspaces`. |
-| `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace - or takes its sources from another `ApplicationSource`, e.g. the repository of the project (see [git hosting](doc:factory/git-hosting#how-a-project-gets-its-repository)) -, builds it and runs it under the supervision of the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
+| `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it under the supervision of the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
 | `ProjectWorkspaces` | Service running the operations on the workspaces of the stored projects in the background and storing their state and output; reconciles the stored states with the existing containers after a restart. |
-| `WorkspaceProxyService` / `WorkspaceProxyHandler` | Access of the workspaces to services of the control application's environment without a credential in the workspace, through routes such as `LLMRoute` to the Anthropic Messages API, `GitRoute` to the repository of the project and `CIRoute` to its CI job, on a port of its own (`WorkspaceProxyListener`) or in the web application (`WorkspaceProxyServlet`), see [the workspace proxy](#the-workspace-proxy). |
-| `GitConnections` / `GitHostingService` / `GitHostingProvider` | The repositories of the projects on git hosting services, optional: each project chooses a git connection - a built-in one of the installation, or one its tenant created with an access token of its own; `GiteaProviderType` of the module `tl-factory-gitea` for Gitea, see [git hosting](doc:factory/git-hosting). |
-| `CIService` / `CIProvider` | The CI jobs building the repositories of the projects, optional; `JenkinsCIProvider` of the module `tl-factory-jenkins` for Jenkins, see [CI](doc:factory/ci). |
+| `LLMProxyService` / `LLMProxyHandler` | Access of the workspaces to the Anthropic Messages API through the control application, on a port of its own (`LLMProxyListener`) or in the web application (`LLMProxyServlet`), see [LLM access](#llm-access). |
 | `WorkspaceAgentService` / `WorkspaceAgent` | The coding agent of a workspace answering a chat, see [the agent in the workspace](#the-agent-in-the-workspace). |
-| `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryUpdate`, `factoryImageOutdated`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`; for CI `factoryCiUnavailable`, `factoryStartBuild`, `factoryLastBuild` (see [CI](doc:factory/ci#the-project-and-its-views)). |
+| `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryUpdate`, `factoryImageOutdated`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`. |
 
-The coordinates of a project are checked by `factoryCheckGroupId` and `factoryCheckArtifactId`
-(`ProjectWorkspaces.checkGroupId`, `checkArtifactId`): the archetype derives the Java package of
-the application from them - the group, then each part of the artifact between dashes as a name -,
-so every name of the group and every part of the artifact must be a Java identifier and none a
-reserved word of Java (`my-app2`, not `my-2app` or `my-new-app`). The artifact ID, lower case
-letters, digits and dashes, also names the context path, the repository and the CI job.
-
-The model module `tl.factory` has the classes `Tenant` with the enumeration `TenantRole` (see
-[tenants](doc:factory/tenants)), `Project` (name, tenant, group ID, artifact ID, engine version,
-its git connection and its repository there with `branchProtected`, its CI job, the workspace as
-a composition), `GitConnection` (see [git connections](doc:factory/git-hosting#git-connections)),
-`Workspace` (workspace ID, status, host port, preview URL - the path of the running application
-below the preview route -, context path, initial root password, the image its container was
-created from, the output of the last operation as `log`, its agent conversations),
-`AgentConversation` (see [the agent in the workspace](#the-agent-in-the-workspace)) and the
+The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
+version, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
+preview URL, initial root password, the image its container was created from, the output of the
+last operation as `log`) and the
 enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Application stopped*,
 *Stopping*, *Stopped*, *Cleaning up*, *Updating*, *Error*, *Unknown*. *Application stopped*
 (`APP_STOPPED`) means: the container runs, its application does not - it was stopped or failed to
@@ -59,7 +45,7 @@ container.
 A new workspace gets a random initial password, which the container passes to the application in
 the environment variable `tl_initial_password` (`ApplicationWorkspaces.ENV_INITIAL_PASSWORD`); the
 application sets it for its account `root` when it creates its database. The detail view shows it
-below the link to the application. It is the password of a development workspace and is no longer valid once
+under the preview link. It is the password of a development workspace and is no longer valid once
 it is changed in the application.
 
 The output of the application itself - copied to the output of the main process of the container,
@@ -122,9 +108,8 @@ every other command in the container would end with it.
   (`HostConfig.withInit`) as PID 1: it reaps orphaned processes - the JVMs and tools of commands
   that ended before their children - and forwards the stop signal to the entry script.
 - **Supervisor.** Until the file `.tl-factory-built` exists in the source volume, the entry script
-  only waits. Then it runs `mvn -B` in the directory of the application with the port 8080 and the
-  [context path](#context-path-and-external-url) of the workspace, `TL_FACTORY_CONTEXT_PATH`, and
-  the environment of the container (`tl_initial_password` among it). The output goes both to the
+  only waits. Then it runs `mvn -B -Dtl.port=8080` in the directory of the application, with the
+  environment of the container (`tl_initial_password` among it). The output goes both to the
   output of the entry script - the container log, so `followLog` and the tab *Application log* show
   every run - and to the log of the current run, `$TL_WORKSPACE_APP_STATE/app.log`. Stopping the
   container (`SIGTERM`) stops the application gracefully and ends the script. The supervisor
@@ -144,7 +129,7 @@ every other command in the container would end with it.
   `stop`), the supervisor starts or stops the application within a second and publishes its
   state (`unbuilt`, `starting`, `running`, `stopping`, `stopped`, `failed`), the number of runs,
   the process ID and the exit code of the last run. `start` and `restart` wait until the
-  application answers at `http://localhost:8080<context path>/` (`TL_WORKSPACE_APP_TIMEOUT`,
+  application answers at `http://localhost:8080/<artifactId>/` (`TL_WORKSPACE_APP_TIMEOUT`,
   default 300 seconds) and print `url:`, `log:` and `login: root / <initial password>`; a run that
   fails meanwhile fails the command with the end of its log. `stop` leaves the container running.
   `status` prints the state and exits 0 if the application answers, 4 if it failed, 3 otherwise
@@ -159,7 +144,7 @@ every other command in the container would end with it.
 In the control application:
 
 - **Waiting for the application** (`ApplicationWorkspaces.awaitApplication`, after creating,
-  starting or updating a workspace) asks `tl-workspace-app status` whenever the application does
+  starting or updating a workspace) asks `tl-workspace-app status` whenever the preview URL does
   not answer yet. If the application failed, the wait ends at once with an
   `ApplicationFailedException`, after writing the end of the application log to the output of the
   operation; the workspace becomes *Application stopped*.
@@ -175,119 +160,8 @@ In the control application:
 - **After a restart** of the control application, the reconciliation asks every running container
   the same way.
 
-A container on an image without `tl-workspace-app` tells no application state; its application
-counts as running while the container runs.
-
-### Context path and external URL
-
-The application of a workspace answers under a context path of its own, which may have several
-segments: by default `<control context>/preview/<workspace>/<artifactId>`, the path of the
-workspace below the [preview route](#the-preview-route) of the control application, e.g.
-`/tl-factory-app/preview/my-app-1a2b3c4d/my-app`. The pattern is the property `context-path` of the
-`applications` of `WorkspaceService` (`tl_factory_context_path`); `{context}` stands for the
-context path of the control application (`%APP_CONTEXT%`, empty at the root), `{workspace}` for
-the identifier of the workspace, `{artifact}` for the artifact of the application
-(`ApplicationWorkspaces.contextPath`). Every segment consists of letters, digits, `.`, `_`, `~`
-and `-`; no segment may be `view` or `servlet`, where the client of a TopLogic application finds
-its routes, and the first one not `admin`, where the development server stops a running instance.
-The artifact of a project is checked for these names; the identifier of a workspace is never one
-of them, it ends with `-` and eight hex digits.
-
-- **Stored per workspace.** A workspace records the context path its container is created with
-  (`contextPath`, `FactoryModel.WORKSPACE_CONTEXT_PATH`); creating and updating a workspace takes
-  the one of the configured pattern. A workspace without recorded context path has a container
-  created before the context path was recorded, which serves the application under
-  `/<artifactId>`.
-- **Opening the application.** A user opens the application of a running workspace by the link
-  *Application* in the details of the project (*Projects*, select the project, tab *Details*); the
-  column *Preview* of the list shows the same path. The link is the path-absolute URL
-  `<context path>/` (`ApplicationWorkspaces.previewUrl`, stored as `previewUrl` of the workspace),
-  which the browser resolves against the origin of the control application and which reaches the
-  application through the [preview route](#the-preview-route) - no host name or port is
-  configured for it. A workspace whose context path is not below the route of its workspace - a
-  container without recorded context path, or one created with another pattern - has no link. Its
-  details show the warning *Application
-  not reachable*, and *Update workspace* is offered: it creates the container anew with the
-  context path of the configured pattern (`ProjectWorkspaces.isContextPathOutdated`,
-  `factoryContextPathOutdated`).
-- **Talking to the container.** Where the control application itself requests the application -
-  waiting for it after a start -, it uses the published port directly:
-  `http://<published address>:<host port><context path>/` (`ApplicationWorkspaces.applicationUrl`),
-  with the address the [preview route](#the-preview-route) forwards to as well.
-- **In the container.** The container gets the context path in `TL_FACTORY_CONTEXT_PATH`
-  (`ApplicationWorkspaces.ENV_CONTEXT_PATH`); the supervisor starts the application with it, and
-  `tl-workspace-app` probes and prints the URL with it. The supervisor passes port and context
-  path as the arguments of the launch, `-Dexec.args=-port <port> -contextPath <path>`, which
-  replace the arguments the parent POM configures for `exec:java`: an application built on a
-  TopLogic version whose `tl-parent-app` has no property `tl.contextPath` is started under the
-  context path as well.
-- **External URL.** `application-origin` (`tl_factory_application_origin`) is the origin under
-  which a browser reaches the applications, e.g. `https://factory.example.com`; the containers get
-  it as `tl_host` (`ApplicationWorkspaces.ENV_HOST`), the external URL of a TopLogic application
-  (`%HOST%`). Empty (the default), `tl_host` is not set and an application takes
-  `http://localhost:8080`, the address in its container. The development server of an application
-  requests `<tl_host>/admin/stop` on every start to stop an instance running before; the origin
-  must answer that request with another status than 200, e.g. 404: a 200 with the body `OK`
-  stops the server answering there, a 200 with another body keeps the application from starting.
-
-### The preview route
-
-A browser reaches the application of a workspace through the control application:
-`<control origin><control context>/preview/<workspace>/<artifactId>/...` (`PreviewServlet`,
-mapped to `/preview/*` in the `web-fragment.xml` of `tl-factory`) is a reverse proxy to the
-published port of the workspace. The path is forwarded unchanged - no URL of a page, redirect or
-cookie is rewritten -, which is why the application serves exactly the browser-visible path,
-including the context path of the control application.
-
-- **What is forwarded.** The first segment below `/preview` names the workspace. Only a path that,
-  as sent and decoded, is the stored context path of that workspace or below it, without `.` or
-  `..` segments (also with path parameters such as `..;`) and without backslash, is forwarded
-  (`PreviewRoute.target`); everything else is answered with 404 and reaches no container, so
-  neither `/admin/stop` of the development server nor another path of the workspace or of another
-  workspace can be requested through the route. A workspace whose stored context path is not below
-  `/preview/<its identifier>` of the current control context - one created with another pattern or
-  before the context path was recorded - is reached only after an update.
-- **Access check.** The client is the user the `SessionService` registered for the HTTP session at
-  the login to the control application; the request passes only if this user may read the project
-  of the workspace (`StoredPreviewWorkspaces`, `ModelAccessRights` with the user's rights): the
-  members of the tenant and the operators. Without a logged-in session the answer is 403 ("Log in
-  to the control application") for every workspace, known or not, so that the route does not tell
-  which workspaces exist; for another user 403, for an unknown workspace 404, for a
-  workspace that is not `RUNNING` or `STARTING` or has no published port 503, and 503 as well if
-  the application does not accept the connection.
-- **Target.** `http://<address>:<host port>` with the stored host port of the workspace; the address
-  is the one the ports are published on (`WorkspaceProvider.publishedAddress()`): `host-ip` of the
-  Docker provider (`tl_factory_host_ip`), the loopback address if it is empty or a wildcard. The
-  published ports stay bound to that address; the route is what makes a workspace reachable from
-  other hosts. The context path contains the identifier of the workspace, so a stale host port
-  that now belongs to another workspace answers 404.
-- **Headers and streams.** Method, body and all headers except the hop-by-hop headers pass; the
-  application gets `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host`, and the `Host`
-  of its own address. Redirects are passed back, not followed: TopLogic (Jetty) answers with a
-  path-absolute `Location`, which stays below the origin of the control application. The answer
-  is streamed back and flushed piece by piece, so Server-Sent Events of the React UI arrive at
-  once (the heartbeat of the stream keeps the connection busy); its headers replace the ones the
-  filters of the control application set, e.g. `X-Frame-Options`. Websocket upgrades are not
-  forwarded; the TopLogic UI does not use websockets. The forwarding uses the HTTP client of the
-  JDK (`ProxyForwarding`), not a Jetty proxy servlet: the development server hides the Jetty
-  classes from the web application.
-- **No thread per stream.** The route answers asynchronously (`ServletProxyExchange.startAsync`,
-  servlet `async-supported`): the request goes out with `HttpClient.sendAsync`, the body comes
-  back as a publisher and is written with non-blocking output, one piece requested after the
-  client took the one before. No thread of the control application waits for the application or
-  for the client, so open preview tabs do not use up its thread pool. A client that goes away
-  cancels the body, which closes the connection to the container. The routes of the workspace
-  proxy (LLM, git) forward the same way.
-- **Cookies.** The control application and the application both use the session cookie
-  `JSESSIONID`, with the paths `<control context>` and `<context path of the workspace>`, so the
-  browser sends both with every request of the route. Jetty takes the first of several session
-  cookies that names a valid session of its own, so each server finds its session. The route
-  removes the session cookie of the control application - the one whose value is the session of the
-  request - from what it forwards, so the application of the workspace, code of the tenant, never
-  sees it (`PreviewRoute.forwardedCookies`). A cookie the application sets passes only if it has no
-  `Domain` and its `Path` is absent or below its context path (`PreviewRoute.isConfinedCookie`), so
-  it can neither replace the session cookie of the control application nor set cookies of other
-  workspaces.
+A container on an image without `tl-workspace-app` tells no application state; it is treated as
+before (running container = running application).
 
 ### Pinned versions
 
@@ -353,10 +227,7 @@ The update is an operation like the others, in state *Updating* with its output 
   on the existing named volumes. Sources, Maven repository and database stay, so do the
   conversations of the agent and the initial password of the workspace. A workspace whose container is lost but whose volumes exist gets a
   container again this way.
-- The new container serves the application under the context path of the configured pattern,
-  which the workspace records, see [context path](#context-path-and-external-url).
-- If the proxy is switched on, the new container gets the current URLs of its routes, e.g.
-  `ANTHROPIC_BASE_URL`.
+- If the proxy is switched on, the new container gets its current URL in `ANTHROPIC_BASE_URL`.
 - A workspace that was running is started again and waited for like by *Start*; otherwise it ends
   in *Created*. A failure ends in *Error* with the reason in the log; the update can be repeated.
 
@@ -438,6 +309,7 @@ then.
 |---|---|---|
 | `tl_factory_docker_host` | `unix:///var/run/docker.sock` | URI of the Docker daemon, `unix://` or `tcp://`. |
 | `tl_factory_docker_network` | `tl-factory` | Network all workspace containers join; created if missing. |
+| `tl_factory_public_host` | `localhost` | Host name under which a browser reaches the published ports; the preview URL is built from it. |
 | `tl_factory_host_port_min` / `tl_factory_host_port_max` | `20000` / `20999` | Range of host ports the container port 8080 is published on. |
 | `tl_factory_host_ip` | `127.0.0.1` | Address of the daemon host the ports are published on; empty for all addresses, see [hardening](#hardening-of-the-workspace-containers). |
 | `tl_factory_docker_isolate` | `true` | Whether the workspace containers are kept from reaching each other on the workspace network; applies when the network is created. |
@@ -449,18 +321,14 @@ then.
 | `tl_factory_repository_url` | TopLogic Nexus | Maven repository the TopLogic releases are taken from. |
 | `tl_factory_start_timeout` | `600` | Seconds a started application has to answer. |
 | `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
-| `tl_factory_context_path` | `{context}/preview/{workspace}/{artifact}` | Pattern of the context path the application of a workspace is served under, see [context path](#context-path-and-external-url). |
-| `tl_factory_application_origin` | *(empty)* | Origin under which a browser reaches the applications of the workspaces, given to them as `tl_host`; empty if not known. |
 | `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
-| `tl_factory_proxy_url` | *(empty)* | URL of the root of the workspace proxy as the workspace containers reach it, without the path of a route, e.g. `http://host.docker.internal:8091`; empty switches the proxy off, see [the workspace proxy](#the-workspace-proxy). |
-| `tl_factory_proxy_address` | `127.0.0.1` | Address the proxy listens on with its own port, see [the port of the proxy](#the-port-of-the-proxy). |
-| `tl_factory_proxy_port` | `8091` | Port of the proxy, apart from the port of the control application; `0` for none. |
-| `tl_factory_proxy_servlet` | `false` | Whether the proxy also answers in the web application, at the paths of `WorkspaceProxyServlet` (`/llm-proxy/`). |
-| `tl_factory_proxy_rate_limit` | `120` | Requests per minute a token may make; `0` for no limit. |
-| `tl_factory_proxy_allowed_sources` | *(empty)* | Comma separated client addresses the workspace proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [accepted sources](#accepted-sources). |
-| `tl_factory_git_protected_files` | `deploy/**` | Comma separated glob patterns of the files of a project repository no push to its default branch may change; the pipeline file is added once the CI of the project is set up, see [git hosting](doc:factory/git-hosting#protected-files-and-commit-identity). |
-| `tl_factory_git_user_name` / `tl_factory_git_user_email` | `TopLogic Factory` / `tl-factory@localhost` | Author and committer of the commits made in the workspaces, by the agent and the control application; empty for none. |
-| `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the LLM route of the proxy uses. |
+| `tl_factory_llm_proxy_url` | *(empty)* | URL of the LLM proxy as the workspace containers reach it, e.g. `http://host.docker.internal:8091/llm-proxy`; empty switches the proxy off, see [LLM access](#llm-access). |
+| `tl_factory_llm_proxy_address` | `127.0.0.1` | Address the proxy listens on with its own port, see [the port of the proxy](#the-port-of-the-proxy). |
+| `tl_factory_llm_proxy_port` | `8091` | Port of the proxy, apart from the port of the control application; `0` for none. |
+| `tl_factory_llm_proxy_servlet` | `false` | Whether the proxy also answers at `/llm-proxy/` of the web application. |
+| `tl_factory_llm_rate_limit` | `120` | Requests per minute a token may make; `0` for no limit. |
+| `tl_factory_llm_allowed_sources` | *(empty)* | Comma separated client addresses the LLM proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [LLM access](#llm-access). |
+| `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the proxy uses. |
 | `tl_factory_agent_model` | *(empty)* | Model the coding agent works with, e.g. `claude-sonnet-4-6` or `sonnet`; empty for the default of Claude Code. |
 | `tl_factory_agent_thinking_display` | `summarized` | How the thinking of the agent appears in its output: `summarized` for a summary the chat shows, `omitted` for none, empty for the default of Claude Code (none in print mode). |
 | `tl_factory_agent_extra_args` | *(empty)* | Comma separated further arguments of the command line of the agent, e.g. `--max-turns,50`. |
@@ -472,16 +340,6 @@ then.
 Further properties of the Docker provider (`tls-cert-path`, `connect-timeout`, `label-namespace`,
 `name-prefix`, `stop-timeout`, `terminate-timeout`) are set in the configuration of `WorkspaceService` of the
 application.
-
-`tl-factory-app` depends on the modules `tl-factory-gitea` and `tl-factory-jenkins`: `tl_factory_gitea_url`
-and `tl_factory_gitea_owner` switch on its built-in [git connection](doc:factory/git-hosting#configuration)
-to a Gitea, `tl_factory_jenkins_*` [CI](doc:factory/ci#configuration); without their URLs, both are
-off. The access tokens the tenants enter for their own git connections are kept in the writable
-secret store: the deployment `deploy/local` of `tl-factory-app` appends a `database-store` to the
-development secret store (`tl-factory-devel-secrets.config.xml`, key `tl_secret_store_key`, see
-[secret stores](doc:credentials/secret-stores#databasesecretstore)); a production installation
-configures its secret store with a writable store, otherwise its tenants cannot create git
-connections.
 
 ### Hardening of the workspace containers
 
@@ -509,137 +367,92 @@ provider creates every workspace container like this:
   unfinished application with its initial password is not reachable from the whole network. A
   rootful Docker daemon publishes ports by DNAT rules that come before the firewall rules of the
   host - UFW does not block them -, so the address is the restriction that holds. A server sets
-  the address explicitly, e.g. the internal address a reverse proxy forwards to. The
-  [preview route](#the-preview-route) of the control application makes the previews reachable
-  through its login, with the published ports staying on that address.
+  the address explicitly, e.g. the internal address a reverse proxy forwards to; making the
+  previews reachable only through the login of the control application is a task of that reverse
+  proxy.
 - **No traffic between workspaces** (`isolate-workspaces`, `tl_factory_docker_isolate`): the
   workspace network is created with `com.docker.network.bridge.enable_icc=false`
   (`DockerWorkspaceProvider.OPTION_ENABLE_ICC`). A workspace reaches the daemon host through the
-  gateway of its network - the control application and its workspace proxy in host mode, the outside -,
+  gateway of its network - the control application and its LLM proxy in host mode, the outside -,
   but not the application or database of another workspace. Together with the published port on
   the loopback address, it does not reach that application through the host either. The option
   is fixed when a network is created: the provider does not change an existing network with
-  another setting, which other containers may use, but logs a warning once. Such a network - e.g.
-  a `tl-factory` network created with `enable_icc` on - is removed while no container is attached (`docker network rm tl-factory`, after stopping the workspaces or
+  another setting, which other containers may use, but logs a warning once. Such a network -
+  e.g. `tl-factory` of a control application from before this setting - is removed while no
+  container is attached (`docker network rm tl-factory`, after stopping the workspaces or
   disconnecting them); the next workspace that is created or updated creates it anew.
 
-## The workspace proxy
+## LLM access
 
-A workspace uses services that need a credential - the Anthropic Messages API for Claude Code -,
-but no credential ever enters a workspace container: whatever runs in the container - the agent,
-the generated application, a dependency of it - could read it. The container talks to these
-services through the workspace proxy of the control application (`WorkspaceProxyService`)
-instead, which adds the credentials of the control application.
+Claude Code in a workspace talks to the Anthropic Messages API, but no API key ever enters a
+workspace container: whatever runs in the container - the agent, the generated application, a
+dependency of it - could read it. The container talks to the API through the control application
+instead.
 
-- **Routes.** Each service is a route of the proxy (`ProxyRoute`) below a path of its own, listed
-  in `routes` of `WorkspaceProxyService`; `tl-factory` configures the [LLM route](#llm-access)
-  at `/llm-proxy`, the [git route](doc:factory/git-hosting#the-git-route) at `/git` and the
-  [CI route](doc:factory/ci#the-ci-route) at `/ci`. A route is a polymorphic configuration
-  (`<route class="..." path="..."/>`, keyed by its `path`, which starts with a slash and has none
-  at its end).
-- **The URL.** `proxy-url` (`tl_factory_proxy_url`) is the root of the proxy as the workspace
-  containers reach it, without the path of a route, e.g. `http://host.docker.internal:8091`; a
-  route is reached at that URL followed by its path. Empty switches the proxy off: workspaces get
-  no URL, no token is issued, and every request is answered with 404. If it is switched on, every
-  workspace container gets what the routes need to find the proxy (`ProxyRoute.containerEnv`,
-  `WorkspaceProxyService.containerEnv()`), e.g. the URL of the LLM route in `ANTHROPIC_BASE_URL`.
-  It is no secret and the only thing about the proxy the container gets.
+- **The URL.** If the proxy is switched on, every workspace container gets the URL of the proxy,
+  `tl_factory_llm_proxy_url`, in the environment variable `ANTHROPIC_BASE_URL`. It is no secret
+  and the only thing about the proxy the container gets.
 - **The token.** The container gets no token. A token belongs to one agent run: the control
-  application issues it when it starts the run (`WorkspaceProxyService.issue(workspaceId,
-  lifetime)`) and passes it only to the process of the run, in the environment of its command
-  (`ProxyTokens.processEnv(token)`, put on the `ExecCommand` by the harness, never on the
-  container); neither the application of the workspace nor `docker inspect` sees it. The
-  environment holds the token in `TL_FACTORY_PROXY_TOKEN` (`ProxyTokens.ENV_PROXY_TOKEN`), what
-  the routes add (`ProxyRoute.processEnv`, e.g. `ANTHROPIC_AUTH_TOKEN`), and the git configuration
-  of all routes (`ProxyRoute.gitConfig`, e.g. the credential helper of the git route) as one set of
-  `GIT_CONFIG_COUNT` / `GIT_CONFIG_KEY_<n>` / `GIT_CONFIG_VALUE_<n>` (`GitEnvironment`), so that
-  routes cannot overwrite each other's entries. A command of the control application in a
-  workspace gets a token of its own the same way: `issueProcessToken(workspaceId, lifetime)`
-  returns token and environment as `ProcessToken`, whose `close()` revokes the token. A token is valid for every route of the proxy. It is `tlwst_` followed by a
-  random secret of about 256 bits (`SecretTokens` of `tl-ai-core`). It is valid until the run
-  ends and the token is revoked (`revoke`), until its lifetime ends - at most `max-token-lifetime`
-  of `WorkspaceProxyService`, four hours by default; a longer lifetime asked for is cut to it -, or
-  until its workspace is removed (*Clean up* revokes all its tokens, `revokeAll`, and a token of a
+  application issues it when it starts the run (`LLMProxyService.issue(workspaceId, lifetime)`)
+  and passes it only to the process of the run, in `ANTHROPIC_AUTH_TOKEN` of its command
+  (`ExecCommand`); neither the application of the workspace nor `docker inspect` sees it. Claude
+  Code sends it as `Authorization: Bearer <token>`. A token is `tlwst_` followed by a random
+  secret of about 256 bits (`SecretTokens` of `tl-ai-core`). It is valid until the run ends and
+  the token is revoked (`revoke`), until its lifetime ends - at most `max-token-lifetime` of
+  `LLMProxyService`, four hours by default; a longer lifetime asked for is cut to it -, or until
+  its workspace is removed (*Clean up* revokes all its tokens, `revokeAll`, and a token of a
   workspace that no longer exists is refused anyway). Tokens are kept in memory only, by their
   SHA-256: nothing is stored in the database, and a restart of the control application
   invalidates all tokens - together with the runs it started, which end with it.
-- **The checks.** `WorkspaceProxyHandler` chooses the route whose path is the longest prefix of the
-  path of the request (followed by a slash or its end); a request reaching no route is answered
-  with 404. Before the route sees the request, the checks common to all routes are made: a request
-  from an address that is not accepted (see [accepted sources](#accepted-sources)) is refused with
-  403, a missing, unknown, revoked or expired token with 401, a token used from another address
-  than its first request with 403, and a token over its rate limit with 429 (see [token
-  checks](#token-checks)). The token is read from `Authorization: Bearer <token>` or as the
-  password of `Authorization: Basic` - the user name is ignored -, so that clients that only speak
-  basic authentication can present it. The route answers a refusal in the format of its protocol
-  (`ProxyRoute.sendError`) and gets the admitted request with the workspace of its token.
-- **Forwarding.** `ProxyForwarding` holds what the routes share: the request headers that are
-  never forwarded (`Authorization`, cookies, `Host`, the length and the hop-by-hop headers), the
-  request body streamed to the upstream as it arrives - with the length of the client, or in
-  chunks without one -, never held as a whole, and the answer passed back with status and headers,
-  its body flushed as it arrives.
+- **The proxy.** `LLMProxyHandler` at `/llm-proxy/` forwards `POST` of `/v1/messages` and
+  `/v1/messages/count_tokens` (with their query string) to the base URL of the configured
+  provider; every other path and method is answered with 404, a request from an address that is
+  not accepted (see below) with 403, a missing, unknown, revoked or expired token with 401, a token
+  used from another address than its first request with 403, and a token over its rate limit with
+  429 (see [token checks](#token-checks)). It drops the credentials (`Authorization`, `x-api-key`), cookies, `Host`,
+  `Accept-Encoding` and the hop-by-hop headers of the request, sets `x-api-key` to the API key of
+  the provider and `anthropic-version` to its version, unless the client sent one; a client's
+  `anthropic-beta` is kept. Status, headers and body of the answer are passed back, the body
+  flushed as it arrives, so that a streamed answer (server-sent events) reaches the agent while it
+  is produced. The API key appears neither in a log nor in an answer.
+- **The key.** It is the `api-key` of the Anthropic provider named by `tl_factory_llm_provider` in
+  the `LLMProviderService` of `tl-ai-core`. `tl-factory-app` configures a provider `anthropic`
+  without models whose key is read from the environment variable `tl_anthropic_api_key`.
 
 The workspace containers must reach the URL of the proxy, see [the port of the
 proxy](#the-port-of-the-proxy) and *Reaching the control application* in the operation modes
 below. The proxy answers any valid token, whatever state its workspace is in.
 
-### LLM access
-
-Claude Code in a workspace talks to the Anthropic Messages API through the route `LLMRoute` of
-the workspace proxy, at `/llm-proxy` (its `path`).
-
-- **Environment.** A workspace container gets the URL of the route in `ANTHROPIC_BASE_URL`, e.g.
-  `http://host.docker.internal:8091/llm-proxy`; an agent process its token in
-  `ANTHROPIC_AUTH_TOKEN`, which Claude Code sends as `Authorization: Bearer <token>`.
-- **The route.** It forwards `POST` of `/v1/messages` and `/v1/messages/count_tokens` (with their
-  query string) to the base URL of the configured provider; every other path and method is
-  answered with 404. Refusals of the proxy are answered as errors of the Anthropic API
-  (`authentication_error`, `permission_error`, `rate_limit_error`). It drops the credentials
-  (`Authorization`, `x-api-key`), cookies, `Host`, `Accept-Encoding` and the hop-by-hop headers of
-  the request, sets `x-api-key` to the API key of the provider and `anthropic-version` to its
-  version, unless the client sent one; a client's `anthropic-beta` is kept. Status, headers and
-  body of the answer are passed back, the body flushed as it arrives, so that a streamed answer
-  (server-sent events) reaches the agent while it is produced. The API key appears neither in a
-  log nor in an answer.
-- **The key.** It is the `api-key` of the Anthropic provider named by `provider` of the route
-  (`tl_factory_llm_provider`) in the `LLMProviderService` of `tl-ai-core`. `tl-factory-app`
-  configures a provider `anthropic` without models whose key is read from the environment
-  variable `tl_anthropic_api_key`.
-
 ### The port of the proxy
 
 The port of the control application is the one its users reach, from wherever they are; the
-proxy needs not be reachable there. `WorkspaceProxyService` therefore serves the proxy on a port
-of its own: `WorkspaceProxyListener`, an HTTP server of the JDK independent of the server the
-control application runs in, listens on `listen-address`:`listen-port`
-(`tl_factory_proxy_address`, default `127.0.0.1`, and `tl_factory_proxy_port`, default
-`8091`) and answers at the paths of the routes only. All requests go to one handler, which
-chooses the route, so that every other path is answered the same way. It is opened only while the
-proxy is switched on by its URL; port `0` opens none. A port that cannot be bound is logged as
-error, and the workspaces have no access to the routes then.
+proxy needs not be reachable there. `LLMProxyService` therefore serves the proxy on a port of its
+own: `LLMProxyListener`, an HTTP server of the JDK independent of the server the control
+application runs in, listens on `listen-address`:`listen-port` (`tl_factory_llm_proxy_address`,
+default `127.0.0.1`, and `tl_factory_llm_proxy_port`, default `8091`) and answers at `/llm-proxy/`
+only. It is opened only while the proxy is switched on by its URL; port `0` opens none. A port that
+cannot be bound is logged as error, and the workspaces have no LLM access then.
 
 The address depends on how the workspaces reach the control application:
 
-| Operation mode | `listen-address` | `tl_factory_proxy_url` |
+| Operation mode | `listen-address` | `tl_factory_llm_proxy_url` |
 |---|---|---|
-| Control application on the host of the daemon | the address `host-gateway` stands for, the gateway of Docker's default bridge (`docker network inspect bridge`, e.g. `172.17.0.1`): the workspaces reach it, other hosts do not | `http://host.docker.internal:8091` with the extra host `host.docker.internal:host-gateway` |
-| Control application in a container of the daemon | `0.0.0.0` in its container, the port not published; see [isolation](#hardening-of-the-workspace-containers) for how the workspaces reach the container | `http://<address of the container>:8091` |
-| [Two daemons](doc:factory/docker-server#how-control-application-and-workspaces-reach-each-other) | `0.0.0.0` in its container, the port published on an internal address of the server only, never on all addresses | `http://<internal address of the server>:8091` |
+| Control application on the host of the daemon | the address `host-gateway` stands for, the gateway of Docker's default bridge (`docker network inspect bridge`, e.g. `172.17.0.1`): the workspaces reach it, other hosts do not | `http://host.docker.internal:8091/llm-proxy` with the extra host `host.docker.internal:host-gateway` |
+| Control application in a container of the daemon | `0.0.0.0` in its container, the port not published; see [isolation](#hardening-of-the-workspace-containers) for how the workspaces reach the container | `http://<address of the container>:8091/llm-proxy` |
+| [Two daemons](doc:factory/docker-server#how-control-application-and-workspaces-reach-each-other) | `0.0.0.0` in its container, the port published on an internal address of the server only, never on all addresses | `http://<internal address of the server>:8091/llm-proxy` |
 | Behind a reverse proxy or tunnel on the same host | `127.0.0.1`, the default | the URL of the reverse proxy |
 
-The servlet `WorkspaceProxyServlet` of the web application is mapped to the paths of the routes
-(`/llm-proxy/*`, `/git/*` and `/ci/*` in the `web-fragment.xml` of `tl-factory`; a route served there
-needs a mapping of its path) and answers only if `servlet-enabled` (`tl_factory_proxy_servlet`) is set;
-otherwise it answers with 404. `proxy-url` is then the URL of the web application, e.g.
-`http://host.docker.internal:8080/tl-factory-app`. It is the alternative where no second port can
-be opened: then a reverse proxy in front of the control application must refuse the paths of the
-routes to clients from outside (e.g. `location /tl-factory-app/llm-proxy/ { deny all; }` in nginx)
-and pass them only on the address the workspaces use.
+The servlet `LLMProxyServlet` at `/llm-proxy/*` of the web application answers only if
+`servlet-enabled` (`tl_factory_llm_proxy_servlet`) is set; otherwise it answers with 404. It is the
+alternative where no second port can be opened: then a reverse proxy in front of the control
+application must refuse the path `/llm-proxy/` to clients from outside (e.g. `location
+/tl-factory-app/llm-proxy/ { deny all; }` in nginx) and pass it only on the address the workspaces
+use.
 
 **TLS.** The token travels in the `Authorization` header. Whenever the proxy is not reached on the
 host itself or over a network of the daemon - a VM, a remote daemon, another host, the cloud -, it
 must be reached over TLS: a reverse proxy terminating TLS in front of the port of the proxy, and
-`tl_factory_proxy_url` with `https://`. The workspace must trust its certificate: a
+`tl_factory_llm_proxy_url` with `https://`. The workspace must trust its certificate: a
 certificate of a public CA needs nothing, one of an own CA is added to the image or given to Claude
 Code in `NODE_EXTRA_CA_CERTS`.
 
@@ -647,7 +460,7 @@ Code in `NODE_EXTRA_CA_CERTS`.
 
 Beside its validity, every request is checked against its token (`TokenGrants`):
 
-- **Rate limit.** A token may make `rate-limit` requests per minute (`tl_factory_proxy_rate_limit`,
+- **Rate limit.** A token may make `rate-limit` requests per minute (`tl_factory_llm_rate_limit`,
   default 120, `0` for none), in bursts up to that number; its allowance refills continuously. A
   request beyond is answered with 429, `rate_limit_error` and the seconds to wait in `Retry-After`,
   which Claude Code waits for before it repeats the request. 120 leave an agent working at full
@@ -665,7 +478,7 @@ Beside its validity, every request is checked against its token (`TokenGrants`):
 
 ### Accepted sources
 
-`allowed-sources` of `WorkspaceProxyService` (`tl_factory_proxy_allowed_sources`) restricts the clients
+`allowed-sources` of `LLMProxyService` (`tl_factory_llm_allowed_sources`) restricts the clients
 of the proxy by their address, in addition to the token. An entry is a range in CIDR notation,
 IPv4 or IPv6, a single address, or `workspace-network`: the ranges of the network the workspace
 containers are attached to, as the container platform reports them
@@ -707,7 +520,7 @@ chat session of the current user about it and sends the task as its first messag
 into view, so it shows the run while it is written. The command is offered while
 `factoryAgentUnavailable(workspace)` names no reason: the container of the workspace runs
 (*Running* or *Application stopped* - the agent is needed most when the application does not
-start) on the current image, the agent service runs and the workspace proxy is switched on. The tab *Agent* (`factory/workspace-agent.view.xml`)
+start) on the current image, the agent service runs and the LLM proxy is switched on. The tab *Agent* (`factory/workspace-agent.view.xml`)
 lists the conversations of the workspace, newest first, beside the chat of the selected one; its
 subject is the conversation, so a message typed there continues it, also a conversation another
 user started, whose first message then creates that user's chat session about it.
@@ -722,9 +535,9 @@ the same for every harness. One process serves one conversation:
   [<extra args>]`, as the user `tl` in
   the directory of the application (`/workspace/<artifact ID>`). The workspace must be running;
   otherwise the message is refused with a sentence saying so.
-- **Token per process.** The process gets a token of the workspace proxy of its own, issued for
-  `token-lifetime` and passed only in the environment of its command (`AgentLaunch.env()`, e.g.
-  `ANTHROPIC_AUTH_TOKEN`); it is revoked when the process ends. A process whose token has less than half of its lifetime left is replaced before
+- **Token per process.** The process gets a token of the LLM proxy of its own, issued for
+  `token-lifetime` and passed only in `ANTHROPIC_AUTH_TOKEN` of its command; it is revoked when the
+  process ends. A process whose token has less than half of its lifetime left is replaced before
   the next message.
 - It is kept between the messages and stopped after `idle-timeout` without a message (its input is
   closed, after `stop-timeout` it is terminated).
@@ -787,7 +600,7 @@ ignored. A tool call still open when the run ends gets a `ToolCallFailed`.
 The test fixtures of the mapping are recorded from the pinned Claude Code version by
 `TestClaudeCodeIntegration` (`-Dtl.factory.integration=true`, the API key in
 `tl_anthropic_api_key`, `-Dtl.factory.record=<fixtures directory>`), which runs Claude Code in a
-workspace container against a `WorkspaceProxyServlet` with an `LLMRoute` of the test and a conversation through
+workspace container against an `LLMProxyServlet` of the test and a conversation through
 `WorkspaceAgent`. A new Claude Code version is checked by recording the fixtures anew and running
 `TestClaudeCodeProtocol` and `TestWorkspaceAgent` on them.
 
@@ -797,15 +610,15 @@ workspace container against a `WorkspaceProxyServlet` with an `LLMRoute` of the 
 
 The simplest mode, used during development: the control application runs as a process on a host
 with a Docker daemon and talks to it through the default socket `unix:///var/run/docker.sock`. The
-user running it must be allowed to use the socket. The browsers open the applications of the
-workspaces through the [preview route](#the-preview-route) of the control application, also from
-other machines; the published ports stay on the host.
+user running it must be allowed to use the socket. Preview links point to
+`http://localhost:<host port>/<artifact ID>/`; for access from other machines,
+`tl_factory_public_host` names the host as the browsers see it.
 
 A workspace container reaches the control application through the gateway of the daemon: with
 `tl_factory_docker_extra_hosts=host.docker.internal:host-gateway`, new containers resolve
 `host.docker.internal` to the address of the host on Docker's default bridge (`docker0`, e.g.
-`172.17.0.1`), and reach the workspace proxy under `http://host.docker.internal:8091` when it
-listens on that address (`tl_factory_proxy_address=172.17.0.1`, see [the port of the
+`172.17.0.1`), and reach the LLM proxy under `http://host.docker.internal:8091/llm-proxy` when it
+listens on that address (`tl_factory_llm_proxy_address=172.17.0.1`, see [the port of the
 proxy](#the-port-of-the-proxy)). A firewall of the host must let the workspace network through to
 that port. Containers created before the setting keep their host names until they are created
 anew. The published ports of the workspaces are bound to `127.0.0.1`, where the control
@@ -830,22 +643,24 @@ In both cases:
 - **Only named volumes.** The provider creates named volumes for the workspaces and the release
   repository and never bind-mounts a path. A path of the control application's container would mean
   nothing to the daemon anyway, which resolves bind mounts on its own host.
-- **The published address.** The control application waits for a started application and
-  forwards the [preview route](#the-preview-route) to it at the address the ports are published on
-  (`tl_factory_host_ip`, the loopback address if it is empty or a wildcard). In a container, the
-  loopback address is the container itself: publish the ports on an address of the daemon host
-  that the control application's container reaches. The browsers reach the applications through
-  the control application only.
+- **The workspace network.** The control application waits for a started application by requesting
+  its preview URL. In a container, `localhost` is the container itself: connect the control
+  application's container to the workspace network (`tl_factory_docker_network`) or give
+  `tl_factory_public_host` a name that resolves to the daemon host from inside the container as
+  well as for the browsers.
+- **Public host.** `tl_factory_public_host` is the name browsers use to reach the published ports
+  of the daemon host.
 - **Reaching the control application.** A workspace container reaches the control application by
-  the name of its container on the workspace network, e.g. `http://tl-factory-app:8091`,
+  the name of its container on the workspace network, e.g. `http://tl-factory-app:8091/llm-proxy`,
   once the control application's container is connected to that network (see above). No extra
   host is needed then; `host-gateway` names the daemon host, which reaches the control application
   only through a port it publishes there. On the [isolated](#hardening-of-the-workspace-containers)
   workspace network, however, no container reaches another - the control application's container
   neither reaches the workspaces nor is reached by them. Either switch the isolation off
   (`tl_factory_docker_isolate=false`) and accept that workspaces reach each other, or keep the
-  control application off the workspace network: it reaches the previews through the published
-  ports (`tl_factory_host_ip` an address its container reaches), and the workspaces reach its proxy through a port it publishes on the gateway address
+  control application off the workspace network: it reaches the previews through
+  `tl_factory_public_host` and the published ports (`tl_factory_host_ip` an address its container
+  reaches), and the workspaces reach its proxy through a port it publishes on the gateway address
   of the default bridge, as `host.docker.internal:host-gateway`.
 - **Ownership by labels.** The provider marks everything it creates with labels in its
   `label-namespace` and lists, cleans up and removes only objects carrying them - never by name. The
@@ -864,114 +679,3 @@ browsers on Windows reach the control application and the previews through `loca
 forwards; keep the sources of the control application and its database inside the WSL2 file system
 for speed. The resource limits of the workspaces apply inside the WSL2 VM, whose own size is set in
 `.wslconfig`.
-
-## Local setup
-
-`tl-factory-app/devel` runs the services of a complete loop on one machine - a Gitea as [git
-hosting](doc:factory/git-hosting) and a Jenkins as [CI server](doc:factory/ci) - for the control
-application running on the host (see [control application on the
-host](#control-application-on-the-host)):
-
-| File | Content |
-|---|---|
-| `compose.yaml` | Gitea of the version `tl-factory-gitea` generates its client from (`gitea.version`), and the Jenkins of `tl-factory-jenkins` (target `devel` of its image context: the pinned release and plugins with Maven and the Maven settings of the workspace image), on the Docker network `tl-factory-devel`. Gitea is published at `127.0.0.1:3300`, Jenkins at `127.0.0.1:8380` (`TL_FACTORY_DEVEL_BIND_ADDRESS`, `TL_FACTORY_DEVEL_GITEA_PORT`, `TL_FACTORY_DEVEL_JENKINS_PORT`, see *URLs* below). |
-| `tl-factory-devel.sh` | Starts, stops and resets the setup. |
-
-```bash
-tl-factory-app/devel/tl-factory-devel.sh          # start; set up on the first start
-tl-factory-app/devel/tl-factory-devel.sh down     # stop, keep the data
-tl-factory-app/devel/tl-factory-devel.sh reset    # remove containers, data and generated credentials
-```
-
-The first start creates the Gitea administrator `factory-admin`, the organization `tl-factory`, an
-access token with the scopes of the control application (`write:organization`, `write:repository`,
-`read:user`) and a read token for Jenkins, and the Jenkins administrator `tl-factory` with an API
-token and the SCM credential `tl-factory-gitea` holding the read token. The built-in git connection
-of the control application creates the organization of each tenant (`tl-factory-<tenant>`) as
-`factory-admin` on its first repository. All credentials are generated and written to the secret
-folder of the developer (`tl_devel_secrets_dir`, default `~/.top-logic/secrets`, mode 600): the
-secrets `tl_factory_gitea_token` and `tl_factory_jenkins_token` of the control application, the key
-`tl_secret_store_key` of its database secret store (only if the folder has none; it is never
-replaced or removed, also not by `reset`, since the tokens the tenants entered are unreadable
-without it), the passwords
-and tokens of the setup in `tl_factory_devel_gitea.env` and `tl_factory_devel_jenkins.env` (the
-environment of the Jenkins container). The script prints the URLs and logins. A start of an
-existing setup keeps the credentials; one that no longer works, e.g. a revoked token, is
-generated anew. A secret file of the control application holding a value not generated by the
-setup is never overwritten: the script stops and asks to move it.
-
-**URLs.** Two variables of the script (and of `compose.yaml`) decide where the services are
-reached:
-
-| Variable | Default | Effect |
-|---|---|---|
-| `TL_FACTORY_DEVEL_PUBLIC_HOST` | `localhost` | The host name under which the browsers reach Gitea and Jenkins: the `ROOT_URL` of Gitea `http://<public host>:3300/` and the Jenkins URL `http://<public host>:8380/` (Gitea with `PUBLIC_URL_DETECTION=legacy`, so that it does not report the URLs below the host a request names). The services report their pages and clone URLs below them, and the control application shows these as the links of the projects. |
-| `TL_FACTORY_DEVEL_BIND_ADDRESS` | `127.0.0.1` | The address of the host the ports of Gitea and Jenkins are published on. |
-
-The control application on the host reaches the published ports at `localhost` if they are
-published on the loopback address or on all addresses (`0.0.0.0`), otherwise at the bind address;
-the script prints `tl_factory_gitea_url` and `tl_factory_jenkins_url` accordingly. Jenkins clones
-from the clone URLs of Gitea: in its container, a system git configuration rewrites them to the
-Gitea service on the network of the setup (`url.http://gitea:3000/.insteadOf
-http://<public host>:3300/`, and the same for `localhost`, the clone URL of jobs configured
-before). The workspaces never talk to Gitea or Jenkins; they reach both through the [workspace
-proxy](#the-workspace-proxy).
-
-For browsers on other machines, e.g. a host reached as `ai.bos.local` at `10.49.8.10`:
-
-```bash
-TL_FACTORY_DEVEL_PUBLIC_HOST=ai.bos.local TL_FACTORY_DEVEL_BIND_ADDRESS=10.49.8.10 \
-  tl-factory-app/devel/tl-factory-devel.sh
-```
-
-A start with changed variables recreates both containers and keeps their data; the control
-application, restarted with the printed environment, updates the links of the existing projects
-(see [the public URL of the hosting service](doc:factory/git-hosting#the-public-url-of-the-hosting-service)).
-The variables must be set again for every later start of the script.
-
-**Note:** Publishing beyond the loopback address exposes Gitea and Jenkins to the network, with the
-generated administrator logins. A rootful Docker daemon publishes ports with its own `iptables`
-rules, which bypass host firewalls such as UFW: a firewall rule does not restrict who reaches the
-ports. Bind to an address of a trusted network only.
-
-**The control application** runs on the host with this environment, which the script prints at
-its end (here with the default URLs); the secrets are read from the secret folder by the
-development secret store of `deploy/local`:
-
-```bash
-export tl_factory_gitea_url=http://localhost:3300/
-export tl_factory_jenkins_url=http://localhost:8380/
-export tl_factory_jenkins_scm_credentials=tl-factory-gitea
-export tl_factory_proxy_url=http://host.docker.internal:8091
-export tl_factory_proxy_address=172.17.0.1
-export tl_factory_docker_extra_hosts=host.docker.internal:host-gateway
-export tl_factory_proxy_allowed_sources=workspace-network
-```
-
-| Variable | Why |
-|---|---|
-| `tl_factory_gitea_url` | Switches the built-in git connection to the Gitea of the setup on; without it, projects have no repository. |
-| `tl_factory_jenkins_url`, `tl_factory_jenkins_scm_credentials` | Switch CI on, with the Jenkins credential holding the read token, with which the jobs clone the private repositories. |
-| `tl_factory_proxy_url` | Switches the [workspace proxy](#the-workspace-proxy) on. Without it, the agent has no model access and a workspace of a project with repository cannot be created (`ERROR_NO_GIT_ROUTE`): the workspaces reach Gitea only through the git route. |
-| `tl_factory_proxy_address` | The gateway of Docker's default bridge (`docker network inspect bridge`, the script asks it), where the workspaces reach the port of the proxy and other hosts do not. |
-| `tl_factory_docker_extra_hosts` | Lets the workspace containers resolve `host.docker.internal` of the proxy URL to that gateway. |
-| `tl_factory_proxy_allowed_sources` | Optional: accepts proxy requests from the workspace network only. |
-
-The other settings keep their defaults. `tl_factory_host_ip` stays `127.0.0.1`: the control
-application on the host forwards the [preview route](#the-preview-route) to the published ports
-there, and a browser, also on another machine, opens the applications through the control
-application. `tl_factory_proxy_port` is changed only if another process, e.g. a second control application,
-holds `8091`; set when the script runs, it is printed and put into `tl_factory_proxy_url`. The agent of a workspace needs
-an Anthropic API key in `tl_anthropic_api_key` in addition; creating projects and workspaces,
-their repositories and CI builds work without.
-
-**First steps.** Log in as `root` / `root1234` and create a tenant with its first administrator
-(*Tenants*, *Create tenant*, see [tenants](doc:factory/tenants)). Under *Projects*, *Create application*
-with that tenant and the git connection `gitea`: the workspace is built and its application pushed
-to a new repository in the organization of the tenant. Once the workspace is *Running*, its
-details show the link *Application*, which opens the application through the preview route below
-`/tl-factory-app/preview/`, and its initial password of `root`. *Set up CI* adds the pipeline and
-starts the first build on the Jenkins.
-
-`TestProjectCI` runs the
-creation of a new project, the set up of its CI and its first build against the setup, see [the tests](doc:factory/ci#the-tests).

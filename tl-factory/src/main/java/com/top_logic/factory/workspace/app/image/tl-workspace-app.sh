@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
 #
 # Controls the application of an application workspace, which the supervisor (the entry script of
-# the container) runs on port TL_FACTORY_PORT under the context path TL_FACTORY_CONTEXT_PATH.
+# the container) runs on port TL_FACTORY_PORT.
 #
 # Usage: tl-workspace-app <status|start|stop|restart|log> [<app-module-path>]
 #
@@ -20,7 +20,7 @@
 # On a successful start or restart it prints, like the tl-app skill of tl-claude-tools (which hands
 # its commands to this one through TL_APP_CONTROL):
 #
-#   url: http://localhost:<port><context path>/
+#   url: http://localhost:<port>/<artifactId>/
 #   log: <log of the run>
 #   login: root / <initial password>
 #
@@ -36,7 +36,7 @@ STATE="$TL_WORKSPACE_APP_STATE"
 TIMEOUT="${TL_WORKSPACE_APP_TIMEOUT:-300}"
 LOG_LINES="${TL_WORKSPACE_APP_LOG_LINES:-100}"
 LOG="$STATE/app.log"
-URL="http://localhost:$TL_FACTORY_PORT${TL_FACTORY_CONTEXT_PATH:-/$(basename "$TL_FACTORY_APP_DIR")}/"
+URL="http://localhost:$TL_FACTORY_PORT/$(basename "$TL_FACTORY_APP_DIR")/"
 
 usage() {
 	echo "Usage: tl-workspace-app <status|start|stop|restart|log> [<app-module-path>]" >&2

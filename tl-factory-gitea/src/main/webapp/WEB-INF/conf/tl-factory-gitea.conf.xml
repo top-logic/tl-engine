@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-
-<root>
-	<alias>
-		<entry name="%FACTORY_GITEA_REQUIRED_APPROVALS%" value="${env:tl_factory_gitea_required_approvals:1}" comment="Approvals a pull request to the protected default branch of a project repository on a Gitea server needs."/>
-	</alias>
-</root>

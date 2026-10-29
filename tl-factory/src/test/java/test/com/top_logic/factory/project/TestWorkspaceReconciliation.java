@@ -61,7 +61,7 @@ public class TestWorkspaceReconciliation extends TestCase {
 		Outcome a = result.get("a");
 		assertEquals(WorkspaceStatus.RUNNING, a.status());
 		assertEquals(Integer.valueOf(20001), a.hostPort());
-		assertEquals("/preview/a:20001" + URL_SUFFIX, a.previewUrl());
+		assertEquals("http://localhost:20001/" + URL_SUFFIX, a.previewUrl());
 		assertNotNull("A changed state is explained.", a.message());
 
 		Outcome b = result.get("b");
@@ -232,7 +232,7 @@ public class TestWorkspaceReconciliation extends TestCase {
 		assertEquals(WorkspaceStatus.RUNNING, result.get("unknown").status());
 		Outcome again = result.get("again");
 		assertEquals(WorkspaceStatus.RUNNING, again.status());
-		assertEquals("/preview/again:20011" + URL_SUFFIX, again.previewUrl());
+		assertEquals("http://localhost:20011/" + URL_SUFFIX, again.previewUrl());
 	}
 
 	/**
@@ -263,17 +263,17 @@ public class TestWorkspaceReconciliation extends TestCase {
 		for (int n = 0; n < idsAndStates.length; n += 2) {
 			stored.put((String) idsAndStates[n], (WorkspaceStatus) idsAndStates[n + 1]);
 		}
-		return new WorkspaceReconciliation(provider, info -> "/preview/" + info.getWorkspaceId() + ":" + info.getHostPort() + URL_SUFFIX, applications)
+		return new WorkspaceReconciliation(provider, info -> info.getPreviewUrl() + URL_SUFFIX, applications)
 			.reconcile(stored);
 	}
 
 	private static WorkspaceInfo running(String id, int port) {
 		return new WorkspaceInfo(id, WorkspaceState.RUNNING, "container-" + id, IMAGE, port,
-			Collections.emptyList());
+			"http://localhost:" + port + "/", Collections.emptyList());
 	}
 
 	private static WorkspaceInfo info(String id, WorkspaceState state) {
-		return new WorkspaceInfo(id, state, "container-" + id, IMAGE, WorkspaceInfo.NO_PORT,
+		return new WorkspaceInfo(id, state, "container-" + id, IMAGE, WorkspaceInfo.NO_PORT, null,
 			Collections.emptyList());
 	}
 

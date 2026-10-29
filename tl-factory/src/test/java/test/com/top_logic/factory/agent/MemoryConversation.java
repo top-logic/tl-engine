@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.factory.agent.ConversationTarget;
-import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * A {@link ConversationTarget} kept in memory, recording the session IDs stored.
@@ -21,8 +20,6 @@ public class MemoryConversation implements ConversationTarget {
 	private final String _workingDir;
 
 	private volatile String _sessionId;
-
-	private volatile String _instructions;
 
 	private final List<String> _stored = new CopyOnWriteArrayList<>();
 
@@ -50,30 +47,8 @@ public class MemoryConversation implements ConversationTarget {
 	}
 
 	@Override
-	public String instructions() {
-		return _instructions;
-	}
-
-	/**
-	 * Sets what the agent is told in addition to the instructions of its harness.
-	 *
-	 * @see #instructions()
-	 */
-	public void setInstructions(String instructions) {
-		_instructions = instructions;
-	}
-
-	@Override
 	public String sessionId() {
 		return _sessionId;
-	}
-
-	/**
-	 * Every user may continue a conversation of a test.
-	 */
-	@Override
-	public void checkContinue(Person user) {
-		// Not access controlled.
 	}
 
 	@Override

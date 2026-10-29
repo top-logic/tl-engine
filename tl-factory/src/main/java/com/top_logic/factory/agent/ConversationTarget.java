@@ -5,8 +5,6 @@
  */
 package com.top_logic.factory.agent;
 
-import com.top_logic.knowledge.wrap.person.Person;
-
 /**
  * The conversation a {@link WorkspaceAgent} holds: the workspace its agent works in and the
  * session ID under which the agent keeps it.
@@ -33,26 +31,6 @@ public interface ConversationTarget {
 	 * time.
 	 */
 	String sessionId();
-
-	/**
-	 * What the agent is told about the workspace in addition to the instructions of its harness,
-	 * e.g. how its work reaches the application; no secret.
-	 *
-	 * @return The text, {@code null} for nothing.
-	 */
-	default String instructions() {
-		return null;
-	}
-
-	/**
-	 * Ensures that the given user may give the agent a message in this conversation.
-	 *
-	 * @param user
-	 *        The user writing the message.
-	 * @throws com.top_logic.util.error.TopLogicException
-	 *         If the user may not.
-	 */
-	void checkContinue(Person user);
 
 	/**
 	 * Stores the session ID the agent reported.

@@ -3,8 +3,7 @@
   "enabledManagers": [
     "maven",
     "npm",
-    "custom.regex",
-    "jenkins"
+    "custom.regex"
   ],
   "lockFileMaintenance": {
     "enabled": true
@@ -15,11 +14,6 @@
   "postUpdateOptions": [
     "npmDedupe"
   ],
-  "jenkins": {
-    "managerFilePatterns": [
-      "/(^|/)tl-factory-jenkins/src/test/docker/jenkins/plugins\\.txt$/"
-    ]
-  },
   "customManagers": [
     {
       "customType": "regex",
@@ -42,36 +36,6 @@
         "FROM (?<depName>[a-z0-9./_-]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})"
       ],
       "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "Gitea version of tl-factory-gitea in the property gitea.version, annotated by a preceding '<!-- renovate: -->' comment: the version of the OpenAPI specification its client is generated from and of the image its integration test runs against.",
-      "managerFilePatterns": [
-        "/(^|/)tl-factory-gitea/pom\\.xml$/"
-      ],
-      "matchStrings": [
-        "<!-- renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+) -->\\s*<gitea\\.version>(?<currentValue>[^<]+)</gitea\\.version>"
-      ]
-    },
-    {
-      "customType": "regex",
-      "description": "Gitea image of the local development setup of tl-factory-app, annotated by a preceding '# renovate:' comment; updated together with gitea.version of tl-factory-gitea.",
-      "managerFilePatterns": [
-        "/(^|/)tl-factory-app/devel/compose\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+image: [^:\\s]+:(?<currentValue>\\S+)"
-      ]
-    },
-    {
-      "customType": "regex",
-      "description": "Jenkins release (and Maven of the target devel) of the image of tl-factory-jenkins in the ARGs of its Dockerfile, each annotated by a preceding '# renovate:' comment; the tag suffix (-lts-jdk21) keeps it on the LTS line.",
-      "managerFilePatterns": [
-        "/(^|/)tl-factory-jenkins/src/test/docker/jenkins/Dockerfile$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+ARG [A-Z0-9_]+=(?<currentValue>\\S+)"
-      ]
     }
   ],
   "packageRules": [
@@ -117,40 +81,6 @@
         "patch"
       ],
       "enabled": false
-    },
-    {
-      "description": "Gitea of tl-factory-gitea and of the local development setup of tl-factory-app: an update also needs the specification of the new version in src/main/openapi (the build fails without it) and the integration test against the new image, see the developer article factory/git-hosting.",
-      "matchFileNames": [
-        "tl-factory-gitea/pom.xml",
-        "tl-factory-app/devel/compose.yaml"
-      ],
-      "matchDepNames": [
-        "gitea/gitea"
-      ],
-      "groupName": "Gitea of tl-factory",
-      "automerge": false,
-      "labels": [
-        "manual-step"
-      ],
-      "prBodyNotes": [
-        "**Manual step before merging:** this update needs the OpenAPI specification of the new Gitea version, the build fails without it (enforcer rule `gitea-specification` of `tl-factory-gitea`).",
-        "1. `docker run -d --name gitea-spec -p 127.0.0.1:3000:3000 -e GITEA__security__INSTALL_LOCK=true gitea/gitea:{{{newVersion}}}`",
-        "2. `curl -o tl-factory-gitea/src/main/openapi/gitea-{{{newVersion}}}.swagger.json http://127.0.0.1:3000/swagger.v1.json && docker rm -f gitea-spec`",
-        "3. Delete `tl-factory-gitea/src/main/openapi/gitea-{{{currentVersion}}}.swagger.json`, build the module (a newly referenced model goes into `modelsToGenerate`) and run `mvn test -DskipTests=false -pl tl-factory-gitea`.",
-        "See the section \"Updating Gitea\" of the developer article factory/git-hosting."
-      ]
-    },
-    {
-      "description": "Jenkins and its plugins of tl-factory-jenkins are updated together: every update needs the integration test of tl-factory-jenkins against the rebuilt image, see the developer article factory/ci.",
-      "matchFileNames": [
-        "tl-factory-jenkins/src/test/docker/jenkins/Dockerfile",
-        "tl-factory-jenkins/src/test/docker/jenkins/plugins.txt"
-      ],
-      "groupName": "Jenkins of tl-factory-jenkins",
-      "automerge": false,
-      "prBodyNotes": [
-        "Run `mvn test -DskipTests=false -pl tl-factory-jenkins` before merging: it builds the Jenkins image of `tl-factory-jenkins/src/test/docker/jenkins` and runs the integration test against it. A plugin update may need a new dependency in `plugins.txt`, see the section \"Updating Jenkins\" of the developer article factory/ci."
-      ]
     }
   ]
 }

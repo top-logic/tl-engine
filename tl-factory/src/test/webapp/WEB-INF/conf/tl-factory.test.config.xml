@@ -6,50 +6,14 @@
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 		<!--
-			The workspace proxy switched on, so that new workspaces get a token; without a port of its
-			own, which a running control application may use.
+			The LLM proxy switched on, so that new workspaces get a token; without a port of its own,
+			which a running control application may use.
 		-->
-		<config service-class="com.top_logic.factory.proxy.WorkspaceProxyService">
-			<instance class="com.top_logic.factory.proxy.WorkspaceProxyService"
+		<config service-class="com.top_logic.factory.llm.LLMProxyService">
+			<instance class="com.top_logic.factory.llm.LLMProxyService"
 				listen-port="0"
-				proxy-url="http://workspace-proxy.test"
+				proxy-url="http://llm-proxy.test/llm-proxy"
 			/>
-		</config>
-
-		<!--
-			A writable secret store for the access tokens of the git connections of the tenants, behind the
-			environment.
-		-->
-		<config service-class="com.top_logic.basic.credential.SecretStoreService">
-			<instance class="com.top_logic.basic.credential.SecretStoreService">
-				<store class="com.top_logic.basic.credential.ChainSecretStore">
-					<stores>
-						<env-store/>
-						<store class="test.com.top_logic.factory.git.MemorySecretStore"/>
-					</stores>
-				</store>
-			</instance>
-		</config>
-
-		<!--
-			A git hosting service without server, and a built-in connection to it offered to every tenant.
-		-->
-		<config service-class="com.top_logic.factory.git.GitHostingService">
-			<instance class="com.top_logic.factory.git.GitHostingService">
-				<provider-types>
-					<provider-type class="test.com.top_logic.factory.git.RecordingGitProviderType"
-						name="recording"
-					/>
-				</provider-types>
-				<connections>
-					<connection name="test-builtin"
-						owner="factory"
-						provider-type="recording"
-						token-secret="tl_factory_test_git_token"
-						url="https://git.test/"
-					/>
-				</connections>
-			</instance>
 		</config>
 
 		<!-- Operations on the workspaces a test chooses; the applications are checked only by the tests. -->

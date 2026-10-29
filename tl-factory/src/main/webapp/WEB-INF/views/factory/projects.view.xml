@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The projects of the control application and their workspaces: a list of the projects of the tenant
-	of the user - of all tenants for an operator - with the
+	The projects of the control application and their workspaces: a list of the projects with the
 	state of each workspace and the address of its running application, and beside it the selected
-	project with the link to its repository, its CI job and last CI build, its workspace and the output
-	of the last operation on it (factory/project-detail.view.xml).
+	project with its workspace and the output of the last operation on it (factory/project-detail.view.xml).
 	While the project has a workspace, the project panel shows these in a tab "Details", beside it a
 	tab "Agent" with the conversations with the coding agent of the workspace
 	(factory/workspace-agent.view.xml) and a tab "Application log" with the log of the application
@@ -15,20 +13,10 @@
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
 	and state while they run. The engine brings these commits to the window, so the list, the state
 	and the output follow the operation without a click. The commands are offered according to the
-	state of the selected workspace. A project gets no CI with its workspace: "Set up CI" sets it up
-	for a project without CI job; "Start CI build", "Refresh CI build" and the CI job in the details
-	are shown only for a project with one. The last CI build is asked from the CI server when the
-	project is selected or a CI command asks for it, not in the background.
+	state of the selected workspace.
 -->
 <view>
 	<channels>
-		<!--
-			The tenant of the user, empty for an operator: a project created here belongs to it, and it
-			is the context the right to create the project is checked in.
-		-->
-		<channel name="tenant">
-			<init>factoryCurrentTenant()</init>
-		</channel>
 		<channel name="project"/>
 		<derived-channel name="workspace"
 			expr="$project.get(`tl.factory:Project#workspace`)"
@@ -83,81 +71,12 @@
 			inputs="workspace"
 			observed-types="tl.factory:Workspace"
 		/>
-		<!--
-			Whether the application of the workspace is reached through the control application only
-			after an update, because its container serves it under a context path outside the preview
-			route; false while it has no workspace.
-		-->
-		<derived-channel name="contextPathOutdated"
-			expr="if($workspace == null, false, factoryContextPathOutdated($workspace))"
-			inputs="workspace"
-			observed-types="tl.factory:Workspace"
-		/>
-		<!--
-			The repository of the selected project as link to its page on the git hosting service; empty
-			while the project has none.
-		-->
-		<derived-channel name="repositoryLink"
-			inputs="project"
-			observed-types="tl.factory:Project"
-		>
-			<expr><![CDATA[{
-	url = $project.get(`tl.factory:Project#repositoryUrl`);
-	name = $project.get(`tl.factory:Project#repository`);
-	if($url == null, null, {{{<p>{#('Repository'@en, 'Repository'@de)}: <a href="{$url}" target="_blank" rel="noopener">{$name}</a></p>}}});
-}]]></expr>
-		</derived-channel>
-		<!--
-			Why the CI of the selected project cannot be set up, empty when it can: what "Set up CI" says
-			while it is disabled.
-		-->
-		<derived-channel name="ciSetUpUnavailable"
-			expr="factoryCiSetUpUnavailable($project)"
-			inputs="project"
-			observed-types="tl.factory:Project"
-		/>
-		<!--
-			Why no CI build of the selected project can be started, empty when one can: what
-			"Start CI build" says while it is disabled.
-		-->
-		<derived-channel name="ciUnavailable"
-			expr="factoryCiUnavailable($project)"
-			inputs="project"
-			observed-types="tl.factory:Project"
-		/>
-		<!-- Written by the CI commands to ask the CI server again for the last build. -->
-		<channel name="ciRefresh"/>
-		<!--
-			The CI job of the selected project as link to its page on the CI server, with its last build
-			asked from the CI server when the project is selected or changes, or a CI command asks for it;
-			empty while the project has no CI job.
-		-->
-		<derived-channel name="ciBuild"
-			inputs="project, ciRefresh"
-			observed-types="tl.factory:Project"
-		>
-			<expr><![CDATA[{
-	jobUrl = $project.get(`tl.factory:Project#ciJobUrl`);
-	job = $project.get(`tl.factory:Project#ciJob`);
-	build = if($jobUrl == null, null, factoryLastBuild($project));
-	last = if($build == null,
-		{{{<p>{#('No CI build yet.'@en, 'Noch kein CI-Build.'@de)}</p>}}},
-		if($build['error'] != null,
-			{{{<p>{#('The CI server cannot be asked: {0}'@en, 'Der CI-Server kann nicht gefragt werden: {0}'@de).fill($build['error'])}</p>}}},
-			{{{<p>{#('Last CI build'@en, 'Letzter CI-Build'@de)}: <a href="{$build['url']}" target="_blank" rel="noopener">{#('Build {0}'@en, 'Build {0}'@de).fill($build['number'])}</a> {$build['stateLabel']}, {$build['startTime']} ({$build['durationSeconds']} s)</p>}}}));
-	if($jobUrl == null, null, {{{<p>{#('CI job'@en, 'CI-Job'@de)}: <a href="{$jobUrl}" target="_blank" rel="noopener">{$job}</a></p>{$last}}}});
-}]]></expr>
-		</derived-channel>
-		<!--
-			The running application of the selected workspace as link through the preview route of the
-			control application; empty while it does not run or is reached only after an update.
-		-->
 		<derived-channel name="previewLink"
 			inputs="workspace"
 		>
 			<expr><![CDATA[{
 	url = $workspace.get(`tl.factory:Workspace#previewUrl`);
-	if($url == null, null, {{{<p>{#('Application'@en, 'Anwendung'@de)}: <a href="{$url}" target="_blank" rel="noopener">{$url}</a></p>}}});
+	if($url == null, null, {{{<a href="{$url}" target="_blank" rel="noopener">{$url}</a>}}});
 }]]></expr>
 		</derived-channel>
 	</channels>
@@ -186,10 +105,7 @@
 								<en>Create application</en>
 								<de>Anwendung anlegen</de>
 							</label>
-							<create-transient
-								container="tenant"
-								type="tl.factory:Project"
-							>
+							<create-transient type="tl.factory:Project">
 								<with-result>
 									<open-dialog
 										bind-input-to="model"
@@ -198,10 +114,6 @@
 										<bind
 											channel="selection"
 											to="project"
-										/>
-										<bind
-											channel="tenant"
-											to="tenant"
 										/>
 									</open-dialog>
 								</with-result>
@@ -217,12 +129,6 @@
 								<en>Create workspace</en>
 								<de>Workspace anlegen</de>
 							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
 							<executability>
 								<visible-if expr="$project != null &amp;&amp; $workspace == null"/>
 							</executability>
@@ -238,12 +144,6 @@
 								<en>Start</en>
 								<de>Starten</de>
 							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('Neither the workspace nor its application is stopped.'@en, 'Weder der Workspace noch seine Anwendung ist gestoppt.'@de))"/>
@@ -260,12 +160,6 @@
 								<en>Stop</en>
 								<de>Stoppen</de>
 							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
@@ -275,24 +169,18 @@
 						<generic-command name="updateWorkspace"
 							clique="edit"
 							image="css:bi bi-arrow-repeat"
-							inputs="project, status, outdated, contextPathOutdated"
+							inputs="project, status, outdated"
 							placement="TOOLBAR"
 						>
 							<label>
 								<en>Update workspace</en>
 								<de>Workspace aktualisieren</de>
 							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated || $contextPathOutdated, null, #('The workspace runs on the current image and is reached through the control application.'@en, 'Der Workspace läuft auf dem aktuellen Image und ist über die Steueranwendung erreichbar.'@de))))"/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
 							</executability>
-							<confirm expr="#('Create the container of {0} anew on the current image and with the current context path? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image und mit dem aktuellen Kontextpfad neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
+							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
 							<execute-script function="factoryUpdate($project)"/>
 						</generic-command>
 						<generic-command name="cleanupWorkspace"
@@ -305,12 +193,6 @@
 								<en>Clean up</en>
 								<de>Aufräumen</de>
 							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
 							<executability>
 								<null-input-disabled/>
 								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
@@ -347,7 +229,6 @@
 					>
 						<columns>
 							<column attribute="name"/>
-							<column attribute="tenant"/>
 							<column attribute="artifactId"/>
 							<column attribute="engineVersion"/>
 							<computed-column name="status"
@@ -369,7 +250,7 @@
 								<value>$row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#previewUrl`)</value>
 							</computed-column>
 						</columns>
-						<rows>factoryProjects()</rows>
+						<rows>all(`tl.factory:Project`)</rows>
 						<row-class><![CDATA[{
 	status = $row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`);
 	if($status == `tl.factory:WorkspaceStatus#ERROR`, 'tl-status-error',
@@ -389,92 +270,8 @@
 						<en>Project</en>
 						<de>Projekt</de>
 					</title>
-					<!-- Commands about the agent of the selected workspace and the CI build of the project. -->
+					<!-- Commands about the agent of the selected workspace. -->
 					<commands>
-						<!--
-							Offered while CI is switched on and the selected project has no CI job; disabled with the
-							reason while its CI cannot be set up, e.g. for a project on a git connection of its
-							tenant or one whose repository has no application yet.
-						-->
-						<generic-command name="setUpCI"
-							image="css:bi bi-gear-wide-connected"
-							inputs="project, ciSetUpUnavailable"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Set up CI</en>
-								<de>CI einrichten</de>
-							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
-							<executability>
-								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) == null &amp;&amp; factoryCiEnabled()"/>
-								<disabled-if expr="$ciSetUpUnavailable"/>
-							</executability>
-							<confirm expr="#('Set up the CI of {0}? The repository gets the default pipeline definition unless it has one, the pipeline file is protected, and the CI job is created and builds the application.'@en, 'Die CI von {0} einrichten? Das Repository erhält die Standard-Pipeline-Definition, sofern es keine hat, die Pipeline-Datei wird geschützt, und der CI-Job wird angelegt und baut die Anwendung.'@de).fill($project)"/>
-							<execute-script function="factorySetUpCI($project)">
-								<with-result>
-									<notify expr="$result"/>
-								</with-result>
-							</execute-script>
-							<execute-script function="now()">
-								<with-result>
-									<write-channel name="ciRefresh"/>
-								</with-result>
-							</execute-script>
-						</generic-command>
-						<generic-command name="startBuild"
-							image="css:bi bi-hammer"
-							inputs="project, ciUnavailable"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Start CI build</en>
-								<de>CI-Build starten</de>
-							</label>
-							<access>
-								<operation name="Write"
-									object="$project"
-									type="tl.factory:Project"
-								/>
-							</access>
-							<executability>
-								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) != null"/>
-								<disabled-if expr="$ciUnavailable"/>
-							</executability>
-							<execute-script function="factoryStartBuild($project)">
-								<with-result>
-									<notify expr="$result"/>
-								</with-result>
-							</execute-script>
-							<execute-script function="now()">
-								<with-result>
-									<write-channel name="ciRefresh"/>
-								</with-result>
-							</execute-script>
-						</generic-command>
-						<generic-command name="refreshBuild"
-							image="css:bi bi-arrow-clockwise"
-							inputs="project"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Refresh CI build</en>
-								<de>CI-Build aktualisieren</de>
-							</label>
-							<executability>
-								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) != null"/>
-							</executability>
-							<execute-script function="now()">
-								<with-result>
-									<write-channel name="ciRefresh"/>
-								</with-result>
-							</execute-script>
-						</generic-command>
 						<generic-command name="assignTask"
 							image="css:bi bi-robot"
 							inputs="workspace, agentUnavailable"
@@ -484,12 +281,6 @@
 								<en>Give a task</en>
 								<de>Auftrag erteilen</de>
 							</label>
-							<access>
-								<operation name="Write"
-									object="$workspace"
-									type="tl.factory:Workspace"
-								/>
-							</access>
 							<executability>
 								<visible-if expr="$workspace != null"/>
 								<disabled-if expr="$agentUnavailable"/>
@@ -542,24 +333,14 @@
 											to="outdated"
 										/>
 										<bind
-											channel="contextPathOutdated"
-											to="contextPathOutdated"
-										/>
-										<bind
 											channel="previewLink"
 											to="previewLink"
 										/>
-										<bind
-											channel="repositoryLink"
-											to="repositoryLink"
-										/>
-										<bind
-											channel="ciBuild"
-											to="ciBuild"
-										/>
 									</view-ref>
 								</tab>
-								<!-- The conversations with the coding agent working in the workspace. -->
+								<!--
+									The conversations with the coding agent working in the workspace.
+								-->
 								<tab id="agent"
 									icon="css:bi bi-robot"
 									route="none"
@@ -620,20 +401,8 @@
 									to="outdated"
 								/>
 								<bind
-									channel="contextPathOutdated"
-									to="contextPathOutdated"
-								/>
-								<bind
 									channel="previewLink"
 									to="previewLink"
-								/>
-								<bind
-									channel="repositoryLink"
-									to="repositoryLink"
-								/>
-								<bind
-									channel="ciBuild"
-									to="ciBuild"
 								/>
 							</view-ref>
 						</default>

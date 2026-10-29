@@ -28,8 +28,6 @@ import test.com.top_logic.factory.agent.claude.Fixtures;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 
 import com.top_logic.ai.chat.backend.BackendTurn;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.DaemonThreadFactory;
@@ -38,12 +36,14 @@ import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
 import com.top_logic.factory.agent.claude.ClaudeCodeProtocol;
 import com.top_logic.factory.agent.claude.StreamJson;
-import com.top_logic.factory.llm.LLMRoute;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -107,21 +107,6 @@ public class TestWorkspaceAgent extends TestCase {
 	}
 
 	/**
-	 * The instructions of the conversation are appended to the system prompt of the agent.
-	 */
-	public void testInstructions() throws Exception {
-		String instructions = "Commit and push your work.";
-		_conversation.setInstructions(instructions);
-		WorkspaceAgent agent = agent();
-		agent.send(turn("Antworte nur mit OK."), new EventLog(), new CancellationToken());
-
-		List<String> args = _provider.only().command().getCommand();
-		int index = args.indexOf(ClaudeCodeHarness.OPTION_APPEND_SYSTEM_PROMPT);
-		assertTrue(args.toString(), index > 0);
-		assertEquals(instructions, args.get(index + 1));
-	}
-
-	/**
 	 * The first message starts the process as the workspace user in the working directory with a
 	 * token of its own, writes the message as one line, delivers the run and stores the session.
 	 */
@@ -143,10 +128,9 @@ public class TestWorkspaceAgent extends TestCase {
 		assertEquals(ClaudeCodeHarness.DEFAULT_COMMAND, command.getCommand().get(0));
 		assertTrue(command.getCommand().contains(ClaudeCodeHarness.OPTION_INCLUDE_PARTIAL_MESSAGES));
 		assertFalse("A new conversation.", command.getCommand().contains(ClaudeCodeHarness.OPTION_RESUME));
-		assertFalse("No instructions.", command.getCommand().contains(ClaudeCodeHarness.OPTION_APPEND_SYSTEM_PROMPT));
 		assertEquals(1, _tokens.issued().size());
 		String token = _tokens.issued().get(0);
-		assertEquals(Map.of(LLMRoute.ENV_AUTH_TOKEN, token), command.getEnv());
+		assertEquals(Map.of(LLMProxyService.ENV_AUTH_TOKEN, token), command.getEnv());
 		assertFalse("The token is not on the command line.", command.getCommand().toString().contains(token));
 		assertTrue("Kept for the next message.", _tokens.isValid(token));
 

@@ -26,7 +26,7 @@
       <artifactId>tl-layout-view</artifactId>
     </dependency>
 
-    <!-- The LLM provider whose API key the LLM route of the workspace proxy adds to the requests of the workspaces. -->
+    <!-- The LLM provider whose API key the LLM proxy of the workspaces adds to their requests. -->
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ai-core</artifactId>
@@ -58,12 +58,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-view</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

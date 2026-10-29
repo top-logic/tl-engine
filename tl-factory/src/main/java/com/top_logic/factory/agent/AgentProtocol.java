@@ -80,7 +80,7 @@ public interface AgentProtocol {
 
 	/**
 	 * Whether the process can serve no further run: the run that ended found that the agent cannot
-	 * reach its model with the token of the process, e.g. because the workspace proxy refuses it.
+	 * reach its model with the token of the process, e.g. because the LLM proxy refuses it.
 	 *
 	 * <p>
 	 * The process is terminated when such a run has ended; the next message starts a new one with

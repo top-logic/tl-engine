@@ -30,6 +30,8 @@ public final class WorkspaceInfo {
 
 	private final int _hostPort;
 
+	private final String _previewUrl;
+
 	private final List<String> _volumes;
 
 	/**
@@ -45,16 +47,19 @@ public final class WorkspaceInfo {
 	 *        See {@link #getImage()}.
 	 * @param hostPort
 	 *        See {@link #getHostPort()}.
+	 * @param previewUrl
+	 *        See {@link #getPreviewUrl()}.
 	 * @param volumes
 	 *        See {@link #getVolumes()}.
 	 */
 	public WorkspaceInfo(String workspaceId, WorkspaceState state, String containerId, String image,
-			int hostPort, List<String> volumes) {
+			int hostPort, String previewUrl, List<String> volumes) {
 		_workspaceId = Objects.requireNonNull(workspaceId, "workspaceId");
 		_state = Objects.requireNonNull(state, "state");
 		_containerId = containerId;
 		_image = image;
 		_hostPort = hostPort;
+		_previewUrl = previewUrl;
 		_volumes = Collections.unmodifiableList(new ArrayList<>(volumes));
 	}
 
@@ -67,7 +72,7 @@ public final class WorkspaceInfo {
 	 *        See {@link #getVolumes()}.
 	 */
 	public static WorkspaceInfo missing(String workspaceId, List<String> volumes) {
-		return new WorkspaceInfo(workspaceId, WorkspaceState.MISSING, null, null, NO_PORT, volumes);
+		return new WorkspaceInfo(workspaceId, WorkspaceState.MISSING, null, null, NO_PORT, null, volumes);
 	}
 
 	/**
@@ -117,6 +122,14 @@ public final class WorkspaceInfo {
 	 */
 	public boolean hasHostPort() {
 		return _hostPort != NO_PORT;
+	}
+
+	/**
+	 * The URL a browser reaches the application in the workspace with, {@code null} if the port
+	 * is not published.
+	 */
+	public String getPreviewUrl() {
+		return _previewUrl;
 	}
 
 	/**

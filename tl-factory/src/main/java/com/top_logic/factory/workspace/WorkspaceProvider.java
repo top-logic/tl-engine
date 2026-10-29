@@ -34,11 +34,6 @@ import com.top_logic.util.error.TopLogicException;
 public interface WorkspaceProvider extends AutoCloseable {
 
 	/**
-	 * The IPv4 loopback address.
-	 */
-	String LOOPBACK_ADDRESS = "127.0.0.1";
-
-	/**
 	 * Whether the container platform answers requests.
 	 */
 	boolean isAvailable();
@@ -157,7 +152,8 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 * earlier start.
 	 * </p>
 	 *
-	 * @return The workspace with its {@link WorkspaceInfo#getHostPort() host port}.
+	 * @return The workspace with its {@link WorkspaceInfo#getHostPort() host port} and
+	 *         {@link WorkspaceInfo#getPreviewUrl() preview URL}.
 	 */
 	WorkspaceInfo start(String workspaceId);
 
@@ -200,20 +196,6 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 * @return The workspace, in state {@link WorkspaceState#MISSING} if it has no container.
 	 */
 	WorkspaceInfo status(String workspaceId);
-
-	/**
-	 * The address under which this application reaches the {@link WorkspaceInfo#getHostPort() host
-	 * ports} the workspaces are published on, e.g. to forward a request to the application of a
-	 * workspace.
-	 *
-	 * <p>
-	 * By default the loopback address {@value #LOOPBACK_ADDRESS}: the ports are published on the
-	 * host this application runs on.
-	 * </p>
-	 */
-	default String publishedAddress() {
-		return LOOPBACK_ADDRESS;
-	}
 
 	/**
 	 * The address ranges of the network the workspace containers are attached to, as CIDR

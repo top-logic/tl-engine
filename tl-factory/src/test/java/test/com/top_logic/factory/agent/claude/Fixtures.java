@@ -23,7 +23,7 @@ import java.util.List;
  * <li>{@value #TOOL}: a message answered with a Bash tool call reading pom.xml.</li>
  * <li>{@value #INTERRUPT}: a long answer interrupted by a control request after its first text.</li>
  * <li>{@value #RESUME}: the first message of a new process resuming the conversation.</li>
- * <li>{@value #LOGIN_FAILED}: a message to a process whose token the workspace proxy refuses.</li>
+ * <li>{@value #LOGIN_FAILED}: a message to a process whose token the LLM proxy refuses.</li>
  * <li>{@value #SESSION_NOT_FOUND}: a message to a process resuming a conversation Claude Code does
  * not have; the process ends after this line.</li>
  * <li>{@value #THINKING}: a question the default model thinks about, its thinking displayed as
@@ -47,7 +47,7 @@ public final class Fixtures {
 	/** Fixture of the first answer of a resumed conversation. */
 	public static final String RESUME = "resume.jsonl";
 
-	/** Fixture of a message to a process the workspace proxy refuses. */
+	/** Fixture of a message to a process the LLM proxy refuses. */
 	public static final String LOGIN_FAILED = "login-failed.jsonl";
 
 	/** Fixture of a message to a process resuming a conversation Claude Code does not have. */

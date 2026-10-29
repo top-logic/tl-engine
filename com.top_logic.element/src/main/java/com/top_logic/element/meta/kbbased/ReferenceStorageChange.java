@@ -79,6 +79,14 @@ final class ReferenceStorageChange {
 			// A new end has no values, its reference computes the storage when accessed.
 			return NONE;
 		}
+		if (TLModelUtil.getEndIndex(end) == 0) {
+			// The end of a back reference: A back reference has no storage of its own, its values
+			// are those of the forward reference, whose storage depends only on the properties of
+			// its own end. Besides, the end of a back reference is shared by all overrides of the
+			// back reference, so its properties are set while such an override is created and not
+			// yet complete.
+			return NONE;
+		}
 		if (!(end.getReference() instanceof PersistentReference reference)) {
 			return NONE;
 		}

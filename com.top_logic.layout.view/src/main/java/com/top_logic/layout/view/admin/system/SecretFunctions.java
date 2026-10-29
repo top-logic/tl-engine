@@ -7,6 +7,10 @@ package com.top_logic.layout.view.admin.system;
 
 import java.util.List;
 
+import com.top_logic.base.security.util.CryptSupport;
+import com.top_logic.basic.ConfigurationEncryption;
+import com.top_logic.basic.InvalidEncryptedValueException;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.credential.SecretReference;
 import com.top_logic.basic.credential.SecretReferences;
@@ -17,6 +21,7 @@ import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script functions about the secrets the service configurations of the application refer to:
@@ -27,6 +32,12 @@ import com.top_logic.util.Resources;
  * describe one of these {@link SecretReference}s, e.g. the row of a table. None of them reveals a
  * secret. Every function describing a reference accepts no reference at all and answers with
  * nothing.
+ * </p>
+ *
+ * <p>
+ * {@link #encrypt(String, EncryptionFormat)} and {@link #decrypt(String, EncryptionFormat)} convert
+ * a value given by the administrator from and to one of the {@link #formats() forms} in which a
+ * configuration accepts an encrypted value. They never write the value to the log.
  * </p>
  *
  * @implNote Every public static method here is a TL-Script function named by the
@@ -182,6 +193,121 @@ public class SecretFunctions extends TLScriptFunctions {
 	@Label("Whether a secret is missing")
 	public static boolean missing(SecretReference reference) {
 		return reference != null && reference.getStatus() == SecretReference.Status.MISSING;
+	}
+
+	/**
+	 * The forms in which a configuration accepts an encrypted value.
+	 *
+	 * @return All {@link EncryptionFormat}s, the recommended one first.
+	 */
+	@Label("Encryption formats")
+	public static List<EncryptionFormat> formats() {
+		return List.of(EncryptionFormat.values());
+	}
+
+	/**
+	 * Encrypts the given value in the given format.
+	 *
+	 * @param value
+	 *        The plain value.
+	 * @param format
+	 *        The form the configuration accepts the value in.
+	 * @return The encrypted value, as it is written into the configuration.
+	 *
+	 * @see #decrypt(String, EncryptionFormat)
+	 */
+	@Label("Encrypt a value")
+	public static String encrypt(String value, EncryptionFormat format) {
+		if (StringServices.isEmpty(value)) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_VALUE);
+		}
+		switch (checkFormat(format)) {
+			case CONFIGURATION:
+				return ConfigurationEncryption.encrypt(value);
+			case CRYPT_SUPPORT:
+				return cryptSupport().encodeString(value);
+		}
+		throw new IllegalArgumentException("No such format: " + format);
+	}
+
+	/**
+	 * Decrypts the given value encrypted in the given format.
+	 *
+	 * @param value
+	 *        The encrypted value as written in the configuration. White space around it is
+	 *        ignored.
+	 * @param format
+	 *        The form the value is encrypted in. A value encrypted by the
+	 *        {@link EncryptionFormat#CONFIGURATION configuration encryption} is also read in the
+	 *        format without the {@link ConfigurationEncryption#AUTHENTICATED_PREFIX prefix}
+	 *        marking it.
+	 * @return The plain value.
+	 *
+	 * @throws TopLogicException
+	 *         If the value is not encrypted in the given format. The message does not reveal the
+	 *         value.
+	 *
+	 * @see #encrypt(String, EncryptionFormat)
+	 */
+	@Label("Decrypt a value")
+	public static String decrypt(String value, EncryptionFormat format) {
+		String encrypted = value == null ? "" : value.strip();
+		if (encrypted.isEmpty()) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_VALUE);
+		}
+		switch (checkFormat(format)) {
+			case CONFIGURATION:
+				try {
+					return ConfigurationEncryption.decrypt(encrypted);
+				} catch (InvalidEncryptedValueException ex) {
+					throw notEncrypted(format);
+				}
+			case CRYPT_SUPPORT:
+				return decodeCryptSupport(encrypted, format);
+		}
+		throw new IllegalArgumentException("No such format: " + format);
+	}
+
+	/**
+	 * Decodes a value encoded by {@link CryptSupport}.
+	 *
+	 * <p>
+	 * The encoding has no integrity check of its own and decodes almost any hexadecimal text to
+	 * some text. Since it is deterministic, a value is accepted only if encoding its decoded text
+	 * gives the value again.
+	 * </p>
+	 */
+	private static String decodeCryptSupport(String encrypted, EncryptionFormat format) {
+		CryptSupport cryptSupport = cryptSupport();
+		String decoded;
+		try {
+			decoded = cryptSupport.decodeString(encrypted);
+		} catch (RuntimeException ex) {
+			// The cause is dropped, its message may contain the given value.
+			throw notEncrypted(format);
+		}
+		if (StringServices.isEmpty(decoded) || !encrypted.equalsIgnoreCase(cryptSupport.encodeString(decoded))) {
+			throw notEncrypted(format);
+		}
+		return decoded;
+	}
+
+	private static TopLogicException notEncrypted(EncryptionFormat format) {
+		return new TopLogicException(I18NConstants.ERROR_NOT_ENCRYPTED__FORMAT.fill(ResKey.forEnum(format)));
+	}
+
+	private static EncryptionFormat checkFormat(EncryptionFormat format) {
+		if (format == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_ENCRYPTION_FORMAT);
+		}
+		return format;
+	}
+
+	private static CryptSupport cryptSupport() {
+		if (!CryptSupport.Module.INSTANCE.isActive()) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_CRYPT_SUPPORT);
+		}
+		return CryptSupport.getInstance();
 	}
 
 	private static String text(ResKey key) {

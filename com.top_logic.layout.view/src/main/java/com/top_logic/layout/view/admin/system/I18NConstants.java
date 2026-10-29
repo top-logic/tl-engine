@@ -119,6 +119,27 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_SECURITY_STORAGE_NOT_REBUILT;
 
 	/**
+	 * @en Enter a value.
+	 */
+	public static ResKey ERROR_NO_VALUE;
+
+	/**
+	 * @en Choose the format of the encrypted value.
+	 */
+	public static ResKey ERROR_NO_ENCRYPTION_FORMAT;
+
+	/**
+	 * @en The value is not encrypted in the format "{0}". Check that the value was copied
+	 *     completely and that the format it was encrypted in is chosen.
+	 */
+	public static ResKey1 ERROR_NOT_ENCRYPTED__FORMAT;
+
+	/**
+	 * @en The encryption support service is not running.
+	 */
+	public static ResKey ERROR_NO_CRYPT_SUPPORT;
+
+	/**
 	 * @en The system is operating normally.
 	 */
 	public static ResKey MAINTENANCE_STATUS_NORMAL;

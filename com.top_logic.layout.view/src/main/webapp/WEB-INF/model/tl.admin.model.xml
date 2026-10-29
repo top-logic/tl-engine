@@ -133,5 +133,19 @@
 				/>
 			</attributes>
 		</class>
+		<!--
+			The forms in which a configuration accepts an encrypted value, chosen in the "encrypt value"
+			and "decrypt value" dialogs of the secrets view. Only entered in a value-input, never stored
+			in an attribute.
+		-->
+		<datatype name="EncryptionFormat"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.layout.view.admin.system.EncryptionFormat"/>
+		</datatype>
 	</module>
 </model>

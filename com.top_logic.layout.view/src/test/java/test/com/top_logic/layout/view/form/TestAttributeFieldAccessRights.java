@@ -42,8 +42,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A value the user may not read is hidden and not sent to the client. A value the user may not
- * write is read-only, when the refusal does not depend on the object, and disabled with the
- * refusal as tooltip otherwise.
+ * write is read-only, whether the refusal depends on the object or not.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -78,11 +77,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_own = newObject(qualified(PROJECT), "own");
-		TLObject viewed = newObject(qualified(PROJECT), "viewed");
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
-			// The responsible user holds the viewer role on another project, so that writing an
-			// attribute only a viewer may write is refused on the edited object, not hidden.
-			viewed.tUpdateByName(VIEWER, _responsible);
 			_project.tUpdateByName(VIEWER, _roleless);
 			_project.tUpdateByName(BUDGET, BUDGET_VALUE);
 			_project.tUpdateByName(CLASSIFIED, CLASSIFIED_VALUE);
@@ -191,21 +186,19 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Writing is refused on the edited object only (the user may write the project, but does not
-	 * hold the role the attribute grants writing to on it): the field is disabled while the form is
-	 * edited and gives the refusal as tooltip; outside edit mode it shows its value.
+	 * Writing is refused on the edited object (the user may write the project, but does not hold the
+	 * role the attribute grants writing to on it): the field is read-only while the form is edited,
+	 * like a field whose write is refused independent of the object.
 	 */
 	public void testWriteRefusedOnObject() {
 		becomeUser(_responsible);
 		createField(_project, RATING);
 		assertTrue(_form.enterEditMode());
 
-		assertDisabled(part(PROJECT, RATING));
+		assertReadOnly(part(PROJECT, RATING));
 
 		_form.executeCancel();
-		assertFalse(fieldModel().isEditable());
-		assertFalse(fieldModel().isDisabled());
-		assertTooltipWithoutReason(part(PROJECT, RATING));
+		assertReadOnly(part(PROJECT, RATING));
 	}
 
 	/**
@@ -221,19 +214,9 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 
 	/**
 	 * A mode of the model stricter than the access rights wins: an attribute that is read-only by
-	 * its display annotation stays read-only, also where the rights would disable it.
+	 * its display annotation stays read-only, also where the rights refuse writing it.
 	 */
 	public void testModelModeStricter() {
-		becomeUser(_responsible);
-		createField(_project, CODE);
-		assertTrue(_form.enterEditMode());
-		assertReadOnly(part(PROJECT, CODE));
-	}
-
-	/**
-	 * A mode of the model stricter than the disabling refusal on the object wins.
-	 */
-	public void testModelModeStricterThanDisabled() {
 		becomeUser(_responsible);
 		createField(_project, CODE);
 		assertTrue(_form.enterEditMode());
@@ -254,14 +237,14 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 
 	/**
 	 * A draft is decided by its access parent: a user not holding the role the attribute grants
-	 * writing to on the container gets the field disabled, with the refusal as tooltip.
+	 * writing to on the container gets the field read-only.
 	 */
 	public void testDraftWriteRefusedInContext() {
 		becomeUser(_roleless);
 		createField(draftIn(_project), NOTE);
 		assertTrue(_form.enterEditMode());
 
-		assertDisabled(part(STEP, NOTE));
+		assertReadOnly(part(STEP, NOTE));
 	}
 
 	/**
@@ -357,16 +340,6 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 		assertEquals(Boolean.FALSE, inputState(FieldState.EDITABLE__PROP));
 		assertEquals(Boolean.FALSE, inputState(FieldState.DISABLED__PROP));
 		assertTooltipWithoutReason(attribute);
-	}
-
-	private void assertDisabled(TLStructuredTypePart attribute) {
-		assertFalse(fieldModel().isEditable());
-		assertTrue(fieldModel().isDisabled());
-		assertEquals(Boolean.FALSE, inputState(FieldState.EDITABLE__PROP));
-		assertEquals(Boolean.TRUE, inputState(FieldState.DISABLED__PROP));
-		Object tooltip = chrome().scriptingScalarState().get(FormFieldState.TOOLTIP_TEXT__PROP);
-		assertNotNull("The refusal is given as tooltip.", tooltip);
-		assertTrue("The tooltip gives the refusal: " + tooltip, tooltip.toString().contains(writeDenied(attribute)));
 	}
 
 	private void assertTooltipWithoutReason(TLStructuredTypePart attribute) {

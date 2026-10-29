@@ -39,7 +39,6 @@ import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -74,12 +73,6 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class AttributeFieldControl implements FormModelListener, FormParticipant {
-
-	/**
-	 * Separates the description of the attribute from the reason the field cannot be edited in the
-	 * tooltip of the field.
-	 */
-	private static final String TOOLTIP_SEPARATOR = "\n\n";
 
 	private final ReactContext _context;
 
@@ -116,12 +109,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private final FormControl.FieldChangeListener _modeListener = this::onModeDependencyChanged;
 
 	private boolean _modeListenerRegistered;
-
-	/**
-	 * The description of the attribute offered as tooltip of the field, {@code null} when it has
-	 * none.
-	 */
-	private String _description;
 
 	/**
 	 * Whether the {@link #getChromeControl() chrome} has been disposed, which ends the life of this
@@ -246,7 +233,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		_chrome = new ReactFormFieldChromeControl(_context, label, part.isMandatory(),
 			dirty, null, description, null, fullLine, true, _innerControl);
 		initChrome();
-		_description = description;
 		_chrome.setTooltipText(description);
 
 		setupMode(part);
@@ -322,7 +308,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 			String description = resolveDescription(part);
-			_description = description;
 			_chrome.setLabel(resolveLabel());
 			_chrome.setHelpText(description);
 			_chrome.setTooltipText(description);
@@ -367,7 +352,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			_innerControl = newPlaceholder();
 			_chrome.setField(_innerControl);
 			_chrome.setDirty(false);
-			showDenied(null);
 		}
 	}
 
@@ -516,9 +500,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * <p>
 	 * While the form is edited, the right to write the attribute caps the mode, see
 	 * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}: a
-	 * refusal independent of the object makes an editable field read-only, a refusal on the object
-	 * only disables it and gives the refusal as tooltip. A mode of the model that does not let the
-	 * field be edited anyway stays as it is.
+	 * refused write makes an editable field read-only, whether the refusal depends on the object or
+	 * not. A mode of the model that does not let the field be edited anyway stays as it is.
 	 * </p>
 	 */
 	private void applyMode(boolean editMode) {
@@ -578,22 +561,15 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				break;
 		}
 		boolean editing = editMode && !_forceReadonly;
-		ResKey denied = null;
 		if (editing && editable) {
 			// The access rights cap the mode of the model: a value the user may not write on this
-			// object is read-only, or disabled while the refusal depends on the object only.
-			ExecutableState write = ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE,
-				_formModel.getCurrentObject(), part);
-			if (!write.isExecutable()) {
+			// object is read-only.
+			if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE,
+				_formModel.getCurrentObject(), part).isExecutable()) {
 				editable = false;
 				mandatory = false;
-				if (write.isDisabled()) {
-					disabled = true;
-					denied = write.getI18NReasonKey();
-				}
 			}
 		}
-		showDenied(denied);
 		// A disabled field is presented as an inactive input only while the form is edited; in
 		// view mode it shows its value like any other field.
 		boolean effectiveDisabled = editing && disabled;
@@ -604,24 +580,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			wirePosition(legacyLabelPosition(part), effectiveEditable || effectiveDisabled));
 		_model.setDisabled(effectiveDisabled);
 		_model.setEditable(effectiveEditable);
-	}
-
-	/**
-	 * Offers the reason why the field cannot be edited in the tooltip of the field, next to the
-	 * description of the attribute.
-	 *
-	 * @param denied
-	 *        The refusal of the access rights, {@code null} when there is none.
-	 */
-	private void showDenied(ResKey denied) {
-		if (denied == null) {
-			_chrome.setTooltipText(_description);
-			return;
-		}
-		String reason = Resources.getInstance().getString(denied);
-		_chrome.setTooltipText(_description == null || _description.isEmpty()
-			? reason
-			: _description + TOOLTIP_SEPARATOR + reason);
 	}
 
 	/**

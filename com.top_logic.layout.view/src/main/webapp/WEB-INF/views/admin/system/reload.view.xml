@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Reload: the parts of the application that read their configuration again on request (the
+	Reloadables registered with the ReloadableManager), e.g. the resource bundles of the
+	translations.
+	- The table lists one row per Reloadable, given by the key it is registered under
+	(reloadableKeys): the name of its kind, its key and the description it gives of itself. The
+	filter bar searches these columns, so typing "Resources" leaves the translations alone.
+	- The table writes the selected keys to the selection channel; several rows may be selected.
+	Reload reloads the selected Reloadables one after the other (reloadableReload), a failing one
+	not stopping the others, and tells which were reloaded (reloadableReport). If one could not be
+	reloaded, a dialog names each failed entry with its reason (reloadableFailed). Reload is
+	disabled while nothing is selected.
+	- The keys channel holds the list the table displays. While the channel is empty, the table reads
+	the keys itself; Refresh writes them anew, e.g. after a service registering a Reloadable was
+	started.
+	- A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
+	commands.
+-->
+<view>
+	<channels>
+		<channel name="keys"/>
+		<channel name="selection"/>
+	</channels>
+	<panel id="panel"
+		fill="true"
+	>
+		<title>
+			<en>Reload</en>
+			<de>Neu laden</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-repeat"
+				inputs="selection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Reload</en>
+					<de>Neu laden</de>
+				</label>
+				<tooltip>
+					<en>Reloads the configuration of the selected entries.</en>
+					<de>Lädt die Konfiguration der ausgewählten Einträge neu.</de>
+				</tooltip>
+				<executability>
+					<disabled-if expr="if($selection == null, #('Select the entries to reload.'@en, 'Wählen Sie die neu zu ladenden Einträge aus.'@de), null)"/>
+				</executability>
+				<execute-script function="reloadableReload($selection)">
+					<with-result as="outcome">
+						<if test="reloadableFailed($outcome)">
+							<then>
+								<notify
+									display="dialog"
+									expr="reloadableReport($outcome)"
+									kind="error"
+								/>
+							</then>
+							<else>
+								<notify expr="reloadableReport($outcome)"/>
+							</else>
+						</if>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<tooltip>
+					<en>Reads the list of entries again.</en>
+					<de>Liest die Liste der Einträge erneut.</de>
+				</tooltip>
+				<execute-script function="reloadableKeys()">
+					<with-result>
+						<write-channel name="keys"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<table id="table"
+			filter-bar="true"
+			inputs="keys"
+			personalization-key="admin-reload"
+			selection="selection"
+			selection-mode="multi"
+		>
+			<columns>
+				<computed-column name="name"
+					type="tl.core:String"
+					width="320"
+				>
+					<label>
+						<en>Name</en>
+						<de>Name</de>
+					</label>
+					<value>reloadableLabel($row)</value>
+				</computed-column>
+				<computed-column name="key"
+					type="tl.core:String"
+					width="240"
+				>
+					<label>
+						<en>Key</en>
+						<de>Schlüssel</de>
+					</label>
+					<value>$row</value>
+				</computed-column>
+				<computed-column name="description"
+					type="tl.core:String"
+					width="480"
+				>
+					<label>
+						<en>Description</en>
+						<de>Beschreibung</de>
+					</label>
+					<value>reloadableDescription($row)</value>
+				</computed-column>
+			</columns>
+			<rows>$keys == null ? reloadableKeys() : $keys</rows>
+		</table>
+	</panel>
+</view>

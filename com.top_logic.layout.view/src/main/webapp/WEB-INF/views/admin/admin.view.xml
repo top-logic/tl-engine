@@ -187,6 +187,13 @@
 							</label>
 							<view-ref view="admin/system/sql-console.view.xml"/>
 						</tab>
+						<tab id="reload">
+							<label>
+								<en>Reload</en>
+								<de>Neu laden</de>
+							</label>
+							<view-ref view="admin/system/reload.view.xml"/>
+						</tab>
 						<tab id="logs">
 							<label>
 								<en>Logs</en>

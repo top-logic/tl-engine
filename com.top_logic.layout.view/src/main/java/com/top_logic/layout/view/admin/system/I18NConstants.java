@@ -323,6 +323,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 SQL_BINARY_VALUE__SIZE;
 
+	/**
+	 * @en Reloaded: {0}
+	 */
+	public static ResKey1 RELOAD_DONE__NAMES;
+
+	/**
+	 * @en Could not be reloaded:
+	 */
+	public static ResKey RELOAD_FAILED;
+
+	/**
+	 * @en - {0}: {1}
+	 */
+	public static ResKey2 RELOAD_FAILURE__NAME_REASON;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

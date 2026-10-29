@@ -33,7 +33,10 @@ public class TestGitRouteServlet extends TestGitRoute {
 		_jetty.addConnector(connector);
 		ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath(CONTEXT_PATH);
-		context.addServlet(new ServletHolder(new WorkspaceProxyServlet(() -> proxy)), GitRoute.DEFAULT_PATH + "/*");
+		ServletHolder proxyHolder = new ServletHolder(new WorkspaceProxyServlet(() -> proxy));
+		// The proxy answers asynchronously.
+		proxyHolder.setAsyncSupported(true);
+		context.addServlet(proxyHolder, GitRoute.DEFAULT_PATH + "/*");
 		_jetty.setHandler(context);
 		_jetty.start();
 		return "http://" + LOOPBACK + ":" + connector.getLocalPort() + CONTEXT_PATH + GitRoute.DEFAULT_PATH;

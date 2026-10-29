@@ -6,11 +6,9 @@
 package com.top_logic.factory.llm;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -25,6 +23,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.factory.proxy.AsyncAnswer;
 import com.top_logic.factory.proxy.ProxyAdmission;
 import com.top_logic.factory.proxy.ProxyError;
 import com.top_logic.factory.proxy.ProxyExchange;
@@ -305,28 +304,37 @@ public class LLMRoute implements ProxyRoute {
 			return;
 		}
 
-		HttpResponse<InputStream> response;
-		try {
-			response = client(upstream).send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
-		} catch (HttpTimeoutException ex) {
+		AsyncAnswer answer = exchange.startAsync();
+		ProxyForwarding.sendAsync(client(upstream), request.build()).whenComplete((response, failure) -> {
+			try {
+				if (failure != null) {
+					failed(exchange, target, ProxyForwarding.cause(failure));
+					answer.complete();
+					return;
+				}
+				if (response.statusCode() == SC_UNAUTHORIZED) {
+					upstream.credentials().invalidate();
+				}
+				ProxyForwarding.passBack(response, exchange, answer);
+			} catch (IOException | RuntimeException ex) {
+				Logger.info("LLM proxy: answer to the client failed: " + ex.getMessage(), LLMRoute.class);
+				answer.complete();
+			}
+		});
+	}
+
+	/**
+	 * Answers a request whose upstream gave no answer.
+	 */
+	private static void failed(ProxyExchange exchange, URI target, Throwable failure) throws IOException {
+		if (failure instanceof HttpTimeoutException) {
 			Logger.warn("LLM proxy: " + target + " did not answer in time.", LLMRoute.class);
 			error(exchange, SC_GATEWAY_TIMEOUT, API_ERROR, "The LLM API did not answer in time.");
-			return;
-		} catch (IOException ex) {
-			Logger.warn("LLM proxy: " + target + " not reachable: " + ex.getClass().getName() + ": "
-				+ ex.getMessage(), LLMRoute.class);
+		} else {
+			Logger.warn("LLM proxy: " + target + " not reachable: " + failure.getClass().getName() + ": "
+				+ failure.getMessage(), LLMRoute.class);
 			error(exchange, SC_BAD_GATEWAY, API_ERROR, "The LLM API is not reachable.");
-			return;
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
-			error(exchange, SC_SERVICE_UNAVAILABLE, API_ERROR, "Interrupted.");
-			return;
 		}
-
-		if (response.statusCode() == SC_UNAUTHORIZED) {
-			upstream.credentials().invalidate();
-		}
-		ProxyForwarding.sendResponse(response, exchange);
 	}
 
 	@Override

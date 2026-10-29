@@ -6,10 +6,6 @@
 package com.top_logic.factory.proxy;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServlet;
@@ -54,79 +50,7 @@ public class WorkspaceProxyServlet extends HttpServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		_handler.handle(new ServletExchange(req, resp));
-	}
-
-	/**
-	 * {@link ProxyExchange} of a servlet request.
-	 */
-	private static final class ServletExchange implements ProxyExchange {
-
-		private final HttpServletRequest _req;
-
-		private final HttpServletResponse _resp;
-
-		ServletExchange(HttpServletRequest req, HttpServletResponse resp) {
-			_req = req;
-			_resp = resp;
-		}
-
-		@Override
-		public String method() {
-			return _req.getMethod();
-		}
-
-		@Override
-		public String path() {
-			String pathInfo = _req.getPathInfo();
-			return _req.getServletPath() + (pathInfo == null ? "" : pathInfo);
-		}
-
-		@Override
-		public String query() {
-			return _req.getQueryString();
-		}
-
-		@Override
-		public String remoteAddress() {
-			return _req.getRemoteAddr();
-		}
-
-		@Override
-		public List<String> headerNames() {
-			return Collections.list(_req.getHeaderNames());
-		}
-
-		@Override
-		public List<String> headers(String name) {
-			return Collections.list(_req.getHeaders(name));
-		}
-
-		@Override
-		public InputStream body() throws IOException {
-			return _req.getInputStream();
-		}
-
-		@Override
-		public void addHeader(String name, String value) {
-			_resp.addHeader(name, value);
-		}
-
-		@Override
-		public void sendHeaders(int status, long length) throws IOException {
-			_resp.setStatus(status);
-			if (length >= 0) {
-				_resp.setContentLengthLong(length);
-			} else {
-				// Commits status and headers, so that a streamed answer starts at once.
-				_resp.flushBuffer();
-			}
-		}
-
-		@Override
-		public OutputStream responseBody() throws IOException {
-			return _resp.getOutputStream();
-		}
+		_handler.handle(new ServletProxyExchange(req, resp));
 	}
 
 }

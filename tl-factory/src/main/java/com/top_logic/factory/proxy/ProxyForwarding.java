@@ -6,16 +6,25 @@
 package com.top_logic.factory.proxy;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Flow;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * Forwarding of a {@link ProxyExchange} to an upstream with the HTTP client of the JDK, shared by
@@ -45,25 +54,54 @@ public final class ProxyForwarding {
 	public static final String TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 
 	/**
-	 * Request headers (lower case) that are never forwarded: the credentials of the proxy, cookies
-	 * of the control application, hop-by-hop headers, and the headers the HTTP client sets itself.
+	 * Header carrying the cookies of a request.
 	 */
-	public static final Set<String> DROPPED_REQUEST_HEADERS = Set.of(
-		AUTHORIZATION.toLowerCase(Locale.ROOT), "cookie", "host", CONTENT_LENGTH.toLowerCase(Locale.ROOT), "expect",
-		"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "proxy-connection", "te",
-		"trailer", "transfer-encoding", "upgrade", "http2-settings");
+	public static final String COOKIE = "Cookie";
 
 	/**
-	 * Response headers (lower case) that are not passed back: hop-by-hop headers, the length (the
-	 * server chooses the transfer), and cookies of the upstream.
+	 * Header of an answer setting a cookie.
 	 */
-	public static final Set<String> DROPPED_RESPONSE_HEADERS = Set.of(
-		CONTENT_LENGTH.toLowerCase(Locale.ROOT), "set-cookie", "connection", "keep-alive", "proxy-authenticate",
-		"proxy-authorization", "proxy-connection", "te", "trailer", "transfer-encoding", "upgrade");
+	public static final String SET_COOKIE = "Set-Cookie";
+
+	/**
+	 * Header naming the encoding of the body in transfer.
+	 */
+	public static final String TRANSFER_ENCODING = "Transfer-Encoding";
+
+	/**
+	 * Request headers (lower case) a proxy never forwards: hop-by-hop headers and the headers the
+	 * HTTP client sets itself.
+	 */
+	public static final Set<String> HOP_BY_HOP_REQUEST_HEADERS = Set.of(
+		"host", CONTENT_LENGTH.toLowerCase(Locale.ROOT), "expect", "connection", "keep-alive", "proxy-authenticate",
+		"proxy-authorization", "proxy-connection", "te", "trailer", TRANSFER_ENCODING.toLowerCase(Locale.ROOT),
+		"upgrade", "http2-settings");
+
+	/**
+	 * Request headers (lower case) the routes of the workspace proxy never forward: the
+	 * {@link #HOP_BY_HOP_REQUEST_HEADERS}, the credentials of the proxy and cookies of the control
+	 * application.
+	 */
+	public static final Set<String> DROPPED_REQUEST_HEADERS =
+		union(HOP_BY_HOP_REQUEST_HEADERS, AUTHORIZATION.toLowerCase(Locale.ROOT), COOKIE.toLowerCase(Locale.ROOT));
+
+	/**
+	 * Response headers (lower case) a proxy never passes back: hop-by-hop headers and the length
+	 * (the server chooses the transfer).
+	 */
+	public static final Set<String> HOP_BY_HOP_RESPONSE_HEADERS = Set.of(
+		CONTENT_LENGTH.toLowerCase(Locale.ROOT), "connection", "keep-alive", "proxy-authenticate",
+		"proxy-authorization", "proxy-connection", "te", "trailer", TRANSFER_ENCODING.toLowerCase(Locale.ROOT),
+		"upgrade");
+
+	/**
+	 * Response headers (lower case) the routes of the workspace proxy do not pass back: the
+	 * {@link #HOP_BY_HOP_RESPONSE_HEADERS} and cookies of the upstream.
+	 */
+	public static final Set<String> DROPPED_RESPONSE_HEADERS =
+		union(HOP_BY_HOP_RESPONSE_HEADERS, SET_COOKIE.toLowerCase(Locale.ROOT));
 
 	private static final String PSEUDO_HEADER_PREFIX = ":";
-
-	private static final int BUFFER_SIZE = 8 * 1024;
 
 	private ProxyForwarding() {
 		// Static utility.
@@ -83,15 +121,39 @@ public final class ProxyForwarding {
 	 */
 	public static void copyRequestHeaders(ProxyExchange exchange, HttpRequest.Builder request,
 			Set<String> alsoDropped) {
+		forwardRequestHeaders(exchange, request,
+			lower -> DROPPED_REQUEST_HEADERS.contains(lower) || alsoDropped.contains(lower));
+	}
+
+	/**
+	 * Copies the headers of the request to the forwarded request, except the given ones.
+	 *
+	 * @param exchange
+	 *        The request of the client.
+	 * @param request
+	 *        The request to the upstream.
+	 * @param dropped
+	 *        Whether the header of the given name (lower case) is not forwarded; it must drop at
+	 *        least the {@link #HOP_BY_HOP_REQUEST_HEADERS}.
+	 */
+	public static void forwardRequestHeaders(ProxyExchange exchange, HttpRequest.Builder request,
+			Predicate<String> dropped) {
 		for (String name : exchange.headerNames()) {
-			String lower = name.toLowerCase(Locale.ROOT);
-			if (DROPPED_REQUEST_HEADERS.contains(lower) || alsoDropped.contains(lower)) {
+			if (dropped.test(name.toLowerCase(Locale.ROOT))) {
 				continue;
 			}
 			for (String value : exchange.headers(name)) {
 				request.header(name, value);
 			}
 		}
+	}
+
+	/**
+	 * Whether the request has a body: it names its {@link #CONTENT_LENGTH} above zero or a
+	 * {@link #TRANSFER_ENCODING}.
+	 */
+	public static boolean hasRequestBody(ProxyExchange exchange) {
+		return contentLength(exchange) > 0 || !exchange.headers(TRANSFER_ENCODING).isEmpty();
 	}
 
 	/**
@@ -135,31 +197,97 @@ public final class ProxyForwarding {
 	}
 
 	/**
-	 * Passes status, headers and body of the answer of the upstream back to the client, except the
-	 * {@link #DROPPED_RESPONSE_HEADERS}; the body is flushed piece by piece as it arrives, so that
-	 * a stream reaches the client while it is produced.
+	 * Sends the request to the upstream without waiting: the answer arrives with its status and
+	 * headers, its body is published as it arrives, see
+	 * {@link #passBack(HttpResponse, ProxyExchange, AsyncAnswer)}.
 	 */
-	public static void sendResponse(HttpResponse<InputStream> response, ProxyExchange exchange) throws IOException {
-		try (InputStream in = response.body()) {
-			for (Map.Entry<String, List<String>> header : response.headers().map().entrySet()) {
-				String name = header.getKey();
-				String lower = name.toLowerCase(Locale.ROOT);
-				if (lower.startsWith(PSEUDO_HEADER_PREFIX) || DROPPED_RESPONSE_HEADERS.contains(lower)) {
-					continue;
-				}
-				for (String value : header.getValue()) {
+	public static CompletableFuture<HttpResponse<Flow.Publisher<List<ByteBuffer>>>> sendAsync(HttpClient client,
+			HttpRequest request) {
+		return client.sendAsync(request, HttpResponse.BodyHandlers.ofPublisher());
+	}
+
+	/**
+	 * Passes status, headers and body of the answer of the upstream back to the client, except the
+	 * {@link #DROPPED_RESPONSE_HEADERS}; the body is passed on piece by piece as it arrives, so
+	 * that a stream reaches the client while it is produced.
+	 *
+	 * @param answer
+	 *        The {@link ProxyExchange#startAsync() asynchronous answer} of the exchange, completed
+	 *        at the end of the body.
+	 */
+	public static void passBack(HttpResponse<Flow.Publisher<List<ByteBuffer>>> response, ProxyExchange exchange,
+			AsyncAnswer answer) throws IOException {
+		passBack(response, exchange, answer, (lower, value) -> !DROPPED_RESPONSE_HEADERS.contains(lower));
+	}
+
+	/**
+	 * Passes status, headers and body of the answer of the upstream back to the client, except the
+	 * headers the given filter drops; the body is passed on piece by piece as it arrives, so that a
+	 * stream reaches the client while it is produced.
+	 *
+	 * @param answer
+	 *        The {@link ProxyExchange#startAsync() asynchronous answer} of the exchange, completed
+	 *        at the end of the body.
+	 * @param passed
+	 *        Whether the header of the given name (lower case) with the given value is passed
+	 *        back; it must drop at least the {@link #HOP_BY_HOP_RESPONSE_HEADERS}.
+	 */
+	public static void passBack(HttpResponse<Flow.Publisher<List<ByteBuffer>>> response, ProxyExchange exchange,
+			AsyncAnswer answer, BiPredicate<String, String> passed) throws IOException {
+		for (Map.Entry<String, List<String>> header : response.headers().map().entrySet()) {
+			String name = header.getKey();
+			String lower = name.toLowerCase(Locale.ROOT);
+			if (lower.startsWith(PSEUDO_HEADER_PREFIX)) {
+				continue;
+			}
+			for (String value : header.getValue()) {
+				if (passed.test(lower, value)) {
 					exchange.addHeader(name, value);
 				}
 			}
-			exchange.sendHeaders(response.statusCode(), -1);
-			OutputStream out = exchange.responseBody();
-			byte[] buffer = new byte[BUFFER_SIZE];
-			int length;
-			while ((length = in.read(buffer)) >= 0) {
-				out.write(buffer, 0, length);
-				out.flush();
-			}
 		}
+		exchange.sendHeaders(response.statusCode(), -1);
+		answer.stream(response.body());
+	}
+
+	/**
+	 * Drops the body of an answer of the upstream that is not passed back, releasing its
+	 * connection.
+	 */
+	public static void discard(HttpResponse<Flow.Publisher<List<ByteBuffer>>> response) {
+		response.body().subscribe(new Flow.Subscriber<>() {
+			@Override
+			public void onSubscribe(Flow.Subscription subscription) {
+				subscription.cancel();
+			}
+
+			@Override
+			public void onNext(List<ByteBuffer> item) {
+				// Cancelled.
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				// Dropped anyway.
+			}
+
+			@Override
+			public void onComplete() {
+				// Dropped anyway.
+			}
+		});
+	}
+
+	/**
+	 * The failure of an asynchronous send, without the wrapping of the future.
+	 */
+	public static Throwable cause(Throwable failure) {
+		Throwable result = failure;
+		while ((result instanceof CompletionException || result instanceof ExecutionException)
+			&& result.getCause() != null) {
+			result = result.getCause();
+		}
+		return result;
 	}
 
 	/**
@@ -171,6 +299,12 @@ public final class ProxyForwarding {
 		OutputStream out = exchange.responseBody();
 		out.write(body);
 		out.flush();
+	}
+
+	private static Set<String> union(Set<String> headers, String... more) {
+		Set<String> result = new HashSet<>(headers);
+		result.addAll(Arrays.asList(more));
+		return Set.copyOf(result);
 	}
 
 	/**

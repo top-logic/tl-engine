@@ -32,6 +32,10 @@ import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.factory.agent.StoredConversation;
+import com.top_logic.factory.preview.PreviewLookup;
+import com.top_logic.factory.preview.PreviewRefusal;
+import com.top_logic.factory.preview.PreviewTarget;
+import com.top_logic.factory.preview.StoredPreviewWorkspaces;
 import com.top_logic.factory.project.FactoryFunctions;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.WorkspaceStatus;
@@ -40,6 +44,7 @@ import com.top_logic.factory.tenant.TenantMembers;
 import com.top_logic.factory.tenant.TenantMembers.NewAccount;
 import com.top_logic.factory.tenant.TenantRole;
 import com.top_logic.factory.tenant.Tenants;
+import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -70,8 +75,8 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test of the access to the tenants of the control application, their members, their projects and
- * the workspaces of the projects, with the access configuration of the module, and of the
- * management of the members of a tenant.
+ * the workspaces of the projects and their previews, with the access configuration of the module,
+ * and of the management of the members of a tenant.
  *
  * <p>
  * Tenant A has an administrator, a developer and a reader; tenant B a developer. The operator holds
@@ -86,6 +91,8 @@ public class TestTenantAccess extends BasicTestCase {
 	private static final String OPERATOR_ROLE = "tl.factory.Operator";
 
 	private static final String SECURITY_STRUCTURE = "SecurityStructure";
+
+	private static final int PREVIEW_PORT = 20001;
 
 	private static final BoundCommandGroup READ = SimpleBoundCommandGroup.READ;
 
@@ -312,6 +319,41 @@ public class TestTenantAccess extends BasicTestCase {
 					ex.getErrorKey());
 			}
 		}
+	}
+
+	/**
+	 * The preview route forwards to the application of a running workspace only for the members of
+	 * the tenant of its project and the operators.
+	 */
+	public void testPreviewAccess() {
+		inTransaction(() -> {
+			FactoryModel.setStatus(_workspaceA, WorkspaceStatus.RUNNING);
+			FactoryModel.setEndpoint(_workspaceA, Integer.valueOf(PREVIEW_PORT), null);
+		});
+		StoredPreviewWorkspaces previews = new StoredPreviewWorkspaces();
+		PreviewTarget expected = new PreviewTarget(FactoryModel.getContextPath(_workspaceA),
+			StoredPreviewWorkspaces.origin(WorkspaceProvider.LOOPBACK_ADDRESS, PREVIEW_PORT));
+		for (Person member : List.of(_adminA, _developerA, _readerA, _operator)) {
+			assertEquals(member.getName(), PreviewLookup.found(expected),
+				previews.lookup(member, FactoryModel.getWorkspaceId(_workspaceA)));
+		}
+		for (Person other : List.of(_developerB, _noTenant)) {
+			assertEquals(other.getName(), PreviewLookup.refused(PreviewRefusal.FORBIDDEN),
+				previews.lookup(other, FactoryModel.getWorkspaceId(_workspaceA)));
+		}
+		assertEquals(PreviewLookup.refused(PreviewRefusal.NOT_LOGGED_IN),
+			previews.lookup((Person) null, FactoryModel.getWorkspaceId(_workspaceA)));
+		assertEquals(PreviewLookup.refused(PreviewRefusal.NOT_FOUND), previews.lookup(_developerA, "no-such-workspace"));
+
+		inTransaction(() -> FactoryModel.setStatus(_workspaceA, WorkspaceStatus.APP_STOPPED));
+		assertEquals(PreviewLookup.refused(PreviewRefusal.NOT_RUNNING),
+			previews.lookup(_developerA, FactoryModel.getWorkspaceId(_workspaceA)));
+		inTransaction(() -> {
+			FactoryModel.setStatus(_workspaceA, WorkspaceStatus.RUNNING);
+			FactoryModel.setEndpoint(_workspaceA, null, null);
+		});
+		assertEquals("Not published.", PreviewLookup.refused(PreviewRefusal.NOT_RUNNING),
+			previews.lookup(_developerA, FactoryModel.getWorkspaceId(_workspaceA)));
 	}
 
 	public void testContinueConversation() {

@@ -5,6 +5,7 @@
  */
 package com.top_logic.factory.workspace;
 
+import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -81,7 +82,8 @@ public class WorkspaceService extends ConfiguredManagedClass<WorkspaceService.Co
 	public WorkspaceService(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_provider = context.getInstance(config.getProvider());
-		_applications = new ApplicationWorkspaces(config.getApplications(), _provider);
+		_applications = new ApplicationWorkspaces(config.getApplications(), _provider,
+			AliasManager.getInstance().getAlias(AliasManager.APP_CONTEXT));
 	}
 
 	/**

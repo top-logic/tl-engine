@@ -177,10 +177,12 @@ before (running container = running application).
 ### Context path and external URL
 
 The application of a workspace answers under a context path of its own, which may have several
-segments: by default `/preview/<workspace>/<artifactId>`, e.g.
-`/preview/my-app-1a2b3c4d/my-app`. The pattern is the property `context-path` of the
-`applications` of `WorkspaceService` (`tl_factory_context_path`); `{workspace}` stands for the
-identifier of the workspace, `{artifact}` for the artifact of the application
+segments: by default `<control context>/preview/<workspace>/<artifactId>`, the path of the
+workspace below the [preview route](#the-preview-route) of the control application, e.g.
+`/tl-factory-app/preview/my-app-1a2b3c4d/my-app`. The pattern is the property `context-path` of the
+`applications` of `WorkspaceService` (`tl_factory_context_path`); `{context}` stands for the
+context path of the control application (`%APP_CONTEXT%`, empty at the root), `{workspace}` for
+the identifier of the workspace, `{artifact}` for the artifact of the application
 (`ApplicationWorkspaces.contextPath`). Every segment consists of letters, digits, `.`, `_`, `~`
 and `-`; no segment may be `view` or `servlet`, where the client of a TopLogic application finds
 its routes, and the first one not `admin`, where the development server stops a running instance.
@@ -210,6 +212,64 @@ of them, it ends with `-` and eight hex digits.
   requests `<tl_host>/admin/stop` on every start to stop an instance running before; the origin
   must answer that request with another status than 200, e.g. 404: a 200 with the body `OK`
   stops the server answering there, a 200 with another body keeps the application from starting.
+
+### The preview route
+
+A browser reaches the application of a workspace through the control application:
+`<control origin><control context>/preview/<workspace>/<artifactId>/...` (`PreviewServlet`,
+mapped to `/preview/*` in the `web-fragment.xml` of `tl-factory`) is a reverse proxy to the
+published port of the workspace. The path is forwarded unchanged - no URL of a page, redirect or
+cookie is rewritten -, which is why the application serves exactly the browser-visible path,
+including the context path of the control application.
+
+- **What is forwarded.** The first segment below `/preview` names the workspace. Only a path that,
+  as sent and decoded, is the stored context path of that workspace or below it, without `.` or
+  `..` segments (also with path parameters such as `..;`) and without backslash, is forwarded
+  (`PreviewRoute.target`); everything else is answered with 404 and reaches no container, so
+  neither `/admin/stop` of the development server nor another path of the workspace or of another
+  workspace can be requested through the route. A workspace whose stored context path is not below
+  `/preview/<its identifier>` of the current control context - one created with another pattern or
+  before the context path was recorded - is reached only after an update.
+- **Access check.** The client is the user the `SessionService` registered for the HTTP session at
+  the login to the control application; the request passes only if this user may read the project
+  of the workspace (`StoredPreviewWorkspaces`, `ModelAccessRights` with the user's rights): the
+  members of the tenant and the operators. Without a logged-in session the answer is 403 ("Log in
+  to the control application"), for another user 403, for an unknown workspace 404, for a
+  workspace that is not `RUNNING` or `STARTING` or has no published port 503, and 503 as well if
+  the application does not accept the connection.
+- **Target.** `http://<address>:<host port>` with the stored host port of the workspace; the address
+  is the one the ports are published on (`WorkspaceProvider.publishedAddress()`): `host-ip` of the
+  Docker provider (`tl_factory_host_ip`), the loopback address if it is empty or a wildcard. The
+  published ports stay bound to that address; the route is what makes a workspace reachable from
+  other hosts. The context path contains the identifier of the workspace, so a stale host port
+  that now belongs to another workspace answers 404.
+- **Headers and streams.** Method, body and all headers except the hop-by-hop headers pass; the
+  application gets `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host`, and the `Host`
+  of its own address. Redirects are passed back, not followed: TopLogic (Jetty) answers with a
+  path-absolute `Location`, which stays below the origin of the control application. The answer
+  is streamed back and flushed piece by piece, so Server-Sent Events of the React UI arrive at
+  once (the heartbeat of the stream keeps the connection busy); its headers replace the ones the
+  filters of the control application set, e.g. `X-Frame-Options`. Websocket upgrades are not
+  forwarded; the TopLogic UI does not use websockets. The forwarding uses the HTTP client of the
+  JDK (`ProxyForwarding`), not a Jetty proxy servlet: the development server hides the Jetty
+  classes from the web application.
+- **No thread per stream.** The route answers asynchronously (`ServletProxyExchange.startAsync`,
+  servlet `async-supported`): the request goes out with `HttpClient.sendAsync`, the body comes
+  back as a publisher and is written with non-blocking output, one piece requested after the
+  client took the one before. No thread of the control application waits for the application or
+  for the client, so open preview tabs do not use up its thread pool. A client that goes away
+  cancels the body, which closes the connection to the container. The routes of the workspace
+  proxy (LLM, git) forward the same way.
+- **Cookies.** The control application and the application both use the session cookie
+  `JSESSIONID`, with the paths `<control context>` and `<context path of the workspace>`, so the
+  browser sends both with every request of the route. Jetty takes the first of several session
+  cookies that names a valid session of its own, so each server finds its session. The route
+  removes the session cookie of the control application - the one whose value is the session of the
+  request - from what it forwards, so the application of the workspace, code of the tenant, never
+  sees it (`PreviewRoute.forwardedCookies`). A cookie the application sets passes only if it has no
+  `Domain` and its `Path` is absent or below its context path (`PreviewRoute.isConfinedCookie`), so
+  it can neither replace the session cookie of the control application nor set cookies of other
+  workspaces.
 
 ### Pinned versions
 
@@ -372,7 +432,7 @@ then.
 | `tl_factory_repository_url` | TopLogic Nexus | Maven repository the TopLogic releases are taken from. |
 | `tl_factory_start_timeout` | `600` | Seconds a started application has to answer. |
 | `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
-| `tl_factory_context_path` | `/preview/{workspace}/{artifact}` | Pattern of the context path the application of a workspace is served under, see [context path](#context-path-and-external-url). |
+| `tl_factory_context_path` | `{context}/preview/{workspace}/{artifact}` | Pattern of the context path the application of a workspace is served under, see [context path](#context-path-and-external-url). |
 | `tl_factory_application_origin` | *(empty)* | Origin under which a browser reaches the applications of the workspaces, given to them as `tl_host`; empty if not known. |
 | `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
 | `tl_factory_proxy_url` | *(empty)* | URL of the root of the workspace proxy as the workspace containers reach it, without the path of a route, e.g. `http://host.docker.internal:8091`; empty switches the proxy off, see [the workspace proxy](#the-workspace-proxy). |
@@ -432,9 +492,9 @@ provider creates every workspace container like this:
   unfinished application with its initial password is not reachable from the whole network. A
   rootful Docker daemon publishes ports by DNAT rules that come before the firewall rules of the
   host - UFW does not block them -, so the address is the restriction that holds. A server sets
-  the address explicitly, e.g. the internal address a reverse proxy forwards to; making the
-  previews reachable only through the login of the control application is a task of that reverse
-  proxy.
+  the address explicitly, e.g. the internal address a reverse proxy forwards to. The
+  [preview route](#the-preview-route) of the control application makes the previews reachable
+  through its login, with the published ports staying on that address.
 - **No traffic between workspaces** (`isolate-workspaces`, `tl_factory_docker_isolate`): the
   workspace network is created with `com.docker.network.bridge.enable_icc=false`
   (`DockerWorkspaceProvider.OPTION_ENABLE_ICC`). A workspace reaches the daemon host through the

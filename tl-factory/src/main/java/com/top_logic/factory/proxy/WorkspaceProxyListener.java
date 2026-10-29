@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Flow;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,12 +74,18 @@ public class WorkspaceProxyListener implements AutoCloseable {
 			thread.setDaemon(true);
 			return thread;
 		};
-		// A streamed request or answer holds its thread as long as it is transferred.
+		// A streamed request holds its thread as long as it is read; an answer is written on the
+		// threads of the upstream client.
 		_executor = Executors.newCachedThreadPool(factory);
 		_server.setExecutor(_executor);
 		_server.createContext(ROOT_PATH, exchange -> {
-			try (exchange) {
-				_handler.handle(new JdkExchange(exchange));
+			JdkExchange proxyExchange = new JdkExchange(exchange);
+			try {
+				_handler.handle(proxyExchange);
+			} finally {
+				if (!proxyExchange.isAsync()) {
+					exchange.close();
+				}
 			}
 		});
 		_server.start();
@@ -107,6 +115,8 @@ public class WorkspaceProxyListener implements AutoCloseable {
 	private static final class JdkExchange implements ProxyExchange {
 
 		private final HttpExchange _exchange;
+
+		private JdkAsyncAnswer _async;
 
 		JdkExchange(HttpExchange exchange) {
 			_exchange = exchange;
@@ -167,6 +177,77 @@ public class WorkspaceProxyListener implements AutoCloseable {
 		@Override
 		public OutputStream responseBody() {
 			return _exchange.getResponseBody();
+		}
+
+		@Override
+		public AsyncAnswer startAsync() {
+			if (_async == null) {
+				_async = new JdkAsyncAnswer();
+			}
+			return _async;
+		}
+
+		boolean isAsync() {
+			return _async != null;
+		}
+
+		/**
+		 * {@link AsyncAnswer} of the HTTP server of the JDK, whose output only blocks: a piece of
+		 * the body is written on the thread delivering it, no thread waits for the upstream.
+		 */
+		private final class JdkAsyncAnswer implements AsyncAnswer, Flow.Subscriber<List<ByteBuffer>> {
+
+			private Flow.Subscription _subscription;
+
+			private boolean _completed;
+
+			@Override
+			public void stream(Flow.Publisher<List<ByteBuffer>> body) {
+				body.subscribe(this);
+			}
+
+			@Override
+			public void onSubscribe(Flow.Subscription subscription) {
+				_subscription = subscription;
+				subscription.request(1);
+			}
+
+			@Override
+			public void onNext(List<ByteBuffer> item) {
+				try {
+					OutputStream out = _exchange.getResponseBody();
+					for (ByteBuffer buffer : item) {
+						byte[] bytes = new byte[buffer.remaining()];
+						buffer.get(bytes);
+						out.write(bytes);
+					}
+					out.flush();
+				} catch (IOException ex) {
+					// The client went away.
+					_subscription.cancel();
+					complete();
+					return;
+				}
+				_subscription.request(1);
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				complete();
+			}
+
+			@Override
+			public void onComplete() {
+				complete();
+			}
+
+			@Override
+			public synchronized void complete() {
+				if (!_completed) {
+					_completed = true;
+					_exchange.close();
+				}
+			}
 		}
 	}
 

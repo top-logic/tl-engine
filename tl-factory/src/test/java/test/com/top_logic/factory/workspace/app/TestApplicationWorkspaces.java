@@ -5,7 +5,13 @@
  */
 package test.com.top_logic.factory.workspace.app;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,13 +24,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
+import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
@@ -40,12 +58,20 @@ import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.factory.preview.PreviewLookup;
+import com.top_logic.factory.preview.PreviewRefusal;
+import com.top_logic.factory.preview.PreviewServlet;
+import com.top_logic.factory.preview.PreviewTarget;
+import com.top_logic.factory.preview.PreviewWorkspaces;
+import com.top_logic.factory.preview.StoredPreviewWorkspaces;
+import com.top_logic.factory.proxy.ProxyForwarding;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.ImageContext;
 import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.WorkspaceInfo;
+import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.WorkspaceState;
 import com.top_logic.factory.workspace.app.ApplicationFailedException;
@@ -56,9 +82,9 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 
 /**
  * Integration test of {@link ApplicationWorkspaces}: an application is generated, built and run in
- * a Docker workspace with a given initial password of its account root, the tools of an agent are
- * checked in the workspace, the workspace is stopped, started again, updated to another image and
- * removed.
+ * a Docker workspace with a given initial password of its account root, reached through the
+ * {@link PreviewServlet preview route}, the tools of an agent are checked in the workspace, the
+ * workspace is stopped, started again, updated to another image and removed.
  *
  * <p>
  * The test downloads the workspace base image, Maven and the TopLogic release artifacts and takes
@@ -234,6 +260,52 @@ public class TestApplicationWorkspaces extends TestCase {
 		+ "\"params\":{\"name\":\"browser_navigate\","
 		+ "\"arguments\":{\"url\":\"data:text/html,<title>" + BROWSER_CHECK_TITLE + "</title>\"}}}";
 
+	/**
+	 * Context path of the control application the preview route of the test runs in, and in which
+	 * the context path of the application is therefore placed.
+	 */
+	private static final String CONTROL_CONTEXT = "/factory-it-control";
+
+	/**
+	 * Path of the control application logging the client in, answering with the session.
+	 */
+	private static final String CONTROL_LOGIN = "/login";
+
+	/**
+	 * Session attribute of a client logged into the control application.
+	 */
+	private static final String LOGGED_IN = "loggedIn";
+
+	/**
+	 * Path of the stream of {@link #SSE_SERVER} below the context path of the application.
+	 */
+	private static final String SSE_PATH = "/events";
+
+	/**
+	 * Output of {@link #SSE_SERVER} once it listens.
+	 */
+	private static final String SSE_LISTENING = "sse-listening";
+
+	/**
+	 * A server of Server-Sent Events on the container port, run with node in the workspace in place
+	 * of the application: it answers its argument, a path, with a stream that never ends, a comment
+	 * and then an event every half second.
+	 */
+	private static final String SSE_SERVER = "const path = process.argv[1];"
+		+ "require('http').createServer((req, res) => {"
+		+ " if (req.url !== path) { res.writeHead(404); res.end(); return; }"
+		+ " res.writeHead(200, {'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache'});"
+		+ " res.write(': connected\\n\\n');"
+		+ " let n = 0;"
+		+ " const timer = setInterval(() => res.write('data: ' + (n++) + '\\n\\n'), 500);"
+		+ " req.on('close', () => clearInterval(timer));"
+		+ "}).listen(" + WorkspaceSpec.DEFAULT_CONTAINER_PORT + ", () => console.log('" + SSE_LISTENING + "'));";
+
+	/**
+	 * Maximum number of redirects followed to the login page.
+	 */
+	private static final int MAX_REDIRECTS = 5;
+
 	private DockerWorkspaceProvider _provider;
 
 	private ApplicationWorkspaces _applications;
@@ -257,8 +329,8 @@ public class TestApplicationWorkspaces extends TestCase {
 		super.setUp();
 		_workspaceId = "app-" + UUID.randomUUID().toString().substring(0, 8);
 		_provider = createProvider();
-		_applications =
-			new ApplicationWorkspaces(TypedConfiguration.newConfigItem(ApplicationWorkspaces.Config.class), _provider);
+		_applications = new ApplicationWorkspaces(TypedConfiguration.newConfigItem(ApplicationWorkspaces.Config.class),
+			_provider, CONTROL_CONTEXT);
 		_contextPath = _applications.contextPath(_workspaceId, ARTIFACT_ID);
 		_docker = createClient();
 	}
@@ -313,10 +385,12 @@ public class TestApplicationWorkspaces extends TestCase {
 		String url = _applications.awaitApplication(_workspaceId, _contextPath);
 		long reachable = System.currentTimeMillis();
 		assertEquals("Not the multi-segment context path of the default pattern.",
-			"/preview/" + _workspaceId + "/" + ARTIFACT_ID, _contextPath);
+			CONTROL_CONTEXT + ApplicationWorkspaces.PREVIEW_PATH + "/" + _workspaceId + "/" + ARTIFACT_ID,
+			_contextPath);
 		assertEquals(ApplicationWorkspaces.applicationUrl(_provider.status(_workspaceId), _contextPath), url);
 		assertLoginPage(url);
 		assertServedBelow(url);
+		assertPreviewRoute();
 		assertInitialPassword(created.getContainerId());
 		assertAgentTools();
 		assertApplicationControl(url);
@@ -324,6 +398,8 @@ public class TestApplicationWorkspaces extends TestCase {
 			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + DATA_FILE), ExecOutput.NONE));
 		assertEquals("The workspace user cannot write the agent's conversations.", 0, _provider.exec(_workspaceId,
 			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + SESSION_FILE), ExecOutput.NONE));
+
+		assertStreamThroughPreview();
 
 		WorkspaceInfo stopped = _applications.stop(_workspaceId);
 		assertEquals(WorkspaceState.STOPPED, stopped.getState());
@@ -641,7 +717,7 @@ public class TestApplicationWorkspaces extends TestCase {
 	 * has an additional file, so that its current image is another one.
 	 */
 	private ApplicationWorkspaces changedImage() {
-		return new ApplicationWorkspaces(_applications.getConfig(), _provider) {
+		return new ApplicationWorkspaces(_applications.getConfig(), _provider, _applications.getControlContextPath()) {
 			@Override
 			protected ImageContext workspaceImageContext() {
 				return super.workspaceImageContext().add(CHANGED_IMAGE_FILE, _workspaceId);
@@ -759,6 +835,193 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertTrue("The login page refers to no script or stylesheet: " + login.body(), resources > 0);
 		URI layouts = URI.create(url + LAYOUT_ROUTE);
 		assertEquals("Status of " + layouts, 200, status(client, layouts));
+	}
+
+	/**
+	 * The application is reached through the preview route of a control application in front of
+	 * the workspace: only by a client logged into the control application, its login page with
+	 * its scripts and stylesheets and its layouts below the context path, after redirects that
+	 * stay below the origin of the control application; paths of the workspace outside the
+	 * application are not forwarded. The control application and the application each keep their
+	 * session, although both session cookies have the same name.
+	 */
+	private void assertPreviewRoute() throws Exception {
+		try (Control control = startControl()) {
+			CookieManager cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+			HttpClient browser = HttpClient.newBuilder()
+				.cookieHandler(cookies)
+				.connectTimeout(Duration.ofSeconds(10))
+				.followRedirects(HttpClient.Redirect.NEVER)
+				.build();
+			URI app = URI.create(control.origin() + _contextPath + "/");
+			assertEquals("Not logged into the control application.", 403, status(browser, app));
+
+			String controlSession = control.login(browser);
+			HttpResponse<String> login = followBelow(browser, app, control.origin());
+			String page = login.body().toLowerCase(Locale.ROOT);
+			assertTrue("Not a login page: " + login.body(), page.contains("<html") && page.contains("login"));
+			Matcher resource = PAGE_RESOURCE.matcher(login.body());
+			int resources = 0;
+			while (resource.find()) {
+				URI resourceUri = login.uri().resolve(resource.group(1).replace(" ", "%20"));
+				assertTrue("Resource not below the context path: " + resourceUri,
+					resourceUri.getPath().startsWith(_contextPath + "/"));
+				assertEquals("Status of " + resourceUri, 200, status(browser, resourceUri));
+				resources++;
+			}
+			assertTrue("The login page refers to no script or stylesheet: " + login.body(), resources > 0);
+			assertEquals(200, followBelow(browser, URI.create(app + LAYOUT_ROUTE), control.origin()).statusCode());
+			assertEquals("A path of the workspace outside the application.", 404, status(browser, URI.create(
+				control.origin() + CONTROL_CONTEXT + ApplicationWorkspaces.PREVIEW_PATH + "/" + _workspaceId + "/other/")));
+
+			List<HttpCookie> sessions = cookies.getCookieStore().getCookies().stream()
+				.filter(cookie -> cookie.getName().equals(PreviewServlet.DEFAULT_SESSION_COOKIE)).toList();
+			List<String> paths = sessions.stream().map(HttpCookie::getPath).sorted().toList();
+			assertEquals("One session cookie of each application: " + sessions, List.of(CONTROL_CONTEXT, _contextPath),
+				paths);
+			assertEquals("The session of the control application was replaced.", controlSession,
+				control.login(browser));
+			HttpResponse<String> again = followBelow(browser, URI.create(app + LAYOUT_ROUTE), control.origin());
+			assertEquals(200, again.statusCode());
+			assertTrue("The application started another session: " + again.headers().map(),
+				again.headers().allValues(ProxyForwarding.SET_COOKIE).stream()
+					.noneMatch(value -> value.startsWith(PreviewServlet.DEFAULT_SESSION_COOKIE + "=")));
+		}
+	}
+
+	/**
+	 * Requests the given URL through the preview route, following redirects that must stay below
+	 * the given origin and the context path of the application.
+	 *
+	 * @return The first answer that is no redirect.
+	 */
+	private HttpResponse<String> followBelow(HttpClient browser, URI url, String origin) throws Exception {
+		URI current = url;
+		for (int n = 0; n <= MAX_REDIRECTS; n++) {
+			HttpResponse<String> response = browser.send(
+				HttpRequest.newBuilder(current).timeout(Duration.ofSeconds(30)).build(),
+				HttpResponse.BodyHandlers.ofString());
+			int status = response.statusCode();
+			if (status < 300 || status >= 400) {
+				return response;
+			}
+			String location = response.headers().firstValue("Location").orElse(null);
+			assertNotNull("Redirect without location from " + current, location);
+			URI next = current.resolve(location);
+			assertTrue("Redirect leaves the origin of the control application: " + location,
+				(next.getScheme() + "://" + next.getAuthority()).equals(origin));
+			assertTrue("Redirect leaves the application: " + location,
+				next.getPath().startsWith(_contextPath + "/") || next.getPath().equals(_contextPath));
+			current = next;
+		}
+		fail("More than " + MAX_REDIRECTS + " redirects from " + url);
+		return null;
+	}
+
+	/**
+	 * A stream of Server-Sent Events from the published port of the workspace reaches the client
+	 * of the preview route while it is produced. The application is stopped for it, and a server
+	 * of such a stream listens on the container port in its place.
+	 */
+	private void assertStreamThroughPreview() throws Exception {
+		assertTrue(output(ExecCommand.of(ApplicationWorkspaces.APP_CONTROL_COMMAND, "stop")).contains("Stopped."));
+		CollectingOutput serverOutput = new CollectingOutput();
+		try (ExecProcess server = _provider.startExec(_workspaceId,
+			ExecCommand.of("node", "-e", SSE_SERVER, _contextPath + SSE_PATH), serverOutput);
+				Control control = startControl()) {
+			serverOutput.awaitStdoutContaining(SSE_LISTENING);
+			HttpClient browser = HttpClient.newBuilder()
+				.cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+				.connectTimeout(Duration.ofSeconds(10))
+				.build();
+			control.login(browser);
+			HttpResponse<InputStream> response = browser.send(
+				HttpRequest.newBuilder(URI.create(control.origin() + _contextPath + SSE_PATH)).build(),
+				HttpResponse.BodyHandlers.ofInputStream());
+			assertEquals(200, response.statusCode());
+			assertEquals("text/event-stream",
+				response.headers().firstValue(ProxyForwarding.CONTENT_TYPE).orElse(null));
+			try (BufferedReader reader =
+				new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
+				List<String> lines = CompletableFuture.supplyAsync(() -> {
+					List<String> result = new ArrayList<>();
+					try {
+						for (int n = 0; n < 6; n++) {
+							result.add(reader.readLine());
+						}
+					} catch (IOException ex) {
+						result.add(ex.toString());
+					}
+					return result;
+				}).get(WAIT.toSeconds(), TimeUnit.SECONDS);
+				assertEquals(List.of(": connected", "", "data: 0", "", "data: 1", ""), lines);
+			}
+			server.terminate();
+		}
+	}
+
+	/**
+	 * Starts a control application with the preview route in front of the workspace of the test,
+	 * which lets a client logged in at {@link #CONTROL_LOGIN} pass.
+	 */
+	private Control startControl() throws Exception {
+		PreviewWorkspaces workspaces = (request, workspaceId) -> {
+			HttpSession session = request.getSession(false);
+			if (session == null || session.getAttribute(LOGGED_IN) == null) {
+				return PreviewLookup.refused(PreviewRefusal.NOT_LOGGED_IN);
+			}
+			if (!workspaceId.equals(_workspaceId)) {
+				return PreviewLookup.refused(PreviewRefusal.NOT_FOUND);
+			}
+			return PreviewLookup.found(new PreviewTarget(_contextPath, StoredPreviewWorkspaces
+				.origin(_provider.publishedAddress(), _provider.status(_workspaceId).getHostPort())));
+		};
+		Server jetty = new Server();
+		ServerConnector connector = new ServerConnector(jetty);
+		connector.setHost(WorkspaceProvider.LOOPBACK_ADDRESS);
+		connector.setPort(0);
+		jetty.addConnector(connector);
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		context.setContextPath(CONTROL_CONTEXT);
+		context.addServlet(new ServletHolder(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+				HttpSession session = req.getSession(true);
+				session.setAttribute(LOGGED_IN, Boolean.TRUE);
+				resp.getWriter().write(session.getId());
+			}
+		}), CONTROL_LOGIN);
+		ServletHolder proxyHolder = new ServletHolder(new PreviewServlet(workspaces));
+		// The proxy answers asynchronously.
+		proxyHolder.setAsyncSupported(true);
+		context.addServlet(proxyHolder, ApplicationWorkspaces.PREVIEW_PATH + "/*");
+		jetty.setHandler(context);
+		jetty.start();
+		return new Control(jetty, "http://" + WorkspaceProvider.LOOPBACK_ADDRESS + ":" + connector.getLocalPort());
+	}
+
+	/**
+	 * A control application started by {@link #startControl()}.
+	 */
+	private record Control(Server jetty, String origin) implements AutoCloseable {
+
+		/**
+		 * Logs the given client into the control application.
+		 *
+		 * @return The session of the client in the control application.
+		 */
+		String login(HttpClient browser) throws IOException, InterruptedException {
+			HttpResponse<String> response = browser.send(
+				HttpRequest.newBuilder(URI.create(origin + CONTROL_CONTEXT + CONTROL_LOGIN)).build(),
+				HttpResponse.BodyHandlers.ofString());
+			assertEquals(200, response.statusCode());
+			return response.body();
+		}
+
+		@Override
+		public void close() throws Exception {
+			jetty.stop();
+		}
 	}
 
 	private static int status(HttpClient client, URI uri) throws IOException, InterruptedException {

@@ -6,11 +6,9 @@
 package com.top_logic.factory.git;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,6 +30,7 @@ import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.factory.project.FactoryModel;
+import com.top_logic.factory.proxy.AsyncAnswer;
 import com.top_logic.factory.proxy.ProxyAdmission;
 import com.top_logic.factory.proxy.ProxyError;
 import com.top_logic.factory.proxy.ProxyExchange;
@@ -539,41 +538,19 @@ public class GitRoute implements ProxyRoute {
 	private void forward(GitHostingProvider provider, RepositoryName repository, GitRequest request,
 			ProxyExchange exchange) throws IOException {
 		URI target = URI.create(provider.gitUrl(repository) + request.upstreamSuffix());
-		CredentialProvider credentials = provider.gitCredentials();
-
-		HttpResponse<InputStream> response = send(exchange, request, target, credentials);
-		if (response == null) {
-			return;
-		}
-		if (response.statusCode() == SC_UNAUTHORIZED) {
-			response.body().close();
-			credentials.invalidate();
-			if (request.hasBody()) {
-				// The body is gone, the request cannot be repeated.
-				rejectedCredentials(exchange, target);
-				return;
-			}
-			response = send(exchange, request, target, credentials);
-			if (response == null) {
-				return;
-			}
-			if (response.statusCode() == SC_UNAUTHORIZED) {
-				response.body().close();
-				credentials.invalidate();
-				rejectedCredentials(exchange, target);
-				return;
-			}
-		}
-		ProxyForwarding.sendResponse(response, exchange);
+		send(exchange, exchange.startAsync(), request, target, provider.gitCredentials(), true);
 	}
 
 	/**
-	 * Sends the request to the hosting service.
+	 * Sends the request to the hosting service and passes its answer back without waiting for it.
 	 *
-	 * @return The answer, {@code null} if there is none and the client got an error.
+	 * <p>
+	 * If the hosting service rejects the credentials, they are invalidated; a request without body
+	 * is then sent once more with fresh credentials if the given flag allows it.
+	 * </p>
 	 */
-	private HttpResponse<InputStream> send(ProxyExchange exchange, GitRequest request, URI target,
-			CredentialProvider credentials) throws IOException {
+	private void send(ProxyExchange exchange, AsyncAnswer answer, GitRequest request, URI target,
+			CredentialProvider credentials, boolean retry) throws IOException {
 		HttpRequest.Builder builder = HttpRequest.newBuilder(target).timeout(_responseTimeout);
 		if (request.hasBody()) {
 			builder.POST(ProxyForwarding.requestBody(exchange));
@@ -590,23 +567,49 @@ public class GitRoute implements ProxyRoute {
 		} catch (I18NRuntimeException ex) {
 			Logger.warn("Git proxy: no credentials for " + target + ": " + ex.getMessage(), GitRoute.class);
 			error(exchange, SC_SERVICE_UNAVAILABLE, "The credentials of the git hosting service are not available.");
-			return null;
+			answer.complete();
+			return;
 		}
 
-		try {
-			return client().send(builder.build(), HttpResponse.BodyHandlers.ofInputStream());
-		} catch (HttpTimeoutException ex) {
+		ProxyForwarding.sendAsync(client(), builder.build()).whenComplete((response, failure) -> {
+			try {
+				if (failure != null) {
+					failed(exchange, target, ProxyForwarding.cause(failure));
+					answer.complete();
+					return;
+				}
+				if (response.statusCode() == SC_UNAUTHORIZED) {
+					ProxyForwarding.discard(response);
+					credentials.invalidate();
+					if (retry && !request.hasBody()) {
+						send(exchange, answer, request, target, credentials, false);
+						return;
+					}
+					// The body of the request is gone, or the fresh credentials were rejected too.
+					rejectedCredentials(exchange, target);
+					answer.complete();
+					return;
+				}
+				ProxyForwarding.passBack(response, exchange, answer);
+			} catch (IOException | RuntimeException ex) {
+				Logger.info("Git proxy: answer to the client failed: " + ex.getMessage(), GitRoute.class);
+				answer.complete();
+			}
+		});
+	}
+
+	/**
+	 * Answers a request the hosting service gave no answer to.
+	 */
+	private static void failed(ProxyExchange exchange, URI target, Throwable failure) throws IOException {
+		if (failure instanceof HttpTimeoutException) {
 			Logger.warn("Git proxy: " + target + " did not answer in time.", GitRoute.class);
 			error(exchange, SC_GATEWAY_TIMEOUT, "The git hosting service did not answer in time.");
-		} catch (IOException ex) {
-			Logger.warn("Git proxy: " + target + " not reachable: " + ex.getClass().getName() + ": "
-				+ ex.getMessage(), GitRoute.class);
+		} else {
+			Logger.warn("Git proxy: " + target + " not reachable: " + failure.getClass().getName() + ": "
+				+ failure.getMessage(), GitRoute.class);
 			error(exchange, SC_BAD_GATEWAY, "The git hosting service is not reachable.");
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
-			error(exchange, SC_SERVICE_UNAVAILABLE, "Interrupted.");
 		}
-		return null;
 	}
 
 	private static void rejectedCredentials(ProxyExchange exchange, URI target) throws IOException {

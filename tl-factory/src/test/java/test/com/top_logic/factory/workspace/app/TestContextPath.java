@@ -16,7 +16,8 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Test of the context path of the application of a workspace,
- * {@link ApplicationWorkspaces#contextPath(String, String, String)}, and of the URL built from it,
+ * {@link ApplicationWorkspaces#contextPath(String, String, String, String)}, and of the URL built from
+ * it,
  * {@link ApplicationWorkspaces#applicationUrl(WorkspaceInfo, String)}.
  */
 public class TestContextPath extends TestCase {
@@ -25,12 +26,28 @@ public class TestContextPath extends TestCase {
 
 	private static final String ARTIFACT_ID = "my-app";
 
+	private static final String CONTROL_CONTEXT = "/tl-factory-app";
+
 	/**
-	 * The default pattern puts the workspace and the artifact into a path of several segments.
+	 * The default pattern puts the workspace and the artifact into a path of several segments
+	 * below the preview route of the control application, at the root or below its context path.
 	 */
 	public void testDefault() {
 		assertEquals("/preview/my-app-1a2b3c4d/my-app",
-			ApplicationWorkspaces.contextPath(ApplicationWorkspaces.DEFAULT_CONTEXT_PATH, WORKSPACE_ID, ARTIFACT_ID));
+			ApplicationWorkspaces.contextPath(ApplicationWorkspaces.DEFAULT_CONTEXT_PATH, "", WORKSPACE_ID,
+				ARTIFACT_ID));
+		assertEquals("/tl-factory-app/preview/my-app-1a2b3c4d/my-app",
+			ApplicationWorkspaces.contextPath(ApplicationWorkspaces.DEFAULT_CONTEXT_PATH, CONTROL_CONTEXT,
+				WORKSPACE_ID, ARTIFACT_ID));
+	}
+
+	/**
+	 * The context path of the control application is checked as part of the result.
+	 */
+	public void testInvalidControlContext() {
+		assertInvalid(ApplicationWorkspaces.DEFAULT_CONTEXT_PATH, "/view");
+		assertInvalid(ApplicationWorkspaces.DEFAULT_CONTEXT_PATH, "/admin");
+		assertInvalid(ApplicationWorkspaces.DEFAULT_CONTEXT_PATH, "/my app");
 	}
 
 	/**
@@ -39,11 +56,11 @@ public class TestContextPath extends TestCase {
 	 */
 	public void testPatterns() {
 		assertEquals(ApplicationWorkspaces.defaultContextPath(ARTIFACT_ID),
-			ApplicationWorkspaces.contextPath("/" + ApplicationWorkspaces.ARTIFACT_PLACEHOLDER, WORKSPACE_ID,
-				ARTIFACT_ID));
+			ApplicationWorkspaces.contextPath("/" + ApplicationWorkspaces.ARTIFACT_PLACEHOLDER, CONTROL_CONTEXT,
+				WORKSPACE_ID, ARTIFACT_ID));
 		assertEquals("/ws/my-app-1a2b3c4d.app/v1_~x",
 			ApplicationWorkspaces.contextPath("/ws/" + ApplicationWorkspaces.WORKSPACE_PLACEHOLDER + ".app/v1_~x",
-				WORKSPACE_ID, ARTIFACT_ID));
+				"", WORKSPACE_ID, ARTIFACT_ID));
 	}
 
 	/**
@@ -65,13 +82,17 @@ public class TestContextPath extends TestCase {
 		assertInvalid("/preview?x/{artifact}");
 		// "admin" is reserved only as first segment.
 		assertEquals("/preview/admin/my-app",
-			ApplicationWorkspaces.contextPath("/preview/admin/{artifact}", WORKSPACE_ID, ARTIFACT_ID));
+			ApplicationWorkspaces.contextPath("/preview/admin/{artifact}", "", WORKSPACE_ID, ARTIFACT_ID));
 	}
 
 	private static void assertInvalid(String pattern) {
+		assertInvalid(pattern, "");
+	}
+
+	private static void assertInvalid(String pattern, String controlContext) {
 		try {
-			ApplicationWorkspaces.contextPath(pattern, WORKSPACE_ID, ARTIFACT_ID);
-			fail("Accepted: " + pattern);
+			ApplicationWorkspaces.contextPath(pattern, controlContext, WORKSPACE_ID, ARTIFACT_ID);
+			fail("Accepted: " + pattern + " below " + controlContext);
 		} catch (TopLogicException ex) {
 			// Expected.
 		}

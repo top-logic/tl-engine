@@ -14,6 +14,7 @@
   <servlet>
     <servlet-name>WorkspaceProxyServlet</servlet-name>
     <servlet-class>com.top_logic.factory.proxy.WorkspaceProxyServlet</servlet-class>
+    <async-supported>true</async-supported>
   </servlet>
 
   <servlet-mapping>
@@ -21,5 +22,21 @@
     <url-pattern>/llm-proxy/*</url-pattern>
     <url-pattern>/git/*</url-pattern>
     <url-pattern>/ci/*</url-pattern>
+  </servlet-mapping>
+
+  <!--
+    The preview route: the reverse proxy to the applications of the workspaces, mapped to
+    ApplicationWorkspaces.PREVIEW_PATH. It lets a request pass only for a user logged into the
+    control application who may read the project of the workspace.
+  -->
+  <servlet>
+    <servlet-name>PreviewServlet</servlet-name>
+    <servlet-class>com.top_logic.factory.preview.PreviewServlet</servlet-class>
+    <async-supported>true</async-supported>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>PreviewServlet</servlet-name>
+    <url-pattern>/preview/*</url-pattern>
   </servlet-mapping>
 </web-fragment>

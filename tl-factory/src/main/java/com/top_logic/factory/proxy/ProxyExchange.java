@@ -75,4 +75,15 @@ public interface ProxyExchange {
 	 */
 	OutputStream responseBody() throws IOException;
 
+	/**
+	 * Continues the answer after the thread handling the request returns, e.g. to wait for an
+	 * upstream without holding that thread.
+	 *
+	 * <p>
+	 * Called at most once, before {@link #sendHeaders(int, long)}. From then on the exchange stays
+	 * open until the returned answer completes it; the body of the request can still be read.
+	 * </p>
+	 */
+	AsyncAnswer startAsync();
+
 }

@@ -507,9 +507,9 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	}
 
 	/**
-	 * The loopback address of the daemon host, the default {@link Config#getHostIp()}.
+	 * Addresses of {@link Config#getHostIp()} that publish a port on all addresses of the host.
 	 */
-	public static final String LOOPBACK_ADDRESS = "127.0.0.1";
+	private static final Set<String> WILDCARD_ADDRESSES = Set.of("", "0.0.0.0", "::", "[::]");
 
 	/**
 	 * Default of {@link Config#getMemoryLimit()}: {@code 8g}.
@@ -701,6 +701,21 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			.connectionTimeout(Duration.ofSeconds(config.getConnectTimeout()))
 			.build();
 		return DockerClientImpl.getInstance(clientConfig, httpClient);
+	}
+
+	/**
+	 * The {@link Config#getHostIp() address the ports are published on}, the loopback address if
+	 * they are published on all addresses.
+	 *
+	 * <p>
+	 * The daemon host is the host of this application: the ports are published on an address of
+	 * it.
+	 * </p>
+	 */
+	@Override
+	public String publishedAddress() {
+		String hostIp = getConfig().getHostIp() == null ? "" : getConfig().getHostIp().strip();
+		return WILDCARD_ADDRESSES.contains(hostIp) ? LOOPBACK_ADDRESS : hostIp;
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.factory.ci.CIJob;
 import com.top_logic.factory.git.GitRepository;
@@ -345,12 +346,9 @@ public class FactoryModel {
 	 * @return The workspace, {@code null} if there is none.
 	 */
 	public static TLObject findWorkspace(String workspaceId) {
-		for (TLObject workspace : allWorkspaces()) {
-			if (workspaceId.equals(getWorkspaceId(workspace))) {
-				return workspace;
-			}
-		}
-		return null;
+		List<TLObject> found =
+			AttributeOperations.instancesWithValue(workspaceType(), WORKSPACE_ID, workspaceId, TLObject.class);
+		return found.isEmpty() ? null : found.get(0);
 	}
 
 	/**

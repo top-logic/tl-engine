@@ -196,20 +196,28 @@ public class ApplicationWorkspaces {
 		 * Pattern of the context path the application of a workspace is served under.
 		 *
 		 * <p>
-		 * Placeholders stand for the identifier of the workspace and the artifact of the
-		 * application, see {@link ApplicationWorkspaces#contextPath(String, String, String)}, which
-		 * also checks the result. The context path may have several segments. A workspace keeps the
-		 * context path its container was created with until it is updated, see
-		 * {@link ApplicationWorkspaces#update(ApplicationSpec, ExecOutput)}.
+		 * The placeholder <code>{context}</code> stands for the context path of the control
+		 * application (empty if it is served at the root), <code>{workspace}</code> for the
+		 * identifier of the workspace and <code>{artifact}</code> for the artifact of the
+		 * application. The result must start with a slash and may have several segments, each of
+		 * letters, digits, <code>.</code>, <code>_</code>, <code>~</code> and <code>-</code>; no
+		 * segment may be <code>view</code> or <code>servlet</code>, and the first one not
+		 * <code>admin</code>. A workspace keeps the context path its container was created with
+		 * until it is updated.
 		 * </p>
 		 *
 		 * <p>
-		 * The default puts the identifier of the workspace into the path, so that one host name
-		 * can serve the applications of all workspaces, each under a path of its own; the same
-		 * path also answers on the published port of the workspace.
+		 * The default is the path of the workspace below the preview route
+		 * <code>/preview</code> of the control application, which forwards the path of a request
+		 * unchanged, so that the application serves the path the browser shows. A workspace whose
+		 * context path is not below the preview route of its own identifier is not reached
+		 * through the route. The same path also answers on the published port of the workspace.
 		 * </p>
 		 *
 		 * @see #CONTEXT_PATH
+		 * @see ApplicationWorkspaces#contextPath(String, String, String, String)
+		 * @see ApplicationWorkspaces#update(ApplicationSpec, ExecOutput)
+		 * @see com.top_logic.factory.preview.PreviewServlet
 		 */
 		@Name(CONTEXT_PATH)
 		@StringDefault(DEFAULT_CONTEXT_PATH)
@@ -320,6 +328,14 @@ public class ApplicationWorkspaces {
 
 	/**
 	 * Placeholder in the {@link Config#getContextPath() pattern of the context path} replaced by
+	 * the context path of the control application, empty if it is served at the root.
+	 *
+	 * @see com.top_logic.basic.AliasManager#APP_CONTEXT
+	 */
+	public static final String CONTEXT_PLACEHOLDER = "{context}";
+
+	/**
+	 * Placeholder in the {@link Config#getContextPath() pattern of the context path} replaced by
 	 * the identifier of the workspace.
 	 */
 	public static final String WORKSPACE_PLACEHOLDER = "{workspace}";
@@ -331,9 +347,17 @@ public class ApplicationWorkspaces {
 	public static final String ARTIFACT_PLACEHOLDER = "{artifact}";
 
 	/**
-	 * Default of {@link Config#getContextPath()}.
+	 * Path of the preview route below the context of the control application, see
+	 * {@link com.top_logic.factory.preview.PreviewServlet}.
 	 */
-	public static final String DEFAULT_CONTEXT_PATH = "/preview/" + WORKSPACE_PLACEHOLDER + "/" + ARTIFACT_PLACEHOLDER;
+	public static final String PREVIEW_PATH = "/preview";
+
+	/**
+	 * Default of {@link Config#getContextPath()}: the path of the workspace below the
+	 * {@link #PREVIEW_PATH preview route} of the control application.
+	 */
+	public static final String DEFAULT_CONTEXT_PATH =
+		CONTEXT_PLACEHOLDER + PREVIEW_PATH + "/" + WORKSPACE_PLACEHOLDER + "/" + ARTIFACT_PLACEHOLDER;
 
 	/**
 	 * Segments no context path may have: the client of a TopLogic application finds its routes at
@@ -573,6 +597,8 @@ public class ApplicationWorkspaces {
 
 	private final WorkspaceProvider _provider;
 
+	private final String _controlContextPath;
+
 	private final Object _imageLock = new Object();
 
 	private final Map<String, Object> _releaseLocks = new ConcurrentHashMap<>();
@@ -588,8 +614,34 @@ public class ApplicationWorkspaces {
 	 *        The provider the workspaces are created by.
 	 */
 	public ApplicationWorkspaces(Config config, WorkspaceProvider provider) {
+		this(config, provider, "");
+	}
+
+	/**
+	 * Creates {@link ApplicationWorkspaces}.
+	 *
+	 * @param config
+	 *        The configuration.
+	 * @param provider
+	 *        The provider the workspaces are created by.
+	 * @param controlContextPath
+	 *        The context path of the control application, empty if it is served at the root;
+	 *        replaces the {@link #CONTEXT_PLACEHOLDER} of the {@link Config#getContextPath()
+	 *        pattern of the context path}.
+	 */
+	public ApplicationWorkspaces(Config config, WorkspaceProvider provider, String controlContextPath) {
 		_config = config;
 		_provider = provider;
+		_controlContextPath = controlContextPath;
+	}
+
+	/**
+	 * The context path of the control application, empty if it is served at the root.
+	 *
+	 * @see #ApplicationWorkspaces(Config, WorkspaceProvider, String)
+	 */
+	public String getControlContextPath() {
+		return _controlContextPath;
 	}
 
 	/**
@@ -946,12 +998,13 @@ public class ApplicationWorkspaces {
 
 	/**
 	 * The context path of the {@link Config#getContextPath() configured pattern} for the
-	 * application with the given artifact in the given workspace.
+	 * application with the given artifact in the given workspace, below the
+	 * {@link #getControlContextPath() context path of the control application}.
 	 *
-	 * @see #contextPath(String, String, String)
+	 * @see #contextPath(String, String, String, String)
 	 */
 	public String contextPath(String workspaceId, String artifactId) {
-		return contextPath(_config.getContextPath(), workspaceId, artifactId);
+		return contextPath(_config.getContextPath(), _controlContextPath, workspaceId, artifactId);
 	}
 
 	/**
@@ -960,6 +1013,9 @@ public class ApplicationWorkspaces {
 	 *
 	 * @param pattern
 	 *        The pattern, see {@link Config#getContextPath()}.
+	 * @param controlContextPath
+	 *        The context path of the control application, empty if it is served at the root,
+	 *        replacing {@link #CONTEXT_PLACEHOLDER}.
 	 * @param workspaceId
 	 *        The identifier of the workspace, replacing {@link #WORKSPACE_PLACEHOLDER}.
 	 * @param artifactId
@@ -971,8 +1027,12 @@ public class ApplicationWorkspaces {
 	 * @throws TopLogicException
 	 *         If the result is no such context path.
 	 */
-	public static String contextPath(String pattern, String workspaceId, String artifactId) {
-		String result = pattern.replace(WORKSPACE_PLACEHOLDER, workspaceId).replace(ARTIFACT_PLACEHOLDER, artifactId);
+	public static String contextPath(String pattern, String controlContextPath, String workspaceId,
+			String artifactId) {
+		String result = pattern
+			.replace(CONTEXT_PLACEHOLDER, controlContextPath)
+			.replace(WORKSPACE_PLACEHOLDER, workspaceId)
+			.replace(ARTIFACT_PLACEHOLDER, artifactId);
 		if (!isValidContextPath(result)) {
 			throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTEXT_PATH__PATH_PATTERN.fill(result, pattern));
 		}

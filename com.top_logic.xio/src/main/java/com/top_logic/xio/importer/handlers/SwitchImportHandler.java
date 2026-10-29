@@ -40,7 +40,7 @@ public class SwitchImportHandler<C extends SwitchImportHandler.Config<?>> extend
 		 * @see com.top_logic.xio.importer.handlers.ConditionalHandler.Config#getPredicate()
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<ConditionalHandler<?>>> getCases();
+		List<PolymorphicConfiguration<? extends ConditionalHandler<?>>> getCases();
 
 		/**
 		 * The default {@link Handler} to execute, if none of the predicates evaluate to

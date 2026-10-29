@@ -263,13 +263,13 @@ public class GridComponent extends EditComponent implements
 		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Name(GridComponent.XML_CONFIG_MODIFIER_CLASS)
-		PolymorphicConfiguration<FormContextModificator> getModifier();
+		PolymorphicConfiguration<? extends FormContextModificator> getModifier();
 
 		@Name(GridComponent.XML_CONFIG_INNER_APPLY_HANDLER)
-		PolymorphicConfiguration<GridApplyHandler> getGridApplyHandlerClass();
+		PolymorphicConfiguration<? extends GridApplyHandler> getGridApplyHandlerClass();
 
 		@Name(GridComponent.XML_CONFIG_ROW_SECURITY_PROVIDER)
-		PolymorphicConfiguration<GridRowSecurityObjectProvider> getRowSecurityProviderClass();
+		PolymorphicConfiguration<? extends GridRowSecurityObjectProvider> getRowSecurityProviderClass();
 
 		@Name(GridComponent.XML_CONFIG_EXCLUDE_COLUMNS)
 		@StringDefault("")
@@ -581,7 +581,7 @@ public class GridComponent extends EditComponent implements
 	}
 
 	private FormContextModificator createModifier(InstantiationContext context,
-			PolymorphicConfiguration<FormContextModificator> modifierConfig) {
+			PolymorphicConfiguration<? extends FormContextModificator> modifierConfig) {
 		FormContextModificator result = context.getInstance(modifierConfig);
 		return result != null ? result : DefaultFormContextModificator.INSTANCE;
 	}

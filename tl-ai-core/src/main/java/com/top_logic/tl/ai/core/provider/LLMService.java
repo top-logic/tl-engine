@@ -268,7 +268,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(SECURITY_CONTEXT)
 		@Nullable
-		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
+		PolymorphicConfiguration<? extends SecurityContextFactory> getSecurityContext();
 
 		/**
 		 * Now {@link AgentApplicationService.Config#getPromptContributors()}.

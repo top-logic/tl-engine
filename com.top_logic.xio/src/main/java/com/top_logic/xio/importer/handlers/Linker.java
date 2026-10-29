@@ -57,7 +57,7 @@ public class Linker<C extends Linker.Config<?>> extends ConfiguredImportHandler<
 		 * The linker(s) to execute.
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<ObjectLinking>> getLinkings();
+		List<PolymorphicConfiguration<? extends ObjectLinking>> getLinkings();
 
 	}
 
@@ -75,7 +75,7 @@ public class Linker<C extends Linker.Config<?>> extends ConfiguredImportHandler<
 	public Linker(InstantiationContext context, C config) {
 		super(context, config);
 
-		List<PolymorphicConfiguration<ObjectLinking>> linkingConfigs = config.getLinkings();
+		List<PolymorphicConfiguration<? extends ObjectLinking>> linkingConfigs = config.getLinkings();
 		if (linkingConfigs.isEmpty()) {
 			_linkings = Collections.singletonList(NoLinking.INSTANCE);
 		} else {

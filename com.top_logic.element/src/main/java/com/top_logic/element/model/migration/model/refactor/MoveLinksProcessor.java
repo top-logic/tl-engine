@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,6 +23,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
@@ -137,47 +139,16 @@ public class MoveLinksProcessor extends AbstractConfiguredInstance<MoveLinksProc
 		MORepository repository = context.getPersistentRepository();
 		MOStructure sourceTable = (MOStructure) repository.getMetaObject(sourceTableName);
 		MOStructure destTable = (MOStructure) repository.getMetaObject(destTableName);
-		MOReference metaRef = (MOReference) sourceTable.getAttribute(getConfig().getReferenceColumn());
 
 		Util util = context.getSQLUtils();
 		try {
 			TypePart reference = util.getTLTypePartOrFail(connection, getConfig().getReference());
+			String referenceColumn = getConfig().getReferenceColumn();
 
-			List<String> columns = new ArrayList<>();
-			List<SQLColumnDefinition> columnDefs = new ArrayList<>();
-			for (MOAttribute attr : sourceTable.getAttributes()) {
-				if (destTable.getAttributeOrNull(attr.getName()) == null) {
-					continue;
-				}
-
-				for (DBAttribute column : attr.getDbMapping()) {
-					columns.add(column.getDBName());
-					columnDefs.add(columnDef(column.getDBName()));
-				}
-			}
-
-			CompiledStatement copy = query(
-				insert(
-					table(destTable.getDBMapping().getDBName()),
-					columns,
-					select(
-						columnDefs,
-						table(sourceTable.getDBMapping().getDBName()),
-						eqSQL(column(metaRef.getColumn(ReferencePart.name).getDBName()),
-							literal(DBType.ID, reference.getDefinition())))))
-								.toSql(connection.getSQLDialect());
-
-			int cntCopy = copy.executeUpdate(connection);
+			int cntCopy = copyLinks(connection, sourceTable, destTable, referenceColumn, reference.getDefinition());
 			log.info("Copied " + cntCopy + " rows from table '" + sourceTableName + "' to '" + destTableName + "'.");
 
-			CompiledStatement delete = query(
-				delete(
-					table(sourceTable.getDBMapping().getDBName()),
-					eqSQL(column(metaRef.getColumn(ReferencePart.name).getDBName()),
-						literal(DBType.ID, reference.getDefinition()))))
-				.toSql(connection.getSQLDialect());
-
-			int cntDelete = delete.executeUpdate(connection);
+			int cntDelete = deleteLinks(connection, sourceTable, referenceColumn, reference.getDefinition());
 			log.info("Deleted " + cntDelete + " rows from table '" + sourceTableName + ".");
 
 			context.invalidateXRef(sourceTable);
@@ -188,6 +159,79 @@ public class MoveLinksProcessor extends AbstractConfiguredInstance<MoveLinksProc
 					+ sourceTableName + "' to '" + destTableName + "': " + ex.getMessage(),
 				ex);
 		}
+	}
+
+	/**
+	 * Copies the links of a reference from one table to another.
+	 *
+	 * <p>
+	 * The columns of the source table that the destination table also has are copied.
+	 * </p>
+	 *
+	 * @param sourceTable
+	 *        The table to copy the links from.
+	 * @param destTable
+	 *        The table to copy the links to.
+	 * @param referenceColumn
+	 *        The name of the reference attribute of the source table that holds the reference of
+	 *        a link.
+	 * @param reference
+	 *        The identifier of the (definition of the) reference whose links are copied.
+	 * @return The number of copied links.
+	 */
+	public static int copyLinks(PooledConnection connection, MOStructure sourceTable, MOStructure destTable,
+			String referenceColumn, TLID reference) throws SQLException {
+		List<String> columns = new ArrayList<>();
+		List<SQLColumnDefinition> columnDefs = new ArrayList<>();
+		for (MOAttribute attr : sourceTable.getAttributes()) {
+			if (destTable.getAttributeOrNull(attr.getName()) == null) {
+				continue;
+			}
+
+			for (DBAttribute column : attr.getDbMapping()) {
+				columns.add(column.getDBName());
+				columnDefs.add(columnDef(column.getDBName()));
+			}
+		}
+
+		CompiledStatement copy = query(
+			insert(
+				table(destTable.getDBMapping().getDBName()),
+				columns,
+				select(
+					columnDefs,
+					table(sourceTable.getDBMapping().getDBName()),
+					hasReference(sourceTable, referenceColumn, reference))))
+						.toSql(connection.getSQLDialect());
+
+		return copy.executeUpdate(connection);
+	}
+
+	/**
+	 * Deletes the links of a reference from a table.
+	 *
+	 * @param table
+	 *        The table to delete the links from.
+	 * @param referenceColumn
+	 *        The name of the reference attribute of the table that holds the reference of a link.
+	 * @param reference
+	 *        The identifier of the (definition of the) reference whose links are deleted.
+	 * @return The number of deleted links.
+	 */
+	public static int deleteLinks(PooledConnection connection, MOStructure table, String referenceColumn,
+			TLID reference) throws SQLException {
+		CompiledStatement delete = query(
+			delete(
+				table(table.getDBMapping().getDBName()),
+				hasReference(table, referenceColumn, reference)))
+					.toSql(connection.getSQLDialect());
+
+		return delete.executeUpdate(connection);
+	}
+
+	private static SQLExpression hasReference(MOStructure table, String referenceColumn, TLID reference) {
+		MOReference metaRef = (MOReference) table.getAttribute(referenceColumn);
+		return eqSQL(column(metaRef.getColumn(ReferencePart.name).getDBName()), literal(DBType.ID, reference));
 	}
 
 }

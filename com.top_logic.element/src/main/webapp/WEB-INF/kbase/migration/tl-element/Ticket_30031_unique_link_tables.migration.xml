@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30031_unique_link_tables"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29852_binary_attribute_values"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Links of bag references, which may hold a value more than once, are stored in separate tables. -->
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<association
+					abstract="true"
+					object_name="hasWrapperAttValueBagBaseAssociation"
+					super_class="hasWrapperAttValueBaseAssociation"
+				>
+					<index>
+						<mo_index name="source"
+							unique="false"
+						>
+							<index-parts>
+								<index_part name="source"
+									part="name"
+								/>
+								<index_part name="metaAttribute"/>
+							</index-parts>
+						</mo_index>
+					</index>
+				</association>
+				<association
+					db_name="HAS_WRAPPER_ATT_VALUE_BAG"
+					object_name="hasWrapperAttValueBag"
+					super_class="hasWrapperAttValueBagBaseAssociation"
+				/>
+				<association
+					db_name="HAS_WRAPPER_DEL_REF_BAG"
+					object_name="hasWrapperDeleteRefererBag"
+					super_class="hasWrapperAttValueBagBaseAssociation"
+				>
+					<attributes>
+						<source
+							deletion-policy="delete-referer"
+							is-container="true"
+							override="true"
+							target-type="Object"
+						/>
+					</attributes>
+				</association>
+				<association
+					db_name="HAS_WRAPPER_VETO_BAG"
+					object_name="hasWrapperVetoBag"
+					super_class="hasWrapperAttValueBagBaseAssociation"
+				>
+					<attributes>
+						<destination
+							deletion-policy="veto"
+							override="true"
+							target-type="Object"
+						/>
+					</attributes>
+				</association>
+				<metaobject
+					db_name="HAS_HISTORIC_VALUE_BAG"
+					object_name="hasHistoricValueBag"
+					super_class="hasHistoricValue"
+				>
+					<index>
+						<mo_index name="source"
+							unique="false"
+						>
+							<index-parts>
+								<index_part name="source"
+									part="name"
+								/>
+								<index_part name="metaAttribute"/>
+							</index-parts>
+						</mo_index>
+					</index>
+				</metaobject>
+				<metaobject
+					db_name="HAS_MIXED_VALUE_BAG"
+					object_name="hasMixedValueBag"
+					super_class="hasMixedValue"
+				>
+					<index>
+						<mo_index name="source"
+							unique="false"
+						>
+							<index-parts>
+								<index_part name="source"
+									part="name"
+								/>
+								<index_part name="metaAttribute"/>
+							</index-parts>
+						</mo_index>
+					</index>
+				</metaobject>
+				<association
+					db_name="HAS_WRAPPER_BAG_UNV"
+					object_name="hasWrapperAttValueBagUnversioned"
+					super_class="hasWrapperAttValueBag"
+					versioned="false"
+				/>
+				<association
+					db_name="HAS_WRAPPER_DEL_REF_BAG_UNV"
+					object_name="hasWrapperDeleteRefererBagUnversioned"
+					super_class="hasWrapperDeleteRefererBag"
+					versioned="false"
+				/>
+				<association
+					db_name="HAS_WRAPPER_VETO_BAG_UNV"
+					object_name="hasWrapperVetoBagUnversioned"
+					super_class="hasWrapperVetoBag"
+					versioned="false"
+				/>
+				<metaobject
+					db_name="HAS_HISTORIC_VALUE_BAG_UNV"
+					object_name="hasHistoricValueBagUnversioned"
+					super_class="hasHistoricValueBag"
+					versioned="false"
+				/>
+				<metaobject
+					db_name="HAS_MIXED_VALUE_BAG_UNV"
+					object_name="hasMixedValueBagUnversioned"
+					super_class="hasMixedValueBag"
+					versioned="false"
+				/>
+			</schema>
+		</processor>
+
+		<!-- The links of all bag references move from the tables that hold each value at most once to their bag tables. Compositions are not moved, they hold each part only once. -->
+		<move-links-by-bag>
+			<tables>
+				<table dest-table="hasWrapperAttValueBag"
+					source-table="hasWrapperAttValue"
+				/>
+				<table dest-table="hasWrapperDeleteRefererBag"
+					source-table="hasWrapperDeleteReferer"
+				/>
+				<table dest-table="hasWrapperVetoBag"
+					source-table="hasWrapperVeto"
+				/>
+				<table dest-table="hasHistoricValueBag"
+					source-table="hasHistoricValue"
+				/>
+				<table dest-table="hasMixedValueBag"
+					source-table="hasMixedValue"
+				/>
+				<table dest-table="hasWrapperAttValueBagUnversioned"
+					source-table="hasWrapperAttValueUnversioned"
+				/>
+				<table dest-table="hasWrapperDeleteRefererBagUnversioned"
+					source-table="hasWrapperDeleteRefererUnversioned"
+				/>
+				<table dest-table="hasWrapperVetoBagUnversioned"
+					source-table="hasWrapperVetoUnversioned"
+				/>
+				<table dest-table="hasHistoricValueBagUnversioned"
+					source-table="hasHistoricValueUnversioned"
+				/>
+				<table dest-table="hasMixedValueBagUnversioned"
+					source-table="hasMixedValueUnversioned"
+				/>
+			</tables>
+		</move-links-by-bag>
+
+		<!-- A reference that is no bag holds each value at most once: Duplicate links are removed over the whole history. Links of bags remaining in these tables (an explicitly configured storage table) are not touched but reported, the unique index can not be created for them. -->
+		<remove-duplicates
+			exclude="hasWrapperAttValueBagBaseAssociation,hasHistoricValueBag,hasMixedValueBag"
+			skip-bags="true"
+			subtypes-of="hasWrapperAttValueBaseAssociation,hasHistoricValue,hasMixedValue"
+		/>
+
+		<!-- The index "source" becomes unique over source, attribute and destination. -->
+		<align-indexes
+			exclude="hasWrapperAttValueBagBaseAssociation,hasHistoricValueBag,hasMixedValueBag"
+			subtypes-of="hasWrapperAttValueBaseAssociation,hasHistoricValue,hasMixedValue"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

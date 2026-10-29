@@ -7,15 +7,20 @@ package com.top_logic.element.model.migration.model.refactor;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.LongID;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -27,6 +32,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
@@ -42,6 +48,7 @@ import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.service.migration.processors.TableSelection;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
@@ -64,8 +71,17 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
- * The processor works on the tables of the {@link TableSelection}. If the selection is empty, it
- * works on the {@link Config#getAssociationTable() association table}.
+ * Only the owners (or, if globally unique, the values) that hold a value in more than one link are
+ * walked. They are determined by an aggregate query in the database first, so that a table without
+ * duplicates is not read row by row.
+ * </p>
+ *
+ * <p>
+ * The processor works on the tables of the {@link TableSelection}. The selection is resolved in the
+ * {@link MigrationContext#getApplicationSchema() application schema}, so that the type hierarchy
+ * the tables are migrated to decides, which tables are cleaned; tables that do not yet exist are
+ * skipped. If the selection is empty, the processor works on the
+ * {@link Config#getAssociationTable() association table}.
  * </p>
  */
 public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<RemoveDuplicatesProcessor.Config<?>>
@@ -111,6 +127,11 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 		 * Configuration name of {@link #getGloballyUnique()}.
 		 */
 		String GLOBALLY_UNIQUE = "globally-unique";
+
+		/**
+		 * Configuration name of {@link #getSkipBags()}.
+		 */
+		String SKIP_BAGS = "skip-bags";
 
 		/**
 		 * The name of the association table that stores the links.
@@ -185,6 +206,29 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 		 */
 		@Name(GLOBALLY_UNIQUE)
 		boolean getGloballyUnique();
+
+		/**
+		 * Whether the links of references that may hold a value more than once are left
+		 * untouched.
+		 *
+		 * <p>
+		 * A {@link TLStructuredTypePart#isBag() bag} may hold a value more than once, its
+		 * duplicates are values and must not be removed. Each bag reference found in a selected
+		 * table is reported as error: The processor prepares tables that hold each value of a
+		 * reference at most once, which can not store the links of a bag.
+		 * </p>
+		 *
+		 * <p>
+		 * The bag references are identified by the {@link #getReferenceColumn() reference column}.
+		 * </p>
+		 */
+		@Name(SKIP_BAGS)
+		boolean getSkipBags();
+
+		/**
+		 * @see #getSkipBags()
+		 */
+		void setSkipBags(boolean value);
 	}
 
 	/**
@@ -213,7 +257,15 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			}
 			tables = List.of((MOClass) associationTable);
 		} else {
-			tables = TableSelection.resolve(log, getConfig(), repository);
+			tables = new ArrayList<>();
+			for (MOClass selected : TableSelection.resolve(log, getConfig(), context.getSchemaRepository())) {
+				MetaObject stored = repository.getTypeOrNull(selected.getName());
+				if (stored instanceof MOClass storedTable) {
+					tables.add(storedTable);
+				} else {
+					log.info("Table '" + selected.getName() + "' does not exist, duplicates not removed.");
+				}
+			}
 		}
 
 		Util util = context.getSQLUtils();
@@ -226,13 +278,21 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			return;
 		}
 
+		Map<TLID, String> bags;
+		try {
+			bags = getConfig().getSkipBags() ? util.getTLReferenceDefinitionsByBag(connection, true) : Map.of();
+		} catch (SQLException ex) {
+			log.error("Failed to fetch the bag references: " + ex.getMessage(), ex);
+			return;
+		}
+
 		for (MOClass table : tables) {
-			removeDuplicates(context, log, connection, table, reference);
+			removeDuplicates(context, log, connection, table, reference, bags);
 		}
 	}
 
 	private void removeDuplicates(MigrationContext context, Log log, PooledConnection connection,
-			MOClass associationTable, TypePart reference) {
+			MOClass associationTable, TypePart reference, Map<TLID, String> bags) {
 		String associationTableName = associationTable.getName();
 		String sourceTableName = getConfig().getSourceTable();
 		String destTableName = getConfig().getDestTable();
@@ -247,9 +307,19 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 		MOAttribute metaAttribute = associationTable.getAttributeOrNull(getConfig().getReferenceColumn());
 		MOReference metaRef = metaAttribute instanceof MOReference ref ? ref : null;
 
+		if (getConfig().getSkipBags() && metaRef == null) {
+			log.error("Table '" + associationTableName + "' has no reference column '"
+				+ getConfig().getReferenceColumn() + "' to identify the links of bags, duplicates not removed.");
+			return;
+		}
+
 		Util util = context.getSQLUtils();
 		try {
+			DBHelper sqlDialect = connection.getSQLDialect();
 			SQLExpression condition = literalTrueLogical();
+			// The condition as SQL text with parameters for the aggregate queries.
+			List<String> where = new ArrayList<>();
+			List<Object> whereArgs = new ArrayList<>();
 
 			if (reference != null) {
 				if (metaRef == null) {
@@ -261,6 +331,8 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 					eqSQL(
 						column(metaRef.getColumn(ReferencePart.name).getDBName()),
 						literal(DBType.ID, reference.getDefinition())));
+				where.add(sqlDialect.columnRef(metaRef.getColumn(ReferencePart.name).getDBName()) + " = ?");
+				whereArgs.add(id(reference.getDefinition()));
 			}
 
 			if (sourceTableName != null) {
@@ -268,6 +340,8 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 					eqSQL(
 						column(srcEnd.getColumn(ReferencePart.type).getDBName()),
 						literal(DBType.STRING, sourceTableName)));
+				where.add(sqlDialect.columnRef(srcEnd.getColumn(ReferencePart.type).getDBName()) + " = ?");
+				whereArgs.add(sourceTableName);
 			}
 
 			if (destTableName != null) {
@@ -275,6 +349,8 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 					eqSQL(
 						column(dstEnd.getColumn(ReferencePart.type).getDBName()),
 						literal(DBType.STRING, destTableName)));
+				where.add(sqlDialect.columnRef(dstEnd.getColumn(ReferencePart.type).getDBName()) + " = ?");
+				whereArgs.add(destTableName);
 			}
 
 			MOReference valueEnd = (MOReference) associationTable.getAttribute(getConfig().getTargetEnd());
@@ -282,6 +358,34 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			DBAttribute valueRevColumn = valueEnd.getColumn(ReferencePart.revision);
 
 			boolean globallyUnique = getConfig().getGloballyUnique();
+
+			String table = sqlDialect.tableRef(associationTable.getDBMapping().getDBName());
+			String attributeColumn = metaRef == null ? null : metaRef.getColumn(ReferencePart.name).getDBName();
+			if (!bags.isEmpty()) {
+				reportBags(log, connection, associationTableName, table, attributeColumn, where, whereArgs, bags);
+				for (List<Long> chunk : chunks(ids(bags.keySet()), sqlDialect.getMaxSetSize())) {
+					where.add(sqlDialect.columnRef(attributeColumn) + " NOT IN (" + join(chunk) + ")");
+				}
+			}
+
+			// Duplicates can only occur in the groups of links (owners or, if globally unique,
+			// values) that hold the same value more than once. Only those groups are walked.
+			String groupColumn = (globallyUnique ? valueEnd : ownerEnd).getColumn(ReferencePart.name).getDBName();
+			List<String> keyColumns = Util.listWithoutNull(
+				util.branchColumnOrNull(),
+				globallyUnique ? null : ownerEnd.getColumn(ReferencePart.name).getDBName(),
+				attributeColumn,
+				valueEnd.getColumn(ReferencePart.name).getDBName(),
+				valueRevColumn == null ? null : valueRevColumn.getDBName());
+			List<Long> groups =
+				duplicateGroups(connection, table, groupColumn, keyColumns, where, whereArgs);
+			if (groups.isEmpty()) {
+				log.info("No duplicate assignments in '" + associationTableName + "', table not scanned.");
+				log.info("Deleted 0 assignments and adjusted 0 assignments in '" + associationTableName + "'.");
+				return;
+			}
+			log.info("Found " + groups.size() + (globallyUnique ? " values" : " owners")
+				+ " with duplicate assignments in '" + associationTableName + "'.");
 
 			/* Note: util().branchColumnDef() may return constant column. It is important (at least
 			 * in H2) that no constant column is contained in the result list, otherwise the row can
@@ -299,74 +403,82 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			int valueRevCol = valueRevColumn == null ? 0
 				: addColumn(columnDefs, columnDef(valueRevColumn.getDBName()));
 
-			CompiledStatement links = query(
-				select(
-					columnDefs,
-					table(associationTable.getDBMapping().getDBName()),
-					condition,
-					Util.listWithoutNull(
-						util.branchOrderOrNull(),
-						globallyUnique ? null
-							: order(column(ownerEnd.getColumn(ReferencePart.name).getDBName())),
-						order(column(BasicTypes.REV_MIN_DB_NAME))))
-				).toSql(connection.getSQLDialect());
-
-			links.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-
-			// Map, where keys identify an assigned value and the value is the maximum revMax of its
-			// assignments seen so far.
-			Map<LinkKey, Long> values = new HashMap<>();
-
-			long currentBranch = 0;
-			long currentOwner = 0;
-
 			int updated = 0;
 			int deleted = 0;
-			try (ResultSet resultSet = links.executeQuery(connection)) {
-				while (resultSet.next()) {
-					long branch = branchCol > 0 ? resultSet.getLong(branchCol) : TLContext.TRUNK_ID;
-					long owner = resultSet.getLong(ownerCol);
-					long value = resultSet.getLong(valueCol);
-					long attribute = attributeCol > 0 ? resultSet.getLong(attributeCol) : 0;
-					long valueRev = valueRevCol > 0 ? resultSet.getLong(valueRevCol) : 0;
-					long revMin = resultSet.getLong(revMinCol);
-					long revMax = resultSet.getLong(revMaxCol);
+			for (List<Long> chunk : chunks(groups, sqlDialect.getMaxSetSize())) {
+				CompiledStatement links = query(
+					select(
+						columnDefs,
+						table(associationTable.getDBMapping().getDBName()),
+						and(condition, inSet(column(groupColumn), toIDs(chunk), DBType.ID)),
+						Util.listWithoutNull(
+							util.branchOrderOrNull(),
+							globallyUnique ? null
+								: order(column(ownerEnd.getColumn(ReferencePart.name).getDBName())),
+							order(column(BasicTypes.REV_MIN_DB_NAME))))
+					).toSql(connection.getSQLDialect());
 
-					if (currentBranch != branch || (!globallyUnique && currentOwner != owner)) {
-						values.clear();
+				links.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
-						currentBranch = branch;
-						currentOwner = owner;
-					}
+				// Map, where keys identify an assigned value and the value is the maximum revMax of its
+				// assignments seen so far.
+				Map<LinkKey, Long> values = new HashMap<>();
 
-					LinkKey key = new LinkKey(attribute, value, valueRev);
-					Long oldRevMaxValue = values.get(key);
-					if (oldRevMaxValue == null || oldRevMaxValue.longValue() < revMin) {
-						// No overlap with an earlier assignment.
-						values.put(key, Long.valueOf(revMax));
-						continue;
-					}
+				long currentBranch = 0;
+				long currentOwner = 0;
 
-					String assignment = "value " + value + (valueRevCol > 0 ? "@" + valueRev : "")
-						+ " of attribute " + attribute + " to owner " + owner + " in '" + associationTableName + "'";
-					long oldRevMax = oldRevMaxValue.longValue();
-					if (oldRevMax >= revMax) {
-						// The assignment is completely covered by an earlier assignment, delete.
-						resultSet.deleteRow();
-						deleted++;
+				try (ResultSet resultSet = links.executeQuery(connection)) {
+					while (resultSet.next()) {
+						long branch = branchCol > 0 ? resultSet.getLong(branchCol) : TLContext.TRUNK_ID;
+						long owner = resultSet.getLong(ownerCol);
+						long value = resultSet.getLong(valueCol);
+						long attribute = attributeCol > 0 ? resultSet.getLong(attributeCol) : 0;
+						long valueRev = valueRevCol > 0 ? resultSet.getLong(valueRevCol) : 0;
+						long revMin = resultSet.getLong(revMinCol);
+						long revMax = resultSet.getLong(revMaxCol);
 
-						log.info("Deleted assignment of " + assignment + " in time range [" + revMin + ", " + revMax
-							+ "].");
-					} else {
-						// The assignment starts during an earlier assignment, cut its start.
-						long newRevMin = oldRevMax + 1;
-						resultSet.updateLong(revMinCol, newRevMin);
-						resultSet.updateRow();
-						updated++;
-						values.put(key, Long.valueOf(revMax));
+						if (currentBranch != branch || (!globallyUnique && currentOwner != owner)) {
+							values.clear();
 
-						log.info("Updated assignment of " + assignment + " from time range [" + revMin + ", " + revMax
-							+ "] to [" + newRevMin + ", " + revMax + "].");
+							currentBranch = branch;
+							currentOwner = owner;
+						}
+
+						if (!bags.isEmpty() && bags.containsKey(LongID.valueOf(attribute))) {
+							// Reported by reportBags().
+							continue;
+						}
+
+						LinkKey key = new LinkKey(attribute, value, valueRev);
+						Long oldRevMaxValue = values.get(key);
+						if (oldRevMaxValue == null || oldRevMaxValue.longValue() < revMin) {
+							// No overlap with an earlier assignment.
+							values.put(key, Long.valueOf(revMax));
+							continue;
+						}
+
+						String assignment = "value " + value + (valueRevCol > 0 ? "@" + valueRev : "")
+							+ " of attribute " + attribute + " to owner " + owner + " in '" + associationTableName
+							+ "'";
+						long oldRevMax = oldRevMaxValue.longValue();
+						if (oldRevMax >= revMax) {
+							// The assignment is completely covered by an earlier assignment, delete.
+							resultSet.deleteRow();
+							deleted++;
+
+							log.info("Deleted assignment of " + assignment + " in time range [" + revMin + ", "
+								+ revMax + "].");
+						} else {
+							// The assignment starts during an earlier assignment, cut its start.
+							long newRevMin = oldRevMax + 1;
+							resultSet.updateLong(revMinCol, newRevMin);
+							resultSet.updateRow();
+							updated++;
+							values.put(key, Long.valueOf(revMax));
+
+							log.info("Updated assignment of " + assignment + " from time range [" + revMin + ", "
+								+ revMax + "] to [" + newRevMin + ", " + revMax + "].");
+						}
 					}
 				}
 			}
@@ -380,6 +492,124 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			log.error(
 				"Failed to remove duplicates from '" + associationTableName + "': " + ex.getMessage(), ex);
 		}
+	}
+
+	/**
+	 * Reports the links of bag references in the given table as error.
+	 */
+	private static void reportBags(Log log, PooledConnection connection, String tableName, String table,
+			String attributeColumn, List<String> where, List<Object> whereArgs, Map<TLID, String> bags)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		String attribute = sqlDialect.columnRef(attributeColumn);
+		for (List<Long> chunk : chunks(ids(bags.keySet()), sqlDialect.getMaxSetSize())) {
+			List<String> bagWhere = new ArrayList<>(where);
+			bagWhere.add(attribute + " IN (" + join(chunk) + ")");
+			String sql = "SELECT " + attribute + ", COUNT(*) FROM " + table + whereClause(bagWhere)
+				+ " GROUP BY " + attribute;
+			try (PreparedStatement statement = connection.prepareStatement(sql)) {
+				setArguments(statement, whereArgs);
+				try (ResultSet result = statement.executeQuery()) {
+					while (result.next()) {
+						log.error("Table '" + tableName + "' holds " + result.getLong(2)
+							+ " links of the bag reference '" + bags.get(LongID.valueOf(result.getLong(1)))
+							+ "', which may hold a value more than once. Its duplicates are not removed,"
+							+ " the reference must be stored in a table for bags.");
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * The values of the given group column of the groups of links that hold the same key more
+	 * than once.
+	 *
+	 * <p>
+	 * The rows of one link in different revisions share its identifier, they are counted once.
+	 * </p>
+	 *
+	 * @param groupColumn
+	 *        The column whose values identify the groups to walk, one of the key columns.
+	 * @param keyColumns
+	 *        The columns identifying an assigned value.
+	 * @return The distinct values of the group column in ascending order.
+	 */
+	private static List<Long> duplicateGroups(PooledConnection connection, String table, String groupColumn,
+			List<String> keyColumns, List<String> where, List<Object> whereArgs) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		List<String> keys = new ArrayList<>();
+		for (String keyColumn : keyColumns) {
+			keys.add(sqlDialect.columnRef(keyColumn));
+		}
+		String keyList = String.join(", ", keys);
+		String sql = "SELECT " + keyList + " FROM " + table + whereClause(where)
+			+ " GROUP BY " + keyList
+			+ " HAVING COUNT(DISTINCT " + sqlDialect.columnRef(BasicTypes.IDENTIFIER_DB_NAME) + ") > 1";
+		int groupIndex = keyColumns.indexOf(groupColumn) + 1;
+
+		TreeSet<Long> result = new TreeSet<>();
+		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+			setArguments(statement, whereArgs);
+			try (ResultSet rows = statement.executeQuery()) {
+				while (rows.next()) {
+					result.add(rows.getLong(groupIndex));
+				}
+			}
+		}
+		return new ArrayList<>(result);
+	}
+
+	private static String whereClause(List<String> where) {
+		return where.isEmpty() ? "" : " WHERE " + String.join(" AND ", where);
+	}
+
+	private static void setArguments(PreparedStatement statement, List<Object> args) throws SQLException {
+		for (int n = 0; n < args.size(); n++) {
+			statement.setObject(n + 1, args.get(n));
+		}
+	}
+
+	private static Long id(TLID id) {
+		return Long.valueOf(((LongID) id).longValue());
+	}
+
+	private static List<Long> ids(Collection<TLID> ids) {
+		List<Long> result = new ArrayList<>();
+		for (TLID id : ids) {
+			result.add(id(id));
+		}
+		return result;
+	}
+
+	private static List<TLID> toIDs(List<Long> ids) {
+		List<TLID> result = new ArrayList<>();
+		for (Long id : ids) {
+			result.add(LongID.valueOf(id.longValue()));
+		}
+		return result;
+	}
+
+	private static String join(List<Long> values) {
+		StringBuilder result = new StringBuilder();
+		for (Long value : values) {
+			if (result.length() > 0) {
+				result.append(", ");
+			}
+			result.append(value.longValue());
+		}
+		return result.toString();
+	}
+
+	/**
+	 * Splits the given list into lists of at most the given size.
+	 */
+	private static <T> List<List<T>> chunks(List<T> values, int size) {
+		List<List<T>> result = new ArrayList<>();
+		for (int start = 0; start < values.size(); start += size) {
+			result.add(values.subList(start, Math.min(values.size(), start + size)));
+		}
+		return result;
 	}
 
 	/**

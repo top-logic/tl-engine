@@ -68,7 +68,7 @@ public class TestRemoveDuplicatesInLinkTables extends AbstractLinkTableMigration
 
 		RemoveDuplicatesProcessor.Config<?> config =
 			TypedConfiguration.newConfigItem(RemoveDuplicatesProcessor.Config.class);
-		config.setSubtypesOf(asList("hasWrapperAttValueBagBaseAssociation"));
+		config.setSubtypesOf(asList(WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_BASE));
 		config.setTables(asList(historic));
 		BufferingProtocol log = migrate(TypedConfigUtil.createInstance(config), null);
 

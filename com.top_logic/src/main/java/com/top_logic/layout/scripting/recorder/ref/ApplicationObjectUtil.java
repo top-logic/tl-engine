@@ -188,6 +188,12 @@ public class ApplicationObjectUtil {
 	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION_BASE = "hasWrapperAttValueBaseAssociation";
 
 	/**
+	 * Abstract KA being the root of the wrapper attribute associations that store the links of bag
+	 * references, which may hold a value more than once.
+	 */
+	public static final String WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_BASE = "hasWrapperAttValueBagBaseAssociation";
+
+	/**
 	 * KA used to connect MetaElemented KO to the Wrapper KO.
 	 * 
 	 * @see "com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil#WRAPPER_ATTRIBUTE_ASSOCIATION"

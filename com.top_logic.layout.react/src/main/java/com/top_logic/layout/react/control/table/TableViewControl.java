@@ -125,15 +125,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * <b>Placement requirement:</b> this control virtualizes - it renders only the row window that
- * fits its scroll viewport and scrolls internally - so it must be given a container with a
- * <em>definite (bounded) height</em>. Its root fills its parent ({@code height: 100%}); if every
- * ancestor up to a bounded box is content-sized, there is no viewport to bound against, so the
- * control expands to its full natural height and the <em>surrounding</em> scroller (e.g. the tab
- * content) scrolls instead - showing a large scrollbar while the table never pages in new rows:
- * such a body reports no viewport, so the table shows only the rows of its last window (at most
- * {@link #MAX_VIEWPORT_ROWS} plus the prefetched rows around them).
- * Inside the {@code com.top_logic.layout.view} layer, place it in a {@code <split-panel>}/
+ * <b>Placement:</b> this control virtualizes - it renders only the row window that fits its
+ * scroll viewport and scrolls internally - when it is given a container with a <em>definite
+ * (bounded) height</em>. Its root fills its parent ({@code height: 100%}); if every ancestor up to
+ * a bounded box is content-sized, the control expands to the full height of its rows and the
+ * <em>surrounding</em> scroller (e.g. the tab content) scrolls them instead: the client then reports
+ * the part of the rows visible in that scroller as its viewport, so the rows still page in as it
+ * scrolls. Each window is limited to {@link #MAX_VIEWPORT_ROWS} rows plus the prefetched rows
+ * around them. Inside the {@code com.top_logic.layout.view} layer, place it in a {@code <split-panel>}/
  * {@code <pane>} or a fill panel ({@code <panel fill="true">}) - the containers between such a
  * filling control and the next bounded box grow with it, so the chain holds however deeply it is
  * nested; standalone (e.g. in a JSP-rendered component) wrap it in a fixed- or flex-bounded
@@ -379,10 +378,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * The largest number of rows a viewport shows, whatever the client reports.
 	 *
 	 * <p>
-	 * The client reports how many rows fit into the height of the table body, and every later update
-	 * of the rows sends that many again. A table body that no container bounds is as high as all its
-	 * rows, so a report from it would make every update send thousands of rows. No bounded table body
-	 * shows more rows than this.
+	 * The client reports how many rows it shows, and every later update of the rows sends that many
+	 * again. A client measuring a table body that is as high as all its rows would otherwise make
+	 * every update send thousands of rows. No viewport on a screen shows more rows than this.
 	 * </p>
 	 */
 	public static final int MAX_VIEWPORT_ROWS = 200;

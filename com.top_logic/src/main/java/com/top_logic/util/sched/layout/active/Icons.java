@@ -16,8 +16,8 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	public static ThemeImage INACTIVE;
+	public static ThemeImage ACTIVE_STATE_INACTIVE;
 
-	public static ThemeImage CHILD_INACTIVE;
+	public static ThemeImage ACTIVE_STATE_CHILD_INACTIVE;
 
 }

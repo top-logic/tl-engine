@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Scheduler administration as a drill-down: the initial frame lists the tasks of the scheduler and
+	acts on the selected one (scheduler/overview.view.xml).
+	- The schedulerNavPath channel holds the drill-down path; the breadcrumb ("Scheduler > ...")
+	is raised into the app bar of the shell with <slot-content to="appbar-content">. Every frame
+	sees the path as navPath (bind-path-to).
+	- The tasks channel holds the SchedulerSnapshot the overview table displays. It is bound into
+	every frame, so that a command of a frame pushed onto the overview writes a new snapshot the
+	covered overview frame shows when the user comes back to it.
+-->
+<view>
+	<channels>
+		<channel name="tasks"/>
+		<channel name="schedulerNavPath"/>
+	</channels>
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="schedulerNavPath">
+				<home-label>
+					<en>Scheduler</en>
+					<de>Steuerprogramm</de>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			bind-path-to="navPath"
+			initial="admin/system/scheduler/overview.view.xml"
+			path="schedulerNavPath"
+		>
+			<bindings>
+				<bind
+					channel="tasks"
+					to="tasks"
+				/>
+			</bindings>
+		</tile-stack>
+	</stack>
+</view>

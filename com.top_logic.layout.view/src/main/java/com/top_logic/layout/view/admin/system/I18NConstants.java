@@ -103,6 +103,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SERVICE_LIFECYCLE__NAME;
 
 	/**
+	 * @en Operation on task ''{0}'' failed.
+	 */
+	public static ResKey1 ERROR_SCHEDULER_TASK__NAME;
+
+	/**
+	 * @en Task ''{0}'' has been told to stop.
+	 */
+	public static ResKey1 SCHEDULER_TASK_STOP_SIGNALED__NAME;
+
+	/**
+	 * @en Task ''{0}'' has not accepted the request to stop.
+	 */
+	public static ResKey1 ERROR_SCHEDULER_TASK_NOT_STOPPED__NAME;
+
+	/**
 	 * @en The system is operating normally.
 	 */
 	public static ResKey MAINTENANCE_STATUS_NORMAL;

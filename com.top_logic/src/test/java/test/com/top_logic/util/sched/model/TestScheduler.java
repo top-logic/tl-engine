@@ -27,10 +27,16 @@ import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sched.ScheduledThread;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.impl.TaskImpl;
+import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.schedule.legacy.LegacyOnceSchedule;
 import com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon;
 
@@ -716,6 +722,61 @@ public class TestScheduler extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * The cluster lock of a {@link Task} can be {@link Scheduler#releaseClusterLock(Task) released}
+	 * only while it is set, and only for a {@link Task} running once in the cluster.
+	 */
+	public void testReleaseClusterLock() throws KnowledgeBaseException {
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier("testReleaseClusterLock", schedulerBarrier);
+		try {
+			// Scheduler has attached its tasks and waits for dispatching:
+			waitUntilThreadsWaiting(schedulerBarrier, 1);
+
+			AlwaysBarrierTestTask localTask = createAlwaysBarrierTestTask("testReleaseClusterLockLocal");
+			scheduler.addDisabledTask(localTask);
+			assertNull(Scheduler.getClusterLockHolder(localTask));
+			assertReleaseClusterLockRefused(localTask);
+
+			AlwaysBarrierTestTask task = createClusterGlobalTask("testReleaseClusterLock");
+			scheduler.addDisabledTask(task);
+			TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+			assertNull(Scheduler.getClusterLockHolder(task));
+			assertReleaseClusterLockRefused(task);
+
+			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+			try {
+				log.setClusterLock();
+				tx.commit();
+			} finally {
+				tx.rollback();
+			}
+			assertTrue(Scheduler.canReleaseClusterLock(task));
+			assertNull(Scheduler.getClusterLockReleaseProblem(task));
+			assertEquals(log.getClusterLockName() + " (" + log.getClusterLockId() + ")",
+				Scheduler.getClusterLockHolder(task));
+
+			Scheduler.releaseClusterLock(task);
+			assertFalse(log.isClusterLockSet());
+			assertNull(Scheduler.getClusterLockHolder(task));
+			assertReleaseClusterLockRefused(task);
+		} finally {
+			stopBarrierScheduler();
+		}
+	}
+
+	private static void assertReleaseClusterLockRefused(Task task) {
+		assertFalse(Scheduler.canReleaseClusterLock(task));
+		ResKey problem = Scheduler.getClusterLockReleaseProblem(task);
+		assertNotNull(problem);
+		try {
+			Scheduler.releaseClusterLock(task);
+			fail("Releasing the cluster lock of task '" + task.getName() + "' must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(problem, ex.getErrorKey());
+		}
+	}
+
 	private void assertSchedulerStartsTask(BarrierTestTask task) {
 		int oldStartedTasks = scheduler.getStartedTasks();
 		// Scheduler starts dispatching:
@@ -791,6 +852,16 @@ public class TestScheduler extends BasicTestCase {
 		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
 		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
 		taskConfig.setPersistent(persistent);
+		return (AlwaysBarrierTestTask) getInstantiationContext().getInstance(taskConfig);
+	}
+
+	private static AlwaysBarrierTestTask createClusterGlobalTask(String name) {
+		BarrierTestTask.BarrierTestTaskConfig taskConfig =
+			TypedConfiguration.newConfigItem(BarrierTestTask.BarrierTestTaskConfig.class);
+		taskConfig.setImplementationClass(AlwaysBarrierTestTask.class);
+		taskConfig.setName(name);
+		taskConfig.setPersistent(true);
+		taskConfig.setNodeLocal(false);
 		return (AlwaysBarrierTestTask) getInstantiationContext().getInstance(taskConfig);
 	}
 

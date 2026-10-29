@@ -12,6 +12,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.EnumResourceProvider;
+import com.top_logic.util.sched.ActiveState;
 
 /**
  * {@link Renderer} writing the label of an {@link ActiveState}, preceded by an icon for an
@@ -48,9 +49,9 @@ public class ActiveStateRenderer implements Renderer<ActiveState> {
 		switch (state) {
 			case INACTIVE_CONFIGURED:
 			case INACTIVE_ADMINISTRATOR:
-				return Icons.INACTIVE;
+				return Icons.ACTIVE_STATE_INACTIVE;
 			case CHILD_INACTIVE:
-				return Icons.CHILD_INACTIVE;
+				return Icons.ACTIVE_STATE_CHILD_INACTIVE;
 			case ACTIVE_CONFIGURED:
 			case ACTIVE_ADMINISTRATOR:
 				return null;

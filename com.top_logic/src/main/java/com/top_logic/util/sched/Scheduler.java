@@ -66,6 +66,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.thread.LoggingExceptionHandler;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Suspendable;
 import com.top_logic.basic.util.retry.Retry;
 import com.top_logic.basic.util.retry.RetryResult;
@@ -73,14 +74,19 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.entry.SchedulerEntry;
 import com.top_logic.util.sched.entry.SchedulerEntryStorage;
@@ -2402,6 +2408,150 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			reschedule(entry, now);
 			notifyUpdate(task);
 		}
+	}
+
+	/**
+	 * The label of the {@link Task}: its translation, if the application provides one, otherwise
+	 * its name.
+	 *
+	 * @see I18NConstants#TASK_NAMES
+	 */
+	public static String getTaskLabel(Task task) {
+		String name = task.getName();
+		return Resources.getInstance().getString(I18NConstants.TASK_NAMES.key(name), name);
+	}
+
+	/**
+	 * When the {@link Task} is run next.
+	 *
+	 * @return <code>null</code>, if no run is planned: the {@link Task} is not {@link #isActive(Task)
+	 *         active} and has not been {@link #startTask(Task) started manually}, or its schedule
+	 *         has no further date.
+	 */
+	public Date getNextRun(Task task) {
+		if (!task.isForcedRun() && !isActive(task)) {
+			return null;
+		}
+		long next = task.getNextShed();
+		return next > 0 ? new Date(next) : null;
+	}
+
+	/**
+	 * The cluster node holding the cluster lock of the {@link Task}: its name followed by its id in
+	 * parentheses.
+	 *
+	 * <p>
+	 * A {@link Task} that is not {@link Task#isNodeLocal() node local} and is
+	 * {@link Task#isPersistent() persistent} is run on one cluster node at a time: the node running
+	 * it holds its cluster lock.
+	 * </p>
+	 *
+	 * @return <code>null</code>, if the {@link Task} cannot have a cluster lock, or no node holds
+	 *         it.
+	 *
+	 * @see #releaseClusterLock(Task)
+	 */
+	public static String getClusterLockHolder(Task task) {
+		if (task.isNodeLocal() || !task.isPersistent()) {
+			return null;
+		}
+		TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+		if (!log.isClusterLockSet()) {
+			return null;
+		}
+		return log.getClusterLockName() + " (" + log.getClusterLockId() + ")";
+	}
+
+	/**
+	 * Why the cluster lock of the {@link Task} cannot be {@link #releaseClusterLock(Task) released}.
+	 *
+	 * @return <code>null</code>, if the cluster lock is set and can be released.
+	 *
+	 * @see #canReleaseClusterLock(Task)
+	 */
+	public static ResKey getClusterLockReleaseProblem(Task task) {
+		if (task.isNodeLocal()) {
+			return I18NConstants.ERROR_CLUSTER_LOCK_TASK_NODE_LOCAL__TASK.fill(task.getName());
+		}
+		if (!task.isPersistent()) {
+			return I18NConstants.ERROR_CLUSTER_LOCK_TASK_NOT_PERSISTENT__TASK.fill(task.getName());
+		}
+		if (!((TaskLogWrapper) task.getLog()).isClusterLockSet()) {
+			return I18NConstants.ERROR_CLUSTER_LOCK_NOT_SET__TASK.fill(task.getName());
+		}
+		return null;
+	}
+
+	/**
+	 * Whether the cluster lock of the {@link Task} is set and can be
+	 * {@link #releaseClusterLock(Task) released}.
+	 *
+	 * @see #getClusterLockReleaseProblem(Task)
+	 */
+	public static boolean canReleaseClusterLock(Task task) {
+		return getClusterLockReleaseProblem(task) == null;
+	}
+
+	/**
+	 * Releases the cluster lock of the {@link Task} manually, regardless of the cluster node
+	 * holding it, and marks the {@link Task} and its unfinished results as ended.
+	 *
+	 * <p>
+	 * This repairs a lock left behind by a cluster node that died while running the {@link Task}.
+	 * <b>If the {@link Task} is still running on the node holding the lock, or about to start,
+	 * releasing the lock lets another node run it at the same time, which can corrupt data.</b>
+	 * The release is therefore logged as a warning, naming the {@link Task}, the node that held
+	 * the lock and the acting user.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the cluster lock {@link #canReleaseClusterLock(Task) cannot be released}.
+	 * @throws KnowledgeBaseRuntimeException
+	 *         If the release cannot be committed.
+	 */
+	public static void releaseClusterLock(Task task) {
+		ResKey problem = getClusterLockReleaseProblem(task);
+		if (problem != null) {
+			throw new TopLogicException(problem);
+		}
+		String holder = getClusterLockHolder(task);
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.RELEASED_CLUSTER_LOCK__TASK.fill(task.getName()));
+		try {
+			((TaskLogWrapper) task.getLog()).forceUncheckedMarkTaskAsInactive(task,
+				I18NConstants.TASK_ENDED_BY_CLUSTER_LOCK_RELEASE__TASK.fill(task.getName()));
+			transaction.commit();
+		} catch (KnowledgeBaseException ex) {
+			throw new KnowledgeBaseRuntimeException(
+				"Failed to release the cluster lock of task '" + task.getName() + "'.", ex);
+		} finally {
+			transaction.rollback();
+		}
+		Logger.warn("Cluster lock of task '" + task.getName() + "' held by cluster node " + holder
+			+ " released manually by user '" + actingUserName() + "'.", Scheduler.class);
+	}
+
+	/**
+	 * Tells the {@link Task} to stop its current run.
+	 *
+	 * <p>
+	 * The {@link Task} stops at the next point its implementation checks for the request; until
+	 * then its state is {@link TaskState#CANCELING}. The request is logged with the acting user.
+	 * </p>
+	 *
+	 * @return Whether the {@link Task} accepted the request.
+	 *
+	 * @see Task#signalStop()
+	 */
+	public boolean stopTask(Task task) {
+		Logger.info("User '" + actingUserName() + "' requested stop of task '" + task.getName() + "'.",
+			Scheduler.class);
+		return task.signalStop();
+	}
+
+	private static String actingUserName() {
+		Person user = TLContext.currentUser();
+		return user == null ? null : user.getName();
 	}
 
 	private String format(Date start) {

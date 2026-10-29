@@ -3,10 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.util.sched.layout.active;
+package com.top_logic.util.sched;
 
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.composite.CompositeTask;
 

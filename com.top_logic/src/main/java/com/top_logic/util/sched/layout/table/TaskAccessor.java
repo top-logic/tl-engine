@@ -5,12 +5,10 @@
  */
 package com.top_logic.util.sched.layout.table;
 
-import java.util.Date;
-
 import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.util.Resources;
+import com.top_logic.util.sched.ActiveState;
 import com.top_logic.util.sched.Scheduler;
-import com.top_logic.util.sched.layout.active.ActiveState;
 import com.top_logic.util.sched.layout.table.results.TaskResultAccessor;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskState;
@@ -84,9 +82,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
     @Override
 	public Object getValue(Task aTask, String aProperty) {
         if (NAME.equals(aProperty)) {
-            String theName = aTask.getName();
-
-			return Resources.getInstance().getString(I18NConstants.TASK_NAMES.key(theName), theName);
+			return Scheduler.getTaskLabel(aTask);
         }
 		else if (COMBINED_STATE.equals(aProperty)) {
 			TaskState state = aTask.getLog().getState();
@@ -106,10 +102,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
             return aTask.getClass().getName();
         }
         else if (NEXT_SCHEDULE.equals(aProperty)) {
-			if (!aTask.isForcedRun() && !Scheduler.getSchedulerInstance().isActive(aTask)) {
-				return null;
-			}
-			return this.getDate(aTask.getNextShed());
+			return Scheduler.getSchedulerInstance().getNextRun(aTask);
         }
         else if (LAST_SCHEDULE.equals(aProperty)) {
 			TaskResult lastResult = aTask.getLog().getLastResult();
@@ -142,26 +135,13 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 		if (task.isNodeLocal() || !task.isPersistent()) {
 			return null;
 		}
-		TaskLogWrapper taskLogWrapper = (TaskLogWrapper) task.getLog();
-		if (taskLogWrapper.isClusterLockSet()) {
-			String lockName = taskLogWrapper.getClusterLockName();
-			Long lockId = taskLogWrapper.getClusterLockId();
-			return lockName + " (" + lockId + ")";
+		String holder = Scheduler.getClusterLockHolder(task);
+		if (holder != null) {
+			return holder;
 		}
-		if (taskLogWrapper.getState() != TaskState.INACTIVE) {
+		if (task.getLog().getState() != TaskState.INACTIVE) {
 			return Resources.getInstance().getString(I18NConstants.CLUSTER_LOCK_FREE_BUT_STATE_NOT_INACTIVE);
 		}
 		return null;
 	}
-
-    /** 
-     * Return a date for the given time.
-     * 
-     * @param    aTime    The time as long.
-     * @return   The requested date or <code>null</code> when give time is 0.
-     */
-    protected Date getDate(long aTime) {
-		return (aTime > 0) ? new Date(aTime) : null;
-	}
 }
-

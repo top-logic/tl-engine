@@ -1482,10 +1482,10 @@
 	<icon name="ICONS_BUTTON_PAUSE"
 		value="css:fa-solid fa-pause red"
 	/>
-	<icon name="com.top_logic.util.sched.layout.active.Icons.INACTIVE"
+	<icon name="com.top_logic.util.sched.layout.active.Icons.ACTIVE_STATE_INACTIVE"
 		expr="%ICONS_BUTTON_PAUSE%"
 	/>
-	<icon name="com.top_logic.util.sched.layout.active.Icons.CHILD_INACTIVE"
+	<icon name="com.top_logic.util.sched.layout.active.Icons.ACTIVE_STATE_CHILD_INACTIVE"
 		value="css:fa-solid fa-pause yellow"
 	/>
 	<icon name="com.top_logic.util.sched.task.Icons.CANCELING"

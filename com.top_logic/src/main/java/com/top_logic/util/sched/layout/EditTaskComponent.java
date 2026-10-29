@@ -29,7 +29,7 @@ import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.Resources;
-import com.top_logic.util.sched.layout.active.ActiveState;
+import com.top_logic.util.sched.ActiveState;
 import com.top_logic.util.sched.layout.active.ActiveStateRenderer;
 import com.top_logic.util.sched.layout.table.TaskAccessor;
 import com.top_logic.util.sched.layout.table.results.TaskResultAccessor;

@@ -370,12 +370,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 	}
 
 	protected void updateEntryInfo4Delete(String user, EntryInfo anInfo, int revision) {
-		BaseEntryInfo finfo = (BaseEntryInfo) anInfo;
-
-		finfo.numVersions = revision; // set new Version number
-		finfo.author = user; // and new author
-		finfo.versions = null; // invalidate old Versions Info
-		finfo.deleted = true; // Mark current Version as deleted
+		((BaseEntryInfo) anInfo).markDeleted(user, revision);
 	}
 
 	/**

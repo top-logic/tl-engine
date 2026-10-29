@@ -94,7 +94,7 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	 */
 	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType,
 			DeletionPolicy deletionPolicy, boolean unversioned) {
-		return LinkStorage.defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
+		return LinkStorage.defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned, false);
 	}
 
 	@Override

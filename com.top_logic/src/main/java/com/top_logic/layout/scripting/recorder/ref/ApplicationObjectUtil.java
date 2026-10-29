@@ -197,6 +197,12 @@ public class ApplicationObjectUtil {
 	/** Unversioned variant of {@link #WRAPPER_ATTRIBUTE_ASSOCIATION}. */
 	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED = "hasWrapperAttValueUnversioned";
 
+	/** Bag variant of {@link #WRAPPER_ATTRIBUTE_ASSOCIATION}. */
+	public static final String WRAPPER_ATTRIBUTE_BAG_ASSOCIATION = "hasWrapperAttValueBag";
+
+	/** Unversioned variant of {@link #WRAPPER_ATTRIBUTE_BAG_ASSOCIATION}. */
+	public static final String WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_UNVERSIONED = "hasWrapperAttValueBagUnversioned";
+
 	/**
 	 * Generic association to store links for references marked with deletion policy
 	 * {@link DeletionPolicy#DELETE_REFERER}.
@@ -206,6 +212,13 @@ public class ApplicationObjectUtil {
 	/** Unversioned variant of {@link #WRAPPER_DELETE_REFERER_ASSOCIATION}. */
 	public static final String WRAPPER_DELETE_REFERER_ASSOCIATION_UNVERSIONED = "hasWrapperDeleteRefererUnversioned";
 
+	/** Bag variant of {@link #WRAPPER_DELETE_REFERER_ASSOCIATION}. */
+	public static final String WRAPPER_DELETE_REFERER_BAG_ASSOCIATION = "hasWrapperDeleteRefererBag";
+
+	/** Unversioned variant of {@link #WRAPPER_DELETE_REFERER_BAG_ASSOCIATION}. */
+	public static final String WRAPPER_DELETE_REFERER_BAG_ASSOCIATION_UNVERSIONED =
+		"hasWrapperDeleteRefererBagUnversioned";
+
 	/**
 	 * Generic association to store links for references marked with deletion policy
 	 * {@link DeletionPolicy#VETO}.
@@ -214,6 +227,12 @@ public class ApplicationObjectUtil {
 
 	/** Unversioned variant of {@link #WRAPPER_VETO_ASSOCIATION}. */
 	public static final String WRAPPER_VETO_ASSOCIATION_UNVERSIONED = "hasWrapperVetoUnversioned";
+
+	/** Bag variant of {@link #WRAPPER_VETO_ASSOCIATION}. */
+	public static final String WRAPPER_VETO_BAG_ASSOCIATION = "hasWrapperVetoBag";
+
+	/** Unversioned variant of {@link #WRAPPER_VETO_BAG_ASSOCIATION}. */
+	public static final String WRAPPER_VETO_BAG_ASSOCIATION_UNVERSIONED = "hasWrapperVetoBagUnversioned";
 
 	/**
 	 * Name of the table in which references to historic items are stored.
@@ -225,6 +244,13 @@ public class ApplicationObjectUtil {
 	/** Unversioned variant of {@link #HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION}. */
 	public static final String HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED = "hasHistoricValueUnversioned";
 
+	/** Bag variant of {@link #HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION}. */
+	public static final String HISTORIC_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION = "hasHistoricValueBag";
+
+	/** Unversioned variant of {@link #HISTORIC_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION}. */
+	public static final String HISTORIC_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_UNVERSIONED =
+		"hasHistoricValueBagUnversioned";
+
 	/**
 	 * Name of the table in which references to both historical and current items can be stored.
 	 * 
@@ -234,6 +260,12 @@ public class ApplicationObjectUtil {
 
 	/** Unversioned variant of {@link #MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION}. */
 	public static final String MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED = "hasMixedValueUnversioned";
+
+	/** Bag variant of {@link #MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION}. */
+	public static final String MIXED_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION = "hasMixedValueBag";
+
+	/** Unversioned variant of {@link #MIXED_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION}. */
+	public static final String MIXED_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_UNVERSIONED = "hasMixedValueBagUnversioned";
 
 	/**
 	 * KA attribute used to store {@link TLStructuredTypePart}.

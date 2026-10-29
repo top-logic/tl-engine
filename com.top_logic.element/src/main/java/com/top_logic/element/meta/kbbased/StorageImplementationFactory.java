@@ -95,16 +95,17 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 					boolean composite = end.isComposite();
 					boolean ordered = end.isOrdered();
 					boolean multiple = end.isMultiple();
+					boolean bag = end.isBag();
 					if (multiple) {
 						if (ordered) {
 							TLType endType = end.getType();
 							if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
-								config = ImageGalleryStorage.imageGalleryConfig();
+								config = ImageGalleryStorage.imageGalleryConfig(bag);
 							} else {
-								config = ListStorage.listConfig(composite, historyType, deletionPolicy, unversioned);
+								config = ListStorage.listConfig(composite, historyType, deletionPolicy, unversioned, bag);
 							}
 						} else {
-							config = SetStorage.setConfig(composite, historyType, deletionPolicy, unversioned);
+							config = SetStorage.setConfig(composite, historyType, deletionPolicy, unversioned, bag);
 						}
 					} else {
 						TLType endType = end.getType();

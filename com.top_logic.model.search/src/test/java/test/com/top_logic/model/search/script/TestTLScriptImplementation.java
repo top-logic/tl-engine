@@ -240,34 +240,34 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 		String DEFAULT_PROVIDER = "default-provider";
 
 		@Name(FILTER)
-		PolymorphicConfiguration<Filter<Object>> getFilter();
+		PolymorphicConfiguration<? extends Filter<Object>> getFilter();
 
 		@Name(MAPPING)
 		PolymorphicConfiguration<? extends Mapping<Object, String>> getMapping();
 
 		@Name(INT_FUN)
-		PolymorphicConfiguration<IntFun> getIntFun();
+		PolymorphicConfiguration<? extends IntFun> getIntFun();
 
 		@Name(BOOLEAN_FUN)
-		PolymorphicConfiguration<BooleanFun> getBooleanFun();
+		PolymorphicConfiguration<? extends BooleanFun> getBooleanFun();
 
 		@Name(LIST_FUN)
-		PolymorphicConfiguration<ListFun> getListFun();
+		PolymorphicConfiguration<? extends ListFun> getListFun();
 
 		@Name(ENUM_FUN)
-		PolymorphicConfiguration<EnumFun> getEnumFun();
+		PolymorphicConfiguration<? extends EnumFun> getEnumFun();
 
 		@Name(WITH_DEFAULT)
-		PolymorphicConfiguration<WithDefault> getWithDefault();
+		PolymorphicConfiguration<? extends WithDefault> getWithDefault();
 
 		@Name(VAR_ARGS)
-		PolymorphicConfiguration<VarArgsFun> getVarArgs();
+		PolymorphicConfiguration<? extends VarArgsFun> getVarArgs();
 
 		@Name(VOID_FUN)
-		PolymorphicConfiguration<VoidFun> getVoidFun();
+		PolymorphicConfiguration<? extends VoidFun> getVoidFun();
 
 		@Name(FUN1)
-		PolymorphicConfiguration<IFunction1<String, Object>> getFun1();
+		PolymorphicConfiguration<? extends IFunction1<String, Object>> getFun1();
 
 		@Name(FUN2)
 		ScriptFunction2<String, Object, Object> getFun2();
@@ -276,28 +276,28 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 		ScriptFunction1<Object, Object> getLegacy();
 
 		@Name(MULTI)
-		PolymorphicConfiguration<Multi> getMulti();
+		PolymorphicConfiguration<? extends Multi> getMulti();
 
 		@Name(BUILDER)
-		PolymorphicConfiguration<ListModelBuilder> getBuilder();
+		PolymorphicConfiguration<? extends ListModelBuilder> getBuilder();
 
 		@Name(OVERLOADED)
-		PolymorphicConfiguration<Overloaded> getOverloaded();
+		PolymorphicConfiguration<? extends Overloaded> getOverloaded();
 
 		@Name(RENAMED)
-		PolymorphicConfiguration<Renamed> getRenamed();
+		PolymorphicConfiguration<? extends Renamed> getRenamed();
 
 		@Name(COMPARATOR)
-		PolymorphicConfiguration<Comparator<Object>> getComparator();
+		PolymorphicConfiguration<? extends Comparator<Object>> getComparator();
 
 		@Name(SETTINGS)
-		PolymorphicConfiguration<Settings> getSettings();
+		PolymorphicConfiguration<? extends Settings> getSettings();
 
 		@Name(FLAG)
-		PolymorphicConfiguration<Flag> getFlag();
+		PolymorphicConfiguration<? extends Flag> getFlag();
 
 		@Name(DEFAULT_PROVIDER)
-		PolymorphicConfiguration<DefaultProvider> getDefaultProvider();
+		PolymorphicConfiguration<? extends DefaultProvider> getDefaultProvider();
 	}
 
 	public void testRealProvider() {

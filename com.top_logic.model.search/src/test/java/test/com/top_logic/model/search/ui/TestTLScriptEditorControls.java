@@ -109,10 +109,10 @@ public class TestTLScriptEditorControls extends TestCase {
 		ScriptFunction4<?, ?, ?, ?, ?> getFunction4();
 
 		@Name("filter")
-		PolymorphicConfiguration<Filter<Object>> getFilter();
+		PolymorphicConfiguration<? extends Filter<Object>> getFilter();
 
 		@Name("switch")
-		PolymorphicConfiguration<Switch> getSwitch();
+		PolymorphicConfiguration<? extends Switch> getSwitch();
 	}
 
 	/**

@@ -129,7 +129,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 
 		@Name(GREETER)
 		@Mandatory
-		PolymorphicConfiguration<Greeter> getGreeter();
+		PolymorphicConfiguration<? extends Greeter> getGreeter();
 
 		@Name(FUNCTION)
 		@Mandatory
@@ -192,7 +192,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		PolymorphicItemControl greeter = polymorphic(editor, greeter(config));
 		greeter.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptImplementation.class));
 
-		PolymorphicConfiguration<Greeter> script = config.getGreeter();
+		PolymorphicConfiguration<? extends Greeter> script = config.getGreeter();
 		assertNotNull(script);
 		assertNotNull("Script configuration.", ScriptImplementationType.forDescriptor(script.descriptor()));
 		assertEquals(List.of(Greeter.GREET), propertyNames(index, script));
@@ -296,7 +296,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		String CONVERTER = "converter";
 
 		@Name(CONVERTER)
-		PolymorphicConfiguration<Converter> getConverter();
+		PolymorphicConfiguration<? extends Converter> getConverter();
 	}
 
 	public void testSingleScriptCarriesTheOwnersLabelAndSignature() {

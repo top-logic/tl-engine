@@ -106,9 +106,9 @@ public class TestScriptImplementation extends AbstractTypedConfigurationTestCase
 		String FUN = "fun";
 
 		@Name(FUN)
-		PolymorphicConfiguration<Fun> getFun();
+		PolymorphicConfiguration<? extends Fun> getFun();
 
-		void setFun(PolymorphicConfiguration<Fun> value);
+		void setFun(PolymorphicConfiguration<? extends Fun> value);
 
 		PolymorphicConfiguration<? extends Fun> getWildcard();
 
@@ -120,19 +120,19 @@ public class TestScriptImplementation extends AbstractTypedConfigurationTestCase
 
 		OtherFunConfig getOther();
 
-		PolymorphicConfiguration<TwoMethods> getTwo();
+		PolymorphicConfiguration<? extends TwoMethods> getTwo();
 
-		void setTwo(PolymorphicConfiguration<TwoMethods> value);
+		void setTwo(PolymorphicConfiguration<? extends TwoMethods> value);
 
 		@ImplementationClassDefault(JavaFun.class)
-		PolymorphicConfiguration<Fun> getWithDefault();
+		PolymorphicConfiguration<? extends Fun> getWithDefault();
 	}
 
 	/**
 	 * Property type declared before any provider is installed.
 	 */
 	public interface WithoutProvider extends ConfigurationItem {
-		PolymorphicConfiguration<Fun> getFun();
+		PolymorphicConfiguration<? extends Fun> getFun();
 	}
 
 	/**

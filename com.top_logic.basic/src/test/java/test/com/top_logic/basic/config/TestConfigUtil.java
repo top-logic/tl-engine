@@ -30,6 +30,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.reflect.JavaTypeUtil;
 
 /**
  * Test case for {@link ConfigUtil}
@@ -571,37 +572,37 @@ public class TestConfigUtil extends BasicTestCase {
 	public interface GenericInstanceTypes extends ConfigurationItem {
 
 		@Name("item")
-		PolymorphicConfiguration<Function<Object, String>> getItem();
-
-		@Name("wildcard")
-		PolymorphicConfiguration<? extends Function<Object, String>> getWildcard();
+		PolymorphicConfiguration<? extends Function<Object, String>> getItem();
 
 		@Name("sub")
 		LabelFunctionConfig getSub();
 
 		@Name("list")
-		List<PolymorphicConfiguration<Function<Object, String>>> getList();
+		List<PolymorphicConfiguration<? extends Function<Object, String>>> getList();
 
 		@Name("array")
 		LabelFunctionConfig[] getArray();
 
 		@Name("raw")
 		@SuppressWarnings("rawtypes")
-		PolymorphicConfiguration<Function> getRaw();
+		PolymorphicConfiguration<? extends Function> getRaw();
 	}
 
 	public void testGetGenericInstanceType() {
 		Type expected = new TypeToken<Function<Object, String>>() {}.getType();
-		assertEquals(expected, genericInstanceType("item"));
+		// Bound in the sub interface declaration.
 		assertEquals(expected, genericInstanceType("sub"));
-		assertEquals(expected, genericInstanceType("list"));
 		assertEquals(expected, genericInstanceType("array"));
 		// The wildcard as declared, possibly captured as type variable.
-		Type wildcard = genericInstanceType("wildcard");
-		Type bound = wildcard instanceof WildcardType w ? w.getUpperBounds()[0]
-			: ((TypeVariable<?>) wildcard).getBounds()[0];
-		assertEquals(expected, bound);
-		assertEquals(Function.class, genericInstanceType("raw"));
+		assertEquals(expected, wildcardBound(genericInstanceType("item")));
+		assertEquals(expected, wildcardBound(genericInstanceType("list")));
+		assertEquals(Function.class, wildcardBound(genericInstanceType("raw")));
+	}
+
+	private static Type wildcardBound(Type type) {
+		assertTrue("Not a wildcard or its capture: " + type,
+			type instanceof WildcardType || type instanceof TypeVariable<?>);
+		return JavaTypeUtil.upperBound(type);
 	}
 
 	private static Type genericInstanceType(String property) {

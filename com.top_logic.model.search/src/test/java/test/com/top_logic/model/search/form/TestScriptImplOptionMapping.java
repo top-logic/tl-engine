@@ -95,7 +95,7 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 	public interface A extends ConfigurationItem {
 		@Name(FILTER)
-		PolymorphicConfiguration<Filter<Object>> getFilter();
+		PolymorphicConfiguration<? extends Filter<Object>> getFilter();
 
 		@Name(FUNCTION)
 		ScriptFunction1<Object, Object> getFunction();
@@ -107,12 +107,12 @@ public class TestScriptImplOptionMapping extends TestCase {
 		ScriptFunction3<Object, TLObject, ResKey, TLStructuredTypePart> getLabel();
 
 		@Name(PROVIDER)
-		PolymorphicConfiguration<DefaultProvider> getProvider();
+		PolymorphicConfiguration<? extends DefaultProvider> getProvider();
 
 		@Name(CHOSEN)
 		@com.top_logic.layout.form.values.edit.annotation.Options(fun = ChosenFilters.class,
 			mapping = ImplOptionMapping.class)
-		PolymorphicConfiguration<Filter<Object>> getChosen();
+		PolymorphicConfiguration<? extends Filter<Object>> getChosen();
 	}
 
 	/**

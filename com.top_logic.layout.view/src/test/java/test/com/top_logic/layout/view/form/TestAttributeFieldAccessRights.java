@@ -78,7 +78,11 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_own = newObject(qualified(PROJECT), "own");
+		TLObject viewed = newObject(qualified(PROJECT), "viewed");
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			// The responsible user holds the viewer role on another project, so that writing an
+			// attribute only a viewer may write is refused on the edited object, not hidden.
+			viewed.tUpdateByName(VIEWER, _responsible);
 			_project.tUpdateByName(VIEWER, _roleless);
 			_project.tUpdateByName(BUDGET, BUDGET_VALUE);
 			_project.tUpdateByName(CLASSIFIED, CLASSIFIED_VALUE);

@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
@@ -886,6 +887,23 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		for (WindowEntry entry : registry._windows.values()) {
 			requestReload(entry.getQueue());
+		}
+	}
+
+	/**
+	 * Performs the given action for every window of every live session.
+	 *
+	 * <p>
+	 * May be called from any thread. A window opened or torn down concurrently may or may not be
+	 * visited.
+	 * </p>
+	 *
+	 * @param action
+	 *        The action to perform for each window.
+	 */
+	public static void forEachWindow(Consumer<? super WindowEntry> action) {
+		for (ReactWindowRegistry registry : REGISTRIES_BY_SESSION_ID.values()) {
+			registry._windows.values().forEach(action);
 		}
 	}
 

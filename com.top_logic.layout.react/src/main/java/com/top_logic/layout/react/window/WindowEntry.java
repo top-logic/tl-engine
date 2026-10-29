@@ -10,6 +10,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.impl.ModelChangeSummary;
 
 /**
  * The server-side state of a single browser window.
@@ -230,6 +231,24 @@ public class WindowEntry {
 		if (forwarder != null) {
 			forwarder.synthesizeModelEvents();
 		}
+	}
+
+	/**
+	 * Whether the summarized change reaches a listener of this window's
+	 * {@link #getOrCreateModelScope() model scope}.
+	 *
+	 * <p>
+	 * A window that has not created its scope observes nothing and is not affected; the scope is not
+	 * created by asking. May be called from any thread, see
+	 * {@link GlobalModelEventForwarder#isAffectedBy(ModelChangeSummary)}.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change built with {@link GlobalModelEventForwarder#configuredSettings()}.
+	 */
+	public boolean isAffectedBy(ModelChangeSummary change) {
+		GlobalModelEventForwarder forwarder = _modelScope;
+		return forwarder != null && forwarder.isAffectedBy(change);
 	}
 
 	/**

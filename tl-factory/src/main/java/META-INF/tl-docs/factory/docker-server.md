@@ -137,7 +137,7 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
    ```bash
    docker run ... \
      -v /run/user/<uid>/docker.sock:/var/run/docker.sock \
-     -e tl_factory_public_host=<name of the server> \
+     -e tl_factory_host_ip=<internal address of the server> \
      <image of tl-factory-app>
    ```
 
@@ -146,9 +146,11 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
 
 4. **Ports.** The workspaces publish their applications on the server in the range
    `tl_factory_host_port_min`..`tl_factory_host_port_max` (default 20000-20999), on the address
-   `tl_factory_host_ip`. Its default `127.0.0.1` keeps them on the server; set it explicitly, to
-   the internal address a reverse proxy forwards to - which puts the previews behind the login it
-   demands -, never to all addresses of a server reachable from the internet. A rootful daemon
+   `tl_factory_host_ip`. Its default `127.0.0.1` keeps them on the server, but is the control
+   application's container itself for the control application; set it explicitly, to an internal
+   address of the server the control application's container reaches - the browsers open the
+   previews through the [preview route](doc:factory#the-preview-route) of the control application,
+   behind its login -, never to all addresses of a server reachable from the internet. A rootful daemon
    publishes ports by DNAT rules that come before the firewall of the host - UFW does not block
    them -, so this address is the restriction that holds.
 
@@ -162,9 +164,11 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
 Control application and workspaces run on two different daemons, so they share no Docker network.
 They reach each other through ports published on the server:
 
-- The control application reaches a started application under its preview URL
-  `http://<tl_factory_public_host>:<host port>/...`. The server's name must resolve to the server
-  from inside the control application's container as well.
+- The control application reaches a started application - waiting for it, forwarding its
+  [preview route](doc:factory#the-preview-route) - at the published port on `tl_factory_host_ip`,
+  `http://<tl_factory_host_ip>:<host port>/...`; that address must be reachable from inside the
+  control application's container. The browsers open the applications through the control
+  application only.
 - A workspace reaches the control application under the URL the control application is published
   at, with the server's name, e.g. `http://<name of the server>:<published port>/`.
 
@@ -218,6 +222,7 @@ cgroup v2 (`docker info` reports `Cgroup Version: 2`).
 
 For the strongest isolation the workspaces run on a VM of their own. Its daemon is reached over
 `tcp://<VM>:2376` with TLS client certificates (property `tls-cert-path` of the provider), and
-`tl_factory_public_host` names the VM. Control application and workspaces reach each other as
+`tl_factory_host_ip` is the address of the VM the workspaces publish their ports on, which the
+control application reaches. Control application and workspaces reach each other as
 described for the rootless daemon, through ports published on the VM and on the server of the
 control application.

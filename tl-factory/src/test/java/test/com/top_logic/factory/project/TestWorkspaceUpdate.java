@@ -44,7 +44,8 @@ import com.top_logic.util.model.ModelService;
 /**
  * Test of the bookkeeping of updating a workspace to the current workspace image, against a
  * knowledge base and a {@link RecordingWorkspaceProvider}: the stored image, the outdated flag, the
- * kept initial password, the URL of the LLM proxy and the stored context path.
+ * kept initial password, the URL of the LLM proxy, the stored context path and whether a browser
+ * opens the application through the preview route.
  */
 public class TestWorkspaceUpdate extends BasicTestCase {
 
@@ -82,6 +83,9 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			assertEquals(CONTEXT_PATH, created.spec().getContextPath());
 			assertEquals(CONTEXT_PATH, FactoryModel.getString(workspace, FactoryModel.WORKSPACE_CONTEXT_PATH));
 			assertEquals(CONTEXT_PATH, FactoryModel.getContextPath(workspace));
+			assertEquals("A browser opens the application through the preview route.", CONTEXT_PATH + "/",
+				ProjectWorkspaces.previewUrl(workspace));
+			assertFalse(ProjectWorkspaces.isContextPathOutdated(workspace));
 
 			WorkspaceInfo createdInfo = applications.create(created.spec(), ExecOutput.NONE);
 			commit(() -> workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, createdInfo.getImage()));
@@ -121,12 +125,16 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			// A workspace whose container was created before the context path was recorded.
 			commit(() -> workspace.tUpdateByName(FactoryModel.WORKSPACE_CONTEXT_PATH, null));
 			assertEquals("/" + ARTIFACT_ID, FactoryModel.getContextPath(workspace));
+			assertNull("Not reached through the preview route.", ProjectWorkspaces.previewUrl(workspace));
+			assertTrue("An update makes it reachable.", ProjectWorkspaces.isContextPathOutdated(workspace));
 
 			commit(() -> ProjectWorkspaces.recordUpdate(workspace, update.spec(), updated));
 			assertEquals(updated.getImage(), FactoryModel.getString(workspace, FactoryModel.WORKSPACE_IMAGE));
 			assertFalse("An updated workspace runs the current image.", ProjectWorkspaces.isImageOutdated(workspace));
 			assertEquals("The update records the context path of the new container.", CONTEXT_PATH,
 				FactoryModel.getContextPath(workspace));
+			assertEquals(CONTEXT_PATH + "/", ProjectWorkspaces.previewUrl(workspace));
+			assertFalse(ProjectWorkspaces.isContextPathOutdated(workspace));
 		} finally {
 			commit(() -> {
 				TLObject workspace = FactoryModel.getWorkspace(project);

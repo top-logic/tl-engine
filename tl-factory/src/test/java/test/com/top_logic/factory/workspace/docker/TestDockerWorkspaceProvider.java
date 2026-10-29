@@ -253,7 +253,6 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		assertEquals(WorkspaceState.CREATED, created.getState());
 		assertNotNull(created.getContainerId());
 		assertFalse(created.hasHostPort());
-		assertNull(created.getPreviewUrl());
 		assertEquals(1, created.getVolumes().size());
 		String volume = created.getVolumes().get(0);
 
@@ -261,8 +260,7 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		assertEquals(WorkspaceState.RUNNING, started.getState());
 		assertTrue("Host port not in range: " + started.getHostPort(),
 			started.getHostPort() >= HOST_PORT_MIN && started.getHostPort() <= HOST_PORT_MAX);
-		assertEquals("http://localhost:" + started.getHostPort() + "/", started.getPreviewUrl());
-		assertTrue(httpGet(started.getPreviewUrl()).contains(PAGE_CONTENT));
+		assertTrue(httpGet(rootUrl(started)).contains(PAGE_CONTENT));
 
 		CollectingOutput output = new CollectingOutput();
 		int exitCode = _provider.exec(id,
@@ -289,7 +287,7 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		WorkspaceInfo restarted = _provider.start(id);
 		assertEquals(WorkspaceState.RUNNING, restarted.getState());
 		assertTrue(restarted.hasHostPort());
-		assertTrue(httpGet(restarted.getPreviewUrl()).contains(PAGE_CONTENT));
+		assertTrue(httpGet(rootUrl(restarted)).contains(PAGE_CONTENT));
 		CollectingOutput markerOutput = new CollectingOutput();
 		assertEquals(0, _provider.exec(id, ExecCommand.of("cat", DATA_PATH + "/marker"), markerOutput));
 		assertEquals("The volume did not survive the restart.", "persisted\n", markerOutput.stdout());
@@ -359,7 +357,7 @@ public class TestDockerWorkspaceProvider extends TestCase {
 
 			WorkspaceInfo started = _provider.start(id);
 			assertEquals(WorkspaceState.RUNNING, started.getState());
-			assertTrue(httpGet(started.getPreviewUrl()).contains(PAGE_CONTENT));
+			assertTrue(httpGet(rootUrl(started)).contains(PAGE_CONTENT));
 			CollectingOutput marker = new CollectingOutput();
 			assertEquals(0, _provider.exec(id, ExecCommand.of("cat", DATA_PATH + "/marker"), marker));
 			assertEquals("The volume did not survive the new container.", "persisted\n", marker.stdout());
@@ -1089,6 +1087,13 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		}
 		Collections.sort(result);
 		return result;
+	}
+
+	/**
+	 * The root of the published port of a running workspace, at the address it is published on.
+	 */
+	private static String rootUrl(WorkspaceInfo workspace) {
+		return "http://" + LOOPBACK + ":" + workspace.getHostPort() + "/";
 	}
 
 	private static String httpGet(String url) throws IOException, InterruptedException {

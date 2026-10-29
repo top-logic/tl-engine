@@ -581,6 +581,14 @@ public class ApplicationWorkspaces {
 
 	private static final String PATH_SEPARATOR = "/";
 
+	private static final String HTTP_SCHEME = "http://";
+
+	private static final char PORT_SEPARATOR = ':';
+
+	private static final char IPV6_START = '[';
+
+	private static final char IPV6_END = ']';
+
 	private static final long POLL_MILLIS = 2000;
 
 	private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
@@ -966,24 +974,100 @@ public class ApplicationWorkspaces {
 	}
 
 	/**
-	 * The URL of the application with the given context path in a running workspace.
+	 * The URL under which this application reaches the application with the given context path in
+	 * a running workspace: at the {@link WorkspaceProvider#publishedAddress() address the ports are
+	 * published on} and the {@link WorkspaceInfo#getHostPort() host port} of the workspace.
+	 *
+	 * <p>
+	 * This URL is for the control application talking to the container, e.g. waiting for the
+	 * application. A browser opens the application through the preview route, see
+	 * {@link #previewUrl(String, String)}.
+	 * </p>
 	 *
 	 * @param workspace
 	 *        The running workspace.
 	 * @param contextPath
 	 *        The context path of the application, see {@link #contextPath(ApplicationSpec)}.
-	 * @return The {@link WorkspaceInfo#getPreviewUrl() preview URL} of the workspace followed by
-	 *         the context path and a slash.
 	 */
-	public static String applicationUrl(WorkspaceInfo workspace, String contextPath) {
-		String previewUrl = workspace.getPreviewUrl();
-		if (previewUrl == null) {
+	public String applicationUrl(WorkspaceInfo workspace, String contextPath) {
+		if (!workspace.hasHostPort()) {
 			throw new IllegalArgumentException("Workspace has no published port: " + workspace);
 		}
-		String origin = previewUrl.endsWith(PATH_SEPARATOR)
-			? previewUrl.substring(0, previewUrl.length() - PATH_SEPARATOR.length()) : previewUrl;
+		return applicationUrl(_provider.publishedAddress(), workspace.getHostPort(), contextPath);
+	}
+
+	/**
+	 * The URL of the application with the given context path listening on the given address and
+	 * port.
+	 *
+	 * @param address
+	 *        The address the port is published on, see {@link WorkspaceProvider#publishedAddress()}.
+	 * @param port
+	 *        The host port of the workspace.
+	 * @param contextPath
+	 *        The context path of the application.
+	 * @return The {@link #origin(String, int) origin} followed by the context path and a slash.
+	 */
+	public static String applicationUrl(String address, int port, String contextPath) {
 		String path = contextPath.startsWith(PATH_SEPARATOR) ? contextPath : PATH_SEPARATOR + contextPath;
-		return origin + path + PATH_SEPARATOR;
+		return origin(address, port) + path + PATH_SEPARATOR;
+	}
+
+	/**
+	 * The origin of an application listening on the given address and port.
+	 */
+	public static String origin(String address, int port) {
+		boolean ipv6 = address.indexOf(PORT_SEPARATOR) >= 0 && address.charAt(0) != IPV6_START;
+		String host = ipv6 ? IPV6_START + address + IPV6_END : address;
+		return HTTP_SCHEME + host + PORT_SEPARATOR + port;
+	}
+
+	/**
+	 * The URL under which a browser opens the application of a workspace: the path of the
+	 * application below the {@link #PREVIEW_PATH preview route} of the control application.
+	 *
+	 * @param workspaceId
+	 *        The identifier of the workspace.
+	 * @param contextPath
+	 *        The context path the application of the workspace is served under.
+	 * @return The path-absolute URL, {@code null} if the application is not reached through the
+	 *         preview route.
+	 * @see #previewUrl(String, String, String)
+	 */
+	public String previewUrl(String workspaceId, String contextPath) {
+		return previewUrl(_controlContextPath, workspaceId, contextPath);
+	}
+
+	/**
+	 * The URL under which a browser opens the application of a workspace through the
+	 * {@link #PREVIEW_PATH preview route} of the control application.
+	 *
+	 * <p>
+	 * The route forwards the requests below {@code <control context>/preview/<workspace>} that are
+	 * below the context path of the application of the workspace, unchanged. So the application is
+	 * reached through it only if its context path is that path of the route or below it; it is not
+	 * for a context path created with another pattern or before the context path of a workspace
+	 * started with the one of the control application, until the workspace is updated.
+	 * </p>
+	 *
+	 * @param controlContextPath
+	 *        The context path of the control application, empty if it is served at the root.
+	 * @param workspaceId
+	 *        The identifier of the workspace.
+	 * @param contextPath
+	 *        The context path the application of the workspace is served under.
+	 * @return The context path followed by a slash, a path-absolute URL that needs no origin;
+	 *         {@code null} if the application is not reached through the preview route.
+	 */
+	public static String previewUrl(String controlContextPath, String workspaceId, String contextPath) {
+		if (contextPath == null) {
+			return null;
+		}
+		String route = controlContextPath + PREVIEW_PATH + PATH_SEPARATOR + workspaceId;
+		if (!contextPath.equals(route) && !contextPath.startsWith(route + PATH_SEPARATOR)) {
+			return null;
+		}
+		return contextPath + PATH_SEPARATOR;
 	}
 
 	/**

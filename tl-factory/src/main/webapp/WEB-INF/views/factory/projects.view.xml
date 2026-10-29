@@ -92,6 +92,16 @@
 			observed-types="tl.factory:Workspace"
 		/>
 		<!--
+			Whether the application of the workspace is reached through the control application only
+			after an update, because its container serves it under a context path outside the preview
+			route; false while it has no workspace.
+		-->
+		<derived-channel name="contextPathOutdated"
+			expr="if($workspace == null, false, factoryContextPathOutdated($workspace))"
+			inputs="workspace"
+			observed-types="tl.factory:Workspace"
+		/>
+		<!--
 			The repository of the selected project as link to its page on the git hosting service; empty
 			while the project has none.
 		-->
@@ -146,12 +156,16 @@
 	if($jobUrl == null, null, {{{<p>{#('CI job'@en, 'CI-Job'@de)}: <a href="{$jobUrl}" target="_blank" rel="noopener">{$job}</a></p>{$last}}}});
 }]]></expr>
 		</derived-channel>
+		<!--
+			The running application of the selected workspace as link through the preview route of the
+			control application; empty while it does not run or is reached only after an update.
+		-->
 		<derived-channel name="previewLink"
 			inputs="workspace"
 		>
 			<expr><![CDATA[{
 	url = $workspace.get(`tl.factory:Workspace#previewUrl`);
-	if($url == null, null, {{{<a href="{$url}" target="_blank" rel="noopener">{$url}</a>}}});
+	if($url == null, null, {{{<p>{#('Application'@en, 'Anwendung'@de)}: <a href="{$url}" target="_blank" rel="noopener">{$url}</a></p>}}});
 }]]></expr>
 		</derived-channel>
 	</channels>
@@ -269,7 +283,7 @@
 						<generic-command name="updateWorkspace"
 							clique="edit"
 							image="css:bi bi-arrow-repeat"
-							inputs="project, status, outdated"
+							inputs="project, status, outdated, contextPathOutdated"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -284,9 +298,9 @@
 							</access>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated || $contextPathOutdated, null, #('The workspace runs on the current image and is reached through the control application.'@en, 'Der Workspace läuft auf dem aktuellen Image und ist über die Steueranwendung erreichbar.'@de))))"/>
 							</executability>
-							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
+							<confirm expr="#('Create the container of {0} anew on the current image and with the current context path? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image und mit dem aktuellen Kontextpfad neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
 							<execute-script function="factoryUpdate($project)"/>
 						</generic-command>
 						<generic-command name="cleanupWorkspace"
@@ -536,6 +550,10 @@
 											to="outdated"
 										/>
 										<bind
+											channel="contextPathOutdated"
+											to="contextPathOutdated"
+										/>
+										<bind
 											channel="previewLink"
 											to="previewLink"
 										/>
@@ -608,6 +626,10 @@
 								<bind
 									channel="outdated"
 									to="outdated"
+								/>
+								<bind
+									channel="contextPathOutdated"
+									to="contextPathOutdated"
 								/>
 								<bind
 									channel="previewLink"

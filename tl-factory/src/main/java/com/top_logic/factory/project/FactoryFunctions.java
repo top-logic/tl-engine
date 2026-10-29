@@ -621,6 +621,22 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Whether the application of a workspace is reached through the control application only
+	 * after the workspace is updated: its container serves the application under a context path
+	 * outside the preview route of the control application, the update creates it with the
+	 * context path of the configured pattern.
+	 *
+	 * @param workspace
+	 *        The workspace of a project.
+	 * @return Whether the context path of the workspace is outdated.
+	 */
+	@Label("Workspace context path outdated")
+	@SideEffectFree
+	public static boolean contextPathOutdated(@Mandatory TLObject workspace) {
+		return ProjectWorkspaces.isContextPathOutdated(workspace);
+	}
+
+	/**
 	 * Why the coding agent cannot work in a workspace now: the workspace is not running, runs an
 	 * outdated image without the agent tools, or the control application gives workspaces no access
 	 * to a language model.

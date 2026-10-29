@@ -54,7 +54,8 @@ public class WorkspaceReconciliation {
 	 * @param hostPort
 	 *        The host port the application is published on, {@code null} if it is not.
 	 * @param previewUrl
-	 *        The URL of the application, {@code null} if it is not published.
+	 *        The URL under which a browser opens the application, {@code null} if it is not
+	 *        published or not reached through the preview route of the control application.
 	 * @param message
 	 *        A line explaining a change to the user, {@code null} if there is nothing to explain.
 	 * @param image
@@ -73,13 +74,14 @@ public class WorkspaceReconciliation {
 	}
 
 	/**
-	 * Function computing the URL of the application of a running workspace from what the provider
-	 * reports about it.
+	 * Function computing the URL under which a browser opens the application of a running
+	 * workspace from what the provider reports about it.
 	 */
-	public interface ApplicationUrl {
+	public interface PreviewUrl {
 
 		/**
-		 * The URL of the application in the given running workspace.
+		 * The URL under which a browser opens the application in the given running workspace,
+		 * {@code null} if it is not reached through the preview route of the control application.
 		 */
 		String of(WorkspaceInfo workspace);
 
@@ -99,7 +101,7 @@ public class WorkspaceReconciliation {
 
 	private final WorkspaceProvider _provider;
 
-	private final ApplicationUrl _applicationUrl;
+	private final PreviewUrl _previewUrl;
 
 	private final ApplicationStateCheck _applicationState;
 
@@ -108,15 +110,15 @@ public class WorkspaceReconciliation {
 	 *
 	 * @param provider
 	 *        The provider reporting the containers.
-	 * @param applicationUrl
-	 *        Computes the URL of the application of a running workspace.
+	 * @param previewUrl
+	 *        Computes the URL under which a browser opens the application of a running workspace.
 	 * @param applicationState
 	 *        Tells the state of the application of a running workspace.
 	 */
-	public WorkspaceReconciliation(WorkspaceProvider provider, ApplicationUrl applicationUrl,
+	public WorkspaceReconciliation(WorkspaceProvider provider, PreviewUrl previewUrl,
 			ApplicationStateCheck applicationState) {
 		_provider = provider;
-		_applicationUrl = applicationUrl;
+		_previewUrl = previewUrl;
 		_applicationState = applicationState;
 	}
 
@@ -204,7 +206,7 @@ public class WorkspaceReconciliation {
 			return new Outcome(status, Integer.valueOf(actual.getHostPort()), null, message, image(actual));
 		}
 		if (actual.getState() == WorkspaceState.RUNNING && actual.hasHostPort()) {
-			return new Outcome(status, Integer.valueOf(actual.getHostPort()), _applicationUrl.of(actual), message,
+			return new Outcome(status, Integer.valueOf(actual.getHostPort()), _previewUrl.of(actual), message,
 				image(actual));
 		}
 		return new Outcome(status, null, null, message, image(actual));

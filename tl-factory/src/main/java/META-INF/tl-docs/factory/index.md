@@ -43,7 +43,7 @@ letters, digits and dashes, also names the context path, the repository and the 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
 version, its git connection and its repository there, the workspace as a composition),
 `GitConnection` (see [git connections](doc:factory/git-hosting#git-connections)) and `Workspace` (workspace ID, status, host port,
-preview URL, initial root password, the image its container was created from, the output of the
+preview URL - the path of the running application below the preview route -, context path, initial root password, the image its container was created from, the output of the
 last operation as `log`) and the
 enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Application stopped*,
 *Stopping*, *Stopped*, *Cleaning up*, *Updating*, *Error*, *Unknown*. *Application stopped*
@@ -55,7 +55,7 @@ container.
 A new workspace gets a random initial password, which the container passes to the application in
 the environment variable `tl_initial_password` (`ApplicationWorkspaces.ENV_INITIAL_PASSWORD`); the
 application sets it for its account `root` when it creates its database. The detail view shows it
-under the preview link. It is the password of a development workspace and is no longer valid once
+below the link to the application. It is the password of a development workspace and is no longer valid once
 it is changed in the application.
 
 The output of the application itself - copied to the output of the main process of the container,
@@ -155,7 +155,7 @@ every other command in the container would end with it.
 In the control application:
 
 - **Waiting for the application** (`ApplicationWorkspaces.awaitApplication`, after creating,
-  starting or updating a workspace) asks `tl-workspace-app status` whenever the preview URL does
+  starting or updating a workspace) asks `tl-workspace-app status` whenever the application does
   not answer yet. If the application failed, the wait ends at once with an
   `ApplicationFailedException`, after writing the end of the application log to the output of the
   operation; the workspace becomes *Application stopped*.
@@ -193,10 +193,23 @@ of them, it ends with `-` and eight hex digits.
   (`contextPath`, `FactoryModel.WORKSPACE_CONTEXT_PATH`); creating and updating a workspace takes
   the one of the configured pattern. A workspace without recorded context path has a container
   created before the context path was recorded, which serves the application under
-  `/<artifactId>`. Every URL of an application the control application builds - waiting for the
-  application, the preview URL of a running workspace - is the preview URL of the workspace
-  (`http://<public host>:<host port>/`) followed by this context path
-  (`ApplicationWorkspaces.applicationUrl`).
+  `/<artifactId>`.
+- **Opening the application.** A user opens the application of a running workspace by the link
+  *Application* in the details of the project (*Projects*, select the project, tab *Details*); the
+  column *Preview* of the list shows the same path. The link is the path-absolute URL
+  `<context path>/` (`ApplicationWorkspaces.previewUrl`, stored as `previewUrl` of the workspace),
+  which the browser resolves against the origin of the control application and which reaches the
+  application through the [preview route](#the-preview-route) - no host name or port is
+  configured for it. A workspace whose context path is not below the route of its workspace has
+  no link: its container was created before the context path of a workspace started with the one
+  of the control application, or with another pattern. Its details show the warning *Application
+  not reachable*, and *Update workspace* is offered: it creates the container anew with the
+  context path of the configured pattern (`ProjectWorkspaces.isContextPathOutdated`,
+  `factoryContextPathOutdated`).
+- **Talking to the container.** Where the control application itself requests the application -
+  waiting for it after a start -, it uses the published port directly:
+  `http://<published address>:<host port><context path>/` (`ApplicationWorkspaces.applicationUrl`),
+  with the address the [preview route](#the-preview-route) forwards to as well.
 - **In the container.** The container gets the context path in `TL_FACTORY_CONTEXT_PATH`
   (`ApplicationWorkspaces.ENV_CONTEXT_PATH`); the supervisor starts the application with it, and
   `tl-workspace-app` probes and prints the URL with it. The supervisor passes port and context
@@ -234,7 +247,8 @@ including the context path of the control application.
   the login to the control application; the request passes only if this user may read the project
   of the workspace (`StoredPreviewWorkspaces`, `ModelAccessRights` with the user's rights): the
   members of the tenant and the operators. Without a logged-in session the answer is 403 ("Log in
-  to the control application"), for another user 403, for an unknown workspace 404, for a
+  to the control application") for every workspace, known or not, so that the route does not tell
+  which workspaces exist; for another user 403, for an unknown workspace 404, for a
   workspace that is not `RUNNING` or `STARTING` or has no published port 503, and 503 as well if
   the application does not accept the connection.
 - **Target.** `http://<address>:<host port>` with the stored host port of the workspace; the address
@@ -420,7 +434,6 @@ then.
 |---|---|---|
 | `tl_factory_docker_host` | `unix:///var/run/docker.sock` | URI of the Docker daemon, `unix://` or `tcp://`. |
 | `tl_factory_docker_network` | `tl-factory` | Network all workspace containers join; created if missing. |
-| `tl_factory_public_host` | `localhost` | Host name under which a browser reaches the published ports; the preview URL is built from it. |
 | `tl_factory_host_port_min` / `tl_factory_host_port_max` | `20000` / `20999` | Range of host ports the container port 8080 is published on. |
 | `tl_factory_host_ip` | `127.0.0.1` | Address of the daemon host the ports are published on; empty for all addresses, see [hardening](#hardening-of-the-workspace-containers). |
 | `tl_factory_docker_isolate` | `true` | Whether the workspace containers are kept from reaching each other on the workspace network; applies when the network is created. |
@@ -781,9 +794,9 @@ workspace container against a `WorkspaceProxyServlet` with an `LLMRoute` of the 
 
 The simplest mode, used during development: the control application runs as a process on a host
 with a Docker daemon and talks to it through the default socket `unix:///var/run/docker.sock`. The
-user running it must be allowed to use the socket. Preview links point to
-`http://localhost:<host port>/<artifact ID>/`; for access from other machines,
-`tl_factory_public_host` names the host as the browsers see it.
+user running it must be allowed to use the socket. The browsers open the applications of the
+workspaces through the [preview route](#the-preview-route) of the control application, also from
+other machines; the published ports stay on the host.
 
 A workspace container reaches the control application through the gateway of the daemon: with
 `tl_factory_docker_extra_hosts=host.docker.internal:host-gateway`, new containers resolve
@@ -814,13 +827,12 @@ In both cases:
 - **Only named volumes.** The provider creates named volumes for the workspaces and the release
   repository and never bind-mounts a path. A path of the control application's container would mean
   nothing to the daemon anyway, which resolves bind mounts on its own host.
-- **The workspace network.** The control application waits for a started application by requesting
-  its preview URL. In a container, `localhost` is the container itself: connect the control
-  application's container to the workspace network (`tl_factory_docker_network`) or give
-  `tl_factory_public_host` a name that resolves to the daemon host from inside the container as
-  well as for the browsers.
-- **Public host.** `tl_factory_public_host` is the name browsers use to reach the published ports
-  of the daemon host.
+- **The published address.** The control application waits for a started application and
+  forwards the [preview route](#the-preview-route) to it at the address the ports are published on
+  (`tl_factory_host_ip`, the loopback address if it is empty or a wildcard). In a container, the
+  loopback address is the container itself: publish the ports on an address of the daemon host
+  that the control application's container reaches. The browsers reach the applications through
+  the control application only.
 - **Reaching the control application.** A workspace container reaches the control application by
   the name of its container on the workspace network, e.g. `http://tl-factory-app:8091`,
   once the control application's container is connected to that network (see above). No extra
@@ -829,9 +841,8 @@ In both cases:
   workspace network, however, no container reaches another - the control application's container
   neither reaches the workspaces nor is reached by them. Either switch the isolation off
   (`tl_factory_docker_isolate=false`) and accept that workspaces reach each other, or keep the
-  control application off the workspace network: it reaches the previews through
-  `tl_factory_public_host` and the published ports (`tl_factory_host_ip` an address its container
-  reaches), and the workspaces reach its proxy through a port it publishes on the gateway address
+  control application off the workspace network: it reaches the previews through the published
+  ports (`tl_factory_host_ip` an address its container reaches), and the workspaces reach its proxy through a port it publishes on the gateway address
   of the default bridge, as `host.docker.internal:host-gateway`.
 - **Ownership by labels.** The provider marks everything it creates with labels in its
   `label-namespace` and lists, cleans up and removes only objects carrying them - never by name. The

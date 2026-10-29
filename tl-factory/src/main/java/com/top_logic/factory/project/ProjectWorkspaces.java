@@ -781,6 +781,36 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
+	 * Whether the application of a workspace is not reached through the preview route of the
+	 * control application with the context path its container was created with, but is after an
+	 * {@link #update(TLObject) update}, which creates the container with the context path of the
+	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern}.
+	 *
+	 * <p>
+	 * This is a workspace whose container was created before the context path of a workspace
+	 * started with the one of the control application, or with another pattern.
+	 * </p>
+	 *
+	 * @see #previewUrl(TLObject)
+	 */
+	public static boolean isContextPathOutdated(TLObject workspace) {
+		if (previewUrl(workspace) != null) {
+			return false;
+		}
+		ApplicationWorkspaces applications = applications();
+		String workspaceId = FactoryModel.getWorkspaceId(workspace);
+		String artifactId = FactoryModel.getString(FactoryModel.getProject(workspace), FactoryModel.PROJECT_ARTIFACT_ID);
+		String current;
+		try {
+			current = applications.contextPath(workspaceId, artifactId);
+		} catch (TopLogicException ex) {
+			// The configured pattern gives no valid context path, an update cannot help.
+			return false;
+		}
+		return applications.previewUrl(workspaceId, current) != null;
+	}
+
+	/**
 	 * Checks the Maven group of an application.
 	 *
 	 * <p>
@@ -1014,10 +1044,12 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			return;
 		}
 		WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
-		log.line("Application running at " + url);
+		String previewUrl = getApplications().previewUrl(workspaceId, contextPath);
+		log.line(previewUrl != null ? "Application running at " + previewUrl
+			: "Application running at " + url + ", not reachable through the control application before the workspace is updated.");
 		log.update(w -> {
 			FactoryModel.setStatus(w, WorkspaceStatus.RUNNING);
-			FactoryModel.setEndpoint(w, port(info), url);
+			FactoryModel.setEndpoint(w, port(info), previewUrl);
 		});
 	}
 
@@ -1082,7 +1114,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 		try {
 			Map<String, WorkspaceReconciliation.Outcome> outcomes =
-				new WorkspaceReconciliation(getApplications().getProvider(), ProjectWorkspaces::applicationUrl,
+				new WorkspaceReconciliation(getApplications().getProvider(), ProjectWorkspaces::previewUrl,
 					this::applicationState).reconcile(stored);
 			commit(() -> {
 				for (Map.Entry<String, WorkspaceReconciliation.Outcome> entry : outcomes.entrySet()) {
@@ -1133,10 +1165,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 					Logger.info("The application of workspace " + id + " is " + state + ".", ProjectWorkspaces.class);
 				} else if (stored == WorkspaceStatus.APP_STOPPED && state == ApplicationState.RUNNING) {
 					WorkspaceInfo info = getApplications().getProvider().status(id);
-					String url = info.hasHostPort() ? applicationUrl(info) : null;
 					commit(() -> {
 						FactoryModel.setStatus(workspace, WorkspaceStatus.RUNNING);
-						FactoryModel.setEndpoint(workspace, port(info), url);
+						FactoryModel.setEndpoint(workspace, port(info), info.hasHostPort() ? previewUrl(workspace) : null);
 					});
 					Logger.info("The application of workspace " + id + " runs again.", ProjectWorkspaces.class);
 				}
@@ -1165,14 +1196,24 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		return text == null ? "" : text;
 	}
 
-	private static String applicationUrl(WorkspaceInfo info) {
-		String id = info.getWorkspaceId();
-		for (TLObject workspace : FactoryModel.allWorkspaces()) {
-			if (id.equals(FactoryModel.getWorkspaceId(workspace))) {
-				return ApplicationWorkspaces.applicationUrl(info, FactoryModel.getContextPath(workspace));
-			}
-		}
-		return info.getPreviewUrl();
+	/**
+	 * The URL under which a browser opens the application of the given running workspace, see
+	 * {@link #previewUrl(TLObject)}.
+	 */
+	private static String previewUrl(WorkspaceInfo info) {
+		TLObject workspace = FactoryModel.findWorkspace(info.getWorkspaceId());
+		return workspace == null ? null : previewUrl(workspace);
+	}
+
+	/**
+	 * The URL under which a browser opens the application of the given workspace through the
+	 * preview route of the control application, {@code null} if its context path is not below
+	 * the route.
+	 *
+	 * @see ApplicationWorkspaces#previewUrl(String, String)
+	 */
+	public static String previewUrl(TLObject workspace) {
+		return applications().previewUrl(FactoryModel.getWorkspaceId(workspace), FactoryModel.getContextPath(workspace));
 	}
 
 	/**

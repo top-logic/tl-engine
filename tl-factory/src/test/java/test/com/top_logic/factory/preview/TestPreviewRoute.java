@@ -12,7 +12,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.factory.preview.PreviewRoute;
 import com.top_logic.factory.preview.PreviewTarget;
-import com.top_logic.factory.preview.StoredPreviewWorkspaces;
 
 /**
  * Test of the decisions of the preview route, {@link PreviewRoute}: the workspace a request names,
@@ -114,12 +113,6 @@ public class TestPreviewRoute extends TestCase {
 		assertFalse(PreviewRoute.isConfinedCookie("a=1; Path=" + CONTEXT_PATH + "s", CONTEXT_PATH));
 		assertFalse(PreviewRoute.isConfinedCookie("a=1; Domain=example.com; Path=" + CONTEXT_PATH, CONTEXT_PATH));
 		assertFalse(PreviewRoute.isConfinedCookie("", CONTEXT_PATH));
-	}
-
-	public void testOrigin() {
-		assertEquals("http://127.0.0.1:20001", StoredPreviewWorkspaces.origin("127.0.0.1", 20001));
-		assertEquals("http://[::1]:20001", StoredPreviewWorkspaces.origin("::1", 20001));
-		assertEquals("http://[::1]:20001", StoredPreviewWorkspaces.origin("[::1]", 20001));
 	}
 
 }

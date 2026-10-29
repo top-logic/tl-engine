@@ -157,8 +157,7 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 * earlier start.
 	 * </p>
 	 *
-	 * @return The workspace with its {@link WorkspaceInfo#getHostPort() host port} and
-	 *         {@link WorkspaceInfo#getPreviewUrl() preview URL}.
+	 * @return The workspace with its {@link WorkspaceInfo#getHostPort() host port}.
 	 */
 	WorkspaceInfo start(String workspaceId);
 

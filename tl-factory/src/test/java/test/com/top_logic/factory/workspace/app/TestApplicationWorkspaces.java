@@ -63,7 +63,6 @@ import com.top_logic.factory.preview.PreviewRefusal;
 import com.top_logic.factory.preview.PreviewServlet;
 import com.top_logic.factory.preview.PreviewTarget;
 import com.top_logic.factory.preview.PreviewWorkspaces;
-import com.top_logic.factory.preview.StoredPreviewWorkspaces;
 import com.top_logic.factory.proxy.ProxyForwarding;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
@@ -387,7 +386,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertEquals("Not the multi-segment context path of the default pattern.",
 			CONTROL_CONTEXT + ApplicationWorkspaces.PREVIEW_PATH + "/" + _workspaceId + "/" + ARTIFACT_ID,
 			_contextPath);
-		assertEquals(ApplicationWorkspaces.applicationUrl(_provider.status(_workspaceId), _contextPath), url);
+		assertEquals(_applications.applicationUrl(_provider.status(_workspaceId), _contextPath), url);
 		assertLoginPage(url);
 		assertServedBelow(url);
 		assertPreviewRoute();
@@ -973,7 +972,7 @@ public class TestApplicationWorkspaces extends TestCase {
 			if (!workspaceId.equals(_workspaceId)) {
 				return PreviewLookup.refused(PreviewRefusal.NOT_FOUND);
 			}
-			return PreviewLookup.found(new PreviewTarget(_contextPath, StoredPreviewWorkspaces
+			return PreviewLookup.found(new PreviewTarget(_contextPath, ApplicationWorkspaces
 				.origin(_provider.publishedAddress(), _provider.status(_workspaceId).getHostPort())));
 		};
 		Server jetty = new Server();

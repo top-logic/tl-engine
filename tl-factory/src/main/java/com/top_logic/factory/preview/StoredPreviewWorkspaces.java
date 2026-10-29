@@ -14,6 +14,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.WorkspaceStatus;
 import com.top_logic.factory.workspace.WorkspaceService;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.ModelAccessRights;
@@ -45,14 +46,6 @@ public class StoredPreviewWorkspaces implements PreviewWorkspaces {
 	 * States of a workspace in which requests are forwarded to its application.
 	 */
 	public static final Set<WorkspaceStatus> FORWARDED_STATES = Set.of(WorkspaceStatus.RUNNING, WorkspaceStatus.STARTING);
-
-	private static final String HTTP_SCHEME = "http://";
-
-	private static final char PORT_SEPARATOR = ':';
-
-	private static final char IPV6_START = '[';
-
-	private static final char IPV6_END = ']';
 
 	@Override
 	public PreviewLookup lookup(HttpServletRequest request, String workspaceId) {
@@ -97,21 +90,12 @@ public class StoredPreviewWorkspaces implements PreviewWorkspaces {
 				return PreviewLookup.refused(PreviewRefusal.NOT_RUNNING);
 			}
 			return PreviewLookup.found(new PreviewTarget(FactoryModel.getContextPath(workspace),
-				origin(publishedAddress(), hostPort.intValue())));
+				ApplicationWorkspaces.origin(publishedAddress(), hostPort.intValue())));
 		});
 	}
 
 	private static String publishedAddress() {
 		return WorkspaceService.getInstance().getProvider().publishedAddress();
-	}
-
-	/**
-	 * The origin of an application listening on the given address and port.
-	 */
-	public static String origin(String address, int port) {
-		boolean ipv6 = address.indexOf(PORT_SEPARATOR) >= 0 && address.charAt(0) != IPV6_START;
-		String host = ipv6 ? IPV6_START + address + IPV6_END : address;
-		return HTTP_SCHEME + host + PORT_SEPARATOR + port;
 	}
 
 }

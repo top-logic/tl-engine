@@ -20,7 +20,6 @@
 				<provider class="com.top_logic.factory.workspace.docker.DockerWorkspaceProvider"
 					docker-host="%FACTORY_DOCKER_HOST%"
 					network="%FACTORY_DOCKER_NETWORK%"
-					public-host="%FACTORY_PUBLIC_HOST%"
 					host-port-min="%FACTORY_HOST_PORT_MIN%"
 					host-port-max="%FACTORY_HOST_PORT_MAX%"
 					cpu-limit="%FACTORY_WORKSPACE_CPUS%"

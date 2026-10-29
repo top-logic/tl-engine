@@ -46,6 +46,7 @@ import com.top_logic.factory.tenant.TenantRole;
 import com.top_logic.factory.tenant.Tenants;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceService;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -332,7 +333,7 @@ public class TestTenantAccess extends BasicTestCase {
 		});
 		StoredPreviewWorkspaces previews = new StoredPreviewWorkspaces();
 		PreviewTarget expected = new PreviewTarget(FactoryModel.getContextPath(_workspaceA),
-			StoredPreviewWorkspaces.origin(WorkspaceProvider.LOOPBACK_ADDRESS, PREVIEW_PORT));
+			ApplicationWorkspaces.origin(WorkspaceProvider.LOOPBACK_ADDRESS, PREVIEW_PORT));
 		for (Person member : List.of(_adminA, _developerA, _readerA, _operator)) {
 			assertEquals(member.getName(), PreviewLookup.found(expected),
 				previews.lookup(member, FactoryModel.getWorkspaceId(_workspaceA)));

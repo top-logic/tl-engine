@@ -1394,6 +1394,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A deleted object is accessible for nobody, and its type must not be read.
 			return false;
 		}
+		if (instance instanceof TLModelPart && SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)) {
+			// A model element is meta-data, not a business object, see
+			// ModelAccessRights#isDiscoverAllowed(Person, TLObject).
+			return true;
+		}
 		if (!isCommitted(instance)) {
 			// Roles are computed at commit time; an object created in the current transaction has no
 			// computed roles yet, so an instance-level check against it is not meaningful.

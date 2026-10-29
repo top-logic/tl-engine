@@ -61,16 +61,11 @@ public interface Task extends Batch {
 		/** Default value for {@link #isBlockingAllowed()}. */
 		final boolean DEFAULT_BLOCKING_ALLOWED = true;
 
-		/** Default value for {@link #isBlockingAllowed()}. */
-		final boolean DEFAULT_BLOCKED_BY_DEFAULT_VALUE = false;
-		
 		/** The name of the property {@link #getSchedules()}. */
 		String SCHEDULES = "schedules";
 
-		/**
-		 * Property name of {@link #isBlockedByDefault()}.
-		 */
-		String BLOCKED_BY_DEFAULT_PROPERTY = "blocked-by-default";
+		/** The name of the property {@link #isBlockingAllowed()}. */
+		String BLOCKING_ALLOWED = "blocking-allowed";
 
 		/**
 		 * The name of the task.
@@ -83,11 +78,15 @@ public interface Task extends Batch {
 		String getName();
 
 		/**
-		 * Whether the task should be considered in the schedule.
+		 * Whether the task is active by configuration.
 		 * 
 		 * <p>
-		 * A task that is not enabled is never scheduled independently of its
-		 * {@link #getSchedules()}.
+		 * An active task is run automatically according to its {@link #getSchedules()}, an
+		 * inactive task is never run automatically. This is the default an administrator can
+		 * override by {@link Scheduler#activate(Task) activating} or
+		 * {@link Scheduler#deactivate(Task) deactivating} the task, see
+		 * {@link Scheduler#isActive(Task) active state}. Every task can be
+		 * {@link Scheduler#startTask(Task) started manually}, regardless of this setting.
 		 * </p>
 		 */
 		@BooleanDefault(true)
@@ -170,19 +169,18 @@ public interface Task extends Batch {
 		boolean isMaintenanceModeSafe();
 
 		/**
-		 * Whether this {@link Task} can be {@link Scheduler#blockTask(Task) blocked}.
+		 * Whether an administrator may override the configured {@link #isEnabled() active state} of
+		 * this {@link Task}.
+		 * 
+		 * <p>
+		 * If not, the task cannot be {@link Scheduler#deactivate(Task) deactivated} and always
+		 * follows its configured state.
+		 * </p>
 		 */
+		@Name(BLOCKING_ALLOWED)
 		@BooleanDefault(DEFAULT_BLOCKING_ALLOWED)
 		boolean isBlockingAllowed();
 
-		/**
-		 * Whether this {@link Task} is {@link Scheduler#isTaskBlocked(Task) blocked} by default
-		 * (but can be enabled by the administrator).
-		 */
-		@Name(BLOCKED_BY_DEFAULT_PROPERTY)
-		@BooleanDefault(DEFAULT_BLOCKED_BY_DEFAULT_VALUE)
-		boolean isBlockedByDefault();
-		
 	}
 
 	/**
@@ -416,10 +414,5 @@ public interface Task extends Batch {
 	 * @see Config#isBlockingAllowed()
 	 */
 	boolean isBlockingAllowed();
-
-	/**
-	 * @see Config#isBlockedByDefault()
-	 */
-	boolean isBlockedByDefault();
 
 }

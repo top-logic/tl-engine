@@ -11,6 +11,7 @@ import static com.top_logic.util.sched.entry.SchedulerEntryUtil.*;
 import static com.top_logic.util.sched.task.TaskCommon.*;
 
 import java.lang.Thread.State;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,9 +60,10 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.sched.ScheduledThread;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.thread.LoggingExceptionHandler;
-import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Suspendable;
@@ -83,8 +86,6 @@ import com.top_logic.util.sched.entry.SchedulerEntry;
 import com.top_logic.util.sched.entry.SchedulerEntryStorage;
 import com.top_logic.util.sched.entry.comparator.SchedulerEntryByTaskComparator;
 import com.top_logic.util.sched.entry.filter.BrokenSchedulerEntryFilter;
-import com.top_logic.util.sched.entry.filter.EnabledSchedulerEntryFilter;
-import com.top_logic.util.sched.entry.filter.ManuallyStartedSchedulerEntryFilter;
 import com.top_logic.util.sched.entry.filter.SchedulerEntryStateFilter;
 import com.top_logic.util.sched.entry.filter.TopLevelSchedulerEntryFilter;
 import com.top_logic.util.sched.task.Task;
@@ -222,8 +223,9 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		 * All configured tasks.
 		 * 
 		 * <p>
-		 * A configured {@link Task} is only considered for scheduling, if its
-		 * {@link com.top_logic.util.sched.task.Task.Config#isEnabled() enabled} flag is set.
+		 * The {@link com.top_logic.util.sched.task.Task.Config#isEnabled() enabled} flag of a
+		 * configured {@link Task} is its {@link Scheduler#isConfiguredActive(Task) configured active
+		 * state}.
 		 * </p>
 		 */
 		@Key(Task.Config.NAME_ATTRIBUTE)
@@ -264,7 +266,45 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	private static final String RESTART_FAILED =
 		"Failed to restart the Scheduler. Tasks are not executed until the system is restarted.";
 
+	/**
+	 * Prefix of the key of a cluster-wide {@link DBProperties} entry that stores whether a task is
+	 * blocked, followed by the task name.
+	 * 
+	 * <p>
+	 * The value is {@link #BLOCKED_VALUE} or {@link #UNBLOCKED_VALUE}. Such an entry is taken over
+	 * as an active state override on first read, see {@link #isActive(Task)}, and is deleted then.
+	 * </p>
+	 */
 	private static final String DB_PROPERTY_BLOCKED_TASKS = Scheduler.class.getName() + ".";
+
+	/** Value of a {@link #DB_PROPERTY_BLOCKED_TASKS} entry of a blocked task. */
+	private static final String BLOCKED_VALUE = Boolean.TRUE.toString();
+
+	/** Value of a {@link #DB_PROPERTY_BLOCKED_TASKS} entry of an unblocked task. */
+	private static final String UNBLOCKED_VALUE = Boolean.FALSE.toString();
+
+	/**
+	 * Prefix of the key of the cluster-wide {@link DBProperties} entry that stores an
+	 * administrator's override of the active state of a task, followed by the task name.
+	 * 
+	 * <p>
+	 * The value is the overriding state, followed by {@link #ACTIVE_OVERRIDE_SEPARATOR} and the
+	 * configured state the override was made against. Each state is either {@link #STATE_ACTIVE}
+	 * or {@link #STATE_INACTIVE}.
+	 * </p>
+	 * 
+	 * @see #isActive(Task)
+	 */
+	private static final String DB_PROPERTY_ACTIVE_OVERRIDE = Scheduler.class.getName() + "#active.";
+
+	/** Separator in the value of a {@link #DB_PROPERTY_ACTIVE_OVERRIDE} entry. */
+	private static final String ACTIVE_OVERRIDE_SEPARATOR = "/";
+
+	/** Encoding of the active state in a {@link #DB_PROPERTY_ACTIVE_OVERRIDE} entry. */
+	private static final String STATE_ACTIVE = "active";
+
+	/** Encoding of the inactive state in a {@link #DB_PROPERTY_ACTIVE_OVERRIDE} entry. */
+	private static final String STATE_INACTIVE = "inactive";
 
 	private final SchedulerEntryStorage _entries = new SchedulerEntryStorage();
 
@@ -431,7 +471,9 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	/**
 	 * Add the {@link Task} to the list of known tasks.
 	 * <p>
-	 * The {@link Task} will be {@link #enable(Task) enabled} and therefore scheduled for execution.
+	 * The {@link Task} is {@link #isConfiguredActive(Task) configured active} and therefore run
+	 * according to its schedules, as long as no administrator {@link #deactivate(Task)
+	 * deactivates} it.
 	 * </p>
 	 * 
 	 * @param aTask
@@ -442,13 +484,16 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 *         If the {@link Task} is null.
 	 */
 	public void addTask(Task aTask) {
-		addKnownTask(aTask);
-		enable(aTask);
+		addKnownTask(aTask, true);
     }
 
 	/**
-	 * Add the {@link Task} to the list of known tasks but don't {@link #isTaskEnabled(Task) enable}
-	 * it.
+	 * Add the {@link Task} to the list of known tasks as {@link #isConfiguredActive(Task)
+	 * configured inactive}.
+	 * <p>
+	 * The {@link Task} is not run automatically, as long as no administrator
+	 * {@link #activate(Task) activates} it. It can be {@link #startTask(Task) started manually}.
+	 * </p>
 	 * 
 	 * @param task
 	 *        Is not allowed to be null. It's {@link Task#getName()} is not allowed to be null or
@@ -458,7 +503,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 *         If the {@link Task} is null.
 	 */
 	public void addDisabledTask(Task task) {
-		addKnownTask(task);
+		addKnownTask(task, false);
 	}
 
 	/**
@@ -466,12 +511,15 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 *        Is not allowed to be null. Has to have a case-insensitive unique
 	 *        {@link Task#getName() name} among {@link #getAllKnownTasks()}. The same rules apply
 	 *        for the children of {@link CompositeTask} s, too, recursively.
+	 * @param configuredActive
+	 *        See {@link #isConfiguredActive(Task)}.
 	 * @throws NullPointerException
 	 *         If the {@link Task} is null.
 	 */
-	private void addKnownTask(Task task) {
-		getEntries().add(task);
-		attach(getEntries().get(task).get());
+	private void addKnownTask(Task task, boolean configuredActive) {
+		SchedulerEntry entry = getEntries().add(task, configuredActive);
+		attach(entry);
+		reschedule(entry, now());
 	}
 
 	/**
@@ -542,7 +590,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		if (!entry.hasValue()) {
 			return false;
 		}
-		disable(entry.get());
 		getEntries().remove(aTask);
 		removeAfterTaskDoneActions(aTask);
 		if (entry.get().isAttached()) {
@@ -689,14 +736,10 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	private List<SchedulerEntry> getWaitingEntries() {
-		Filter<? super SchedulerEntry> enabledOrStarted = or(
-			EnabledSchedulerEntryFilter.INSTANCE,
-			ManuallyStartedSchedulerEntryFilter.INSTANCE);
 		Filter<? super SchedulerEntry> valid = not(BrokenSchedulerEntryFilter.INSTANCE);
 		List<SchedulerEntry> result = toList(getEntries().getAllEntries(
 			and(
 				TopLevelSchedulerEntryFilter.INSTANCE,
-				enabledOrStarted,
 				valid,
 				new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING))));
 		Collections.sort(result, new SchedulerEntryByTaskComparator(TaskComparator.INSTANCE));
@@ -749,24 +792,20 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private TaskStartResponse tryStartTaskUnsafe(SchedulerEntry entry) {
 		Task task = entry.getTask();
+		long now = now();
+		if (!task.isForcedRun() && !isActive(entry)) {
+			// Skip to the next schedule time instead of delaying the execution until the task is
+			// activated: An administrator who wants the task to run directly after activating it
+			// starts it manually.
+			task.markAsRun(now);
+			task.calcNextShed(now);
+			logDebug("Execution of task '" + task.getName() + "' has been skipped, as it is inactive.");
+			return TaskStartResponse.RESCHEDULE_DELAYED;
+		}
 		enforceTaskLog(task);
 		if (_taskLogsToFix.contains(task.getName())) {
 			Logger.warn("Task '" + task.getName() + "' cannot be started, as the task log has to be repaired first.",
 				Scheduler.class);
-			return TaskStartResponse.RESCHEDULE_DELAYED;
-		}
-		long now = now();
-		if (isTaskBlocked(task)) {
-			// Don't just delay the execution until it is unblocked,
-			// but skip to the next schedule time.
-			// If the task should be executed directly after being unblocked,
-			// the user can start it manually.
-			// But the user cannot wait to unblock it until it should be executed,
-			// as that might be in the middle of the night.
-			task.markAsRun(now);
-			task.calcNextShed(now);
-			Logger.info("Execution of Task '" + task.getName()
-				+ "' has been skipped, as it is blocked.", Scheduler.class);
 			return TaskStartResponse.RESCHEDULE_DELAYED;
 		}
 		if (delayDueToMaintenanceMode(task)) {
@@ -1143,126 +1182,391 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	/**
-	 * Compatibility redirect to {@link #isEnabled(Task)}, which has a more concise name.
+	 * Whether the {@link Task} is active, i.e. run automatically according to its schedules.
+	 *
 	 * <p>
-	 * The fact that the method {@link #isEnabled(Task)} is about a {@link Task}, is already
-	 * expressed by its parameter type. Therefore, the word 'Task' is not needed in the name.
+	 * An inactive {@link Task} is never run automatically, but can be {@link #startTask(Task)
+	 * started manually}.
 	 * </p>
-	 * 
+	 *
+	 * <p>
+	 * The {@link #isConfiguredActive(Task) configured state} applies, unless an administrator has
+	 * overridden it with {@link #activate(Task)} or {@link #deactivate(Task)}. The override is
+	 * stored cluster-wide in the {@link DBProperties} and remembers the configured state it was
+	 * made against. When the configured state changes (e.g. by an application update), the
+	 * override is dropped and the configured state applies. A {@link Task} whose
+	 * {@link #isBlockingAllowed(Task) blocking is not allowed} always follows its configured
+	 * state.
+	 * </p>
+	 *
+	 * <p>
+	 * A block of the {@link Task} stored in the {@link DBProperties} is taken over on first read:
+	 * A blocked {@link Task} is overridden inactive, an unblocked one active.
+	 * </p>
+	 *
+	 * <p>
+	 * If the override cannot be read from the database, the {@link Task} is considered inactive
+	 * (unless its blocking is not allowed).
+	 * </p>
+	 *
+	 * @return <code>false</code>, if the {@link Task} is not registered at the {@link Scheduler}.
+	 *
 	 * @throws NullPointerException
 	 *         If the {@link Task} is null.
 	 */
-	public boolean isTaskEnabled(Task task) {
-		return isEnabled(task);
-	}
-
-	/**
-	 * Is the {@link Task} enabled? If not, it is never run by the scheduler. (Unless the user
-	 * explicitly forces the Scheduler to run the task.)
-	 * 
-	 * @see #enable(Task)
-	 * @see #disable(Task)
-	 * 
-	 * @return false, if the {@link Task} is not registered at the {@link Scheduler}.
-	 * 
-	 * @throws NullPointerException
-	 *         If the {@link Task} is null.
-	 */
-	public final boolean isEnabled(Task task) {
+	public final boolean isActive(Task task) {
 		Maybe<SchedulerEntry> entry = getEntries().get(task);
 		if (entry.hasValue()) {
-			return isEnabled(entry.get());
+			return isActive(entry.get());
 		}
 		return false;
 	}
 
 	/**
-	 * The part of the implementation of {@link #isEnabled(Task)} that can be overridden by
+	 * The part of the implementation of {@link #isActive(Task)} that can be overridden by
 	 * subclasses.
 	 */
-	protected boolean isEnabled(SchedulerEntry entry) {
-		return entry.isEnabled();
+	protected boolean isActive(SchedulerEntry entry) {
+		boolean configuredActive = entry.isConfiguredActive();
+		if (!isBlockingAllowed(entry.getTask())) {
+			return configuredActive;
+		}
+		Maybe<Boolean> override = fetchActiveOverride(entry);
+		if (override == null) {
+			// Database failure, already logged.
+			return false;
+		}
+		if (override.hasValue()) {
+			return override.get().booleanValue();
+		}
+		return configuredActive;
 	}
 
 	/**
-	 * Enable the {@link Task} and schedule it for execution.
-	 * 
+	 * Whether the {@link Task} is active by configuration, i.e. as long as no administrator
+	 * overrides it.
+	 *
 	 * <p>
-	 * <b>This settings is cluster node local and is not persisted, i.e. it will be reset on node
-	 * restart and {@link Scheduler#reload()}.</b>
+	 * For a configured {@link Task}, this is its
+	 * {@link com.top_logic.util.sched.task.Task.Config#isEnabled() enabled} flag. A {@link Task}
+	 * added by {@link #addTask(Task)} is configured active, one added by
+	 * {@link #addDisabledTask(Task)} is configured inactive. A child of a {@link CompositeTask} is
+	 * configured active, it runs whenever its parent runs.
 	 * </p>
-	 * 
-	 * <p>
-	 * If the {@link Task} is not registered at the {@link Scheduler}, nothing happens.
-	 * </p>
-	 * 
-	 * @see #isEnabled(Task)
-	 * @see #disable(Task)
-	 * 
-	 * @throws NullPointerException
-	 *         If the {@link Task} is null.
+	 *
+	 * @return <code>false</code>, if the {@link Task} is not registered at the {@link Scheduler}.
+	 *
+	 * @see #isActive(Task)
 	 */
-	public final void enable(Task task) {
+	public final boolean isConfiguredActive(Task task) {
 		Maybe<SchedulerEntry> entry = getEntries().get(task);
 		if (entry.hasValue()) {
-			enable(entry.get());
+			return entry.get().isConfiguredActive();
+		}
+		return false;
+	}
+
+	/**
+	 * Whether an administrator override of the {@link #isConfiguredActive(Task) configured state}
+	 * is in effect for the {@link Task}.
+	 *
+	 * @return <code>false</code>, if the {@link Task} is not registered at the {@link Scheduler},
+	 *         its {@link #isBlockingAllowed(Task) blocking is not allowed}, or the override cannot
+	 *         be read from the database.
+	 *
+	 * @see #isActive(Task)
+	 * @see #resetActive(Task)
+	 */
+	public final boolean hasActiveOverride(Task task) {
+		Maybe<SchedulerEntry> entry = getEntries().get(task);
+		if (!entry.hasValue() || !isBlockingAllowed(task)) {
+			return false;
+		}
+		Maybe<Boolean> override = fetchActiveOverride(entry.get());
+		return override != null && override.hasValue();
+	}
+
+	/**
+	 * Makes the {@link Task} {@link #isActive(Task) active} cluster-wide and persistently.
+	 *
+	 * <p>
+	 * If the {@link Task} is {@link #isConfiguredActive(Task) configured active}, this is a
+	 * {@link #resetActive(Task) reset}.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the {@link Task} is not registered at the {@link Scheduler}, or if it is
+	 *         configured inactive and its {@link #isBlockingAllowed(Task) blocking is not allowed}.
+	 */
+	public final void activate(Task task) {
+		setActive(task, true);
+	}
+
+	/**
+	 * Makes the {@link Task} {@link #isActive(Task) inactive} cluster-wide and persistently.
+	 *
+	 * <p>
+	 * If the {@link Task} is already running, that execution is not stopped. If the {@link Task}
+	 * is {@link #isConfiguredActive(Task) configured inactive}, this is a
+	 * {@link #resetActive(Task) reset}.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the {@link Task} is not registered at the {@link Scheduler}, or if it is
+	 *         configured active and its {@link #isBlockingAllowed(Task) blocking is not allowed}.
+	 */
+	public final void deactivate(Task task) {
+		setActive(task, false);
+	}
+
+	/**
+	 * Removes an administrator override of the {@link #isConfiguredActive(Task) configured state}
+	 * of the {@link Task}, so that the configured state applies again.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If the {@link Task} is not registered at the {@link Scheduler}.
+	 *
+	 * @see #hasActiveOverride(Task)
+	 */
+	public final void resetActive(Task task) {
+		SchedulerEntry entry = getRegisteredEntry(task);
+		storeActiveOverride(task, null);
+		if (entry.isConfiguredActive()) {
+			rescheduleTopLevel(entry);
+		}
+		notifyUpdate(task);
+		Logger.info("Task '" + task.getName() + "' is reset to its configured state: "
+			+ encodeState(entry.isConfiguredActive()), Scheduler.class);
+	}
+
+	private void setActive(Task task, boolean active) {
+		SchedulerEntry entry = getRegisteredEntry(task);
+		boolean configuredActive = entry.isConfiguredActive();
+		String newValue;
+		if (active == configuredActive) {
+			newValue = null;
+		} else {
+			if (!isBlockingAllowed(task)) {
+				throw new IllegalArgumentException("Changing the configured active state of task '"
+					+ task.getName() + "' is not allowed.");
+			}
+			newValue = encodeActiveOverride(active, configuredActive);
+		}
+		storeActiveOverride(task, newValue);
+		if (active) {
+			rescheduleTopLevel(entry);
+		}
+		notifyUpdate(task);
+		Logger.info("Task '" + task.getName() + "' is " + (active ? "activated" : "deactivated")
+			+ (newValue == null ? " (configured state)." : " (overriding its configured state)."),
+			Scheduler.class);
+	}
+
+	private SchedulerEntry getRegisteredEntry(Task task) {
+		Maybe<SchedulerEntry> entry = getEntries().get(task);
+		if (!entry.hasValue()) {
+			throw new IllegalArgumentException("Task '" + task.getName() + "' is not registered at the scheduler.");
+		}
+		return entry.get();
+	}
+
+	private void rescheduleTopLevel(SchedulerEntry entry) {
+		if (!entry.isChild()) {
+			reschedule(entry, now());
 		}
 	}
 
 	/**
-	 * The part of the implementation of {@link #enable(Task)} that can be overridden by subclasses.
+	 * Stores the administrator override of the active state of the given {@link Task}.
+	 *
+	 * @param value
+	 *        The encoded override, see {@link #DB_PROPERTY_ACTIVE_OVERRIDE}. <code>null</code>
+	 *        removes the override. A stored block (see {@link #DB_PROPERTY_BLOCKED_TASKS}) is
+	 *        removed in any case.
 	 */
-	protected void enable(SchedulerEntry entry) {
-		entry.setEnabled(true);
-		reschedule(entry, now());
-	}
-
-	/**
-	 * Disable the {@link Task} and stop it from being executed.
-	 * <p>
-	 * <b>This settings is cluster node local and is not persisted, i.e. it will be reset on node
-	 * restart and {@link Scheduler#reload()}.</b> <br/>
-	 * If the {@link Task} is already executing, that execution will not be stopped. If the
-	 * {@link Task} is already in the processing of being started "right now", it is unspecified
-	 * whether that execution will happen or not.
-	 * </p>
-	 * <p>
-	 * If the {@link Task} is not registered at the {@link Scheduler}, nothing happens.
-	 * </p>
-	 * 
-	 * @see #isEnabled(Task)
-	 * @see #enable(Task)
-	 * 
-	 * @throws NullPointerException
-	 *         If the {@link Task} is null.
-	 */
-	public final void disable(Task task) {
-		Maybe<SchedulerEntry> entry = getEntries().get(task);
-		if (entry.hasValue()) {
-			disable(entry.get());
+	private void storeActiveOverride(Task task, String value) {
+		RetryResult<Void, List<Throwable>> result =
+			Retry.<Void, Throwable> retry(COMMIT_RETRIES, () -> {
+				try {
+					PooledConnection connection = _dbProperties.connectionPool().borrowWriteConnection();
+					try {
+						DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
+							getPropertyNameActiveOverride(task), value);
+						DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY,
+							getPropertyNameTaskBlock(task), null);
+						connection.commit();
+					} finally {
+						_dbProperties.connectionPool().releaseWriteConnection(connection);
+					}
+					return RetryResult.createSuccess();
+				} catch (Throwable ex) {
+					return RetryResult.createFailure(ex);
+				}
+			});
+		if (!result.isSuccess()) {
+			String message = "Failed to store the active state of task '" + task.getName() + "'.";
+			throw ExceptionUtil.createException(message, result.getReason());
 		}
 	}
 
 	/**
-	 * The part of the implementation of {@link #disable(Task)} that can be overridden by
-	 * subclasses.
+	 * Fetches the administrator override of the active state of the {@link Task} of the given
+	 * {@link SchedulerEntry}.
+	 *
+	 * <p>
+	 * Takes over a stored block (see {@link #DB_PROPERTY_BLOCKED_TASKS}) and drops an override made
+	 * against another configured state, see {@link #isActive(Task)}.
+	 * </p>
+	 *
+	 * @return The overriding active state, {@link Maybe#none()} if the configured state applies,
+	 *         <code>null</code> if the database access failed.
 	 */
-	protected void disable(SchedulerEntry entry) {
-		entry.setEnabled(false);
+	private Maybe<Boolean> fetchActiveOverride(SchedulerEntry entry) {
+		Task task = entry.getTask();
+		RetryResult<Maybe<Boolean>, List<Throwable>> result =
+			Retry.<Maybe<Boolean>, Throwable> retry(COMMIT_RETRIES, () -> {
+				try {
+					return RetryResult.createSuccess(fetchActiveOverrideUnsafe(entry));
+				} catch (Throwable ex) {
+					return RetryResult.createFailure(ex);
+				}
+			});
+		if (!result.isSuccess()) {
+			String message = "Failed to fetch whether task '" + task.getName() + "' is active or not."
+				+ " Pretending it is inactive, until the database is available again.";
+			RuntimeException error = ExceptionUtil.createException(message, result.getReason());
+			Logger.error(message, error, Scheduler.class);
+			// As long as the database is unavailable, no task that may be deactivated is scheduled.
+			// Throwing an exception instead would cause big problems because of the various
+			// callers, and pretending the task is active would run tasks that were deactivated.
+			return null;
+		}
+		return result.getValue();
+	}
+
+	private Maybe<Boolean> fetchActiveOverrideUnsafe(SchedulerEntry entry) throws SQLException {
+		Task task = entry.getTask();
+		boolean configuredActive = entry.isConfiguredActive();
+		String overrideKey = getPropertyNameActiveOverride(task);
+		String blockKey = getPropertyNameTaskBlock(task);
+		ConnectionPool pool = _dbProperties.connectionPool();
+
+		Map<String, String> values;
+		PooledConnection readConnection = pool.borrowReadConnection();
+		try {
+			values = DBProperties.getProperties(readConnection, DBProperties.GLOBAL_PROPERTY, overrideKey, blockKey);
+		} finally {
+			pool.releaseReadConnection(readConnection);
+		}
+		String storedOverride = values.get(overrideKey);
+		String storedBlock = values.get(blockKey);
+
+		String newOverride = storedOverride;
+		if (storedOverride == null && storedBlock != null) {
+			boolean active = !isBlockedValue(task, storedBlock);
+			newOverride = active == configuredActive ? null : encodeActiveOverride(active, configuredActive);
+			Logger.info("Taking over the stored block '" + storedBlock + "' of task '" + task.getName()
+				+ "' as active state override: " + (newOverride == null ? "none" : newOverride), Scheduler.class);
+		}
+		Maybe<Boolean> override = decodeActiveOverride(newOverride, configuredActive);
+		if (newOverride != null && !override.hasValue()) {
+			Logger.info("Dropping the active state override '" + newOverride + "' of task '" + task.getName()
+				+ "', as its configured state is " + encodeState(configuredActive) + ".", Scheduler.class);
+			newOverride = null;
+		}
+
+		if (storedBlock != null || !Objects.equals(storedOverride, newOverride)) {
+			PooledConnection writeConnection = pool.borrowWriteConnection();
+			try {
+				DBProperties.setProperty(writeConnection, DBProperties.GLOBAL_PROPERTY, overrideKey, newOverride);
+				DBProperties.setProperty(writeConnection, DBProperties.GLOBAL_PROPERTY, blockKey, null);
+				writeConnection.commit();
+			} finally {
+				pool.releaseWriteConnection(writeConnection);
+			}
+		}
+		return override;
+	}
+
+	private static boolean isBlockedValue(Task task, String storedBlock) {
+		if (BLOCKED_VALUE.equals(storedBlock)) {
+			return true;
+		}
+		if (!UNBLOCKED_VALUE.equals(storedBlock)) {
+			Logger.warn("Invalid stored block '" + storedBlock + "' of task '" + task.getName()
+				+ "', treating it as '" + UNBLOCKED_VALUE + "'.", Scheduler.class);
+		}
+		return false;
+	}
+
+	private static String encodeActiveOverride(boolean active, boolean configuredActive) {
+		return encodeState(active) + ACTIVE_OVERRIDE_SEPARATOR + encodeState(configuredActive);
 	}
 
 	/**
-	 * Is the {@link Task} activated in the configuration?
-	 * <p>
-	 * Is also false for all {@link Task}s which are not configured, for example because they have
-	 * been added to the {@link Scheduler} programmatically. <br/>
-	 * Use {@link #isEnabled(Task)} to check if the {@link Task} is enabled in the {@link Scheduler}
-	 * .
-	 * </p>
+	 * Decodes a {@link #DB_PROPERTY_ACTIVE_OVERRIDE} value.
+	 *
+	 * @return The overriding state, {@link Maybe#none()} if there is no value, the value is
+	 *         invalid, it was made against another configured state than the given one, or it does
+	 *         not differ from the configured state.
 	 */
-	public boolean isEnabledInConfig(Task task) {
-		Task.Config<?> config = getConfig().getTasks().get(task.getName());
-		return config != null && config.isEnabled();
+	private static Maybe<Boolean> decodeActiveOverride(String value, boolean configuredActive) {
+		if (value == null) {
+			return Maybe.none();
+		}
+		int separatorIndex = value.indexOf(ACTIVE_OVERRIDE_SEPARATOR);
+		if (separatorIndex < 0) {
+			return Maybe.none();
+		}
+		Boolean active = decodeState(value.substring(0, separatorIndex));
+		Boolean rememberedConfiguredActive =
+			decodeState(value.substring(separatorIndex + ACTIVE_OVERRIDE_SEPARATOR.length()));
+		if (active == null || rememberedConfiguredActive == null) {
+			return Maybe.none();
+		}
+		if (rememberedConfiguredActive.booleanValue() != configuredActive) {
+			return Maybe.none();
+		}
+		if (active.booleanValue() == configuredActive) {
+			return Maybe.none();
+		}
+		return Maybe.some(active);
+	}
+
+	private static String encodeState(boolean active) {
+		return active ? STATE_ACTIVE : STATE_INACTIVE;
+	}
+
+	private static Boolean decodeState(String state) {
+		if (STATE_ACTIVE.equals(state)) {
+			return Boolean.TRUE;
+		}
+		if (STATE_INACTIVE.equals(state)) {
+			return Boolean.FALSE;
+		}
+		return null;
+	}
+
+	/**
+	 * Whether an administrator may override the {@link #isConfiguredActive(Task) configured active
+	 * state} of the given {@link Task}.
+	 * <p>
+	 * Some system critical tasks cannot be {@link #deactivate(Task) deactivated}. They always follow
+	 * their configured state.
+	 * </p>
+	 *
+	 * @see Task#isBlockingAllowed()
+	 */
+	public boolean isBlockingAllowed(Task task) {
+		return task.isBlockingAllowed();
+	}
+
+	private static String getPropertyNameActiveOverride(Task task) {
+		return DB_PROPERTY_ACTIVE_OVERRIDE + task.getName();
+	}
+
+	private static String getPropertyNameTaskBlock(Task task) {
+		return DB_PROPERTY_BLOCKED_TASKS + task.getName();
 	}
 
 	/** Is it allowed to run this {@link Task} in maintenance mode? */
@@ -2111,12 +2415,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * again. <br/>
 	 * If the task is not {@link Task#isNodeLocal() node local} and is run on another cluster node,
 	 * the forced run will still be executed. <br/>
-	 * If the task is {@link Scheduler#isTaskBlocked(Task) blocked}, this method has no effect.
-	 * </p>
-	 * 
-	 * <p>
-	 * Whether the task is {@link Scheduler#isEnabled(Task) enabled or disabled in the
-	 * configuration} is not relevant.
+	 * The task is started regardless of whether it is {@link #isActive(Task) active}.
 	 * </p>
 	 */
 	public void startTask(Task task) {
@@ -2135,123 +2434,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private String format(Date start) {
 		return HTMLFormatter.getInstance().formatDate(start);
-	}
-
-	/**
-	 * Is it allowed to block the given {@link Task}?
-	 * <p>
-	 * Some system critical tasks are not allowed to be blocked.
-	 * </p>
-	 * 
-	 * @see #blockTask(Task)
-	 */
-	public boolean isBlockingAllowed(Task task) {
-		return task.isBlockingAllowed();
-	}
-
-	/**
-	 * Blocks the given {@link Task}.
-	 * <p>
-	 * Blocked tasks are not executed by the scheduler. Tasks can be {@link #blockTask(Task)
-	 * blocked} and {@link #unblockTask(Task) unblocked} by an administrator in the task maintenance
-	 * view.
-	 * </p>
-	 */
-	public final void blockTask(Task task) {
-		if (!isBlockingAllowed(task)) {
-			throw new IllegalArgumentException("Blocking task '" + task.getName() + "' is not allowed.");
-		}
-		storeTaskBlocked(task, true);
-		notifyUpdate(task);
-		Logger.info("Task " + task.getName() + " is being blocked.", new StackTrace(), Scheduler.class);
-	}
-
-	/**
-	 * Unblock the given {@link Task}.
-	 * 
-	 * @see #blockTask(Task)
-	 */
-	public final void unblockTask(Task task) {
-		storeTaskBlocked(task, false);
-		notifyUpdate(task);
-		Logger.info("Task " + task.getName() + " is being unblocked.", new StackTrace(), Scheduler.class);
-	}
-
-	/**
-	 * Whether the given {@link Task} is blocked.
-	 * 
-	 * @see #blockTask(Task)
-	 */
-	public final boolean isTaskBlocked(Task task) {
-		return isBlockingAllowed(task) && fetchTaskBlocked(task);
-	}
-
-	/**
-	 * Store in the database that the given {@link Task} is blocked/unblocked.
-	 * 
-	 * @param isBlocked
-	 *        If <code>true</code>, the Task is blocked. Otherwise unblocked.
-	 * 
-	 * @see #blockTask(Task)
-	 */
-	protected void storeTaskBlocked(final Task task, final boolean isBlocked) {
-		RetryResult<Void, List<Throwable>> result =
-			Retry.<Void, Throwable> retry(COMMIT_RETRIES, () -> {
-				try {
-					_dbProperties.setProperty(
-						DBProperties.GLOBAL_PROPERTY, getPropertyNameTaskBlock(task),
-						Boolean.valueOf(isBlocked).toString());
-					return RetryResult.createSuccess();
-				} catch (Throwable ex) {
-					return RetryResult.createFailure(ex);
-				}
-			});
-		if (!result.isSuccess()) {
-			String message = "Failed to store that task '" + task.getName() + "' is "
-				+ (isBlocked ? "" : "un") + "blocked.";
-			throw ExceptionUtil.createException(message, result.getReason());
-		}
-	}
-
-	/**
-	 * Fetch from the database whether the given {@link Task} is blocked.
-	 * 
-	 * @see #blockTask(Task)
-	 */
-	protected boolean fetchTaskBlocked(final Task task) {
-		RetryResult<Boolean, List<Throwable>> result =
-			Retry.<Boolean, Throwable> retry(COMMIT_RETRIES, () -> {
-				try {
-					String rawValue = _dbProperties.getProperty(getPropertyNameTaskBlock(task));
-					Boolean resultValue;
-					if (StringServices.isEmpty(rawValue)) {
-						resultValue = Boolean.valueOf(task.isBlockedByDefault());
-					} else {
-						resultValue = Boolean.valueOf(rawValue);
-					}
-					return RetryResult.createSuccess(resultValue);
-				} catch (Throwable ex) {
-					return RetryResult.createFailure(ex);
-				}
-			});
-		if (!result.isSuccess()) {
-			String message = "Failed to fetch whether task '" + task.getName() + "' is blocked or not."
-				+ " Pretending it is blocked, until the database is available again.";
-			RuntimeException error = ExceptionUtil.createException(message, result.getReason());
-			Logger.error(message, error, Scheduler.class);
-			// As long as the database is unavailable, no blockable tasks are scheduled.
-			// This should not be a problem, as there are only very few things that can be done
-			// while the database is unavailable.
-			// Throwing an exception here instead would cause big problems
-			// because of the various callers of this method.
-			// And returning "false" would cause tasks to be scheduled that were blocked.
-			return true;
-		}
-		return result.getValue();
-	}
-
-	private String getPropertyNameTaskBlock(Task task) {
-		return DB_PROPERTY_BLOCKED_TASKS + task.getName();
 	}
 
 	private void notifyUpdate(Task task) {

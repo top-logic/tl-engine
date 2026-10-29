@@ -50,8 +50,6 @@ public final class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey SCHEDULER_SUSPENDED;
 
-	public static ResKey1 TASK_BLOCKED__TASK;
-
 	public static ResKey1 TASK_RUNNING__TASK;
 
 	public static ResKey1 TASK_IS_NOT_TOP_LEVEL__TASK;

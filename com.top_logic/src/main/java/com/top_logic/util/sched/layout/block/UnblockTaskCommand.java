@@ -13,6 +13,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.conditional.CommandStep;
+import com.top_logic.tool.boundsec.conditional.Failure;
 import com.top_logic.tool.boundsec.conditional.Hide;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.conditional.Success;
@@ -20,7 +21,7 @@ import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 
 /**
- * {@link Scheduler#blockTask(Task) blocks} the {@link Task} selected in the given component.
+ * {@link Scheduler#activate(Task) Activates} the {@link Task} selected in the given component.
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
@@ -50,14 +51,17 @@ public class UnblockTaskCommand extends PreconditionCommandHandler {
 			return new Hide();
 		}
 		Task task = (Task) model;
-		if (!Scheduler.getSchedulerInstance().isTaskBlocked(task)) {
+		if (Scheduler.getSchedulerInstance().isActive(task)) {
 			return new Hide();
+		}
+		if (!Scheduler.getSchedulerInstance().isBlockingAllowed(task)) {
+			return new Failure(I18NConstants.BLOCKING_NOT_ALLOWED__TASK.fill(task.getName()));
 		}
 
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext context) {
-				Scheduler.getSchedulerInstance().unblockTask(task);
+				Scheduler.getSchedulerInstance().activate(task);
 			}
 		};
 	}

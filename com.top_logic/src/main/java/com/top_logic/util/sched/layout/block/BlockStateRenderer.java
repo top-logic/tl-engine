@@ -19,7 +19,7 @@ import com.top_logic.util.sched.task.Task;
 
 /**
  * Render an image depending on whether a {@link Task} and its children
- * {@link Scheduler#isTaskBlocked(Task) are blocked} by the scheduler or not.
+ * {@link Scheduler#isActive(Task) are active} or not.
  * 
  * @author <a href=mailto:Jan Stolzenburg@top-logic.com>Jan Stolzenburg</a>
  */

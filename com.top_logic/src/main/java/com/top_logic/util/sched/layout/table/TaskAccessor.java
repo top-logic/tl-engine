@@ -51,7 +51,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
     /** Date of next scheduled. */
     public static final String NEXT_SCHEDULE = "nextSched";
 
-	/** <code>true</code> when {@link Task} {@link Scheduler#isEnabled(Task) is enabled}. */
+	/** <code>true</code> when {@link Task} {@link Scheduler#isActive(Task) is active}. */
 	public static final String IS_ENABLED = "isEnabled";
 
 	/**
@@ -109,7 +109,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
             return aTask.getClass().getName();
         }
         else if (NEXT_SCHEDULE.equals(aProperty)) {
-			if (!Scheduler.getSchedulerInstance().isEnabled(aTask)) {
+			if (!aTask.isForcedRun() && !Scheduler.getSchedulerInstance().isActive(aTask)) {
 				return null;
 			}
 			return this.getDate(aTask.getNextShed());
@@ -119,7 +119,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 			return lastResult == null ? null : lastResult.getStartDate();
         }
 		else if (IS_ENABLED.equals(aProperty)) {
-            return Boolean.valueOf(Scheduler.getSchedulerInstance().isEnabled(aTask));
+            return Boolean.valueOf(Scheduler.getSchedulerInstance().isActive(aTask));
         }
 		else if (PERSISTENT.equals(aProperty)) {
 			return Boolean.valueOf(aTask.isPersistent());
@@ -161,7 +161,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 	}
 
 	private BlockState getBlockState(Task task) {
-		if (Scheduler.getSchedulerInstance().isTaskBlocked(task)) {
+		if (!Scheduler.getSchedulerInstance().isActive(task)) {
 			return BlockState.BLOCKED;
 		}
 		if (!(task instanceof CompositeTask)) {
@@ -175,7 +175,7 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 
 	private boolean isChildBlocked(CompositeTask task) {
 		for (Task child : task.getChildren()) {
-			if (Scheduler.getSchedulerInstance().isTaskBlocked(child)) {
+			if (!Scheduler.getSchedulerInstance().isActive(child)) {
 				return true;
 			}
 			if ((child instanceof CompositeTask) && isChildBlocked((CompositeTask) child)) {

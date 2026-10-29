@@ -9,20 +9,19 @@ import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 
 /**
- * The different values of how a {@link Task} {@link Scheduler#isTaskBlocked(Task) can be blocked}
- * by the {@link Scheduler}.
+ * Whether a {@link Task} or one of its children is {@link Scheduler#isActive(Task) inactive}.
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
 public enum BlockState {
 
-	/** It is not blocked, and it either has no children or none of them is blocked. */
+	/** It is active, and it either has no children or all of them are active. */
 	NOT_BLOCKED,
 
-	/** It is blocked. */
+	/** It is inactive. */
 	BLOCKED,
 
-	/** It is not blocked, but a (direct or indirect) child is blocked. */
+	/** It is active, but a (direct or indirect) child is inactive. */
 	CHILD_BLOCKED
 
 }

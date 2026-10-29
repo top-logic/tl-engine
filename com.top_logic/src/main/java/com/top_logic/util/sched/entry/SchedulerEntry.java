@@ -59,7 +59,7 @@ public class SchedulerEntry {
 
 	private final boolean _isChild;
 
-	private boolean _enabled = false;
+	private final boolean _configuredActive;
 
 	private ScheduledThread _thread;
 
@@ -73,13 +73,21 @@ public class SchedulerEntry {
 
 	/**
 	 * Creates an {@link SchedulerEntry}.
+	 * 
+	 * @param task
+	 *        See {@link #getTask()}.
+	 * @param isChild
+	 *        See {@link #isChild()}.
+	 * @param configuredActive
+	 *        See {@link #isConfiguredActive()}.
 	 */
-	public SchedulerEntry(Task task, boolean isChild) {
+	public SchedulerEntry(Task task, boolean isChild, boolean configuredActive) {
 		if (task == null) {
 			throw new NullPointerException("Task is not allowed to be null.");
 		}
 		_task = task;
 		_isChild = isChild;
+		_configuredActive = configuredActive;
 	}
 
 	/**
@@ -97,17 +105,13 @@ public class SchedulerEntry {
 	}
 
 	/**
-	 * @see Scheduler#isEnabled(Task)
+	 * Whether the {@link Task} is active by configuration, i.e. as long as no administrator
+	 * overrides it.
+	 * 
+	 * @see Scheduler#isConfiguredActive(Task)
 	 */
-	public synchronized void setEnabled(boolean enabled) {
-		_enabled = enabled;
-	}
-
-	/**
-	 * @see Scheduler#isEnabled(Task)
-	 */
-	public synchronized boolean isEnabled() {
-		return _enabled;
+	public boolean isConfiguredActive() {
+		return _configuredActive;
 	}
 
 	/**
@@ -152,7 +156,7 @@ public class SchedulerEntry {
 		return new NameBuilder(this)
 			.add("task", getTask())
 			.add("isChild", isChild())
-			.add("enabled", isEnabled())
+			.add("configuredActive", isConfiguredActive())
 			.add("state", getState())
 			.add("isOvertimeIgnored", isOvertimeIgnored())
 			.add("thread", getThread())

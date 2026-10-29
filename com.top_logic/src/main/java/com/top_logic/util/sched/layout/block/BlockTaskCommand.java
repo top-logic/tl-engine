@@ -21,7 +21,7 @@ import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 
 /**
- * {@link Scheduler#blockTask(Task) blocks} the {@link Task} selected in the given component.
+ * {@link Scheduler#deactivate(Task) Deactivates} the {@link Task} selected in the given component.
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
@@ -53,7 +53,7 @@ public class BlockTaskCommand extends PreconditionCommandHandler {
 
 		Task task = (Task) model;
 
-		if (Scheduler.getSchedulerInstance().isTaskBlocked(task)) {
+		if (!Scheduler.getSchedulerInstance().isActive(task)) {
 			return new Hide();
 		}
 		if (!Scheduler.getSchedulerInstance().isBlockingAllowed(task)) {
@@ -64,7 +64,7 @@ public class BlockTaskCommand extends PreconditionCommandHandler {
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext context) {
-				Scheduler.getSchedulerInstance().blockTask(task);
+				Scheduler.getSchedulerInstance().deactivate(task);
 			}
 		};
 	}

@@ -6,11 +6,11 @@
 			<instance>
 				<modules>
 					<!--
-						Pushes a running agent's writes into the open chat windows, so a model-bound
-						element beside the transcript follows the run instead of waiting for the SSE
-						heartbeat.
+						Connects agent runs to the browser windows the chat is displayed in: a tool
+						writes into the window of its run, and a deleted chat leaves every window of
+						its owner.
 					-->
-					<module key="com.top_logic.ai.chat.view.AgentViewRefreshService$Module" value="true"/>
+					<module key="com.top_logic.ai.chat.view.ChatWindowService$Module" value="true"/>
 					<!--
 						Decides which conversations an external backend answers instead of the
 						framework's own agent. Without a resolver, none.
@@ -19,8 +19,8 @@
 				</modules>
 			</instance>
 		</config>
-		<config service-class="com.top_logic.ai.chat.view.AgentViewRefreshService">
-			<instance class="com.top_logic.ai.chat.view.AgentViewRefreshService"/>
+		<config service-class="com.top_logic.ai.chat.view.ChatWindowService">
+			<instance class="com.top_logic.ai.chat.view.ChatWindowService"/>
 		</config>
 		<!--
 			An application adds its resolver to the list, see ConversationBackendResolver.

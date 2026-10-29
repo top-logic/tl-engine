@@ -7,6 +7,7 @@ package com.top_logic.layout.view.admin.system;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKeyN;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -213,6 +214,68 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Level
 	 */
 	public static ResKey LOGGER_COLUMN_LEVEL;
+
+	/**
+	 * @en Database
+	 */
+	public static ResKey DATABASE_SECTION_DATABASE;
+
+	/**
+	 * @en History
+	 */
+	public static ResKey DATABASE_SECTION_HISTORY;
+
+	/**
+	 * @en Product
+	 */
+	public static ResKey DATABASE_PRODUCT;
+
+	/**
+	 * @en Product version
+	 */
+	public static ResKey DATABASE_PRODUCT_VERSION;
+
+	/**
+	 * @en JDBC driver
+	 */
+	public static ResKey DATABASE_DRIVER;
+
+	/**
+	 * @en SQL dialect
+	 */
+	public static ResKey DATABASE_SQL_DIALECT;
+
+	/**
+	 * @en The application keeps no history.
+	 */
+	public static ResKey DATABASE_NO_HISTORY;
+
+	/**
+	 * @en Current revision
+	 */
+	public static ResKey DATABASE_LAST_REVISION;
+
+	/**
+	 * @en Current revision committed at
+	 */
+	public static ResKey DATABASE_LAST_REVISION_DATE;
+
+	/**
+	 * @en Oldest revision kept
+	 */
+	public static ResKey DATABASE_FIRST_REVISION;
+
+	/**
+	 * @en Oldest revision committed at
+	 */
+	public static ResKey DATABASE_FIRST_REVISION_DATE;
+
+	/**
+	 * @en A compaction would collapse the history into revision {0}: {1} rows deleted, {2} rows
+	 *     rewritten, {3} references re-pinned, {4} references cleared, {5} rows without a
+	 *     mandatory target deleted.
+	 */
+	public static ResKeyN DATABASE_ANALYSIS__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED_DROPPED;
 
 	static {
 		initConstants(I18NConstants.class);

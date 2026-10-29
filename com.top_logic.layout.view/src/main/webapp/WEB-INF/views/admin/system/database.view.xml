@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Database: the state of the database of the application and the commands maintaining it. The
+	DatabaseStateTable shows the database product and the range of revisions the history still holds
+	(the current revision and the oldest one kept, which moves forward when the history is compacted);
+	it reads the state again whenever the refresh channel changes, which Refresh and the compaction
+	write.
+	- Export dump downloads the dump of all data (databaseDump). The file is written while the browser
+	downloads it, so the command itself returns at once and needs no background job.
+	- Compact history clears the job channel of the last run and opens the dialog
+	compact-history.view.xml, which runs the analysis or the compaction as a background job on the job
+	channel; while it runs, a job-status below the toolbar shows it, also after the dialog was closed.
+	Its result is shown in the dialog. A command taking job as input is disabled while a job runs.
+	- Extension point: another module adds commands for the database with a same-path overlay of this
+	view, appending them to the toolbar of the panel "database":
+	<panel config:ref="database"><commands><generic-command>...</generic-command></commands></panel>.
+	A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
+	commands.
+-->
+<view>
+	<channels>
+		<channel name="refresh"/>
+		<channel name="job"/>
+	</channels>
+	<panel id="database"
+		fill="true"
+	>
+		<title>
+			<en>Database</en>
+			<de>Datenbank</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-download"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Export dump</en>
+					<de>Dump exportieren</de>
+				</label>
+				<tooltip>
+					<en>Downloads all data of the application as a compressed XML file, which can be imported into an empty database.</en>
+					<de>Lädt alle Daten der Anwendung als komprimierte XML-Datei herunter, die in eine leere Datenbank importiert werden kann.</de>
+				</tooltip>
+				<execute-script function="databaseDump()">
+					<with-result>
+						<download/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-scissors"
+				inputs="job as jobState"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Compact history</en>
+					<de>Historie verdichten</de>
+				</label>
+				<tooltip>
+					<en>Discards the history before a given date irrevocably. Needs an active maintenance window; afterwards the persistency layer is restarted, which ends all sessions.</en>
+					<de>Verwirft die Historie vor einem gegebenen Datum unwiderruflich. Erfordert einen aktiven Wartungsmodus; danach wird die Persistenzschicht neu gestartet, wodurch alle Sitzungen beendet werden.</de>
+				</tooltip>
+				<executability>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<write-channel
+					clear="true"
+					name="job"
+				/>
+				<open-dialog dialog-view="admin/system/compact-history.view.xml">
+					<bind
+						channel="job"
+						to="job"
+					/>
+					<bind
+						channel="refresh"
+						to="refresh"
+					/>
+				</open-dialog>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<execute-script function="now()">
+					<with-result>
+						<write-channel name="refresh"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<visible-if
+			expr="jobIsRunning($job)"
+			input="job"
+		>
+			<job-status input="job"/>
+		</visible-if>
+		<child id="state"
+			class="com.top_logic.layout.view.admin.system.DatabaseStateTable"
+			refresh="refresh"
+		/>
+	</panel>
+</view>

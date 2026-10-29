@@ -62,7 +62,7 @@ import com.top_logic.knowledge.service.migration.MigrationInfo;
 import com.top_logic.knowledge.service.migration.MigrationUtil;
 import com.top_logic.knowledge.service.migration.Version;
 import com.top_logic.knowledge.service.migration.VersionDescriptor;
-import com.top_logic.knowledge.service.migration.dump.KBDumpHandler;
+import com.top_logic.knowledge.service.migration.dump.KBDump;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ResPrefix;
@@ -295,7 +295,7 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 	}
 
 	static String baseName(BinaryData data) {
-		return removeExt(removeExt(data.getName(), KBDumpHandler.GZ_EXT), KBDumpHandler.DUMP_EXT);
+		return removeExt(removeExt(data.getName(), KBDump.GZ_EXT), KBDump.DUMP_EXT);
 	}
 
 	private static String removeExt(String name, String ext) {

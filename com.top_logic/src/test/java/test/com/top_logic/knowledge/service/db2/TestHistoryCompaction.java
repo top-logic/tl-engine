@@ -46,10 +46,12 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.BranchSupport;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.HistoryCompaction;
 import com.top_logic.knowledge.service.db2.HistoryCompaction.TableReport;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
@@ -528,6 +530,68 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		Report result = compaction.compactHistory(cutDate, _log);
 		assertEquals(resolved, result.getCompactionRevision());
 		assertEquals("Revisions below the compaction revision are deleted.", 0, countRevisionsBelow(resolved));
+	}
+
+	/**
+	 * An object the running knowledge base holds in its cache and that was last changed before the
+	 * compaction revision can still be changed after the compaction, once the knowledge base was
+	 * told about it, without dropping its cache.
+	 */
+	public void testChangeCachedObjectAfterCompaction() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject live = newD("live-created");
+		commit(tx);
+
+		tx = begin();
+		newD("other");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+		assertTrue("The object was last changed before the cut.", live.getLastUpdate() < cut);
+
+		Report result = newCompaction().compactRevisions(0, cut, _log);
+		assertFalse("Something must have been compacted.", result.isEmpty());
+		kb().historyCompacted(cut);
+		assertEquals("The cached current state starts at the compaction revision.", cut, live.getLastUpdate());
+
+		tx = begin();
+		setA1(live, "live-changed");
+		commit(tx);
+
+		KBTestUtils.clearCache(kb());
+		KnowledgeItem reloaded = kb().resolveObjectKey(live.tId());
+		assertEquals("live-changed", reloaded.getAttributeValue(A1_NAME));
+		assertEquals("The change outdated the compacted row.", cut,
+			kb().getCreateRevision(reloaded));
+	}
+
+	/**
+	 * Without adapting the cache, a change of a cached object last changed before the compaction
+	 * revision is refused as a lost update: the reason for
+	 * {@link DBKnowledgeBase#historyCompacted(long)}.
+	 */
+	public void testChangeOutdatedCacheFails() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject live = newD("stale-created");
+		commit(tx);
+
+		tx = begin();
+		newD("stale-other");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+
+		newCompaction().compactRevisions(0, cut, _log);
+
+		tx = kb().beginTransaction();
+		try {
+			setA1(live, "stale-changed");
+			tx.commit();
+			fail("A change based on an outdated last update must be refused.");
+		} catch (KnowledgeBaseException ex) {
+			// Expected: lost update.
+		} finally {
+			tx.rollback();
+		}
+		KBTestUtils.clearCache(kb());
 	}
 
 	/**

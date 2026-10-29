@@ -173,6 +173,13 @@
 							</label>
 							<view-ref view="admin/system/maintenance.view.xml"/>
 						</tab>
+						<tab id="database">
+							<label>
+								<en>Database</en>
+								<de>Datenbank</de>
+							</label>
+							<view-ref view="admin/system/database.view.xml"/>
+						</tab>
 						<tab id="logs">
 							<label>
 								<en>Logs</en>

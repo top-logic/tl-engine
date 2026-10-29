@@ -777,7 +777,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			_kb = null;
 		}
 		for (String sessionId : new ArrayList<>(_sessionMap.keySet())) {
-			invalidateSession(sessionId);
+			try {
+				invalidateSession(sessionId);
+			} catch (RuntimeException ex) {
+				// The service must shut down completely, also when the logout of one session cannot
+				// be processed.
+				Logger.error("Failed to end session '" + sessionId + "' on shutdown.", ex, SessionService.class);
+			}
 		}
 		_sessionMap.clear();
 		super.shutDown();

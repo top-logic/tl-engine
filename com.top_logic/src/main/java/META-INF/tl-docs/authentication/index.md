@@ -1,5 +1,5 @@
 ---
-description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig), the order of the login steps (password, expired password, second factor), login throttling with LoginFailuresModule, and where multi-factor authentication and the self-service flows are described.
+description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), the order of the login steps (password, expired password, second factor), login throttling with LoginFailuresModule, and where multi-factor authentication and the self-service flows are described.
 order: 25
 ---
 
@@ -118,6 +118,45 @@ depending on it. The self-service module `com.top_logic.layout.view.selfservice`
 ```
 
 The entries are keyed by `id`, so an overlay can address a contributed element.
+
+### External login methods (single sign-on)
+
+`<login-methods/>` (`LoginMethodsElement`) shows one button per external login method, e.g. "Login
+with Keycloak". The methods come from the application configuration `LoginMethodConfig`
+(`com.top_logic.base.accesscontrol.loginmethod`), a list of `LoginMethodProvider`s; `LoginMethods.all()`
+asks every provider for its `LoginMethod`s and leaves out those that are not `isAvailable()` now.
+The interfaces live in this module, so a provider module depends on the core only, not on the view
+layer. The pac4j module `tl-security-auth-pac4j` registers its provider in `tlPac4jConf.config.xml`:
+
+```xml
+<config config:interface="com.top_logic.base.accesscontrol.loginmethod.LoginMethodConfig">
+	<providers>
+		<provider class="com.top_logic.security.auth.pac4j.login.Pac4jLoginMethodProvider"/>
+	</providers>
+</config>
+```
+
+`Pac4jLoginMethodProvider` yields one method per configured client of `Pac4jConfigFactory` (nothing
+while the pac4j module is not active). The button label is the client's `label`, its `icon` the
+optional button icon; without a label the client name is shown. A client is offered only while its
+`ClientConfigurator` reports it available - e.g. not while the OIDC client secret is missing.
+
+A `LoginMethod` answers:
+
+- `getInitiationUrl(returnTo)` - the address the button sends the browser to, a full-page
+  redirect. For pac4j: `/servlet/openid?force_client=<client>&startPage=<returnTo>`; the identity
+  provider authenticates the user, the callback logs the user in through
+  `ExternalAuthenticationServlet` and returns to the page the visitor asked for.
+- `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
+  the running session once more, or `null` when the method cannot. pac4j answers it only for a
+  session its own client established.
+
+The buttons are determined each time the element is rendered, so a method that becomes available
+(a secret is provided) appears without a restart. An external login that failed returns to the login
+page, and `<login-methods/>` shows its message (`ExternalLoginFailure`) above the buttons.
+
+`ExternalAuthenticationServlet` with `reuseSession` reuses only an authenticated session: the
+anonymous session the view UI starts every browser with does not suppress the external login.
 
 ## Pitfalls
 

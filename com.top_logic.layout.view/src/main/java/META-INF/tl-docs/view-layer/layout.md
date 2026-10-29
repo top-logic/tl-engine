@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -309,3 +309,29 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 - **Lazy content.** `<content>` holds any elements. The wrapper is required, since the `image` property of the popover and the `<image>` element share a tag name. The content is created when the popover opens for the first time and kept while it is closed, so what the user entered there survives closing. It gets the personalization segment `popover` and is part of the view the popover is written in: it shares that view's channels - a form in the content edits the object of a view channel, a `<write-channel>` in it is seen by the rest of the view. A popover needing channels of its own holds a `<view-ref>`.
 - **Closing from the content.** The action `<close-popover/>` (`ClosePopoverAction`) in a command of the content closes the popover, of nested popovers the innermost one. It has no result, and the actions of the chain beside it work with the same arguments, so "apply what was entered, then close" is one command. Outside a popover it does nothing, like `<close-dialog/>` outside a dialog.
 - **Reveal.** The popover is a container of the reveal protocol with its content under the key `content`: displaying something that lives inside the content of a closed popover (see [Navigation](doc:view-layer/navigation)) opens it.
+
+## Content shown in an enclosing region: `<slot>` and `<slot-content>`
+
+A view sometimes owns content that is to be displayed elsewhere - its breadcrumb in the app bar of the shell, the buttons of a wizard step in a footer below the wizard. `<slot-content to="X">` (`SlotContentElement`) declares such content where it belongs; `<slot name="X"/>` (`SlotElement`) marks the place it is displayed at. Neither knows the other, and the elements in between do nothing for it.
+
+```xml
+<!-- app.view.xml: the place in the app bar -->
+<slot name="appbar-content"/>
+
+<!-- admin/system/services.view.xml: the breadcrumb of the view, shown there -->
+<slot-content to="appbar-content">
+	<tile-breadcrumb path="serviceNavPath">
+		<home-label><en>Services</en></home-label>
+	</tile-breadcrumb>
+</slot-content>
+```
+
+- **The content belongs to the declaring view.** The children of `<slot-content>` are built in the context of the view declaring them, so they see its channels; the slot only displays the controls. They live as long as the `<slot-content>` is displayed: when it leaves the display (another tab, another case of a switch, the next frame), its content disappears from the slot, and it reappears when the contribution is displayed again. At its own position, `<slot-content>` displays nothing.
+- **Routing by tree distance.** A contribution goes to the slot of the same name nearest to it in the element tree - the smallest number of steps up to a common ancestor and down again (`SlotRegistry`, `SlotPath`). A slot inside an element therefore catches the contributions inside it before a slot of the same name further out: a `<slot name="wizard-actions"/>` beside a `<wizard>` receives the buttons of its steps (see [the wizard](doc:view-layer/navigation)), while a contribution elsewhere in the view goes on to the outer slot. Routing is recomputed whenever a slot or a contribution is displayed or leaves the display.
+- **Several contributions** to one slot are all displayed, in the order they were registered.
+- **Shipped slots.** The shell `app.view.xml` offers `appbar-leading` (the sidebar puts its drawer toggle there, `drawer-open-slot-name` of `<sidebar>`) and `appbar-content`, see [the application shell](doc:view-layer/app-shell).
+
+Pitfalls:
+
+- A contribution that finds no slot of its name is displayed nowhere, without an error - check the name when content does not show up.
+- The position in the tree is extended by the containers that list children (`<stack>`, `<grid>`, `<columns>`, `<app-shell>`, `<app-bar>`, a `<switch>`, the tabs of a `<tab-bar>`, the sections of an `<accordion>`, the steps of a `<wizard>`, `<popover>`, `<object-list>`, ...). The panes of a `<split-panel>` and the items of a `<sidebar>` do not extend it, so slots of the same name in two of them are equally near to a contribution outside; then the slot registered first wins. Give such slots distinct names.

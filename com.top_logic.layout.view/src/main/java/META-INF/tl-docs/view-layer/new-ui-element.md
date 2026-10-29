@@ -440,6 +440,8 @@ my.app.module/
 
 - [Basics](doc:view-layer/basics) — when a new component is justified at all, and how to
   compose existing ones
+- [Client and server](doc:view-layer/client-server-protocol) — how state patches and commands
+  travel, and when a control's update reaches the client
 - [New React control module](doc:engine/new-react-module) — a module whose purpose *is* React controls, including
   third-party libraries and their React shims
 - [New module checklist](doc:engine/new-module-checklist) — everything a new module needs beyond this

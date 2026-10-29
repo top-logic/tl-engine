@@ -178,6 +178,6 @@ The layers are **independent**: L1 does not assume L2 ran, L4 does not assume L2
 | Uses `aiAgentChat` from TL-Script | The run acts as the calling account; a thread with no bound account is refused |
 | Runs agents unattended (`AgentTask`, `aiAgentChatAsync`) | The run acts as a configured account and is bounded by the `<background-allowlist>` |
 
-Administrators and engine super-users bypass the tool layer and the model rights, and so does any code in a system context - **testing with an admin account proves nothing**.
+Administrators and engine super-users bypass the tool layer and the model rights, and so does any code in a system context - **testing with an admin account proves nothing**. [The security test bed](doc:ai/security/test-bed) of `tl-ai-demo` has personas and a scenario per behaviour of each layer.
 
 The administrator's guides: [tool access configuration](doc:ai/security/tool-access-configuration), [run access](doc:ai/security/run-access) (agents, models, MCP servers), [browsing governance](doc:ai/security/browsing-governance), [the MCP endpoint](doc:ai/security/mcp-endpoint), and the [administration reference](doc:ai/security/administration) for the precise semantics of the policy, approval decided from the call, and the shipped read policy for screenshots and cookie pools.

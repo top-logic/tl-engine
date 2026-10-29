@@ -28,7 +28,8 @@ import {
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
 import { handleDownload, type DownloadEventData } from './download';
-import { afterNavigationGrace, isPageLeaving, leavePage, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
+import { afterNavigationGrace, isPageLeaving, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
+import { leavePageWhenAnswered } from './command-channel';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -498,7 +499,7 @@ function dispatch(data: unknown): void {
       handleDownload(payload as unknown as DownloadEventData);
       break;
     case PAGE_NAVIGATION_EVENT:
-      leavePage((payload as unknown as PageNavigationEventData).url);
+      leavePageWhenAnswered((payload as unknown as PageNavigationEventData).url);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

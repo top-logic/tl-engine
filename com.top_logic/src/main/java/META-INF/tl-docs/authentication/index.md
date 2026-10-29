@@ -79,9 +79,12 @@ the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The 
    (`ChangePasswordApplyAction`), which continues with the next step.
 2. An account with a stored secret gets `otp.view.xml` (`<verify-otp/>`); an account with
    `MfaRequirement` `required` and no secret gets `mfa-enroll.view.xml` (`<verify-otp persist="true"/>`).
-3. The last step re-checks maintenance mode and allowed groups, records the pending login on the
-   HTTP session and reloads the page; `PendingSessionAction` performs the session switch on that
-   reload.
+3. The last step re-checks maintenance mode and allowed groups and logs the user in within the
+   current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept and only
+   its ID is changed, other open tabs keep their user, and a tab opened later starts with the user
+   logged in. The window's control tree is discarded and the window reloads
+   (`ReactWindowRegistry.rebuildWindow`). The logout swaps the session through
+   `PendingSessionAction` on the reload it triggers.
 
 The partially authenticated account travels on the dialog channel `account` of the step dialogs; the
 TOTP secret on the channel `secret`, server side only. The step dialogs do not close on a backdrop

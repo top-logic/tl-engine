@@ -39,8 +39,9 @@ import com.top_logic.util.TLContextManager;
  * Per-session registry of the browser windows of that session.
  *
  * <p>
- * Stored as an HTTP session attribute, so it dies with the session - a login or logout therefore
- * discards every window it knows. Each window is represented by one {@link WindowEntry} that owns its
+ * Stored as an HTTP session attribute, so it dies with the session - a logout therefore discards
+ * every window it knows. A login within a window keeps the session and changes only its ID, which
+ * the registry follows ({@link #handleSessionIdChange(HttpSession, String)}). Each window is represented by one {@link WindowEntry} that owns its
  * per-window state; the registry only maps window IDs to entries, resolves singleton windows, and
  * decides when a window has stayed away long enough to be torn down: one whose page was unloaded
  * ({@link #sweepUnloadedWindows()}) and one whose client went away
@@ -62,7 +63,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *
 	 * @implNote Entries are removed in {@link #valueUnbound(HttpSessionBindingEvent)}, which the
 	 *           container calls for every attribute of an ending session, so the index cannot
-	 *           outlive the sessions it points to.
+	 *           outlive the sessions it points to. A session whose ID changes is re-indexed by
+	 *           {@link #handleSessionIdChange(HttpSession, String)}.
 	 */
 	private static final ConcurrentHashMap<String, ReactWindowRegistry> REGISTRIES_BY_SESSION_ID =
 		new ConcurrentHashMap<>();
@@ -139,8 +141,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	private final AtomicLong _pageLoads = new AtomicLong();
 
-	/** The ID of the session this registry belongs to, remembered for the index. */
-	private final String _sessionId;
+	/**
+	 * The current ID of the session this registry belongs to, remembered for the index.
+	 *
+	 * @see #handleSessionIdChange(HttpSession, String)
+	 */
+	private volatile String _sessionId;
 
 	/**
 	 * The listeners to inform about the requests of this session.
@@ -185,6 +191,36 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			}
 		}
 		return registry;
+	}
+
+	/**
+	 * Follows a change of the ID of the given session, e.g. by
+	 * {@link jakarta.servlet.http.HttpServletRequest#changeSessionId()} on a login.
+	 *
+	 * <p>
+	 * The registry of the session stays the same, and so do its windows: only the ID it is known
+	 * by changes, both in the index of all registries and for asking the {@link SessionService}
+	 * about the session's user.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session, already carrying its new ID.
+	 * @param formerId
+	 *        The ID the session had before.
+	 *
+	 * @see SessionIdChangeListener
+	 */
+	static void handleSessionIdChange(HttpSession session, String formerId) {
+		synchronized (session) {
+			ReactWindowRegistry registry = lookup(session);
+			if (registry == null) {
+				return;
+			}
+			String newId = session.getId();
+			registry._sessionId = newId;
+			REGISTRIES_BY_SESSION_ID.put(newId, registry);
+			REGISTRIES_BY_SESSION_ID.remove(formerId, registry);
+		}
 	}
 
 	/**
@@ -864,6 +900,28 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			entry.requestRebuild();
 			requestReload(entry.getQueue());
 		}
+	}
+
+	/**
+	 * Rebuilds the given window of this session from scratch.
+	 *
+	 * <p>
+	 * Called when what the window's tree was built from has changed for this window alone - the user
+	 * of the window, after a login in it. The window is {@link WindowEntry#requestRebuild() marked}
+	 * and told to reload, as in {@link #rebuildWindows()}; the other windows of the session are left
+	 * alone.
+	 * </p>
+	 *
+	 * @param windowName
+	 *        The name of the window to rebuild; an unknown name is ignored.
+	 */
+	public void rebuildWindow(String windowName) {
+		WindowEntry entry = _windows.get(windowName);
+		if (entry == null) {
+			return;
+		}
+		entry.requestRebuild();
+		requestReload(entry.getQueue());
 	}
 
 	/**

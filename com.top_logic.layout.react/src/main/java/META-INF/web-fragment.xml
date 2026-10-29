@@ -11,6 +11,14 @@
 	<name>tl-layout-react</name>
 
 	<!--
+		Lets the window registry of a session follow a change of the session's ID, as a login within
+		a window does.
+	-->
+	<listener>
+		<listener-class>com.top_logic.layout.react.window.SessionIdChangeListener</listener-class>
+	</listener>
+
+	<!--
 		Tells a control counting down to the end of the session about every request that restarts
 		the session's inactivity timeout, whichever servlet answers it.
 	-->

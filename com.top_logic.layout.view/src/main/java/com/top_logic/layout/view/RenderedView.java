@@ -33,8 +33,9 @@ import com.top_logic.layout.react.window.WindowEntry;
  * part: the labels the user came for are worth more than a scroll position. Kept in the browser
  * tab's
  * {@link SubSessionContext}, which dies together with the window registry when
- * {@link com.top_logic.layout.view.login.PendingSessionAction a login or logout} replaces the
- * session - so a tree is never reused for a different user.
+ * {@link com.top_logic.layout.view.login.PendingSessionAction a logout} replaces the session. A
+ * {@link com.top_logic.layout.view.login.LoginAction login} keeps the session and asks for the
+ * window to be rebuilt - so a tree is never reused for a different user.
  * </p>
  *
  * @param viewPath

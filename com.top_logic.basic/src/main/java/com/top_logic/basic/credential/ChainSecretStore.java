@@ -34,12 +34,13 @@ import com.top_logic.basic.util.ResKey;
  * </pre>
  *
  * <p>
- * Secrets are written to the first of the stores that is writable (see
- * {@link #getWritableStore()}), with the {@link Config#getPrefix() prefix} of this store. A
- * writable store is therefore placed at the end of the chain: the read-only stores in front of it
- * take precedence for the names they hold, and a secret the application writes cannot shadow
- * them.
+ * Secrets are written to the first of the stores that is writable, with the
+ * {@link Config#getPrefix() prefix} of this store. A writable store is therefore placed at the end
+ * of the chain: the read-only stores in front of it take precedence for the names they hold, and a
+ * secret the application writes cannot shadow them.
  * </p>
+ *
+ * @see #getWritableStore()
  */
 @Label("Several secret stores")
 public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Config> {

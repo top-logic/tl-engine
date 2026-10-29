@@ -1024,7 +1024,7 @@ public class LayoutUtils {
 	 * Extract the title of the given dialog.
 	 */
 	public static ResKey getDialogTitle(LayoutComponent dialog) {
-		PolymorphicConfiguration<TitleProvider> titleConfig = dialog.getDialogInfo().getTitle();
+		PolymorphicConfiguration<? extends TitleProvider> titleConfig = dialog.getDialogInfo().getTitle();
 
 		if (titleConfig != null) {
 			InstantiationContext instantiationContext = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;

@@ -923,7 +923,7 @@ public class MigrationUtils {
 	 * Creates a new {@link TLPrimitive} in the model identified by the given type name.
 	 */
 	public static Element createDatatype(Log log, Document model, QualifiedTypeName typeName, Kind kind,
-			DBColumnType columnType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
+			DBColumnType columnType, PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping,
 			AnnotatedConfig<TLTypeAnnotation> annotations) throws MigrationException {
 		Element module = getTLModuleOrFail(model, typeName.getModuleName());
 		return createDatatype(log, module, typeName.getTypeName(), kind, columnType, storageMapping, annotations);
@@ -933,7 +933,7 @@ public class MigrationUtils {
 	 * Creates a new {@link TLPrimitive} in the given module with given name.
 	 */
 	public static Element createDatatype(Log log, Element module, String typeName, Kind kind,
-			DBColumnType columnType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
+			DBColumnType columnType, PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping,
 			AnnotatedConfig<TLTypeAnnotation> annotations) {
 		Element datatype = createType(log, module, DatatypeConfig.TAG_NAME, typeName, annotations);
 		datatype.setAttribute(DatatypeConfig.KIND, kind.getExternalName());
@@ -964,7 +964,7 @@ public class MigrationUtils {
 		}
 	}
 
-	private static String storageMappingToString(PolymorphicConfiguration<StorageMapping<?>> config) {
+	private static String storageMappingToString(PolymorphicConfiguration<? extends StorageMapping<?>> config) {
 		StringWriter buffer = new StringWriter();
 		try {
 			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
@@ -1391,7 +1391,7 @@ public class MigrationUtils {
 	 */
 	public static void updateDatatype(Log log, Document tlModel, QualifiedTypeName typeName, QualifiedTypeName newName,
 			Kind kind,
-			DBColumnType columnType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
+			DBColumnType columnType, PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping,
 			AnnotatedConfig<TLTypeAnnotation> annotations)
 			throws MigrationException {
 		Element module = getTLModuleOrFail(tlModel, typeName.getModuleName());

@@ -111,7 +111,7 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/**
 		 * The {@link TreeDragSource} to use.

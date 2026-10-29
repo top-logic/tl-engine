@@ -28,7 +28,7 @@ public interface ValueTransformation {
 	 *        "identity".
 	 */
 	static ValueTransformation getInstance(InstantiationContext context,
-			PolymorphicConfiguration<ValueTransformation> config) {
+			PolymorphicConfiguration<? extends ValueTransformation> config) {
 		ValueTransformation result = context.getInstance(config);
 		if (result == null) {
 			return CommandResult.INSTANCE;

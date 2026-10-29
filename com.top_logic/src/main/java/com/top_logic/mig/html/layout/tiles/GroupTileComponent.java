@@ -62,7 +62,7 @@ public class GroupTileComponent extends LayoutList implements Selectable, Layout
 
 		@Override
 		@ItemDefault(GroupTileControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {

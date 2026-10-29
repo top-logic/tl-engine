@@ -174,7 +174,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Override
 		@StringDefault(EDIT_STRUCTURE_OPERATION)

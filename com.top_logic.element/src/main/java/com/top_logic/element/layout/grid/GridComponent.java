@@ -260,7 +260,7 @@ public class GridComponent extends EditComponent implements
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Name(GridComponent.XML_CONFIG_MODIFIER_CLASS)
 		PolymorphicConfiguration<FormContextModificator> getModifier();

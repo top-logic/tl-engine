@@ -46,7 +46,7 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 		 */
 		@Name(REPLACEMENTS)
 		@DefaultContainer
-		List<PolymorphicConfiguration<Mapping<? super String, String>>> getReplacements();
+		List<PolymorphicConfiguration<? extends Mapping<? super String, String>>> getReplacements();
 
 	}
 

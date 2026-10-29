@@ -37,7 +37,7 @@ public class StepOutCommand extends PreconditionCommandHandler {
 
 		@Override
 		@ItemDefault(ChildrenCheckScopeProvider.class)
-		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> getCheckScopeProvider();
 
 	}
 

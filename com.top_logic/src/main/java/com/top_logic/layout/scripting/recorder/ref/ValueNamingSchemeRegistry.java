@@ -57,7 +57,7 @@ public class ValueNamingSchemeRegistry extends ConfiguredManagedClass<ValueNamin
 		/** Getter for {@link Scheme#PROVIDER}. */
 		@Name(PROVIDER)
 		@Mandatory
-		PolymorphicConfiguration<ValueNamingScheme<?>> getProvider();
+		PolymorphicConfiguration<? extends ValueNamingScheme<?>> getProvider();
 
 		/** Getter for {@link Scheme#TYPE}. */
 		@Name(TYPE)

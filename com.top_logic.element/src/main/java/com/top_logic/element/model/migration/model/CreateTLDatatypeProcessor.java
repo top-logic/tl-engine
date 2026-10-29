@@ -73,12 +73,12 @@ public class CreateTLDatatypeProcessor extends TLModelBaseLineMigrationProcessor
 		@Name(DatatypeConfig.STORAGE_MAPPING)
 		@Mandatory
 		@DefaultContainer
-		PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
+		PolymorphicConfiguration<? extends StorageMapping<?>> getStorageMapping();
 
 		/**
 		 * Setter for {@link #getStorageMapping()}.
 		 */
-		void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
+		void setStorageMapping(PolymorphicConfiguration<? extends StorageMapping<?>> value);
 
 	}
 

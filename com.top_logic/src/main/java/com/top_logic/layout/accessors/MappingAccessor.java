@@ -37,12 +37,12 @@ public class MappingAccessor extends AccessorProxy<MappingAccessor, Object> {
 		 */
 		@Name(MAPPING)
 		@Mandatory
-		PolymorphicConfiguration<Mapping<Object, Object>> getMapping();
+		PolymorphicConfiguration<? extends Mapping<Object, Object>> getMapping();
 
 		/**
 		 * Setter for {@link #getMapping()}
 		 */
-		void setMapping(PolymorphicConfiguration<Mapping<Object, Object>> mapping);
+		void setMapping(PolymorphicConfiguration<? extends Mapping<Object, Object>> mapping);
 
 	}
 

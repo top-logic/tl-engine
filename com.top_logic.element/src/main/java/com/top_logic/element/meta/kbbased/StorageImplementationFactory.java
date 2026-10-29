@@ -277,6 +277,26 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 
 	}
 
+	/**
+	 * The part whose storage implementation the given part copies, or <code>null</code> if the
+	 * storage of the given part is not copied from another part.
+	 *
+	 * <p>
+	 * An override without {@link TLStorage} annotation uses the storage of the part it overrides,
+	 * see {@link #createStorageImplementation(TLStructuredTypePart)}.
+	 * </p>
+	 */
+	public static TLStructuredTypePart storageTemplate(TLStructuredTypePart part) {
+		if (part.isAbstract() || part.getAnnotation(TLStorage.class) != null) {
+			return null;
+		}
+		TLStructuredTypePart definition = part.getDefinition();
+		if (definition == part) {
+			return null;
+		}
+		return findStorageTemplate(part, definition);
+	}
+
 	private static TLStructuredTypePart findStorageTemplate(TLStructuredTypePart part,
 			TLStructuredTypePart definition) {
 		if (!definition.isAbstract()) {

@@ -7,6 +7,7 @@ package com.top_logic.element.meta.kbbased;
 
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.db2.DBKnowledgeItem;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -31,6 +32,19 @@ public abstract class ConfiguredAttributeImpl extends KBBasedMetaAttribute {
 	@Override
 	public final StorageImplementation getStorageImplementation() {
 		return (StorageImplementation) tGetData(STORAGE_IMPLEMENTATION_ATTRIBUTE);
+	}
+
+	/**
+	 * Discards the {@link #getStorageImplementation() storage implementation} computed for this
+	 * part in the current transaction.
+	 *
+	 * <p>
+	 * The storage implementation is computed anew from the current state of this part on the next
+	 * access. Other transactions keep the storage implementation of the committed state.
+	 * </p>
+	 */
+	public final void discardStorageImplementation() {
+		((DBKnowledgeItem) tHandle()).discardCacheValue(STORAGE_IMPLEMENTATION_ATTRIBUTE);
 	}
 
 }

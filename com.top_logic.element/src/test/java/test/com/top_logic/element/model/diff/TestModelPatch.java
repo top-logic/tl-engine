@@ -360,7 +360,7 @@ public class TestModelPatch extends AbstractModelPatchTest {
 	 * a bag.
 	 */
 	public void testPatchMakesBag() throws SQLException {
-		doTestBagChange("test-bag-left.model.xml", "test-bag-right.model.xml", "makeBag",
+		doTestLinkMove("test-bag-left.model.xml", "test-bag-right.model.xml", "makeBag",
 			(a, b) -> List.of(a, b), (a, b) -> List.of(a, b));
 	}
 
@@ -369,20 +369,29 @@ public class TestModelPatch extends AbstractModelPatchTest {
 	 * bag, when the reference stops being a bag, and that duplicate values are removed.
 	 */
 	public void testPatchMakesUnique() throws SQLException {
-		doTestBagChange("test-bag-right.model.xml", "test-bag-left.model.xml", "makeUnique",
+		doTestLinkMove("test-bag-right.model.xml", "test-bag-left.model.xml", "makeUnique",
 			(a, b) -> List.of(a, b, a, b), (a, b) -> List.of(a, b));
 	}
 
 	/**
+	 * Checks that the links of a reference are moved to the table of its new deletion policy.
+	 */
+	public void testPatchDeletionPolicy() throws SQLException {
+		doTestLinkMove("test-bag-left.model.xml", "test-veto-right.model.xml", "makeVeto",
+			(a, b) -> List.of(a, b), (a, b) -> List.of(a, b));
+	}
+
+	/**
 	 * Migrates a persistent model with a value in the reference {@link #BAG_TEST_REFERENCE} from
-	 * the left to the right fixture, which differ in the bag state of the reference.
+	 * the left to the right fixture, which differ in a property of the reference that determines
+	 * its link table.
 	 *
 	 * @param before
 	 *        The value of the reference before the migration, given two objects.
 	 * @param expected
 	 *        The expected value of the reference after the migration, given the same two objects.
 	 */
-	private void doTestBagChange(String leftResource, String rightResource, String moduleName,
+	private void doTestLinkMove(String leftResource, String rightResource, String moduleName,
 			BiFunction<TLObject, TLObject, List<TLObject>> before,
 			BiFunction<TLObject, TLObject, List<TLObject>> expected) throws SQLException {
 		ModelConfig leftConfig = fixture(leftResource, moduleName);
@@ -411,7 +420,7 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		TLModel right = loadModelTransient(rightConfig);
 		List<MigrationProcessor> processors = applyPatch(base, new DefaultModelFactory(), createPatch(base, right));
 		assertTrue(processors.stream().anyMatch(MoveLinksProcessor.class::isInstance));
-		assertEquals(!localPart(right, moduleName, BAG_TEST_TYPE, BAG_TEST_REFERENCE).isBag(),
+		assertEquals(leftRef.isBag() && !localPart(right, moduleName, BAG_TEST_TYPE, BAG_TEST_REFERENCE).isBag(),
 			processors.stream().anyMatch(RemoveDuplicatesProcessor.class::isInstance));
 
 		TLModel migrated = migrate(left, processors);

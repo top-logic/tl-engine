@@ -164,11 +164,12 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	/**
 	 * The links to move after all diffs are applied, indexed by the qualified name of the
-	 * reference whose {@link TLStructuredTypePart#isBag() bag} flag changes.
+	 * reference whose {@link TLStructuredTypePart#isBag() bag} flag or
+	 * {@link TLReference#getDeletionPolicy() deletion policy} changes.
 	 *
-	 * @see #scheduleBagLinkMove(TLStructuredTypePart)
+	 * @see #scheduleLinkMove(TLStructuredTypePart)
 	 */
-	private final Map<String, BagLinkMove> _bagLinkMoves = new LinkedHashMap<>();
+	private final Map<String, LinkMove> _linkMoves = new LinkedHashMap<>();
 
 	/**
 	 * {@link DiffVisitor} computing a priority to sort {@link DiffElement}s before applying a
@@ -1536,7 +1537,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		if (createProcessors()) {
-			scheduleBagLinkMove(part);
+			scheduleLinkMove(part);
 		}
 
 		part.setBag(diff.isBag());
@@ -1643,6 +1644,9 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			return null;
 		}
 		log().info("Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy() + "'.");
+		if (createProcessors()) {
+			scheduleLinkMove(part);
+		}
 		part.setDeletionPolicy(diff.getDeletionPolicy());
 
 		if (createProcessors()) {
@@ -1998,33 +2002,33 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		super.complete();
 
 		if (createProcessors()) {
-			addBagLinkMoves();
+			addLinkMoves();
 		}
 	}
 
 	/**
 	 * Records the table that stores the links of the reference whose
-	 * {@link TLStructuredTypePart#isBag() bag} flag is about to change.
+	 * {@link TLStructuredTypePart#isBag() bag} flag or {@link TLReference#getDeletionPolicy()
+	 * deletion policy} is about to change.
 	 *
 	 * <p>
-	 * The default link table of a reference depends on its bag flag. When the flag changes, the
-	 * links are moved from the table used before the patch to the table used after the patch,
-	 * see {@link #addBagLinkMoves()}. The destination table is determined after all diffs are
-	 * applied, since other diffs of the same patch (e.g. a change of the
-	 * {@link TLReference#getDeletionPolicy() deletion policy}) may also change the table.
+	 * The default link table of a reference depends on these properties. When one of them
+	 * changes, the links are moved from the table used before the patch to the table used after
+	 * the patch, see {@link #addLinkMoves()}. The destination table is determined after all diffs
+	 * are applied, since other diffs of the same patch may also change the table.
 	 * </p>
 	 *
 	 * @param part
-	 *        The reference or the association end of a reference, before its bag flag is
+	 *        The reference or the association end of a reference, before its property is
 	 *        changed.
 	 */
-	private void scheduleBagLinkMove(TLStructuredTypePart part) {
+	private void scheduleLinkMove(TLStructuredTypePart part) {
 		TLReference reference = linkReference(part);
 		if (reference == null) {
 			return;
 		}
 		String name = TLModelUtil.qualifiedName(reference);
-		if (_bagLinkMoves.containsKey(name)) {
+		if (_linkMoves.containsKey(name)) {
 			return;
 		}
 		if (!hasDefaultStorage(reference)) {
@@ -2034,22 +2038,22 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (sourceTable == null) {
 			return;
 		}
-		_bagLinkMoves.put(name, new BagLinkMove(name, sourceTable, reference.getHistoryType()));
+		_linkMoves.put(name, new LinkMove(name, sourceTable, reference.isBag(), reference.getHistoryType()));
 	}
 
 	/**
-	 * Adds the processors moving the links of the references whose bag flag has changed to the
-	 * tables of their final storage.
+	 * Adds the processors moving the links of the references whose bag flag or deletion policy
+	 * has changed to the tables of their final storage.
 	 *
 	 * <p>
 	 * A reference that is no bag must not hold a value more than once. Before moving the links of
 	 * a former bag reference, its duplicate values are removed from the bag table.
 	 * </p>
 	 *
-	 * @see #scheduleBagLinkMove(TLStructuredTypePart)
+	 * @see #scheduleLinkMove(TLStructuredTypePart)
 	 */
-	private void addBagLinkMoves() {
-		for (BagLinkMove move : _bagLinkMoves.values()) {
+	private void addLinkMoves() {
+		for (LinkMove move : _linkMoves.values()) {
 			TLReference reference;
 			try {
 				reference = (TLReference) resolvePart(move.reference());
@@ -2072,7 +2076,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				continue;
 			}
 
-			if (!reference.isBag()) {
+			if (move.bag() && !reference.isBag()) {
 				RemoveDuplicatesProcessor.Config<?> removeDuplicates =
 					newConfigItem(RemoveDuplicatesProcessor.Config.class);
 				removeDuplicates.setAssociationTable(move.sourceTable());
@@ -2107,21 +2111,23 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 *
 	 * <p>
 	 * A reference with an explicit {@link TLStorage} annotation keeps its table, when its bag
-	 * flag changes. If the table does not fit the new flag, the links must be moved manually. An
-	 * override shares the links of the reference it overrides.
+	 * flag or deletion policy changes. If the table does not fit the new state, the links must be
+	 * moved manually. An override shares the links of the reference it overrides.
 	 * </p>
 	 */
 	private boolean hasDefaultStorage(TLReference reference) {
 		String name = TLModelUtil.qualifiedName(reference);
 		if (reference.getAnnotation(TLStorage.class) != null) {
 			log().info("Reference '" + name + "' has an explicit storage, its links are not moved when its bag"
-				+ " state changes. If its table does not fit the new bag state, the links must be moved manually.",
+				+ " state or deletion policy changes. If its table does not fit the new state, the links must be"
+				+ " moved manually.",
 				Log.WARN);
 			return false;
 		}
 		if (reference.isOverride()) {
 			log().info("Reference '" + name + "' is an override, its links are not moved when its bag"
-				+ " state changes. If its table does not fit the new bag state, the links must be moved manually.",
+				+ " state or deletion policy changes. If its table does not fit the new state, the links must be"
+				+ " moved manually.",
 				Log.WARN);
 			return false;
 		}
@@ -2152,16 +2158,19 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	}
 
 	/**
-	 * The links of a reference that must be moved, because its bag flag changes.
+	 * The links of a reference that must be moved, because its bag flag or deletion policy
+	 * changes.
 	 *
 	 * @param reference
 	 *        The qualified name of the reference.
 	 * @param sourceTable
 	 *        The table storing the links before the patch.
+	 * @param bag
+	 *        Whether the reference is a bag before the patch.
 	 * @param historyType
 	 *        The history type of the reference before the patch.
 	 */
-	private record BagLinkMove(String reference, String sourceTable, HistoryType historyType) {
+	private record LinkMove(String reference, String sourceTable, boolean bag, HistoryType historyType) {
 		// Pure value.
 	}
 

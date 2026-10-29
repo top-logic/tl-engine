@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestReferenceStorageChange">
+			<types>
+				<class name="Owner">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<reference name="toUnique"
+							bag="true"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+						<reference name="toBag"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+						<reference name="toVeto"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+						<reference name="toHistoric"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+						<reference name="toList"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+						<reference name="parts"
+							composite="true"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+						<reference name="empty"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+						<reference name="rollback"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+				<class name="Child">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -73,7 +73,7 @@ public class ConfigAsString<C extends ConfigAsString.Config<?>> extends Abstract
 		 * The function to apply to the XML-serialized version of the configuration.
 		 */
 		@DefaultContainer
-		PolymorphicConfiguration<Mapping<String, String>> getInner();
+		PolymorphicConfiguration<? extends Mapping<String, String>> getInner();
 
 	}
 

@@ -46,7 +46,7 @@ public class I18NCheck extends ConfiguredManagedClass<I18NCheck.Config> {
 		 */
 		@DefaultContainer
 		@Key(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME)
-		Map<Class<?>, PolymorphicConfiguration<I18NChecker>> getCheckers();
+		Map<Class<?>, PolymorphicConfiguration<? extends I18NChecker>> getCheckers();
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class I18NCheck extends ConfiguredManagedClass<I18NCheck.Config> {
 	protected void startUp() {
 		super.startUp();
 
-		Map<Class<?>, PolymorphicConfiguration<I18NChecker>> checkerConfigs = getConfig().getCheckers();
+		Map<Class<?>, PolymorphicConfiguration<? extends I18NChecker>> checkerConfigs = getConfig().getCheckers();
 		DefaultInstantiationContext ctx = new DefaultInstantiationContext(I18NCheck.class);
 		Map<Class<?>, I18NChecker> checkers = TypedConfiguration.getInstanceMap(ctx, checkerConfigs);
 		try {

@@ -72,6 +72,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_ARTIFACT_ID_EMPTY_PART__VALUE;
 
 	/**
+	 * @en "{0}" is not a valid artifact ID: it is a segment of the context path of the application,
+	 *     and "view", "servlet" and "admin" are reserved there.
+	 */
+	public static ResKey1 ERROR_ARTIFACT_ID_RESERVED__VALUE;
+
+	/**
 	 * @en "{0}" cannot be used: its part "{1}" is a reserved word of Java and cannot be a name of
 	 *     the Java package of the application.
 	 */

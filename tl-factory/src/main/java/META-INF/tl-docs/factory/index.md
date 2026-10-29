@@ -118,8 +118,9 @@ every other command in the container would end with it.
   (`HostConfig.withInit`) as PID 1: it reaps orphaned processes - the JVMs and tools of commands
   that ended before their children - and forwards the stop signal to the entry script.
 - **Supervisor.** Until the file `.tl-factory-built` exists in the source volume, the entry script
-  only waits. Then it runs `mvn -B -Dtl.port=8080` in the directory of the application, with the
-  environment of the container (`tl_initial_password` among it). The output goes both to the
+  only waits. Then it runs `mvn -B` in the directory of the application with the port 8080 and the
+  [context path](#context-path-and-external-url) of the workspace, `TL_FACTORY_CONTEXT_PATH`, and
+  the environment of the container (`tl_initial_password` among it). The output goes both to the
   output of the entry script - the container log, so `followLog` and the tab *Application log* show
   every run - and to the log of the current run, `$TL_WORKSPACE_APP_STATE/app.log`. Stopping the
   container (`SIGTERM`) stops the application gracefully and ends the script. The supervisor
@@ -139,7 +140,7 @@ every other command in the container would end with it.
   `stop`), the supervisor starts or stops the application within a second and publishes its
   state (`unbuilt`, `starting`, `running`, `stopping`, `stopped`, `failed`), the number of runs,
   the process ID and the exit code of the last run. `start` and `restart` wait until the
-  application answers at `http://localhost:8080/<artifactId>/` (`TL_WORKSPACE_APP_TIMEOUT`,
+  application answers at `http://localhost:8080<context path>/` (`TL_WORKSPACE_APP_TIMEOUT`,
   default 300 seconds) and print `url:`, `log:` and `login: root / <initial password>`; a run that
   fails meanwhile fails the command with the end of its log. `stop` leaves the container running.
   `status` prints the state and exits 0 if the application answers, 4 if it failed, 3 otherwise
@@ -172,6 +173,43 @@ In the control application:
 
 A container on an image without `tl-workspace-app` tells no application state; it is treated as
 before (running container = running application).
+
+### Context path and external URL
+
+The application of a workspace answers under a context path of its own, which may have several
+segments: by default `/preview/<workspace>/<artifactId>`, e.g.
+`/preview/my-app-1a2b3c4d/my-app`. The pattern is the property `context-path` of the
+`applications` of `WorkspaceService` (`tl_factory_context_path`); `{workspace}` stands for the
+identifier of the workspace, `{artifact}` for the artifact of the application
+(`ApplicationWorkspaces.contextPath`). Every segment consists of letters, digits, `.`, `_`, `~`
+and `-`; no segment may be `view` or `servlet`, where the client of a TopLogic application finds
+its routes, and the first one not `admin`, where the development server stops a running instance.
+The artifact of a project is checked for these names; the identifier of a workspace is never one
+of them, it ends with `-` and eight hex digits.
+
+- **Stored per workspace.** A workspace records the context path its container is created with
+  (`contextPath`, `FactoryModel.WORKSPACE_CONTEXT_PATH`); creating and updating a workspace takes
+  the one of the configured pattern. A workspace without recorded context path has a container
+  created before the context path was recorded, which serves the application under
+  `/<artifactId>`. Every URL of an application the control application builds - waiting for the
+  application, the preview URL of a running workspace - is the preview URL of the workspace
+  (`http://<public host>:<host port>/`) followed by this context path
+  (`ApplicationWorkspaces.applicationUrl`).
+- **In the container.** The container gets the context path in `TL_FACTORY_CONTEXT_PATH`
+  (`ApplicationWorkspaces.ENV_CONTEXT_PATH`); the supervisor starts the application with it, and
+  `tl-workspace-app` probes and prints the URL with it. The supervisor passes port and context
+  path as the arguments of the launch, `-Dexec.args=-port <port> -contextPath <path>`, which
+  replace the arguments the parent POM configures for `exec:java`: an application built on a
+  TopLogic version whose `tl-parent-app` has no property `tl.contextPath` is started under the
+  context path as well.
+- **External URL.** `application-origin` (`tl_factory_application_origin`) is the origin under
+  which a browser reaches the applications, e.g. `https://factory.example.com`; the containers get
+  it as `tl_host` (`ApplicationWorkspaces.ENV_HOST`), the external URL of a TopLogic application
+  (`%HOST%`). Empty (the default), `tl_host` is not set and an application takes
+  `http://localhost:8080`, the address in its container. The development server of an application
+  requests `<tl_host>/admin/stop` on every start to stop an instance running before; the origin
+  must answer that request with another status than 200, e.g. 404: a 200 with the body `OK`
+  stops the server answering there, a 200 with another body keeps the application from starting.
 
 ### Pinned versions
 
@@ -237,6 +275,8 @@ The update is an operation like the others, in state *Updating* with its output 
   on the existing named volumes. Sources, Maven repository and database stay, so do the
   conversations of the agent and the initial password of the workspace. A workspace whose container is lost but whose volumes exist gets a
   container again this way.
+- The new container serves the application under the context path of the configured pattern,
+  which the workspace records, see [context path](#context-path-and-external-url).
 - If the proxy is switched on, the new container gets the current URLs of its routes, e.g.
   `ANTHROPIC_BASE_URL`.
 - A workspace that was running is started again and waited for like by *Start*; otherwise it ends
@@ -332,6 +372,8 @@ then.
 | `tl_factory_repository_url` | TopLogic Nexus | Maven repository the TopLogic releases are taken from. |
 | `tl_factory_start_timeout` | `600` | Seconds a started application has to answer. |
 | `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
+| `tl_factory_context_path` | `/preview/{workspace}/{artifact}` | Pattern of the context path the application of a workspace is served under, see [context path](#context-path-and-external-url). |
+| `tl_factory_application_origin` | *(empty)* | Origin under which a browser reaches the applications of the workspaces, given to them as `tl_host`; empty if not known. |
 | `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
 | `tl_factory_proxy_url` | *(empty)* | URL of the root of the workspace proxy as the workspace containers reach it, without the path of a route, e.g. `http://host.docker.internal:8091`; empty switches the proxy off, see [the workspace proxy](#the-workspace-proxy). |
 | `tl_factory_proxy_address` | `127.0.0.1` | Address the proxy listens on with its own port, see [the port of the proxy](#the-port-of-the-proxy). |

@@ -8,8 +8,9 @@
 # As long as the file TL_FACTORY_BUILT_MARKER does not exist, the application is not yet built and
 # the script only keeps the container alive, so that commands can be run in it. Once the file
 # exists, the script runs the application in the directory TL_FACTORY_APP_DIR on the port
-# TL_FACTORY_PORT. Starting the container thus starts the application, stopping the container
-# (SIGTERM) stops the application gracefully and ends the script.
+# TL_FACTORY_PORT under the context path TL_FACTORY_CONTEXT_PATH (default: / followed by the name of
+# the application directory, the artifact). Starting the container thus starts the application,
+# stopping the container (SIGTERM) stops the application gracefully and ends the script.
 #
 # In between, the command tl-workspace-app stops and starts the application through the state
 # directory TL_WORKSPACE_APP_STATE, without ending the container:
@@ -44,7 +45,8 @@ START_GRACE="${TL_WORKSPACE_APP_START_GRACE:-5}"
 STARTED_MARKER='up and running'
 READY_MARKER='Server started:'
 PREFIX='[tl-workspace-app]'
-URL="http://localhost:$TL_FACTORY_PORT/$(basename "$TL_FACTORY_APP_DIR")/"
+CONTEXT_PATH="${TL_FACTORY_CONTEXT_PATH:-/$(basename "$TL_FACTORY_APP_DIR")}"
+URL="http://localhost:$TL_FACTORY_PORT$CONTEXT_PATH/"
 
 terminating=false
 started=false
@@ -79,15 +81,19 @@ start_app() {
 	put runs $(($(get runs) + 1))
 	started=false
 	grace=0
-	say "Starting the application in $TL_FACTORY_APP_DIR on port $TL_FACTORY_PORT."
+	say "Starting the application in $TL_FACTORY_APP_DIR on port $TL_FACTORY_PORT under $CONTEXT_PATH."
 	# The runner copies the output to the container output and to the log of the run, records the
-	# process ID of the application and, once it has ended, its exit code.
+	# process ID of the application and, once it has ended, its exit code. The arguments of the
+	# launch (exec.args) replace the ones the parent POM configures, so that the port and the context
+	# path also apply to an application on a TopLogic version whose parent has no property for the
+	# context path (tl.contextPath).
 	(
 		tee -a "$STATE/app.log" < "$STATE/output" &
 		copier=$!
 		rc=0
 		if cd "$TL_FACTORY_APP_DIR"; then
-			mvn -B "-Dtl.port=$TL_FACTORY_PORT" > "$STATE/output" 2>&1 &
+			mvn -B "-Dtl.port=$TL_FACTORY_PORT" "-Dtl.contextPath=$CONTEXT_PATH" \
+				"-Dexec.args=-port $TL_FACTORY_PORT -contextPath $CONTEXT_PATH" > "$STATE/output" 2>&1 &
 			app=$!
 			put pid "$app"
 			wait "$app" || rc=$?

@@ -62,6 +62,18 @@ public class TestCoordinateCheck extends TestCase {
 	}
 
 	/**
+	 * The artifact is a segment of the context path of the application, which cannot be one of the
+	 * reserved segments.
+	 */
+	public void testReservedSegment() {
+		for (String reserved : new String[] { "view", "servlet", "admin" }) {
+			assertEquals(I18NConstants.ERROR_ARTIFACT_ID_RESERVED__VALUE.fill(reserved),
+				ProjectWorkspaces.checkArtifactId(reserved));
+		}
+		assertNull(ProjectWorkspaces.checkArtifactId("view-app"));
+	}
+
+	/**
 	 * Values outside the allowed characters are rejected as before.
 	 */
 	public void testInvalidCharacters() {

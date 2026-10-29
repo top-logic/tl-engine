@@ -13,6 +13,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.factory.ci.CIJob;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.RepositoryName;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -183,6 +184,12 @@ public class FactoryModel {
 	 * {@link com.top_logic.factory.workspace.WorkspaceInfo#getImage()}.
 	 */
 	public static final String WORKSPACE_IMAGE = "image";
+
+	/**
+	 * Attribute of a {@link #WORKSPACE}: the context path its application is served under, see
+	 * {@link #getContextPath(TLObject)}.
+	 */
+	public static final String WORKSPACE_CONTEXT_PATH = "contextPath";
 
 	/** Attribute of a {@link #WORKSPACE}: the output of its last operation. */
 	public static final String WORKSPACE_LOG = "log";
@@ -412,6 +419,22 @@ public class FactoryModel {
 	 */
 	public static String getWorkspaceId(TLObject workspace) {
 		return getString(workspace, WORKSPACE_ID);
+	}
+
+	/**
+	 * The context path the application of the given workspace is served under.
+	 *
+	 * @return The stored {@link #WORKSPACE_CONTEXT_PATH}; for a workspace without one, whose
+	 *         container was created before workspaces recorded it, the artifact of its project,
+	 *         the context path such a container serves its application under.
+	 * @see com.top_logic.factory.workspace.app.ApplicationSpec#getContextPath()
+	 */
+	public static String getContextPath(TLObject workspace) {
+		String stored = getString(workspace, WORKSPACE_CONTEXT_PATH);
+		if (stored != null && !stored.isEmpty()) {
+			return stored;
+		}
+		return ApplicationWorkspaces.defaultContextPath(getString(getProject(workspace), PROJECT_ARTIFACT_ID));
 	}
 
 	/**

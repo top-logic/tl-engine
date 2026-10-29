@@ -17,6 +17,8 @@
 		<entry name="%FACTORY_REPOSITORY_URL%" value="${env:tl_factory_repository_url:https://dev.top-logic.com/nexus/repository/toplogic/}" comment="Maven repository the TopLogic releases are taken from."/>
 		<entry name="%FACTORY_START_TIMEOUT%" value="${env:tl_factory_start_timeout:600}" comment="Seconds to wait for a started application to answer."/>
 		<entry name="%FACTORY_BUILD_TIMEOUT%" value="${env:tl_factory_build_timeout:1800}" comment="Seconds a Maven run in a workspace may take."/>
+		<entry name="%FACTORY_CONTEXT_PATH%" value="${env:tl_factory_context_path:/preview/{workspace\}/{artifact\}}" comment="Context path the application of a workspace is served under; {workspace} stands for the identifier of the workspace, {artifact} for the artifact of the application."/>
+		<entry name="%FACTORY_APPLICATION_ORIGIN%" value="${env:tl_factory_application_origin:}" comment="Origin (e.g. https://factory.example.com) under which a browser reaches the applications of the workspaces, given to them as tl_host; empty if not known. It must answer /admin/stop with another status than 200."/>
 		<entry name="%FACTORY_DOCKER_EXTRA_HOSTS%" value="${env:tl_factory_docker_extra_hosts:}" comment="Comma separated host:address entries added to the host names a workspace container resolves, e.g. host.docker.internal:host-gateway."/>
 		<entry name="%FACTORY_PROXY_URL%" value="${env:tl_factory_proxy_url:}" comment="URL of the root of the workspace proxy as the workspace containers reach it, without the path of a route, e.g. http://host.docker.internal:8091; empty switches the proxy off."/>
 		<entry name="%FACTORY_PROXY_ADDRESS%" value="${env:tl_factory_proxy_address:127.0.0.1}" comment="Address the workspace proxy listens on with a port of its own."/>

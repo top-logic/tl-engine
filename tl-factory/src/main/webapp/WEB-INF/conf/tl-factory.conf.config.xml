@@ -31,6 +31,8 @@
 					pids-limit="%FACTORY_WORKSPACE_PIDS%"
 				/>
 				<applications
+					application-origin="%FACTORY_APPLICATION_ORIGIN%"
+					context-path="%FACTORY_CONTEXT_PATH%"
 					engine-version="%FACTORY_ENGINE_VERSION%"
 					image-repository="%FACTORY_IMAGE_REPOSITORY%"
 					repository-url="%FACTORY_REPOSITORY_URL%"

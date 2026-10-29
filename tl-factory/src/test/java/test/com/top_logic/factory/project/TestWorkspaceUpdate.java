@@ -18,6 +18,8 @@ import test.com.top_logic.factory.tenant.TestTenants;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.llm.LLMRoute;
@@ -32,6 +34,7 @@ import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -41,7 +44,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * Test of the bookkeeping of updating a workspace to the current workspace image, against a
  * knowledge base and a {@link RecordingWorkspaceProvider}: the stored image, the outdated flag, the
- * kept initial password and the URL of the LLM proxy.
+ * kept initial password, the URL of the LLM proxy and the stored context path.
  */
 public class TestWorkspaceUpdate extends BasicTestCase {
 
@@ -49,16 +52,23 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 
 	private static final String OLD_IMAGE = "tl-factory-workspace:0000000000000000";
 
+	private static final String ARTIFACT_ID = "update-test";
+
+	private static final String CONTEXT_PATH = "/preview/" + WORKSPACE_ID + "/" + ARTIFACT_ID;
+
+	private static final String ORIGIN = "https://factory.example.com";
+
 	/**
 	 * A created workspace runs the current image; after the image changed, the update creates the
-	 * container anew on the same volumes with the initial password and the URL of the LLM proxy.
+	 * container anew on the same volumes with the initial password, the URL of the LLM proxy and the
+	 * context path of the configured pattern, which the workspace records.
 	 */
 	public void testUpdate() throws Exception {
 		TLObject project = commit(() -> {
 			TLObject result = TestTenants.newProject();
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "Update test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
-			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, "update-test");
+			result.tUpdateByName(FactoryModel.PROJECT_ARTIFACT_ID, ARTIFACT_ID);
 			result.tUpdateByName(FactoryModel.PROJECT_ENGINE_VERSION, "8.0.0");
 			return result;
 		});
@@ -69,6 +79,9 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(project, WORKSPACE_ID);
 			TLObject workspace = created.workspace();
 			assertFalse("A workspace without container is not outdated.", ProjectWorkspaces.isImageOutdated(workspace));
+			assertEquals(CONTEXT_PATH, created.spec().getContextPath());
+			assertEquals(CONTEXT_PATH, FactoryModel.getString(workspace, FactoryModel.WORKSPACE_CONTEXT_PATH));
+			assertEquals(CONTEXT_PATH, FactoryModel.getContextPath(workspace));
 
 			WorkspaceInfo createdInfo = applications.create(created.spec(), ExecOutput.NONE);
 			commit(() -> workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, createdInfo.getImage()));
@@ -101,10 +114,19 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			assertFalse("No container gets a token.", env.containsKey(LLMRoute.ENV_AUTH_TOKEN)
 				|| first.getEnv().containsKey(LLMRoute.ENV_AUTH_TOKEN));
 			assertEquals(first.getEnv().get(ApplicationWorkspaces.ENV_APP_DIR), env.get(ApplicationWorkspaces.ENV_APP_DIR));
+			assertEquals(CONTEXT_PATH, first.getEnv().get(ApplicationWorkspaces.ENV_CONTEXT_PATH));
+			assertEquals(CONTEXT_PATH, env.get(ApplicationWorkspaces.ENV_CONTEXT_PATH));
+			assertFalse("No external URL without configured origin.", env.containsKey(ApplicationWorkspaces.ENV_HOST));
 
-			commit(() -> ProjectWorkspaces.recordUpdate(workspace, updated));
+			// A workspace whose container was created before the context path was recorded.
+			commit(() -> workspace.tUpdateByName(FactoryModel.WORKSPACE_CONTEXT_PATH, null));
+			assertEquals("/" + ARTIFACT_ID, FactoryModel.getContextPath(workspace));
+
+			commit(() -> ProjectWorkspaces.recordUpdate(workspace, update.spec(), updated));
 			assertEquals(updated.getImage(), FactoryModel.getString(workspace, FactoryModel.WORKSPACE_IMAGE));
 			assertFalse("An updated workspace runs the current image.", ProjectWorkspaces.isImageOutdated(workspace));
+			assertEquals("The update records the context path of the new container.", CONTEXT_PATH,
+				FactoryModel.getContextPath(workspace));
 		} finally {
 			commit(() -> {
 				TLObject workspace = FactoryModel.getWorkspace(project);
@@ -114,6 +136,21 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 				project.tDelete();
 			});
 		}
+	}
+
+	/**
+	 * With a configured origin, the container gets it as the external URL of the application.
+	 */
+	public void testApplicationOrigin() throws Exception {
+		ApplicationWorkspaces.Config config =
+			TypedConfiguration.copy(WorkspaceService.getInstance().getApplications().getConfig());
+		TypedConfigUtil.setProperty(config, ApplicationWorkspaces.Config.APPLICATION_ORIGIN, ORIGIN);
+		RecordingWorkspaceProvider provider = new RecordingWorkspaceProvider();
+		ApplicationWorkspaces applications = new ApplicationWorkspaces(config, provider);
+		applications.create(new ApplicationSpec(WORKSPACE_ID, "com.example", ARTIFACT_ID), ExecOutput.NONE);
+		Map<String, String> env = provider.created(WORKSPACE_ID).getEnv();
+		assertEquals(ORIGIN, env.get(ApplicationWorkspaces.ENV_HOST));
+		assertEquals(CONTEXT_PATH, env.get(ApplicationWorkspaces.ENV_CONTEXT_PATH));
 	}
 
 	private static List<String> mountPaths(WorkspaceSpec spec) {

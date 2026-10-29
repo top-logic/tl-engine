@@ -181,6 +181,18 @@ public class TestApplicationWorkspaces extends TestCase {
 	private static final String BACKUP_SUFFIX = ".it-backup";
 
 	/**
+	 * A script or stylesheet a page refers to by a URL relative to the page or its host.
+	 */
+	private static final Pattern PAGE_RESOURCE =
+		Pattern.compile("(?:src|href)=\"((?!https?:|//|data:|#)[^\"]+\\.(?:js|css)(?:\\?[^\"]*)?)\"");
+
+	/**
+	 * The route of the layouts of the application, relative to its URL: the generated application
+	 * of the engine version the test uses has the classic UI.
+	 */
+	private static final String LAYOUT_ROUTE = "servlet/LayoutServlet";
+
+	/**
 	 * Time within which a failed start of the application is recognized: its start up to the failure
 	 * and the grace period of the supervisor.
 	 */
@@ -231,6 +243,11 @@ public class TestApplicationWorkspaces extends TestCase {
 	private String _workspaceId;
 
 	/**
+	 * The context path of the application, the one of the default pattern.
+	 */
+	private String _contextPath;
+
+	/**
 	 * Images the test built in addition to the workspace image, removed after the test.
 	 */
 	private final List<String> _builtImages = new ArrayList<>();
@@ -242,6 +259,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		_provider = createProvider();
 		_applications =
 			new ApplicationWorkspaces(TypedConfiguration.newConfigItem(ApplicationWorkspaces.Config.class), _provider);
+		_contextPath = _applications.contextPath(_workspaceId, ARTIFACT_ID);
 		_docker = createClient();
 	}
 
@@ -292,9 +310,13 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertEquals(WorkspaceState.RUNNING, created.getState());
 		assertEquals(3, created.getVolumes().size());
 
-		String url = _applications.awaitApplication(_workspaceId, ARTIFACT_ID);
+		String url = _applications.awaitApplication(_workspaceId, _contextPath);
 		long reachable = System.currentTimeMillis();
+		assertEquals("Not the multi-segment context path of the default pattern.",
+			"/preview/" + _workspaceId + "/" + ARTIFACT_ID, _contextPath);
+		assertEquals(ApplicationWorkspaces.applicationUrl(_provider.status(_workspaceId), _contextPath), url);
 		assertLoginPage(url);
+		assertServedBelow(url);
 		assertInitialPassword(created.getContainerId());
 		assertAgentTools();
 		assertApplicationControl(url);
@@ -310,7 +332,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		long restart = System.currentTimeMillis();
 		WorkspaceInfo restarted = _applications.start(_workspaceId);
 		assertEquals(WorkspaceState.RUNNING, restarted.getState());
-		String restartedUrl = _applications.awaitApplication(_workspaceId, ARTIFACT_ID);
+		String restartedUrl = _applications.awaitApplication(_workspaceId, _contextPath);
 		long reachableAgain = System.currentTimeMillis();
 		assertLoginPage(restartedUrl);
 		assertInitialPassword(created.getContainerId());
@@ -335,7 +357,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertEquals(created.getVolumes(), updated.getVolumes());
 		assertFalse(created.getContainerId().equals(updated.getContainerId()));
 		changed.start(_workspaceId);
-		assertLoginPage(changed.awaitApplication(_workspaceId, ARTIFACT_ID));
+		assertLoginPage(changed.awaitApplication(_workspaceId, _contextPath));
 		long reachableUpdated = System.currentTimeMillis();
 		assertEquals("The initial password is not kept.", INITIAL_PASSWORD + "\n",
 			output(ExecCommand.of("printenv", ApplicationWorkspaces.ENV_INITIAL_PASSWORD)));
@@ -467,7 +489,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertEquals(ApplicationWorkspaces.APP_CONTROL_COMMAND + "\n",
 			output(ExecCommand.of("printenv", ApplicationWorkspaces.ENV_APP_CONTROL)));
 		String control = ApplicationWorkspaces.APP_CONTROL_COMMAND;
-		String localUrl = "http://localhost:" + WorkspaceSpec.DEFAULT_CONTAINER_PORT + "/" + ARTIFACT_ID + "/";
+		String localUrl = "http://localhost:" + WorkspaceSpec.DEFAULT_CONTAINER_PORT + _contextPath + "/";
 		String status = output(ExecCommand.of(control, "status"));
 		assertTrue(status, status.contains("status: running\n"));
 		assertTrue(status, status.contains("url: " + localUrl + "\n"));
@@ -534,7 +556,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		CollectingOutput waitLog = new CollectingOutput();
 		start = System.currentTimeMillis();
 		try {
-			_applications.awaitApplication(_workspaceId, ARTIFACT_ID, waitLog);
+			_applications.awaitApplication(_workspaceId, _contextPath, waitLog);
 			fail("A failed application is waited for.");
 		} catch (ApplicationFailedException ex) {
 			// Expected.
@@ -555,7 +577,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		_applications.startApplication(_workspaceId, repaired);
 		assertTrue(repaired.stdout(), repaired.stdout().contains("url: "));
 		assertEquals(ApplicationState.RUNNING, _applications.applicationState(_workspaceId));
-		assertLoginPage(_applications.awaitApplication(_workspaceId, ARTIFACT_ID));
+		assertLoginPage(_applications.awaitApplication(_workspaceId, _contextPath));
 		assertLoginPage(url);
 	}
 
@@ -709,6 +731,39 @@ public class TestApplicationWorkspaces extends TestCase {
 		String page = response.body().toLowerCase(Locale.ROOT);
 		assertTrue("Not an HTML page: " + response.body(), page.contains("<html"));
 		assertTrue("Not a login page: " + response.body(), page.contains("login"));
+	}
+
+	/**
+	 * The resources the login page refers to and the route of the layouts are served below the
+	 * context path of the application.
+	 */
+	private void assertServedBelow(String url) throws IOException, InterruptedException {
+		HttpClient client = HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(10))
+			.followRedirects(HttpClient.Redirect.NORMAL)
+			.build();
+		HttpResponse<String> login = client.send(
+			HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(30)).build(),
+			HttpResponse.BodyHandlers.ofString());
+		assertTrue("Login page not below the context path: " + login.uri(),
+			login.uri().getPath().startsWith(_contextPath + "/"));
+		Matcher resource = PAGE_RESOURCE.matcher(login.body());
+		int resources = 0;
+		while (resource.find()) {
+			URI resourceUri = login.uri().resolve(resource.group(1).replace(" ", "%20"));
+			assertTrue("Resource not below the context path: " + resourceUri,
+				resourceUri.getPath().startsWith(_contextPath + "/"));
+			assertEquals("Status of " + resourceUri, 200, status(client, resourceUri));
+			resources++;
+		}
+		assertTrue("The login page refers to no script or stylesheet: " + login.body(), resources > 0);
+		URI layouts = URI.create(url + LAYOUT_ROUTE);
+		assertEquals("Status of " + layouts, 200, status(client, layouts));
+	}
+
+	private static int status(HttpClient client, URI uri) throws IOException, InterruptedException {
+		return client.send(HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(30)).build(),
+			HttpResponse.BodyHandlers.discarding()).statusCode();
 	}
 
 	private static String dockerHost() {

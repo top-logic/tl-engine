@@ -26,6 +26,8 @@ public final class ApplicationSpec {
 
 	private String _initialPassword;
 
+	private String _contextPath;
+
 	private ApplicationSource _source = ApplicationSource.ARCHETYPE;
 
 	private final Map<String, String> _env = new LinkedHashMap<>();
@@ -66,8 +68,7 @@ public final class ApplicationSpec {
 	 * The Maven artifact of the application, e.g. {@code my-app}.
 	 *
 	 * <p>
-	 * It also names the directory of the application in the workspace and the context path the
-	 * application is served under.
+	 * It also names the directory of the application in the workspace.
 	 * </p>
 	 */
 	public String getArtifactId() {
@@ -109,6 +110,26 @@ public final class ApplicationSpec {
 	 */
 	public ApplicationSpec setInitialPassword(String initialPassword) {
 		_initialPassword = initialPassword;
+		return this;
+	}
+
+	/**
+	 * The context path the application is served under, {@code null} for the one of the
+	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern}.
+	 *
+	 * @see ApplicationWorkspaces#contextPath(ApplicationSpec)
+	 */
+	public String getContextPath() {
+		return _contextPath;
+	}
+
+	/**
+	 * Sets the context path the application is served under.
+	 *
+	 * @see #getContextPath()
+	 */
+	public ApplicationSpec setContextPath(String contextPath) {
+		_contextPath = contextPath;
 		return this;
 	}
 

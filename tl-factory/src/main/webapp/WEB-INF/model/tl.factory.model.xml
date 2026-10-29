@@ -410,6 +410,18 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+					<!--
+						The context path the application of the workspace is served under, decided when its
+						container was created. A workspace without one has a container that serves the
+						application under its artifact.
+					-->
+					<property name="contextPath"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 					<property name="log"
 						type="tl.core:Text"
 					>

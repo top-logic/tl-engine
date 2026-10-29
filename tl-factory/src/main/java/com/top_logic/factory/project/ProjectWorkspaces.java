@@ -162,7 +162,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	private static final Pattern GROUP_ID = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*");
 
 	/**
-	 * Allowed Maven artifact of an application, which is also the context path of the
+	 * Allowed Maven artifact of an application, which is also a segment of the context path of the
 	 * application and the start of the workspace identifier.
 	 */
 	private static final Pattern ARTIFACT_ID = Pattern.compile("[a-z][a-z0-9-]*");
@@ -321,7 +321,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 				FactoryModel.setStatus(w, WorkspaceStatus.STARTING);
 				FactoryModel.setEndpoint(w, port(info), null);
 			});
-			awaitApplication(log, workspaceId, artifactId);
+			awaitApplication(log, workspaceId, spec.getContextPath());
 		});
 		return workspace;
 	}
@@ -627,8 +627,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * transaction of its own, without creating its container.
 	 *
 	 * <p>
-	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
-	 * The password and, if the {@link WorkspaceProxyService workspace proxy} is switched on, the
+	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}
+	 * and the {@link FactoryModel#WORKSPACE_CONTEXT_PATH context path} of the
+	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern}. The password, the
+	 * context path and, if the {@link WorkspaceProxyService workspace proxy} is switched on, the
 	 * URLs of its routes are in the environment of the returned {@link NewWorkspace#spec() spec}.
 	 * </p>
 	 *
@@ -639,20 +641,28 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 */
 	public static NewWorkspace commitNewWorkspace(TLObject project, String workspaceId) {
 		String initialPassword = SecureRandomService.getInstance().getRandomString();
-		TLObject workspace = commitInRequest(
-			() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
-		return new NewWorkspace(workspace, applicationSpec(project, workspaceId, initialPassword));
+		ApplicationSpec spec = applicationSpec(project, workspaceId, initialPassword);
+		TLObject workspace = commitInRequest(() -> {
+			TLObject result =
+				FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING);
+			result.tUpdateByName(FactoryModel.WORKSPACE_CONTEXT_PATH, spec.getContextPath());
+			return result;
+		});
+		return new NewWorkspace(workspace, spec);
 	}
 
 	/**
-	 * The description of the application of a workspace, with the environment its container gets.
+	 * The description of the application of a workspace, with the context path of the
+	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern} and the environment
+	 * its container gets.
 	 */
 	private static ApplicationSpec applicationSpec(TLObject project, String workspaceId, String initialPassword) {
+		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
 		ApplicationSpec spec = new ApplicationSpec(workspaceId,
-			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID),
-			FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID))
+			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID), artifactId)
 			.setEngineVersion(FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION))
-			.setInitialPassword(initialPassword);
+			.setInitialPassword(initialPassword)
+			.setContextPath(applications().contextPath(workspaceId, artifactId));
 		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
 		if (proxy != null) {
 			spec.putEnv(proxy.containerEnv());
@@ -682,21 +692,20 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		WorkspaceUpdate update = existing == null ? null : prepareUpdate(existing);
 		TLObject workspace = begin(project, WorkspaceStatus.UPDATING, WorkspaceStatus.values());
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
-		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
 		run(workspace, "Updating the workspace to the current image.", log -> {
 			boolean wasRunning =
 				getApplications().getProvider().status(workspaceId).getState() == WorkspaceState.RUNNING;
 			WorkspaceInfo info = getApplications().update(update.spec(), log);
 			log.line("Container created on image " + info.getImage() + ".");
 			log.update(w -> {
-				recordUpdate(w, info);
+				recordUpdate(w, update.spec(), info);
 				FactoryModel.setStatus(w, wasRunning ? WorkspaceStatus.STARTING : WorkspaceStatus.of(info.getState()));
 				FactoryModel.setEndpoint(w, null, null);
 			});
 			if (wasRunning) {
 				WorkspaceInfo started = getApplications().start(workspaceId);
 				log.update(w -> FactoryModel.setEndpoint(w, port(started), null));
-				awaitApplication(log, workspaceId, artifactId);
+				awaitApplication(log, workspaceId, update.spec().getContextPath());
 			}
 		});
 	}
@@ -719,7 +728,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Describes the container of an updated workspace without storing anything.
 	 *
 	 * <p>
-	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
+	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}; its
+	 * context path is the one of the {@link ApplicationWorkspaces.Config#getContextPath()
+	 * configured pattern}, which {@link #recordUpdate(TLObject, ApplicationSpec, WorkspaceInfo)}
+	 * stores.
 	 * </p>
 	 *
 	 * @param workspace
@@ -734,15 +746,20 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 
 	/**
 	 * Stores in the current transaction that the container of a workspace was created anew: the
-	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container.
+	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container and the
+	 * {@link FactoryModel#WORKSPACE_CONTEXT_PATH context path} it serves the application under.
 	 *
 	 * @param workspace
 	 *        The stored workspace.
+	 * @param spec
+	 *        The application the container was created anew for, see
+	 *        {@link #prepareUpdate(TLObject)}.
 	 * @param info
 	 *        The workspace in its new container.
 	 */
-	public static void recordUpdate(TLObject workspace, WorkspaceInfo info) {
+	public static void recordUpdate(TLObject workspace, ApplicationSpec spec, WorkspaceInfo info) {
 		workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
+		workspace.tUpdateByName(FactoryModel.WORKSPACE_CONTEXT_PATH, spec.getContextPath());
 	}
 
 	/**
@@ -784,8 +801,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Checks the Maven artifact of an application.
 	 *
 	 * <p>
-	 * The artifact is the context path of the application, the name of its repository and CI job
-	 * and the start of the workspace identifier. The archetype derives the end of the Java package
+	 * The artifact is a segment of the context path of the application, the name of its repository
+	 * and CI job and the start of the workspace identifier, so it must not be one of the segments a
+	 * context path cannot have. The archetype derives the end of the Java package
 	 * and the module name of the application from it, a name for each part between dashes: each
 	 * part must start with a letter and must not be a reserved word of Java.
 	 * </p>
@@ -795,6 +813,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	public static ResKey checkArtifactId(String artifactId) {
 		if (artifactId == null || !ARTIFACT_ID.matcher(artifactId).matches()) {
 			return I18NConstants.ERROR_INVALID_ARTIFACT_ID__VALUE.fill(artifactId);
+		}
+		if (ApplicationWorkspaces.RESERVED_SEGMENTS.contains(artifactId)
+			|| ApplicationWorkspaces.RESERVED_FIRST_SEGMENT.equals(artifactId)) {
+			return I18NConstants.ERROR_ARTIFACT_ID_RESERVED__VALUE.fill(artifactId);
 		}
 		for (String part : artifactId.split(ARTIFACT_ID_SEPARATOR, -1)) {
 			if (part.isEmpty()) {
@@ -835,7 +857,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		TLObject workspace = begin(project, WorkspaceStatus.STARTING, WorkspaceStatus.STOPPED, WorkspaceStatus.CREATED,
 			WorkspaceStatus.APP_STOPPED, WorkspaceStatus.UNKNOWN);
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
-		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
+		String contextPath = FactoryModel.getContextPath(workspace);
 		run(workspace, "Starting the workspace.", log -> {
 			WorkspaceInfo current = getApplications().getProvider().status(workspaceId);
 			if (current.getState() == WorkspaceState.RUNNING) {
@@ -851,7 +873,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 				WorkspaceInfo info = getApplications().start(workspaceId);
 				log.update(w -> FactoryModel.setEndpoint(w, port(info), null));
 			}
-			awaitApplication(log, workspaceId, artifactId);
+			awaitApplication(log, workspaceId, contextPath);
 		});
 	}
 
@@ -980,13 +1002,13 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 	}
 
-	private void awaitApplication(WorkspaceLog log, String workspaceId, String artifactId)
+	private void awaitApplication(WorkspaceLog log, String workspaceId, String contextPath)
 			throws InterruptedException {
 		log.line("Waiting for the application to answer.");
 		log.flush();
 		String url;
 		try {
-			url = getApplications().awaitApplication(workspaceId, artifactId, log);
+			url = getApplications().awaitApplication(workspaceId, contextPath, log);
 		} catch (ApplicationFailedException ex) {
 			applicationStopped(log, workspaceId, ex);
 			return;
@@ -1147,9 +1169,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		String id = info.getWorkspaceId();
 		for (TLObject workspace : FactoryModel.allWorkspaces()) {
 			if (id.equals(FactoryModel.getWorkspaceId(workspace))) {
-				String artifactId =
-					FactoryModel.getString(FactoryModel.getProject(workspace), FactoryModel.PROJECT_ARTIFACT_ID);
-				return ApplicationWorkspaces.applicationUrl(info, artifactId);
+				return ApplicationWorkspaces.applicationUrl(info, FactoryModel.getContextPath(workspace));
 			}
 		}
 		return info.getPreviewUrl();

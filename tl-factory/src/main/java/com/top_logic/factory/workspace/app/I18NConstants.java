@@ -6,6 +6,7 @@
 package com.top_logic.factory.workspace.app;
 
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
@@ -40,6 +41,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The resource "{0}" of the workspace image is missing.
 	 */
 	public static ResKey1 ERROR_MISSING_IMAGE_RESOURCE__NAME;
+
+	/**
+	 * @en The context path "{0}" of the pattern "{1}" is not valid: it must start with "/" and
+	 *     consist of segments of letters, digits, ".", "_", "~" and "-", none starting with ".",
+	 *     none of them "view" or "servlet", the first one not "admin".
+	 */
+	public static ResKey2 ERROR_INVALID_CONTEXT_PATH__PATH_PATTERN;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -22,20 +22,24 @@
 	>
 		<drag kind="row"/>
 		<drop>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="row, other"
 			target="row"
 			target-channel="dropTarget"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<inputs>
 			<input channel="testInput"/>
 		</inputs>
 		<presets initial="all-active">
-			<preset name="mine">
+			<preset
+				count="true"
+				css-class="tl-preset--mine"
+				name="mine"
+			>
 				<label>
 					<en>My rows</en>
 					<de>Meine Zeilen</de>
@@ -81,7 +85,7 @@
 					<en>Row name</en>
 					<de>Zeilenname</de>
 				</label>
-				<comparator>comparator(name -&gt; $name.toLowerCase())</comparator>
+				<comparator>compare($left.toLowerCase(), $right.toLowerCase())</comparator>
 			</column>
 			<column attribute="active"/>
 			<column
@@ -92,20 +96,23 @@
 				type="tl.core:Double"
 			>
 				<inputs>
-					<input channel="testInput"/>
+					<input
+						as="factor"
+						channel="testInput"
+					/>
 				</inputs>
-				<value>factor -&gt; row -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
-				<update>factor -&gt; row -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value / $factor)</update>
-				<can-update>factor -&gt; row -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
-				<aggregate>rows -&gt; $rows.size()</aggregate>
-				<comparator>total1 -&gt; total2 -&gt; $total2 - $total1</comparator>
+				<value>$factor * $row.get(`demo.test:Row#amount`)</value>
+				<update>$row.set(`demo.test:Row#amount`, $value / $factor)</update>
+				<can-update>$row.get(`demo.test:Row#amount`) != null</can-update>
+				<aggregate>$members.size()</aggregate>
+				<comparator>$right - $left</comparator>
 			</computed-column>
 			<embedded-columns reference="owner.contact">
 				<column attribute="name"/>
 				<computed-column name="mail"
 					type="tl.core:String"
 				>
-					<value>contact -&gt; $contact.get(`demo.test:Contact#email`).toLowerCase()</value>
+					<value>$row.get(`demo.test:Contact#email`).toLowerCase()</value>
 				</computed-column>
 			</embedded-columns>
 			<embedded-columns name="accounts"
@@ -116,28 +123,32 @@
 					<en>Account</en>
 					<de>Konto</de>
 				</label>
-				<object>row -&gt; $row.get(`demo.test:Row#accounts`)</object>
+				<object>$row.get(`demo.test:Row#accounts`)</object>
 				<column attribute="number"/>
 			</embedded-columns>
 			<dynamic-columns name="milestones"
+				column-as="col"
 				readonly="true"
 				type="tl.core:Double"
 				width="90"
 			>
-				<aggregate>factor -&gt; rows -&gt; col -&gt; $rows.size()</aggregate>
-				<can-update>factor -&gt; row -&gt; col -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
-				<column-label>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-label>
-				<column-name>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-name>
-				<column-visible>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`) != "hidden"</column-visible>
-				<comparator>factor -&gt; value1 -&gt; value2 -&gt; $value2 - $value1</comparator>
-				<columns>factor -&gt; all(`demo.test:Milestone`)</columns>
+				<aggregate>$members.size()</aggregate>
+				<can-update>$row.get(`demo.test:Row#amount`) != null</can-update>
+				<column-label>$col.get(`demo.test:Milestone#name`)</column-label>
+				<column-name>$col.get(`demo.test:Milestone#name`)</column-name>
+				<column-visible>$col.get(`demo.test:Milestone#name`) != "hidden"</column-visible>
+				<comparator>$right - $left</comparator>
+				<columns>all(`demo.test:Milestone`)</columns>
 				<inputs>
-					<input channel="testInput"/>
+					<input
+						as="factor"
+						channel="testInput"
+					/>
 				</inputs>
-				<update>factor -&gt; row -&gt; col -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value)</update>
-				<value>factor -&gt; row -&gt; col -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
+				<update>$row.set(`demo.test:Row#amount`, $value)</update>
+				<value>$factor * $row.get(`demo.test:Row#amount`)</value>
 			</dynamic-columns>
 		</columns>
-		<rows>input -&gt; list($input)</rows>
+		<rows>list($testInput)</rows>
 	</table>
 </view>

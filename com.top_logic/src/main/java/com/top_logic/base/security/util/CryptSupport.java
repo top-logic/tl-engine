@@ -12,6 +12,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 
 
 /**
@@ -20,6 +22,7 @@ import com.top_logic.basic.module.ModuleException;
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 @Label("Encryption support")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class CryptSupport extends ManagedClass {
 
     /** The coder for messages. */

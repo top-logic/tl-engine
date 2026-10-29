@@ -5,9 +5,11 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -21,7 +23,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
@@ -66,13 +67,19 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote All file and service operations are delegated to {@link SecurityDefinitionEditor}, so
  *           that this action only maps between the view layer and that editor: it resolves the
  *           input, reports a failure of the editor as a {@link TopLogicException} and hands the
- *           result back to the chain. The marker of the stored but unapplied changes is
- *           {@link Boolean#TRUE}, so that a view displays it with the plain predicate
- *           {@code p -> $p != null}.
+ *           result back to the chain. The marker of the stored but unapplied changes is a
+ *           number new with every change, so that a view displays it with the plain predicate
+ *           {@code $pending != null} over the channel {@code pending} holding it, and a listener
+ *           of that channel notices every change, not only the first one.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SecurityDefinitionAction implements ViewAction {
+
+	/**
+	 * Counter of the changes made, see {@link #changed()}.
+	 */
+	private static final AtomicLong CHANGES = new AtomicLong();
 
 	/**
 	 * Suffix of the id proposed for a new role rule, appended to the name of the type it applies
@@ -142,7 +149,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * Configuration for {@link SecurityDefinitionAction}.
 	 */
-	public interface Config extends PolymorphicConfiguration<SecurityDefinitionAction> {
+	public interface Config extends PolymorphicConfiguration<SecurityDefinitionAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";
@@ -260,53 +267,50 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * Stores the given role parent rule after checking that it can navigate anywhere.
 	 */
 	private Object saveRoleParentRule(NavigationRuleConfig rule) {
-		checkCommon(rule);
 		if (rule.getPathElements().isEmpty()) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_PATH);
 		}
 		store(() -> editor().putRoleParentRule(rule));
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
-	 * Stores the given role rule after checking that it delivers a role.
+	 * Stores the given role rule.
 	 */
 	private Object saveRoleRule(RoleRuleConfig rule) {
-		checkCommon(rule);
-		if (rule.getRole().isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_ROLE);
-		}
 		store(() -> editor().putRoleRule(rule));
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
-	 * Drops the role parent rule with the given id from the stored configuration.
+	 * Removes the role parent rule with the given id, a stored one as well as one of the underlying
+	 * configuration layers, see {@link SecurityDefinitionEditor#removeRoleParentRule(String)}.
 	 */
 	private Object removeRoleParentRule(String id) {
-		remove(() -> editor().removeRoleParentRule(id), id);
-		return Boolean.TRUE;
+		remove(() -> editor().removeRoleParentRule(id), I18NConstants.ERROR_UNKNOWN_ROLE_PARENT_RULE__ID.fill(id));
+		return changed();
 	}
 
 	/**
-	 * Drops the role rule with the given id from the stored configuration.
+	 * Removes the role rule with the given id, a stored one as well as one of the underlying
+	 * configuration layers, see {@link SecurityDefinitionEditor#removeRoleRule(String)}.
 	 */
 	private Object removeRoleRule(String id) {
-		remove(() -> editor().removeRoleRule(id), id);
-		return Boolean.TRUE;
+		remove(() -> editor().removeRoleRule(id), I18NConstants.ERROR_UNKNOWN_ROLE_RULE__ID.fill(id));
+		return changed();
 	}
 
 	/**
-	 * Runs the given removal, reporting a rule the stored configuration does not define as one the
-	 * base configuration declares.
-	 *
-	 * <p>
-	 * Layering a file onto the configuration underneath can add a rule and replace one, but it
-	 * cannot take one away: a rule the application's own file does not define is removed where it
-	 * is declared, or overridden by an edited rule of the same id.
-	 * </p>
+	 * The marker of the stored but unapplied changes, new with every change.
 	 */
-	private void remove(FileRemoval removal, String id) {
+	private static Object changed() {
+		return Long.valueOf(CHANGES.incrementAndGet());
+	}
+
+	/**
+	 * Runs the given removal, reporting a rule it did not find with the given message.
+	 */
+	private void remove(FileRemoval removal, ResKey unknownRule) {
 		boolean removed;
 		try {
 			removed = removal.run();
@@ -314,21 +318,7 @@ public class SecurityDefinitionAction implements ViewAction {
 			throw new TopLogicException(errorWritingFile(editor().getAccessManagerFile()), ex);
 		}
 		if (!removed) {
-			throw new TopLogicException(I18NConstants.ERROR_BASE_RULE_NOT_REMOVABLE__ID.fill(id));
-		}
-	}
-
-	/**
-	 * Checks what every rule needs: a name to be stored under and a type to apply to.
-	 */
-	private static void checkCommon(NavigationRuleConfig rule) {
-		String id = rule.getId();
-		if (id == null || id.isBlank()) {
-			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_ID);
-		}
-		String type = rule.getMetaElement();
-		if (type == null || type.isBlank()) {
-			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_TYPE);
+			throw new TopLogicException(unknownRule);
 		}
 	}
 
@@ -373,7 +363,7 @@ public class SecurityDefinitionAction implements ViewAction {
 		}
 		checkConstraints(entry);
 		store(() -> editor().putAccessRights(entry), grantsFile());
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -415,7 +405,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	private Object setInternal(TypeCoverage coverage, boolean value) {
 		TLClass type = coverage.type();
 		store(() -> editor().setInternal(type, value), grantsFile());
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -426,7 +416,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	private Object setWithoutSecurity(TypeCoverage coverage, boolean value) {
 		TLClass type = coverage.type();
 		store(() -> editor().setWithoutSecurity(type, value), grantsFile());
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -576,8 +566,8 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * A fresh analysis of the access definition.
 	 */
-	private static List<TypeCoverage> analyze() {
-		return SecurityCoverageCheck.getInstance().analyze();
+	private static List<Object> analyze() {
+		return SecurityCoverageTable.analysisRows();
 	}
 
 	/**

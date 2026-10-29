@@ -11,26 +11,30 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.SingleInput;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.SwitchElement.SwitchCase;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -75,10 +79,8 @@ public class VisibleIfElement implements UIElement {
 	 * Configuration for {@link VisibleIfElement}.
 	 */
 	@TagName("visible-if")
-	public interface Config extends UIElement.Config {
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
+	@TypeIcon("css:bi bi-eye")
+	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";
@@ -94,31 +96,47 @@ public class VisibleIfElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * The channel whose current value is passed to the condition.
+		 * The channel whose current value the condition decides on.
+		 *
+		 * <p>
+		 * The condition sees the value as a variable named after the channel, or by the name given
+		 * with {@code as}: {@code input="selection as ticket"}.
+		 * </p>
 		 */
+		@Override
 		@Name(INPUT)
-		@Format(ChannelRefFormat.class)
+		@Format(InputRefFormat.class)
 		@Mandatory
-		ChannelRef getInput();
+		InputRef getInput();
 
 		/**
-		 * TL-Script predicate called with the current value of the {@link #getInput() input}
-		 * channel; the content is shown while it returns {@code true}.
+		 * TL-Script predicate over the current value of the {@link #getInput() input} channel; the
+		 * content is shown while it returns {@code true}.
+		 *
+		 * <p>
+		 * The predicate sees the value as a variable named after the channel, or by its {@code as}
+		 * name, e.g. {@code input="selection as ticket"} with
+		 * {@code expr="$ticket.get(`my.module:Ticket#open`)"}.
+		 * </p>
 		 */
 		@Name(EXPR)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 
 		/**
 		 * The content elements shown while the condition holds.
 		 *
 		 * @implNote Written directly as children of the {@code <visible-if>}.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		List<UIElement.Config> getContent();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
@@ -135,7 +153,7 @@ public class VisibleIfElement implements UIElement {
 		List<TLModelPartRef> getObservedTypes();
 	}
 
-	private final ChannelRef _inputRef;
+	private final InputRef _input;
 
 	private final SwitchCase _case;
 
@@ -148,10 +166,10 @@ public class VisibleIfElement implements UIElement {
 	 */
 	@CalledByReflection
 	public VisibleIfElement(InstantiationContext context, Config config) {
-		_inputRef = config.getInput();
+		_input = config.getInput();
 		_observedTypeRefs = config.getObservedTypes();
 
-		QueryExecutor test = QueryExecutor.compile(config.getExpr());
+		QueryExecutor test = InputScript.compile(config, Config.EXPR);
 		List<UIElement> content = config.getContent().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
@@ -166,9 +184,9 @@ public class VisibleIfElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ViewChannel input = context.resolveChannel(_inputRef);
+		ViewChannel input = context.resolveChannel(_input.getChannel());
 		ReactSwitchControl result = new ReactSwitchControl(context, input, List.of(_case), List.of(),
-			ObservedTypes.resolve(_observedTypeRefs));
+			ObservedTypes.resolve(_observedTypeRefs), false);
 		result.setCssClass(_cssClass);
 		return result;
 	}

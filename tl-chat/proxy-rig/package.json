@@ -1,0 +1,9 @@
+{
+  "name": "tl-chat-proxy-rig",
+  "private": true,
+  "type": "module",
+  "description": "Drives the chat through a hostile proxy, see README.md.",
+  "dependencies": {
+    "playwright-core": "1.55.1"
+  }
+}

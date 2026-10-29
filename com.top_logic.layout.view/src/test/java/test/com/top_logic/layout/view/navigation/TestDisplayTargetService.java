@@ -5,8 +5,6 @@
  */
 package test.com.top_logic.layout.view.navigation;
 
-import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +15,8 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.layout.view.command.ActionScript;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -36,7 +36,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.TLModelImpl;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -160,18 +159,18 @@ public class TestDisplayTargetService extends TestCase {
 	public void testBindingWithoutExpressionYieldsObject() {
 		Object shown = new Object();
 
-		assertSame(shown, new Binding("item", null).evaluate(shown));
+		assertSame(shown, new Binding("item", null).evaluate(shownArguments(shown)));
 	}
 
 	/**
 	 * A binding with an expression passes what the expression computes from the displayed object.
 	 */
 	public void testBindingEvaluatesExpression() {
-		QueryExecutor expr = QueryExecutor.interpret(null, _model, lambda("x", isEmpty(var("x"))));
+		ActionScript expr = (context, arguments, additional) -> arguments.get(DisplayTargetService.OBJECT) == null;
 		Binding binding = new Binding("item", expr);
 
-		assertEquals(Boolean.FALSE, binding.evaluate("displayed"));
-		assertEquals(Boolean.TRUE, binding.evaluate(null));
+		assertEquals(Boolean.FALSE, binding.evaluate(shownArguments("displayed")));
+		assertEquals(Boolean.TRUE, binding.evaluate(shownArguments(null)));
 	}
 
 	/**
@@ -179,13 +178,13 @@ public class TestDisplayTargetService extends TestCase {
 	 * same.
 	 */
 	public void testLabelIsComputedFromTheShownObject() {
-		QueryExecutor identity = QueryExecutor.interpret(null, _model, lambda("x", var("x")));
+		ActionScript identity = (context, arguments, additional) -> arguments.get(DisplayTargetService.OBJECT);
 		ResKey fixed = ResKey.text("Fixed");
 
-		assertEquals(fixed, new ShowStep(SHARED, false, fixed, null, List.of()).labelFor("Shown"));
+		assertEquals(fixed, new ShowStep(SHARED, false, fixed, null, List.of()).labelFor(shownArguments("Shown")));
 		assertEquals(ResKey.text("Shown"),
-			new ShowStep(SHARED, false, fixed, identity, List.of()).labelFor("Shown"));
-		assertNull(new ShowStep(SHARED, false, null, null, List.of()).labelFor("Shown"));
+			new ShowStep(SHARED, false, fixed, identity, List.of()).labelFor(shownArguments("Shown")));
+		assertNull(new ShowStep(SHARED, false, null, null, List.of()).labelFor(shownArguments("Shown")));
 	}
 
 	/**
@@ -241,7 +240,7 @@ public class TestDisplayTargetService extends TestCase {
 		assertEquals(2, target.getShows().size());
 
 		DisplayTargetService.ShowConfig outer = target.getShows().get(0);
-		assertEquals(SHARED, outer.getView());
+		assertEquals(SHARED, outer.getView().getPath());
 		assertFalse(outer.isDialog());
 		assertNull(outer.getLabel());
 		assertNotNull("The view is named after the object it displays.", outer.getLabelExpr());
@@ -251,11 +250,18 @@ public class TestDisplayTargetService extends TestCase {
 			outer.getBindings().get(0).getExpr());
 
 		DisplayTargetService.ShowConfig inner = target.getShows().get(1);
-		assertEquals(ORPHAN, inner.getView());
+		assertEquals(ORPHAN, inner.getView().getPath());
 		assertTrue(inner.isDialog());
 		assertNotNull(inner.getLabel());
 		assertNull("A fixed label needs no expression.", inner.getLabelExpr());
 		assertNotNull(inner.getBindings().get(0).getExpr());
+	}
+
+	/**
+	 * The arguments of a display target showing the given object.
+	 */
+	private static ActionArguments shownArguments(Object shown) {
+		return ActionArguments.of(DisplayTargetService.OBJECT, shown);
 	}
 
 	/**

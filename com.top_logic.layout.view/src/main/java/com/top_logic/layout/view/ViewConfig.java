@@ -10,12 +10,14 @@ import java.util.List;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Application-level configuration for the view system.
@@ -36,6 +38,28 @@ public interface ViewConfig extends ConfigurationItem {
 	/** Configuration name for {@link #getLoginView()}. */
 	String LOGIN_VIEW = "login-view";
 
+	/** Configuration name for {@link #getTitle()}. */
+	String TITLE = "title";
+
+	/**
+	 * The title of the application, naming it in the browser tab.
+	 *
+	 * <p>
+	 * The tab title is composed of the label of the innermost route the display shows that has one
+	 * - the item a sidebar selects, the tab a tab bar shows, the frame a tile stack drills into, the
+	 * object a route parameter names - followed by this title, e.g. "Ticket 4711 – My Application".
+	 * A page whose display names no labeled route is titled by this title alone.
+	 * </p>
+	 *
+	 * <p>
+	 * Unset for an application without a title of its own: the tab is then titled by the label of
+	 * the displayed route alone, and by {@link ViewServlet#DEFAULT_TITLE} where there is none.
+	 * </p>
+	 */
+	@Name(TITLE)
+	@Nullable
+	ResKey getTitle();
+
 	/**
 	 * The name of the default view file loaded when the {@link ViewServlet} is accessed without a
 	 * path (e.g. {@code /view/}).
@@ -50,8 +74,9 @@ public interface ViewConfig extends ConfigurationItem {
 	 * </p>
 	 */
 	@Name(DEFAULT_VIEW)
-	@StringDefault("app.view.xml")
-	String getDefaultView();
+	@FormattedDefault("app.view.xml")
+	@Format(ViewRefFormat.class)
+	ViewRef getDefaultView();
 
 	/**
 	 * The views that a URL may name as the contents of a browser tab, besides the
@@ -104,7 +129,8 @@ public interface ViewConfig extends ConfigurationItem {
 	 */
 	@Name(LOGIN_VIEW)
 	@Nullable
-	String getLoginView();
+	@Format(ViewRefFormat.class)
+	ViewRef getLoginView();
 
 	/**
 	 * A view that a URL may name as the contents of a browser tab.
@@ -123,7 +149,8 @@ public interface ViewConfig extends ConfigurationItem {
 		 */
 		@Name(VIEW)
 		@Mandatory
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 
 		/**
 		 * Whether the view is shown to a session that belongs to no account as well.

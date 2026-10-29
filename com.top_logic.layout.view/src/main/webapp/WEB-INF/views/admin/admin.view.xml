@@ -1,22 +1,41 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Administration area for the React view UI. A self-contained view: the outer tab-bar groups admin
-	sections; each inner tab-bar holds that section's views. A depending module adds a section by
-	dropping a same-path overlay (WEB-INF/views/admin/admin.view.xml) into its own module; the
-	ViewLoader merges all copies in dependency order, so this view is extended - and its sections
-	repositioned - without this module depending on the contributor. See tl-model-search-react and
-	tl-dev-tools.
+	Administration area for the React view UI. A self-contained view: the outer tab-bar "sections"
+	groups admin sections; each inner tab-bar holds that section's views. A depending module adds a
+	section by dropping a same-path overlay (WEB-INF/views/admin/admin.view.xml) into its own
+	module; the ViewLoader merges all copies in dependency order, so this view is extended - and its
+	sections repositioned - without this module depending on the contributor. The overlay addresses
+	the tab bar by its id and lists its tab:
+	
+	<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="sections">
+	<tabs>
+	<tab id="my-section" config:position="after" config:reference="system">
+	...
+	
+	See tl-model-search-react and tl-dev-tools. A view inside an existing section is contributed
+	the same way: the inner tab bars carry the ids "access-control-views", "monitoring-views" and
+	"system-views", so the overlay addresses the one of its section:
+	
+	<tab-bar config:ref="system-views">
+	<tabs>
+	<tab id="my-view" config:position="after" config:reference="locks">
+	...
 -->
 <view>
-	<tab-bar active-tab="access-control">
+	<tab-bar id="sections"
+		active-tab="access-control"
+	>
 		<tabs>
 			<tab id="access-control">
 				<label>
 					<en>Access control</en>
 					<de>Zugriffskontrolle</de>
 				</label>
-				<tab-bar active-tab="accounts">
+				<tab-bar id="access-control-views"
+					active-tab="accounts"
+				>
 					<tabs>
 						<tab id="accounts">
 							<label>
@@ -39,12 +58,12 @@
 							</label>
 							<view-ref view="admin/access-control/roles.view.xml"/>
 						</tab>
-						<tab id="permissions">
+						<tab id="grants">
 							<label>
-								<en>Permissions</en>
-								<de>Berechtigungen</de>
+								<en>Grants</en>
+								<de>Rechte</de>
 							</label>
-							<view-ref view="admin/access-control/permissions.view.xml"/>
+							<view-ref view="admin/access-control/grants.view.xml"/>
 						</tab>
 						<tab id="coverage">
 							<label>
@@ -61,7 +80,9 @@
 					<en>Monitoring</en>
 					<de>Überwachung</de>
 				</label>
-				<tab-bar active-tab="system-environment">
+				<tab-bar id="monitoring-views"
+					active-tab="system-environment"
+				>
 					<tabs>
 						<tab id="system-environment">
 							<label>
@@ -120,7 +141,9 @@
 					<en>System</en>
 					<de>System</de>
 				</label>
-				<tab-bar active-tab="services">
+				<tab-bar id="system-views"
+					active-tab="services"
+				>
 					<tabs>
 						<tab id="services">
 							<label>
@@ -128,6 +151,13 @@
 								<de>Dienste</de>
 							</label>
 							<view-ref view="admin/system/services.view.xml"/>
+						</tab>
+						<tab id="secrets">
+							<label>
+								<en>Secrets</en>
+								<de>Geheimnisse</de>
+							</label>
+							<view-ref view="admin/system/secrets.view.xml"/>
 						</tab>
 						<tab id="locks">
 							<label>

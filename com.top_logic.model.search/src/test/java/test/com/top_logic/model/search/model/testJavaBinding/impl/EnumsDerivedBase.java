@@ -90,6 +90,11 @@ public interface EnumsDerivedBase extends test.com.top_logic.model.search.model.
 	String REF_ORDERED_BAG_ATTR = "refOrderedBag";
 
 	/**
+	 * Name of the table storing {@link #ENUMS_DERIVED_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #IN_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

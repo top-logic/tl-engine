@@ -1,5 +1,14 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, useFieldLabelProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, rootClassName, stateAttr, useFieldLabelProps, usePart, downloadBlob, ICON_FILE, ICON_ATTACH } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+/** Command removing a file from the collection. */
+const CMD_REMOVE_CHIP = 'removeChip';
+
+/** Argument of {@link CMD_REMOVE_CHIP}: the key of the file to remove. */
+const ARG_KEY = 'key';
+
+/** The name of the multipart part carrying a file. */
+const PART_FILE = 'file';
 
 const I18N_KEYS = {
   'js.fileChips.add': 'Add file',
@@ -8,7 +17,7 @@ const I18N_KEYS = {
   'js.download.file': 'Download {0}',
 };
 
-interface Chip {
+interface FileChip {
   key: string;
   name: string;
   size: number | null;
@@ -27,70 +36,60 @@ function formatSize(size: number): string {
 }
 
 /**
- * Renders a collection of files as chips: file icon, name, size, click-to-download. In edit mode,
- * each chip carries a remove button, and files can be added via the add button or by dropping them
- * onto the control; uploads go to the server control's upload endpoint.
+ * Renders a collection of files as chips (part `Chip`) in a chip group: file icon, name, size as
+ * detail, pressed to download where the file has data. In edit mode, each chip offers to remove its
+ * file, and files can be added via the add button (part `Button`) or by dropping them onto the group;
+ * uploads go to the server control's upload endpoint, the error of the last one is announced below
+ * the chips. In little room, a table cell for instance, the control keeps to one line: the chips
+ * scroll sideways, each name ends with an ellipsis where it is too long, the sizes are left out, the
+ * add button stays at the end of the line, showing its icon alone, its label being its tooltip, and
+ * the error is cut short, its full text being its tooltip.
  *
  * State:
  * - chips: [{ key, name, size, hasData }]
  * - editable: boolean
+ * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
+ * - maxUploadSize: number, the size limit of each single file in bytes (0: none); the upload channel
+ *   refuses a selection holding a larger file before transmitting it
+ * - error: string, the message of the last failed upload; absent after a successful one. Hidden
+ *   from the moment the next upload starts until the server reports its outcome.
+ * - compact: boolean, whether the field is displayed in little room (see FieldState)
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
   const state = useTLState();
   const sendCommand = useTLCommand();
-  const upload = useTLUpload();
+  const { uploading, error, upload } = useUpload();
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
+  const Chip = usePart('Chip');
+  const Button = usePart('Button');
 
-  const chips = (state.chips as Chip[] | null) ?? [];
+  const chips = (state.chips as FileChip[] | null) ?? [];
   const editable = state.editable === true;
+  const accept = (state.accept as string | null) ?? '';
+  const compact = state.compact === true;
 
-  const [uploading, setUploading] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  // The state at the start of the latest upload: its error belongs to an earlier upload and is
+  // hidden until the server sends the next state.
+  const [stateAtUpload, setStateAtUpload] = React.useState<object | null>(null);
 
-  const doUpload = React.useCallback(async (files: FileList | File[]) => {
+  const doUpload = React.useCallback((files: FileList | File[]) => {
     const list = Array.from(files);
     if (list.length === 0) {
       return;
     }
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      for (const file of list) {
-        formData.append('file', file, file.name);
-      }
-      await upload(formData);
-    } finally {
-      setUploading(false);
-    }
-  }, [upload]);
+    setStateAtUpload(state);
+    upload(list.map(file => ({ name: PART_FILE, file, fileName: file.name })));
+  }, [upload, state]);
 
-  const doDownload = React.useCallback(async (chip: Chip) => {
+  const doDownload = React.useCallback((chip: FileChip) => {
     if (!chip.hasData) {
       return;
     }
-    try {
-      const url = dataUrl + '&key=' + encodeURIComponent(chip.key);
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error('[TLFileChips] Failed to fetch data:', resp.status);
-        return;
-      }
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = chip.name;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      console.error('[TLFileChips] Fetch error:', e);
-    }
+    downloadBlob(dataUrl + '&key=' + encodeURIComponent(chip.key), chip.name);
   }, [dataUrl]);
 
   const handleFileChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,85 +130,56 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [editable, uploading, doUpload]);
 
-  const className = [
-    'tlFileChips',
-    editable ? 'tlFileChips--editable' : '',
-    isDragOver ? 'tlFileChips--dragover' : '',
-  ].filter(Boolean).join(' ');
-
   return (
     <div
       id={controlId}
       {...labelProps}
       role="group"
-      className={rootClassName(state, className)}
+      className={rootClassName(state, 'tl-chip-group')}
+      data-tl-state={stateAttr(isDragOver && 'dragover', compact && 'compact')}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {chips.map(chip => {
-        const downloadLabel = t['js.download.file'].replace('{0}', chip.name);
-        const removeLabel = t['js.fileChips.remove'].replace('{0}', chip.name);
-        return (
-          <span key={chip.key} className="tlFileChip">
-            <button
-              type="button"
-              className="tlFileChip__main"
-              onClick={() => doDownload(chip)}
-              disabled={!chip.hasData}
-              {...tooltipProps(chip.hasData ? downloadLabel : chip.name)}
-            >
-              <svg className="tlFileChip__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                <path d="M9.5 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5L9.5 1z"
-                  fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                <path d="M9.5 1v3.5H13" fill="none" stroke="currentColor" strokeWidth="1.2"
-                  strokeLinejoin="round" />
-              </svg>
-              <span className="tlFileChip__name">{chip.name}</span>
-              {chip.size != null && (
-                <span className="tlFileChip__size">{formatSize(chip.size)}</span>
-              )}
-            </button>
-            {editable && (
-              <button
-                type="button"
-                className="tlFileChip__remove"
-                onClick={() => sendCommand('removeChip', { key: chip.key })}
-                aria-label={removeLabel}
-                {...tooltipProps(removeLabel)}
-              >
-                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5"
-                    strokeLinecap="round" />
-                </svg>
-              </button>
-            )}
-          </span>
-        );
-      })}
+      <div className="tl-chip-group__chips">
+        {chips.map(chip => (
+          <Chip
+            key={chip.key}
+            icon={ICON_FILE}
+            label={chip.name}
+            detail={chip.size != null && !compact ? formatSize(chip.size) : undefined}
+            tooltip={chip.hasData ? t['js.download.file'].replace('{0}', chip.name) : chip.name}
+            onClick={chip.hasData ? () => doDownload(chip) : undefined}
+            onRemove={editable ? () => sendCommand(CMD_REMOVE_CHIP, { [ARG_KEY]: chip.key }) : undefined}
+            removeLabel={t['js.fileChips.remove'].replace('{0}', chip.name)}
+          />
+        ))}
+      </div>
       {editable && (
         <>
           <input
             ref={fileInputRef}
             type="file"
             multiple
+            accept={accept || undefined}
             onChange={handleFileChange}
             style={{ display: 'none' }}
           />
-          <button
-            type="button"
-            className={'tlFileChips__add' + (uploading ? ' tlFileChips__add--uploading' : '')}
-            onClick={handleAddClick}
+          <Button
+            label={uploading ? t['js.uploading'] : t['js.fileChips.add']}
+            image={ICON_ATTACH}
+            display={compact ? 'icon-only' : 'icon-label'}
+            small={compact}
+            appearance="secondary"
             disabled={uploading}
-            {...tooltipProps(uploading ? t['js.uploading'] : t['js.fileChips.add'])}
-          >
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-              <path d="M13.5 7.5l-5.6 5.6a3.3 3.3 0 0 1-4.7-4.7l6-6a2.2 2.2 0 0 1 3.1 3.1l-5.8 5.8a1.1 1.1 0 0 1-1.6-1.6l5.2-5.2"
-                fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>{uploading ? t['js.uploading'] : t['js.fileChips.add']}</span>
-          </button>
+            aria-busy={uploading ? true : undefined}
+            onClick={handleAddClick}
+          />
         </>
+      )}
+      {error && state !== stateAtUpload && (
+        <span className="tl-file-upload__status tl-type-label" role="alert"
+          title={compact ? error : undefined}>{error}</span>
       )}
     </div>
   );

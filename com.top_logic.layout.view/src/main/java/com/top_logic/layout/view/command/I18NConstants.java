@@ -45,6 +45,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey THEME_GROUP;
 
 	/**
+	 * @en Density
+	 */
+	public static ResKey DENSITY_GROUP;
+
+	/**
+	 * @en Normal
+	 */
+	public static ResKey DENSITY_NORMAL;
+
+	/**
+	 * @en Compact
+	 */
+	public static ResKey DENSITY_COMPACT;
+
+	/**
 	 * @en Changed language of "{0}".
 	 */
 	public static ResKey1 CHANGED_LANGUAGE__USER;
@@ -96,6 +111,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
 
 	/**
+	 * @en The form still has unsaved changes.
+	 */
+	public static ResKey ERROR_FORM_HAS_UNSAVED_CHANGES;
+
+	/**
+	 * @en The form cannot be edited.
+	 */
+	public static ResKey ERROR_FORM_NOT_EDITABLE;
+
+	/**
 	 * @en Upload of "{0}" failed.
 	 */
 	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;
@@ -104,6 +129,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en A command of this dialog is still running.
 	 */
 	public static ResKey ERROR_DIALOG_COMMAND_RUNNING;
+
+	/**
+	 * @en There is no file to download.
+	 */
+	public static ResKey ERROR_NOTHING_TO_DOWNLOAD;
+
+	/**
+	 * @en "{0}" is no file and cannot be downloaded.
+	 */
+	public static ResKey1 ERROR_NOT_A_FILE__VALUE;
 
 	static {
 		initConstants(I18NConstants.class);

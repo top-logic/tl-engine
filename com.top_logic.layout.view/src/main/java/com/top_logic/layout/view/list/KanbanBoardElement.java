@@ -12,16 +12,25 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.dnd.DropArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -37,17 +46,18 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DropSignature;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
-import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SelectionMode;
 
@@ -75,7 +85,7 @@ import com.top_logic.table.SelectionMode;
  * &lt;kanban-board
  *   columns="all(`demo.tickets:TicketStatus`)"
  *   items="all(`demo.tickets:Ticket`).sort(comparator(t -&gt; $t.get(`demo.tickets:Ticket#name`)))"
- *   column="t -&gt; $t.get(`demo.tickets:Ticket#status`)"
+ *   column="$element.get(`demo.tickets:Ticket#status`)"
  *   observed-types="demo.tickets:Ticket"
  *   selection="ticket"
  * &gt;
@@ -110,7 +120,7 @@ import com.top_logic.table.SelectionMode;
  *
  * <pre>
  * &lt;kanban-board ...
- *   on-reorder="column -&gt; tickets -&gt; count($tickets.size()).foreach(i -&gt; $tickets[$i].set(`demo.tickets:Ticket#order`, $i))"
+ *   on-reorder="count($objects.size()).foreach(i -&gt; $objects[$i].set(`demo.tickets:Ticket#order`, $i))"
  * &gt;
  *   &lt;drag kind="ticket"/&gt;
  *   &lt;drop accept="ticket" target-channel="dropColumn"&gt;
@@ -129,7 +139,11 @@ public class KanbanBoardElement implements UIElement {
 	 * Configuration for {@link KanbanBoardElement}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends UIElement.Config, Inputs {
+	@TypeIcon("css:bi bi-kanban")
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, ElementAsConfig {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
@@ -167,39 +181,60 @@ public class KanbanBoardElement implements UIElement {
 		/** Configuration name for {@link #getOnReorder()}. */
 		String ON_REORDER = "on-reorder";
 
+		/** Configuration name for {@link #getColumnAs()}. */
+		String COLUMN_AS = "column-as";
+
+		/** Name of the variable holding the column value when no other name is given. */
+		String DEFAULT_COLUMN_AS = "column";
+
+		/** Name of the variable holding the objects of a column in their new order. */
+		String OBJECTS_VARIABLE = "objects";
+
 		@Override
 		@ClassDefault(KanbanBoardElement.class)
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * TL-Script function computing the column values from the values of the inputs:
-		 * {@code ...inputs -> columns}.
+		 * TL-Script expression computing the column values from the values of the inputs.
 		 *
 		 * <p>
-		 * One column is displayed per value, in the order computed: the classifiers of an
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. One column is displayed per value, in the order computed: the classifiers of an
 		 * enumeration, or arbitrary objects.
 		 * </p>
 		 */
 		@Name(COLUMNS)
 		@Mandatory
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getColumns();
 
 		/**
-		 * TL-Script function computing the displayed objects from the values of the inputs:
-		 * {@code ...inputs -> objects}.
+		 * TL-Script expression computing the displayed objects from the values of the inputs.
 		 *
 		 * <p>
-		 * Within a column, the objects are displayed in the order computed here. An input whose
-		 * object was deleted meanwhile is passed as nothing.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. Within a column, the objects are displayed in
+		 * the order computed here. An input whose object was deleted meanwhile has no value.
 		 * </p>
 		 */
 		@Name(ITEMS)
 		@Mandatory
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getItems();
 
 		/**
-		 * TL-Script function computing the column value of a displayed object:
-		 * {@code object -> column}.
+		 * TL-Script expression computing the column value of a displayed object.
+		 *
+		 * <p>
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, and the object as the variable
+		 * {@value ElementAsConfig#DEFAULT_ELEMENT_AS}, or by the name given with
+		 * {@value ElementAsConfig#ELEMENT_AS}:
+		 * </p>
+		 *
+		 * <pre>
+		 * $element.get(`my:Ticket#status`)
+		 * </pre>
 		 *
 		 * <p>
 		 * An object whose column value is none of the {@link #getColumns() columns} is not
@@ -208,18 +243,38 @@ public class KanbanBoardElement implements UIElement {
 		 */
 		@Name(COLUMN)
 		@Mandatory
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getColumn();
 
 		/**
-		 * TL-Script function computing the label of a column's header from its column value:
-		 * {@code column -> label}.
+		 * TL-Script expression computing the label of a column's header.
 		 *
 		 * <p>
-		 * Without it, a column is labeled with the label of its column value.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, and the column value as the variable
+		 * {@value #DEFAULT_COLUMN_AS}, or by the name given with {@value #COLUMN_AS}. Without it, a
+		 * column is labeled with the label of its column value.
 		 * </p>
 		 */
 		@Name(COLUMN_LABEL)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getColumnLabel();
+
+		/**
+		 * The name of the variable holding the column value in the scripts evaluated for a column:
+		 * the {@link #getColumnLabel() column label} and the {@link #getOnReorder() reorder
+		 * function}.
+		 *
+		 * <p>
+		 * Unset, the variable is named {@value #DEFAULT_COLUMN_AS}. An input of the same name is a
+		 * configuration error and is renamed with <code>as</code>.
+		 * </p>
+		 */
+		@Name(COLUMN_AS)
+		@Nullable
+		String getColumnAs();
 
 		/**
 		 * Types whose object changes (create / update / delete) re-distribute the objects of the
@@ -286,12 +341,16 @@ public class KanbanBoardElement implements UIElement {
 		 * &lt;view-ref&gt;} binding the element channel, or elements written inline. Multiple entries
 		 * are stacked vertically.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CARD)
 		@Mandatory
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getCard();
+		List<UIElement.Config> getCard();
 
 		/**
 		 * Makes the cards of this board draggable, so they can be dropped on another column or on a
@@ -318,18 +377,38 @@ public class KanbanBoardElement implements UIElement {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<KanbanDropConfig> getDrops();
 
 		/**
-		 * TL-Script function giving a column a new order on a drop: {@code column -> objects -> ...},
-		 * run in a transaction.
+		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
+		 * its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), config -> DropSignature.ONTO);
+			if (drop != null) {
+				return drop;
+			}
+			return outer;
+		}
+
+		/**
+		 * TL-Script expression giving a column a new order on a drop, run in a transaction.
 		 *
 		 * <p>
-		 * The function receives the column value and the objects of that column in their new order -
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, the column value as the variable
+		 * {@value #DEFAULT_COLUMN_AS} (or by the name given with {@value #COLUMN_AS}), and the
+		 * objects of that column in their new order as the variable {@value #OBJECTS_VARIABLE} -
 		 * those the column displayed when the drop was made, with the dropped objects placed where
 		 * they were dropped. It typically numbers the objects in an attribute that the
-		 * {@link #getItems() items} are sorted by.
+		 * {@link #getItems() items} are sorted by:
 		 * </p>
+		 *
+		 * <pre>
+		 * count($objects.size()).foreach(i -&gt; $objects[$i].set(`my:Ticket#order`, $i))
+		 * </pre>
 		 *
 		 * <p>
 		 * A drop within a column runs this function alone. A drop on another column runs the action
@@ -339,6 +418,9 @@ public class KanbanBoardElement implements UIElement {
 		 * </p>
 		 */
 		@Name(ON_REORDER)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@Supplies(OBJECTS_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOnReorder();
 	}
 
@@ -365,17 +447,17 @@ public class KanbanBoardElement implements UIElement {
 	@CalledByReflection
 	public KanbanBoardElement(InstantiationContext context, Config config) {
 		_config = config;
-		_columnsExecutor = QueryExecutor.compile(config.getColumns());
-		_itemsExecutor = QueryExecutor.compile(config.getItems());
-		_columnExecutor = QueryExecutor.compile(config.getColumn());
-		_columnLabelExecutor = QueryExecutor.compileOptional(config.getColumnLabel());
+		_columnsExecutor = InputScript.compile(config, Config.COLUMNS);
+		_itemsExecutor = InputScript.compile(config, Config.ITEMS);
+		_columnExecutor = InputScript.compile(config, Config.COLUMN);
+		_columnLabelExecutor = InputScript.compile(config, Config.COLUMN_LABEL);
 		_cardContent = config.getCard().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
 		_drops = config.getDrops().stream()
 			.map(drop -> DeclaredDrop.compile(context, drop, DropSignature.ONTO))
 			.toList();
-		_onReorder = QueryExecutor.compileOptional(config.getOnReorder());
+		_onReorder = InputScript.compile(config, Config.ON_REORDER);
 	}
 
 	@Override
@@ -389,7 +471,7 @@ public class KanbanBoardElement implements UIElement {
 
 		QueryExecutor columnExecutor = _columnExecutor;
 		KanbanBoardCards cards = new KanbanBoardCards(context, _cardContent, _config.getElementChannel(),
-			item -> columnExecutor.execute(item), this::columnLabel);
+			item -> columnExecutor.execute(arguments(inputs, item)), column -> columnLabel(inputs, column));
 
 		List<Object> initialItems = toList(_itemsExecutor, ChannelInputs.arguments(inputs));
 		cards.show(toList(_columnsExecutor, ChannelInputs.arguments(inputs)), initialItems);
@@ -419,7 +501,8 @@ public class KanbanBoardElement implements UIElement {
 		}
 		QueryExecutor onReorder = _onReorder;
 		if (onReorder != null) {
-			board.setReorder((column, objects) -> inTransaction(() -> onReorder.execute(column, objects)));
+			board.setReorder(
+				(column, objects) -> inTransaction(() -> onReorder.execute(arguments(inputs, column, objects))));
 		}
 		// Observe the model only while the board is displayed.
 		board.addAttachListener(() -> observer.attach(context.getModelScope()));
@@ -454,7 +537,7 @@ public class KanbanBoardElement implements UIElement {
 				board.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, board, source, drag, drag.getKind(), drag.getCardExecutability());
+		DragSourceBinding.install(context, board, source, drag, drag.getKind(), KanbanDragConfig.CARD_EXECUTABILITY);
 	}
 
 	private static void inTransaction(Runnable action) {
@@ -465,10 +548,19 @@ public class KanbanBoardElement implements UIElement {
 	}
 
 	/**
+	 * The values a script of the board is evaluated with: the current values of the inputs, followed
+	 * by the given supplied values.
+	 */
+	private static Object[] arguments(List<ViewChannel> inputs, Object... supplied) {
+		return InputValues.alive(ChannelInputs.arguments(inputs, supplied));
+	}
+
+	/**
 	 * The label of a column's header.
 	 */
-	private String columnLabel(Object column) {
-		Object label = _columnLabelExecutor == null ? column : _columnLabelExecutor.execute(column);
+	private String columnLabel(List<ViewChannel> inputs, Object column) {
+		Object label =
+			_columnLabelExecutor == null ? column : _columnLabelExecutor.execute(arguments(inputs, column));
 		if (label instanceof String text) {
 			return text;
 		}

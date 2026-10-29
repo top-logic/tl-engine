@@ -17,13 +17,20 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
 import com.top_logic.basic.format.DecimalFormatDefinition;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnResolution;
@@ -38,7 +45,6 @@ import com.top_logic.model.annotate.ui.Format;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -91,8 +97,8 @@ public class TestColumnDeclarations extends TestCase {
 		assertNull("A column aggregates nothing unless it says so.", setup.aggregate());
 
 		Column<Object, ?> column = setup.buildColumn();
-		assertEquals("A whole number is filtered by a numeric range.", ComparableColumnFilter.class,
-			column.filter().get().getClass());
+		assertTrue("A whole number is filtered by a numeric range.",
+			column.filter().get() instanceof ComparableColumnFilter);
 		assertEquals("A whole number is shown in the number width.",
 			ColumnProviderService.getInstance().getConfig().getNumberWidth(), column.defaultWidth());
 		assertTrue("A column that aggregates nothing leaves its group cell empty.",
@@ -146,8 +152,8 @@ public class TestColumnDeclarations extends TestCase {
 			TLModelUtil.qualifiedName(setup.type().type()));
 
 		Column<Object, ?> column = setup.buildColumn();
-		assertEquals("A computed whole number is filtered by a numeric range, too.",
-			ComparableColumnFilter.class, column.filter().get().getClass());
+		assertTrue("A computed whole number is filtered by a numeric range, too.",
+			column.filter().get() instanceof ComparableColumnFilter);
 		assertEquals("A computed whole number is shown in the number width, too.",
 			ColumnProviderService.getInstance().getConfig().getNumberWidth(), column.defaultWidth());
 	}
@@ -249,6 +255,139 @@ public class TestColumnDeclarations extends TestCase {
 			sort.columns());
 		assertEquals("A table whose columns declare no direction starts unsorted.", SortSpec.NONE,
 			ColumnDeclarations.defaultSort(instantiate(attributeColumn("count", null))));
+	}
+
+	/**
+	 * A column declared not to be sortable offers no sorting, while a declaration saying nothing
+	 * about it sorts.
+	 */
+	public void testUnsortableColumnDoesNotSort() {
+		ComputedColumn.Config unsortable = computedColumn("total", MODULE + ":Integer");
+		set(unsortable, ComputedColumn.Config.SORTABLE, false);
+
+		ColumnSetup setup = single(unsortable);
+		assertFalse(setup.sortable());
+		assertTrue("The column offers no sorting.", setup.buildColumn().sort().isEmpty());
+
+		ColumnSetup sortable = single(attributeColumn("count", null));
+		assertTrue("A column sorts by default.", sortable.sortable());
+		assertTrue(sortable.buildColumn().sort().isPresent());
+	}
+
+	/**
+	 * A column declared not to be sortable can neither sort the table in a direction nor order its
+	 * values by a comparator.
+	 */
+	public void testUnsortableColumnWithASortIsReported() {
+		AttributeColumn.Config sorted = attributeColumn("count", "ASC");
+		set(sorted, AttributeColumn.Config.SORTABLE, false);
+		assertReported(sorted);
+
+		ComputedColumn.Config compared = computedColumn("total", null);
+		set(compared, ComputedColumn.Config.SORTABLE, false);
+		set(compared, ComputedColumn.Config.COMPARATOR, TypedConfiguration.newConfigItem(Expr.Null.class));
+		assertReported(compared);
+	}
+
+	/** Checks that the given declaration is reported when it is instantiated. */
+	private static void assertReported(PolymorphicConfiguration<? extends ColumnDeclaration> config) {
+		ColumnsConfig columns = TypedConfiguration.newConfigItem(ColumnsConfig.class);
+		columns.getColumns().add(config);
+
+		BufferingProtocol log = new BufferingProtocol();
+		ColumnDeclarations.instantiate(new DefaultInstantiationContext(log), columns);
+
+		assertFalse("The column is reported.", log.getErrors().isEmpty());
+		assertTrue("The report names the option: " + log.getErrors(),
+			log.getErrors().get(0).contains(AttributeColumn.Config.SORTABLE));
+	}
+
+	/**
+	 * The channels the declared columns read are collected once each, in declaration order; a
+	 * {@code <column>} over an attribute reads none.
+	 */
+	public void testInputsOfTheDeclarations() {
+		ComputedColumn.Config total = computedColumn("total", null);
+		set(total, Inputs.INPUTS,
+			List.of(new InputRef(new ChannelRef("selected")), new InputRef(new ChannelRef("factor"))));
+		ComputedColumn.Config share = computedColumn("share", null);
+		set(share, Inputs.INPUTS, List.of(new InputRef(new ChannelRef("factor"))));
+
+		List<ColumnDeclaration> declarations = instantiate(attributeColumn("count", null), total, share);
+
+		assertEquals(List.of(), declarations.get(0).inputs());
+		assertEquals(List.of("selected", "factor"), names(ColumnDeclarations.inputs(declarations)));
+	}
+
+	/**
+	 * The channels a column's filter reads count among the inputs of its declaration: the filter
+	 * decides which rows are displayed, and follows its channels by the table being refreshed.
+	 */
+	public void testFilterInputsOfTheDeclarations() {
+		AttributeColumn.Config count = attributeColumn("count", null);
+		set(count, AttributeColumn.Config.FILTER, inputFilter("threshold"));
+		ComputedColumn.Config total = computedColumn("total", null);
+		set(total, Inputs.INPUTS, List.of(new InputRef(new ChannelRef("factor"))));
+		set(total, ComputedColumn.Config.FILTER, inputFilter("selected"));
+
+		List<ColumnDeclaration> declarations = instantiate(count, total);
+
+		assertEquals(List.of("threshold"), names(declarations.get(0).inputs()));
+		assertEquals(List.of("factor", "selected"), names(declarations.get(1).inputs()));
+		assertEquals(List.of("threshold", "factor", "selected"),
+			names(ColumnDeclarations.inputs(declarations)));
+	}
+
+	/** The argument names of the given input references, in order. */
+	private static List<String> names(List<InputRef> refs) {
+		List<String> result = new ArrayList<>();
+		for (InputRef ref : refs) {
+			result.add(ref.getName());
+		}
+		return result;
+	}
+
+	/** The configuration of an {@link InputFilter} reading the given channel. */
+	private static InputFilter.Config inputFilter(String channel) {
+		InputFilter.Config config = TypedConfiguration.newConfigItem(InputFilter.Config.class);
+		set(config, Inputs.INPUTS, List.of(new InputRef(new ChannelRef(channel))));
+		return config;
+	}
+
+	/**
+	 * A column filter with inputs of its own, as a {@link com.top_logic.layout.view.table.ScriptedFilter}
+	 * has them: it integrates through {@link ColumnBinding} and names its inputs there.
+	 */
+	public static class InputFilter extends TextColumnFilter<Object> implements ColumnBinding {
+
+		/**
+		 * Configuration of an {@link InputFilter}.
+		 */
+		public interface Config extends PolymorphicConfiguration<InputFilter>, Inputs {
+			@Override
+			@ClassDefault(InputFilter.class)
+			Class<? extends InputFilter> getImplementationClass();
+		}
+
+		private final List<InputRef> _inputs;
+
+		/**
+		 * Creates an {@link InputFilter} from configuration.
+		 */
+		public InputFilter(InstantiationContext context, Config config) {
+			super(String::valueOf);
+			_inputs = config.getInputs();
+		}
+
+		@Override
+		public Column<Object, ?> createColumn(ColumnSetup setup) {
+			return ColumnBinding.TYPE_DERIVED.createColumn(setup);
+		}
+
+		@Override
+		public List<InputRef> inputs() {
+			return _inputs;
+		}
 	}
 
 	/**
@@ -375,7 +514,7 @@ public class TestColumnDeclarations extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ModelAccessRights.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
+		ThreadContext.<Void, Throwable, RuntimeException> withoutSecurityChecks(() -> {
 			super.runTest();
 			return null;
 		});

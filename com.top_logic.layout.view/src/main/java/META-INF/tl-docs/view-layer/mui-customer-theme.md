@@ -1,5 +1,5 @@
 ---
-description: Read when an application is to look like a Material UI application in a customer's MUI theme - the theme module calling installMui, which components are replaced, what of the theme reaches the TopLogic components, and restyled, replaced and additional MUI-based components of the customer.
+description: Read when an application is to look like a Material UI application in a customer's MUI theme - the theme module calling installMui, which parts and controls are replaced (the replace option), what of the theme reaches the TopLogic components, and restyled, replaced and additional MUI-based components of the customer.
 order: 39
 ---
 
@@ -19,7 +19,7 @@ This article walks through both:
 
 The building blocks are the Material UI module `com.top_logic.layout.react.mui` (artifact
 `tl-layout-react-mui`, import specifier `tl-react-mui`) and the bridge `tl-react-bridge`. The
-mechanism behind them — root wrappers, `replace`, the state contract `state.proto` — is described in
+mechanism behind them — root wrappers, `replacePart` and `replace`, the state contract `state.proto` — is described in
 [Rendering the React UI with a customer's component library](doc:view-layer/customer-component-library); this article is the recipe for the
 Material UI case. The runnable reference is `com.top_logic.demo.react.mui` (artifact
 `tl-demo-react-mui`), a module in exactly the shape of a customer project; the excerpts below are
@@ -36,8 +36,8 @@ tl-react-mui bundle          all of @mui/material and @mui/x-date-pickers (re-ex
   (tl-layout-react-mui)      the adapters, installMui, the root wrapper, the derived properties
         │  imports React from 'tl-react-bridge'
         ▼
-tl-react-bridge bundle       React, the component registry (register / replace), the control hooks
-  (tl-layout-react)
+tl-react-bridge bundle       React, the part registry (registerPart / replacePart), the component
+  (tl-layout-react)          registry (register / replace), the control hooks
 ```
 
 - **The customer's theme is the single source of the look.** `installMui` creates the MUI theme
@@ -45,7 +45,8 @@ tl-react-bridge bundle       React, the component registry (register / replace),
 - **The TopLogic components that are not replaced follow the theme.** Tables, trees, panels, the
   sidebar and toolbars read CSS custom properties that `installMui` derives from the MUI theme and
   writes into the page ([Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme)).
-- **Which components are MUI is a free choice**: all 25 replaceable components, or a selection.
+- **What is MUI is a free choice**: all 12 parts and 19 controls the module has adapters for, or a
+  selection.
 - **There is exactly one Material UI on the page**, the one in `tl-react-mui`. The theme and every
   customer component import Material UI from there, so they share the theme context, the emotion
   style cache and the date localization of the root wrapper with the adapters.
@@ -345,7 +346,8 @@ installMui({ theme: customerTheme, replace: 'all' });
    (`<style id="tl-mui-theme-properties">` at the end of `<head>`),
 3. registers the root wrapper (emotion cache writing into the cascade layer `mui`, `ThemeProvider`,
    the date pickers' `LocalizationProvider`) above every React root of the bridge,
-4. replaces the selected TopLogic components by their MUI adapters (`replace` of the bridge).
+4. replaces the selected parts (`replacePart` of the bridge) and TopLogic controls (`replace`) by
+   their MUI adapters.
 
 The bundle is loaded before the page's controls are mounted, so all of this is in place for the
 first render.
@@ -407,14 +409,32 @@ anything.
 
 ### Choosing the MUI components
 
-`replace` selects the TopLogic components rendered with Material UI:
+`replace` selects what is rendered with Material UI, by the names of `COMPONENT_NAMES`:
 
-- `'all'` (`ALL_COMPONENTS`, the default) — every one of `COMPONENT_NAMES`, the 25 components of
-  the state contract listed in
-  [The replaceable components](doc:view-layer/customer-component-library#the-replaceable-components);
-- a list of names (typed as the union `ComponentName`), e.g.
-  `replace: ['TLButton', 'TLCheckbox', 'TLTextInput']` — the other components keep their TopLogic
-  rendering and follow the theme through the derived properties.
+| Name | Replaced | Drawn with |
+|---|---|---|
+| `Button` | the part: buttons, toggle buttons, menu entries, links drawn as buttons, the action buttons of toolbars, panels, tables, dialogs, … | `Button`, `IconButton`, `ToggleButton`, `ListItemButton` |
+| `MenuTrigger` | the part: the trigger of a toolbar menu and of a menu region | `Button`, `IconButton` |
+| `DisclosureToggle` | the part: the toggles of form groups, tree nodes, tree table rows and the sidebar | `IconButton` with a chevron |
+| `Checkbox` | the part: boolean fields, choice groups, the selection of a table, the column selection | `Checkbox`, `Switch` |
+| `TextInput` | the part: text, password and number fields, the searches and filters of tables and popups | `TextField` |
+| `FieldValue` | the part: the value of a field that is not editable | `Typography`, `Link` |
+| `Chip` | the part: option chips, chosen values of a dropdown, filters of a table, file chips, values with a color role | `Chip` |
+| `Badge` | the part: the counts of the sidebar and the bottom bar | `Badge` |
+| `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
+| `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
+| `Spinner` | the part: busy indicators | `CircularProgress` |
+| `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |
+| `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLAvatar`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
+| `TLFloatingAction` | the control as a whole: one action, several actions | `Fab` (`extended` when the action shows its label), `SpeedDial` with a `SpeedDialAction` per action (its label as tooltip) |
+
+The parts are described in [Parts: the atoms of the React UI](doc:view-layer/parts), the controls
+in [The replaceable components](doc:view-layer/customer-component-library#the-replaceable-components).
+
+- `'all'` (`ALL_COMPONENTS`, the default) — every one of `COMPONENT_NAMES`;
+- a list of names (typed as the union `ComponentName`), e.g. `replace: ['Button', 'Checkbox']` —
+  buttons and checkboxes are MUI wherever they appear, everything else keeps its TopLogic rendering
+  and follows the theme through the derived properties.
 
 `installMui` throws for a name without adapter (the message lists the known names) and on a second
 call: the installation is made once per page and cannot be changed afterwards. `COMPONENT_NAMES`
@@ -508,12 +528,39 @@ Two things to know about the adapters:
   adapters map the server state to MUI's own variants. A different look for one particular
   control is a `css-class` in the view ([Basics: composition, spacing, height and styling](doc:view-layer/basics#styling-a-single-element-css-class));
   the adapters put it on their root element (`rootClassName`).
+- **Some adapters bring a default style** for their MUI component, which the theme's
+  `styleOverrides.root` follow, so the theme wins on every property it sets. The avatar
+  (`TLAvatar` → `MuiAvatar`) is one: its default keeps the look of the design system — the
+  neutral circle, the surface and border of the category the display name maps to, the initials in
+  `text.primary`, the diameters of the size tokens. The adapter marks the root with the category
+  (`data-category="1"` to `"8"`, present whenever the avatar has a name) and the size
+  (`data-size="small|medium|large|x-large"`), so a theme restyles them through nested selectors —
+  e.g. the avatar of the user menu on a dark app bar, without a stylesheet against `.tl-avatar`:
 
-### B. Replacing a TopLogic component by a customer adapter
+  ```ts
+  MuiAvatar: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        '&[data-category]': { borderColor: theme.vars.palette.common.white },
+        '&[data-category="3"]': { backgroundColor: theme.vars.palette.secondary.light },
+        '&[data-size="small"]': { fontSize: theme.typography.pxToRem(10) },
+      }),
+    },
+  },
+  ```
 
-If the customer has a component of its own for a TopLogic component — say a corporate button built
-with `styled(Button)` — the module renders that TopLogic component with it. The customer adapter
-takes the place of the MUI adapter for that name.
+  The constants are `CATEGORY_ATTRIBUTE` and `SIZE_ATTRIBUTE` of
+  `com.top_logic.layout.react.mui/react-src/adapters/MuiAvatarAdapter.tsx`, the default style is
+  its `avatarRootStyle`.
+
+### B. Replacing a part or a control by a customer adapter
+
+If the customer has a component of its own for a part or a control — say a corporate button built
+with `styled(Button)` — the module draws that part (or renders that control) with it. The customer
+adapter takes the place of the MUI adapter for that name. A button, a checkbox, a text box or a
+chip is a part: its replacement appears wherever a control draws it. A window, a dialog or a
+select is a control, replaced as a whole
+([Parts and controls](doc:view-layer/customer-component-library#parts-and-controls)).
 
 #### Building JSX
 
@@ -545,17 +592,14 @@ library that imports `react` itself.
 
 #### The adapter
 
-An adapter is a component of the bridge (`TLCellProps`) that reads the control state with
-`useTLState<Partial<XStateJson>>()` and sends the commands of the state contract with
-`useTLCommand()`:
+A part adapter takes the props of the part (`ButtonPartProps` for the part `Button`, see
+[Parts: the atoms of the React UI](doc:view-layer/parts)) and draws them; the button controls have
+already resolved the state of the server and the defaults of the container into these props:
 
 ```tsx
-import { React, useTLState, useTLCommand, useButtonDefaults, rootClassName, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
+import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes } from 'tl-react-bridge';
+import type { ButtonPartProps } from 'tl-react-bridge';
 import { Button, styled } from 'tl-react-mui';
-
-/** The command a button sends when it is clicked (ButtonState in state.proto). */
-const CMD_CLICK = 'click';
 
 /** The customer's button: a MUI button with the pill shape of the corporate design. */
 const PillButton = styled(Button)(({ theme }) => ({
@@ -563,26 +607,28 @@ const PillButton = styled(Button)(({ theme }) => ({
   paddingInline: theme.spacing(2),
 }));
 
-/** Renders the state of a TopLogic button (`TLButton`) with the customer's button. */
-const AcmeButton: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<ButtonStateJson>>();
-  const sendCommand = useTLCommand();
-  const defaults = useButtonDefaults();
-  if (state.hidden === true) {
-    return null;
-  }
-  const appearance = (state.appearance === 'default' ? undefined : state.appearance) ?? defaults.appearance;
+/** Draws the part `Button` with the customer's button. */
+const AcmeButton: React.FC<ButtonPartProps> = (props) => {
+  const { id, ref, label, image, display, appearance, danger, small, disabled, tabIndex, className,
+    onClick, onMouseDown } = props;
+  const link = props.href === undefined ? {} : { component: 'a' as const, ...buttonLinkAttributes(props) };
   return (
     <PillButton
-      id={controlId}
-      disabled={state.disabled === true}
+      id={id}
+      ref={ref as React.Ref<HTMLButtonElement>}
+      disabled={disabled}
+      tabIndex={tabIndex}
+      size={small ? 'small' : 'medium'}
       variant={appearance === 'primary' ? 'contained' : 'outlined'}
-      color={state.tone === 'danger' ? 'error' : 'primary'}
-      startIcon={state.image ? <ThemeIcon encoded={state.image} className="tl-icon-sm" /> : undefined}
-      className={rootClassName(state, state.cssClasses)}
-      onClick={() => sendCommand(CMD_CLICK)}
+      color={danger ? 'error' : 'primary'}
+      startIcon={image && display !== 'label-only' ? <ThemeIcon encoded={image} className="tl-icon-sm" /> : undefined}
+      className={className}
+      onClick={onClick}
+      onMouseDown={onMouseDown}
+      {...link}
+      {...buttonPartAttributes(props)}
     >
-      {state.label}
+      {display === 'icon-only' && image ? null : label}
     </PillButton>
   );
 };
@@ -594,34 +640,35 @@ export default AcmeButton;
 part of the page's Material UI: it sees the theme of the root wrapper, and the theme's `MuiButton`
 overrides apply to it underneath the styles of `styled`.
 
-The sketch maps only part of the contract. A replacement renders the component *everywhere* —
-also as a menu entry, as an icon-only toolbar button, as a link — so a production adapter covers
-the whole message `ButtonState` of `state.proto`: `displayMode` and the container's `iconOnly`,
-the `menu-item` appearance with `menuItemProps`, `tooltip`, `keyGesture` (`useKeyboardBinding`),
-`navigateUrl`, `active`, `size`. `MuiButtonAdapter.tsx` is the complete mapping to start from.
-The state contract and the helpers of the bridge (`useTLFieldValue` for fields, `useFormLayout`,
-`useButtonDefaults`, `ThemeIcon`, `rootClassName`) are described in
-[Rendering the React UI with a customer's component library](doc:view-layer/customer-component-library#level-2-adapter-components-for-leaf-widgets).
+The sketch draws only part of the contract. A replacement of a part draws it *everywhere* — also as
+a menu entry (appearance `menu-item`), as a toggle (`checked`), as an icon-only toolbar button —
+so a production adapter covers every prop of `ButtonPartProps`; `MuiButtonAdapter.tsx` is the
+complete mapping to start from. `buttonPartAttributes` gives the accessible name, the pressed,
+current or checked state, the role of a menu entry and the tooltip every implementation sets. A
+control adapter reads the state of the control instead (`useTLState`, `useTLCommand`,
+`useTLFieldValue` for fields), see
+[Rendering the React UI with a customer's component library](doc:view-layer/customer-component-library#a-control-adapter).
 
 #### Registering it
 
-The entry leaves the name out of the selection of `installMui` and replaces it itself:
+The entry leaves the name out of the selection of `installMui` and replaces it itself — a part with
+`replacePart`, a control with `replace`:
 
 ```ts
-import { replace } from 'tl-react-bridge';
+import { replacePart } from 'tl-react-bridge';
 import { installMui, COMPONENT_NAMES } from 'tl-react-mui';
 import customerTheme from './customerTheme';
 import AcmeButton from './AcmeButton';
 
-installMui({ theme: customerTheme, replace: COMPONENT_NAMES.filter(name => name !== 'TLButton') });
-replace('TLButton', AcmeButton);
+installMui({ theme: customerTheme, replace: COMPONENT_NAMES.filter(name => name !== 'Button') });
+replacePart('Button', AcmeButton);
 ```
 
-The rule of the bridge (`registry.ts`): a `replace` wins over the component TopLogic `register`s
-under the name, whatever the load order; of two `replace` calls for the same name, the later one
-wins and the bridge logs the console warning "Component replaced twice". Calling `replace` after
-`installMui({ replace: 'all' })` therefore works too, but leaving the name out of the selection
-states the intent and keeps the console clean.
+The rule of the bridge (`parts.ts`, `registry.ts`): a replacement wins over the component TopLogic
+registers under the name, whatever the load order; of two replacements of the same name, the later
+one wins and the bridge logs a console warning ("Part replaced twice", "Component replaced twice").
+Calling `replacePart` after `installMui({ replace: 'all' })` therefore works too, but leaving the
+name out of the selection states the intent and keeps the console clean.
 
 ### C. A specialized component of its own
 

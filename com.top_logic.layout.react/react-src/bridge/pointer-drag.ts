@@ -25,8 +25,11 @@
 
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
-/** Class of the element that covers the viewport while a drag gesture runs. */
-export const DRAG_SHIELD_CLASS = 'tlDragShield';
+/**
+ * Class of the element that covers the viewport while a drag gesture runs: `tl-drag-shield` of the
+ * design system package (drag.css), above every other layer.
+ */
+export const DRAG_SHIELD_CLASS = 'tl-drag-shield';
 
 /** How far the pointer moves away from the press before the gesture counts as a drag. */
 export const DRAG_THRESHOLD_PX = 3;

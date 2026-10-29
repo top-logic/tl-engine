@@ -10,7 +10,6 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -32,6 +31,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.top_logic.tools.resources.translate.ConnectionAuthentication;
+import com.top_logic.tools.resources.translate.DetectedTranslation;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.tools.resources.translate.deepl.protocol.Glossaries;
 import com.top_logic.tools.resources.translate.deepl.protocol.Glossary;
@@ -52,6 +53,14 @@ public class DeepLTranslator implements Translator {
 
 	/** API authentication key. */
 	public static final String AUTH_KEY = "auth_key";
+
+	/** The request header carrying the credentials. */
+	public static final String AUTHORIZATION = "Authorization";
+
+	/**
+	 * The authentication scheme written before the API key in the {@link #AUTHORIZATION} header.
+	 */
+	public static final String AUTH_SCHEME = "DeepL-Auth-Key";
 
 	/** The usage function allows to monitor how much you translate, as well as the limits set. */
 	public static final String USAGE = "usage";
@@ -134,6 +143,8 @@ public class DeepLTranslator implements Translator {
 
 		private String _apiKey;
 
+		private ConnectionAuthentication _authentication;
+
 		private List<String> _ignoreTags = Collections.emptyList();
 
 		private List<String> _nonSplittingTags = Collections.emptyList();
@@ -163,7 +174,15 @@ public class DeepLTranslator implements Translator {
 			_apiHost = apiHost;
 		}
 
-		/** Gets the API authentication key. Keep it secret, because translations are not free. */
+		/**
+		 * Gets the API authentication key. Keep it secret, because translations are not free.
+		 *
+		 * <p>
+		 * The key is sent in the {@link DeepLTranslator#AUTHORIZATION} header with the scheme
+		 * {@link DeepLTranslator#AUTH_SCHEME}, unless an {@link #getAuthentication()
+		 * authentication} is set.
+		 * </p>
+		 */
 		public String getApiKey() {
 			return _apiKey;
 		}
@@ -173,6 +192,34 @@ public class DeepLTranslator implements Translator {
 		 */
 		public void setApiKey(String apiKey) {
 			_apiKey = apiKey;
+		}
+
+		/**
+		 * How the requests to the API are authenticated.
+		 *
+		 * <p>
+		 * When set, the {@link #getApiKey() API key} is not used.
+		 * </p>
+		 */
+		public ConnectionAuthentication getAuthentication() {
+			return _authentication;
+		}
+
+		/**
+		 * @see #getAuthentication()
+		 */
+		public void setAuthentication(ConnectionAuthentication authentication) {
+			_authentication = authentication;
+		}
+
+		private ConnectionAuthentication authentication() {
+			if (_authentication != null) {
+				return _authentication;
+			}
+			if (isEmpty(_apiKey)) {
+				return ConnectionAuthentication.NONE;
+			}
+			return ConnectionAuthentication.header(AUTHORIZATION, AUTH_SCHEME + " " + _apiKey);
 		}
 
 		/** Comma-separated list of XML tags that indicate text not to be translated. */
@@ -288,7 +335,7 @@ public class DeepLTranslator implements Translator {
 		 */
 		public DeepLTranslator build() {
 			return new DeepLTranslator(
-				_apiKey,
+				authentication(),
 				url(LANGUAGES), createTranslateUrl(),
 				url(GLOSSARIES_PATH), id -> url(GLOSSARIES_PATH + '/' + id), _glossaryNames);
 		}
@@ -335,19 +382,21 @@ public class DeepLTranslator implements Translator {
 
 	private Function<String, URL> _glossaryUrl;
 
-	private final String _apiKey;
+	private final ConnectionAuthentication _authentication;
 
 	/**
 	 * Creates a {@link DeepLTranslator}.
 	 * 
+	 * @param authentication
+	 *        Adds the credentials to each request.
 	 * @param glossaryNameIndex
 	 *        Mapping of source language to target language to name of the glossary to use for this
 	 *        translation direction.
 	 */
-	public DeepLTranslator(String apiKey, URL languagesLookupURL, String translateUrl, URL glossariesLookupUrl,
+	public DeepLTranslator(ConnectionAuthentication authentication, URL languagesLookupURL, String translateUrl, URL glossariesLookupUrl,
 			Function<String, URL> glossaryDeleteUrl,
 			Map<String, Map<String, String>> glossaryNameIndex) {
-		_apiKey = apiKey;
+		_authentication = authentication;
 		_languagesLookupUrl = languagesLookupURL;
 		_translateUrl = translateUrl;
 		_glossariesLookupUrl = glossariesLookupUrl;
@@ -371,11 +420,23 @@ public class DeepLTranslator implements Translator {
 
 	@Override
 	public String translate(String text, String sourceLanguage, String targetLanguage) {
-		String json;
+		return getTranslationText(requestTranslation(text, sourceLanguage, targetLanguage));
+	}
+
+	@Override
+	public DetectedTranslation translateDetecting(String text, String targetLanguage) {
+		List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> tuples =
+			requestTranslation(text, null, targetLanguage);
+		String detected = tuples.isEmpty() ? null : tuples.get(0).getDetectedSourceLanguage();
+		return new DetectedTranslation(getTranslationText(tuples),
+			isEmpty(detected) ? null : normalizeLanguage(detected), targetLanguage);
+	}
+
+	private List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> requestTranslation(String text,
+			String sourceLanguage, String targetLanguage) {
 		try {
 			URL url = buildTranslateURL(sourceLanguage, targetLanguage);
-			json = request(url, text);
-			return getTranslationFromJSONString(json);
+			return parseTranslationResult(request(url, text));
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}
@@ -407,9 +468,6 @@ public class DeepLTranslator implements Translator {
 			}
 		}
 
-		HttpURLConnection connection = openConnection("POST", _glossariesLookupUrl);
-		connection.setDoOutput(true);
-		OutputStream output = connection.getOutputStream();
 		Writer writer = new StringWriter();
 		
 		writeField(writer, "name", encode(name));
@@ -422,11 +480,7 @@ public class DeepLTranslator implements Translator {
 		writer.append('&');
 		writeField(writer, "entries", encode(contents));
 
-		OutputStreamWriter out = new OutputStreamWriter(output, StandardCharsets.UTF_8);
-		out.write(writer.toString());
-		out.flush();
-
-		String result = retrieveResponse(connection);
+		String result = request("POST", _glossariesLookupUrl, writer.toString());
 		Glossary glossary = Glossary.readGlossary(json(result));
 
 		LOG.info("Created glossary entry: " + toString(glossary));
@@ -481,8 +535,8 @@ public class DeepLTranslator implements Translator {
 		return Glossaries.readGlossaries(json(result));
 	}
 
-	private String getTranslationFromJSONString(String json) throws IOException {
-		List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> tuples = parseTranslationResult(json);
+	private static String getTranslationText(
+			List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> tuples) {
 		StringBuilder translation = new StringBuilder();
 		for (com.top_logic.tools.resources.translate.deepl.protocol.Translation tuple : tuples) {
 			String translatedText = tuple.getText();
@@ -520,22 +574,51 @@ public class DeepLTranslator implements Translator {
 	 *        text will be translated.
 	 */
 	private String request(URL url, String text) throws IOException {
-		return request("POST", url, text);
-	}
-
-	private String request(String method, URL url, String text)
-			throws IOException, ProtocolException, UnsupportedEncodingException {
-		HttpURLConnection connection = openConnection(method, url);
+		String body;
 		if (text != null && !text.isEmpty()) {
 			checkRequestSize(text);
-
-			connection.setDoOutput(true);
-			String encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8);
-			OutputStream output = connection.getOutputStream();
-			output.write("text=".getBytes(StandardCharsets.UTF_8));
-			output.write(encodedText.getBytes(StandardCharsets.UTF_8));
+			body = "text=" + URLEncoder.encode(text, StandardCharsets.UTF_8);
+		} else {
+			body = null;
 		}
-		return retrieveResponse(connection);
+		return request("POST", url, body);
+	}
+
+	/**
+	 * Sends a request and returns the response body.
+	 *
+	 * <p>
+	 * Each attempt is authenticated at the moment it is sent. An answer
+	 * {@link HttpURLConnection#HTTP_UNAUTHORIZED} {@link ConnectionAuthentication#invalidate()
+	 * invalidates} the credentials, and the request is sent once more with fresh ones.
+	 * </p>
+	 *
+	 * @param body
+	 *        The form encoded request body, <code>null</code> for none.
+	 */
+	private String request(String method, URL url, String body)
+			throws IOException, ProtocolException, UnsupportedEncodingException {
+		boolean renewed = false;
+		while (true) {
+			HttpURLConnection connection = openConnection(method, url);
+			if (body != null) {
+				connection.setDoOutput(true);
+				try (OutputStream output = connection.getOutputStream()) {
+					output.write(body.getBytes(StandardCharsets.UTF_8));
+				}
+			}
+			int responseCode = connection.getResponseCode();
+			if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				_authentication.invalidate();
+				if (!renewed) {
+					renewed = true;
+					connection.disconnect();
+					LOG.info("DeepL rejected the credentials, retrying with fresh ones.");
+					continue;
+				}
+			}
+			return retrieveResponse(connection, responseCode);
+		}
 	}
 
 	private String encode(String name) {
@@ -551,15 +634,12 @@ public class DeepLTranslator implements Translator {
 	private HttpURLConnection openConnection(String method, URL url) throws IOException, ProtocolException {
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestMethod(method);
-		if (_apiKey != null) {
-			connection.setRequestProperty("Authorization", "DeepL-Auth-Key " + _apiKey);
-		}
+		_authentication.authenticate(connection);
 		connection.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
 		return connection;
 	}
 
-	private String retrieveResponse(HttpURLConnection connection) throws IOException {
-		int responseCode = connection.getResponseCode();
+	private String retrieveResponse(HttpURLConnection connection, int responseCode) throws IOException {
 		if (responseCode >= 200 && responseCode < 300) {
 			return readResponse(connection);
 		} else {
@@ -603,6 +683,8 @@ public class DeepLTranslator implements Translator {
 		switch (code) {
 			case 400:
 				return "Bad request";
+			case 401:
+				return "Credentials rejected";
 			case 403:
 				return "Authorization failed";
 			case 404:

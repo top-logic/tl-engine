@@ -17,20 +17,28 @@ package test.com.top_logic.element.structured.model;
 public class TestTypesFactory extends com.top_logic.element.structured.wrap.StructuredElementWrapperFactory {
 
 	/**
-	 * Name of singleton {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of singleton {@link #TEST_TYPES_MODULE}.
 	 */
 	public static final String SINGLETON_ROOT = "ROOT";
 
 	/**
-	 * Name of the structure <code>TestTypes</code> defined by {@link TestTypesFactory}.
+	 * Name of the module <code>TestTypes</code> defined by {@link TestTypesFactory}.
 	 */
-	public static final String TEST_TYPES_STRUCTURE = "TestTypes";
+	public static final String TEST_TYPES_MODULE = "TestTypes";
+
+	/**
+	 * Name of the structure <code>TestTypes</code> defined by {@link TestTypesFactory}.
+	 * 
+	 * @deprecated Use {@link #TEST_TYPES_MODULE}.
+	 */
+	@Deprecated
+	public static final String TEST_TYPES_STRUCTURE = TEST_TYPES_MODULE;
 
 	/**
 	 * Lookup {@link CommonNode} type.
 	 */
 	public static com.top_logic.model.TLClass getCommonNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(CommonNode.COMMON_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(CommonNode.COMMON_NODE_TYPE);
 	}
 
 	/**
@@ -51,7 +59,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
@@ -72,7 +80,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link B} type.
 	 */
 	public static com.top_logic.model.TLClass getBType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(B.B_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(B.B_TYPE);
 	}
 
 	/**
@@ -359,7 +367,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link ANode} type.
 	 */
 	public static com.top_logic.model.TLClass getANodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(ANode.A_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(ANode.A_NODE_TYPE);
 	}
 
 	/**
@@ -436,7 +444,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link BNode} type.
 	 */
 	public static com.top_logic.model.TLClass getBNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(BNode.B_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(BNode.B_NODE_TYPE);
 	}
 
 	/**
@@ -457,7 +465,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link CNode} type.
 	 */
 	public static com.top_logic.model.TLClass getCNodeType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(CNode.C_NODE_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(CNode.C_NODE_TYPE);
 	}
 
 	/**
@@ -499,28 +507,28 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link CContent} type.
 	 */
 	public static com.top_logic.model.TLClass getCContentType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(CContent.C_CONTENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(CContent.C_CONTENT_TYPE);
 	}
 
 	/**
 	 * Lookup {@link ANodeChild} type.
 	 */
 	public static com.top_logic.model.TLClass getANodeChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(ANodeChild.A_NODE_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(ANodeChild.A_NODE_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link BNodeChild} type.
 	 */
 	public static com.top_logic.model.TLClass getBNodeChildType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(BNodeChild.B_NODE_CHILD_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(BNodeChild.B_NODE_CHILD_TYPE);
 	}
 
 	/**
 	 * Lookup {@link Part} type.
 	 */
 	public static com.top_logic.model.TLClass getPartType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(Part.PART_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(Part.PART_TYPE);
 	}
 
 	/**
@@ -534,7 +542,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Lookup {@link PreloadTest} type.
 	 */
 	public static com.top_logic.model.TLClass getPreloadTestType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(PreloadTest.PRELOAD_TEST_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_MODULE).getType(PreloadTest.PRELOAD_TEST_TYPE);
 	}
 
 	/**
@@ -587,7 +595,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
-	 * Name of type <code>CommonNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>CommonNode</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link CommonNode#COMMON_NODE_TYPE}.
 	 */
@@ -595,7 +603,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String COMMON_NODE_NODE = CommonNode.COMMON_NODE_TYPE;
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -603,7 +611,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String A_NODE = A.A_TYPE;
 
 	/**
-	 * Name of type <code>B</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>B</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link B#B_TYPE}.
 	 */
@@ -611,7 +619,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String B_NODE = B.B_TYPE;
 
 	/**
-	 * Name of type <code>ANode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>ANode</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link ANode#A_NODE_TYPE}.
 	 */
@@ -620,11 +628,14 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #A_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.structured.model.impl.ANodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A_NODE = "AElement";
+	@Deprecated
+	public static final String KO_NAME_A_NODE = test.com.top_logic.element.structured.model.impl.ANodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>BNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>BNode</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link BNode#B_NODE_TYPE}.
 	 */
@@ -633,11 +644,14 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #B_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.structured.model.impl.BNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_B_NODE = "BElement";
+	@Deprecated
+	public static final String KO_NAME_B_NODE = test.com.top_logic.element.structured.model.impl.BNodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>CNode</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link CNode#C_NODE_TYPE}.
 	 */
@@ -646,11 +660,14 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #C_NODE_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.structured.model.impl.CNodeBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_C_NODE = "StructuredElement";
+	@Deprecated
+	public static final String KO_NAME_C_NODE = test.com.top_logic.element.structured.model.impl.CNodeBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>CContent</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>CContent</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link CContent#C_CONTENT_TYPE}.
 	 */
@@ -659,11 +676,14 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #C_CONTENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.structured.model.impl.CContentBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_C_CONTENT = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_C_CONTENT = test.com.top_logic.element.structured.model.impl.CContentBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ANodeChild</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>ANodeChild</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link ANodeChild#A_NODE_CHILD_TYPE}.
 	 */
@@ -671,7 +691,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String A_NODE_CHILD_NODE = ANodeChild.A_NODE_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>BNodeChild</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>BNodeChild</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link BNodeChild#B_NODE_CHILD_TYPE}.
 	 */
@@ -679,7 +699,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String B_NODE_CHILD_NODE = BNodeChild.B_NODE_CHILD_TYPE;
 
 	/**
-	 * Name of type <code>Part</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>Part</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link Part#PART_TYPE}.
 	 */
@@ -688,11 +708,14 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #PART_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.structured.model.impl.PartBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PART = "CompositePart";
+	@Deprecated
+	public static final String KO_NAME_PART = test.com.top_logic.element.structured.model.impl.PartBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>PreloadTest</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * Name of type <code>PreloadTest</code> in module {@link #TEST_TYPES_MODULE}.
 	 * 
 	 * @deprecated Use {@link PreloadTest#PRELOAD_TEST_TYPE}.
 	 */
@@ -701,8 +724,11 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 
 	/**
 	 * Storage table name of {@link #PRELOAD_TEST_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.element.structured.model.impl.PreloadTestBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PRELOAD_TEST = "PreloadTest";
+	@Deprecated
+	public static final String KO_NAME_PRELOAD_TEST = test.com.top_logic.element.structured.model.impl.PreloadTestBase.TABLE_NAME;
 
 	/**
 	 * Singleton <code>ROOT</code>.
@@ -814,6 +840,6 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * The singleton instance of {@link TestTypesFactory}.
 	 */
 	public static TestTypesFactory getInstance() {
-		return (TestTypesFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_TYPES_STRUCTURE);
+		return (TestTypesFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_TYPES_MODULE);
 	}
 }

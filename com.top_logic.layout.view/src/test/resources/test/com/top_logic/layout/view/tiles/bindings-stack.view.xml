@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="navPath"/>
+		<channel name="shared"/>
+		<channel name="private"/>
+	</channels>
+	<tile-stack
+		initial="bindings-frame.view.xml"
+		path="navPath"
+	>
+		<bindings>
+			<bind
+				channel="shared"
+				to="shared"
+			/>
+		</bindings>
+		<frame id="frame"
+			view="bindings-frame.view.xml"
+		/>
+	</tile-stack>
+</view>

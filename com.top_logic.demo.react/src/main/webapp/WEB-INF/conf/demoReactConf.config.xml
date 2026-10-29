@@ -13,6 +13,7 @@
 					<locale name="es"/>
 				</supported-locales>
 				<bundles>
+					<bundle name="demoReactMessages"/>
 					<bundle name="model.demo.react.messages"/>
 					<bundle name="model.demo.tickets.messages"/>
 					<bundle name="model.demo.charts.messages"/>
@@ -23,18 +24,20 @@
 					<bundle name="model.demo.calendar.messages"/>
 					<bundle name="model.demo.documents.messages"/>
 					<bundle name="model.demo.dnd.messages"/>
+					<bundle name="model.demo.temperature.messages"/>
 				</bundles>
 			</instance>
 		</config>
 		<!--
 			The roles of this application: the administrator role that may open the administration
-			area, granted in security.xml; the account reader and user roles that the role rules below
+			area, granted the operation "Administration" on the security root below; the account reader and user roles that the role rules below
 			give to the members of the "users" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
 			on that project only; the project manager role that a role rule below gives to the members
-			of the "DemoProjectManagers" group on the security root; and the chart reader role that
+			of the "DemoProjectManagers" group on the security root; the chart reader role that
 			makes the sales and purchases of the chart demo visible to a visitor without an account,
-			granted by a role rule below as well.
+			granted by a role rule below as well; and the ticket watcher and project path viewer
+			roles of the ticket-watcher scenario, see the grants and role rules below.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -46,7 +49,107 @@
 					<role name="demo.react.ProjectAdmin"/>
 					<role name="demo.react.ProjectManager"/>
 					<role name="demo.react.ChartReader"/>
+					<role name="demo.react.TicketWatcher"/>
+					<role name="demo.react.ProjectPathViewer"/>
 				</roles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+				<group name="Approve" type="write"/>
+				<group name="ShowPlanning" type="read"/>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<!--
+						A member of a project approves a milestone of it, although only an
+						administrator may write Milestone#approved (see the security-config).
+					-->
+					<privileged-script name="approveMilestone"
+						command-group="Approve"
+						security-object="$milestone.container()"
+					>
+						<parameters>
+							<parameter name="milestone"/>
+						</parameters>
+						<implementation>{
+							$milestone.set(`tl.demo.projectManagement:Milestone#approved`, true);
+							$milestone;
+						}</implementation>
+					</privileged-script>
+					<!--
+						Approves several milestones at once, which may belong to different projects: the
+						caller must hold "Approve" on the project of every milestone.
+					-->
+					<privileged-script name="approveMilestones"
+						command-group="Approve"
+						security-object="$milestones.map(m -> $m.container())"
+					>
+						<parameters>
+							<parameter name="milestones"/>
+						</parameters>
+						<implementation>{
+							$milestones.foreach(m -> $m.set(`tl.demo.projectManagement:Milestone#approved`, true));
+							$milestones;
+						}</implementation>
+					</privileged-script>
+					<!--
+						The comment views enter the attachments of a comment as a list of files and store
+						them through this function. A file matches an attachment holding the same content
+						under the same name; each attachment matches one file at most, so a file that is
+						attached twice stays two attachments.
+					-->
+					<configured-script name="demoTicketsStoreAttachments">
+						<label>
+							<en>Store attachments</en>
+							<de>Anhänge speichern</de>
+						</label>
+						<description>
+							<en><![CDATA[<p>Makes the attachments of a comment hold the given files, in their order: an attachment whose file is still in the list is kept, a new file becomes a new attachment, and an attachment whose file is no longer in the list is deleted.</p>]]></en>
+							<de><![CDATA[<p>Lässt die Anhänge eines Kommentars die gegebenen Dateien in deren Reihenfolge halten: Ein Anhang, dessen Datei noch in der Liste steht, bleibt erhalten, eine neue Datei wird zu einem neuen Anhang, und ein Anhang, dessen Datei nicht mehr in der Liste steht, wird gelöscht.</p>]]></de>
+						</description>
+						<parameters>
+							<parameter name="comment"
+								mandatory="true"
+								type="demo.tickets:Comment"
+							>
+								<description>
+									<en>The comment whose attachments are stored.</en>
+									<de>Der Kommentar, dessen Anhänge gespeichert werden.</de>
+								</description>
+							</parameter>
+							<parameter name="files"
+								multiple="true"
+								type="tl.core:Binary"
+							>
+								<description>
+									<en>The files the attachments hold afterwards, in their order.</en>
+									<de>Die Dateien, die die Anhänge danach halten, in ihrer Reihenfolge.</de>
+								</description>
+							</parameter>
+						</parameters>
+						<implementation><![CDATA[{
+  matched = $files.reduce(
+    [[], $comment.get(`demo.tickets:Comment#attachments`)],
+    state -> file -> {
+      match = $state[1]
+        .filter(a -> {
+          data = $a.get(`demo.tickets:Attachment#data`);
+          $data == $file && label($data) == label($file);
+        })
+        .firstElement();
+      $match == null
+        ? [concat($state[0], new(`demo.tickets:Attachment`)..set(`demo.tickets:Attachment#data`, $file)), $state[1]]
+        : [concat($state[0], $match), $state[1].filter(a -> $a != $match)];
+    });
+  $matched[1].delete();
+  $comment.set(`demo.tickets:Comment#attachments`, $matched[0]);
+  $comment;
+}]]></implementation>
+					</configured-script>
+				</scripts>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
@@ -62,7 +165,23 @@
 					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.documents.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.dnd.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.temperature.model.xml"/>
 				</declarations>
+			</instance>
+		</config>
+		<!--
+			A temperature is labeled with its value in the unit it is displayed in. The storage of the
+			attribute attaches that unit when it reads the value.
+		-->
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<label-providers>
+					<provider
+						implementation="com.top_logic.demo.react.temperature.TemperatureLabelProvider"
+						kind="CODE"
+						type="com.top_logic.demo.react.temperature.Temperature"
+					/>
+				</label-providers>
 			</instance>
 		</config>
 		<!--
@@ -140,8 +259,9 @@
 						the rights of a project are given by its members and administrators, which a
 						project being created does not have yet.
 						
-						A user - every member of the "users" group - reads the contributors, which
-						belong to no project, and the tickets of the ticket demo.
+						A user - every member of the "users" group - reads the person contacts, which
+						belong to no project and are the assignees of the project tickets, and the
+						tickets of the ticket demo.
 						
 						The views follow these rights: for an account that is a member of P1 but not
 						of P2 and no project manager, the project list shows P1 only; "New Project" is
@@ -157,6 +277,17 @@
 						in the "New Milestone" dialog and when editing the milestone; a member creates a
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
+
+						A member or an administrator of P1 approves a milestone of P1 with the "Approve"
+						command of the milestone list (the privileged script approveMilestone), a ticket
+						watcher cannot. The "Approve" command of the tree demo approves all selected
+						milestones (the privileged script approveMilestones): selecting milestones of P1
+						and P2 disables it for an account that is a member of P1 only.
+
+						The "Planning" tile of the project cockpit needs the operation "ShowPlanning" on
+						the project, which only its administrators hold: a member of the project sees
+						the "no access" placeholder in its place. The "Approvals" tile needs the same
+						operation, and is not displayed at all to a member.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -181,15 +312,39 @@
 						/>
 					</module>
 					<class name="tl.demo.projectManagement:ProjectScope">
+						<operations>
+							<operation name="Approve"/>
+							<operation name="ShowPlanning"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
 							roles="demo.react.ProjectMember"
 						/>
 						<grant
+							operation="Approve"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="ShowPlanning"
+							roles="demo.react.ProjectAdmin"
+						/>
+						<grant
 							inherit="true"
 							operation="Create"
 							roles="demo.react.ProjectManager"
+						/>
+					</class>
+					<!--
+						The deliverables of a project are of one of three kinds. A project administrator
+						creates every kind, by the module grant above; a project member creates
+						specifications only. The deliverables take the project roles by the role rules
+						below, so they decide for themselves rather than through the project.
+					-->
+					<class name="tl.demo.projectManagement:Specification">
+						<grant
+							operation="Create"
+							roles="demo.react.ProjectMember"
 						/>
 					</class>
 					<part name="tl.demo.projectManagement:ProjectScope#members">
@@ -230,7 +385,62 @@
 							<container reference="tl.demo.projectManagement:ProjectScope#notes"/>
 						</access-parent>
 					</class>
-					<class name="tl.demo.projectManagement:Contributor">
+					<!--
+						The ticket-watcher scenario, showing the Discover right: an account whose person
+						is listed in the watchers of a ticket - a ticket watcher, by the role rules below -
+						reads that ticket, and nothing else of its project. To show the ticket in the tree
+						demo, it must see the path to the ticket: the project and the milestone, with
+						their labels.
+						
+						For that, a ticket watcher is a project path viewer on the project containing
+						the ticket. A project path viewer reads the names and the milestones of the
+						project and the names and tickets of its milestones, but no other attribute of
+						the project or a milestone: not its description, its budget, its members. Reading an attribute of an object
+						implies discovering the object, so the project and its milestones appear in the
+						tree with their labels. The tickets of a milestone are filtered: the watcher
+						discovers the ticket it watches, not the other tickets of the milestone, and not
+						the projects in which it watches no ticket.
+						
+						The grant on an attribute replaces the grant on its type for this attribute, so
+						the project members and administrators, who read these attributes through the
+						module grant, are listed here as well. The roles on a milestone are the roles on
+						its project, its access parent, so the grant on the tickets of a milestone names
+						the project path viewer, which a ticket watcher holds on the project.
+					-->
+					<class name="tl.demo.projectManagement:Ticket">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.TicketWatcher"
+						/>
+					</class>
+					<part name="tl.demo.projectManagement:ProjectScope#milestones">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:Milestone#tickets">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<!-- The project path viewer also reads the names of the project and its milestones, so
+						that a table or a form shows which object a discovered row is. -->
+					<part name="tl.demo.projectManagement:ProjectScope#name">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:Milestone#name">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<class name="Contacts:PersonContact">
 						<grant
 							inherit="true"
 							operation="Read"
@@ -244,6 +454,33 @@
 							roles="demo.react.User"
 						/>
 					</module>
+					<!--
+						A user - every member of the "users" group, by the role rules below - reads and
+						edits the sites and the sensors of the temperature demo, and creates and deletes
+						sensors.
+					-->
+					<module name="demo.temperature">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.User"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.User"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.User"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="demo.react.User"
+						/>
+					</module>
 					<class name="demo.charts:Transaktion">
 						<grant
 							inherit="true"
@@ -251,6 +488,13 @@
 							roles="demo.react.ChartReader"
 						/>
 					</class>
+					<!-- The administrator role opens the administration area. -->
+					<singleton name="SecurityStructure#ROOT">
+						<grant
+							operation="Administration"
+							roles="demo.react.Administrator"
+						/>
+					</singleton>
 				</security-config>
 			</instance>
 		</config>
@@ -332,13 +576,65 @@
 								/>
 							</path>
 						</inheritance-rule>
+						<inheritance-rule id="MembersOnDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.ProjectMember"
+							source-role="demo.react.ProjectMember"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#deliverables"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="AdminsOnDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.ProjectAdmin"
+							source-role="demo.react.ProjectAdmin"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#deliverables"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
 						<!--
-							Every member of the "users" group is a user on the contributors and on every
+							The ticket-watcher scenario, see the grants above: an account listed in the
+							watchers of a ticket is a ticket watcher on that ticket, and a ticket watcher on
+							a ticket of a project is a project path viewer on that project. The project
+							path viewer is passed on to nothing below the project: it would make the other
+							tickets of the project discoverable.
+						-->
+						<rule id="WatchersOfTickets"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Ticket"
+							role="demo.react.TicketWatcher"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:Ticket#watchers"/>
+							</path>
+						</rule>
+						<inheritance-rule id="PathViewersOfProjects"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:ProjectScope"
+							role="demo.react.ProjectPathViewer"
+							source-role="demo.react.TicketWatcher"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:ProjectScope#tickets"/>
+							</path>
+						</inheritance-rule>
+						<!--
+							Every member of the "users" group is a user on the person contacts and on every
 							object of the ticket demo.
 						-->
-						<rule id="ContributorsOfUsers"
+						<rule id="PersonContactsOfUsers"
 							inherit="true"
-							meta-element="tl.demo.projectManagement:Contributor"
+							meta-element="Contacts:PersonContact"
 							role="demo.react.User"
 						>
 							<group-with-name name="users"/>
@@ -364,6 +660,24 @@
 						>
 							<group-with-name name="users"/>
 						</rule>
+						<!--
+							Every member of the "users" group is a user on the sites and the sensors of the
+							temperature demo.
+						-->
+						<rule id="TemperatureSitesOfUsers"
+							inherit="true"
+							meta-element="demo.temperature:DemoSite"
+							role="demo.react.User"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="TemperatureSensorsOfUsers"
+							inherit="true"
+							meta-element="demo.temperature:DemoSensor"
+							role="demo.react.User"
+						>
+							<group-with-name name="users"/>
+						</rule>
 						<rule id="ChartsReadableByAnonymous"
 							inherit="true"
 							meta-element="demo.charts:Transaktion"
@@ -380,14 +694,18 @@
 			listed here is offered as a link; following it reveals the views below in order and
 			hands each of them the values its bindings compute.
 			
-			The frames a target pushes carry the same channel values and the same labels as the
-			frames the user's own drill-down pushes, so a target leading into a drill-down the user
+			The frames a target pushes carry the same channel values as the frames the user's own
+			drill-down pushes, and both are named by the label the project drill-down declares for
+			the frame view (projects.view.xml), so a target leading into a drill-down the user
 			already has leaves it untouched.
 			
-			Each view is looked for within the view shown before it, and a view that the drill-down
-			reaches by pushing a frame is named as its own step: the milestone list sits behind the
-			Milestones tile of the project cockpit, so it is a frame after the cockpit frame, and
-			its label is the one that tile pushes with.
+			Each view is looked for within the view shown before it, and a frame the drill-down
+			reaches by pushing it is named as its own step by the id of its <frame> declaration
+			(frame="..."), following the nesting of the declarations: the milestone list sits behind
+			the Milestones tile of the project cockpit, so it is the frame milestones after the frame
+			project. The bindings of such a step name the parameters of the frame; a further binding
+			(the milestone of the milestone list) is written into the frame view, where it selects the
+			row.
 		-->
 		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
 			<instance>
@@ -401,25 +719,19 @@
 						<show view="projects/overview.view.xml">
 							<bind
 								channel="project"
-								expr="m -> $m.container()"
+								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="m -> $m.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
-							view="projects/milestones.view.xml"
-						>
+						<show frame="project">
 							<bind
 								channel="project"
-								expr="m -> $m.container()"
+								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="m -> #('Milestones'@en, 'Meilensteine'@de)"
-							view="projects/milestone-list.view.xml"
-						>
+						<show frame="milestones">
 							<bind
 								channel="project"
-								expr="m -> $m.container()"
+								expr="$object.container()"
 							/>
 							<bind channel="milestone"/>
 						</show>
@@ -428,53 +740,41 @@
 						<show view="projects/overview.view.xml">
 							<bind
 								channel="project"
-								expr="t -> $t.container()"
+								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="t -> $t.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
-							view="projects/milestones.view.xml"
-						>
+						<show frame="project">
 							<bind
 								channel="project"
-								expr="t -> $t.container()"
+								expr="$object.container()"
 							/>
 						</show>
-						<show
-							label-expr="t -> #('Milestones'@en, 'Meilensteine'@de)"
-							view="projects/milestone-list.view.xml"
-						>
+						<show frame="milestones">
 							<bind
 								channel="project"
-								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`).container()"
+								expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`).container()"
 							/>
 							<bind
 								channel="milestone"
-								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
+								expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`)"
 							/>
 						</show>
-						<show
-							label-expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#name`)"
-							view="projects/tickets.view.xml"
-						>
+						<show frame="milestone">
 							<bind
 								channel="milestone"
-								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
+								expr="$object.get(`tl.demo.projectManagement:Ticket#milestone`)"
 							/>
 						</show>
-						<show
-							label-expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
-							view="projects/ticket-detail.view.xml"
-						>
+						<show frame="ticket">
 							<bind channel="ticket"/>
 						</show>
 					</target>
-					<target type="tl.demo.projectManagement:Contributor">
+					<target type="Contacts:PersonContact">
 						<show
 							dialog="true"
-							view="projects/contributor-dialog.view.xml"
+							view="projects/contact-dialog.view.xml"
 						>
-							<bind channel="contributor"/>
+							<bind channel="contact"/>
 						</show>
 					</target>
 					<target type="tl.accounts:Person">
@@ -482,8 +782,8 @@
 							<bind channel="selectedPerson"/>
 						</show>
 						<show
-							label-expr="p -> $p.get(`tl.accounts:Person#name`)"
-							view="demo/tiles-demo/person-detail.view.xml"
+							frame="person"
+							label-expr="$object.get(`tl.accounts:Person#name`)"
 						>
 							<bind channel="person"/>
 						</show>
@@ -563,12 +863,15 @@
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>
 					<stylesheet name="tl-demo-react-css"
-						requires="tl-react-controls-css"
+						requires="tl-design-system-components"
 						resource="/style/tl-demo-react.css"
 					/>
 				</resources>
 			</instance>
 		</config>
+		<!--
+			TL-Script functions of this application, shared by the views calling them.
+		-->
 	</services>
 
 	<configs>
@@ -597,6 +900,10 @@
 		<config config:interface="com.top_logic.layout.view.ViewConfig"
 			login-view="demo-login-page.view.xml"
 		>
+			<title>
+				<en>TopLogic React Demo</en>
+				<de>TopLogic React Demo</de>
+			</title>
 			<!--
 				A second view a URL may load top-level, besides the default view: the document viewer
 				is self-contained, so it shows the same thing in a browser tab of its own as it does

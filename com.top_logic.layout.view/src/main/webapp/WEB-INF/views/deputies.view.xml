@@ -44,7 +44,7 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
-					input="model"
+					inputs="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -62,7 +62,7 @@
 							<de>Geben Sie Ihr Passwort ein, um zu ändern, wer in Ihrem Namen handeln darf.</de>
 						</message>
 					</verify-identity>
-					<confirm expr="group -> #('Grant the selected accounts every right of your account?'@en, 'Den ausgewählten Konten alle Rechte Ihres Kontos einräumen?'@de)"/>
+					<confirm expr="#('Grant the selected accounts every right of your account?'@en, 'Den ausgewählten Konten alle Rechte Ihres Kontos einräumen?'@de)"/>
 					<with-transaction>
 						<commitMessage>
 							<en>Named the deputies of {0}.</en>

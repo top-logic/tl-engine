@@ -44,7 +44,7 @@
 			       <module key="com.top_logic.tool.export.ExportRegistryFactory$Module" value="true"/>
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
 			       <module key="com.top_logic.base.services.InitialRolesManager$Module" value="true" />
-			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
+			       <module key="com.top_logic.util.StartupHooks$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>
 			       <module key="com.top_logic.layout.admin.component.PerformanceMonitor$Module" value="true" />
@@ -65,11 +65,27 @@
 			       <module key="com.top_logic.layout.editor.DynamicComponentService$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.commandhandlers.BookmarkService$Module" value="true"/>
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
-			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
 			       <module key="com.top_logic.model.security.SecurityConfigurationService$Module" value="true"/>
 				</modules>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.util.StartupHooks">
+			<instance class="com.top_logic.util.StartupHooks">
+				<hooks>
+					<hook id="initial-data"
+						on-error="log-error"
+					>
+						<action class="com.top_logic.knowledge.service.db2.InitialDataSetup"/>
+					</hook>
+					<hook id="access-configuration"
+						on-error="log-error"
+					>
+						<action class="com.top_logic.tool.boundsec.config.AccessConfigurationSetup"/>
+					</hook>
+				</hooks>
 			</instance>
 		</config>
 		
@@ -856,6 +872,7 @@
 							<rule class="com.top_logic.tool.execution.RootOnlyExecutabilityRule"/>
 						</executability>
 					</definition>
+					<definition id="RootOnlyInProduction" executability="com.top_logic.tool.execution.RootOnlyInProduction"/>
 					<definition id="ComponentIsVisible" executability="com.top_logic.tool.execution.ComponentIsVisibleRule" />
 					<definition id="InDesignModeExecutable" executability="com.top_logic.tool.execution.InDesignModeExecutable" />
 				</definitions>
@@ -1382,13 +1399,13 @@
 					<handler id="reloadI18N"
 						class="com.top_logic.layout.debug.ReloadI18NCommand"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_I18N_RELOAD22"
 					/>
 					<handler id="reloadTheme"
 						class="com.top_logic.layout.debug.ReloadThemeCommand"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_THEME_RELOAD22"
 						resourceKey="debug.button.reloadTheme"
 					/>
@@ -1397,7 +1414,7 @@
 						activeImage="theme:IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
 						class="com.top_logic.layout.debug.ToggleShowKeyCommand"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_I18N_DEBUG22"
 						resourceKey="debug.button.toggleAlwaysShowKeys"
 					/>
@@ -1406,7 +1423,7 @@
 						activeImage="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
 						class="com.top_logic.layout.debug.ToggleShowAllCommands"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS"
 						resourceKey="debug.button.toggleShowAllCommands"
 					/>
@@ -1440,7 +1457,7 @@
 					<handler id="exportLayout" class="com.top_logic.layout.editor.commands.ExportLayoutCommandHandler"
 						image="theme:layouts.themes.default.toolrow.ExportLayout"
 						clique="layout-editor-reset"
-						executability="IDEOnly, RootOnly"
+						executability="IDEOnly, RootOnlyInProduction"
 					/>
 					<handler id="resetLayoutConfig" class="com.top_logic.layout.editor.commands.ResetLayoutConfiguration"
 						group="System"
@@ -2104,6 +2121,36 @@
 		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
 			<!-- This feature causes still too many problems and is therefore deactivated until they are solved. -->
 			<display-fields-as-text>false</display-fields-as-text>
+			<annotation-controls>
+				<!--
+					Code first: a code editor module overrides this entry with its editor, and a
+					@MultiLine on the same property gives the rows of the text input used without one.
+				-->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Code">
+					<impl class="com.top_logic.layout.form.values.CodeTextProvider"/>
+				</annotation-control>
+				<!--
+					Html: a WYSIWYG editor module overrides this entry with its editor. Without one,
+					the HTML source is edited as text, with the rows of a @MultiLine on the same property.
+				-->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Html">
+					<impl class="com.top_logic.layout.form.values.HtmlTextProvider"/>
+				</annotation-control>
+				<!-- CommonMark before MultiLine: its text spans several lines, too, and a @MultiLine on the same property gives the rows. -->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.CommonMark">
+					<impl class="com.top_logic.layout.form.values.CommonMarkTextProvider"/>
+				</annotation-control>
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.MultiLine">
+					<impl class="com.top_logic.layout.form.values.MultiLineTextProvider"/>
+				</annotation-control>
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Inline">
+					<impl class="com.top_logic.layout.form.values.edit.editor.InlineItemProvider"/>
+				</annotation-control>
+				<!-- The value of a property that cannot be set is displayed with the labels of its options. -->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.OptionLabels">
+					<impl class="com.top_logic.layout.form.values.edit.editor.OptionLabelsDisplayProvider"/>
+				</annotation-control>
+			</annotation-controls>
 			<customizations>
 				<type name="com.top_logic.basic.util.ResKey">
 					<annotations>
@@ -2265,8 +2312,6 @@
 		
 		<config config:interface="com.top_logic.util.monitor.SystemEnvironmentBuilder$GlobalConfig">
 			<protected-alias pattern="(?i)(_PASS|_CRED|_PWD|_API_KEY|_SECRET)[^_]*$" />
-			<!-- Attention: Do not use %TRANSLATION_API_KEY%, because this will be replaced by the value! -->
-			<protected-alias pattern="TRANSLATION_API_KEY" />
 		</config>
 
 		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">

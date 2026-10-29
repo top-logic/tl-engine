@@ -3,11 +3,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import type { DatePickerStateJson } from 'tl-react-bridge';
 import MuiDatePickerAdapter, { fromIso, toIso } from './MuiDatePickerAdapter';
 import { CONTROL_ID, matchDesktopPointer, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The value of a field that is not editable is drawn by the part FieldValue.
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the ISO form of the value. */
 const ARG_VALUE = 'value';
@@ -44,26 +48,40 @@ describe('ISO form of a TLDatePicker value', () => {
   it('reads and writes a date', () => {
     const date = fromIso('date', '2026-06-01')!;
     expect([date.year(), date.month(), date.date(), date.hour()]).toEqual([2026, 5, 1, 0]);
-    expect(toIso('date', date)).toBe('2026-06-01');
+    expect(toIso('date', 'minutes', date)).toBe('2026-06-01');
+    expect(toIso('date', 'seconds', date)).toBe('2026-06-01');
   });
 
   it('reads and writes a time of day', () => {
     const time = fromIso('time', '14:30')!;
     expect([time.hour(), time.minute()]).toEqual([14, 30]);
-    expect(toIso('time', time)).toBe('14:30');
+    expect(toIso('time', 'minutes', time)).toBe('14:30');
   });
 
   it('reads a local date-time without a zone and writes it to the minute', () => {
     const dateTime = fromIso('datetime-local', '2026-06-01T14:30:15')!;
     expect([dateTime.date(), dateTime.hour(), dateTime.minute()]).toEqual([1, 14, 30]);
-    expect(toIso('datetime-local', dateTime)).toBe('2026-06-01T14:30');
+    expect(toIso('datetime-local', 'minutes', dateTime)).toBe('2026-06-01T14:30');
+  });
+
+  it('reads and writes a time of day to the second for the precision of seconds', () => {
+    const time = fromIso('time', '14:30:15')!;
+    expect([time.hour(), time.minute(), time.second()]).toEqual([14, 30, 15]);
+    expect(toIso('time', 'seconds', time)).toBe('14:30:15');
+    expect(toIso('time', 'minutes', time)).toBe('14:30');
+  });
+
+  it('writes a local date-time to the second for the precision of seconds', () => {
+    const dateTime = fromIso('datetime-local', '2026-06-01T14:30:15')!;
+    expect(dateTime.second()).toBe(15);
+    expect(toIso('datetime-local', 'seconds', dateTime)).toBe('2026-06-01T14:30:15');
   });
 
   it('reads no value and an invalid text as null', () => {
     expect(fromIso('date', undefined)).toBeNull();
     expect(fromIso('date', '')).toBeNull();
     expect(fromIso('date', 'kein Datum')).toBeNull();
-    expect(toIso('date', null)).toBeNull();
+    expect(toIso('date', 'minutes', null)).toBeNull();
   });
 });
 
@@ -107,6 +125,29 @@ describe('TLDatePicker as MUI X picker', () => {
     expect(sent.mock.calls).toEqual([changedTo('14:31')]);
   });
 
+  it('edits the seconds of a time of day with the precision of seconds', async () => {
+    const sent = mountDate({ value: '14:30:15', inputType: 'time', precision: 'seconds' });
+
+    await stepUp('Seconds');
+
+    expect(sent.mock.calls).toEqual([changedTo('14:30:16')]);
+  });
+
+  it('has no seconds section for the precision of minutes', () => {
+    mountDate({ value: '14:30', inputType: 'time', precision: 'minutes' });
+
+    expect(screen.getByRole('spinbutton', { name: 'Minutes' })).toBeTruthy();
+    expect(screen.queryByRole('spinbutton', { name: 'Seconds' })).toBeNull();
+  });
+
+  it('edits the seconds of a date-time with the precision of seconds', async () => {
+    const sent = mountDate({ value: '2026-06-01T14:30:15', inputType: 'datetime-local', precision: 'seconds' });
+
+    await stepUp('Seconds');
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-06-01T14:30:16')]);
+  });
+
   it('sends the ISO form of a changed date-time', async () => {
     const sent = mountDate({ value: '2026-06-01T14:30', inputType: 'datetime-local' });
 
@@ -138,7 +179,10 @@ describe('TLDatePicker as MUI X picker', () => {
     mountDate({ value: '2026-06-01', displayValue: '01.06.2026', editable: false });
 
     expect(screen.queryByRole('group')).toBeNull();
-    expect(document.getElementById(CONTROL_ID)!.textContent).toBe('01.06.2026');
+    const shown = document.getElementById(CONTROL_ID)!;
+    expect(shown.textContent).toBe('01.06.2026');
+    expect(shown.classList).toContain('MuiTypography-body2');
+    expect(shown.classList).not.toContain('tl-field-value');
   });
 
   it('sends nothing while disabled', async () => {

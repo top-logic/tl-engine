@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Reloadable;
@@ -21,8 +20,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -36,6 +37,7 @@ import com.top_logic.util.TLContextManager;
  */
 @ServiceDependencies({ ExportRegistryFactory.Module.class, PersonManager.Module.class })
 @Label("Export queue manager")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueueManager.Config> implements Reloadable {
 
 	private static final String TECHNOLOGY = "technology";
@@ -250,9 +252,8 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 		public void inContext() {
 			Export theExport = this.lookupQueue();
 			if (theExport != null) {
-				TLSubSessionContext session = TLContextManager.getSubSession();
 				do {
-					this.processExport(session, theExport);
+					this.processExport(theExport);
 					if (shouldStop) {
 						break;
 					}
@@ -280,27 +281,12 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 			}
 		}
 
-		private void processExport(TLSubSessionContext sessionContext, Export anExport) {
-			String systemId = null;
-			Person oldPerson = null;
+		private void processExport(Export anExport) {
 			Person exportPerson = anExport.getPerson();
-			boolean changePerson = exportPerson != null;
-			if (changePerson) {
-				oldPerson = sessionContext.getPerson();
-				if (oldPerson == null) {
-					systemId = sessionContext.getContextId();
-				}
-				sessionContext.setPerson(exportPerson);
-			}
-			try {
+			if (exportPerson != null) {
+				TLContextManager.inPersonContext(exportPerson, () -> inUserContext(anExport));
+			} else {
 				inUserContext(anExport);
-			} finally {
-				if (changePerson) {
-					sessionContext.setPerson(oldPerson);
-					if (oldPerson == null) {
-						sessionContext.setContextId(systemId);
-					}
-				}
 			}
 		}
 

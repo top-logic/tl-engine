@@ -5,19 +5,25 @@
 	on the row carrying the keyboard cursor, or its chevron button - pushes the project's cockpit,
 	announced with the project's name.
 	
-	The toolbar creates a project and deletes the selected one; the table observes projects, so
-	both are reflected in the rows without a reload. A project being created has its creator as
-	administrator, so the creator sees and administers it once it is created.
+	The toolbar creates a project, deletes the selected one and creates a PowerPoint status report of
+	the selected one; the table observes projects, so creation and deletion are reflected in the rows
+	without a reload. A project being created has its creator as administrator, so the creator sees
+	and administers it once it is created.
 	
-	Above the table, a new budget for the selected project is applied in place: each edit the user
-	finishes - Enter, or leaving the input after a change - stores the entered budget
-	(submit-on="change"), which the budget column then shows. A negative budget is refused with an
-	error message.
+	Above the table, a new budget for the selected project is applied in place. The budget channel is
+	initialized from the selected project (init over the input project): the field shows the stored
+	budget of the selected project and follows the selection. Each edit the user finishes - Enter,
+	or leaving the input after a change - stores the entered budget (submit-on="change"), which the
+	budget column and, through the observation of the project, the field then show. A negative
+	budget is refused with an error message.
 -->
 <view>
 	<channels>
 		<channel name="project"/>
-		<channel name="budget"/>
+		<channel name="budget"
+			init="if($project == null, null, $project.get(`tl.demo.projectManagement:ProjectScope#budget`))"
+			inputs="project"
+		/>
 	</channels>
 
 	<panel>
@@ -34,21 +40,24 @@
 					<en>New Project</en>
 					<de>Neues Projekt</de>
 				</label>
-				<create-transient type="tl.demo.projectManagement:ProjectScope"/>
-				<execute-script function="p -> { $p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()]); $p; }"/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-project-scope.view.xml"
-				>
-					<bind
-						channel="selection"
-						to="project"
-					/>
-				</open-dialog>
+				<create-transient type="tl.demo.projectManagement:ProjectScope">
+					<with-result as="p">
+						<execute-script function="$p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()])"/>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-project-scope.view.xml"
+						>
+							<bind
+								channel="selection"
+								to="project"
+							/>
+						</open-dialog>
+					</with-result>
+				</create-transient>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-trash"
-				input="project"
+				inputs="project"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -58,9 +67,186 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="p -> #('Delete project {0}?'@en, 'Projekt {0} löschen?'@de).fill($p.get(`tl.demo.projectManagement:ProjectScope#name`))"/>
+				<confirm expr="#('Delete project {0}?'@en, 'Projekt {0} löschen?'@de).fill($project.get(`tl.demo.projectManagement:ProjectScope#name`))"/>
 				<delete-object/>
-				<write-channel name="project"/>
+				<write-channel name="project"
+					clear="true"
+				/>
+			</generic-command>
+			<!--
+				A PowerPoint status report of the selected project: TL-Script builds the slides from the
+				project's milestones and tickets with the ppt functions and creates the presentation with
+				pptDeck() on the project's report template (a blank 16:9 presentation if it has none);
+				<download/> hands the file to the browser. A ticket counts as done when its milestone is
+				approved; the urgency of an open ticket follows from the due date of its milestone. The open
+				tickets are listed in the order of their number within the project; after the list, each open
+				ticket has a slide of its own with its description, converted from HTML with pptHtml() and
+				continued on further slides when it is long.
+			-->
+			<generic-command
+				image="css:bi bi-file-earmark-slides"
+				inputs="project as p"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Status report (PowerPoint)</en>
+					<de>Statusbericht (PowerPoint)</de>
+				</label>
+				<tooltip>
+					<en>Creates a PowerPoint presentation with key figures, schedule and open tickets of the selected project.</en>
+					<de>Erzeugt eine PowerPoint-Präsentation mit Kennzahlen, Zeitplan und offenen Tickets des gewählten Projekts.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<execute-script>
+					<function><![CDATA[
+						{
+							name = $p.get(`tl.demo.projectManagement:ProjectScope#name`);
+							milestones = $p.get(`tl.demo.projectManagement:ProjectScope#milestones`);
+							tickets = $p.get(`tl.demo.projectManagement:ProjectScope#tickets`);
+							milestoneOf = t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`);
+							dueOf = m -> if($m == null, null, $m.get(`tl.demo.projectManagement:Milestone#dueDate`));
+							isApproved = m -> $m != null && $m.get(`tl.demo.projectManagement:Milestone#approved`) == true;
+							nameOf = m -> if($m == null, "–", $m.get(`tl.demo.projectManagement:Milestone#name`));
+							formatDate = d -> if($d == null, "–", dateFormat("dd.MM.yyyy").format($d));
+
+							// A ticket is done, when its milestone is approved.
+							open = $tickets.filter(t -> !$isApproved($milestoneOf($t)));
+							done = $tickets.filter(t -> $isApproved($milestoneOf($t)));
+							approved = $milestones.filter(m -> $isApproved($m));
+							next = $milestones.filter(m -> !$isApproved($m)).firstElement();
+
+							// The urgency of an open ticket follows from the due date of its milestone.
+							urgencyOf = t -> {
+								due = $dueOf($milestoneOf($t));
+								switch {
+									$due == null: ["none", #('no date'@en, 'ohne Termin'@de).localize()];
+									$due < today(): ["high", #('overdue'@en, 'überfällig'@de).localize()];
+									$due < today().toSystemCalendar().withDayAdded(14).toDate(): ["medium", #('due soon'@en, 'bald fällig'@de).localize()];
+									default: ["low", #('on schedule'@en, 'im Plan'@de).localize()];
+								}
+							};
+							urgency = t -> {
+								level = $urgencyOf($t);
+								pptRating($level[0], $level[1]);
+							};
+
+							header = h -> pptCell($h, fill: "topicA", color: "inverse", bold: true);
+							numberOf = t -> $t.get(`tl.demo.projectManagement:Ticket#number`);
+							labelOf = t -> if($numberOf($t) == null, "–", toString("#", $numberOf($t)));
+							assigneeOf = t -> {
+								assignee = $t.get(`tl.demo.projectManagement:Ticket#assignee`);
+								if($assignee == null, "–", $assignee.get(`Contacts:PersonContact#fullName`));
+							};
+							openByNumber = $open.sort(comparator(t -> $numberOf($t)));
+							ticketRows = $openByNumber.map(t -> [
+								$labelOf($t),
+								$t.get(`tl.demo.projectManagement:Ticket#title`),
+								$nameOf($milestoneOf($t)),
+								$formatDate($dueOf($milestoneOf($t))),
+								$assigneeOf($t),
+								$urgency($t)
+							]);
+
+							titleSlide = pptTitle($name, #('Status report of {0}'@en, 'Statusbericht vom {0}'@de).fill($formatDate(today())).localize(),
+								notes: #('Status of the project at a glance: key figures, schedule and open tickets.'@en,
+									'Der Stand des Projekts im Überblick: Kennzahlen, Zeitplan und offene Tickets.'@de).localize());
+
+							agendaSlide = pptAgenda([
+									#('Key figures'@en, 'Kennzahlen'@de).localize(),
+									#('Schedule'@en, 'Zeitplan'@de).localize(),
+									#('Tickets per milestone'@en, 'Tickets je Meilenstein'@de).localize(),
+									#('Open tickets'@en, 'Offene Tickets'@de).localize()
+								],
+								notes: #('The report follows these four topics.'@en, 'Der Bericht folgt diesen vier Themen.'@de).localize());
+
+							figuresSlide = pptContent(#('Key figures'@en, 'Kennzahlen'@de).localize(),
+								$p.get(`tl.demo.projectManagement:ProjectScope#description`), [
+									pptRow([
+										pptStat($open.size(), #('open tickets'@en, 'offene Tickets'@de).localize(),
+											#('in milestones not yet approved'@en, 'in nicht abgenommenen Meilensteinen'@de).localize(), role: "risk"),
+										pptStat($done.size(), #('done tickets'@en, 'erledigte Tickets'@de).localize(),
+											#('in approved milestones'@en, 'in abgenommenen Meilensteinen'@de).localize(), role: "done"),
+										pptStat($milestones.size(), #('milestones'@en, 'Meilensteine'@de).localize(),
+											#('{0} of them approved'@en, 'davon {0} abgenommen'@de).fill($approved.size()).localize(), role: "topicA")
+									], height: "auto"),
+									pptBanner(if($open.isEmpty(),
+										#('All tickets are done.'@en, 'Alle Tickets sind erledigt.'@de).localize(),
+										#('{0} of {1} tickets are still open.'@en, '{0} von {1} Tickets sind noch offen.'@de)
+											.fill($open.size(), $tickets.size()).localize()),
+										role: if($open.isEmpty(), "done", "topicA"))
+								],
+								notes: #('Open and done tickets as well as the milestones of the project. A ticket counts as done, when its milestone is approved.'@en,
+									'Offene und erledigte Tickets sowie die Meilensteine des Projekts. Ein Ticket gilt als erledigt, wenn sein Meilenstein abgenommen ist.'@de).localize());
+
+							scheduleSlide = pptContent(#('Schedule'@en, 'Zeitplan'@de).localize(), null,
+								if($milestones.isEmpty(),
+									pptBanner(#('The project has no milestones yet.'@en, 'Das Projekt hat noch keine Meilensteine.'@de).localize(), role: "muted"),
+									[
+										pptTimeline($milestones.map(m -> [
+											$formatDate($dueOf($m)),
+											$nameOf($m),
+											if($isApproved($m), #('approved'@en, 'abgenommen'@de).localize(), #('open'@en, 'offen'@de).localize()),
+											if($isApproved($m), "done", "topicA")
+										])),
+										if($next == null,
+											pptBanner(#('All milestones are approved.'@en, 'Alle Meilensteine sind abgenommen.'@de).localize(), role: "done"),
+											pptBanner(#('Next milestone: {0}, due {1}'@en, 'Nächster Meilenstein: {0}, fällig {1}'@de)
+												.fill($nameOf($next), $formatDate($dueOf($next))).localize()))
+									]),
+								notes: #('The milestones in their planned order with their due date; green milestones are approved.'@en,
+									'Die Meilensteine in ihrer geplanten Reihenfolge mit Fälligkeitsdatum; grüne Meilensteine sind abgenommen.'@de).localize());
+
+							chartSlide = pptContent(#('Tickets per milestone'@en, 'Tickets je Meilenstein'@de).localize(), null,
+								if($milestones.isEmpty(),
+									pptBanner(#('The project has no milestones yet.'@en, 'Das Projekt hat noch keine Meilensteine.'@de).localize(), role: "muted"),
+									pptColumnChart($milestones.map(m -> $nameOf($m)), [
+										pptSeries(#('open'@en, 'offen'@de).localize(),
+											$milestones.map(m -> $open.filter(t -> $milestoneOf($t) == $m).size()), "risk"),
+										pptSeries(#('done'@en, 'erledigt'@de).localize(),
+											$milestones.map(m -> $done.filter(t -> $milestoneOf($t) == $m).size()), "done")
+									], stacked: true)),
+								notes: #('The chart is a real PowerPoint chart; its data can be edited in PowerPoint.'@en,
+									'Das Diagramm ist ein echtes PowerPoint-Diagramm; seine Daten lassen sich in PowerPoint bearbeiten.'@de).localize());
+
+							ticketSlide = pptContent(#('Open tickets'@en, 'Offene Tickets'@de).localize(), null,
+								if($open.isEmpty(),
+									pptBanner(#('There are no open tickets.'@en, 'Es gibt keine offenen Tickets.'@de).localize(), role: "done"),
+									pptTable(concat([[
+											$header(#('No.'@en, 'Nr.'@de).localize()),
+											$header(#('Title'@en, 'Titel'@de).localize()),
+											$header(#('Milestone'@en, 'Meilenstein'@de).localize()),
+											$header(#('Due'@en, 'Fällig'@de).localize()),
+											$header(#('Assignee'@en, 'Bearbeiter'@de).localize()),
+											$header(#('Urgency'@en, 'Dringlichkeit'@de).localize())
+										]], $ticketRows),
+										headerRows: 1, columnWeights: [1, 6, 2, 1.6, 2.4, 2])),
+								notes: #('The open tickets with the due date of their milestone. A long list continues on further slides.'@en,
+									'Die offenen Tickets mit dem Fälligkeitsdatum ihres Meilensteins. Eine lange Liste wird auf weiteren Folien fortgesetzt.'@de).localize());
+
+							// One slide per open ticket with its description; a long description continues on further slides.
+							detailSlides = $openByNumber.map(t -> {
+								description = $t.get(`tl.demo.projectManagement:Ticket#description`);
+								pptContent(toString($labelOf($t), " ", $t.get(`tl.demo.projectManagement:Ticket#title`)),
+									toString($nameOf($milestoneOf($t)), " · ", $assigneeOf($t)),
+									if($description == null || toString($description).trim().isEmpty(),
+										pptTextBox(#('No description.'@en, 'Keine Beschreibung.'@de).localize(), color: "muted", italic: true),
+										pptHtml($description)),
+									notes: #('Due: {0}, {1}.'@en, 'Fällig: {0}, {1}.'@de)
+										.fill($formatDate($dueOf($milestoneOf($t))), $urgencyOf($t)[1]).localize());
+							});
+
+							pptDeck($p.get(`tl.demo.projectManagement:ProjectScope#reportTemplate`),
+								concat([$titleSlide, $agendaSlide, $figuresSlide, $scheduleSlide, $chartSlide, $ticketSlide], $detailSlides),
+								footer: #('Status report {0}'@en, 'Statusbericht {0}'@de).fill($name).localize(),
+								name: toString($name, ".pptx"))
+						}
+					]]></function>
+					<with-result>
+						<download/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 		</commands>
 		<stack direction="column">
@@ -76,7 +262,7 @@
 					</label>
 					<on-submit>
 						<with-transaction>
-							<execute-script function="p -> b -> if($p == null, null, if($b != null &amp;&amp; $b &lt; 0, throw(#('A budget cannot be negative.'@en, 'Ein Budget kann nicht negativ sein.'@de)), $p.set(`tl.demo.projectManagement:ProjectScope#budget`, $b)))">
+							<execute-script function="if($project == null, null, if($value != null &amp;&amp; $value &lt; 0, throw(#('A budget cannot be negative.'@en, 'Ein Budget kann nicht negativ sein.'@de)), $project.set(`tl.demo.projectManagement:ProjectScope#budget`, $value)))">
 								<inputs>
 									<input channel="project"/>
 								</inputs>
@@ -98,13 +284,8 @@
 				<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
 				<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
-					view="projects/milestones.view.xml"
-				>
-					<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-						expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
-						inputs="project"
-					/>
-				</on-activate>
+					frame="project"
+				/>
 			</table>
 		</stack>
 	</panel>

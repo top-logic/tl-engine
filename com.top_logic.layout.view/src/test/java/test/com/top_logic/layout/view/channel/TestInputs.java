@@ -22,6 +22,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.CommaSeparatedInputRefs;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.Inputs;
 
 /**
@@ -50,8 +52,8 @@ public class TestInputs extends TestCase {
 	 * Tests that both notations yield the same references.
 	 */
 	public void testNotationsAgree() throws Exception {
-		List<ChannelRef> fromAttribute = parse("<inputs-config inputs='a,b,c'/>").getInputs();
-		List<ChannelRef> fromElements = parse(
+		List<InputRef> fromAttribute = parse("<inputs-config inputs='a,b,c'/>").getInputs();
+		List<InputRef> fromElements = parse(
 			"<inputs-config>"
 				+ "<inputs><input channel='a'/><input channel='b'/><input channel='c'/></inputs>"
 				+ "</inputs-config>").getInputs();
@@ -87,8 +89,26 @@ public class TestInputs extends TestCase {
 		}
 	}
 
-	private static List<ChannelRef> refs(String... names) {
-		return List.of(names).stream().map(ChannelRef::new).toList();
+	/**
+	 * Tests that an input renamed with {@value CommaSeparatedInputRefs#AS} is read in both
+	 * notations and names its variable.
+	 */
+	public void testRenamedInput() throws Exception {
+		List<InputRef> expected =
+			List.of(new InputRef(new ChannelRef("selection"), "ticket"), new InputRef(new ChannelRef("b")));
+		List<InputRef> fromAttribute = parse("<inputs-config inputs='selection as ticket, b'/>").getInputs();
+		List<InputRef> fromElements = parse(
+			"<inputs-config>"
+				+ "<inputs><input channel='selection' as='ticket'/><input channel='b'/></inputs>"
+				+ "</inputs-config>").getInputs();
+
+		assertEquals(expected, fromAttribute);
+		assertEquals(expected, fromElements);
+		assertEquals(List.of("ticket", "b"), InputRef.names(fromAttribute));
+	}
+
+	private static List<InputRef> refs(String... names) {
+		return List.of(names).stream().map(name -> new InputRef(new ChannelRef(name))).toList();
 	}
 
 	private static Inputs parse(String xml) throws ConfigurationException {

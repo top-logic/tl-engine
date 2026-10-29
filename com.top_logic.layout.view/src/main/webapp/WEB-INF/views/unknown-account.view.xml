@@ -20,7 +20,7 @@
 		<derived-channel name="message"
 			inputs="login"
 		>
-			<expr><![CDATA[login -> if($login == null || $login.isEmpty(),
+			<expr><![CDATA[if($login == null || $login.isEmpty(),
 	#"class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_MESSAGE",
 	#"class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_MESSAGE__LOGIN_NAME".fill($login))]]></expr>
 		</derived-channel>

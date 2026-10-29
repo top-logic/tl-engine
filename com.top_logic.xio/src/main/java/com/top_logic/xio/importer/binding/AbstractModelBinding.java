@@ -5,6 +5,7 @@
  */
 package com.top_logic.xio.importer.binding;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -17,9 +18,12 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
+import com.top_logic.xio.importer.I18NConstants;
 import com.top_logic.xio.importer.handlers.ImportPart;
 
 /**
@@ -126,10 +130,24 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	 */
 	protected abstract TLObject createObject(TLClass type);
 
+	/**
+	 * Adds the given element to the given multiple reference, if it is not yet contained.
+	 *
+	 * <p>
+	 * Linking is idempotent: An object that is imported multiple times (e.g. an object that joins a
+	 * duplicate) is linked only once. Membership is checked with
+	 * {@link TLObject#tContains(TLStructuredTypePart, Object)}, which does not need to read the
+	 * whole reference.
+	 * </p>
+	 */
 	@Override
 	public void addValue(ImportPart handler, Object obj, String part, Object element) {
 		TLObject self = (TLObject) obj;
 		TLStructuredTypePart referencePart = self.tType().getPartOrFail(part);
+		if (self.tContains(referencePart, element)) {
+			return;
+		}
+		checkNotContainedElsewhere(self, referencePart, element);
 		self.tAdd(referencePart, element);
 	}
 
@@ -175,7 +193,58 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	protected void setValue(Object obj, String partName, Object value) {
 		TLObject self = (TLObject) obj;
 		TLStructuredTypePart part = self.tType().getPartOrFail(partName);
+		if (value instanceof Collection<?> collection) {
+			for (Object element : collection) {
+				checkNotContainedElsewhere(self, part, element);
+			}
+		} else {
+			checkNotContainedElsewhere(self, part, value);
+		}
 		self.tUpdate(part, value);
+	}
+
+	/**
+	 * Rejects storing the given value into a composite reference, if the value is already part of
+	 * another container.
+	 *
+	 * <p>
+	 * An object can be part of at most one container. Storing an object that is already contained
+	 * in another container (or in the same container through another composite reference) into a
+	 * composite reference would make it part of two containers. Storing it again into the container
+	 * and reference that already holds it is not a conflict, nor is storing it into a composite
+	 * reference of the container it was created in (a container known without a reference).
+	 * </p>
+	 *
+	 * @param container
+	 *        The object whose part receives the value.
+	 * @param part
+	 *        The part receiving the value. Nothing is checked, if it is not a composite
+	 *        {@link TLReference}.
+	 * @param value
+	 *        The value to store. Nothing is checked, if it is not a {@link TLObject}.
+	 * @throws TopLogicException
+	 *         If the value is already part of another container.
+	 */
+	private static void checkNotContainedElsewhere(TLObject container, TLStructuredTypePart part, Object value) {
+		if (!(part instanceof TLReference reference) || !reference.isComposite()) {
+			return;
+		}
+		if (!(value instanceof TLObject element)) {
+			return;
+		}
+		TLObject currentContainer = element.tContainer();
+		if (currentContainer == null) {
+			return;
+		}
+		TLReference currentReference = element.tContainerReference();
+		boolean otherReference =
+			currentReference != null && currentReference.getDefinition() != reference.getDefinition();
+		if (currentContainer == container && !otherReference) {
+			return;
+		}
+		throw new TopLogicException(
+			I18NConstants.ERROR_OBJECT_ALREADY_CONTAINED__OBJ_CONTAINER_REF_NEW_CONTAINER_NEW_REF.fill(element,
+				currentContainer, currentReference, container, reference));
 	}
 
 }

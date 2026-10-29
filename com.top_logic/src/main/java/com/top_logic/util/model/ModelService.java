@@ -41,8 +41,10 @@ import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
@@ -114,6 +116,7 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	FormatterService.Module.class,
 })
 @Label("Application model")
+@ServiceCategory.Of(ModelCategory.class)
 public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		implements CommitChecker, ModificationListener {
 
@@ -350,7 +353,11 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 				allProblems.add(problem);
 			}
 		};
-		checkConstraints(problems, objectsToCheck);
+
+		// Model integrity must not depend on the read rights of the committing user: e.g. a
+		// constraint reading a derived reference would otherwise see a value filtered for that
+		// user.
+		ThreadContext.withoutSecurityChecks(() -> checkConstraints(problems, objectsToCheck));
 
 		I18NRuntimeException ex = null;
 		for (ResKey message : allProblems) {
@@ -424,11 +431,34 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 
 	private Set<KnowledgeItem> findObjectsToCheck(UpdateEvent event) {
 		Set<KnowledgeItem> result = new LinkedHashSet<>();
-		Collection<KnowledgeItem> createdObjects = event.getCreatedObjects().values();
-		result.addAll(createdObjects);
+		result.addAll(event.getCreatedObjects().values());
 		result.addAll(event.getUpdatedObjects().values());
+		result.addAll(findChangedValueOwners(event));
+		return result;
+	}
+
+	/**
+	 * The objects whose attribute values are changed in the given event by creating, updating, or
+	 * deleting rows other than the objects' own rows.
+	 *
+	 * <p>
+	 * The constraints of these objects are checked in addition to the constraints of the created
+	 * and updated objects in {@link #checkCommit(UpdateEvent)}.
+	 * </p>
+	 *
+	 * <p>
+	 * This implementation reports the source of each created, updated, or deleted
+	 * {@link KnowledgeAssociation}.
+	 * </p>
+	 *
+	 * @param event
+	 *        The changes about to be committed.
+	 * @return The affected objects that are alive after the commit.
+	 */
+	protected Collection<? extends KnowledgeItem> findChangedValueOwners(UpdateEvent event) {
+		Set<KnowledgeItem> result = new LinkedHashSet<>();
 		KnowledgeBase kb = event.getKnowledgeBase();
-		addAssociationSources(kb, result, createdObjects);
+		addAssociationSources(kb, result, event.getCreatedObjects().values());
 		addAssociationSources(kb, result, event.getUpdatedObjects().values());
 
 		if (!event.getDeletedObjectKeys().isEmpty()) {

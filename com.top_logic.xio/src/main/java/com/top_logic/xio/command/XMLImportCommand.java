@@ -48,7 +48,8 @@ import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
@@ -288,7 +289,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 			 * The configured import handler.
 			 */
 			@PropertyEditor(ConfigXMLEditor.class)
-			@ControlProvider(ConfigXMLEditor.CP.class)
+			@Code(language = CodeLanguage.XML)
 			@ItemDisplay(ItemDisplayType.VALUE)
 			@RenderWholeLine
 			@LabelPositioning(LabelPosition.ABOVE)

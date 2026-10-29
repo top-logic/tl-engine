@@ -5,11 +5,13 @@
  */
 package com.top_logic.layout.react.window;
 
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.impl.ModelChangeSummary;
 
 /**
  * The server-side state of a single browser window.
@@ -44,6 +46,13 @@ public class WindowEntry {
 	private final SSEUpdateQueue _queue;
 
 	private volatile GlobalModelEventForwarder _modelScope;
+
+	/**
+	 * Whether the window was torn down and its model scope released.
+	 *
+	 * @see #releaseModelScope()
+	 */
+	private boolean _modelScopeReleased;
 
 	/**
 	 * When the window's page was reported as unloaded, or {@code 0} while it is displayed.
@@ -172,18 +181,61 @@ public class WindowEntry {
 	}
 
 	/**
+	 * The sub-session this window displays, or {@code null} if it displays none.
+	 *
+	 * <p>
+	 * A window displays the sub-session its session context holds under the window's name, once its
+	 * page was served, see {@link SSEUpdateQueue#getWindowSubSession()}. A tree rendered for no
+	 * browser window in a sub-session borrowed from a window - a view rendered headlessly to check
+	 * it - does not make that sub-session one of another window.
+	 * </p>
+	 */
+	public TLSubSessionContext getSubSession() {
+		return _queue.getWindowSubSession();
+	}
+
+	/**
 	 * The {@link ModelScope} this window's controls observe, created on first access.
 	 *
 	 * <p>
 	 * Each window gets its own {@link GlobalModelEventForwarder} with an independent update-chain
 	 * cursor, so events synthesized for one window are not dispatched to another.
 	 * </p>
+	 *
+	 * <p>
+	 * A window whose scope was {@link #releaseModelScope() released} answers a released scope: it
+	 * accepts listeners but delivers no events to them and holds no cursor on the update chain. A
+	 * caller still holding the entry of a torn-down window therefore cannot make it observe the model
+	 * again.
+	 * </p>
 	 */
 	public synchronized ModelScope getOrCreateModelScope() {
 		if (_modelScope == null) {
 			_modelScope = GlobalModelEventForwarder.createForWindow();
+			if (_modelScopeReleased) {
+				_modelScope.release();
+			}
 		}
 		return _modelScope;
+	}
+
+	/**
+	 * Releases the {@link #getOrCreateModelScope() model scope} of this window, which is what a
+	 * torn-down window does.
+	 *
+	 * <p>
+	 * The scope gives up its cursor on the update chain of the knowledge base, so that no commit made
+	 * after the teardown is kept in memory on behalf of this window, whoever still references the
+	 * scope. A released scope delivers no events anymore. Safe to call for a window that never created
+	 * a scope, and more than once.
+	 * </p>
+	 */
+	public synchronized void releaseModelScope() {
+		_modelScopeReleased = true;
+		GlobalModelEventForwarder forwarder = _modelScope;
+		if (forwarder != null) {
+			forwarder.release();
+		}
 	}
 
 	/**
@@ -194,6 +246,24 @@ public class WindowEntry {
 		if (forwarder != null) {
 			forwarder.synthesizeModelEvents();
 		}
+	}
+
+	/**
+	 * Whether the summarized change reaches a listener of this window's
+	 * {@link #getOrCreateModelScope() model scope}.
+	 *
+	 * <p>
+	 * A window that has not created its scope observes nothing and is not affected; the scope is not
+	 * created by asking. May be called from any thread, see
+	 * {@link GlobalModelEventForwarder#isAffectedBy(ModelChangeSummary)}.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change built with {@link GlobalModelEventForwarder#configuredSettings()}.
+	 */
+	public boolean isAffectedBy(ModelChangeSummary change) {
+		GlobalModelEventForwarder forwarder = _modelScope;
+		return forwarder != null && forwarder.isAffectedBy(change);
 	}
 
 	/**

@@ -41,16 +41,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_PASSWORD_CHANGE_UNSUPPORTED;
 
 	/**
-	 * @en Scope
-	 */
-	public static ResKey MATRIX_SCOPE_COLUMN;
-
-	/**
-	 * @en Command group
-	 */
-	public static ResKey MATRIX_GROUP_COLUMN;
-
-	/**
 	 * @en Type
 	 */
 	public static ResKey COVERAGE_COLUMN_TYPE;
@@ -96,10 +86,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_RULE_KIND_ROLE_RULE;
 
 	/**
-	 * @en The rule "{0}" is defined by the base configuration. It can be overridden by a rule of
-	 *     the same id, but not removed.
+	 * @en New
 	 */
-	public static ResKey1 ERROR_BASE_RULE_NOT_REMOVABLE__ID;
+	public static ResKey COVERAGE_RULE_STATE_NEW;
+
+	/**
+	 * @en Changed
+	 */
+	public static ResKey COVERAGE_RULE_STATE_CHANGED;
+
+	/**
+	 * @en Deleted
+	 */
+	public static ResKey COVERAGE_RULE_STATE_DELETED;
 
 	/**
 	 * @en Please select the type to edit the access definition of.
@@ -127,24 +126,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_UNKNOWN_ROLE_RULE__ID;
 
 	/**
-	 * @en Please enter an id naming the rule.
-	 */
-	public static ResKey ERROR_MISSING_RULE_ID;
-
-	/**
-	 * @en Please select the type the rule applies to.
-	 */
-	public static ResKey ERROR_MISSING_RULE_TYPE;
-
-	/**
 	 * @en Please enter at least one step leading to the role parent.
 	 */
 	public static ResKey ERROR_MISSING_RULE_PATH;
-
-	/**
-	 * @en Please select at least one role the rule grants.
-	 */
-	public static ResKey ERROR_MISSING_RULE_ROLE;
 
 	/**
 	 * @en There are no access rights to store.
@@ -174,8 +158,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 
 	/**
-	 * @en No read grant: no role is granted the read operation on the type, so its objects are
-	 *     inaccessible to every user.
+	 * @en No read grant: no role is granted any operation on the type or on one of its attributes,
+	 *     so its objects are inaccessible to every user.
 	 */
 	public static ResKey COVERAGE_PROBLEM_NO_READ_GRANT;
 
@@ -210,8 +194,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_SOLUTION_MARK_INTERNAL;
 
 	/**
-	 * @en Grant the read operation to a role on the type or on its module ("Access rights…",
-	 *     "Module access rights…").
+	 * @en Grant the read operation to a role on the type or one of its attributes, or on its module
+	 *     ("Access rights…", "Module access rights…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_READ_GRANT;
 
@@ -244,6 +228,70 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     ("Access rights…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT;
+
+	/**
+	 * @en Ungranted operation: the operation "{0}" is declared for the type, but no role holds it
+	 *     there, so every check of it on an object of the type is refused.
+	 */
+	public static ResKey1 COVERAGE_PROBLEM_UNGRANTED_OPERATION__OPERATION;
+
+	/**
+	 * @en Grant the operation to a role on the type ("Grants" tab), or declare it implied by an
+	 *     operation the roles hold ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_GRANT_OPERATION;
+
+	/**
+	 * @en Inapplicable operation: the operation "{0}" does not apply to the type, but {1} check it
+	 *     on an object of the type, so the check is refused for every user.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_INAPPLICABLE_OPERATION__OPERATION_USERS;
+
+	/**
+	 * @en Declare the operation for the type, one of its generalizations or its module
+	 *     ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_DECLARE_OPERATION;
+
+	/**
+	 * @en Unknown operation: the operation "{0}" checked by {1} is no registered command group.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_UNKNOWN_OPERATION__OPERATION_USERS;
+
+	/**
+	 * @en Register the command group in the configuration of the command group registry.
+	 */
+	public static ResKey COVERAGE_SOLUTION_REGISTER_OPERATION;
+
+	/**
+	 * @en Check another operation at the places listed.
+	 */
+	public static ResKey COVERAGE_SOLUTION_CHECK_OTHER_OPERATION;
+
+	/**
+	 * @en Unchecked grant: the operation "{0}" is granted to the roles {1}, but no view, command,
+	 *     form or privileged script checks it - nor an operation it implies - on objects of the
+	 *     type, so the grant has no effect.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES;
+
+	/**
+	 * @en Remove the grant ("Grants" tab, or the access rights configuration of the type, its
+	 *     generalization or its module that grants it).
+	 */
+	public static ResKey COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT;
+
+	/**
+	 * @en Add the check that should use the operation: an access control of a view unit, the
+	 *     access of a command, the edit operation of a form, or the command group of a privileged
+	 *     script.
+	 */
+	public static ResKey COVERAGE_SOLUTION_ADD_CHECK;
+
+	/**
+	 * @en Operation uses without a checked type
+	 */
+	public static ResKey COVERAGE_UNATTACHED_GROUP;
 
 	/**
 	 * @en The type delegates every access decision to its access parent, the object reached through
@@ -305,6 +353,64 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The access definition could not be read from the file "{0}".
 	 */
 	public static ResKey1 ERROR_READING_ACCESS_DEFINITION__FILE;
+
+	/**
+	 * @en The type delegates every access decision to its access parent "{0}", so it has no grants
+	 *     of its own. The grants of the type the access parent leads to decide.
+	 */
+	public static ResKey1 GRANTS_DELEGATED__PARENT;
+
+	/**
+	 * @en The type is excluded from access control or used by the application code only, so it
+	 *     has no grants.
+	 */
+	public static ResKey GRANTS_EXEMPT;
+
+	/**
+	 * @en Checked on objects of the type by: {0}
+	 */
+	public static ResKey1 GRANTS_CHECKED_BY__USERS;
+
+	/**
+	 * @en Checked on objects whose type is not declared by: {0}
+	 */
+	public static ResKey1 GRANTS_UNDECLARED__USERS;
+
+	/**
+	 * @en No view, command or privileged script of the application checks the operation on
+	 *     objects of the type.
+	 */
+	public static ResKey GRANTS_NOT_CHECKED;
+
+	/**
+	 * @en Held through "{0}", which implies it. Change the grant of that operation.
+	 */
+	public static ResKey1 GRANTS_IMPLIED__OPERATIONS;
+
+	/**
+	 * @en Held through "{0}" on the attributes {1}, which implies it. Change the grants of these
+	 *     attributes.
+	 */
+	public static ResKey2 GRANTS_IMPLIED_BY_ATTRIBUTES__OPERATION_ATTRIBUTES;
+
+	/**
+	 * @en Not restricted: the rights on the object decide. Granting the operation to a role
+	 *     restricts the attribute to the roles it is granted to; revoking it from the last of them
+	 *     lifts the restriction again.
+	 */
+	public static ResKey GRANTS_UNRESTRICTED;
+
+	/**
+	 * @en Stored, but not yet in effect: the change takes effect with "Apply configuration".
+	 */
+	public static ResKey GRANTS_PENDING;
+
+	/**
+	 * @en No rule assigns this role on objects of the type, and it is assigned to none of them
+	 *     directly, so its grants never take effect. Revoke them, or define a rule assigning the
+	 *     role ("Coverage" tab).
+	 */
+	public static ResKey GRANTS_INEFFECTIVE;
 
 	static {
 		initConstants(I18NConstants.class);

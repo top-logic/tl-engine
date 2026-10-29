@@ -156,6 +156,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 
 	private boolean _noFilter = false;
 
+	private boolean _freeEntry = false;
+
 	private String _emptyOptionLabel = "";
 
 	/**
@@ -300,6 +302,22 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	}
 
 	@Override
+	public final boolean isFreeEntry() {
+		return _freeEntry;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setFreeEntry(boolean value) {
+		internalSetFreeEntry(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isFreeEntry()} without chain call utility. */
+	protected final void internalSetFreeEntry(boolean value) {
+		_freeEntry = value;
+	}
+
+	@Override
 	public final String getEmptyOptionLabel() {
 		return _emptyOptionLabel;
 	}
@@ -388,6 +406,12 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.DropdownSelectState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;
@@ -425,6 +449,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 		out.value(isMultiSelect());
 		out.name(NO_FILTER__PROP);
 		out.value(isNoFilter());
+		out.name(FREE_ENTRY__PROP);
+		out.value(isFreeEntry());
 		out.name(EMPTY_OPTION_LABEL__PROP);
 		out.value(getEmptyOptionLabel());
 	}
@@ -448,6 +474,7 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 			case CUSTOM_ORDER__PROP: setCustomOrder(in.nextBoolean()); break;
 			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
 			case NO_FILTER__PROP: setNoFilter(in.nextBoolean()); break;
+			case FREE_ENTRY__PROP: setFreeEntry(in.nextBoolean()); break;
 			case EMPTY_OPTION_LABEL__PROP: setEmptyOptionLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}

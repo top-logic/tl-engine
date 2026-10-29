@@ -100,6 +100,8 @@ public class TestTableViewDragDrop extends TestCase {
 	/** State key of the announced drop modes. */
 	private static final String DROP_MODES = DropSupport.DROP_MODES;
 
+	private static final String DROP_MODES_BY_KIND = DropSupport.DROP_MODES_BY_KIND;
+
 	/** State key telling whether any drag is accepted. */
 	private static final String DROP_ACCEPTS_ANY = "dropAcceptsAny";
 
@@ -644,6 +646,23 @@ public class TestTableViewDragDrop extends TestCase {
 
 		_target.setDropTarget(null);
 		assertEquals("A table accepting no drop announces no mode.", List.of(), _target.clientState(DROP_MODES));
+	}
+
+	/**
+	 * The table also announces the modes for each listed kind - the client splits a row by the modes
+	 * of the kind it drags. A target answering per kind with its defaults announces all its modes for
+	 * every listed kind, and a target accepting any kind lists no kind.
+	 */
+	public void testDropModesAreAnnouncedPerKind() {
+		_announced._acceptedKinds = AcceptedKinds.of(List.of(PERSON));
+		_announced._modes = new LinkedHashSet<>(List.of(DropMode.ORDERED, DropMode.ONTO));
+		_target.refreshDropTarget();
+		assertEquals(Map.of(PERSON, List.of(DropMode.ORDERED.wireName(), DropMode.ONTO.wireName())),
+			_target.clientState(DROP_MODES_BY_KIND));
+
+		_announced._acceptedKinds = AcceptedKinds.ANY;
+		_target.refreshDropTarget();
+		assertEquals(Map.of(), _target.clientState(DROP_MODES_BY_KIND));
 	}
 
 	/**

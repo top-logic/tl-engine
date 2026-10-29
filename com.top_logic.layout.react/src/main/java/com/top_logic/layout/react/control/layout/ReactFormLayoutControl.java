@@ -29,6 +29,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@link #LABEL_POSITION} - {@link LabelPosition#SIDE}, {@link LabelPosition#TOP}, or
  * {@link LabelPosition#AUTO}</li>
  * <li>{@link #READ_ONLY} - whether the form is read-only</li>
+ * <li>{@link #INLINE} - whether the fields are laid out in the grid of the surrounding form</li>
  * <li>{@code children} - child controls (TLFormGroup or TLFormField)</li>
  * </ul>
  */
@@ -47,6 +48,12 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 
 	/** State key telling whether the fields are displayed but cannot be changed. */
 	public static final String READ_ONLY = "readOnly";
+
+	/**
+	 * State key telling whether the fields are laid out in the grid of the surrounding form, see
+	 * {@link #setInline(boolean)}.
+	 */
+	public static final String INLINE = "inline";
 
 	/**
 	 * Creates a form layout with full configuration.
@@ -97,6 +104,24 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 	 */
 	public void setReadOnly(boolean readOnly) {
 		putState(READ_ONLY, readOnly);
+	}
+
+	/**
+	 * Decides whether this layout lays out its fields in the grid of the surrounding form layout.
+	 *
+	 * <p>
+	 * An inline layout has no grid of its own: its fields and groups are placed into the grid of
+	 * the form layout around it, among the fields of that form, and take its label position. The
+	 * fields of a part of a form that is managed as a whole - e.g. the properties of a nested
+	 * configuration - can so be displayed as fields of the surrounding form. Outside a form
+	 * layout, an inline layout behaves as a plain one.
+	 * </p>
+	 *
+	 * @param inline
+	 *        Whether the fields are laid out in the grid of the surrounding form.
+	 */
+	public void setInline(boolean inline) {
+		putState(INLINE, inline);
 	}
 
 }

@@ -25,7 +25,9 @@ import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.dob.IdentifierTypes;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -59,7 +61,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -74,6 +75,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * @author <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 @Label("Reference attribute storage")
+@ServiceCategory.Of(ModelCategory.class)
 public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAttributeUtil.Config> {
 
 	/**
@@ -438,7 +440,7 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 	public static List getIncomingWrappers(TLObject dest, String koType) {
 		ArrayList result = new ArrayList();
 		for (MetaObject referenceType : getReferenceAssociationTypes()) {
-			result.addAll(((AbstractWrapper) dest).getIncomingWrappers(referenceType.getName(), koType));
+			result.addAll(((Wrapper) dest).getIncomingWrappers(referenceType.getName(), koType));
 		}
 		return result;
 	}

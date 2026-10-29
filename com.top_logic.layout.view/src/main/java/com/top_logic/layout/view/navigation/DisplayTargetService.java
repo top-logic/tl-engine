@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,22 +21,33 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelConfig;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ActionScriptVariables;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.model.ModelService;
 
@@ -54,7 +67,7 @@ import com.top_logic.util.model.ModelService;
  *       &lt;target type="demo.tickets:Ticket"&gt;
  *         &lt;show view="milestones.view.xml"&gt;
  *           &lt;bind channel="milestone"
- *             expr="t -&gt; $t.get(`demo.tickets:Ticket#milestone`)"
+ *             expr="$object.get(`demo.tickets:Ticket#milestone`)"
  *           /&gt;
  *         &lt;/show&gt;
  *         &lt;show view="ticket-detail.view.xml"&gt;
@@ -65,6 +78,11 @@ import com.top_logic.util.model.ModelService;
  *   &lt;/instance&gt;
  * &lt;/config&gt;
  * </pre>
+ *
+ * <p>
+ * The scripts of a target - {@link BindConfig#getExpr()} and {@link ShowConfig#getLabelExpr()} -
+ * see the object being displayed as the variable {@value #OBJECT}.
+ * </p>
  *
  * <p>
  * Declaring the targets in one place rather than at the views displaying the objects lets an object
@@ -78,7 +96,19 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@ServiceCategory.Of(UICategory.class)
 public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetService.Config> {
+
+	/**
+	 * Name of the variable holding the object being displayed in the scripts of a target.
+	 */
+	public static final String OBJECT = "object";
+
+	/**
+	 * The scope the scripts of a target are compiled in: the object being displayed, named
+	 * {@value #OBJECT}.
+	 */
+	public static final ActionScope OBJECT_SCOPE = ActionScope.single(OBJECT);
 
 	/**
 	 * Configuration of the {@link DisplayTargetService}.
@@ -112,7 +142,10 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 	/**
 	 * Where the objects of one model type are displayed.
 	 */
-	public interface TargetConfig extends ConfigurationItem {
+	public interface TargetConfig extends ConfigurationItem, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getType()}. */
 		String TYPE = "type";
@@ -156,15 +189,36 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		@DefaultContainer
 		@Mandatory
 		List<ShowConfig> getShows();
+
+		/**
+		 * The scripts of the {@link #getShows() views} see the object being displayed as the
+		 * variable {@value DisplayTargetService#OBJECT}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getShows(), part)) {
+				return OBJECT_SCOPE;
+			}
+			return outer;
+		}
 	}
 
 	/**
 	 * One view displaying the object, and the values its channels receive.
+	 *
+	 * <p>
+	 * The scripts see the object being displayed as the variable {@value DisplayTargetService#OBJECT}
+	 * in a display target; in a {@link ShowViewAction} they see the arguments of
+	 * the action chain, like any script of the chain.
+	 * </p>
 	 */
-	public interface ShowConfig extends ConfigurationItem {
+	public interface ShowConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getView()}. */
 		String VIEW = "view";
+
+		/** Configuration name for {@link #getFrame()}. */
+		String FRAME = "frame";
 
 		/** Configuration name for {@link #isDialog()}. */
 		String DIALOG = "dialog";
@@ -183,10 +237,36 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 
 		/**
 		 * Path of the view file to display, relative to the application's view directory.
+		 *
+		 * <p>
+		 * A view displayed somewhere in the window - or within the view the entry before displayed
+		 * - is revealed where it is displayed. Either this or {@link #getFrame() frame} is given.
+		 * </p>
 		 */
 		@Name(VIEW)
-		@Mandatory
-		String getView();
+		@Nullable
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
+
+		/**
+		 * The {@link com.top_logic.layout.view.tiles.FrameRouteConfig#getId() id} of the frame
+		 * declaration to drill down to, in the
+		 * {@link com.top_logic.layout.view.tiles.TileStackElement tile stack} holding the view the
+		 * entry before displayed.
+		 *
+		 * <p>
+		 * The frames of consecutive entries follow the frame graph of the stack: the first names a
+		 * declaration directly inside the stack, each further one a successor of the declaration
+		 * before. The {@link #getBindings() bindings} name every parameter of the frame and become
+		 * its parameters, so that the frame is the one a push of the user puts on the path; a
+		 * binding naming another channel of the frame view is written into the displayed frame,
+		 * e.g. the row a list frame selects. Either this or {@link #getView() view} is given; a frame
+		 * is not displayed as a {@link #isDialog() dialog}.
+		 * </p>
+		 */
+		@Name(FRAME)
+		@Nullable
+		String getFrame();
 
 		/**
 		 * Whether to display the view as a dialog on top of the current display, rather than within
@@ -209,7 +289,11 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		ResKey getLabel();
 
 		/**
-		 * Function computing the label of the displayed view from the object being displayed.
+		 * Script computing the label of the displayed view from the object being displayed.
+		 *
+		 * <p>
+		 * The script uses the object as a variable without declaring it, see {@link ShowConfig}.
+		 * </p>
 		 *
 		 * <p>
 		 * Takes precedence over the fixed label. A view that the user reaches by drilling down is
@@ -219,6 +303,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		 */
 		@Name(LABEL_EXPR)
 		@Nullable
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getLabelExpr();
 
 		/**
@@ -235,7 +320,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 	/**
 	 * The value one channel of a displayed view receives.
 	 */
-	public interface BindConfig extends ConfigurationItem {
+	public interface BindConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getChannel()}. */
 		String CHANNEL = "channel";
@@ -251,14 +336,16 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		String getChannel();
 
 		/**
-		 * Function computing the channel value from the object being displayed.
+		 * Script computing the channel value from the object being displayed.
 		 *
 		 * <p>
+		 * The script uses the object as a variable without declaring it, see {@link ShowConfig}.
 		 * Empty passes the displayed object itself.
 		 * </p>
 		 */
 		@Name(EXPR)
 		@Nullable
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getExpr();
 	}
 
@@ -307,7 +394,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 			return null;
 		}
 
-		return new DisplayTarget(type, config.isDefault(), ShowStep.fromConfigs(config.getShows()));
+		return new DisplayTarget(type, config.isDefault(), ShowStep.fromConfigs(config.getShows(), OBJECT_SCOPE));
 	}
 
 	/**
@@ -348,7 +435,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 	 * The places the application's views are displayed at, seen from its root view.
 	 */
 	private static ViewMounts applicationMounts() {
-		return ViewMounts.forRootView(ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView());
+		return ViewMounts.forRootView(ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().getPath());
 	}
 
 	/**

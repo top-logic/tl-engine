@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-app-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+    <relativePath>../tl-parent-app/internal</relativePath>
+  </parent>
+
+  <artifactId>tl-ai-demo</artifactId>
+  <name>${project.artifactId}</name>
+  <description>Demo application of the AI modules: chat, MCP server, A2A, living views, hybrid search and AI-powered business logic.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
+
+  <properties>
+    <dependency-check.skip>true</dependency-check.skip>
+  </properties>
+
+  <dependencies>
+    <!-- Chat, MCP server, A2A and Living Views (agents build and change the demo's views; see views-demo.config.xml). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-starter-ai</artifactId>
+      <type>pom</type>
+    </dependency>
+    <!-- The "Albert" tab of the classic LayoutServlet UI, hosting the React chat. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-chat-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-vector-index</artifactId>
+    </dependency>
+    <!-- Hybrid search over the demo's events and sessions; see ai-index.config.xml. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-starter-ai-search</artifactId>
+      <type>pom</type>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-starter-classic</artifactId>
+      <type>pom</type>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-bpe-app</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-chart-chartjs</artifactId>
+    </dependency>
+    <!-- Allow to integrate REST services through OpenAPI interface definitions. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-service-openapi-client</artifactId>
+    </dependency>
+    <!-- Provide REST services through OpenAPI interface definitions. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-service-openapi-server</artifactId>
+    </dependency>
+
+    <!-- Tests -->
+    <!--
+      The junit gates of tl-ai-core - AssumptionAwareRunner and the switches beside it - so that
+      a test here which needs something the build may not have (an embedding key) reports as
+      skipped rather than failing in its setup. Test scope, and surefire's dependenciesToScan
+      names tl-basic only, so nothing of tl-ai-core's own test suite runs here.
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- The tests live in packages mirroring the production code, see the comment in tl-ai-core/pom.xml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>%regex[test[/.]TestAll(\.class)?]</include>
+            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>de.haumacher.msgbuf</groupId>
+        <artifactId>msgbuf-generator-maven-plugin</artifactId>
+        <version>${msgbuf.version}</version>
+        <executions>
+          <execution>
+            <id>generate-protocols</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

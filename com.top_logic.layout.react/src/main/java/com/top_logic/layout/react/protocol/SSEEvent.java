@@ -56,8 +56,14 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 		/** Type literal for {@link com.top_logic.layout.react.protocol.RouteChangeEvent}. */
 		ROUTE_CHANGE_EVENT,
 
+		/** Type literal for {@link com.top_logic.layout.react.protocol.PageNavigationEvent}. */
+		PAGE_NAVIGATION_EVENT,
+
 		/** Type literal for {@link com.top_logic.layout.react.protocol.RouteResumeEvent}. */
 		ROUTE_RESUME_EVENT,
+
+		/** Type literal for {@link com.top_logic.layout.react.protocol.DownloadEvent}. */
+		DOWNLOAD_EVENT,
 		;
 
 	}
@@ -113,8 +119,14 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 		/** Visit case for {@link com.top_logic.layout.react.protocol.RouteChangeEvent}.*/
 		R visit(com.top_logic.layout.react.protocol.RouteChangeEvent self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.layout.react.protocol.PageNavigationEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.PageNavigationEvent self, A arg) throws E;
+
 		/** Visit case for {@link com.top_logic.layout.react.protocol.RouteResumeEvent}.*/
 		R visit(com.top_logic.layout.react.protocol.RouteResumeEvent self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.layout.react.protocol.DownloadEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.DownloadEvent self, A arg) throws E;
 
 	}
 
@@ -146,7 +158,9 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 			case PickEvent.PICK_EVENT__TYPE: result = com.top_logic.layout.react.protocol.PickEvent.readPickEvent(in); break;
 			case WindowFocusEvent.WINDOW_FOCUS_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowFocusEvent.readWindowFocusEvent(in); break;
 			case RouteChangeEvent.ROUTE_CHANGE_EVENT__TYPE: result = com.top_logic.layout.react.protocol.RouteChangeEvent.readRouteChangeEvent(in); break;
+			case PageNavigationEvent.PAGE_NAVIGATION_EVENT__TYPE: result = com.top_logic.layout.react.protocol.PageNavigationEvent.readPageNavigationEvent(in); break;
 			case RouteResumeEvent.ROUTE_RESUME_EVENT__TYPE: result = com.top_logic.layout.react.protocol.RouteResumeEvent.readRouteResumeEvent(in); break;
+			case DownloadEvent.DOWNLOAD_EVENT__TYPE: result = com.top_logic.layout.react.protocol.DownloadEvent.readDownloadEvent(in); break;
 			default: in.skipValue(); result = null; break;
 		}
 		in.endArray();

@@ -23,10 +23,14 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.CommandArguments;
+import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.DeleteObjectAction;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.PersistTransientAction;
@@ -74,10 +78,8 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 	/** The name the {@link #RENAME_XML} script gives the project. */
 	private static final String RENAMED = "renamed";
 
-	/** A script action renaming its input to {@value #RENAMED}. */
-	private static final String RENAME_XML =
-		"<execute-script function=\"x -> $x.set(`" + MODULE + ":" + PROJECT + "#" + NAME + "`, '" + RENAMED
-			+ "')\"/>";
+	/** A script action renaming the main argument of a command without inputs to {@value #RENAMED}. */
+	private static final String RENAME_XML = rename(CommandArguments.DEFAULT_ARGUMENT);
 
 	private ViewContext _context;
 
@@ -89,7 +91,11 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 		_context = new DefaultViewContext(null);
 		_channel = new DefaultViewChannel(CHANNEL);
 		_context.registerChannel(CHANNEL, _channel);
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	@Override
@@ -132,7 +138,7 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 	 */
 	public void testTransactionNested() throws Exception {
 		GenericViewCommand command = command(
-			"<" + COMMAND + ">" + LABEL_XML + "<if test=\"x -> true\"><then><" + TRANSACTION + ">" + RENAME_XML
+			"<" + COMMAND + ">" + LABEL_XML + "<if test=\"true\"><then><" + TRANSACTION + ">" + RENAME_XML
 				+ "</" + TRANSACTION + "></then></if></" + COMMAND + ">");
 
 		command.execute(_context, _project);
@@ -145,10 +151,11 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 	 */
 	public void testTransactionInUploadCommand() throws Exception {
 		UploadCommand command = (UploadCommand) instantiate(UPLOAD, UploadCommand.Config.class,
-			"<" + UPLOAD + ">" + LABEL_XML + "<" + TRANSACTION + ">" + RENAME_XML + "</" + TRANSACTION + "></"
-				+ UPLOAD + ">");
+			"<" + UPLOAD + ">" + LABEL_XML + "<" + TRANSACTION + ">" + rename(UploadCommand.FILE_ARGUMENT) + "</"
+				+ TRANSACTION + "></" + UPLOAD + ">");
 
-		command.getActions().get(0).execute(_context, _project);
+		ViewActionChain.run(_context, command.getActions(), command.getArguments().arguments(_project, List.of()),
+			null);
 
 		assertLastMessage("Performed operation \"" + LABEL + "\" on \"" + ORIGINAL + "\".");
 	}
@@ -174,7 +181,7 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 		transaction.execute(_context, _project);
 		assertLastMessage("Updated object: " + ORIGINAL);
 
-		ViewAction create = action("<" + TRANSACTION + "><execute-script function=\"x -> new(`" + MODULE + ":"
+		ViewAction create = action("<" + TRANSACTION + "><execute-script function=\"new(`" + MODULE + ":"
 			+ CATEGORY + "`)\"/></" + TRANSACTION + ">");
 		TLObject category = (TLObject) create.execute(_context, null);
 		try {
@@ -260,6 +267,12 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 		assertEquals(expected, Resources.getInstance(Locale.ENGLISH).getString(log));
 	}
 
+	/** A script action renaming the argument of the given name to {@value #RENAMED}. */
+	private static String rename(String argument) {
+		return "<execute-script function=\"$" + argument + ".set(`" + MODULE + ":" + PROJECT + "#" + NAME + "`, '"
+			+ RENAMED + "')\"/>";
+	}
+
 	private static GenericViewCommand command(String xml) throws ConfigurationException {
 		return (GenericViewCommand) instantiate(COMMAND, GenericViewCommand.Config.class, xml);
 	}
@@ -282,7 +295,7 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 		reader.setSource(CharacterContents.newContent(xml));
 		PolymorphicConfiguration<?> config = (PolymorphicConfiguration<?>) reader.read();
 		context.checkErrors();
-		Object result = context.getInstance(config);
+		Object result = ActionScope.single(CommandArguments.DEFAULT_ARGUMENT).bind(context).getInstance(config);
 		context.checkErrors();
 		return result;
 	}

@@ -63,6 +63,9 @@ public class TestRowCommandColumn extends TestCase {
 	/** The rows the command was run with, in execution order. */
 	private List<Object> _executed;
 
+	/** The rows a row command's own action was run with, in execution order. */
+	private List<Object> _acted;
+
 	private ReactContext _context;
 
 	@Override
@@ -70,6 +73,7 @@ public class TestRowCommandColumn extends TestCase {
 		super.setUp();
 
 		_executed = new ArrayList<>();
+		_acted = new ArrayList<>();
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
@@ -97,6 +101,33 @@ public class TestRowCommandColumn extends TestCase {
 
 		assertTrue(result.isSuccess());
 		assertEquals(List.of(ACCEPTED), _executed);
+	}
+
+	/**
+	 * Tests that the button of a row command with an action of its own runs that action with its
+	 * row, not the command model.
+	 */
+	public void testButtonRunsTheActionWithItsRow() {
+		Column<String, String> column = columnWithAction(rule());
+
+		HandlerResult result = click(button(column, ACCEPTED));
+
+		assertTrue(result.isSuccess());
+		assertEquals("The button runs the action with its row.", List.of(ACCEPTED), _acted);
+		assertEquals("The action replaces running the model.", List.of(), _executed);
+	}
+
+	/**
+	 * Tests that a row command with an action of its own still offers it by the model's rules: a
+	 * rejected row shows a disabled button running nothing, a hidden row shows none.
+	 */
+	public void testActionFollowsTheModelsExecutability() {
+		Column<String, String> column = columnWithAction(rule());
+
+		assertFalse("The button of a rejected row is disabled.", click(button(column, REJECTED)).isSuccess());
+		assertEquals("A disabled button runs no action.", List.of(), _acted);
+		assertEquals("A row the command is hidden for has an empty cell.",
+			CellContent.EMPTY, column.renderCell(HIDDEN));
 	}
 
 	/**
@@ -138,7 +169,7 @@ public class TestRowCommandColumn extends TestCase {
 	 * Tests that every command becomes a column of its own, in the given order.
 	 */
 	public void testOneColumnPerCommand() {
-		List<Column<String, String>> columns = RowCommandColumn.columns(_context,
+		List<Column<String, String>> columns = RowCommandColumn.columns(
 			List.of(rowCommand(ViewExecutabilityRule.ALWAYS_EXECUTABLE),
 				rowCommand(ViewExecutabilityRule.ALWAYS_EXECUTABLE)));
 
@@ -165,20 +196,40 @@ public class TestRowCommandColumn extends TestCase {
 
 	/** The single column offering the command guarded by the given rule. */
 	private Column<String, String> column(ViewExecutabilityRule rule) {
-		List<Column<String, String>> columns = RowCommandColumn.columns(_context, List.of(rowCommand(rule)));
+		return single(rowCommand(rule));
+	}
+
+	/**
+	 * The single column offering the command guarded by the given rule, with an action of its own
+	 * recording the rows it is run with.
+	 */
+	private Column<String, String> columnWithAction(ViewExecutabilityRule rule) {
+		return single(new RowCommandColumn.RowCommand<>(model(rule), row -> {
+			_acted.add(row);
+			return HandlerResult.DEFAULT_RESULT;
+		}, DEFAULT_IMAGE, DEFAULT_LABEL));
+	}
+
+	/** The single column offering the given command. */
+	private static Column<String, String> single(RowCommandColumn.RowCommand<String> command) {
+		List<Column<String, String>> columns = RowCommandColumn.columns(List.of(command));
 		assertEquals(1, columns.size());
 		return columns.get(0);
 	}
 
-	/** The command recording the rows it is run with, guarded by the given rule. */
-	private RowCommandColumn.RowCommand rowCommand(ViewExecutabilityRule rule) {
+	/** The command running its model with the row, guarded by the given rule. */
+	private RowCommandColumn.RowCommand<String> rowCommand(ViewExecutabilityRule rule) {
+		return RowCommandColumn.RowCommand.of(_context, model(rule), DEFAULT_IMAGE, DEFAULT_LABEL);
+	}
+
+	/** The model of the command recording the rows it is run with, guarded by the given rule. */
+	private ViewCommandModel model(ViewExecutabilityRule rule) {
 		ViewCommand command = (context, input) -> {
 			_executed.add(input);
 			return HandlerResult.DEFAULT_RESULT;
 		};
-		ViewCommandModel model = new ViewCommandModel(command,
+		return new ViewCommandModel(command,
 			TypedConfiguration.newConfigItem(ViewCommand.Config.class), null, rule);
-		return new RowCommandColumn.RowCommand(model, DEFAULT_IMAGE, DEFAULT_LABEL);
 	}
 
 	/** The button the column's cell holds for the given row. */

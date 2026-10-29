@@ -1,0 +1,1279 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.provider;
+
+import java.io.IOException;
+import java.time.Clock;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.ReadOnly;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.tl.ai.core.agent.AgentTuning;
+import com.top_logic.tl.ai.core.provider.catalog.CatalogStatus;
+import com.top_logic.tl.ai.core.provider.catalog.ModelCatalog;
+import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
+import com.top_logic.tl.ai.core.provider.catalog.ResolvedModel;
+import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.tl.ai.tool.api.AICategory;
+import com.top_logic.util.error.TopLogicException;
+
+/**
+ * The LLM providers of this installation: which models exist and how to reach them, what is known
+ * about each model, and where a run goes when its model cannot answer.
+ *
+ * <p>
+ * The service configuration is organized into these sections:
+ * </p>
+ * <ol>
+ * <li><b>Providers</b> - connection details for each LLM provider (API keys, base URLs, model
+ * allowlists). Each provider entry defines how to reach a specific LLM API endpoint and which
+ * models are enabled.</li>
+ * <li><b>Failover</b> - where a run goes when the model it was configured with cannot answer.</li>
+ * <li><b>Model Catalog</b> - where the metadata describing each model's capabilities (tool
+ * calling, reasoning, temperature support) and limits (context window, max output tokens) comes
+ * from: the catalog bundled with the application at startup and the
+ * <a href="https://models.dev">models.dev</a> remote catalog in the background after it, with
+ * optional manual overrides for local or unlisted models.</li>
+ * </ol>
+ *
+ * <p>
+ * The metadata resolved from these sources is state of the running service, not part of its
+ * configuration.
+ * </p>
+ *
+ * <p>
+ * Which agent runs on which of these models is configured on {@link AgentRuntimeService}. This
+ * service was called {@code LLMService} before; a configuration that still names that service stops
+ * the application from starting, with a message that says where each of its sections now belongs -
+ * see {@link LLMService}.
+ * </p>
+ *
+ * @see LLMProviderConfig
+ * @see AgentFactory
+ * @see #catalog()
+ */
+@ServiceDependencies(SecretStoreService.Module.class)
+@Label("LLM providers")
+@ServiceCategory.Of(AICategory.class)
+public class LLMProviderService extends ConfiguredManagedClass<LLMProviderService.Config<?>> {
+
+	/**
+	 * Provides model names from the running {@link LLMProviderService} instance.
+	 *
+	 * <p>
+	 * This does not require a {@link com.top_logic.basic.config.annotation.Container @Container}
+	 * chain to resolve the provider map. This makes it suitable for contexts where the container
+	 * reference is not yet set, such as during creation of a new {@link AgentRuntimeService.AgentOverride} entry in a
+	 * keyed map.
+	 * </p>
+	 */
+	public static class ServiceModelOptions extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			if (!LLMProviderService.Module.INSTANCE.isActive()) {
+				return List.of();
+			}
+			return LLMProviderService.getInstance().getConfiguredModelNames();
+		}
+	}
+
+	/**
+	 * Provides provider names from the running {@link LLMProviderService} instance.
+	 *
+	 * <p>
+	 * Does not require a {@link com.top_logic.basic.config.annotation.Container @Container} chain, so
+	 * it serves contexts where the container reference is not yet set - such as creating a new
+	 * {@link AgentRuntimeService.AgentOverride} entry in a keyed map.
+	 * </p>
+	 */
+	public static class ServiceProviderOptions extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			if (!LLMProviderService.Module.INSTANCE.isActive()) {
+				return List.of();
+			}
+			return LLMProviderService.getInstance().getConfiguredProviderNames();
+		}
+	}
+
+	/**
+	 * Configuration interface for {@link LLMProviderService}.
+	 */
+	@DisplayOrder({
+		Config.PROVIDERS,
+		Config.FAILOVER,
+		Config.MODEL_CATALOG,
+	})
+	public interface Config<I extends LLMProviderService> extends ConfiguredManagedClass.Config<I> {
+
+		/**
+		 * Configuration property name for providers.
+		 *
+		 * @see #getProviders()
+		 */
+		String PROVIDERS = "providers";
+
+		/**
+		 * Configuration property name for the model catalog.
+		 *
+		 * @see #getModelCatalog()
+		 */
+		String MODEL_CATALOG = "model-catalog";
+
+		/**
+		 * Configuration property name for the failover section.
+		 *
+		 * @see #getFailover()
+		 */
+		String FAILOVER = "failover";
+
+		/**
+		 * The configured LLM providers, keyed by provider name.
+		 *
+		 * <p>
+		 * Each entry carries provider-specific properties.
+		 * </p>
+		 */
+		@Name(PROVIDERS)
+		@EntryTag("provider")
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		Map<String, LLMProviderConfig.Config> getProviders();
+
+		/**
+		 * Where the metadata describing each model's capabilities and limits comes from.
+		 *
+		 * <p>
+		 * The metadata is taken from the <a href="https://models.dev">models.dev</a> catalog.
+		 * Manual overrides can be added for models not listed in the catalog (e.g. local or
+		 * custom-hosted models).
+		 * </p>
+		 *
+		 * @see #MODEL_CATALOG
+		 */
+		@Name(MODEL_CATALOG)
+		ModelCatalogConfig getModelCatalog();
+
+		/**
+		 * Where a run goes when the model it was configured with cannot answer, and how long this
+		 * installation remembers that a model could not.
+		 *
+		 * <p>
+		 * Empty by default, and an empty section changes nothing.
+		 * </p>
+		 *
+		 * @see #FAILOVER
+		 */
+		@Name(FAILOVER)
+		FailoverConfig getFailover();
+
+	}
+
+	/**
+	 * Configuration for the model metadata catalog.
+	 *
+	 * <p>
+	 * Says where the metadata about each model's capabilities (tool calling, reasoning,
+	 * temperature support) and limits (context window, max output tokens) comes from, for all
+	 * models configured in the provider section. The service starts with the copy of the
+	 * <a href="https://models.dev">models.dev</a> catalog bundled with the application and loads
+	 * the current catalog in the background after its start. Models not found in the catalog
+	 * (e.g. locally hosted models) can be defined manually in the
+	 * {@link #getModelOverrides() model overrides}. The resolved metadata is not part of this
+	 * configuration.
+	 * </p>
+	 *
+	 * @see LLMProviderService#catalog()
+	 */
+	public interface ModelCatalogConfig extends ConfigurationItem {
+
+		/** Default catalog URL. */
+		String DEFAULT_CATALOG_URL = "https://models.dev/api.json";
+
+		/** @see #getCatalogUrl() */
+		String CATALOG_URL = "catalog-url";
+
+		/** @see #getFetchRemoteCatalog() */
+		String FETCH_REMOTE_CATALOG = "fetch-remote-catalog";
+
+		/** @see #getModelOverrides() */
+		String MODEL_OVERRIDES = "model-overrides";
+
+		/**
+		 * The URL of the remote model catalog.
+		 *
+		 * @see #CATALOG_URL
+		 */
+		@Name(CATALOG_URL)
+		@StringDefault(DEFAULT_CATALOG_URL)
+		@ReadOnly
+		String getCatalogUrl();
+
+		/**
+		 * Whether the current catalog is loaded from the catalog URL.
+		 *
+		 * <p>
+		 * The service never waits for it: it starts with the catalog bundled with the application
+		 * and loads the current one in the background. Switched off, no request is made at all and
+		 * the bundled catalog is used alone - for an installation without access to the internet.
+		 * </p>
+		 *
+		 * @see #FETCH_REMOTE_CATALOG
+		 */
+		@Name(FETCH_REMOTE_CATALOG)
+		@BooleanDefault(true)
+		boolean getFetchRemoteCatalog();
+
+		/**
+		 * Manually defined model metadata for models not in the remote catalog.
+		 *
+		 * <p>
+		 * Use this for local models or <code>OpenAI</code>-compatible endpoints whose models are not listed
+		 * on models.dev. Entries here take precedence over catalog entries with the same name.
+		 * </p>
+		 *
+		 * <p>
+		 * An entry may also give a model its prices, in US dollars per million tokens. A model
+		 * without a price costs nothing in a money budget.
+		 * </p>
+		 *
+		 * @see #MODEL_OVERRIDES
+		 */
+		@Name(MODEL_OVERRIDES)
+		@Label("Model overrides")
+		@EntryTag("model")
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		Map<String, ModelCatalogEntry.OverrideConfig> getModelOverrides();
+	}
+
+	/**
+	 * The time the remote catalog may take to load, from name resolution to the last byte.
+	 *
+	 * <p>
+	 * Nobody waits for it, so it only bounds how long a stalled server holds a connection. The
+	 * catalog is about 6 MB, which a link of 1 Mbit/s still transfers within this time.
+	 * </p>
+	 */
+	private static final Duration CATALOG_DEADLINE = Duration.ofSeconds(60);
+
+	private static volatile LLMProviderService _instance;
+
+	private final InstantiationContext _context;
+
+	/**
+	 * Index mapping each model name to the names of the providers exposing it, in configuration
+	 * order.
+	 *
+	 * <p>
+	 * A model exposed by two provider entries has both of them here - neither is dropped. Which of
+	 * them serves a given agent is decided by that agent's {@link AgentRuntimeService.AgentOverride#getProvider()
+	 * provider}, never by iteration order; an unqualified reference to such a model is refused at
+	 * {@link #startUp()}.
+	 * </p>
+	 */
+	private Map<String, List<String>> _modelProviders;
+
+	/**
+	 * Named provider configs, keyed by the provider config name, in configuration order.
+	 */
+	private Map<String, LLMProviderConfig> _providerConfigs;
+
+	/**
+	 * The resolved model metadata together with the state of the catalog it was taken from, or
+	 * <code>null</code> while the service is not running.
+	 *
+	 * <p>
+	 * Replaced as a whole, under the lock of this service, so that readers never see models and a
+	 * status that do not belong together.
+	 * </p>
+	 */
+	private volatile ModelCatalog _catalog;
+
+	/**
+	 * The thread loading the remote catalog, or <code>null</code> when none is loading for this
+	 * start. A loader that is no longer this thread installs nothing.
+	 */
+	private Thread _catalogLoader;
+
+	/**
+	 * What every model is currently known to be good for.
+	 *
+	 * <p>
+	 * A component rather than a service of its own - see {@link ModelAvailability} for why. It is
+	 * replaced on every start, so a restart of this service is also the blunt way to clear every
+	 * mark.
+	 * </p>
+	 */
+	private volatile ModelAvailability _health = new ModelAvailability(null, Clock.systemUTC());
+
+	/**
+	 * Creates a new {@link LLMProviderService} from configuration.
+	 *
+	 * @param context
+	 *        The instantiation context for error reporting.
+	 * @param config
+	 *        The service configuration.
+	 */
+	@CalledByReflection
+	public LLMProviderService(InstantiationContext context, Config<?> config) {
+		super(context, config);
+		_context = context;
+	}
+
+	/**
+	 * Returns the singleton instance of the {@link LLMProviderService}.
+	 *
+	 * @return The service instance, or {@code null} if not yet started.
+	 */
+	public static LLMProviderService getInstance() {
+		return _instance;
+	}
+
+	/**
+	 * What every model of this installation is currently known to be good for.
+	 *
+	 * <p>
+	 * Never <code>null</code>, and usable before {@link #startUp()} has read the configuration: an
+	 * installation that configured no lifetimes gets the shipped ones.
+	 * </p>
+	 *
+	 * @see ModelAvailability
+	 */
+	public ModelAvailability modelHealth() {
+		return _health;
+	}
+
+	/**
+	 * The models a run configured with the given model reference may use, in order.
+	 *
+	 * <p>
+	 * The first entry is always the reference itself, so a model with no configured chain yields a
+	 * list of one and nothing about that run changes. The rest is the {@code <failover>} section's
+	 * chain for that model name, whichever provider was asked to serve it.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model the run was configured with; may be <code>null</code>, which yields an
+	 *        empty list.
+	 * @param provider
+	 *        The provider qualifying it, or <code>null</code>.
+	 * @return An immutable list, the configured reference first; never <code>null</code>.
+	 */
+	public List<ModelTarget> failoverChain(String model, String provider) {
+		if (model == null || model.isBlank()) {
+			return List.of();
+		}
+		ModelTarget configured = new ModelTarget(model, blankToNull(provider));
+		FailoverConfig failover = getConfig().getFailover();
+		FailoverConfig.Chain chain = failover == null ? null : failover.getChains().get(model);
+		if (chain == null || chain.getFallbacks().isEmpty()) {
+			return List.of(configured);
+		}
+		List<ModelTarget> result = new ArrayList<>();
+		result.add(configured);
+		for (FailoverConfig.Target fallback : chain.getFallbacks()) {
+			ModelTarget target = new ModelTarget(fallback.getModel(), blankToNull(fallback.getProvider()));
+			// A chain that names the model it is the way out of, or names one twice, would spend a
+			// turn re-trying what just failed. Dropped here rather than refused at start-up: the
+			// duplicate may be the same model served by a second provider, which is legitimate.
+			if (result.stream().noneMatch(target::sameAs)) {
+				result.add(target);
+			}
+		}
+		return List.copyOf(result);
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		// Before anything else: a configuration of the old service is not read by anybody, so an
+		// application that still has one would run on whatever tl-ai ships - other providers, no keys,
+		// other limits - without a word. The engine knows no alias for a renamed service.
+		LLMService.refuseOldConfiguration(_context);
+		_instance = this;
+		ModelDiscoveryHelper.clearCache();
+
+		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
+		Map<String, List<String>> modelProviders = new LinkedHashMap<>();
+
+		for (Map.Entry<String, LLMProviderConfig.Config> entry : getConfig().getProviders().entrySet()) {
+			String providerName = entry.getKey();
+			LLMProviderConfig providerConfig = _context.getInstance(entry.getValue());
+			providerConfigs.put(providerName, providerConfig);
+
+			for (String model : providerConfig.getConfiguredModels()) {
+				List<String> exposedBy = modelProviders.computeIfAbsent(model, name -> new ArrayList<>());
+				if (!exposedBy.contains(providerName)) {
+					exposedBy.add(providerName);
+				}
+			}
+		}
+
+		// Not Map.copyOf(): the order of the providers decides which one serves the default model.
+		_providerConfigs = Collections.unmodifiableMap(providerConfigs);
+		Map<String, List<String>> index = new LinkedHashMap<>();
+		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
+			index.put(entry.getKey(), List.copyOf(entry.getValue()));
+		}
+		_modelProviders = Map.copyOf(index);
+
+		refuseUnroutableReferences();
+
+		// Built here rather than in the constructor so that a restart of this service - the blunt
+		// way to clear every mark - also picks up changed lifetimes.
+		_health = new ModelAvailability(getConfig().getFailover(), Clock.systemUTC());
+
+		// --- Catalog phase ---
+		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
+		Map<String, Set<String>> catalogRequested = buildCatalogProviderModels();
+
+		Map<String, ModelInfo> bundled;
+		if (catalogConfig == null || catalogRequested.isEmpty()) {
+			bundled = Map.of();
+		} else {
+			bundled = ModelsDevFetcher.loadSnapshot(catalogRequested);
+		}
+		boolean fetchRemote =
+			catalogConfig != null && !catalogRequested.isEmpty() && catalogConfig.getFetchRemoteCatalog();
+		Map<String, ResolvedModel> bundledEntries = withOrigin(bundled, ResolvedModel.Origin.BUNDLED);
+		installCatalog(bundledEntries,
+			fetchRemote ? CatalogStatus.State.LOADING : CatalogStatus.State.DISABLED);
+
+		int overrideCount = catalogConfig == null ? 0 : catalogConfig.getModelOverrides().size();
+		Logger.info("LLMProviderService started with " +
+			getConfig().getProviders().size() + " provider(s), " +
+			bundled.size() + " model(s) from the bundled catalog" +
+			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
+			LLMProviderService.class);
+
+		if (fetchRemote) {
+			String url = catalogConfig.getCatalogUrl();
+			Thread loader =
+				new Thread(() -> loadRemoteCatalog(url, catalogRequested, bundledEntries), "Model catalog");
+			loader.setDaemon(true);
+			synchronized (this) {
+				_catalogLoader = loader;
+			}
+			loader.start();
+		}
+	}
+
+	/**
+	 * Loads the remote catalog and installs it over the bundled one, on the
+	 * {@link #_catalogLoader} thread.
+	 */
+	private void loadRemoteCatalog(String url, Map<String, Set<String>> requested,
+			Map<String, ResolvedModel> bundled) {
+		Map<String, ModelInfo> remote;
+		try {
+			remote = ModelsDevFetcher.fetch(url, requested, CATALOG_DEADLINE);
+		} catch (InterruptedException ex) {
+			// The service stopped.
+			return;
+		} catch (IOException ex) {
+			Logger.warn("Could not load the model catalog from " + url + " (" + ex.getMessage()
+				+ "); the bundled catalog stays in use.", LLMProviderService.class);
+			synchronized (this) {
+				if (_catalogLoader != Thread.currentThread()) {
+					// Stopped or restarted meanwhile.
+					return;
+				}
+				_catalogLoader = null;
+				_catalog = _catalog.withState(CatalogStatus.State.FAILED, failureDetail(ex));
+			}
+			return;
+		}
+
+		// A model the remote catalog does not list keeps what the bundled one knows about it.
+		Map<String, ResolvedModel> combined = new LinkedHashMap<>(bundled);
+		combined.putAll(withOrigin(remote, ResolvedModel.Origin.REMOTE));
+		synchronized (this) {
+			if (_catalogLoader != Thread.currentThread()) {
+				// Stopped or restarted meanwhile.
+				return;
+			}
+			_catalogLoader = null;
+			installCatalog(combined, CatalogStatus.State.LOADED);
+		}
+		Logger.info("Loaded " + remote.size() + " model(s) from the model catalog at " + url + ".",
+			LLMProviderService.class);
+	}
+
+	/**
+	 * Makes the given catalog the one {@link #catalog()} and {@link #getModel(String)} answer from,
+	 * with the manual overrides applied over it.
+	 *
+	 * @param catalog
+	 *        The catalog entries by model name, each with its origin.
+	 * @param state
+	 *        Where loading the remote catalog stands after this installation.
+	 */
+	private synchronized void installCatalog(Map<String, ResolvedModel> catalog, CatalogStatus.State state) {
+		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
+		Map<String, ModelCatalogEntry.OverrideConfig> overrides =
+			catalogConfig == null ? Map.of() : catalogConfig.getModelOverrides();
+
+		// Manual overrides take precedence over the catalog.
+		Map<String, ResolvedModel> merged = new LinkedHashMap<>(catalog);
+		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
+			ResolvedModel listed = catalog.get(entry.getKey());
+			ModelInfo info =
+				ModelCatalogEntry.overrideToModelInfo(entry.getValue(), listed == null ? null : listed.info());
+			merged.put(entry.getKey(), new ResolvedModel(info, ResolvedModel.Origin.OVERRIDE));
+		}
+
+		String url = catalogConfig == null ? null : catalogConfig.getCatalogUrl();
+		_catalog = new ModelCatalog(merged,
+			new CatalogStatus(state, url, Clock.systemUTC().instant(), null));
+	}
+
+	/**
+	 * The given catalog metadata, each entry marked with the given origin.
+	 */
+	private static Map<String, ResolvedModel> withOrigin(Map<String, ModelInfo> catalog,
+			ResolvedModel.Origin origin) {
+		Map<String, ResolvedModel> result = new LinkedHashMap<>();
+		for (Map.Entry<String, ModelInfo> entry : catalog.entrySet()) {
+			result.put(entry.getKey(), new ResolvedModel(entry.getValue(), origin));
+		}
+		return result;
+	}
+
+	/**
+	 * The failure of loading the remote catalog, for {@link CatalogStatus#failure()}.
+	 */
+	private static String failureDetail(IOException ex) {
+		String message = ex.getMessage();
+		return message == null || message.isBlank() ? ex.getClass().getSimpleName() : message;
+	}
+
+	@Override
+	protected void shutDown() {
+		try {
+			Thread loader;
+			synchronized (this) {
+				loader = _catalogLoader;
+				_catalogLoader = null;
+			}
+			if (loader != null) {
+				loader.interrupt();
+			}
+			_instance = null;
+			_modelProviders = null;
+			_providerConfigs = null;
+			_catalog = null;
+		} finally {
+			super.shutDown();
+		}
+	}
+
+	/**
+	 * Refuses the start when a configured model reference cannot be routed to exactly one
+	 * provider.
+	 *
+	 * <p>
+	 * Reported to the {@link InstantiationContext} so that a full application boot lists every
+	 * problem at once, and thrown so that this start fails whoever asked for it. The context alone
+	 * is not enough: {@link TypedRuntimeModule} tests it for errors <em>before</em> this method
+	 * runs, so at boot the refusal would only surface as the next service's failure, and an
+	 * in-app restart of this service alone would report nothing and leave an unroutable
+	 * configuration running.
+	 * </p>
+	 */
+	private void refuseUnroutableReferences() {
+		List<String> refusals = refusals(getConfig().getFailover(), _modelProviders, _providerConfigs.keySet());
+		if (refusals.isEmpty()) {
+			return;
+		}
+		for (String refusal : refusals) {
+			_context.error(refusal);
+		}
+		throw new ConfigurationError(ResKey.text("The failover configuration cannot be routed to"
+			+ " providers, so this service is not running: " + String.join(" ", refusals)));
+	}
+
+	/**
+	 * Everything about the given failover configuration that must stop the service from starting.
+	 *
+	 * <p>
+	 * Two things do: a reference to a provider that is not configured, and an unqualified reference
+	 * to a model that two providers expose. The second is a refusal rather than a warning because
+	 * there is no answer to give - the operator listed the model twice to keep the two endpoints
+	 * apart, and picking either one by configuration order would be guessing which account, key or
+	 * rate limit the run was meant to use.
+	 * </p>
+	 *
+	 * <p>
+	 * The model references of the agents - the default model and the agent overrides - are checked
+	 * by {@link AgentRuntimeService} at its own start, through {@link #routingRefusal}.
+	 * </p>
+	 *
+	 * @param failover
+	 *        The failover section, whose fallbacks are model references; may be <code>null</code>.
+	 * @param modelProviders
+	 *        Model name to the names of the providers exposing it.
+	 * @param providerNames
+	 *        The names of all configured providers.
+	 * @return One sentence per problem, in configuration order; empty for a routable
+	 *         configuration.
+	 */
+	static List<String> refusals(FailoverConfig failover, Map<String, List<String>> modelProviders,
+			Set<String> providerNames) {
+		List<String> result = new ArrayList<>();
+		// A fallback is a model reference like any other, and one that cannot be routed is worse
+		// than a missing fallback: it is only ever reached on the day the primary model is already
+		// down, which is the worst moment to find out.
+		if (failover != null) {
+			for (Map.Entry<String, FailoverConfig.Chain> entry : failover.getChains().entrySet()) {
+				for (FailoverConfig.Target fallback : entry.getValue().getFallbacks()) {
+					addRefusal(result, "The fallback for model '" + entry.getKey() + "'",
+						new ModelRef(fallback.getModel(), blankToNull(fallback.getProvider())),
+						modelProviders, providerNames);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Why the given model reference cannot be routed to exactly one provider of this service, or
+	 * <code>null</code> when it can.
+	 *
+	 * <p>
+	 * Refused are a model that no provider exposes, a provider that is not configured or does not
+	 * expose the model, and an unqualified reference to a model that two providers expose.
+	 * </p>
+	 *
+	 * @param subject
+	 *        Who makes the reference, the beginning of the sentence, e.g. {@code "Agent 'X'"}.
+	 * @param model
+	 *        The model name; a blank one is not a reference and answers <code>null</code>.
+	 * @param provider
+	 *        The provider named for it, or <code>null</code>.
+	 */
+	public String routingRefusal(String subject, String model, String provider) {
+		if (model == null || model.isBlank()) {
+			return null;
+		}
+		Map<String, List<String>> modelProviders = _modelProviders == null ? Map.of() : _modelProviders;
+		Set<String> providerNames = _providerConfigs == null ? Set.of() : _providerConfigs.keySet();
+		if (provider == null || provider.isBlank()) {
+			if (modelProviders.getOrDefault(model, List.of()).isEmpty()) {
+				return subject + ": no provider exposes model '" + model + "'; the configured models are "
+					+ modelProviders.keySet() + ".";
+			}
+		}
+		List<String> refusals = new ArrayList<>();
+		addRefusal(refusals, subject, new ModelRef(model, blankToNull(provider)), modelProviders, providerNames);
+		return refusals.isEmpty() ? null : refusals.get(0);
+	}
+
+	private static void addRefusal(List<String> refusals, String subject, ModelRef ref,
+			Map<String, List<String>> modelProviders, Set<String> providerNames) {
+		String model = ref.model();
+		if (model == null || model.isBlank()) {
+			// No model to route; reported by the resolution itself when the agent runs.
+			return;
+		}
+		List<String> exposedBy = modelProviders.getOrDefault(model, List.of());
+		String provider = ref.provider();
+		if (provider != null) {
+			if (!providerNames.contains(provider)) {
+				refusals.add(subject + ": the provider '" + provider + "' named for model '" + model
+					+ "' is not configured; configured providers are " + providerNames + ".");
+			} else if (!exposedBy.contains(provider)) {
+				refusals.add(subject + ": the provider '" + provider + "' does not expose model '" + model
+					+ "'; it exposes " + modelsOf(provider, modelProviders) + ".");
+			}
+		} else if (exposedBy.size() > 1) {
+			refusals.add(subject + ": model '" + model + "' is exposed by " + exposedBy
+				+ ", so one of them must be named as the provider.");
+		}
+	}
+
+	/**
+	 * The models the given provider exposes, for a refusal message.
+	 */
+	private static List<String> modelsOf(String providerName, Map<String, List<String>> modelProviders) {
+		List<String> result = new ArrayList<>();
+		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
+			if (entry.getValue().contains(providerName)) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns only the explicitly configured model names from all providers.
+	 *
+	 * <p>
+	 * Returns only models that an admin has explicitly added to a provider's {@code models}
+	 * allowlist. Models that were merely discovered via provider API are excluded.
+	 * </p>
+	 *
+	 * @return An immutable list of explicitly configured model names.
+	 */
+	public List<String> getConfiguredModelNames() {
+		return modelNamesOf(getConfig().getProviders());
+	}
+
+	/**
+	 * Collects the explicitly configured model names from the given provider map.
+	 *
+	 * @param providers
+	 *        The provider configurations keyed by name, or {@code null}.
+	 * @return An immutable list of the model names listed in each provider's
+	 *         {@link LLMProviderConfig.Config#getModels() allowlist}, de-duplicated in iteration
+	 *         order.
+	 */
+	static List<String> modelNamesOf(Map<String, LLMProviderConfig.Config> providers) {
+		if (providers == null) {
+			return List.of();
+		}
+		Set<String> result = new LinkedHashSet<>();
+		for (LLMProviderConfig.Config config : providers.values()) {
+			List<String> models = config.getModels();
+			if (models != null) {
+				result.addAll(models);
+			}
+		}
+		return List.copyOf(result);
+	}
+
+	/**
+	 * The names of all configured providers, in configuration order.
+	 */
+	public List<String> getConfiguredProviderNames() {
+		return List.copyOf(getConfig().getProviders().keySet());
+	}
+
+	/**
+	 * The names of the providers exposing the given model, in configuration order.
+	 *
+	 * <p>
+	 * More than one entry means the model must be referenced with a provider - see
+	 * {@link AgentRuntimeService.AgentOverride#getProvider()}.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model to look up.
+	 * @return The provider names; empty if no configured provider exposes the model.
+	 */
+	public List<String> getProvidersOf(String modelName) {
+		if (_modelProviders == null) {
+			return List.of();
+		}
+		return _modelProviders.getOrDefault(modelName, List.of());
+	}
+
+	/**
+	 * Whether a run on the given model can be served now: whether one of the providers
+	 * {@link #getProvidersOf(String) exposing} it is {@link LLMProviderConfig#isAvailable()
+	 * available}.
+	 *
+	 * <p>
+	 * Asked anew on each call, so a provider whose secret is provided later serves the model from
+	 * then on without a restart. For what is offered to a user to choose from; what is checked
+	 * against the configuration - a model named in an agent override or in an access policy - is
+	 * checked against the {@link #getConfiguredModelNames() configured} models instead.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model to look up.
+	 * @return Whether a provider exposing the model has its credentials; <code>false</code> for a
+	 *         model no provider exposes.
+	 */
+	public boolean isServable(String modelName) {
+		if (_providerConfigs == null) {
+			return false;
+		}
+		for (String providerName : getProvidersOf(modelName)) {
+			LLMProviderConfig providerConfig = _providerConfigs.get(providerName);
+			if (providerConfig != null && providerConfig.isAvailable()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The models the given provider exposes, in configuration order.
+	 *
+	 * <p>
+	 * Together with {@link #getConfiguredProviderNames()} the pairs of a provider and a model it
+	 * serves, whether or not the {@link #catalog() catalog} describes that model.
+	 * </p>
+	 *
+	 * @param providerName
+	 *        The name of a configured provider.
+	 * @return The model names; empty if no provider of this name is configured.
+	 */
+	public List<String> getModelsOf(String providerName) {
+		LLMProviderConfig providerConfig = _providerConfigs == null ? null : _providerConfigs.get(providerName);
+		if (providerConfig == null) {
+			return List.of();
+		}
+		return List.copyOf(new LinkedHashSet<>(providerConfig.getConfiguredModels()));
+	}
+
+	/**
+	 * Builds an {@link LLMProvider} for an unqualified model reference.
+	 *
+	 * @see #buildProvider(String, String)
+	 */
+	public LLMProvider buildProvider(String modelName) {
+		return buildProvider(modelName, null);
+	}
+
+	/**
+	 * Builds an {@link LLMProvider} for the given model, served by the named provider.
+	 *
+	 * @param modelName
+	 *        The model name to find a provider for.
+	 * @param providerName
+	 *        The configured provider that must serve the model, or {@code null} to let the
+	 *        model's only provider serve it.
+	 * @return A ready-to-use provider.
+	 * @throws IllegalStateException
+	 *         if the model cannot be routed to exactly one configured provider.
+	 * @throws TopLogicException
+	 *         if the provider serving the model is not {@link LLMProviderConfig#isAvailable()
+	 *         available}.
+	 */
+	public LLMProvider buildProvider(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = routedProvider(modelName, providerName);
+		if (!providerConfig.isAvailable()) {
+			throw new TopLogicException(unavailable(modelName, providerName, providerConfig));
+		}
+		return providerConfig.createProvider();
+	}
+
+	/**
+	 * Builds an {@link LLMProvider} for the given model, served by the named provider, whether or
+	 * not the provider is {@link LLMProviderConfig#isAvailable() available} now.
+	 *
+	 * <p>
+	 * For a caller that asks {@link LLMProvider#isAvailable()} before each request, e.g. an agent
+	 * run that can pass an inactive provider over for another model of its failover chain.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to find a provider for.
+	 * @param providerName
+	 *        The configured provider that must serve the model, or {@code null} to let the
+	 *        model's only provider serve it.
+	 * @return A provider that may not be able to authenticate its requests.
+	 * @throws IllegalStateException
+	 *         if the model cannot be routed to exactly one configured provider.
+	 *
+	 * @see #buildProvider(String, String)
+	 */
+	public LLMProvider routeProvider(String modelName, String providerName) {
+		return routedProvider(modelName, providerName).createProvider();
+	}
+
+	/**
+	 * The provider configuration serving the given model reference.
+	 *
+	 * @throws IllegalStateException
+	 *         if the model cannot be routed to exactly one configured provider.
+	 */
+	private LLMProviderConfig routedProvider(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		if (providerConfig == null) {
+			throw new IllegalStateException(unroutable(modelName, providerName));
+		}
+		return providerConfig;
+	}
+
+	/**
+	 * Why the given model reference cannot be served now because its provider is not
+	 * {@link LLMProviderConfig#isAvailable() available}.
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The message for the user, naming the provider and the secret it needs;
+	 *         <code>null</code> if the provider is available, or if the reference does not route
+	 *         to exactly one provider, which {@link #buildProvider(String, String)} reports.
+	 */
+	public ResKey unavailableReason(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		if (providerConfig == null || providerConfig.isAvailable()) {
+			return null;
+		}
+		return unavailable(modelName, providerName, providerConfig);
+	}
+
+	/**
+	 * The message for a run on a model whose provider is not available.
+	 */
+	private ResKey unavailable(String modelName, String providerName, LLMProviderConfig providerConfig) {
+		String provider = providerName != null && !providerName.isBlank() ? providerName : nameOf(providerConfig);
+		ResKey secret = providerConfig.credentialsReference();
+		if (secret == null) {
+			return I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER.fill(modelName, provider);
+		}
+		return I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET.fill(modelName, provider, secret);
+	}
+
+	/**
+	 * The configured name of the given provider.
+	 */
+	private String nameOf(LLMProviderConfig providerConfig) {
+		for (Map.Entry<String, LLMProviderConfig> entry : _providerConfigs.entrySet()) {
+			if (entry.getValue() == providerConfig) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The model a run uses that is assigned none: the first configured model of the first
+	 * {@link LLMProviderConfig#isAvailable() available} provider, in configuration order.
+	 *
+	 * <p>
+	 * Resolved each time it is asked for, so that a provider whose secret is provided later serves
+	 * the next run without a restart, and a provider before it in the configuration takes over as
+	 * soon as it becomes available.
+	 * </p>
+	 *
+	 * @return The model qualified by the provider serving it; <code>null</code> if no provider
+	 *         with models is available.
+	 *
+	 * @see #noProviderAvailable()
+	 */
+	public ModelTarget defaultTarget() {
+		if (_providerConfigs == null) {
+			return null;
+		}
+		for (Map.Entry<String, LLMProviderConfig> entry : _providerConfigs.entrySet()) {
+			LLMProviderConfig providerConfig = entry.getValue();
+			List<String> models = providerConfig.getConfiguredModels();
+			if (models == null || models.isEmpty() || !providerConfig.isAvailable()) {
+				continue;
+			}
+			return new ModelTarget(models.get(0), entry.getKey());
+		}
+		return null;
+	}
+
+	/**
+	 * The message for a run that needs a model while no {@link #defaultTarget()} exists.
+	 *
+	 * @return The message for the user, naming the secrets that would make a provider available.
+	 */
+	public ResKey noProviderAvailable() {
+		Set<ResKey> secrets = new LinkedHashSet<>();
+		if (_providerConfigs != null) {
+			for (LLMProviderConfig providerConfig : _providerConfigs.values()) {
+				List<String> models = providerConfig.getConfiguredModels();
+				if (models == null || models.isEmpty()) {
+					// Its secret would activate nothing.
+					continue;
+				}
+				ResKey secret = providerConfig.credentialsReference();
+				if (secret != null) {
+					secrets.add(secret);
+				}
+			}
+		}
+		ResKey list = null;
+		for (ResKey secret : secrets) {
+			list = list == null ? secret : I18NConstants.SECRET_LIST__LIST_SECRET.fill(list, secret);
+		}
+		if (list == null) {
+			return I18NConstants.ERROR_NO_PROVIDER_CONFIGURED;
+		}
+		return I18NConstants.ERROR_NO_PROVIDER_AVAILABLE__SECRETS.fill(list);
+	}
+
+	/**
+	 * The provider configuration serving the given model reference, or {@code null} if the
+	 * reference does not resolve to exactly one provider.
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 */
+	private LLMProviderConfig lookupProvider(String modelName, String providerName) {
+		if (_providerConfigs == null || modelName == null) {
+			return null;
+		}
+		List<String> exposedBy = getProvidersOf(modelName);
+		if (providerName != null && !providerName.isBlank()) {
+			// An allowlist that is bypassed is not an allowlist: a provider only serves the models
+			// it exposes, however it was named.
+			return exposedBy.contains(providerName) ? _providerConfigs.get(providerName) : null;
+		}
+		if (exposedBy.size() != 1) {
+			return null;
+		}
+		return _providerConfigs.get(exposedBy.get(0));
+	}
+
+	/**
+	 * The started provider with the given name.
+	 *
+	 * @param providerName
+	 *        The name of the provider in {@link Config#getProviders()}.
+	 * @return The provider, {@code null} if none of that name is configured.
+	 */
+	public LLMProviderConfig getProvider(String providerName) {
+		return _providerConfigs == null ? null : _providerConfigs.get(providerName);
+	}
+
+	/**
+	 * Why the given model reference does not resolve to exactly one provider.
+	 */
+	private String unroutable(String modelName, String providerName) {
+		List<String> exposedBy = getProvidersOf(modelName);
+		if (providerName != null && !providerName.isBlank()) {
+			if (_providerConfigs == null || !_providerConfigs.containsKey(providerName)) {
+				return "No provider named '" + providerName + "' is configured for model '" + modelName
+					+ "'. Configured providers: " + getConfiguredProviderNames();
+			}
+			return "Provider '" + providerName + "' does not expose model '" + modelName
+				+ "'. It exposes: " + modelsOf(providerName, _modelProviders) + ".";
+		}
+		if (exposedBy.isEmpty()) {
+			return "No provider configured for model: " + modelName
+				+ ". Available models: " + (_modelProviders == null ? List.of() : _modelProviders.keySet());
+		}
+		return "Model '" + modelName + "' is exposed by the providers " + exposedBy
+			+ ". Name one of them to select the provider.";
+	}
+
+	/**
+	 * Returns metadata for the given model, or {@code null} if unknown.
+	 *
+	 * @see #getCatalogEntry(String)
+	 */
+	public ModelInfo getModel(String modelId) {
+		ResolvedModel entry = getCatalogEntry(modelId);
+		return entry == null ? null : entry.info();
+	}
+
+	/**
+	 * The metadata of the given model together with its origin, or {@code null} if the catalog
+	 * has none for it.
+	 *
+	 * @param modelId
+	 *        The model name.
+	 *
+	 * @see #catalog()
+	 */
+	public ResolvedModel getCatalogEntry(String modelId) {
+		ModelCatalog catalog = _catalog;
+		return catalog == null ? null : catalog.get(modelId);
+	}
+
+	/**
+	 * The model catalog of this service: the metadata of every model it knows, each with its
+	 * origin, and the state of the catalog.
+	 *
+	 * <p>
+	 * An immutable snapshot, replaced as a whole when the remote catalog arrives or fails. A
+	 * configured model the catalog does not list and no override describes has no entry; the
+	 * configured models are {@link #getModelsOf(String) listed per provider}.
+	 * </p>
+	 *
+	 * @return The catalog, or {@code null} while the service is not running.
+	 */
+	public ModelCatalog catalog() {
+		return _catalog;
+	}
+
+	/**
+	 * The state of the model catalog of this service.
+	 *
+	 * @return The status, or {@code null} while the service is not running.
+	 *
+	 * @see #catalog()
+	 */
+	public CatalogStatus catalogStatus() {
+		ModelCatalog catalog = _catalog;
+		return catalog == null ? null : catalog.status();
+	}
+
+	/**
+	 * Returns the catalog provider ID for an unqualified model reference, or {@code null} if it
+	 * cannot be determined.
+	 *
+	 * <p>
+	 * Two provider entries for the same vendor - the case this exists for, two Anthropic accounts
+	 * exposing the same model - agree on their
+	 * {@link LLMProviderConfig#getCatalogProviderId() catalog provider ID}, so the ID is
+	 * unambiguous even where the provider <em>instance</em> is not. Only providers that disagree
+	 * make the answer {@code null}.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
+	 */
+	public String getProviderId(String modelName) {
+		if (_providerConfigs == null) {
+			return null;
+		}
+		String result = null;
+		boolean first = true;
+		for (String providerName : getProvidersOf(modelName)) {
+			String catalogId = _providerConfigs.get(providerName).getCatalogProviderId();
+			if (first) {
+				result = catalogId;
+				first = false;
+			} else if (!Objects.equals(result, catalogId)) {
+				return null;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns the catalog provider ID of the given model reference, or {@code null} if the
+	 * reference does not resolve to exactly one provider.
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
+	 */
+	public String getProviderId(String modelName, String providerName) {
+		if (providerName == null || providerName.isBlank()) {
+			return getProviderId(modelName);
+		}
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		return providerConfig == null ? null : providerConfig.getCatalogProviderId();
+	}
+
+	/**
+	 * How long, in seconds, a run on its last model waits in total for a model that is rate limited.
+	 *
+	 * @see FailoverConfig#getRateLimitWaitSeconds()
+	 */
+	public int rateLimitWaitSeconds() {
+		FailoverConfig failover = getConfig().getFailover();
+		return failover == null ? AgentTuning.DEFAULT_RATE_LIMIT_WAIT_SECONDS : failover.getRateLimitWaitSeconds();
+	}
+
+	/**
+	 * A model together with the provider that serves it.
+	 *
+	 * @param model
+	 *        The model name, or {@code null} if none is configured.
+	 * @param provider
+	 *        The name of the provider serving the model, or {@code null} for an unqualified
+	 *        reference that the model's only provider serves.
+	 */
+	record ModelRef(String model, String provider) {
+		// A pair, nothing more.
+	}
+
+	private static String blankToNull(String value) {
+		return value == null || value.isBlank() ? null : value;
+	}
+
+	/**
+	 * Derives the catalog-provider-ID to model-ID mapping from configured providers.
+	 */
+	private Map<String, Set<String>> buildCatalogProviderModels() {
+		Map<String, Set<String>> result = new LinkedHashMap<>();
+		for (LLMProviderConfig providerConfig : _providerConfigs.values()) {
+			String catalogId = providerConfig.getCatalogProviderId();
+			if (catalogId == null || catalogId.isBlank()) {
+				continue;
+			}
+			// Every provider contributes its own allowlist: a model two providers expose is
+			// requested once per catalog ID, and neither provider's models go unrequested.
+			result.computeIfAbsent(catalogId, id -> new LinkedHashSet<>())
+				.addAll(providerConfig.getConfiguredModels());
+		}
+		return result;
+	}
+
+	/**
+	 * Options provider that collects all model names configured across all provider entries.
+	 *
+	 * <p>
+	 * Used by UI components to display available models for selection.
+	 * </p>
+	 */
+	public static class AllowedModelOptions extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
+		@Override
+		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
+			if (providers == null || providers.isEmpty()) {
+				return List.of();
+			}
+			Set<String> allModels = new LinkedHashSet<>();
+			for (LLMProviderConfig.Config config : providers.values()) {
+				List<String> models = config.getModels();
+				if (models != null) {
+					allModels.addAll(models);
+				}
+			}
+			return new ArrayList<>(allModels);
+		}
+	}
+
+	/**
+	 * Module for {@link LLMProviderService}.
+	 */
+	public static final class Module extends TypedRuntimeModule<LLMProviderService> {
+
+		/**
+		 * Singleton {@link LLMProviderService.Module} instance.
+		 */
+		public static final LLMProviderService.Module INSTANCE = new LLMProviderService.Module();
+
+		private Module() {
+			// Singleton constructor
+		}
+
+		@Override
+		public Class<LLMProviderService> getImplementation() {
+			return LLMProviderService.class;
+		}
+	}
+}

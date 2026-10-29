@@ -15,8 +15,10 @@ import java.util.concurrent.TimeUnit;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.sched.SchedulerService;
 
 /**
@@ -34,6 +36,7 @@ import com.top_logic.basic.sched.SchedulerService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies(SchedulerService.Module.class)
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class LoginFailuresModule<C extends LoginFailuresModule.Config<?>> extends ConfiguredManagedClass<C> {
 
 	/**

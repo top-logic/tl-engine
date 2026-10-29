@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -29,11 +28,13 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.command.ActionStep;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.ActionScript;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.ExecuteScriptAction;
@@ -41,16 +42,12 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.IfAction;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.SwitchAction;
+import com.top_logic.layout.view.command.SwitchAction.CaseMatcher;
 import com.top_logic.layout.view.command.SwitchAction.SwitchCase;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.PanelElement;
-import com.top_logic.model.TLModel;
-import com.top_logic.model.search.expr.EvalContext;
-import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.query.Args;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * Tests for {@link IfAction} and {@link SwitchAction}, the branches of an action chain.
@@ -60,16 +57,16 @@ public class TestBranchActions extends TestCase {
 	private static final String VIEW = "test-branch-actions.view.xml";
 
 	/** Condition that holds for every value. */
-	private static final ActionScript TRUE = (context, input) -> Boolean.TRUE;
+	private static final ActionScript TRUE = (context, arguments, additional) -> Boolean.TRUE;
 
 	/** Condition that holds for no value. */
-	private static final ActionScript FALSE = (context, input) -> Boolean.FALSE;
+	private static final ActionScript FALSE = (context, arguments, additional) -> Boolean.FALSE;
 
 	/**
-	 * Function handing the chain's current value on as the switch value, as a {@code <switch>}
-	 * without a value function does.
+	 * Script handing the chain's default argument on as the switch value, as a {@code <switch>}
+	 * without a value script does.
 	 */
-	private static final ActionScript VALUE = (context, input) -> input;
+	private static final ActionScript VALUE = (context, arguments, additional) -> arguments.value();
 
 	private final List<String> _log = new ArrayList<>();
 
@@ -98,7 +95,7 @@ public class TestBranchActions extends TestCase {
 	}
 
 	/**
-	 * Tests that the chain's value passes through a branch that is not configured.
+	 * Tests that the chain's arguments reach the action after a branch that is not configured.
 	 */
 	public void testMissingBranchPassesValueThrough() {
 		IfAction branch = new IfAction(FALSE, List.of(result("then", "produced")), List.of());
@@ -111,21 +108,25 @@ public class TestBranchActions extends TestCase {
 	}
 
 	/**
-	 * Tests that the result of the branch's last action becomes the value the chain continues with.
+	 * Tests that the result of the branch's last action is the result of the branch, seen by its
+	 * follow-up actions, while the chain continues with its unchanged arguments.
 	 */
 	public void testBranchResultContinuesChain() {
 		IfAction branch = new IfAction(TRUE, List.of(result("then", "produced")), List.of());
-		Object[] seen = new Object[1];
+		Object[] seen = new Object[2];
 
-		run(List.of(branch, (context, input) -> seen[0] = input), "in");
+		run(List.of(
+			new ActionStep(branch, null, WithResultActions.RESULT, List.of((context, input) -> seen[0] = input)),
+			(context, input) -> seen[1] = input), "in");
 
-		assertEquals("produced", seen[0]);
-		assertEquals("The chain settles with the value the branch produced.", List.of("produced"), _completions);
+		assertEquals("The follow-up actions of the branch see its result.", "produced", seen[0]);
+		assertEquals("The chain continues with its arguments.", "in", seen[1]);
+		assertEquals(List.of("in"), _completions);
 	}
 
 	/**
-	 * Tests that an action inside a branch may resume the chain later, its result reaching the
-	 * action that follows the branch.
+	 * Tests that an action inside a branch may resume the chain later, the chain continuing with
+	 * the action that follows the branch.
 	 */
 	public void testAsynchronousActionInsideBranch() {
 		Suspend suspend = new Suspend();
@@ -140,9 +141,8 @@ public class TestBranchActions extends TestCase {
 		suspend.resume("late");
 
 		assertEquals(List.of("then"), _log);
-		assertEquals("The value the suspended action resumed with reaches the branch's next action.",
-			"late", seen[0]);
-		assertEquals(List.of("late"), _completions);
+		assertEquals("The action after the branch runs with the chain's arguments.", "in", seen[0]);
+		assertEquals(List.of("in"), _completions);
 	}
 
 	/**
@@ -267,7 +267,7 @@ public class TestBranchActions extends TestCase {
 	 * loaded.
 	 */
 	public void testSwitchCaseWithBothConditions() {
-		assertCaseRejected("<case match=\"'open'\" test=\"s -> $s == 'open'\"/>");
+		assertCaseRejected("<case match=\"'open'\" test=\"$value == 'open'\"/>");
 	}
 
 	/**
@@ -285,7 +285,7 @@ public class TestBranchActions extends TestCase {
 					</channels>
 					<panel>
 						<commands>
-							<generic-command name="select" input="ticket">
+							<generic-command name="select" inputs="ticket">
 								<switch>
 									%s
 								</switch>
@@ -315,43 +315,18 @@ public class TestBranchActions extends TestCase {
 	}
 
 	/** Matcher of a case selected by a switch value equal to the given one. */
-	private static Predicate<Object> is(Object expected) {
-		return value -> expected.equals(value);
+	private static CaseMatcher is(Object expected) {
+		return (context, arguments, value) -> expected.equals(value);
 	}
 
-	/** A compiled script delivering the given value, as a {@code match} expression does. */
-	private static QueryExecutor literal(Object value) {
+	/** A script delivering the given value, as a {@code match} expression does. */
+	private static ActionScript literal(Object value) {
 		return script(ignored -> value);
 	}
 
-	/** A compiled script computing its result from its single argument. */
-	private static QueryExecutor script(Function<Object, Object> function) {
-		return new QueryExecutor() {
-			@Override
-			protected Object internalExecuteWith(EvalContext definitions, Args args) {
-				return function.apply(args.hasValue() ? args.value() : null);
-			}
-
-			@Override
-			public SearchExpression getSearch() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			protected KnowledgeBase getKnowledgeBase() {
-				return null;
-			}
-
-			@Override
-			protected TLModel getTLModel() {
-				return null;
-			}
-
-			@Override
-			protected void internalDisableSecurity() {
-				// Nothing to switch off, the script accesses no data.
-			}
-		};
+	/** A script computing its result from the switch value, its additional value. */
+	private static ActionScript script(Function<Object, Object> function) {
+		return (context, arguments, additional) -> function.apply(additional.length > 0 ? additional[0] : null);
 	}
 
 	/**
@@ -387,7 +362,7 @@ public class TestBranchActions extends TestCase {
 		GenericViewCommand.Config decide = (GenericViewCommand.Config) commands.get("decide");
 		IfAction.Config ifConfig = (IfAction.Config) decide.getActions().get(0);
 		assertNotNull("The condition is parsed.", ifConfig.getTest());
-		assertEquals("branchInput", ifConfig.getInputs().get(0).getChannelName());
+		assertEquals("branchInput", ifConfig.getInputs().get(0).getName());
 		assertEquals(1, ifConfig.getThen().size());
 		assertTrue(ifConfig.getThen().get(0) instanceof ExecuteScriptAction.Config);
 		assertEquals(1, ifConfig.getElse().size());
@@ -427,7 +402,7 @@ public class TestBranchActions extends TestCase {
 	}
 
 	private void run(List<ViewAction> actions, Object input) {
-		ViewActionChain.run(new DefaultViewContext(null), actions, input, _completions::add);
+		ViewActionChain.run(new DefaultViewContext(null), actions, args(input), _completions::add);
 	}
 
 	/** An action that logs its name and hands the chain's value on. */
@@ -501,5 +476,10 @@ public class TestBranchActions extends TestCase {
 	 */
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestBranchActions.class, TypeIndex.Module.INSTANCE);
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

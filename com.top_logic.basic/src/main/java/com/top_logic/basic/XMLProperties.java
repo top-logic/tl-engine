@@ -43,6 +43,8 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.tooling.Workspace;
@@ -102,6 +104,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 @Label("XML properties")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class XMLProperties extends ManagedClass {
 
 	/**
@@ -313,7 +316,7 @@ public class XMLProperties extends ManagedClass {
 	 * The attribute name for the value stored in the entry (is "encrypt"). The value must be "true"
 	 * or "false".
 	 */
-	private static final String ENCRYPT_ATTR = "encrypt";
+	public static final String ENCRYPT_ATTR = "encrypt";
 
     /** The Document containig the actual properties */
     private Document  document;
@@ -514,7 +517,7 @@ public class XMLProperties extends ManagedClass {
 			}
 			String encryptAttr = reader.getAttributeValue(null, ENCRYPT_ATTR);
 			if (Boolean.TRUE.toString().equals(encryptAttr)) {
-				value = decryptValue(key, value);
+				value = decryptValue(reader, key, value);
 			}
 			config.put(key, value);
 			XMLStreamUtil.skipToMatchingEndTag(reader);
@@ -598,18 +601,31 @@ public class XMLProperties extends ManagedClass {
 		return properties;
     }
 
-	private String decryptValue(String key, String value) {
+	private String decryptValue(XMLStreamReader reader, String key, String value) {
 		if (!StringServices.isEmpty(value)) {
 			// do not decrypt empty values, just leave them empty
 			try {
-				value = ConfigurationEncryption.decrypt(value);
-			} catch (RuntimeException ex) {
+				String decryptedValue = ConfigurationEncryption.decrypt(value);
+				if (!ConfigurationEncryption.isAuthenticated(value)) {
+					Logger.warn("The value of key '" + key + "' marked with " + ENCRYPT_ATTR + "='true' "
+						+ XMLStreamUtil.atLocation(reader)
+						+ " is encrypted in the unauthenticated format without prefix '"
+						+ ConfigurationEncryption.AUTHENTICATED_PREFIX
+						+ "'. Encrypt the value again, e.g. using the maintenance page EncodeConfigurationValues.jsp.",
+						XMLProperties.class);
+				}
+				value = decryptedValue;
+			} catch (InvalidEncryptedValueException ex) {
+				// The value is not part of the error: a value that cannot be decrypted is in most
+				// cases a secret configured in plain text.
 				StringBuilder msg = new StringBuilder();
-				msg.append("Unable to decode '");
-				msg.append(value);
-				msg.append("' as value for key '");
+				msg.append("Unable to decrypt the value of key '");
 				msg.append(key);
-				msg.append("'.");
+				msg.append("' marked with ");
+				msg.append(ENCRYPT_ATTR);
+				msg.append("='true' ");
+				msg.append(XMLStreamUtil.atLocation(reader));
+				msg.append(".");
 				throw new ConfigurationError(msg.toString(), ex);
 			}
 		}

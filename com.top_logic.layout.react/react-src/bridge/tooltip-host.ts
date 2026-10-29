@@ -46,9 +46,14 @@ import { isMountedControl, getApiBase } from './tl-react-bridge';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
 import { wrapRoot } from './root-wrapper';
 
-const HOVER_DELAY_MS = 400;
+/** How long the pointer rests on an element before the surface it opens by hovering appears. */
+export const HOVER_DELAY_MS = 400;
 const CLOSE_DELAY_MS_PASSIVE = 150;
-const CLOSE_DELAY_MS_INTERACTIVE = 400;
+/**
+ * How long a surface the pointer can enter - an interactive tooltip, a popover opened by hovering -
+ * stays after the pointer has left it and its anchor.
+ */
+export const CLOSE_DELAY_MS_INTERACTIVE = 400;
 
 /** Attribute with which an element declares its tooltip, see the mode list above. */
 export const TOOLTIP_ATTR = 'data-tooltip';

@@ -7,6 +7,9 @@ package com.top_logic.element.model;
 
 import java.util.Collection;
 
+import org.apache.commons.collections4.BidiMap;
+
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.DuplicateAttributeException;
@@ -18,11 +21,10 @@ import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.MetaElementHolder;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.service.db2.IndexedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.knowledge.wrap.list.FastListElement;
@@ -61,8 +63,14 @@ public class PersistentTLModel extends DynamicModelPart implements TLModel {
 	/** Name of the {@link MetaObject} holding {@link PersistentTLModel}. */
 	public static final String OBJECT_TYPE = TlModelFactory.KO_NAME_TL_MODEL;
 	
-	private static final AssociationSetQuery<TLModule> MODULES = AssociationQuery.createQuery("modules", TLModule.class,
-		ApplicationObjectUtil.MODULE_OBJECT_TYPE, ApplicationObjectUtil.MODULE_MODEL_ATTR);
+	/**
+	 * The {@link TLModule}s of a {@link TLModel}, indexed by their {@link PersistentModule#NAME_ATTR
+	 * name}.
+	 */
+	private static final IndexedLinkQuery<String, TLModule> MODULES_BY_NAME =
+		IndexedLinkQuery.indexedLinkQuery(new NamedConstant("modules"), TLModule.class,
+			ApplicationObjectUtil.MODULE_OBJECT_TYPE, ApplicationObjectUtil.MODULE_MODEL_ATTR,
+			PersistentModule.NAME_ATTR, String.class, null, true);
 
 	public PersistentTLModel(KnowledgeObject ko) {
 		super(ko);
@@ -75,18 +83,16 @@ public class PersistentTLModel extends DynamicModelPart implements TLModel {
 
 	@Override
 	public Collection<TLModule> getModules() {
-		return AbstractWrapper.resolveLinks(this, MODULES);
+		return modulesIndex().values();
 	}
 
 	@Override
 	public TLModule getModule(String name) {
-		Collection<TLModule> allModules = getModules();
-		for (TLModule module: allModules) {
-			if (name.equals(module.getName())) {
-				return module;
-			}
-		}
-		return null;
+		return modulesIndex().get(name);
+	}
+
+	private BidiMap<String, TLModule> modulesIndex() {
+		return AbstractWrapper.resolveLinks(this, MODULES_BY_NAME);
 	}
 
 	@Override

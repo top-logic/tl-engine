@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.list;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,15 +18,19 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
@@ -38,16 +44,29 @@ import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.security.AccessCheck;
+import com.top_logic.layout.view.security.CommandAccess;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Declarative {@link UIElement} repeating a content template over a computed list of model objects
@@ -91,7 +110,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * <pre>
  * &lt;object-list
  *   inputs="catalogue"
- *   items="catalogue -&gt; $catalogue.get(`demo:Catalogue#products`)"
+ *   items="$catalogue.get(`demo:Catalogue#products`)"
  *   layout="grid"
  *   max-columns="4"
  *   min-column-width="18rem"
@@ -100,6 +119,25 @@ import com.top_logic.model.util.TLModelPartRef;
  *     &lt;view-ref view="catalogue/product-card.view.xml"&gt;
  *       &lt;bind channel="product" to="element"/&gt;
  *     &lt;/view-ref&gt;
+ *   &lt;/item&gt;
+ * &lt;/object-list&gt;
+ * </pre>
+ *
+ * <p>
+ * With a {@link Config#getSelection() selection channel}, the elements are selectable like the
+ * entries of a list box: clicking an element writes its object to the channel, and the element of
+ * the object the channel holds is displayed as selected. Without one, the list only displays its
+ * elements.
+ * </p>
+ *
+ * <pre>
+ * &lt;object-list
+ *   inputs="catalogue"
+ *   items="$catalogue.get(`demo:Catalogue#products`)"
+ *   selection="product"
+ * &gt;
+ *   &lt;item&gt;
+ *     &lt;text input="element"/&gt;
  *   &lt;/item&gt;
  * &lt;/object-list&gt;
  * </pre>
@@ -115,7 +153,7 @@ public class ObjectListElement implements UIElement {
 
 	/**
 	 * CSS class of the element the client places around each item, carrying its 0-based position as
-	 * the CSS custom property {@code --tl-item-index}.
+	 * the CSS custom property {@code --item-index}.
 	 *
 	 * <p>
 	 * An application styles the items of every list through this class, a staggered entrance
@@ -179,7 +217,11 @@ public class ObjectListElement implements UIElement {
 	 * Configuration for {@link ObjectListElement}.
 	 */
 	@TagName("object-list")
-	public interface Config extends UIElement.Config, Inputs, GridOptions {
+	@TypeIcon("css:bi bi-list-ul")
+	public interface Config extends UIElement.Config, Inputs, GridOptions, ElementAsConfig, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getLayout()}. */
 		String LAYOUT = "layout";
@@ -192,6 +234,12 @@ public class ObjectListElement implements UIElement {
 
 		/** Configuration name for {@link #getRemove()}. */
 		String REMOVE = "remove";
+
+		/** Configuration name for {@link #getLinkAccess()}. */
+		String LINK_ACCESS = "link-access";
+
+		/** Configuration name for {@link #getRemoveAccess()}. */
+		String REMOVE_ACCESS = "remove-access";
 
 		/** Configuration name for {@link #getElementType()}. */
 		String ELEMENT_TYPE = "element-type";
@@ -214,6 +262,12 @@ public class ObjectListElement implements UIElement {
 		/** Configuration name for {@link #getEmptyText()}. */
 		String EMPTY_TEXT = "empty-text";
 
+		/** Configuration name for {@link #getSelection()}. */
+		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
+
 		@Override
 		@ClassDefault(ObjectListElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -231,42 +285,105 @@ public class ObjectListElement implements UIElement {
 		Layout getLayout();
 
 		/**
-		 * TL-Script function computing the displayed elements from the values of the inputs:
-		 * {@code ...inputs -> elements}.
+		 * TL-Script expression computing the displayed elements from the values of the inputs.
 		 *
 		 * <p>
-		 * Applied again whenever an input changes, so the displayed elements follow what the inputs
-		 * hold. An input whose object was deleted meanwhile is passed as nothing.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. It is evaluated again whenever an input
+		 * changes, so the displayed elements follow what the inputs hold. An input whose object was
+		 * deleted meanwhile has no value.
 		 * </p>
 		 */
 		@Name(ITEMS)
 		@Mandatory
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getItems();
 
 		/**
-		 * TL-Script function attaching a newly composed element:
-		 * {@code ...inputs -> element -> ...}.
+		 * TL-Script expression attaching a newly composed element.
 		 *
 		 * <p>
-		 * Run by {@link LinkElementAction &lt;link-element&gt;} in a transaction. The element passed
-		 * behind the input values is the new-element template's transient object; the function is
-		 * responsible for making it persistent (e.g. via a non-transient copy) and attaching it
-		 * where it belongs.
+		 * Run by {@link LinkElementAction &lt;link-element&gt;} in a transaction. The expression
+		 * sees the values of the {@link #getInputs() inputs} as variables named after their
+		 * channels, or by their {@code as} names, and the element as the variable
+		 * {@value ElementAsConfig#DEFAULT_ELEMENT_AS}, or by the name given with
+		 * {@value ElementAsConfig#ELEMENT_AS}. The element is the new-element template's transient
+		 * object; the expression is responsible for making it persistent (e.g. via a non-transient
+		 * copy) and attaching it where it belongs:
 		 * </p>
+		 *
+		 * <pre>
+		 * $ticket.add(`my:Ticket#comments`, $element.copy(transient: false))
+		 * </pre>
 		 */
 		@Name(LINK)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getLink();
 
 		/**
-		 * TL-Script function detaching an element: {@code ...inputs -> element -> ...}.
+		 * TL-Script expression detaching an element.
 		 *
 		 * <p>
-		 * Run by {@link RemoveElementAction &lt;remove-element&gt;} in a transaction, with the
-		 * element passed behind the input values.
+		 * Run by {@link RemoveElementAction &lt;remove-element&gt;} in a transaction. The expression
+		 * sees the values of the {@link #getInputs() inputs} and the element, as the
+		 * {@link #getLink() link expression} does.
 		 * </p>
 		 */
 		@Name(REMOVE)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRemove();
+
+		/**
+		 * What {@link #getLink() linking} an element does in the model, checked in the model access
+		 * rights of the current user before a {@link LinkElementAction &lt;link-element&gt;} runs.
+		 *
+		 * <p>
+		 * The same checks a command declares in its {@link ViewCommand.Config#getAccess() access}:
+		 * {@code <operation>} and {@code <create>}. Their scripts see the values of the
+		 * {@link #getInputs() inputs} and the element, like the {@link #getLink() link expression}.
+		 * A command running {@code <link-element/>} brings these checks as its own rule, so it is
+		 * hidden or disabled where the link would be refused. Without a check, linking is not
+		 * checked here.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;link-access&gt;
+		 *   &lt;create in="$ticket" reference="my:Ticket#comments"/&gt;
+		 * &lt;/link-access&gt;
+		 * </pre>
+		 */
+		@Name(LINK_ACCESS)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		List<PolymorphicConfiguration<? extends AccessCheck>> getLinkAccess();
+
+		/**
+		 * What {@link #getRemove() removing} an element does in the model, checked like the
+		 * {@link #getLinkAccess() link access} before a
+		 * {@link RemoveElementAction &lt;remove-element&gt;} runs.
+		 *
+		 * <pre>
+		 * &lt;remove-access&gt;
+		 *   &lt;operation name="Delete" object="$comment" type="my:Comment"/&gt;
+		 * &lt;/remove-access&gt;
+		 * </pre>
+		 */
+		@Name(REMOVE_ACCESS)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		List<PolymorphicConfiguration<? extends AccessCheck>> getRemoveAccess();
+
+		/**
+		 * The checks of the {@link #getLinkAccess() link access} and the
+		 * {@link #getRemoveAccess() remove access} see the values of the inputs and the element.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getLinkAccess(), part) || ActionScopes.contains(getRemoveAccess(), part)) {
+				return accessScope(this);
+			}
+			return outer;
+		}
 
 		/**
 		 * The type of the transient element created for the new-element template.
@@ -309,12 +426,16 @@ public class ObjectListElement implements UIElement {
 		 * &lt;view-ref&gt;} binding the element channel, or elements written inline. Multiple entries
 		 * are stacked vertically.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(ITEM)
 		@Mandatory
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getItem();
+		List<UIElement.Config> getItem();
 
 		/**
 		 * The content instantiated once behind the items for entering a new element, with the fresh
@@ -325,17 +446,57 @@ public class ObjectListElement implements UIElement {
 		 * Displayed while every input holds a value, because an element is composed to be attached
 		 * somewhere. Ordinary view content, like {@link #getItem()}.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(NEW_ELEMENT)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getNewElement();
+		List<UIElement.Config> getNewElement();
 
 		/**
 		 * Text displayed instead of items when the list is empty.
 		 */
 		@Name(EMPTY_TEXT)
 		ResKey getEmptyText();
+
+		/**
+		 * Optional {@link ViewChannel} the object of the selected element is written to.
+		 *
+		 * <p>
+		 * The element of the object the channel holds is displayed as selected. Without a selection
+		 * channel, the elements are not selectable.
+		 * </p>
+		 */
+		@Name(SELECTION)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelection();
+
+		/**
+		 * Whether the user may select one element at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and a
+		 * click on the selected element with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} adds an element to the selection, or takes it out again, by a
+		 * click with {@code Ctrl} or a long press on a touch screen; a click with {@code Shift} adds the elements from the one clicked
+		 * last up to the clicked one.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the object of the selected element
+		 * while exactly one is selected, the set of the selected objects while there are several,
+		 * and nothing while there is none.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
 	}
 
 	private final Config _config;
@@ -356,15 +517,29 @@ public class ObjectListElement implements UIElement {
 	@CalledByReflection
 	public ObjectListElement(InstantiationContext context, Config config) {
 		_config = config;
-		_itemsExecutor = QueryExecutor.compile(config.getItems());
-		_linkExecutor = config.getLink() == null ? null : QueryExecutor.compile(config.getLink());
-		_removeExecutor = config.getRemove() == null ? null : QueryExecutor.compile(config.getRemove());
+		_itemsExecutor = InputScript.compile(config, Config.ITEMS);
+		_linkExecutor = InputScript.compile(config, Config.LINK);
+		_removeExecutor = InputScript.compile(config, Config.REMOVE);
 		_itemContent = instantiate(context, config.getItem());
 		_newElementContent = instantiate(context, config.getNewElement());
 	}
 
+	/**
+	 * The arguments the {@link Config#getLinkAccess() link access} and the
+	 * {@link Config#getRemoveAccess() remove access} of the given list decide over: the values of
+	 * its inputs and the element, which is the default argument.
+	 */
+	static ActionScope accessScope(Config config) {
+		List<String> names = InputRef.names(config.getInputs());
+		String element = config.getElementAs() == null || config.getElementAs().isBlank()
+			? ElementAsConfig.DEFAULT_ELEMENT_AS
+			: config.getElementAs().trim();
+		names.add(element);
+		return ActionScope.of(names, element);
+	}
+
 	private static List<UIElement> instantiate(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> content) {
+			List<UIElement.Config> content) {
 		if (content == null) {
 			return Collections.emptyList();
 		}
@@ -385,12 +560,23 @@ public class ObjectListElement implements UIElement {
 		List<ViewChannel> inputs = ChannelInputs.resolve(context, _config.getInputs());
 
 		ObjectListScope scope = new ObjectListScope(inputs, _linkExecutor, _removeExecutor);
+		ActionScope accessScope = accessScope(_config);
+		scope.initAccess(accessScope,
+			CommandAccess.create(_config.getLinkAccess(), accessScope, context,
+				"the link access of the object list at " + _config.location()),
+			CommandAccess.create(_config.getRemoveAccess(), accessScope, context,
+				"the remove access of the object list at " + _config.location()));
 		ViewContext templateContext = context.withScope(ObjectListScope.class, scope);
 
 		ObjectListItems items = new ObjectListItems(templateContext, scope, _config.getLayout(), _config, inputs,
 			_itemContent, _newElementContent,
 			_config.getElementChannel(), _config.getNewElementChannel(),
 			resolveElementType(), _config.getEmptyText());
+
+		ChannelRef selection = _config.getSelection();
+		if (selection != null) {
+			items.bindSelection(_config.getSelectionMode(), context.resolveChannel(selection));
+		}
 
 		QueryExecutor itemsExecutor = _itemsExecutor;
 		List<Object> initialElements = computeElements(itemsExecutor, ChannelInputs.arguments(inputs));

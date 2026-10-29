@@ -22,6 +22,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.ExpectedFailure;
+import test.com.top_logic.basic.ExpectedFailureProtocol;
 import test.com.top_logic.basic.config.TypedConfigurationSzenario.A;
 import test.com.top_logic.basic.config.TypedConfigurationSzenario.A.Config;
 import test.com.top_logic.basic.config.TypedConfigurationSzenario.EConfig;
@@ -255,6 +256,50 @@ public class TestTypedConfiguration extends AbstractTypedConfigurationTestCase {
 			initDefaultTest();
 		}
 		testDecodeString(rootTag, "unencrypted: Bla blub ", " Bla blub ");
+	}
+
+	public void testUndecodableValueNotReportedInAttribute() {
+		String secret = "PlainSecret";
+		assertUndecodableValueNotReported(secret,
+			"<encrypted " + EncryptedConfig.ENCRYPTED_STRING_NAME + "='" + secret + "'/>");
+	}
+
+	public void testUndecodableValueNotReportedInElement() {
+		String secret = "PlainSecret";
+		assertUndecodableValueNotReported(secret,
+			"<encrypted><" + EncryptedConfig.ENCRYPTED_STRING_NAME + ">" + secret + "</"
+				+ EncryptedConfig.ENCRYPTED_STRING_NAME + "></encrypted>");
+	}
+
+	private void assertUndecodableValueNotReported(String secret, String source) {
+		initFailureTest();
+		try {
+			StringBuilder report = new StringBuilder();
+			try {
+				read(source);
+				fail("Must not be able to decode unencoded value.");
+			} catch (ConfigurationException | ExpectedFailure ex) {
+				appendMessages(report, ex);
+			}
+			for (String error : ((ExpectedFailureProtocol) protocol).getErrors()) {
+				report.append(error).append('\n');
+			}
+			String reported = report.toString();
+			assertTrue("No error for the property reported: " + reported,
+				reported.contains(EncryptedConfig.ENCRYPTED_STRING_NAME));
+			assertFalse("Undecodable value of encrypted property reported: " + reported, reported.contains(secret));
+		} finally {
+			initDefaultTest();
+		}
+	}
+
+	private static void appendMessages(StringBuilder out, Throwable ex) {
+		for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+			out.append(cause.getClass().getName()).append(": ").append(cause.getMessage()).append('\n');
+			for (Throwable suppressed : cause.getSuppressed()) {
+				appendMessages(out, suppressed);
+			}
+		}
 	}
 
 	private void testDecodeString(String rootTag, String encrypted, String decrypted) throws ConfigurationException {

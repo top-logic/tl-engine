@@ -16,7 +16,8 @@
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-themes-core</artifactId>
+      <artifactId>tl-starter-classic</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -28,23 +29,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-doc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-formeditor</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-wysiwyg-highlighter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-themeedit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-scripting-template</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -57,14 +42,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-model-wysiwyg</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-graphic-blocks-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-monitoring</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -145,6 +122,7 @@
 				<executions>
 					<execution>
 						<id>generate-binding</id>
+						<phase>none</phase>
 						<goals>
 							<goal>generate-java</goal>
 						</goals>

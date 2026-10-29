@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <objects>
+	<resolvers>
+		<resolver type="tl.accounts:Person">
+			<impl class="com.top_logic.model.instance.importer.resolver.AccountResolver"/>
+		</resolver>
+	</resolvers>
+	<object id="10"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Clara"
+		/>
+		<attribute name="name"
+			value="Weber"
+		/>
+		<attribute name="email"
+			value="clara.weber@example.com"
+		/>
+	</object>
+	<object id="20"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Christian"
+		/>
+		<attribute name="name"
+			value="Becker"
+		/>
+		<attribute name="email"
+			value="christian.becker@example.com"
+		/>
+	</object>
+	<object id="30"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Anna"
+		/>
+		<attribute name="name"
+			value="Schmidt"
+		/>
+		<attribute name="email"
+			value="anna.schmidt@example.com"
+		/>
+	</object>
+	<object id="40"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Bernd"
+		/>
+		<attribute name="name"
+			value="Hoffmann"
+		/>
+		<attribute name="email"
+			value="bernd.hoffmann@example.com"
+		/>
+	</object>
 	<object id="1"
 		type="tl.demo.projectManagement:ProjectScope"
 	>
@@ -13,6 +70,11 @@
 		<attribute name="budget"
 			value="80000.0"
 		/>
+		<attribute name="members">
+			<global-ref id="root"
+				kind="tl.accounts:Person"
+			/>
+		</attribute>
 		<attribute name="milestones">
 			<object id="6"
 				type="tl.demo.projectManagement:Milestone"
@@ -30,26 +92,44 @@
 				type="tl.demo.projectManagement:Ticket"
 			>
 				<attribute name="title"
-					value="T4"
+					value="Schnittstelle zum Lager anbinden"
 				/>
-				<attribute name="description"
-					value="Aufgabe in Projekt 2"
-				/>
+				<attribute name="description">
+					<complex-value>
+						<contents>
+							<value>
+								<source-code><![CDATA[<p>Die Bestandsdaten aus dem Lagerverwaltungssystem <strong>stündlich</strong> übernehmen. Die Felder werden wie folgt abgebildet:</p><table><thead><tr><th>Lagersystem</th><th>Anwendung</th><th>Hinweis</th></tr></thead><tbody><tr><td>ARTNR</td><td>Artikelnummer</td><td>führende Nullen entfernen</td></tr><tr><td>BESTAND</td><td>Menge</td><td>in Stück</td></tr><tr><td>LAGERORT</td><td>Lager</td><td>über Zuordnungstabelle</td></tr><tr><td>AENDDAT</td><td>Stand</td><td>Zeitzone UTC</td></tr></tbody></table><p>Fehlerhafte Sätze werden protokolliert und <em>nicht</em> übernommen.</p>]]></source-code>
+							</value>
+						</contents>
+					</complex-value>
+				</attribute>
 				<attribute name="milestone">
 					<ref id="6"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="10"/>
 				</attribute>
 			</object>
 			<object id="8"
 				type="tl.demo.projectManagement:Ticket"
 			>
 				<attribute name="title"
-					value="T5"
+					value="Datenmigration nachbereiten"
 				/>
-				<attribute name="description"
-					value="Nacharbeit in Projekt 2"
-				/>
+				<attribute name="description">
+					<complex-value>
+						<contents>
+							<value>
+								<source-code><![CDATA[<p>Die bei der Migration abgewiesenen Datensätze prüfen und nachpflegen.</p><ul><li>Fehlerliste auswerten</li><li>Korrekturen einspielen</li></ul>]]></source-code>
+							</value>
+						</contents>
+					</complex-value>
+				</attribute>
 				<attribute name="milestone">
 					<ref id="6"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="20"/>
 				</attribute>
 			</object>
 		</attribute>
@@ -67,6 +147,11 @@
 		<attribute name="budget"
 			value="120000.0"
 		/>
+		<attribute name="members">
+			<global-ref id="root"
+				kind="tl.accounts:Person"
+			/>
+		</attribute>
 		<attribute name="milestones">
 			<object id="3"
 				type="tl.demo.projectManagement:Milestone"
@@ -97,39 +182,66 @@
 				type="tl.demo.projectManagement:Ticket"
 			>
 				<attribute name="title"
-					value="T1"
+					value="Anforderungen abstimmen"
 				/>
-				<attribute name="description"
-					value="Problem in Projekt 1"
-				/>
+				<attribute name="description">
+					<complex-value>
+						<contents>
+							<value>
+								<source-code><![CDATA[<p>Die Anforderungen mit den Fachbereichen abstimmen und als <strong>verbindliche Grundlage</strong> festhalten.</p><ul><li>Workshop mit dem Vertrieb</li><li>Workshop mit der Buchhaltung</li><li>Protokolle freigeben lassen</li></ul>]]></source-code>
+							</value>
+						</contents>
+					</complex-value>
+				</attribute>
 				<attribute name="milestone">
 					<ref id="3"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="20"/>
 				</attribute>
 			</object>
 			<object id="11"
 				type="tl.demo.projectManagement:Ticket"
 			>
 				<attribute name="title"
-					value="T2"
+					value="Datenmodell entwerfen"
 				/>
-				<attribute name="description"
-					value="Folgearbeit in Projekt 1"
-				/>
+				<attribute name="description">
+					<complex-value>
+						<contents>
+							<value>
+								<source-code><![CDATA[<p>Das fachliche Datenmodell aus den abgestimmten Anforderungen ableiten.</p><p>Offene Fragen zur Historisierung werden im nächsten Jour fixe geklärt.</p>]]></source-code>
+							</value>
+						</contents>
+					</complex-value>
+				</attribute>
 				<attribute name="milestone">
 					<ref id="3"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="10"/>
 				</attribute>
 			</object>
 			<object id="12"
 				type="tl.demo.projectManagement:Ticket"
 			>
 				<attribute name="title"
-					value="T3"
+					value="Abnahmetest durchführen"
 				/>
-				<attribute name="description"
-					value="Abnahme in Projekt 1"
-				/>
+				<attribute name="description">
+					<complex-value>
+						<contents>
+							<value>
+								<source-code><![CDATA[<h2>Ziel</h2><p>Den Abnahmetest gemeinsam mit dem Kunden durchführen und die Abnahme des Releases <strong>schriftlich bestätigen</strong> lassen. Der Test deckt alle Anforderungen ab, die im ersten Meilenstein verbindlich vereinbart wurden.</p><h2>Vorbereitung</h2><ol><li>Testfälle aus den abgestimmten Anforderungen ableiten und mit dem Fachbereich durchgehen.</li><li>Testdaten bereitstellen: anonymisierte Kopie des Produktivbestands vom Monatsende.</li><li>Testumgebung mit dem Release-Kandidaten aufsetzen und die Zugänge der Tester einrichten.</li><li>Termin mit den Testern aus Vertrieb und Buchhaltung abstimmen.</li></ol><h2>Durchführung</h2><p>Jeder Testfall wird von einem Tester des Fachbereichs ausgeführt und im Testprotokoll mit <em>bestanden</em>, <em>bestanden mit Mängeln</em> oder <em>nicht bestanden</em> bewertet. Gefundene Mängel werden sofort als Ticket erfasst und nach ihrer Schwere eingestuft.</p><ul><li><strong>Kritisch:</strong> verhindert die Abnahme, muss vor dem Go-live behoben werden.</li><li><strong>Wesentlich:</strong> Abnahme unter Vorbehalt, Behebung innerhalb von zwei Wochen.</li><li><strong>Gering:</strong> wird im nächsten regulären Release behoben.</li></ul><h2>Abschluss</h2><p>Nach dem letzten Testfall werden die Ergebnisse im Abnahmegespräch vorgestellt. Sind alle kritischen Mängel behoben, unterschreibt der Kunde das <strong>Abnahmeprotokoll</strong>; damit ist der Meilenstein erreicht.</p>]]></source-code>
+							</value>
+						</contents>
+					</complex-value>
+				</attribute>
 				<attribute name="milestone">
 					<ref id="9"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="20"/>
 				</attribute>
 			</object>
 		</attribute>
@@ -142,54 +254,5 @@
 				/>
 			</object>
 		</attribute>
-	</object>
-	<object id="10"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="C2"
-		/>
-		<attribute name="email"
-			value="c2@example.com"
-		/>
-		<attribute name="assignedTickets">
-			<ref id="11"/>
-			<ref id="7"/>
-		</attribute>
-	</object>
-	<object id="20"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="C1"
-		/>
-		<attribute name="email"
-			value="c1@example.com"
-		/>
-		<attribute name="assignedTickets">
-			<ref id="4"/>
-			<ref id="12"/>
-			<ref id="8"/>
-		</attribute>
-	</object>
-	<object id="30"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="A1"
-		/>
-		<attribute name="email"
-			value="a1@example.com"
-		/>
-	</object>
-	<object id="40"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="B1"
-		/>
-		<attribute name="email"
-			value="b1@example.com"
-		/>
 	</object>
 </objects>

@@ -8,10 +8,10 @@ package com.top_logic.layout.editor;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.BufferingProtocol;
@@ -29,8 +29,10 @@ import com.top_logic.basic.io.PathUpdate;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
@@ -48,6 +50,7 @@ import com.top_logic.mig.html.layout.LayoutUtils;
 	SafeHTML.Module.class,
 })
 @Label("Dynamic components")
+@ServiceCategory.Of(UICategory.class)
 public class DynamicComponentService extends ConfiguredManagedClass<DynamicComponentService.Config> {
 
 	/**
@@ -66,8 +69,23 @@ public class DynamicComponentService extends ConfiguredManagedClass<DynamicCompo
 	 */
 	public static final String LABEL_KEY_SUFFIX = "label";
 
-	private Map<String, DynamicComponentDefinition> _allDefinitions;
+	/**
+	 * The definitions by their {@link DynamicComponentDefinition#definitionFile()}.
+	 * 
+	 * <p>
+	 * Read by arbitrary threads concurrently to the modifications done in
+	 * {@link #updateTemplateCache()}.
+	 * </p>
+	 */
+	private final Map<String, DynamicComponentDefinition> _allDefinitions;
 
+	/**
+	 * The pending file system updates, <code>null</code> when this service is not started.
+	 * 
+	 * <p>
+	 * Only accessed while holding the monitor of this service, see {@link #updateTemplateCache()}.
+	 * </p>
+	 */
 	private Iterator<PathUpdate> _updates;
 
 	/**
@@ -88,18 +106,22 @@ public class DynamicComponentService extends ConfiguredManagedClass<DynamicCompo
 	protected void startUp() {
 		super.startUp();
 
-		_updates = FileSystemCache.getCache().getUpdates();
+		synchronized (this) {
+			_updates = FileSystemCache.getCache().getUpdates();
+		}
 	}
 
 	@Override
 	protected void shutDown() {
-		_updates = null;
+		synchronized (this) {
+			_updates = null;
+		}
 
 		super.shutDown();
 	}
 
 	private Map<String, DynamicComponentDefinition> fetchDefinitions(Log context) {
-			Map<String, DynamicComponentDefinition> definitions = new HashMap<>();
+			Map<String, DynamicComponentDefinition> definitions = new ConcurrentHashMap<>();
 			FileManager fileManager = FileManager.getInstance();
 			Set<String> dynamicLayoutNames = findRelativePathNames();
 			for (String fileName : dynamicLayoutNames) {
@@ -165,10 +187,25 @@ public class DynamicComponentService extends ConfiguredManagedClass<DynamicCompo
 		return _allDefinitions.get(templateName);
 	}
 
-	private void updateTemplateCache() {
+	/**
+	 * Applies the pending file system updates to the template definitions.
+	 * 
+	 * <p>
+	 * Called from every thread that requests a definition. The iterator of pending updates is
+	 * shared by all these threads and its {@link Iterator#hasNext()} and {@link Iterator#next()}
+	 * calls are not atomic as a pair. Therefore, the updates are drained while holding the monitor
+	 * of this service: A concurrent caller waits until the updates fetched so far are applied.
+	 * </p>
+	 */
+	private synchronized void updateTemplateCache() {
+		Iterator<PathUpdate> updates = _updates;
+		if (updates == null) {
+			// Not started.
+			return;
+		}
 		FileSystemCache.getCache().fetchUpdates();
-		while (_updates.hasNext()) {
-			PathUpdate update = _updates.next();
+		while (updates.hasNext()) {
+			PathUpdate update = updates.next();
 
 			BufferingProtocol log = new BufferingProtocol();
 			addChangedTemplates(log, update);

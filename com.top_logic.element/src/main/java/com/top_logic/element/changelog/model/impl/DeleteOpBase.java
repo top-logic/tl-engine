@@ -27,6 +27,11 @@ public interface DeleteOpBase extends com.top_logic.element.changelog.model.Oper
 	String TARGET_ATTR = "target";
 
 	/**
+	 * Name of the table storing {@link #DELETE_OP_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #TARGET_ATTR}.
 	 */
 	default com.top_logic.model.TLObject getTarget() {

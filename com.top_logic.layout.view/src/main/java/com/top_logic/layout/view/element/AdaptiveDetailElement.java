@@ -14,13 +14,14 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -74,6 +75,7 @@ public class AdaptiveDetailElement implements UIElement {
 	 * Configuration for {@link AdaptiveDetailElement}.
 	 */
 	@TagName("adaptive-detail")
+	@TypeIcon("css:bi bi-layout-text-sidebar-reverse")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getSelection()}. */
@@ -151,7 +153,7 @@ public class AdaptiveDetailElement implements UIElement {
 		List<ChannelRef> getResetOn();
 
 		/**
-		 * Label of the breadcrumb's home crumb (the one that returns to the empty selector).
+		 * Label of the breadcrumb's home crumb (the one that returns to the empty selector). Without one, the first crumb reads "Overview".
 		 *
 		 * <p>
 		 * Only meaningful on the outermost {@code <adaptive-detail>}: in compact mode it renders a
@@ -209,12 +211,16 @@ public class AdaptiveDetailElement implements UIElement {
 
 		/**
 		 * The content elements of this side.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	/**

@@ -38,6 +38,7 @@ import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.ParamBindingConfig;
 import com.top_logic.layout.view.routing.ParamBindingParticipant;
+import com.top_logic.layout.view.tiles.TileLabelProvider;
 import com.top_logic.layout.view.routing.QueryBindingConfig;
 import com.top_logic.layout.view.routing.QueryBindingParticipant;
 
@@ -133,7 +134,7 @@ public class ViewElement implements UIElement {
 
 	private final List<Map.Entry<String, ChannelFactory>> _channelEntries;
 
-	private final List<ParamBindingConfig> _paramBindings;
+	private final List<ParamBinding> _paramBindings;
 
 	private final List<QueryBindingConfig> _queryBindings;
 
@@ -151,7 +152,9 @@ public class ViewElement implements UIElement {
 		_channelEntries = config.getChannels().stream()
 			.map(cc -> Map.entry(cc.getName(), context.getInstance(cc)))
 			.collect(Collectors.toList());
-		_paramBindings = config.getParamBindings();
+		_paramBindings = config.getParamBindings().stream()
+			.map(binding -> new ParamBinding(binding, labelProvider(context, binding)))
+			.collect(Collectors.toList());
 		_queryBindings = config.getQueryBindings();
 		PolymorphicConfiguration<? extends UIElement> contentConfig = config.getContent();
 		if (contentConfig == null) {
@@ -248,6 +251,12 @@ public class ViewElement implements UIElement {
 				// content element keeps the class it declares itself.
 				rc.setCssClass(_cssClass);
 			}
+			if (_viewRef != null && rc.getViewSource() == null) {
+				// Wherever the view is displayed - as page, in a <view-ref>, as frame of a tile stack,
+				// in a dialog or window - a click into it is mapped to its file. A content control that
+				// is the root of a nested view already names that view, which is what is displayed.
+				rc.setViewSource(ViewLoader.fullPath(_viewRef));
+			}
 			RouteManager rm = context.getRouteManager();
 			if (!participants.isEmpty() && rm != null) {
 				for (RoutingParticipant participant : participants) {
@@ -334,9 +343,10 @@ public class ViewElement implements UIElement {
 		}
 
 		List<RoutingParticipant> result = new ArrayList<>();
-		for (ParamBindingConfig binding : _paramBindings) {
-			result.add(new ParamBindingParticipant(binding.getPrefix(), binding.getRouteParam(),
-				channel(context, binding.getChannel())));
+		for (ParamBinding binding : _paramBindings) {
+			ParamBindingConfig config = binding.config();
+			result.add(new ParamBindingParticipant(config.getPrefix(), config.getRouteParam(),
+				channel(context, config.getChannel()), binding.label(), context, config.getFinalTitle()));
 		}
 		for (QueryBindingConfig binding : _queryBindings) {
 			result.add(new QueryBindingParticipant(binding.getQueryParam(),
@@ -350,5 +360,23 @@ public class ViewElement implements UIElement {
 	 */
 	private static ViewChannel channel(ViewContext context, String name) {
 		return context.resolveChannel(new ChannelRef(name));
+	}
+
+	/**
+	 * The provider of the label the given binding names the page by, or {@code null} if it declares
+	 * none.
+	 */
+	private static TileLabelProvider labelProvider(InstantiationContext context, ParamBindingConfig binding) {
+		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = binding.getLabel();
+		return labelConfig != null ? context.getInstance(labelConfig) : null;
+	}
+
+	/**
+	 * A declared {@code <bind>} of the {@link Config#getParamBindings() route parameters} together
+	 * with the provider of its {@link ParamBindingConfig#getLabel() label}, instantiated once for all
+	 * sessions.
+	 */
+	private record ParamBinding(ParamBindingConfig config, TileLabelProvider label) {
+		// Pure data.
 	}
 }

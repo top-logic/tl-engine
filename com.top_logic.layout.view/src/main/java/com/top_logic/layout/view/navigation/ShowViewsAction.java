@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -17,10 +18,13 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.Continuation;
-import com.top_logic.layout.view.command.InterruptibleViewAction;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
 
@@ -35,9 +39,9 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * </p>
  *
  * <pre>
- * &lt;show-views&gt;
+ * &lt;show-views value="ticket"&gt;
  *   &lt;show view="projects/overview.view.xml"&gt;
- *     &lt;bind channel="project" expr="t -&gt; $t.container()"/&gt;
+ *     &lt;bind channel="project" expr="$ticket.container()"/&gt;
  *   &lt;/show&gt;
  *   &lt;show view="projects/ticket-detail.view.xml"&gt;
  *     &lt;bind channel="ticket"/&gt;
@@ -46,9 +50,9 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * </pre>
  *
  * <p>
- * Each binding is a function of the chain's current value; a binding without an expression receives
- * that value itself. The chain continues with the value it had, so what a command does after
- * displaying the views is unaffected.
+ * Each binding is a script over the arguments of the chain, which it uses as variables without
+ * declaring them (see {@link com.top_logic.layout.view.command.ActionScript}); a binding without an
+ * expression receives the value the action processes itself.
  * </p>
  *
  * @implNote The action carries out a list of {@link ShowStep}s in one request; a single one is
@@ -56,13 +60,13 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  */
 @InApp
 @Label("Show views")
-public class ShowViewsAction extends InterruptibleViewAction {
+public class ShowViewsAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link ShowViewsAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<ShowViewsAction> {
+	public interface Config extends PolymorphicConfiguration<ShowViewsAction>, WithValueArgument {
 
 		/** Configuration tag of a {@link ShowViewsAction}. */
 		String TAG_NAME = "show-views";
@@ -86,6 +90,7 @@ public class ShowViewsAction extends InterruptibleViewAction {
 		@EntryTag(SHOW)
 		@DefaultContainer
 		@Mandatory
+		@TreeProperty
 		List<ShowConfig> getShows();
 	}
 
@@ -109,11 +114,23 @@ public class ShowViewsAction extends InterruptibleViewAction {
 	 */
 	@CalledByReflection
 	public ShowViewsAction(InstantiationContext context, Config config) {
-		this(ShowStep.fromConfigs(config.getShows()));
+		this(ShowStep.fromConfigs(config.getShows(), ActionScope.of(context)));
 	}
 
+	/**
+	 * Displays the views, their scripts evaluated over the given arguments; resumes the chain with
+	 * the value the action processes.
+	 */
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ObjectNavigation.show(context, _shows, input, new ResumeWith(continuation, input));
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		ObjectNavigation.show(context, _shows, arguments, new ResumeWith(continuation, arguments.value()));
+	}
+
+	/**
+	 * Navigates to the views and writes their channels.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

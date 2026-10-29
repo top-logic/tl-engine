@@ -80,6 +80,20 @@
 				<button id="showCurrentRevision"
 					class="com.top_logic.tool.boundsec.commandhandlers.ShowCurrentRevisionCommandHandler"
 				/>
+				<button id="makeResponsibleAdmin"
+					class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+					group="Read"
+					image="css:fas fa-user-shield"
+					operation="model -> makeResponsibleAdmin($model)"
+				>
+					<resourceKey key="dynamic.3e7a9b1c-2d4f-4e8a-b6c5-1f0e9d8c7b6a">
+						<en>Make responsible an administrator</en>
+						<de>Verantwortlichen zum Admin machen</de>
+					</resourceKey>
+					<executability>
+						<rule-by-expression decision="model -> if($model.instanceOf(`DemoTypes:DemoTypes.A`), $model.get(`DemoTypes:DemoTypes.A#responsible`) != null &amp;&amp; canCall(makeResponsibleAdmin($model)), false)"/>
+					</executability>
+				</button>
 				<reference command-id="addToClipboard"/>
 				<reference command-id="showBookmarkLink"/>
 			</buttons>

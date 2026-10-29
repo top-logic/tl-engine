@@ -21,7 +21,6 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.XMLProperties;
-import com.top_logic.basic.config.ApplicationConfig.Config.Defaults;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -36,7 +35,9 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.vars.VariableExpander;
 
 /**
@@ -47,6 +48,7 @@ import com.top_logic.basic.vars.VariableExpander;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Application configuration")
+@ServiceCategory.Of(RuntimeCategory.class)
 public final class ApplicationConfig extends ManagedClass implements Reloadable {
 
 	/**
@@ -81,8 +83,20 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 		Map<Class<? extends ManagedClass>, ModuleConfiguration> getServices();
 
 		/**
-		 * The configured defaults for the configuration interfaces.
+		 * @see #getDefaults()
 		 */
+		String DEFAULTS = "defaults";
+
+		/**
+		 * The configured defaults for the configuration interfaces.
+		 * 
+		 * <p>
+		 * The defaults are applied before the rest of the application configuration is read, so
+		 * they also apply to the {@link #getServices() services} and {@link #getConfigs() configs}
+		 * of the application configuration itself.
+		 * </p>
+		 */
+		@Name(DEFAULTS)
 		@EntryTag("config")
 		@Key(Defaults.INTERFACE)
 		@Subtypes({})
@@ -154,11 +168,6 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	private volatile InstantiationContext _serviceStartupContext;
 
 	/**
-	 * Configured defaults configurations indexed by their configuration interface.
-	 */
-	private Map<Class<?>, Defaults> _defaults;
-
-	/**
 	 * Creates a new ApplicationConfig form the given configuration.
 	 * 
 	 * @param applicationConfiguration
@@ -188,7 +197,6 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 		_serviceStartupContext = context;
 		installConfigs(applicationConfiguration);
 		installServiceConfigurations(context, applicationConfiguration);
-		_defaults = applicationConfiguration.getDefaults();
 	}
 
 	private void installServiceConfigurations(InstantiationContext context, Config configuration) {
@@ -260,6 +268,54 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	}
 
 	/**
+	 * Whether the service with the given class has a service configuration.
+	 * 
+	 * <p>
+	 * A service has a service configuration, if one is configured for it, or if the configuration
+	 * interface of the service class is a
+	 * {@link com.top_logic.basic.module.ManagedClass.ServiceConfiguration} (or the service needs no
+	 * configuration besides its implementation class). A service configured with another
+	 * configuration interface (like the {@link ApplicationConfig} itself) has none, and
+	 * {@link #getServiceConfiguration(Class)} fails for it.
+	 * </p>
+	 * 
+	 * @param serviceClass
+	 *        A class defining a service.
+	 * @return Whether {@link #getServiceConfiguration(Class)} provides a configuration for the
+	 *         given service class.
+	 * 
+	 * @throws ConfigurationException
+	 *         if it is not possible to resolve the configuration interface of the given service
+	 *         class.
+	 */
+	public boolean hasServiceConfiguration(Class<? extends ManagedClass> serviceClass) throws ConfigurationException {
+		if (_serviceConfigByClass.containsKey(serviceClass)) {
+			return true;
+		}
+		return serviceConfigInterface(serviceClass) != null;
+	}
+
+	/**
+	 * The {@link com.top_logic.basic.module.ManagedClass.ServiceConfiguration} interface of the
+	 * given implementation class, or <code>null</code>, if the implementation class is configured
+	 * with another configuration interface.
+	 */
+	private static Class<?> serviceConfigInterface(Class<?> implClass) throws ConfigurationException {
+		Factory factory = DefaultConfigConstructorScheme.getFactory(implClass);
+		Class<?> configInterface = factory.getConfigurationInterface();
+		if (ServiceConfiguration.class.isAssignableFrom(configInterface)) {
+			return configInterface;
+		}
+		if (PolymorphicConfiguration.class == configInterface) {
+			// This can happen, if the configured service has no configuration constructor at
+			// all. This is OK, if the service needs no additional configuration besides it's
+			// implementation class.
+			return ServiceConfiguration.class;
+		}
+		return null;
+	}
+
+	/**
 	 * Creates a new service configuration for the given service class.
 	 * 
 	 * @param implClass
@@ -273,22 +329,11 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	 */
 	private <M extends ManagedClass> ServiceConfiguration<M> newServiceConfig(Class<? extends M> implClass)
 			throws ConfigurationException {
-		Factory factory = DefaultConfigConstructorScheme.getFactory(implClass);
-		Class<?> configInterface = factory.getConfigurationInterface();
-		if (!ServiceConfiguration.class.isAssignableFrom(configInterface)) {
-			if (PolymorphicConfiguration.class == configInterface) {
-				// This can happen, if the configured service has no configuration constructor at
-				// all. This is OK, if the service needs no additional configuration besides it's
-				// implementation class.
-				configInterface = ServiceConfiguration.class;
-			} else {
-				StringBuilder error = new StringBuilder();
-				error.append(implClass.getName());
-				error.append(" has no ");
-				error.append(ServiceConfiguration.class.getName());
-				error.append(" interface");
-				throw new ConfigurationException(error.toString());
-			}
+		Class<?> configInterface = serviceConfigInterface(implClass);
+		if (configInterface == null) {
+			throw new ConfigurationException(
+				I18NConstants.ERROR_NO_SERVICE_CONFIGURATION_INTERFACE__CLASS.fill(implClass.getName()),
+				PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME, implClass.getName());
 		}
 		// valid cast because it is checked before.
 		@SuppressWarnings("unchecked")
@@ -362,7 +407,6 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 
 		internalShutDown();
 		init(context, newConfig);
-		internalStartUp();
 	}
 
 	/**
@@ -376,18 +420,14 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	@Override
 	protected void startUp() {
 		super.startUp();
-		internalStartUp();
 		ReloadableManager.getInstance().addReloadable(this);
-	}
-
-	private void internalStartUp() {
-		ConfigDescriptionResolver.adaptConfiguredDefaults(_defaults);
 	}
 
 	@Override
 	protected void shutDown() {
 		ReloadableManager.getInstance().removeReloadable(this);
 		internalShutDown();
+		ConfigDescriptionResolver.resetConfiguredDefaults();
 		super.shutDown();
 	}
 
@@ -443,6 +483,7 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 			try {
 				Protocol protocol = new LogProtocol(ApplicationConfig.class);
 				InstantiationContext context = new DefaultInstantiationContext(protocol);
+				ConfigDescriptionResolver.adaptConfiguredDefaults(config.getDefaults());
 				ApplicationConfig impl = createImplementation(context, config);
 				check(protocol);
 
@@ -498,10 +539,45 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 
 			context.info("Loading config files: " + typedConfigList);
 
-			ConfigurationReader reader = new ConfigurationReader(context, configDescriptor());
 			VariableExpander expander = AliasManager.getInstance().getExpander();
+			applyConfiguredDefaults(typedConfigList, expander);
+
+			ConfigurationReader reader = new ConfigurationReader(context, configDescriptor());
 			ConfigurationItem config = reader.setSources(typedConfigList).setVariableExpander(expander).read();
 			return (Config) config;
+		}
+
+		/**
+		 * Reads only the {@link Config#getDefaults() defaults} sections of the given configuration
+		 * files and applies them.
+		 * 
+		 * <p>
+		 * This must happen before the complete configuration is read: The defaults may change how
+		 * the services and configs of the application configuration are parsed, e.g. by
+		 * configuring the implementation class of a polymorphic configuration.
+		 * </p>
+		 * 
+		 * <p>
+		 * Errors are not reported here, because the complete configuration contains the same
+		 * defaults sections and reports them when it is read afterwards. In case of errors no
+		 * defaults are applied.
+		 * </p>
+		 */
+		private static void applyConfiguredDefaults(List<BinaryContent> typedConfigList, VariableExpander expander) {
+			BufferingProtocol protocol = new BufferingProtocol();
+			ConfigurationReader reader =
+				new ConfigurationReader(new DefaultInstantiationContext(protocol), configDescriptor());
+			reader.setTopLevelFilter(Config.DEFAULTS::equals);
+			Config defaultsOnly;
+			try {
+				defaultsOnly = (Config) reader.setSources(typedConfigList).setVariableExpander(expander).read();
+			} catch (ConfigurationException ex) {
+				return;
+			}
+			if (protocol.hasErrors()) {
+				return;
+			}
+			ConfigDescriptionResolver.adaptConfiguredDefaults(defaultsOnly.getDefaults());
 		}
 
 		private static Map<String, ConfigurationDescriptor> configDescriptor() {

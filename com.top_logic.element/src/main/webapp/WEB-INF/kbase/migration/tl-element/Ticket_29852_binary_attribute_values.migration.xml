@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29852_binary_attribute_values"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29617_color_role"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Values of multi-valued binary attributes are stored in a separate table, one row per file. -->
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<metaobject object_name="BinaryAttributeValue" super_class="Item" db_name="BINARY_ATT_VALUE">
+					<annotations>
+						<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+							<implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory" />
+						</annotation>
+						<key-attributes attributes="object, metaAttribute"/>
+					</annotations>
+					<attributes>
+						<reference att_name="object"
+							mandatory="true"
+							by-value="true"
+							history-type="current"
+							branch-global="false"
+							monomorphic="false"
+							is-container="false"
+							deletion-policy="delete-referer"
+							target-type="Object"
+						/>
+						<reference att_name="metaAttribute"
+							mandatory="true"
+							by-value="true"
+							history-type="current"
+							branch-global="false"
+							monomorphic="true"
+							is-container="false"
+							deletion-policy="delete-referer"
+							target-type="MetaAttribute"
+						/>
+						<mo_attribute att_name="sortOrder" att_type="Integer" mandatory="true" />
+						<mo_attribute att_name="name" att_type="String" mandatory="false" db_size="1024" />
+						<mo_attribute att_name="contentType" att_type="String" mandatory="false" />
+						<mo_attribute att_name="data" att_type="java.sql.Blob" mandatory="true" />
+					</attributes>
+					<index>
+						<!-- Note: The name of the index matches the name of the auto-generated index for the 
+							object reference. By this convention, the explicitly declared index supersedes the 
+							auto-generated one. -->
+						<mo_index name="object" unique="false">
+							<index-parts>
+								<index_part name="object" part="name" />
+								<index_part name="metaAttribute" />
+							</index-parts>
+						</mo_index>
+					</index>
+				</metaobject>
+				<metaobject
+					db_name="BINARY_ATT_VALUE_UNV"
+					object_name="BinaryAttributeValueUnversioned"
+					super_class="BinaryAttributeValue"
+					versioned="false"
+				/>
+			</schema>
+		</processor>
+		<!-- Binary values can be stored in a multi-valued attribute, therefore the binary data type offers the multiplicity option. -->
+		<add-annotations name="tl.core:Binary">
+			<annotations>
+				<supports-multiple/>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

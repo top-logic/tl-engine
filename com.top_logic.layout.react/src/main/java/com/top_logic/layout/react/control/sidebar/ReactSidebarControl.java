@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ScriptingControl;
@@ -49,7 +50,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * <li>{@code items} - serialized item list</li>
  * <li>{@code activeItemId} - the currently selected navigation item ID</li>
  * <li>{@code collapsed} - whether the desktop rail is collapsed (persisted user preference)</li>
- * <li>{@code drawerOpen} - whether the mobile off-canvas drawer is currently shown
+ * <li>{@code drawerOpen} - whether the drawer of the navigation is currently shown (only while the app shell is compact)
  * (transient, always starts {@code false} on page load)</li>
  * <li>{@code activeContent} - the active item's content as a child control descriptor</li>
  * <li>{@code headerContent} - optional header slot child control descriptor (expanded mode)</li>
@@ -121,6 +122,11 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	private boolean _collapsed;
 
 	private boolean _drawerOpen;
+
+	/**
+	 * The hamburger button opening the drawer, told whenever the drawer opens or closes; {@code null} without one.
+	 */
+	private DrawerToggleControl _drawerToggle;
 
 	private final List<RouteChangeListener> _routeChangeListeners = new ArrayList<>();
 
@@ -208,6 +214,19 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		_drawerToggleContribution = contribution;
 		if (contribution != null) {
 			putState(DRAWER_TOGGLE_CONTRIBUTION, contribution);
+		}
+	}
+
+	/**
+	 * Registers the button that opens the drawer, so it can report the drawer's state.
+	 */
+	void setDrawerToggle(DrawerToggleControl toggle) {
+		_drawerToggle = toggle;
+	}
+
+	private void updateDrawerToggle() {
+		if (_drawerToggle != null) {
+			_drawerToggle.setOpen(_drawerOpen);
 		}
 	}
 
@@ -318,15 +337,21 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	/**
 	 * Reports the route of the selected item to the {@link RouteChangeListener}s.
+	 *
+	 * <p>
+	 * An item without a route is reported as well, with an empty segment: the address bar has to
+	 * leave the item selected before, whose segment no longer describes the display.
+	 * </p>
 	 */
 	private void notifyRouteListeners() {
 		NavigationItem newItem = findNavItem(_activeItemId, _items);
-		if (newItem != null && newItem.getRoute() != null) {
-			RoutePattern pattern = RoutePattern.compile(newItem.getRoute(), newItem.getId());
-			RouteSegment segment = new RouteSegment(pattern.produce(Map.of()));
-			for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
-				listener.onRouteChange(this, segment);
-			}
+		if (newItem == null) {
+			return;
+		}
+		RouteSegment segment = activeRouteSegment();
+		RouteSegment reported = segment != null ? segment : new RouteSegment("");
+		for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
+			listener.onRouteChange(this, reported);
 		}
 	}
 
@@ -344,6 +369,30 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return;
 		}
 		navItem.setBadge(badge);
+		refreshItems();
+	}
+
+	/**
+	 * Draws the item with the given ID, or leaves it out.
+	 *
+	 * <p>
+	 * The item stays part of the sidebar: an open navigation item that is withheld stays open and
+	 * keeps displaying its content.
+	 * </p>
+	 *
+	 * @param itemId
+	 *        The ID of the item, also of an item within a group.
+	 * @param withheld
+	 *        Whether the item is left out.
+	 *
+	 * @see SidebarItem#setWithheld(boolean)
+	 */
+	public void setItemWithheld(String itemId, boolean withheld) {
+		SidebarItem item = findItem(itemId);
+		if (item == null || item.isWithheld() == withheld) {
+			return;
+		}
+		item.setWithheld(withheld);
 		refreshItems();
 	}
 
@@ -525,6 +574,43 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		return null;
 	}
 
+	/**
+	 * The label of the selected item, where the item has a route.
+	 *
+	 * <p>
+	 * An item without a route names no page: the URL ends above it, and so does the title, which is
+	 * left to the participants around this sidebar.
+	 * </p>
+	 */
+	@Override
+	public ResKey activeRouteLabel() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		if (activeItem == null || activeItem.getRoute() == null) {
+			return null;
+		}
+		String label = activeItem.getLabel();
+		return label == null || label.isEmpty() ? null : ResKey.text(label);
+	}
+
+	/**
+	 * The content of a selected item without a route has no URL.
+	 */
+	@Override
+	public boolean routesContent() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		return activeItem == null || activeItem.getRoute() != null;
+	}
+
+	/**
+	 * The content of a selected item with a route that is declared the
+	 * {@link NavigationItem#isFinalTitle() final title} does not rename the page.
+	 */
+	@Override
+	public boolean titlesContent() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		return activeItem == null || activeItem.getRoute() == null || !activeItem.isFinalTitle();
+	}
+
 	@Override
 	public void addRouteChangeListener(RouteChangeListener listener) {
 		_routeChangeListeners.add(listener);
@@ -628,6 +714,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		if (_drawerOpen) {
 			_drawerOpen = false;
 			putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
+			updateDrawerToggle();
 		}
 	}
 
@@ -659,7 +746,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * Toggles the mobile drawer's open state (transient — not persisted).
 	 *
 	 * <p>
-	 * Triggered by the hamburger button in the app bar or by a click on the drawer backdrop.
+	 * Triggered by the hamburger button in the app bar, by Escape in the drawer or by a click on its scrim.
 	 * Independent of {@link #toggleCollapse()}, so the desktop rail preference is preserved across
 	 * mobile drawer interactions. Always defaults to {@code false} on a fresh page load.
 	 * </p>
@@ -667,6 +754,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	public void toggleDrawer() {
 		_drawerOpen = !_drawerOpen;
 		putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
+		updateDrawerToggle();
 	}
 
 	/**

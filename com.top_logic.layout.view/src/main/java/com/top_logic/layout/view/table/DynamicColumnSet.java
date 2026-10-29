@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -124,6 +125,26 @@ public interface DynamicColumnSet {
 	 * @see ColumnSetup#comparator()
 	 */
 	default Comparator<Object> comparator(Object column) {
+		return null;
+	}
+
+	/**
+	 * The tooltip of a cell of the given column, computed from the row and the value of the cell,
+	 * {@code null} for a column whose cells have none.
+	 *
+	 * @see ColumnSetup#tooltip()
+	 */
+	default BiFunction<Object, Object, String> tooltip(Object column) {
+		return null;
+	}
+
+	/**
+	 * The CSS class of a cell of the given column, computed from the row and the value of the
+	 * cell, {@code null} for a column whose cells have none.
+	 *
+	 * @see ColumnSetup#cellClass()
+	 */
+	default BiFunction<Object, Object, String> cellClass(Object column) {
 		return null;
 	}
 

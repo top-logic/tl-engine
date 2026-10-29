@@ -1,0 +1,741 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.mcp.server;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+
+
+import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
+import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
+import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
+import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
+import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
+import com.top_logic.ai.mcp.server.resources.ConfigSchemaResource;
+import com.top_logic.ai.mcp.server.resources.EnumerationClassifiersResource;
+import com.top_logic.ai.mcp.server.resources.InstanceResource;
+import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
+import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
+import com.top_logic.ai.mcp.server.resources.TypePartsResource;
+import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
+import com.top_logic.ai.mcp.server.tools.ExposedTool;
+import com.top_logic.ai.mcp.server.tools.McpExposure;
+import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.order.DisplayInherited;
+import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.services.ServletContextService;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.tl.ai.core.access.EndpointSecret;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.tool.api.AICategory;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+
+import io.modelcontextprotocol.json.McpJsonDefaults;
+import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.DefaultServerTransportSecurityValidator;
+import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
+import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
+
+/**
+ * TopLogic service that provides an MCP (Model Context Protocol) server for exposing
+ * application-specific APIs to AI models via HTTP transport.
+ *
+ * <p>
+ * This service initializes an MCP server during application startup using the MCP protocol
+ * over HTTP and ensures proper cleanup during shutdown. The server can be configured through
+ * the TopLogic application configuration.
+ * </p>
+ *
+ * <p>
+ * The service exposes HTTP endpoints (registered in web-fragment.xml under /mcp/*) that
+ * implement the MCP protocol for bidirectional communication between AI clients and the
+ * TopLogic application. {@link McpAuthenticationFilter MCP authentication filter} guards that
+ * path: it authenticates every request and opens the {@code TLContext} of the account it
+ * resolved, which the protocol handlers then run in.
+ * </p>
+ *
+ * <p>
+ * <b>This service is switched off in the configuration this module ships</b>, and an application
+ * that switches it on has to say who may reach it: {@code /mcp/*} serves no request it cannot
+ * attribute to an account, and it accepts only the {@link Config#getAuthentications()
+ * authentications} the application configures. Configure none and every request is refused. See
+ * the developer article {@code ai/security/mcp-endpoint}. While the service is off,
+ * {@code MCPTransportServlet} answers the whole {@code /mcp/*} path with 503.
+ * </p>
+ *
+ * <p>
+ * The service uses {@link ServletContextService} to obtain the application's context path
+ * at startup, ensuring that endpoint URLs sent to clients include the correct context path
+ * regardless of the deployment configuration.
+ * </p>
+ *
+ * @author Bernhard Haumacher
+ */
+@ServiceDependencies({
+	ServletContextService.Module.class,
+	ToolRegistryService.Module.class,
+	AiToolAccessService.Module.class,
+	SecretStoreService.Module.class,
+})
+@ServiceCategory.Of(AICategory.class)
+public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
+
+	/** Path for the MCP endpoint (must match web.xml servlet mapping /mcp). */
+	private static final String MCP_ENDPOINT = "/mcp";
+
+	/**
+	 * Configuration interface for {@link MCPServerService}.
+	 */
+	@DisplayOrder({
+		Config.SERVER_NAME,
+		Config.SERVER_VERSION,
+		Config.KEEP_ALIVE_INTERVAL,
+		ServerAuthentications.AUTHENTICATIONS,
+		Config.SECRETS,
+		Config.ALLOWED_ORIGINS,
+		Config.ALLOWED_HOSTS,
+		Config.INSTRUCTIONS,
+		Config.EXPOSED_TOOLS,
+		Config.DYNAMIC_RESOURCES,
+	})
+	@DisplayInherited(DisplayStrategy.PREPEND)
+	public interface Config<I extends MCPServerService>
+			extends ConfiguredManagedClass.Config<I>, ServerAuthentications {
+
+		/**
+		 * Configuration property name for server name.
+		 *
+		 * @see #getServerName()
+		 */
+		String SERVER_NAME = "server-name";
+
+		/**
+		 * Configuration property name for server version.
+		 *
+		 * @see #getServerVersion()
+		 */
+		String SERVER_VERSION = "server-version";
+
+		/**
+		 * Configuration property name for keep-alive interval in seconds.
+		 *
+		 * @see #getKeepAliveInterval()
+		 */
+		String KEEP_ALIVE_INTERVAL = "keep-alive-interval";
+
+		/**
+		 * Configuration property name for how long a session that does not answer stays.
+		 *
+		 * @see #getSessionIdleTimeout()
+		 */
+		String SESSION_IDLE_TIMEOUT = "session-idle-timeout";
+
+		/**
+		 * Configuration property name for dynamic resources.
+		 *
+		 * @see #getDynamicResources()
+		 */
+		String DYNAMIC_RESOURCES = "dynamic-resources";
+
+		/**
+		 * Configuration property name for the secrets callers authenticate with.
+		 *
+		 * @see #getSecrets()
+		 */
+		String SECRETS = "secrets";
+
+		/**
+		 * Configuration property name for the tools the server publishes.
+		 *
+		 * @see #getExposedTools()
+		 */
+		String EXPOSED_TOOLS = "exposed-tools";
+
+		/**
+		 * Configuration property name for the instructions sent to a client.
+		 *
+		 * @see #getInstructions()
+		 */
+		String INSTRUCTIONS = "instructions";
+
+		/**
+		 * Configuration property name for the origins a browser-based client may call from.
+		 *
+		 * @see #getAllowedOrigins()
+		 */
+		String ALLOWED_ORIGINS = "allowed-origins";
+
+		/**
+		 * Configuration property name for the host names the endpoint answers to.
+		 *
+		 * @see #getAllowedHosts()
+		 */
+		String ALLOWED_HOSTS = "allowed-hosts";
+
+		/**
+		 * The name of the MCP server.
+		 */
+		@Name(SERVER_NAME)
+		@StringDefault("TopLogic MCP Server")
+		String getServerName();
+
+		/**
+		 * The version of the MCP server.
+		 */
+		@Name(SERVER_VERSION)
+		@StringDefault("1.0.0")
+		String getServerVersion();
+
+		/**
+		 * Keep-alive interval in seconds: how often every MCP session is pinged.
+		 *
+		 * <p>
+		 * The ping keeps a client's event stream open through proxies, and finds the sessions that
+		 * no client answers for any more, see {@link #getSessionIdleTimeout()}. {@code 0} switches
+		 * both off.
+		 * </p>
+		 *
+		 * <p>Default: 30 seconds</p>
+		 */
+		@Name(KEEP_ALIVE_INTERVAL)
+		@LongDefault(30)
+		long getKeepAliveInterval();
+
+		/**
+		 * How long, in seconds, a session that does not answer a ping stays after the last request
+		 * that named it.
+		 *
+		 * <p>
+		 * A client that sends its requests by {@code POST} and never opens the event stream cannot
+		 * answer a ping, and most such clients never delete their session. Such a session is removed
+		 * once it has not answered and no request named it for this long; its client is answered
+		 * {@code 404} next and starts a new session.
+		 * </p>
+		 *
+		 * <p>Default: 1800 seconds (30 minutes)</p>
+		 */
+		@Name(SESSION_IDLE_TIMEOUT)
+		@LongDefault(1800)
+		long getSessionIdleTimeout();
+
+		/**
+		 * List of configurable dynamic resources.
+		 *
+		 * <p>
+		 * Each resource is configured using the polymorphic configuration pattern, allowing
+		 * different implementations to provide MCP resources in different ways:
+		 * </p>
+		 * <ul>
+		 * <li>{@link ConfigurableResourceTemplate} - Uses TL-Script expressions to compute content</li>
+		 * <li>Future implementations can add other resource types (static, database-driven, etc.)</li>
+		 * </ul>
+		 */
+		@Name(DYNAMIC_RESOURCES)
+		List<PolymorphicConfiguration<? extends DynamicResource>> getDynamicResources();
+
+		/**
+		 * How a caller of the MCP endpoint proves who it is.
+		 *
+		 * <p>
+		 * Configure at least one, or the endpoint refuses every request: it serves nothing it cannot
+		 * attribute to an account. A personal access token is one a person created for their own
+		 * account, HTTP basic authenticates against the account's own password database, an API key
+		 * maps a key to a named account, and a bearer token is validated against the authorization
+		 * server the deployment runs. A caller may present any one of the configured schemes.
+		 * </p>
+		 *
+		 * <p>
+		 * Prefer personal access tokens where people connect their own client, and an API key for a
+		 * service account, over the password of a real person: both are revocable on their own, and
+		 * they keep a login out of a client configuration file.
+		 * </p>
+		 */
+		@Override
+		@DisplayMinimized
+		Map<String, ServerAuthentication.Config<?>> getAuthentications();
+
+		/**
+		 * The secrets the configured authentications check a caller against.
+		 *
+		 * <p>
+		 * Each secret names the domain of the authentication it belongs to. A secret must name the
+		 * account the request then acts as: this endpoint never processes a request in system
+		 * context, so a secret without an account is refused at request time.
+		 * </p>
+		 */
+		@Name(SECRETS)
+		@DisplayMinimized
+		List<EndpointSecret> getSecrets();
+
+		/**
+		 * The tools of the application an MCP client sees and may call.
+		 *
+		 * <p>
+		 * Nothing is published that is not listed here, so an empty list publishes no tool. An entry
+		 * names a single tool - and may give it the name, title and description an external model
+		 * reads - or a whole tool group. A tool that is not listed is unknown to an MCP client. A
+		 * listed tool is still authorized per call against the caller's roles and the background
+		 * allowlist.
+		 * </p>
+		 */
+		@Name(EXPOSED_TOOLS)
+		@EntryTag("exposed-tool")
+		List<ExposedTool> getExposedTools();
+
+		/**
+		 * What an MCP client is told about this server when it connects.
+		 *
+		 * <p>
+		 * Sent in the answer to {@code initialize}; clients put it in front of their model. Say what
+		 * the application is, which published tool to use for what, and how its identifiers look.
+		 * Empty sends no instructions.
+		 * </p>
+		 */
+		@Name(INSTRUCTIONS)
+		@Nullable
+		@MultiLine
+		String getInstructions();
+
+		/**
+		 * The origins a browser may call this endpoint from, for example
+		 * {@code https://app.example.com} or {@code http://localhost:*}.
+		 *
+		 * <p>
+		 * A request that carries an {@code Origin} header not in this list is refused with 403, which
+		 * is what stops a web page from reaching the endpoint through DNS rebinding. A request without
+		 * an {@code Origin} header - every command-line and desktop client - is not affected. Empty
+		 * refuses every request that carries an {@code Origin}. {@code :*} matches any port.
+		 * </p>
+		 */
+		@Name(ALLOWED_ORIGINS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getAllowedOrigins();
+
+		/**
+		 * The host names this endpoint answers to, for example {@code mcp.example.com} or
+		 * {@code localhost:*}.
+		 *
+		 * <p>
+		 * When set, a request whose {@code Host} header is not in this list is refused with 421.
+		 * Empty checks no {@code Host}. {@code :*} matches any port.
+		 * </p>
+		 */
+		@Name(ALLOWED_HOSTS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getAllowedHosts();
+	}
+
+	private static volatile MCPServerService _instance;
+
+	private McpSyncServer _mcpServer;
+
+	private HttpServletStreamableServerTransportProvider _transportProvider;
+
+	private Authenticator _authenticator;
+
+	private List<String> _publishedTools = List.of();
+
+	private final McpSessionPrincipals _sessionPrincipals = new McpSessionPrincipals();
+
+	private McpSessionKeeper _sessionKeeper;
+
+	/**
+	 * Creates a new {@link MCPServerService} from configuration.
+	 *
+	 * @param context
+	 *        The instantiation context for error reporting.
+	 * @param config
+	 *        The service configuration.
+	 */
+	public MCPServerService(InstantiationContext context, Config<?> config) {
+		super(context, config);
+	}
+
+	/**
+	 * Returns the singleton instance of the MCP server service.
+	 *
+	 * @return The service instance, or {@code null} if not yet started.
+	 */
+	public static MCPServerService getInstance() {
+		return _instance;
+	}
+
+	/**
+	 * Returns the HTTP transport provider for delegating servlet requests.
+	 *
+	 * @return The transport provider, or {@code null} if the service is not started.
+	 */
+	public HttpServletStreamableServerTransportProvider getTransportProvider() {
+		return _transportProvider;
+	}
+
+	/**
+	 * How a request to {@code /mcp/*} is authenticated.
+	 *
+	 * <p>
+	 * Built once at start-up from {@link Config#getAuthentications()} and
+	 * {@link Config#getSecrets()}. Refuses everything when the application configured no
+	 * authentication - see {@link EndpointAuthentication}.
+	 * </p>
+	 *
+	 * @return The authenticator, never <code>null</code> while the service is started.
+	 */
+	public Authenticator getAuthenticator() {
+		return _authenticator;
+	}
+
+	/**
+	 * Which account opened which MCP session.
+	 *
+	 * @see McpSessionPrincipals
+	 */
+	public McpSessionPrincipals getSessionPrincipals() {
+		return _sessionPrincipals;
+	}
+
+	/**
+	 * Notes that a request named the given MCP session, or opened it.
+	 *
+	 * @param sessionId
+	 *        The {@code mcp-session-id} of the request or of its answer; <code>null</code> is ignored.
+	 *
+	 * @see McpSessionKeeper
+	 */
+	void noteSessionRequest(String sessionId) {
+		McpSessionKeeper keeper = _sessionKeeper;
+		if (keeper != null) {
+			keeper.noteRequest(sessionId);
+		}
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+
+		try {
+			// Register singleton instance
+			_instance = this;
+
+			Config<?> config = getConfig();
+
+			_authenticator =
+				EndpointAuthentication.build(MCP_ENDPOINT + "/*", config.getAuthentications(), config.getSecrets());
+
+			// Create HTTP transport provider
+			// Note: A statically registered servlet (MCPTransportServlet) delegates requests
+			// to this transport provider, so no dynamic servlet registration is needed.
+			_transportProvider = createTransport(config);
+
+			// Initialize the transport provider
+			jakarta.servlet.ServletContext servletContext = ServletContextService.getInstance().getServletContext();
+			try {
+				_transportProvider.init(new ServletConfigAdapter(servletContext));
+			} catch (ServletException ex) {
+				throw new RuntimeException("Failed to initialize MCP transport provider: " + ex.getMessage(), ex);
+			}
+
+			if (config.getKeepAliveInterval() > 0) {
+				_sessionKeeper = McpSessionKeeper.attach(_transportProvider,
+					Duration.ofSeconds(config.getSessionIdleTimeout()), _sessionPrincipals, System::currentTimeMillis);
+				if (_sessionKeeper != null) {
+					_sessionKeeper.start(Duration.ofSeconds(config.getKeepAliveInterval()));
+				}
+			}
+
+			var builder = createServer(_transportProvider, config);
+
+			// Configure the server with application-specific capabilities BEFORE building
+			configureServer(builder);
+
+			// Build the server
+			_mcpServer = builder.build();
+
+			reportEndpointExposure();
+
+		} catch (RuntimeException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new RuntimeException("Failed to start MCP server: " + ex.getMessage(), ex);
+		}
+	}
+
+	/**
+	 * The HTTP transport for the given configuration.
+	 *
+	 * <p>
+	 * It refuses a request from a foreign {@link Config#getAllowedOrigins() origin} or to a foreign
+	 * {@link Config#getAllowedHosts() host} before it reads the request.
+	 * </p>
+	 */
+	static HttpServletStreamableServerTransportProvider createTransport(Config<?> config) {
+		return HttpServletStreamableServerTransportProvider.builder()
+			.jsonMapper(McpJsonDefaults.getMapper())
+			.mcpEndpoint(MCP_ENDPOINT)
+			// No keep-alive of the SDK's: it pings, but never removes a session that does not
+			// answer. McpSessionKeeper does both.
+			.securityValidator(DefaultServerTransportSecurityValidator.builder()
+				.allowedOrigins(config.getAllowedOrigins())
+				.allowedHosts(config.getAllowedHosts())
+				.build())
+			.build();
+	}
+
+	/**
+	 * The MCP server on the given transport, with the server information and instructions of the
+	 * given configuration and nothing published yet.
+	 */
+	static McpServer.SyncSpecification<?> createServer(
+			HttpServletStreamableServerTransportProvider transport, Config<?> config) {
+		// immediateExecution(true) keeps every protocol handler on the servlet request thread
+		// instead of offloading it to Schedulers.boundedElastic(). That is what lets
+		// McpAuthenticationFilter establish the caller's TLContext for the whole request: the
+		// transport blocks the request thread while the handler runs, so the handler sees the
+		// context the filter opened. Without it the handlers would run on a pooled thread with
+		// no interaction and no account, and every read would have to be refused.
+		var builder = McpServer.sync(transport)
+			.immediateExecution(true)
+			.serverInfo(config.getServerName(), config.getServerVersion());
+		String instructions = StringServices.nonEmpty(config.getInstructions());
+		if (instructions != null) {
+			builder.instructions(instructions.strip());
+		}
+		return builder;
+	}
+
+	/**
+	 * States in the boot log what enabling this endpoint published.
+	 *
+	 * <p>
+	 * A statement at every boot rather than a line in a document, because it is a property of the
+	 * running deployment: what {@code /mcp/*} serves, and to whom, follows from the authentications
+	 * this application configured, and reaching this method means an administrator switched the
+	 * module on - it is {@code false} in this module's own configuration.
+	 * </p>
+	 */
+	private void reportEndpointExposure() {
+		int schemes = getConfig().getAuthentications().size();
+		if (schemes == 0) {
+			Logger.warn("MCP server started on " + MCP_ENDPOINT + "/* with NO authentication"
+				+ " configured, so it refuses every request with 503. The endpoint serves nothing it"
+				+ " cannot attribute to an account. Configure <authentications> and <secrets> on"
+				+ " MCPServerService to make it usable - see the developer article ai/security/mcp-endpoint.",
+				MCPServerService.class);
+			return;
+		}
+
+		Logger.info("MCP server started on " + MCP_ENDPOINT + "/* with "
+			+ getConfig().getAuthentications().keySet() + " as accepted authentication(s), publishing "
+			+ (_publishedTools.isEmpty() ? "no tool" : "the tools " + _publishedTools)
+			+ " and accepting the browser origins " + getConfig().getAllowedOrigins() + ". Every"
+			+ " request is authenticated and acts as the account it authenticated: resource reads are"
+			+ " filtered by that account's model access rights, and tool calls are authorized against"
+			+ " its roles, bounded by the <background-allowlist> because an MCP caller has no human to"
+			+ " answer an approval prompt. tools/list shows every published tool to any authenticated"
+			+ " caller. See the developer article ai/security/mcp-endpoint.",
+			MCPServerService.class);
+	}
+
+	/**
+	 * Configures the MCP server builder with application-specific tools, resources, and prompts.
+	 *
+	 * <p>
+	 * Override or extend this method to register custom MCP capabilities for your application.
+	 * </p>
+	 *
+	 * <p>
+	 * Default implementation registers resources for TopLogic model exploration:
+	 * </p>
+	 * <ul>
+	 * <li>{@link InstanceResource} - Retrieves detailed information about a specific instance by its TID</li>
+	 * <li>{@link TypeInstancesResource} - Retrieves all instances of a specific type</li>
+	 * <li>{@link ModuleTypesResource} - Lists types within a specific module (dynamic resource template)</li>
+	 * <li>{@link TypePartsResource} - Lists parts within a specific type (dynamic resource template)</li>
+	 * <li>{@link EnumerationClassifiersResource} - Lists classifiers within an enumeration (dynamic resource template)</li>
+	 * <li>{@link TypeUsagesResource} - Finds usages of a specific type (dynamic resource template)</li>
+	 * <li>{@link ModuleNameCompletion} - Provides completions for module name parameters</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The tools are the ones {@link Config#getExposedTools()} publishes from the
+	 * {@link ToolRegistryService}, adapted by the {@link McpToolAdapter}.
+	 * </p>
+	 *
+	 * <p>
+	 * Additionally registers any configured resource templates from the service configuration.
+	 * </p>
+	 *
+	 * @param builder
+	 *        The MCP server builder to configure.
+	 */
+	protected void configureServer(McpServer.SyncSpecification<?> builder) {
+		builder.capabilities(ServerCapabilities.builder().resources(true, true).tools(true).build());
+
+		// Register resource template for retrieving instance details by TID
+		builder.resourceTemplates(InstanceResource.createSpecification());
+
+		// Register resource template for retrieving all instances of a specific type
+		builder.resourceTemplates(TypeInstancesResource.createSpecification());
+
+		// Register resource template for listing types in a specific module
+		builder.resourceTemplates(ModuleTypesResource.createSpecification());
+
+		// Register resource template for listing parts in a specific type
+		builder.resourceTemplates(TypePartsResource.createSpecification());
+
+		// Register resource template for listing classifiers in an enumeration
+		builder.resourceTemplates(EnumerationClassifiersResource.createSpecification());
+
+		// Register resource template for finding usages of a specific type
+		builder.resourceTemplates(TypeUsagesResource.createSpecification());
+
+		// Register resource template for configuration interface JSON schemas
+		builder.resourceTemplates(ConfigSchemaResource.createSpecification());
+
+		// Register completion handler for module name parameter
+		builder.completions(ModuleNameCompletion.createSpecification());
+
+		// Register configured dynamic resources
+		InstantiationContext context = new com.top_logic.basic.config.DefaultInstantiationContext(getClass());
+		for (PolymorphicConfiguration<? extends DynamicResource> resourceConfig : getConfig().getDynamicResources()) {
+			DynamicResource resource = context.getInstance(resourceConfig);
+			builder.resourceTemplates(resource.createSpecification());
+		}
+
+		// Register the published tools, and only those: a tool that is not registered here is an
+		// unknown tool to every MCP client.
+		List<String> published = new ArrayList<>();
+		for (McpExposure.Published tool : McpExposure.resolve(getConfig().getExposedTools())) {
+			builder.tools(McpToolAdapter.adapt(tool));
+			published.add(tool.name());
+		}
+		_publishedTools = published;
+	}
+
+	@Override
+	protected void shutDown() {
+		try {
+			// Unregister singleton instance
+			_instance = null;
+			_authenticator = null;
+
+			// The transport is destroyed below, so every MCP session it held is gone; keeping their
+			// owners would leave a restarted service deciding about sessions that no longer exist.
+			_sessionPrincipals.clear();
+			if (_sessionKeeper != null) {
+				_sessionKeeper.stop();
+				_sessionKeeper = null;
+			}
+
+			// Clean up MCP server resources
+			if (_mcpServer != null) {
+				try {
+					_mcpServer.close();
+				} catch (Exception ex) {
+					// Log but don't fail shutdown
+					System.err.println("Error closing MCP server: " + ex.getMessage());
+				}
+				_mcpServer = null;
+			}
+
+			// Clean up transport provider
+			if (_transportProvider != null) {
+				try {
+					_transportProvider.destroy();
+				} catch (Exception ex) {
+					// Log but don't fail shutdown
+					System.err.println("Error destroying MCP transport provider: " + ex.getMessage());
+				}
+				_transportProvider = null;
+			}
+		} finally {
+			super.shutDown();
+		}
+	}
+
+	/**
+	 * Simple ServletConfig adapter for initializing the MCP transport servlet.
+	 */
+	private static class ServletConfigAdapter implements ServletConfig {
+
+		private ServletContext _servletContext;
+
+		/**
+		 * Creates a {@link ServletConfigAdapter}.
+		 */
+		public ServletConfigAdapter(ServletContext servletContext) {
+			_servletContext = servletContext;
+		}
+
+		@Override
+		public String getServletName() {
+			return "MCPServerTransport";
+		}
+
+		@Override
+		public jakarta.servlet.ServletContext getServletContext() {
+			return _servletContext;
+		}
+
+		@Override
+		public String getInitParameter(String name) {
+			return null;
+		}
+
+		@Override
+		public java.util.Enumeration<String> getInitParameterNames() {
+			return java.util.Collections.emptyEnumeration();
+		}
+	}
+
+	/**
+	 * Module for {@link MCPServerService}.
+	 */
+	public static final class Module extends TypedRuntimeModule<MCPServerService> {
+
+		/**
+		 * Singleton {@link MCPServerService.Module} instance.
+		 */
+		public static final MCPServerService.Module INSTANCE = new MCPServerService.Module();
+
+		private Module() {
+			// Singleton constructor
+		}
+
+		@Override
+		public Class<MCPServerService> getImplementation() {
+			return MCPServerService.class;
+		}
+	}
+}

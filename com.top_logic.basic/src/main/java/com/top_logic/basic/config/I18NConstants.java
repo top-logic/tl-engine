@@ -73,6 +73,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 ERROR_SINGLETON_REFERENCE_IS_NULL__FIELD;
 
+	public static ResKey2 ERROR_UNDECODABLE_ENCRYPTED_VALUE__PROPERTY_PREFIX;
+
 	public static ResKey PROPERTY_IS_MANDATORY_BUT_VALUE_WAS_EMPTY;
 
 	public static ResKey2 ERROR_INSTANTIATION_FAILED__CLASS_LOCATION;
@@ -80,5 +82,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 ERROR_INVALID_FORMAT__VALUE_PROPERTY_DETAIL;
 
 	public static ResKey2 ERROR_INVALID_DEFAULT_VALUE_FOR_TYPE__TYPE___VALUE;
+
+	/**
+	 * @en The service class "{0}" has no service configuration interface.
+	 */
+	public static ResKey1 ERROR_NO_SERVICE_CONFIGURATION_INTERFACE__CLASS;
 
 }

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Temperatures displayed in the unit of their site: an application-defined primitive type whose
+	display depends on the object owning the value.
+	
+	The minimum and maximum temperature of a sensor are stored in degrees Celsius. The storage of
+	the type reads them in the unit of the site the sensor belongs to, so the sensor table and the
+	sensor form show them in that unit, and a number typed into the form without a unit is taken in
+	that unit as well. A number typed with a unit (20 °C, 68 F, 300 K) is converted.
+	
+	The sensor table observes the sites as well, so it follows a changed unit of its site at once;
+	the sensor form shows the changed unit when it is displayed again.
+	
+	"New Sensor" creates a sensor in the selected site through a dialog. The sensor being created
+	belongs to no site yet, so its temperatures are entered in degrees Celsius unless typed with
+	another unit.
+-->
+<view>
+	<channels>
+		<channel name="site"/>
+		<channel name="sensor"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Temperatures</en>
+			<de>Temperaturen</de>
+		</title>
+
+		<adaptive-detail selection="site">
+			<home-label>
+				<en>Sites</en>
+				<de>Standorte</de>
+			</home-label>
+			<selector>
+				<panel>
+					<title>
+						<en>Sites</en>
+						<de>Standorte</de>
+					</title>
+					<inset>
+						<text>
+							<label>
+								<en>This demo shows an application-defined value type: the temperatures of the sensors are stored as plain numbers in degrees Celsius, but every display - table, form, label - shows them in the unit of the site the sensor belongs to, and a number typed into a form is read in that unit. Change the unit of a site to see its sensors in another unit. How such a type is built is described in the developer article model/custom-primitive-type.</en>
+								<de>Diese Demo zeigt einen anwendungsdefinierten Werttyp: Die Temperaturen der Sensoren werden als einfache Zahlen in Grad Celsius gespeichert, aber jede Anzeige - Tabelle, Formular, Beschriftung - zeigt sie in der Einheit des Standorts, zu dem der Sensor gehört, und eine in ein Formular eingegebene Zahl wird in dieser Einheit gelesen. Ändern Sie die Einheit eines Standorts, um seine Sensoren in einer anderen Einheit zu sehen. Wie ein solcher Typ gebaut wird, beschreibt der Entwicklerartikel model/custom-primitive-type.</de>
+							</label>
+						</text>
+					</inset>
+					<table
+						observed-types="demo.temperature:DemoSite"
+						selection="site"
+						types="demo.temperature:DemoSite"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="temperatureUnit"/>
+						</columns>
+						<rows>all(`demo.temperature:DemoSite`)</rows>
+					</table>
+				</panel>
+			</selector>
+			<detail>
+				<adaptive-detail
+					reset-on="site"
+					selection="sensor"
+				>
+					<selector>
+						<panel>
+							<title>
+								<en>Site</en>
+								<de>Standort</de>
+							</title>
+							<commands>
+								<generic-command
+									image="css:bi bi-plus-lg"
+									inputs="site"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>New Sensor</en>
+										<de>Neuer Sensor</de>
+									</label>
+									<executability>
+										<null-input-disabled/>
+									</executability>
+									<create-transient type="demo.temperature:DemoSensor">
+										<with-result>
+											<open-dialog
+												bind-input-to="model"
+												dialog-view="demo/create-sensor.view.xml"
+											>
+												<bind
+													channel="container"
+													to="site"
+												/>
+												<bind
+													channel="selection"
+													to="sensor"
+												/>
+											</open-dialog>
+										</with-result>
+									</create-transient>
+								</generic-command>
+							</commands>
+							<form
+								input="site"
+								with-inset="true"
+							>
+								<field attribute="name"/>
+								<field attribute="temperatureUnit"/>
+								<field attribute="alarmCondition">
+									<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+										<suggestions><![CDATA[self -> text -> caret -> {
+	// What fits at the caret depends on the text before it.
+	before = $text.subString(0, $caret);
+	endsWith = pattern -> !regex($pattern + '$').regexSearch($before).isEmpty();
+
+	// An unfinished sensor reference: @ or @" followed by a name without closing quote.
+	reference = regex('@"?([^"@]*)$').regexSearch($before).firstElement();
+
+	switch {
+		$reference != null: $self.get(`demo.temperature:DemoSite#sensors`)
+			.map(sensor -> $sensor.get(`demo.temperature:DemoSensor#name`))
+			.filter(name -> $name.stringContains($reference.regexGroup(1)))
+			.map(name -> {
+				"label": $name,
+				"text": '@"' + $name + '"',
+				"from": $reference.regexStart(),
+				"to": $caret
+			});
+
+		// The start of a condition.
+		$endsWith('^\\s*') || $endsWith('\\b(and|or) '): ['not ', '@"'];
+		$endsWith('\\bnot '): ['@"'];
+
+		// A complete reference is compared to a number.
+		$endsWith('" '): ['> ', '< '];
+
+		// A complete comparison is combined with the next one.
+		$endsWith('\\d '): ['and ', 'or '];
+
+		default: [];
+	}
+}]]></suggestions>
+									</input-control>
+								</field>
+							</form>
+							<table
+								observed-types="demo.temperature:DemoSite,demo.temperature:DemoSensor"
+								selection="sensor"
+								types="demo.temperature:DemoSensor"
+							>
+								<columns>
+									<column attribute="name"/>
+									<column attribute="minTemperature"/>
+									<column attribute="maxTemperature"/>
+								</columns>
+								<inputs>
+									<input channel="site"/>
+								</inputs>
+								<rows>if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
+							</table>
+						</panel>
+					</selector>
+					<detail>
+						<panel>
+							<title>
+								<en>Sensor</en>
+								<de>Sensor</de>
+							</title>
+							<form
+								input="sensor"
+								with-inset="true"
+							>
+								<field attribute="name"/>
+								<field attribute="minTemperature"/>
+								<field attribute="maxTemperature"/>
+							</form>
+						</panel>
+					</detail>
+				</adaptive-detail>
+			</detail>
+		</adaptive-detail>
+	</panel>
+</view>

@@ -8,7 +8,8 @@
 	computed, and the table needs no row type at all. "Transient rows" shows a table over objects
 	that were never persisted. "Embedded columns" shows the columns of the object a row points to
 	as columns of the row. "Dynamic columns" shows one column per milestone, decided by the data.
-	"Group order" shows groups ordered by a comparator the grouping column declares.
+	"Group order" shows groups ordered by a comparator the grouping column declares, "Row order"
+	groups by a column declared with sortable="false", whose groups follow the order of the rows.
 	"Editable column" edits a computed column through its update function. "Default columns" shows
 	what a table displays when it declares no columns: the main properties of its row type.
 	
@@ -54,7 +55,7 @@
 									<en>Milestone</en>
 									<de>Meilenstein</de>
 								</label>
-								<value><![CDATA[row -> $row["name"]]]></value>
+								<value><![CDATA[$row["name"]]]></value>
 							</computed-column>
 							<computed-column name="count"
 								type="tl.core:Integer"
@@ -63,8 +64,8 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[row -> $row["count"]]]></value>
-								<aggregate><![CDATA[rows -> $rows.map(r -> $r["count"]).sum()]]></aggregate>
+								<value><![CDATA[$row["count"]]]></value>
+								<aggregate><![CDATA[$members.map(r -> $r["count"]).sum()]]></aggregate>
 							</computed-column>
 							<computed-column name="share"
 								type="tl.core:Double"
@@ -74,7 +75,7 @@
 									<en>Share</en>
 									<de>Anteil</de>
 								</label>
-								<value><![CDATA[row -> if($row["total"] == 0, 0, $row["count"] / $row["total"])]]></value>
+								<value><![CDATA[if($row["total"] == 0, 0, $row["count"] / $row["total"])]]></value>
 							</computed-column>
 						</columns>
 						<rows><![CDATA[{
@@ -128,7 +129,7 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()]]></value>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Milestone#tickets`).size()]]></value>
 							</computed-column>
 						</columns>
 						<rows><![CDATA[count(4).map(i -> {
@@ -154,8 +155,8 @@
 					</title>
 					<!--
 						The assignee's name is shown as a column of the ticket: the embedding names the
-						reference, the nested declaration resolves against the contributor type, and the
-						header reads "Assignee / Name". The remaining attributes of the contributor are
+						reference, the nested declaration resolves against the person contact type, and the
+						header reads "Assignee / Name". The remaining attributes of the contact are
 						offered in the column selection, hidden until the user picks one. The second
 						embedding walks two references, the last of them holding several objects, so its
 						cells collect the titles of all tickets of the ticket's milestone. The computed
@@ -187,7 +188,7 @@
 									<en>Titles in the milestone</en>
 									<de>Titel im Meilenstein</de>
 								</label>
-								<value><![CDATA[t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`)
 	.get(`tl.demo.projectManagement:Milestone#tickets`)
 	.map(x -> $x.get(`tl.demo.projectManagement:Ticket#title`))]]></value>
 							</computed-column>
@@ -210,7 +211,7 @@
 					</title>
 					<!--
 						Which columns there are is decided by the data: one per milestone, each showing how
-						many tickets of the contributor belong to it. The table starts grouped by the
+						many tickets assigned to the contact belong to it. The table starts grouped by the
 						computed initial column, so the sum every milestone column aggregates over the rows
 						of a group is visible in its header row. The column-visible function hides the
 						column of milestone M3 at the start (M1 and M2 are shown); it is offered in the
@@ -218,9 +219,10 @@
 					-->
 					<table
 						group-by="initial"
-						observed-types="tl.demo.projectManagement:Contributor"
+						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 						personalization-key="table-columns-dynamic"
-						types="tl.demo.projectManagement:Contributor"
+						row-as="contact"
+						types="Contacts:PersonContact"
 					>
 						<columns>
 							<column
@@ -235,28 +237,29 @@
 									<en>Initial</en>
 									<de>Anfangsbuchstabe</de>
 								</label>
-								<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#name`).subString(0, 1)]]></value>
+								<value><![CDATA[$contact.get(`Contacts:PersonContact#name`).subString(0, 1)]]></value>
 							</computed-column>
 							<dynamic-columns name="milestones"
+								column-as="milestone"
 								readonly="true"
 								type="tl.core:Integer"
 								width="120"
 							>
 								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
-								<column-name><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
-								<column-label><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
-								<column-visible><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`) != "M3"]]></column-visible>
-								<value><![CDATA[c -> m -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
-	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
+								<column-name><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<column-visible><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`) != "M3"]]></column-visible>
+								<value><![CDATA[$contact.referers(`tl.demo.projectManagement:Ticket#assignee`)
+	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone)
 	.size()]]></value>
-								<aggregate><![CDATA[rows -> m -> $rows
-	.map(c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
-		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
+								<aggregate><![CDATA[$members
+	.map(c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`)
+		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone)
 		.size())
 	.sum()]]></aggregate>
 							</dynamic-columns>
 						</columns>
-						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
 					</table>
 				</panel>
 			</tab>
@@ -273,16 +276,16 @@
 						<de>Gruppen in deklarierter Reihenfolge</de>
 					</title>
 					<!--
-						The table starts grouped by the computed load column, which classifies a contributor
+						The table starts grouped by the computed load column, which classifies a contact
 						by the number of assigned tickets. Its comparator orders the classes none, few, many -
 						alphabetically they would read few, many, none. The ticket column sums the tickets
 						of a group in its header row.
 					-->
 					<table
 						group-by="load"
-						observed-types="tl.demo.projectManagement:Contributor"
+						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 						personalization-key="table-columns-group-order"
-						types="tl.demo.projectManagement:Contributor"
+						types="Contacts:PersonContact"
 					>
 						<columns>
 							<column
@@ -297,19 +300,22 @@
 									<en>Load</en>
 									<de>Auslastung</de>
 								</label>
-								<value><![CDATA[c -> {
-	count = $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size();
+								<value><![CDATA[{
+	count = $row.referers(`tl.demo.projectManagement:Ticket#assignee`).size();
 	switch {
 		$count == 0: "none";
 		$count <= 2: "few";
 		default: "many";
 	};
 }]]></value>
-								<comparator><![CDATA[comparator(load -> switch ($load) {
-	"none": 0;
-	"few": 1;
-	default: 2;
-})]]></comparator>
+								<comparator><![CDATA[{
+	rank = load -> switch ($load) {
+		"none": 0;
+		"few": 1;
+		default: 2;
+	};
+	compare($rank($left), $rank($right));
+}]]></comparator>
 							</computed-column>
 							<computed-column name="tickets"
 								type="tl.core:Integer"
@@ -319,13 +325,50 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size()]]></value>
-								<aggregate><![CDATA[rows -> $rows
-	.map(c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size())
+								<value><![CDATA[$row.referers(`tl.demo.projectManagement:Ticket#assignee`).size()]]></value>
+								<aggregate><![CDATA[$members
+	.map(c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size())
 	.sum()]]></aggregate>
 							</computed-column>
 						</columns>
-						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="row-order"
+				icon="css:bi bi-list-ol"
+			>
+				<label>
+					<en>Row order</en>
+					<de>Zeilenreihenfolge</de>
+				</label>
+				<panel>
+					<title>
+						<en>Groups in the order of their rows</en>
+						<de>Gruppen in der Reihenfolge ihrer Zeilen</de>
+					</title>
+					<!--
+						The table starts grouped by the milestone column, which is declared with
+						sortable="false": it offers no sorting, and its groups come in the order of the rows
+						the table is given. The rows are the tickets in descending order of their title, so the
+						milestone of the last ticket in alphabetical order comes first, not the milestones in
+						alphabetical order. Sorting the table by the title keeps the groups in that order and
+						only orders the tickets within each group.
+					-->
+					<table
+						group-by="milestone"
+						personalization-key="table-columns-row-order"
+						types="tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column attribute="title"/>
+							<column
+								attribute="milestone"
+								sortable="false"
+							/>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)
+	.sort(x -> y -> compare($y.get(`tl.demo.projectManagement:Ticket#title`), $x.get(`tl.demo.projectManagement:Ticket#title`)))]]></rows>
 					</table>
 				</panel>
 			</tab>
@@ -342,16 +385,16 @@
 						<de>Bearbeiten einer berechneten Spalte</de>
 					</title>
 					<!--
-						The mail column computes its value from the contributor and writes an edited one back
+						The mail column computes its value from the contact and writes an edited one back
 						through its update function. The control the value is entered with follows from the
 						declared type; the edit is buffered on the row and applied when the form is saved.
 					-->
 					<form input="editAnchor">
 						<table
-							observed-types="tl.demo.projectManagement:Contributor"
+							observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 							personalization-key="table-columns-editable"
 							row-edit="ALL"
-							types="tl.demo.projectManagement:Contributor"
+							types="Contacts:PersonContact"
 						>
 							<columns>
 								<column
@@ -365,12 +408,12 @@
 										<en>Mail</en>
 										<de>Mail</de>
 									</label>
-									<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#email`)]]></value>
-									<update><![CDATA[c -> v -> $c.set(`tl.demo.projectManagement:Contributor#email`, $v)]]></update>
-									<can-update><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#name`) != null]]></can-update>
+									<value><![CDATA[$row.get(`Contacts:PersonContact#email`)]]></value>
+									<update><![CDATA[$row.set(`Contacts:PersonContact#email`, $value)]]></update>
+									<can-update><![CDATA[$row.get(`Contacts:PersonContact#name`) != null]]></can-update>
 								</computed-column>
 							</columns>
-							<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+							<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
 						</table>
 					</form>
 				</panel>

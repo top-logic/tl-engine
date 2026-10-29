@@ -35,7 +35,6 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -58,9 +57,9 @@ import com.top_logic.util.error.TopLogicException;
  * {@value #SECRET} is denied for every role. The {@link CommandApprovalService} refuses writing a
  * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden). The account in
  * {@value #VIEWER} holds the role {@value #ROLE_VIEWER} on the project, which grants read only.
- * Reading {@value #BUDGET} is granted to {@value #ROLE_RESPONSIBLE} only, reading
- * {@value #CLASSIFIED} to no role, reading the reference {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE}
- * only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
+ * Reading {@value #BUDGET} and the boolean {@value #APPROVED} are granted to
+ * {@value #ROLE_RESPONSIBLE} only, reading {@value #CLASSIFIED} to no role, reading the reference
+ * {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE} only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
  * The attribute {@value #CODE} is read-only by its display annotation, and writing it is granted to
  * {@value #ROLE_VIEWER} only.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
@@ -74,8 +73,16 @@ import com.top_logic.util.error.TopLogicException;
  * role. Writing its composition {@value #LOCKED_ITEMS} is granted to no role either.</li>
  * <li>{@value #ITEM}: the type of the compositions {@value #ITEMS} and {@value #LOCKED_ITEMS} of a
  * step, with a mandatory {@value #NAME}. An item has its container as access parent.</li>
- * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
- * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
+ * <li>{@value #CATEGORY}: the type of the references {@value #CATEGORY_REF} and {@value #CATEGORIES}
+ * (multiple, unordered) of a project. The account in {@value #READER} holds the role
+ * {@value #ROLE_READER}, which grants read on the category and, by a grant of the attribute, writing
+ * its {@value #NAME}.</li>
+ * <li>{@value #MILESTONE}: the type of the composition {@value #MILESTONES} of a project,
+ * {@value #NOTE}: the type of the composition {@value #NOTES} of a category. Neither is configured,
+ * so both are decided by their container, the access parent a composition part gets by
+ * default.</li>
+ * <li>{@value #REMARK}: a type whose access parent is computed by a script, so that the types of its
+ * access parents are not known statically.</li>
  * </ul>
  *
  * <p>
@@ -112,6 +119,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
 	protected static final String BUDGET = "budget";
+
+	/** Name of the boolean {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
+	protected static final String APPROVED = "approved";
 
 	/** Name of the {@link #PROJECT} attribute nobody but a super-user may read. */
 	protected static final String CLASSIFIED = "classified";
@@ -155,11 +165,38 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Name of the {@link #STEP} composition of {@link #ITEM}s nobody may write. */
 	protected static final String LOCKED_ITEMS = "lockedItems";
 
+	/**
+	 * Name of the type of the composition {@link #MILESTONES} of a {@link #PROJECT}, deciding by
+	 * its container as composition part without configuration.
+	 */
+	protected static final String MILESTONE = "Milestone";
+
+	/** Name of the {@link #PROJECT} composition of {@link #MILESTONE}s. */
+	protected static final String MILESTONES = "milestones";
+
+	/**
+	 * Name of the type of the composition {@link #NOTES} of a {@link #CATEGORY}, deciding by its
+	 * container as composition part without configuration.
+	 */
+	protected static final String NOTE = "Note";
+
+	/** Name of the {@link #CATEGORY} composition of {@link #NOTE}s. */
+	protected static final String NOTES = "notes";
+
+	/**
+	 * Name of the type whose access parent is computed by a script, with access parent types not
+	 * known statically.
+	 */
+	protected static final String REMARK = "Remark";
+
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_RESPONSIBLE}. */
 	protected static final String RESPONSIBLE = "responsible";
 
 	/** Name of the {@link #PROJECT} reference to a {@link #CATEGORY}. */
 	protected static final String CATEGORY_REF = "category";
+
+	/** Name of the unordered {@link #PROJECT} reference to several {@link #CATEGORY}s. */
+	protected static final String CATEGORIES = "categories";
 
 	/** Name of the {@link #PROJECT} composition of {@link #TASK}s. */
 	protected static final String TASKS = "tasks";
@@ -190,10 +227,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	private final List<Person> _persons = new ArrayList<>();
 
-	private Person _formerUser;
-
-	private String _formerContextId;
-
 	/** The super-user, bypassing the model access rights. */
 	protected Person _root;
 
@@ -218,9 +251,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext context = TLContext.getContext();
-		_formerUser = context.getCurrentPersonWrapper();
-		_formerContextId = context.getContextId();
 		_root = PersonManager.getManager().getRoot();
 		_responsible = newPerson("viewModelAccessResponsible");
 		_roleless = newPerson("viewModelAccessRoleless");
@@ -248,13 +278,11 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 			TestPerson.deletePersonAndUser(person);
 		}
 		_persons.clear();
+	}
 
-		TLContext context = TLContext.getContext();
-		context.setCurrentPerson(_formerUser);
-		if (_formerUser == null) {
-			// Without a person, the context is identified by its explicit context id.
-			context.setContextId(_formerContextId);
-		}
+	@Override
+	protected boolean checksSecurity() {
+		return true;
 	}
 
 	private Person newPerson(String name) {
@@ -282,6 +310,24 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	 */
 	protected static TLStructuredTypePart part(String typeName, String partName) {
 		return type(typeName).getPartOrFail(partName);
+	}
+
+	/**
+	 * Creates an object of the test type with the given local name in the given composition of
+	 * the given container, replacing its former contents.
+	 *
+	 * <p>
+	 * The object is deleted with its container.
+	 * </p>
+	 */
+	protected TLObject newPart(TLObject container, String composition, String typeName) {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject result = DynamicModelService.getFactoryFor(MODULE).createObject(type(typeName));
+			result.tUpdateByName(NAME, typeName);
+			container.tUpdateByName(composition, List.of(result));
+			tx.commit();
+			return result;
+		}
 	}
 
 	/**
@@ -315,7 +361,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 		List<BasicRuntimeModule<?>> modules = new ArrayList<>(List.of(
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE,
 			CommandApprovalService.Module.INSTANCE));

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Exposes Albert as an A2A agent at /a2a/albert and gives it the tools to call other A2A agents.
+	Enable it in metaConf.txt. See tl-ai-a2a/README.md.
+
+	A caller authenticates with a personal access token of an account of this application (My
+	settings -> Access tokens), sent as "Authorization: Bearer tlpat_...". Its runs act as that
+	account. For a quick local try, HTTP basic with an account's own login works too - FOR A LOCAL
+	DEMO ONLY, like mcp-demo.config.xml.
+
+	    curl -s http://localhost:8080/tl-ai-demo/a2a/albert/agent-card.json
+	    curl -s -X POST http://localhost:8080/tl-ai-demo/a2a/albert -H "Authorization: Bearer $TOKEN" \
+	        -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"SendMessage",
+	        "params":{"message":{"messageId":"m1","role":"ROLE_USER","parts":[{"text":"Hallo"}]}}}'
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.ai.a2a.A2AService">
+			<instance class="com.top_logic.ai.a2a.A2AService"
+				app="albert"
+			>
+				<authentications>
+					<personal-access-token-authentication domain="tokens"/>
+					<basic-authentication domain="a2a-demo" in-user-context="true"/>
+				</authentications>
+				<agents>
+					<agent path="albert" agent="TL_SingleAgent" display-name="Albert" allow-writes="true"
+						description="Albert knows this TopLogic application and builds in it: model, layouts, data, pages."
+					>
+						<skills>
+							<skill id="build" name="Build the application"
+								description="Creates types, attributes, layouts and data in the running application."
+								tags="toplogic, modeling"/>
+							<skill id="answer" name="Answer questions"
+								description="Answers questions about the application's model and data."
+								tags="toplogic, questions"/>
+						</skills>
+					</agent>
+				</agents>
+				<!-- Another A2A agent Albert may call; its token comes from the environment.
+				<remote-agents>
+					<remote-agent name="other" card-url="http://localhost:8081/other/a2a/agent/agent-card.json">
+						<credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer">
+							<secret name="tl_a2a_other_token"/>
+						</credentials>
+					</remote-agent>
+				</remote-agents>
+				-->
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="TL_SingleAgent">
+						<tools>
+							<tool name="a2a.listAgents"/>
+							<tool name="a2a.askAgent"/>
+							<tool name="a2a.replyAgent"/>
+							<tool name="a2a.getAgentTask"/>
+							<tool name="a2a.listAgentConversations"/>
+							<tool name="a2a.fetchArtifact"/>
+						</tools>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+	</services>
+</application>

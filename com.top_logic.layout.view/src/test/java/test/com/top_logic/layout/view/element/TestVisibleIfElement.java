@@ -19,7 +19,6 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
@@ -37,6 +36,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.InsetElement;
@@ -105,6 +105,25 @@ public class TestVisibleIfElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the condition sees the value of an input renamed with {@code as} under its new
+	 * name.
+	 */
+	public void testConditionSeesRenamedInput() {
+		_state.set(SHOWN);
+
+		ReactControl visibleIf =
+			createControl(new InputRef(new ChannelRef(STATE_CHANNEL), "mode"), "$mode == '" + SHOWN + "'");
+
+		visibleIf.attach();
+
+		assertTrue("The renamed input is seen under its name.",
+			shownContent(visibleIf) instanceof ReactInsetControl);
+
+		_state.set(HIDDEN);
+		assertNull("The condition follows the renamed input.", shownContent(visibleIf));
+	}
+
+	/**
 	 * Tests that no content is built while the condition does not hold.
 	 */
 	public void testNothingIsShownWhileTheConditionDoesNotHold() {
@@ -161,10 +180,10 @@ public class TestVisibleIfElement extends BasicTestCase {
 		VisibleIfElement.Config visibleIf = (VisibleIfElement.Config) config.getContent();
 
 		assertEquals("The condition is evaluated over the configured channel.",
-			STATE_CHANNEL, visibleIf.getInput().getChannelName());
+			STATE_CHANNEL, visibleIf.getInput().getChannel().getChannelName());
 		assertNotNull("The condition is parsed.", visibleIf.getExpr());
 
-		List<PolymorphicConfiguration<? extends UIElement>> content = visibleIf.getContent();
+		List<UIElement.Config> content = visibleIf.getContent();
 		assertEquals("The children of the tag are its content.", 1, content.size());
 		assertTrue("The child of the tag is the <inset> written inside it.",
 			content.get(0) instanceof InsetElement.Config);
@@ -179,9 +198,17 @@ public class TestVisibleIfElement extends BasicTestCase {
 	 * while the channel holds {@link #SHOWN}.
 	 */
 	private ReactControl createControl() {
+		return createControl(new InputRef(new ChannelRef(STATE_CHANNEL)), "$" + STATE_CHANNEL + " == '" + SHOWN + "'");
+	}
+
+	/**
+	 * The control of a {@code <visible-if>} over the given input showing an {@code <inset>} while
+	 * the given condition holds.
+	 */
+	private ReactControl createControl(InputRef input, String condition) {
 		VisibleIfElement.Config config = TypedConfiguration.newConfigItem(VisibleIfElement.Config.class);
-		update(config, VisibleIfElement.Config.INPUT, new ChannelRef(STATE_CHANNEL));
-		update(config, VisibleIfElement.Config.EXPR, expr("x -> $x == '" + SHOWN + "'"));
+		update(config, VisibleIfElement.Config.INPUT, input);
+		update(config, VisibleIfElement.Config.EXPR, expr(condition));
 		config.getContent().add(TypedConfiguration.newConfigItem(InsetElement.Config.class));
 
 		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestVisibleIfElement.class);

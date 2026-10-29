@@ -11,11 +11,14 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Subtypes;
+import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -61,6 +64,7 @@ public class ColumnsElement implements UIElement {
 	 * Configuration for {@link ColumnsElement}.
 	 */
 	@TagName("columns")
+	@TypeIcon("css:bi bi-layout-split")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getBreakpoint()}. */
@@ -101,11 +105,17 @@ public class ColumnsElement implements UIElement {
 		 * <p>
 		 * At least one column is needed.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element. Restricted to {@code <column>} entries, since the entry type only
+		 *           binds the instance type to {@link UIElement}.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(COLUMNS)
+		@Subtypes({ @Subtype(tag = ColumnElement.Config.TAG_NAME, type = ColumnElement.Config.class) })
 		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends ColumnElement>> getColumns();
+		List<ColumnElement.Config> getColumns();
 	}
 
 	private final String _breakpoint;
@@ -122,8 +132,8 @@ public class ColumnsElement implements UIElement {
 		_breakpoint = config.getBreakpoint();
 		_gap = config.getGap();
 		_columns = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ColumnElement> columnConfig : config.getColumns()) {
-			ColumnElement column = context.getInstance(columnConfig);
+		for (ColumnElement.Config columnConfig : config.getColumns()) {
+			ColumnElement column = (ColumnElement) context.getInstance(columnConfig);
 			if (column != null) {
 				_columns.add(column);
 			}

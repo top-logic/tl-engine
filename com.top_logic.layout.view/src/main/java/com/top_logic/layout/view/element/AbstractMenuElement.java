@@ -16,10 +16,12 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -71,6 +73,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 	/**
 	 * Configuration for {@link AbstractMenuElement}.
 	 */
+	@TypeIcon("css:bi bi-menu-button-wide")
 	public interface Config extends CommandCarrierElement.Config {
 
 		/** Configuration name for {@link #getInput()}. */
@@ -112,6 +115,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		@Name(GROUPS)
 		@Key(CommandGroup.ID)
 		@EntryTag("group")
+		@TreeProperty
 		List<CommandGroup> getGroups();
 
 		/**
@@ -129,17 +133,19 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 			String COMMANDS = "commands";
 
 			/**
-			 * The name by which the group is addressed.
+			 * The name by which the group is addressed, unique in the whole view, see
+			 * {@link UIElement.Config#getId()}.
 			 *
 			 * <p>
 			 * A module contributing to a menu defined elsewhere writes a same-path overlay of the
 			 * view that names the group by this ID; the entries it lists there are added at the end
-			 * of that group. The groups of one menu need distinct IDs, so at most one of them may go
-			 * without.
+			 * of that group. A group without ID is anonymous: a fragment adds groups beside it, but
+			 * cannot address the group itself.
 			 * </p>
 			 */
 			@Name(ID)
 			@Nullable
+			@GlobalKey
 			String getId();
 
 			/**

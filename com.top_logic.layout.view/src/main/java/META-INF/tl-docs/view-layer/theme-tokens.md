@@ -26,9 +26,11 @@ between the sheet and the browser, so what is written there is what the browser 
 
 **Write `var(--name)` without a fallback.** A `var(--name, 0.5rem)` hides the fact that the theme is
 missing the token: the page renders, silently ignoring the theme. A token the theme does not declare
-is a defect to fix in the theme. The only custom properties that carry a fallback are the ones a
-stylesheet declares itself (`--page-inset`, `--cal-ev-bg`, …), where the fallback is the value of the
-default case rather than a stand-in for a missing token.
+is a defect to fix in the theme. No stylesheet declares a custom property of its own to vary a value
+per element: such a value is either a role the element selects (a calendar event without a color of
+its own takes the surface of its category, `data-tl-role="category-N"` reading
+`--tl-category-N-surface`) or data set inline (a color the server sends for an event, with its text
+color chosen by `textOn`).
 
 ## Cascade layers
 
@@ -36,7 +38,7 @@ The styles of the React page are ordered by CSS cascade layers, not by their pos
 
 | Order | Layer | Rules |
 |---|---|---|
-| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, `tlReactControls.css`, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
+| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
 | 2 | `mui` | the rules of a component library rendering the UI: Material UI's emotion styles, its CSS variables, the styling properties derived from the MUI theme (`tl-mui-theme-properties`), the rules of a customer's `styled` components and `styleOverrides` |
 | — | unlayered | the stylesheets of the application, e.g. the rules of its `css-class` names |
 
@@ -96,8 +98,8 @@ The roles are the closed list of `ValueColor`: `neutral`, `brand`, the four mean
 `warning`, `success`, `info`, and eight categories `category-1` … `category-8` that carry no meaning
 and only tell values apart. A literal color value or a token name is not a valid specification.
 
-The pill a value of that classifier is drawn as carries the role as a class, `tl-pill tl-pill--warning`,
-and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
+The pill a value of that classifier is drawn as carries the role as the attribute `data-tl-role`,
+`<span class="tl-pill" data-tl-role="warning">`, and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
 two tokens of the role, its tinted surface and its line (`--tl-status-warning-subtle`,
 `--tl-status-warning-border`), so the pill follows a theme switch without the server sending a color.
 Which tokens a role reads, and why the text on it is `text-primary`, is decided in `docs/skalen.md` of
@@ -180,20 +182,14 @@ var(--background-image)`. The image token is `none` by default, so the page is a
 theme that wants a gradient or a texture behind the whole application sets it (`linear-gradient(…)`,
 `url(…)`) and leaves the colour as what shows through.
 
-## The current surface
+## Sticky table cells
 
-Some elements must be opaque without standing out from what they are placed on - the frozen and the
-pinned cells of a table, which hide the cells scrolling underneath. They paint
-`var(--tl-current-surface)`: the page's `--background` on `:root`, overridden by every control that
-paints a surface of its own (card, window, drawer, sidebar, maximized panel, accordion,
-`tlReactControls.css`). A new control painting a surface on which other content is placed sets the
-property to its own background colour next to that background, or a table inside it shows its
-sticky columns in the wrong colour.
-
-The table cells add the colour of their row's state on top: a row sets `--tl-row-background`, and a
-sticky cell paints `linear-gradient(var(--tl-row-background), var(--tl-row-background)),
-var(--tl-current-surface)`, which is what the rest of the row shows in every state. A page
-`--background-image` is not reproduced by sticky cells, which paint the colour only.
+The frozen and the pinned cells of a table hide the cells scrolling underneath, so they must be
+opaque without standing out. The table of the design system (`tl-table`, `table.css` of the package)
+paints every row opaque - its surface, the colour of hover or selection, or the tint of a
+[highlight class](doc:view-layer/tables) - and the sticky cells inherit the background of their row.
+They therefore show what the rest of their row shows, in every state and on every surface, without a
+property of the surface they are placed on.
 
 ## Writing a flat theme
 
@@ -239,6 +235,11 @@ a selector that rounds for a reason of its own is passed in the audit's allow-li
 Besides the theme tokens, the audit accepts the tokens the design system's token sheet declares
 (`/style/tl-design-system/tokens.css`, the `--tl-*` namespace), which a module's test names in
 `tokenStylesheets()`. A sheet audited here reads those tokens; it never declares them.
+
+The four sheets under `/style/tl-design-system/` are generated in the repository `TopLogic/tl-design-system` and copied
+here; never edit them in this repository. Each ends with a seal (the SHA-256 of everything before it), and
+`TestDesignSystemCopy` in `tl-layout-react` fails the build when a copy was changed by hand. A change goes into the
+package sources (`design-system/src`), followed by `node tools/generate.mjs` and `node tools/publish-to-worktree.mjs`.
 
 The audit is written against a theme configuration and a stylesheet handed to it, both loaded from
 web application resources (`ThemeTokenAudit.themeTokens`, `ThemeTokenAudit.stylesheet`), so an

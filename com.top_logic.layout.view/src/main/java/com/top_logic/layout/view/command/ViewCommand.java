@@ -5,21 +5,29 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import java.util.List;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Id;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
+import com.top_logic.layout.view.security.AccessCheck;
+import com.top_logic.layout.view.security.CommandAccess;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -37,7 +45,12 @@ public interface ViewCommand {
 	 * Configuration for {@link ViewCommand}.
 	 */
 	@Id(ViewCommand.class)
-	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig {
+	@TypeIcon("css:bi bi-lightning")
+	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig, NamedInputs,
+			ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -68,6 +81,9 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getKey()}. */
 		String KEY = "key";
+
+		/** Configuration name for {@link #getAccess()}. */
+		String ACCESS = "access";
 
 		/**
 		 * The programmatic name of this command.
@@ -169,6 +185,52 @@ public interface ViewCommand {
 		@Nullable
 		@Format(KeyStrokeFormat.class)
 		KeyStroke getKey();
+
+		/**
+		 * What this command does in the model, checked in the model access rights of the current
+		 * user: the operations it performs on objects ({@code <operation>}) and the objects it
+		 * creates ({@code <create>}).
+		 *
+		 * <p>
+		 * The grants deciding the checks are those of the model access rights; the command only
+		 * states what is checked. All checks must pass. A command the user can never pass a check
+		 * of is hidden; otherwise, the first failing check disables it, giving the refusal as its
+		 * reason. The checks decide both the state of the button and whether a dispatched command
+		 * is executed.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;access&gt;
+		 *   &lt;operation name="Approve" object="$milestones.map(m -&gt; $m.container())"
+		 *     type="tl.demo.projectManagement:ProjectScope"/&gt;
+		 *   &lt;create type="demo.tickets:Comment" in="$ticket" reference="demo.tickets:Ticket#comments"/&gt;
+		 * &lt;/access&gt;
+		 * </pre>
+		 *
+		 * @see CommandAccess
+		 */
+		@Name(ACCESS)
+		List<PolymorphicConfiguration<? extends AccessCheck>> getAccess();
+
+		/**
+		 * The name of the value the trigger of this command supplies.
+		 *
+		 * @param trigger
+		 *        The scope the trigger supplies, {@link ActionScope#NONE} for a trigger supplying no
+		 *        value of its own.
+		 * @return The name of the trigger's value, {@code null} for none.
+		 */
+		default String triggerName(ActionScope trigger) {
+			return trigger.defaultName();
+		}
+
+		/**
+		 * The actions of a command run with its {@link CommandArguments arguments}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			return CommandArguments.of(this, outer).scope();
+		}
 	}
 
 	/**
@@ -177,10 +239,29 @@ public interface ViewCommand {
 	 * @param context
 	 *        The view display context providing rendering infrastructure.
 	 * @param input
-	 *        The input value from the configured channel (may be {@code null}).
+	 *        The main argument of the command, see {@link CommandArguments} (may be {@code null}).
 	 * @return The result of the command execution.
 	 */
 	HandlerResult execute(ReactContext context, Object input);
+
+	/**
+	 * Executes this command with the given arguments.
+	 *
+	 * <p>
+	 * The default executes {@link #execute(ReactContext, Object)} with the
+	 * {@link ActionArguments#value() main argument}. A command running actions overrides it, so that
+	 * they see all arguments.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view display context providing rendering infrastructure.
+	 * @param arguments
+	 *        The arguments of the command, see {@link CommandArguments}; {@code null} for none.
+	 * @return The result of the command execution.
+	 */
+	default HandlerResult execute(ReactContext context, ActionArguments arguments) {
+		return execute(context, arguments == null ? null : arguments.value());
+	}
 
 	/**
 	 * Whether executing this command applies the values entered into the enclosing form.

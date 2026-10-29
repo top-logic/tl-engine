@@ -13,9 +13,12 @@ import com.top_logic.basic.config.NamedPolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 
 /**
  * Utility to check HTML input to only contain safe contents.
@@ -23,6 +26,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("HTML safety check")
+@ServiceCategory.Of(UICategory.class)
 public class SafeHTML extends ManagedClass {
 
 	/** Name of a script tag */
@@ -65,10 +69,33 @@ public class SafeHTML extends ManagedClass {
 		boolean isDisabled();
 
 		/**
+		 * Configuration tag name for each attribute name prefix.
+		 */
+		public static final String PREFIX = "prefix";
+
+		/** Property name of {@link #getAllowedAttributePrefixes()}. */
+		public static final String ALLOWED_ATTRIBUTE_PREFIXES = "allowed-attribute-prefixes";
+
+		/**
 		 * {@link List} of allowed attributes.
+		 *
+		 * @see #getAllowedAttributePrefixes()
 		 */
 		@ListBinding(tag = ATTRIBUTE, attribute = NAME)
 		List<String> getAllowedAttributes();
+
+		/**
+		 * Prefixes of allowed attribute names.
+		 *
+		 * <p>
+		 * An attribute whose name starts with one of these prefixes is allowed in addition to the
+		 * {@link #getAllowedAttributes() allowed attributes}, e.g. every custom data attribute with
+		 * the prefix <code>data-</code>.
+		 * </p>
+		 */
+		@Name(ALLOWED_ATTRIBUTE_PREFIXES)
+		@ListBinding(tag = PREFIX, attribute = NAME)
+		List<String> getAllowedAttributePrefixes();
 
 		/**
 		 * {@link List} of allowed tags.

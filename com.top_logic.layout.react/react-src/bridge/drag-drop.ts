@@ -111,6 +111,30 @@ function endDrag(): void {
 }
 
 /**
+ * Calls `callback` once the browser has taken the drag image, if the drag still runs then: the one
+ * moment at which a drag source is marked as dragged (`data-tl-state~="dragging"`, faded by drag.css).
+ * Called from a `dragstart` handler. A change made within `dragstart` itself would show in the drag
+ * image, which the browser takes from the source after the handler returns; React renders a state set
+ * there before that.
+ *
+ * Whether the drag still runs is watched here rather than read from {@link runningDrag}: a drag
+ * started without {@link writeDragPayload} (tree, list reordering) is not registered there.
+ */
+export function afterDragImage(callback: () => void): void {
+  let ended = false;
+  const end = () => { ended = true; };
+  window.addEventListener('dragend', end, true);
+  window.addEventListener('drop', end, true);
+  window.setTimeout(() => {
+    window.removeEventListener('dragend', end, true);
+    window.removeEventListener('drop', end, true);
+    if (!ended) {
+      callback();
+    }
+  }, 0);
+}
+
+/**
  * Ends the running drag once it ends, wherever it ends.
  *
  * `dragend` is dispatched at the element the drag started on, which may have been removed from the
@@ -231,6 +255,53 @@ export function dragKindAccepted(
 }
 
 /**
+ * The decision of {@link dragKindAccepted} for a drag not started yet, from the kind of the dragged
+ * object itself: a keyboard move offers only the drop a pointer drag of that object could make.
+ *
+ * @param kind The drag kind of the dragged object, if any.
+ * @param acceptsAny Whether the target accepts every drag, with any kind or none.
+ * @param acceptedKinds The kinds the target accepts where it does not accept any drag.
+ */
+export function kindAccepted(kind: string | undefined, acceptsAny: boolean, acceptedKinds: readonly string[]): boolean {
+  if (acceptsAny) {
+    return true;
+  }
+  if (!kind) {
+    return false;
+  }
+  const name = kind.toLowerCase();
+  return acceptedKinds.some((accepted) => accepted.toLowerCase() === name);
+}
+
+/**
+ * The drop modes that apply to the drag a transfer carries: the modes the target announces for the
+ * dragged kind, or all its modes where the kind is not listed - a target accepting any kind lists
+ * none. The split of an item follows these modes, so a target inserting one kind among its items and
+ * dropping another kind onto an item splits an item in halves for the first and takes it as a whole
+ * for the second.
+ *
+ * @param dataTransfer The transfer of the running drag.
+ * @param modes The wire names of the drop modes the target announces.
+ * @param modesByKind The wire names of the drop modes the target announces per accepted kind.
+ */
+export function dragModes(
+  dataTransfer: DataTransfer,
+  modes: readonly string[],
+  modesByKind: Readonly<Record<string, readonly string[]>>,
+): readonly string[] {
+  const types = Array.from(dataTransfer.types);
+  const result = new Set<string>();
+  let listed = false;
+  for (const [kind, kindModes] of Object.entries(modesByKind)) {
+    if (types.includes(DRAG_KIND_TYPE_PREFIX + kind.toLowerCase())) {
+      listed = true;
+      kindModes.forEach((mode) => result.add(mode));
+    }
+  }
+  return listed ? [...result] : modes;
+}
+
+/**
  * The split of a row of a flat list for the given announced drop modes: an insertion between two
  * rows needs their upper and lower halves told apart, a drop onto a row needs the row itself, both
  * together need the row in thirds, and a drop on the control as a whole needs no row at all.
@@ -292,4 +363,26 @@ export function dropZoneAt(clientY: number, item: HTMLElement, split: TLZoneSpli
     return 'lower';
   }
   return 'middle';
+}
+
+/**
+ * The boundary between two items of a vertical list nearest to a pointer at the given vertical
+ * position, wherever the pointer is - on an item or in the gap between two: before the first item
+ * whose middle is below the pointer, after the last item where the pointer is below the middle of
+ * every item.
+ *
+ * @param items The items of the list, top to bottom.
+ * @returns The item the boundary is at and its side of it, `null` for a list without items.
+ */
+export function boundaryAt(
+  clientY: number,
+  items: readonly Element[],
+): { item: Element; side: 'before' | 'after' } | null {
+  for (const item of items) {
+    const rect = item.getBoundingClientRect();
+    if (clientY < rect.top + rect.height / 2) {
+      return { item, side: 'before' };
+    }
+  }
+  return items.length > 0 ? { item: items[items.length - 1], side: 'after' } : null;
 }

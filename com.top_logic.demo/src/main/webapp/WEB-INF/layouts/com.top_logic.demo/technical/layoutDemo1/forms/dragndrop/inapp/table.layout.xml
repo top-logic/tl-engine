@@ -40,6 +40,12 @@
 		$draggedObjects.map(x -> $x.get(`DemoTypes:DemoTypes.All#name`)).join(separator: ", "),
 		$referenceRow.get(`DemoTypes:DemoTypes.All#name`))]]></commit-message>
 			</dropTarget>
+			<dropTarget class="com.top_logic.model.search.providers.TableDropTargetByExpression"
+				canDrop="true"
+				dropType="ROW"
+				handleDrop="draggedObjects -> referenceRow -> info(&quot;Dropped &quot; + $draggedObjects + &quot; onto &quot; + $referenceRow)"
+				in-transaction="false"
+			/>
 		</dropTargets>
 		<buttons>
 			<button id="exportExcel"

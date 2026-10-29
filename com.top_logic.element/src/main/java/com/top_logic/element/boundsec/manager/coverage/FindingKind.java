@@ -32,8 +32,8 @@ public enum FindingKind {
 	NO_ROLE_SOURCE,
 
 	/**
-	 * No role is granted the read operation on the type, so its objects are inaccessible to every
-	 * user. A type that the application's code alone uses is declared internal instead.
+	 * No role is granted an operation on the type or on one of its attributes, so its objects are
+	 * inaccessible to every user. A type that the application's code alone uses is declared internal instead.
 	 * 
 	 * @see SimpleBoundCommandGroup#READ
 	 * @see ModelAccessRights#getAllowedRoles(com.top_logic.model.TLClass,
@@ -64,6 +64,57 @@ public enum FindingKind {
 	 * 
 	 * @see CoverageFinding#getRuleIds()
 	 */
-	SHADOWED_RULES;
+	SHADOWED_RULES,
+
+	/**
+	 * An operation is declared for the type, but no role holds it there: it is granted to no
+	 * role, neither directly nor through an operation implying it. Every place checking it on
+	 * an object of the type refuses every user.
+	 *
+	 * <p>
+	 * The {@link com.top_logic.model.security.ApplicableOperations#BUILT_IN built-in operations}
+	 * apply to every type without a declaration and are not reported.
+	 * </p>
+	 *
+	 * @see CoverageFinding#getOperation()
+	 */
+	UNGRANTED_OPERATION,
+
+	/**
+	 * A view, a command, a form or a privileged script checks an operation on an object of the
+	 * type, but the operation does not apply to the type. The check refuses every user.
+	 *
+	 * <p>
+	 * A place checking the security root is reported for the type of the security root.
+	 * </p>
+	 *
+	 * @see CoverageFinding#getOperation()
+	 * @see CoverageFinding#getUses()
+	 */
+	INAPPLICABLE_OPERATION,
+
+	/**
+	 * A view, a command, a form or a privileged script checks an operation that is no registered
+	 * command group.
+	 *
+	 * @see CoverageFinding#getOperationName()
+	 * @see CoverageFinding#getUses()
+	 */
+	UNKNOWN_OPERATION,
+
+	/**
+	 * An operation declared for the application, not a built-in one, is granted on the type, but
+	 * no view, command, form or privileged script checks it - nor an operation it implies - on
+	 * objects of the type. The grant has no effect.
+	 *
+	 * <p>
+	 * Reported only when the places checking an operation are known. A place not declaring the
+	 * type it checks counts as checking every type.
+	 * </p>
+	 *
+	 * @see CoverageFinding#getOperation()
+	 * @see CoverageFinding#getRoles()
+	 */
+	UNCHECKED_GRANT;
 
 }

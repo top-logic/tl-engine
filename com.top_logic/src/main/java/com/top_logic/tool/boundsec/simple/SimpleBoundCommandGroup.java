@@ -40,6 +40,9 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
 	/** {@link BoundCommandGroup#getID()} of the {@link BoundCommandGroup} {@link #READ} */
 	public static final String READ_NAME = "Read";
 
+	/** Name of {@link #DISCOVER}. */
+	public static final String DISCOVER_NAME = "Discover";
+
 	/** {@link BoundCommandGroup#getID()} of the {@link BoundCommandGroup} {@link #WRITE} */
 	public static final String WRITE_NAME = "Write";
 
@@ -118,6 +121,17 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
 	/** Built-in default {@link BoundCommandGroup} for {@link CommandGroupType#DELETE} commands. */
 	public static final BoundCommandGroup DELETE = new SimpleBoundCommandGroup(DELETE_NAME, CommandGroupType.DELETE);
 
+	/**
+	 * Operation making an object visible: it appears in references, enumerations and option lists
+	 * and shows its label, without making any of its attributes readable.
+	 *
+	 * <p>
+	 * Every other right on an object or one of its attributes implies this operation, see
+	 * {@link com.top_logic.model.security.ModelAccessRights#isDiscoverAllowed(Person, com.top_logic.model.TLObject)}.
+	 * </p>
+	 */
+	public static final BoundCommandGroup DISCOVER = new SimpleBoundCommandGroup(DISCOVER_NAME, CommandGroupType.READ);
+
 	/** Built-in {@link BoundCommandGroup} for commands exporting objects. */
 	public static final BoundCommandGroup EXPORT = new SimpleBoundCommandGroup(EXPORT_NAME, CommandGroupType.READ);
 
@@ -155,7 +169,7 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
     public static final Set<BoundCommandGroup> READWRITECREATE_SET = 
         new HashSet<>(Arrays.asList(new BoundCommandGroup[] {READ, WRITE, CREATE}));
     
-	/** Set of {@value #READ}, {@link #WRITE}, {@link #CREATE} and {@link #DELETE}. */
+	/** Set of {@link #READ}, {@link #WRITE}, {@link #CREATE} and {@link #DELETE}. */
     public static final Set<BoundCommandGroup> READWRITECREATEDEL_SET = 
         new HashSet<>(Arrays.asList(new BoundCommandGroup[] {READ, WRITE, CREATE, DELETE}));
 

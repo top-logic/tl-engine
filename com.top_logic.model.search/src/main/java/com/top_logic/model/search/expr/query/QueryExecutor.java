@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.expr.query;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -17,6 +19,7 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.compile.SearchExpressionCompiler;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.TypeResolver;
 import com.top_logic.util.model.ModelService;
@@ -27,17 +30,19 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * A {@link QueryExecutor} is the interface through which an application executes a
  * <i>TL-Script</i>. It therefore secures the result of an execution: unless the security is
- * {@link #disableSecurity() switched off}, objects that the current user is not allowed to read are
- * removed from the result, see {@link #executeWith(EvalContext, Args)}. A
+ * {@link #disableSecurity() switched off}, objects that the current user is not allowed to discover
+ * are removed from the result, see {@link #executeWith(EvalContext, Args)}. A
  * {@link SecurityFilterReport} attached to the {@link EvalContext} of the execution tells the caller
  * what that filter removed.
  * </p>
  *
  * <p>
- * Only the result of an execution is filtered. The value of a reference access ({@code get()},
- * attribute navigation) inside the expression is not, because a reference is not a query: reading
- * the attributes of an object the user must not read is denied by the access check of the attribute
- * access itself, see {@link com.top_logic.model.search.expr.AccessLike}.
+ * Within a secured expression, every object source delivers only discoverable objects as well: the
+ * value of a reference access ({@code get()}, attribute navigation, see
+ * {@link com.top_logic.model.search.expr.AccessLike}), the referers of an object, the instances of
+ * a type and the results of functions. Discovering an object does not make its attributes
+ * readable: reading an attribute is denied by the access check of the attribute access itself,
+ * unless the user holds the read right on it.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -103,8 +108,50 @@ public abstract class QueryExecutor {
 	}
 
 	/**
+	 * Creates a {@link QueryExecutor} for an expression with implicitly defined variables.
+	 *
+	 * <p>
+	 * The expression uses the given variable names without declaring them. The resulting
+	 * {@link QueryExecutor} takes the values of the variables as leading positional arguments in
+	 * the order of the given names, see {@link Define#withVariables(List, Expr)}. Arguments
+	 * following the variable values are passed to the expression itself.
+	 * </p>
+	 *
+	 * @param expr
+	 *        The expression using the variables.
+	 * @param variables
+	 *        The names of the implicitly defined variables in the order of their values in the
+	 *        argument list. With an empty list, this is the same as {@link #compile(Expr)}.
+	 * @return The {@link QueryExecutor} that can execute the expression, see
+	 *         {@link #executeWith(Args)}.
+	 */
+	public static QueryExecutor compile(Expr expr, List<String> variables) {
+		return compile(Define.withVariables(variables, expr));
+	}
+
+	/**
+	 * Creates a {@link QueryExecutor} for an optional expression with implicitly defined
+	 * variables.
+	 *
+	 * @param expr
+	 *        The expression using the variables, or <code>null</code>.
+	 * @param variables
+	 *        See {@link #compile(Expr, List)}.
+	 * @return The {@link QueryExecutor} that can execute the expression, or <code>null</code>, if
+	 *         the expression was <code>null</code>.
+	 *
+	 * @see #compile(Expr, List)
+	 */
+	public static QueryExecutor compileOptional(Expr expr, List<String> variables) {
+		if (expr == null) {
+			return null;
+		}
+		return compile(expr, variables);
+	}
+
+	/**
 	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
-	 * 
+	 *
 	 * @param kb
 	 *        The {@link KnowledgeBase} to execute in.
 	 * @param model
@@ -297,9 +344,9 @@ public abstract class QueryExecutor {
 	 *
 	 * <p>
 	 * By default, every executed expression applies security, i.e. elements that the current user
-	 * is not allowed to see are removed from the (intermediate) results, modifying operations
+	 * is not allowed to discover are removed from the (intermediate) results, modifying operations
 	 * require the corresponding write permission, and the {@link #executeWith(EvalContext, Args)
-	 * result} of an execution is filtered for the current user's read rights. Calling this method
+	 * result} of an execution is filtered for the current user's Discover right. Calling this method
 	 * permanently switches security off for this {@link QueryExecutor}. It must therefore only be
 	 * used for internal queries that must not be subject to the user's access rights.
 	 * </p>
@@ -380,10 +427,10 @@ public abstract class QueryExecutor {
 	 *
 	 * <p>
 	 * Unless the security is {@link #disableSecurity() disabled}, the result is filtered for the
-	 * current user's read rights, see {@link SearchExpression#filterSecurity(Object)}. A
+	 * current user's Discover right, see {@link SearchExpression#filterSecurity(Object)}. A
 	 * {@link QueryExecutor} is the interface through which an application executes a
 	 * <i>TL-Script</i>, therefore its result must not contain objects that the current user is not
-	 * allowed to read - the caller does not have to remember to secure it.
+	 * allowed to discover - the caller does not have to remember to secure it.
 	 * </p>
 	 *
 	 * <p>
@@ -393,6 +440,12 @@ public abstract class QueryExecutor {
 	 * {@link EvalContext#setSecurityReport(SecurityFilterReport)} and inspects the report after the
 	 * execution. With the security {@link #disableSecurity() switched off}, nothing is filtered and
 	 * therefore nothing is recorded.
+	 * </p>
+	 *
+	 * <p>
+	 * The arguments are passed on as they are: an object source filters what it delivers (R4 of the
+	 * Discover specification), so the caller handing an object to a secured script is responsible
+	 * for delivering only objects the current user may discover, like every other object source.
 	 * </p>
 	 *
 	 * @param args
@@ -412,14 +465,14 @@ public abstract class QueryExecutor {
 
 	/**
 	 * Executes the expression with the given arguments <em>without</em> filtering the result for the
-	 * current user's read rights.
+	 * current user's Discover right.
 	 *
 	 * <p>
 	 * This is the execution of an expression whose result is an <em>intermediate</em> value of a
 	 * larger operation and is not handed to the user: a configured function called from another
 	 * script, or a step of a technical pipeline such as the XML importer resolving the object to link
 	 * to. Such a result must not be filtered, since an object that the operation navigates through,
-	 * links to, or only counts must not be dropped just because the user may not read it. Securing
+	 * links to, or only counts must not be dropped just because the user may not discover it. Securing
 	 * the value that the operation finally delivers is the job of that operation - for a script, of
 	 * the {@link #executeWith(EvalContext, Args) execution} that started it.
 	 * </p>
@@ -442,7 +495,7 @@ public abstract class QueryExecutor {
 
 	/**
 	 * Executes the expression with the given arguments <em>without</em> filtering the result for the
-	 * current user's read rights.
+	 * current user's Discover right.
 	 * <p>
 	 * Uses the {@link QueryExecutor#context() evaluation context}.
 	 * </p>

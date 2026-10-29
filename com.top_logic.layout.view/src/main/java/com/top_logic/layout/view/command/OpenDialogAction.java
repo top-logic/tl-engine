@@ -17,10 +17,12 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
@@ -34,6 +36,8 @@ import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
@@ -71,7 +75,8 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	 * Configuration for {@link OpenDialogAction}.
 	 */
 	@TagName("open-dialog")
-	public interface Config extends PolymorphicConfiguration<OpenDialogAction> {
+	@TypeIcon("css:bi bi-window-plus")
+	public interface Config extends PolymorphicConfiguration<OpenDialogAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(OpenDialogAction.class)
@@ -82,7 +87,8 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		 */
 		@Name("dialog-view")
 		@Mandatory
-		String getDialogView();
+		@Format(ViewRefFormat.class)
+		ViewRef getDialogView();
 
 		/** Default value of {@link #getCloseOnBackdrop()}. */
 		boolean CLOSE_ON_BACKDROP_DEFAULT = false;
@@ -141,9 +147,9 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	/**
 	 * Creates a new {@link OpenDialogAction} with explicit parameters.
 	 */
-	public OpenDialogAction(String dialogView, boolean closeOnBackdrop, String bindInputTo,
+	public OpenDialogAction(ViewRef dialogView, boolean closeOnBackdrop, String bindInputTo,
 			List<ChannelBindingConfig> bindings) {
-		_dialogViewPath = ViewLoader.VIEW_BASE_PATH + dialogView;
+		_dialogViewPath = dialogView.fullPath();
 		_closeOnBackdrop = closeOnBackdrop;
 		_bindInputTo = bindInputTo != null ? bindInputTo : "model";
 		_bindings = bindings != null ? bindings : Collections.emptyList();
@@ -306,5 +312,13 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		}
 
 		return handle;
+	}
+
+	/**
+	 * Opens a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

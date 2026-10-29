@@ -38,7 +38,6 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.element.AccordionElement;
-import com.top_logic.layout.view.security.SecurityScopeService;
 
 /**
  * Tests {@link AccordionElement}: the sections an {@code <accordion>} is written with, what they
@@ -54,9 +53,6 @@ public class TestAccordionElement extends BasicTestCase {
 
 	/** An accordion with an explicit personalization key. */
 	private static final String KEYED_FIXTURE = "accordion-keyed.view.xml";
-
-	/** An accordion whose first section is guarded by a scope the session has no role on. */
-	private static final String DENIED_FIXTURE = "accordion-denied.view.xml";
 
 	/** The channel the form in {@link #SECTIONS_FIXTURE} displays. */
 	private static final String ITEM_CHANNEL = "item";
@@ -168,16 +164,6 @@ public class TestAccordionElement extends BasicTestCase {
 		assertTrue(accordion.isExclusive());
 		assertTrue(accordion.isExpanded("first"));
 		assertFalse(accordion.isExpanded("second"));
-	}
-
-	/**
-	 * Tests that a section the session may not see is left out, rather than shown empty.
-	 */
-	public void testGuardedSectionIsOmitted() {
-		List<Map<String, Object>> sections = sections(accordion(DENIED_FIXTURE));
-
-		assertEquals("Only the unguarded section is offered: " + sections, 1, sections.size());
-		assertEquals("open", sections.get(0).get(AccordionState.Section.ID__PROP));
 	}
 
 	/**
@@ -355,15 +341,11 @@ public class TestAccordionElement extends BasicTestCase {
 
 	/**
 	 * The suite of tests.
-	 *
-	 * @implNote The guarded section asks the {@link SecurityScopeService} whether the session may
-	 *           see it, and that service materializes its scopes in the
-	 *           {@link com.top_logic.knowledge.service.KnowledgeBase}.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestAccordionElement.class,
 			ServiceTestSetup.createStarterFactoryForModules(
-				TypeIndex.Module.INSTANCE, SecurityScopeService.Module.INSTANCE,
+				TypeIndex.Module.INSTANCE,
 				CommandCliqueService.Module.INSTANCE));
 	}
 

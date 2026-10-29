@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, rootClassName, menuItemProps, useButtonDefaults } from 'tl-react-bridge';
-import type { TLCellProps, ToggleButtonStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
+import { React, useTLState, useTLCommand, rootClassName, useButtonDefaults, usePart } from 'tl-react-bridge';
+import type { TLCellProps, ToggleButtonStateJson, ButtonPartProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
@@ -31,8 +30,13 @@ export interface TLToggleButtonProps {
  * {@code label}, {@code active}, and {@code disabled} as props to customise behaviour.</p>
  *
  * <p>Inside a menu ({@code ButtonDefaults.appearance} {@code menu-item}) it is a checkbox entry of
- * that menu ({@code menuitemcheckbox} with {@code aria-checked}). It shows no icon, so a compact
+ * that menu ({@code menuitemcheckbox} with {@code aria-checked}; under {@code ButtonDefaults.radio} a {@code menuitemradio}). It shows no icon, so a compact
  * toolbar leaves it as it is.</p>
+ *
+ * <p>A hidden toggle button renders nothing.</p>
+ *
+ * <p>The toggle button is drawn by the part {@code Button} ({@link usePart}) as a toggle: a button
+ * with a pressed state ({@link ButtonPartProps.checked}).</p>
  */
 const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId, command, label, active, disabled }) => {
   const state = useTLState<Partial<ToggleButtonStateJson>>();
@@ -48,22 +52,24 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId
     sendCommand(resolvedCommand);
   }, [sendCommand, resolvedCommand]);
 
-  const appearance = defaults.appearance ?? 'secondary';
-  const asMenuItem = appearance === 'menu-item';
+  const Button = usePart('Button');
+
+  if (state.hidden === true) {
+    return null;
+  }
 
   return (
-    <button
-      type="button"
+    <Button
       id={controlId}
-      onClick={handleClick}
+      label={resolvedLabel}
+      display="label-only"
+      appearance={defaults.appearance ?? 'secondary'}
+      checked={resolvedActive}
+      radio={defaults.radio}
       disabled={resolvedDisabled}
-      aria-pressed={!asMenuItem && resolvedActive ? true : undefined}
-      aria-checked={asMenuItem ? resolvedActive : undefined}
-      {...menuItemProps(defaults, resolvedActive)}
-      className={rootClassName(state, buttonClassName({ appearance }))}
-    >
-      <span className={asMenuItem ? 'tl-menu__label' : 'tl-button__label'}>{resolvedLabel}</span>
-    </button>
+      className={rootClassName(state)}
+      onClick={handleClick}
+    />
   );
 };
 

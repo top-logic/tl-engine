@@ -3,14 +3,37 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Base document styling of the React UI. Establishes the default typography and the background of
- * the page from the theme tokens.
+ * The page frame of the React UI: the viewport the control tree fills and the point it is mounted
+ * at. Typography, text colour and background colour of the page come from the design system
+ * package (base.css); a filling control carries its tl-fill (layout.css).
  */
 
-body {
+/* The view page is a full-viewport application: every scrollable region lives inside
+   the control tree (content areas, drawers, dialogs). The page itself never scrolls.
+   Clipping overflow here keeps a component that momentarily exceeds the viewport from
+   widening the mobile layout viewport, which would make the whole page pannable and
+   shift position:fixed overlays (app bar, drawer) partly off-screen. */
+html, body {
+	height: 100%;
 	margin: 0;
-	font-family: var(--font-family);
-	color: var(--text-primary);
-	background-color: var(--background);
+	overflow: hidden;
+}
+
+/* The background image of the demo's glass theme, until #29850 decides on it. */
+body {
 	background-image: var(--background-image);
+}
+
+.is-control {
+	height: 100%;
+}
+
+.is-control > .tl-stack {
+	height: 100%;
+}
+
+/* The React mount point: the viewport-high box the fill chain of the control tree ends at. */
+[data-react-module] {
+	width: 100%;
+	height: 100%;
 }

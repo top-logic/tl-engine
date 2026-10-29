@@ -244,7 +244,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 				
 				// root or owner can modify published queries
 				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
-					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || ThreadContext.isAdmin()) {
 					boolean isPublished;
 					if (groupAssociations.isEmpty()) {
 						isPublished = false;
@@ -332,8 +332,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 		if (model instanceof StoredReport) {
 			{
 				Comparator theComparator;
-				Person theUser = TLContext.getContext().getCurrentPersonWrapper();
-				if (ThreadContext.isAdmin() || Person.isAdmin(theUser)) {
+				if (ThreadContext.isAdmin()) {
 					theComparator = FlexWrapperAdminComparator.INSTANCE;
 				}
 				else {

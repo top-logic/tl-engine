@@ -5,8 +5,11 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,7 +17,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
@@ -29,6 +39,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.util.ResKey;
@@ -38,10 +50,12 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
@@ -58,14 +72,17 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDragConfig;
+import com.top_logic.layout.view.table.TableExportCommand;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
@@ -77,10 +94,13 @@ import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.TLContext;
 
 /**
@@ -112,7 +132,18 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * Configuration of an {@link AbstractTableElement}: what a table displays of its rows, how they are
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
-	public interface Config extends UIElement.Config, Inputs {
+	@TypeIcon("css:bi bi-table")
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnActivateAs()}. */
+		String ACTIVATE_AS = "activate-as";
+
+		/** Name of the value the activated row when no other name is given. */
+		String DEFAULT_ACTIVATE_AS = "row";
+
 
 		/** Configuration name for {@link #getTypes()}. */
 		String TYPES = "types";
@@ -122,6 +153,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getFixedColumns()}. */
 		String FIXED_COLUMNS = "fixed-columns";
+
+		/** Configuration name for {@link #getEditInPlace()}. */
+		String EDIT_IN_PLACE = "edit-in-place";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -149,6 +183,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getDrag()}. */
 		String DRAG = "drag";
+
+		/** Configuration name for {@link #getExport()}. */
+		String EXPORT = "export";
 
 		/**
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
@@ -182,6 +219,23 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(FIXED_COLUMNS)
 		int getFixedColumns();
+
+		/**
+		 * Whether the cells of the columns declaring an <code>update</code> are edited right in the
+		 * displayed table, without a form.
+		 *
+		 * <p>
+		 * A cell of such a column shows the control its value is entered with in every row its
+		 * <code>can-update</code> offers the edit on. An entered value is written at once by the
+		 * <code>update</code> script, in a transaction of its own, and the cells of the table are
+		 * built again, so that values following the written one are shown. This suits a matrix of
+		 * settings - a checkbox per row and column - whose every click is a change of its own. A
+		 * column over an attribute is not edited in place: an object is edited in a form, where
+		 * the edits are saved together.
+		 * </p>
+		 */
+		@Name(EDIT_IN_PLACE)
+		boolean getEditInPlace();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -222,7 +276,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * The activated row becomes the table's selection first, then the command runs with that row
-		 * as its input. The command's own executability rules decide over the row, so a row the
+		 * as its main argument, named by {@link #getOnActivateAs() activate-as}. The command's own executability rules decide over the row, so a row the
 		 * rules reject activates nothing. Without a command, activating a row only selects it.
 		 * </p>
 		 *
@@ -233,7 +287,32 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Name(ON_ACTIVATE)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * The name of the argument holding the activated row, the main argument of the
+		 * {@link #getOnActivate() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(ACTIVATE_AS)
+		@StringDefault(DEFAULT_ACTIVATE_AS)
+		String getOnActivateAs();
+
+		/**
+		 * The {@link #getOnActivate() command} runs with the activated row as argument named by
+		 * {@link #getOnActivateAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnActivate()) {
+				return ActionScope.single(getOnActivateAs());
+			}
+			return outer;
+		}
 
 		/**
 		 * Whether every row shows a button running the {@link #getOnActivate() activation command}
@@ -243,8 +322,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * The button sits in a column of its own at the right edge of the table, which stays there
 		 * while the table is scrolled. It offers the row activation where the gestures running it -
 		 * a double-click, {@code Enter} on the cursor row - are neither visible nor available: a
-		 * touch device has neither. Each button follows the command's executability for its own
-		 * row, so a row the rules reject shows a disabled button and a row they hide shows none.
+		 * touch device has neither. Pressing it activates its row as the gestures do: the row
+		 * becomes the selection, then the command runs. Each button follows the command's
+		 * executability for its own row, so a row the rules reject shows a disabled button and a
+		 * row they hide shows none.
 		 * </p>
 		 *
 		 * <p>
@@ -344,12 +425,34 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(DRAG)
 		TableDragConfig getDrag();
+
+		/**
+		 * The export of this table to Excel, offered as a command in the toolbar of the element the
+		 * table is displayed in, as the first command of its group.
+		 *
+		 * <p>
+		 * The export holds what the user sees: the displayed columns in their order and the
+		 * displayed rows - filtered, searched, sorted and grouped as the table is. A column is left
+		 * out by {@code export="false"} on its declaration, and its cells are written by the
+		 * declaration's {@code export-renderer}. Unset (default), the table offers no export.
+		 * </p>
+		 *
+		 * <p>
+		 * The groups of a grouped table and the levels of a {@link TreeTableElement tree table} are
+		 * written as an outline of the sheet. A tree table whose rows can all be expanded
+		 * ({@link TreeStructureConfig#getCanExpandAll()}, the default) exports its whole tree, the
+		 * rows below a closed row collapsed in the outline. A tree that cannot be expanded
+		 * completely exports only the rows it displays.
+		 * </p>
+		 */
+		@Name(EXPORT)
+		TableExportCommand.Config getExport();
 	}
 
 	/**
 	 * Container for the list of {@link PresetConfig}s of a table.
 	 */
-	public interface PresetsConfig extends ConfigurationItem {
+	public interface PresetsConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getInitial()}. */
 		String INITIAL = "initial";
@@ -387,7 +490,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * A filter criterion a table offers under a name.
 	 */
 	@TagName("preset")
-	public interface PresetConfig extends ConfigurationItem {
+	public interface PresetConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -397,6 +500,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getCriteria()}. */
 		String CRITERIA = "criteria";
+
+		/** Configuration name for {@link #getCount()}. */
+		String COUNT = "count";
+
+		/** Configuration name for {@link #getCssClass()}. */
+		String CSS_CLASS = "css-class";
 
 		/**
 		 * Technical name identifying this preset among the table's named filters.
@@ -427,6 +536,40 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Name(CRITERIA)
 		@DefaultContainer
 		List<CriterionConfig> getCriteria();
+
+		/**
+		 * Whether this preset's chip shows the number of rows the preset selects after its label.
+		 *
+		 * <p>
+		 * The number counts the rows matching this preset's criteria alone - exactly the rows a
+		 * click on the chip shows. The column filters and the search the user currently applies to
+		 * the table do not change it, so every chip tells what it would show, whichever is active.
+		 * The number follows the rows of the table: it is computed again whenever they change, e.g.
+		 * after a commit touching objects of the table's observed types, without the page being
+		 * reloaded.
+		 * </p>
+		 *
+		 * <p>
+		 * A table whose rows cannot be counted without loading them all shows no number, even
+		 * if this is set.
+		 * </p>
+		 */
+		@Name(COUNT)
+		@Label("Show row count")
+		boolean getCount();
+
+		/**
+		 * A CSS class put on this preset's chip, whether the preset is active or not.
+		 *
+		 * <p>
+		 * It lets an application mark a preset of particular meaning - one selecting the items
+		 * waiting for someone, the overdue ones - with a style of its own. Without it, the chip looks
+		 * like every other preset's.
+		 * </p>
+		 */
+		@Name(CSS_CLASS)
+		@Nullable
+		String getCssClass();
 	}
 
 	/**
@@ -438,7 +581,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 */
 	@TagName("criterion")
-	public interface CriterionConfig extends ConfigurationItem {
+	public interface CriterionConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getColumn()}. */
 		String COLUMN = "column";
@@ -468,10 +611,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * It is evaluated when the table is built and whenever one of its
-		 * {@link Config#getInputs() inputs} changes, with the input values as its arguments - so an
-		 * expression like {@code currentUser()} yields a preset that means something different to
-		 * every user, and one over an input yields a preset that follows what is displayed
-		 * elsewhere. Which value the expression may yield depends on the filter of the column: a
+		 * {@link Config#getInputs() inputs} changes, and it sees the values of the inputs as
+		 * variables named after their channels, or by their {@code as} names - so an expression like
+		 * {@code currentUser()} yields a preset that means something different to every user, and
+		 * one over an input yields a preset that follows what is displayed elsewhere. Which value the expression may yield depends on the filter of the column: a
 		 * text filter accepts any single value and matches its text, a selection filter accepts one
 		 * of the values to select or a list of them, a boolean filter accepts {@code true} or
 		 * {@code false}, and a range filter accepts a single value to match exactly or a list of two
@@ -485,6 +628,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * </p>
 		 */
 		@Name(EXPR)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 
 		/**
@@ -584,6 +728,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
 	private final ViewCommand.Config _onActivateConfig;
 
+	/** The instantiated {@link Config#getExport()} command, {@code null} for a table not exported. */
+	private final TableExportCommand _export;
+
 	/**
 	 * A {@link PresetConfig} with its criterion expressions compiled.
 	 *
@@ -593,8 +740,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The name to display.
 	 * @param criteria
 	 *        The compiled criteria, in declaration order.
+	 * @param cssClass
+	 *        The {@link PresetConfig#getCssClass() CSS class} of the preset's chip, or {@code null}.
+	 * @param counted
+	 *        Whether the preset's chip shows the {@link PresetConfig#getCount() number of rows} it
+	 *        selects.
 	 */
-	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria) {
+	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria, String cssClass,
+			boolean counted) {
 		// Pure data carrier.
 	}
 
@@ -641,7 +794,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
-		_onActivate = context.getInstance(onActivate);
+		_onActivate = ViewCommands.instantiate(context, onActivate, config.getOnActivateAs());
+
+		TableExportCommand.Config export = config.getExport();
+		_export = export == null ? null : new TableExportCommand(export);
 	}
 
 	/**
@@ -663,10 +819,46 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * A read-only table built by {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function)}.
+	 * Binds the selection of a table built by
+	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * to its {@link Config#getSelection() selection channel}.
+	 *
+	 * @param <B>
+	 *        The type of the binding.
+	 */
+	@FunctionalInterface
+	protected interface SelectionBinder<B> {
+
+		/**
+		 * Binds the selection of the given control to the given channel, for as long as the control
+		 * lives.
+		 *
+		 * @param control
+		 *        The control displaying the table.
+		 * @param channel
+		 *        The selection channel.
+		 * @return The binding.
+		 */
+		B bind(TableViewControl<Object> control, ViewChannel channel);
+	}
+
+	/**
+	 * {@link SelectionBinder} of a table selecting its rows by a {@link TableSelectionBinding}.
+	 */
+	protected static final SelectionBinder<TableSelectionBinding> ROW_SELECTION = (control, channel) -> {
+		TableSelectionBinding binding = new TableSelectionBinding(control, channel);
+		control.addCleanupAction(binding::dispose);
+		return binding;
+	};
+
+	/**
+	 * A read-only table built by
+	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
+	 * @param <B>
+	 *        The type of the binding of the selection channel.
 	 * @param control
 	 *        The control displaying the table.
 	 * @param view
@@ -679,10 +871,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The names of the columns the table declares.
 	 * @param selectionBinding
 	 *        The binding of the selection channel, {@code null} without one.
+	 * @param setups
+	 *        The descriptors of the declared columns.
 	 */
-	protected record ReadOnlyTable<S extends RowSource<Object>>(TableViewControl<Object> control,
+	protected record ReadOnlyTable<S extends RowSource<Object>, B>(TableViewControl<Object> control,
 			DefaultTableView<Object> view, S source, List<Column<Object, ?>> columns, List<String> declaredNames,
-			TableSelectionBinding selectionBinding) {
+			B selectionBinding, List<ColumnSetup> setups) {
 		// Pure data.
 	}
 
@@ -707,21 +901,28 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * @param rowCssClass
 	 *        The CSS class of a row computed from its object, {@code null} for a table whose rows
 	 *        carry none.
+	 * @param selectionBinder
+	 *        Binds the selection of the table to the {@link Config#getSelection() selection
+	 *        channel}, if one is configured.
 	 */
-	protected final <S extends RowSource<Object>> ReadOnlyTable<S> createTable(ViewContext context,
+	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
 			TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
-			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass) {
+			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
+			SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
 		List<ColumnDeclaration> declarations = columns(rowType);
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		List<ColumnSetup> setups =
 			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
+		// The activation button and the cells edited in place reach the table control through
+		// this holder, since the control is built from the view over these very columns.
+		ControlActivation activate = new ControlActivation();
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
-			columns.add(setup.buildColumn());
+			columns.add(_config.getEditInPlace() ? setup.buildInPlaceColumn(activate::rowWritten) : setup.buildColumn());
 		}
-		columns.addAll(this.<Object> rowCommandColumns(context, activation));
+		columns.addAll(this.<Object> rowCommandColumns(activation, activate));
 		S source = sourceFactory.apply(columns);
 		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
@@ -736,6 +937,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
+		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
 		if (_config.getDrag() != null) {
@@ -751,11 +953,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 
 		ChannelRef selectionRef = _config.getSelection();
-		TableSelectionBinding selectionBinding =
-			selectionRef != null ? new TableSelectionBinding(control, context.resolveChannel(selectionRef)) : null;
-		if (selectionBinding != null) {
-			control.addCleanupAction(selectionBinding::dispose);
-		}
+		B selectionBinding =
+			selectionRef != null ? selectionBinder.bind(control, context.resolveChannel(selectionRef)) : null;
 
 		TableFilterBinding filterBinding = filterBinding(context, control);
 		if (filterBinding != null) {
@@ -764,7 +963,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		control.setActivationHandler(activationHandler(context, activation));
 
-		return new ReadOnlyTable<>(control, view, source, columns, declaredNames, selectionBinding);
+		return new ReadOnlyTable<>(control, view, source, columns, declaredNames, selectionBinding, setups);
 	}
 
 	/**
@@ -772,14 +971,134 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * from the inputs, so a changed input means other criteria - they are resolved again, and a chip
 	 * the user has applied goes on filtering by what it now means.
 	 *
+	 * <p>
+	 * Only the {@link ReadOnlyTable#view() view} takes up the resolved presets. A caller that does
+	 * not push the table again anyway - by {@link TableViewControl#refreshData()} after the rows
+	 * changed - pushes it by {@link TableViewControl#refreshFilters()} when this returns
+	 * {@code true}.
+	 * </p>
+	 *
 	 * @param inputValues
 	 *        The values of the input channels now.
+	 * @return Whether the table declares presets, so that its named filters were replaced.
 	 */
-	protected final void refreshPresets(ReadOnlyTable<?> table, Object[] inputValues) {
+	protected final boolean refreshPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
 		if (_presets.isEmpty()) {
-			return;
+			return false;
 		}
 		table.view().setDeclaredFilters(declaredFilters(table.columns(), table.declaredNames(), inputValues));
+		return true;
+	}
+
+	/**
+	 * Contributes the {@link Config#getExport() export} command to the enclosing command scope - the
+	 * toolbar of the element the table is displayed in - for as long as the table is displayed.
+	 *
+	 * @param control
+	 *        The control displaying the table.
+	 * @param view
+	 *        The table as it is displayed when the export runs.
+	 * @param renderers
+	 *        The export renderers of the columns displayed when the export runs; asked for only
+	 *        then, since the columns of a row-edit table change with the edit mode.
+	 * @param inputChannels
+	 *        The table's input channels, whose values the download name is computed from.
+	 */
+	protected final void contributeExportCommand(ViewContext context, ReactControl control,
+			Supplier<? extends TableView<?>> view, Supplier<Map<String, ExcelCellRenderer>> renderers,
+			List<ViewChannel> inputChannels) {
+		if (_export == null) {
+			return;
+		}
+		CommandScope scope = context.getScope(CommandScope.class);
+		if (scope == null) {
+			_log.info("The <" + Config.EXPORT + "> of a <" + tagName() + "> needs an enclosing element with a "
+				+ "toolbar, e.g. a <panel>, to be offered.");
+			return;
+		}
+		ViewCommand bound = _export.bind(view, renderers, () -> ChannelInputs.arguments(inputChannels));
+		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, _export.getConfig());
+		control.addAttachListener(() -> {
+			model.attach(context.getModelScope());
+			// The export of the table itself is the primary command of the export group, ahead of
+			// further exports the enclosing element offers.
+			scope.addCommandFirst(model);
+		});
+		control.addDetachListener(() -> {
+			scope.removeCommand(model);
+			model.detach();
+		});
+	}
+
+	/**
+	 * The tag this element is configured with, for messages about its configuration.
+	 */
+	private String tagName() {
+		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
+		TagName tag = configInterface.getAnnotation(TagName.class);
+		return tag != null ? tag.value() : configInterface.getSimpleName();
+	}
+
+	/**
+	 * What a change of each of the table's input channels has to refresh, see
+	 * {@link #inputRoles(ViewContext, List)}.
+	 *
+	 * @param rowIndependent
+	 *        The inputs whose changes cannot change the rows, nor what the columns show or filter: a
+	 *        change of one of them neither queries the rows again nor builds the cells again.
+	 * @param cellIndependent
+	 *        The inputs whose changes cannot change what the columns show or filter, the
+	 *        row-independent ones included: a change of one of them that leaves the rows equal
+	 *        builds no cell again.
+	 */
+	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent) {
+		// Pure data.
+	}
+
+	/**
+	 * Which of the given input channels of the table can be followed without building the cells
+	 * again.
+	 *
+	 * <p>
+	 * What a column shows or filters follows the channels its declaration reads - the
+	 * {@link ColumnDeclaration#inputs() inputs} of its functions, of its filter, and of the scripts
+	 * computing its aggregate, its order, its tooltips and its cell classes, which for a column
+	 * without inputs of its own are the inputs of the table - only by the table being refreshed, which
+	 * builds the cells again and filters the rows anew. A change of such a "cell input" therefore
+	 * refreshes the table in any case. Every other input is cell-independent: where its change
+	 * leaves the rows equal, the cells stay, and only what is computed from the inputs apart from
+	 * the rows - the criteria of the presets, the row class - is computed again.
+	 * </p>
+	 *
+	 * <p>
+	 * The table's own {@link Config#getSelection() selection channel} among the inputs is in
+	 * addition row-independent, unless a column reads it: the rows the user selects from cannot
+	 * depend on what is selected among them, so its change does not query the rows again.
+	 * </p>
+	 *
+	 * @param inputChannels
+	 *        The table's resolved input channels.
+	 */
+	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
+		Set<ViewChannel> cellInputs =
+			new HashSet<>(ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations)));
+
+		List<ViewChannel> cellIndependent = new ArrayList<>();
+		for (ViewChannel input : inputChannels) {
+			if (!cellInputs.contains(input)) {
+				cellIndependent.add(input);
+			}
+		}
+
+		ChannelRef selectionRef = _config.getSelection();
+		List<ViewChannel> rowIndependent = List.of();
+		if (selectionRef != null) {
+			ViewChannel selection = context.resolveChannel(selectionRef);
+			if (cellIndependent.contains(selection)) {
+				rowIndependent = List.of(selection);
+			}
+		}
+		return new InputRoles(rowIndependent, cellIndependent);
 	}
 
 	/**
@@ -847,7 +1166,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			for (CompiledCriterion criterion : preset.criteria()) {
 				criteria.add(criterion.evaluate(arguments));
 			}
-			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
+			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
+				preset.cssClass(), preset.counted()));
 		}
 		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
 			ColumnDeclarations.withheld(declaredNames, columns));
@@ -880,7 +1200,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getRowExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TableDragConfig.ROW_EXECUTABILITY);
 	}
 
 	/**
@@ -910,7 +1230,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			}
 			ResKey label = presetConfig.getLabel();
 			result.add(new CompiledPreset(presetConfig.getName(),
-				label != null ? label : ResKey.text(presetConfig.getName()), criteria));
+				label != null ? label : ResKey.text(presetConfig.getName()), criteria,
+				presetConfig.getCssClass(), presetConfig.getCount()));
 		}
 		return result;
 	}
@@ -937,7 +1258,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return null;
 		}
 		return new CompiledCriterion(criterionConfig.getColumn(),
-			expr == null ? null : QueryExecutor.compile(expr),
+			InputScript.compile(criterionConfig, CriterionConfig.EXPR),
 			state == null ? null : FilterStateTemplate.compile(state),
 			criterionConfig.getInverted());
 	}
@@ -1017,14 +1338,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *
 	 * <p>
 	 * One model serves both ways of running the command - the activation gesture and the button the
-	 * rows carry - so both decide by the same rules.
+	 * rows carry - so both decide by the same rules. Both also run it the same way: the row
+	 * becomes the table's selection first, then the command runs with it, so that whatever the
+	 * command reads from the selection channel is that row.
 	 * </p>
 	 */
 	protected final ViewCommandModel activationModel(ViewContext context) {
 		if (_onActivate == null || _onActivateConfig == null) {
 			return null;
 		}
-		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, _config.getOnActivateAs());
 	}
 
 	/**
@@ -1043,16 +1366,62 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * The trailing columns holding a button per row, empty when the table offers no command per
 	 * row.
 	 *
+	 * <p>
+	 * The activation button of a row activates that row like the activation gesture does: the
+	 * row becomes the table's selection, then the activation command runs with it.
+	 * </p>
+	 *
 	 * @param activation
-	 *        The model of the activation command, {@code null} when the table configures none.
+	 *        The model of the activation command, {@code null} when the table configures none. It
+	 *        decides the button's state for each row.
+	 * @param activate
+	 *        Activates a row in the table control displaying it - the selection, then the
+	 *        {@link #activationHandler(ViewContext, ViewCommandModel) activation handler}.
 	 */
-	protected final <R> List<Column<R, R>> rowCommandColumns(ViewContext context, ViewCommandModel activation) {
+	protected final <R> List<Column<R, R>> rowCommandColumns(ViewCommandModel activation,
+			Function<? super R, HandlerResult> activate) {
 		if (activation == null || !_config.getActivationButton()) {
 			return List.of();
 		}
-		return RowCommandColumn.columns(context, List.of(
-			new RowCommandColumn.RowCommand(activation, Icons.TABLE_ACTIVATE_ROW,
+		return RowCommandColumn.columns(List.of(
+			new RowCommandColumn.RowCommand<R>(activation, activate, Icons.TABLE_ACTIVATE_ROW,
 				I18NConstants.TABLE_ACTIVATE_ROW)));
+	}
+
+	/**
+	 * Activates a row in a {@link TableViewControl} bound after this activation was handed out.
+	 *
+	 * <p>
+	 * A table's columns exist before its control: the control is built from the view over them.
+	 * The activation button sits in one of these columns and needs the control; it gets this
+	 * activation, which reaches the control once {@link #bind(TableViewControl) bound}. A button
+	 * is pressed only in a rendered table, so the control is bound by then. A cell edited in place
+	 * reaches the control the same way to have its row built again.
+	 * </p>
+	 */
+	private static final class ControlActivation implements Function<Object, HandlerResult> {
+
+		private TableViewControl<Object> _control;
+
+		/**
+		 * Binds the control the rows are activated in.
+		 */
+		void bind(TableViewControl<Object> control) {
+			_control = control;
+		}
+
+		/**
+		 * Builds the cells of the table again, after a value of a cell of the given row was written
+		 * in place: a cell of this or of another row may show a value following the written one.
+		 */
+		void rowWritten(Object row) {
+			_control.refreshData();
+		}
+
+		@Override
+		public HandlerResult apply(Object row) {
+			return _control.activate(row);
+		}
 	}
 
 	/**

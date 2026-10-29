@@ -11,7 +11,14 @@
  * {@link CMD_VALUE_CHANGED} itself) first flushes those pending values into the chain, so the
  * action always operates on the complete form state — e.g. submitting a login dialog with Enter
  * while the password field still holds its latest keystrokes in the debounce window.</p>
+ *
+ * <p>A page that is leaving (see {@link isPageLeaving}) sends no command any more: the server it
+ * would reach may already hold the state the navigation brings, and an answer to such a command
+ * says nothing about the page that comes next.</p>
  */
+
+import { isPageLeaving, reloadForStaleUi } from './page-leave';
+import { expectEvents } from './sse-client';
 
 /** Command name for transmitting a form-field value to the server. */
 export const CMD_VALUE_CHANGED = 'valueChanged';
@@ -41,11 +48,11 @@ export const CMD_UPLOAD_REJECTED = 'uploadRejected';
  */
 const ERROR_CODE_STALE_UI = 'stale-ui';
 
-/** Session-storage key holding the time of the last stale-UI reload, guarding against loops. */
-const STALE_UI_RELOAD_TIME_KEY = 'tlReactStaleUiReloadTime';
-
-/** Minimum time between two stale-UI reloads. */
-const STALE_UI_RELOAD_GUARD_MS = 10_000;
+/**
+ * Header of a command's answer: the number of the last event the server wrote for the window.
+ * Must match {@code ReactServlet#LAST_EVENT_HEADER}.
+ */
+const LAST_EVENT_HEADER = 'X-TL-Last-Event';
 
 /**
  * Parsed JSON body a command is answered with.
@@ -78,10 +85,12 @@ const _pendingFlushes = new Set<() => Promise<void>>();
 /**
  * Sends one command POST, reporting failures to the console without throwing.
  *
- * @returns the answer of a successful command, or {@code undefined} when the command failed or
- *          was answered with something other than a JSON object.
+ * @returns the answer of a successful command, or {@code undefined} when the command failed, was
+ *          answered with something other than a JSON object, or was not sent because the page is
+ *          leaving.
  */
 async function post(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
+  if (isPageLeaving()) return undefined;
   try {
     const resp = await fetch(url, {
       method: 'POST',
@@ -89,9 +98,14 @@ async function post(url: string, payload: CommandPayload): Promise<CommandRespon
       body: JSON.stringify(payload),
     });
     const body = await resp.text();
+    const lastEvent = resp.headers.get(LAST_EVENT_HEADER);
+    if (lastEvent) expectEvents(Number(lastEvent));
     if (!resp.ok) {
       if (isStaleUiError(body)) {
-        reloadOnStaleUi();
+        // The server no longer knows this page - e.g. the session was replaced by a login or
+        // logout in another tab, or the server was restarted while the page stayed open. Without
+        // loading the page again, every further interaction would be rejected.
+        reloadForStaleUi();
         return undefined;
       }
       console.error('[TLReact] Command failed:', resp.status, body);
@@ -124,38 +138,36 @@ function isStaleUiError(body: string): boolean {
 }
 
 /**
- * Re-bootstraps the page after the server rejected a command because it no longer knows this
- * page's UI state — e.g. the session was replaced by a login or logout in another tab, or the
- * server was restarted while the page stayed open. Without the reload, every further interaction
- * would be rejected and the page would appear frozen.
- *
- * <p>Guarded so a stale answer arriving right after a reload does not cause a reload loop.</p>
+ * Options of a command sent through {@link enqueueCommand}.
  */
-function reloadOnStaleUi(): void {
-  const lastReload = Number(window.sessionStorage.getItem(STALE_UI_RELOAD_TIME_KEY) ?? '0');
-  if (Date.now() - lastReload < STALE_UI_RELOAD_GUARD_MS) {
-    console.error('[TLReact] Server-side UI state still missing right after a reload; not reloading again.');
-    return;
-  }
-  window.sessionStorage.setItem(STALE_UI_RELOAD_TIME_KEY, String(Date.now()));
-  console.warn('[TLReact] Server no longer knows this page (session replaced or window discarded). Reloading.');
-  window.location.reload();
+export interface CommandOptions {
+  /**
+   * Whether the pending debounced field values are sent before the command; absent: `true`. A
+   * command that reads nothing of the form but its own arguments - a query for the suggestions to
+   * the text typed, which carries that text - passes `false`, so that it does not send a value a
+   * field holds back until it is left.
+   */
+  flushFields?: boolean;
 }
 
 /**
  * Enqueues a command into the strict FIFO chain.
  *
  * <p>For an action command (anything but {@link CMD_VALUE_CHANGED}), all pending debounced field
- * values are flushed first. The flushes enqueue their {@link CMD_VALUE_CHANGED} sends
- * synchronously, so they precede the action in the chain and are processed by the server before
- * the action runs.</p>
+ * values are flushed first, unless {@link CommandOptions.flushFields} says otherwise. The flushes
+ * enqueue their {@link CMD_VALUE_CHANGED} sends synchronously, so they precede the action in the
+ * chain and are processed by the server before the action runs.</p>
  *
  * @returns a promise resolving with this command's answer once it has arrived, or with
- *          {@code undefined} when the command failed; it never rejects (transport failures are
- *          logged).
+ *          {@code undefined} when the command failed or the page started leaving before its turn
+ *          came; it never rejects (transport failures are logged).
  */
-export function enqueueCommand(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
-  if (payload.command !== CMD_VALUE_CHANGED) {
+export function enqueueCommand(
+  url: string,
+  payload: CommandPayload,
+  options?: CommandOptions,
+): Promise<CommandResponse | undefined> {
+  if (payload.command !== CMD_VALUE_CHANGED && options?.flushFields !== false) {
     void flushPendingFieldValues();
   }
   const result = _chain.then(() => post(url, payload));

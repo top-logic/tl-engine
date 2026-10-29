@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
 import type { ChildControlJson } from '../state/control-state';
-import { createChildContext, unmount, TLControlContext } from './tl-react-bridge';
+import { adoptChildDescriptor, applyChildDescriptor, createChildContext, unmount, TLControlContext } from './tl-react-bridge';
+import type { TLControlContextValue } from './tl-react-bridge';
 
 /**
  * Descriptor for a server-defined child control, as sent in the parent's state: a
@@ -12,9 +13,19 @@ export type ChildDescriptor = Omit<Partial<ChildControlJson>, 'state'>
   & { state: Record<string, unknown> };
 
 /**
- * The serialized descriptor state last applied to a child's store, by store.
+ * Acquires the context of a child control for a holder other than {@link TLChild}, e.g. a container
+ * reading the live state of a child it does not render (see useChildStates). Released by
+ * {@code unmount(controlId)}.
+ *
+ * <p>The descriptor counts as applied to the child's store: the state it carries is the one the store
+ * starts with, or older than the patches the store has received since. A TLChild rendering the child
+ * later therefore does not turn the child back to the state of this descriptor.</p>
  */
-const appliedDescriptors = new WeakMap<object, string>();
+export function acquireChildContext(descriptor: ChildDescriptor): TLControlContextValue {
+  const context = createChildContext(descriptor.controlId, descriptor.state);
+  adoptChildDescriptor(context, descriptor.state);
+  return context;
+}
 
 /**
  * Generic component that renders a server-described child control.
@@ -59,13 +70,13 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
   // descriptor it already held; the store survives the remount (see createChildContext) and has
   // received the child's own patches since, so applying that descriptor again would turn the
   // child back to the state it had when the parent last serialized it.
+  //
+  // A descriptor arriving with an SSE update of the parent is applied when it arrives (see
+  // registerChildDescriptors in tl-react-bridge), before the child's own patches of the same
+  // batch; it counts as applied here.
   const stateKey = JSON.stringify(descriptor.state);
   useEffect(() => {
-    if (appliedDescriptors.get(childCtx.store) === stateKey) {
-      return;
-    }
-    appliedDescriptors.set(childCtx.store, stateKey);
-    childCtx.store.applyPatch(descriptor.state);
+    applyChildDescriptor(childCtx, descriptor.state, stateKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childCtx, stateKey]);
 

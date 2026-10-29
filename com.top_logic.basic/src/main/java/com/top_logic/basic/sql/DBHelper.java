@@ -34,6 +34,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
@@ -2789,6 +2790,22 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Whether this database seeks an index for a condition with an <code>IN</code> list only, if
+	 * the list values are given for the first column of the index.
+	 * 
+	 * <p>
+	 * On such a database, a search for a list of identifiers scans the whole table, if the index
+	 * starts with a column that has the same value in all searched rows, such as the branch column
+	 * of a table with versioned objects. Therefore, the branch column of the indexes should follow
+	 * the identifying columns. The value is the default for the <code>branch-last</code> option of
+	 * the type system, if it is not configured explicitly.
+	 * </p>
+	 */
+	public boolean seeksInListOnFirstIndexColumnOnly() {
+		return false;
+	}
+
+	/**
 	 * Whether executing a batch update provided detailed information about the updated rows.
 	 * 
 	 * <p>
@@ -3164,6 +3181,68 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Whether the primary key of an existing table can be dropped and added with
+	 * {@link #dropPrimaryKey(String, String)} and {@link #addPrimaryKey(String, List)}.
+	 *
+	 * <p>
+	 * If not, the table must be rebuilt to change its primary key.
+	 * </p>
+	 *
+	 * @param pkeyStorage
+	 *        Whether the rows of the table are stored along its primary key, see
+	 *        {@link #appendTableOptions(Appendable, boolean, int)}.
+	 */
+	public boolean canChangePrimaryKey(boolean pkeyStorage) {
+		return true;
+	}
+
+	/**
+	 * Creates a statement dropping the primary key of a table.
+	 *
+	 * @param tableName
+	 *        The name of the table.
+	 * @param constraintName
+	 *        The name of the primary key constraint, as reported by
+	 *        {@link DatabaseMetaData#getPrimaryKeys(String, String, String)}.
+	 */
+	public String dropPrimaryKey(String tableName, String constraintName) {
+		return alterTable(tableName) + "DROP PRIMARY KEY";
+	}
+
+	/**
+	 * Creates a statement adding a primary key to a table.
+	 *
+	 * @param tableName
+	 *        The name of the table.
+	 * @param columnNames
+	 *        The names of the key columns in key order.
+	 */
+	public String addPrimaryKey(String tableName, List<String> columnNames) {
+		StringBuilder result = new StringBuilder(alterTable(tableName));
+		result.append("ADD PRIMARY KEY (");
+		for (int n = 0, cnt = columnNames.size(); n < cnt; n++) {
+			if (n > 0) {
+				result.append(", ");
+			}
+			result.append(columnRef(columnNames.get(n)));
+		}
+		result.append(')');
+		return result.toString();
+	}
+
+	/**
+	 * Creates a statement renaming a table.
+	 *
+	 * @param tableName
+	 *        The current name of the table.
+	 * @param newName
+	 *        The new name of the table.
+	 */
+	public String renameTable(String tableName, String newName) {
+		return alterTable(tableName) + "RENAME TO " + tableRef(newName);
+	}
+
+	/**
 	 * Creates the "ALTER TABLE " prefix for schema modification commands.
 	 */
 	protected String alterTable(String tableName) {
@@ -3182,6 +3261,23 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 */
 	public boolean allowParameterColumn() {
 		return true;
+	}
+
+	/**
+	 * Whether a value expression of an <code>UPDATE</code> statement sees the values assigned to
+	 * columns earlier in the same statement.
+	 * 
+	 * <p>
+	 * In standard SQL, every value expression of <code>UPDATE t SET a=b, b=a</code> is evaluated
+	 * against the row before the update, so the statement swaps the values of the columns
+	 * <code>a</code> and <code>b</code>. A dialect returning <code>true</code> evaluates the
+	 * assignments from left to right instead: a value expression reading a column that is
+	 * assigned earlier in the same statement sees the assigned value, so the statement above sets
+	 * both columns to the old value of <code>b</code>.
+	 * </p>
+	 */
+	public boolean updateAssignmentsSeeNewValues() {
+		return false;
 	}
 
 	protected DBType fromProprietarySqlType(int sqlType) {

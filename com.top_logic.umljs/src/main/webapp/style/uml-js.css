@@ -1,3 +1,12 @@
+/*
+ * UML diagram styles, scoped to the subtree of the diagram-js root element (.djs-parent).
+ *
+ * The scope root is the parent of the diagram root, so that rules may also match the diagram root
+ * itself (selectors without :scope match only descendants of the scope root).
+ */
+
+@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) {
+
 .djs-context-pad {
   background-color: white;
 }
@@ -21,14 +30,6 @@
 	margin: 0;
 	box-shadow: none;
 	background-color: #f0f0f0;
-}
-
-html,
-body,
-#canvas,
-#canvas > div {
-    height: 100%;
-    margin: 0;
 }
 
 .djs-label {
@@ -100,4 +101,6 @@ body,
 
 .context-pad-icon-aggregation {
   background-image: url('../images/icons/context-pad/aggregation.svg') !important;
+}
+
 }

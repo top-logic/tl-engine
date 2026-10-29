@@ -15,7 +15,9 @@
 		<channel name="loggers"/>
 		<channel name="selection"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>Log levels</en>
 			<de>Protokollebenen</de>
@@ -29,20 +31,23 @@
 					<en>Add logger</en>
 					<de>Logger hinzufügen</de>
 				</label>
-				<execute-script function="x -> new(`tl.admin:NewLogger`, transient: true)"/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="admin/system/add-logger.view.xml"
-				>
-					<bind
-						channel="loggers"
-						to="loggers"
-					/>
-				</open-dialog>
+				<execute-script function="new(`tl.admin:NewLogger`, transient: true)">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/system/add-logger.view.xml"
+						>
+							<bind
+								channel="loggers"
+								to="loggers"
+							/>
+						</open-dialog>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-trash"
-				input="selection"
+				inputs="selection"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -50,14 +55,17 @@
 					<de>Entfernen</de>
 				</label>
 				<executability>
-					<visible-if expr="selected -> $selected != null &amp;&amp; $selected != ''"/>
+					<visible-if expr="$selection != null &amp;&amp; $selection != ''"/>
 				</executability>
-				<confirm expr="x -> #('Remove the explicit level of the selected logger so it inherits again?'@en, 'Die explizite Ebene des ausgewählten Loggers entfernen, sodass er wieder erbt?'@de)"/>
+				<confirm expr="#('Remove the explicit level of the selected logger so it inherits again?'@en, 'Die explizite Ebene des ausgewählten Loggers entfernen, sodass er wieder erbt?'@de)"/>
 				<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
 					mode="REMOVE"
 					selection="selection"
-				/>
-				<write-channel name="loggers"/>
+				>
+					<with-result>
+						<write-channel name="loggers"/>
+					</with-result>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
@@ -69,11 +77,15 @@
 				</label>
 				<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="loggers"/>
+				>
+					<with-result>
+						<write-channel name="loggers"/>
+					</with-result>
+				</action>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.system.LoggerLevelTable"
+		<child id="table"
+			class="com.top_logic.layout.view.admin.system.LoggerLevelTable"
 			input="loggers"
 			selection="selection"
 		/>

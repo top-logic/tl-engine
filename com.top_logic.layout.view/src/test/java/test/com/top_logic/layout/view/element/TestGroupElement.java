@@ -19,7 +19,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -44,6 +43,7 @@ import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.GroupElement;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
  * Tests for {@link GroupElement} - the {@code <group>} element sectioning the fields of a form.
@@ -203,7 +203,7 @@ public class TestGroupElement extends TestCase {
 		assertTrue("The sections are held by a form.", config.getContent() instanceof FormElement.Config);
 		FormElement.Config formConfig = (FormElement.Config) config.getContent();
 
-		List<PolymorphicConfiguration<? extends UIElement>> children = formConfig.getChildren();
+		List<UIElement.Config> children = formConfig.getChildren();
 		assertTrue("The plain section must be written as a group.",
 			children.get(PLAIN_SECTION) instanceof GroupElement.Config);
 		assertTrue("The stated section must be written as a group.",
@@ -237,6 +237,7 @@ public class TestGroupElement extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestGroupElement.class,
-				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 }

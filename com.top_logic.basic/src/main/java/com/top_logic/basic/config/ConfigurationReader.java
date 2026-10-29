@@ -11,11 +11,13 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.Location;
@@ -30,17 +32,44 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.ArrayStack;
 import com.top_logic.basic.col.Stack;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.FileBasedBinaryContent;
 import com.top_logic.basic.vars.IVariableExpander;
 import com.top_logic.basic.xml.AliasedXMLReader;
 import com.top_logic.basic.xml.LogWithStreamLocation;
+import com.top_logic.basic.xml.TopLevelElementFilter;
 import com.top_logic.basic.xml.XMLContent;
 import com.top_logic.basic.xml.XMLStreamUtil;
 
 /**
  * Reader instantiating {@link ConfigurationItem}s from XML definition files.
+ * 
+ * <p>
+ * Multiple sources are read in order, each source updates the configuration of the sources before
+ * it. The attributes of namespace {@link ConfigurationSchemaConstants#CONFIG_NS} on an entry of a
+ * list valued property control how the entry changes the list:
+ * </p>
+ * <ul>
+ * <li>{@link ConfigurationSchemaConstants#LIST_OPERATION} selects add, update, add-or-update
+ * (default), or remove. In a list with {@link PropertyDescriptor#getKeyProperty() key property},
+ * the entry is matched by its key value.</li>
+ * <li>{@link ConfigurationSchemaConstants#LIST_POSITION} and
+ * {@link ConfigurationSchemaConstants#LIST_REFERENCE_ATTR_NAME} place an added entry or move an
+ * updated one.</li>
+ * <li>{@link ConfigurationSchemaConstants#LIST_INDEX} addresses an entry by its position in the
+ * list read so far and updates it.</li>
+ * <li>{@link ConfigurationSchemaConstants#CONFIG_OVERLOADING_OVERRIDE} replaces an updated entry
+ * instead of merging it.</li>
+ * </ul>
+ * <p>
+ * An entry of a keyed list without key value (see {@link ConfigUtil#isAnonymousKey(Object)}) is
+ * anonymous: It is added (at the end or as placed by
+ * {@link ConfigurationSchemaConstants#LIST_POSITION}), matches no other entry, and any number of
+ * anonymous entries may occur in one list. An update or remove operation without key value and a
+ * reference naming no key are errors. Map valued properties require a key for every entry.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -82,9 +111,66 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		 */
 		private Stack<String> _definitions = new ArrayStack<>();
 
+		/**
+		 * Whether an item with a {@link GlobalKey} property or a referencing element was read, see
+		 * {@link #sawGlobalKeys()}.
+		 */
+		private boolean _globalKeys;
+
 		public Handler(InstantiationContext context, Map<String, ConfigurationDescriptor> globalDescriptorsByLocalName) {
 			this.context = context;
 			this.globalDescriptorsByLocalName = globalDescriptorsByLocalName;
+		}
+
+		/**
+		 * Whether the source read contained an item with a {@link GlobalKey} property, or a
+		 * referencing element (see {@link ConfigurationSchemaConstants#CONFIG_REF}).
+		 * 
+		 * <p>
+		 * Only then can the source have introduced a duplicate global key.
+		 * </p>
+		 */
+		public boolean sawGlobalKeys() {
+			return _globalKeys;
+		}
+
+		/**
+		 * The default container list of the element being read: created when its first entry is
+		 * read, or when a referencing element needs the current contents of the list.
+		 */
+		private final class ContainerListState {
+
+			ListHandler handler;
+
+			Set<Object> keys;
+
+			void init(ConfigurationItem baseConfig, PropertyDescriptor defaultContainer) {
+				if (handler == null) {
+					handler = createListHandler(baseConfig, defaultContainer, false);
+					keys = new HashSet<>();
+				}
+			}
+
+		}
+
+		/**
+		 * An item with a {@link GlobalKey} property, found below the element a referencing element
+		 * is written in.
+		 * 
+		 * @param owner
+		 *        The item whose property holds the item.
+		 * @param property
+		 *        The property of the owner holding the item: an item, list, array or map property.
+		 * @param item
+		 *        The item.
+		 * @param keyProperty
+		 *        The {@link GlobalKey} property of the item, as declared by the item's type.
+		 * @param key
+		 *        The key value of the item.
+		 */
+		private record ItemLocation(ConfigurationItem owner, PropertyDescriptor property, ConfigurationItem item,
+				PropertyDescriptor keyProperty, Object key) {
+			// Pure data.
 		}
 		
 		public ConfigurationItem parse(XMLStreamReader reader, ConfigurationItem baseConfig) {
@@ -146,6 +232,10 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			_definitions.push(null);
 			_definitions.push(reader.getLocation().getSystemId());
 			try {
+				if (isReference(reader)) {
+					context.error("The attribute '" + refAttr() + "' is not allowed on the root element "
+						+ atLocation(reader) + ".");
+				}
 				ConfigurationDescriptor rootDescriptor;
 				if (baseConfig != null) {
 					return readConfigurationItem(reader, baseConfig, null);
@@ -224,6 +314,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			initLocation(valueBuilder, reader);
 
 			ConfigurationDescriptor descriptor = valueBuilder.descriptor();
+			if (GlobalKeys.hasGlobalKeys(descriptor)) {
+				_globalKeys = true;
+			}
 			
 			if (isOverride(reader)) {
 				baseConfig = null;
@@ -351,8 +444,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			}
 			
 			// Read element properties.
-			ListHandler listHandler = null;
-			Set<Object> listKeys = null;
+			ContainerListState containerList = new ContainerListState();
 			Map<Object, Object> mapHandler = null;
 			Set<Object> mapKeys = null;
 			int contentEvent;
@@ -466,6 +558,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					contentEvent = reader.next();
 				}
 
+				if (isReference(reader)) {
+					readReferencingElement(reader, valueBuilder, baseConfig, containerList);
+					continue;
+				}
+
 				String localName = reader.getLocalName();
 				PropertyDescriptor property = descriptor.getProperty(localName);
 				if (property == null) {
@@ -483,12 +580,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 								}
 								case ARRAY:
 								case LIST: {
-									if (listHandler == null) {
-										listHandler = createListHandler(baseConfig, defaultContainer, false);
-										listKeys = new HashSet<>();
-									}
+									containerList.init(baseConfig, defaultContainer);
 									readListEntry(reader, defaultContainer, defaultContainer.getKeyProperty(),
-										listHandler, listKeys);
+										containerList.handler, containerList.keys);
 									break;
 								}
 								case MAP: {
@@ -521,15 +615,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				}
 			}
 			
-			if (listHandler != null) {
+			if (containerList.handler != null) {
 				PropertyDescriptor containerProperty = descriptor.getDefaultContainer();
-				Object containerList;
-				if (containerProperty.kind() == PropertyKind.ARRAY) {
-					containerList = listAsGenericArray(containerProperty, listHandler.toList());
-				} else {
-					containerList = listHandler.toList();
-				}
-				initValue(reader, valueBuilder, containerProperty, containerList,
+				initValue(reader, valueBuilder, containerProperty, listValue(containerProperty, containerList.handler),
 					processedProperties);
 			} else if (mapHandler != null) {
 				initValue(reader, valueBuilder, descriptor.getDefaultContainer(), mapHandler, processedProperties);
@@ -787,7 +875,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 						if (buffer == null) {
 							buffer = new StringBuilder();
 						}
-						buffer.append(reader.getTextCharacters(), reader.getTextStart(), reader.getTextLength());
+						buffer.append(reader.getText());
 						break;
 
 					case XMLStreamConstants.START_ELEMENT:
@@ -959,6 +1047,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				PropertyDescriptor declaredKeyProperty, ListHandler handler, Set<Object> listKeys)
 				throws XMLStreamException {
 			try {
+				if (isReference(reader)) {
+					throw new ConfigurationException("The attribute '" + refAttr()
+						+ "' is not allowed on an entry of a list property; a referencing element is written in the content of an element above the entry it addresses "
+						+ atLocation(reader) + ".");
+				}
 				ConfigurationDescriptor elementDescriptor = readElementDescriptor(owningProperty, reader);
 				PropertyDescriptor keyProperty;
 				if (declaredKeyProperty != null) {
@@ -967,49 +1060,64 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					keyProperty = null;
 				}
 				ListOperation listOperation = getListOperation(reader);
+				Integer index = getListIndexValue(reader);
 				Object listKey;
-				switch (listOperation) {
-					case ADD_OR_UPDATE: {
-						if (keyProperty == null) {
+				if (index != null) {
+					listKey = handleListIndexUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
+						listOperation, index.intValue());
+				} else {
+					switch (listOperation) {
+						case ADD_OR_UPDATE: {
+							if (keyProperty == null) {
+								listKey =
+									handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
+								break;
+							}
+							Object keyPropValue =
+								getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
+							final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
+							if (configToUpdate != null) {
+								handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
+									configToUpdate);
+								listKey = keyPropValue;
+							} else {
+								listKey =
+									handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
+							}
+							break;
+						}
+						case ADD: {
 							listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
 							break;
 						}
-						Object keyPropValue = getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
-						final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
-						if (configToUpdate != null) {
-							handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
-								configToUpdate);
-							listKey = keyPropValue;
-						} else {
-							listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
+						case REMOVE: {
+							listKey = readListEntryKey(reader, owningProperty, keyProperty, elementDescriptor,
+								listOperation);
+							handler.remove(listKey);
+
+							/* May removed to insert at a different position */
+							checkDuplicateKey(reader, listKeys, keyProperty, listKey);
+							listKeys.remove(listKey);
+							listKey = NO_KEY;
+
+							// skip section
+							XMLStreamUtil.skipUpToMatchingEndTag(reader);
+							break;
 						}
-						break;
+						case UPDATE: {
+							listKey =
+								handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler);
+							break;
+						}
+						default: {
+							listKey = NO_KEY;
+							assert false : "Unknown " + ListOperation.class.getName() + ": " + listOperation;
+						}
 					}
-					case ADD: {
-						listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
-						break;
-					}
-					case REMOVE: {
-						listKey = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
-						handler.remove(listKey);
-
-						/* May removed to insert at a different position */
-						checkDuplicateKey(reader, listKeys, keyProperty, listKey);
-						listKeys.remove(listKey);
-						listKey = NO_KEY;
-
-						// skip section
-						XMLStreamUtil.skipUpToMatchingEndTag(reader);
-						break;
-					}
-					case UPDATE: {
-						listKey = handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler);
-						break;
-					}
-					default: {
-						listKey = NO_KEY;
-						assert false : "Unknown " + ListOperation.class.getName() + ": " + listOperation;
-					}
+				}
+				if (ConfigUtil.isAnonymousKey(listKey)) {
+					// Anonymous entries never collide.
+					listKey = NO_KEY;
 				}
 				checkDuplicateKey(reader, listKeys, keyProperty, listKey);
 			} catch (ConfigurationException ex) {
@@ -1017,6 +1125,54 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			} catch (RuntimeException ex) {
 				errorInvalidListEntry(reader, owningProperty, ex);
 			}
+		}
+
+		/**
+		 * Updates the list entry addressed by {@link ConfigurationSchemaConstants#LIST_INDEX}.
+		 * 
+		 * @return The key value of the updated entry, {@link #NO_KEY} for a list without key
+		 *         property.
+		 */
+		private Object handleListIndexUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
+				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler,
+				ListOperation listOperation, int index) throws ConfigurationException, XMLStreamException {
+			if (listOperation == ListOperation.ADD || listOperation == ListOperation.REMOVE) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_INDEX + "' must not be combined with '"
+					+ ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":" + ConfigurationSchemaConstants.LIST_OPERATION
+					+ "=\"" + listOperation.getExternalName() + "\"' " + atLocation(reader) + ".");
+			}
+			ConfigurationItem configToUpdate = handler.resolveIndexOrNull(index);
+			if (configToUpdate == null) {
+				throw new ConfigurationException("List index " + index + " is out of range, the list has "
+					+ handler.size() + " entries " + atLocation(reader) + ".");
+			}
+			ConfigurationItem newConfig =
+				handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler, configToUpdate);
+			if (keyProperty == null || newConfig == null) {
+				return NO_KEY;
+			}
+			return newConfig.value(keyProperty);
+		}
+
+		/**
+		 * Reads the key value of a list entry whose operation requires a key.
+		 */
+		private Object readListEntryKey(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				PropertyDescriptor keyProperty, ConfigurationDescriptor elementDescriptor,
+				ListOperation listOperation) throws ConfigurationException {
+			Object key =
+				keyProperty == null ? null : readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
+			if (ConfigUtil.isAnonymousKey(key)) {
+				throw new ConfigurationException("A list entry with '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX
+					+ ":" + ConfigurationSchemaConstants.LIST_OPERATION + "=\"" + listOperation.getExternalName()
+					+ "\"' must have a key value" + (listOperation == ListOperation.UPDATE
+						? " or an attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+							+ ConfigurationSchemaConstants.LIST_INDEX + "'"
+						: "")
+					+ "; anonymous entries cannot be addressed by key " + atLocation(reader) + ".");
+			}
+			return key;
 		}
 
 		private void appendAtLocation(StringBuilder out, XMLStreamReader reader) {
@@ -1069,15 +1225,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 		private void errorInvalidAttributeConfiguration(XMLStreamReader reader, PropertyDescriptor property,
 				Exception ex, String attributeValue) {
-			StringBuilder invalidConfigError = new StringBuilder();
-			invalidConfigError.append("Invalid value '");
-			invalidConfigError.append(attributeValue);
-			invalidConfigError.append("'");
-			appendForProperty(invalidConfigError, property);
-			appendAtLocation(invalidConfigError, reader);
-			appendException(invalidConfigError, ex);
-			invalidConfigError.append(".");
-			context.error(invalidConfigError.toString(), ex);
+			context.error(messageInvalidValue(reader, property, attributeValue, ex), ex);
 		}
 
 		private XMLStreamException errorInvalidComplexValue(XMLStreamReader reader, PropertyDescriptor property,
@@ -1142,9 +1290,13 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		private String messageInvalidValue(XMLStreamReader reader, PropertyDescriptor property, CharSequence value,
 				Throwable ex) {
 			StringBuilder invalidConfigError = new StringBuilder();
-			invalidConfigError.append("Invalid value '");
-			invalidConfigError.append(value);
-			invalidConfigError.append("'");
+			invalidConfigError.append("Invalid value");
+			// The value of an encrypted property is a secret.
+			if (!property.isEncrypted()) {
+				invalidConfigError.append(" '");
+				invalidConfigError.append(value);
+				invalidConfigError.append("'");
+			}
 			appendForProperty(invalidConfigError, property);
 			appendAtLocation(invalidConfigError, reader);
 			appendException(invalidConfigError, ex);
@@ -1275,57 +1427,341 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		private Object handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
 				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler)
 				throws ConfigurationException, XMLStreamException {
-			final Object keyPropValue = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
-			final ConfigurationItem configToUpdate = handler.resolveReference(keyPropValue);
+			final Object keyPropValue =
+				readListEntryKey(reader, owningProperty, keyProperty, elementDescriptor, ListOperation.UPDATE);
+			final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
+			if (configToUpdate == null) {
+				throw new ConfigurationException("No list entry to update with key '" + keyPropValue + "' "
+					+ atLocation(reader) + ".");
+			}
 			handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler, configToUpdate);
 			return keyPropValue;
 		}
 
-		private void handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
+		/**
+		 * Updates the given list entry with the contents of the current element and moves it, if
+		 * {@link ConfigurationSchemaConstants#LIST_POSITION} is given.
+		 * 
+		 * @return The entry replacing the given one, <code>null</code> if reading failed.
+		 */
+		private ConfigurationItem handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
 				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler,
 				final ConfigurationItem configToUpdate) throws ConfigurationException, XMLStreamException {
 			Position movePosition = getPosition(reader, null);
+			Object reference = null;
+			if (movePosition == Position.BEFORE || movePosition == Position.AFTER) {
+				reference = parseReference(reader, owningProperty, keyProperty);
+			}
+			ConfigurationItem newConfig =
+				readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
+			if (newConfig == null) {
+				return null;
+			}
+			handler.replace(configToUpdate, newConfig);
+			moveEntry(handler, newConfig, movePosition, reference);
+			return newConfig;
+		}
+
+		/**
+		 * Moves the given entry of the list to the given position, if there is one.
+		 */
+		private void moveEntry(ListHandler handler, ConfigurationItem entry, Position movePosition, Object reference) {
 			if (movePosition == null) {
-				ConfigurationItem newConfig =
-					readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
-				handler.update(newConfig);
-			} else {
-				switch (movePosition) {
-					case BEGIN: {
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
-						handler.moveToStart(newConfig);
+				return;
+			}
+			switch (movePosition) {
+				case BEGIN: {
+					handler.moveToStart(entry);
+					break;
+				}
+				case END: {
+					handler.moveToEnd(entry);
+					break;
+				}
+				case BEFORE: {
+					handler.moveBefore(entry, reference);
+					break;
+				}
+				case AFTER: {
+					handler.moveAfter(entry, reference);
+					break;
+				}
+				default:
+					assert false : "Unknown " + Position.class.getName() + ": " + movePosition;
+					break;
+			}
+		}
+
+		/**
+		 * Whether the element the reader is positioned on carries the attribute
+		 * {@link ConfigurationSchemaConstants#CONFIG_REF}.
+		 */
+		private static boolean isReference(XMLStreamReader reader) {
+			return reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
+				ConfigurationSchemaConstants.CONFIG_REF) != null;
+		}
+
+		private static String refAttr() {
+			return ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":" + ConfigurationSchemaConstants.CONFIG_REF;
+		}
+
+		/**
+		 * Reads a referencing element (see {@link ConfigurationSchemaConstants#CONFIG_REF}): Updates
+		 * the item with the referenced {@link GlobalKey} value below the element the referencing
+		 * element is written in.
+		 * 
+		 * @param enclosing
+		 *        The item whose content the referencing element is written in.
+		 * @param baseConfig
+		 *        The base configuration of the enclosing item, <code>null</code> if it has none or
+		 *        replaces it.
+		 * @param containerList
+		 *        The default container list of the enclosing item as read so far.
+		 */
+		private void readReferencingElement(XMLStreamReader reader, ConfigBuilder enclosing,
+				ConfigurationItem baseConfig, ContainerListState containerList) throws XMLStreamException {
+			_globalKeys = true;
+			try {
+				String refSpec = reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
+					ConfigurationSchemaConstants.CONFIG_REF);
+				if (getListIndexValue(reader) != null) {
+					throw new ConfigurationException("Attribute '" + refAttr() + "' must not be combined with '"
+						+ ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":" + ConfigurationSchemaConstants.LIST_INDEX
+						+ "' " + atLocation(reader) + ".");
+				}
+				ListOperation operation = getListOperation(reader);
+				if (operation == ListOperation.ADD) {
+					throw new ConfigurationException("Attribute '" + refAttr() + "' must not be combined with '"
+						+ ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":" + ConfigurationSchemaConstants.LIST_OPERATION
+						+ "=\"" + operation.getExternalName()
+						+ "\"': a referencing element addresses an existing item " + atLocation(reader) + ".");
+				}
+
+				PropertyDescriptor defaultContainer = enclosing.descriptor().getDefaultContainer();
+				if (defaultContainer != null
+					&& (defaultContainer.kind() == PropertyKind.LIST || defaultContainer.kind() == PropertyKind.ARRAY)) {
+					// The entries of the default container read so far are the current contents of
+					// that list, not the value stored in the enclosing item.
+					containerList.init(baseConfig, defaultContainer);
+				}
+				ItemLocation target = resolveReference(reader, enclosing, defaultContainer, containerList, refSpec);
+				if (!(target.owner() instanceof ConfigBuilder)) {
+					throw new ConfigurationException("The item '" + refSpec
+						+ "' is held by a configuration that cannot be updated " + atLocation(reader) + ".");
+				}
+				PropertyDescriptor property = target.property();
+
+				ConfigurationDescriptor elementDescriptor = readReferencedDescriptor(property, reader);
+				String keyName = target.keyProperty().getPropertyName();
+				PropertyDescriptor keyProperty = elementDescriptor.getProperty(keyName);
+				if (keyProperty == null) {
+					throw new ConfigurationException("The type '"
+						+ elementDescriptor.getConfigurationInterface().getName()
+						+ "' of the referencing element has no key property '" + keyName + "' " + atLocation(reader)
+						+ ".");
+				}
+				String keySpec = reader.getAttributeValue(null, keyName);
+				if (!StringServices.isEmpty(keySpec)
+					&& !target.key().equals(parseKeyProperty(reader, property, keyProperty, keySpec))) {
+					throw new ConfigurationException(
+						"A referencing element does not change the key of the item it addresses: '" + keySpec
+							+ "' is not the referenced key '" + refSpec + "' " + atLocation(reader) + ".");
+				}
+
+				switch (property.kind()) {
+					case LIST:
+					case ARRAY: {
+						boolean frameList = target.owner() == enclosing && property == defaultContainer
+							&& containerList.handler != null;
+						ListHandler handler = frameList
+							? containerList.handler
+							: ListHandler.createListHandler(context, property, entriesOf(target.owner(), property));
+						if (operation == ListOperation.REMOVE) {
+							handler.remove(target.key());
+							XMLStreamUtil.skipUpToMatchingEndTag(reader);
+						} else {
+							Position movePosition = getPosition(reader, null);
+							Object reference = null;
+							if (movePosition == Position.BEFORE || movePosition == Position.AFTER) {
+								reference = parseReference(reader, property, property.getKeyProperty());
+							}
+							ConfigurationItem newConfig = readReferencedItem(reader, elementDescriptor, target);
+							if (newConfig != null) {
+								handler.replace(target.item(), newConfig);
+								moveEntry(handler, newConfig, movePosition, reference);
+							}
+						}
+						if (!frameList) {
+							((ConfigBuilder) target.owner()).update(property, listValue(property, handler));
+						}
 						break;
 					}
-					case END: {
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
-						handler.moveToEnd(newConfig);
+					case ITEM: {
+						checkNoPosition(reader, refSpec);
+						if (operation == ListOperation.REMOVE) {
+							((ConfigBuilder) target.owner()).update(property, null);
+							XMLStreamUtil.skipUpToMatchingEndTag(reader);
+						} else {
+							ConfigurationItem newConfig = readReferencedItem(reader, elementDescriptor, target);
+							if (newConfig != null) {
+								((ConfigBuilder) target.owner()).update(property, newConfig);
+							}
+						}
 						break;
 					}
-					case BEFORE: {
-						String externalReference = getEncodedReferenceKey(reader);
-						final Object reference =
-							parseKeyProperty(reader, owningProperty, keyProperty, externalReference);
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
-						handler.moveBefore(newConfig, reference);
+					case MAP: {
+						checkNoPosition(reader, refSpec);
+						Map<?, ?> oldMap = (Map<?, ?>) target.owner().value(property);
+						Map<Object, Object> newMap = new LinkedHashMap<>(oldMap);
+						Object mapKey = GlobalKeys.keyOf(target.item(), property.getKeyProperty());
+						if (operation == ListOperation.REMOVE) {
+							newMap.remove(mapKey);
+							XMLStreamUtil.skipUpToMatchingEndTag(reader);
+						} else {
+							ConfigurationItem newConfig = readReferencedItem(reader, elementDescriptor, target);
+							if (newConfig != null) {
+								newMap.put(mapKey, newConfig);
+							}
+						}
+						((ConfigBuilder) target.owner()).update(property, newMap);
 						break;
 					}
-					case AFTER: {
-						String externalReference = getEncodedReferenceKey(reader);
-						final Object reference =
-							parseKeyProperty(reader, owningProperty, keyProperty, externalReference);
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
-						handler.moveAfter(newConfig, reference);
-						break;
+					default: {
+						throw new UnreachableAssertion("No item in property of kind " + property.kind() + ".");
 					}
-					default:
-						assert false : "Unknown " + Position.class.getName() + ": " + movePosition;
-						break;
+				}
+			} catch (ConfigurationException ex) {
+				errorInvalidReference(reader, ex);
+			} catch (RuntimeException ex) {
+				errorInvalidReference(reader, ex);
+			}
+		}
+
+		/**
+		 * The configuration type of a referencing element addressing an item of the given property.
+		 * 
+		 * <p>
+		 * The tag of the element is the tag of an entry of the property, or the name of the
+		 * property for an item property whose entries have no tags of their own.
+		 * </p>
+		 */
+		private ConfigurationDescriptor readReferencedDescriptor(PropertyDescriptor property, XMLStreamReader reader)
+				throws ConfigurationException {
+			if (property.kind() == PropertyKind.ITEM && property.getElementDescriptor(reader.getLocalName()) == null) {
+				if (!property.getPropertyName().equals(reader.getLocalName())) {
+					throw new ConfigurationException("Unexpected element '" + reader.getLocalName()
+						+ "' for the referenced item of property '" + property.getPropertyName() + "' ("
+						+ property + "), expected '" + property.getPropertyName() + "' " + atLocation(reader) + ".");
+				}
+				ConfigurationDescriptor descriptorFromAttribute = readConfigInterfaceAsDescriptor(reader);
+				return descriptorFromAttribute != null ? descriptorFromAttribute : property.getValueDescriptor();
+			}
+			return readElementDescriptor(property, reader);
+		}
+
+		/**
+		 * Reads the contents of a referencing element as update of the item it addresses.
+		 * 
+		 * @return The item replacing the addressed one, <code>null</code> if reading failed.
+		 */
+		private ConfigurationItem readReferencedItem(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
+				ItemLocation target) throws ConfigurationException, XMLStreamException {
+			ConfigurationItem newConfig =
+				readConfigItemUpdate(reader, elementDescriptor, target.item(), target.property());
+			if (newConfig instanceof ConfigBuilder) {
+				// The item keeps its key, also if the referencing element replaces it.
+				PropertyDescriptor newKeyProperty =
+					newConfig.descriptor().getProperty(target.keyProperty().getPropertyName());
+				if (newKeyProperty != null && ConfigUtil.isAnonymousKey(newConfig.value(newKeyProperty))) {
+					((ConfigBuilder) newConfig).update(newKeyProperty, target.key());
 				}
 			}
+			return newConfig;
+		}
+
+		private void checkNoPosition(XMLStreamReader reader, String refSpec) throws ConfigurationException {
+			if (getPosition(reader, null) != null) {
+				throw new ConfigurationException("The item '" + refSpec
+					+ "' is no entry of a list and cannot be positioned " + atLocation(reader) + ".");
+			}
+		}
+
+		/**
+		 * The item with the given {@link GlobalKey} value below the given item.
+		 * 
+		 * @throws ConfigurationException
+		 *         If there is no such item, or more than one.
+		 */
+		private ItemLocation resolveReference(XMLStreamReader reader, ConfigBuilder enclosing,
+				PropertyDescriptor defaultContainer, ContainerListState containerList, String refSpec)
+				throws ConfigurationException {
+			List<ItemLocation> matches = new ArrayList<>();
+			Map<PropertyDescriptor, Object> refKeys = new HashMap<>();
+			GlobalKeys.visitItems(enclosing,
+				(owner, property) -> owner == enclosing && property == defaultContainer && containerList.handler != null
+					? containerList.handler.toList()
+					: null,
+				(owner, property, item, keyProperty, key) -> {
+					Object refKey = refKeys.get(keyProperty);
+					if (refKey == null) {
+						try {
+							refKey = parseKeyProperty(reader, property, keyProperty, refSpec);
+						} catch (ConfigurationException ex) {
+							// The reference is no value of this key property.
+							refKey = NO_KEY;
+						}
+						refKeys.put(keyProperty, refKey);
+					}
+					if (refKey.equals(key)) {
+						matches.add(new ItemLocation(owner, property, item, keyProperty, key));
+					}
+				});
+			if (matches.isEmpty()) {
+				throw new ConfigurationException("No item with the key '" + refSpec + "' below the element "
+					+ enclosing.location() + " that the referencing element is written in " + atLocation(reader)
+					+ ". A referencing element addresses an item by a key that is unique in the whole configuration, and it is written in the content of an element above that item.");
+			}
+			if (matches.size() > 1) {
+				throw new ConfigurationException("The reference '" + refSpec + "' is ambiguous: "
+					+ matches.get(0).item().location() + " and " + matches.get(1).item().location() + " "
+					+ atLocation(reader) + ".");
+			}
+			return matches.get(0);
+		}
+
+		/**
+		 * The current entries of the given list property of the given item.
+		 */
+		private static List<?> entriesOf(ConfigurationItem owner, PropertyDescriptor listProperty) {
+			Object value = owner.value(listProperty);
+			if (listProperty.kind() == PropertyKind.ARRAY) {
+				return PropertyDescriptorImpl.arrayAsList(value);
+			}
+			return (List<?>) value;
+		}
+
+		/**
+		 * The value of the given list property holding the entries of the given handler.
+		 */
+		private static Object listValue(PropertyDescriptor listProperty, ListHandler handler) {
+			if (listProperty.kind() == PropertyKind.ARRAY) {
+				return listAsGenericArray(listProperty, handler.toList());
+			}
+			return handler.toList();
+		}
+
+		private void errorInvalidReference(XMLStreamReader reader, Exception ex) throws XMLStreamException {
+			StringBuilder error = new StringBuilder();
+			error.append("Invalid referencing element '");
+			error.append(reader.getLocalName());
+			error.append("'");
+			appendAtLocation(error, reader);
+			appendException(error, ex);
+			error.append(".");
+			context.error(error.toString(), ex);
+
+			// No additional events have been read from the reader.
+			XMLStreamUtil.skipUpToMatchingEndTag(reader);
 		}
 
 		private Object readKeyProperty(XMLStreamReader reader, PropertyDescriptor owningProperty,
@@ -1352,17 +1788,13 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					break;
 				}
 				case BEFORE: {
-					String encodedExternalKeyProperty = getEncodedReferenceKey(reader);
-					final Object reference =
-						parseKeyProperty(reader, owningProperty, keyProperty, encodedExternalKeyProperty);
+					final Object reference = parseReference(reader, owningProperty, keyProperty);
 					newConfig = readConfigurationItem(reader, elementDescriptor, elementDescriptor, owningProperty);
 					handler.insertBefore(reference, newConfig);
 					break;
 				}
 				case AFTER: {
-					String encodedExternalKeyProperty = getEncodedReferenceKey(reader);
-					final Object reference =
-						parseKeyProperty(reader, owningProperty, keyProperty, encodedExternalKeyProperty);
+					final Object reference = parseReference(reader, owningProperty, keyProperty);
 					newConfig = readConfigurationItem(reader, elementDescriptor, elementDescriptor, owningProperty);
 					handler.insertAfter(reference, newConfig);
 					break;
@@ -1376,6 +1808,27 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				return newConfig.value(keyProperty);
 			}
 			return NO_KEY;
+		}
+
+		/**
+		 * Parses the key value of {@link ConfigurationSchemaConstants#LIST_REFERENCE_ATTR_NAME}.
+		 * 
+		 * <p>
+		 * A missing reference attribute references the default value of the key property. A
+		 * reference that names no key is an error.
+		 * </p>
+		 */
+		private Object parseReference(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				PropertyDescriptor keyProperty) throws ConfigurationException {
+			String encodedReference = getEncodedReferenceKey(reader);
+			Object reference = parseKeyProperty(reader, owningProperty, keyProperty, encodedReference);
+			if (ConfigUtil.isAnonymousKey(reference)) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_REFERENCE_ATTR_NAME
+					+ "' must name the key of a list entry, anonymous entries cannot be referenced "
+					+ atLocation(reader) + ".");
+			}
+			return reference;
 		}
 
 		private String getEncodedReferenceKey(XMLStreamReader reader) {
@@ -1574,6 +2027,39 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			return ConfigUtil.getEnumValue(ConfigurationSchemaConstants.LIST_OPERATION, attributeValue,
 				ListOperation.class, defaultOperation);
 
+		}
+
+		/**
+		 * Parses the configured value of the list index.
+		 * 
+		 * @param reader
+		 *        {@link XMLStreamReader} that parses the configuration.
+		 * @return The zero-based position given in
+		 *         {@link ConfigurationSchemaConstants#LIST_INDEX}, or <code>null</code> if the
+		 *         attribute is not given.
+		 * @throws ConfigurationException
+		 *         If the value is not a non-negative number.
+		 */
+		public static Integer getListIndexValue(XMLStreamReader reader) throws ConfigurationException {
+			final String attributeValue = reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
+				ConfigurationSchemaConstants.LIST_INDEX);
+			if (StringServices.isEmpty(attributeValue)) {
+				return null;
+			}
+			int index;
+			try {
+				index = Integer.parseInt(attributeValue.trim());
+			} catch (NumberFormatException ex) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_INDEX + "' is not a number: '" + attributeValue + "' "
+					+ XMLStreamUtil.atLocation(reader) + ".", ex);
+			}
+			if (index < 0) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_INDEX + "' must not be negative: '" + attributeValue + "' "
+					+ XMLStreamUtil.atLocation(reader) + ".");
+			}
+			return Integer.valueOf(index);
 		}
 
 		private Position getPosition(XMLStreamReader reader, Position defaultPosition) {
@@ -1859,6 +2345,17 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 	private final Map<String, ConfigurationDescriptor> _globalDescriptorsByName;
 
 	/**
+	 * Whether a source read so far contained lists keyed by a {@link GlobalKey} property, so that
+	 * the result of every further source is checked for duplicate global keys.
+	 */
+	private boolean _checkGlobalKeys;
+
+	/**
+	 * @see #setTopLevelFilter(Predicate)
+	 */
+	private Predicate<String> _topLevelFilter;
+
+	/**
 	 * Creates a {@link ConfigurationReader}, which has to be configured, before {@link #read()} or
 	 * {@link #readConfigBuilder()} can finally be called.
 	 * <p>
@@ -1882,6 +2379,24 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		_protocol = new LogWithStreamLocation(context);
 		_context = new InstantiationContextAdaptor(_protocol, context);
 		_globalDescriptorsByName = globalDescriptorsByName;
+	}
+
+	/**
+	 * Restricts reading to the top-level elements (the children of the root element) whose local
+	 * name is accepted by the given filter.
+	 * 
+	 * <p>
+	 * All other top-level elements are skipped unread, so that their content can neither produce
+	 * errors nor contribute to the result.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        Filter for the local names of the top-level elements to read. <code>null</code> reads
+	 *        all top-level elements.
+	 */
+	public ConfigurationReader setTopLevelFilter(Predicate<String> filter) {
+		_topLevelFilter = filter;
+		return this;
 	}
 
 	static Object listAsGenericArray(PropertyDescriptor property, List<?> list) {
@@ -1924,13 +2439,23 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 	private ConfigurationItem parseAndClose(String name, ConfigurationItem baseConfig, XMLStreamReader xmlReader) {
 		try {
+			if (_topLevelFilter != null) {
+				xmlReader = new TopLevelElementFilter(xmlReader, _topLevelFilter);
+			}
 			if (_expander != null) {
 				xmlReader = wrapAliasReader(xmlReader, name, _expander);
 			}
 			Handler handler = new Handler(_context, _globalDescriptorsByName);
 			XMLStreamReader before = _protocol.setStream(xmlReader);
 			try {
-				return handler.parse(xmlReader, baseConfig);
+				ConfigurationItem result = handler.parse(xmlReader, baseConfig);
+				if (handler.sawGlobalKeys()) {
+					_checkGlobalKeys = true;
+				}
+				if (_checkGlobalKeys && result != null) {
+					GlobalKeys.checkUnique(_context, result);
+				}
+				return result;
 			} finally {
 				_protocol.setStream(before);
 			}

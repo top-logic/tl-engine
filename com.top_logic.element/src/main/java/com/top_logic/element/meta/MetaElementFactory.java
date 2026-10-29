@@ -11,8 +11,10 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.annotation.ScopeRef;
@@ -35,6 +37,7 @@ import com.top_logic.util.model.TL5Types;
  */
 @ServiceDependencies(PersistencyLayer.Module.class)
 @Label("Model class factory")
+@ServiceCategory.Of(ModelCategory.class)
 public abstract class MetaElementFactory extends ManagedClass {
 
 	/**

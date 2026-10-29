@@ -23,7 +23,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-record-circle"
-				input="recording"
+				inputs="recording"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -31,17 +31,20 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running != true"/>
+					<visible-if expr="$recording != true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.recorder.RecorderAction"
 					mode="START"
 				/>
-				<execute-script function="true"/>
-				<write-channel name="recording"/>
+				<execute-script function="true">
+					<with-result>
+						<write-channel name="recording"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop-circle"
-				input="recording"
+				inputs="recording"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -49,25 +52,31 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running == true"/>
+					<visible-if expr="$recording == true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.recorder.RecorderAction"
 					mode="STOP"
 				/>
-				<execute-script function="false"/>
-				<write-channel name="recording"/>
+				<execute-script function="false">
+					<with-result>
+						<write-channel name="recording"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-play-fill"
-				input="selection"
+				inputs="selection"
 				placement="TOOLBAR"
 			>
 				<label>
 					<en>Step</en>
 					<de>Schritt</de>
 				</label>
-				<action class="com.top_logic.layout.view.recorder.StepReplayAction"/>
-				<write-channel name="selection"/>
+				<action class="com.top_logic.layout.view.recorder.StepReplayAction">
+					<with-result>
+						<write-channel name="selection"/>
+					</with-result>
+				</action>
 			</generic-command>
 		</commands>
 		<child class="com.top_logic.layout.view.recorder.RecordedStepsTable"

@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Objects;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 
 /**
  * Base implementation of {@link FieldModel} with listener management and dirty tracking.
@@ -18,6 +21,12 @@ import com.top_logic.basic.util.ResKey;
  * <p>
  * Subclasses can override value storage by overriding {@link #getValue()} and
  * {@link #setValueInternal(Object)}.
+ * </p>
+ *
+ * <p>
+ * A value given to {@link #setValue(Object)} is brought into its canonical form by the
+ * {@link #setNormalizer(ValueNormalizer) normalizer} of the field before it is taken. A value the
+ * field takes over by {@link #setValueInternal(Object)} is not normalized: it is shown as it is.
  * </p>
  */
 public class AbstractFieldModel implements FieldModel {
@@ -46,6 +55,8 @@ public class AbstractFieldModel implements FieldModel {
 
 	private List<FieldModelListener> _listeners = Collections.emptyList();
 
+	private ValueNormalizer _normalizer;
+
 	/**
 	 * Creates a new model with the given initial value.
 	 *
@@ -64,12 +75,88 @@ public class AbstractFieldModel implements FieldModel {
 
 	@Override
 	public void setValue(Object value) {
+		Object newValue = normalize(value);
 		Object oldValue = _value;
-		if (Objects.equals(oldValue, value)) {
+		if (Objects.equals(oldValue, newValue)) {
+			fireIfRewritten(value, newValue);
 			return;
 		}
-		_value = value;
-		fireValueChanged(oldValue, value);
+		_value = newValue;
+		fireValueChanged(oldValue, newValue);
+	}
+
+	/**
+	 * The {@link ValueNormalizer} bringing a value given to {@link #setValue(Object)} into its
+	 * canonical form, or {@code null} if a value is taken as given.
+	 */
+	public ValueNormalizer getNormalizer() {
+		return _normalizer;
+	}
+
+	/**
+	 * Sets the {@link #getNormalizer() normalizer} of this field.
+	 */
+	public void setNormalizer(ValueNormalizer normalizer) {
+		_normalizer = normalizer;
+	}
+
+	/**
+	 * The canonical form of the given value, as the {@link #getNormalizer() normalizer} computes it
+	 * for the {@link #normalizationObject() object} and {@link #normalizationAttribute() attribute}
+	 * this field edits.
+	 *
+	 * <p>
+	 * Called by {@link #setValue(Object)} implementations before they take a value.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value given to the field.
+	 * @return The value the field takes, the given value itself if the field has no normalizer.
+	 */
+	protected final Object normalize(Object value) {
+		if (_normalizer == null) {
+			return value;
+		}
+		return _normalizer.normalize(normalizationObject(), normalizationAttribute(), value);
+	}
+
+	/**
+	 * Announces a value that {@link #normalize(Object) normalization} rewrote to the value the field
+	 * already holds.
+	 *
+	 * <p>
+	 * The value of the field does not change, but an input still shows the value it gave, which it
+	 * replaces with the canonical form only when it is told about it.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value given to the field.
+	 * @param normalized
+	 *        The {@link #normalize(Object) canonical form} of the given value, which the field
+	 *        already holds.
+	 */
+	protected final void fireIfRewritten(Object value, Object normalized) {
+		if (!Objects.equals(value, normalized)) {
+			fireValueChanged(normalized, normalized);
+		}
+	}
+
+	/**
+	 * The object whose value this field edits, as the {@link #getNormalizer() normalizer} sees it.
+	 *
+	 * @return {@code null} for a field that is not bound to an attribute, which is the default.
+	 */
+	protected TLObject normalizationObject() {
+		return null;
+	}
+
+	/**
+	 * The attribute this field edits, as the {@link #getNormalizer() normalizer} sees it.
+	 *
+	 * @return {@code null} for a field that is not bound to an attribute, which is the default.
+	 */
+	protected TLStructuredTypePart normalizationAttribute() {
+		return null;
 	}
 
 	/**

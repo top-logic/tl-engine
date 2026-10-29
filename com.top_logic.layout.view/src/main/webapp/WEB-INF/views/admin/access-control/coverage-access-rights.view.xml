@@ -30,7 +30,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-check-lg"
-				input="rights"
+				inputs="rights"
 				placement="BUTTON_BAR"
 			>
 				<label>
@@ -43,13 +43,16 @@
 				<check-config-form/>
 				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 					mode="SAVE_ACCESS_RIGHTS"
-				/>
-				<write-channel name="pending"/>
-				<close-dialog/>
+				>
+					<with-result>
+						<write-channel name="pending"/>
+						<close-dialog/>
+					</with-result>
+				</action>
 			</generic-command>
 		</commands>
 		<inset>
-			<config-form
+			<config-form id="form"
 				input="rights"
 				withEditMode="false"
 			>

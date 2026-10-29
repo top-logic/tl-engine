@@ -16,15 +16,18 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.TLSupportsMultiple;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -35,12 +38,12 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The mutating operations create their result through the {@link TLModelUtil} primitives and return
- * the newly created part, so it can be written to the editor's selection channel. The created
- * element's name (and, for an attribute, its value type and cardinality) come from the transient
- * input object passed as the action input (the model of the dialog form after
- * {@code <store-form-state/>}); the container to create the element in comes from the configured
- * {@link Config#getContainer() container channel}. All operations must run inside a transaction
- * (wrap the action in {@code <with-transaction>}).
+ * the newly created part to its follow-up actions, so it can be written to the
+ * editor's selection channel. The created element's name (and, for an attribute, its value type and
+ * cardinality) come from the transient object the action processes (the result of an enclosing
+ * {@code <store-form-state>} in the dialog form); the container to create the element in comes
+ * from the configured {@link Config#getContainer() container channel}. All operations must run
+ * inside a transaction (wrap the action in {@code <with-transaction>}).
  * </p>
  */
 public class ModelEditAction implements ViewAction {
@@ -91,7 +94,7 @@ public class ModelEditAction implements ViewAction {
 	 * global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<ModelEditAction> {
+	public interface Config extends PolymorphicConfiguration<ModelEditAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";
@@ -183,14 +186,34 @@ public class ModelEditAction implements ViewAction {
 		if (!(model.tValueByName(TYPE) instanceof TLType valueType)) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_TYPE);
 		}
+		boolean multiple = Boolean.TRUE.equals(model.tValueByName(MULTIPLE));
+		if (multiple && !supportsMultiple(valueType)) {
+			throw new TopLogicException(I18NConstants.ERROR_MULTIPLE_NOT_SUPPORTED__TYPE.fill(valueType));
+		}
 		TLProperty property = TLModelUtil.addProperty(owner, name, valueType);
 		if (Boolean.TRUE.equals(model.tValueByName(MANDATORY))) {
 			property.setMandatory(true);
 		}
-		if (Boolean.TRUE.equals(model.tValueByName(MULTIPLE))) {
+		if (multiple) {
 			property.setMultiple(true);
 		}
 		return property;
+	}
+
+	/**
+	 * Whether an attribute of the given value type may hold several values.
+	 *
+	 * <p>
+	 * A primitive type supports multiple values only if it is annotated with
+	 * {@link TLSupportsMultiple}; every other type (class, enumeration) does.
+	 * </p>
+	 */
+	private static boolean supportsMultiple(TLType valueType) {
+		if (!(valueType instanceof TLPrimitive primitive)) {
+			return true;
+		}
+		TLSupportsMultiple annotation = primitive.getAnnotation(TLSupportsMultiple.class);
+		return annotation != null && annotation.getValue();
 	}
 
 	/**

@@ -121,10 +121,8 @@ public class AssociationNavigation extends SearchExpressionWithSecurity {
 				}
 			}
 		}
-		// Note: The navigation result is returned unfiltered. Security is enforced on the base
-		// object above (navigation is denied if the user must not read the source reference); the
-		// final result of a script must be secured by the caller.
-		return evalInternal(source);
+		// Only discoverable objects are delivered (R4 of the Discover specification).
+		return discoverable(evalInternal(source), withSecurity);
 	}
 
 	private List<TLObject> evalInternal(TLObject source) {

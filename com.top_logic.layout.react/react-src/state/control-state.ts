@@ -6,27 +6,22 @@
  * The state contract between the server-side controls and the React components rendering them.
  *
  * Each message describes the state object a control sends to its component: the property names,
- * their types and their meaning. A component library replacing a TopLogic component (see
+ * their types and their meaning. A component library replacing a TopLogic control (see
  * "replace" of 'tl-react-bridge') renders the state described here.
  *
- * The message of a replaceable component, by the component name it is registered under:
+ * The message of a control a component library replaces as a whole with "replace", by the
+ * component name it is registered under:
  *
- *   TLButton          - ButtonState
- *   TLToggleButton    - ToggleButtonState
- *   TLCheckbox        - CheckboxState
- *   TLTextInput       - TextInputState
- *   TLPasswordInput   - PasswordInputState
- *   TLNumberInput     - NumberInputState
  *   TLDatePicker      - DatePickerState
  *   TLSelect          - SelectState
  *   TLDropdownSelect  - DropdownSelectState
- *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
  *   TLChoiceGroup     - DropdownSelectState
  *   TLTabBar          - TabBarState
  *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
+ *   TLPopover         - PopoverState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
  *   TLAlert           - AlertState
@@ -35,8 +30,22 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLProgress        - ProgressState
+ *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
+ *   TLFloatingAction  - FloatingActionState
+ *
+ * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
+ * (see "replacePart" and the developer article view-layer/parts). A component library replaces
+ * these parts, not the controls:
+ *
+ *   TLButton          - ButtonState
+ *   TLToggleButton    - ToggleButtonState
+ *   TLCheckbox        - CheckboxState
+ *   TLTextInput       - TextInputState
+ *   TLPasswordInput   - PasswordInputState
+ *   TLNumberInput     - NumberInputState
+ *   TLOptionChips     - DropdownSelectState
+ *   TLProgress        - ProgressState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -130,6 +139,12 @@ export interface FieldStateJson extends ControlStateJson {
 	 * Whether pressing Enter in the field sends the submit command with the value typed.
 	 */
 	submitOnEnter: boolean;
+
+	/**
+	 * Whether the field is displayed in little room, a table cell for instance: the height of a
+	 * single line of text, with spacing reduced to what keeps its parts apart.
+	 */
+	compact: boolean;
 }
 
 /**
@@ -434,6 +449,34 @@ export interface TextInputStateJson extends TypingFieldStateJson {
 	 * The number of visible rows of a {@link TextInputStateJson.multiline} field.
 	 */
 	rows: number;
+
+	/**
+	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
+	 *
+	 * The field asks for them with the command `suggest`, giving the text typed as argument
+	 * `text` and the caret position in it as argument `caret`; the answer arrives in
+	 * {@link TextInputStateJson.suggestions}. Asking never changes the value of the field; a suggestion the user
+	 * picks is entered like any other text.
+	 */
+	offersSuggestions: boolean;
+
+	/**
+	 * The suggestions computed for the text {@link TextInputStateJson.suggestionsText} with the caret at
+	 * {@link TextInputStateJson.suggestionsCaret}, in the order they are offered. The list is shown as it is, without
+	 * filtering it further.
+	 */
+	suggestions: SuggestionEntryJson[];
+
+	/**
+	 * The text the {@link TextInputStateJson.suggestions} were computed for. A client that has been typed into since
+	 * it asked ignores suggestions computed for another text or caret position.
+	 */
+	suggestionsText: string;
+
+	/**
+	 * The caret position in {@link TextInputStateJson.suggestionsText} the {@link TextInputStateJson.suggestions} were computed for.
+	 */
+	suggestionsCaret: number;
 }
 
 export namespace TextInputStateJson {
@@ -461,6 +504,38 @@ export namespace TextInputStateJson {
 		 * A search term.
 		 */
 		| 'search';
+}
+
+/**
+ * A suggestion offered for a text being typed: a replacement for a range of that text.
+ *
+ * Picking the suggestion replaces the characters {@link SuggestionEntryJson.from} (inclusive) to {@link SuggestionEntryJson.to}
+ * (exclusive) of the text it was computed for by {@link SuggestionEntryJson.text}, and puts the caret behind the
+ * inserted text. With {@link SuggestionEntryJson.from} equal to {@link SuggestionEntryJson.to}, the suggestion inserts its text at that
+ * position.
+ */
+export interface SuggestionEntryJson {
+	/**
+	 * What the list of suggestions shows for this suggestion.
+	 */
+	label: string;
+
+	/**
+	 * The text replacing the range {@link SuggestionEntryJson.from} to {@link SuggestionEntryJson.to}.
+	 */
+	text: string;
+
+	/**
+	 * The position of the first character replaced, a character offset in the text the suggestion
+	 * was computed for.
+	 */
+	from: number;
+
+	/**
+	 * The position behind the last character replaced, a character offset in the text the
+	 * suggestion was computed for.
+	 */
+	to: number;
 }
 
 /**
@@ -506,13 +581,23 @@ export namespace NumberInputStateJson {
  * State of a field for a date, a time of day, or both, the component `TLDatePicker`.
  *
  * The {@link FieldStateJson.value} is the ISO form of the value for the HTML input of the {@link DatePickerStateJson.inputType}, a
- * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`).
+ * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`). A time of day is
+ * written with its seconds when the field has the {@link DatePickerStateJson.precision} of seconds (e.g.
+ * `14:30:15`, `2026-06-01T14:30:15`).
  */
 export interface DatePickerStateJson extends FieldStateJson {
 	/**
 	 * The part of a point in time the field edits.
 	 */
 	inputType: DatePickerStateJson.InputType;
+
+	/**
+	 * The smallest unit of a time of day the field edits, the one its display format writes.
+	 *
+	 * A field with the precision of seconds lets the seconds be entered and writes them in the ISO
+	 * {@link FieldStateJson.value}. A date without a time of day has the precision of minutes.
+	 */
+	precision: DatePickerStateJson.Precision;
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not
@@ -538,6 +623,19 @@ export namespace DatePickerStateJson {
 		 * A date with a time of day.
 		 */
 		| 'datetime-local';
+
+	/**
+	 * The smallest unit of a time of day a field edits.
+	 */
+	export type Precision =
+		/**
+		 * A time of day is edited in hours and minutes.
+		 */
+		| 'minutes'
+		/**
+		 * A time of day is edited in hours, minutes and seconds.
+		 */
+		| 'seconds';
 }
 
 /**
@@ -622,6 +720,15 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	 * Only the shape `'dropdown'` reads it.
 	 */
 	noFilter: boolean;
+
+	/**
+	 * Whether the user may enter a text that is no option: the text becomes the value, or a value
+	 * created from it, and is sent with the command `enterText` as argument `text`.
+	 * A text matching the label of an option or of a value entered before, ignoring case, chooses
+	 * that one instead. Absent means the user only chooses among the options. Only the shape
+	 * `'dropdown'` reads it.
+	 */
+	freeEntry: boolean;
 
 	/**
 	 * The label of the choice of no object: the option of its own a group of radio buttons offers
@@ -749,6 +856,13 @@ export namespace TabBarStateJson {
 		 * The icon of the tab, the encoded form of a theme image.
 		 */
 		icon: string;
+
+		/**
+		 * Whether the tab is left out of the strip, e.g. because the current user may not see it
+		 * for the object displayed. A hidden tab is never the {@link TabBarStateJson.activeTabId}
+		 * while another tab is visible.
+		 */
+		hidden: boolean;
 	}
 }
 
@@ -799,6 +913,12 @@ export namespace AccordionStateJson {
 		 * Whether the body of the section is displayed.
 		 */
 		expanded: boolean;
+
+		/**
+		 * Whether the section is left out of the accordion, header included, e.g. because the
+		 * current user may not see it for the object displayed.
+		 */
+		hidden: boolean;
 
 		/**
 		 * The actions displayed at the end of the header of the section, a toolbar for instance.
@@ -911,6 +1031,141 @@ export interface DialogStateJson extends ControlStateJson {
 }
 
 /**
+ * State of a non-modal surface of arbitrary content anchored to the trigger that opens it, the
+ * component `TLPopover`.
+ *
+ * The component renders a trigger button in place and, while the popover is {@link PopoverStateJson.open}, the
+ * {@link PopoverStateJson.content} on a surface portaled to the document body and placed at the trigger as
+ * {@link PopoverStateJson.placement} says. The trigger button shows the {@link PopoverStateJson.trigger} content if there is one,
+ * else the {@link PopoverStateJson.icon} alone (with the {@link PopoverStateJson.label} as its accessible name) or the
+ * {@link PopoverStateJson.label}. The surface is a dialog labelled by the trigger.
+ *
+ * The client asks for the popover to open with the command `open` and for it to close with
+ * the command `close`, both without arguments. It sends `close` on Escape, on a press
+ * outside of trigger and surface, and on a click on the trigger of an open popover in mode
+ * `click`. In mode `hover`, it sends `open` after the pointer has rested on the
+ * trigger for a moment or when the trigger receives the keyboard focus, and `close` after the
+ * pointer has left trigger and surface for a moment or when the focus leaves both. The server may
+ * open and close the popover on its own as well.
+ */
+export interface PopoverStateJson extends ControlStateJson {
+	/**
+	 * Whether the surface is shown.
+	 */
+	open: boolean;
+
+	/**
+	 * Where the surface stands at the trigger. Absent: `bottom-start`.
+	 */
+	placement: PopoverStateJson.Placement;
+
+	/**
+	 * The gesture opening the popover. Absent: `click`.
+	 */
+	mode: PopoverStateJson.Mode;
+
+	/**
+	 * The label of the trigger button, its accessible name when it shows an {@link PopoverStateJson.icon} alone or
+	 * {@link PopoverStateJson.trigger} content, and with it the name of the surface. Absent: none.
+	 */
+	label: string;
+
+	/**
+	 * The icon of the trigger button, the encoded form of a theme image. Absent: none.
+	 */
+	icon: string;
+
+	/**
+	 * Content shown inside the trigger button instead of {@link PopoverStateJson.label} and {@link PopoverStateJson.icon}: text, an
+	 * icon, a badge. The trigger button is the interactive element, so the content holds no
+	 * interactive controls of its own. Absent: the trigger button shows {@link PopoverStateJson.label} and
+	 * {@link PopoverStateJson.icon}.
+	 */
+	trigger?: ChildControlJson;
+
+	/**
+	 * The content of the surface. Present while the popover is {@link PopoverStateJson.open}: the content is created
+	 * when the popover opens for the first time and kept on the server while it is closed, so that
+	 * it shows what the user left there when it opens again.
+	 */
+	content?: ChildControlJson;
+}
+
+export namespace PopoverStateJson {
+	/**
+	 * The side of the trigger the surface stands on, and its alignment along that side: `start`
+	 * and `end` align the surface with the start or end edge of the trigger, no alignment
+	 * centers it. A surface that does not fit on its side flips to the opposite one.
+	 */
+	export type Placement =
+		/**
+		 * Above the trigger, centered.
+		 */
+		| 'top'
+		/**
+		 * Above the trigger, aligned with its start edge.
+		 */
+		| 'top-start'
+		/**
+		 * Above the trigger, aligned with its end edge.
+		 */
+		| 'top-end'
+		/**
+		 * Below the trigger, centered.
+		 */
+		| 'bottom'
+		/**
+		 * Below the trigger, aligned with its start edge.
+		 */
+		| 'bottom-start'
+		/**
+		 * Below the trigger, aligned with its end edge.
+		 */
+		| 'bottom-end'
+		/**
+		 * Left of the trigger, centered.
+		 */
+		| 'left'
+		/**
+		 * Left of the trigger, aligned with its top edge.
+		 */
+		| 'left-start'
+		/**
+		 * Left of the trigger, aligned with its bottom edge.
+		 */
+		| 'left-end'
+		/**
+		 * Right of the trigger, centered.
+		 */
+		| 'right'
+		/**
+		 * Right of the trigger, aligned with its top edge.
+		 */
+		| 'right-start'
+		/**
+		 * Right of the trigger, aligned with its bottom edge.
+		 */
+		| 'right-end';
+
+	/**
+	 * The gesture opening the popover.
+	 */
+	export type Mode =
+		/**
+		 * A click on the trigger opens the popover and a further click closes it. Opening moves the
+		 * keyboard focus into the surface, closing returns it to the trigger.
+		 */
+		| 'click'
+		/**
+		 * Resting the pointer on the trigger opens the popover, and it stays open while the pointer
+		 * moves on into the surface. Opening by the pointer leaves the keyboard focus where it is;
+		 * opening by the keyboard focus on the trigger moves it into the surface. A click on the
+		 * trigger opens the popover, too.
+		 */
+		| 'hover';
+}
+
+/**
  * State of a popup menu, the component `TLMenu`.
  *
  * Choosing an item sends the command `selectItem` with the {@link MenuStateJson.Entry.id} as argument
@@ -1015,6 +1270,10 @@ export namespace MenuStateJson {
  *
  * Dismissing the message sends the command `dismiss` with the {@link SnackbarStateJson.generation} of the
  * message as argument `generation`.
+ *
+ * While the message is shown, the component reports the element it occupies with
+ * `useTransientOverlay` of 'tl-react-bridge', so that floating actions (see
+	 * {@link FloatingActionStateJson}) move out of its way.
  */
 export interface SnackbarStateJson extends ControlStateJson {
 	/**
@@ -1115,6 +1374,85 @@ export interface AlertStateJson extends ControlStateJson {
 	 * reporting another number refers to a content that is no longer shown.
 	 */
 	generation: number;
+}
+
+/**
+ * State of a floating action button, the component `TLFloatingAction`: one or more actions
+ * floating over a corner of the frame they stand in, staying in place while the content beneath
+ * them scrolls.
+ *
+ * The frame is the body of the panel or of the window the control is placed in, which offers a
+ * layer for it through `useFloatingAnchor` of 'tl-react-bridge'; outside of such a frame,
+ * the corner of the browser window. A transient overlay the actions would cover - a snackbar
+ * reported through `useTransientOverlay` of 'tl-react-bridge' - moves them aside, read with
+ * `useTransientOverlayRects`.
+ *
+ * Each action is a button ({@link FloatingActionStateJson.actions}): its label, icon, tooltip, display mode, whether it is
+ * disabled and whether it is hidden are the state of that button ({@link ButtonStateJson}), which
+ * follows the executability and visibility of its command. The component renders the actions with
+ * TLChild. A component drawing them with components of its own reads their current states with
+ * `useChildStates` of 'tl-react-bridge' and presses an action by sending the command
+ * `click` to it with `useChildCommand`.
+ *
+ * The actions not hidden decide on the presentation:
+ *
+ * - none: nothing is rendered;
+ * - one: a round button with the icon of the action, also with its label when the display mode of
+ *   the action asks for the label (an extended floating action button);
+ * - several: a speed dial, a round button ({@link FloatingActionStateJson.triggerImage}, named by {@link FloatingActionStateJson.triggerLabel})
+ *   that shows the actions as small round buttons beside it, their labels as tooltips. The dial
+ *   marks the trigger with `aria-expanded`; it closes on Escape, on a press outside of it and
+ *   after an action was pressed.
+ *
+ * The component sends no command of its own.
+ */
+export interface FloatingActionStateJson extends ControlStateJson {
+	/**
+	 * The actions, button controls with the state of a {@link ButtonStateJson}, in the order they are
+	 * offered: in a speed dial, the first stands next to the trigger.
+	 */
+	actions: ChildControlJson[];
+
+	/**
+	 * The corner the actions float over. Absent: `'bottom-end'`.
+	 */
+	position: FloatingActionStateJson.Position;
+
+	/**
+	 * The icon of the button opening a speed dial, the encoded form of a theme image.
+	 */
+	triggerImage: string;
+
+	/**
+	 * The label of the button opening a speed dial: its accessible name and its tooltip.
+	 */
+	triggerLabel: string;
+}
+
+export namespace FloatingActionStateJson {
+	/**
+	 * The corner of the frame the actions float over. Start and end follow the direction of the
+	 * text: the end is the right corner in a left-to-right text.
+	 *
+	 * The control does not send `'bottom-end'`: an absent position means the default.
+	 */
+	export type Position =
+		/**
+		 * The bottom corner at the end of the line, the default.
+		 */
+		| 'bottom-end'
+		/**
+		 * The bottom corner at the start of the line.
+		 */
+		| 'bottom-start'
+		/**
+		 * The top corner at the end of the line.
+		 */
+		| 'top-end'
+		/**
+		 * The top corner at the start of the line.
+		 */
+		| 'top-start';
 }
 
 /**
@@ -1353,9 +1691,9 @@ export namespace TextStateJson {
 		 */
 		| 'helper'
 		/**
-		 * Text the application draws attention to, in the color interactive elements share.
+		 * Text that stands in for a value not yet there: a name not given, a list without entries.
 		 */
-		| 'accent'
+		| 'placeholder'
 		/**
 		 * An outcome that went well.
 		 */
@@ -1562,6 +1900,78 @@ export interface ProgressStateJson extends ControlStateJson {
 	 * The text beside the bar, plain text (e.g. `3 / 4`). Absent: the bar stands alone.
 	 */
 	label: string;
+}
+
+/**
+ * State properties of a control displaying a picture.
+ *
+ * The client only ever loads an address: either the {@link ImageSourceStateJson.url} naming the picture, or - while
+ * {@link ImageSourceStateJson.hasData} is set - the address of the data endpoint of the control itself, which serves the
+ * picture. The client appends the {@link ImageSourceStateJson.dataRevision} to the latter, so that a picture which was
+ * replaced is loaded again instead of being taken from the browser cache.
+ */
+export interface ImageSourceStateJson extends ControlStateJson {
+	/**
+	 * The address the picture is loaded from. Absent or `null`: no picture, unless
+	 * {@link ImageSourceStateJson.hasData} is set.
+	 */
+	url: string;
+
+	/**
+	 * Whether the control serves the picture itself from its data endpoint. The {@link ImageSourceStateJson.url} is
+	 * then absent.
+	 */
+	hasData: boolean;
+
+	/**
+	 * How often the picture the control serves was replaced, the revision the client appends to the
+	 * address of the data endpoint. Absent: 0.
+	 */
+	dataRevision: number;
+}
+
+/**
+ * State of a circular avatar for a person or object, the component `TLAvatar`.
+ *
+ * The circle shows the picture of the one it represents. Where there is none, it shows the
+ * initials of the {@link AvatarStateJson.name} on one of the eight category roles of the design system, which the
+ * client derives from the name; without a name, the neutral circle. The component sends no
+ * commands.
+ */
+export interface AvatarStateJson extends ImageSourceStateJson {
+	/**
+	 * The display name of the one the avatar represents, plain text, the source of the initials,
+	 * the category and the accessible name. Absent or `null`: the neutral circle.
+	 */
+	name: string;
+
+	/**
+	 * The diameter of the circle. Absent means `'medium'`.
+	 */
+	size: AvatarStateJson.Size;
+}
+
+export namespace AvatarStateJson {
+	/**
+	 * The diameter of an avatar, chosen by where the avatar stands, independent of the density.
+	 */
+	export type Size =
+		/**
+		 * An avatar in a table cell or a row.
+		 */
+		| 'small'
+		/**
+		 * The rule: beside text, in lists and in comment headers.
+		 */
+		| 'medium'
+		/**
+		 * An avatar in the header of a detail view.
+		 */
+		| 'large'
+		/**
+		 * A profile page: the picture is the content.
+		 */
+		| 'x-large';
 }
 
 /**

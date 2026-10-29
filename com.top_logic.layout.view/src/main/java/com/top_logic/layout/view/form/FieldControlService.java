@@ -11,9 +11,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -27,9 +29,12 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.format.configured.Formatter;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
@@ -49,16 +54,22 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLMaxUploadSize;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
@@ -66,6 +77,8 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPrese
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
+import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -83,7 +96,10 @@ import com.top_logic.util.model.ModelService;
  * attribute holds - or on its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
- * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
+ * <li>A multi-valued binary value whose {@link BinaryDisplay} asks for a list is edited as a list
+ * with one file field per value.</li>
+ * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}: e.g. the files of a
+ * multi-valued binary value as file chips.</li>
  * </ol>
  *
  * <p>
@@ -93,15 +109,26 @@ import com.top_logic.util.model.ModelService;
  * element controls, one per value.
  * </p>
  *
+ * <p>
+ * The field model of an attribute follows the same order, see
+ * {@link #createModel(TLObject, TLStructuredTypePart, FormControl, PolymorphicConfiguration) the
+ * creation of a field model}: the
+ * control the display asks for decides whether the attribute is edited by selecting from options
+ * before the attribute's annotation, its type and its structure do.
+ * </p>
+ *
  * @implNote Every step ends in
  *           {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
  *           never in {@link ReactFieldControlProvider#createControl(ReactContext, FieldSpec, FieldModel)}
  *           itself, which is what keeps type and multiplicity decided in one place.
+ *           A binary value asking for a list is edited by {@link FieldControlRegistry#BINARY}, the
+ *           built-in fallback of a binary value is {@link FieldControlRegistry#FILE_CHIPS}.
  */
 @Label("Form field controls")
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@ServiceCategory.Of(UICategory.class)
 public class FieldControlService extends ConfiguredManagedClass<FieldControlService.Config> {
 
 	/**
@@ -299,7 +326,16 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
 			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
-		return createFieldControl(context, part, fieldSpec(part, model), model, control);
+		ReactFieldControlProvider fieldControl = instance(control);
+		return createFieldControl(context, part, fieldSpec(part, part, part.isMultiple(), model, fieldControl), model,
+			fieldControl);
+	}
+
+	/**
+	 * The control the given configuration describes, {@code null} for none.
+	 */
+	private ReactFieldControlProvider instance(PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		return control == null ? null : _context.getInstance(control);
 	}
 
 	/**
@@ -364,9 +400,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        What is being edited, describing the given attribute.
 	 */
 	private ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldSpec field,
-			FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+			FieldModel model, ReactFieldControlProvider control) {
 		// The attribute's annotations include the type-level default via the VALUE_TYPE strategy.
-		return createFieldControl(context, part.getType(), part, field, model, control);
+		ReactControl result = resolveControl(context, part.getType(), part, field, model, control);
+		if (model instanceof AttributeSelectFieldModel select) {
+			select.observeWhileDisplayed(result);
+		}
+		return result;
 	}
 
 	/**
@@ -457,9 +497,23 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLType type, AnnotationLookup annotations,
 			FieldSpec field, FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		return resolveControl(context, type, annotations, field, model, instance(control));
+	}
+
+	/**
+	 * Creates the input control for a value of the given model type, as
+	 * {@link #createFieldControl(ReactContext, TLType, AnnotationLookup, FieldSpec, FieldModel, PolymorphicConfiguration)}
+	 * describes it.
+	 *
+	 * @param control
+	 *        The control the display asks for, or {@code null} to let the annotations and the type
+	 *        decide.
+	 */
+	private ReactControl resolveControl(ReactContext context, TLType type, AnnotationLookup annotations,
+			FieldSpec field, FieldModel model, ReactFieldControlProvider control) {
 		// 0. The control the display asks for.
 		if (control != null) {
-			return createControl(context, field, model, _context.getInstance(control));
+			return createControl(context, field, model, control);
 		}
 
 		// 1. The control annotated at the value, or at its type.
@@ -480,9 +534,71 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return createControl(context, field, model, mapped);
 		}
 
-		// 4. The control registered for the kind of value the type holds. The same registry
+		// 4. Files displayed as a list of one file field per value.
+		if (field.isMultiple() && isBinary(type)
+			&& binaryPresentation(annotations, type) == BinaryPresentation.LIST) {
+			return createControl(context, field, model, FieldControlRegistry.BINARY);
+		}
+
+		// 5. The control registered for the kind of value the type holds. The same registry
 		// serves configuration properties, so both are edited alike.
 		return FieldControlRegistry.getInstance().createControl(context, field, model);
+	}
+
+	/**
+	 * Whether values of the given type are files.
+	 */
+	private static boolean isBinary(TLType type) {
+		return BinaryDataSource.class.isAssignableFrom(valueType(type));
+	}
+
+	/**
+	 * How a binary value asks to be displayed, {@link BinaryPresentation#DATA_ITEM} when it says
+	 * nothing.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static BinaryPresentation binaryPresentation(AnnotationLookup annotations, TLType type) {
+		BinaryDisplay annotation = annotation(annotations, type, BinaryDisplay.class);
+		if (annotation == null || annotation.getPresentation() == null) {
+			return BinaryPresentation.DATA_ITEM;
+		}
+		return annotation.getPresentation();
+	}
+
+	/**
+	 * The file types a binary value accepts, in the form of {@link TLAcceptedTypes}, or
+	 * {@code null} where any file is accepted or the value holds no files.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static String acceptedTypes(AnnotationLookup annotations, TLType type) {
+		if (!isBinary(type)) {
+			return null;
+		}
+		TLAcceptedTypes annotation = annotation(annotations, type, TLAcceptedTypes.class);
+		return annotation == null ? null : annotation.getValue();
+	}
+
+	/**
+	 * The maximum size of one file a binary value is uploaded from, in the form of
+	 * {@link TLMaxUploadSize}, or {@code 0} where the value sets no limit of its own or holds no
+	 * files.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static long maxUploadSize(AnnotationLookup annotations, TLType type) {
+		if (!isBinary(type)) {
+			return 0;
+		}
+		TLMaxUploadSize annotation = annotation(annotations, type, TLMaxUploadSize.class);
+		return annotation == null ? 0 : annotation.getValue();
 	}
 
 	/**
@@ -512,7 +628,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	/**
 	 * Describes the given attribute for the control that edits it.
 	 */
-	private static FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
+	private FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
 		return fieldSpec(part, part.isMultiple(), model);
 	}
 
@@ -531,7 +647,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        Whether the described field holds a collection of the attribute's values rather than
 	 *        a single one, see {@link ColumnType#collected()}.
 	 */
-	private static FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
+	private FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
 		return fieldSpec(part, part, multiple, model);
 	}
 
@@ -545,6 +661,11 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * field, see {@link ColumnType#collected()}, and the display annotations are the given ones.
 	 * </p>
 	 *
+	 * <p>
+	 * The {@link FieldSpec#getOptionOrder() order of the options} is the one of their source, see
+	 * {@link #optionOrder(TLStructuredTypePart, ReactFieldControlProvider)}.
+	 * </p>
+	 *
 	 * @param annotations
 	 *        Where the display annotations are read from: the attribute itself, or a column's
 	 *        annotations layered over it, see {@link ColumnType#annotatedBy(AnnotationLookup)}.
@@ -552,10 +673,26 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        Whether the described field holds a collection of the attribute's values rather than
 	 *        a single one.
 	 */
-	private static FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
+	private FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
 			FieldModel model) {
+		return fieldSpec(part, annotations, multiple, model, null);
+	}
+
+	/**
+	 * Describes a value of the given attribute like
+	 * {@link #fieldSpec(TLStructuredTypePart, AnnotationLookup, boolean, FieldModel)}, for a field
+	 * that names the control editing it.
+	 *
+	 * @param fieldControl
+	 *        The control the field names, deciding the order of the options before the attribute
+	 *        does, see {@link #optionOrder(TLStructuredTypePart, ReactFieldControlProvider)};
+	 *        {@code null} for none.
+	 */
+	private FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
+			FieldModel model, ReactFieldControlProvider fieldControl) {
 		return fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
-			.setOrdered(multiple && part.isOrdered());
+			.setOrdered(multiple && part.isOrdered())
+			.setOptionOrder(optionOrder(part, fieldControl));
 	}
 
 	/**
@@ -575,7 +712,10 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The field model holding the value.
 	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}. Its values
 	 *         are not {@link FieldSpec#isOrdered() ordered}: with no attribute holding them, nothing
-	 *         stores an order the user could arrange.
+	 *         stores an order the user could arrange. Its {@link FieldSpec#getOptionOrder() options
+	 *         are ordered} as the options of the type are, see
+	 *         {@link AttributeOptions#orderFor(TLType)}; a caller offering options of its own states
+	 *         their order instead.
 	 */
 	public static FieldSpec fieldSpec(TLType type, AnnotationLookup annotations, String label, boolean multiple,
 			FieldModel model) {
@@ -589,9 +729,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setTriState(isTriState(type))
 			.setSelectDisplay(radio == null ? SelectDisplay.DROPDOWN : SelectDisplay.RADIO)
 			.setSelectOrientation(radio == null ? Orientation.VERTICAL : radio)
+			.setOptionOrder(AttributeOptions.orderFor(type))
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
-			.setNumberFormat(numberFormat(annotations, type));
+			.setNumberFormat(numberFormat(annotations, type))
+			.setAcceptedTypes(acceptedTypes(annotations, type))
+			.setMaxUploadSize(maxUploadSize(annotations, type))
+			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 
 	/**
@@ -775,7 +919,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	/**
 	 * The Java type of the values of the given model type, which decides the control editing them.
 	 */
-	private static Class<?> valueType(TLType type) {
+	static Class<?> valueType(TLType type) {
 		if (type instanceof TLPrimitive primitive) {
 			StorageMapping<?> storage = primitive.getStorageMapping();
 			if (storage != null) {
@@ -910,9 +1054,14 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @param part
 	 *        The model attribute the value belongs to.
 	 * @param value
-	 *        The attribute value to display, may be {@code null}.
+	 *        The attribute value to display, may be {@code null}. The
+	 *        {@link ColumnProviderService#UNREADABLE} marker of a value the user may not read is
+	 *        displayed by its placeholder, see {@link #unreadableControl(ReactContext, Object)}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
+		if (ColumnProviderService.hasUnreadable(value)) {
+			return unreadableControl(context, value);
+		}
 		AbstractFieldModel model = displayModel(part, part.isMultiple(), value);
 		return createFieldControl(context, part, fieldSpec(part, part.isMultiple(), model), model, null);
 	}
@@ -948,6 +1097,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * A value of an unknown type is displayed by its label, the one thing every value has.
 	 * </p>
 	 *
+	 * <p>
+	 * The {@link ColumnProviderService#UNREADABLE} marker of a value the user may not read is
+	 * displayed by its placeholder before anything of the type is considered, see
+	 * {@link #unreadableControl(ReactContext, Object)}.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param columnType
@@ -956,6 +1111,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The value to display, may be {@code null}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
+		if (ColumnProviderService.hasUnreadable(value)) {
+			return unreadableControl(context, value);
+		}
 		TLStructuredTypePart part = columnType.part();
 		boolean multiple = columnType.multiple();
 		if (part != null) {
@@ -974,6 +1132,17 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		AbstractFieldModel model = displayModel(type, multiple, value);
 		FieldSpec field = cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model));
 		return createFieldControl(context, type, field, model);
+	}
+
+	/**
+	 * The read-only control of a value holding the {@link ColumnProviderService#UNREADABLE} marker:
+	 * the plain text of the placeholder, whatever the type of the value - an unreadable boolean is
+	 * no unchecked checkbox, an unreadable reference no empty selection.
+	 *
+	 * @see ColumnProviderService#label(Object)
+	 */
+	private static ReactControl unreadableControl(ReactContext context, Object value) {
+		return new ReactTextControl(context, ColumnProviderService.label(value));
 	}
 
 	/**
@@ -1005,7 +1174,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        one.
 	 */
 	private AbstractFieldModel displayModel(TLStructuredTypePart part, boolean multiple, Object value) {
-		boolean select = selectOptionSource(part) != null || displaysPartsAsSelection(part);
+		boolean select = selectOptionSource(part, null) != null || displaysPartsAsSelection(part);
 		return displayModel(select, multiple, value);
 	}
 
@@ -1060,13 +1229,50 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * Creates the {@link AttributeFieldModel} for the given attribute.
+	 * Creates the {@link AttributeFieldModel} for the given attribute, edited by the control the
+	 * attribute and its type imply.
+	 *
+	 * @param object
+	 *        The object to read/write the attribute value from.
+	 * @param part
+	 *        The attribute to bind to.
+	 * @param form
+	 *        The enclosing form.
+	 *
+	 * @see #createModel(TLObject, TLStructuredTypePart, FormControl, PolymorphicConfiguration)
+	 */
+	public AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part, FormControl form) {
+		return createModel(object, part, form, null);
+	}
+
+	/**
+	 * Creates the {@link AttributeFieldModel} for the given attribute, edited by the given control
+	 * where the field names one.
 	 *
 	 * <p>
 	 * Returns an {@link AttributeSelectFieldModel} when the attribute is edited by selecting from a
-	 * set of options (a configured option-bearing datatype, an enumeration, a reference, an enum
-	 * datatype, or an attribute with a TL-Script options annotation), and a plain
-	 * {@link AttributeFieldModel} otherwise.
+	 * set of options, and a plain {@link AttributeFieldModel} otherwise. The first of these decides:
+	 * </p>
+	 * <ol>
+	 * <li>the control the field names,</li>
+	 * <li>the {@link TLInputControl} annotation of the attribute,</li>
+	 * <li>the {@link TLFreeEntry} annotation of the attribute, which makes it a select,</li>
+	 * <li>the control configured for the attribute's type,</li>
+	 * <li>the structure of the attribute: an enumeration, a reference, an enum datatype, or a
+	 * TL-Script options annotation.</li>
+	 * </ol>
+	 * <p>
+	 * A {@link SelectControlProvider} in the first four steps makes the attribute a select, any
+	 * other control a plain field, whatever the structure says. The options of a select are the
+	 * ones of the provider's option source, of the attribute's options annotation, or of its
+	 * structure; an attribute that offers none of these offers the values it holds where it takes
+	 * free entry, and no options otherwise - a text selected by a control named for the field.
+	 * </p>
+	 *
+	 * <p>
+	 * The options of an attribute referring to a {@link TLClass} follow the instances of that class
+	 * while the field is displayed: an instance created later is offered, a deleted one no longer
+	 * is, see {@link AttributeSelectFieldModel#observeWhileDisplayed(ReactControl)}.
 	 * </p>
 	 *
 	 * <p>
@@ -1081,16 +1287,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The attribute to bind to.
 	 * @param form
 	 *        The enclosing form.
+	 * @param control
+	 *        The control the field names, the one passed to
+	 *        {@link #createFieldControl(ReactContext, TLStructuredTypePart, FieldModel, PolymorphicConfiguration)}
+	 *        for the same field; {@code null} to let the attribute decide.
 	 */
-	public AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part, FormControl form) {
-		OptionSource optionSource = selectOptionSource(part);
+	public AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part, FormControl form,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		OptionSource optionSource = selectOptionSource(part, instance(control));
 		if (optionSource != null) {
 			if (part.isDerived()) {
-				optionSource = NO_OPTIONS;
+				return new AttributeSelectFieldModel(object, part, form, NO_OPTIONS);
 			}
-			return new AttributeSelectFieldModel(object, part, form, optionSource);
+			return new AttributeSelectFieldModel(object, part, form, optionSource, observedTypes(part));
 		}
 		return new AttributeFieldModel(object, part, form);
+	}
+
+	/**
+	 * The types whose object changes compute the options of the given attribute again: the class
+	 * the attribute refers to, none for a value of any other type.
+	 */
+	private static Set<TLStructuredType> observedTypes(TLStructuredTypePart part) {
+		return part.getType() instanceof TLClass target ? Set.of(target) : Set.of();
 	}
 
 	/**
@@ -1100,30 +1319,26 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	/**
 	 * The {@link OptionSource} for the given attribute if it is edited as a select, or {@code null}
-	 * if it uses a plain (non-select) control.
+	 * if it uses a plain (non-select) control, decided in the order
+	 * {@link #createModel(TLObject, TLStructuredTypePart, FormControl, PolymorphicConfiguration)}
+	 * describes.
+	 *
+	 * @param fieldControl
+	 *        The control the field names, {@code null} for none.
 	 */
-	private OptionSource selectOptionSource(TLStructuredTypePart part) {
-		// 1. Explicit control annotation.
-		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
-		if (annotation != null) {
-			ReactFieldControlProvider provider = _context.getInstance(annotation.getImpl());
-			if (provider instanceof SelectControlProvider) {
-				return optionSourceFor(part, (SelectControlProvider) provider);
-			}
-			return null;
+	private OptionSource selectOptionSource(TLStructuredTypePart part, ReactFieldControlProvider fieldControl) {
+		// 1. Control of the field, 2. control annotation, 3. free entry, or 4. configured control by
+		// type.
+		ReactFieldControlProvider configured = configuredProvider(part, fieldControl);
+		if (configured instanceof SelectControlProvider select) {
+			return optionSourceFor(part, select);
 		}
-
-		// 2. Configured control by type.
-		ReactFieldControlProvider mapped = byType(part.getType());
-		if (mapped instanceof SelectControlProvider) {
-			return optionSourceFor(part, (SelectControlProvider) mapped);
-		}
-		if (mapped != null) {
+		if (configured != null) {
 			// A configured non-select control (e.g. color, icon).
 			return null;
 		}
 
-		// 3. Structural select (enumeration, reference, enum datatype, options generator).
+		// 5. Structural select (enumeration, reference, enum datatype, options generator).
 		if (AttributeOptions.isStructuralSelect(part)) {
 			return (self, overlays, dependencies) -> AttributeOptions.optionsFor(self, part, overlays, dependencies);
 		}
@@ -1138,17 +1353,109 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * An {@link TLOptions options annotation of the attribute itself} (e.g. supported locales) takes
 	 * precedence over the provider's configured option source; otherwise the configured option source
 	 * is used, falling back to the attribute's structural options (including the options of the
-	 * attribute's value type). Either way, only options the current user may read are offered.
+	 * attribute's value type). An attribute without any of these offers no options. Either way, only
+	 * options the current user may read are offered.
 	 * </p>
 	 */
 	private OptionSource optionSourceFor(TLStructuredTypePart part, SelectControlProvider provider) {
-		OptionProvider options = provider.getConfiguredOptions();
-		if (options != null && part.getAnnotationLocal(TLOptions.class) == null) {
-			OptionProvider configured = options;
+		OptionProvider configured = configuredOptions(part, provider);
+		if (configured != null) {
 			return (self, overlays, dependencies) -> AttributeOptions.readable(
 				AttributeOptions.toList(configured.getOptions(SimpleEditContext.createContext(self, part))));
 		}
+		if (!AttributeOptions.isStructuralSelect(part)) {
+			return hasFreeEntry(part) ? currentValues(part) : NO_OPTIONS;
+		}
 		return (self, overlays, dependencies) -> AttributeOptions.optionsFor(self, part, overlays, dependencies);
+	}
+
+	/**
+	 * Whether the given attribute is annotated with {@link TLFreeEntry}.
+	 */
+	private static boolean hasFreeEntry(TLStructuredTypePart part) {
+		return part.getAnnotation(TLFreeEntry.class) != null;
+	}
+
+	/**
+	 * The {@link OptionSource} offering the values the edited object holds in the given attribute,
+	 * for an attribute taking free entry that has no options of its own.
+	 */
+	private static OptionSource currentValues(TLStructuredTypePart part) {
+		return (self, overlays, dependencies) -> {
+			Object value = self == null ? null : self.tValue(part);
+			if (value == null) {
+				return Collections.emptyList();
+			}
+			if (value instanceof Collection<?> values) {
+				return new ArrayList<>(values);
+			}
+			return Collections.singletonList(value);
+		};
+	}
+
+	/**
+	 * The control configured for the given attribute: the one the field names, or, where it names
+	 * none, the one the {@link TLInputControl} annotation of the attribute names, or, where it has
+	 * none, a select for an attribute annotated with {@link TLFreeEntry}, or, for any other, the one
+	 * configured for its type. {@code null} where none of them names a control.
+	 *
+	 * @param fieldControl
+	 *        The control the field names, {@code null} for none.
+	 */
+	private ReactFieldControlProvider configuredProvider(TLStructuredTypePart part,
+			ReactFieldControlProvider fieldControl) {
+		if (fieldControl != null) {
+			return fieldControl;
+		}
+		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
+		if (annotation != null) {
+			return _context.getInstance(annotation.getImpl());
+		}
+		if (hasFreeEntry(part)) {
+			return _selectProvider;
+		}
+		return byType(part.getType());
+	}
+
+	/**
+	 * The option source configured at the given {@link SelectControlProvider} that offers the
+	 * options of the given attribute, or {@code null} where the attribute offers options of its own.
+	 *
+	 * <p>
+	 * An {@link TLOptions options annotation of the attribute itself} takes precedence over the
+	 * option source configured at the provider.
+	 * </p>
+	 */
+	private static OptionProvider configuredOptions(TLStructuredTypePart part, SelectControlProvider provider) {
+		OptionProvider options = provider.getConfiguredOptions();
+		if (options != null && part.getAnnotationLocal(TLOptions.class) == null) {
+			return options;
+		}
+		return null;
+	}
+
+	/**
+	 * The order the options of the given attribute are offered in, decided by the source the
+	 * options come from, as {@link #selectOptionSource(TLStructuredTypePart, ReactFieldControlProvider)}
+	 * resolves it.
+	 *
+	 * <p>
+	 * The values of an option source configured for the control of the attribute - countries,
+	 * languages, time zones - have no order of their own and are sorted by their labels. The
+	 * options of the attribute itself are ordered as {@link AttributeOptions#orderFor(TLStructuredTypePart)}
+	 * says.
+	 * </p>
+	 *
+	 * @param fieldControl
+	 *        The control the field names, {@code null} for none.
+	 * @return The order of the options, or {@code null} to offer them as given.
+	 */
+	private Comparator<?> optionOrder(TLStructuredTypePart part, ReactFieldControlProvider fieldControl) {
+		if (configuredProvider(part, fieldControl) instanceof SelectControlProvider select
+			&& configuredOptions(part, select) != null) {
+			return AttributeOptions.byLabel();
+		}
+		return AttributeOptions.orderFor(part);
 	}
 
 	/**

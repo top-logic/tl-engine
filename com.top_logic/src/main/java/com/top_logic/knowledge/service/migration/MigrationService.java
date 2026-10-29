@@ -75,9 +75,11 @@ import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.encryption.SymmetricEncryption;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.DBHelper;
@@ -104,6 +106,7 @@ import com.top_logic.knowledge.service.db2.migration.db.transformers.StoreTypeCo
 import com.top_logic.knowledge.service.db2.migration.sql.InsertWriter;
 import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
 import com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor;
+import com.top_logic.knowledge.service.migration.processors.AlignTableLayoutProcessor;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.util.model.CompatibilityService;
@@ -133,6 +136,7 @@ import com.top_logic.util.model.CompatibilityService;
 })
 @ServiceExtensionPoint(InitialTableSetup.Module.class)
 @Label("Data migration")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class MigrationService extends ConfiguredManagedClass<MigrationService.Config> {
 
 	/**
@@ -185,6 +189,17 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		 * <p>
 		 * The setting is required for upgrading systems from a version before the introduction of
 		 * initial versions.
+		 * </p>
+		 * 
+		 * <p>
+		 * A module without a version stored in the database is considered new to the application:
+		 * Its data does not exist, and all its migrations are skipped. This is wrong for the first
+		 * own migration of an application whose database was created while the application had no
+		 * migration folder: Its data exists, but no version of its module was stored. Such an
+		 * application must list its migration module here, so that its migrations are applied. The
+		 * entry must come with the first migration: Each startup stores the maximal version of each
+		 * module without stored version, so that a skipped migration counts as applied afterwards.
+		 * Skipped migrations of a module without stored version are logged.
 		 * </p>
 		 */
 		@Format(CommaSeparatedStrings.class)
@@ -334,7 +349,13 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	/**
 	 * Checks for schema changes between the stores database schema and the configured one and
 	 * adjusts the current schema.
-	 * 
+	 *
+	 * <p>
+	 * First, the layout of the existing tables is aligned with changed layout options of the
+	 * configured schema (see {@link AlignTableLayoutProcessor}), so that tables for types added
+	 * afterwards are created in the configured layout.
+	 * </p>
+	 *
 	 * @param log
 	 *        {@link ProcessBuilder} to write errors (and any messages) to.
 	 * @param connection
@@ -343,6 +364,34 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 */
 	private boolean executeAutomaticSchemaMigrations(MigrationContext context, Protocol log,
 			PooledConnection connection) {
+		boolean layoutChanged = alignTableLayout(context, log, connection);
+		boolean typesAdded = addApplicationTypes(context, log, connection);
+		return layoutChanged || typesAdded;
+	}
+
+	/**
+	 * Aligns the layout of the existing tables with the layout options of the configured schema,
+	 * if they differ from the ones of the stored schema.
+	 *
+	 * @return Whether any changes have been written to the given connection.
+	 */
+	private boolean alignTableLayout(MigrationContext context, Protocol log, PooledConnection connection) {
+		SchemaConfiguration persistentSchema = context.getPersistentSchema();
+		if (persistentSchema == null
+			|| !AlignTableLayoutProcessor.hasLayoutChange(persistentSchema, context.getApplicationSchema())) {
+			return false;
+		}
+		execute(context, log, connection, TypedConfiguration.newConfigItem(AlignTableLayoutProcessor.Config.class));
+		return true;
+	}
+
+	/**
+	 * Creates tables for the types of the configured schema that are not part of the stored
+	 * schema.
+	 *
+	 * @return Whether any changes have been written to the given connection.
+	 */
+	private boolean addApplicationTypes(MigrationContext context, Protocol log, PooledConnection connection) {
 		Map<String, MetaObjectName> applicationTypes = context.getApplicationSchema().getMetaObjects().getTypes();
 		Map<String, MetaObjectName> persistentTypes = context.getPersistentSchema().getMetaObjects().getTypes();
 
@@ -522,11 +571,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 					// Check that everything is ok.
 					log.checkErrors();
-					if (changes) {
-						commitConnection(log, connection, "Unable to commit automatic schema changes.");
-						return;
-					}
 
+					boolean versionsStored = storeMissingVersions(log, connection);
+					if (changes || versionsStored) {
+						commitConnection(log, connection, "Unable to commit automatic schema and version changes.");
+					}
 				}
 				return;
 			}
@@ -547,6 +596,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				migrate(context, log, connection);
 
 			MigrationUtil.updateStoredVersions(log, connection, maximalVersionByModule.values());
+			storeMissingVersions(log, connection);
 
 			// Update stored schema to be compatible with the current application configuration.
 			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
@@ -594,6 +644,32 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			 * Oracle). */
 			_connectionPool.invalidateWriteConnection(connection);
 		}
+	}
+
+	/**
+	 * Stores the maximal version of each migration module that has no version stored in the
+	 * database.
+	 * 
+	 * <p>
+	 * A module without stored version is considered new to the application, its migrations are
+	 * skipped. Storing its current version makes the next migration of the module run.
+	 * </p>
+	 * 
+	 * @return Whether some version was written. The connection is not committed.
+	 */
+	private boolean storeMissingVersions(Protocol log, PooledConnection connection) {
+		Map<String, Version> storedVersions;
+		try {
+			storedVersions = MigrationUtil.readStoredVersions(connection, getConfig().getModules());
+		} catch (SQLException ex) {
+			log.error("Unable to read stored versions.", ex);
+			return false;
+		}
+		List<Version> missingVersions =
+			MigrationUtil.versionsOfUnstoredModules(MigrationUtil.maximalVersions(log), storedVersions);
+		MigrationUtil.updateStoredVersions(log, connection, missingVersions);
+		log.checkErrors();
+		return !missingVersions.isEmpty();
 	}
 
 	private void commitConnection(Protocol log, PooledConnection connection, String failureMessage) {
@@ -682,6 +758,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		// processors.
 		migration.executeSQLMigration(context, log, connection);
 
+		// The migration processors work on the table layout of the stored schema, which the state
+		// of the context is derived from. The layout is aligned with the configuration only
+		// afterwards, including the tables the processors have created.
 		executeAutomaticSchemaMigrations(context, log, connection);
 
 		if (migration.isReplayRequired()) {

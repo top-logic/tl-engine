@@ -24,6 +24,9 @@
 						<property name="classified"
 							type="tl.core:String"
 						/>
+						<property name="approved"
+							type="tl.core:Boolean"
+						/>
 						<property name="rating"
 							type="tl.core:String"
 						/>
@@ -32,6 +35,31 @@
 						>
 							<annotations>
 								<visibility value="read-only"/>
+							</annotations>
+						</property>
+						<property name="keywords"
+							multiple="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<config-type value="STRING_SET"/>
+								<storage-algorithm>
+									<string-set-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="place"
+							type="tl.core:String"
+						>
+							<annotations>
+								<free-entry/>
+							</annotations>
+						</property>
+						<property name="count"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<free-entry/>
 							</annotations>
 						</property>
 						<reference name="responsible"
@@ -46,6 +74,17 @@
 						<reference name="category"
 							type="Category"
 						/>
+						<reference name="topic"
+							type="Category"
+						>
+							<annotations>
+								<free-entry create="text -> self -> new(`TestViewModelAccess:Category`, transient: true)..set(`TestViewModelAccess:Category#name`, $text)"/>
+							</annotations>
+						</reference>
+						<reference name="categories"
+							multiple="true"
+							type="Category"
+						/>
 						<reference name="tasks"
 							composite="true"
 							multiple="true"
@@ -57,6 +96,24 @@
 							multiple="true"
 							ordered="true"
 							type="Step"
+						/>
+						<reference name="deliverables"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Deliverable"
+						/>
+						<reference name="archive"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Archive"
+						/>
+						<reference name="milestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
 						/>
 					</attributes>
 				</class>
@@ -86,6 +143,16 @@
 						<property name="note"
 							type="tl.core:String"
 						/>
+						<property name="label"
+							type="tl.core:String"
+						>
+							<annotations>
+								<value-normalizer>
+									<trim/>
+									<lower-case/>
+								</value-normalizer>
+							</annotations>
+						</property>
 						<property name="secret"
 							type="tl.core:String"
 						>
@@ -177,7 +244,106 @@
 						<reference name="reader"
 							type="tl.accounts:Person"
 						/>
+						<reference name="notes"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Note"
+						/>
 					</attributes>
+				</class>
+
+				<class name="Deliverable"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+
+				<class name="Spec">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Deliverable"/>
+					</generalizations>
+				</class>
+
+				<class name="Plan">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Deliverable"/>
+					</generalizations>
+				</class>
+
+				<class name="Archive"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+
+				<class name="ArchiveEntry">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Archive"/>
+					</generalizations>
+				</class>
+
+				<class name="Milestone">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Note">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Remark">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Empty"
+					abstract="true"
+				>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
 				</class>
 			</types>
 		</module>

@@ -176,6 +176,54 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The data rows counted are the nodes of the {@link TreeStructure} whose own business object
+	 * the given filter lets pass. An ancestor the filter displays only to lead to a matching
+	 * descendant is not counted: it is shown for its position in the tree, not because it is one of
+	 * the rows the filter selects. A tree that is not {@link TreeStructure#isFinite() finite}
+	 * cannot be counted, its complete node set cannot be enumerated, so it answers
+	 * {@link #UNKNOWN_COUNT}.
+	 * </p>
+	 *
+	 * <p>
+	 * This source does not tell the {@link #matchCount() count under its current filter}; the
+	 * count answered here does not touch that filter or the expansion of a node, it walks the
+	 * structure on its own.
+	 * </p>
+	 */
+	@Override
+	public int matchCount(FilterSpec filter) {
+		if (!_structure.isFinite()) {
+			return UNKNOWN_COUNT;
+		}
+		Predicate<R> predicate = ColumnLogic.predicate(filter, _byName);
+		int result = 0;
+		for (N root : _structure.roots()) {
+			result += countMatches(root, predicate);
+		}
+		return result;
+	}
+
+	/**
+	 * The number of nodes in the subtree of the given node, the node included, whose own business
+	 * object the given predicate accepts.
+	 *
+	 * @param predicate
+	 *        The filter to count, {@code null} to count every node.
+	 */
+	private int countMatches(N node, Predicate<R> predicate) {
+		int result = predicate == null || predicate.test(_structure.businessObject(node)) ? 1 : 0;
+		if (!_structure.isLeaf(node)) {
+			for (N child : _structure.children(node)) {
+				result += countMatches(child, predicate);
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public RowSource<R> withOrder(SortSpec sort) {
 		_sort = sort;
@@ -307,22 +355,49 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 		_nodes.clear();
 		_parents.clear();
 
-		List<Row<R>> displayed = new ArrayList<>();
-		for (N root : sortedSiblings(_structure.roots(), _nodeOrder)) {
-			visit(null, root, 0, displayed);
-		}
-		_displayed = displayed;
+		_displayed = treeRows(false);
 	}
 
-	private void visit(N parent, N node, int depth, List<Row<R>> out) {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The descendants of a collapsed node follow it, as those of an expanded one do. Of a tree that
+	 * is not {@link TreeStructure#isFinite() finite} only the displayed nodes are answered, since
+	 * its complete node set cannot be enumerated.
+	 * </p>
+	 */
+	@Override
+	public List<Row<R>> allRows() {
+		if (!_structure.isFinite()) {
+			return List.copyOf(_displayed);
+		}
+		return treeRows(true);
+	}
+
+	/**
+	 * The rows of the tree in display order.
+	 *
+	 * @param all
+	 *        Whether the descendants of collapsed nodes are included.
+	 */
+	private List<Row<R>> treeRows(boolean all) {
+		List<Row<R>> result = new ArrayList<>();
+		for (N root : sortedSiblings(_structure.roots(), _nodeOrder)) {
+			visit(null, root, 0, result, all);
+		}
+		return result;
+	}
+
+	private void visit(N parent, N node, int depth, List<Row<R>> out, boolean all) {
 		if (_predicate != null && !isVisible(node, _predicate)) {
 			return;
 		}
 		Row<R> row = row(parent, node, depth);
 		out.add(row);
-		if (row.expanded()) {
+		if (row.expanded() || (all && !_structure.isLeaf(node))) {
 			for (N child : sortedSiblings(_structure.children(node), _nodeOrder)) {
-				visit(node, child, depth + 1, out);
+				visit(node, child, depth + 1, out, all);
 			}
 		}
 	}

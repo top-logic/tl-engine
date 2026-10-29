@@ -10,13 +10,12 @@ import java.util.List;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.config.TLModelPartMapping;
@@ -69,17 +68,20 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	@Nullable
 	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
-	@ControlProvider(SelectionControlProvider.class)
 	String getSourceMetaElement();
 
 	/**
 	 * The roles a user gets on an object of the {@link #getMetaElement() type}.
+	 *
+	 * <p>
+	 * A rule without a role grants nothing, so at least one is required.
+	 * </p>
 	 */
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_ROLE)
+	@Mandatory
 	@Label("Granted roles")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
-	@ControlProvider(SelectionControlProvider.class)
 	List<String> getRole();
 
 	/**
@@ -90,7 +92,6 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE)
 	@Label("Role at path end")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
-	@ControlProvider(SelectionControlProvider.class)
 	List<String> getSourceRole();
 
 	/**

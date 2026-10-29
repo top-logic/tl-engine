@@ -9,7 +9,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.dnd.DropArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
@@ -22,6 +29,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -45,6 +53,7 @@ import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
@@ -58,6 +67,7 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.impl.ListRowSource;
@@ -90,6 +100,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	@TagName("table")
 	public interface Config extends AbstractTableElement.Config, RowClassConfig {
 
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
 		@Override
 		@ClassDefault(TableElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -119,15 +132,18 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		String DROPS = "drops";
 
 		/**
-		 * TL-Script function computing the row objects (a {@link Collection}).
+		 * TL-Script expression computing the row objects (a {@link Collection}).
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, e.g. {@code inputs="selection as project"}
+		 * with {@code rows="$project.get(`my.module:Project#tickets`)"}.
 		 * </p>
 		 */
 		@Name(ROWS)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRows();
 
 		/**
@@ -210,7 +226,21 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<TableDropConfig> getDrops();
+
+		/**
+		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
+		 * its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), config -> config.getTarget().signature());
+			if (drop != null) {
+				return drop;
+			}
+			return AbstractTableElement.Config.super.actionScope(part, outer);
+		}
 	}
 
 	/**
@@ -244,14 +274,19 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
-		_rowsExecutor = QueryExecutor.compile(config.getRows());
-		_rowClass = RowClassFunction.compile(config.getRowClass());
+		_rowsExecutor = InputScript.compile(config, Config.ROWS);
+		_rowClass = RowClassFunction.compile(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a
 			// declaration there would apply to nothing.
 			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
 				+ "> nor <" + DropConfig.TAG_NAME + ">.");
+		}
+		if (config.getRowEdit() != RowEditPolicy.NONE && config.getEditInPlace()) {
+			// A row-edit table buffers its edits in the form, an edit in place writes at once.
+			context.error("A <table> with '" + Config.ROW_EDIT + "' is not edited in place ('"
+				+ Config.EDIT_IN_PLACE + "').");
 		}
 	}
 
@@ -266,12 +301,16 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			return createEditableControl(context, inputChannels, initialRows);
 		}
 
-		ReadOnlyTable<ListRowSource<Object>> table = createTable(context, resolveRowType(rows), inputValues,
-			columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false, initialGrouping(), _drops,
-			_rowClass.bind(inputChannels));
+		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
+		ReadOnlyTable<ListRowSource<Object>, TableSelectionBinding> table = createTable(context,
+			resolveRowType(rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
+			initialGrouping(), _drops, rowCssClass, ROW_SELECTION);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());
+
+		contributeExportCommand(context, control, table::view,
+			() -> ColumnDeclarations.exportRenderers(table.setups()), inputChannels);
 
 		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
@@ -282,12 +321,26 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 				table.selectionBinding().rowsRefreshed();
 			}
 		};
+		// An input change leaving the rows as they are - a change of the table's own selection
+		// above all - keeps the cells where no column reads that input, and only refreshes what is
+		// computed from the inputs apart from the rows.
+		InputRoles roles = inputRoles(context, inputChannels);
+		Runnable inputsChanged = () -> {
+			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// Pushes the rows again as well, for their row class.
+				control.refreshFilters();
+			} else if (rowCssClass != null) {
+				control.repaintRows();
+			}
+		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			table.source(),
 			args -> new ArrayList<>(refreshRows(rowsExecutor, args, control)),
 			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
-			refresh);
+			refresh)
+				.withRowIndependentInputs(roles.rowIndependent())
+				.onInputsChanged(roles.cellIndependent(), inputsChanged);
 		// Observe the model only while the table is displayed: a table that is not attached - the
 		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
@@ -347,14 +400,18 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setSelectionMode(_config.getSelectionMode());
+		InputRoles roles = inputRoles(context, inputChannels);
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
-			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels, roles.rowIndependent(),
+			roles.cellIndependent());
 		control.setActivationHandler(activationHandler(context, activation));
-		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
+		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 
 		contributeAddRowCommand(context, formControl, binding, control);
+		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
+			control::getExportRenderers, inputChannels);
 
 		return control;
 	}

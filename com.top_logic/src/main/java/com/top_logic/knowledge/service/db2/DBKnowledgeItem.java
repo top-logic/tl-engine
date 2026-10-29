@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
@@ -157,8 +158,15 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 
 	}
 
-	/** Storage object holding global data without local changes. */
-	private Values _values;
+	/**
+	 * Storage object holding global data without local changes.
+	 * 
+	 * <p>
+	 * Read without lock, written only in the synchronized {@link #setValues(Values)}, see
+	 * {@link #getValues()}.
+	 * </p>
+	 */
+	private volatile Values _values;
 
 	/* package protected */DBKnowledgeItem(DBKnowledgeBase kb, MOKnowledgeItem staticType) {
 		super(kb, staticType);
@@ -187,12 +195,15 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 
 	@Override
 	public final Object getValue(MOAttribute attribute, long revision) {
-		return getAttributeValue(getCurrentDBContext(), attribute, revision, this);
+		TLInteractionContext interaction = currentInteraction();
+		return getAttributeValue(lookupDBContext(interaction), attribute, dataRevision(interaction, revision), this);
 	}
 
 	@Override
 	public final Object getAttributeValue(String attributeName, long revision) throws NoSuchAttributeException {
-		return getAttributeValue(getCurrentDBContext(), attributeName, revision, this);
+		TLInteractionContext interaction = currentInteraction();
+		return getAttributeValue(lookupDBContext(interaction), attributeName, dataRevision(interaction, revision),
+			this);
 	}
 
 	@Override
@@ -202,7 +213,9 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 
 	@Override
 	public final ObjectKey getReferencedKey(MOReference reference, long revision) {
-		return lookupKey(reference, getLocalValues(getCurrentDBContext(), revision, false));
+		TLInteractionContext interaction = currentInteraction();
+		return lookupKey(reference,
+			getLocalValues(lookupDBContext(interaction), dataRevision(interaction, revision), false));
 	}
 
 	@Override
@@ -364,7 +377,8 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 
 	@Override
 	protected final Object[] getLocalValues() {
-		return getLocalValues(getCurrentDBContext(), IN_SESSION_REVISION, false);
+		TLInteractionContext interaction = currentInteraction();
+		return getLocalValues(lookupDBContext(interaction), dataRevision(interaction, IN_SESSION_REVISION), false);
 	}
 
 	@Override
@@ -681,6 +695,53 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	protected final DBContext getCurrentDBContext() {
 		return getKnowledgeBase().getCurrentDBContext();
 	}
+
+	/**
+	 * The {@link TLInteractionContext} of the current thread.
+	 * 
+	 * <p>
+	 * An operation that needs both the {@link DBContext} and the session revision fetches the
+	 * interaction once and derives both from it, see {@link #lookupDBContext(TLInteractionContext)}
+	 * and {@link #dataRevision(TLInteractionContext, long)}.
+	 * </p>
+	 */
+	private TLInteractionContext currentInteraction() {
+		return getKnowledgeBase().currentInteraction();
+	}
+
+	/**
+	 * The {@link DBContext} of the given interaction.
+	 * 
+	 * @see #getCurrentDBContext()
+	 */
+	private DBContext lookupDBContext(TLInteractionContext interaction) {
+		return getKnowledgeBase().lookupDBContext(interaction);
+	}
+
+	/**
+	 * Resolves {@link #IN_SESSION_REVISION} to the session revision of the given interaction.
+	 * 
+	 * <p>
+	 * The result is passed down to {@link #checkAlive(DBContext, long)},
+	 * {@link #getLocalValues(DBContext, long, boolean)} and {@link #getGlobalValues(long)}, so that
+	 * these do not look up the session revision once more.
+	 * </p>
+	 * 
+	 * @param interaction
+	 *        The interaction of the current thread.
+	 * @param revision
+	 *        The requested revision, or {@link #IN_SESSION_REVISION}.
+	 * @return The revision to read the data of this item in. For a persistent item, the result is
+	 *         never {@link #IN_SESSION_REVISION}. A new item has no data in any revision; for such an
+	 *         item, {@link #IN_SESSION_REVISION} is returned unchanged, so that accessing it does not
+	 *         fix the session revision of the interaction.
+	 */
+	private long dataRevision(TLInteractionContext interaction, long revision) {
+		if (revision == IN_SESSION_REVISION && isPersistent()) {
+			return getKnowledgeBase().getSessionRevision(interaction);
+		}
+		return revision;
+	}
 	
 	private void checkInitialValueNotSet(MOAttribute attribute, Object value) throws DataObjectException {
 		if (isPersistent()) {
@@ -861,7 +922,8 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 
 	@Override
 	public final boolean isAlive() {
-		return this.isAlive(getCurrentDBContext());
+		TLInteractionContext interaction = currentInteraction();
+		return aliveState(lookupDBContext(interaction), dataRevision(interaction, IN_SESSION_REVISION)).isAlive();
 	}
 
 	final boolean isAlive(DBContext context) {
@@ -1241,9 +1303,19 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	 * In a new object this is <code>null</code> until the object is committed.
 	 * </p>
 	 * 
+	 * <p>
+	 * The reference is a volatile read without lock: A caller sees the {@link Values} installed by
+	 * the latest {@link #setValues(Values)}. The consistency of the chain of {@link Values} (the
+	 * validity bounds {@link Values#minValidity()} and {@link Values#maxValidity()} and the link
+	 * {@link Values#formerValidity()}) is guarded by the synchronized methods
+	 * {@link #findValues(long, Values)} and {@link #updateValues(Values)}, which walk and modify
+	 * the chain under the lock of this item; {@link ValidityChainImpl} declares the bounds and the
+	 * link volatile.
+	 * </p>
+	 * 
 	 * @see #findValues(long) The values for a given revision.
 	 */
-	protected synchronized Values getValues() {
+	protected Values getValues() {
 		return _values;
 	}
 

@@ -10,6 +10,8 @@ import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import type { CommandOptions } from './command-channel';
+import type { ChildControlJson } from '../state/control-state';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -59,16 +61,173 @@ const TLControlContext = createContext<TLControlContextValue | null>(null);
 type StateListener = (state: Record<string, unknown>) => void;
 
 /**
- * Map of mounted control IDs to their React roots, state stores, and SSE listeners.
- *
- * <p>{@code refs} counts the live holders of the entry (one top-level {@link mount} or one or more
- * {@link createChildContext} callers). It exists because a React re-render can create the next
- * holder — reusing this entry and its SSE subscription — before the previous holder's cleanup runs;
- * tearing down on the first {@link unmount} would then orphan the still-mounted component from
- * further SSE patches. The entry is torn down only when the last holder releases.</p>
+ * The client side of a control: its React root (for a top-level {@link mount}), its state store
+ * and its SSE subscription.
  */
-const _mounts =
-  new Map<string, { root: Root | null; store: ControlStateStore; sseListener: StateListener; refs: number }>();
+interface MountEntry {
+  root: Root | null;
+  store: ControlStateStore;
+  sseListener: StateListener;
+
+  /**
+   * The live holders of the entry: one top-level {@link mount} or one or more
+   * {@link createChildContext} callers.
+   *
+   * <p>It exists because a React re-render can create the next holder — reusing this entry and
+   * its SSE subscription — before the previous holder's cleanup runs; tearing down on the first
+   * {@link unmount} would then orphan the still-mounted component from further SSE patches. The
+   * entry is torn down only when the last holder releases.</p>
+   *
+   * <p>An entry created for a child descriptor arriving with an SSE event (see
+   * {@link registerChildDescriptors}) has no holder until a {@link TLChild} renders the child.</p>
+   */
+  refs: number;
+
+  /**
+   * The control describing this one, as long as the entry has no holder; {@code null} otherwise:
+   * the control whose SSE update carried the descriptor this entry was created for, or, for a
+   * descriptor nested in the state of another descriptor, the control of that other descriptor.
+   */
+  owner: string | null;
+
+  /**
+   * The entries created for descriptors in the SSE events of this control that have no holder
+   * yet. They are torn down together with this entry.
+   */
+  owned: Set<string>;
+}
+
+/**
+ * Map of mounted control IDs to their React roots, state stores, and SSE listeners.
+ */
+const _mounts = new Map<string, MountEntry>();
+
+/**
+ * The serialized state of the child descriptor last applied to a store, by store.
+ *
+ * <p>A descriptor is applied to a store once. Applying it again (when a parent remounts a child
+ * with the descriptor it already held) would turn the child back to the state it had when the
+ * parent serialized it, discarding the patches the child received since.</p>
+ */
+const _appliedDescriptors = new WeakMap<ControlStateStore, string>();
+
+/**
+ * Creates the entry of a control with a store holding the given state and subscribes it to the
+ * SSE updates of the control.
+ */
+function createEntry(controlId: string, initialState: Record<string, unknown>, root: Root | null): MountEntry {
+  const store = new ControlStateStore(initialState);
+  // PatchEvents send partial state, StateEvents send full state; both arrive as a patch. Child
+  // descriptors in the update are registered before the update reaches the store, so that their
+  // own updates following in the same SSE batch find a listener.
+  const sseListener = (data: Record<string, unknown>) => {
+    registerChildDescriptors(controlId, data);
+    store.applyPatch(data);
+  };
+  subscribe(controlId, sseListener);
+  return { root, store, sseListener, refs: 0, owner: null, owned: new Set() };
+}
+
+/**
+ * Whether the given value is a child descriptor (see {@link ChildControlJson}).
+ */
+function isChildDescriptor(value: Record<string, unknown>): boolean {
+  return typeof value.controlId === 'string'
+    && typeof value.module === 'string'
+    && typeof value.state === 'object' && value.state !== null && !Array.isArray(value.state);
+}
+
+/**
+ * Makes sure every child control described in an update of the given control has its entry when
+ * the update reaches the store.
+ *
+ * <p>The server creates a child control and sends the patches of the child in the same request as
+ * the descriptor of the child in the state of its parent. A {@link TLChild} creates the entry of
+ * the child only when React renders the parent's new state, which happens after the whole batch of
+ * SSE events is dispatched. Without an entry, the patches of the child would find no listener and
+ * the child would show the state of its descriptor.</p>
+ *
+ * <p>For each descriptor in the update (at any depth, also inside the state of another
+ * descriptor), an entry missing so far is created from the descriptor's state, owned by the
+ * control that describes it. A descriptor whose state has not been applied to an existing entry
+ * is applied to its store. Either way, the descriptor counts as applied (see
+ * {@link _appliedDescriptors}).</p>
+ *
+ * @param owner the control whose update contains the given value
+ * @param value the update or a part of it
+ */
+function registerChildDescriptors(owner: string, value: unknown): void {
+  if (Array.isArray(value)) {
+    for (const element of value) {
+      registerChildDescriptors(owner, element);
+    }
+    return;
+  }
+  if (value === null || typeof value !== 'object') {
+    return;
+  }
+  const obj = value as Record<string, unknown>;
+  if (isChildDescriptor(obj)) {
+    registerChildDescriptor(owner, obj as unknown as ChildControlJson & { state: Record<string, unknown> });
+    return;
+  }
+  for (const key in obj) {
+    registerChildDescriptors(owner, obj[key]);
+  }
+}
+
+/**
+ * Registers a single child descriptor, see {@link registerChildDescriptors}.
+ */
+function registerChildDescriptor(
+  owner: string,
+  descriptor: ChildControlJson & { state: Record<string, unknown> }
+): void {
+  const childId = descriptor.controlId;
+  const stateKey = JSON.stringify(descriptor.state);
+  let entry = _mounts.get(childId);
+  if (entry === undefined) {
+    const ownerEntry = _mounts.get(owner);
+    if (ownerEntry === undefined) {
+      return;
+    }
+    entry = createEntry(childId, descriptor.state, null);
+    entry.owner = owner;
+    ownerEntry.owned.add(childId);
+    _mounts.set(childId, entry);
+    _appliedDescriptors.set(entry.store, stateKey);
+    registerChildDescriptors(childId, descriptor.state);
+  } else if (_appliedDescriptors.get(entry.store) !== stateKey) {
+    _appliedDescriptors.set(entry.store, stateKey);
+    registerChildDescriptors(childId, descriptor.state);
+    entry.store.applyPatch(descriptor.state);
+  }
+}
+
+/**
+ * Removes the given entry with its SSE subscription and React root, together with the entries it
+ * owns that still have no holder.
+ */
+function tearDown(controlId: string, entry: MountEntry): void {
+  unsubscribe(controlId, entry.sseListener);
+  if (entry.root) {
+    entry.root.unmount();
+  }
+  if (_mounts.get(controlId) === entry) {
+    _mounts.delete(controlId);
+  }
+  if (entry.owner !== null) {
+    _mounts.get(entry.owner)?.owned.delete(controlId);
+  }
+  const owned = [...entry.owned];
+  entry.owned.clear();
+  for (const childId of owned) {
+    const child = _mounts.get(childId);
+    if (child !== undefined && child.refs === 0 && child.owner === controlId) {
+      tearDown(childId, child);
+    }
+  }
+}
 
 /** The application context path (e.g. "/demo"), set on first mount(). */
 let _contextPath = '';
@@ -131,23 +290,16 @@ export function mount(
   // Clean up any existing mount for this controlId (e.g. after AJAX page reload).
   unmount(controlId);
 
-  const store = new ControlStateStore(initialState);
-
   // Hide the mount point eagerly to prevent a visible flash when the control starts hidden.
   if (initialState.hidden === true) {
     element.style.display = 'none';
   }
 
-  // Listen for SSE updates.
-  const sseListener = (data: Record<string, unknown>) => {
-    // PatchEvents send partial state, StateEvents send full state.
-    // Both arrive through notifyListeners. We check for a full replacement marker.
-    store.applyPatch(data);
-  };
-  subscribe(controlId, sseListener);
-
   const root = createRoot(element);
-  _mounts.set(controlId, { root, store, sseListener, refs: 1 });
+  const entry = createEntry(controlId, initialState, root);
+  entry.refs = 1;
+  _mounts.set(controlId, entry);
+  const store = entry.store;
 
   _lastWindowName = resolvedWindowName;
 
@@ -198,11 +350,7 @@ export function unmount(controlId: string): void {
     entry.refs--;
     return;
   }
-  unsubscribe(controlId, entry.sseListener);
-  if (entry.root) {
-    entry.root.unmount();
-  }
-  _mounts.delete(controlId);
+  tearDown(controlId, entry);
 }
 
 /**
@@ -239,17 +387,17 @@ export function createChildContext(
   childControlId: string,
   initialState: Record<string, unknown>
 ): TLControlContextValue {
-  // Re-use an existing mount entry if the child was independently mounted.
+  // Re-use an existing mount entry if the child was independently mounted or registered when its
+  // descriptor arrived (see registerChildDescriptors).
   let entry = _mounts.get(childControlId);
   if (!entry) {
-    const store = new ControlStateStore(initialState);
-    const sseListener = (data: Record<string, unknown>) => {
-      store.applyPatch(data);
-    };
-    subscribe(childControlId, sseListener);
-    // Track it so we can clean up on unmount.
-    entry = { root: null, store, sseListener, refs: 0 };
+    entry = createEntry(childControlId, initialState, null);
     _mounts.set(childControlId, entry);
+  } else if (entry.owner !== null) {
+    // The first holder claims an entry registered for an arriving descriptor: from now on, its
+    // holders decide its lifetime, not the control that described it.
+    _mounts.get(entry.owner)?.owned.delete(childControlId);
+    entry.owner = null;
   }
   // Register this holder. A matching unmount() releases it; the entry (and its SSE subscription)
   // survives until the last holder is gone, which keeps patches flowing across a remount.
@@ -259,6 +407,40 @@ export function createChildContext(
   const parentWindowName = _lastWindowName;
 
   return { controlId: childControlId, windowName: parentWindowName, store: entry.store };
+}
+
+/**
+ * Applies the state of a child's descriptor to the store of the child, unless this descriptor
+ * state is the one applied last (see {@link _appliedDescriptors}).
+ *
+ * @param context  the context of the child, see {@link createChildContext}
+ * @param state    the state of the descriptor
+ * @param stateKey the serialized form of {@code state}
+ */
+export function applyChildDescriptor(
+  context: TLControlContextValue,
+  state: Record<string, unknown>,
+  stateKey: string
+): void {
+  if (_appliedDescriptors.get(context.store) === stateKey) {
+    return;
+  }
+  _appliedDescriptors.set(context.store, stateKey);
+  context.store.applyPatch(state);
+}
+
+/**
+ * Records the state of a child's descriptor as applied to the store of the child, unless a
+ * descriptor has been applied to it before: the store started with this state or has received
+ * newer state since.
+ *
+ * @param context the context of the child, see {@link createChildContext}
+ * @param state   the state of the descriptor
+ */
+export function adoptChildDescriptor(context: TLControlContextValue, state: Record<string, unknown>): void {
+  if (!_appliedDescriptors.has(context.store)) {
+    _appliedDescriptors.set(context.store, JSON.stringify(state));
+  }
 }
 
 /** Tracks the last windowName used in mount() for child context inheritance. */
@@ -284,10 +466,14 @@ export function useTLState<T extends object = Record<string, unknown>>(): T {
  *
  * <p>Commands are dispatched through the strict FIFO chain of {@link enqueueCommand}: they reach
  * the server in dispatch order, and an action command implicitly flushes all pending debounced
- * field values first (see {@link useTLFieldValue}). The returned promise resolves when this
- * command's server response has arrived.</p>
+ * field values first (see {@link useTLFieldValue}), unless the given {@link CommandOptions} say
+ * otherwise. The returned promise resolves when this command's server response has arrived.</p>
  */
-export function useTLCommand(): (command: string, args?: Record<string, unknown>) => Promise<void> {
+export function useTLCommand(): (
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<void> {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useTLCommand must be used inside a TLReact-mounted component.');
@@ -296,13 +482,13 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
   const windowName = ctx.windowName;
 
   return useCallback(
-    async (command: string, args?: Record<string, unknown>) => {
+    async (command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
       await enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
         arguments: args ?? {},
-      });
+      }, options);
     },
     [controlId, windowName]
   );
@@ -328,28 +514,15 @@ function oversizedFile(formData: FormData, limit: number): File | null {
 }
 
 /**
- * The total size of all files in the given form data.
- */
-function totalFileSize(formData: FormData): number {
-  let total = 0;
-  for (const value of formData.values()) {
-    if (value instanceof File) {
-      total += value.size;
-    }
-  }
-  return total;
-}
-
-/**
  * Returns a function to upload a FormData to the server for the enclosing control.
  *
  * <p>The control ID and window name are appended automatically. The server dispatches
  * to controls implementing the {@code UploadHandler} interface.</p>
  *
- * <p>A selection larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit - either a single
- * file or the selection as a whole - is not transmitted at all. Instead, the
- * {@link CMD_UPLOAD_REJECTED} command tells the server about the refusal, which reports the limit
- * to the user.</p>
+ * <p>A selection holding a file larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit is
+ * not transmitted at all. The limit applies to each file on its own, not to the selection as a
+ * whole. Instead of the upload, the {@link CMD_UPLOAD_REJECTED} command tells the server about the
+ * refusal, which reports the limit to the user.</p>
  */
 export function useTLUpload(): (formData: FormData) => Promise<void> {
   const ctx = useContext(TLControlContext);
@@ -365,15 +538,14 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
       const limit = Number(store.getSnapshot()[STATE_MAX_UPLOAD_SIZE] ?? 0);
       if (limit > 0) {
         const oversized = oversizedFile(formData, limit);
-        const total = totalFileSize(formData);
-        if (oversized !== null || total > limit) {
+        if (oversized !== null) {
           await enqueueCommand(getApiBase() + 'react-api/command', {
             controlId,
             command: CMD_UPLOAD_REJECTED,
             windowName,
             arguments: {
-              fileName: oversized !== null ? oversized.name : '',
-              size: oversized !== null ? oversized.size : total,
+              fileName: oversized.name,
+              size: oversized.size,
             },
           });
           return;
@@ -579,7 +751,7 @@ export interface TLTypingField {
    * The key handler of a single-line input, `undefined` while the state asks for nothing on Enter.
    * Never attach it to a text area, where Enter is part of the text.
    */
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 /**
@@ -650,7 +822,7 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
   }, [normalize, text, setValue, toValue, commitEdit]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
         return;
       }
@@ -782,6 +954,22 @@ function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, Ge
 }
 
 /**
+ * Binds Escape to {@code onClose} in the enclosing keyboard scope.
+ *
+ * <p>A component, not a hook: a dialog or window opens its own scope with a
+ * {@link KeyboardScopeProvider} and renders this as the provider's first child, so the binding lands
+ * in that scope - a hook called by the same component would bind into the scope around it. Being the
+ * first child, it is overridden by an explicit action bound to Escape that mounts later.</p>
+ */
+const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useKeyboardBinding('ESCAPE', () => {
+    onClose();
+    return true;
+  });
+  return null;
+};
+
+/**
  * Confines keyboard focus to {@code ref}'s element while {@code active}, moving focus into it on
  * activation and restoring focus to the previously focused element on deactivation.
  *
@@ -796,13 +984,22 @@ function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, Ge
  * @param mode
  *        Where to place initial focus: {@code 'field'} = the first form field (form dialogs),
  *        {@code 'first'} = the first focusable element (item menus), {@code 'container'} = the
- *        container itself (default; e.g. a menu that manages its own roving focus). In every mode
- *        the fallback is the container - never an incidental title-bar button.
+ *        container itself (default; e.g. a menu that manages its own roving focus), or a function
+ *        that picks the target in the container for a surface with an order of its own (a dialog).
+ *        In every mode the fallback is the container - never an incidental title-bar button.
+ * @param options
+ *        {@code trap: false} moves focus in and gives it back, but does not confine it - a surface that
+ *        is not modal (a drawer without scrim). {@code preventScroll: true} moves focus in without
+ *        scrolling, for a surface that slides in from outside the clipped box of its area.
+ *        {@code restore: 'from-inside'} gives the focus back only when it is still inside the
+ *        surface or was dropped with it, not when the user has put it elsewhere meanwhile - a surface
+ *        that is not modal and closes on a press outside, which may be a press into another field.
  */
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
-  mode: 'field' | 'first' | 'container' = 'container'
+  mode: 'field' | 'first' | 'container' | ((container: HTMLElement) => HTMLElement | null) = 'container',
+  options: { trap?: boolean; preventScroll?: boolean; restore?: 'always' | 'from-inside' } = {}
 ): void {
   React.useEffect(() => {
     if (!active) {
@@ -821,7 +1018,8 @@ function useFocusTrap(
       if (!cur) {
         return null;
       }
-      const pick = mode === 'field' ? firstFocusable(cur, true)
+      const pick = typeof mode === 'function' ? mode(cur)
+        : mode === 'field' ? firstFocusable(cur, true)
         : mode === 'first' ? firstFocusable(cur, false)
         : null;
       if (pick) {
@@ -832,15 +1030,23 @@ function useFocusTrap(
       }
       return cur;
     };
-    const unpush = pushTrap(() => ref.current, preferredTarget);
+    const unpush = options.trap === false ? () => {} : pushTrap(() => ref.current, preferredTarget);
 
     const target = preferredTarget();
     if (target && target !== document.activeElement) {
-      target.focus();
+      target.focus({ preventScroll: options.preventScroll === true });
     }
 
     return () => {
       unpush();
+      if (options.restore === 'from-inside') {
+        // The surface may already be gone, its focus then fell to the document body.
+        const current = document.activeElement;
+        const inside = current == null || current === document.body || el.contains(current);
+        if (!inside) {
+          return;
+        }
+      }
       if (previous && previous.isConnected && typeof previous.focus === 'function') {
         previous.focus();
       }
@@ -854,6 +1060,7 @@ export {
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  EscapeToClose,
 };
 
 // --- MutationObserver for auto-mount and auto-unmount ---

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The models the configured LLM providers serve, with the metadata the model catalog of the LLM
+	provider service holds for them (ticket #29954): limits, prices, capabilities and dates, and where
+	each entry comes from - the bundled catalog, the remote catalog or a model override of the service
+	configuration. A model without an origin is one the catalog does not describe; the service works
+	without limits and prices for it.
+	- The line above the table tells the state of the remote catalog (aiModelCatalogStatus()), and why
+	loading it failed, if it did.
+	- The table lists one row per provider and configured model (aiModelCatalog()), grouped by provider.
+	- Reload writes the current time to the reload channel, which the status and the rows read as
+	input, so both are computed again - e.g. once the remote catalog has arrived after the start.
+	The model overrides themselves are edited in the configuration of the LLM provider service.
+-->
+<view>
+	<channels>
+		<channel name="reload"/>
+		<derived-channel name="status"
+			expr="aiModelCatalogStatus()"
+			inputs="reload"
+		/>
+		<derived-channel name="statusText"
+			inputs="status"
+		>
+			<expr><![CDATA[switch {
+	$status == null: #('The LLM provider service is not running.'@en, 'Der LLM-Anbieterdienst läuft nicht.'@de);
+	default: #('Remote catalog: {0} ({1}). Model metadata in use since {2}.'@en, 'Remote-Katalog: {0} ({1}). Modell-Metadaten in Gebrauch seit {2}.'@de)
+		.fill(label($status['state']), if($status['url'] == null, '-', $status['url']), configuredFormat('medium-date-time').format($status['installedAt']));
+}]]></expr>
+		</derived-channel>
+		<derived-channel name="failure"
+			expr="if($status == null, null, $status['failure'])"
+			inputs="status"
+		/>
+	</channels>
+	<panel>
+		<title>
+			<en>AI models</en>
+			<de>KI-Modelle</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Reload</en>
+					<de>Neu laden</de>
+				</label>
+				<tooltip>
+					<en>Reads the state of the model catalog and the configured models again, e.g. once the remote catalog has arrived.</en>
+					<de>Liest den Zustand des Modellkatalogs und die konfigurierten Modelle neu ein, z. B. sobald der Remote-Katalog eingetroffen ist.</de>
+				</tooltip>
+				<execute-script function="now()">
+					<with-result>
+						<write-channel name="reload"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<inset>
+			<stack>
+				<text input="statusText"/>
+				<text
+					input="failure"
+					tone="error"
+				/>
+			</stack>
+		</inset>
+		<table
+			filter-bar="true"
+			group-by="provider"
+			inputs="reload"
+			personalization-key="admin-ai-models"
+		>
+			<columns>
+				<computed-column name="model"
+					type="tl.core:String"
+					width="260"
+				>
+					<label>
+						<en>Model</en>
+						<de>Modell</de>
+					</label>
+					<value>$row['model']</value>
+				</computed-column>
+				<computed-column name="provider"
+					type="tl.core:String"
+					visible="false"
+				>
+					<label>
+						<en>Provider</en>
+						<de>Anbieter</de>
+					</label>
+					<value>$row['provider']</value>
+				</computed-column>
+				<computed-column name="origin"
+					width="140"
+				>
+					<label>
+						<en>Origin</en>
+						<de>Herkunft</de>
+					</label>
+					<value>$row['origin']</value>
+				</computed-column>
+				<computed-column name="contextWindow"
+					type="tl.core:Long"
+					width="120"
+				>
+					<label>
+						<en>Context window</en>
+						<de>Kontextfenster</de>
+					</label>
+					<value>$row['contextWindow']</value>
+				</computed-column>
+				<computed-column name="maxOutput"
+					type="tl.core:Long"
+					width="110"
+				>
+					<label>
+						<en>Max. output</en>
+						<de>Max. Ausgabe</de>
+					</label>
+					<value>$row['maxOutput']</value>
+				</computed-column>
+				<computed-column name="inputPrice"
+					type="tl.core:Double"
+					width="110"
+				>
+					<label>
+						<en>Input $/M</en>
+						<de>Eingabe $/M</de>
+					</label>
+					<value>$row['inputPrice']</value>
+					<tooltip>#('US dollars per million input tokens'@en, 'US-Dollar pro Million Eingabe-Tokens'@de)</tooltip>
+				</computed-column>
+				<computed-column name="outputPrice"
+					type="tl.core:Double"
+					width="110"
+				>
+					<label>
+						<en>Output $/M</en>
+						<de>Ausgabe $/M</de>
+					</label>
+					<value>$row['outputPrice']</value>
+					<tooltip>#('US dollars per million output tokens'@en, 'US-Dollar pro Million Ausgabe-Tokens'@de)</tooltip>
+				</computed-column>
+				<computed-column name="cacheReadPrice"
+					type="tl.core:Double"
+					width="120"
+				>
+					<label>
+						<en>Cache read $/M</en>
+						<de>Cache-Lesen $/M</de>
+					</label>
+					<value>$row['cacheReadPrice']</value>
+					<tooltip>#('US dollars per million tokens read from the prompt cache'@en, 'US-Dollar pro Million aus dem Prompt-Cache gelesener Tokens'@de)</tooltip>
+				</computed-column>
+				<computed-column name="cacheWritePrice"
+					type="tl.core:Double"
+					width="120"
+				>
+					<label>
+						<en>Cache write $/M</en>
+						<de>Cache-Schreiben $/M</de>
+					</label>
+					<value>$row['cacheWritePrice']</value>
+					<tooltip>#('US dollars per million tokens written to the prompt cache'@en, 'US-Dollar pro Million in den Prompt-Cache geschriebener Tokens'@de)</tooltip>
+				</computed-column>
+				<computed-column name="reasoning"
+					type="tl.core:Boolean"
+					width="100"
+				>
+					<label>
+						<en>Reasoning</en>
+						<de>Reasoning</de>
+					</label>
+					<value>$row['reasoning']</value>
+				</computed-column>
+				<computed-column name="toolCall"
+					type="tl.core:Boolean"
+					width="100"
+				>
+					<label>
+						<en>Tool calls</en>
+						<de>Tool-Aufrufe</de>
+					</label>
+					<value>$row['toolCall']</value>
+				</computed-column>
+				<computed-column name="attachment"
+					type="tl.core:Boolean"
+					width="100"
+				>
+					<label>
+						<en>Attachments</en>
+						<de>Anhänge</de>
+					</label>
+					<value>$row['attachment']</value>
+				</computed-column>
+				<computed-column name="structuredOutput"
+					type="tl.core:Boolean"
+					width="120"
+				>
+					<label>
+						<en>Structured output</en>
+						<de>Strukturierte Ausgabe</de>
+					</label>
+					<value>$row['structuredOutput']</value>
+				</computed-column>
+				<computed-column name="knowledgeCutoff"
+					type="tl.core:String"
+					width="120"
+				>
+					<label>
+						<en>Knowledge cutoff</en>
+						<de>Wissensstand</de>
+					</label>
+					<value>$row['knowledgeCutoff']</value>
+				</computed-column>
+				<computed-column name="releaseDate"
+					type="tl.core:String"
+					width="110"
+				>
+					<label>
+						<en>Released</en>
+						<de>Veröffentlicht</de>
+					</label>
+					<value>$row['releaseDate']</value>
+				</computed-column>
+				<computed-column name="status"
+					type="tl.core:String"
+					width="110"
+				>
+					<label>
+						<en>Status</en>
+						<de>Status</de>
+					</label>
+					<value>$row['status']</value>
+				</computed-column>
+			</columns>
+			<rows>aiModelCatalog()</rows>
+		</table>
+	</panel>
+</view>

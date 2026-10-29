@@ -17,6 +17,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
@@ -25,18 +27,20 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * {@link UIElement} that renders a Chart.js chart via the React control layer.
  *
  * <p>
- * The chart data is computed by a TL-Script expression ({@link Config#getData()}) that
- * receives the input channel values as arguments. The expression returns a Chart.js
+ * The chart data is computed by a TL-Script expression ({@link Config#getData()}) that sees the
+ * values of the input channels as variables. The expression returns a Chart.js
  * configuration map that may contain TL objects in {@code datasets[].metadata}.
  * </p>
  *
@@ -49,6 +53,7 @@ public class ChartElement implements UIElement {
 	 * Configuration for {@link ChartElement}.
 	 */
 	@TagName("chart")
+	@TypeIcon("css:bi bi-bar-chart")
 	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
@@ -74,14 +79,15 @@ public class ChartElement implements UIElement {
 		 * TL-Script expression producing the Chart.js configuration map.
 		 *
 		 * <p>
-		 * Receives as many arguments as {@link #getInputs() input channels} are declared.
-		 * Must return a map with keys {@code type}, {@code data}, and optionally {@code options}.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. It must return a map with keys {@code type}, {@code data}, and optionally {@code options}.
 		 * Datasets may contain {@code metadata} arrays with TL objects, and {@code onClick},
 		 * {@code onLegendClick}, {@code tooltip} string keys referencing configured handlers.
 		 * </p>
 		 */
 		@Mandatory
 		@Name(DATA)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getData();
 
 		/**
@@ -90,6 +96,7 @@ public class ChartElement implements UIElement {
 		 */
 		@Name(HANDLERS)
 		@EntryTag("handler")
+		@TreeProperty
 		List<ClickHandlerConfig> getHandlers();
 
 		/**
@@ -121,7 +128,7 @@ public class ChartElement implements UIElement {
 
 	private final Map<String, QueryExecutor> _tooltips;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final boolean _zoomEnabled;
 
@@ -134,7 +141,7 @@ public class ChartElement implements UIElement {
 	 */
 	@CalledByReflection
 	public ChartElement(InstantiationContext context, Config config) {
-		_dataFun = QueryExecutor.compile(config.getData());
+		_dataFun = InputScript.compile(config, Config.DATA);
 		_inputs = config.getInputs();
 		_zoomEnabled = config.getZoomEnabled();
 		_cssClass = config.getCssClass();
@@ -147,7 +154,7 @@ public class ChartElement implements UIElement {
 
 		_tooltips = new HashMap<>();
 		for (TooltipProviderConfig tooltip : config.getTooltips()) {
-			_tooltips.put(tooltip.getName(), QueryExecutor.compile(tooltip.getExpr()));
+			_tooltips.put(tooltip.getName(), InputScript.compile(tooltip, TooltipProviderConfig.EXPR));
 		}
 	}
 

@@ -6,14 +6,15 @@
 package com.top_logic.service.openapi.server.authentication.apikey;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
@@ -22,6 +23,7 @@ import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeType;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator.AllowedKey;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 
@@ -67,14 +69,36 @@ public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthe
 	@Override
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
 		Config<?> config = getConfig();
-		Map<String, String> allowedKeys =
+		List<AllowedKey> allowedKeys =
 			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerAPIKeySecret.class)
-				.collect(Collectors.toMap(s -> s.getAPIKey(), s -> StringServices.nonNull(s.getUserId())));
+				.filter(this::hasAPIKey)
+				.map(s -> new AllowedKey(TypedConfigUtil.createInstance(s.getAPIKey()),
+					StringServices.nonNull(s.getUserId())))
+				.collect(Collectors.toList());
 
 		if (allowedKeys.isEmpty()) {
 			return NeverAuthenticated.missingSecret();
 		}
 		return new APIKeyAuthenticator(config.getPosition(), config.getParameterName(), allowedKeys);
+	}
+
+	/**
+	 * Whether the given secret has an API key.
+	 * 
+	 * <p>
+	 * A secret without API key (e.g. an empty API key attribute) is ignored and reported as configuration error, since it
+	 * would accept requests sending an empty API key.
+	 * </p>
+	 */
+	private boolean hasAPIKey(ServerAPIKeySecret secret) {
+		if (secret.getAPIKey() == null) {
+			Config<?> config = getConfig();
+			Logger.error("Ignoring API key secret with empty API key for authentication domain '"
+				+ config.getDomain() + "' (parameter '" + config.getParameterName() + "').",
+				APIKeyAuthentication.class);
+			return false;
+		}
+		return true;
 	}
 
 }

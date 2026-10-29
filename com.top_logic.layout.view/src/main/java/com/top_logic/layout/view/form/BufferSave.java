@@ -34,24 +34,34 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Starting at the buffers to store, the store follows the compositions the buffers hold values
- * for, and nothing else: an overlay writes the attributes whose values it changed into its base
- * object, a new (transient) object is created once as persistent object with its values, and a
- * part taken out of a composition is deleted. An object no buffer edits is neither visited nor
- * written, so the cost is that of the touched objects.
+ * for, and the new (transient) objects in their other references, and nothing else: an overlay
+ * writes the attributes whose values it changed into its base object, a new object is created once
+ * as persistent object with its values, and a part taken out of a composition is deleted. An
+ * object no buffer edits is neither visited nor written, so the cost is that of the touched
+ * objects.
+ * </p>
+ *
+ * <p>
+ * A new object reached through a composition is created in the context of the object holding it.
+ * A new object reached only through a reference that is no composition is not part of the
+ * referencing object: it is created without a context, like a root, and its own compositions and
+ * references are followed in turn. An original or an overlay in a reference that is no composition
+ * is not stored by this reference; an overlay is stored where it is reached through a composition.
  * </p>
  *
  * <p>
  * Every value written is resolved: an overlay stands for the object it edits, a new object for the
- * persistent object created for it - also in a reference that is no composition.
+ * persistent object created for it.
  * </p>
  *
  * <p>
  * The current user needs the right to write each changed attribute of an existing object and the
- * right to create each new object in the context it is created in; the values of a new object are
- * not checked attribute by attribute, they were entered through fields following the rights of
- * the attributes. A refusal of a write is reported before anything is written, a refusal of a
- * creation aborts the store; either way the enclosing transaction is to be rolled back. The store must run within a transaction; the buffers themselves are left
- * as they are.
+ * right to create each new object in the context it is created in, which for an object without
+ * context is the global security root; the values of a new object are not checked attribute by
+ * attribute, they were entered through fields following the rights of the attributes. A refusal of
+ * a write is reported before anything is written, a refusal of a creation aborts the store; either
+ * way the enclosing transaction is to be rolled back. The store must run within a transaction; the
+ * buffers themselves are left as they are.
  * </p>
  */
 public class BufferSave {
@@ -65,10 +75,26 @@ public class BufferSave {
 	/** The persistent object created for each new object reached. */
 	private final Map<TLObject, TLObject> _created = new IdentityHashMap<>();
 
+	/** The context each new object reached through a composition is created in. */
+	private final Map<TLObject, Context> _contexts = new IdentityHashMap<>();
+
 	private final Set<TLObject> _visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
 	/**
-	 * Stores the given buffer and the buffers reachable from it through compositions.
+	 * The context a new object is created in.
+	 *
+	 * @param container
+	 *        The buffer or persistent object holding the new object, {@code null} for none.
+	 * @param reference
+	 *        The composition holding the new object, {@code null} for none.
+	 */
+	private record Context(TLObject container, TLReference reference) {
+		// Pure data.
+	}
+
+	/**
+	 * Stores the given buffer and the buffers reachable from it through compositions, and the new
+	 * objects these refer to.
 	 *
 	 * @param buffer
 	 *        A buffer of a root level, or an original, which is stored as it is.
@@ -79,7 +105,8 @@ public class BufferSave {
 	}
 
 	/**
-	 * Stores the given buffers and the buffers reachable from them through compositions.
+	 * Stores the given buffers and the buffers reachable from them through compositions, and the
+	 * new objects these refer to.
 	 *
 	 * @param buffers
 	 *        Buffers of a root level, or originals, which are stored as they are.
@@ -91,7 +118,7 @@ public class BufferSave {
 
 	/**
 	 * Stores the given buffers, which a container holds in a reference, and the buffers reachable
-	 * from them through compositions.
+	 * from them through compositions, and the new objects these refer to.
 	 *
 	 * @param buffers
 	 *        Buffers of a root level, or originals, which are stored as they are.
@@ -108,6 +135,7 @@ public class BufferSave {
 		for (TLObject buffer : buffers) {
 			save.visit(buffer, container, reference);
 		}
+		save.createNewObjects();
 		save.checkWrite();
 		save.write();
 		List<TLObject> result = new ArrayList<>(buffers.size());
@@ -122,50 +150,109 @@ public class BufferSave {
 	}
 
 	/**
-	 * Collects the given object, when it is a buffer, and the buffers reachable from it through
-	 * compositions; creates the persistent object of a new object.
+	 * Collects the given object, when it is a buffer, the buffers reachable from it through
+	 * compositions, and the new objects in its other references.
 	 *
 	 * @param container
-	 *        The buffer holding the object in the given composition, {@code null} for a root.
+	 *        The buffer holding the object in the given composition, {@code null} for none.
 	 * @param reference
-	 *        The composition holding the object, {@code null} for a root.
+	 *        The composition holding the object, {@code null} for none.
 	 */
 	private void visit(Object object, TLObject container, TLReference reference) {
-		if (!(object instanceof TLObject buffer) || !_visited.add(buffer)) {
+		if (!(object instanceof TLObject buffer)) {
 			return;
 		}
 		if (buffer instanceof TLObjectOverlay overlay) {
+			if (!_visited.add(overlay)) {
+				return;
+			}
 			// An overlay of a buffer stores into what its base is stored as.
 			visit(overlay.getBase(), container, reference);
 			_overlays.add(overlay);
 		} else if (buffer.tTransient()) {
-			_created.put(buffer, create(buffer, container, reference));
+			if (container != null || reference != null) {
+				// Reached through a composition, also after having been reached through a reference.
+				_contexts.putIfAbsent(buffer, new Context(container, reference));
+			}
+			if (!_visited.add(buffer)) {
+				return;
+			}
 			_newObjects.add(buffer);
 		} else {
 			// An original: nothing below it is edited.
 			return;
 		}
 		for (TLStructuredTypePart part : EditLevel.bufferedParts(buffer)) {
-			if (part instanceof TLReference composition && composition.isComposite()) {
-				Object value = buffer.tValue(part);
-				if (value instanceof Collection<?> parts) {
-					for (Object element : parts) {
-						visit(element, buffer, composition);
-					}
-				} else {
-					visit(value, buffer, composition);
+			if (!(part instanceof TLReference ref)) {
+				continue;
+			}
+			boolean composite = ref.isComposite();
+			for (Object element : asCollection(buffer.tValue(part))) {
+				if (composite) {
+					visit(element, buffer, ref);
+				} else if (isNewObject(element)) {
+					// Not a part of the referencing object.
+					visit(element, null, null);
 				}
 			}
 		}
 	}
 
+	private static boolean isNewObject(Object value) {
+		return value instanceof TLObject object && !(object instanceof TLObjectOverlay) && object.tTransient();
+	}
+
 	/**
-	 * Creates the persistent object of the given new object, in the context of the object its
-	 * container is stored as.
+	 * Creates the persistent objects of all new objects reached.
 	 */
-	private TLObject create(TLObject newObject, TLObject container, TLReference reference) {
+	private void createNewObjects() {
+		for (TLObject newObject : _newObjects) {
+			created(newObject);
+		}
+	}
+
+	/**
+	 * The persistent object of the given new object, created in the context it was reached in when
+	 * not created before.
+	 */
+	private TLObject created(TLObject newObject) {
+		TLObject result = _created.get(newObject);
+		if (result == null) {
+			Context context = _contexts.get(newObject);
+			result = context == null
+				? create(newObject, null, null)
+				: create(newObject, stored(context.container()), context.reference());
+			_created.put(newObject, result);
+		}
+		return result;
+	}
+
+	/**
+	 * The persistent object the given buffer is stored as, created first for a new object.
+	 */
+	private TLObject stored(TLObject buffer) {
+		if (buffer == null) {
+			return null;
+		}
+		if (buffer instanceof TLObjectOverlay overlay) {
+			return stored(overlay.getBase());
+		}
+		if (buffer.tTransient()) {
+			return created(buffer);
+		}
+		return buffer;
+	}
+
+	/**
+	 * Creates the persistent object of the given new object in the given context.
+	 *
+	 * @param context
+	 *        The persistent object the new object is created in, {@code null} for none.
+	 * @param reference
+	 *        The composition of the context holding the new object, {@code null} for none.
+	 */
+	private TLObject create(TLObject newObject, TLObject context, TLReference reference) {
 		TLClass type = (TLClass) newObject.tType();
-		TLObject context = container == null ? null : (TLObject) resolve(container);
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		Person user = TLContext.currentUser();
 		boolean allowed = reference == null
@@ -272,7 +359,7 @@ public class BufferSave {
 			TLObject created = _created.get(object);
 			if (created == null) {
 				throw new IllegalStateException(
-					"Reference to a new object that is not part of a stored composition: " + object);
+					"Reference to a new object not reached from the stored buffers: " + object);
 			}
 			return created;
 		}

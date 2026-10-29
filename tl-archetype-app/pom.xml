@@ -37,8 +37,9 @@
 
 	<dependencies>
 		<!-- 
-			Note: The archetype is test by building an app generated with this archetype. To do this successfully, 
-			all other parts of the framework have to be built first. 
+			Note: The archetype is tested by building the projects generated with this archetype (see
+			src/test/resources/projects). To do this successfully, all modules these projects use have to be
+			built first.
 		-->
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -48,6 +49,51 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-demo</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-demo-react</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view-selfservice</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-react</artifactId>
+			<type>pom</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-classic</artifactId>
+			<type>pom</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-ai</artifactId>
+			<type>pom</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-ai-search</artifactId>
+			<type>pom</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat-classic</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-auth-pac4j</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -80,9 +126,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-archetype-plugin</artifactId>
-				<!-- Note: Old version as workaround for .gitignore files not copied 
-					into the archive. -->
-				<version>2.4</version>
+				<version>3.4.1</version>
+				<configuration>
+					<!-- Packages the .gitignore files of the template into the archetype. -->
+					<useDefaultExcludes>false</useDefaultExcludes>
+				</configuration>
 			</plugin>
 
 			<plugin>

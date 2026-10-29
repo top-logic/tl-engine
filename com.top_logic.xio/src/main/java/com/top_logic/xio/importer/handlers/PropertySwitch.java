@@ -6,6 +6,7 @@
 package com.top_logic.xio.importer.handlers;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
@@ -15,7 +16,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -45,11 +46,15 @@ public class PropertySwitch<C extends PropertySwitch.Config<?>> extends Configur
 		String getXmlAttribute();
 
 		/**
-		 * Mapping of potential values of the {@link #getXmlAttribute()} to target {@link Handler}s.
+		 * The cases assigning potential values of the {@link #getXmlAttribute()} to target
+		 * {@link Handler}s.
+		 * 
+		 * <p>
+		 * A value must not be listed in more than one case of the same switch.
+		 * </p>
 		 */
-		@Key(ValueHandler.VALUE)
 		@DefaultContainer
-		Map<String, ValueHandler> getCases();
+		List<ValueHandler> getCases();
 
 		/**
 		 * The default {@link Handler} to invoke, if the value does not match any of the configured
@@ -58,18 +63,28 @@ public class PropertySwitch<C extends PropertySwitch.Config<?>> extends Configur
 		HandlerRef getDefault();
 
 		/**
-		 * Combination of a {@link Handler} reference with a pattern value.
+		 * Combination of a {@link Handler} reference with the values selecting it.
 		 */
 		interface ValueHandler extends HandlerRef {
+			/**
+			 * Configuration name of {@link #getValue()}.
+			 */
 			public static final String VALUE = "value";
 
 			/**
-			 * The pattern value to match against the value of the
-			 * {@link com.top_logic.xio.importer.handlers.PropertySwitch.Config#getXmlAttribute()}.
+			 * The values of the
+			 * {@link com.top_logic.xio.importer.handlers.PropertySwitch.Config#getXmlAttribute()}
+			 * selecting this case, comma-separated.
+			 * 
+			 * <p>
+			 * Each of the values selects this case. An empty entry, or an empty value of this
+			 * property, stands for the empty attribute value.
+			 * </p>
 			 */
 			@Name(VALUE)
 			@Mandatory
-			String getValue();
+			@Format(CaseValues.class)
+			List<String> getValue();
 		}
 	}
 
@@ -90,8 +105,15 @@ public class PropertySwitch<C extends PropertySwitch.Config<?>> extends Configur
 		super(context, config);
 
 		_cases = new HashMap<>();
-		for (ValueHandler valueHandler : config.getCases().values()) {
-			_cases.put(valueHandler.getValue(), context.getInstance(valueHandler.getHandler()));
+		for (ValueHandler valueHandler : config.getCases()) {
+			Handler handler = context.getInstance(valueHandler.getHandler());
+			for (String value : valueHandler.getValue()) {
+				if (_cases.containsKey(value)) {
+					context.error("Duplicate case value '" + value + "' in the switch at " + config.location() + ".");
+					continue;
+				}
+				_cases.put(value, handler);
+			}
 		}
 
 		HandlerRef defaultRef = config.getDefault();

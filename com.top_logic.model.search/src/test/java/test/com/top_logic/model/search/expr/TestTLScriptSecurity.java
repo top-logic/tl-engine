@@ -23,7 +23,6 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -38,6 +37,9 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
+import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -48,7 +50,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -265,6 +266,11 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		super.tearDown();
 	}
 
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
 	private TLObject newObject(String className) {
 		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
 		return DynamicModelService.getFactoryFor("TestTLScriptSecurity").createObject(type);
@@ -331,17 +337,14 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		// Sanity: restricted in person context.
 		assertEquals(set(), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
 
-		TLContext context = TLContext.getContext();
-		Person formerPerson = context.getCurrentPersonWrapper();
-		// An explicit context id can only be set without a current person.
-		context.setCurrentPerson(null);
-		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
-		try {
-			assertTrue(ThreadContext.isSystemContext());
+		ThreadContext.<Void, ParseException, RuntimeException> inSystemContext(TestTLScriptSecurity.class, () -> {
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertEquals(set(_p1), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
-		} finally {
-			context.setCurrentPerson(formerPerson);
-		}
+			return null;
+		});
+
+		// The checks apply again after the system context.
+		assertEquals(set(), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
 	}
 
 	/**
@@ -361,18 +364,52 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * The result of an execution is secured by the {@link QueryExecutor}: the reference navigation
-	 * itself delivers the referenced employee unfiltered, but the employee is not readable for the
-	 * user, so the result of the execution is {@code null}.
+	 * The result of an execution is secured by the {@link QueryExecutor}, even if the script
+	 * delivers an object it did not filter itself.
+	 *
+	 * <p>
+	 * The navigation is switched to unsecured evaluation with
+	 * {@link UpdateSecurityVisitor#disableSecurity(SearchExpression)} on the script, so it delivers
+	 * the employee unfiltered (an unsecured sub-expression does not depend on which secured sources
+	 * filter, now or later), while the {@link QueryExecutor} still secures the result.
+	 * </p>
 	 */
 	public void testResultSecuredByExecutor() throws Exception {
-		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+		SearchExpression script = search(RESPONSIBLE_OF);
+		UpdateSecurityVisitor.disableSecurity(script);
+		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), script);
 
 		becomeUser(_root);
 		assertEquals(_e1, responsible.execute(_p1));
 
 		becomeUser(_user);
-		assertNull("The user must not read the navigated employee.", responsible.execute(_p1));
+		assertEquals("The script itself delivers the employee.", _e1, responsible.executeIntermediate(_p1));
+		assertNull("The user must not discover the delivered employee, the executor removes it.",
+			responsible.execute(_p1));
+	}
+
+	/**
+	 * A comparison on a reference of the query root is not compiled into the database query: the
+	 * interpreted navigation delivers only discoverable targets (R4 of the Discover specification),
+	 * so a comparison of the stored reference would disagree.
+	 *
+	 * <p>
+	 * The {@code eval} helper asserts that the interpreted and the compiled evaluation agree.
+	 * </p>
+	 */
+	public void testRootReferenceComparisonNotCompiled() throws Exception {
+		// Precondition: no Project is discoverable without being readable, so only the reference
+		// exclusion decides whether the access is compiled.
+		for (TLClass type : TLModelUtil.getConcreteReflexiveTransitiveSpecializations(projectType())) {
+			assertTrue(ModelAccessRights.getInstance().getAllowedRoles(type, SimpleBoundCommandGroup.READ)
+				.containsAll(ModelAccessRights.getInstance().getAllowedRoles(type, SimpleBoundCommandGroup.DISCOVER)));
+		}
+
+		becomeUser(_user);
+		// _user reads p1 and p2 but cannot discover their responsible employees, which are therefore
+		// null.
+		assertEquals(set(_p1, _p2), asSet(eval(
+			"all(`TestTLScriptSecurity:Project`).filter(p -> $p.get(`TestTLScriptSecurity:Project#responsible`) == null)")));
 	}
 
 	/**
@@ -427,13 +464,23 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	public void testNestedResultNotFiltered() throws Exception {
 		becomeUser(_user);
 
+		// Since the reference navigation itself only delivers discoverable objects (R4 of the Discover
+		// specification), the responsible employee is no longer delivered by the navigation. An
+		// object handed in directly demonstrates that a nested result is not filtered.
 		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
-		assertEquals("A nested result must keep the objects the calling script computes with.",
-			_e1, responsible.executeIntermediate(_p1));
+		assertNull("The reference navigation filters undiscoverable objects (R4 of the Discover specification).",
+			responsible.executeIntermediate(_p1));
 
-		QueryExecutor salary = QueryExecutor.compile(kb(), model(), search(SALARY_OF_RESPONSIBLE));
+		QueryExecutor identity = QueryExecutor.compile(kb(), model(), search("e -> $e"));
+		assertEquals("A nested result must keep the objects the calling script computes with.",
+			_e1, identity.executeIntermediate(_e1));
+
+		// The input of an intermediate execution is not filtered, so the attribute check itself is
+		// exercised here.
+		QueryExecutor salary =
+			QueryExecutor.compile(kb(), model(), search("e -> $e.get(`TestTLScriptSecurity:Employee#salary`)"));
 		assertNull("The attribute of an unreadable object stays inaccessible in a nested execution.",
-			salary.executeIntermediate(_p1));
+			salary.executeIntermediate(_e1));
 	}
 
 	/**
@@ -524,7 +571,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	 * <p>
 	 * This is a regression test for a {@code PersonRoleCache} staleness bug: the per-interaction role
 	 * computation cache in {@code StorageAccessManager} was reused after the current person was
-	 * switched (via {@code setCurrentPerson}), so it reported the previous user's roles for the new
+	 * switched (via {@link #becomeUser(Person)}), so it reported the previous user's roles for the new
 	 * user, wrongly allowing the second write. The cache is now rebuilt when the current person
 	 * changes (see {@code StorageAccessManager.getRoleComputation}).
 	 * </p>
@@ -549,18 +596,34 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * {@code add(...)} / {@code remove(...)} succeed for the responsible's account (ProjectResponsible
-	 * grants write). Editing {@code members} cannot revoke the actor's own grant, which comes from
+	 * {@code remove(...)} succeeds for the responsible's account (ProjectResponsible grants write),
+	 * {@code add(...)} succeeds as long as the added employee is discoverable for the actor.
+	 * Editing {@code members} cannot revoke the actor's own grant, which comes from
 	 * {@code responsible}.
+	 *
+	 * <p>
+	 * The responsible does not discover employees, therefore the new member is added by an
+	 * administrator first. Adding that employee as the responsible is denied (R5 of the Discover
+	 * specification: a new reference target must be discoverable).
+	 * </p>
 	 */
 	public void testAddRemoveAllowedForResponsible() throws Exception {
 		becomeUser(_user);
+		assertPermissionDenied(() -> {
+			try (Transaction tx = beginTx()) {
+				execute(search(ADD_MEMBER), _p1, _e1);
+				tx.commit();
+			}
+		});
+
+		becomeUser(_root);
 		try (Transaction tx = beginTx()) {
 			execute(search(ADD_MEMBER), _p1, _e1);
 			tx.commit();
 		}
 		assertTrue(members(_p1).contains(_e1));
 
+		becomeUser(_user);
 		try (Transaction tx = beginTx()) {
 			execute(search(REMOVE_MEMBER), _p1, _e1);
 			tx.commit();
@@ -1003,17 +1066,11 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			accessRights.isReadAllowed(_user, _p1, name));
 
 		// A bypassing super-user (system context) is unaffected by the attribute deny.
-		TLContext context = TLContext.getContext();
-		Person formerPerson = context.getCurrentPersonWrapper();
-		context.setCurrentPerson(null);
-		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
-		try {
-			assertTrue(ThreadContext.isSystemContext());
+		ThreadContext.inSystemContext(TestTLScriptSecurity.class, () -> {
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertTrue("A system context bypasses the attribute deny.",
 				accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));
-		} finally {
-			context.setCurrentPerson(formerPerson);
-		}
+		});
 
 		// A bypassing super-user is unaffected by the attribute deny.
 		becomeUser(_root);
@@ -1356,7 +1413,6 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		return suite(TestTLScriptSecurity.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

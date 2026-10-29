@@ -21,7 +21,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 
 /**
  * Admission of non-browser callers to the {@link AgentServlet}.
@@ -44,6 +46,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * </p>
  */
 @Label("Agent access")
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class AgentAccess extends ConfiguredManagedClass<AgentAccess.Config> {
 
 	/**

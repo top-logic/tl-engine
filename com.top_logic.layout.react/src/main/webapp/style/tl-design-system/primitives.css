@@ -50,7 +50,6 @@
   --tl-gray-43: #75787D;
   --tl-gray-45: #6F7277;
   --tl-gray-46: #6B6E73;
-  --tl-gray-48: #676A6F;
   --tl-gray-49: #64676B;
   --tl-gray-55: #54565B;
   --tl-gray-60: #44484C;
@@ -87,6 +86,7 @@
   --tl-red-29: #FF6C5E;
   --tl-red-31: #FF6053;
   --tl-red-33: #D77290;
+  --tl-red-34: #F2554A;
   --tl-red-35: #F14F43;
   --tl-red-41: #DC3B32;
   --tl-red-42: #D7352D;
@@ -108,6 +108,19 @@
   --tl-teal-73: #002E2A;
   --tl-blue-75: #092A3C;
   --tl-teal-75: #002830;
+  --tl-blue-54: #005F8A;
+  --tl-red-36: #DA668B;
+  --tl-blue-38: #7F76DC;
+  --tl-teal-38: #00A296;
+  --tl-magenta-40: #9D63C1;
+  --tl-green-50: #566E00;
+  --tl-magenta-36: #C464AD;
+  --tl-red-28: #EF799D;
+  --tl-blue-34: #9088F0;
+  --tl-teal-32: #00B0A3;
+  --tl-magenta-32: #B67BDC;
+  --tl-magenta-29: #DF7DC7;
+  --tl-amber-46: #A75600;
   --tl-size-1: 0.25rem;
   --tl-size-2: 0.5rem;
   --tl-size-3: 0.75rem;
@@ -119,7 +132,13 @@
   --tl-size-9: 4rem;
   --tl-size-10: 6rem;
   --tl-size-11: 10rem;
+  --tl-size-12: 16rem;
+  --tl-size-13: 24rem;
+  --tl-size-14: 36rem;
+  --tl-size-15: 40rem;
   --tl-view-1: 70vh;
+  --tl-view-2: 100dvw;
+  --tl-view-3: 100dvh;
   --tl-text-1: 0.75rem;
   --tl-text-2: 0.875rem;
   --tl-text-3: 1rem;
@@ -144,6 +163,8 @@
   --tl-depth-3: 1000;
   --tl-depth-4: 1100;
   --tl-depth-5: 1200;
+  --tl-depth-6: 1300;
+  --tl-depth-7: 1400;
   --tl-font-1: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
   --tl-font-2: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
   --tl-dur-1: 100ms;
@@ -166,4 +187,7 @@
   --tl-veil-2: rgba(27, 29, 33, 0.12);
   --tl-veil-3: rgba(240, 243, 249, 0.06);
   --tl-veil-4: rgba(240, 243, 249, 0.12);
+  --tl-veil-5: rgba(27, 29, 33, 0.16);
+  --tl-veil-6: rgba(240, 243, 249, 0.13);
 }
+/* tl-design-system sha256:38d176b0891f71518d91bed5933818ffcb46d3c90dfccf500be8d59d32a9a680 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

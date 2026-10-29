@@ -8,7 +8,6 @@ package com.top_logic.tool.boundsec.gui.profile;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,10 +17,8 @@ import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -71,57 +68,9 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 	}
 
 	private void ensureRead(ConfigNode node, Set<BoundedRole> roles) {
-		List<BoundCommandGroup> commands = node.getCommandGroups();
-		boolean hasAnyRight = false;
 		for (BoundedRole role : roles) {
-			for (BoundCommandGroup cgn : commands) {
-				hasAnyRight = node.hasRight(role, cgn);
-				if (hasAnyRight) {
-					break;
-				}
-			}
-			ConfigNode csl = node.getParent();
-			while (csl != null) {
-				if (ensureRead(csl, role, hasAnyRight)) {
-					csl = csl.getParent();
-				} else {
-					break;
-				}
-			}
+			ImplicitReadRights.updateImplicitReadRights(node.layoutNode(), role);
 		}
-	}
-
-	private boolean ensureRead(ConfigNode csl, BoundedRole role, boolean shouldHaveRight) {
-		boolean hasRight = csl.hasRight(role, SimpleBoundCommandGroup.READ);
-		boolean hasChange = hasRight != shouldHaveRight;
-		if (hasChange) {
-			if (!shouldHaveRight) {
-				if (anySubNeedsRight(csl, role)) {
-					return false;
-				}
-			}
-			csl.storeRight(role, SimpleBoundCommandGroup.READ, shouldHaveRight);
-		}
-		return hasChange;
-	}
-
-	private boolean anySubNeedsRight(ConfigNode csl, BoundedRole role) {
-		List<SecurityNode> children = csl.getChildren();
-		for (SecurityNode child : children) {
-			if (child instanceof ConfigNode) {
-				ConfigNode childConfigNode = (ConfigNode) child;
-				List<BoundCommandGroup> commands = childConfigNode.getCommandGroups();
-				for (BoundCommandGroup cgn : commands) {
-					if (childConfigNode.hasRight(role, cgn)) {
-						return true;
-					}
-				}
-				if (anySubNeedsRight(childConfigNode, role)) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 }

@@ -165,8 +165,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Notified when a row is activated: opened by a double-click, or by {@code Enter} while it
-	 * carries the keyboard cursor.
+	 * Notified when a row is activated: opened by a double-click, by {@code Enter} while it carries
+	 * the keyboard cursor, or by a control acting on behalf of the row through
+	 * {@link TableViewControl#activate(Object)}.
 	 *
 	 * @param <T>
 	 *        The row business object type.
@@ -175,7 +176,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public interface ActivationHandler<T> {
 
 		/**
-		 * Called after the activated row became the table's selection.
+		 * Called after the activated row became the table's selection - whether the row was
+		 * activated by the gesture or through {@link TableViewControl#activate(Object)}.
 		 *
 		 * @param row
 		 *        The business object of the activated row.
@@ -190,9 +192,36 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String VIEWPORT_START = "viewportStart";
 
+	/**
+	 * The first row of the window the client body showed last, so that a body mounted again (after a
+	 * reload of the page) scrolls back to it. {@link #VIEWPORT_START} is the start of the rows sent,
+	 * which lies before it by the prefetched rows.
+	 */
+	private static final String SCROLL_START = "scrollStart";
+
+	/**
+	 * State key of the rows the client renders: the window of the rows around the displayed ones,
+	 * starting at {@link #VIEWPORT_START}, each with its cell controls.
+	 *
+	 * <p>
+	 * Pushed when the rows themselves change - the window is scrolled, the data, the filter, the
+	 * sorting or the grouping changes, or a row's cells are built again. The selection is carried
+	 * by {@link #SELECTED_ROWS}, so a selection change pushes no rows.
+	 * </p>
+	 */
 	private static final String ROWS = "rows";
 
-	private static final String ROW_HEIGHT = "rowHeight";
+	/**
+	 * State key of the selected rows among the {@link #ROWS rows sent}: the list of their
+	 * {@link #ROW_INDEX indexes}, in the order of the rows.
+	 *
+	 * <p>
+	 * A selected row outside the window of the rows sent is not listed; the key is pushed again
+	 * whenever the selection or that window changes. Pushed together with {@link #SELECTED_COUNT}
+	 * and {@link #CURSOR_INDEX}, each only when its value changed.
+	 * </p>
+	 */
+	private static final String SELECTED_ROWS = "selectedRows";
 
 	private static final String SELECTION_MODE = "selectionMode";
 
@@ -269,6 +298,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String ROW_INDEX = "index";
 
+	/**
+	 * Entry of a row in the agent projection of the rows (see {@link #scriptingScalarState()})
+	 * telling whether the row is selected.
+	 */
 	private static final String ROW_SELECTED = "selected";
 
 	/**
@@ -331,6 +364,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private static final String ROW_GROUP_COUNT = "groupCount";
 
+	/**
+	 * The type class of the design system the text of a group header row is drawn in: the header
+	 * is strong where its text is set, since the text brings its own type class, which a class on
+	 * the row could not override.
+	 */
+	private static final String GROUP_HEADER_TYPE_CLASS = "tl-type-body-strong";
+
 	private static final int PREFETCH_ROWS = 20;
 
 	private static final int MIN_WIDTH = 50;
@@ -379,6 +419,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** Entry key telling whether a {@link #NAMED_FILTERS} filter may be deleted. */
 	private static final String NAMED_FILTER_DELETABLE = "deletable";
+
+	/**
+	 * Entry key of a {@link #NAMED_FILTERS} filter's {@link NamedFilter#cssClass() CSS class}, put
+	 * on its chip in either state. Present only for a filter that has one.
+	 */
+	private static final String NAMED_FILTER_CSS_CLASS = "cssClass";
+
+	/**
+	 * Entry key of the number of data rows a {@link NamedFilter#counted() counted}
+	 * {@link #NAMED_FILTERS} filter selects on its own, see {@link TableView#matchCount(NamedFilter)}.
+	 * Present only for a counted filter of a table whose rows can be counted.
+	 */
+	private static final String NAMED_FILTER_COUNT = "count";
 
 	/**
 	 * State key holding the {@link NamedFilter#id() identifier} of the filter the table currently
@@ -521,6 +574,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private int _viewportCount = 50;
 
+	/** The {@link #ROW_INDEX index} of the first of the {@link #ROWS rows sent}. */
+	private int _bufferedStart;
+
+	/** The {@link Row#key() keys} of the {@link #ROWS rows sent}, starting at {@link #_bufferedStart}. */
+	private List<Object> _bufferedKeys = List.of();
+
 	private final SelectionMode _selectionMode;
 
 	private final Set<Object> _selectedKeys = new LinkedHashSet<>();
@@ -594,7 +653,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_treeMode = treeMode;
 		_selectionMode = view.state().getSelection().mode();
 
-		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode.getExternalName());
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
@@ -820,6 +878,34 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Pushes the table again after the {@link TableView#namedFilters() named filters} were replaced
+	 * on the {@link #getView() view} directly, the rows and their content staying as they are.
+	 *
+	 * <p>
+	 * The filter bar displays the replaced filters - with the numbers of rows they select -, and
+	 * an active declared filter is applied again with its replaced criteria, so the displayed rows
+	 * are pushed again as well. No cell control is built again, in contrast to
+	 * {@link #refreshData()}.
+	 * </p>
+	 */
+	public void refreshFilters() {
+		buildFullState();
+	}
+
+	/**
+	 * Pushes the rows of the current window again, with the cell controls built for them.
+	 *
+	 * <p>
+	 * For a change that leaves the rows and their cells as they are but changes what is evaluated
+	 * with every push of the rows, such as the {@link TableView#rowCssClass(Row) row class}: no cell
+	 * control is built again, in contrast to {@link #refreshData()}.
+	 * </p>
+	 */
+	public void repaintRows() {
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
 	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
 	 * or clears the selection when {@code key} is {@code null} or names no row of the table's data.
 	 * Pushes the change to the client, scrolls the row into view and notifies the
@@ -867,11 +953,32 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		pushSelection();
 		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
 		// selected programmatically after a create), centering it; keep the viewport otherwise.
-		int start = _viewportStart;
 		if (_cursorIndex >= 0 && (_cursorIndex < _viewportStart || _cursorIndex >= _viewportStart + _viewportCount)) {
-			start = Math.max(0, _cursorIndex - _viewportCount / 2);
+			updateViewport(Math.max(0, _cursorIndex - _viewportCount / 2), _viewportCount);
 		}
-		updateViewport(start, _viewportCount);
+	}
+
+	/**
+	 * Expands the rows with the given {@link Row#key() row keys}, as the user does with their
+	 * toggles, and re-renders the rows.
+	 *
+	 * <p>
+	 * A row is expanded in the order the keys are given, so a row below another one becomes
+	 * displayed when the keys name the row above it first. A key of a row that is expanded already
+	 * changes nothing.
+	 * </p>
+	 *
+	 * @param keys
+	 *        The keys of the rows to expand.
+	 */
+	public void expandRows(Collection<?> keys) {
+		if (keys.isEmpty()) {
+			return;
+		}
+		for (Object key : keys) {
+			_view.setExpanded(key, true);
+		}
+		rebuildAfterRowChange();
 	}
 
 	/**
@@ -977,6 +1084,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * filter set in the per-column dialog ends the match just like applying another named filter
 	 * does.
 	 * </p>
+	 *
+	 * <p>
+	 * The number of rows a {@link NamedFilter#counted() counted} filter selects is computed here
+	 * as well, so it follows every change of the rows - a {@link #refreshData()} after the
+	 * displayed objects changed, a {@link #refreshFilters()} after the declared filters were
+	 * resolved anew.
+	 * </p>
 	 */
 	private void refreshFilterBar() {
 		if (!_filterBar) {
@@ -992,6 +1106,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				filterState.put(NAMED_FILTER_LABEL, label(resources, filter.label()));
 				filterState.put(NAMED_FILTER_DELETABLE,
 					Boolean.valueOf(filter.origin() == NamedFilter.Origin.SAVED));
+				if (filter.cssClass() != null) {
+					filterState.put(NAMED_FILTER_CSS_CLASS, filter.cssClass());
+				}
+				if (filter.counted()) {
+					int count = _view.matchCount(filter);
+					if (count != RowSource.UNKNOWN_COUNT) {
+						filterState.put(NAMED_FILTER_COUNT, Integer.valueOf(count));
+					}
+				}
 				filters.add(filterState);
 			}
 			putState(NAMED_FILTERS, filters);
@@ -1023,6 +1146,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return key == null ? null : resources.getString(key.tooltipOptional());
 	}
 
+	/**
+	 * Pushes the {@link #ROWS rows} of the window around the given viewport, the viewport itself
+	 * and the {@link #SELECTED_ROWS selection} within the window.
+	 *
+	 * <p>
+	 * Called where the rows change; the selection is carried by {@link #SELECTED_ROWS}, so a
+	 * selection change pushes no rows.
+	 * </p>
+	 *
+	 * @param start
+	 *        The index of the first displayed row.
+	 * @param count
+	 *        The number of displayed rows.
+	 */
 	private void updateViewport(int start, int count) {
 		int total = _view.rowCount();
 		int bufferedStart = Math.max(0, start - PREFETCH_ROWS);
@@ -1030,10 +1167,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 		List<Row<R>> rows = bufferedStart < bufferedEnd ? _view.rows(bufferedStart, bufferedEnd) : List.of();
 
-		Set<Object> bufferedKeys = new HashSet<>();
+		List<Object> bufferedKeyList = new ArrayList<>(rows.size());
 		for (Row<R> row : rows) {
-			bufferedKeys.add(row.key());
+			bufferedKeyList.add(row.key());
 		}
+		Set<Object> bufferedKeys = new HashSet<>(bufferedKeyList);
 		// Drop cell controls for rows that left the buffer.
 		for (Object cached : new ArrayList<>(_cellCache.keySet())) {
 			if (!bufferedKeys.contains(cached)) {
@@ -1052,7 +1190,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
-			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
 			if (_dragEnabled) {
 				rowState.put(ROW_DRAGGABLE, Boolean.valueOf(isDraggableRow(row)));
 			}
@@ -1083,11 +1220,35 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 		_viewportStart = start;
 		_viewportCount = count;
+		_bufferedStart = bufferedStart;
+		_bufferedKeys = bufferedKeyList;
 
 		putState(VIEWPORT_START, Integer.valueOf(bufferedStart));
+		putState(SCROLL_START, Integer.valueOf(start));
 		putState(ROWS, rowStates);
-		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
-		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
+		pushSelectionState();
+	}
+
+	/**
+	 * Pushes the selection as the client displays it - {@link #SELECTED_ROWS},
+	 * {@link #SELECTED_COUNT} and {@link #CURSOR_INDEX} - each only when it changed.
+	 *
+	 * <p>
+	 * Called when the selection changes and when the window of the {@link #ROWS rows sent} does.
+	 * </p>
+	 */
+	private void pushSelectionState() {
+		List<Integer> selectedRows = new ArrayList<>();
+		if (!_selectedKeys.isEmpty()) {
+			for (int n = 0, cnt = _bufferedKeys.size(); n < cnt; n++) {
+				if (_selectedKeys.contains(_bufferedKeys.get(n))) {
+					selectedRows.add(Integer.valueOf(_bufferedStart + n));
+				}
+			}
+		}
+		putChangedState(SELECTED_ROWS, selectedRows);
+		putChangedState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
+		putChangedState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
 	}
 
 	/**
@@ -1200,7 +1361,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		for (Row<R> row : _view.rows(start, end)) {
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
-			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
+			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
 			if (row.kind() == RowKind.GROUP_HEADER) {
 				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			} else {
@@ -1244,9 +1405,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Map<String, ReactControl> controls = new LinkedHashMap<>();
 		Map<String, String> tooltips = new LinkedHashMap<>();
 		Map<String, String> cssClasses = new LinkedHashMap<>();
+		String typeClass = row.kind() == RowKind.GROUP_HEADER ? GROUP_HEADER_TYPE_CLASS : null;
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
-			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
+			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content, typeClass);
 			controls.put(column.name(), cell);
 			String tooltip = content.tooltip();
 			if (!StringServices.isEmpty(tooltip)) {
@@ -1396,8 +1558,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	// -- Column selection dialog --
 
 	/**
-	 * Opens the column selection: which columns the table displays, in which order, and which of
-	 * them the rows are grouped by.
+	 * Opens the column selection: which columns the table displays, in which order, which of them
+	 * it freezes, and which column the rows are grouped by.
 	 *
 	 * <p>
 	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
@@ -1418,15 +1580,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Resources resources = Resources.getInstance();
 
 		ReactColumnSelectControl selection =
-			new ReactColumnSelectControl(context, _view.columnOptions(), getGroupedColumn(), !_treeMode);
+			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames(), getGroupedColumn(),
+				!_treeMode);
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
+		// A fixed height: the search stays in place above the list, which fills the rest and scrolls
+		// alone, and the window keeps its size while a search narrows the list.
+		window.setHeight(DisplayDimension.percent(70));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
-			setGroupedColumn(selection.groupedColumn());
-			applyColumns(selection.visibleColumns());
+			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumn());
 			dialogs.closeTopDialog(DialogResult.ok(null));
 			return HandlerResult.DEFAULT_RESULT;
 		});
@@ -1450,23 +1615,34 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Applies a new set of displayed columns and re-renders.
+	 * Applies a new set of displayed columns, the columns to freeze and the grouping, and re-renders.
 	 *
-	 * @see #rearrange(Runnable)
+	 * @param columns
+	 *        The columns to display, in display order.
+	 * @param lockedColumns
+	 *        The displayed columns to freeze; the table freezes up to the last of them in the new order.
+	 * @param groupedColumn
+	 *        The column to group the rows by, displayed or not; {@code null} or empty for none.
 	 */
-	private void applyColumns(List<String> columns) {
-		rearrange(() -> _view.setColumnOrder(columns));
+	protected void applyColumns(List<String> columns, List<String> lockedColumns, String groupedColumn) {
+		GroupSpec grouping = groupSpec(groupedColumn);
+		rearrange(() -> {
+			_view.setColumnOrder(columns);
+			_view.setFrozenColumnCount(frozenPrefixOf(lockedColumns));
+			if (!grouping.columns().equals(_view.state().getGrouping().columns())) {
+				_view.group(grouping);
+			}
+		});
 	}
 
 	/**
-	 * Performs a change of the table's arrangement - its columns, its sort, its grouping - and
-	 * re-renders: the cell controls of the buffered rows belong to the previous arrangement, so they
-	 * are rebuilt for the new one.
+	 * Performs a change of the table's arrangement - its columns, its frozen columns, its sort, its
+	 * grouping - and re-renders: the cell controls of the buffered rows belong to the previous
+	 * arrangement, so they are rebuilt for the new one.
 	 *
 	 * <p>
-	 * Columns and rows must reach the client as one patch: a client that already knows a newly shown
-	 * column but still holds the rows of the previous column set would render a cell that has no
-	 * control yet.
+	 * Columns, frozen count and rows must reach the client as one patch: a client that already knows a newly shown
+	 * column but still holds the rows of the previous column set would render a cell that has no control yet.
 	 * </p>
 	 *
 	 * <p>
@@ -1492,6 +1668,32 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} finally {
 			commitUpdate(update);
 		}
+	}
+
+	/**
+	 * The number of leading displayed columns up to and including the last of the given ones.
+	 */
+	private int frozenPrefixOf(List<String> lockedColumns) {
+		int result = 0;
+		List<ColumnView> displayed = _view.columns();
+		for (int n = 0; n < displayed.size(); n++) {
+			if (lockedColumns.contains(displayed.get(n).name())) {
+				result = n + 1;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The names of the columns the table freezes now - the locks the column selection opens with.
+	 */
+	protected Set<String> lockedColumnNames() {
+		Set<String> result = new HashSet<>();
+		List<ColumnView> displayed = _view.columns();
+		for (int n = 0; n < Math.min(_view.frozenColumnCount(), displayed.size()); n++) {
+			result.add(displayed.get(n).name());
+		}
+		return result;
 	}
 
 	/**
@@ -1598,11 +1800,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        The name of the column to group by.
 	 */
 	public void setGroupedColumn(String column) {
-		GroupSpec grouping = StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
+		GroupSpec grouping = groupSpec(column);
 		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
 			return;
 		}
 		rearrange(() -> _view.group(grouping));
+	}
+
+	/**
+	 * The grouping by the given column, {@link GroupSpec#NONE} for a {@code null} or empty one.
+	 */
+	private static GroupSpec groupSpec(String column) {
+		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
 	}
 
 	/**
@@ -1722,7 +1931,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		}
 
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -1781,6 +1989,29 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return activateRow(rowIndex);
 	}
 
+	/**
+	 * Activates the row displaying the given business object, as a double-click on that row does:
+	 * the row becomes the sole selection, then what {@link #setActivationHandler(ActivationHandler)}
+	 * registered runs with the object.
+	 *
+	 * <p>
+	 * This is the entry for a control acting on behalf of a row - a button the row carries, say -
+	 * so that whatever reads the table's selection while the activation runs sees that row. An
+	 * object the table currently displays in no row activates nothing.
+	 * </p>
+	 *
+	 * @param row
+	 *        The business object of the row to activate.
+	 * @return The outcome of the {@link ActivationHandler}, {@link HandlerResult#DEFAULT_RESULT}
+	 *         when no row displays the object or no handler is set.
+	 */
+	public HandlerResult activate(R row) {
+		if (row == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return activateRow(rowIndexOfData(row));
+	}
+
 	private HandlerResult activateRow(int rowIndex) {
 		Row<R> row = rowAt(rowIndex);
 		if (row == null) {
@@ -1816,7 +2047,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_cursorIndex = rowIndex;
 		_selectionAnchor = rowIndex;
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -1839,6 +2069,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (target == null) {
 			return -1;
 		}
+		return rowIndexOfData(target);
+	}
+
+	/**
+	 * The index of the row whose business object is the given one, or {@code -1} when no row
+	 * displays it.
+	 */
+	private int rowIndexOfData(Object target) {
 		List<Row<R>> rows = _view.rows(0, _view.rowCount());
 		for (int i = 0; i < rows.size(); i++) {
 			if (target.equals(rows.get(i).data())) {
@@ -2006,7 +2244,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			matching.forEach(_selectedKeys::remove);
 		}
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -2582,7 +2819,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Re-buffers the viewport so the given row is within the rendered window, then re-renders.
+	 * Re-buffers the viewport so the given row is within the rendered window, and re-renders the
+	 * rows when that moved the viewport.
 	 */
 	private void scrollIntoView(int target) {
 		int start = _viewportStart;
@@ -2591,7 +2829,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} else if (target >= start + _viewportCount) {
 			start = target - _viewportCount + 1;
 		}
-		updateViewport(Math.max(0, start), _viewportCount);
+		start = Math.max(0, start);
+		if (start != _viewportStart) {
+			updateViewport(start, _viewportCount);
+		}
 	}
 
 	/**
@@ -2618,6 +2859,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			_cursorIndex = _committedCursor;
 			_selectionAnchor = _committedAnchor;
 			selectInView(_selectedKeys);
+			pushSelectionState();
 			throw ex;
 		}
 		commitSelection();
@@ -2644,6 +2886,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// A refused change restores exactly this state, so the counts of the committed selection are
 		// the ones the client keeps showing then.
 		refreshSelectionCounts();
+		pushSelectionState();
 	}
 
 }

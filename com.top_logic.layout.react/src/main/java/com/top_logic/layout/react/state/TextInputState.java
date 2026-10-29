@@ -104,6 +104,18 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	/** @see #getRows() */
 	String ROWS__PROP = "rows";
 
+	/** @see #isOffersSuggestions() */
+	String OFFERS_SUGGESTIONS__PROP = "offersSuggestions";
+
+	/** @see #getSuggestions() */
+	String SUGGESTIONS__PROP = "suggestions";
+
+	/** @see #getSuggestionsText() */
+	String SUGGESTIONS_TEXT__PROP = "suggestionsText";
+
+	/** @see #getSuggestionsCaret() */
+	String SUGGESTIONS_CARET__PROP = "suggestionsCaret";
+
 	/**
 	 * The kind of value the field edits. Absent: plain text.
 	 */
@@ -154,6 +166,64 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	 */
 	com.top_logic.layout.react.state.TextInputState setRows(int value);
 
+	/**
+	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
+	 *
+	 * The field asks for them with the command {@code suggest}, giving the text typed as argument
+	 * {@code text} and the caret position in it as argument {@code caret}; the answer arrives in
+	 * {@link #getSuggestions()}. Asking never changes the value of the field; a suggestion the user
+	 * picks is entered like any other text.
+	 */
+	boolean isOffersSuggestions();
+
+	/**
+	 * @see #isOffersSuggestions()
+	 */
+	com.top_logic.layout.react.state.TextInputState setOffersSuggestions(boolean value);
+
+	/**
+	 * The suggestions computed for the text {@link #getSuggestionsText()} with the caret at
+	 * {@link #getSuggestionsCaret()}, in the order they are offered. The list is shown as it is, without
+	 * filtering it further.
+	 */
+	java.util.List<com.top_logic.layout.react.state.SuggestionEntry> getSuggestions();
+
+	/**
+	 * @see #getSuggestions()
+	 */
+	com.top_logic.layout.react.state.TextInputState setSuggestions(java.util.List<? extends com.top_logic.layout.react.state.SuggestionEntry> value);
+
+	/**
+	 * Adds a value to the {@link #getSuggestions()} list.
+	 */
+	com.top_logic.layout.react.state.TextInputState addSuggestion(com.top_logic.layout.react.state.SuggestionEntry value);
+
+	/**
+	 * Removes a value from the {@link #getSuggestions()} list.
+	 */
+	void removeSuggestion(com.top_logic.layout.react.state.SuggestionEntry value);
+
+	/**
+	 * The text the {@link #getSuggestions()} were computed for. A client that has been typed into since
+	 * it asked ignores suggestions computed for another text or caret position.
+	 */
+	String getSuggestionsText();
+
+	/**
+	 * @see #getSuggestionsText()
+	 */
+	com.top_logic.layout.react.state.TextInputState setSuggestionsText(String value);
+
+	/**
+	 * The caret position in {@link #getSuggestionsText()} the {@link #getSuggestions()} were computed for.
+	 */
+	int getSuggestionsCaret();
+
+	/**
+	 * @see #getSuggestionsCaret()
+	 */
+	com.top_logic.layout.react.state.TextInputState setSuggestionsCaret(int value);
+
 	@Override
 	com.top_logic.layout.react.state.TextInputState setDebounceMs(long value);
 
@@ -198,6 +268,9 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 
 	@Override
 	com.top_logic.layout.react.state.TextInputState setSubmitOnEnter(boolean value);
+
+	@Override
+	com.top_logic.layout.react.state.TextInputState setCompact(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.TextInputState setHidden(boolean value);

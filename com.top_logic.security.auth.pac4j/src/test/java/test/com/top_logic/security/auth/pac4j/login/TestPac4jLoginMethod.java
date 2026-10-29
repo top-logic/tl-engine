@@ -25,7 +25,7 @@ import com.meterware.servletunit.ServletUnitClient;
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.base.accesscontrol.UserTokens;
 import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -151,7 +151,7 @@ public class TestPac4jLoginMethod extends TestCase {
 	 * Tests that a session established by another authentication mechanism is offered nothing.
 	 */
 	public void testForeignAuthentication() {
-		ThreadContextManager.inSystemInteraction(TestPac4jLoginMethod.class, () -> {
+		ThreadContext.inSystemContext(TestPac4jLoginMethod.class, () -> {
 			_servlet.installUserTokens(new ForeignTokens());
 
 			assertNull("A session this login method did not establish is not confirmed by its provider.",
@@ -163,7 +163,7 @@ public class TestPac4jLoginMethod extends TestCase {
 	 * Tests that a session established by another pac4j client is offered nothing.
 	 */
 	public void testOtherClient() {
-		ThreadContextManager.inSystemInteraction(TestPac4jLoginMethod.class, () -> {
+		ThreadContext.inSystemContext(TestPac4jLoginMethod.class, () -> {
 			_servlet.installUserTokens(new Pac4jUserTokens(_context, profile("other-oidc")));
 
 			assertNull("A session logged in with another client is not confirmed by this one's provider.",
@@ -172,7 +172,7 @@ public class TestPac4jLoginMethod extends TestCase {
 	}
 
 	private static Pac4jLoginMethod loginMethod() {
-		return new Pac4jLoginMethod(CLIENT, ResKey.text(CLIENT), null);
+		return new Pac4jLoginMethod(CLIENT, ResKey.text(CLIENT), null, context -> null);
 	}
 
 	private static OidcProfile profile(String clientName) {

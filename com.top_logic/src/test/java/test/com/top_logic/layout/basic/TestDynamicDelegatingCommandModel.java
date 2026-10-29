@@ -13,6 +13,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.thread.InContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
@@ -34,7 +35,7 @@ import com.top_logic.tool.execution.ExecutableState;
 public class TestDynamicDelegatingCommandModel extends TestCase {
 
 	public void testExecutability() {
-		ThreadContextManager.inSystemInteraction(TestDynamicDelegatingCommandModel.class, new InContext() {
+		ThreadContext.inSystemContext(TestDynamicDelegatingCommandModel.class, new InContext() {
 			@Override
 			public void inContext() {
 				doTestExecutability();

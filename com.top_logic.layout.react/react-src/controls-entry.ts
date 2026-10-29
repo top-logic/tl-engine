@@ -7,7 +7,20 @@
 //
 // Use:   import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 //        React.useState(...)   React.useRef(...)   React.useCallback(...)
-import { register } from 'tl-react-bridge';
+import { register, registerPart } from 'tl-react-bridge';
+
+import ButtonPart from './controls/button/ButtonPart';
+import MenuTriggerPart from './controls/button/MenuTriggerPart';
+import DisclosureTogglePart from './controls/button/DisclosureTogglePart';
+import CheckboxPart from './controls/form/CheckboxPart';
+import TextInputPart from './controls/form/TextInputPart';
+import FieldValuePart from './controls/form/FieldValuePart';
+import ChipPart from './controls/chip/ChipPart';
+import BadgePart from './controls/chip/BadgePart';
+import DividerPart from './controls/divider/DividerPart';
+import ProgressBarPart from './controls/progress/ProgressBarPart';
+import SpinnerPart from './controls/progress/SpinnerPart';
+import ListboxPart from './controls/listbox/ListboxPart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -19,7 +32,6 @@ import TLCheckbox from './controls/TLCheckbox';
 import TLButton from './controls/TLButton';
 import TLUploadButton from './controls/TLUploadButton';
 import TLToggleButton from './controls/TLToggleButton';
-import TLCounter from './controls/TLCounter';
 import TLTabBar from './controls/TLTabBar';
 import TLAccordion from './controls/TLAccordion';
 import TLFieldList from './controls/TLFieldList';
@@ -58,9 +70,11 @@ import TLDialogManager from './controls/TLDialogManager';
 import TLWindow from './controls/TLWindow';
 import TLDrawer from './controls/TLDrawer';
 import TLMenuRegion from './controls/TLMenuRegion';
+import TLPopover from './controls/TLPopover';
 import TLSnackbar from './controls/TLSnackbar';
 import TLNoticeBar from './controls/TLNoticeBar';
 import TLAlert from './controls/TLAlert';
+import TLFloatingAction from './controls/TLFloatingAction';
 import TLMenu from './controls/TLMenu';
 import TLAppShell from './controls/TLAppShell';
 import TLText from './controls/TLText';
@@ -91,6 +105,21 @@ import TLSlotContent from './controls/TLSlotContent';
 import TLDrawerToggle from './controls/TLDrawerToggle';
 
 
+// The TopLogic drawing of the parts the controls draw themselves with; a component library
+// replaces them with replacePart.
+registerPart('Button', ButtonPart);
+registerPart('MenuTrigger', MenuTriggerPart);
+registerPart('DisclosureToggle', DisclosureTogglePart);
+registerPart('Checkbox', CheckboxPart);
+registerPart('TextInput', TextInputPart);
+registerPart('FieldValue', FieldValuePart);
+registerPart('Chip', ChipPart);
+registerPart('Badge', BadgePart);
+registerPart('Divider', DividerPart);
+registerPart('ProgressBar', ProgressBarPart);
+registerPart('Spinner', SpinnerPart);
+registerPart('Listbox', ListboxPart);
+
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);
 register('TLToggleButton', TLToggleButton);
@@ -101,7 +130,6 @@ register('TLDatePicker', TLDatePicker);
 register('TLSlider', TLSlider);
 register('TLSelect', TLSelect);
 register('TLCheckbox', TLCheckbox);
-register('TLCounter', TLCounter);
 register('TLTabBar', TLTabBar);
 register('TLAccordion', TLAccordion);
 register('TLFieldList', TLFieldList);
@@ -140,9 +168,11 @@ register('TLDialogManager', TLDialogManager);
 register('TLWindow', TLWindow);
 register('TLDrawer', TLDrawer);
 register('TLMenuRegion', TLMenuRegion);
+register('TLPopover', TLPopover);
 register('TLSnackbar', TLSnackbar);
 register('TLNoticeBar', TLNoticeBar);
 register('TLAlert', TLAlert);
+register('TLFloatingAction', TLFloatingAction);
 register('TLMenu', TLMenu);
 register('TLAppShell', TLAppShell);
 register('TLText', TLText);

@@ -1,5 +1,5 @@
 ---
-description: Read before extending app.view.xml - the application shell, sidebar items, badges and the rail chrome, login and anonymous sessions with the login view, and the state classes for transitions.
+description: Read before extending app.view.xml - the application shell, sidebar items, badges and the rail chrome, login and anonymous sessions with the login view, and the state marks for transitions.
 order: 80
 ---
 
@@ -7,9 +7,9 @@ order: 80
 
 ## The application shell: extending `app.view.xml`
 
-`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order.
+`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order. The general merge rules - keys, positions, overrides, anonymous elements - are described in [extending a view with a same-path overlay](doc:view-layer/overlays); what follows is what they mean for the shell.
 
-- Each slot of `<app-shell>` (`header`, `notices`, `content`, `footer`) holds **at most one element of a kind** — the slot lists are keyed by the configuration interface of their entries. The overlay's `<content><sidebar>` and `<header><app-bar>` therefore extend the shell's sidebar and app bar instead of adding second ones; two elements of the same kind in one slot are rejected.
+- The overlay addresses the shell's sidebar and app bar by their ids, wherever the shell keeps them: `<sidebar config:ref="sidebar">` and `<app-bar config:ref="app-bar">`, written directly in the `<view>`. (The slots of `<app-shell>` — `header`, `notices`, `content`, `footer` — hold **at most one element of a kind**, the slot lists being keyed by the configuration interface of their entries, so an overlay that writes the path, `<app-shell><content><sidebar>`, extends the same sidebar; two elements of the same kind in one slot are rejected.)
 - Single-valued properties written in the overlay replace the shell's: the `<title>` of the app bar, the `active-item` of the sidebar.
 - The rail chrome (`<header>`, `<footer>`, … of the sidebar) is a list of arbitrary elements; the overlay marks its list with `config:override="true"` to replace the shell's neutral texts instead of adding to them.
 - Sidebar items are keyed by `id`. An item without a position is appended — after the `administration` item; an item for the application's own section names the separator: `config:position="before" config:reference="system-separator"`.
@@ -17,26 +17,22 @@ order: 80
 
 ```xml
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-    <app-shell>
-        <content>
-            <sidebar active-item="home">
-                <header config:override="true">
-                    <text><label><en>My App</en></label></text>
-                </header>
-                <nav-item id="home" config:position="before" config:reference="system-separator">
-                    <view-ref view="home.view.xml"/>
-                    <label><en>Home</en></label>
-                </nav-item>
-            </sidebar>
-        </content>
-        <header>
-            <app-bar>
-                <title><en>My App</en></title>
-            </app-bar>
+    <sidebar config:ref="sidebar" active-item="home">
+        <header config:override="true">
+            <text><label><en>My App</en></label></text>
         </header>
-    </app-shell>
+        <nav-item id="home" config:position="before" config:reference="system-separator">
+            <view-ref view="home.view.xml"/>
+            <label><en>Home</en></label>
+        </nav-item>
+    </sidebar>
+    <app-bar config:ref="app-bar">
+        <title><en>My App</en></title>
+    </app-bar>
 </view>
 ```
+
+`<session-timeout-notice/>` counts down to the end of the session and warns `lead-seconds` (300) before it. Every request that carries the session restarts the container's inactivity timeout, whatever servlet answers it - a React command, a page, a stylesheet, an application's own servlet such as the chat's `/chat/*` - and the `SessionActivityFilter` of `tl-layout-react`, mapped to every request, tells the notice about each of them (`ReactWindowRegistry.noteActivity`). A servlet of an application therefore needs nothing of its own for the notice to count from its requests.
 
 An application that defines its whole shell itself writes `<app-shell config:override="true">` in its copy; the copy then takes the place of the shipped shell as a whole (channels of its `<view>` are still added to the shell's, which has none). `com.top_logic.demo.react`'s `app.view.xml` is a complete overlay example; `TestAppShellOverlay` pins the merge behavior.
 
@@ -50,9 +46,9 @@ Five kinds of item:
 - `<group id icon expanded>` gathers further items under a heading the user folds away. A group holds items, not content: the navigation items inside it lead to the same places and are addressed at the sidebar itself, so a group nests inside a group without changing where anything is displayed. Whether it is folded is remembered per user under the group's `id` (`PersonalizingExpandable`, the states stored as one JSON map beside the rail's own collapsed state), and applied to a group at any depth when the item list is pushed. On a folded rail a group opens as a flyout listing its items.
 - `<header-item id icon>` is a caption naming the items that follow it. It leads nowhere and cannot be activated; it divides a long navigation into named sections that all stay visible, where a group would fold them away.
 - `<command-item id>` runs a command instead of leading somewhere. The `<action>` it hosts is a `ViewCommand`, whose label and image the item displays, so the item reads like the button of the same command elsewhere. The item follows the command's executability for as long as the rail stands: invisible is not displayed, not executable is displayed out of reach (greyed), and the item takes its place back as soon as the rules allow it. The reason a rule gives for disabling the command (the text of a `<disabled-if>` expression, say) is what the item shows when the pointer rests on it, as the button of the same command does. The control refuses an activation of an item in either state, so a client addressing the command directly does not bypass the rules.
-- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`, and at most one such anonymous entry may occur — give separators explicit ids where more than one is needed.
+- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`: an entry without id is anonymous, appended in order and addressed by no fragment, so any number of separators may stay anonymous. Give a separator an id where a fragment positions items against it, as the shell's `system-separator`.
 
-`<nav-item>` and `<group>` take an `<access-control scope="…"/>`: an item the current user may not reach is not built at all, and a group whose access is denied withholds everything inside it.
+`<nav-item>` and `<group>` take an `<access-control operation="…"/>` (see [access control of UI units](doc:view-layer/access-control)): an item the current user can never reach is not built at all, a group whose access is denied withholds everything inside it, and the check of a group applies to the content of every item in it.
 
 ```xml
 <sidebar active-item="attributes">
@@ -116,7 +112,7 @@ Five kinds of item:
         <separator/>
         <command-item id="about">
             <action class="com.top_logic.layout.view.command.GenericViewCommand"
-                image="css:bi bi-info-circle" input="ticketCount"
+                image="css:bi bi-info-circle" inputs="ticketCount"
             >
                 <label>
                     <en>About</en>
@@ -125,7 +121,7 @@ Five kinds of item:
                 <executability>
                     <null-input-disabled/>
                 </executability>
-                <notify expr="count -> #('{0} tickets.'@en, '{0} Tickets.'@de).fill($count)"/>
+                <notify expr="#('{0} tickets.'@en, '{0} Tickets.'@de).fill($ticketCount)"/>
             </action>
         </command-item>
     </items>
@@ -167,7 +163,7 @@ Build the items of a nested list with `SidebarElement.createItems(elements, cont
 
 ## Login, anonymous sessions and the login view
 
-Every visitor reaches the application under an anonymous session, so who is let in is a question the application answers rather than one the servlet refuses. An application that shows itself to visitors offers the login from its account area: `user-menu.view.xml` offers an anonymous session (`account -> $account.accountIsAnonymous()`) a Login button that opens `login.view.xml` as a dialog, and the parts that are not for visitors are gated in place — `<access-control scope="administration"/>` on a `<nav-item>`, `<authenticated-only/>` in a command's `<executability>`.
+Every visitor reaches the application under an anonymous session, so who is let in is a question the application answers rather than one the servlet refuses. An application that shows itself to visitors offers the login from its account area: `user-menu.view.xml` offers an anonymous session (`<case test="$currentUser.accountIsAnonymous()">` over the channel `currentUser`) a Login button that opens `login.view.xml` as a dialog, and the parts that are not for visitors are gated in place — `<access-control operation="Administration"/>` on a `<nav-item>`, `<authenticated-only/>` in a command's `<executability>`.
 
 An application that has nothing to show a visitor names a login view in its `ViewConfig` instead: `<config config:interface="com.top_logic.layout.view.ViewConfig" login-view="login-page.view.xml">`. `ViewServlet` then renders that view for every request of a session that belongs to no account, whatever the URL names — a route, the default view, an entry point, or a view that is none of them — so the visitor sees the login and nothing else. `login-page.view.xml` is what the framework ships for this: the credentials form on a centered `<panel appearance="card" width="380px">` and nothing else, where `width` is the general option of `<panel>` for a panel that is not to take the width it is offered. An application with a login display of its own names that one. Both displays reference the same `login-form.view.xml` — the fields, the login action, the `<login-commands/>` a feature module contributes to and the `<login-methods/>` buttons of the configured SSO providers — so the dialog and the page offer the same login.
 
@@ -177,22 +173,22 @@ An application that has nothing to show a visitor names a login view in its `Vie
 
 Leaving works the other way round: `<logout-command>` swaps the session back and sends the browser to the root of the view application (`ViewServlet.ROOT_PATH`), because the page the departing user was on is theirs and not the landing page of whoever sits down at the browser next. `com.top_logic.demo.react` configures a login view, `com.top_logic.demo` does not — its React view is browsed anonymously and logged into through the account area.
 
-## Transitions: the state classes an application animates
+## Transitions: the state marks an application animates
 
-Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with state classes, and which animation runs — or whether one runs at all — is the application stylesheet's decision. The classes are the API; the engine ships a default animation for the wizard only.
+Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with `data-tl-state` words, and which animation runs — or whether one runs at all — is the application stylesheet's decision. The states are the API. Each display animates by default on the motion tokens: the design system package slides the wizard step and the tile frame (`tl-slide-*`, `--tl-duration-slow`, offset `--tl-space-md`), and fades the dialog (`--tl-duration-base`). A theme changes or switches off the movement through the tokens (a zero duration ends the change at once); an application overrides it with rules on the same marks, and `animation: none` drops it.
 
 | Display | While it arrives | While it leaves | Direction on the root |
 | --- | --- | --- | --- |
-| `<wizard>` | `tlWizard__step--entering` | `tlWizard__step--exiting` | `tlWizard--forward` / `tlWizard--backward` |
-| dialog | `tlDialog__backdrop--entering` | `tlDialog__backdrop--exiting` | — |
-| `<tile-stack>` | `tlTileStack__frame--entering` | `tlTileStack__frame--exiting` | `tlTileStack--forward` / `tlTileStack--backward` |
+| `<wizard>` | `.tl-wizard__step[data-tl-state~="entering"]` | `.tl-wizard__step[data-tl-state~="exiting"]` | `.tl-wizard[data-tl-state~="backward"]` |
+| dialog | `.tl-dialog[data-tl-state~="entering"]` | `.tl-dialog[data-tl-state~="exiting"]` | — |
+| `<tile-stack>` | `.tl-tile-stack__frame[data-tl-state~="entering"]` | `.tl-tile-stack__frame[data-tl-state~="exiting"]` | `.tl-tile-stack[data-tl-state~="backward"]` |
 
 The wizard takes its direction from the server (state key `direction`); the tile stack derives it from the position it displays, deeper into the stack being forward.
 
-**What leaves is a copy.** The control of a step left behind, of a dialog closed or of a frame popped is disposed on the server the moment the display moves, so there is nothing left to render — what can still be animated out is a picture of it. The `--exiting` element is therefore an inert `cloneNode` copy of what left: `aria-hidden`, `inert`, without the ids of what it copied (so that nothing addresses it) and without pointer input. There is one copy per key at a time, and a copy is dropped when its `animationend` or `transitionend` arrives, when the same key is displayed again, or — where the stylesheet animates nothing — after a one-second fallback. The engine places the copy and ships only the structural rules that make it a picture: absolutely positioned over the stack for a tile frame, `pointer-events: none` for the dialog backdrop, whose copy covers the page and therefore has to let both the page and a dialog still open below it through.
+**What leaves is a copy.** The control of a step left behind, of a dialog closed or of a frame popped is disposed on the server the moment the display moves, so there is nothing left to render — what can still be animated out is a picture of it. The element marked `exiting` is therefore an inert `cloneNode` copy of what left: `aria-hidden`, `inert`, without the ids of what it copied (so that nothing addresses it) and without pointer input. There is one copy per key at a time, and a copy is dropped when its `animationend` or `transitionend` arrives or when the same key is displayed again. Where the stylesheet animates nothing, mark and copy go at once, before the browser paints; an animation that never reports its end is cut off after one second. The enter mark stays while the element arrives even if the element's own renderer rewrites the attribute carrying it. Besides the default animations, the design system package ships the structural rules that make a copy a picture: absolutely positioned over the stack for a tile frame, `pointer-events: none` for the dialog scrim (`tl-dialog`, in the package), whose copy covers the page and therefore has to let both the page and a dialog still open below it through.
 
-**Reduced motion is decided before the stylesheet.** Where `(prefers-reduced-motion: reduce)` matches, no class is set and no copy is made at all, so the change is instantaneous whatever an application animates. Neither the engine stylesheet nor an application's needs a `prefers-reduced-motion` block for these classes.
+**Reduced motion is decided before the stylesheet.** Where `(prefers-reduced-motion: reduce)` matches, no state is set and no copy is made at all, so the change is instantaneous whatever an application animates. Neither the design system package nor an application's stylesheet needs a `prefers-reduced-motion` block for these marks.
 
-**One hook does this for all three.** `useKeyedTransition` (`com.top_logic.layout.react/react-src/bridge/transition.ts`, exported from `tl-react-bridge`) takes the keys of what is displayed now, a way to resolve the element of a key, the container the copies are shown in, and the two class names; it notices which keys appeared and which disappeared, marks the DOM before the browser paints, and takes the marks away again. It writes the classes onto the DOM rather than handing them back for rendering, so the element marked may be rendered anywhere below the component that notices the change — a dialog's backdrop belongs to the dialog, while its opening and closing is the dialog manager's news. A display that newly wants a transition uses this hook rather than a mechanism of its own.
+**One hook does this for all three.** `useKeyedTransition` (`com.top_logic.layout.react/react-src/bridge/transition.ts`, exported from `tl-react-bridge`) takes the keys of what is displayed now, a way to resolve the element of a key, the container the copies are shown in, and how to mark: the words `entering` and `exiting` in `data-tl-state`; it notices which keys appeared and which disappeared, marks the DOM before the browser paints, and takes the marks away again. It writes the marks (the words `entering`/`exiting` in `data-tl-state`) onto the DOM rather than handing them back for rendering, so the element marked may be rendered anywhere below the component that notices the change — a dialog's scrim belongs to the dialog, while its opening and closing is the dialog manager's news. A display that newly wants a transition uses this hook rather than a mechanism of its own.
 
-**An example stylesheet.** `com.top_logic.demo.react/src/main/webapp/style/tl-demo-react.css` animates the anchors the engine leaves free: a 150ms opacity fade for the dialog backdrop and a 200ms fade-and-slide for the tile frames, the slide following `tlTileStack--forward` / `tlTileStack--backward`.
+**Restyling a change.** An application redefines the rules of the marks in its own stylesheet: for the tile frame `.tl-tile-stack__frame[data-tl-state~="entering"]` and `~="exiting"` (with `.tl-tile-stack[data-tl-state~="backward"]` for the other direction), for the dialog `.tl-dialog[data-tl-state~="entering"]` and `~="exiting"`.

@@ -17,6 +17,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
@@ -38,6 +39,13 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 	private VariableScope _vars = NoVariables.INSTANCE;
 
 	private final Map<String, Ref> _resolvers = new HashMap<>();
+
+	/**
+	 * The installed {@link IdLookup}s, the innermost one last.
+	 * 
+	 * @see #withIdLookup(IdLookup, XMLStreamReader, Handler)
+	 */
+	private final List<IdLookup> _lookups = new ArrayList<>();
 
 	private int _depth = 0;
 
@@ -103,6 +111,16 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 	}
 
 	@Override
+	public Object withIdLookup(IdLookup lookup, XMLStreamReader in, Handler inner) throws XMLStreamException {
+		_lookups.add(lookup);
+		try {
+			return inner.importXml(this, in);
+		} finally {
+			_lookups.remove(_lookups.size() - 1);
+		}
+	}
+
+	@Override
 	public Object getVar(String name) {
 		Object result = getVarOrNull(name);
 		if (result == null && name != null && !_vars.containsKey(name)) {
@@ -118,19 +136,47 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 
 	abstract class Resolver implements ImportContext.Resolution {
 
-		private final ImportPart _handler;
+		private ImportPart _handler;
 
-		private final Location _location;
+		private Location _location;
 
 		private final String _id;
 
-		public Resolver(ImportPart handler, Location location, String id) {
+		/**
+		 * Whether at least one requester requires the ID to be resolved.
+		 */
+		private boolean _required;
+
+		public Resolver(ImportPart handler, Location location, String id, boolean required) {
 			_handler = handler;
 			_location = location;
 			_id = id;
+			_required = required;
 		}
 
+		/**
+		 * Records another requester of this ID.
+		 * 
+		 * <p>
+		 * The first requester that requires the resolution is the one reported, if the ID is never
+		 * resolved.
+		 * </p>
+		 */
+		void addRequester(ImportPart handler, Location location, boolean required) {
+			if (required && !_required) {
+				_handler = handler;
+				_location = location;
+				_required = true;
+			}
+		}
+
+		/**
+		 * Reports this ID as unresolved, if a requester requires its resolution.
+		 */
 		public void errorUnresolved() {
+			if (!_required) {
+				return;
+			}
 			error(_location, I18NConstants.ERROR_UNRESOLVED_ID__HANDLER_ID.fill(_handler.location(), _id));
 		}
 
@@ -144,18 +190,35 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 
 		private List<ImportContext.Resolution> _resolutions = new ArrayList<>();
 
+		/**
+		 * Callbacks to run, if this reference is still unresolved at the end of the import.
+		 */
+		private List<Runnable> _unresolvedCallbacks = new ArrayList<>();
+
 		private Object _target;
 
-		public Ref(ImportPart handler, Location location, String id) {
-			super(handler, location, id);
+		public Ref(ImportPart handler, Location location, String id, boolean required) {
+			super(handler, location, id, required);
 		}
 
-		void deref(ImportContext.Resolution fun) {
+		void deref(ImportContext.Resolution fun, Runnable ifUnresolved) {
 			if (_resolutions == null) {
 				fun.resolve(_target);
 			} else {
 				_resolutions.add(fun);
+				if (ifUnresolved != null) {
+					_unresolvedCallbacks.add(ifUnresolved);
+				}
 			}
+		}
+
+		/**
+		 * Runs the callbacks waiting for this reference to stay unresolved.
+		 */
+		void runUnresolvedCallbacks() {
+			List<Runnable> callbacks = _unresolvedCallbacks;
+			_unresolvedCallbacks = new ArrayList<>();
+			callbacks.forEach(Runnable::run);
 		}
 
 		@Override
@@ -172,16 +235,19 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 			// resolution.
 			_target = target;
 			_resolutions = null;
+			_unresolvedCallbacks = null;
 			return result;
 		}
 
 	}
 
-	private Resolver addRef(ImportPart handler, Location location, String id) {
+	private Resolver addRef(ImportPart handler, Location location, String id, boolean required) {
 		Ref ref = _resolvers.get(id);
 		if (ref == null) {
-			ref = new Ref(handler, location, id);
+			ref = new Ref(handler, location, id, required);
 			_resolvers.put(id, ref);
+		} else {
+			ref.addRequester(handler, location, required);
 		}
 		return ref;
 	}
@@ -214,11 +280,28 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 
 	@Override
 	public void deref(Object obj, Resolution fun) {
+		deref(obj, fun, null);
+	}
+
+	@Override
+	public void deref(Object obj, Resolution fun, Runnable ifUnresolved) {
 		if (obj instanceof Ref) {
-			((Ref) obj).deref(keepVars(_vars, fun));
+			((Ref) obj).deref(keepVars(_vars, fun), ifUnresolved == null ? null : keepVars(_vars, ifUnresolved));
 		} else {
 			fun.resolve(obj);
 		}
+	}
+
+	private Runnable keepVars(VariableScope vars, Runnable fun) {
+		return () -> {
+			VariableScope before = _vars;
+			_vars = vars;
+			try {
+				fun.run();
+			} finally {
+				_vars = before;
+			}
+		};
 	}
 
 	private Resolution keepVars(VariableScope vars, Resolution fun) {
@@ -234,18 +317,29 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 	}
 
 	@Override
-	public Object resolveObject(ImportPart handler, Location location, String id) {
+	public Object resolveObject(ImportPart handler, Location location, String id, boolean required) {
 		Object result = resolveObjectBackwards(handler, location, id);
 		if (result != null) {
 			return result;
 		}
 
-		return addRef(handler, location, id);
+		return addRef(handler, location, id, required);
 	}
 
 	@Override
 	public Object resolveObjectBackwards(ImportPart handler, Location location, String id) {
-		return _binding.resolveObject(handler, location, id);
+		Object result = _binding.resolveObject(handler, location, id);
+		if (result != null) {
+			return result;
+		}
+		for (int n = _lookups.size() - 1; n >= 0; n--) {
+			Object found = _lookups.get(n).lookup(location, id);
+			if (found != null) {
+				assignId(found, id);
+				return found;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -321,8 +415,7 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.setProperty(handler, obj, name, value);
 		} catch (RuntimeException ex) {
-			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler,
-				obj, name, value, ex.getMessage()), ex);
+			errorSettingFailed(handler, obj, name, value, ex);
 		}
 	}
 
@@ -330,7 +423,7 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.getProperty(handler, obj, name, continuation);
 		} catch (RuntimeException ex) {
-			error(location(), I18NConstants.ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE.fill(handler,
+			error(location(), I18NConstants.ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE.fill(handler.location(),
 				obj, name, ex.getMessage()), ex);
 		}
 	}
@@ -339,8 +432,7 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.setReference(handler, obj, name, value);
 		} catch (RuntimeException ex) {
-			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler,
-				obj, name, value, ex.getMessage()), ex);
+			errorSettingFailed(handler, obj, name, value, ex);
 		}
 	}
 
@@ -348,9 +440,27 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.addValue(handler, obj, name, value);
 		} catch (RuntimeException ex) {
-			error(location(),
-				I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler.location(),
-					obj, name, value, ex.getMessage()), ex);
+			errorSettingFailed(handler, obj, name, value, ex);
+		}
+	}
+
+	/**
+	 * Reports a failure to store a value into a property at the current document location.
+	 *
+	 * <p>
+	 * A failure that carries its own internationalized message (an {@link I18NFailure}) is reported
+	 * with that message (and its cause), any other failure with a generic message naming the
+	 * property and value.
+	 * </p>
+	 */
+	private void errorSettingFailed(ImportPart handler, Object obj, String name, Object value,
+			RuntimeException ex) {
+		if (ex instanceof I18NFailure failure) {
+			// The message of the failure is its error key, only its cause adds to it.
+			error(location(), failure.getErrorKey(), ex.getCause());
+		} else {
+			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(
+				handler.location(), obj, name, value, ex.getMessage()), ex);
 		}
 	}
 
@@ -360,7 +470,9 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 
 	@Override
 	public void close() {
-		_resolvers.values().forEach(r -> r.errorUnresolved());
+		List<Ref> unresolved = new ArrayList<>(_resolvers.values());
+		unresolved.forEach(Ref::runUnresolvedCallbacks);
+		unresolved.forEach(Ref::errorUnresolved);
 	}
 
 	@Override

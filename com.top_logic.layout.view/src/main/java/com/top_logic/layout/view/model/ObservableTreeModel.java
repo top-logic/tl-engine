@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,7 +71,10 @@ import com.top_logic.model.listen.ModelScope;
  * <p>
  * An input change is a different tree: the root object is computed from the new input and the model
  * is built anew. The subtrees that were open are opened again wherever the new tree holds their
- * objects.
+ * objects. A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a
+ * channel the tree's functions receive but whose value cannot change the tree, such as the selection
+ * of the very table displaying it - builds nothing; the display is only told that the inputs changed,
+ * see {@link Display#inputsChanged()}.
  * </p>
  *
  * <p>
@@ -120,6 +124,19 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		void treeReplaced(DefaultTreeUINodeModel treeModel);
 
 		/**
+		 * A {@link ObservableTreeModel#withRowIndependentInputs(Collection) row-independent input}
+		 * changed: the tree is the same, but what the display computes from the inputs apart from
+		 * the tree may be stale.
+		 *
+		 * <p>
+		 * Does nothing by default.
+		 * </p>
+		 */
+		default void inputsChanged() {
+			// The tree is unchanged.
+		}
+
+		/**
 		 * The {@link Display} of the given tree control.
 		 */
 		static Display of(ReactTreeControl tree) {
@@ -155,6 +172,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	private final Set<TLStructuredType> _observedTypes;
 
 	private final List<ViewChannel> _inputChannels;
+
+	/** @see #withRowIndependentInputs(Collection) */
+	private Set<ViewChannel> _rowIndependentInputs = Set.of();
 
 	private DefaultTreeUINodeModel _treeModel;
 
@@ -215,6 +235,25 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		_builder = builder;
 		_parentFunction = parentFunction;
 		_inputChannels = inputChannels;
+	}
+
+	/**
+	 * Declares input channels whose changes cannot change the tree.
+	 *
+	 * <p>
+	 * A change of such a channel does not build the tree anew; the {@link Display} is told by
+	 * {@link Display#inputsChanged()} instead. The functions of the tree still receive the channel's
+	 * value at its declared position. A channel that is not among the input channels is ignored.
+	 * </p>
+	 *
+	 * @param channels
+	 *        Input channels the tree does not depend on, e.g. the selection channel of the table
+	 *        displaying the tree.
+	 * @return This instance, for call chaining.
+	 */
+	public ObservableTreeModel withRowIndependentInputs(Collection<? extends ViewChannel> channels) {
+		_rowIndependentInputs = new HashSet<>(channels);
+		return this;
 	}
 
 	/**
@@ -332,9 +371,13 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 * </p>
 	 *
 	 * <p>
-	 * An observation that resumes - one that was stopped by {@link #detach()} - reconciles the tree
-	 * on top of that, because every change of the displayed objects passed unnoticed while the
-	 * display was suspended. An observation beginning for the first time needs none: the tree was
+	 * An observation that resumes - one that was stopped by {@link #detach()} - brings the whole
+	 * display up to date on top of that, because every change of the displayed objects passed
+	 * unnoticed while the display was suspended: it reconciles the child lists of the tree,
+	 * {@link Display#invalidateNode(DefaultTreeUINode) invalidates} every displayed node, since an
+	 * attribute shown for it may have changed without changing the tree, and tells the display and
+	 * the {@link #addStructureListener(Runnable) structure listeners} about it, whether the tree
+	 * changed or not. An observation beginning for the first time needs none of it: the tree was
 	 * just built from the objects as they are.
 	 * </p>
 	 */
@@ -358,8 +401,23 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		if (changed) {
 			syncObjectListeners();
-			_display.nodesChanged();
-			notifyStructureChanged();
+		}
+		invalidateSubtree(_treeModel.getRoot());
+		_display.nodesChanged();
+		notifyStructureChanged();
+	}
+
+	/**
+	 * {@link Display#invalidateNode(DefaultTreeUINode) Invalidates} the given node and every node
+	 * below it whose children were computed already.
+	 */
+	private void invalidateSubtree(DefaultTreeUINode node) {
+		_display.invalidateNode(node);
+		if (!node.isInitialized()) {
+			return;
+		}
+		for (DefaultTreeUINode child : node.getChildren()) {
+			invalidateSubtree(child);
 		}
 	}
 
@@ -550,6 +608,10 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	@Override
 	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
+		if (_rowIndependentInputs.contains(sender)) {
+			_display.inputsChanged();
+			return;
+		}
 		reEvaluateTree();
 	}
 

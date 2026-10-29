@@ -13,7 +13,9 @@
 		<channel name="sqlStats"/>
 		<channel name="monitoring"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>SQL monitor</en>
 			<de>SQL-Monitor</de>
@@ -21,7 +23,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play"
-				input="monitoring"
+				inputs="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -29,18 +31,24 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running != true"/>
+					<visible-if expr="$monitoring != true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="START"
-				/>
-				<write-channel name="sqlStats"/>
-				<execute-script function="true"/>
-				<write-channel name="monitoring"/>
+				>
+					<with-result>
+						<write-channel name="sqlStats"/>
+					</with-result>
+				</action>
+				<execute-script function="true">
+					<with-result>
+						<write-channel name="monitoring"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
-				input="monitoring"
+				inputs="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -48,16 +56,19 @@
 					<de>Aktualisieren</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running == true"/>
+					<visible-if expr="$monitoring == true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="sqlStats"/>
+				>
+					<with-result>
+						<write-channel name="sqlStats"/>
+					</with-result>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop"
-				input="monitoring"
+				inputs="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -65,17 +76,24 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running == true"/>
+					<visible-if expr="$monitoring == true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="STOP"
-				/>
-				<write-channel name="sqlStats"/>
-				<execute-script function="false"/>
-				<write-channel name="monitoring"/>
+				>
+					<with-result>
+						<write-channel name="sqlStats"/>
+					</with-result>
+				</action>
+				<execute-script function="false">
+					<with-result>
+						<write-channel name="monitoring"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"
+		<child id="table"
+			class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"
 			input="sqlStats"
 		/>
 	</panel>

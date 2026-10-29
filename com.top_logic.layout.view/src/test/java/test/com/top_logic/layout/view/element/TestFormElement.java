@@ -45,6 +45,7 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.PasswordInputControlProvider;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
  * Tests parsing and instantiation of {@link FormElement} and {@link FieldElement}.
@@ -281,7 +282,7 @@ public class TestFormElement extends TestCase {
 		context.checkErrors();
 
 		assertTrue("The forms are held by a panel.", config.getContent() instanceof PanelElement.Config);
-		List<PolymorphicConfiguration<? extends UIElement>> forms =
+		List<UIElement.Config> forms =
 			((PanelElement.Config) config.getContent()).getChildren();
 
 		PolymorphicConfiguration<? extends UIElement> entry = forms.get(index);
@@ -312,6 +313,7 @@ public class TestFormElement extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestFormElement.class,
-				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 }

@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useI18N, TLChild, KeyboardScopeProvider, useKeyboardBinding, useFocusTrap,
-  FillBarrier, ButtonDefaults, rootClassName, tooltipProps,
+  FillBarrier, ButtonDefaults, rootClassName, tooltipProps, useFloatingFrame, FloatingFrame, FloatingRail,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
 import Paper from '@mui/material/Paper';
@@ -71,7 +71,8 @@ const TOOLBAR_STYLE: React.CSSProperties = { display: 'flex', alignItems: 'cente
 
 /**
  * The body: flush (the content owns its inset), scrolling what does not fit, separated from title
- * bar and footer by lines.
+ * bar and footer by lines. Its layout is the bounded region of the design system (tl-region), which
+ * stretches the content to the body's height.
  */
 const BODY_SX: SxProps<Theme> = { padding: 0, flex: 1, overflow: 'auto' };
 
@@ -114,7 +115,9 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  * <li>title → the text of the `DialogTitle`, which names the window (`aria-labelledby`);</li>
  * <li>toolbar → in the title bar, rendered through {@link TLChild};</li>
  * <li>child → the `DialogContent`, flush and scrolling, rendered through {@link TLChild} behind a
- *     {@link FillBarrier} (the body is bounded by the window);</li>
+ *     {@link FillBarrier} (the body is bounded by the window); the window is a frame for floating
+ *     elements, as TLWindow ({@link useFloatingFrame}): their rails stand directly before and after
+ *     the `DialogContent`;</li>
  * <li>footer → the `DialogActions`, rendered through {@link TLChild}: the toolbar of the actions
  *     and the button-bar commands, whose buttons take the appearance `secondary` as in TLWindow
  *     ({@link ButtonDefaults}). A footer without commands is not shown;</li>
@@ -136,6 +139,7 @@ const MuiWindowAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const frame = useWindowFrame(state, sendCommand);
+  const floating = useFloatingFrame();
 
   const resizable = state.resizable === true;
   const closable = state.closable !== false;
@@ -193,11 +197,15 @@ const MuiWindowAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={BODY_SX}>
-          <FillBarrier>
-            <TLChild control={state.child} />
-          </FillBarrier>
+        <FloatingRail host={floating} edge="top" />
+        <DialogContent dividers className="tl-region" sx={BODY_SX}>
+          <FloatingFrame host={floating}>
+            <FillBarrier>
+              <TLChild control={state.child} />
+            </FillBarrier>
+          </FloatingFrame>
         </DialogContent>
+        <FloatingRail host={floating} edge="bottom" />
         {!!state.footer && (
           <DialogActions sx={FOOTER_SX}>
             <ButtonDefaults appearance="secondary">

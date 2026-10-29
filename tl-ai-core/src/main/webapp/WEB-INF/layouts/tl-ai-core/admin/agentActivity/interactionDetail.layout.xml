@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The selected question, with its prompt in full and the run it blocks. Read-only for the reason
+	given in interactionsView.xml: the state of a request belongs to the interaction store, not to a
+	form.
+-->
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments name="admin.ai.agentActivity.interactions.detail"
+		model="selection(tl-ai-core/admin/agentActivity/agentActivityView.layout.xml#aiInteractionsTable)"
+		showNoModel="false"
+		type="tl.ai.execution:InteractionRequest"
+	>
+		<editExecutability>
+			<rule class="com.top_logic.tool.execution.AlwaysHidden"/>
+		</editExecutability>
+		<forms>
+			<form type="tl.ai.execution:InteractionRequest">
+				<formDefinition>
+					<group columns="THREE">
+						<label key="admin.ai.agentActivity.interactions.group.request"/>
+						<field
+							attribute="type"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#type"
+							type="tl.ai.execution:InteractionType"
+						/>
+						<field
+							attribute="state"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#state"
+							type="tl.ai.execution:InteractionState"
+						/>
+						<field
+							attribute="header"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#header"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="responder"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#responder"
+							type="tl.accounts:Person"
+						/>
+						<field
+							attribute="execution"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#execution"
+							type="tl.ai.execution:AgentExecution"
+						/>
+						<field
+							attribute="createdAt"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#createdAt"
+							type="tl.core:DateTime"
+						/>
+						<field
+							attribute="resolvedAt"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#resolvedAt"
+							type="tl.core:DateTime"
+						/>
+						<field
+							attribute="requestId"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#requestId"
+							type="tl.core:String"
+						/>
+					</group>
+					<group
+						columns="ONE"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.interactions.group.content"/>
+						<field
+							attribute="prompt"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#prompt"
+							type="tl.core:Text"
+						/>
+						<field
+							attribute="resolution"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#resolution"
+							type="tl.core:Text"
+						/>
+					</group>
+					<group
+						columns="ONE"
+						initiallyOpened="false"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.interactions.group.payload"/>
+						<field
+							attribute="payload"
+							fullQualifiedName="tl.ai.execution:InteractionRequest#payload"
+							type="tl.core:Text"
+						/>
+					</group>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

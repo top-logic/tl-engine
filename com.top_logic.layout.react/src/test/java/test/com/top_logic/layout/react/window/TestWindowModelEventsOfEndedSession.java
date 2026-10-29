@@ -12,6 +12,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionBindingEvent;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -22,6 +23,7 @@ import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -30,12 +32,13 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.listen.ModelChangeEvent;
-import com.top_logic.util.TLContextManager;
 
 /**
  * Tests that {@link ReactWindowRegistry#synthesizeModelEvents(String)} delivers model events only
- * to the windows of a session that has a live user.
+ * to the windows of a session that has a live user, and that a torn-down window observes the model
+ * no longer.
  */
 public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 
@@ -114,6 +117,70 @@ public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 	}
 
 	/**
+	 * A closed window delivers no model events anymore, not even to whoever still holds its entry.
+	 */
+	public void testClosedWindowReleasesModelScope() throws Exception {
+		HttpSession session = login(createPerson());
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		List<ModelChangeEvent> events = observe(registry);
+		WindowEntry entry = registry.getWindow(WINDOW);
+		assertFollowsModel(entry, events);
+
+		registry.windowClosed(WINDOW);
+		createPerson();
+		entry.synthesizeModelEvents();
+
+		assertTrue("A closed window must not receive model events.", events.isEmpty());
+		assertNoEventsAfterTeardown(entry);
+		SessionService.getInstance().terminateSession(session.getId());
+	}
+
+	/**
+	 * The windows of an ended session deliver no model events anymore, not even to whoever still
+	 * holds their entries.
+	 */
+	public void testEndedSessionReleasesModelScopes() throws Exception {
+		HttpSession session = login(createPerson());
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		List<ModelChangeEvent> events = observe(registry);
+		WindowEntry entry = registry.getWindow(WINDOW);
+		assertFollowsModel(entry, events);
+
+		// The test container does not report the end of a session to its attributes; the end is
+		// reported as a servlet container does.
+		registry.valueUnbound(new HttpSessionBindingEvent(session, ReactWindowRegistry.class.getName()));
+		assertNull("The windows of an ended session must be torn down.", registry.getWindow(WINDOW));
+		createPerson();
+		entry.synthesizeModelEvents();
+
+		assertTrue("A window of an ended session must not receive model events.", events.isEmpty());
+		session.invalidate();
+	}
+
+	/**
+	 * Asserts that the given window, observed by the given events, receives the events of a commit,
+	 * and forgets them afterwards.
+	 */
+	private void assertFollowsModel(WindowEntry entry, List<ModelChangeEvent> events) {
+		createPerson();
+		entry.synthesizeModelEvents();
+		assertFalse("An open window must receive the model events.", events.isEmpty());
+		events.clear();
+	}
+
+	/**
+	 * Asserts that a listener added to the model scope of the given torn-down window hears of no
+	 * commit.
+	 */
+	private void assertNoEventsAfterTeardown(WindowEntry entry) {
+		List<ModelChangeEvent> late = new ArrayList<>();
+		entry.getOrCreateModelScope().addModelListener(late::add);
+		createPerson();
+		entry.synthesizeModelEvents();
+		assertTrue("The scope of a torn-down window must deliver no events.", late.isEmpty());
+	}
+
+	/**
 	 * Registers a listener on the model scope of {@link #WINDOW}, after the events pending so far
 	 * have been delivered.
 	 */
@@ -131,7 +198,7 @@ public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
 		// Keep the session context of the test thread.
-		return TLContextManager.inSystemInteraction(TestWindowModelEventsOfEndedSession.class,
+		return ThreadContext.inSystemContext(TestWindowModelEventsOfEndedSession.class,
 			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user));
 	}
 

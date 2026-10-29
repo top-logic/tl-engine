@@ -158,22 +158,25 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	}
 
 	/** CSS class of the control: a compact field. */
-	private static final String CSS_FIELD = "tlCompactField";
+	private static final String CSS_FIELD = "tl-compact-field";
 
 	/**
-	 * CSS classes of a field that may be edited, displayed like an input field: the frame of an
+	 * CSS class of a field that may be edited, displayed like an input field: the frame of an
 	 * input, which in a table cell is the cell-filling input of the other cell editors.
 	 */
-	private static final String CSS_FIELD_EDIT = "tlCompactField--edit tl-field";
+	private static final String CSS_FIELD_EDIT = "tl-field";
 
-	/** CSS class of a field that may not be edited, displayed as plain text. */
-	private static final String CSS_FIELD_VIEW = "tlCompactField--view";
+	/** State word of a field that may be edited. */
+	private static final String STATE_EDIT = "edit";
 
 	/** CSS class of the preview of the value. */
-	private static final String CSS_PREVIEW = "tlCompactField__preview";
+	private static final String CSS_PREVIEW = "tl-compact-field__preview";
 
 	/** CSS class of the button opening the dialog. */
-	private static final String CSS_OPENER = "tlCompactField__opener";
+	private static final String CSS_OPENER = "tl-compact-field__opener";
+
+	/** CSS class of the button of a field that may not be edited: shown on pointing at the field. */
+	private static final String CSS_OPENER_REVEALED = CSS_OPENER + " tl-reveal-on-hover";
 
 	/** The width the dialog opens with. */
 	private static final DisplayDimension DIALOG_WIDTH = DisplayDimension.px(640);
@@ -261,7 +264,6 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		_opener.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		_opener.setAppearance(ButtonAppearance.GHOST);
 		_opener.setSize(ButtonSize.SMALL);
-		_opener.setCssClass(CSS_OPENER);
 		updateDisplay();
 
 		setChildren(List.of(_preview, _opener));
@@ -339,7 +341,9 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 */
 	private void updateDisplay() {
 		boolean editable = _model.isEditable();
-		setCssClass(CSS_FIELD + ' ' + (editable ? CSS_FIELD_EDIT : CSS_FIELD_VIEW));
+		setCssClass(editable ? CSS_FIELD + ' ' + CSS_FIELD_EDIT : CSS_FIELD);
+		setStateWords(editable ? STATE_EDIT : null);
+		_opener.setCssClass(editable ? CSS_OPENER : CSS_OPENER_REVEALED);
 
 		Resources resources = Resources.getInstance();
 		_opener.setImage(editable ? Icons.COMPACT_FIELD_EDIT : Icons.COMPACT_FIELD_VIEW);
@@ -394,8 +398,11 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 		ReactWindowControl window = new ReactWindowControl(context, dialogTitle(), DIALOG_WIDTH, cancel);
 		window.setResizable(true);
-		// The window body is flush; the editor keeps the page inset from its border.
-		window.setChild(new ReactInsetControl(context, editor));
+		// The window body is flush; the editor keeps the page inset from its border. The inset is the
+		// place of the value, as the input area of a form field: a read-only value takes its type.
+		ReactInsetControl inset = new ReactInsetControl(context, editor);
+		inset.setCssClass("tl-type-body");
+		window.setChild(inset);
 
 		List<ReactControl> actions = new ArrayList<>();
 		if (editable) {

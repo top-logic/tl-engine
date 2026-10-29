@@ -20,8 +20,6 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.xml.TagUtil;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -47,7 +45,6 @@ public class GroupWithName extends AbstractConfiguredInstance<GroupWithName.Conf
 		 */
 		@Override
 		@Options(fun = Group.AllGroups.class, mapping = GroupNameMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		String getName();
 	}
 

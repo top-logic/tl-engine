@@ -18,6 +18,11 @@ public interface BNotUnderABase extends com.top_logic.demo.model.types.DemoTypes
 	String B_NOT_UNDER_A_TYPE = "BNotUnderA";
 
 	/**
+	 * Name of the table storing {@link #B_NOT_UNDER_A_TYPE} objects.
+	 */
+	String TABLE_NAME = "DemoTypes";
+
+	/**
 	 * Getter for part {@link #CHILDREN_ATTR}.
 	 */
 	@Override

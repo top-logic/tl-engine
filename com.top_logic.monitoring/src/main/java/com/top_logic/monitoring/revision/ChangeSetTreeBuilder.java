@@ -17,6 +17,7 @@ import java.util.Set;
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.CloseableIteratorProxy;
+import com.top_logic.basic.col.EmptyClosableIterator;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilteredCloseableIterator;
 import com.top_logic.basic.col.InlineMap;
@@ -493,9 +494,11 @@ public class ChangeSetTreeBuilder extends DefaultTreeTableBuilder {
 		 * @param kb
 		 *        {@link KnowledgeBase} to fetch {@link ChangeSet} from,
 		 * @param startRev
-		 *        First revision to display in the {@link ChangeSet} tree.
+		 *        First revision to display in the {@link ChangeSet} tree. <code>null</code>, if
+		 *        the displayed range is empty.
 		 * @param stopRev
-		 *        Last revision to display in the {@link ChangeSet} tree.
+		 *        Last revision (inclusive) to display in the {@link ChangeSet} tree.
+		 *        <code>null</code>, if the displayed range is empty.
 		 * @param showSystemObjects
 		 *        Whether system objects (i.e. objects without business {@link TLObject#tType()})
 		 *        must be displayed.
@@ -516,6 +519,9 @@ public class ChangeSetTreeBuilder extends DefaultTreeTableBuilder {
 		 * The changes described by this {@link ChangeSetTreeRoot}.
 		 */
 		CloseableIterator<ChangeSet> fetchChanges() {
+			if (_startRev == null || _stopRev == null) {
+				return EmptyClosableIterator.getInstance();
+			}
 			ReaderConfig readerConfig = ReaderConfigBuilder.createConfig(_startRev, _stopRev);
 			ChangeSetReader csReader = _kb.getChangeSetReader(readerConfig);
 			CloseableIterator<ChangeSet> csIterator = new ChangeSetReaderIterator(csReader);

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias>
+		<!-- The embedding model of ai-index.config.xml: model_int8.onnx and tokenizer.json. -->
+		<entry name="%AI_INDEX_MODEL_DIR%" value="${env:tl_ai_index_model_dir:%VAR_PATH%/models/snowflake-arctic-embed-m-v2.0}"/>
+	</alias>
+</root>

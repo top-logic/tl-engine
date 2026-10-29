@@ -24,6 +24,10 @@
 	link without the parameters says nothing about the filtering and leaves the list as it
 	establishes itself.
 	
+	The <label> of the binding names the browser tab after the selected ticket ("Login broken -
+	TopLogic React Demo"). It reads the ticketName channel, which observes the ticket, so the tab
+	title follows a rename of the displayed ticket as well.
+	
 	The two parameters describe the displayed rows together: a chip selects the rows and the
 	search narrows them within that selection, so typing into the search field keeps the chip
 	marked and adds q beside filter. Picking a chip, on the other hand, replaces the whole
@@ -31,6 +35,13 @@
 	puts that filter on the bar beside the presets, and it reaches the address exactly like a
 	preset, under the identifier it was given - it carries the text that was searched when it was
 	saved, so it is the marked one only while exactly that text is searched for again.
+	
+	Each preset chip shows the number of tickets its criteria select (count="true"), whatever the
+	list is searched for at the moment - the tickets a click on the chip shows. The numbers follow
+	the data without a reload: closing a ticket by dragging it to the Closed list takes it out of
+	the counts of the Open list's chips. The "Without comments" chip carries a CSS class of its own
+	(css-class), which the stylesheet of this application draws in the colours of a warning, marking
+	the tickets nobody has looked at as the ones needing attention.
 	
 	The inputs above the lists show that an input is bound to a channel for a value of any type:
 	the search term is a tl.core:String and is written in a text field, while the status is an
@@ -40,8 +51,8 @@
 	list reads the status through its <inputs> and narrows its rows by it.
 	
 	The jump-to box in the app bar demonstrates the submit hook: pressing Enter writes the entered
-	text to the jump channel and then runs the <on-submit> command over it. The command keeps the
-	entered text as its value and branches on the ticket of that name: there is one, and it is
+	text to the jump channel and then runs the <on-submit> command over it. The command sees the
+	entered text as $value and branches on the ticket of that name: there is one, and it is
 	written to the ticket channel - so the list shows it selected -, or there is none, and the
 	list is shown searched for the text. That is what <show-view> does: it brings this very view
 	into view and writes the values its channels receive, the preset all onto activeFilter and the
@@ -70,8 +81,8 @@
 	closes it and dragging it back reopens it, which is what each list's <drop> does with the
 	tickets dropped on it. Dragging a selected row drags the whole selection, so several
 	tickets close in one gesture. The Involve list below them is a row target instead: a
-	ticket dropped onto one of its rows gets a comment by that person, and the person dropped
-	on arrives on the dropPerson channel that the drop's script reads.
+	ticket dropped onto one of its rows gets a comment by that person: the drop names the person
+	dropped on $person and the dragged tickets $tickets, and its scripts read them.
 	
 	Rules restrict where a ticket may be dragged and dropped. The <executability> of both lists'
 	<drag> and <drop> admits only a logged-in user, so an anonymous session can neither pick a
@@ -93,6 +104,35 @@
 	The lists stand one below the other in the scrolling body of the Tickets panel, each as high as
 	its rows: their panels set fill="false", so that the tables do not divide the height of the
 	page between them, as a panel around a table otherwise does.
+	
+	The form of the Conversation panel switches its edit mode with commands of its own instead of
+	the built-in Edit, Save and Cancel (mode-switch="false"). It publishes its mode on the
+	ticketEditMode channel, from which viewedTicket and editedTicket derive the ticket while it is
+	viewed and while it is edited, so Edit is shown in view mode and Save and Cancel in edit mode.
+	Edit starts the edit session with <enter-edit-mode/>, Cancel drops the input with
+	<discard-form-state/>. Save is a chain: <store-form-state/> and a script adding the comment
+	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
+	session once the transaction is committed - the comment appearing in the conversation shows
+	that the script ran on the stored ticket.
+
+The Category, Tags, Keywords and Estimate fields of that form are selections that also take a
+text of their own: the dropdown offers the values used so far, and a typed text naming none of
+them becomes a new value. Free entry is configured on the attributes in the model
+(demo.tickets.model.xml, annotation <free-entry>), so the fields name no control. Category holds
+one text, Tags several texts, and each offers the texts the tickets carry so far. Estimate is a
+number of hours: a typed text is read as a number, and a text that is none is refused.
+Keywords references Keyword objects: a typed text creates a transient Keyword through the create
+function of the annotation, which storing the form makes persistent and Cancel drops.
+
+The Keywords field overrides that create function with the nested <free-entry> of its
+SelectControlProvider, because the catalog a new keyword is put into comes from this view and
+not from the model: the "Catalog for new keywords" select above the form writes the
+keywordCatalog channel, the field reads it through inputs="keywordCatalog as catalog", and its
+create script sets the new keyword's catalog to $catalog. The column "Keywords by catalog" of the
+Open list shows each keyword with its catalog. The catalogs "Technik" and "Fachlich" come with
+the initial data of the application (Z07-tickets-demo.objects.xml). "Generate samples" gives the
+generated tickets a category, tags, an estimate and keywords of these catalogs, so the option
+lists start filled.
 -->
 <view>
 	<channels>
@@ -102,15 +142,28 @@
 		<channel name="searchTerm"/>
 		<channel name="status"/>
 		<channel name="jump"/>
-		<channel name="dropPerson"/>
+		<channel name="ticketEditMode"/>
+		<channel name="keywordCatalog"/>
 		<derived-channel name="ticketId"
-			expr="t -> objectId($t)"
+			expr="objectId($ticket)"
 			inputs="ticket"
-			reverse="id -> $id.objectResolve(`demo.tickets:Ticket`)"
+			reverse="$value.objectResolve(`demo.tickets:Ticket`)"
+		/>
+		<derived-channel name="ticketName"
+			expr="$ticket.get(`demo.tickets:Ticket#name`)"
+			inputs="ticket"
 		/>
 		<derived-channel name="ticketState"
-			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
+			expr="if($ticket == null, '', if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
 			inputs="ticket"
+		/>
+		<derived-channel name="viewedTicket"
+			expr="if($editing == true, null, $ticket)"
+			inputs="ticket, ticketEditMode as editing"
+		/>
+		<derived-channel name="editedTicket"
+			expr="if($editing == true, $ticket, null)"
+			inputs="ticket, ticketEditMode as editing"
 		/>
 	</channels>
 	<param-bindings>
@@ -118,7 +171,12 @@
 			channel="ticketId"
 			prefix="ticket"
 			route-param="ticket"
-		/>
+		>
+			<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+				expr="$name"
+				inputs="ticketName as name"
+			/>
+		</bind>
 	</param-bindings>
 	<query-bindings>
 		<bind
@@ -150,22 +208,25 @@
 						<de>Zu Ticket springen</de>
 					</placeholder>
 					<on-submit>
-						<if test="name -> $name != null &amp;&amp; $name != ''">
+						<if test="$value != null &amp;&amp; $value != ''">
 							<then>
-								<if test="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement() != null">
+								<if test="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement() != null">
 									<then>
-										<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
-										<write-channel name="ticket"/>
+										<execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
+											<with-result>
+												<write-channel name="ticket"/>
+											</with-result>
+										</execute-script>
 									</then>
 									<else>
 										<show-view view="tickets.view.xml">
 											<bind
 												channel="activeFilter"
-												expr="term -> 'all'"
+												expr="'all'"
 											/>
 											<bind
 												channel="searchTerm"
-												expr="term -> $term"
+												expr="$value"
 											/>
 										</show-view>
 									</else>
@@ -175,7 +236,7 @@
 					</on-submit>
 				</value-input>
 				<visible-if
-					expr="t -> $t != null"
+					expr="$ticket != null"
 					input="ticket"
 				>
 					<text
@@ -209,14 +270,11 @@
 									<en>Generate samples</en>
 									<de>Beispiele erzeugen</de>
 								</label>
-								<executability>
-									<model-access
-										operation="Create"
-										type="demo.tickets:Ticket"
-									/>
-								</executability>
+								<access>
+									<create type="demo.tickets:Ticket"/>
+								</access>
 								<with-transaction>
-									<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
+									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; categories = ['Bug', 'Feature', 'Question']; tags = [['backend'], ['ui', 'urgent'], []]; estimates = [2, 4, 8, 16]; catalogs = ['Technik', 'Fachlich'].map(n -> all(`demo.tickets:KeywordCatalog`).filter(c -> $c.get(`demo.tickets:KeywordCatalog#name`) == $n).firstElement()); keywords = [['Performance', 0], ['Usability', 1], ['Security', 0]].map(e -> { n = $e[0]; existing = all(`demo.tickets:Keyword`).filter(k -> $k.get(`demo.tickets:Keyword#name`) == $n).firstElement(); k = if($existing == null, new(`demo.tickets:Keyword`)..set(`demo.tickets:Keyword#name`, $n), $existing); $k.set(`demo.tickets:Keyword#catalog`, $catalogs[$e[1]]); $k; }); other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#category`, $categories[$i % 3]); $t.set(`demo.tickets:Ticket#tags`, $tags[$i % 3]); $t.set(`demo.tickets:Ticket#estimate`, $estimates[$i % 4]); $t.set(`demo.tickets:Ticket#keywords`, if($i % 2 == 0, [$keywords[$i % 3]], [])); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command
@@ -227,20 +285,23 @@
 									<en>New</en>
 									<de>Neu</de>
 								</label>
-								<create-transient type="demo.tickets:Ticket"/>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="tickets-create.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="ticket"
-									/>
-								</open-dialog>
+								<create-transient type="demo.tickets:Ticket">
+									<with-result>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="tickets-create.view.xml"
+										>
+											<bind
+												channel="selection"
+												to="ticket"
+											/>
+										</open-dialog>
+									</with-result>
+								</create-transient>
 							</generic-command>
 							<generic-command
 								image="css:bi bi-trash"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -249,14 +310,16 @@
 								</label>
 								<executability>
 									<null-input-disabled/>
-									<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
+									<disabled-if expr="if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 								</executability>
 								<delete-object/>
-								<write-channel name="ticket"/>
+								<write-channel name="ticket"
+									clear="true"
+								/>
 							</generic-command>
 							<generic-command name="closeTicket"
 								image="css:bi bi-check2-circle"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -264,15 +327,15 @@
 									<de>Schließen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
-									<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command name="reopenTicket"
 								image="css:bi bi-arrow-counterclockwise"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -280,15 +343,15 @@
 									<de>Wiedereröffnen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
-									<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command name="toggleTicket"
 								image="css:bi bi-toggles"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -298,14 +361,14 @@
 								<executability>
 									<null-input-disabled/>
 								</executability>
-								<switch value="t -> $t.get(`demo.tickets:Ticket#status`)">
+								<switch value="$ticket.get(`demo.tickets:Ticket#status`)">
 									<case match="`demo.tickets:TicketStatus#closed`">
 										<with-transaction>
 											<commitMessage>
 												<en>Reopened ticket {0}.</en>
 												<de>Ticket {0} wiedereröffnet.</de>
 											</commitMessage>
-											<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+											<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
 										</with-transaction>
 									</case>
 									<default>
@@ -314,7 +377,7 @@
 												<en>Closed ticket {0}.</en>
 												<de>Ticket {0} geschlossen.</de>
 											</commitMessage>
-											<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+											<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
 										</with-transaction>
 									</default>
 								</switch>
@@ -327,9 +390,9 @@
 								input="ticketState"
 							/>
 							<progress
-								done="x -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
+								done="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
 								observed-types="demo.tickets:Ticket"
-								total="x -> all(`demo.tickets:Ticket`).size()"
+								total="all(`demo.tickets:Ticket`).size()"
 							/>
 							<fields>
 								<value-input
@@ -371,7 +434,10 @@
 										<authenticated-only/>
 									</executability>
 								</drag>
-								<drop accept="ticket">
+								<drop
+									accept="ticket"
+									as="tickets"
+								>
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -380,20 +446,24 @@
 											<en>Set tickets {0} to open.</en>
 											<de>Tickets {0} auf offen gesetzt.</de>
 										</commitMessage>
-										<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
+										<execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
 									</with-transaction>
 								</drop>
 								<inputs>
 									<input channel="status"/>
 								</inputs>
 								<presets initial="mine">
-									<preset name="all">
+									<preset name="all"
+										count="true"
+									>
 										<label>
 											<en>All</en>
 											<de>Alle</de>
 										</label>
 									</preset>
-									<preset name="mine">
+									<preset name="mine"
+										count="true"
+									>
 										<label>
 											<en>Commented by me</en>
 											<de>Von mir kommentiert</de>
@@ -403,7 +473,9 @@
 											expr="true"
 										/>
 									</preset>
-									<preset name="discussed">
+									<preset name="discussed"
+										count="true"
+									>
 										<label>
 											<en>Discussed</en>
 											<de>Diskutiert</de>
@@ -416,7 +488,10 @@
 											/>
 										</criterion>
 									</preset>
-									<preset name="untouched">
+									<preset name="untouched"
+										count="true"
+										css-class="tlDemoNeedsAttention"
+									>
 										<label>
 											<en>Without comments</en>
 											<de>Ohne Kommentare</de>
@@ -432,6 +507,19 @@
 									<column attribute="name"/>
 									<column attribute="status"/>
 									<column attribute="statusLabel"/>
+									<column attribute="category"/>
+									<column attribute="tags"/>
+									<column attribute="keywords"/>
+									<computed-column name="keywordCatalogs"
+										type="tl.core:String"
+									>
+										<label>
+											<en>Keywords by catalog</en>
+											<de>Schlagwörter nach Katalog</de>
+										</label>
+										<value>$row.get(`demo.tickets:Ticket#keywords`).map(k -&gt; $k.get(`demo.tickets:Keyword#name`) + ' (' + if($k.get(`demo.tickets:Keyword#catalog`) == null, '-', label($k.get(`demo.tickets:Keyword#catalog`))) + ')').join(', ')</value>
+									</computed-column>
+									<column attribute="estimate"/>
 									<computed-column name="comments"
 										type="tl.core:Integer"
 									>
@@ -439,7 +527,7 @@
 											<en>Comments</en>
 											<de>Kommentare</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).size()</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).size()</value>
 									</computed-column>
 									<computed-column name="commentedByMe"
 										type="tl.core:Boolean"
@@ -448,12 +536,12 @@
 											<en>Commented by me</en>
 											<de>Von mir kommentiert</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
 									</computed-column>
 								</columns>
-								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
-								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+								<row-class>$row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
 						<panel fill="false">
@@ -472,10 +560,13 @@
 										<authenticated-only/>
 									</executability>
 									<row-executability>
-										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
+										<disabled-if expr="$row.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
 									</row-executability>
 								</drag>
-								<drop accept="ticket">
+								<drop
+									accept="ticket"
+									as="tickets"
+								>
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -484,7 +575,7 @@
 											<en>Closed tickets {0}.</en>
 											<de>Tickets {0} geschlossen.</de>
 										</commitMessage>
-										<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
+										<execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
 									</with-transaction>
 								</drop>
 								<inputs>
@@ -495,7 +586,7 @@
 									<column attribute="status"/>
 									<column attribute="statusLabel"/>
 								</columns>
-								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 							</table>
 						</panel>
 						<panel fill="false">
@@ -506,20 +597,17 @@
 							<table types="tl.accounts:Person">
 								<drop
 									accept="ticket"
+									as="tickets"
 									target="row"
-									target-channel="dropPerson"
+									target-as="person"
 								>
-									<refuse-if>tickets -&gt; person -&gt; { commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
+									<refuse-if>{ commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
 									<with-transaction>
 										<commitMessage>
 											<en>Involved a person in tickets {0}.</en>
 											<de>Person an Tickets {0} beteiligt.</de>
 										</commitMessage>
-										<execute-script function="person -> tickets -> $tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })">
-											<inputs>
-												<input channel="dropPerson"/>
-											</inputs>
-										</execute-script>
+										<execute-script function="$tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })"/>
 									</with-transaction>
 								</drop>
 								<columns>
@@ -539,22 +627,113 @@
 							<en>Conversation</en>
 							<de>Verlauf</de>
 						</title>
-						<form input="ticket">
+						<fields>
+							<value-input
+								type="demo.tickets:KeywordCatalog"
+								value="keywordCatalog"
+							>
+								<label>
+									<en>Catalog for new keywords</en>
+									<de>Katalog für neue Schlagwörter</de>
+								</label>
+							</value-input>
+						</fields>
+						<form
+							editMode="ticketEditMode"
+							input="ticket"
+							mode-switch="false"
+						>
 							<field attribute="name"/>
 							<field attribute="status"/>
 							<field attribute="statusLabel"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
+							<field attribute="category"/>
+							<field attribute="tags"/>
+							<field attribute="keywords">
+								<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+									<free-entry
+										create="new(`demo.tickets:Keyword`, transient: true)..set(`demo.tickets:Keyword#name`, $text)..set(`demo.tickets:Keyword#catalog`, $catalog)"
+										inputs="keywordCatalog as catalog"
+									/>
+								</input-control>
+							</field>
+							<field attribute="estimate"/>
+							<commands>
+								<generic-command
+									image="css:bi bi-pencil"
+									inputs="viewedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Edit</en>
+										<de>Bearbeiten</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<enter-edit-mode/>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-check-lg"
+									inputs="editedTicket as ticket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Save</en>
+										<de>Speichern</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<with-transaction>
+										<commitMessage>
+											<en>Updated ticket {0}.</en>
+											<de>Ticket {0} aktualisiert.</de>
+										</commitMessage>
+										<store-form-state/>
+										<execute-script function="{ c = new(`demo.tickets:Comment`, $ticket); $c.set(`demo.tickets:Comment#author`, currentUser()); $c.set(`demo.tickets:Comment#content`, 'Ticket updated.'); $c.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $c); }"/>
+									</with-transaction>
+									<leave-edit-mode/>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-x-lg"
+									inputs="editedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Cancel</en>
+										<de>Abbrechen</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<discard-form-state/>
+								</generic-command>
+							</commands>
 						</form>
 						<object-list
+							element-as="comment"
 							element-channel="comment"
 							element-type="demo.tickets:Comment"
 							inputs="ticket"
-							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
-							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							items="$ticket.get(`demo.tickets:Ticket#comments`)"
+							link="{ persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); $persistent; }"
 							new-element-channel="newComment"
-							remove="ticket -> comment -> $comment.delete()"
+							remove="$comment.delete()"
 						>
+							<link-access>
+								<create
+									in="$ticket"
+									reference="demo.tickets:Ticket#comments"
+								/>
+							</link-access>
+							<remove-access>
+								<operation name="Delete"
+									object="$comment"
+									type="demo.tickets:Comment"
+								/>
+							</remove-access>
 							<item>
 								<view-ref view="tickets/comment.view.xml">
 									<bind

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Main configuration file.
+
+	The research questions' web search and the real-model arms name the variables of their keys in
+	the configuration itself (WebToolsService, LLMProviderService), so that a key never reaches a
+	configuration file.
+-->
+<root/>

@@ -1,0 +1,35 @@
+<h2>Syntax</h2>
+
+<pre><code>canCall($call)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Reports whether the currently logged-in user may make the given call of a configured TL-Script function, without making it. Only the arguments of the call are evaluated.</p>
+
+<p>For a privileged script, the security object is computed and the command group is checked on it; for a collection of security objects, on every element. <code class="hljs inlineCode">null</code> and an empty collection deny the call. A plain configured function may always be called. Typical use: the executability of a command that calls a privileged function.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>call</td><td>Function call</td><td>A call of a configured TL-Script function. Anything else is a compile error.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may make the call, <code class="hljs inlineCode">false</code> otherwise.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>canCall(approveMilestone($milestone))</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Whether the logged-in user may call the function <code class="hljs inlineCode">approveMilestone</code> with the given milestone.</p>

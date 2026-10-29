@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -22,6 +23,8 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
 import com.top_logic.layout.react.control.calendar.CalendarModel;
 import com.top_logic.layout.react.control.calendar.CalendarModelListener;
+import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -42,8 +45,8 @@ public class ExpressionCalendarModel implements CalendarModel {
 	 * The per-field expressions deriving a {@link CalendarEvent} from a business object.
 	 *
 	 * <p>
-	 * Each expression is a single-argument function receiving the business object. Only
-	 * {@link #_start} is required; the others may be <code>null</code>.
+	 * Each expression takes the values of the calendar's inputs followed by the business object.
+	 * Only {@link #_start} is required; the others may be <code>null</code>.
 	 * </p>
 	 */
 	public static final class EventExprs {
@@ -112,6 +115,8 @@ public class ExpressionCalendarModel implements CalendarModel {
 
 	private static final long DEFAULT_DURATION_MS = 3600000L;
 
+	private final List<ViewChannel> _inputs;
+
 	private final List<Object> _objects;
 
 	private final EventExprs _exprs;
@@ -127,22 +132,26 @@ public class ExpressionCalendarModel implements CalendarModel {
 	/**
 	 * Creates an {@link ExpressionCalendarModel}.
 	 *
+	 * @param inputs
+	 *        The channels whose current values lead the values every expression is evaluated with.
 	 * @param objects
 	 *        The initial business objects to render.
 	 * @param exprs
 	 *        The field-deriving expressions.
 	 * @param onMove
-	 *        Write-back function <code>object, newStart, newEnd -&gt; ...</code> for a drag-move, or
-	 *        <code>null</code> to disable moving.
+	 *        Write-back function taking the input values, the business object, the new start and the
+	 *        new end, for a drag-move, or <code>null</code> to disable moving.
 	 * @param onResize
-	 *        Write-back function <code>object, newEnd -&gt; ...</code> for a resize, or
-	 *        <code>null</code> to disable resizing.
+	 *        Write-back function taking the input values, the business object and the new end, for a
+	 *        resize, or <code>null</code> to disable resizing.
 	 * @param onCreate
-	 *        Write-back function <code>start, end, allDay -&gt; object</code> for slot creation, or
+	 *        Write-back function taking the input values, the start, the end, whether the event
+	 *        spans whole days and the title, returning the created object, for slot creation, or
 	 *        <code>null</code> to disable creation.
 	 */
-	public ExpressionCalendarModel(Collection<?> objects, EventExprs exprs, QueryExecutor onMove,
-			QueryExecutor onResize, QueryExecutor onCreate) {
+	public ExpressionCalendarModel(List<ViewChannel> inputs, Collection<?> objects, EventExprs exprs,
+			QueryExecutor onMove, QueryExecutor onResize, QueryExecutor onCreate) {
+		_inputs = inputs;
 		_objects = new ArrayList<>(objects);
 		_exprs = exprs;
 		_onMove = onMove;
@@ -165,13 +174,14 @@ public class ExpressionCalendarModel implements CalendarModel {
 	@Override
 	public Collection<? extends CalendarEvent> getEvents(Date start, Date end) {
 		List<CalendarEvent> result = new ArrayList<>();
+		Object[] inputValues = ChannelInputs.arguments(_inputs);
 		for (Object object : _objects) {
 			// Skip objects deleted concurrently (e.g. the just-deleted selected appointment before the
 			// object list is re-queried): evaluating the field expressions on a deleted object throws.
 			if (object instanceof TLObject persistent && !persistent.tValid()) {
 				continue;
 			}
-			WrappedEvent event = new WrappedEvent(object, _exprs);
+			WrappedEvent event = new WrappedEvent(inputValues, object, _exprs);
 			if (event.getStart() != null && event.getStart().before(end) && event.getEnd().after(start)) {
 				result.add(event);
 			}
@@ -186,7 +196,7 @@ public class ExpressionCalendarModel implements CalendarModel {
 		}
 		Object entry = event.getBusinessObject();
 		inTransaction(I18NConstants.MOVED_CALENDAR_ENTRY__ENTRY.fill(label(entry)),
-			tx -> _onMove.execute(entry, newStart, newEnd));
+			tx -> _onMove.execute(ChannelInputs.arguments(_inputs, entry, newStart, newEnd)));
 		fireChanged();
 	}
 
@@ -197,7 +207,7 @@ public class ExpressionCalendarModel implements CalendarModel {
 		}
 		Object entry = event.getBusinessObject();
 		inTransaction(I18NConstants.RESIZED_CALENDAR_ENTRY__ENTRY.fill(label(entry)),
-			tx -> _onResize.execute(entry, newEnd));
+			tx -> _onResize.execute(ChannelInputs.arguments(_inputs, entry, newEnd)));
 		fireChanged();
 	}
 
@@ -208,7 +218,8 @@ public class ExpressionCalendarModel implements CalendarModel {
 		}
 		Object[] created = {null};
 		inTransaction(com.top_logic.layout.form.component.I18NConstants.CREATED__MODEL.fill(title), tx -> {
-			created[0] = _onCreate.execute(start, end, Boolean.valueOf(allDay), title);
+			created[0] =
+				_onCreate.execute(ChannelInputs.arguments(_inputs, start, end, Boolean.valueOf(allDay), title));
 			if (created[0] != null && tx.getState() == Transaction.STATE_OPEN) {
 				// Name the created object as it is, rather than by the title it was requested with.
 				tx.setCommitMessage(
@@ -219,7 +230,7 @@ public class ExpressionCalendarModel implements CalendarModel {
 			_objects.add(created[0]);
 		}
 		fireChanged();
-		return created[0] != null ? new WrappedEvent(created[0], _exprs) : null;
+		return created[0] != null ? new WrappedEvent(ChannelInputs.arguments(_inputs), created[0], _exprs) : null;
 	}
 
 	private static void inTransaction(ResKey message, Consumer<Transaction> action) {
@@ -276,22 +287,34 @@ public class ExpressionCalendarModel implements CalendarModel {
 
 		private final boolean _resizable;
 
-		WrappedEvent(Object object, EventExprs exprs) {
+		/**
+		 * Creates a {@link WrappedEvent}.
+		 *
+		 * @param inputValues
+		 *        The values of the calendar's inputs the expressions are evaluated with.
+		 * @param object
+		 *        The business object of the event.
+		 * @param exprs
+		 *        The expressions computing the fields of the event.
+		 */
+		WrappedEvent(Object[] inputValues, Object object, EventExprs exprs) {
 			_object = object;
-			_start = toDate(eval(exprs._start, object));
-			Date end = toDate(eval(exprs._end, object));
+			Object[] args = Arrays.copyOf(inputValues, inputValues.length + 1);
+			args[inputValues.length] = object;
+			_start = toDate(eval(exprs._start, args));
+			Date end = toDate(eval(exprs._end, args));
 			_end = end != null ? end : (_start != null ? new Date(_start.getTime() + DEFAULT_DURATION_MS) : null);
-			_allDay = toBoolean(exprs._allDay, object, false);
-			_title = toStringOrNull(eval(exprs._title, object));
-			_tooltip = toStringOrNull(eval(exprs._tooltip, object));
-			_category = toStringOrNull(eval(exprs._category, object));
-			_color = toCssColor(eval(exprs._color, object));
-			_movable = toBoolean(exprs._movable, object, true);
-			_resizable = toBoolean(exprs._resizable, object, true);
+			_allDay = toBoolean(exprs._allDay, args, false);
+			_title = toStringOrNull(eval(exprs._title, args));
+			_tooltip = toStringOrNull(eval(exprs._tooltip, args));
+			_category = toStringOrNull(eval(exprs._category, args));
+			_color = toCssColor(eval(exprs._color, args));
+			_movable = toBoolean(exprs._movable, args, true);
+			_resizable = toBoolean(exprs._resizable, args, true);
 		}
 
-		private static Object eval(QueryExecutor expr, Object object) {
-			return expr == null ? null : expr.execute(object);
+		private static Object eval(QueryExecutor expr, Object[] args) {
+			return expr == null ? null : expr.execute(args);
 		}
 
 		private static Date toDate(Object value) {
@@ -304,8 +327,8 @@ public class ExpressionCalendarModel implements CalendarModel {
 			return null;
 		}
 
-		private static boolean toBoolean(QueryExecutor expr, Object object, boolean defaultValue) {
-			Object value = eval(expr, object);
+		private static boolean toBoolean(QueryExecutor expr, Object[] args, boolean defaultValue) {
+			Object value = eval(expr, args);
 			if (value == null) {
 				return defaultValue;
 			}

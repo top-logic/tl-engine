@@ -7,18 +7,23 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.table.Column;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
+import com.top_logic.tool.export.ExcelCellRenderer;
 
 /**
  * What a list of {@link ColumnDeclaration}s amounts to: the columns it contributes, their names,
@@ -94,6 +99,20 @@ public class ColumnDeclarations {
 	}
 
 	/**
+	 * The channels the functions of the given declarations read, see
+	 * {@link ColumnDeclaration#inputs()}, each once, in declaration order.
+	 */
+	public static List<InputRef> inputs(List<ColumnDeclaration> declarations) {
+		Map<String, InputRef> result = new LinkedHashMap<>();
+		for (ColumnDeclaration declaration : declarations) {
+			for (InputRef input : declaration.inputs()) {
+				result.putIfAbsent(input.getChannel().getChannelName(), input);
+			}
+		}
+		return new ArrayList<>(result.values());
+	}
+
+	/**
 	 * The order the given declarations sort the table in until the user sorts it themselves,
 	 * {@link SortSpec#NONE} when none of them declares a direction.
 	 */
@@ -153,6 +172,27 @@ public class ColumnDeclarations {
 		for (ColumnSetup setup : setups) {
 			if (setup.hiddenByDefault()) {
 				result.add(setup.name());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The renderers writing the values of the given columns into an Excel export, by column name.
+	 *
+	 * <p>
+	 * A column whose type brings no renderer of its own, and whose declaration configures none, has
+	 * no entry: it is written by the default renderer.
+	 * </p>
+	 *
+	 * @see ColumnSetup#exportRenderer()
+	 */
+	public static Map<String, ExcelCellRenderer> exportRenderers(List<ColumnSetup> setups) {
+		Map<String, ExcelCellRenderer> result = new HashMap<>();
+		for (ColumnSetup setup : setups) {
+			ExcelCellRenderer renderer = setup.exportRenderer();
+			if (renderer != null) {
+				result.put(setup.name(), renderer);
 			}
 		}
 		return result;

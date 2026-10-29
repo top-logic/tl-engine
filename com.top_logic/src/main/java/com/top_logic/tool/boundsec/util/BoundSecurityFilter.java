@@ -11,15 +11,14 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
+import com.top_logic.tool.boundsec.wrap.BoundWrapper;
 import com.top_logic.util.TLContext;
 
 /**
- * A Filter based checking BoundObjects.
- * 
- * This relies on AbstractBoundWrapper for now,
- * don't know how to fix this without breaking the Abstraction
+ * A Filter accepting the persistent {@link BoundWrapper}s the configured {@link Person} has access
+ * to.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -84,11 +83,11 @@ public class BoundSecurityFilter implements Filter {
 
     @Override
 	public boolean accept(Object anObject) {
-        return (anObject instanceof AbstractBoundWrapper) && this.acceptSecurity((AbstractBoundWrapper)anObject);
+		return (anObject instanceof BoundWrapper boundObject) && acceptSecurity(boundObject);
     }
 
     /** Check that the given Object is allowed to execute the commandGroup */ 
-    protected boolean acceptSecurity(AbstractBoundWrapper anObject) {
+    protected boolean acceptSecurity(BoundObject anObject) {
         if (isSuperUser) return true;
         if (checker != null) return BoundChecker.allowCommandOnSecurityObject(checker, commandGroup, anObject);
         if (person != null) return !AccessManager.getInstance().getRoles(person, anObject).isEmpty();

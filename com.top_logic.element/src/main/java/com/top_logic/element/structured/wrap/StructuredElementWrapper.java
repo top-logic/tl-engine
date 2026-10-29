@@ -11,13 +11,9 @@ import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.core.TLElementVisitor;
-import com.top_logic.element.core.TraversalFactory;
 import com.top_logic.element.core.wrap.WrapperTLElement;
 import com.top_logic.element.layout.structured.I18NConstants;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLObject;
@@ -29,9 +25,7 @@ import com.top_logic.tool.boundsec.BoundObject;
  * Wrapper based implementation of the interface {@link com.top_logic.element.structured.StructuredElement}.
  * 
  * This implementation will not call a commit on the knowledgebase, when changing
- * attributes or elements, this has to be done somewhere else. The internal
- * caching of parent and children can be deactivated by changing the constant
- * {@link WrapperTLElement#USE_CACHE}. 
+ * attributes or elements, this has to be done somewhere else.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -61,39 +55,11 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
     /**
      * Do NOT inherit roles from security parents.
      * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
+     * @see com.top_logic.tool.boundsec.wrap.BoundWrapper#getSecurityParents()
      */
     @Override
 	public Collection<? extends BoundObject> getSecurityParents() {
 		return Collections.emptyList();
-    }
-
-    /**
-     * Return the factory for this kind of elements.
-     *
-     * @return    The factory for wrapper elements. 
-     */
-	protected StructuredElementWrapperFactory tGetFactory() {
-		return (StructuredElementWrapperFactory) DynamicModelService.getFactoryFor(getStructureName());
-	}
-
-    /**
-     * @param    aVisitor    The visitor to be used for visiting.
-     * @return   <code>false</code>, if traversing has been finished by the
-     *           given visitor, not the depth.
-     */
-    protected boolean traverseUp(TLElementVisitor aVisitor) {
-        boolean theResult = aVisitor.onVisit(this, TraversalFactory.ANCESTORS);
-
-        if (theResult) {
-            StructuredElement theParent = this.getParent();
-
-            if (theParent != null) {
-                theResult = TraversalFactory.traverse(theParent, aVisitor, TraversalFactory.ANCESTORS);
-            }
-        }
-        
-        return (theResult);
     }
 
 	/**
@@ -101,13 +67,6 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
 	 */
 	public static void preloadChildren(PreloadContext context, List<? extends TLObject> parents) {
 		MetaElementUtil.preloadAttribute(context, parents, StructuredElementWrapper.CHILDREN_ATTR);
-	}
-
-	/**
-	 * Fill the parent caches and load the parents of all given child objects.
-	 */
-	public static void preloadParents(PreloadContext context, List<? extends TLObject> children) {
-		MetaElementUtil.preloadAttribute(context, children, StructuredElementWrapper.PARENT_ATTR);
 	}
 
 }

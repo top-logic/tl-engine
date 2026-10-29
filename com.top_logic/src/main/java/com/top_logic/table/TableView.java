@@ -144,6 +144,14 @@ public interface TableView<R> {
 	List<Row<R>> rows(int from, int to);
 
 	/**
+	 * All rows of this table in display order, the ones collapsed groups and tree nodes hide
+	 * included.
+	 *
+	 * @see RowSource#allRows()
+	 */
+	List<Row<R>> allRows();
+
+	/**
 	 * The tree the rows of this table form, {@code null} for a table whose rows form none.
 	 *
 	 * @see RowSource#hierarchy()
@@ -169,6 +177,17 @@ public interface TableView<R> {
 	 * The content of the given row's cell in the named column.
 	 */
 	CellContent cell(Row<R> row, String column);
+
+	/**
+	 * The definition of the named column, or {@code null} if this table has no such column.
+	 *
+	 * <p>
+	 * A consumer that needs more of a column than its {@link #cell(Row, String) rendered content} -
+	 * the typed {@link Column#value(Object) value} an export writes, say - asks for the definition
+	 * here.
+	 * </p>
+	 */
+	Column<R, ?> column(String column);
 
 	/**
 	 * The CSS class marking the given row as a whole, or {@code null} for none.
@@ -255,6 +274,30 @@ public interface TableView<R> {
 	 * </p>
 	 */
 	void applyNamedFilter(String id);
+
+	/**
+	 * The number of data rows the table would show after {@link #applyNamedFilter(String)
+	 * applying} the given {@link NamedFilter}.
+	 *
+	 * <p>
+	 * The count is of the rows the filter's criteria select on their own: the filter is counted as
+	 * applying it would set it - its column criteria replacing the live ones, a criterion for a
+	 * column this table does not have or does not filter by dropped, and its
+	 * {@link NamedFilter#search() search term} replacing the live one - so the column filters and
+	 * the search the table is currently filtered by do not change the result. Counting changes
+	 * nothing: the table goes on showing what it shows.
+	 * </p>
+	 *
+	 * @param filter
+	 *        The filter to count, usually one of the {@link #namedFilters() offered ones}.
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} if the table's rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see NamedFilter#counted()
+	 */
+	default int matchCount(NamedFilter filter) {
+		return RowSource.UNKNOWN_COUNT;
+	}
 
 	/**
 	 * Whether this table keeps {@link NamedFilter}s of the user's own, so that

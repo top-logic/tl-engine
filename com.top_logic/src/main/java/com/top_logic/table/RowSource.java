@@ -43,8 +43,8 @@ public interface RowSource<R> {
 	int size();
 
 	/**
-	 * Value of {@link #matchCount()} and {@link #dataCount()} for a source that cannot tell its
-	 * count.
+	 * Value of {@link #matchCount()}, {@link #matchCount(FilterSpec)} and {@link #dataCount()} for
+	 * a source that cannot tell its count.
 	 */
 	int UNKNOWN_COUNT = -1;
 
@@ -60,6 +60,29 @@ public interface RowSource<R> {
 	 *         displays lazily to tell it.
 	 */
 	default int matchCount() {
+		return UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The number of data rows the given filter would let pass.
+	 *
+	 * <p>
+	 * The count is that of {@link #matchCount()} for a source the given filter were
+	 * {@link #withFilter(FilterSpec) applied} to, but the filter is not applied: the result is
+	 * independent of the current filter, sort, grouping and expansion of this source, and asking for
+	 * it leaves all of them - the {@link #size() displayed rows} and their {@link #window(int, int)
+	 * windows} included - as they are. This tells how many rows a filter would select before the
+	 * user switches to it, e.g. for a filter offered under a name.
+	 * </p>
+	 *
+	 * @param filter
+	 *        The filter to count the rows of, in place of the current one.
+	 * @return The count, or {@link #UNKNOWN_COUNT} for a source that would have to load what it
+	 *         displays lazily to tell it.
+	 *
+	 * @see #matchCount()
+	 */
+	default int matchCount(FilterSpec filter) {
 		return UNKNOWN_COUNT;
 	}
 
@@ -119,6 +142,21 @@ public interface RowSource<R> {
 	 * {@code [0, size())}.
 	 */
 	List<Row<R>> window(int from, int to);
+
+	/**
+	 * All rows of this source in display order, as if every group and every tree node were
+	 * expanded - the rows a collapsed group or node hides included.
+	 *
+	 * <p>
+	 * Sort and filter apply as for the {@link #window(int, int) displayed rows}, and every row keeps
+	 * its own {@link Row#expanded() expansion state}, so a consumer that needs the whole data - an
+	 * export - can tell which rows the display currently hides. The default is the displayed rows;
+	 * a source whose rows cannot all be enumerated (an infinite tree) answers those as well.
+	 * </p>
+	 */
+	default List<Row<R>> allRows() {
+		return window(0, size());
+	}
 
 	/**
 	 * The given row keys that belong to a data row of this source, in the order they are given.

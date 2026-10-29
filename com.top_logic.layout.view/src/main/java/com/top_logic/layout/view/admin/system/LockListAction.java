@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import com.top_logic.layout.view.command.WithValueArgument;
+import com.top_logic.layout.view.command.WithResultActions;
 import java.util.ArrayList;
 import com.top_logic.base.locking.token.LockInfo;
 import com.top_logic.base.locking.token.TokenService;
@@ -51,7 +53,7 @@ public class LockListAction implements ViewAction {
 	 * {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<LockListAction> {
+	public interface Config extends PolymorphicConfiguration<LockListAction>, WithResultActions, WithValueArgument {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";

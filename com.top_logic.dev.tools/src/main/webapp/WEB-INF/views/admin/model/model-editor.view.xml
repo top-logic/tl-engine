@@ -20,7 +20,7 @@
 			other model part, so one form serves both and the module needs no panel of its own.
 		-->
 		<derived-channel name="selectedDetail"
-			expr="part -> module -> ifElse($part != null, $part, $module)"
+			expr="ifElse($selectedPart != null, $selectedPart, $selectedModule)"
 			inputs="selectedPart, selectedModule"
 		/>
 	</channels>
@@ -47,21 +47,24 @@
 								<en>New module</en>
 								<de>Neues Modul</de>
 							</label>
-							<execute-script function="x -> new(`tl.devtools:NewModule`, transient: true)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="admin/model/create-module.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedModule"
-								/>
-							</open-dialog>
+							<execute-script function="new(`tl.devtools:NewModule`, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/model/create-module.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedModule"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedModule"
+							inputs="selectedModule"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -71,13 +74,15 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<confirm expr="x -> #('Delete the selected module and all its contents?'@en, 'Das ausgewählte Modul und seinen gesamten Inhalt löschen?'@de)"/>
+							<confirm expr="#('Delete the selected module and all its contents?'@en, 'Das ausgewählte Modul und seinen gesamten Inhalt löschen?'@de)"/>
 							<with-transaction>
 								<action class="com.top_logic.dev.tools.model.ModelEditAction"
 									mode="DELETE"
 								/>
 							</with-transaction>
-							<write-channel name="selectedModule"/>
+							<write-channel name="selectedModule"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<table
@@ -113,7 +118,7 @@
 								<commands>
 									<generic-command
 										image="css:bi bi-plus-lg"
-										input="selectedModule"
+										inputs="selectedModule"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -123,28 +128,31 @@
 										<executability>
 											<null-input-disabled/>
 										</executability>
-										<execute-script function="x -> new(`tl.devtools:NewType`, transient: true)"/>
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="admin/model/create-type.view.xml"
-										>
-											<bind
-												channel="selection"
-												to="selectedPart"
-											/>
-											<bind
-												channel="container"
-												to="selectedModule"
-											/>
-											<bind
-												channel="reload"
-												to="reload"
-											/>
-										</open-dialog>
+										<execute-script function="new(`tl.devtools:NewType`, transient: true)">
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="admin/model/create-type.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selectedPart"
+													/>
+													<bind
+														channel="container"
+														to="selectedModule"
+													/>
+													<bind
+														channel="reload"
+														to="reload"
+													/>
+												</open-dialog>
+											</with-result>
+										</execute-script>
 									</generic-command>
 									<generic-command
 										image="css:bi bi-node-plus"
-										input="selectedPart"
+										inputs="selectedPart"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -152,30 +160,33 @@
 											<de>Neues Attribut</de>
 										</label>
 										<executability>
-											<visible-if expr="part -> $part != null &amp;&amp; !$part.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$part.instanceOf(`tl.model:TLClassifier`)"/>
+											<visible-if expr="$selectedPart != null &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLClassifier`)"/>
 										</executability>
-										<execute-script function="x -> new(`tl.devtools:NewAttribute`, transient: true)"/>
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="admin/model/create-attribute.view.xml"
-										>
-											<bind
-												channel="selection"
-												to="selectedPart"
-											/>
-											<bind
-												channel="container"
-												to="selectedPart"
-											/>
-											<bind
-												channel="reload"
-												to="reload"
-											/>
-										</open-dialog>
+										<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="admin/model/create-attribute.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selectedPart"
+													/>
+													<bind
+														channel="container"
+														to="selectedPart"
+													/>
+													<bind
+														channel="reload"
+														to="reload"
+													/>
+												</open-dialog>
+											</with-result>
+										</execute-script>
 									</generic-command>
 									<generic-command
 										image="css:bi bi-tag"
-										input="selectedPart"
+										inputs="selectedPart"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -183,31 +194,34 @@
 											<de>Neuer Klassifikator</de>
 										</label>
 										<executability>
-											<visible-if expr="part -> $part != null &amp;&amp; ($part.instanceOf(`tl.model:TLEnumeration`) || $part.instanceOf(`tl.model:TLClassifier`))"/>
+											<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLEnumeration`) || $selectedPart.instanceOf(`tl.model:TLClassifier`))"/>
 										</executability>
-										<execute-script function="x -> new(`tl.devtools:NewClassifier`, transient: true)"/>
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="admin/model/create-classifier.view.xml"
-										>
-											<bind
-												channel="selection"
-												to="selectedPart"
-											/>
-											<bind
-												channel="container"
-												to="selectedPart"
-											/>
-											<bind
-												channel="reload"
-												to="reload"
-											/>
-										</open-dialog>
+										<execute-script function="new(`tl.devtools:NewClassifier`, transient: true)">
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="admin/model/create-classifier.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selectedPart"
+													/>
+													<bind
+														channel="container"
+														to="selectedPart"
+													/>
+													<bind
+														channel="reload"
+														to="reload"
+													/>
+												</open-dialog>
+											</with-result>
+										</execute-script>
 									</generic-command>
 									<generic-command
 										clique="more"
 										image="css:bi bi-trash"
-										input="selectedPart"
+										inputs="selectedPart"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -217,23 +231,31 @@
 										<executability>
 											<null-input-disabled/>
 										</executability>
-										<confirm expr="x -> #('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
+										<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
 										<with-transaction>
 											<action class="com.top_logic.dev.tools.model.ModelEditAction"
 												mode="DELETE"
 											/>
 										</with-transaction>
-										<write-channel name="selectedPart"/>
-										<execute-script function="x -> now()"/>
-										<write-channel name="reload"/>
+										<write-channel name="selectedPart"
+											clear="true"
+										/>
+										<execute-script function="now()">
+											<with-result>
+												<write-channel name="reload"/>
+											</with-result>
+										</execute-script>
 									</generic-command>
 								</commands>
 								<flow-diagram selection="selectedPart">
 									<inputs>
-										<input channel="selectedModule"/>
+										<input
+											as="module"
+											channel="selectedModule"
+										/>
 										<input channel="reload"/>
 									</inputs>
-									<createChart><![CDATA[module -> reload -> {
+									<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
 		.filter(t -> $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`));
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
@@ -391,7 +413,7 @@
 								classifier, a datatype - with what every model part has.
 							-->
 							<switch input="selectedDetail">
-								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLModule`)">
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLModule`)">
 									<panel>
 										<title>
 											<en>Module</en>
@@ -410,7 +432,7 @@
 										</form>
 									</panel>
 								</case>
-								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLStructuredTypePart`)">
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLStructuredTypePart`)">
 									<panel>
 										<title>
 											<en>Attribute</en>
@@ -431,7 +453,7 @@
 										</form>
 									</panel>
 								</case>
-								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLClass`)">
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLClass`)">
 									<panel>
 										<title>
 											<en>Class</en>

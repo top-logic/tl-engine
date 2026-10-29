@@ -24,6 +24,9 @@
 			<instance>
 				<security-config>
 					<class name="TestViewModelAccess:Project">
+						<operations>
+							<operation name="Finish"/>
+						</operations>
 						<!-- The responsible may do everything with a project. -->
 						<grant
 							operation="Read"
@@ -83,6 +86,37 @@
 							<container/>
 						</access-parent>
 					</class>
+					<!--
+						The deliverables of a project decide for themselves: the responsible creates
+						specs, no role creates plans or archive entries.
+					-->
+					<class name="TestViewModelAccess:Deliverable">
+						<access-parent>
+							<self/>
+						</access-parent>
+					</class>
+					<class name="TestViewModelAccess:Spec">
+						<grant
+							operation="Create"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</class>
+					<class name="TestViewModelAccess:Archive">
+						<access-parent>
+							<self/>
+						</access-parent>
+					</class>
+					<!--
+						The milestones of a project and the notes of a category have no configuration:
+						as composition parts without a role source, they are decided by their
+						container.
+					-->
+					<!-- A remark is decided by an access parent whose type is not known statically. -->
+					<class name="TestViewModelAccess:Remark">
+						<access-parent>
+							<script expr="r -> $r.container()"/>
+						</access-parent>
+					</class>
 					<class name="TestViewModelAccess:Category">
 						<!-- A category may only be read, by its reader. -->
 						<grant
@@ -90,6 +124,16 @@
 							roles="TestViewModelAccess.Reader"
 						/>
 					</class>
+					<part name="TestViewModelAccess:Category#name">
+						<!--
+							The reader of a category may rename it, although the category grants writing
+							to no role.
+						-->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Reader"
+						/>
+					</part>
 					<part name="TestViewModelAccess:Project#secret">
 						<!--
 							Present grant with no roles: writing this attribute is denied for every
@@ -99,6 +143,13 @@
 					</part>
 					<part name="TestViewModelAccess:Project#budget">
 						<!-- Only the responsible of the project may read its budget. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#approved">
+						<!-- Only the responsible of the project may see whether it is approved. -->
 						<grant
 							operation="Read"
 							roles="TestViewModelAccess.Responsible"

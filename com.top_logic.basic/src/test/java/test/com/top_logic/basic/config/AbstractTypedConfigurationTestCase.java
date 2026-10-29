@@ -49,6 +49,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.io.character.CharacterContent;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.XMLCompare;
@@ -503,6 +504,22 @@ public abstract class AbstractTypedConfigurationTestCase extends TestCase {
 	protected static Test suite(Class<? extends TestCase> testClass) {
 		return ModuleTestSetup.setupModule(ServiceTestSetup.createSetup(null, testClass,
 			ResourcesModule.Module.INSTANCE));
+	}
+
+	/**
+	 * The suite of the given test class, running with the given services started in addition to
+	 * the {@link ResourcesModule}.
+	 *
+	 * <p>
+	 * A test reading a named secret (a {@link com.top_logic.basic.credential.NamedSecretSource})
+	 * starts the {@link com.top_logic.basic.credential.SecretStoreService}.
+	 * </p>
+	 */
+	protected static Test suite(Class<? extends TestCase> testClass, BasicRuntimeModule<?>... services) {
+		BasicRuntimeModule<?>[] modules = new BasicRuntimeModule<?>[services.length + 1];
+		modules[0] = ResourcesModule.Module.INSTANCE;
+		System.arraycopy(services, 0, modules, 1, services.length);
+		return ModuleTestSetup.setupModule(ServiceTestSetup.createSetup(null, testClass, modules));
 	}
 
 }

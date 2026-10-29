@@ -10,9 +10,10 @@ import { vi } from 'vitest';
 import { act, render } from '@testing-library/react';
 import {
   TLControlContext, KeyboardScopeProvider, FieldLabelContext, FormLayoutContext, ButtonDefaults, useKeyboardBinding,
-  useTLState, register,
+  useTLState, register, DisplayClassProvider,
 } from 'tl-react-bridge';
-import type { TLCellProps, FieldLabel, FormLayout, ButtonDefaultsValue, ChildControlJson } from 'tl-react-bridge';
+import type { TLCellProps, FieldLabel, FormLayout, ButtonDefaultsValue, ChildControlJson, DisplayClass } from 'tl-react-bridge';
+import type { ThemeOptions } from '@mui/material/styles';
 import { createMuiRoot, createPageThemes } from '../MuiRoot';
 
 /** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
@@ -91,6 +92,12 @@ export interface MountOptions {
 
   /** The defaults a container around the adapter gives its buttons; absent: none. */
   buttonDefaults?: ButtonDefaultsValue;
+
+  /** The display class of the app shell around the adapter; absent: none (regular). */
+  displayClass?: DisplayClass;
+
+  /** The options of the theme the adapter renders with; absent: the MUI default theme. */
+  theme?: ThemeOptions;
 }
 
 /**
@@ -128,18 +135,22 @@ export function mountAdapter(
       </TLControlContext.Provider>
     </FieldLabelContext.Provider>
   );
-  const adapter = options.buttonDefaults === undefined
+  const defaulted = options.buttonDefaults === undefined
     ? control
     : <ButtonDefaults {...options.buttonDefaults}>{control}</ButtonDefaults>;
+  const adapter = options.displayClass === undefined
+    ? defaulted
+    : <DisplayClassProvider value={options.displayClass}>{defaulted}</DisplayClassProvider>;
+  const Root = options.theme === undefined ? MuiRoot : createMuiRoot(createPageThemes(options.theme));
   render(
-    <MuiRoot>
+    <Root>
       {outer && <OuterBinding gesture={outer.gesture} onGesture={outer.onGesture} />}
       <KeyboardScopeProvider>
         {options.formLayout === undefined
           ? adapter
           : <FormLayoutContext.Provider value={options.formLayout}>{adapter}</FormLayoutContext.Provider>}
       </KeyboardScopeProvider>
-    </MuiRoot>,
+    </Root>,
   );
   return sent;
 }

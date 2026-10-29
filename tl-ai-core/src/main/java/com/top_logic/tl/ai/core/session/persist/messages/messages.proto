@@ -1,0 +1,686 @@
+package com.top_logic.tl.ai.core.session.persist.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Estimated split of a prompt into the parts it is made of.
+ *
+ * <p>
+ * The provider reports one prompt total and never breaks it down, so these are the agent loop's own
+ * estimates from the same token estimator the compaction budget uses. A consumer showing them next
+ * to a measured total must mark them as estimates.
+ * </p>
+ */
+message ContextCompositionDto {
+	/** Estimated tokens of the system prompt. */
+	int systemPromptTokens;
+
+	/** Estimated tokens of the tool schemas sent with the request. */
+	int toolDefinitionTokens;
+
+	/** Estimated tokens of the conversation messages, tool results included. */
+	int messageTokens;
+
+	/** Estimated tokens of the tool results within {@link #messageTokens}. */
+	int toolResultTokens;
+
+	/** Number of tool schemas sent with the request. */
+	int toolCount;
+
+	/**
+	 * The skills whose tools this request carried, in the order they were loaded.
+	 *
+	 * <p>
+	 * The part of {@link #toolDefinitionTokens} a {@code loadSkill} added, and the only part of the
+	 * tool array that can still change within a conversation.
+	 * </p>
+	 */
+	repeated string loadedSkills;
+}
+
+/** Token usage breakdown. */
+message TokenUsageDto {
+	/** Input tokens. */
+	int inputTokens;
+
+	/** Output tokens. */
+	int outputTokens;
+
+	/** Thinking tokens. */
+	int thinkingTokens;
+
+	/** Cache read tokens. */
+	int cacheReadTokens;
+
+	/** Cache write tokens. */
+	int cacheWriteTokens;
+}
+
+/** A complete conversation in the turn-based persistence format. */
+message PersistedConversationV2 {
+	/** The turns in this conversation. */
+	repeated PersistedTurn turns;
+
+	/** Session metadata. */
+	SessionMetadataV2 metadata;
+}
+
+/** A single turn in a conversation, representing one user-assistant exchange. */
+message PersistedTurn {
+	/** Unique turn identifier. */
+	string id;
+
+	/** Sequential turn number within the conversation. */
+	int turnNumber;
+
+	/** Timestamp when this turn started. */
+	long timestamp;
+
+	/** The model used for this turn. */
+	string model;
+
+	/** The provider used for this turn. */
+	string provider;
+
+	/** Token usage for this turn, summed over every agent-loop iteration it took. */
+	TokenUsageDto usage;
+
+	/**
+	 * Token usage of the LAST agent-loop iteration of this turn.
+	 *
+	 * <p>
+	 * Its prompt size (input + cache read + cache write) is the exact context the model saw at the
+	 * end of the turn, which is what a context-usage display must show. {@link #getUsage()} cannot
+	 * serve that purpose: every iteration resends the whole conversation, so its summed prompt size
+	 * counts the conversation once per iteration. Absent in transcripts written before this field
+	 * existed.
+	 * </p>
+	 */
+	TokenUsageDto lastIterationUsage;
+
+	/**
+	 * What the prompt of this turn's last request was made of.
+	 *
+	 * <p>
+	 * Estimates from the agent loop's token estimator, recorded so a re-opened chat can show the
+	 * same breakdown a live one does. Absent in transcripts written before this field existed.
+	 * </p>
+	 */
+	ContextCompositionDto contextComposition;
+
+	/**
+	 * What the host stated about this turn - the facts that change while the conversation runs.
+	 *
+	 * <p>
+	 * Sent to the model beside the user's text and stored apart from it, so a reader of
+	 * {@link #getUserParts()} gets what the user wrote and nothing else. Empty when the host stated
+	 * no per-turn fact, and in transcripts written before this field existed.
+	 * </p>
+	 */
+	string turnContext;
+
+	/**
+	 * What the run of this turn read - the sources its answer could point at, cited or not.
+	 *
+	 * <p>
+	 * Empty in transcripts written before this field existed.
+	 * </p>
+	 */
+	repeated ReadSourceDto sources;
+
+	/** Parts contributed by the user in this turn. */
+	repeated PersistedPart userParts;
+
+	/** Parts contributed by the assistant in this turn. */
+	repeated PersistedPart assistantParts;
+
+	/** Server-rendered HTML of the assistant's text content. Computed at load time, not persisted. */
+	string contentHtml;
+}
+
+/** A single part within a turn, representing one atomic piece of content. */
+message PersistedPart {
+	/** Unique part identifier. */
+	string id;
+
+	/** Timestamp when this part was created. */
+	long timestamp;
+
+	/** Discriminator for the part type. */
+	string type;
+
+	/** Text content data. */
+	TextPartDto textData;
+
+	/** Thinking/reasoning data. */
+	ThinkingPartDto thinkingData;
+
+	/** Tool call data. */
+	ToolCallPartDto toolCallData;
+
+	/** Approval request data. */
+	ApprovalPartDto approvalData;
+
+	/** User interaction data. */
+	InteractionPartDto interactionData;
+
+	/** Context compaction data. */
+	CompactionPartDto compactionData;
+
+	/** Error data. */
+	ErrorPartDto errorData;
+
+	/** Transaction data. */
+	TransactionPartDto transactionData;
+
+	/** Agent delegation data. */
+	DelegationPartDto delegationData;
+
+	/** System event data. */
+	SystemPartDto systemData;
+
+	/** Background subagent data. */
+	SubagentPartDto subagentData;
+}
+
+/**
+ * A background subagent a turn started; see {@code Part.SubagentPart}. Its steps are in its own
+ * transcript, keyed by {@link #childRunId}.
+ */
+message SubagentPartDto {
+	/** The subagent's id within its chat, e.g. "sa-2". */
+	string subagentId;
+
+	/** The agent the subagent runs. */
+	string agentName;
+
+	/** The task brief it was given. */
+	string task;
+
+	/** The id of the lead's tool call that started it. */
+	string parentToolCallId;
+
+	/** The run id of the child run; empty until known. */
+	string childRunId;
+
+	/** The job's state: RUNNING, DONE, FAILED or CANCELLED. */
+	string status;
+
+	/** A short summary of how it ended; empty while it runs. */
+	string summary;
+}
+
+/** One source a run read, as its reading list recorded it. */
+message ReadSourceDto {
+	/** Declared kind, e.g. {@code web}, {@code object} or an application's own. */
+	string kind;
+
+	/** The reference an answer writes to point at it: an object id, a URL, a record code. */
+	string id;
+
+	/** What to call it in front of a reader. */
+	string title;
+
+	/** Address of a web source; empty otherwise. */
+	string url;
+
+	/** Where the copy archived when it was read can be looked at; empty without one. */
+	string archiveUrl;
+
+	/** When it was read, ISO-8601. */
+	string readAt;
+}
+
+/** One source a citation marker in an answer points to. */
+message CitationDto {
+	/** 1-based marker index shown in the answer. */
+	int index;
+
+	/** Tool that produced the cited id or URL. */
+	string toolName;
+
+	/** Tool call id of that tool, when known. */
+	string toolCallId;
+
+	/** Host kind, e.g. {@code web} or {@code invoice}, as the application declared it. */
+	string kind;
+
+	/**
+	 * What to call that kind in front of a reader, in the reader's language.
+	 *
+	 * Empty when the host declared no label for the kind; the {@code kind} is then shown instead.
+	 */
+	string kindLabel;
+
+	/** Id the tool returned (a URL, a TID, …). */
+	string id;
+
+	/** Human label for the chip popover. */
+	string label;
+
+	/** Link for a web source; empty otherwise. */
+	string url;
+	/** The sentence of the source the fact rests on, as the model read it; empty when none. */
+	string passage;
+
+	/** A window of the source around {@link #passage}, for the marker's popover. */
+	string excerpt;
+
+	/** Where the copy of a web page archived when it was read can be looked at; empty without one. */
+	string archiveUrl;
+
+	/** When that copy was taken, ISO-8601; empty without one. */
+	string archivedAt;
+}
+
+/** Text content part. */
+message TextPartDto {
+	/** The text content. */
+	string text;
+
+	/** Citations the validator kept for this text; empty when the turn cited nothing. */
+	repeated CitationDto citations;
+}
+
+/** Thinking/reasoning content part. */
+message ThinkingPartDto {
+	/** The thinking text. */
+	string text;
+
+	/** Opaque provider token for multi-turn continuity (signature / encrypted_content). */
+	string continuityToken;
+
+	/**
+	 * Catalog ID of the provider that produced the block, e.g. "anthropic".
+	 *
+	 * <p>
+	 * A continuity token only means something to the provider that minted it, so the origin has to
+	 * survive persistence: without it a reloaded conversation cannot tell whether a thinking block
+	 * may be replayed to the model now in force. Absent in transcripts written before this field.
+	 * </p>
+	 */
+	string provider;
+}
+
+/** Tool call part with invocation details and result. */
+message ToolCallPartDto {
+	/** Name of the tool that was called. */
+	string toolName;
+
+	/** JSON-encoded arguments passed to the tool. */
+	string argsJson;
+
+	/**
+	 * What kind of state change the tool makes (the {@code ToolMode} name).
+	 *
+	 * <p>Empty when unknown - a log written before the mode was recorded, or a tool that could
+	 * not be resolved.</p>
+	 */
+	string mode;
+
+	/** Execution status of the tool call. */
+	string status;
+
+	/** The result returned by the tool. */
+	string result;
+
+	/** Reference to an externally stored result. */
+	string resultRef;
+
+	/** Error message if the tool call failed. */
+	string errorMessage;
+
+	/** Reason the tool call was denied. */
+	string denyReason;
+
+	/** Duration of the tool call in milliseconds. */
+	long durationMs;
+}
+
+/** Approval request part for tool calls requiring user confirmation. */
+message ApprovalPartDto {
+	/** ID of the tool call requiring approval. */
+	string toolCallId;
+
+	/** Name of the tool requiring approval. */
+	string toolName;
+
+	/** JSON-encoded arguments for the tool call. */
+	string argsJson;
+
+	/** Reason displayed to the user for the approval request. */
+	string displayReason;
+
+	/**
+	 * The {@code ToolMode} the approval was asked for, or empty when it was not recorded.
+	 *
+	 * <p>
+	 * What lets a reader be told in their own language what the agent wanted to do. The reason
+	 * above is the security context's sentence, in English, because it is the same for everyone;
+	 * the mode is the key the chat phrases its own sentence from, live and in the recorded
+	 * history alike.
+	 * </p>
+	 */
+	string mode;
+
+	/** The user's decision. */
+	string decision;
+
+	/** Optional comment from the user. */
+	string userComment;
+
+	/** Timestamp when the approval was resolved. */
+	long resolvedAt;
+}
+
+/** User interaction part for questions posed to the user. */
+message InteractionPartDto {
+	/** Type of interaction. */
+	string interactionType;
+
+	/** The question posed to the user. */
+	string question;
+
+	/** Optional header text. */
+	string header;
+
+	/** Available options for the user to choose from. */
+	repeated string options;
+
+	/** Whether multiple options can be selected. */
+	boolean multiSelect;
+
+	/** The user's response. */
+	string userResponse;
+
+	/** Timestamp when the interaction was resolved. */
+	long resolvedAt;
+}
+
+/** Context compaction event part. */
+message CompactionPartDto {
+	/** Token count before compaction. */
+	int tokensBefore;
+
+	/** Token count after compaction. */
+	int tokensAfter;
+
+	/** What triggered the compaction. */
+	string trigger;
+
+	/**
+	 * What this compaction put in place of the history it replaced, so a reloaded session
+	 * comes back compacted instead of at its original size.
+	 *
+	 * <p>Absent in a log written before the sidecar existed, and in one whose compaction is
+	 * still running.</p>
+	 */
+	CompactionSidecarDto sidecar;
+}
+
+/**
+ * The replay sidecar of a compaction: the messages it produced, plus a fingerprint of the
+ * canonical history they replaced.
+ */
+message CompactionSidecarDto {
+	/**
+	 * Version of the fingerprint algorithm {@link #fingerprint} was computed with.
+	 *
+	 * <p>A sidecar whose version is not the reader's current one is rejected rather than
+	 * migrated: it is a cache, and the fallback - replaying the full canonical history - is
+	 * always available.</p>
+	 */
+	int fingerprintVersion;
+
+	/** Fingerprint of the message history this compaction replaced. */
+	string fingerprint;
+
+	/** The messages this compaction put in place of that history. */
+	repeated PersistedMessage replacementMessages;
+}
+
+/** One LLM conversation message. */
+message PersistedMessage {
+	/** Unique message identifier. */
+	string id;
+
+	/** Timestamp when this message was created. */
+	long timestamp;
+
+	/** Discriminator for the message type. */
+	string type;
+
+	/** User message data. */
+	UserMessageDto userData;
+
+	/** Assistant message data. */
+	AssistantMessageDto assistantData;
+
+	/** Tool result message data. */
+	ToolResultMessageDto toolResultData;
+
+	/** System message data. */
+	SystemMessageDto systemData;
+
+	/** Compaction marker data. */
+	CompactionMarkerDto markerData;
+}
+
+/** A message from the user. */
+message UserMessageDto {
+	/** The message content. */
+	repeated PersistedContent content;
+
+	/**
+	 * Who wrote the message, when it was not the user: the name of the message's origin, for
+	 * example "FRAMEWORK". Empty for a message of the user.
+	 */
+	string origin;
+}
+
+/** A message from the assistant. */
+message AssistantMessageDto {
+	/** The message content. */
+	repeated PersistedContent content;
+
+	/** Token usage reported for this message. */
+	TokenUsageDto usage;
+
+	/** Why the model stopped producing this message. */
+	string finishReason;
+}
+
+/** The outcome of one tool call, as the model sees it. */
+message ToolResultMessageDto {
+	/** ID of the tool call this result answers. */
+	string toolCallId;
+
+	/** Name of the tool that was called. */
+	string toolName;
+
+	/** The state of the tool call. */
+	ToolStateDto state;
+}
+
+/** A system message in the message history. */
+message SystemMessageDto {
+	/** The message text. */
+	string content;
+}
+
+/** A marker recording that history was compacted at this point. */
+message CompactionMarkerDto {
+	/** How many messages were replaced. */
+	int messagesSummarized;
+
+	/** Token count before the compaction. */
+	int tokensBefore;
+
+	/** What triggered the compaction. */
+	string trigger;
+}
+
+/** One piece of message content. */
+message PersistedContent {
+	/** Discriminator for the content type. */
+	string type;
+
+	/** The text, for text and thinking content. */
+	string text;
+
+	/** Opaque provider token for multi-turn continuity, for thinking content. */
+	string continuityToken;
+
+	/**
+	 * Catalog ID of the provider that produced the block, e.g. "anthropic".
+	 *
+	 * <p>
+	 * A continuity token only means something to the provider that minted it, so the origin has to
+	 * survive persistence: without it a reloaded conversation cannot tell whether a thinking block
+	 * may be replayed to the model now in force. Absent in transcripts written before this field.
+	 * </p>
+	 */
+	string provider;
+
+	/** ID of the tool call, for tool call content. */
+	string toolCallId;
+
+	/** Name of the called tool, for tool call content. */
+	string toolName;
+
+	/** JSON-encoded arguments, for tool call content. */
+	string arguments;
+
+	/** The image URL, for image content. */
+	string url;
+
+	/** The base64-encoded document, for PDF content. */
+	string data;
+
+	/** The media type, for image and PDF content. */
+	string mediaType;
+}
+
+/** The lifecycle state of a tool call. */
+message ToolStateDto {
+	/** Discriminator for the state. */
+	string kind;
+
+	/** JSON-encoded arguments, for the pending and running states. */
+	string arguments;
+
+	/** When execution started. */
+	long startTime;
+
+	/** When execution ended. */
+	long endTime;
+
+	/** The result text, for the completed state. */
+	string result;
+
+	/** Whether the result was shortened, for the completed state. */
+	boolean compacted;
+
+	/** Summary of a shortened result, for the completed state. */
+	string summary;
+
+	/** How much of the result was dropped, for the completed state. */
+	int truncationHint;
+
+	/** Structured result content, for the completed state. */
+	repeated PersistedContent content;
+
+	/** The error text, for the failed state. */
+	string error;
+
+	/** Whether the failure was synthesized rather than reported by the tool. */
+	boolean synthetic;
+}
+
+/** Error event part. */
+message ErrorPartDto {
+	/** The kind of error. */
+	string kind;
+
+	/** The error message text. */
+	string errorMessage;
+}
+
+/** Transaction event part. */
+message TransactionPartDto {
+	/** The transaction type. */
+	string type;
+
+	/** The revision number. */
+	long revisionNumber;
+
+	/** Optional reason for the transaction. */
+	string reason;
+}
+
+/** Agent delegation part. */
+message DelegationPartDto {
+	/** The agent delegating the task. */
+	string fromAgent;
+
+	/** The agent receiving the task. */
+	string toAgent;
+
+	/** Summary of the input given to the delegate. */
+	string inputSummary;
+
+	/** Summary of the result from the delegate. */
+	string resultSummary;
+
+	/** Session ID of the child agent session. */
+	string childSessionId;
+
+	/** Duration of the delegation in milliseconds. */
+	long durationMs;
+
+	/** Nested child parts from the sub-agent's execution. */
+	repeated PersistedPart childParts;
+
+	/** Number of LLM iterations the sub-agent executed, or -1 if unknown. */
+	int turnsUsed;
+
+	/** Cumulative token usage of the sub-agent. */
+	TokenUsageDto totalUsage;
+
+	/** Why the sub-agent stopped (e.g. COMPLETE, MAX_TURNS, ERROR). */
+	string stopReason;
+
+	/**
+	 * The id of the lead's {@code delegate_to_*} call, where the chat draws the delegation's card;
+	 * empty for a log written before the card was drawn.
+	 */
+	string parentToolCallId;
+}
+
+/** System event part. */
+message SystemPartDto {
+	/** The type of system event. */
+	string eventType;
+
+	/** Optional details about the event. */
+	string details;
+}
+
+/** Session metadata for the turn-based persistence format. */
+message SessionMetadataV2 {
+	/** Tool names approved for this session. */
+	repeated string approvedTools;
+
+	/** Cumulative token usage across all turns. */
+	TokenUsageDto cumulativeUsage;
+
+	/** Last model used. */
+	string lastModel;
+
+	/** The approval mode for the session. */
+	string approvalMode;
+}

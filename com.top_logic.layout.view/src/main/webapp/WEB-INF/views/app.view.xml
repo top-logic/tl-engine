@@ -8,8 +8,8 @@
 	An application does not copy this shell but extends it with a same-path overlay - a
 	WEB-INF/views/app.view.xml of its own module, declaring the namespace
 	xmlns:config="http://www.top-logic.com/ns/config/6.0". The ViewLoader merges all copies in
-	dependency order. Each slot of the app-shell holds at most one element of a kind, so the
-	<sidebar> and the <app-bar> of the overlay extend the ones defined here.
+	dependency order. The overlay addresses the sidebar and the app bar by their ids, wherever they
+	sit in the shell: <sidebar config:ref="sidebar"> and <app-bar config:ref="app-bar">.
 	
 	What an application typically sets in its overlay: the title of the app bar; the active-item of
 	the sidebar; its header, header-collapsed, footer and footer-collapsed, marked with
@@ -18,6 +18,10 @@
 	added without a position comes after the administration item. To place it before the system
 	section, it names the separator in front of the administration item:
 	config:position="before" config:reference="system-separator".
+	
+	The two areas closing the app bar carry the ids dev-menu and user-menu, so that an element the
+	application adds to the trailing area of the bar is placed against them, e.g.
+	config:position="before" config:reference="user-menu".
 	
 	An application that defines its whole shell itself marks the content of its copy as a
 	replacement: <app-shell config:override="true">. Its copy then takes the place of this shell as a
@@ -35,7 +39,9 @@
 			<session-timeout-notice/>
 		</notices>
 		<content>
-			<sidebar drawer-open-slot-name="appbar-leading">
+			<sidebar id="sidebar"
+				drawer-open-slot-name="appbar-leading"
+			>
 				<!--
 					The chrome of the rail itself: what stands above and below the items, outside
 					the list. The folded rail has room for an abbreviation, not for a name, so it
@@ -81,9 +87,8 @@
 					<separator id="system-separator"/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"
-						route="none"
 					>
-						<access-control scope="administration"/>
+						<access-control operation="Administration"/>
 						<view-ref view="admin/admin.view.xml"/>
 						<label>
 							<en>Administration</en>
@@ -94,7 +99,9 @@
 			</sidebar>
 		</content>
 		<header>
-			<app-bar variant="flat">
+			<app-bar id="app-bar"
+				variant="flat"
+			>
 				<title>
 					<en>TopLogic</en>
 					<de>TopLogic</de>
@@ -103,8 +110,8 @@
 					<!--
 						Mobile drawer-toggle target. The sidebar above is configured with
 						drawer-open-slot-name="appbar-leading", which makes it contribute a
-						hamburger button into this slot via the slot-content registry; CSS makes
-						it visible only at small viewports. The two names must match.
+						hamburger button into this slot via the slot-content registry; it renders
+						only while the app shell is compact (below its breakpoint). The two names must match.
 					-->
 					<slot name="appbar-leading"/>
 				</leading>
@@ -124,14 +131,18 @@
 						whether the session may use it, and the menu shows no trigger while none is
 						available.
 					-->
-					<view-ref view="dev-menu.view.xml"/>
+					<view-ref id="dev-menu"
+						view="dev-menu.view.xml"
+					/>
 
 					<!--
 						The account area: who is logged in, plus logout and the theme entries. Its
 						view declares the channel feeding it, so nothing here wires it. It closes the
 						bar, where an application's account area is looked for.
 					-->
-					<view-ref view="user-menu.view.xml"/>
+					<view-ref id="user-menu"
+						view="user-menu.view.xml"
+					/>
 				</trailing>
 			</app-bar>
 		</header>

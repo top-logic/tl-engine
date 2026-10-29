@@ -20,6 +20,9 @@ Several breaking changes have **no** migration section in Trac (see the appendix
 on the release changelog alone. The 7.11 maintenance branch `TL/TL_7.11_x` has no commits beyond
 the `TL_7.11.0` tag, so 7.11.0 is the exact base of every 7.11 application.
 
+**Upgrading from 7.10.** A 7.10.x application follows this guide unchanged: no change in 7.11.0
+requires a migration step, so there is no separate 7.10 to 7.11 path.
+
 **Legend.** *Mandatory* = the app does not build or start otherwise. *Conditional* = only if the
 app uses the feature (each item names a `grep` to find out). *Optional* = recommended, not required.
 
@@ -61,6 +64,21 @@ Java 17, Jakarta Servlet 6.1 and Jetty 12.1 were already in 7.11; only patch/min
 party libraries happen (Jetty 12.1.10 to 12.1.13, H2 2.4 to 2.5, httpclient5 5.2 to 5.6, BouncyCastle
 1.86, log4j 2.26.1, Jackson 2.22.2). No new JVM flags are needed.
 
+**Maven 3.8.9 or newer** is required (#29702). The `requireMavenVersion` enforcer rule inherited
+from `tl-parent-all` stops a build with an older Maven (e.g. 3.8.7, the Debian/Ubuntu package) right
+at the start:
+
+```
+Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion failed with message:
+Detected Maven Version: 3.8.7 is not in the allowed range [3.8.9,).
+```
+
+If the system Maven is older, add a Maven wrapper to the project and build with `./mvnw`:
+
+```bash
+mvn -N wrapper:wrapper -Dmaven=3.9.11
+```
+
 Related POM hygiene:
 
 - `tl-maven-plugin` is now managed in `tl-parent-all` `<pluginManagement>`. Remove a pinned
@@ -71,6 +89,9 @@ Related POM hygiene:
 - New projects declare the `tl-releases` / `tl-snapshots` repositories in the POM (see
   `tl-archetype-app`); copy them if your build relied on a `settings.xml` for that (#27889).
 - No Maven module was removed or renamed between 7.11 and 8.0, so no `artifactId` changes.
+- An app POM without a `<version>` of its own inherits the TopLogic version from the parent, so the
+  app's own artifact changes its coordinates with this (and every further) parent bump. Declare an
+  own `<version>` to keep the app's coordinates independent of the engine version.
 - No Node/npm is needed: the React modules are optional and not transitive from `tl-core`/`tl-element`.
 
 ### 1.2 Source and resource encoding ISO-8859-1 to UTF-8 (mandatory, do it before the first build)
@@ -264,6 +285,9 @@ Add a config file (registered in the app's `metaConf.txt`):
 				<grant operation="Delete" roles="Manager"                 inherit="true"/>
 			</module>
 			<class name="myapp:Order">
+				<operations>                          <!-- custom operations are declared -->
+					<operation name="Approve"/>
+				</operations>
 				<grant operation="Approve" roles="Manager, Approver"/>
 			</class>
 			<part name="myapp:Customer#salary">      <!-- attribute grants restrict -->
@@ -275,7 +299,10 @@ Add a config file (registered in the app's `metaConf.txt`):
 </config>
 ```
 
-Rules: `operation` is a `BoundCommandGroup`; module/type grants are additive (union), `<part>` grants
+Rules: `operation` is a `BoundCommandGroup` that applies to the type: a built-in one (`Read`,
+`Write`, `Create`, `Delete`, `Discover`, `Export`) or one declared in the `<operations>` of the type,
+a generalization or the module (a grant of an undeclared operation is a startup error, see
+[Operations](doc:access-configuration#operations-which-operations-apply-to-a-type)); module/type grants are additive (union), `<part>` grants
 restrict, `inherit="true"` propagates to subtypes; roles must exist (3.1), an unknown role is a
 startup error. Since #29564 grants are an ordered list: use `<revoke operation=... roles=.../>` to
 remove a framework role and `config:override="true"` on `<class>` to replace the whole list. Starting
@@ -525,6 +552,11 @@ The ~2000 other removed lines in the diff are the UTF-8 re-encoding of `_de` bun
 | `MetaElementUtil.getAllInstancesOf(TLClass)` | `getAllInstancesOf(TLClass, Class<T>)` / `AttributeOperations.allDirectInstances` | #29092 |
 | `ListStorage.listConfig(...)`, `SetStorage.setConfig(...)`, `SingletonLinkStorage.singletonLinkConfig(...)` | trailing `boolean unversioned` (`false`) | #29092 |
 | `DiffVisitor` implementations | `CreateRole`/`DeleteRole` cases gone; `UpdateDeletionPolicy`/`UpdateHistoryType` added | #29221, #29361 |
+| `ThreadContextManager.inSystemInteraction(Class, job)`, `ThreadContextManager.inInteraction(String, job)` | `ThreadContext.inSystemContext(Class, job)` | #29798 |
+| `ThreadContext.pushSuperUser()` / `popSuperUser()` / `resetSuperUser()` | `ThreadContext.withoutSecurityChecks(job)` (keeps the person), or `ThreadContext.inSystemContext(Class, job)` (no person) | #29798 |
+| `TLContextManager.inRootPersonContext(job)` | `ThreadContext.inSystemContext(Class, job)`, or `TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), job)` | #29798 |
+| `TLContext.setCurrentPerson(Person)` | `TLContextManager.inPersonContext(Person, job)` to act as a person; `TLSubSessionContext.setPerson(Person)` | #29798 |
+| `ThreadContext#isAdminContext()` (override in a context subclass) | `ThreadContext#isUserAdministrator()`; ask `ThreadContext.isAdmin()` whether the current context has administrative rights | #29798 |
 
 Deprecations are almost absent in the range (only `Environment.DEVELOPER_MODE` and `isJarFile()`):
 breaking changes were made by removal, so compile the app (including tests, see
@@ -553,6 +585,12 @@ breaking changes were made by removal, so compile the app (including tests, see
 - `Utils.isEmpty(StructuredText)` counts empty HTML as empty (#29195); `DBType.fromLiteralValue`
   maps `Float`/`Integer` to `FLOAT`/`INT`; `ErrorHandlingHelper` logs only `SYSTEM_FAILURE` as ERROR.
 - The session locale is no longer fixed at login (#29525): do not cache resolved `ResKey`s in shared objects.
+- `ThreadContext.inSystemContext(...)` and `TLContextManager.inPersonContext(...)` take effect also
+  inside a running interaction (#29798): the identity of the caller's sub-session is switched for the
+  job and restored afterwards. A job must therefore not log in or set a person meant to outlive it;
+  look up the account inside the job, return it, and continue outside. Setting a person on the
+  current context does not switch the security checks on or off: the checks are bypassed only in a
+  system context or within `ThreadContext.withoutSecurityChecks(...)`.
 
 ### 6.3 TL-Script semantics
 
@@ -663,6 +701,29 @@ case-insensitive.
   `tl: Ticket_29492_enlarge_layout_key`, `tl-element: Ticket_29548_create_email_phone`,
   `tl-contact: Ticket_28557_enlarge_contact_attributes`, `tl-model-search: Ticket_28710_Added_TLSearch`,
   `tl-bpe: Ticket_29037_Update_diagram_attribute`.
+- A migration module without a version stored in the database is treated as new to the application
+  (e.g. a framework module just added as dependency): its data is assumed not to exist, and all its
+  migrations are skipped. The log names the module and the skipped migrations ("Skipping migrations of
+  module ..."), while the overall result still reads "No migration required.". An application whose
+  database was created before it had `WEB-INF/kbase/migration/<module>/` has no stored version of its own
+  module, so its first own migration is skipped and the automatic model upgrade runs instead. Such an
+  application must list its module in `minimum-modules` of the `MigrationService`, in the same release as
+  its first migration:
+
+  ```xml
+  <config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+  	<instance minimum-modules="my-app">
+  		<modules>
+  			<module name="my-app" />
+  		</modules>
+  	</instance>
+  </config>
+  ```
+
+  Every startup stores the maximal version of each module that has no stored
+  version yet. After a start that skipped the migration, its version therefore counts as applied, and
+  `minimum-modules` no longer has an effect. Apps created from the archetype ship the folder (with a
+  `README.md`) and get the `<initial>` version of their module stored at database setup.
 - Remove `<post-processor class="...MoveRolesFromSingletonsToModules"/>` from old app migrations (class deleted).
 - New processors available: `RecollateStringColumnsProcessor`, `UpdateTLPropertiesProcessor`
   (`<update-tl-properties>`), `ResolvePersonNameCollisionsProcessor`, `AddDatabaseColumnProcessor`,
@@ -704,11 +765,11 @@ case-insensitive.
 
 ## Appendix A: Trac coverage of the changes above
 
-Every change in this guide is covered by a ticket flagged `RequiresMigration` with a `== Migration ==`
-section in its description: #28388, #28694, #28710, #28816, #29037, #29073, #29080, #29088, #29092,
-#29106, #29108, #29111, #29221, #29286, #29306, #29361, #29383, #29384, #29396, #29400, #29420,
-#29423, #29425, #29429, #29447, #29449, #29457, #29465, #29484, #29492, #29512, #29525, #29528,
-#29540, #29542, #29548, #29555, #29563, #29564.
+Every change in this guide except the Maven version (see below) is covered by a ticket flagged
+`RequiresMigration` with a `== Migration ==` section in its description: #28388, #28694, #28710,
+#28816, #29037, #29073, #29080, #29088, #29092, #29106, #29108, #29111, #29221, #29286, #29306,
+#29361, #29383, #29384, #29396, #29400, #29420, #29423, #29425, #29429, #29447, #29449, #29457,
+#29465, #29484, #29492, #29512, #29525, #29528, #29540, #29542, #29548, #29555, #29563, #29564.
 
 The review of the diff found eleven of them incomplete; their sections were written on 2026-09-17
 and are the source of the corresponding items above: #29092 (login rewrite, MFA config, account
@@ -717,6 +778,8 @@ classes), #29088 (removed legacy module system), #29108 (Font Awesome path, move
 #28816 (dangling references), #29361 (schema check, migration API), #29484 (login field label),
 #28388 (resource provider API), #29548 (new `tl.util` types), #29555 (`canEvaluateAtCompileTime`).
 #29400 still carries milestone `TL_8.1.0` although the change is on master before 8.0.
+
+Not flagged: #29702 (Maven 3.8.9 or newer, phase 1.1) has no migration section.
 
 Flagged but not implemented (status `new`, no instructions): #26916, #27285, #28031, #28487,
 #28488. #28026 (`AttributedObject` to `TLObject` in `*Meta.xml`) is flagged but has **not** landed

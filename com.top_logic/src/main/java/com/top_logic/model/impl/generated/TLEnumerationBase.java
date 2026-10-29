@@ -26,4 +26,9 @@ public interface TLEnumerationBase extends com.top_logic.model.TLStructuredType 
 	 */
 	String CLASSIFIERS_ATTR = "classifiers";
 
+	/**
+	 * Name of the table storing {@link #TL_ENUMERATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "FastList";
+
 }

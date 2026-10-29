@@ -1,14 +1,21 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, stateAttr, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { showsValueOnly } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import ColorPopup from './color/ColorPopup';
 
-const I18N_KEYS = { 'js.colorInput.chooseColor': 'Choose color' };
+const I18N_KEYS = {
+  'js.colorInput.noColor': 'No color',
+};
 
 const { useState, useCallback, useRef } = React;
 
 /**
  * A color input field rendered via React.
+ *
+ * <p>The field is one swatch of the design system (tl-swatch tl-swatch--color): a button that opens the
+ * color picker, a plain span while the field is read-only, an inactive button while it is disabled. It carries
+ * the field state like every other field (error, warning, mandatory) and the state word `empty` while it
+ * holds no color; the color itself is inline, as data.</p>
  *
  * State from server:
  *  - value: string | null       - Current hex color ('#RRGGBB') or null
@@ -33,6 +40,8 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const palette = (state.palette as (string | null)[]) ?? [];
   const paletteColumns = (state.paletteColumns as number) ?? 6;
   const defaultPalette = (state.defaultPalette as (string | null)[]) ?? palette;
+  // What the swatch says of itself: its color, or that it has none. That it opens a dialog is aria-haspopup's to say.
+  const name = value == null ? i18n['js.colorInput.noColor'] : value.toUpperCase();
 
   const handleClick = useCallback(() => {
     // The press of this click has closed the popup this swatch opens: leave it closed.
@@ -61,34 +70,42 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     [sendCommand]
   );
 
-  // Read-only: just a colored span
+  // Read-only: the color alone, as a swatch that is no button
   if (showsValueOnly(state)) {
     return (
       <span
         id={controlId}
-        className={rootClassName(state, 'tlColorInput tlColorInput--immutable' +
-          (value == null ? ' tlColorInput--noColor' : ''))}
+        className={rootClassName(state, 'tl-swatch tl-swatch--color')}
+        data-tl-state={stateAttr(value == null && 'empty')}
         style={value != null ? { backgroundColor: value } : undefined}
-        {...tooltipProps(value)}
+        role="img"
+        aria-label={name}
+        {...tooltipProps(value ?? name)}
       />
     );
   }
 
+  const fieldState = fieldStateAttrs(state);
+
   return (
-    <span id={controlId} className={rootClassName(state, 'tlColorInput')}>
+    <span id={controlId} className={rootClassName(state) || undefined}>
       <button
         ref={swatchRef}
-        className={
-          'tlColorInput__swatch' +
-          (value == null ? ' tlColorInput__swatch--noColor' : '')
-        }
+        type="button"
+        className="tl-swatch tl-swatch--color"
         style={value != null ? { backgroundColor: value } : undefined}
         onClick={handleClick}
         disabled={state.disabled === true}
-        aria-label={i18n['js.colorInput.chooseColor']}
-        {...tooltipProps(value ?? i18n['js.colorInput.chooseColor'])}
+        aria-label={name}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        {...fieldState}
+        data-tl-state={stateAttr(value == null && 'empty', fieldState['data-tl-state'])}
+        {...tooltipProps(value ?? name)}
         id={inputId}
         {...labelProps}
+        // Inside a form field the label names the field; the swatch adds its own value (aria-label) to it.
+        aria-labelledby={labelProps['aria-labelledby'] === undefined ? undefined : `${labelProps['aria-labelledby']} ${inputId}`}
       />
 
       {open && (

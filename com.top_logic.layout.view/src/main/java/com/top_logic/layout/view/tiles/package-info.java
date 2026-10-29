@@ -32,14 +32,17 @@
  * </p>
  *
  * <p>
- * The path is part of the address of the page. For every frame view the stack declares a
- * {@link com.top_logic.layout.view.tiles.FrameRouteConfig &lt;frame&gt;} route for, the frames on
- * the path name themselves in the URL - one route each, in the order they were drilled down -
- * through the {@link com.top_logic.layout.view.tiles.TileFrameRouteParticipant} of the mounted
- * frame. Opening such an address restores the path frame by frame, and a URL naming fewer frames
- * than the display shows returns the stack to the view it started in. The declaration also carries
- * the {@link com.top_logic.layout.view.tiles.TileLabelProvider label} naming every frame of that
- * view, which is what lets a frame be named once, at the stack, for every place that pushes it.
+ * The frames that can be pushed are declared in the stack as
+ * {@link com.top_logic.layout.view.tiles.FrameRouteConfig &lt;frame&gt;} entries, nested the way
+ * one frame may follow another; a push names the declaration by its id. The path is part of the
+ * address of the page: the frames on the path whose declarations have a route name themselves in
+ * the URL - one route each, in the order they were drilled down - through the
+ * {@link com.top_logic.layout.view.tiles.TileFrameRouteParticipant} of the mounted frame. Opening
+ * such an address restores the path frame by frame along the nesting of the declarations, and a
+ * URL naming fewer frames than the display shows returns the stack to the view it started in. The
+ * declaration also carries the {@link com.top_logic.layout.view.tiles.TileLabelProvider label}
+ * naming its frames, which is what lets a frame be named once, at the stack, for every place that
+ * pushes it.
  * </p>
  */
 package com.top_logic.layout.view.tiles;

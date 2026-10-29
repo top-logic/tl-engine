@@ -16,21 +16,24 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * {@link TileLabelProvider} that computes the label from current channel values using a TL-Script
  * expression.
  *
  * <p>
- * Resolves all {@link Config#getInputs() inputs} to channels at compute time, reads their current
- * values and passes them as positional arguments to the compiled expression. The expression's
- * result is converted to a {@link ResKey} according to its runtime type - intended for labels
- * derived from business object names.
+ * Resolves all {@link Config#getInputs() inputs} to channels at compute time and evaluates the
+ * expression over their current values, which it sees as variables named after the channels or by
+ * their {@code as} names. The expression's result is converted to a {@link ResKey} according to its
+ * runtime type - intended for labels derived from business object names.
  * </p>
  *
  * @implNote The result is turned into a {@link ResKey} by
@@ -55,16 +58,18 @@ public class ScriptedTileLabel implements TileLabelProvider {
 		 * TL-Script expression returning the label string.
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names.
 		 * </p>
 		 */
 		@Name(EXPR)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 	}
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final QueryExecutor _executor;
 
@@ -74,15 +79,20 @@ public class ScriptedTileLabel implements TileLabelProvider {
 	@CalledByReflection
 	public ScriptedTileLabel(InstantiationContext context, Config config) {
 		_inputs = config.getInputs();
-		_executor = QueryExecutor.compile(config.getExpr());
+		_executor = InputScript.compile(config, Config.EXPR);
 	}
 
 	@Override
 	public ResKey compute(ViewContext context) {
-		Object[] args = _inputs.stream()
-			.map(context::resolveChannel)
-			.map(ViewChannel::get)
-			.toArray();
+		Object[] args = ChannelInputs.arguments(ChannelInputs.resolve(context, _inputs));
 		return TileLabelProvider.toLabel(_executor.execute(args));
+	}
+
+	/**
+	 * The {@link Config#getInputs() inputs} the expression reads.
+	 */
+	@Override
+	public List<ViewChannel> observedChannels(ViewContext context) {
+		return ChannelInputs.resolve(context, _inputs);
 	}
 }

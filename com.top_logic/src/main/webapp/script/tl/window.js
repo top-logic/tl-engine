@@ -87,6 +87,14 @@ function winOnUnloadWindow(windowRef) {
 	// at the time, this method is called.
 	var unloadNotifier = new Thread(
 		function() {
+			if (winAllWindows[name] !== windowInfo) {
+				// The entry has been removed (e.g. by winTakeClosedWindows()) or 
+				// replaced by a re-opened window of the same name. The close has 
+				// already been reported, reporting it again would drop the 
+				// re-opened window on the server.
+				this.stop();
+				return;
+			}
 			if (! windowInfo.lock.acquire("is-closed")) {
 				// Wait.
 				return;
@@ -138,6 +146,13 @@ function winOpenWindow(name, url, width, height, hasLocation, hasStatus, isResiz
 	// it has been closed by user interaction.
 	var observer = new Thread(
 		function() {
+			if (winAllWindows[name] !== windowInfo) {
+				// The entry has been removed (e.g. by winTakeClosedWindows()) or 
+				// replaced by a re-opened window of the same name, see 
+				// winOnUnloadWindow().
+				this.stop();
+				return;
+			}
 			if (! windowInfo.lock.acquire("open-observer")) {
 				// Wait.
 				return;
@@ -282,8 +297,12 @@ function winFocusWindow(name) {
 		return;
 	}
 
-	if (windowInfo.ref.closed) {
-		// The window is currently being closed.
+	if (_winIsClosed(windowInfo)) {
+		// The window has been closed, but the server has not been informed yet 
+		// and therefore requested to focus it instead of opening it again. 
+		// Report the close now, so that the next open request opens the window.
+		delete winAllWindows[name];
+		_winNotifyWindowClose(name);
 		return;
 	}
 	
@@ -291,11 +310,64 @@ function winFocusWindow(name) {
 }
 
 /**
+ * Removes all windows from the list of open windows that have been closed by 
+ * the user and returns their names.
+ * 
+ * <p>
+ * A window closed by the user is otherwise only detected by the observer thread 
+ * started in winOnUnloadWindow(), which reports the close with a delay or not at 
+ * all, if the unload callback of the closed window does not complete. The AJAX 
+ * service calls this function before each sequenced request and reports the 
+ * returned windows as closed within that request (see 
+ * services.ajax.WINDOW_CLOSE_COMMAND), so that the server knows about the closed 
+ * windows before it processes the request, e.g. a command that opens the same 
+ * window again.
+ * </p>
+ * 
+ * <p>
+ * This function does not acquire the lock of the window infos, because a closed 
+ * window cannot call back any more.
+ * </p>
+ * 
+ * @return {Array} The names of the removed windows.
+ */
+function winTakeClosedWindows() {
+	var result = [];
+	for (var name in winAllWindows) {
+		var windowInfo = winAllWindows[name];
+		if (windowInfo == null) {
+			continue;
+		}
+		if (_winIsClosed(windowInfo)) {
+			delete winAllWindows[name];
+			result.push(name);
+		}
+	}
+	return result;
+}
+
+/**
+ * Whether the window of the given window info has been closed.
+ * 
+ * <p>
+ * A window that cannot be accessed is considered closed: In some browsers, 
+ * accessing a closed window throws a security exception.
+ * </p>
+ */
+function _winIsClosed(windowInfo) {
+	try {
+		return windowInfo.ref == null || windowInfo.ref.closed;
+	} catch (ex) {
+		return true;
+	}
+}
+
+/**
  * Remove the window with the given name from the list of open windows and 
  * inform the server about the close operation.
  */
 function _winNotifyWindowClose(name) {
-	services.ajax.execute("onWindowClose", {name: name});
+	services.ajax.execute(services.ajax.WINDOW_CLOSE_COMMAND, {name: name});
 	// services.log.info("Window closed: " + name);
 }
 

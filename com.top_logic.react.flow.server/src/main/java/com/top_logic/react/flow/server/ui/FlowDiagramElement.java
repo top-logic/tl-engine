@@ -5,12 +5,9 @@
  */
 package com.top_logic.react.flow.server.ui;
 
-import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
@@ -24,36 +21,44 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.layout.view.channel.ViewScripts;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.react.flow.callback.DiagramHandler;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.server.control.DiagramSelectionBinding;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
-import com.top_logic.util.model.ModelService;
+import com.top_logic.table.SelectionMode;
 
 /**
  * {@link UIElement} for embedding a flow diagram in the React View framework.
  *
  * <p>
  * The diagram is created by evaluating a TL-Script expression ({@link Config#getCreateChart()})
- * with the current values of the configured {@link Config#getInputs() input channels} as positional
- * arguments. Diagram handlers are injected as implicit variables into the script.
+ * that sees the current values of the configured {@link Config#getInputs() input channels} and the
+ * configured {@link Config#getHandlers() handlers} as variables.
  * </p>
  */
 @InApp
@@ -63,6 +68,7 @@ public class FlowDiagramElement implements UIElement {
 	 * Configuration for {@link FlowDiagramElement}.
 	 */
 	@TagName("flow-diagram")
+	@TypeIcon("css:bi bi-bezier2")
 	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
@@ -72,39 +78,33 @@ public class FlowDiagramElement implements UIElement {
 		/** Configuration name for {@link #getCreateChart()}. */
 		String CREATE_CHART = "createChart";
 
-		/** Configuration name for {@link #getObserved()}. */
-		String OBSERVED = "observed";
-
 		/** Configuration name for {@link #getHandlers()}. */
 		String HANDLERS = "handlers";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
+
 		/**
 		 * TL-Script expression that creates a {@link Diagram}.
 		 *
 		 * <p>
-		 * Takes the input channel values as positional arguments. Handler variables are available
-		 * as implicitly defined variables.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, followed by the {@link #getHandlers()
+		 * handlers}, each as the variable named like the handler. An input named like a handler is
+		 * a configuration error and is renamed with {@code as}.
 		 * </p>
 		 */
 		@Name(CREATE_CHART)
 		@NonNullable
 		@FormattedDefault("flowChart()")
+		@ScriptContextVariables(ScriptVariables.class)
 		Expr getCreateChart();
-
-		/**
-		 * Optional TL-Script function for determining the business objects to observe for a given
-		 * diagram element's user object.
-		 *
-		 * <p>
-		 * The function receives a diagram element as first argument and the component's model as
-		 * second argument.
-		 * </p>
-		 */
-		@Name(OBSERVED)
-		Expr getObserved();
 
 		/**
 		 * Specification of interactions with the diagram contents.
@@ -142,6 +142,46 @@ public class FlowDiagramElement implements UIElement {
 		ChannelRef getSelection();
 
 		/**
+		 * Whether the user may select one diagram element at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and
+		 * a click on a selected element with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} adds an element to the selection by a click with
+		 * {@code Ctrl} or {@code Shift}, and takes a selected one out again by a click with
+		 * {@code Ctrl}. Dragging with {@code Ctrl} held draws a rectangle and adds every element
+		 * lying completely inside it to the selection. A click or drag with {@code Ctrl} keeps the
+		 * objects of the {@link #getSelection() selection channel} no element of the diagram
+		 * carries, a click without a modifier replaces the whole selection.
+		 * </p>
+		 *
+		 * <p>
+		 * The mode applies to every diagram the {@link #getCreateChart() create chart script}
+		 * builds, the script need not set it.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
+
+		/**
+		 * Types whose object changes (create / update / delete) redraw the diagram, in addition to
+		 * the objects on the {@link #getInputs() input} channels, which are always observed.
+		 *
+		 * <p>
+		 * Configure this for a diagram that draws more than its input objects - the parts of a
+		 * product, their names and the connections between them: a part created, edited or deleted
+		 * then shows in the diagram right away.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
+
+		/**
 		 * Common super-interface for configurations of a {@link DiagramHandler}.
 		 */
 		@Abstract
@@ -166,9 +206,7 @@ public class FlowDiagramElement implements UIElement {
 
 	private final QueryExecutor _createChart;
 
-	private final QueryExecutor _getObserved;
-
-	private final List<DiagramHandler> _handlers;
+	private final Object[] _handlers;
 
 	/**
 	 * Creates a {@link FlowDiagramElement} from configuration.
@@ -184,19 +222,28 @@ public class FlowDiagramElement implements UIElement {
 
 		Map<String, DiagramHandler> handlerMap =
 			TypedConfiguration.getInstanceMap(context, config.getHandlers());
+		List<String> handlerNames = handlerNames(config);
+		_handlers = handlerNames.stream().map(handlerMap::get).toArray();
 
-		SearchExpression createChart =
-			SearchBuilder.toSearchExpression(ModelService.getApplicationModel(), config.getCreateChart());
+		InputScript.checkInputNames(config.getInputs(), handlerNames);
+		_createChart = ViewScripts.compile(config.getCreateChart(), variables(config));
+	}
 
-		// Inject handler variables as lambda wrappers.
-		_handlers = new ArrayList<>();
-		for (Entry<String, DiagramHandler> handler : handlerMap.entrySet()) {
-			createChart = lambda(handler.getKey(), createChart);
-			_handlers.add(handler.getValue());
-		}
+	/**
+	 * The variables the {@link Config#getCreateChart() create chart script} of the given
+	 * configuration sees.
+	 *
+	 * @return The names of the {@link Config#getInputs() inputs}, followed by the names of the
+	 *         {@link Config#getHandlers() handlers}.
+	 */
+	public static List<String> variables(Config config) {
+		List<String> result = new ArrayList<>(InputRef.names(config.getInputs()));
+		result.addAll(handlerNames(config));
+		return result;
+	}
 
-		_createChart = QueryExecutor.compile(createChart);
-		_getObserved = QueryExecutor.compileOptional(config.getObserved());
+	private static List<String> handlerNames(Config config) {
+		return new ArrayList<>(config.getHandlers().keySet());
 	}
 
 	@Override
@@ -212,13 +259,18 @@ public class FlowDiagramElement implements UIElement {
 		control.setCssClass(_config.getCssClass());
 
 		// 4. Listen for input channel changes and rebuild diagram.
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> {
-			Diagram newDiagram = buildDiagram(inputChannels);
-			control.setModel(newDiagram);
-		};
+		Runnable rebuild = () -> control.setModel(buildDiagram(inputChannels));
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> rebuild.run();
 		for (ViewChannel channel : inputChannels) {
 			channel.addListener(listener);
 		}
+
+		// Rebuild as well when the objects on the input channels or objects of the observed types
+		// change.
+		ChannelObjectObserver observer = new ChannelObjectObserver(inputChannels,
+			ObservedTypes.resolve(_config.getObservedTypes()), rebuild);
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 
 		// 5. Wire selection channel if configured.
 		ChannelRef selectionRef = _config.getSelection();
@@ -238,14 +290,13 @@ public class FlowDiagramElement implements UIElement {
 	}
 
 	private Diagram buildDiagram(List<ViewChannel> inputChannels) {
-		Object[] channelValues = ChannelInputs.arguments(inputChannels);
+		Diagram diagram = createDiagram(inputChannels);
+		diagram.setMultiSelect(_config.getSelectionMode() == SelectionMode.MULTI);
+		return diagram;
+	}
 
-		Args args = Args.some(channelValues);
-		for (DiagramHandler handler : _handlers) {
-			args = Args.cons(handler, args);
-		}
-
-		Object result = _createChart.executeWith(args);
+	private Diagram createDiagram(List<ViewChannel> inputChannels) {
+		Object result = _createChart.execute(ChannelInputs.arguments(inputChannels, _handlers));
 		if (result instanceof Diagram) {
 			return (Diagram) result;
 		}
@@ -253,6 +304,18 @@ public class FlowDiagramElement implements UIElement {
 			return Diagram.create().setRoot((Box) result);
 		}
 		return Diagram.create();
+	}
+
+	/**
+	 * {@link ScriptContextVariablesProvider} offering the {@link FlowDiagramElement#variables(Config)
+	 * variables} of the {@link Config#getCreateChart() create chart script}.
+	 */
+	public static class ScriptVariables implements ScriptContextVariablesProvider {
+
+		@Override
+		public List<String> getVariables(ValueModel valueModel) {
+			return variables((Config) valueModel.getModel());
+		}
 	}
 
 }

@@ -64,5 +64,31 @@
 				/>
 			</attributes>
 		</metaobject>
+
+		<metaobject
+			object_name="TLSecPathNode"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="name"
+					att_type="String"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
+
+		<metaobject
+			object_name="TLSecPathHome"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="title"
+					att_type="String"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
 	</metaobjects>
 </objectlist>

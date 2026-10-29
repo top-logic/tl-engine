@@ -15,7 +15,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -31,6 +33,7 @@ import com.top_logic.basic.util.ResKey;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@ServiceCategory.Of(AccessControlCategory.class)
 public class UploadSecurityService extends ConfiguredManagedClass<UploadSecurityService.Config> {
 
 	/**

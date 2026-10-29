@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -66,7 +67,7 @@ public class ExtendedWebFolderAwareHelper {
 			
 			if (anAttNameExcludes == null || !anAttNameExcludes.contains(theAttrName)) {
 		
-				boolean hasAccess = TLContext.isAdmin();
+				boolean hasAccess = ThreadContext.isAdmin();
 				if (!hasAccess) {
 					if (AttributeOperations.isClassified(theFolderAttr)) {
 						hasAccess = AttributeOperations.getAccess(theFolderAttr, AccessManager.getInstance().getRoles(TLContext.getContext().getCurrentPersonWrapper(), 

@@ -17,33 +17,27 @@ import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
-import com.top_logic.knowledge.service.I18NConstants;
-import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
 import com.top_logic.layout.react.control.calendar.DefaultCalendarEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.element.CalendarElement;
 import com.top_logic.layout.view.element.ExpressionCalendarModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.job.ChunkedJobBody;
 import com.top_logic.layout.view.job.JobMonitor;
 import com.top_logic.layout.view.job.JobPhase;
+import com.top_logic.layout.view.list.ElementAsConfig;
 import com.top_logic.layout.view.list.ObjectListScope;
-import com.top_logic.layout.view.security.SecurityScope;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.util.Resources;
 
 /**
- * Tests the commit messages of the changes the calendar, the object list, the security scope, the
- * form and the background job of the view layer perform.
+ * Tests the commit messages of the changes the calendar, the object list, the form and the
+ * background job of the view layer perform.
  *
  * <p>
  * Each test asserts the message stored with the revision the change is committed in.
@@ -51,7 +45,6 @@ import com.top_logic.util.Resources;
  *
  * @see ExpressionCalendarModel
  * @see ObjectListScope
- * @see SecurityScope
  * @see FormControl
  * @see ChunkedJobBody
  */
@@ -60,19 +53,35 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	/** The TL-Script literal of the name attribute of a project. */
 	private static final String RENAME = "`" + MODULE + ":" + PROJECT + "#" + NAME + "`";
 
+	/** The variable holding the calendar entry. */
+	private static final String ENTRY = CalendarElement.Config.DEFAULT_ENTRY_AS;
+
+	/** The variable holding the start of a calendar entry. */
+	private static final String START = CalendarElement.Config.START_VARIABLE;
+
+	/** The variable holding the end of a calendar entry. */
+	private static final String END = CalendarElement.Config.END_VARIABLE;
+
+	/** The variable telling whether a created calendar entry spans whole days. */
+	private static final String ALL_DAY = CalendarElement.Config.ALL_DAY_VARIABLE;
+
+	/** The variable holding the title of a created calendar entry. */
+	private static final String TITLE = CalendarElement.Config.TITLE_VARIABLE;
+
+	/** The variable holding the element of a list. */
+	private static final String ELEMENT = ElementAsConfig.DEFAULT_ELEMENT_AS;
+
 	/** The label of the project before a change, which the commit message names. */
 	private static final String ORIGINAL = "project";
-
-	/** Security ID of the scope the tests grant and revoke on. */
-	private static final ComponentName SCOPE_ID = ComponentName.newName("test.TestElementCommitMessages");
-
-	/** Label of the scope the tests grant and revoke on. */
-	private static final String SCOPE_LABEL = "Test scope";
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	/**
@@ -80,7 +89,7 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	 */
 	public void testCalendarMove() throws Exception {
 		ExpressionCalendarModel calendar =
-			calendar(script("o -> s -> e -> $o.set(" + RENAME + ", 'moved')"), null, null);
+			calendar(script("$entry.set(" + RENAME + ", 'moved')", ENTRY, START, END), null, null);
 
 		calendar.moveEvent(event(_project), new Date(), new Date());
 
@@ -93,7 +102,7 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	 */
 	public void testCalendarResize() throws Exception {
 		ExpressionCalendarModel calendar =
-			calendar(null, script("o -> e -> $o.set(" + RENAME + ", 'resized')"), null);
+			calendar(null, script("$entry.set(" + RENAME + ", 'resized')", ENTRY, END), null);
 
 		calendar.resizeEvent(event(_project), new Date());
 
@@ -107,8 +116,8 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	public void testCalendarCreate() throws Exception {
 		String category = "`" + MODULE + ":" + CATEGORY + "`";
 		ExpressionCalendarModel calendar = calendar(null, null,
-			script("s -> e -> a -> t -> { c = new(" + category + "); $c.set(`" + MODULE + ":" + CATEGORY + "#"
-				+ NAME + "`, $t + '!'); $c; }"));
+			script("{ c = new(" + category + "); $c.set(`" + MODULE + ":" + CATEGORY + "#"
+				+ NAME + "`, $title + '!'); $c; }", START, END, ALL_DAY, TITLE));
 
 		CalendarEvent created = calendar.createEvent(new Date(), new Date(), false, "entry");
 		try {
@@ -122,7 +131,7 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	 * Adding an element to a list names the element.
 	 */
 	public void testListAdd() throws Exception {
-		ObjectListScope list = list(script("x -> $x.set(" + RENAME + ", 'added')"));
+		ObjectListScope list = list(script("$element.set(" + RENAME + ", 'added')", ELEMENT));
 
 		list.linkElement(_project);
 
@@ -133,42 +142,11 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	 * Removing an element from a list names the element.
 	 */
 	public void testListRemove() throws Exception {
-		ObjectListScope list = list(script("x -> $x.set(" + RENAME + ", 'removed')"));
+		ObjectListScope list = list(script("$element.set(" + RENAME + ", 'removed')", ELEMENT));
 
 		list.removeElement(_project);
 
 		assertLastMessage("Removed list element: " + ORIGINAL);
-	}
-
-	/**
-	 * Granting and revoking a command group names the group, the role and the scope.
-	 */
-	public void testSecurityGrant() throws Exception {
-		PersBoundComp persBoundComp;
-		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
-			persBoundComp = PersBoundComp.createInstance(kb(), SCOPE_ID);
-			tx.commit();
-		}
-		try {
-			SecurityScope scope = new SecurityScope(SCOPE_ID, ResKey.text(SCOPE_LABEL), List.of());
-			BoundCommandGroup group = SimpleBoundCommandGroup.READ;
-			BoundedRole role = BoundedRole.getRoleByName(ROLE_RESPONSIBLE);
-			String groupLabel = MetaLabelProvider.INSTANCE.getLabel(group);
-			String roleLabel = MetaLabelProvider.INSTANCE.getLabel(role);
-
-			scope.setGranted(group, role, true);
-			assertTrue(scope.isGranted(group, role));
-			assertLastMessage(
-				"Granted command group \"" + groupLabel + "\" to role \"" + roleLabel + "\" on \"" + SCOPE_LABEL + "\".");
-
-			scope.setGranted(group, role, false);
-			assertFalse(scope.isGranted(group, role));
-			assertLastMessage(
-				"Revoked command group \"" + groupLabel + "\" from role \"" + roleLabel + "\" on \"" + SCOPE_LABEL
-					+ "\".");
-		} finally {
-			delete(persBoundComp);
-		}
 	}
 
 	/**
@@ -298,7 +276,7 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 			QueryExecutor onCreate) {
 		ExpressionCalendarModel.EventExprs exprs =
 			new ExpressionCalendarModel.EventExprs(null, null, null, null, null, null, null, null, null);
-		return new ExpressionCalendarModel(List.of(), exprs, onMove, onResize, onCreate);
+		return new ExpressionCalendarModel(List.of(), List.of(), exprs, onMove, onResize, onCreate);
 	}
 
 	private static CalendarEvent event(Object businessObject) {
@@ -309,8 +287,8 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 		return new ObjectListScope(List.of(), function, function);
 	}
 
-	private static QueryExecutor script(String function) throws Exception {
-		return QueryExecutor.compile(parse(function));
+	private static QueryExecutor script(String function, String... variables) throws Exception {
+		return QueryExecutor.compile(parse(function), List.of(variables));
 	}
 
 	private static void assertLastMessage(String expected) {

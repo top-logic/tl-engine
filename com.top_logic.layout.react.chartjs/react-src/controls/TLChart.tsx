@@ -1,5 +1,5 @@
 // react-src/controls/TLChart.tsx
-import { React, rootClassName } from 'tl-react-bridge';
+import { React, rootClassName, useI18N, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
   Chart as ChartJS,
@@ -14,13 +14,17 @@ import ChartTooltip from './chart/ChartTooltip';
 // Register all chart types + zoom plugin.
 ChartJS.register(...registerables, zoomPlugin);
 
+const I18N_KEYS = {
+  'js.chart.label': 'Chart',
+  'js.chart.resetZoom': 'Reset zoom',
+};
+
 /**
  * React component that renders a Chart.js chart driven by server-side state.
  *
  * State from server:
  *  - chartConfig: any        - Clean Chart.js config (type, data, options)
  *  - interactions: any       - Interaction descriptor per dataset
- *  - themeColors: any        - Theme palette and color defaults
  *  - zoomEnabled: boolean    - Whether zoom/pan is enabled
  *  - error: string | null    - Error message to display instead of chart
  *  - noDataMessage: string | null - Message when no datasets
@@ -31,14 +35,16 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const chartConfig = state.chartConfig as any;
   const interactions = state.interactions as any;
-  const themeColors = state.themeColors as any;
   const zoomEnabled = state.zoomEnabled as boolean;
   const error = state.error as string | null;
   const noDataMessage = state.noDataMessage as string | null;
   const tooltipContent = state.tooltipContent as any;
+  const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
-  // Merge theme defaults.
-  const themedConfig = useThemeDefaults(chartConfig, themeColors);
+  // Merge theme defaults: the categories, the separator and the secondary text of the theme, read in the browser; the
+  // scales are painted by the plugin the themed config carries.
+  const themedConfig = useThemeDefaults(chartConfig);
 
   // Build callbacks from interaction descriptor.
   const { callbacks, hasAnyTooltip, onTooltip, onTooltipHide, tooltipPos } = useChartCallbacks(interactions);
@@ -103,8 +109,8 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   // Error state.
   if (error) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlReactChart', 'tlReactChart--error')}>
-        <div className="tlReactChart__error">{error}</div>
+      <div id={controlId} className={rootClassName(state, 'tl-chart')}>
+        <div className="tl-status tl-type-body" role="alert">{error}</div>
       </div>
     );
   }
@@ -112,32 +118,37 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   // No data.
   if (!themedConfig?.data?.datasets?.length && noDataMessage) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlReactChart', 'tlReactChart--noData')}>
-        <div className="tlReactChart__noData">{noDataMessage}</div>
+      <div id={controlId} className={rootClassName(state, 'tl-chart')}>
+        <div className="tl-status tl-type-body" role="status">{noDataMessage}</div>
       </div>
     );
   }
 
   // No config yet.
   if (!themedConfig) {
-    return <div id={controlId} className={rootClassName(state, 'tlReactChart')} />;
+    return <div id={controlId} className={rootClassName(state, 'tl-chart')} />;
   }
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlReactChart')} aria-label={`${themedConfig.type} chart`}>
+    <div id={controlId} className={rootClassName(state, 'tl-chart')}>
       <Chart
         ref={chartRef}
         type={themedConfig.type}
         data={themedConfig.data}
         options={options}
+        plugins={themedConfig.plugins}
+        role="img"
+        aria-label={i18n['js.chart.label']}
       />
       {zoomEnabled && (
-        <button
-          className="tlReactChart__zoomReset"
-          onClick={() => chartRef.current?.resetZoom()}
-        >
-          Reset Zoom
-        </button>
+        <div className="tl-chart__zoom-reset">
+          <Button
+            label={i18n['js.chart.resetZoom']}
+            display="label-only"
+            appearance="secondary"
+            onClick={() => chartRef.current?.resetZoom()}
+          />
+        </div>
       )}
       <ChartTooltip content={tooltipContent} position={tooltipPos} />
     </div>

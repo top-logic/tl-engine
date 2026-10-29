@@ -28,7 +28,6 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -44,7 +43,6 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.operations.Count;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.search.ui.TLScriptCodeEditorControl;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 
 /**
@@ -592,7 +590,6 @@ import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 @Format(ExprFormat.class)
 @ItemDisplay(ItemDisplayType.VALUE)
 @PropertyEditor(TLScriptPropertyEditor.class)
-@ControlProvider(TLScriptCodeEditorControl.PlainCP.class)
 @CssClass("tlscript")
 @Label("Expression")
 @RenderWholeLine
@@ -1217,6 +1214,36 @@ public interface Expr extends ConfigurationItem {
 			Define result = TypedConfiguration.newConfigItem(Define.class);
 			result.setName(name);
 			result.setExpr(expr);
+			return result;
+		}
+
+		/**
+		 * Wraps the given expression in one {@link Define} per variable name, so that the given
+		 * names are implicitly defined variables in the expression.
+		 *
+		 * <p>
+		 * The result is a function taking the values of the variables as leading positional
+		 * arguments in the order of the given names: the first argument is bound to the first
+		 * name, the second to the second, and so on. The expression refers to the variables by
+		 * name, so the order in which it uses them does not matter, and it need not use all of
+		 * them. Arguments left over after the variable values are passed on to the expression
+		 * itself (relevant, if the expression is a function).
+		 * </p>
+		 *
+		 * @param names
+		 *        The names of the variables in the order of their values in the argument list.
+		 *        An empty list leaves the expression unchanged.
+		 * @param expr
+		 *        The expression using the variables.
+		 * @return The expression with the variables bound to the leading arguments.
+		 */
+		static Expr withVariables(List<String> names, Expr expr) {
+			// The outermost lambda binds the first argument, therefore the lambdas are constructed
+			// in reverse order.
+			Expr result = expr;
+			for (int n = names.size() - 1; n >= 0; n--) {
+				result = create(names.get(n), result);
+			}
 			return result;
 		}
 

@@ -5,14 +5,15 @@
  */
 package com.top_logic.service.openapi.server.authentication.http.basic;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 
@@ -33,16 +34,21 @@ public abstract class BasicAuthenticator implements Authenticator {
 		if (!AuthorizationUtil.isBasicAuthentiation(authenticationHeader)) {
 			throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_NO_BASIC_AUTH);
 		}
-		LoginCredentials sentCredentials = AuthorizationUtil.retrieveBasicAuthCredentials(authenticationHeader,
-			BasicAuthenticator::createCredentials);
-		return authenticateUser(sentCredentials);
+		Entry<String, char[]> sentCredentials =
+			AuthorizationUtil.retrieveBasicAuthCredentials(authenticationHeader, Map::entry);
+		return authenticateUser(sentCredentials.getKey(), sentCredentials.getValue());
 	}
 
 	/**
 	 * Checks authentication and (optionally) retrieves the system account to use for processing
 	 * requests.
+	 *
+	 * @param user
+	 *        The user name sent in the request.
+	 * @param password
+	 *        The password sent in the request.
 	 */
-	protected abstract Person authenticateUser(LoginCredentials sentCredentials) throws AuthenticationFailure;
+	protected abstract Person authenticateUser(String user, char[] password) throws AuthenticationFailure;
 
 	/**
 	 * Creates an {@link AuthenticationFailure} for a failed authentication that requests the
@@ -57,15 +63,4 @@ public abstract class BasicAuthenticator implements Authenticator {
 		return authenticationFailure;
 	}
 
-	/**
-	 * Creates {@link LoginCredentials} for the given user name and password.
-	 */
-	public static LoginCredentials createCredentials(String user, char[] pwd) {
-		LoginCredentials result = TypedConfiguration.newConfigItem(LoginCredentials.class);
-		result.setUser(user);
-		result.setPassword(new String(pwd));
-		return result;
-	}
-
 }
-

@@ -32,11 +32,25 @@ import com.top_logic.util.TLContextManager;
  *
  * <p>
  * The servlet validates the session, sets SSE headers, starts an asynchronous context, and
- * registers the connection with the window's {@link SSEUpdateQueue} obtained from the
- * {@link ReactWindowRegistry}.
+ * registers the connection with the window's {@link SSEUpdateQueue}, see
+ * {@link ReactWindowRegistry#connectQueue(String)}.
+ * </p>
+ *
+ * <p>
+ * A connection never creates a window: the window is created by rendering its page. A window the
+ * registry does not know - it was torn down after its client went away, or its session was replaced
+ * - is answered as gone ({@link HttpServletResponse#SC_GONE}). The client then switches to polling,
+ * whose first poll is answered as gone as well, upon which the client reloads the page.
  * </p>
  */
 public class SSEServlet extends HttpServlet {
+
+	/**
+	 * The comment that opens a stream, padded to 2 KB: a proxy that forwards a response only once
+	 * it holds a few kilobytes releases the start of the stream at once. A proxy that holds back
+	 * more than that is answered by polling, see {@link PollServlet}.
+	 */
+	private static final String CONNECTED_COMMENT = ": connected" + " ".repeat(2048) + "\n\n";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -52,6 +66,13 @@ public class SSEServlet extends HttpServlet {
 			return;
 		}
 
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		if (registry.getQueue(windowName) == null) {
+			Logger.info("SSEServlet: window '" + windowName + "' is unknown, answered as gone.", SSEServlet.class);
+			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
+			return;
+		}
+
 		response.setContentType("text/event-stream");
 		response.setCharacterEncoding("UTF-8");
 		response.setHeader("Cache-Control", "no-cache");
@@ -59,13 +80,6 @@ public class SSEServlet extends HttpServlet {
 
 		AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(0);
-
-		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
-		// Establishing the connection restarts the session's inactivity timeout just as any other
-		// request does, so a control counting down to the end of the session has to hear about it.
-		// Nothing further arrives through this connection: the heartbeats travel down the one
-		// request opened here and never touch the session again.
-		registry.noteActivity(session);
 		Logger.info("SSEServlet: windowName='" + windowName + "', registry@" + System.identityHashCode(registry),
 			SSEServlet.class);
 		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
@@ -74,8 +88,16 @@ public class SSEServlet extends HttpServlet {
 		// does, so it is an interaction. It ends before this request hands its thread back: the
 		// connection outlives the request, the interaction does not.
 		SSEUpdateQueue queue;
+		boolean[] accepted = { false };
 		try (Interaction interaction = registry.beginInteraction()) {
-			queue = registry.getOrCreateQueue(windowName);
+			queue = registry.connectQueue(windowName);
+			if (queue == null) {
+				// Torn down since it was looked up above.
+				Logger.info("SSEServlet: window '" + windowName + "' was torn down, stream closed.",
+					SSEServlet.class);
+				asyncContext.complete();
+				return;
+			}
 			Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
 				SSEServlet.class);
 
@@ -87,40 +109,81 @@ public class SSEServlet extends HttpServlet {
 			TLContextManager.inInteraction(sessionContext, getServletContext(), request, response, () -> {
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 				ReactWindowReplay.installSubSession(displayContext, windowName);
-				queue.setConnection(asyncContext);
+				accepted[0] = queue.setConnection(asyncContext);
 			});
+			if (!accepted[0]) {
+				// The queue closed the stream: its window is torn down.
+				return;
+			}
 			queue.setWindowContext(windowName, sessionContext, registry);
 		}
 
-		asyncContext.addListener(new AsyncListener() {
-			@Override
-			public void onComplete(AsyncEvent event) {
-				queue.clearConnection(asyncContext);
-			}
-
-			@Override
-			public void onTimeout(AsyncEvent event) {
-				queue.clearConnection(asyncContext);
-			}
-
-			@Override
-			public void onError(AsyncEvent event) {
-				queue.clearConnection(asyncContext);
-			}
-
-			@Override
-			public void onStartAsync(AsyncEvent event) {
-				// Nothing to do.
-			}
-		});
+		asyncContext.addListener(new StreamEndListener(queue, asyncContext));
 
 		try {
 			PrintWriter writer = response.getWriter();
-			writer.write(": connected\n\n");
+			writer.write(CONNECTED_COMMENT);
 			writer.flush();
 		} catch (IOException ex) {
 			Logger.warn("Failed to write SSE connection comment.", ex, SSEServlet.class);
 			queue.clearConnection(asyncContext);
+		}
+	}
+
+	/**
+	 * Clears the connection of a window's {@link SSEUpdateQueue} when its stream ends.
+	 *
+	 * <p>
+	 * The container may keep the listener with an idle connection after the stream ended; it must
+	 * not keep the window with it. The listener therefore lets go of the queue as soon as the stream
+	 * has ended.
+	 * </p>
+	 */
+	static final class StreamEndListener implements AsyncListener {
+
+		private volatile SSEUpdateQueue _queue;
+
+		private final AsyncContext _asyncContext;
+
+		/**
+		 * Creates a {@link StreamEndListener}.
+		 *
+		 * @param queue
+		 *        The queue whose connection is the stream of the given context.
+		 * @param asyncContext
+		 *        The context of the stream.
+		 */
+		StreamEndListener(SSEUpdateQueue queue, AsyncContext asyncContext) {
+			_queue = queue;
+			_asyncContext = asyncContext;
+		}
+
+		@Override
+		public void onComplete(AsyncEvent event) {
+			streamEnded();
+		}
+
+		@Override
+		public void onTimeout(AsyncEvent event) {
+			streamEnded();
+		}
+
+		@Override
+		public void onError(AsyncEvent event) {
+			streamEnded();
+		}
+
+		@Override
+		public void onStartAsync(AsyncEvent event) {
+			// Nothing to do.
+		}
+
+		private void streamEnded() {
+			SSEUpdateQueue queue = _queue;
+			if (queue != null) {
+				queue.clearConnection(_asyncContext);
+				_queue = null;
+			}
 		}
 	}
 

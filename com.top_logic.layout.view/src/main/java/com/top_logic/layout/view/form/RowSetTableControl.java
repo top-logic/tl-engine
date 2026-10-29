@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -27,6 +28,7 @@ import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -72,6 +74,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.Resources;
 
 /**
@@ -97,9 +100,10 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A {@link #setFramed framed} table shows the bound attribute's label as panel title and offers row
- * creation as an Add button in its own toolbar; a frameless table shows neither, and its creator
- * offers row creation through the enclosing command scope instead. Optional wiring - column
+ * A {@link #setFramed framed} table shows the bound attribute's label as panel title, offers row
+ * creation as an Add button in its own toolbar and is sized by its rows; a frameless table shows
+ * neither, fills the height its container offers, and its creator offers row creation through the
+ * enclosing command scope instead. Optional wiring - column
  * personalization, a two-way selection channel, and automatic row refresh on model or input changes
  * - is configured through setters before {@link #init()}. While an edit session is running, the row
  * set is frozen (no automatic re-query), so edited rows stay in place; after save or cancel the rows
@@ -115,7 +119,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	static final String COLUMN_DETAIL = "_detail";
 
 	/** Column name for the row-removal action column. */
-	static final String COLUMN_DELETE = "_delete";
+	public static final String COLUMN_DELETE = "_delete";
+
+	/** Display width in pixels of the detail and the row-removal action columns. */
+	public static final int ACTION_COLUMN_WIDTH = 48;
 
 	/** Command name for {@link #handleAddRow()}. */
 	private static final String CMD_ADD_ROW = "addRow";
@@ -187,7 +194,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private List<ViewChannel> _inputChannels = List.of();
 
+	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	private List<ViewChannel> _rowIndependentInputs = List.of();
+
+	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	private List<ViewChannel> _cellIndependentInputs = List.of();
+
 	private TableViewControl<TLObject> _tableControl;
+
+	/**
+	 * The setups of the data columns currently displayed.
+	 *
+	 * @see #getExportRenderers()
+	 */
+	private List<ColumnSetup> _dataSetups = List.of();
 
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
@@ -270,6 +290,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		putState(ERROR_ICON,
 			ReactImages.encode(_context, com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR));
+
+		updateFill();
 	}
 
 	@Override
@@ -320,13 +342,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * creator offers row creation through the enclosing command scope.
 	 *
 	 * <p>
-	 * A frameless table is a region of its own rather than a field among others: it fills the
-	 * height its container offers, so the table bounds its scroll viewport and scrolls internally.
+	 * A framed table is a field among others: its panel is sized by its content and ends the fill
+	 * chain, so the table shows all its rows and the enclosing form or dialog scrolls. A frameless
+	 * table is a region of its own: it fills the height its container offers, so the table bounds
+	 * its scroll viewport and scrolls internally.
 	 * </p>
 	 */
 	public void setFramed(boolean framed) {
 		_framed = framed;
-		putState(ReactPanelControl.FILL, Boolean.valueOf(!framed));
+		updateFill();
+	}
+
+	/**
+	 * Pushes the panel's {@link ReactPanelControl#FILL} state for the current {@link #setFramed
+	 * framed} setting: a framed table is content-sized, a frameless one fills.
+	 */
+	private void updateFill() {
+		putState(ReactPanelControl.FILL, Boolean.valueOf(!_framed));
 	}
 
 	/**
@@ -455,18 +487,38 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Enables automatic row refresh outside edit sessions: the row function is re-evaluated when an
 	 * observed object or input channel changes.
 	 *
+	 * <p>
+	 * An input change that leaves the rows as they are - a change of a row-independent input, or
+	 * of a cell-independent input yielding the same rows - keeps the cells: only the criteria of
+	 * the declared filters are resolved again, and the rows are pushed again for their
+	 * {@link #setRowCssClass(Function) CSS class}, where one is set. A change of any other input
+	 * builds the cells again.
+	 * </p>
+	 *
 	 * @param rowFunction
-	 *        Computes the row objects from the input channel values.
+	 *        Computes the row objects from the values of all input channels, in their order.
 	 * @param observedTypes
 	 *        Types whose object changes trigger a refresh.
 	 * @param inputChannels
-	 *        Channels whose changes trigger a refresh.
+	 *        Channels whose values the row function is called with.
+	 * @param rowIndependentInputs
+	 *        Those of the input channels whose changes cannot change the rows, e.g. the table's
+	 *        own selection channel; their changes do not re-evaluate the row function.
+	 * @param cellIndependentInputs
+	 *        Those of the input channels no cell reads; a change of one of them that yields the
+	 *        same rows keeps the cells.
+	 *
+	 * @see RowSourceObserver#withRowIndependentInputs(Collection)
+	 * @see RowSourceObserver#onInputsChanged(Collection, Runnable)
 	 */
 	public void setRowRefresh(Function<Object[], Collection<?>> rowFunction,
-			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels) {
+			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels,
+			List<ViewChannel> rowIndependentInputs, List<ViewChannel> cellIndependentInputs) {
 		_rowFunction = rowFunction;
 		_observedTypes = observedTypes;
 		_inputChannels = inputChannels;
+		_rowIndependentInputs = rowIndependentInputs;
+		_cellIndependentInputs = cellIndependentInputs;
 	}
 
 	/**
@@ -519,6 +571,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * The renderers writing the values of the data columns into an Excel export, by column name; a
+	 * column without an entry is written by the default renderer.
+	 *
+	 * <p>
+	 * Follows the columns the table is currently built with, which differ between view and edit
+	 * mode.
+	 * </p>
+	 */
+	public Map<String, ExcelCellRenderer> getExportRenderers() {
+		return ColumnDeclarations.exportRenderers(_dataSetups);
+	}
+
+	/**
 	 * Sets the function computing the CSS class of a data row from its row object.
 	 *
 	 * <p>
@@ -541,6 +606,26 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public TableViewControl<TLObject> getTableControl() {
 		return _tableControl;
+	}
+
+	/**
+	 * Activates the row displaying the given object in the current inner table, as a double-click
+	 * on that row does: the row becomes the selection, then the
+	 * {@link #setActivationHandler(TableViewControl.ActivationHandler) activation handler} runs.
+	 *
+	 * @param row
+	 *        The object of the row to activate.
+	 * @return The outcome of the activation, {@link HandlerResult#DEFAULT_RESULT} before
+	 *         {@link #init()} or when no row displays the object.
+	 *
+	 * @see TableViewControl#activate(Object)
+	 */
+	public HandlerResult activate(TLObject row) {
+		TableViewControl<TLObject> table = _tableControl;
+		if (table == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return table.activate(row);
 	}
 
 	/**
@@ -599,7 +684,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DETAIL, row -> row)
 				.label(ResKey.text(""))
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
-				.width(48)
+				.width(ACTION_COLUMN_WIDTH)
 				.frozenEligible(false)
 				// Holds a per-row button, not data: nothing to offer in the column selection.
 				.selectable(false)
@@ -609,17 +694,17 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
 		columns.addAll(createDataColumns(editMode, setups));
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
+		_dataSetups = setups;
 
-		// Removal action column (edit mode only, when the binding supports removal, last, no header
-		// label - see detail column).
+		// Removal action column (edit mode only, when the binding supports removal, no header label -
+		// see detail column). Like every per-row command column it is pinned to the end of the
+		// table: it keeps its width, and the last data column takes the room the columns leave.
 		if (editMode && binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
 				.label(ResKey.text(""))
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
-				.width(48)
-				.frozenEligible(false)
-				// Holds a per-row button, not data: nothing to offer in the column selection.
-				.selectable(false)
+				.width(ACTION_COLUMN_WIDTH)
+				.pinnedEnd(true)
 				.build());
 		}
 
@@ -687,14 +772,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				() -> {
 					// The criteria a table declares can depend on the inputs it is refreshed for, so
 					// they are resolved again for their new values.
-					if (_declaredFilters != null) {
-						view.setDeclaredFilters(_declaredFilters.apply(columns));
-					}
+					refreshDeclaredFilters(view, columns);
 					table.refreshData();
 					if (_selectionBinding != null) {
 						_selectionBinding.rowsRefreshed();
 					}
-				});
+				})
+					.withRowIndependentInputs(_rowIndependentInputs)
+					.onInputsChanged(_cellIndependentInputs, () -> {
+						// The rows and their cells stay; what is computed from the inputs apart
+						// from the rows is computed again.
+						if (refreshDeclaredFilters(view, columns)) {
+							// Pushes the rows again as well, for their row class.
+							table.refreshFilters();
+						} else if (_rowCssClass != null) {
+							table.repaintRows();
+						}
+					});
 			if (isAttached()) {
 				attachObserver();
 			}
@@ -703,6 +797,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Update toolbar: a framed table offers an own Add button in edit mode, when the binding
 		// offers row creation.
 		updateToolbar(_framed && editMode && !binding().getCreateTypes().isEmpty());
+	}
+
+	/**
+	 * Resolves the criteria of the declared filters again for the current input values.
+	 *
+	 * @return Whether the table declares filters, so that they were replaced on the given view.
+	 */
+	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+		if (_declaredFilters == null) {
+			return false;
+		}
+		view.setDeclaredFilters(_declaredFilters.apply(columns));
+		return true;
 	}
 
 	/**
@@ -864,7 +971,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		// Load the dialog view from the configured layout path.
-		String viewPath = ViewLoader.VIEW_BASE_PATH + _detailDialogConfig.getLayout();
+		String viewPath = _detailDialogConfig.getLayout().fullPath();
 		ViewElement dialogView;
 		try {
 			dialogView = ViewLoader.getOrLoadView(viewPath);
@@ -942,8 +1049,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Adapts a type-derived {@link Column} (rows typed {@code Object}) to the {@link TLObject} row
 	 * type of this table, rendering cells editable when the enclosing form edits and the
-	 * {@link RowEditPolicy} covers the row, and read-only cells through the view-mode field display
-	 * of the column's values (so value types keep their interactive display, e.g. a download link).
+	 * {@link RowEditPolicy} covers the row, and read-only cells exactly as the column built from its
+	 * {@link ColumnSetup} renders them - with the display, the tooltip and the CSS class it declares,
+	 * and the view-mode field display of the values' type otherwise (so value types keep their
+	 * interactive display, e.g. a download link).
 	 */
 	private final class EditAwareColumn<V> implements Column<TLObject, V> {
 
@@ -987,13 +1096,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					ReactControl editControl = buildEditCellControl(context, row, _setup);
 					return editControl != null
 						? editControl
-						: readOnlyControl(context, row);
+						: CellContentReactAdapter.toControl(context, _inner.renderCell(row));
 				});
 			}
-			if (_setup.type().resolved() && row != null) {
-				return new CellContent.Raw((CellControlFactory) context -> readOnlyControl(context, row));
-			}
 			return _inner.renderCell(row);
+		}
+
+		@Override
+		public String searchText(TLObject row) {
+			return _inner.searchText(row);
 		}
 
 		/**
@@ -1002,19 +1113,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		private boolean offersEdit(TLObject row) {
 			CellEditing editing = _setup.editing();
 			return editing != null && editing.canEdit(row);
-		}
-
-		/**
-		 * The read-only cell control: the view-mode field display of the column's values.
-		 *
-		 * <p>
-		 * The value is read through the column's own value function, so a column showing something
-		 * else than an attribute of the row displays that.
-		 * </p>
-		 */
-		private ReactControl readOnlyControl(ReactContext context, TLObject row) {
-			return FieldControlService.getInstance()
-				.createDisplayControl(context, _setup.type(), _setup.value().apply(row));
 		}
 
 		@Override
@@ -1035,6 +1133,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public int defaultWidth() {
 			return _inner.defaultWidth();
+		}
+
+		@Override
+		public boolean exportable() {
+			return _inner.exportable();
+		}
+
+		@Override
+		public Object exportValue(TLObject row) {
+			return _inner.exportValue(row);
 		}
 
 		@Override

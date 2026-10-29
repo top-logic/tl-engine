@@ -25,7 +25,7 @@ public class ObjectRef<C extends ObjectRef.Config<?>> extends ObjectImport<C> {
 	 * Configuration options for {@link ObjectRef}.
 	 */
 	@TagName("object-ref")
-	public interface Config<I extends ObjectRef<?>> extends ObjectImport.Config<I> {
+	public interface Config<I extends ObjectRef<?>> extends ObjectImport.Config<I>, UnresolvedIdConfig {
 		@Override
 		@Mandatory
 		String getIdAttribute();
@@ -83,7 +83,7 @@ public class ObjectRef<C extends ObjectRef.Config<?>> extends ObjectImport<C> {
 	}
 
 	private Object importSingle(ImportContext context, XMLStreamReader in, String id) throws XMLStreamException {
-		Object result = context.resolveObject(this, in.getLocation(), id);
+		Object result = context.resolveObject(this, in.getLocation(), id, !getConfig().getIgnoreUnresolved());
 		return importTarget(context, in, result);
 	}
 

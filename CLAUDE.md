@@ -22,6 +22,8 @@ Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTest
 
 **IMPORTANT**: Always build from the project root using `-pl <module-dir>`, never by `cd`-ing into a module directory. The build uses a workspace-local Maven repository; generate it once per workspace with `.claude/scripts/local-m2.sh`. Never use the global Maven repository (`~/.m2/repository`) and never pass `-Dmaven.repo.local=$HOME/.m2/repository` — each workspace has its own local repo.
 
+**Merge driver for resource bundles**: register the driver `tl-properties` once per clone (`git config include.path ../tools/git/gitconfig` in the main checkout, see [engine/git-merge-driver.md](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/git-merge-driver.md)). It merges `messages_*.properties` and `WEB-INF/conf/resources/*.properties` key by key, so two branches that add different keys no longer conflict.
+
 ### Refreshing the Workspace After a Branch Switch
 
 Switching branches or pulling can leave stale jars in the local Maven repo (installed artifacts older than — or built from a different branch than — the current sources). A full rebuild is expensive; detect and rebuild only the stale modules:
@@ -88,7 +90,7 @@ TopLogic is a layered Maven reactor of 110+ modules. Name prefixes:
 - **`ext.*`** — repackaged external libraries (CKEditor, Font Awesome, BPMN.js, …)
 - **`test.*`** — test-only modules
 
-Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`.
+Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`. Projects outside the engine can instead use the packagings `tl-app` / `tl-fragment` of `tl-maven-plugin` with the BOM `tl-bom` and the feature starters `tl-starter-*`, see [application-project.md](com.top_logic/src/main/java/META-INF/tl-docs/application-project.md).
 
 **Dependency direction is strictly bottom-up and must stay acyclic:** `com.top_logic.basic` (utilities, no other TL deps) → `basic.db` → `dob` / `dsa` (data access) → `com.top_logic` (knowledge base, model, layout) → feature modules → application modules. In particular, `basic.*` must never depend on a higher layer.
 
@@ -150,7 +152,7 @@ UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. 
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [engine/new-react-module.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/engine/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see the [React view layer chapter](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/index.md) and its [tables article](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/tables.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [view-layer/basics.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/basics.md#spacing-model)). For adding a `UIElement` (with a client component of its own), see [new-ui-element.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [theme-tokens.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [view-layer/customer-component-library.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/customer-component-library.md). For an application in a customer's Material UI theme (the theme module calling `installMui`, restyled, replaced and additional MUI-based components) — see [view-layer/mui-customer-theme.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/mui-customer-theme.md).
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [engine/new-react-module.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/engine/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see the [React view layer chapter](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/index.md) and its [tables article](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/tables.md). Containers are flush and content owns its breathing room: flowing content in a `<panel>` gets `with-inset="true"` on the panel (see the "Spacing model" section of [view-layer/basics.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/basics.md#spacing-model)). For extending a view of another module with a same-path overlay (descending into nested lists by `id`, `config:position`, `config:override`, `config:index`, anonymous elements), see [view-layer/overlays.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/overlays.md). For adding a `UIElement` (with a client component of its own), see [new-ui-element.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [theme-tokens.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, adapters for parts via `replacePart` and for whole controls via `replace`, the `state.proto` state contract) — see [view-layer/customer-component-library.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/customer-component-library.md); for the parts (atoms) the controls draw themselves with — the part registry, the list of parts, adding a part — see [view-layer/parts.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/parts.md). For an application in a customer's Material UI theme (the theme module calling `installMui`, restyled, replaced and additional MUI-based components) — see [view-layer/mui-customer-theme.md](com.top_logic.layout.view/src/main/java/META-INF/tl-docs/view-layer/mui-customer-theme.md).
 
 ### Model Definitions
 
@@ -217,7 +219,7 @@ external/JS identifiers.
 
 After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done:
 
-1. **Ensure the feature is accessible in `com.top_logic.demo`** — if it is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+1. **Ensure the feature is accessible in a demo app** — `com.top_logic.demo` for a feature of the classic UI, `com.top_logic.demo.react` for a feature of the React UI (`tl-demo` has no React UI). If it is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
 2. **Start the demo app** using the `tl-app` skill.
 3. **Verify the feature** by navigating to it, interacting with it, and checking it behaves as expected. **Delegate the browser interaction loop to a sub-agent** so its hundreds of round-trips don't re-bill the main thread's context on every turn — see the `tl-app` skill's "Verifying in the browser" section for the sub-agent brief and the snapshot-vs-screenshot guidance.
 4. **Only then report the work as complete.**
@@ -226,13 +228,13 @@ After implementing a UI feature or fix, always verify it manually in a running a
 
 ### Demo App Credentials
 
-The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [the demo apps article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/demo-apps.md).
+The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demo `tl-demo-react` at `/view/`) and scripted-test notes, see [the demo apps article](com.top_logic.basic/src/main/java/META-INF/tl-docs/engine/demo-apps.md).
 
 ### Version Management
 
-- Central version is defined in `tl-parent-all` — read it from there when needed.
+- Central version is defined in `tl-bom` — read it from there when needed.
 - Use `${tl.version}` property for internal dependencies
-- External dependencies versioned via properties (e.g., `${jetty.version}`)
+- External dependencies versioned via properties of `tl-bom` (e.g., `${jetty.version}`), the parent of `tl-parent-all`
 
 ### New Module Setup
 
@@ -280,23 +282,32 @@ mvn exec:java@migrate-ticket28336
 ## Repository Structure
 
 - **./** - Root aggregator POM
-- **tl-parent-engine/** - Aggregates all runtime modules (103 modules)
+- **tl-parent-engine/** - Aggregates all runtime modules
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
 - **com.top_logic.element/** - Element management
-- **com.top_logic.demo/** - Legacy demo application (`tl-demo`). The classic
-  layout UI plus a React view layer mounted at `/view/`. Depends directly on the
-  legacy `graphic.blocks.*` diagram stack, so it also serves those modules'
-  webapp resources (e.g. `/style/tl-flow-core.css`).
+- **com.top_logic.demo/** - Legacy demo application (`tl-demo`) with the classic
+  layout UI only. It does not depend on `com.top_logic.layout.react` /
+  `com.top_logic.layout.view` and has no React view layer (removed in #29409), so
+  neither the React UI nor services of those modules are available in it. Depends
+  directly on the legacy `graphic.blocks.*` diagram stack, so it also serves those
+  modules' webapp resources (e.g. `/style/tl-flow-core.css`).
 - **com.top_logic.demo.react/** - React-only demo application (`tl-demo-react`),
   built purely on the `com.top_logic.layout.view` `.view.xml` layer and served at
   `/view/`. This is the successor test bed for React UI features (see its
   `TRIAGE.md`). It does **not** depend on the legacy `graphic.blocks.*` modules;
   the React flow diagram is provided by the copied, self-contained
-  `com.top_logic.react.flow.*` modules. When verifying a React UI feature, run
-  this app, not `tl-demo` — a feature that works under `tl-demo` may still be
-  broken here if it relies on a legacy webapp resource that only `tl-demo`
-  happens to serve.
+  `com.top_logic.react.flow.*` modules. Verify React UI features in this app;
+  `tl-demo` has no React UI.
+- **tl-ai-\*/, tl-chat/, tl-chat-classic/** - The AI modules: `tl-ai-tool-api` (tool
+  contracts), `tl-ai-core` (agent loop, LLM providers, tools, MCP client, delegation,
+  TL-Script bindings), `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-chat` (React chat UI),
+  `tl-chat-classic` (the chat in a classic LayoutServlet tab), `tl-ai-views` (agents
+  editing `.view.xml` views), `tl-ai-vector-index`, `tl-ai-index` / `tl-ai-index-onnx`
+  (hybrid search), `tl-ai-eval` (model eval harness) and the demo application
+  `tl-ai-demo`. Their tests live in packages mirroring the production code and are
+  found through the surefire includes in each module POM (see `tl-ai-core/pom.xml`).
+  The developer articles of the chapter `ai` (in `tl-ai-core`) describe them.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output

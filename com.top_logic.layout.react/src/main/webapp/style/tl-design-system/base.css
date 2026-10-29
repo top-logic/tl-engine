@@ -27,6 +27,7 @@ body {
   letter-spacing: -0.01em;
 }
 
+.tl-prose h1,
 .tl-type-heading-lg {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-heading-lg);
@@ -35,6 +36,7 @@ body {
   letter-spacing: -0.005em;
 }
 
+.tl-prose h2,
 .tl-type-heading-md {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-heading-md);
@@ -43,6 +45,10 @@ body {
   letter-spacing: 0;
 }
 
+.tl-prose h3,
+.tl-prose h4,
+.tl-prose h5,
+.tl-prose h6,
 .tl-type-heading-sm {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-heading-sm);
@@ -51,6 +57,10 @@ body {
   letter-spacing: 0;
 }
 
+.tl-prose p,
+.tl-prose li,
+.tl-prose td,
+.tl-prose blockquote,
 .tl-type-body {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-body);
@@ -59,6 +69,7 @@ body {
   letter-spacing: 0;
 }
 
+.tl-prose th,
 .tl-type-body-strong {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-body);
@@ -83,6 +94,8 @@ body {
   letter-spacing: 0.01em;
 }
 
+.tl-prose code,
+.tl-prose pre,
 .tl-type-code {
   font-family: var(--tl-font-family-mono);
   font-size: var(--tl-font-size-body);
@@ -113,10 +126,37 @@ body {
   border: 0;
 }
 
-/* Der Ring gehört der Tastatur. Ein Mechanismus, außen, nur beim Tastaturfokus. */
-:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
+/* Der Ring gehört der Tastatur. Ein Mechanismus, außen, nur beim Tastaturfokus.
+   Ein Behälter mit virtuellem Cursor (Tabelle, Baum: aria-activedescendant, 3a §5.4, 3b §3) trägt ihn
+   nicht selbst: der Ring liegt innen am Element mit data-tl-state~="cursor". Gezeichnet wird er von
+   dessen ::after, einer Fläche über dem Element — haftende Zellen überdecken den eigenen Umriss einer
+   Zeile. Ein Feld mit aria-activedescendant ist kein Behälter und behält den Ring: das Suchfeld eines
+   Select (input) und das Select ohne Suchfeld (role=combobox) — ihr Cursor steht im Popup.
+   Eine Dashboard-Kachel mit Aktion trägt den Ring, wenn ihr verborgener Knopf (tl-visually-hidden) den Tastaturfokus
+   hat: der Knopf ist unsichtbar, die Kachel ist, was der Nutzer drückt (Spec 5c §6). */
+:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):where(:not(:not(input, textarea, [role="combobox"])[aria-activedescendant])):focus-visible,
+:where(:not(input, textarea, [role="combobox"])[aria-activedescendant]:focus-visible [data-tl-state~="cursor"])::after,
+.tl-dashboard__tile:has(> .tl-dashboard__action:focus-visible) {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
   outline-offset: var(--tl-focus-offset);
+}
+
+/* Die Fläche des Cursor-Rings: deckungsgleich mit dem Element, über seinen haftenden Zellen
+   (layer-sticky; der Behälter isoliert den Stapel), für den Zeiger durchlässig, der Ring nach innen. */
+:where(:not(input, textarea, [role="combobox"])[aria-activedescendant] [data-tl-state~="cursor"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-sticky);
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+  pointer-events: none;
+}
+
+/* Der Behälter mit virtuellem Cursor zeichnet kein Browser-Outline (Spec 3b §3): der Ring liegt am
+   Cursor-Element. Die einzige Ausnahme vom Ring, nur dieser Selektor. Ohne Cursor-Element setzt die
+   Engine kein aria-activedescendant (WCAG 2.4.7) — dann gilt der normale Ring. */
+:where(:not(input, textarea, [role="combobox"])[aria-activedescendant]):focus-visible {
+  outline-style: none;
 }
 
 /* Icons: drei Stufen nach Rolle plus Glyph im Control — siehe skalen.md „Icons“.
@@ -134,6 +174,20 @@ body {
 .tl-icon-sm { font-size: var(--tl-size-icon-sm); }
 .tl-icon-md { font-size: var(--tl-size-icon-md); }
 .tl-icon-lg { font-size: var(--tl-size-icon-lg); }
+
+/* Sprungziel (<anchor>, scroll.ts): nach einem Sprung blitzt das Ziel kurz auf, damit der Sprung zu sehen ist — auch
+   wenn nichts scrollt, weil das Ziel schon sichtbar war. Ein Zustand, keine Klasse; scroll.ts setzt und entfernt ihn.
+   Das Bild ist der halo des Pakets (focus-width in surface-state-hover-strong), kein Ring: der Ring gehört der Tastatur
+   (Spec 5d §3, Plan-Review K2). Der halo klingt zum eigenen Schatten des Ziels aus — ein Endbild „transparent“ wäre
+   kein halo und bräche das Klassen-Gate. Reduced Motion regelt die Grundregel unten. */
+[data-tl-anchor][data-tl-state~="flash"] {
+  border-radius: var(--tl-radius-sm);
+  animation: tl-anchor-flash var(--tl-duration-loop) var(--tl-easing-exit);
+}
+
+@keyframes tl-anchor-flash {
+  from { box-shadow: 0 0 0 var(--tl-focus-width) var(--tl-surface-state-hover-strong); }
+}
 
 /* Wer Bewegung abbestellt hat, hat sie abbestellt. 0.01ms statt 0, sonst feuert transitionend nie. */
 @media (prefers-reduced-motion: reduce) {
@@ -171,3 +225,4 @@ body {
     font-variant-numeric: tabular-nums;
   }
 }
+/* tl-design-system sha256:9da9e59df57ab06d0fa02110b8a8d1d73dd42f0e9770f59921b94be615d98bd2 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

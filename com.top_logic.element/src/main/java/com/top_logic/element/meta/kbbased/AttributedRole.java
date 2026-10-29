@@ -5,17 +5,11 @@
  */
 package com.top_logic.element.meta.kbbased;
 
-import java.util.Set;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.service.db2.KnowledgeItemImpl;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLReference;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -24,7 +18,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AttributedRole extends BoundedRole {
+public class AttributedRole extends BoundedRole implements AttributedObject {
 
 	/**
 	 * @see KnowledgeItemImpl#createWrapper(KnowledgeItem)
@@ -32,67 +26,6 @@ public class AttributedRole extends BoundedRole {
 	@CalledByReflection
 	public AttributedRole(KnowledgeObject ko) {
 		super(ko);
-	}
-
-	@Override
-	public TLClass tType() {
-		return PersistentObjectImpl.tType(this);
-	}
-
-	@Override
-	public Set<String> getAllAttributeNames() {
-		Set<String> theResult = super.getAllAttributeNames();
-
-		for (TLStructuredTypePart part : tType().getAllParts()) {
-			theResult.add(part.getName());
-		}
-
-		return theResult;
-	}
-
-	@Override
-	public TLObject tContainer() {
-		return PersistentObjectImpl.tContainer(this);
-	}
-
-	@Override
-	public TLReference tContainerReference() {
-		return PersistentObjectImpl.tContainerReference(this);
-	}
-
-	@Override
-	public Object getValue(String anAttribute) {
-		return PersistentObjectImpl.getValue(this, anAttribute);
-	}
-
-	@Override
-	public Object tValue(TLStructuredTypePart part) {
-		return PersistentObjectImpl.getValue(this, part);
-	}
-
-	@Override
-	public void generateFullText(FullTextBuBuffer buffer) {
-		PersistentObjectImpl.generateFullText(buffer, this);
-	}
-
-	@Override
-	public void setValue(String aKey, Object aValue) {
-		PersistentObjectImpl.setValue(this, aKey, aValue);
-	}
-
-	@Override
-	public void tUpdate(TLStructuredTypePart part, Object value) {
-		PersistentObjectImpl.setValue(this, part, value);
-	}
-
-	@Override
-	public void tAdd(TLStructuredTypePart part, Object value) {
-		PersistentObjectImpl.addValue(this, part, value);
-	}
-
-	@Override
-	public void tRemove(TLStructuredTypePart part, Object value) {
-		PersistentObjectImpl.removeValue(this, part, value);
 	}
 
 }

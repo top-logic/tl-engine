@@ -12,13 +12,14 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -82,6 +83,7 @@ public class WizardElement implements UIElement {
 	 * Configuration for {@link WizardElement}.
 	 */
 	@TagName("wizard")
+	@TypeIcon("css:bi bi-magic")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getCurrentStep()}. */
@@ -119,12 +121,15 @@ public class WizardElement implements UIElement {
 		/**
 		 * The sources contributing the steps, in the order the wizard walks them.
 		 *
-		 * @implNote Written directly as children of the {@code <wizard>}.
+		 * @implNote Written directly as children of the {@code <wizard>}. Keyed by
+		 *           {@link WizardStepSource.Config#ID} so that a same-path overlay can address a
+		 *           source.
 		 */
 		@Name(STEPS)
+		@Key(WizardStepSource.Config.ID)
 		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends WizardStepSource>> getSteps();
+		List<WizardStepSource.Config> getSteps();
 
 		/**
 		 * Whether the indicator counts the step displayed against the number of steps.

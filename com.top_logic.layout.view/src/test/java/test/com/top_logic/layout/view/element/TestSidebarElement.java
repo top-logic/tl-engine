@@ -40,7 +40,6 @@ import com.top_logic.layout.view.element.SidebarElement;
 import com.top_logic.layout.view.navigation.MountPath;
 import com.top_logic.layout.view.navigation.MountStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
-import com.top_logic.layout.view.security.SecurityScopeService;
 
 /**
  * Tests the items a {@code <sidebar>} offers: the captions, groups, navigation items and command
@@ -63,9 +62,6 @@ public class TestSidebarElement extends BasicTestCase {
 
 	/** The view the navigation item inside the group leads to. */
 	private static final String CONTENT_VIEW = "sidebar-item-content.view.xml";
-
-	/** A view whose group is guarded by a scope the session has no role on. */
-	private static final String DENIED_FIXTURE = "sidebar-denied-group.view.xml";
 
 	/** A view whose sidebar is written with content above and below its items. */
 	private static final String CHROME_FIXTURE = "sidebar-chrome.view.xml";
@@ -237,17 +233,6 @@ public class TestSidebarElement extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that a group the session may not see is left out with everything it gathers, rather
-	 * than shown empty.
-	 */
-	public void testAGuardedGroupIsOmitted() {
-		List<Map<String, Object>> items = items(sidebar(DENIED_FIXTURE));
-
-		assertEquals("Only the unguarded item is offered: " + items, 1, items.size());
-		assertEquals("open", items.get(0).get(ID));
-	}
-
-	/**
 	 * Tests that the content written above and below the items reaches the client as part of the
 	 * sidebar, in both the unfolded and the folded shape of the rail.
 	 */
@@ -382,15 +367,11 @@ public class TestSidebarElement extends BasicTestCase {
 
 	/**
 	 * The suite of tests.
-	 *
-	 * @implNote The guarded group asks the {@link SecurityScopeService} whether the session may see
-	 *           it, and that service materializes its scopes in the
-	 *           {@link com.top_logic.knowledge.service.KnowledgeBase}.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestSidebarElement.class,
 			ServiceTestSetup.createStarterFactoryForModules(
-				TypeIndex.Module.INSTANCE, SecurityScopeService.Module.INSTANCE,
+				TypeIndex.Module.INSTANCE,
 				CommandCliqueService.Module.INSTANCE));
 	}
 

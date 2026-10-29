@@ -6,6 +6,8 @@
 package com.top_logic.basic.config;
 
 import com.top_logic.basic.ConfigurationEncryption;
+import com.top_logic.basic.InvalidEncryptedValueException;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Encrypted;
 
@@ -25,7 +27,7 @@ public class EncodingConfigurationValueProvider<T> extends ConfigurationValuePro
 	 * Prefix for values of {@link Encrypted} properties that are unencrypted. This is useful for
 	 * temporary configuration of unencrypted values until encrypted value is determined.
 	 */
-	private static final String UNENCRYPTED_PREFIX = "unencrypted:";
+	public static final String UNENCRYPTED_PREFIX = "unencrypted:";
 
 	/**
 	 * Returns an {@link EncodingConfigurationValueProvider} with given
@@ -75,24 +77,24 @@ public class EncodingConfigurationValueProvider<T> extends ConfigurationValuePro
 		if (encodedValue.startsWith(UNENCRYPTED_PREFIX)) {
 			return encodedValue.substring(UNENCRYPTED_PREFIX.length());
 		}
+		String decryptedValue;
 		try {
-			return ConfigurationEncryption.decrypt(encodedValue);
-		} catch (RuntimeException ex) {
-			throw handleUndecryptableValue(propertyName, encodedValue, ex);
+			decryptedValue = ConfigurationEncryption.decrypt(encodedValue);
+		} catch (InvalidEncryptedValueException ex) {
+			// The value is not part of the error: a value that cannot be decrypted is in most
+			// cases a secret configured in plain text.
+			throw new ConfigurationException(
+				I18NConstants.ERROR_UNDECODABLE_ENCRYPTED_VALUE__PROPERTY_PREFIX.fill(propertyName, UNENCRYPTED_PREFIX),
+				propertyName, null, ex);
 		}
-	}
-
-	private ConfigurationException handleUndecryptableValue(String propertyName, String encodedValue, RuntimeException ex)
-			throws ConfigurationException {
-		StringBuilder msg = new StringBuilder();
-		msg.append("Unable to decode '");
-		msg.append(encodedValue);
-		msg.append("' as value for property '");
-		msg.append(propertyName);
-		msg.append("'. For temporary configuration of unencoded values use '");
-		msg.append(UNENCRYPTED_PREFIX);
-		msg.append("' as prefix.");
-		throw new ConfigurationException(msg.toString(), ex);
+		if (!ConfigurationEncryption.isAuthenticated(encodedValue)) {
+			Logger.warn("The value of property '" + propertyName
+				+ "' is encrypted in the unauthenticated format without prefix '"
+				+ ConfigurationEncryption.AUTHENTICATED_PREFIX
+				+ "'. Encrypt the value again, e.g. using the maintenance page EncodeConfigurationValues.jsp.",
+				EncodingConfigurationValueProvider.class);
+		}
+		return decryptedValue;
 	}
 
 	@Override

@@ -27,6 +27,11 @@ public interface PlantsBase extends test.com.top_logic.model.search.model.testSc
 	String PLANTS_ATTR = "plants";
 
 	/**
+	 * Name of the table storing {@link #PLANTS_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #PLANTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

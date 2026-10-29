@@ -54,6 +54,11 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String MFA_REQUIREMENT_ATTR = "mfaRequirement";
 
 	/**
+	 * Name of the table storing {@link #INVITATION_TYPE} objects.
+	 */
+	String TABLE_NAME = "Invitation";
+
+	/**
 	 * Getter for part {@link #CREATE_CALLBACK_ATTR}.
 	 */
 	default com.top_logic.model.search.expr.SearchExpression getCreateCallback() {

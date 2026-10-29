@@ -25,8 +25,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.event.infoservice.InfoService;
 
 /**
@@ -34,7 +38,9 @@ import com.top_logic.event.infoservice.InfoService;
  *
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("JMS messaging")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	/**

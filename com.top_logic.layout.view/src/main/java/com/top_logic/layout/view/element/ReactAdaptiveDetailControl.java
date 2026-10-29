@@ -32,6 +32,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.AdaptiveDetailElement.Config;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
 /**
@@ -77,8 +78,6 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	private static final String OVERLAY = "overlay";
 
 	private static final String BREADCRUMB = "breadcrumb";
-
-	private static final String DEFAULT_HOME_LABEL = "‹";
 
 	/**
 	 * Segment appended to the personalization key of the context to form the key the
@@ -347,7 +346,7 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 			// Nothing selected: showing the selector full-bleed, no breadcrumb needed.
 			return null;
 		}
-		items.add(0, crumb(0, _homeLabel != null ? _homeLabel : DEFAULT_HOME_LABEL));
+		items.add(0, crumb(0, _homeLabel != null ? _homeLabel : Resources.getInstance().getString(I18NConstants.ADAPTIVE_DETAIL_HOME)));
 		return items;
 	}
 

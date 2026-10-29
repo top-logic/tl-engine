@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="project"/>
+		<channel name="budget"
+			init="$project"
+			inputs="project"
+			observed-types="test.types:B"
+		/>
+		<channel name="limit"
+			init="10"
+		/>
+	</channels>
+
+	<stack direction="column"/>
+</view>

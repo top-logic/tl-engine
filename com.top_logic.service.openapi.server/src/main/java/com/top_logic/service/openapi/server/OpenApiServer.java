@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,14 +51,17 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
@@ -84,6 +86,7 @@ import com.top_logic.service.openapi.server.parameter.InvalidValueException;
 import com.top_logic.service.openapi.server.parameter.ParameterReference;
 import com.top_logic.service.openapi.server.parameter.ReferencedParameter;
 import com.top_logic.service.openapi.server.parameter.RequestParameter;
+import com.top_logic.service.openapi.server.schema.JsonSchemaCompiler;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -92,7 +95,9 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("OpenAPI server")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?>> {
 
 	/**
@@ -141,7 +146,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		 * @implSpec The actual value is the path relative to the application path.
 		 */
 		@Mandatory
-		@ControlProvider(DisplayFullPathTemplate.class)
+		@ApplicationRelativeURL
 		String getBaseURL();
 
 		/**
@@ -382,19 +387,21 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 
 	private Map<HttpMethod, List<HandlerForPath>> buildHandlers(List<PathItem> paths) {
 		Map<HttpMethod, List<HandlerForPath>> handlerMap = new HashMap<>();
+		JsonSchemaCompiler schemaCompiler = new JsonSchemaCompiler(getConfig().getGlobalSchemas());
 		Map<String, ConcreteRequestParameter<?>> globalParameters =
-			createGlobalParameters(getConfig().getGlobalParameters());
+			createGlobalParameters(getConfig().getGlobalParameters(), schemaCompiler);
 		for (PathItem pathItem : paths) {
-			List<ConcreteRequestParameter<?>> pathItemParams =
-				resolveParameters(pathItem.getParameters(), globalParameters);
+			String path = pathItem.getCompletePath();
 
 			for (Entry<HttpMethod, OperationByMethod> entry : pathItem.getOperations().entrySet()) {
 				HttpMethod method = entry.getKey();
 				OperationByMethod operation = entry.getValue();
 
-				List<ConcreteRequestParameter<?>> allParameters = new ArrayList<>(pathItemParams);
-				allParameters.addAll(resolveParameters(operation.getParameters(), globalParameters));
-				String path = pathItem.getCompletePath();
+				List<ConcreteRequestParameter<?>> allParameters = new ArrayList<>();
+				allParameters.addAll(
+					resolveParameters(pathItem.getParameters(), globalParameters, schemaCompiler, path, method));
+				allParameters.addAll(
+					resolveParameters(operation.getParameters(), globalParameters, schemaCompiler, path, method));
 				Set<String> clashingVariables = ConcreteRequestParameter.clashingVariableNames(
 					allParameters.stream().map(ConcreteRequestParameter::getConfig).collect(Collectors.toList()));
 				if (!clashingVariables.isEmpty()) {
@@ -429,29 +436,52 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 	 * Builds a map from the name of a {@link ReferencedParameter} to its definition.
 	 */
 	private Map<String, ConcreteRequestParameter<?>> createGlobalParameters(
-			Map<String, ReferencedParameter> globalParameters) {
+			Map<String, ReferencedParameter> globalParameters, JsonSchemaCompiler schemaCompiler) {
 		Map<String, ConcreteRequestParameter<?>> result = new HashMap<>();
 		for (Entry<String, ReferencedParameter> globalParam : globalParameters.entrySet()) {
-			result.put(globalParam.getKey(),
-				TypedConfigUtil.createInstance(globalParam.getValue().getParameterDefinition()));
+			String name = globalParam.getKey();
+			ConcreteRequestParameter<?> parameter =
+				TypedConfigUtil.createInstance(globalParam.getValue().getParameterDefinition());
+			try {
+				parameter.compileSchemas(schemaCompiler);
+			} catch (TopLogicException ex) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_INVALID_GLOBAL_PARAMETER_SCHEMA__PARAMETER.fill(name), ex);
+			}
+			result.put(name, parameter);
 		}
 		return result;
 	}
 
+	/**
+	 * Creates the {@link ConcreteRequestParameter}s for the given configurations.
+	 * 
+	 * <p>
+	 * A {@link ParameterReference} is resolved to the given global parameter. Any other parameter
+	 * is instantiated and its schemas are compiled.
+	 * </p>
+	 */
 	private List<ConcreteRequestParameter<?>> resolveParameters(
-			List<RequestParameter.Config<? extends RequestParameter<?>>> parameter,
-			Map<String, ConcreteRequestParameter<?>> globalParameters) {
-		Stream<ConcreteRequestParameter<?>> concreteParamsStream = parameter.stream()
-			.map(paramConfig -> {
+			List<RequestParameter.Config<? extends RequestParameter<?>>> parameters,
+			Map<String, ConcreteRequestParameter<?>> globalParameters, JsonSchemaCompiler schemaCompiler,
+			String path, HttpMethod method) {
+		List<ConcreteRequestParameter<?>> result = new ArrayList<>(parameters.size());
+		for (RequestParameter.Config<? extends RequestParameter<?>> paramConfig : parameters) {
 			if (paramConfig instanceof ParameterReference.Config) {
-				return globalParameters.get(paramConfig.getName());
+				result.add(globalParameters.get(paramConfig.getName()));
 			} else {
-				return TypedConfigUtil.createInstance(paramConfig);
+				ConcreteRequestParameter<?> parameter =
+					(ConcreteRequestParameter<?>) TypedConfigUtil.createInstance(paramConfig);
+				try {
+					parameter.compileSchemas(schemaCompiler);
+				} catch (TopLogicException ex) {
+					throw new TopLogicException(I18NConstants.ERROR_INVALID_PARAMETER_SCHEMA__PATH__METHOD__PARAMETER
+						.fill(path, method, paramConfig.getName()), ex);
+				}
+				result.add(parameter);
 			}
-			})
-			.map(ConcreteRequestParameter.class::cast);
-		/* Note: Assigned to local variable because JavaC recognises an compilation failure. */
-		return concreteParamsStream.collect(Collectors.toList());
+		}
+		return result;
 	}
 
 	private void sortHandlers(List<HandlerForPath> handlers) {

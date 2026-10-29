@@ -18,7 +18,7 @@
 			initial="slot-overview.view.xml"
 			path="navPath"
 		>
-			<frame
+			<frame id="detail"
 				route="detail"
 				view="slot-detail.view.xml"
 			/>

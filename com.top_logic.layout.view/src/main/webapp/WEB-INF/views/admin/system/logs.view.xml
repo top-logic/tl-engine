@@ -13,31 +13,36 @@
 		<channel name="selectedFile"/>
 		<channel name="reload"/>
 	</channels>
-	<split-panel
+	<split-panel id="main"
 		orientation="horizontal"
 		resizable="true"
 	>
 		<panes>
-			<pane
+			<pane id="files"
 				min-size="240"
 				size="40"
 				unit="%"
 			>
-				<panel fill="true">
+				<panel id="files-panel"
+					fill="true"
+				>
 					<title>
 						<en>Log files</en>
 						<de>Protokolldateien</de>
 					</title>
-					<child class="com.top_logic.layout.view.admin.system.LogFileTable"
+					<child id="files-table"
+						class="com.top_logic.layout.view.admin.system.LogFileTable"
 						selection="selectedFile"
 					/>
 				</panel>
 			</pane>
-			<pane
+			<pane id="lines"
 				size="60"
 				unit="%"
 			>
-				<panel fill="true">
+				<panel id="lines-panel"
+					fill="true"
+				>
 					<title>
 						<en>Content</en>
 						<de>Inhalt</de>
@@ -45,18 +50,22 @@
 					<commands>
 						<generic-command
 							image="css:bi bi-arrow-clockwise"
-							input="reload"
+							inputs="reload"
 							placement="TOOLBAR"
 						>
 							<label>
 								<en>Refresh</en>
 								<de>Aktualisieren</de>
 							</label>
-							<execute-script function="tick -> ($tick == null) ? 1 : $tick + 1"/>
-							<write-channel name="reload"/>
+							<execute-script function="($reload == null) ? 1 : $reload + 1">
+								<with-result>
+									<write-channel name="reload"/>
+								</with-result>
+							</execute-script>
 						</generic-command>
 					</commands>
-					<child class="com.top_logic.layout.view.admin.system.LogLineTable"
+					<child id="lines-table"
+						class="com.top_logic.layout.view.admin.system.LogLineTable"
 						input="selectedFile"
 						reload="reload"
 					/>

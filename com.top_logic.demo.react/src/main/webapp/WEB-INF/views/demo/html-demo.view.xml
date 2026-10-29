@@ -16,8 +16,8 @@
 	and a coloured header band. On the left they are repeated as cards by an <object-list>, each
 	card showing its document with display="thumbnail": a preview laid out at the page size the
 	document is written for and scaled down to the width of the card, so it keeps its proportions
-	instead of being reflowed. A preview takes no clicks and no focus; the button below it writes
-	the card's document to the "expose" channel, which is what selects it.
+	instead of being reflowed. The list writes the exposé of the card the user clicks to its selection
+	channel "expose" and marks the card of the exposé that channel holds.
 	
 	On the right the selected exposé is shown with display="document". A document is not inserted
 	into the page: it is fetched by a frame from the element's data endpoint and shown isolated,
@@ -25,8 +25,8 @@
 	why a document needs no whitelist check. The print button hands the frame to the browser's
 	print dialog, which is also where the browser offers saving it as a PDF file.
 	
-	The exposé shown is the one on the "expose" channel, and the first of the list while nothing
-	is selected.
+	The exposé shown is the one on the "expose" channel, which starts out with the first exposé of
+	the list.
 -->
 <view>
 	<channels>
@@ -170,10 +170,9 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 ]
 ]]></expr>
 		</derived-channel>
-		<channel name="expose"/>
-		<derived-channel name="current"
-			expr="selected -> documents -> ifElse($selected != null, $selected, $documents[0])"
-			inputs="expose, exposes"
+		<channel name="expose"
+			init="$exposes[0]"
+			inputs="exposes"
 		/>
 	</channels>
 
@@ -237,10 +236,11 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 								<object-list
 									gap="default"
 									inputs="exposes"
-									items="exposes -> $exposes"
+									items="$exposes"
 									layout="grid"
 									max-columns="3"
 									min-column-width="8rem"
+									selection="expose"
 								>
 									<item>
 										<card padding="none">
@@ -250,21 +250,10 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 											/>
 											<inset>
 												<text
-													css-class="tlText--strong"
+													css-class="tl-type-body-strong"
 													input="element"
 													overflow="ellipsis"
 												/>
-												<button appearance="link">
-													<action class="com.top_logic.layout.view.command.GenericViewCommand"
-														input="element"
-													>
-														<label>
-															<en>Show</en>
-															<de>Anzeigen</de>
-														</label>
-														<write-channel name="expose"/>
-													</action>
-												</button>
 											</inset>
 										</card>
 									</item>
@@ -287,7 +276,7 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 								</title>
 								<html
 									display="document"
-									input="current"
+									input="expose"
 									print="true"
 								/>
 							</panel>

@@ -12,7 +12,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.cache.TLModelOperations.PartDefault;
 import com.top_logic.model.provider.DefaultProvider;
 
 /**
@@ -123,18 +124,12 @@ public interface TLFactory {
 		// sequence number default, this attribute stays empty in the transient version to prevent
 		// an auto-rollback of the transaction started when the default is filled.
 		boolean isTransient = obj.tTransient();
-		for (TLStructuredTypePart part : type.getAllParts()) {
-			if (part.isDerived()) {
-				// For safety reasons, ignore default value annotations on derived attributes.
-				continue;
-			}
-			DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
-			if (defaultProvider == null) {
-				continue;
-			}
+		for (PartDefault entry : TLModelCacheService.getOperations().getDefaultProviders(type)) {
+			DefaultProvider defaultProvider = entry.provider();
 			if (isTransient && defaultProvider.isComputedInTransaction()) {
 				continue;
 			}
+			TLStructuredTypePart part = entry.part();
 			obj.tUpdate(part, defaultProvider.createDefault(createContext, part));
 		}
 	}

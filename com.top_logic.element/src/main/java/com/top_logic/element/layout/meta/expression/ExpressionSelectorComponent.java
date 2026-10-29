@@ -20,8 +20,8 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.layout.meta.search.QueryUtils;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
@@ -143,14 +143,14 @@ public abstract class ExpressionSelectorComponent<W extends Wrapper> extends For
 			if (QueryUtils.allowWriteAndPublish(this)) {
 				{
 					List<?> groupAssociations =
-						MapBasedPersistancySupport.getGroupAssociation((AbstractWrapper) expression);
+						MapBasedPersistancySupport.getGroupAssociation(expression);
 					Person creator = expression.getCreator();
 					Person currentUser = TLContext.getContext().getCurrentPersonWrapper();
 
 					// root or owner can modify published queries
 					if (WrapperHistoryUtils.getUnversionedIdentity(currentUser).equals(
 						WrapperHistoryUtils.getUnversionedIdentity(creator))
-						|| Person.isAdmin(currentUser)) {
+						|| ThreadContext.isAdmin()) {
 						boolean isPublished;
 						if (groupAssociations.isEmpty()) {
 							isPublished = false;

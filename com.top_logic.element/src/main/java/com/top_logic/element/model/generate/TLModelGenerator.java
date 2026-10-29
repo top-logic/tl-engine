@@ -109,9 +109,9 @@ public abstract class TLModelGenerator extends JavaGenerator {
 	}
 
 	/**
-	 * Whether the given {@link TLModule} represents a structure.
+	 * Whether the given {@link TLModule} declares singletons.
 	 */
-	protected boolean isStructure(TLModule module) {
+	protected boolean hasSingletons(TLModule module) {
 		return module.getAnnotation(TLSingletons.class) != null;
 	}
 
@@ -137,23 +137,6 @@ public abstract class TLModelGenerator extends JavaGenerator {
 	public void setNoElementClasses(boolean noElementClasses) {
 		_noElementClasses = noElementClasses;
 
-	}
-
-	/**
-	 * Check that classes from element are allowed.
-	 * 
-	 * @implNote This method is designed to be called when files are created for classes in modules
-	 *           that are structured.
-	 * 
-	 * @throws IllegalStateException
-	 *         When {@link #noElementClasses() no element classes} are allowed.
-	 * 
-	 */
-	protected void checkElementClassesAllowedInStructures() {
-		if (noElementClasses()) {
-			throw new IllegalStateException("Can not create classes for " + className()
-				+ " because no element classes can be used, but module is a structure.");
-		}
 	}
 
 }

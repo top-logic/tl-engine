@@ -43,11 +43,15 @@
 	    <groupId>org.apache.commons</groupId>
 	    <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
 	</dependency>
+	<dependency>
+	    <groupId>com.networknt</groupId>
+	    <artifactId>json-schema-validator</artifactId>
+	</dependency>
 
     <dependency>
 	    <groupId>org.webjars.npm</groupId>
 	    <artifactId>swagger-ui-dist</artifactId>
-	    <version>5.33.2</version>
+	    <version>5.33.3</version>
 	</dependency>
   </dependencies>
 </project>

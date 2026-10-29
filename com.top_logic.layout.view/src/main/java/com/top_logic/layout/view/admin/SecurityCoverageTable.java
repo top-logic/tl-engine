@@ -20,18 +20,22 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.CoverageStatus;
+import com.top_logic.element.boundsec.manager.coverage.OperationUse;
+import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
@@ -40,6 +44,8 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -102,7 +108,7 @@ import com.top_logic.util.Resources;
  * empty.
  * </p>
  *
- * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by its
+ * @implNote The rows come from {@link #analysisRows()}; a row is keyed by its
  *           module or type, since every analysis yields fresh {@link TypeCoverage} instances and
  *           the selection and the opened modules are to survive a refresh. The type and role
  *           columns are built by the {@link ColumnProviderService} from the model types of their
@@ -110,6 +116,12 @@ import com.top_logic.util.Resources;
  *           attributes does.
  */
 public class SecurityCoverageTable implements UIElement {
+
+	/**
+	 * The node grouping the findings that belong to no analyzed type, see
+	 * {@link SecurityCoverageAnalysis#getUnattachedFindings()}.
+	 */
+	public static final Object UNATTACHED = new NamedConstant("unattachedFindings");
 
 	/** Id of the column showing the analyzed type. */
 	public static final String COLUMN_TYPE = "type";
@@ -146,6 +158,28 @@ public class SecurityCoverageTable implements UIElement {
 
 	/** Key of the flag telling whether the application's configuration defines a rule entry. */
 	public static final String RULE_STORED = "stored";
+
+	/**
+	 * Key of the change of a rule entry that is stored but not yet applied, one of
+	 * {@link #STATE_NEW}, {@link #STATE_CHANGED}, {@link #STATE_DELETED}, or the empty string for a
+	 * rule in effect as stored.
+	 */
+	public static final String RULE_STATE = "state";
+
+	/** Key of the localized name of the {@link #RULE_STATE state} of a rule entry. */
+	public static final String RULE_STATE_LABEL = "stateLabel";
+
+	/** {@link #RULE_STATE} of a stored rule that is not yet in effect. */
+	public static final String STATE_NEW = "new";
+
+	/** {@link #RULE_STATE} of a rule in effect whose stored form differs from the one in effect. */
+	public static final String STATE_CHANGED = "changed";
+
+	/** {@link #RULE_STATE} of a rule in effect that the stored configuration deletes. */
+	public static final String STATE_DELETED = "deleted";
+
+	/** {@link #RULE_STATE} of a rule in effect as stored. */
+	public static final String STATE_APPLIED = "";
 
 	/**
 	 * Renders a {@link CoverageStatus} with its icon and label through the default
@@ -209,6 +243,9 @@ public class SecurityCoverageTable implements UIElement {
 
 		/** Configuration name for {@link #getSelectedModule()}. */
 		String SELECTED_MODULE = "selected-module";
+
+		/** Configuration name for {@link #getPending()}. */
+		String PENDING = "pending";
 
 		@Override
 		@ClassDefault(SecurityCoverageTable.class)
@@ -287,9 +324,16 @@ public class SecurityCoverageTable implements UIElement {
 		 * <p>
 		 * An entry is a dictionary keyed by {@link SecurityCoverageTable#RULE_KIND},
 		 * {@link SecurityCoverageTable#RULE_KIND_LABEL}, {@link SecurityCoverageTable#RULE_ID},
-		 * {@link SecurityCoverageTable#RULE_DESCRIPTION} and
-		 * {@link SecurityCoverageTable#RULE_STORED}, so a display shows the entries in a table of
-		 * computed columns and a command works on the entry the user picks.
+		 * {@link SecurityCoverageTable#RULE_DESCRIPTION}, {@link SecurityCoverageTable#RULE_STORED},
+		 * {@link SecurityCoverageTable#RULE_STATE} and {@link SecurityCoverageTable#RULE_STATE_LABEL},
+		 * so a display shows the entries in a table of computed columns and a command works on the
+		 * entry the user picks.
+		 * </p>
+		 *
+		 * <p>
+		 * Besides the rules in effect, the entries show the stored changes that are not yet applied:
+		 * a stored rule that is not yet in effect is listed as new, a rule in effect is marked as
+		 * changed or deleted by the stored configuration.
 		 * </p>
 		 */
 		@Name(SELECTED_RULES)
@@ -306,6 +350,20 @@ public class SecurityCoverageTable implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelectedModule();
+
+		/**
+		 * Channel marking the stored changes of the access definition that are not yet applied.
+		 *
+		 * <p>
+		 * Whenever its value changes, the {@link #getSelectedRules() rules} of the selected type are
+		 * written again, so that a stored change shows in them right away, see
+		 * {@link SecurityCoverageTable#RULE_STATE}.
+		 * </p>
+		 */
+		@Name(PENDING)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getPending();
 	}
 
 	private final ChannelRef _inputRef;
@@ -324,6 +382,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedModuleRef;
 
+	private final ChannelRef _pendingRef;
+
 	/**
 	 * Creates a new {@link SecurityCoverageTable} from configuration.
 	 */
@@ -337,13 +397,14 @@ public class SecurityCoverageTable implements UIElement {
 		_selectedFindingsRef = config.getSelectedFindings();
 		_selectedModuleRef = config.getSelectedModule();
 		_selectedRulesRef = config.getSelectedRules();
+		_pendingRef = config.getPending();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<Column<Object, ?>> columns = new ArrayList<>();
-		columns.add(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE, TL_MODEL_PART_TYPE, false,
-			row -> row instanceof TypeCoverage coverage ? coverage.type() : row, 300));
+		columns.add(withUnattachedLabels(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE,
+			TL_MODEL_PART_TYPE, false, row -> isModelRow(row) ? modelValue(row) : null, 300)));
 		columns.add(statusColumn());
 		columns.add(objectColumn(COLUMN_READ_ROLES, I18NConstants.COVERAGE_COLUMN_READ_ROLES, BoundedRole.ROLE_TYPE,
 			true, ofType(SecurityCoverageTable::readRoles), 230));
@@ -354,7 +415,7 @@ public class SecurityCoverageTable implements UIElement {
 		columns.add(textColumn(COLUMN_ACCESS_PARENT, I18NConstants.COVERAGE_COLUMN_ACCESS_PARENT,
 			ofType(SecurityCoverageTable::accessParent), 260));
 		columns.add(textColumn(COLUMN_FINDINGS, I18NConstants.COVERAGE_COLUMN_FINDINGS,
-			ofType(SecurityCoverageTable::findings), 460));
+			SecurityCoverageTable::findingsText, 460));
 
 		ViewChannel dataChannel = _inputRef != null ? context.resolveChannel(_inputRef) : null;
 		CoverageTree tree = new CoverageTree();
@@ -363,7 +424,7 @@ public class SecurityCoverageTable implements UIElement {
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, SortSpec.NONE, Set.of(COLUMN_FINDINGS));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
-		Set<TLModule> opened = new HashSet<>();
+		Set<Object> opened = new HashSet<>();
 		openNew(view, tree, opened);
 		TableViewControl<Object> control = new TableViewControl<>(context, view, true);
 
@@ -398,6 +459,13 @@ public class SecurityCoverageTable implements UIElement {
 			Registration registration = dataChannel.addListener(listener);
 			control.addCleanupAction(registration::dispose);
 		}
+		if (_pendingRef != null && detail.isBound()) {
+			// A stored change does not change the analysis, but the rules of the selected type show
+			// the stored changes, see ruleEntries().
+			ChannelListener listener = (sender, oldValue, newValue) -> detail.show(detail.getNode(), tree::coverage);
+			Registration registration = context.resolveChannel(_pendingRef).addListener(listener);
+			control.addCleanupAction(registration::dispose);
+		}
 		return control;
 	}
 
@@ -405,11 +473,14 @@ public class SecurityCoverageTable implements UIElement {
 	 * Opens the modules of the given tree that were not displayed before, so that every module shows
 	 * its types when it appears.
 	 */
-	private static void openNew(DefaultTableView<Object> view, CoverageTree tree, Set<TLModule> opened) {
+	private static void openNew(DefaultTableView<Object> view, CoverageTree tree, Set<Object> opened) {
 		for (TLModule module : tree.modules()) {
 			if (opened.add(module)) {
 				view.setExpanded(module, true);
 			}
+		}
+		if (tree.roots().contains(UNATTACHED) && opened.add(UNATTACHED)) {
+			view.setExpanded(UNATTACHED, true);
 		}
 	}
 
@@ -419,10 +490,12 @@ public class SecurityCoverageTable implements UIElement {
 	 *
 	 * <p>
 	 * A node is the {@link TLModule} or {@link TLClass} itself, which stays the same object across
-	 * analyses; the row displayed for a type is its current {@link TypeCoverage}.
+	 * analyses; the row displayed for a type is its current {@link TypeCoverage}. The findings that
+	 * belong to no analyzed type follow the modules as the children of the node
+	 * {@link SecurityCoverageTable#UNATTACHED}; each of them is its own row.
 	 * </p>
 	 */
-	private static final class CoverageTree implements TreeStructure<Object, Object> {
+	public static final class CoverageTree implements TreeStructure<Object, Object> {
 
 		private List<TLModule> _modules = List.of();
 
@@ -430,13 +503,21 @@ public class SecurityCoverageTable implements UIElement {
 
 		private Map<TLClass, TypeCoverage> _coverages = Map.of();
 
+		private List<Object> _unattached = List.of();
+
 		/**
-		 * Replaces the tree by the given analyzed types.
+		 * Replaces the tree by the given rows: analyzed types and unattached findings, see
+		 * {@link SecurityCoverageTable#analysisRows()}.
 		 */
-		void update(List<?> rows) {
+		public void update(List<?> rows) {
 			Map<TLModule, List<Object>> types = new HashMap<>();
 			Map<TLClass, TypeCoverage> coverages = new HashMap<>();
+			List<Object> unattached = new ArrayList<>();
 			for (Object row : rows) {
+				if (row instanceof CoverageFinding finding) {
+					unattached.add(finding);
+					continue;
+				}
 				TypeCoverage coverage = (TypeCoverage) row;
 				TLClass type = coverage.type();
 				coverages.put(type, coverage);
@@ -447,6 +528,7 @@ public class SecurityCoverageTable implements UIElement {
 			_modules = modules;
 			_types = types;
 			_coverages = coverages;
+			_unattached = unattached;
 		}
 
 		/**
@@ -459,23 +541,34 @@ public class SecurityCoverageTable implements UIElement {
 		/**
 		 * The analysis of the given node if it is a type, else <code>null</code>.
 		 */
-		TypeCoverage coverage(Object node) {
+		public TypeCoverage coverage(Object node) {
 			return node instanceof TLClass type ? _coverages.get(type) : null;
 		}
 
+		/**
+		 * The modules, followed by the {@link SecurityCoverageTable#UNATTACHED group} of the
+		 * unattached findings when there are any.
+		 */
 		@Override
 		public List<Object> roots() {
-			return new ArrayList<>(_modules);
+			List<Object> result = new ArrayList<>(_modules);
+			if (!_unattached.isEmpty()) {
+				result.add(UNATTACHED);
+			}
+			return result;
 		}
 
 		@Override
 		public List<Object> children(Object node) {
+			if (node == UNATTACHED) {
+				return _unattached;
+			}
 			return node instanceof TLModule module ? _types.getOrDefault(module, List.of()) : List.of();
 		}
 
 		@Override
 		public boolean isLeaf(Object node) {
-			return !(node instanceof TLModule);
+			return !(node instanceof TLModule) && node != UNATTACHED;
 		}
 
 		@Override
@@ -569,6 +662,10 @@ public class SecurityCoverageTable implements UIElement {
 			if (_module != null) {
 				_module.set(module);
 			}
+			if (node instanceof CoverageFinding finding && _findings != null) {
+				// A finding belonging to no type is described by itself.
+				_findings.set(findingsHtml(List.of(finding)));
+			}
 		}
 
 		/**
@@ -599,14 +696,17 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The rules in effect for the given type, the role parent rules first, each as the
-	 * dictionary a display shows and a command works on.
+	 * dictionary a display shows and a command works on, followed by the stored rules for the type
+	 * that are not yet in effect.
 	 *
 	 * @see Config#getSelectedRules()
 	 */
 	private static List<Map<String, Object>> ruleEntries(TypeCoverage coverage) {
 		SecurityDefinitionEditor editor = new SecurityDefinitionEditor();
-		Set<String> storedParents = storedIds(editor::storedRoleParentRules);
-		Set<String> storedRoleRules = storedIds(editor::storedRoleRules);
+		List<? extends NavigationRuleConfig> storedParents = stored(editor::storedRoleParentRules);
+		List<? extends RoleRuleConfig> storedRoleRules = stored(editor::storedRoleRules);
+		Set<String> removedParents = removed(editor::removedRoleParentRules);
+		Set<String> removedRoleRules = removed(editor::removedRoleRules);
 		Resources resources = Resources.getInstance();
 		String parentKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_PARENT);
 		String roleKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_RULE);
@@ -614,48 +714,140 @@ public class SecurityCoverageTable implements UIElement {
 		List<Map<String, Object>> result = new ArrayList<>();
 		for (NavigationRule rule : coverage.roleParentRules()) {
 			String id = rule.getId();
-			result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, id, path(rule.getPath()),
-				storedParents.contains(id)));
+			NavigationRuleConfig stored = find(storedParents, id);
+			result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, id, path(rule.getPath()), stored != null,
+				state(stored, editor.effectiveRoleParentRule(id), removedParents.contains(id))));
 		}
 		for (Map.Entry<String, List<RoleProvider>> group : roleRulesByConfigId(coverage).entrySet()) {
 			String id = group.getKey();
+			RoleRuleConfig stored = find(storedRoleRules, id);
 			result.add(ruleEntry(KIND_ROLE_RULE, roleKind, id, roleRuleDescription(group.getValue()),
-				storedRoleRules.contains(id)));
+				stored != null, state(stored, editor.effectiveRoleRule(id), removedRoleRules.contains(id))));
+		}
+		for (NavigationRuleConfig rule : storedParents) {
+			if (editor.effectiveRoleParentRule(rule.getId()) == null && appliesTo(rule, coverage.type())) {
+				result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, rule.getId(), "", true, STATE_NEW));
+			}
+		}
+		for (RoleRuleConfig rule : storedRoleRules) {
+			if (editor.effectiveRoleRule(rule.getId()) == null && appliesTo(rule, coverage.type())) {
+				result.add(ruleEntry(KIND_ROLE_RULE, roleKind, rule.getId(),
+					String.join(VALUE_SEPARATOR, rule.getRole()), true, STATE_NEW));
+			}
 		}
 		return result;
+	}
+
+	/**
+	 * The {@link #RULE_STATE} of a rule in effect.
+	 *
+	 * @param stored
+	 *        The stored form of the rule, <code>null</code> when it is not stored.
+	 * @param effective
+	 *        The rule as it is in effect.
+	 * @param removed
+	 *        Whether the stored configuration removes the rule.
+	 */
+	private static String state(NavigationRuleConfig stored, NavigationRuleConfig effective, boolean removed) {
+		if (removed) {
+			return STATE_DELETED;
+		}
+		if (stored != null && effective != null && !ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(stored, effective)) {
+			return STATE_CHANGED;
+		}
+		return STATE_APPLIED;
+	}
+
+	/**
+	 * Whether the given stored rule applies to the given type: it is configured for the type, for a
+	 * generalization of it including its sub types, or for a singleton of the type.
+	 */
+	private static boolean appliesTo(NavigationRuleConfig rule, TLClass type) {
+		try {
+			if (rule instanceof SingletonRuleConfig singletonRule) {
+				return TLModelUtil.resolveQualifiedName(singletonRule.getTarget()).tType() == type;
+			}
+			String typeName = rule.getMetaElement();
+			if (typeName == null || typeName.isBlank()) {
+				return false;
+			}
+			TLType ruleType = TLModelUtil.findType(typeName);
+			if (ruleType == type) {
+				return true;
+			}
+			return rule.isInherit() && ruleType instanceof TLClass ruleClass
+				&& TLModelUtil.isGeneralization(ruleClass, type);
+		} catch (RuntimeException ex) {
+			// A rule referring to a model element that does not exist applies nowhere.
+			return false;
+		}
+	}
+
+	/**
+	 * The rule with the given id of the given rules, or <code>null</code>.
+	 */
+	private static <R extends NavigationRuleConfig> R find(List<? extends R> rules, String id) {
+		for (R rule : rules) {
+			if (id.equals(rule.getId())) {
+				return rule;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The rules the given query of the stored configuration answers, empty when that configuration
+	 * cannot be read.
+	 */
+	private static <R extends NavigationRuleConfig> List<? extends R> stored(StoredRulesQuery<R> query) {
+		try {
+			return query.run();
+		} catch (ConfigurationException ex) {
+			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
+			return List.of();
+		}
+	}
+
+	/**
+	 * The ids of the removed rules the given query of the stored configuration answers, empty when
+	 * that configuration cannot be read.
+	 */
+	private static Set<String> removed(RemovedRulesQuery query) {
+		try {
+			return query.run();
+		} catch (ConfigurationException ex) {
+			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
+			return Set.of();
+		}
 	}
 
 	/**
 	 * One entry of {@link Config#getSelectedRules()}.
 	 */
 	private static Map<String, Object> ruleEntry(String kind, String kindLabel, String id, String description,
-			boolean stored) {
+			boolean stored, String state) {
 		Map<String, Object> entry = new LinkedHashMap<>();
 		entry.put(RULE_KIND, kind);
 		entry.put(RULE_KIND_LABEL, kindLabel);
 		entry.put(RULE_ID, id);
 		entry.put(RULE_DESCRIPTION, description);
 		entry.put(RULE_STORED, Boolean.valueOf(stored));
+		entry.put(RULE_STATE, state);
+		entry.put(RULE_STATE_LABEL, stateLabel(state));
 		return entry;
 	}
 
 	/**
-	 * The ids of the rules the given query of the stored configuration answers, empty when that
-	 * configuration cannot be read.
-	 *
-	 * <p>
-	 * A configuration that cannot be read means that no rule can be shown as stored, hence that
-	 * none is offered for deletion - which is the safe answer, the file being the only place a rule
-	 * can be deleted from.
-	 * </p>
+	 * The localized name of the given {@link #RULE_STATE}.
 	 */
-	private static Set<String> storedIds(StoredRulesQuery query) {
-		try {
-			return query.run().stream().map(NavigationRuleConfig::getId).collect(Collectors.toSet());
-		} catch (ConfigurationException ex) {
-			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
-			return Set.of();
-		}
+	private static String stateLabel(String state) {
+		ResKey label = switch (state) {
+			case STATE_NEW -> I18NConstants.COVERAGE_RULE_STATE_NEW;
+			case STATE_CHANGED -> I18NConstants.COVERAGE_RULE_STATE_CHANGED;
+			case STATE_DELETED -> I18NConstants.COVERAGE_RULE_STATE_DELETED;
+			default -> null;
+		};
+		return label == null ? "" : Resources.getInstance().getString(label);
 	}
 
 	/**
@@ -691,20 +883,114 @@ public class SecurityCoverageTable implements UIElement {
 	/**
 	 * A query for the rules the stored configuration defines.
 	 */
-	private interface StoredRulesQuery {
+	private interface StoredRulesQuery<R extends NavigationRuleConfig> {
 
 		/**
 		 * Answers the query.
 		 */
-		List<? extends NavigationRuleConfig> run() throws ConfigurationException;
+		List<? extends R> run() throws ConfigurationException;
 	}
 
 	/**
-	 * The analyzed types held by the channel value, or a fresh analysis when the channel is unset.
+	 * A query for the ids of the rules the stored configuration removes.
+	 */
+	private interface RemovedRulesQuery {
+
+		/**
+		 * Answers the query.
+		 */
+		Set<String> run() throws ConfigurationException;
+	}
+
+	/**
+	 * The rows held by the channel value, or a fresh analysis when the channel is unset.
+	 *
+	 * @see #analysisRows()
 	 */
 	private static List<Object> rows(Object value) {
-		List<?> rows = value instanceof List<?> list ? list : SecurityCoverageCheck.getInstance().analyze();
-		return new ArrayList<>(rows);
+		return value instanceof List<?> list ? new ArrayList<>(list) : analysisRows();
+	}
+
+	/**
+	 * A fresh analysis as the rows of this table: the {@link TypeCoverage} of every analyzed type,
+	 * followed by the {@link CoverageFinding}s that belong to no analyzed type
+	 * ({@link SecurityCoverageAnalysis#getUnattachedFindings()}), which the table shows in a group
+	 * of their own.
+	 *
+	 * <p>
+	 * This is the value a command refreshing the table writes to its {@link Config#getInput() input
+	 * channel}.
+	 * </p>
+	 */
+	public static List<Object> analysisRows() {
+		SecurityCoverageAnalysis analysis = SecurityCoverageCheck.getInstance().newAnalysis();
+		List<Object> result = new ArrayList<>(analysis.analyze());
+		result.addAll(analysis.getUnattachedFindings());
+		return result;
+	}
+
+	/**
+	 * Whether the given row stands for a part of the model: an analyzed type or a module.
+	 */
+	private static boolean isModelRow(Object row) {
+		return row instanceof TypeCoverage || row instanceof TLModule;
+	}
+
+	/**
+	 * The model part the given {@link #isModelRow(Object) model row} stands for.
+	 */
+	private static Object modelValue(Object row) {
+		return row instanceof TypeCoverage coverage ? coverage.type() : row;
+	}
+
+	/**
+	 * The given column, showing the label of the group of the unattached findings and the places
+	 * of each of these findings in the rows that stand for no part of the model.
+	 */
+	private static <V> Column<Object, V> withUnattachedLabels(Column<Object, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				String label = unattachedLabel(row);
+				return label != null ? CellContent.text(label) : super.renderCell(row);
+			}
+
+			@Override
+			public String searchText(Object row) {
+				String label = unattachedLabel(row);
+				return label != null ? label : super.searchText(row);
+			}
+		};
+	}
+
+	/**
+	 * The text the type column shows for a row standing for no part of the model: the label of the
+	 * {@link #UNATTACHED group} of the unattached findings, or the places of such a finding.
+	 *
+	 * @return <code>null</code> for a {@link #isModelRow(Object) model row}.
+	 */
+	private static String unattachedLabel(Object row) {
+		if (row == UNATTACHED) {
+			return Resources.getInstance().getString(I18NConstants.COVERAGE_UNATTACHED_GROUP);
+		}
+		if (row instanceof CoverageFinding finding) {
+			return users(finding);
+		}
+		return null;
+	}
+
+	/**
+	 * The text of the findings column: the messages of the findings of a type, the message of an
+	 * unattached finding, nothing for a module.
+	 */
+	private static String findingsText(Object row) {
+		if (row instanceof TypeCoverage) {
+			return findings(row);
+		}
+		if (row instanceof CoverageFinding finding) {
+			return Resources.getInstance().getString(finding.getMessage());
+		}
+		return null;
 	}
 
 	/**
@@ -866,8 +1152,19 @@ public class SecurityCoverageTable implements UIElement {
 		if (delegation != null) {
 			html.append("<p>").append(TagUtil.encodeXML(resources.getString(delegation))).append("</p>");
 		}
+		html.append(findingsHtml(coverage.findings()));
+		return html.toString();
+	}
+
+	/**
+	 * The given findings as an HTML list with one entry per problem, the ways to solve it nested
+	 * underneath.
+	 */
+	private static String findingsHtml(List<CoverageFinding> findings) {
+		Resources resources = Resources.getInstance();
+		StringBuilder html = new StringBuilder();
 		html.append("<ul>");
-		for (CoverageFinding finding : coverage.findings()) {
+		for (CoverageFinding finding : findings) {
 			ResKey problem = problem(finding);
 			if (problem == null) {
 				continue;
@@ -875,7 +1172,7 @@ public class SecurityCoverageTable implements UIElement {
 			html.append("<li>");
 			html.append(TagUtil.encodeXML(resources.getString(problem)));
 			html.append("<ul>");
-			for (ResKey solution : solutions(coverage, finding)) {
+			for (ResKey solution : solutions(finding)) {
 				html.append("<li>").append(TagUtil.encodeXML(resources.getString(solution))).append("</li>");
 			}
 			html.append("</ul>");
@@ -913,17 +1210,33 @@ public class SecurityCoverageTable implements UIElement {
 			case NO_ROLE_SOURCE -> I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 			case NO_READ_GRANT -> I18NConstants.COVERAGE_PROBLEM_NO_READ_GRANT;
 			case DEAD_GRANT -> I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES.fill(
-				finding.getOperation().getID(),
+				finding.getOperationLabel(),
 				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
 			case SHADOWED_RULES -> I18NConstants.COVERAGE_PROBLEM_SHADOWED_RULES__RULES
 				.fill(String.join(VALUE_SEPARATOR, finding.getRuleIds()));
+			case UNGRANTED_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNGRANTED_OPERATION__OPERATION
+				.fill(finding.getOperationLabel());
+			case INAPPLICABLE_OPERATION -> I18NConstants.COVERAGE_PROBLEM_INAPPLICABLE_OPERATION__OPERATION_USERS
+				.fill(finding.getOperationLabel(), users(finding));
+			case UNKNOWN_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNKNOWN_OPERATION__OPERATION_USERS
+				.fill(finding.getOperationLabel(), users(finding));
+			case UNCHECKED_GRANT -> I18NConstants.COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES.fill(
+				finding.getOperationLabel(),
+				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
 		};
+	}
+
+	/**
+	 * The places of the application a finding about an operation lists.
+	 */
+	private static String users(CoverageFinding finding) {
+		return finding.getUses().stream().map(OperationUse::user).collect(Collectors.joining(VALUE_SEPARATOR));
 	}
 
 	/**
 	 * The ways to solve the problem the given finding reports, the most specific one first.
 	 */
-	private static List<ResKey> solutions(TypeCoverage coverage, CoverageFinding finding) {
+	private static List<ResKey> solutions(CoverageFinding finding) {
 		List<ResKey> solutions = new ArrayList<>();
 		switch (finding.getKind()) {
 			case NO_ROLE_SOURCE -> {
@@ -943,6 +1256,21 @@ public class SecurityCoverageTable implements UIElement {
 			case SHADOWED_RULES -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT);
+			}
+			case UNGRANTED_OPERATION -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_GRANT_OPERATION);
+			}
+			case INAPPLICABLE_OPERATION -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_DECLARE_OPERATION);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHECK_OTHER_OPERATION);
+			}
+			case UNKNOWN_OPERATION -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REGISTER_OPERATION);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHECK_OTHER_OPERATION);
+			}
+			case UNCHECKED_GRANT -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_ADD_CHECK);
 			}
 		}
 		return solutions;

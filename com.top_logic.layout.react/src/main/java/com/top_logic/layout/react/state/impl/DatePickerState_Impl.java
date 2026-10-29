@@ -7,6 +7,8 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 
 	private com.top_logic.layout.react.state.DatePickerState.InputType _inputType = com.top_logic.layout.react.state.DatePickerState.InputType.DATE;
 
+	private com.top_logic.layout.react.state.DatePickerState.Precision _precision = com.top_logic.layout.react.state.DatePickerState.Precision.MINUTES;
+
 	private String _displayValue = "";
 
 	/**
@@ -33,6 +35,23 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 	protected final void internalSetInputType(com.top_logic.layout.react.state.DatePickerState.InputType value) {
 		if (value == null) throw new IllegalArgumentException("Property 'inputType' cannot be null.");
 		_inputType = value;
+	}
+
+	@Override
+	public final com.top_logic.layout.react.state.DatePickerState.Precision getPrecision() {
+		return _precision;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DatePickerState setPrecision(com.top_logic.layout.react.state.DatePickerState.Precision value) {
+		internalSetPrecision(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPrecision()} without chain call utility. */
+	protected final void internalSetPrecision(com.top_logic.layout.react.state.DatePickerState.Precision value) {
+		if (value == null) throw new IllegalArgumentException("Property 'precision' cannot be null.");
+		_precision = value;
 	}
 
 	@Override
@@ -124,6 +143,12 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.DatePickerState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.DatePickerState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;
@@ -145,6 +170,8 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 		super.writeFields(out);
 		out.name(INPUT_TYPE__PROP);
 		getInputType().writeTo(out);
+		out.name(PRECISION__PROP);
+		getPrecision().writeTo(out);
 		out.name(DISPLAY_VALUE__PROP);
 		out.value(getDisplayValue());
 	}
@@ -153,6 +180,7 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case INPUT_TYPE__PROP: setInputType(com.top_logic.layout.react.state.DatePickerState.InputType.readInputType(in)); break;
+			case PRECISION__PROP: setPrecision(com.top_logic.layout.react.state.DatePickerState.Precision.readPrecision(in)); break;
 			case DISPLAY_VALUE__PROP: setDisplayValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}

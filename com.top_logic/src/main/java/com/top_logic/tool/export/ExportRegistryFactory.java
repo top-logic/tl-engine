@@ -12,8 +12,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 
@@ -26,6 +28,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 	ThreadContextManager.Module.class
 })
 @Label("Export registry")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class ExportRegistryFactory extends ManagedClass {
 
 	/**

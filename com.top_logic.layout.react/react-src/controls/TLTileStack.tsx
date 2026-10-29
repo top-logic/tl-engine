@@ -20,15 +20,11 @@ const TileFrame: React.FC<{
 }> = ({ frame, covered, wrapperRef }) => {
   const [fillClass, fillHost] = useFillHost();
 
-  const className = [
-    'tlTileStack__frame',
-    covered ? 'tlTileStack__frame--covered' : '',
-    fillClass,
-  ].filter(Boolean).join(' ');
+  const className = ['tl-tile-stack__frame', fillClass].filter(Boolean).join(' ');
 
   return (
     <FillProvider host={fillHost}>
-      <div className={className} ref={wrapperRef}>
+      <div className={className} data-tl-state={covered ? 'covered' : undefined} ref={wrapperRef}>
         <TLChild control={frame} />
       </div>
     </FillProvider>
@@ -43,11 +39,11 @@ const TileFrame: React.FC<{
  * - frames: ChildDescriptor[] - one frame per stack position, the initial view first
  * - activeIndex: number - position of the frame to display
  *
- * Moving through the stack is a transition an application stylesheet owns: the root says which way
- * the stack moved - `tlTileStack--forward` for a frame pushed, `tlTileStack--backward` for one
- * popped - and {@link useKeyedTransition} marks the frame arriving `tlTileStack__frame--entering`
- * and holds an inert copy of the frame left behind, marked `tlTileStack__frame--exiting`, over the
- * stack while it leaves. The engine only places the copy; the movement is the stylesheet's.
+ * Moving through the stack is a transition the package stylesheet owns: the root says which way the stack
+ * moved - `data-tl-state~="backward"` for a frame popped, nothing for one pushed - and
+ * {@link useKeyedTransition} marks the frame arriving `entering` and holds an inert copy of the frame left behind,
+ * marked `exiting`, over the stack while it leaves, both in the frame's `data-tl-state`; a frame that is covered
+ * carries `covered` there.
  *
  * Takes part in the fill contract as a container: a stack whose frame fills fills its own
  * container, so the frame content spans the available height instead of the stack collapsing to
@@ -77,16 +73,13 @@ const TLTileStack: React.FC<TLCellProps> = ({ controlId }) => {
     keys: frames.map((frame) => frame.controlId),
     node: (key) => frameNodes.get(key) ?? null,
     container: () => rootRef.current,
-    enterClass: 'tlTileStack__frame--entering',
-    exitClass: 'tlTileStack__frame--exiting',
+    state: true,
   });
-
-  const rootClass = ['tlTileStack', 'tlTileStack--' + direction.current, fillClass]
-    .filter(Boolean).join(' ');
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} ref={rootRef} className={rootClassName(state, rootClass)}>
+      <div id={controlId} ref={rootRef} className={rootClassName(state, 'tl-tile-stack', fillClass)}
+        data-tl-state={direction.current === 'backward' ? 'backward' : undefined}>
         {frames.map((frame, i) => (
           <TileFrame
             key={frame.controlId}

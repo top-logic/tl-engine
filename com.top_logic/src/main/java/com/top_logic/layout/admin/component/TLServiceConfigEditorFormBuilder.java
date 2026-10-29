@@ -6,16 +6,12 @@
 package com.top_logic.layout.admin.component;
 
 import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 
 /**
  * Builds a form for the configuration of the given TL service.
@@ -50,7 +46,7 @@ public class TLServiceConfigEditorFormBuilder
 		 * 
 		 * @return Configuration of the given service class.
 		 */
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		ServiceConfiguration<?> getServiceConfiguration();
 
 		/**
@@ -65,22 +61,9 @@ public class TLServiceConfigEditorFormBuilder
 		return EditModel.class;
 	}
 
-	private ServiceConfiguration<? extends ManagedClass> getServiceConfiguration(
-			Class<? extends ManagedClass> serviceClass) {
-		try {
-			return ConfigCopier.copy(ApplicationConfig.getInstance().getServiceConfiguration(serviceClass));
-		} catch (ConfigurationException exception) {
-			return null;
-		}
-	}
-
 	@Override
 	protected void fillFormModel(EditModel formModel, BasicRuntimeModule<?> serviceModule) {
-		formModel.setServiceConfiguration(getServiceConfig(serviceModule));
-	}
-
-	private ServiceConfiguration<? extends ManagedClass> getServiceConfig(BasicRuntimeModule<?> module) {
-		return getServiceConfiguration(module.getImplementation());
+		formModel.setServiceConfiguration(TLServiceUtils.getServiceConfiguration(serviceModule));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

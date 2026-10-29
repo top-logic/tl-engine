@@ -48,7 +48,7 @@ public class ChangedValueOwners {
 	 * @param modelTables
 	 *        Description of the tables used for storing attribute values.
 	 * @param event
-	 *        The committed change.
+	 *        The committed change, or the change about to be committed.
 	 * @return The keys of the objects with changed attribute values, each key reported once.
 	 */
 	public static Set<ObjectKey> of(ModelTables modelTables, UpdateEvent event) {

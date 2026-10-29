@@ -12,9 +12,11 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.module.category.AccessControlCategory;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
@@ -38,6 +40,7 @@ import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 	BoundHelper.Module.class,
 })
 @Label("Layout-based security")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity.Config> {
 
 	/**
@@ -122,7 +125,7 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	}
 
 	private LayoutComponent.Config loadLayout(String layoutName) throws ConfigurationException {
-		return ThreadContextManager.inSystemInteraction(LayoutBasedSecurity.class,
+		return ThreadContext.inSystemContext(LayoutBasedSecurity.class,
 			new ComputationEx<LayoutComponent.Config, ConfigurationException>() {
 
 				@Override

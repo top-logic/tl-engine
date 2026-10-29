@@ -10,11 +10,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -44,10 +46,13 @@ import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactFormFieldControl} editing a value that is picked from a set of options.
@@ -70,6 +75,12 @@ import com.top_logic.util.Resources;
  * <p>
  * Extends {@link ReactFormFieldControl} to automatically observe model changes (value, editability,
  * mandatory, visibility, errors) and push incremental patches to the client via SSE.
+ * </p>
+ *
+ * <p>
+ * A list that opens on demand can {@link #setFreeEntry(Function) accept free entry}: besides
+ * choosing an option, the user enters a text with the {@link EnterTextArguments#COMMAND} command,
+ * which becomes the value of the field or a value created from it.
  * </p>
  *
  * <p>
@@ -122,6 +133,27 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private boolean _filter = true;
 
 	/**
+	 * Converts a text the user entered into the value it stands for, {@code null} while the field
+	 * accepts no free entry.
+	 *
+	 * @see #setFreeEntry(Function)
+	 */
+	private Function<String, ?> _textToValue;
+
+	/**
+	 * The values {@link #_textToValue} created from the texts the user entered into this field, in
+	 * the order they were created.
+	 *
+	 * <p>
+	 * They are offered like options while the field holds them, so a text entered once more chooses
+	 * the value created the first time instead of creating another one. A value taken out of the
+	 * selection again is offered no longer: it was never stored, and the options show the values
+	 * the field can be set to, not the typing that led to the current value.
+	 * </p>
+	 */
+	private final List<Object> _enteredValues = new ArrayList<>();
+
+	/**
 	 * Maps option ID strings to the original option objects. Used by
 	 * {@link #handleValueChanged(Map)} to resolve client-sent IDs back to model objects. Populated
 	 * by {@link #loadOptions()} and incrementally by {@link #toOptionDescriptors(List)} when
@@ -132,8 +164,15 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Maps option objects to their allocated IDs. Built alongside {@link #_optionIndex} so that
 	 * {@link #toOptionDescriptors(List)} produces IDs consistent with the option index.
+	 *
+	 * <p>
+	 * Options are looked up by {@link Object#equals(Object)}, as the field's value is compared with
+	 * its options everywhere else: a value that is equal to an option, but not the same instance (a
+	 * string read from a channel, a number parsed from a configuration), is the selection of that
+	 * option.
+	 * </p>
 	 */
-	private Map<Object, String> _optionIdByObject = new IdentityHashMap<>();
+	private Map<Object, String> _optionIdByObject = new HashMap<>();
 
 	/**
 	 * Guard flag to suppress the value changed listener when the change originates from the client
@@ -292,6 +331,49 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * Whether the user may enter a text that is no option, which then becomes the value of the
+	 * field.
+	 *
+	 * @see #setFreeEntry(Function)
+	 */
+	public boolean hasFreeEntry() {
+		return _textToValue != null;
+	}
+
+	/**
+	 * Sets whether and how the user may enter a text that is no option.
+	 *
+	 * <p>
+	 * With free entry, the user either chooses an option or enters a text, which the client sends
+	 * with the {@link EnterTextArguments#COMMAND} command. The entered text is trimmed; an empty
+	 * text changes nothing. A text that matches the label of an option, of a value of the field,
+	 * or of a value created before from an entered text, ignoring case, chooses that value. Any
+	 * other text is converted by the given function, and its result is chosen: it replaces the
+	 * value of a field holding one value and is added to the values of a field holding several.
+	 * </p>
+	 *
+	 * <p>
+	 * The function may refuse a text by throwing a {@link TopLogicException}, whose message the
+	 * user is shown; the value of the field then stays as it is. A {@code null} result leaves the
+	 * value unchanged as well.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the shape {@link SelectDisplay#DROPDOWN} offers an input to enter a text into; the other
+	 * shapes ignore the setting.
+	 * </p>
+	 *
+	 * @param textToValue
+	 *        Converts an entered text into the value it stands for, e.g. the text itself for a
+	 *        field holding texts, or a new object named by the text. {@code null} to accept only a
+	 *        choice among the options.
+	 */
+	public void setFreeEntry(Function<String, ?> textToValue) {
+		_textToValue = textToValue;
+		putState(DropdownSelectState.FREE_ENTRY__PROP, Boolean.valueOf(textToValue != null));
+	}
+
+	/**
 	 * The label of the choice of no value in the given shape.
 	 *
 	 * <p>
@@ -328,6 +410,27 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		updateValueState();
 		invalidateOptions();
 		commitUpdate(tx);
+	}
+
+	/**
+	 * Whether the given value must be shown masked: a business object the current user may not
+	 * discover.
+	 *
+	 * <p>
+	 * A field holds the unfiltered value of a reference, so it may contain such objects. Their
+	 * identity - label, image, color, link - is not sent to the client: the field shows the
+	 * placeholder {@link I18NConstants#MASKED_VALUE} instead, keeps the object at its place in the
+	 * value, and writes it back unchanged unless the user removes it.
+	 * </p>
+	 *
+	 * @param option
+	 *        The value to check, may be {@code null}.
+	 */
+	public static boolean isMasked(Object option) {
+		// A model element is meta-data, not a business object, and is never masked (like it is never
+		// filtered, see SearchExpression#filterSecurity).
+		return option instanceof TLObject object && !(object instanceof TLModelPart)
+			&& !ModelAccessRights.getInstance().isDiscoverAllowed(object);
 	}
 
 	/**
@@ -393,7 +496,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private void loadOptions() {
 		List<?> options = sortedOptions();
 		Map<String, Object> newIndex = new HashMap<>();
-		Map<Object, String> newReverse = new IdentityHashMap<>();
+		Map<Object, String> newReverse = new HashMap<>();
 		List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
 		_optionIndex = newIndex;
 		_optionIdByObject = newReverse;
@@ -404,6 +507,19 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		// Re-send value with IDs consistent with the new option index.
 		updateValueState();
 		commitUpdate(tx);
+	}
+
+	/**
+	 * Without free entry, the command entering a text is refused anyway, so it is not offered.
+	 */
+	@Override
+	protected Set<String> scriptingHiddenCommands() {
+		if (hasFreeEntry()) {
+			return super.scriptingHiddenCommands();
+		}
+		Set<String> result = new LinkedHashSet<>(super.scriptingHiddenCommands());
+		result.add(EnterTextArguments.COMMAND);
+		return result;
 	}
 
 	private void updateValueState() {
@@ -458,12 +574,19 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Overrides the default value change handling from {@link ReactFormFieldControl} to send full
 	 * option descriptors (with label and image) instead of raw field values.
+	 *
+	 * <p>
+	 * A value set from elsewhere - the form being reset, stored, or switched to another object -
+	 * ends what the user entered: the values created from the entered texts belong to the edit
+	 * that is over and are no longer offered.
+	 * </p>
 	 */
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		// The objects displayed are the ones the value now names, whoever set it.
 		_displayedObjects.observeValue(newValue);
 		if (!_updatingFromClient) {
+			_enteredValues.clear();
 			updateValueState();
 			// The option list carries the labels of the value as well, so it goes stale with it.
 			invalidateOptions();
@@ -489,6 +612,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
 	 *
+	 * <p>
+	 * Like every value arriving from a client, the selection is dropped unless the field
+	 * {@link #acceptsClientValue() accepts client values}.
+	 * </p>
+	 *
 	 * @param arguments
 	 *        Must contain a {@link FieldValueArguments#VALUE} entry with a list of option value IDs.
 	 */
@@ -499,6 +627,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
 		if (selectedIds == null) {
 			selectedIds = Collections.emptyList();
@@ -530,6 +661,92 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * Handles the {@link EnterTextArguments#COMMAND} command: chooses the value the text the user
+	 * entered stands for, see {@link #setFreeEntry(Function)}.
+	 *
+	 * <p>
+	 * Like every value arriving from a client, the text is dropped unless the field
+	 * {@link #acceptsClientValue() accepts client values}. A field without free entry refuses it.
+	 * </p>
+	 *
+	 * <p>
+	 * The text names the value itself, so the command is recorded as it was dispatched and replays
+	 * in a later session: there, the text chooses the value of that label, or creates it again.
+	 * </p>
+	 */
+	@ReactCommandHandler(EnterTextArguments.COMMAND)
+	HandlerResult handleEnterText(EnterTextArguments arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		if (!hasFreeEntry()) {
+			return HandlerResult.error(I18NConstants.ERROR_NO_FREE_ENTRY, null);
+		}
+		String text = arguments.getText() == null ? "" : arguments.getText().trim();
+		if (text.isEmpty()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		Object value = findByLabel(text);
+		if (value == null) {
+			try {
+				value = _textToValue.apply(text);
+			} catch (TopLogicException ex) {
+				// With the exception, its message is the title of the report, not an internal error.
+				return HandlerResult.error(ex.getErrorKey(), ex);
+			}
+			if (value == null) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			_enteredValues.add(value);
+		}
+
+		List<Object> newSelection;
+		if (_selectModel.isMultiple()) {
+			newSelection = new ArrayList<>(selection());
+			if (newSelection.contains(value)) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			newSelection.add(value);
+		} else {
+			newSelection = Collections.singletonList(value);
+		}
+		_updatingFromClient = true;
+		try {
+			_selectModel.setValue(newSelection);
+		} finally {
+			_updatingFromClient = false;
+		}
+		updateValueState();
+		// A value created from the text is offered from now on, which the list held by the client
+		// does not know yet.
+		invalidateOptions();
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The value whose label is the given text, ignoring case: an option, a value of the field, or
+	 * a value created before from an entered text. {@code null}, if there is none.
+	 *
+	 * <p>
+	 * A {@link #isMasked(Object) masked} value is no match: its label is not disclosed, neither by
+	 * displaying nor by matching it.
+	 * </p>
+	 */
+	private Object findByLabel(String text) {
+		for (Object candidate : optionsAndValue()) {
+			if (candidate == null || isMasked(candidate)) {
+				continue;
+			}
+			String label = _labelProvider.getLabel(candidate);
+			if (label != null && label.trim().equalsIgnoreCase(text)) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Handles the {@link #CMD_SELECT_BY_KEY} command: sets the selection to the options designated by
 	 * their stable business {@link ScriptingModelKey key}s — the round-trip inverse of the {@code key} that
 	 * {@link #scriptingScalarState()} projects onto each option.
@@ -543,6 +760,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
 	HandlerResult handleSelectByKey(SelectByKeysArguments arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		List<ModelName> keys = arguments.getKeys();
 
 		List<ModelName> unresolved = new ArrayList<>();
@@ -574,8 +794,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (CMD_VALUE_CHANGED.equals(command) && arguments != null) {
 			List<String> ids = (List<String>) arguments.get(FieldValueArguments.VALUE);
 			if (ids != null) {
-				ReactOptionScope scope =
-					new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+				ReactOptionScope scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 				SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
 				recorded.setName(CMD_SELECT_BY_KEY);
 				for (String id : ids) {
@@ -602,9 +821,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * the keys were built against. A key that throws or resolves to nothing is reported as unresolved
 	 * rather than skipped.
 	 * </p>
+	 *
+	 * <p>
+	 * The scope contains the current value as well: a {@link #isMasked(Object) masked} value is no
+	 * option, but stays in the selection when it is replayed.
+	 * </p>
 	 */
 	private List<Object> resolveByKeys(List<ModelName> keys, List<ModelName> unresolvedOut) {
-		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+		ReactOptionScope scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 		ActionContext actionContext = ScriptingModelKey.newActionContext();
 		List<Object> resolved = new ArrayList<>(keys.size());
 		for (ModelName name : keys) {
@@ -621,6 +845,40 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		return resolved;
 	}
 
+
+	/**
+	 * The {@link #offeredOptions() offered options} followed by the elements of the value of the
+	 * field that are none of them (e.g. {@link #isMasked(Object) masked} values, which no option
+	 * list contains).
+	 */
+	private List<Object> optionsAndValue() {
+		List<Object> result = offeredOptions();
+		Set<Object> contained = new HashSet<>(result);
+		for (Object element : getSelectionSorted()) {
+			if (contained.add(element)) {
+				result.add(element);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The options of the field followed by the {@link #_enteredValues values created from entered
+	 * texts} that are no options and are still selected.
+	 */
+	private List<Object> offeredOptions() {
+		List<Object> result = new ArrayList<>(_selectModel.getOptions());
+		if (!_enteredValues.isEmpty()) {
+			_enteredValues.retainAll(selection());
+			Set<Object> contained = new HashSet<>(result);
+			for (Object entered : _enteredValues) {
+				if (contained.add(entered)) {
+					result.add(entered);
+				}
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Builds option descriptors and populates the given index and reverse maps. Each option
@@ -665,7 +923,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			}
 
 			Map<String, Object> descriptor = describe(id, option, resourceProvider);
-			if (navigator != null && navigator.canShow(option)) {
+			if (navigator != null && !isMasked(option) && navigator.canShow(option)) {
 				descriptor.put(DropdownSelectState.Option.LINK__PROP, Boolean.TRUE);
 			}
 			descriptors.add(descriptor);
@@ -683,6 +941,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * option is decided in one place.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link #isMasked(Object) masked} option is described by its id and the placeholder label
+	 * only.
+	 * </p>
+	 *
 	 * @param id
 	 *        The id the option is addressed by, from {@link #_optionIndex}.
 	 * @param option
@@ -695,6 +958,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private Map<String, Object> describe(String id, Object option, ResourceProvider resourceProvider) {
 		Map<String, Object> descriptor = new HashMap<>();
 		descriptor.put(DropdownSelectState.Option.VALUE__PROP, id);
+		if (isMasked(option)) {
+			// Only the opaque id, so the masked value is written back unchanged.
+			descriptor.put(DropdownSelectState.Option.LABEL__PROP,
+				Resources.getInstance().getString(I18NConstants.MASKED_VALUE));
+			return descriptor;
+		}
 		descriptor.put(DropdownSelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));
 
 		if (resourceProvider != null) {
@@ -719,7 +988,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	HandlerResult handleGoto(ReactContext context, Map<String, Object> arguments) {
 		Object option = _optionIndex.get(arguments.get(ARG_OPTION));
 		ObjectNavigator navigator = navigator();
-		if (option != null && navigator != null && navigator.canShow(option)) {
+		if (option != null && navigator != null && !isMasked(option) && navigator.canShow(option)) {
 			navigator.show(context, option);
 		}
 		return HandlerResult.DEFAULT_RESULT;
@@ -727,30 +996,44 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * Returns the current selection as a sorted list. If {@link #_customOrder} is enabled, the
-	 * selection order is preserved. Otherwise it is sorted by {@link #_optionComparator}.
+	 * selection order is preserved. Otherwise it is sorted by {@link #_optionComparator}, with the
+	 * {@link #isMasked(Object) masked} values appended in their stored order: sorting them by their
+	 * labels would disclose these labels by their position.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private List<?> getSelectionSorted() {
+		List<?> selection = selection();
+		if (_customOrder || selection.size() <= 1 || _optionComparator == null) {
+			return selection;
+		}
+		List<Object> visible = new ArrayList<>(selection.size());
+		List<Object> masked = new ArrayList<>();
+		for (Object element : selection) {
+			(isMasked(element) ? masked : visible).add(element);
+		}
+		visible.sort((Comparator) _optionComparator);
+		visible.addAll(masked);
+		return visible;
+	}
+
+	/**
+	 * The current selection in the order the model holds it.
+	 */
+	private List<?> selection() {
 		Object value = _selectModel.getValue();
 		if (!(value instanceof List)) {
 			return value != null ? Collections.singletonList(value) : Collections.emptyList();
 		}
-		List<?> selection = (List<?>) value;
-		if (_customOrder || selection.size() <= 1 || _optionComparator == null) {
-			return selection;
-		}
-		Object[] array = selection.toArray();
-		Arrays.sort(array, (Comparator) _optionComparator);
-		return Arrays.asList(array);
+		return (List<?>) value;
 	}
 
 	/**
-	 * Returns the option list sorted by the comparator. Custom order only affects selection order,
-	 * not option display order.
+	 * Returns the {@link #offeredOptions() offered options} sorted by the comparator. Custom order
+	 * only affects selection order, not option display order.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private List<?> sortedOptions() {
-		List<?> options = _selectModel.getOptions();
+		List<?> options = offeredOptions();
 		if (options.size() <= 1 || _optionComparator == null) {
 			return options;
 		}

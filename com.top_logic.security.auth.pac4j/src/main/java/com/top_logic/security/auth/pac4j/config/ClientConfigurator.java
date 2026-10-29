@@ -109,4 +109,16 @@ public interface ClientConfigurator {
 		return null;
 	}
 
+	/**
+	 * Whether a login with the client of this configurator can succeed now.
+	 *
+	 * <p>
+	 * Asked each time the login page lists the clients, so that a client is offered as soon as its
+	 * prerequisites, e.g. its secret, are provided.
+	 * </p>
+	 */
+	default boolean isAvailable() {
+		return true;
+	}
+
 }

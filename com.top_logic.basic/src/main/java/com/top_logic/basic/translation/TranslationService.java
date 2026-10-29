@@ -16,16 +16,25 @@ import javax.net.ssl.HttpsURLConnection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MemorySizeFormat;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
+import com.top_logic.tools.resources.translate.DetectedTranslation;
 import com.top_logic.tools.resources.translate.Translator;
 
 /**
@@ -62,7 +71,9 @@ import com.top_logic.tools.resources.translate.Translator;
  * 
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("Translation service")
+@ServiceCategory.Of(I18NCategory.class)
 public abstract class TranslationService<C extends TranslationService.Config> extends ConfiguredManagedClass<C>
 		implements Translator {
 
@@ -74,8 +85,11 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		/** @see #getApiHost() */
 		String API_HOST = "api-host";
 
-		/** The API key to authenticate the request. */
+		/** @see #getApiKey() */
 		String API_KEY = "api-key";
+
+		/** @see #getCredentials() */
+		String CREDENTIALS = "credentials";
 
 		/** @see #getMaxAccumulatedTranslationSize() */
 		String MAX_ACCUMULATED_TRANSLATION_SIZE = "max-accumulated-translation-size";
@@ -93,14 +107,46 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		/** @see #getApiHost() */
 		void setApiHost(String apiHost);
 
-		/** The API key to authenticate the requests. */
+		/**
+		 * The API key to authenticate the requests.
+		 *
+		 * <p>
+		 * Recommended is a reference to the key by its secret name, so that the key is not part of
+		 * the configuration:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;api-key name="translation_api_key"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * An attribute value is an encrypted key, or a plain key with the prefix
+		 * <code>unencrypted:</code>. Configuring both an API key and {@link #getCredentials()
+		 * credentials} is an error.
+		 * </p>
+		 */
 		@Name(API_KEY)
-		@Mandatory
-		@Encrypted
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
 
 		/** @see #getApiKey() */
-		void setApiKey(String apiKey);
+		void setApiKey(PolymorphicConfiguration<? extends SecretSource> apiKey);
+
+		/**
+		 * How the requests to the translation API are authenticated, if not with an
+		 * {@link #getApiKey() API key}.
+		 *
+		 * <p>
+		 * E.g. no credentials at all, when a gateway in between adds them. Configuring both
+		 * credentials and an API key is an error.
+		 * </p>
+		 */
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
+
+		/** @see #getCredentials() */
+		void setCredentials(PolymorphicConfiguration<? extends CredentialProvider> credentials);
 
 		/**
 		 * The maximum accumulated size of translations.
@@ -178,6 +224,26 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		handleTranslationSize(text);
 		try {
 			return _translator.translate(text, sourceLanguage, targetLanguage);
+		} catch (Exception ex) {
+			throw new I18NRuntimeException(I18NConstants.HTTP_REQUEST_ERROR__REASON.fill(ex.getMessage()), ex);
+		}
+	}
+
+	/**
+	 * Translates the given text to the target language, detecting the language of the given text
+	 * automatically.
+	 *
+	 * @return The translation together with the detected source language, <code>null</code> as
+	 *         source language for an empty text or if the translator does not report it.
+	 */
+	@Override
+	public DetectedTranslation translateDetecting(String text, String targetLanguage) {
+		if (StringServices.isEmpty(text)) {
+			return new DetectedTranslation(StringServices.EMPTY_STRING, null, targetLanguage);
+		}
+		handleTranslationSize(text);
+		try {
+			return _translator.translateDetecting(text, targetLanguage);
 		} catch (Exception ex) {
 			throw new I18NRuntimeException(I18NConstants.HTTP_REQUEST_ERROR__REASON.fill(ex.getMessage()), ex);
 		}

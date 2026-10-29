@@ -11,6 +11,9 @@
 					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.react.window.WindowModelEventService$Module"
+						value="true"
+					/>
 				</modules>
 			</instance>
 		</config>
@@ -28,6 +31,11 @@
 					</listener>
 				</listeners>
 			</instance>
+		</config>
+
+		<!-- Lets the browser windows follow the commits of other threads. -->
+		<config service-class="com.top_logic.layout.react.window.WindowModelEventService">
+			<instance class="com.top_logic.layout.react.window.WindowModelEventService"/>
 		</config>
 
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
@@ -88,11 +96,6 @@
 						layer="tl"
 						resource="/style/tlReactBase.css"
 						requires="tl-react-fonts-inter,tl-design-system-components"
-					/>
-					<stylesheet name="tl-react-controls-css"
-						layer="tl"
-						resource="/style/tlReactControls.css"
-						requires="tl-react-base,tl-react-icons-fontawesome,tl-react-icons-bootstrap,tl-react-icons-tl"
 					/>
 				</resources>
 			</instance>

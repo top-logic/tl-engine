@@ -78,7 +78,7 @@ public class TestTableElement extends TestCase {
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, tableConfig.getInputs().size());
-		assertEquals("Input channel name", "testInput", tableConfig.getInputs().get(0).getChannelName());
+		assertEquals("Input channel name", "testInput", tableConfig.getInputs().get(0).getChannel().getChannelName());
 
 		// Verify rows expression is present (non-null).
 		assertNotNull("Rows expression should be set", tableConfig.getRows());
@@ -222,6 +222,22 @@ public class TestTableElement extends TestCase {
 		assertEquals("all-active", allActive.getName());
 		assertNull("A preset without a label declares none", allActive.getLabel());
 		assertEquals("Should have one criterion", 1, allActive.getCriteria().size());
+	}
+
+	/**
+	 * Tests that a preset's chip presentation - the row count and the CSS class - is parsed, and
+	 * that a preset declaring neither shows no count and carries no class.
+	 */
+	public void testParsePresetPresentation() throws Exception {
+		List<PresetConfig> presets = readTableConfig().getPresets().getPresets();
+
+		PresetConfig mine = presets.get(0);
+		assertTrue("The preset declares its count shown.", mine.getCount());
+		assertEquals("The preset declares a CSS class of its own.", "tl-preset--mine", mine.getCssClass());
+
+		PresetConfig allActive = presets.get(1);
+		assertFalse("A preset shows no count unless it says so.", allActive.getCount());
+		assertNull("A preset carries no CSS class unless it declares one.", allActive.getCssClass());
 	}
 
 	/**
@@ -388,7 +404,7 @@ public class TestTableElement extends TestCase {
 		assertNotNull("The columns aggregate over a group.", milestones.getAggregate());
 		assertNotNull("The columns order their values themselves.", milestones.getComparator());
 		assertEquals("Should declare one input", 1, milestones.getInputs().size());
-		assertEquals("testInput", milestones.getInputs().get(0).getChannelName());
+		assertEquals("testInput", milestones.getInputs().get(0).getChannel().getChannelName());
 
 		DynamicColumns.Config plain = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
 		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
@@ -498,6 +514,18 @@ public class TestTableElement extends TestCase {
 	/**
 	 * The problems reported while instantiating the given configuration.
 	 */
+	/**
+	 * Tests that a row-edit table edited in place is reported: a row-edit table buffers its edits
+	 * in the form, an edit in place writes at once.
+	 */
+	public void testEditInPlaceWithRowEditReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		tableConfig.update(tableConfig.descriptor().getProperty(TableElement.Config.ROW_EDIT), RowEditPolicy.ALL);
+		tableConfig.update(tableConfig.descriptor().getProperty(TableElement.Config.EDIT_IN_PLACE), Boolean.TRUE);
+
+		assertContains(TableElement.Config.EDIT_IN_PLACE, errors(tableConfig));
+	}
+
 	private static List<String> errors(TableElement.Config tableConfig) {
 		BufferingProtocol log = new BufferingProtocol();
 		new DefaultInstantiationContext(log).getInstance(tableConfig);
@@ -630,7 +658,7 @@ public class TestTableElement extends TestCase {
 			total.getMultiple());
 		assertNotNull("The value function is declared.", total.getValue());
 		assertEquals("Should declare one input", 1, total.getInputs().size());
-		assertEquals("testInput", total.getInputs().get(0).getChannelName());
+		assertEquals("testInput", total.getInputs().get(0).getChannel().getChannelName());
 		assertNotNull("The column aggregates over a group.", total.getAggregate());
 		assertNotNull("The column orders its values themselves.", total.getComparator());
 		assertNull("A column without a label is named after itself.", total.getLabel());

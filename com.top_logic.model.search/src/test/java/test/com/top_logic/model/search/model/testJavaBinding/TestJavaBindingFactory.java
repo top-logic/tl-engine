@@ -17,35 +17,55 @@ package test.com.top_logic.model.search.model.testJavaBinding;
 public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
+	 * Name of the module <code>TestJavaBinding</code> defined by {@link TestJavaBindingFactory}.
+	 */
+	public static final String TEST_JAVA_BINDING_MODULE = "TestJavaBinding";
+
+	/**
 	 * Name of the structure <code>TestJavaBinding</code> defined by {@link TestJavaBindingFactory}.
+	 * 
+	 * @deprecated Use {@link #TEST_JAVA_BINDING_MODULE}.
 	 */
-	public static final String TEST_JAVA_BINDING_STRUCTURE = "TestJavaBinding";
+	@Deprecated
+	public static final String TEST_JAVA_BINDING_STRUCTURE = TEST_JAVA_BINDING_MODULE;
 
 	/**
-	 * Name of the enumeration <code>E</code> in module {@value #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of the enumeration <code>E</code> in module {@value #TEST_JAVA_BINDING_MODULE}.
+	 * 
+	 * @deprecated Use {@link E#TYPE_NAME}.
 	 */
-	public static final String E_ENUM = "E";
+	@Deprecated
+	public static final String E_ENUM = E.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>A</code> in enumeration {@value #E_ENUM}.
+	 * Name of the classifier <code>A</code> in enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#A_CLASSIFIER}.
 	 */
-	public static final String A_E_CLASSIFIER = "A";
+	@Deprecated
+	public static final String A_E_CLASSIFIER = E.A_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>B</code> in enumeration {@value #E_ENUM}.
+	 * Name of the classifier <code>B</code> in enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#B_CLASSIFIER}.
 	 */
-	public static final String B_E_CLASSIFIER = "B";
+	@Deprecated
+	public static final String B_E_CLASSIFIER = E.B_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>C</code> in enumeration {@value #E_ENUM}.
+	 * Name of the classifier <code>C</code> in enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#C_CLASSIFIER}.
 	 */
-	public static final String C_E_CLASSIFIER = "C";
+	@Deprecated
+	public static final String C_E_CLASSIFIER = E.C_CLASSIFIER;
 
 	/**
 	 * Lookup {@link Common} type.
 	 */
 	public static com.top_logic.model.TLClass getCommonType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(Common.COMMON_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(Common.COMMON_TYPE);
 	}
 
 	/**
@@ -59,7 +79,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link A} type.
 	 */
 	public static com.top_logic.model.TLClass getAType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(A.A_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(A.A_TYPE);
 	}
 
 	/**
@@ -80,7 +100,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link Primitives} type.
 	 */
 	public static com.top_logic.model.TLClass getPrimitivesType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(Primitives.PRIMITIVES_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(Primitives.PRIMITIVES_TYPE);
 	}
 
 	/**
@@ -129,7 +149,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link PrimitivesMandatory} type.
 	 */
 	public static com.top_logic.model.TLClass getPrimitivesMandatoryType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(PrimitivesMandatory.PRIMITIVES_MANDATORY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(PrimitivesMandatory.PRIMITIVES_MANDATORY_TYPE);
 	}
 
 	/**
@@ -178,7 +198,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link PrimitivesDerived} type.
 	 */
 	public static com.top_logic.model.TLClass getPrimitivesDerivedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(PrimitivesDerived.PRIMITIVES_DERIVED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(PrimitivesDerived.PRIMITIVES_DERIVED_TYPE);
 	}
 
 	/**
@@ -234,7 +254,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link PrimitivesDerivedMandatory} type.
 	 */
 	public static com.top_logic.model.TLClass getPrimitivesDerivedMandatoryType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(PrimitivesDerivedMandatory.PRIMITIVES_DERIVED_MANDATORY_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(PrimitivesDerivedMandatory.PRIMITIVES_DERIVED_MANDATORY_TYPE);
 	}
 
 	/**
@@ -290,7 +310,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link References} type.
 	 */
 	public static com.top_logic.model.TLClass getReferencesType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(References.REFERENCES_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(References.REFERENCES_TYPE);
 	}
 
 	/**
@@ -346,7 +366,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link ReferencesDerived} type.
 	 */
 	public static com.top_logic.model.TLClass getReferencesDerivedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(ReferencesDerived.REFERENCES_DERIVED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(ReferencesDerived.REFERENCES_DERIVED_TYPE);
 	}
 
 	/**
@@ -409,7 +429,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link Enums} type.
 	 */
 	public static com.top_logic.model.TLClass getEnumsType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(Enums.ENUMS_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(Enums.ENUMS_TYPE);
 	}
 
 	/**
@@ -465,7 +485,7 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * Lookup {@link EnumsDerived} type.
 	 */
 	public static com.top_logic.model.TLClass getEnumsDerivedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(EnumsDerived.ENUMS_DERIVED_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_MODULE).getType(EnumsDerived.ENUMS_DERIVED_TYPE);
 	}
 
 	/**
@@ -525,35 +545,47 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	}
 
 	/**
-	 * Lookup {@value #E_ENUM} enumeration.
+	 * Lookup the enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getEEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_JAVA_BINDING_STRUCTURE).getType(E_ENUM);
+		return E.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #A_E_CLASSIFIER} of enumeration {@value #E_ENUM}.
+	 * Lookup classifier <code>A</code> of enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#aClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getAEClassifier() {
-		return getEEnum().getClassifier(A_E_CLASSIFIER);
+		return E.aClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #B_E_CLASSIFIER} of enumeration {@value #E_ENUM}.
+	 * Lookup classifier <code>B</code> of enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#bClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getBEClassifier() {
-		return getEEnum().getClassifier(B_E_CLASSIFIER);
+		return E.bClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #C_E_CLASSIFIER} of enumeration {@value #E_ENUM}.
+	 * Lookup classifier <code>C</code> of enumeration <code>E</code>.
+	 * 
+	 * @deprecated Use {@link E#cClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getCEClassifier() {
-		return getEEnum().getClassifier(C_E_CLASSIFIER);
+		return E.cClassifier();
 	}
 
 	/**
-	 * Name of type <code>Common</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>Common</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link Common#COMMON_TYPE}.
 	 */
@@ -562,11 +594,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #COMMON_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.CommonBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_COMMON = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_COMMON = test.com.top_logic.model.search.model.testJavaBinding.impl.CommonBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>A</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>A</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
 	 */
@@ -575,11 +610,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #A_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.ABase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_A = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_A = test.com.top_logic.model.search.model.testJavaBinding.impl.ABase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Primitives</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>Primitives</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link Primitives#PRIMITIVES_TYPE}.
 	 */
@@ -588,11 +626,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #PRIMITIVES_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PRIMITIVES = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_PRIMITIVES = test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>PrimitivesMandatory</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>PrimitivesMandatory</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link PrimitivesMandatory#PRIMITIVES_MANDATORY_TYPE}.
 	 */
@@ -601,11 +642,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #PRIMITIVES_MANDATORY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesMandatoryBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PRIMITIVES_MANDATORY = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_PRIMITIVES_MANDATORY = test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesMandatoryBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>PrimitivesDerived</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>PrimitivesDerived</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link PrimitivesDerived#PRIMITIVES_DERIVED_TYPE}.
 	 */
@@ -614,11 +658,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #PRIMITIVES_DERIVED_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesDerivedBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PRIMITIVES_DERIVED = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_PRIMITIVES_DERIVED = test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesDerivedBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>PrimitivesDerivedMandatory</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>PrimitivesDerivedMandatory</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link PrimitivesDerivedMandatory#PRIMITIVES_DERIVED_MANDATORY_TYPE}.
 	 */
@@ -627,11 +674,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #PRIMITIVES_DERIVED_MANDATORY_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesDerivedMandatoryBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_PRIMITIVES_DERIVED_MANDATORY = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_PRIMITIVES_DERIVED_MANDATORY = test.com.top_logic.model.search.model.testJavaBinding.impl.PrimitivesDerivedMandatoryBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>References</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>References</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link References#REFERENCES_TYPE}.
 	 */
@@ -640,11 +690,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #REFERENCES_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.ReferencesBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_REFERENCES = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_REFERENCES = test.com.top_logic.model.search.model.testJavaBinding.impl.ReferencesBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>ReferencesDerived</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>ReferencesDerived</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link ReferencesDerived#REFERENCES_DERIVED_TYPE}.
 	 */
@@ -653,11 +706,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #REFERENCES_DERIVED_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.ReferencesDerivedBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_REFERENCES_DERIVED = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_REFERENCES_DERIVED = test.com.top_logic.model.search.model.testJavaBinding.impl.ReferencesDerivedBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Enums</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>Enums</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link Enums#ENUMS_TYPE}.
 	 */
@@ -666,11 +722,14 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #ENUMS_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.EnumsBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ENUMS = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ENUMS = test.com.top_logic.model.search.model.testJavaBinding.impl.EnumsBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>EnumsDerived</code> in structure {@link #TEST_JAVA_BINDING_STRUCTURE}.
+	 * Name of type <code>EnumsDerived</code> in module {@link #TEST_JAVA_BINDING_MODULE}.
 	 * 
 	 * @deprecated Use {@link EnumsDerived#ENUMS_DERIVED_TYPE}.
 	 */
@@ -679,8 +738,11 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 
 	/**
 	 * Storage table name of {@link #ENUMS_DERIVED_NODE} objects.
+	 * 
+	 * @deprecated Use {@link test.com.top_logic.model.search.model.testJavaBinding.impl.EnumsDerivedBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ENUMS_DERIVED = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ENUMS_DERIVED = test.com.top_logic.model.search.model.testJavaBinding.impl.EnumsDerivedBase.TABLE_NAME;
 
 
 	/**
@@ -827,6 +889,6 @@ public class TestJavaBindingFactory extends com.top_logic.element.meta.kbbased.A
 	 * The singleton instance of {@link TestJavaBindingFactory}.
 	 */
 	public static TestJavaBindingFactory getInstance() {
-		return (TestJavaBindingFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_JAVA_BINDING_STRUCTURE);
+		return (TestJavaBindingFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(TEST_JAVA_BINDING_MODULE);
 	}
 }

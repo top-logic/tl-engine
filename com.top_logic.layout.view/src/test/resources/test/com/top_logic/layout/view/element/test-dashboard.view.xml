@@ -22,7 +22,7 @@
 				</title>
 			</card>
 			<action class="test.com.top_logic.layout.view.element.TestDashboardElement$OpeningCommand"
-				input="ch"
+				inputs="ch"
 			>
 				<executability>
 					<null-input-disabled/>
@@ -50,6 +50,16 @@
 		>
 			<card/>
 			<action class="test.com.top_logic.layout.view.element.TestDashboardElement$OpeningCommand"/>
+		</tile>
+		<tile id="extra"
+			optional="true"
+			width="half"
+		>
+			<label>
+				<en>Extras</en>
+				<de>Extras</de>
+			</label>
+			<card/>
 		</tile>
 	</dashboard>
 </view>

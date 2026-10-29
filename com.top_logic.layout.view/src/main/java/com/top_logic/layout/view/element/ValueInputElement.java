@@ -5,9 +5,19 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -17,9 +27,12 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -36,16 +49,18 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -53,14 +68,23 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
+import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.TLValueNormalizer;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -93,6 +117,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * While the input is displayed, its options follow the model: an object of one of the
+ * {@link Config#getObservedTypes() observed types} that is created, and an offered option that is
+ * changed or deleted, compute the options again, as does a change of one of the
+ * {@link Config#getInputs() inputs}. The instances of a class are therefore offered as they are now,
+ * an object created after the input was built included.
+ * </p>
+ *
+ * <p>
  * The value is declared in the words of an attribute of a class in the model: its
  * {@link Config#getType() type}, whether it is {@link Config#getMandatory() mandatory}, whether it
  * holds {@link Config#getMultiple() multiple} values, and the {@link Config#getAnnotations()
@@ -103,11 +135,23 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * A {@link TLValueNormalizer} among the annotations brings a value the user enters into its
+ * canonical form before it reaches the channel. Its function sees no object, since the input is not
+ * bound to one.
+ * </p>
+ *
+ * <p>
  * A {@link Config#getOnSubmit() submit command} turns the input into an action over the value the
  * user enters: a search field or a jump-to box runs it on Enter, an input whose value is applied at
  * once runs it on every edit the user finishes, as {@link Config#getSubmitOn() stated}. A value
  * that is picked from options runs it with every choice. Whenever the command runs, the value has
  * already reached the channel.
+ * </p>
+ *
+ * <p>
+ * Inside a {@code <form>}, the input follows the form's edit mode: the value can be changed only
+ * while the form is edited. An {@link Config#getEditMode() edit mode channel} decides instead of
+ * the form, and {@link Config#getReadonly() readonly} keeps the input unchangeable in any case.
  * </p>
  */
 @InApp
@@ -122,7 +166,18 @@ public class ValueInputElement implements UIElement {
 	 * Configuration for {@link ValueInputElement}.
 	 */
 	@TagName("value-input")
-	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase {
+	@TypeIcon("css:bi bi-input-cursor-text")
+	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnSubmitAs()}. */
+		String SUBMIT_AS = "submit-as";
+
+		/** Name of the value the submitted value when no other name is given. */
+		String DEFAULT_SUBMIT_AS = "value";
+
 
 		@Override
 		@ClassDefault(ValueInputElement.class)
@@ -136,6 +191,12 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getOptions()}. */
 		String OPTIONS = "options";
+
+		/** Configuration name for {@link #getOptionOrder()}. */
+		String OPTION_ORDER = "option-order";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
 
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
@@ -160,6 +221,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
+
+		/** Configuration name for {@link #getEditMode()}. */
+		String EDIT_MODE = "edit-mode";
 
 		/** Configuration name for {@link #getLabelPosition()}. */
 		String LABEL_POSITION = "label-position";
@@ -198,9 +262,9 @@ public class ValueInputElement implements UIElement {
 		 * The values to choose from.
 		 *
 		 * <p>
-		 * Called with the values of the {@link #getInputs() input channels} as its arguments, so
-		 * that the options can depend on what the rest of the view shows; without inputs, an
-		 * expression computing the options directly.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, so that the options can depend on what the
+		 * rest of the view shows.
 		 * </p>
 		 *
 		 * <p>
@@ -210,12 +274,58 @@ public class ValueInputElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * The options are computed again whenever one of the input channels changes.
+		 * The options of an expression are offered in the order it computes them, so that the
+		 * expression decides where each option stands; the {@link #getOptionOrder() option order}
+		 * sorts them by their labels instead.
+		 * </p>
+		 *
+		 * <p>
+		 * While the input is displayed, the options are computed again whenever one of the input
+		 * channels changes, an object of one of the {@link #getObservedTypes() observed types} is
+		 * created, or an offered option is changed or deleted.
 		 * </p>
 		 */
 		@Name(OPTIONS)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOptions();
+
+		/**
+		 * The order the options are offered in, or nothing to offer them in the order their source
+		 * gives them.
+		 *
+		 * <p>
+		 * Where nothing is stated, the options of an {@link #getOptions() options expression} are
+		 * offered in the order it computes them, the options of the type in the order of its
+		 * classifiers for an enumeration and sorted by their labels for the instances of a class.
+		 * Sorting by label suits options computed without an order of their own, which the
+		 * expression would otherwise have to sort itself.
+		 * </p>
+		 *
+		 * <p>
+		 * An order stated at the {@link #getInputControl() input control} wins over this one.
+		 * </p>
+		 */
+		@Name(OPTION_ORDER)
+		@Nullable
+		@NullDefault
+		OptionOrder getOptionOrder();
+
+		/**
+		 * Types whose object changes (create / update / delete) compute the {@link #getOptions()
+		 * options} again while the input is displayed, so that an object created after the input
+		 * was built is offered, and a deleted one is no longer.
+		 *
+		 * <p>
+		 * When empty, the {@link #getType() type} of the value is observed if it is a class: the
+		 * instances of the class are offered as they are now, also by an options expression that
+		 * selects among them. An options expression computing its options from objects of other
+		 * types names those types here.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * Whether the channel holds a collection of values rather than a single one.
@@ -330,6 +440,28 @@ public class ValueInputElement implements UIElement {
 		boolean getReadonly();
 
 		/**
+		 * The channel deciding whether the value can be changed: it can while the channel holds
+		 * {@code true}, and cannot otherwise.
+		 *
+		 * <p>
+		 * Without a channel, an input inside a {@code <form>} can be changed while the form is in
+		 * edit mode, and an input outside a form can always be changed. With a channel, the
+		 * form's mode is ignored: an input whose value belongs to the view rather than to the
+		 * edited object - a filter above a list shown in the form, a choice made while viewing -
+		 * names a channel that always holds {@code true}, or the channel of its own edit state.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link #getReadonly() Readonly} wins over this channel: a read-only input is never
+		 * changed.
+		 * </p>
+		 */
+		@Name(EDIT_MODE)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getEditMode();
+
+		/**
 		 * Where the input renders its label relative to itself, e.g. {@code hide-label} for a
 		 * label-less input.
 		 *
@@ -361,7 +493,32 @@ public class ValueInputElement implements UIElement {
 		@Nullable
 		@ImplementationClassDefault(GenericViewCommand.class)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
+
+		/**
+		 * The name of the argument holding the submitted value, the main argument of the
+		 * {@link #getOnSubmit() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(SUBMIT_AS)
+		@StringDefault(DEFAULT_SUBMIT_AS)
+		String getOnSubmitAs();
+
+		/**
+		 * The {@link #getOnSubmit() command} runs with the submitted value as argument named by
+		 * {@link #getOnSubmitAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnSubmit()) {
+				return ActionScope.single(getOnSubmitAs());
+			}
+			return outer;
+		}
 
 		/**
 		 * When the {@link #getOnSubmit() submit command} runs on a value the user types - a text, a
@@ -405,6 +562,7 @@ public class ValueInputElement implements UIElement {
 		@Name(INPUT_CONTROL)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ReactFieldControlProvider> getInputControl();
 	}
 
@@ -414,13 +572,19 @@ public class ValueInputElement implements UIElement {
 
 	private final QueryExecutor _options;
 
-	private final List<ChannelRef> _inputRefs;
+	private final List<InputRef> _inputRefs;
+
+	private final List<TLModelPartRef> _observedTypes;
+
+	private final OptionOrder _optionOrder;
 
 	private final boolean _multiple;
 
 	private final boolean _mandatory;
 
 	private final AnnotationLookup _annotations;
+
+	private final ValueNormalizer _normalizer;
 
 	private final ResKey _label;
 
@@ -434,9 +598,13 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _readonly;
 
+	private final ChannelRef _editModeRef;
+
 	private final LabelPosition _labelPosition;
 
 	private final ViewCommand _submitCommand;
+
+	private final String _submitAs;
 
 	private final ViewCommand.Config _submitCommandConfig;
 
@@ -453,22 +621,28 @@ public class ValueInputElement implements UIElement {
 	public ValueInputElement(InstantiationContext context, Config config) {
 		_valueRef = config.getValue();
 		_typeRef = config.getType();
-		_options = QueryExecutor.compileOptional(config.getOptions());
+		_options = InputScript.compile(config, Config.OPTIONS);
 		_inputRefs = config.getInputs();
+		_observedTypes = config.getObservedTypes();
+		_optionOrder = config.getOptionOrder();
 		_multiple = config.getMultiple();
 		_mandatory = config.getMandatory();
 		_annotations = config;
+		_normalizer = ValueNormalizer.annotated(config);
 		_label = config.getLabel();
 		_placeholder = config.getPlaceholder();
 		_icon = config.getIcon();
 		_clearable = config.getClearable();
 		_debounce = config.getDebounce();
 		_readonly = config.getReadonly();
+		_editModeRef = config.getEditMode();
 		_labelPosition = config.getLabelPosition();
 
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
-		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_submitCommand = _submitCommandConfig == null ? null
+			: ViewCommands.instantiate(context, submitConfig, config.getOnSubmitAs());
+		_submitAs = config.getOnSubmitAs();
 		_submitOn = config.getSubmitOn();
 		_inputControl = config.getInputControl();
 		_cssClass = config.getCssClass();
@@ -479,23 +653,34 @@ public class ValueInputElement implements UIElement {
 		TLType type = _typeRef.resolveType();
 
 		List<ViewChannel> optionInputs = ChannelInputs.resolve(context, _inputRefs);
-		List<?> options = options(type, optionInputs);
+		List<?> options = options(type, ChannelInputs.arguments(optionInputs));
 
 		AbstractFieldModel field = options == null
 			? new AbstractFieldModel(null)
 			: new SimpleSelectFieldModel(null, options, _multiple);
-		field.setEditable(!_readonly);
+		ViewChannel editModeChannel = _editModeRef == null ? null : context.resolveChannel(_editModeRef);
+		FormModel form = editModeChannel == null ? context.getFormModel() : null;
+		field.setEditable(!_readonly && editMode(editModeChannel, form));
 		field.setMandatory(_mandatory);
 
 		// Bound before the control is built, so that the control is built over the value the
 		// channel already holds instead of over an empty field it has to be told about afterwards.
 		ChannelFieldBinding binding = ChannelFieldBinding.bind(context.resolveChannel(_valueRef), field,
 			options != null, _multiple);
+		// Set after binding: the value the channel holds is shown as it is, only an entered value is
+		// normalized.
+		field.setNormalizer(_normalizer);
 		FieldModelListener mandatoryCheck = _mandatory ? checkMandatory(field) : null;
 
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, _annotations, label, _multiple, field);
+		if (_optionOrder != null) {
+			spec.setOptionOrder(AttributeOptions.comparator(_optionOrder));
+		} else if (_options != null) {
+			// The options expression computes the order the options are offered in.
+			spec.setOptionOrder(null);
+		}
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
 		}
@@ -507,8 +692,8 @@ public class ValueInputElement implements UIElement {
 			input.addCleanupAction(() -> field.removeListener(mandatoryCheck));
 		}
 
-		if (_options != null && !optionInputs.isEmpty()) {
-			followOptions(type, optionInputs, (SelectFieldModel) field, input);
+		if (options != null) {
+			followOptions(type, optionInputs, options, (SelectFieldModel) field, input);
 		}
 
 		if (_submitCommand != null) {
@@ -517,13 +702,73 @@ public class ValueInputElement implements UIElement {
 
 		if (_label == null && _labelPosition == null) {
 			input.setCssClass(_cssClass);
+			followEditMode(editModeChannel, form, field, input, null);
 			return input;
 		}
+		boolean editable = field.isEditable();
 		ReactFormFieldChromeControl chrome =
-			new ReactFormFieldChromeControl(context, label, field.isMandatory(), false, null, null,
-				AttributeFieldControl.wirePosition(_labelPosition, !_readonly), false, true, input);
+			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, null,
+				AttributeFieldControl.wirePosition(_labelPosition, editable), false, true, input);
 		chrome.setCssClass(_cssClass);
+		followEditMode(editModeChannel, form, field, input, chrome);
 		return chrome;
+	}
+
+	/**
+	 * Whether the value can be changed, as far as the edit mode decides.
+	 *
+	 * @param editModeChannel
+	 *        The {@link Config#getEditMode() edit mode channel}, or {@code null} if none is
+	 *        configured.
+	 * @param form
+	 *        The enclosing form, or {@code null} if the input stands outside a form or the edit
+	 *        mode channel decides.
+	 */
+	private static boolean editMode(ViewChannel editModeChannel, FormModel form) {
+		if (editModeChannel != null) {
+			return Boolean.TRUE.equals(editModeChannel.get());
+		}
+		if (form != null) {
+			return form.isEditMode();
+		}
+		return true;
+	}
+
+	/**
+	 * Makes the input follow the edit mode of the {@link Config#getEditMode() edit mode channel}
+	 * respectively of the enclosing form.
+	 *
+	 * <p>
+	 * The mandatory mark and an edit-dependent label position follow the editability, as they do
+	 * for the field of an attribute. A {@link Config#getReadonly() read-only} input follows
+	 * nothing.
+	 * </p>
+	 *
+	 * @param chrome
+	 *        The chrome around the input, or {@code null} if the input stands alone.
+	 */
+	private void followEditMode(ViewChannel editModeChannel, FormModel form, AbstractFieldModel field,
+			ReactControl input, ReactFormFieldChromeControl chrome) {
+		if (_readonly) {
+			return;
+		}
+		Runnable update = () -> {
+			boolean editable = editMode(editModeChannel, form);
+			field.setEditable(editable);
+			if (chrome != null) {
+				chrome.setRequired(_mandatory && editable);
+				chrome.setLabelPosition(AttributeFieldControl.wirePosition(_labelPosition, editable));
+			}
+		};
+		if (editModeChannel != null) {
+			Registration registration =
+				editModeChannel.addListener((sender, oldValue, newValue) -> update.run());
+			input.addCleanupAction(registration::dispose);
+		} else if (form != null) {
+			FormModelListener listener = source -> update.run();
+			form.addFormModelListener(listener);
+			input.addCleanupAction(() -> form.removeFormModelListener(listener));
+		}
 	}
 
 	/**
@@ -555,7 +800,8 @@ public class ValueInputElement implements UIElement {
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
 			ChannelFieldBinding binding) {
-		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
+		ViewCommandModel model =
+			ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig, _submitAs);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
 			Function<Object, HandlerResult> submit = value -> {
 				if (missingValue(value) != null) {
@@ -632,28 +878,53 @@ public class ValueInputElement implements UIElement {
 	}
 
 	/**
-	 * Recomputes the options whenever one of the option inputs changes, so that a selection offered
-	 * for what the view currently shows stays in step with it.
+	 * Computes the options again whenever one of the option inputs changes, an object of one of the
+	 * {@link Config#getObservedTypes() observed types} is created, or an offered option is changed
+	 * or deleted, so that a selection stays in step with what the view shows and with the model.
+	 *
+	 * <p>
+	 * The options are observed only while the input is displayed: the observation begins when the
+	 * input control is attached and stops when it is detached. The input control, not a chrome
+	 * around it, carries the observation, so that the options it is handed reach a control that
+	 * already follows them.
+	 * </p>
 	 */
-	private void followOptions(TLType type, List<ViewChannel> optionInputs, SelectFieldModel field,
-			ReactControl input) {
-		ChannelListener listener = (sender, oldValue, newValue) -> field.setOptions(options(type, optionInputs));
-		for (ViewChannel channel : optionInputs) {
-			Registration registration = channel.addListener(listener);
-			input.addCleanupAction(registration::dispose);
+	private void followOptions(TLType type, List<ViewChannel> optionInputs, List<?> options,
+			SelectFieldModel field, ReactControl input) {
+		new RowSourceObserver<>(
+			new ArrayList<Object>(options),
+			args -> options(type, args),
+			observedTypes(type),
+			optionInputs,
+			field::setOptions).observeWhileAttached(input);
+	}
+
+	/**
+	 * The types whose object changes compute the options again: the configured
+	 * {@link Config#getObservedTypes() observed types}, or the type of the value where none is
+	 * configured and the value is an instance of a class.
+	 */
+	private Set<TLStructuredType> observedTypes(TLType type) {
+		if (!_observedTypes.isEmpty()) {
+			return ObservedTypes.resolve(_observedTypes);
 		}
+		return type instanceof TLClass classType ? Set.of(classType) : Set.of();
 	}
 
 	/**
 	 * The values to choose from, or {@code null} if the value is entered rather than chosen.
+	 *
+	 * @param inputValues
+	 *        The values of the option inputs, in declaration order; an object that was deleted is
+	 *        passed on as nothing.
 	 */
-	private List<?> options(TLType type, List<ViewChannel> optionInputs) {
+	private List<?> options(TLType type, Object[] inputValues) {
 		if (_options == null) {
 			return AttributeOptions.optionsFor(type);
 		}
-		Object[] args = new Object[optionInputs.size()];
+		Object[] args = new Object[inputValues.length];
 		for (int n = 0, cnt = args.length; n < cnt; n++) {
-			args[n] = optionInputs.get(n).get();
+			args[n] = DeletedObjects.withoutDeleted(inputValues[n]);
 		}
 		return SearchExpression.asList(_options.execute(args));
 	}

@@ -1,9 +1,12 @@
 import {
-  React, useTLState, useTLCommand, TLChild, useFillHost, FillProvider, rootClassName,
+  React, useTLState, useTLCommand, useI18N, TLChild, useFillHost, FillProvider, rootClassName, stateAttr,
   useKeyedTransition,
   ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
+import { buttonClassName } from './button/buttonClassName';
+
+const I18N_KEYS = { 'js.wizard.steps': 'Steps' };
 
 const { useCallback, useEffect, useRef } = React;
 
@@ -52,9 +55,8 @@ function stepState(position: number, activeIndex: number): string {
  * there leads through the steps in between.
  *
  * The step change is a transition the stylesheet owns: this component only says what is happening -
- * the direction as a modifier on the root - and leaves the marking of the step arriving and the
- * copy of the step left behind to {@link useKeyedTransition}, which the engine draws a default
- * animation for.
+ * the direction as `data-tl-state~="backward"` on the root - and leaves the marking of the step arriving and the
+ * copy of the step left behind to {@link useKeyedTransition}. The design system package draws the default slide.
  *
  * Takes part in the fill contract as a container: a wizard whose step content fills fills its own
  * container, so the content spans the available height instead of the wizard collapsing to it.
@@ -62,6 +64,7 @@ function stepState(position: number, activeIndex: number): string {
 const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
   const [fillClass, fillHost] = useFillHost();
 
   const steps = (state.steps as StepInfo[]) ?? [];
@@ -87,8 +90,7 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
     keys: activeStepId === null ? [] : [activeStepId],
     node: () => stepRef.current,
     container: () => bodyRef.current,
-    enterClass: 'tlWizard__step--entering',
-    exitClass: 'tlWizard__step--exiting',
+    state: true,
   });
 
   // --- A step that moves on by itself ---------------------------------------------------------
@@ -104,36 +106,40 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
   }, [autoAdvance, activeStepId, sendCommand]);
 
   const hasHeader = showCounter || progress || showStepList;
-  const rootClass = ['tlWizard', 'tlWizard--' + direction, fillClass].filter(Boolean).join(' ');
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={rootClassName(state, rootClass)}>
+      <div id={controlId} className={rootClassName(state, 'tl-wizard', fillClass)}
+        data-tl-state={stateAttr(direction === 'backward' && 'backward')}>
         {hasHeader && (
-          <div className="tlWizard__header">
+          <div className="tl-wizard__header">
             {showCounter && (
-              <span className="tlWizard__counter">{counterText(activeIndex, steps.length)}</span>
-            )}
-            {progress && (
-              <div className="tlWizard__progress">
-                <TLChild control={progress} />
-              </div>
+              // While the list stands, it says with aria-current where the user is and the counter repeats it for the
+              // eye only; without the list the counter is the only place that says it, so it is read.
+              <span className="tl-wizard__counter tl-type-label tl-nums" aria-hidden={showStepList ? 'true' : undefined}>
+                {counterText(activeIndex, steps.length)}
+              </span>
             )}
             {showStepList && (
-              <ol className="tlWizard__steps">
+              <ol className="tl-steps" aria-label={i18n['js.wizard.steps']}>
                 {steps.map((step, position) => {
                   const status = stepState(position, activeIndex);
-                  const className = 'tlWizard__stepItem tlWizard__stepItem--' + status;
                   return (
-                    <li key={step.key} className={className} aria-current={status === 'current' ? 'step' : undefined}>
+                    <li
+                      key={step.key}
+                      className="tl-steps__item"
+                      data-tl-state={stateAttr(status === 'done' && 'done')}
+                      aria-current={status === 'current' ? 'step' : undefined}
+                    >
+                      <span className="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">{position + 1}</span>
                       {status === 'done' ? (
-                        <button type="button" className="tlWizard__stepButton" onClick={() => goTo(step.key)}>
-                          {step.icon && <ThemeIcon encoded={step.icon} className="tlWizard__stepIcon" />}
-                          {step.label}
+                        <button type="button" className={buttonClassName({ appearance: 'link' })} onClick={() => goTo(step.key)}>
+                          {step.icon && <ThemeIcon encoded={step.icon} className="tl-button__icon tl-icon-sm" />}
+                          <span className="tl-button__label">{step.label}</span>
                         </button>
                       ) : (
-                        <span className="tlWizard__stepName">
-                          {step.icon && <ThemeIcon encoded={step.icon} className="tlWizard__stepIcon" />}
+                        <span className={'tl-steps__name ' + (status === 'current' ? 'tl-type-body-strong' : 'tl-type-body')}>
+                          {step.icon && <ThemeIcon encoded={step.icon} className="tl-icon-sm" />}
                           {step.label}
                         </span>
                       )}
@@ -142,10 +148,15 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
                 })}
               </ol>
             )}
+            {progress && (
+              <div className="tl-wizard__progress">
+                <TLChild control={progress} />
+              </div>
+            )}
           </div>
         )}
-        <div className="tlWizard__body" ref={bodyRef}>
-          <div key={activeStepId ?? ''} className="tlWizard__step" ref={stepRef}>
+        <div className="tl-wizard__body" ref={bodyRef}>
+          <div key={activeStepId ?? ''} className="tl-wizard__step" ref={stepRef}>
             {activeChild && <TLChild control={activeChild} />}
           </div>
         </div>

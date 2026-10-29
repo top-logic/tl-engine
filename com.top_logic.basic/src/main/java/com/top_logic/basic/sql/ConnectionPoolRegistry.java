@@ -23,9 +23,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
@@ -37,8 +40,10 @@ import com.top_logic.basic.thread.ThreadContextManager;
  */
 @ServiceDependencies({
 	ThreadContextManager.Module.class,
+	SecretStoreService.Module.class,
 })
 @Label("Database connection pools")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class ConnectionPoolRegistry extends ManagedClass {
 
 	/**

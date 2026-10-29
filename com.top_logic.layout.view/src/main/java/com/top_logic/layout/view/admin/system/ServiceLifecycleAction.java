@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.view.admin.system;
 
-import java.util.ArrayList;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -23,16 +21,16 @@ import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.WithResultActions;
 
 /**
- * {@link ViewAction} returning the current application services for display in a {@link ServiceTable},
- * and optionally starting, stopping or restarting the selected service first.
+ * {@link ViewAction} returning the current application services for display in a table, and
+ * optionally starting, stopping or restarting the selected service first.
  *
  * <p>
- * The returned {@code List<BasicRuntimeModule>} is meant to be written to the channel feeding the
- * {@link ServiceTable}. The service to act on is read from the configured
- * {@link Config#getSelection() selection channel} (not the command input, which carries the running
- * state used to gate the command). Dependent services are started / stopped / restarted automatically.
+ * The returned {@link ServiceSnapshot} is meant to be written to the channel feeding the table of
+ * the services. The service to act on is read from the configured
+ * {@link Config#getSelection() selection channel} when the action runs. Dependent services are started / stopped / restarted automatically.
  * </p>
  *
  * @implNote Enumeration uses {@link ModuleUtil#getAllModules()}; lifecycle delegates to
@@ -66,7 +64,7 @@ public class ServiceLifecycleAction implements ViewAction {
 	 * global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<ServiceLifecycleAction> {
+	public interface Config extends PolymorphicConfiguration<ServiceLifecycleAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";
@@ -110,12 +108,12 @@ public class ServiceLifecycleAction implements ViewAction {
 	@Override
 	public Object execute(ReactContext context, Object input) {
 		if (_mode != Mode.REFRESH) {
-			BasicRuntimeModule<?> module = selectedModule(context);
+			BasicRuntimeModule<?> module = selectedModule(context, _selectionChannel);
 			if (module != null) {
 				apply(context, module);
 			}
 		}
-		return new ArrayList<>(ModuleUtil.getAllModules());
+		return ServiceSnapshot.current();
 	}
 
 	/**
@@ -145,16 +143,29 @@ public class ServiceLifecycleAction implements ViewAction {
 	}
 
 	/**
-	 * The module held by the configured selection channel, or {@code null} when nothing is selected.
+	 * The module held by the given channel, or {@code null} when nothing is selected.
+	 *
+	 * @param context
+	 *        The context of the action.
+	 * @param channelName
+	 *        The name of the channel holding the module, {@code null} for none.
 	 */
-	private BasicRuntimeModule<?> selectedModule(ReactContext context) {
-		if (_selectionChannel == null || !(context instanceof ViewContext viewContext)) {
+	static BasicRuntimeModule<?> selectedModule(ReactContext context, String channelName) {
+		if (channelName == null || !(context instanceof ViewContext viewContext)) {
 			return null;
 		}
-		if (!viewContext.hasChannel(_selectionChannel)) {
+		if (!viewContext.hasChannel(channelName)) {
 			return null;
 		}
-		Object value = viewContext.resolveChannel(new ChannelRef(_selectionChannel)).get();
+		Object value = viewContext.resolveChannel(new ChannelRef(channelName)).get();
 		return value instanceof BasicRuntimeModule<?> module ? module : null;
+	}
+
+	/**
+	 * Tells the user when the service operation fails.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

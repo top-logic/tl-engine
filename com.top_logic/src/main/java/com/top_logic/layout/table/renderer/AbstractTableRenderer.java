@@ -8,7 +8,10 @@ package com.top_logic.layout.table.renderer;
 import static com.top_logic.layout.form.FormConstants.*;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -19,6 +22,7 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.dnd.TableDropTarget;
+import com.top_logic.layout.table.dnd.TableDropTarget.DropType;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -68,22 +72,26 @@ public abstract class AbstractTableRenderer<C extends AbstractTableRenderer.Conf
 			out.endAttribute();
 		}
 
-		TableDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getDropTargets(), data);
+		Set<DropType> dropTypes = getEnabledDropTypes(data.getDropTargets(), data);
 
-		if (firstEnabledDropTarget != null) {
-			out.writeAttribute(TableDropTarget.TL_DROPTYPE_ATTR, firstEnabledDropTarget.getDropType().name());
+		if (!dropTypes.isEmpty()) {
+			out.writeAttribute(TableDropTarget.TL_DROPTYPE_ATTR, toAttributeValue(dropTypes));
 			writeOnDropAttributes(out, data);
 		}
 	}
 
-	private TableDropTarget getFirstEnabledDropTarget(List<TableDropTarget> dropTargets, TableData data) {
+	private Set<DropType> getEnabledDropTypes(List<TableDropTarget> dropTargets, TableData data) {
+		Set<DropType> result = EnumSet.noneOf(DropType.class);
 		for (TableDropTarget dropTarget : dropTargets) {
 			if (dropTarget.dropEnabled(data)) {
-				return dropTarget;
+				result.add(dropTarget.getDropType());
 			}
 		}
+		return result;
+	}
 
-		return null;
+	private static String toAttributeValue(Set<DropType> dropTypes) {
+		return dropTypes.stream().map(DropType::name).collect(Collectors.joining(" "));
 	}
 
 	@Override

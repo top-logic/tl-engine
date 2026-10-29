@@ -12,8 +12,8 @@ import com.top_logic.layout.view.ViewContext;
  * command it guards before it can answer {@link ViewExecutabilityRule#isExecutable(Object)}.
  *
  * <p>
- * A rule resolving an enclosing security scope or a context channel cannot do so from its
- * configuration alone. {@link ViewExecutabilityRules#build(java.util.List, ViewContext)} calls
+ * A rule resolving the object of an enclosing unit or a context channel cannot do so from its
+ * configuration alone. {@link ViewExecutabilityRules#build(java.util.List, ViewContext, ActionScope)} calls
  * {@link #bind(ViewContext)} once, at control-build time, on every rule implementing this interface,
  * so the rule can capture what it needs from the context.
  * </p>
@@ -25,8 +25,8 @@ public interface ContextDependentRule {
 	 *
 	 * <p>
 	 * Called exactly once, before the rule is first evaluated. The rule should capture any
-	 * context-derived state (e.g. the enclosing {@link ViewContext#getScope(Class) security
-	 * scope} or a resolved channel) here.
+	 * context-derived state (e.g. the {@link ViewContext#getScope(Class) object of an enclosing
+	 * unit} or a resolved channel) here.
 	 * </p>
 	 *
 	 * @param context

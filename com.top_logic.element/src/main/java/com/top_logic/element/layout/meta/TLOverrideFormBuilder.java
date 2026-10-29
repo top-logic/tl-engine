@@ -28,10 +28,9 @@ import com.top_logic.element.layout.meta.TLPropertyFormBuilder.PropertyModel;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLProperty;
@@ -181,7 +180,7 @@ public class TLOverrideFormBuilder extends TLStructuredTypePartFormBuilder {
 		@Override
 		@ItemDefault(OverrideModel.class)
 		@DynamicMode(fun = GroupActiveIf.class, args = @Ref(CREATING))
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		PartModel getPartModel();
 
 	}

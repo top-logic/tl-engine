@@ -77,7 +77,7 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.thread.InContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.tooling.WebXmlBuilder;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
@@ -209,7 +209,7 @@ public class TestedApplication implements Application {
 				final HttpServletRequest request = invocation.getRequest();
 				final HttpServletResponse response = invocation.getResponse();
 				
-				ThreadContextManager.inSystemInteraction(TestedApplication.class, new InContext() {
+				ThreadContext.inSystemContext(TestedApplication.class, new InContext() {
 					@Override
 					public void inContext() {
 						try {

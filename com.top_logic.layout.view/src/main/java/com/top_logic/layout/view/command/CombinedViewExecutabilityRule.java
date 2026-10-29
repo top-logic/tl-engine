@@ -61,7 +61,7 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, Con
 	 *
 	 * <p>
 	 * A combination built from rules that are bound already, as
-	 * {@link ViewExecutabilityRules#build(List, ViewContext)} does, is not bound again.
+	 * {@link ViewExecutabilityRules#build(List, ViewContext, ActionScope)} does, is not bound again.
 	 * </p>
 	 */
 	@Override
@@ -92,6 +92,21 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, Con
 	public ExecutableState isExecutable(Object input) {
 		for (ViewExecutabilityRule rule : _rules) {
 			ExecutableState state = rule.isExecutable(input);
+			if (!state.isExecutable()) {
+				return state;
+			}
+		}
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
+	 * Hands the arguments to every combined rule, so that each decides over the arguments it
+	 * needs.
+	 */
+	@Override
+	public ExecutableState isExecutableFor(ActionArguments arguments) {
+		for (ViewExecutabilityRule rule : _rules) {
+			ExecutableState state = rule.isExecutableFor(arguments);
 			if (!state.isExecutable()) {
 				return state;
 			}

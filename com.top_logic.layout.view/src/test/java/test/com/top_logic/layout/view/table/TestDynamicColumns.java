@@ -17,8 +17,13 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
@@ -28,6 +33,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -140,7 +146,8 @@ public class TestDynamicColumns extends TestCase {
 		Columns edited = set("first");
 		edited.setUpdate(column -> (row, value) -> fail("The column is read-only."));
 
-		assertNull(resolve(new DynamicColumns("milestones", 0, true, scope -> edited), edited).get(0).editing());
+		assertNull(resolve(new DynamicColumns("milestones", 0, true, ColumnExport.DEFAULT, scope -> edited), edited)
+			.get(0).editing());
 	}
 
 	/**
@@ -184,8 +191,46 @@ public class TestDynamicColumns extends TestCase {
 		}
 
 		assertEquals("Columns keep the width their type derives unless the declaration states one.",
-			0, resolve(new DynamicColumns("milestones", 0, false, scope -> set("first")), set("first"))
-				.get(0).width());
+			0, resolve(new DynamicColumns("milestones", 0, false, ColumnExport.DEFAULT, scope -> set("first")),
+				set("first")).get(0).width());
+	}
+
+	/**
+	 * Whether the columns sort is decided for all of them by the declaration, and they sort by
+	 * default.
+	 */
+	public void testSortableIsSharedByEveryColumn() {
+		for (ColumnSetup setup : resolve(declaration(), set("first", "second"))) {
+			assertTrue("Columns sort by default.", setup.sortable());
+		}
+
+		DynamicColumns unsortable = new DynamicColumns("milestones", 0, false, ColumnExport.DEFAULT, false,
+			scope -> set("first"), List.of());
+		for (ColumnSetup setup : resolve(unsortable, set("first", "second"))) {
+			assertFalse(setup.sortable());
+		}
+	}
+
+	/**
+	 * Columns declared not to be sortable cannot order their values by a comparator.
+	 */
+	public void testUnsortableColumnsWithAComparatorAreReported() {
+		DynamicColumns.Config config = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
+		set(config, DynamicColumns.Config.NAME, "milestones");
+		set(config, DynamicColumns.Config.COLUMNS, TypedConfiguration.newConfigItem(Expr.Null.class));
+		set(config, DynamicColumns.Config.SORTABLE, false);
+		set(config, DynamicColumns.Config.COMPARATOR, TypedConfiguration.newConfigItem(Expr.Null.class));
+
+		BufferingProtocol log = new BufferingProtocol();
+		new DefaultInstantiationContext(log).getInstance(config);
+
+		assertFalse("The columns are reported.", log.getErrors().isEmpty());
+		assertTrue("The report names the option: " + log.getErrors(),
+			log.getErrors().get(0).contains(DynamicColumns.Config.SORTABLE));
+	}
+
+	private static void set(ConfigurationItem config, String property, Object value) {
+		config.update(config.descriptor().getProperty(property), value);
 	}
 
 	/** The columns the given declaration contributes for the given set, in display order. */
@@ -200,7 +245,7 @@ public class TestDynamicColumns extends TestCase {
 
 	/** A declaration naming its columns after {@code milestones} and displaying them 120px wide. */
 	private static DynamicColumns declaration() {
-		return new DynamicColumns("milestones", 120, false, scope -> {
+		return new DynamicColumns("milestones", 120, false, ColumnExport.DEFAULT, scope -> {
 			throw new AssertionError("The columns are the ones the test hands over.");
 		});
 	}

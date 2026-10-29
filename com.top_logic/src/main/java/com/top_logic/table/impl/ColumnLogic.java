@@ -151,7 +151,8 @@ final class ColumnLogic {
 
 	/**
 	 * The comparator ordering the group values of the given grouping column, or {@code null}
-	 * if the column has no {@link Column#sort() sort capability}.
+	 * if the column has no {@link Column#sort() sort capability} - the groups of such a column
+	 * keep the order of the given rows, whatever the table is sorted by.
 	 *
 	 * <p>
 	 * The group values are compared by the column's own {@link Column#sort() comparator}, with

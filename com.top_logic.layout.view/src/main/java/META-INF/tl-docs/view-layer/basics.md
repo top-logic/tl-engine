@@ -25,8 +25,9 @@ order: 10
       </annotations>
     </value-input>
     ```
-  - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
+  - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script expression that sees the values of the `<inputs><input channel="…"/></inputs>` channels as variables named after the channels, or by their `as` names - like the scripts of `<execute-script>`. While the input is displayed, its options follow the model: they are recomputed whenever one of those channels changes, an object of one of the `observed-types` (comma-separated type names) is created, or an offered option is changed or deleted - the `RowSourceObserver` a `<table>` and an `<object-list>` follow their elements with, begun when the input control is attached and stopped when it is detached. Without `observed-types`, the type of the value is observed if it is a class, so `<value-input type="my.module:Customer"/>` offers a customer created after the view was built, also where an `options` expression selects among the instances of that type; an expression computing its options from objects of other types names those types in `observed-types`. The options of an expression are offered in the order it computes them; those of the type in the order the type gives them (classifiers as declared, instances by label). `option-order` (`OptionOrder`) states the order instead: `by-label` sorts the options by their labels - the simple way to sort the result of an expression, which would otherwise have to sort it itself -, `as-given` keeps the order of their source; an `order` stated at the `input-control` wins over it. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
+  - **Inside a `<form>`, a `<value-input>` follows the form's edit mode**: its value can be changed only while the form is edited, and the required marker of a mandatory input is shown only then, as for a `<field>`. `edit-mode="ch"` names a channel whose boolean value decides instead (`true` = changeable), and the form's mode is then ignored - for an input whose value belongs to the view, not to the edited object, e.g. a filter shown in a form in view mode, which names a channel `<channel name="always" init="true"/>`. Outside a form and without `edit-mode`, the input is always changeable. `readonly="true"` wins over both.
   - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: `TLFormField` keeps the label text in a visually hidden `label` (`tl-visually-hidden`) that refers to the input by `for` and names it through `aria-labelledby`, so the input keeps its accessible name without a visible label. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A group of radio buttons or checkboxes (`TLChoiceGroup`) names each option by a `label` of its own wrapping the input and its text, which makes the text part of the hit area; the field's label, which may not contain those labels, names the group as a whole through `aria-labelledby`.
   - **A search field out of the box.** An input that narrows what a view shows is three properties on top of the submit hook, so an application needs no element of its own: `icon` draws a `ThemeImage` inside the input ahead of what is typed, `clearable="true"` adds the button that empties it (shown only while the input holds something, writing the empty value at once), and `debounce` says how long the input waits after the last keystroke before the typed value reaches the channel, written as a duration (`@Format(MillisFormat.class)`). All three ride on the field description (`FieldSpec.setIcon(…)` / `setClearable(…)` / `setDebounce(…)`) and are applied by `ReactFieldControlProvider.createField(…)`, like the `placeholder`. `TLTextInput` renders icon and clear button - a search field is a text - while `TLNumberInput` and `TLPasswordInput` take only the delay; the icon and the button sit in the same `tl-field-group` as the link that opens a `url` / `email` / `tel` value, in the order `[icon] input [clear] [link]`.
     ```xml
@@ -78,13 +79,16 @@ order: 10
     </group>
     ```
     The demo is the "Edit demo object" dialog of `com.top_logic.demo.react`'s Attributes page (`WEB-INF/views/attributes-detail.view.xml`), whose fifty fields stand in eight sections.
-  - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
+  - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its main argument named `value` (`submit-as="term"` on the `<value-input>` names it otherwise), so the command's `<execute-script function="… $value …">` uses it directly and needs no `inputs` channel of its own (see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml
     <fields>
       <value-input value="jump">
         <on-submit>
-          <execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
-          <write-channel name="ticket"/>
+          <execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
+            <with-result>
+              <write-channel name="ticket"/>
+            </with-result>
+          </execute-script>
         </on-submit>
       </value-input>
     </fields>
@@ -97,7 +101,6 @@ order: 10
       ```xml
       <value-input type="tl.core:Integer" value="pageSize" submit-on="change">
         <on-submit>
-          <execute-script function="size -> $size"/>
           <write-channel name="appliedPageSize"/>
         </on-submit>
       </value-input>
@@ -118,12 +121,12 @@ order: 10
 Containers are flush: a `<panel>`, a `<tab>`, a `<pane>`, a dialog window and the simple layouts `<stack>` / `<grid>` lay their content out up to their border and add no padding. The content owns its breathing room:
 
 - **Content that fills** - a `<table>`, a `<flow-diagram>`, a `<split-panel>`, a `<tab-bar>` of its own panels, an `<adaptive-detail>`, an `<html display="document">` - stays edge to edge. Nothing is set.
-- **Content that flows** - texts, stacks, grids, alerts, buttons, cards, a form that does not span its container - keeps the page inset (`--page-inset`) as distance to the border. Where it stands decides how:
+- **Content that flows** - texts, stacks, grids, alerts, buttons, cards, a form that does not span its container - keeps the page inset as distance to the border (`tl-inset`; how far is decided by the surface it stands on: 1.5rem on a page, 1rem in a panel, compact in a card). Where it stands decides how:
   - directly in a `<panel>`: `with-inset="true"` on the panel (first choice). It insets the panel body, not the title and the toolbar (`PanelElement.Config` extends `InsetOptions`).
   - a `<form>` or `<fields>` that is the content of a dialog, a tab or a pane, or the sole content of a panel: `with-inset="true"` on the form / fields (`FormLayoutOptions` extends `InsetOptions`).
   - any other content not directly in a panel (a tab, a pane, a wizard step, a `<visible-if>` that must not leave an empty padded box behind): wrap it in `<inset>` (`InsetElement`).
 
-All three render the same `ReactInsetControl` (`.tlInset`). Content is inset **once**: a panel with `with-inset` holds no form / fields with `with-inset` and no `<inset>`. A nested `<panel>` is a container of its own and decides for its own body. A card (`appearance="card"`, `<card>`) reduces `--page-inset`, so an inset inside it is compact.
+All three render the same `ReactInsetControl` (`.tl-inset`). Content is inset **once**: a panel with `with-inset` holds no form / fields with `with-inset` and no `<inset>`. A nested `<panel>` is a container of its own and decides for its own body. In a card (`appearance="card"`, `<card>`) an inset is compact; the card tells it (React context `useSurface`).
 
 ```xml
 <panel with-inset="true">
@@ -148,15 +151,17 @@ Checklist: content glued to the border of its container → `with-inset="true"` 
 
 ## Filling the available height: the fill contract
 
-A control that should span the height its container offers - instead of growing with its content - carries the CSS class `tlFill`, which the layout CSS turns into `flex: 1; min-height: 0`. That bounds the control only while its container has a definite height itself, so the decision is not local: a container hosting a filling child has to fill in turn, up to the first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split pane). This chain is a property of the path through the control tree, which is why it lives in the React bridge (`react-src/bridge/fill.ts`) rather than in a CSS selector enumerating the child types allowed to grow.
+A control that should span the height its container offers - instead of growing with its content - carries the CSS class `tl-fill`, which the design system package (`layout.css`) turns into `flex: 1; min-height: 0`. That bounds the control only while its container has a definite height itself, so the decision is not local: a container hosting a filling child has to fill in turn, up to the first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split pane). This chain is a property of the path through the control tree, which is why it lives in the React bridge (`react-src/bridge/fill.ts`) rather than in a CSS selector enumerating the child types allowed to grow.
 
 A container component therefore declares how it takes part:
 
 - `useFill(fills)` — a fixed decision by the control's own configuration: a table always reports filling. Returns the class for the root element.
 - `useFillHost(alwaysFills?)` — a container: it fills while it always does (a split panel, whose panes are sized proportionally; a tab bar, whose strip stays pinned) or while one of its children reports filling, and reports that on to its own container. Returns the class plus the host to provide to the children (`<FillProvider host={…}>`).
-- `<FillBarrier>` — ends the chain: a region bounded on its own that scrolls what does not fit (a tab content area, the body of a `<panel fill="false">`), or a surface laid out apart from the page (a dialog, a window, a drawer). A filling control inside resolves its height against that region, and nothing outside reacts to it.
+- `<FillBarrier>` — ends the chain: a region bounded on its own that scrolls what does not fit (a tab content area, a pane of a `<split-panel>`, the body of a `<panel fill="false">`), or a surface laid out apart from the page (a dialog, a window, a drawer). A filling control inside resolves its height against that region, and nothing outside reacts to it.
 
-**A `<panel>` follows its content.** It is a fill host for its body: a panel around a table, a split or another filling panel fills, so the same panel with a table spans the height in a tab, a split pane, a frame of a tile stack and a stack alike, and the table scrolls its rows itself. `fill="true"` makes the panel fill around content of its own size as well. `fill="false"` ends the chain at the panel body: where nothing else gives the panel a height - several panels listed one below the other in a scrolling panel body - it stays as high as its content and a table inside shows all of its rows.
+**A bounded region gives its content the region's height.** The regions bounded on their own that host a single content - a split pane, the content of a tab, the content area of the app shell and of a sidebar, the body of a window and of a drawer - carry the design system class `tl-region`, a one-cell grid (`grid-template-rows: minmax(0, 1fr)`, `grid-template-columns: minmax(0, 1fr)`) that stretches its content to the region's height whether it fills or not. A filling content (a table, a panel around a table) is thereby held to exactly that height and scrolls inside itself; a content of its own size (a panel with a form) spans the region as well. Where such a content is taller than the region, a panel scrolls its body and keeps its title bar and button bar in view; other content overflows its box and the region scrolls.
+
+**A `<panel>` follows its content.** It is a fill host for its body: a panel around a table, a split or another filling panel fills, so the same panel with a table spans the height in a tab, a split pane, a frame of a tile stack and a stack alike, and the table scrolls its rows itself. Around content of its own size a panel is as high as that content in a stack, and as high as the region in a bounded region (see above). `fill="true"` makes the panel fill around content of its own size as well. `fill="false"` ends the chain at the panel body: where nothing else gives the panel a height - several panels listed one below the other in a scrolling panel body - it stays as high as its content and a table inside shows all of its rows.
 
 A container that declares nothing is opaque: a filling control inside it does not grow it, so a new container element that lays out vertical space adds its declaration.
 
@@ -197,8 +202,8 @@ element of the control displaying that element, beside the classes the control's
 ```
 
 ```html
-<div class="tlStack tlStack--column tlStack--gap-normal tlDemoHero">
-  <span class="tlText tlDemoHeroTitle">Welcome</span>
+<div class="tl-stack tl-stack--column tl-stack--gap-default tlDemoHero">
+  <span class="tl-text tl-type-body tlDemoHeroTitle">Welcome</span>
 </div>
 ```
 
@@ -225,7 +230,7 @@ element, e.g. Material UI (layer `mui`), whatever the specificity and the positi
 rule `.tlDemoGlass { background: … }` therefore beats the background of the MUI `Card` the element
 is rendered with. See [Cascade layers](doc:view-layer/theme-tokens#cascade-layers).
 
-A modifier class of a kind — `tlText--ellipsis`, `tlCard--outlined` — is not the way to reach one
+A modifier class of a kind — `tl-text--truncate`, `tl-card__body--pad-compact` — is not the way to reach one
 element. Those classes are what a control writes for the display options of its own kind, so writing
 one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the
 one element only by accident, since the engine writes the same class on every element that carries

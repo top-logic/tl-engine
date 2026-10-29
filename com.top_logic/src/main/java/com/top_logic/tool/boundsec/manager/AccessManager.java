@@ -22,9 +22,12 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -48,6 +51,7 @@ import com.top_logic.util.TLContext;
 })
 @ServiceExtensionPoint(PersistencyLayer.Module.class)
 @Label("Access control")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> implements Reloadable {
 
 	/**
@@ -134,17 +138,25 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 		return CollectionUtil.containsAny(assignedRoles, accessRoles);
 	}
 
-    /**
-     * Check if the current person has one of the given roles at the given bound object.
-     *
-     * @param aBO
-     *            the bound object to check
-     * @param someRoles
-     *            a collection of BoundRoles
-     * @return <code>true</code>, if the given person has one of the given roles at the
-     *         given bound object, <code>false</code> otherwise
-     */
+	/**
+	 * Check if the current person has one of the given roles at the given bound object.
+	 *
+	 * <p>
+	 * While the {@link ThreadContext#isSecurityBypassed() security checks are bypassed}, access is
+	 * granted regardless of the roles. Without a current person, access is denied.
+	 * </p>
+	 *
+	 * @param aBO
+	 *        the bound object to check
+	 * @param someRoles
+	 *        a collection of BoundRoles
+	 * @return <code>true</code>, if the current person has one of the given roles at the given
+	 *         bound object, <code>false</code> otherwise
+	 */
 	public boolean hasRole(BoundObject aBO, Collection<? extends BoundRole> someRoles) {
+		if (ThreadContext.isSecurityBypassed()) {
+			return true;
+		}
 		TLContext context = TLContext.getContext();
 		if (context == null) {
 			return false;

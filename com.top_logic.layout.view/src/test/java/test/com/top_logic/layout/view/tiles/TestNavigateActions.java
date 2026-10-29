@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -23,6 +24,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -32,15 +34,18 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.tiles.FrameRoute;
 import com.top_logic.layout.view.tiles.NavigatePopAction;
 import com.top_logic.layout.view.tiles.NavigatePopCommand;
 import com.top_logic.layout.view.tiles.NavigatePopToAction;
 import com.top_logic.layout.view.tiles.NavigatePopToCommand;
+import com.top_logic.layout.view.tiles.NavigatePushCommand;
 import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.layout.view.tiles.TileStackElement;
 import com.top_logic.layout.view.tiles.TileStackScope;
@@ -52,6 +57,12 @@ import com.top_logic.layout.view.tiles.TileStackScope;
 public class TestNavigateActions extends TestCase {
 
 	private static final String VIEW = "test-navigate-actions.view.xml";
+
+	/** Id of the declaration of the person frame of the {@link #pushScope(ViewChannel) push tests}. */
+	private static final String PERSON = "person";
+
+	/** Id of the declaration of the order frame of the {@link #pushScope(ViewChannel) push tests}. */
+	private static final String ORDER = "order";
 
 	/**
 	 * Tests that a pop leaves the top frame of a two-frame path and hands the input on unchanged.
@@ -75,7 +86,7 @@ public class TestNavigateActions extends TestCase {
 		Object[] seen = new Object[1];
 		ViewAction record = (context, value) -> seen[0] = value;
 
-		ViewActionChain.run(frameContext(path), List.of(new NavigatePopAction(), record), input, null);
+		ViewActionChain.run(frameContext(path), List.of(new NavigatePopAction(), record), args(input), null);
 
 		assertEquals(List.of(frame("overview")), path.get());
 		assertSame("The object survives the pop.", input, seen[0]);
@@ -210,6 +221,66 @@ public class TestNavigateActions extends TestCase {
 	}
 
 	/**
+	 * Tests that a push names the frame by the id of its declaration, which supplies the view of the
+	 * pushed frame.
+	 */
+	public void testPushByIdBuildsFrameOfDeclaration() {
+		ViewChannel path = path();
+		TileStackScope scope = pushScope(path);
+		ViewContext initial = displayedIn(scope, scope.root());
+		NavigatePushCommand push = push(PERSON, PERSON);
+
+		check(push, initial);
+		push.execute(initial, "1");
+
+		assertEquals(List.of(new TileFrame(PERSON, PERSON + ".view.xml", null, Map.of(PERSON, "1"))), path.get());
+
+		ViewContext personFrame = displayedIn(scope, scope.declaration(PERSON));
+		NavigatePushCommand order = push(ORDER, ORDER);
+		check(order, personFrame);
+		order.execute(personFrame, "7");
+		assertEquals(ORDER, ((TileFrame) ((List<?>) path.get()).get(1)).getFrameId());
+	}
+
+	/**
+	 * Tests that a push naming a frame that does not follow the frame it is displayed in is
+	 * rejected when that frame is built.
+	 */
+	public void testPushOfNonSuccessorRejected() {
+		TileStackScope scope = pushScope(path());
+		NavigatePushCommand order = push(ORDER, ORDER);
+		try {
+			check(order, displayedIn(scope, scope.root()));
+			fail("An order follows a person, not the initial view.");
+		} catch (ConfigurationError expected) {
+			assertContains(ORDER, expected.getMessage());
+			assertContains("initial view", expected.getMessage());
+		}
+
+		try {
+			check(push("missing", ORDER), displayedIn(scope, scope.root()));
+			fail("The stack declares no such frame.");
+		} catch (ConfigurationError expected) {
+			assertContains("missing", expected.getMessage());
+		}
+	}
+
+	/**
+	 * Tests that a push handing over other values than the parameters of the frame it names is
+	 * rejected when the frame displaying it is built.
+	 */
+	public void testPushWithOtherParametersRejected() {
+		TileStackScope scope = pushScope(path());
+		try {
+			check(push(PERSON, "selected"), displayedIn(scope, scope.root()));
+			fail("The person frame holds the parameter person.");
+		} catch (ConfigurationError expected) {
+			assertContains(PERSON, expected.getMessage());
+			assertContains("selected", expected.getMessage());
+		}
+	}
+
+	/**
 	 * Tests that a tile stack names the channel under which its frames see the path.
 	 */
 	public void testStackBindsPath() throws Exception {
@@ -249,6 +320,42 @@ public class TestNavigateActions extends TestCase {
 		return result;
 	}
 
+	/**
+	 * A stack whose person frame follows the initial view and whose order frame follows a person
+	 * frame, each holding a parameter named like it.
+	 */
+	private static TileStackScope pushScope(ViewChannel path) {
+		FrameRoute order = new FrameRoute(ORDER, ORDER + ".view.xml", "order/:order", Map.of(), Map.of(), null);
+		FrameRoute person = new FrameRoute(PERSON, PERSON + ".view.xml", "person/:person", Map.of(), Map.of(), null);
+		person.initSuccessors(List.of(order));
+		return new TileStackScope(path, List.of(person));
+	}
+
+	/**
+	 * The context of a frame of the given declaration displayed in the given stack.
+	 */
+	private static ViewContext displayedIn(TileStackScope scope, FrameRoute declaration) {
+		return new DefaultViewContext(null).withScope(TileStackScope.class, scope)
+			.withScope(FrameRoute.class, declaration);
+	}
+
+	/**
+	 * A push of the frame of the given declaration, handing its input over as the given parameter.
+	 */
+	private static NavigatePushCommand push(String frame, String bindInputTo) {
+		NavigatePushCommand.Config config = TypedConfiguration.newConfigItem(NavigatePushCommand.Config.class);
+		config.update(config.descriptor().getProperty(NavigatePushCommand.Config.FRAME), frame);
+		config.update(config.descriptor().getProperty(NavigatePushCommand.Config.BIND_INPUT_TO), bindInputTo);
+		return (NavigatePushCommand) new DefaultInstantiationContext(TestNavigateActions.class).getInstance(config);
+	}
+
+	/**
+	 * Checks the push as building the frame displaying it in the given context does.
+	 */
+	private static void check(NavigatePushCommand push, ViewContext context) {
+		((ContextDependentRule) push.getIntrinsicRule()).bind(context);
+	}
+
 	private static ViewChannel path(TileFrame... frames) {
 		DefaultViewChannel channel = new DefaultViewChannel("navPath");
 		channel.set(List.of(frames));
@@ -256,11 +363,11 @@ public class TestNavigateActions extends TestCase {
 	}
 
 	private static ViewContext frameContext(ViewChannel pathChannel) {
-		return new DefaultViewContext(null).withScope(TileStackScope.class, new TileStackScope(pathChannel));
+		return new DefaultViewContext(null).withScope(TileStackScope.class, new TileStackScope(pathChannel, List.of()));
 	}
 
 	private static TileFrame frame(String name) {
-		return new TileFrame(name + ".view.xml", null, Map.of());
+		return new TileFrame(name, name + ".view.xml", null, Map.of());
 	}
 
 	private static void assertContains(String expected, String message) {
@@ -273,5 +380,10 @@ public class TestNavigateActions extends TestCase {
 	 */
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestNavigateActions.class, TypeIndex.Module.INSTANCE);
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

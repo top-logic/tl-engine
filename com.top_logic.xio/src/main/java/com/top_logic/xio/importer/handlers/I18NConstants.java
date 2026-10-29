@@ -8,6 +8,7 @@ package com.top_logic.xio.importer.handlers;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -40,6 +41,37 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Warning: Ignoring unknown tag "{0}".
 	 */
 	public static ResKey1 WARN_IGNORING_UNKNOWN__TAG;
+
+	/**
+	 * @en Unknown element "{0}" skipped.
+	 */
+	public static ResKey1 WARN_UNKNOWN_ELEMENT__TAG;
+
+	/**
+	 * @en Unknown element "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_ELEMENT__TAG;
+
+	/**
+	 * @en Ambiguous key "{1}" of existing objects ({0}): Using "{2}", ignoring "{3}".
+	 */
+	public static ResKey4 WARN_AMBIGUOUS_EXISTING_KEY__HANDLER_KEY_USED_IGNORED;
+
+	/**
+	 * @en No language given for the translation ({0}).
+	 */
+	public static ResKey1 ERROR_NO_LANGUAGE__HANDLER;
+
+	/**
+	 * @en Invalid language "{1}" for the translation ({0}).
+	 */
+	public static ResKey2 ERROR_INVALID_LANGUAGE__HANDLER_VALUE;
+
+	/**
+	 * @en The variable "{1}" passed to the condition ({0}) refers to an object that is not yet
+	 *     imported.
+	 */
+	public static ResKey2 ERROR_UNRESOLVED_CONDITION_ARGUMENT__HANDLER_VAR;
 
 	static {
 		initConstants(I18NConstants.class);

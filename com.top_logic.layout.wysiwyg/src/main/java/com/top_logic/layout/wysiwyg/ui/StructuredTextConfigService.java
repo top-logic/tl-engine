@@ -42,7 +42,9 @@ import com.top_logic.basic.json.config.JSONConfigValueAnalyzer;
 import com.top_logic.basic.json.config.JSONObject;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.tool.boundsec.securityObjectProvider.path.Component;
 import com.top_logic.util.Resources;
@@ -56,6 +58,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 @Label("Structured text editor configuration")
+@ServiceCategory.Of(UICategory.class)
 public class StructuredTextConfigService extends ManagedClass {
 	
 	/** Path of the ckeditor in webapp */
@@ -101,6 +104,15 @@ public class StructuredTextConfigService extends ManagedClass {
 	 * @see #getEditorConfig(String, String, List, String)
 	 */
 	public static final String FEATURE_SET_I18N_HTML = "i18n-html";
+
+	/**
+	 * Name for the feature set containing list of {@link #getFeatures() feature} names to select
+	 * for an HTML editor of a text with embedded TL-Script expressions, which additionally offers
+	 * editing the HTML source.
+	 * 
+	 * @see #getEditorConfig(String, String, List, String)
+	 */
+	public static final String FEATURE_SET_MACRO = "macro";
 
 	private static final String ITEMS_NAME_ATTRIBUTE = "items";
 

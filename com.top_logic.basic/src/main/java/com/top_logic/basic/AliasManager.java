@@ -24,6 +24,8 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.vars.VariableExpander;
 
@@ -53,6 +55,7 @@ import com.top_logic.basic.vars.VariableExpander;
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 @Label("Alias management")
+@ServiceCategory.Of(RuntimeCategory.class)
 public abstract class AliasManager extends ManagedClass implements Reloadable {
 
 	/**

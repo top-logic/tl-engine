@@ -5,12 +5,15 @@
  */
 package com.top_logic.layout.form.values.edit;
 
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import static com.top_logic.basic.util.Utils.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 import static com.top_logic.layout.form.values.Fields.*;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,13 +45,17 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.MapBinding;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.ReadOnly.ReadOnlyMode;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.constraint.ConstraintAnnotation;
 import com.top_logic.basic.config.constraint.ConstraintFactory;
 import com.top_logic.basic.config.constraint.ConstraintSpec;
@@ -69,22 +76,25 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.model.AbstractFormContainer;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.Values;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.annotation.UseBuilder;
@@ -170,9 +180,204 @@ public class EditorFactory implements AnnotationCustomizations {
 		@Name(DISPLAY_FIELDS_AS_TEXT)
 		boolean getDisplayFieldsAsText();
 
+		/** Property name of {@link #getAnnotationControls()}. */
+		String ANNOTATION_CONTROLS = "annotation-controls";
+
+		/**
+		 * Controls chosen by an annotation of the displayed property.
+		 *
+		 * <p>
+		 * A property that carries (directly, through its value type, or through a form
+		 * customization) one of the configured annotations is displayed with the control the
+		 * annotation's {@link AnnotationControlProvider} chooses. If a property carries several
+		 * of the configured annotations, the first entry in this list whose annotation is present
+		 * and that chooses a control wins.
+		 * </p>
+		 *
+		 * <p>
+		 * A control chosen here takes precedence over {@link #getTypeControls()} and over the
+		 * control of the editor that creates the field, also one chosen with a
+		 * {@link PropertyEditor} annotation. Only an {@link Encrypted} property is never displayed
+		 * with a control chosen here: it always gets the password input.
+		 * </p>
+		 */
+		@Name(ANNOTATION_CONTROLS)
+		@Key(AnnotationControlMapping.ANNOTATION)
+		List<AnnotationControlMapping> getAnnotationControls();
+
+		/** Property name of {@link #getTypeControls()}. */
+		String TYPE_CONTROLS = "type-controls";
+
+		/**
+		 * Controls chosen by the Java type of the displayed property.
+		 *
+		 * <p>
+		 * The entry for the property's type is used. If there is none, the entry for the nearest
+		 * superclass is used, and if there is none either, the entry for the first of its
+		 * interfaces in breadth-first order (the interfaces of the type itself first, then those
+		 * of its superclasses, then their super interfaces).
+		 * </p>
+		 *
+		 * <p>
+		 * An entry here is used for a property that has no control chosen by
+		 * {@link #getAnnotationControls()}. It also applies to a property whose field is created by
+		 * an editor chosen with a {@link PropertyEditor} annotation: the editor creates the field,
+		 * the entry chooses the control displaying it. An {@link Encrypted} property always gets
+		 * the password input instead.
+		 * </p>
+		 */
+		@Name(TYPE_CONTROLS)
+		@Key(TypeControlMapping.TYPE)
+		Map<Class<?>, TypeControlMapping> getTypeControls();
+
+		/** Property name of {@link #getSelectionDialogThreshold()}. */
+		String SELECTION_DIALOG_THRESHOLD = "selection-dialog-threshold";
+
+		/**
+		 * The number of options up to which a single-valued selection is displayed as drop-down
+		 * list.
+		 *
+		 * <p>
+		 * A single-valued selection with more options is displayed with a selection dialog that
+		 * offers searching the options. Multi-valued selections and selections whose options form
+		 * a tree always use the selection dialog, since a drop-down list cannot show a tree.
+		 * </p>
+		 */
+		@Name(SELECTION_DIALOG_THRESHOLD)
+		@IntDefault(20)
+		int getSelectionDialogThreshold();
+
+	}
+
+	/**
+	 * Entry of {@link Config#getAnnotationControls()}.
+	 */
+	public interface AnnotationControlMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getAnnotation()}. */
+		String ANNOTATION = "annotation";
+
+		/** Property name of {@link #getImpl()}. */
+		String IMPL = "impl";
+
+		/**
+		 * The annotation type a property must carry for this entry to apply.
+		 *
+		 * <p>
+		 * Only an annotation marked with {@link ControlAnnotation} can be given.
+		 * </p>
+		 */
+		@Name(ANNOTATION)
+		@Mandatory
+		@Format(ControlAnnotationFormat.class)
+		@Options(fun = ControlAnnotationOptions.class)
+		Class<? extends Annotation> getAnnotation();
+
+		/**
+		 * The {@link AnnotationControlProvider} that chooses the control for a property with the
+		 * annotation.
+		 *
+		 * <p>
+		 * The provider must accept the annotation type of this entry.
+		 * </p>
+		 */
+		@Name(IMPL)
+		@Mandatory
+		PolymorphicConfiguration<? extends AnnotationControlProvider<?>> getImpl();
+
+	}
+
+	/**
+	 * Entry of {@link Config#getTypeControls()}.
+	 */
+	public interface TypeControlMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getType()}. */
+		String TYPE = "type";
+
+		/** Property name of {@link #getImpl()}. */
+		String IMPL = "impl";
+
+		/**
+		 * The Java type of the property value this entry applies to.
+		 */
+		@Name(TYPE)
+		@Mandatory
+		Class<?> getType();
+
+		/**
+		 * The control for properties of the type.
+		 */
+		@Name(IMPL)
+		@Mandatory
+		PolymorphicConfiguration<? extends ControlProvider> getImpl();
+
+	}
+
+	/**
+	 * The instantiated control choices of a {@link Config}.
+	 */
+	private static final class ConfiguredControls {
+
+		private final List<Map.Entry<Class<? extends Annotation>, AnnotationControlProvider<?>>> _byAnnotation;
+
+		private final Map<Class<?>, ControlProvider> _byType;
+
+		ConfiguredControls(Config config) {
+			InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
+			List<Map.Entry<Class<? extends Annotation>, AnnotationControlProvider<?>>> byAnnotation =
+				new ArrayList<>();
+			for (AnnotationControlMapping mapping : config.getAnnotationControls()) {
+				byAnnotation.add(Map.entry(mapping.getAnnotation(), context.getInstance(mapping.getImpl())));
+			}
+			_byAnnotation = byAnnotation;
+
+			Map<Class<?>, ControlProvider> byType = new HashMap<>();
+			for (TypeControlMapping mapping : config.getTypeControls().values()) {
+				byType.put(mapping.getType(), context.getInstance(mapping.getImpl()));
+			}
+			_byType = byType;
+		}
+
+		List<Map.Entry<Class<? extends Annotation>, AnnotationControlProvider<?>>> byAnnotation() {
+			return _byAnnotation;
+		}
+
+		ControlProvider byType(Class<?> type) {
+			if (_byType.isEmpty()) {
+				return null;
+			}
+			for (Class<?> current = type; current != null; current = current.getSuperclass()) {
+				ControlProvider result = _byType.get(current);
+				if (result != null) {
+					return result;
+				}
+			}
+
+			List<Class<?>> interfaces = new ArrayList<>();
+			for (Class<?> current = type; current != null; current = current.getSuperclass()) {
+				interfaces.addAll(Arrays.asList(current.getInterfaces()));
+			}
+			Set<Class<?>> seen = new HashSet<>();
+			for (int n = 0; n < interfaces.size(); n++) {
+				Class<?> current = interfaces.get(n);
+				if (!seen.add(current)) {
+					continue;
+				}
+				ControlProvider result = _byType.get(current);
+				if (result != null) {
+					return result;
+				}
+				interfaces.addAll(Arrays.asList(current.getInterfaces()));
+			}
+			return null;
+		}
+
 	}
 
 	private final Config _config;
+
+	private final ConfiguredControls _controls;
 
 	final DescendingInitializer _initializer;
 
@@ -205,7 +410,24 @@ public class EditorFactory implements AnnotationCustomizations {
 	 *        See {@link #getInitializerProvider()}.
 	 */
 	public EditorFactory(InitializerProvider initializerProvider) {
-		_config = ApplicationConfig.getInstance().getConfig(Config.class);
+		this(ApplicationConfig.getInstance().getConfig(Config.class), initializerProvider);
+	}
+
+	/**
+	 * Creates a {@link EditorFactory} with an explicit configuration.
+	 *
+	 * @param config
+	 *        See {@link #getConfig()}.
+	 * @param initializerProvider
+	 *        See {@link #getInitializerProvider()}.
+	 */
+	public EditorFactory(Config config, InitializerProvider initializerProvider) {
+		this(config, new ConfiguredControls(config), initializerProvider);
+	}
+
+	private EditorFactory(Config config, ConfiguredControls controls, InitializerProvider initializerProvider) {
+		_config = config;
+		_controls = controls;
 		_defaultCustomizations = new ConfiguredAnnotationCustomizations(_config);
 		_initializer = wrapInitializers(initializerProvider);
 		_orderStrategy = createOrderStrategy();
@@ -265,10 +487,25 @@ public class EditorFactory implements AnnotationCustomizations {
 	 * Creates {@link DeclarativeFormOptions} for the given {@link PropertyDescriptor}.
 	 */
 	public DeclarativeFormOptions formOptions(PropertyDescriptor contextProperty) {
+		return formOptions(contextProperty, null);
+	}
+
+	/**
+	 * Creates {@link DeclarativeFormOptions} for the given {@link PropertyDescriptor} whose UI is
+	 * created in the given {@link FormContainer}.
+	 * 
+	 * @see DeclarativeFormOptions#getContainer()
+	 */
+	public DeclarativeFormOptions formOptions(PropertyDescriptor contextProperty, FormContainer container) {
 		return new DeclarativeFormOptions() {
 			@Override
 			public PropertyDescriptor getProperty() {
 				return contextProperty;
+			}
+
+			@Override
+			public FormContainer getContainer() {
+				return container;
 			}
 
 			@Override
@@ -565,22 +802,89 @@ public class EditorFactory implements AnnotationCustomizations {
 	}
 
 	/**
-	 * Installs the control provider annotated by the {@link ControlProvider} annotation.
+	 * Installs the control chosen for the given property on its field.
 	 * 
 	 * @param property
 	 *        The {@link PropertyDescriptor} for which the given field was created.
 	 * @param field
 	 *        The field to set the control provider,
-	 *        {@link FormMember#setControlProvider(com.top_logic.layout.form.template.ControlProvider)}
-	 * @return Whether a {@link ControlProvider} annotation was found.
+	 *        {@link FormMember#setControlProvider(ControlProvider)}
+	 * @return Whether a control was chosen for the property. If not, the field keeps its control
+	 *         provider.
+	 * 
+	 * @see #resolveControlProvider(PropertyDescriptor)
 	 */
-	public boolean processControlProviderAnnotation(PropertyDescriptor property, FormMember field) {
-		ControlProvider controlProvider = getAnnotation(property, ControlProvider.class);
-		if (controlProvider != null) {
-			installAnnotatedControlProvider(field, property, controlProvider);
-			return true;
+	public boolean installControlProvider(PropertyDescriptor property, FormMember field) {
+		ControlProvider controlProvider = resolveControlProvider(property);
+		if (controlProvider == null) {
+			return false;
 		}
-		return false;
+		field.setControlProvider(controlProvider);
+		return true;
+	}
+
+	/**
+	 * The control chosen for the given property by its annotations or its value type.
+	 * 
+	 * <p>
+	 * The control is chosen by the first of:
+	 * </p>
+	 * <ol>
+	 * <li>the password input for an {@link Encrypted} property, ahead of every configured control,
+	 * so that no configuration can display a secret in the clear,</li>
+	 * <li>the first entry of {@link Config#getAnnotationControls()} whose annotation the property
+	 * carries and that chooses a control,</li>
+	 * <li>the entry of {@link Config#getTypeControls()} for the property type, also if the field
+	 * is created by an editor chosen by a {@link PropertyEditor} annotation,</li>
+	 * <li>the control of the editor that creates the field (signaled by a <code>null</code>
+	 * result).</li>
+	 * </ol>
+	 * 
+	 * <p>
+	 * Annotations are resolved through {@link #getAnnotation(PropertyDescriptor, Class)}, so form
+	 * customizations and annotations of the property's value type are considered.
+	 * </p>
+	 * 
+	 * @param property
+	 *        The property to choose a control for.
+	 * @return The chosen control, or <code>null</code>, if neither annotations nor configuration
+	 *         choose one, and the editor's built-in control is used.
+	 */
+	public ControlProvider resolveControlProvider(PropertyDescriptor property) {
+		if (getAnnotation(property, Encrypted.class) != null) {
+			return PasswordInputControlProvider.INSTANCE;
+		}
+
+		for (Map.Entry<Class<? extends Annotation>, AnnotationControlProvider<?>> entry : _controls.byAnnotation()) {
+			ControlProvider result =
+				fromAnnotation(property, entry.getKey(), entry.getValue());
+			if (result != null) {
+				return result;
+			}
+		}
+
+		return _controls.byType(property.getType());
+	}
+
+	private <A extends Annotation> ControlProvider fromAnnotation(
+			PropertyDescriptor property, Class<A> annotationType, AnnotationControlProvider<?> provider) {
+		A annotation = getAnnotation(property, annotationType);
+		if (annotation == null) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		AnnotationControlProvider<A> typedProvider = (AnnotationControlProvider<A>) provider;
+		return typedProvider.getControlProvider(this, property, annotation);
+	}
+
+	/**
+	 * Whether the given single-valued selection is displayed with a selection dialog instead of a
+	 * drop-down list.
+	 * 
+	 * @see Config#getSelectionDialogThreshold()
+	 */
+	public boolean useSelectionDialog(SelectField select) {
+		return select.isOptionsTree() || select.getOptionCount() > _config.getSelectionDialogThreshold();
 	}
 
 	private FormMember createMember(Class<? extends Editor> editorClass, FormContainer container, ValueModel setting) {
@@ -606,26 +910,6 @@ public class EditorFactory implements AnnotationCustomizations {
 	public ValueModel valueModel(ConfigurationItem model, PropertyDescriptor property) {
 		PropertyValue propertyValue = new PropertyValueImpl(model, property);
 		return new Setting(this, propertyValue, _initializer);
-	}
-
-	/**
-	 * Installs the control provider annotated by the {@link ControlProvider} annotation.
-	 * 
-	 * @param field
-	 *        The field to set the control provider,
-	 *        {@link FormMember#setControlProvider(com.top_logic.layout.form.template.ControlProvider)}
-	 * @param property
-	 *        The {@link PropertyDescriptor} for which the given field was created.
-	 * @param controlProvider
-	 *        The annotation to instantiate.
-	 */
-	public static void installAnnotatedControlProvider(FormMember field, PropertyDescriptor property,
-			ControlProvider controlProvider) {
-		try {
-			field.setControlProvider(ConfigUtil.getInstance(controlProvider.value()));
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError("Control provider annotation for '" + property + "' is invalid.", ex);
-		}
 	}
 
 	private void inspectConstraintAnnotations(ConfigurationItem model, PropertyDescriptor property) {
@@ -810,7 +1094,8 @@ public class EditorFactory implements AnnotationCustomizations {
 				} else {
 					if (keyMapping != null) {
 						Object key = keyMapping.map(value);
-						boolean containsKey = collectionValue.stream()
+						// An anonymous entry has no key and therefore never collides with another entry.
+						boolean containsKey = !ConfigUtil.isAnonymousKey(key) && collectionValue.stream()
 							.map(keyMapping)
 							.anyMatch(key::equals);
 						if (containsKey) {
@@ -1271,7 +1556,7 @@ public class EditorFactory implements AnnotationCustomizations {
 	 * Creates a new {@link EditorFactory} with the same settings as this one.
 	 */
 	public EditorFactory copy() {
-		EditorFactory result = new EditorFactory(getInitializerProvider());
+		EditorFactory result = new EditorFactory(_config, _controls, getInitializerProvider());
 		result.setCustomizations(_customizations);
 		result.setCompact(isCompact());
 		return result;

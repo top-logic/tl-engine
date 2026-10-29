@@ -32,6 +32,10 @@ public class TabDefinition {
 
 	private String _icon;
 
+	private boolean _finalTitle;
+
+	private boolean _hidden;
+
 	/**
 	 * Creates a new {@link TabDefinition}.
 	 *
@@ -115,6 +119,55 @@ public class TabDefinition {
 	 */
 	public TabDefinition withIcon(String icon) {
 		_icon = icon;
+		return this;
+	}
+
+	/**
+	 * Whether the label of this tab is the final title of the page while the tab is active.
+	 *
+	 * <p>
+	 * Only meaningful for a tab with a {@link #getRoute() route}: a tab without one names no page.
+	 * </p>
+	 *
+	 * @see com.top_logic.layout.react.routing.RoutingParticipant#titlesContent()
+	 */
+	public boolean isFinalTitle() {
+		return _finalTitle;
+	}
+
+	/**
+	 * Sets whether the label of this tab is the final title of the page.
+	 *
+	 * @param finalTitle
+	 *        {@code true} to keep the labels of the routes inside the content of this tab out of the
+	 *        title of the page.
+	 * @return This instance for fluent chaining.
+	 *
+	 * @see #isFinalTitle()
+	 */
+	public TabDefinition withFinalTitle(boolean finalTitle) {
+		_finalTitle = finalTitle;
+		return this;
+	}
+
+	/**
+	 * Whether this tab is left out of the strip when the tab bar is built.
+	 *
+	 * @see ReactTabBarControl#setTabHidden(String, boolean)
+	 */
+	public boolean isHidden() {
+		return _hidden;
+	}
+
+	/**
+	 * Sets whether this tab is left out of the strip when the tab bar is built.
+	 *
+	 * @param hidden
+	 *        {@code true} to leave the tab out.
+	 * @return This instance for fluent chaining.
+	 */
+	public TabDefinition withHidden(boolean hidden) {
+		_hidden = hidden;
 		return this;
 	}
 

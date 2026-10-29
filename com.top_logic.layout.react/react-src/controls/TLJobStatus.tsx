@@ -1,7 +1,6 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
-import { ProgressBar } from './TLProgress';
 
 const { useCallback, useEffect, useMemo, useState } = React;
 
@@ -12,6 +11,8 @@ const I18N_KEYS = {
   'js.jobStatus.cancelled': 'Cancelled',
   'js.jobStatus.elapsed': 'Elapsed time',
   'js.jobStatus.cancel': 'Cancel',
+  'js.jobStatus.currentStep': 'Step: {0}',
+  'js.jobStatus.steps': 'Steps',
 };
 
 /** One of the steps the job goes through, and where it stands. */
@@ -19,6 +20,16 @@ interface PhaseEntry {
   label: string;
   status: 'done' | 'active' | 'pending';
 }
+
+/** Where a step stands, as the attributes of its item in the step list (tl-steps). */
+const STEP_ATTRIBUTES: Record<PhaseEntry['status'], Record<string, string>> = {
+  done: { 'data-tl-state': 'done' },
+  active: { 'aria-current': 'step' },
+  pending: {},
+};
+
+/** The share of the job done, as the label beside its bar: a whole percentage in the browser's language. */
+const PERCENT = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
 
 /**
  * What is known about a long-running job: the steps it goes through, how far it has come, how long
@@ -45,6 +56,8 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
+  const ProgressBar = usePart('ProgressBar');
 
   const status = (state.status as string | null) ?? null;
   const phases = (state.phases as PhaseEntry[] | undefined) ?? [];
@@ -91,33 +104,75 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   // nothing is going on any more.
   const showBar = running || fraction != null;
 
+  // The bar shows its share as a percentage; the state above it says what progresses and names the
+  // bar, so the percentage is announced once, as the bar's value.
+  const stateId = `${controlId}-state`;
+  // Rounded to whole percent as the bar rounds its aria-valuenow (Math.round of fraction × 100): the format
+  // alone rounds the decimal digits of the fraction and can show one percent more (0.285: 29 %, the bar 28).
+  const percent = fraction != null ? PERCENT.format(Math.round(fraction * 100) / 100) : null;
+
+  const stateText = i18n[`js.jobStatus.${status}`] ?? status;
+
+  // The live line says what is worth announcing: the state and the step the job is at, with the message. The
+  // name of the step stands visible; the state and the word "Step" before it are only read, since the header
+  // shows the state and the list the step. The elapsed time, the list and the bar stay outside: the time
+  // changes every second and would be announced every second.
+  const currentStep = phases.find(phase => phase.status === 'active') ?? null;
+  const stepTemplate = i18n['js.jobStatus.currentStep'];
+  const argument = stepTemplate.indexOf('{0}');
+  const stepBefore = argument < 0 ? stepTemplate + ' ' : stepTemplate.substring(0, argument);
+  const stepAfter = argument < 0 ? '' : stepTemplate.substring(argument + '{0}'.length);
+
   return (
-    <div id={controlId} className={rootClassName(state, `tlJobStatus tlJobStatus--${status}`)} role="status" aria-live="polite">
-      <div className="tlJobStatus__header">
-        <span className="tlJobStatus__state">{i18n[`js.jobStatus.${status}`] ?? status}</span>
+    <div id={controlId} className={rootClassName(state, 'tl-job-status')}>
+      <div className="tl-job-status__header">
+        <span id={stateId} className="tl-job-status__state tl-type-body-strong">{stateText}</span>
         {elapsed !== null && (
-          <span className="tlJobStatus__elapsed" {...tooltipProps(i18n['js.jobStatus.elapsed'])}>{elapsed}</span>
+          <span className="tl-job-status__elapsed tl-type-body tl-nums" {...tooltipProps(i18n['js.jobStatus.elapsed'])}>{elapsed}</span>
         )}
         {cancelable && (
-          <button type="button" className="tlJobStatus__cancel" onClick={handleCancel}>
-            {i18n['js.jobStatus.cancel']}
-          </button>
+          <span className="tl-job-status__cancel">
+            <Button
+              label={i18n['js.jobStatus.cancel']}
+              display="label-only"
+              appearance="secondary"
+              onClick={handleCancel}
+            />
+          </span>
         )}
       </div>
+      <div className="tl-job-status__live tl-type-body" role="status">
+        {currentStep == null
+          ? <span className="tl-visually-hidden">{stateText + '.'}</span>
+          : (
+            <>
+              <span className="tl-visually-hidden">{stateText + '. ' + stepBefore}</span>
+              {currentStep.label}
+              {stepAfter !== '' && <span className="tl-visually-hidden">{stepAfter}</span>}
+            </>
+          )}
+        {message !== null && message !== '' && <div className="tl-job-status__message tl-type-body">{message}</div>}
+      </div>
       {phases.length > 0 && (
-        <ol className="tlJobStatus__phases">
+        <ol className="tl-steps tl-steps--vertical" aria-label={i18n['js.jobStatus.steps']}>
           {phases.map((phase, index) => (
-            <li key={index} className={`tlJobStatus__phase tlJobStatus__phase--${phase.status}`}>
-              {phase.label}
+            <li key={index} className="tl-steps__item" {...STEP_ATTRIBUTES[phase.status]}>
+              <span className="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">{index + 1}</span>
+              <span className={'tl-steps__name ' + (phase.status === 'active' ? 'tl-type-body-strong' : 'tl-type-body')}>
+                {phase.label}
+              </span>
             </li>
           ))}
         </ol>
       )}
-      {showBar && <ProgressBar fraction={fraction} className="tlJobStatus__bar" />}
-      {message !== null && message !== '' && <div className="tlJobStatus__message">{message}</div>}
-      {error !== null && error !== '' && <div className="tlJobStatus__error">{error}</div>}
+      {showBar && (
+        <div className="tl-job-status__bar">
+          <ProgressBar value={fraction ?? undefined} label={percent ?? undefined} labelledBy={stateId} />
+        </div>
+      )}
+      {error !== null && error !== '' && <div className="tl-job-status__error tl-type-body" role="alert">{error}</div>}
       {error == null && result !== null && result !== '' && (
-        <div className="tlJobStatus__result">{result}</div>
+        <div className="tl-job-status__result tl-type-body">{result}</div>
       )}
     </div>
   );

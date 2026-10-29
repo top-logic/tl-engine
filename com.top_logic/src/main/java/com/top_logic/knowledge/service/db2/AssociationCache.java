@@ -213,8 +213,12 @@ abstract class AssociationCache<T extends TLObject, C> extends AssociationCacheB
 		} else {
 			_cache = newCache;
 		}
-		if (cacheRevision == getKnowledgeBase().getLastLocalRevision()) {
-			assert _cache == newCache;
+		/* A result for the last local revision stays valid until the next commit, which limits the
+		 * validity again when publishing its changes. This holds only if the result is the head of
+		 * the chain: A commit publishes its caches (installing a newer head) before it advances the
+		 * last local revision. A result for the former last local revision that arrives in between
+		 * is an older entry whose validity is already limited by that commit. */
+		if (_cache == newCache && cacheRevision == getKnowledgeBase().getLastLocalRevision()) {
 			_cache.updateMaxValidity(Revision.CURRENT_REV);
 		}
 		return newCache;

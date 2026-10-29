@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -18,9 +19,12 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.view.model.CommittedModelChanges;
+import test.com.top_logic.layout.view.model.CommittedModelChanges.ScopedReactContext;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
@@ -28,11 +32,16 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.format.DateStyle;
+import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.meta.form.constraint.I18NConstants;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
@@ -47,18 +56,22 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.DatePickerState.Precision;
+import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -85,14 +98,20 @@ import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
+import com.top_logic.model.annotate.ui.Format;
+import com.top_logic.model.annotate.ui.FormatBase;
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -124,6 +143,12 @@ import com.top_logic.util.model.ModelService;
  * </p>
  */
 public class TestValueInputElement extends TestCase {
+
+	/** {@link ConfigType} value marking a datatype as a time of day. */
+	private static final String CONFIG_TYPE_TIME = "TIME";
+
+	/** Name of the property {@link TimeFormatDefinition.Config#getStyle()}. */
+	private static final String TIME_STYLE = "style";
 
 	/** Name of the module the types under test live in. */
 	private static final String MODULE = "test.input";
@@ -215,8 +240,38 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final int MANDATORY_TEXT_ON_CHANGE = 18;
 
+	/**
+	 * Position of the input of the test view choosing a text from the options its expression
+	 * computes.
+	 */
+	private static final int COMPUTED_OPTIONS = 19;
+
+	/**
+	 * Position of the input of the test view choosing a text from the options its expression
+	 * computes, offered sorted by their labels.
+	 */
+	private static final int COMPUTED_OPTIONS_BY_LABEL = 20;
+
+	/** Position of the input of the test view choosing a module from the instances of its type. */
+	private static final int MODULE_INSTANCES = 21;
+
+	/**
+	 * Position of the input of the test view choosing a text from the modules its expression
+	 * computes, observing the module type.
+	 */
+	private static final int OBSERVED_MODULE_OPTIONS = 22;
+
+	/**
+	 * Position of the input of the test view choosing a text from the modules its expression
+	 * computes, observing no type.
+	 */
+	private static final int UNOBSERVED_MODULE_OPTIONS = 23;
+
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 19;
+	private static final int INPUT_COUNT = 24;
+
+	/** Name of the module a test creates to see it offered by an input displaying the modules. */
+	private static final String CREATED_MODULE = "test.input.created";
 
 	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
 	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
@@ -275,7 +330,7 @@ public class TestValueInputElement extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestValueInputElement.class,
+		ThreadContext.<Void, Throwable, RuntimeException> inSystemContext(TestValueInputElement.class,
 			() -> {
 				super.runTest();
 				return null;
@@ -301,7 +356,7 @@ public class TestValueInputElement extends TestCase {
 	 * how the value is entered.
 	 */
 	public void testParseInputs() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+		List<UIElement.Config> inputs = parseInputs();
 		assertEquals("Every input of the test view must be parsed.", INPUT_COUNT, inputs.size());
 
 		ValueInputElement.Config text = config(inputs, 0);
@@ -348,7 +403,7 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
 		assertNotNull("The options expression must reach the configuration.", owners.getOptions());
 		assertEquals("The options depend on one channel.", 1, owners.getInputs().size());
-		assertEquals("project", owners.getInputs().get(0).getChannelName());
+		assertEquals("project", owners.getInputs().get(0).getChannel().getChannelName());
 	}
 
 	/** A text is written in a text input, on a channel as in an attribute. */
@@ -364,6 +419,82 @@ public class TestValueInputElement extends TestCase {
 	/** A point in time is picked in a date picker, on a channel as in an attribute. */
 	public void testDateIsPickedInADatePicker() {
 		assertEnteredLike(datatype("Day", Kind.DATE, Date.class), Date.class, ReactDatePickerControl.class);
+	}
+
+	/** A time of day shown in a format writing seconds is edited with seconds. */
+	public void testATimeShownWithSecondsIsEditedInSeconds() {
+		assertEquals("A format writing seconds must give a field editing seconds.",
+			Precision.SECONDS, timePicker(timeOfDay("TimeSeconds"), timeFormat(DateStyle.MEDIUM)).getPrecision());
+	}
+
+	/** A time of day shown in a format without seconds is edited in minutes. */
+	public void testATimeShownWithoutSecondsIsEditedInMinutes() {
+		assertEquals("A format writing no seconds must give a field editing minutes.",
+			Precision.MINUTES, timePicker(timeOfDay("TimeMinutes"), timeFormat(DateStyle.SHORT)).getPrecision());
+	}
+
+	/**
+	 * A time of day without a format of its own is edited in the precision of the format its type
+	 * carries.
+	 *
+	 * <p>
+	 * The attribute settings of the type
+	 * ({@link com.top_logic.element.meta.AttributeSettings#getConfiguredTypeAnnotation(Class, TLType)},
+	 * reached through {@link TLType#getAnnotation(Class)}) give a datatype of {@link ConfigType}
+	 * {@value #CONFIG_TYPE_TIME} the {@code short-time} format, which writes no seconds, so a value
+	 * without a {@link Format} of its own is edited in minutes.
+	 * </p>
+	 */
+	public void testATimeWithoutFormatFollowsTheFormatOfItsType() throws ConfigurationException {
+		TLPrimitive type = timeOfDay("TimeDefault");
+		Format typeFormat = type.getAnnotation(Format.class);
+		assertNotNull("The attribute settings must give a time of day a format.", typeFormat);
+		Precision expected = ReactDatePickerControl.precision(ReactDatePickerControl.Kind.TIME,
+			(DateFormat) DisplayAnnotations.toFormat(typeFormat));
+
+		assertEquals("The format of the type must decide the precision.", Precision.MINUTES, expected);
+		assertEquals(expected, timePicker(type, null).getPrecision());
+	}
+
+	/**
+	 * A datatype of time-of-day values, marked as such by its {@link ConfigType}.
+	 *
+	 * @param name
+	 *        The name of the datatype within the test module.
+	 */
+	private TLPrimitive timeOfDay(String name) {
+		TLPrimitive type = datatype(name, Kind.DATE, Date.class);
+		ConfigType configType = TypedConfiguration.newConfigItem(ConfigType.class);
+		configType.setValue(CONFIG_TYPE_TIME);
+		type.setAnnotation(configType);
+		return type;
+	}
+
+	/**
+	 * The picker a value of the given time-of-day type is entered in on a channel, the value
+	 * declared with the given display format, or with none if it is {@code null}.
+	 */
+	private ReactDatePickerControl timePicker(TLPrimitive type, Format format) {
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		if (format != null) {
+			declared.getAnnotations().add(format);
+		}
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		FieldSpec spec = FieldControlService.fieldSpec(type, declared, LABEL, false, field);
+		assertEquals(ReactDatePickerControl.Kind.TIME, spec.getDateKind());
+
+		ReactControl control = FieldControlRegistry.getInstance().createControl(_context, spec, field);
+		assertEquals(ReactDatePickerControl.class, control.getClass());
+		return (ReactDatePickerControl) control;
+	}
+
+	/** A {@link Format} annotation showing a time of day in the given style. */
+	private static Format timeFormat(DateStyle style) {
+		TimeFormatDefinition.Config definition = TypedConfiguration.newConfigItem(TimeFormatDefinition.Config.class);
+		definition.update(definition.descriptor().getProperty(TIME_STYLE), style);
+		Format format = TypedConfiguration.newConfigItem(Format.class);
+		format.update(format.descriptor().getProperty(FormatBase.DEFINITION), definition);
+		return format;
 	}
 
 	/**
@@ -750,7 +881,7 @@ public class TestValueInputElement extends TestCase {
 	 * annotations shaping its display.
 	 */
 	public void testParseValueDeclaration() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+		List<UIElement.Config> inputs = parseInputs();
 
 		assertTrue("A stated mandatory flag must reach the configuration.",
 			config(inputs, MANDATORY_CHOICE).getMandatory());
@@ -821,6 +952,46 @@ public class TestValueInputElement extends TestCase {
 
 		assertEquals("Without an annotation, the options are offered in a list that opens on demand.",
 			SelectDisplay.DROPDOWN, select(field(chrome(OPTIONAL_CHOICE))).getDisplay());
+	}
+
+	/**
+	 * The options an expression computes are offered in the order it computes them, not sorted by
+	 * their labels.
+	 */
+	public void testComputedOptionsAreOfferedInTheirOrder() throws Exception {
+		assertEquals(List.of("No day", "Monday", "Tuesday"), offeredLabels(COMPUTED_OPTIONS));
+	}
+
+	/**
+	 * The options an expression computes are offered sorted by their labels where the input states
+	 * {@link OptionOrder#BY_LABEL}.
+	 */
+	public void testComputedOptionsAreSortedByLabelOnRequest() throws Exception {
+		assertEquals(List.of("Monday", "No day", "Tuesday"), offeredLabels(COMPUTED_OPTIONS_BY_LABEL));
+	}
+
+	/**
+	 * The labels of the options the select input at the given position hands to its client, in the
+	 * order handed over.
+	 */
+	private List<String> offeredLabels(int position) throws Exception {
+		return offeredLabels(input(position));
+	}
+
+	/**
+	 * The labels of the options the given select input hands to its client, in the order handed
+	 * over.
+	 */
+	private static List<String> offeredLabels(ReactControl input) {
+		Map<?, ?> state = clientState(select(input));
+
+		assertEquals("The chips are handed their options.", Boolean.TRUE,
+			state.get(DropdownSelectState.OPTIONS_LOADED__PROP));
+		List<String> labels = new ArrayList<>();
+		for (Object option : (List<?>) state.get(DropdownSelectState.OPTIONS__PROP)) {
+			labels.add((String) ((Map<?, ?>) option).get(DropdownSelectState.Option.LABEL__PROP));
+		}
+		return labels;
 	}
 
 	/**
@@ -1020,6 +1191,87 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/**
+	 * An input choosing an instance of a class offers an instance created while the input is
+	 * displayed, and no longer offers it once it is deleted.
+	 */
+	public void testTheInstancesOfAClassFollowTheModel() throws Exception {
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ReactFormFieldControl input = observedInput(scope, MODULE_INSTANCES);
+		input.attach();
+		assertFalse("The module does not exist yet.", offeredLabels(input).contains(CREATED_MODULE));
+
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
+		assertTrue("A created instance is offered at once: " + offeredLabels(input),
+			offeredLabels(input).contains(CREATED_MODULE));
+
+		CommittedModelChanges.deleteModule(scope, module);
+		assertFalse("A deleted instance is no longer offered.", offeredLabels(input).contains(CREATED_MODULE));
+	}
+
+	/**
+	 * An input that is not displayed does not follow the model, and catches up with what happened
+	 * meanwhile as soon as it is displayed again.
+	 */
+	public void testAHiddenInputCatchesUpWhenDisplayedAgain() throws Exception {
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ReactFormFieldControl input = observedInput(scope, MODULE_INSTANCES);
+		input.attach();
+		input.detach();
+
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
+		try {
+			assertFalse("A hidden input offers what it offered when it was left.",
+				offeredLabels(input).contains(CREATED_MODULE));
+
+			input.attach();
+			assertTrue("The input displayed again offers the instance created while it was hidden.",
+				offeredLabels(input).contains(CREATED_MODULE));
+		} finally {
+			CommittedModelChanges.deleteModule(scope, module);
+		}
+	}
+
+	/**
+	 * An options expression computing its options from objects of a type it observes computes them
+	 * again when such an object is created; without the type observed, it does not.
+	 */
+	public void testAnOptionsExpressionFollowsTheObservedTypes() throws Exception {
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ReactFormFieldControl observed = observedInput(scope, OBSERVED_MODULE_OPTIONS);
+		ReactFormFieldControl unobserved = observedInput(scope, UNOBSERVED_MODULE_OPTIONS);
+		observed.attach();
+		unobserved.attach();
+
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
+		try {
+			assertTrue("An object of an observed type computes the options again: " + offeredLabels(observed),
+				offeredLabels(observed).contains(CREATED_MODULE));
+			assertFalse("An object of a type nobody observes changes no options.",
+				offeredLabels(unobserved).contains(CREATED_MODULE));
+		} finally {
+			CommittedModelChanges.deleteModule(scope, module);
+		}
+	}
+
+	/**
+	 * The input control built by the {@code <value-input>} at the given position of the test view
+	 * in a window observing the model in the given scope.
+	 */
+	private ReactFormFieldControl observedInput(ModelScope scope, int index) throws Exception {
+		ViewContext context = new DefaultViewContext(new ScopedReactContext(scope));
+		context.registerChannel(TERM, new DefaultViewChannel(TERM));
+		ValueInputElement.Config config = config(parseInputs(), index);
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestValueInputElement.class);
+		UIElement element = instantiation.getInstance(config);
+		instantiation.checkErrors();
+
+		IReactControl control = element.createControl(context);
+		assertTrue("An input without a label is the field control itself, but is " + control,
+			control instanceof ReactFormFieldControl);
+		return (ReactFormFieldControl) control;
+	}
+
+	/**
 	 * {@link ViewCommand} recording the inputs it is run on, the submit command of the inputs of the
 	 * test view testing the submit gesture.
 	 */
@@ -1105,7 +1357,7 @@ public class TestValueInputElement extends TestCase {
 	 * An input names the control the value is entered in, in the shape a {@code <field>} names it.
 	 */
 	public void testParseInputControl() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+		List<UIElement.Config> inputs = parseInputs();
 
 		SelectControlProvider.Config chosen = inputControl(inputs, 5, SelectControlProvider.Config.class);
 		assertEquals(SelectControlProvider.class, chosen.getImplementationClass());
@@ -1116,9 +1368,9 @@ public class TestValueInputElement extends TestCase {
 			inputControl(inputs, 6, NumberInputControlProvider.Config.class);
 		assertEquals(NumberDisplay.SLIDER, dragged.getDisplay());
 		assertEquals("The bounds of the range must reach the configuration.",
-			Double.valueOf(0.0), dragged.getMin());
-		assertEquals(Double.valueOf(10.0), dragged.getMax());
-		assertEquals(Double.valueOf(1.0), dragged.getStep());
+			Double.valueOf(0.0), evaluated(dragged.getMin()));
+		assertEquals(Double.valueOf(10.0), evaluated(dragged.getMax()));
+		assertEquals(Double.valueOf(1.0), evaluated(dragged.getStep()));
 
 		BooleanControlProvider.Config flipped =
 			inputControl(inputs, 7, BooleanControlProvider.Config.class);
@@ -1264,6 +1516,18 @@ public class TestValueInputElement extends TestCase {
 			multiple);
 	}
 
+	/**
+	 * The state of the given control as the client parses it.
+	 */
+	private static Map<?, ?> clientState(ReactControl control) {
+		String json = control.stateAsJSON();
+		try {
+			return (Map<?, ?>) JSON.fromString(json);
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("Not the JSON state of a control: " + json, ex);
+		}
+	}
+
 	/** The given control as the select control a choice is made on. */
 	private static ReactDropdownSelectControl select(ReactControl control) {
 		assertTrue("A selection is made on a select control, but is made on " + control.getClass(),
@@ -1308,16 +1572,28 @@ public class TestValueInputElement extends TestCase {
 		return config;
 	}
 
+	/** The number the given constant expression computes. */
+	private static Double evaluated(Expr expr) {
+		return Double.valueOf(((Number) QueryExecutor.compile(expr).execute()).doubleValue());
+	}
+
+	/** The given TL-Script expression. */
+	private static Expr script(String source) {
+		try {
+			return ExprFormat.INSTANCE.getValue(NumberInputControlProvider.Config.MIN, source);
+		} catch (ConfigurationException ex) {
+			throw new AssertionError("Not a TL-Script expression: " + source, ex);
+		}
+	}
+
 	/** A number control dragging its value along a track of a small range. */
 	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> sliderDisplay() {
 		NumberInputControlProvider.Config config =
 			TypedConfiguration.newConfigItem(NumberInputControlProvider.Config.class);
 		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.DISPLAY),
 			NumberDisplay.SLIDER);
-		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN),
-			Double.valueOf(0.0));
-		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX),
-			Double.valueOf(10.0));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN), script("0.0"));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX), script("10.0"));
 		return config;
 	}
 
@@ -1343,7 +1619,7 @@ public class TestValueInputElement extends TestCase {
 
 	/** The control configuration the input at the given position names. */
 	private static <C extends PolymorphicConfiguration<? extends ReactFieldControlProvider>> C inputControl(
-			List<PolymorphicConfiguration<? extends UIElement>> inputs, int index, Class<C> expected) {
+			List<UIElement.Config> inputs, int index, Class<C> expected) {
 		PolymorphicConfiguration<? extends ReactFieldControlProvider> control =
 			config(inputs, index).getInputControl();
 		assertNotNull("Input " + index + " must name a control.", control);
@@ -1432,7 +1708,7 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/** The {@code <value-input>} configurations of the test view. */
-	private List<PolymorphicConfiguration<? extends UIElement>> parseInputs() throws Exception {
+	private List<UIElement.Config> parseInputs() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputElement.class);
 
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
@@ -1450,7 +1726,7 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/** The {@code <value-input>} configuration at the given position. */
-	private static ValueInputElement.Config config(List<PolymorphicConfiguration<? extends UIElement>> inputs, int index) {
+	private static ValueInputElement.Config config(List<UIElement.Config> inputs, int index) {
 		PolymorphicConfiguration<? extends UIElement> entry = inputs.get(index);
 		assertTrue("Entry " + index + " must be an input, but is " + entry, entry instanceof ValueInputElement.Config);
 		return (ValueInputElement.Config) entry;

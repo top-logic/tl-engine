@@ -33,26 +33,22 @@ every text of a role at once — see
 
 - **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
   `label`, `caption`. The family, size, line height and weight come from the tokens.
-- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`, `accent`,
-  `success`, `warning`, `error`, `on-color`.
+- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`,
+  `placeholder`, `success`, `warning`, `error`, `on-color`.
 - **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
 
-Every text carries a class per role — `tlText--<variant>`, `tlText--tone-<tone>`, and
-`tlText--pill` where the appearance asks for one — beside `tlText` and the element's own
-`css-class`:
+Every text is a `tl-text` with the type class of its variant (`tl-type-heading-lg` …) and its tone
+as the attribute `data-tl-tone` (`secondary`, `helper`, `placeholder`, `success`, `warning`, `error`,
+`on-brand`); the primary tone carries no attribute and inherits the colour of its surroundings, which
+is how text on the primary app bar reads in the bar's colour. A strong text names the strong type
+class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
+role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
+while runs of spaces collapse and the text wraps at the width available (`white-space: pre-line`). A
+text with `overflow="ellipsis"` and a text in a table cell stay on one line.
 
 ```html
-<span class="tlText tlText--caption tlText--tone-helper">Figures as of yesterday.</span>
+<span class="tl-text tl-type-label" data-tl-tone="helper">Figures as of yesterday.</span>
 ```
-
-The classes are a stable contract the stylesheet of the application may read, not something to
-write into a `css-class`: a display option of the element is a property of the element.
-
-The colour of a tone travels as the custom property `--tlText-tone`, which the text colour is taken
-from and which tints a pill that has no colour of its own — one declaration per tone. That is also
-how a text keeps its tone where the surrounding control re-maps the text colour: the primary app bar
-re-maps `.tlAppBar--primary .tlText--tone-primary`, so a text that follows the default tone reads in
-the on-accent colour while a text that states a tone of its own — an error, a success — keeps it.
 
 ## Pictures: `<image>`, `<overlay>`, `<avatar>`
 
@@ -63,9 +59,9 @@ the on-accent colour while a text that states a tone of its own — an error, a 
 
 The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row of pictures of differing originals stays even), `width` and `height` (CSS lengths); with none of them the box takes the size of the picture, limited to the width available. `fit` decides what a picture whose proportions differ from the box does with it: `cover` (the default) crops it to fill the box, `contain` fits the whole picture into it. `lazy="true"` lets the browser postpone the loading until the box comes close to the visible part of the page — right for the thumbnails of a long card grid, wrong for a picture the user sees at once. `alt` says what the picture shows for a reader who cannot see it, and `css-class` adds a class to the box.
 
-`<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tlOverlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
+`<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tl-overlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
 
-`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`tl-avatar--category-<n>`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`data-tl-role="category-<n>"`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
 
 ```xml
 <overlay>
@@ -95,7 +91,33 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 </overlay>
 ```
 
-The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar--category-<n>` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+The client classes an application styles against are `.tl-media` / `.tl-media--cover` / `.tl-media--contain` / `.tl-media__frame` (design system, `media.css`), `.tl-overlay` / `.tl-overlay__layer` / `.tl-overlay__layer--<anchor>` (design system, `overlay.css`) and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+
+## Recording, playback and download
+
+Four elements work on `BinaryData` held by a [channel](doc:view-layer/channels), each through its `input` attribute:
+
+- **`<audio-recorder input="ch">`** (`AudioRecorderElement`) records from the user's microphone; the recording is uploaded and written to the channel.
+- **`<audio-player input="ch">`** (`AudioPlayerElement`) plays back the audio the channel holds.
+- **`<photo-capture input="ch">`** (`PhotoCaptureElement`) takes a photo with the user's camera; the photo is uploaded and written to the channel.
+- **`<download input="ch">`** (`DownloadElement`) shows the file name of the data the channel holds and downloads it on request.
+
+All four are bound to their channel in both directions (`BinaryChannelBinding`): a new value of the channel reaches the element, and what the element produces is written to the channel. Elements that share a channel therefore share the data — a recorder, a player and a download on one channel play and offer the latest recording, and an `<image>` on the channel of a `<photo-capture>` shows the latest photo. A value that is no `BinaryData` counts as no data.
+
+```xml
+<view>
+	<channels>
+		<channel name="recording"/>
+	</channels>
+	<stack>
+		<audio-recorder input="recording"/>
+		<audio-player input="recording"/>
+		<download input="recording"/>
+	</stack>
+</view>
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/media-demo.view.xml`.
 
 ## Ready-made HTML: `<html>`
 
@@ -109,7 +131,7 @@ A value of any other type has no HTML representation; the element reports that i
 
 `display` decides how the content is shown, and with it what stands between it and the reader.
 
-**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the stylesheet gives `.tlHtml--inline` the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
+**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the design system's `.tl-prose` (`prose.css`) gives it the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
 
 ```xml
 <html input="answer"/>
@@ -128,13 +150,13 @@ A value of any other type has no HTML representation; the element reports that i
 **`thumbnail`** shows that same isolated document as a picture of itself: a card-sized preview for a grid of documents. The frame is laid out at `thumbnail-width` × `thumbnail-height` CSS pixels — 800 × 1130 by default, a portrait page at that width — and scaled down to the width the preview box measures (a `ResizeObserver` on the box, `transform: scale(…)` from its top left corner), so the document appears in its own proportions instead of being reflowed into a small one. The box keeps the aspect ratio of the two sizes and cuts off what is taller, as a page does. A preview is looked at rather than used: it takes no clicks, no focus and no print button, and it is fetched only once it comes near the viewport, so a grid loads the previews the reader actually reaches. Selecting one is therefore the business of whatever carries it — a button in the card writing the element to a channel, for instance.
 
 ```xml
-<object-list inputs="exposes" items="exposes -> $exposes" layout="grid" max-columns="3">
+<object-list inputs="exposes" items="$exposes" layout="grid" max-columns="3">
 	<item>
 		<card padding="compact">
 			<html display="thumbnail" input="element"/>
-			<text css-class="tlText--strong" input="element"/>
+			<text css-class="tl-type-body-strong" input="element"/>
 			<button appearance="link">
-				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="element">
 					<label><en>Show</en></label>
 					<write-channel name="expose"/>
 				</action>
@@ -156,7 +178,7 @@ A value's color is part of the model: two annotations say where it comes from, a
 - **`<dynamic-color>`** on a type (`TLDynamicColor`) holds the `ValueColorProvider` computing the color of its instances, in the shape `<dynamic-icon>` and `<label>` use for icons and labels. `ColorByExpression` states that algorithm as a TL-Script expression over the object: the demo ticket takes its color from its status, `<dynamic-color><color-by-expression color="t -> $t.get(`demo.tickets:Ticket#status`)"/></dynamic-color>`, so a ticket appears in the color of the status literal it holds. An enumeration literal as the result is colored by its own `<color>`, the name of a role (`x -> 'category-3'`) is that role, any other result — a `Color` value included — and `null` leave the object uncolored. Specializations inherit the annotation.
 - **`AnnotationValueColorProvider.INSTANCE`** (a `ValueColorProvider`) answers both: `colorOf(value)` returns the `ValueColor` — the role — of a classifier or an object, and `null` for everything the model gives no color to. `ValueColor` is an `ExternallyNamed` enum; its external name is what reaches the client.
 
-A colored value is displayed as a **pill** in its role, an uncolored one as plain text. The role travels as the single state / descriptor field `ReactValueColor.ROLE` (`colorRole`), filled by `ReactValueColor.putRole(descriptor, value)`; never CSS. One shared presentational component `TLPill` (`react-src/controls/pill/TLPill.tsx`) draws it everywhere as `tl-pill tl-pill--<role>` with a `tl-pill__label`, and nothing but that class is set. The design-system stylesheet (`style/tl-design-system/components.css`, `pill.css` in the `tl-design-system` repository) gives each role its two tokens — the tinted surface and its line — per mode; the text on it is `text-primary`. Decision and reasoning: `docs/skalen.md`, "Pill: Rolle statt Farbe".
+A colored value is displayed as a **pill** in its role, an uncolored one as plain text. The role travels as the single state / descriptor field `ReactValueColor.ROLE` (`colorRole`), filled by `ReactValueColor.putRole(descriptor, value)`; never CSS. The part `Chip` (see [Parts](doc:view-layer/parts)) draws it everywhere - in its TopLogic drawing as `tl-pill` with `data-tl-role="<role>"` and a `tl-pill__label`, nothing but that attribute set; a read-only value of a role is the part `FieldValue` holding that chip. The design-system stylesheet (`style/tl-design-system/components.css`, `pill.css` in the `tl-design-system` repository) gives each role its two tokens — the tinted surface and its line — per mode; the text on it is `text-primary`. Decision and reasoning: `docs/skalen.md`, "Pill: Rolle statt Farbe".
 
 `<text appearance="pill">` asks for a pill whether or not the value carries a colour: a badge, a
 status, a tag written as a text rather than read off the model. The colour then follows a
@@ -179,10 +201,10 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 
 `<progress>` (`ProgressElement`) states the bar one of two ways, never both:
 
-- `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+- `<progress input="ch" fraction="…$ch…"/>` — the filled part directly. Such a bar carries no label unless `label="…"` gives it one.
   A fraction expression that answers nothing at all leaves the bar without a share: the client marks the bar `aria-busy` and the design-system stylesheet (`tl-progress`, `progress.css`) sweeps a partial fill over the track instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
-- `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
+- `<progress input="ch" done="…" total="…"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
 
-Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
+Every expression sees the current value of the `input` channel as a variable named after the channel (`$ch`), or by the name given with `as` (`input="job as upload"` makes it `$upload`). The input is optional: a bar counting the model as a whole needs none, and its expressions then see no variable. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
 
 A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.

@@ -3,6 +3,7 @@ import type { TLCellProps, AppBarStateJson, ChildControlJson } from 'tl-react-br
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 /** The elevation of an elevated bar, the one MUI gives an app bar by default. */
@@ -18,6 +19,12 @@ const COLOR = 'default';
 /** The space between the parts of the bar, in units of the MUI spacing. */
 const TOOLBAR_SX: SxProps<Theme> = { gap: 1 };
 
+/** The slots of the bar, laid out by MUI: the actions take the room left and give way first, the title last. */
+const LEADING_SX: SxProps<Theme> = { display: 'flex', flex: 'none', alignItems: 'center' };
+const CHILDREN_SX: SxProps<Theme> = { display: 'flex', flex: '0 1 auto', alignItems: 'center', gap: 1, minWidth: 0 };
+const ACTIONS_SX: SxProps<Theme> = { display: 'flex', flex: '1 1 0', justifyContent: 'flex-end', minWidth: 0, '&:empty': { display: 'none' } };
+const TRAILING_SX: SxProps<Theme> = { display: 'flex', flex: 'none', alignItems: 'center', gap: 1, ml: 'auto' };
+
 /** The title: as wide as its text, truncated when the bar is short of room. */
 const TITLE_SX: SxProps<Theme> = { flex: '0 1 auto', minWidth: 0 };
 
@@ -25,11 +32,8 @@ const TITLE_SX: SxProps<Theme> = { flex: '0 1 auto', minWidth: 0 };
  * Renders the state of a TopLogic app bar (module name `TLAppBar`) with the MUI `AppBar`
  * (`position="static"`, color `default`) and its `Toolbar`.
  *
- * <p>The parts keep the slot elements and classes of the design system's app bar
- * (`tlAppBar__leading`, `__children`, `__actions`, `__trailing`): they decide who gives way when
- * the bar is short of room (the actions toolbar folds its commands into its overflow menu before
- * the title truncates), push the actions and the trailing part to the end of the bar, and drop an
- * actions area that shows no command.</p>
+ * <p>The adapter lays out its slots with MUI; it follows the state contract (state.proto), not the stylesheets of
+ * TopLogic.</p>
  *
  * <p>Mapping from the control state:</p>
  * <ul>
@@ -56,27 +60,27 @@ const MuiAppBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
       elevation={state.variant === 'elevated' ? ELEVATION : 0}>
       <Toolbar sx={TOOLBAR_SX}>
         {!!state.leading && (
-          <div className="tlAppBar__leading">
+          <Box data-slot="leading" sx={LEADING_SX}>
             <TLChild control={state.leading} />
-          </div>
+          </Box>
         )}
         <Typography variant="h6" component="h1" noWrap sx={TITLE_SX}>{state.title ?? ''}</Typography>
         {children.length > 0 && (
-          <div className="tlAppBar__children">
+          <Box data-slot="children" sx={CHILDREN_SX}>
             {children.map(child => <TLChild key={child.controlId} control={child} />)}
-          </div>
+          </Box>
         )}
         {state.actions != null && (
           <ButtonDefaults appearance="ghost">
-            <div className="tlAppBar__actions">
+            <Box data-slot="actions" sx={ACTIONS_SX}>
               <TLChild control={state.actions} />
-            </div>
+            </Box>
           </ButtonDefaults>
         )}
         {!!state.trailing && (
-          <div className="tlAppBar__trailing">
+          <Box data-slot="trailing" sx={TRAILING_SX}>
             <TLChild control={state.trailing} />
-          </div>
+          </Box>
         )}
       </Toolbar>
     </AppBar>

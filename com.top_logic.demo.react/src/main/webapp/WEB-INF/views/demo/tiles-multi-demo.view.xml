@@ -15,7 +15,8 @@
 	the other. Each stack binds its path into its frames under the common name navPath, so the
 	shared frame views derive their depth from the stack they are mounted in.
 	
-	Both stacks declare the same <frame> route, so both put their drill-down into the address bar -
+	Both stacks declare the same person frame the shared views push, with the same route, so both
+	put their drill-down into the address bar -
 	behind the segment of the tab they sit in, which is what keeps the two paths apart in the URL.
 	Only the active tab is mounted, so only its path is part of the address.
 -->
@@ -47,18 +48,20 @@
 							initial="demo/tiles-demo/overview.view.xml"
 							path="navPathA"
 						>
-							<frame
+							<frame id="person"
+								final-title="true"
 								route="person/:person"
 								view="demo/tiles-demo/person-detail.view.xml"
 							>
 								<param name="person"
-									expr="p -> objectId($p)"
-									reverse="id -> $id.objectResolve(`tl.accounts:Person`)"
+									expr="objectId($person)"
+									reverse="$value.objectResolve(`tl.accounts:Person`)"
 								/>
 								<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-									expr="p -> $p.get(`tl.accounts:Person#name`)"
+									expr="$person.get(`tl.accounts:Person#name`)"
 									inputs="person"
 								/>
+								<frame-ref frame="person"/>
 							</frame>
 						</tile-stack>
 					</stack>
@@ -89,18 +92,20 @@
 							initial="demo/tiles-demo/overview.view.xml"
 							path="navPathB"
 						>
-							<frame
+							<frame id="person"
+								final-title="true"
 								route="person/:person"
 								view="demo/tiles-demo/person-detail.view.xml"
 							>
 								<param name="person"
-									expr="p -> objectId($p)"
-									reverse="id -> $id.objectResolve(`tl.accounts:Person`)"
+									expr="objectId($person)"
+									reverse="$value.objectResolve(`tl.accounts:Person`)"
 								/>
 								<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-									expr="p -> $p.get(`tl.accounts:Person#name`)"
+									expr="$person.get(`tl.accounts:Person#name`)"
 									inputs="person"
 								/>
+								<frame-ref frame="person"/>
 							</frame>
 						</tile-stack>
 					</stack>

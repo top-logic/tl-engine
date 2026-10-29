@@ -7,6 +7,7 @@ package com.top_logic.layout.react.wysiwyg;
 
 import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -20,6 +21,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_IMAGE_UPLOAD_FAILED;
 
 	/**
+	 * @en The text contains HTML that is not allowed: {0}
+	 */
+	public static ResKey1 ERROR_UNSAFE_HTML__PROBLEM;
+
+	/**
 	 * @en The linked object cannot be found.
 	 */
 	public static ResKey ERROR_LINKED_OBJECT_NOT_FOUND;
@@ -28,6 +34,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en There is no place where the linked object is displayed.
 	 */
 	public static ResKey ERROR_LINKED_OBJECT_NOT_DISPLAYED;
+
+	/**
+	 * @en The objects to refer to could not be determined.
+	 */
+	public static ResKey ERROR_MENTION_FAILED;
+
+	/** @en Editor toolbar */
+	@CustomKey("js.wysiwyg.toolbar")
+	public static ResKey JS_WYSIWYG_TOOLBAR;
 
 	/** @en Bold */
 	@CustomKey("js.wysiwyg.bold")
@@ -128,6 +143,10 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Redo */
 	@CustomKey("js.wysiwyg.redo")
 	public static ResKey JS_WYSIWYG_REDO;
+
+	/** @en Source code */
+	@CustomKey("js.wysiwyg.source")
+	public static ResKey JS_WYSIWYG_SOURCE;
 
 	static {
 		initConstants(I18NConstants.class);

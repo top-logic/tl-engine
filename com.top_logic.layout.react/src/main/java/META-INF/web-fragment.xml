@@ -10,6 +10,21 @@
 >
 	<name>tl-layout-react</name>
 
+	<!--
+		Tells a control counting down to the end of the session about every request that restarts
+		the session's inactivity timeout, whichever servlet answers it.
+	-->
+	<filter>
+		<filter-name>SessionActivityFilter</filter-name>
+		<filter-class>com.top_logic.layout.react.servlet.SessionActivityFilter</filter-class>
+		<async-supported>true</async-supported>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>SessionActivityFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
 	<servlet>
 		<servlet-name>ReactServlet</servlet-name>
 		<servlet-class>com.top_logic.layout.react.servlet.ReactServlet</servlet-class>
@@ -32,6 +47,17 @@
 	<servlet-mapping>
 		<servlet-name>SSEServlet</servlet-name>
 		<url-pattern>/react-api/events</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>PollServlet</servlet-name>
+		<servlet-class>com.top_logic.layout.react.servlet.PollServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>PollServlet</servlet-name>
+		<url-pattern>/react-api/poll</url-pattern>
 	</servlet-mapping>
 
 </web-fragment>

@@ -10,7 +10,7 @@
 			<en>New Role</en>
 			<de>Neue Rolle</de>
 		</title>
-		<form
+		<form id="form"
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
@@ -28,16 +28,21 @@
 						<en>Create</en>
 						<de>Erstellen</de>
 					</label>
-					<store-form-state/>
-					<with-transaction>
-						<commitMessage>
-							<en>Created role {0}.</en>
-							<de>Rolle {0} angelegt.</de>
-						</commitMessage>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
-					<write-channel name="selection"/>
-					<close-dialog/>
+					<store-form-state>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Created role {0}.</en>
+									<de>Rolle {0} angelegt.</de>
+								</commitMessage>
+								<execute-script function="$result.copy(transient: false)"/>
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</with-transaction>
+							<close-dialog/>
+						</with-result>
+					</store-form-state>
 				</generic-command>
 			</commands>
 		</form>

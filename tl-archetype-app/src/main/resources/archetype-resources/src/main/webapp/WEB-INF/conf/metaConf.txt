@@ -1,2 +1,7 @@
+#if ($moduleType != "fragment")
 db-default.xml
+#if ($useBranches != "true")
+top-logic.singleBranch.config.xml
+#end
+#end
 \${projectName}.conf.xml

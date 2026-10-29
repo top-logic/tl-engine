@@ -23,6 +23,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
@@ -45,6 +47,9 @@ import com.top_logic.util.model.ModelService;
  */
 public class TestShowViewAction extends AbstractNavigationTest {
 
+	/** Name of the argument the command chain carries. */
+	private static final String ARGUMENT = "input";
+
 	/** The value the command chain carries. */
 	private static final String INPUT = "alpha";
 
@@ -58,7 +63,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		run(action("""
 			<show-view view="nav-item.view.xml">
 				<bind channel="item"
-					expr="s -> $s + '!'"
+					expr="$input + '!'"
 				/>
 				<bind channel="raw"/>
 			</show-view>
@@ -86,7 +91,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		run(action("""
 			<show-views>
 				<show view="nav-home.view.xml"/>
-				<show view="nav-frame.view.xml"/>
+				<show frame="frame"/>
 				<show view="nav-detail.view.xml">
 					<bind channel="item"/>
 				</show>
@@ -129,10 +134,23 @@ public class TestShowViewAction extends AbstractNavigationTest {
 	}
 
 	/**
-	 * Displaying a view needs the view to display.
+	 * Displaying a view needs the view or the frame to display, and not both.
 	 */
-	public void testShowViewNeedsItsView() {
-		assertRejected("<show-view/>", ShowViewAction.Config.VIEW);
+	public void testShowViewNeedsViewOrFrame() {
+		assertRejected("<show-view/>");
+		assertRejected("<show-view view='nav-item.view.xml' frame='frame'/>");
+	}
+
+	/**
+	 * Asserts that the given action configuration is rejected.
+	 */
+	private void assertRejected(String xml) {
+		try {
+			action(xml);
+			fail("The configuration '" + xml + "' must be rejected.");
+		} catch (ConfigurationException | RuntimeException expected) {
+			// Expected.
+		}
 	}
 
 	/**
@@ -164,7 +182,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 	 * Runs the given action as the only action of a command chain over the window's root display.
 	 */
 	private void run(ViewAction action) {
-		ViewActionChain.run(_root, List.of(action), INPUT, _completions::add);
+		ViewActionChain.run(_root, List.of(action), args(INPUT), _completions::add);
 	}
 
 	/**
@@ -187,7 +205,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		PolymorphicConfiguration<?> config = (PolymorphicConfiguration<?>) reader.read();
 		context.checkErrors();
 
-		ViewAction result = (ViewAction) context.getInstance(config);
+		ViewAction result = (ViewAction) ActionScope.single(ARGUMENT).bind(context).getInstance(config);
 		context.checkErrors();
 		return result;
 	}
@@ -200,5 +218,10 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		return KBSetup.getSingleKBTest(TestShowViewAction.class,
 			ServiceTestSetup.createStarterFactoryForModules(
 				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE));
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of(ARGUMENT, value);
 	}
 }

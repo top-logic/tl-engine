@@ -43,7 +43,9 @@
 			<field attribute="date"/>
 			<field attribute="dateTime"/>
 			<field attribute="dateTimeShort"/>
+			<field attribute="dateTimeSeconds"/>
 			<field attribute="time"/>
+			<field attribute="timeSeconds"/>
 			<field attribute="duration"/>
 			<field attribute="deadlines"/>
 			<field attribute="icon"/>
@@ -56,6 +58,8 @@
 			<field attribute="phone"/>
 			<field attribute="json"/>
 			<field attribute="image"/>
+			<field attribute="attachments"/>
+			<field attribute="documents"/>
 			<field attribute="priority"/>
 			<field attribute="tags"/>
 			<field attribute="owner"/>
@@ -63,7 +67,7 @@
 			<field attribute="related"/>
 			<commands>
 				<generic-command
-					input="model"
+					inputs="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -71,9 +75,12 @@
 						<de>Anlegen</de>
 					</label>
 					<store-form-state/>
-					<persist-transient/>
-					<write-channel name="selection"/>
-					<close-dialog/>
+					<persist-transient>
+						<with-result>
+							<write-channel name="selection"/>
+							<close-dialog/>
+						</with-result>
+					</persist-transient>
 				</generic-command>
 			</commands>
 		</form>

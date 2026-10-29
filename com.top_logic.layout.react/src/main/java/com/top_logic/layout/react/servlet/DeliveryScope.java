@@ -33,9 +33,8 @@ import com.top_logic.basic.Logger;
  * </p>
  *
  * <p>
- * Events enqueued outside a scope are written through immediately: an SSE (re)connection, the
- * synthesis of model events on the heartbeat and background activity all deliver state that no
- * interaction is about to revise.
+ * Events enqueued outside a scope are written through immediately: an SSE (re)connection and
+ * background activity deliver state that no interaction is about to revise.
  * </p>
  *
  * @see com.top_logic.layout.react.window.Interaction

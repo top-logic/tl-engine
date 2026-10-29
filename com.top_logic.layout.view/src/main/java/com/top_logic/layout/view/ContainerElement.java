@@ -13,11 +13,12 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.layout.react.control.IReactControl;
 
 /**
@@ -28,6 +29,7 @@ public abstract class ContainerElement implements UIElement {
 	/**
 	 * Configuration for {@link ContainerElement}.
 	 */
+	@TypeIcon("css:bi bi-bounding-box")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getChildren()}. */
@@ -41,13 +43,17 @@ public abstract class ContainerElement implements UIElement {
 		 * {@code <card>}, {@code <table>}). The explicit {@code <child class="..."/>} entry tag
 		 * additionally allows referencing an element implementation that has no own tag name.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@EntryTag("child")
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	private final List<UIElement> _children;

@@ -75,9 +75,9 @@
 					</inset>
 					<slot-content to="wizard-actions">
 						<stack
-							align="end"
 							direction="row"
 							gap="default"
+							justify="end"
 						>
 							<button appearance="primary">
 								<action class="com.top_logic.layout.view.command.GenericViewCommand">
@@ -89,15 +89,21 @@
 										<wizard-has-next/>
 									</executability>
 									<execute-script
-										function="p -> x -> if($p == null, new(`demo.react:Demo`, transient: true), $p)"
+										function="if($profile == null, new(`demo.react:Demo`, transient: true), $profile)"
 										inputs="profile"
-									/>
-									<write-channel name="profile"/>
+									>
+										<with-result>
+											<write-channel name="profile"/>
+										</with-result>
+									</execute-script>
 									<execute-script
-										function="qs -> x -> if($qs == null || $qs.isEmpty(), ['role'], $qs)"
+										function="if($questions == null || $questions.isEmpty(), ['role'], $questions)"
 										inputs="questions"
-									/>
-									<write-channel name="questions"/>
+									>
+										<with-result>
+											<write-channel name="questions"/>
+										</with-result>
+									</execute-script>
 									<wizard-next/>
 								</action>
 							</button>
@@ -121,9 +127,9 @@
 						<field attribute="email"/>
 						<slot-content to="wizard-actions">
 							<stack
-								align="end"
 								direction="row"
 								gap="default"
+								justify="end"
 							>
 								<button>
 									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
@@ -173,8 +179,8 @@
 				</step>
 				<dynamic-steps
 					element-channel="question"
-					icon="q -> 'css:bi bi-question-circle'"
-					label="q -> if($q == 'role', 'Role', if($q == 'phone', 'Phone', 'Notes'))"
+					icon="'css:bi bi-question-circle'"
+					label="if($step == 'role', #('Role'@en, 'Rolle'@de), if($step == 'phone', #('Phone'@en, 'Telefon'@de), #('Notes'@en, 'Notizen'@de)))"
 					steps="questions"
 				>
 					<form
@@ -184,10 +190,10 @@
 						with-inset="true"
 					>
 						<switch input="question">
-							<case test="q -> $q == 'role'">
+							<case test="$question == 'role'">
 								<field attribute="string"/>
 							</case>
-							<case test="q -> $q == 'phone'">
+							<case test="$question == 'phone'">
 								<field attribute="phone"/>
 							</case>
 							<default>
@@ -196,9 +202,9 @@
 						</switch>
 						<slot-content to="wizard-actions">
 							<stack
-								align="end"
 								direction="row"
 								gap="default"
+								justify="end"
 							>
 								<button>
 									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
@@ -222,10 +228,13 @@
 										</executability>
 										<store-form-state/>
 										<execute-script
-											function="qs -> x -> if($qs.size() == 1, ['role', 'phone'], if($qs.size() == 2, ['role', 'phone', 'notes'], $qs))"
+											function="if($questions.size() == 1, ['role', 'phone'], if($questions.size() == 2, ['role', 'phone', 'notes'], $questions))"
 											inputs="questions"
-										/>
-										<write-channel name="questions"/>
+										>
+											<with-result>
+												<write-channel name="questions"/>
+											</with-result>
+										</execute-script>
 										<wizard-next/>
 									</action>
 								</button>
@@ -263,9 +272,9 @@
 					</stack>
 					<slot-content to="wizard-actions">
 						<stack
-							align="end"
 							direction="row"
 							gap="default"
+							justify="end"
 						>
 							<button>
 								<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
@@ -292,7 +301,9 @@
 					</slot-content>
 				</step>
 			</wizard>
-			<slot name="wizard-actions"/>
+			<inset>
+				<slot name="wizard-actions"/>
+			</inset>
 		</stack>
 	</panel>
 </view>

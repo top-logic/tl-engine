@@ -2,7 +2,7 @@
 export { register, replace, getComponent } from './bridge/registry';
 export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-wrapper';
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
-export { connect, subscribe, unsubscribe } from './bridge/sse-client';
+export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
   mount,
   mountField,
@@ -21,33 +21,87 @@ export {
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  EscapeToClose,
   VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export type { CommandOptions } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
+export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
+export { useTabList } from './bridge/tab-list';
+export type { TabProps, PanelProps, TabListOptions } from './bridge/tab-list';
+export { TabStrip, SCROLL_START_KEY, SCROLL_END_KEY } from './bridge/TabStrip';
+export type { TabStripProps } from './bridge/TabStrip';
+export { useScrollStrip, stripOverflow, revealScrollLeft, pageScrollLeft, EDGE_START, EDGE_END, PAGE_FRACTION } from './bridge/scroll-strip';
+export type { StripEdge, StripGeometry, StripExtent, StripOverflow, ScrollStrip, ScrollStripOptions } from './bridge/scroll-strip';
+export { Menu, MenuItem, MenuHeader, MenuSeparator, useRovingMenu, menuItemClassName } from './bridge/menu';
+export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
-export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
+export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export type {
+  PartProps,
+  PartName,
+  PartComponent,
+  PartAttributes,
+  PartRef,
+  ButtonPartProps,
+  ButtonDisplay,
+  MenuTriggerPartProps,
+  MenuTriggerPopup,
+  DisclosureTogglePartProps,
+  DisclosureDirection,
+  CheckboxPartProps,
+  CheckboxDisplay,
+  FieldValidation,
+  TextInputPartProps,
+  TextInputType,
+  TextInputMode,
+  FieldValuePartProps,
+  ChipPartProps,
+  ColorRole,
+  BadgePartProps,
+  DividerPartProps,
+  DividerOrientation,
+  ProgressBarPartProps,
+  SpinnerPartProps,
+  SpinnerSize,
+  ListboxPartProps,
+  ListboxEntry,
+} from './bridge/parts';
+export {
+  useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
+} from './bridge/suggestions';
+export type { Suggestions, SuggestionsOptions, SuggestionsAnswer, ComboboxAttributes } from './bridge/suggestions';
+export { OptionValues } from './bridge/option-values';
+export type { OptionDescriptor } from './bridge/option-values';
+export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
-export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
-export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
+export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
+export type { DisplayClass } from './bridge/display-class';
+export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
+export type { Surface, SurfaceLevel, InsetKind } from './bridge/surface';
+export { separatorMove, separatorStep, movedSize } from './bridge/separator';
+export type { SeparatorMove, SeparatorOrientation } from './bridge/separator';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';
-export { useListReorder } from './bridge/list-reorder';
+export { useListReorder, reorderState } from './bridge/list-reorder';
 export type {
   ListReorder,
   ListReorderOptions,
@@ -60,6 +114,13 @@ export type {
   ReorderSide,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
+export { useImageSrc } from './bridge/image-source';
+export { useUpload } from './bridge/upload';
+export type { UploadState, UploadPart } from './bridge/upload';
+export { downloadBlob } from './bridge/download-blob';
+export { avatarInitials } from './bridge/avatar';
+export { categoryOf } from './bridge/category';
+export { textOn } from './bridge/text-on';
 // The state contract of the replaceable components, generated from state.proto: one message per
 // component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
 export type {
@@ -71,6 +132,7 @@ export type {
   ToggleButtonStateJson,
   CheckboxStateJson,
   TextInputStateJson,
+  SuggestionEntryJson,
   PasswordInputStateJson,
   NumberInputStateJson,
   DatePickerStateJson,
@@ -80,6 +142,7 @@ export type {
   AccordionStateJson,
   WindowStateJson,
   DialogStateJson,
+  PopoverStateJson,
   MenuStateJson,
   SnackbarStateJson,
   AlertStateJson,
@@ -89,13 +152,22 @@ export type {
   AppBarStateJson,
   BreadcrumbStateJson,
   ProgressStateJson,
+  ImageSourceStateJson,
+  AvatarStateJson,
   SliderStateJson,
+  FloatingActionStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
-export { rootClassName } from './bridge/css';
+export { rootClassName, stateAttr } from './bridge/css';
+export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
+export { isEditorTarget } from './bridge/editor-target';
+export { filterOptions, labelMatches } from './bridge/filter-options';
+export { useFocusAfterRemove } from './bridge/focus-after-remove';
+export type { FocusAfterRemove } from './bridge/focus-after-remove';
+export * from './bridge/icons';
 export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
 export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
@@ -103,6 +175,11 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
+export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
+export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
+export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';
+export type { ClearanceBox } from './bridge/transient-overlay';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

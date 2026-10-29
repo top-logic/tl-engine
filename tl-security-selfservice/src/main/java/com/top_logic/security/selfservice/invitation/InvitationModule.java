@@ -17,7 +17,9 @@ import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -31,6 +33,7 @@ import com.top_logic.security.selfservice.model.TlSecuritySelfserviceFactory;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Service module for invitations")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class InvitationModule extends KBBasedManagedClass<InvitationModule.Config> {
 
 	/**

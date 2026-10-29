@@ -54,7 +54,7 @@ public class PersistentObjectImpl {
 		PersistentScope.addMetaElement(self, aMetaElement);
 	}
 
-	public static void setMetaElement(AbstractWrapper self, TLClass aMetaElement) {
+	public static void setMetaElement(TLObject self, TLClass aMetaElement) {
 		AbstractWrapper.setReference(self, PersistentObject.TYPE_REF, aMetaElement);
 	}
 
@@ -289,6 +289,22 @@ public class PersistentObjectImpl {
 		}
 	}
 
+
+	/**
+	 * Whether the values of the given attribute contain the given value.
+	 * 
+	 * @param object
+	 *        The object whose attribute value to look up.
+	 * @param attribute
+	 *        The attribute to look up the value in.
+	 * @param value
+	 *        The value to look up.
+	 * 
+	 * @see TLObject#tContains(TLStructuredTypePart, Object)
+	 */
+	public static boolean containsValue(TLObject object, TLStructuredTypePart attribute, Object value) {
+		return AttributeOperations.containsAttributeValue(object, attribute, value);
+	}
 
     /**
 	 * Integrates MetaAttributes. Falls back to FlexWrapper mechanism if there is no attribute of

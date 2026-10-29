@@ -16,9 +16,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -43,6 +45,7 @@ public class SlotContentElement implements UIElement {
 	 * Configuration for {@link SlotContentElement}.
 	 */
 	@TagName("slot-content")
+	@TypeIcon("css:bi bi-puzzle-fill")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -70,12 +73,16 @@ public class SlotContentElement implements UIElement {
 
 		/**
 		 * The contributed child elements.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	private final String _slotName;

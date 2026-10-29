@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import com.top_logic.layout.view.channel.Supplies;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -35,12 +36,18 @@ public interface TableDragConfig extends DragConfig {
 	 * Rules deciding which rows may be dragged, each row being the input they decide over.
 	 *
 	 * <p>
+	 * A script rule sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the name
+	 * the table gives it with {@value RowAsConfig#ROW_AS}.
+	 * </p>
+	 *
+	 * <p>
 	 * A row the rules refuse offers no drag, and a drag of a selection including such a row is
 	 * refused as a whole. Empty (default) lets every row be dragged while the table-wide
 	 * {@link #getExecutability() executability} allows dragging at all.
 	 * </p>
 	 */
 	@Name(ROW_EXECUTABILITY)
+	@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
 	@EntryTag(RULE)
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getRowExecutability();
 

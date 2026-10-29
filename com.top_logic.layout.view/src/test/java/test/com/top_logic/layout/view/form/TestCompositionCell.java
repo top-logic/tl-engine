@@ -21,6 +21,7 @@ import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -49,6 +50,7 @@ import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLObject;
 import com.top_logic.table.CellContent;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Tests the cell of a composition of a row edited in a table: a one-line preview of the parts with
@@ -105,12 +107,18 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 			tx.commit();
 		}
 
-		becomeUser(_responsible);
-		_form = new FormControl(_context, _project, "no model", NoTokenHandling.INSTANCE);
-		_steps = new StepsControl(_form);
-		_steps.init();
-		assertTrue(_form.enterEditMode());
-		_stepRow = single(_steps.session().currentRows());
+		TLContextManager.inPersonContext(_responsible, () -> {
+			_form = new FormControl(_context, _project, "no model", NoTokenHandling.INSTANCE);
+			_steps = new StepsControl(_form);
+			_steps.init();
+			assertTrue(_form.enterEditMode());
+			_stepRow = single(_steps.session().currentRows());
+		});
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _responsible;
 	}
 
 	private static TLObject named(String type, String name) {
@@ -359,9 +367,12 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		assertTrue(descendants(_dialogs._open.peek(), RowSetTableControl.class).isEmpty());
 		assertEquals(1, descendants(_dialogs._open.peek(), TableViewControl.class).size());
 
-		// The cell of the substeps of the substep, as the dialog's table displays it.
-		ReactCompactFieldControl nested = displayCell(_substep);
-		assertEquals(NEW_SUBSTEP, nested.getPreviewText());
+		// The cell of the substeps of the substep in the dialog's table.
+		ReactCompactFieldControl nested = descendants(_dialogs._open.peek(), ReactCompactFieldControl.class)
+			.stream()
+			.filter(c -> NEW_SUBSTEP.equals(c.getPreviewText()))
+			.findFirst()
+			.orElseThrow(() -> new AssertionError("The dialog's table shows the substeps of the substep."));
 		open(nested);
 		assertEquals(2, _dialogs._open.size());
 		assertEquals(1, dialogActions().size());
@@ -444,7 +455,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	private static void collectActions(ReactControl control, List<ReactButtonControl> result) {
-		if (control instanceof RowSetTableControl) {
+		if (control instanceof RowSetTableControl || control instanceof TableViewControl) {
 			return;
 		}
 		if (control instanceof ReactButtonControl button) {

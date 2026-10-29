@@ -29,6 +29,7 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -58,6 +59,7 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
+import com.top_logic.layout.react.control.form.SliderRange;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
@@ -72,6 +74,7 @@ import com.top_logic.layout.react.control.nav.ReactBreadcrumbControl.BreadcrumbE
 import com.top_logic.layout.react.control.overlay.ReactDialogControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
+import com.top_logic.layout.react.control.overlay.ReactPopoverControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -96,6 +99,7 @@ import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.state.MenuState;
 import com.top_logic.layout.react.state.NumberInputState;
 import com.top_logic.layout.react.state.PasswordInputState;
+import com.top_logic.layout.react.state.PopoverState;
 import com.top_logic.layout.react.state.ProgressState;
 import com.top_logic.layout.react.state.SelectState;
 import com.top_logic.layout.react.state.SliderState;
@@ -455,7 +459,7 @@ public class TestControlStateSchema extends TestCase {
 	public void testAccordionKeys() {
 		ReactAccordionControl control = new ReactAccordionControl(createContext(), null, List.of(
 			new AccordionSection("a", "A", this::toggle).withExpanded(true).withIcon("css:fas fa-home")
-				.withActions(toggle()),
+				.withActions(toggle()).withHidden(true),
 			new AccordionSection("b", "B", this::toggle)), true);
 		// Creates the content of the expanded section.
 		control.attach();
@@ -507,6 +511,44 @@ public class TestControlStateSchema extends TestCase {
 		Map<?, ?> state = state(control);
 		assertDeclared(state, DialogState.class);
 		assertChild(state.get(DialogState.CHILD__PROP));
+	}
+
+	/**
+	 * Every key of a popover is declared in {@link PopoverState}, and every property of
+	 * {@link PopoverState} is put by the control.
+	 */
+	public void testPopoverKeys() {
+		ReactPopoverControl control = new ReactPopoverControl(createContext(), toggle(), this::toggle,
+			PopoverState.Placement.TOP_END, PopoverState.Mode.HOVER);
+		control.open();
+		control.setLabel("Label");
+		control.setIcon(ThemeImage.cssIcon("fas fa-home"));
+		control.setHidden(false);
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertEquals(properties(PopoverState.class), state.keySet());
+		assertChild(state.get(PopoverState.TRIGGER__PROP));
+		assertChild(state.get(PopoverState.CONTENT__PROP));
+		assertEquals("top-end", state.get(PopoverState.PLACEMENT__PROP));
+		assertEquals("hover", state.get(PopoverState.MODE__PROP));
+	}
+
+	/**
+	 * A popover whose trigger button shows label and icon puts no trigger content, and declares
+	 * every key it puts.
+	 */
+	public void testPopoverLabelIconKeys() {
+		ReactPopoverControl control = new ReactPopoverControl(createContext(), this::toggle,
+			PopoverState.Placement.BOTTOM_START, PopoverState.Mode.CLICK);
+		control.setLabel("Label");
+		control.setIcon(ThemeImage.cssIcon("fas fa-home"));
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, PopoverState.class);
+		assertFalse(state.containsKey(PopoverState.TRIGGER__PROP));
+		assertEquals("Label", state.get(PopoverState.LABEL__PROP));
+		assertEquals("css:fas fa-home", state.get(PopoverState.ICON__PROP));
 	}
 
 	/**
@@ -768,7 +810,8 @@ public class TestControlStateSchema extends TestCase {
 	 */
 	public void testSliderKeys() {
 		ReactSliderControl control = new ReactSliderControl(createContext(),
-			new AbstractFieldModel(Double.valueOf(5)), NumberFormat.getInstance(Locale.GERMAN), 0, 10, 0.5);
+			new AbstractFieldModel(Double.valueOf(5)), NumberFormat.getInstance(Locale.GERMAN),
+			new SliderRange(0.0, 10.0, 0.5, null));
 		putFieldKeys(control);
 		control.setDebounce(Long.valueOf(100));
 

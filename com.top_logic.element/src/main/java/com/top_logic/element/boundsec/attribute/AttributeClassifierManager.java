@@ -25,8 +25,10 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.meta.AttributeOperations;
@@ -48,6 +50,7 @@ import com.top_logic.util.model.ModelService;
  */
 @ServiceDependencies(ModelService.Module.class)
 @Label("Attribute classifiers")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class AttributeClassifierManager extends ManagedClass {
     
 	public static final String KA_CLASSIFIED_BY = ApplicationObjectUtil.KA_CLASSIFIED_BY;

@@ -14,10 +14,11 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
@@ -96,10 +97,15 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 		 * Rendered after the {@link #getTitle()} text; multiple elements are laid out in a
 		 * horizontal row.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(TITLE_CONTENT)
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getTitleContent();
+		@TreeProperty
+		List<UIElement.Config> getTitleContent();
 
 		/**
 		 * Whether the header's toolbar buttons stay hidden until the pointer hovers over the panel

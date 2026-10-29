@@ -9,12 +9,15 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 
 /**
  * Factory creating {@link RequestLock} instances during user logins / subsession creations.
  */
 @Label("Request lock factory")
+@ServiceCategory.Of(UICategory.class)
 public abstract class RequestLockFactory extends ManagedClass {
 
 	/**

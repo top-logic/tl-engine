@@ -40,6 +40,7 @@ import com.top_logic.dsa.DataAccessService;
 import com.top_logic.element.meta.AttributeSettings;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.config.JavaClass;
@@ -204,6 +205,28 @@ public class WrapperGenerator {
 	private boolean _noPropertyGetter;
 
 	private File _resourcesPath;
+
+	private final List<Path> _resourceStack;
+
+	/**
+	 * Creates a {@link WrapperGenerator} that derives its resource stack from the workspace, see
+	 * {@link Workspace#applicationModules(String...)}.
+	 */
+	public WrapperGenerator() {
+		this(null);
+	}
+
+	/**
+	 * Creates a {@link WrapperGenerator} with an explicit resource stack.
+	 * 
+	 * @param resourceStack
+	 *        The resource stack the {@link FileManager} of the generator reads from, see
+	 *        {@link #generate(List, String[])}. <code>null</code> derives the stack from the
+	 *        workspace, see {@link Workspace#applicationModules(String...)}.
+	 */
+	public WrapperGenerator(List<Path> resourceStack) {
+		_resourceStack = resourceStack;
+	}
 
 	private void setup(String[] args) {
 		for (int n = 0; n < args.length;) {
@@ -388,7 +411,7 @@ public class WrapperGenerator {
 	 */
 	protected void initXMLProperties() throws ModuleException {
 		// The file manager is needed for the configuration to resolve files
-		List<Path> appDirs = Workspace.applicationModules();
+		List<Path> appDirs = _resourceStack != null ? _resourceStack : Workspace.applicationModules();
 		int deployCnt = _deployFolders.size();
 		if (deployCnt > 0) {
 			List<Path> appDirsPlus = new ArrayList<>(appDirs.size() + deployCnt);
@@ -421,6 +444,9 @@ public class WrapperGenerator {
 			generateInterfaceTemplate(type);
 			removeLegacyImplementation(type);
 			generateImplementation(type);
+		}
+		for (TLEnumeration type : module.getEnumerations()) {
+			generateEnumeration(type);
 		}
 
 		generateFactory(module);
@@ -566,6 +592,17 @@ public class WrapperGenerator {
 		generate(generator);
 	}
 
+	private void generateEnumeration(TLEnumeration type) throws IOException {
+		if (_noIntf) {
+			return;
+		}
+		_log.info(
+			"Generate class for enumeration '" + type.getName() + "' in module '" + type.getModule().getName() + "'.");
+		EnumerationGenerator generator = new EnumerationGenerator(type);
+		generator.setNoElementClasses(_noElementClasses);
+		generate(generator);
+	}
+
 	private void generateConstants(TLClass type) throws IOException {
 		if (_noConst) {
 			return;
@@ -654,6 +691,27 @@ public class WrapperGenerator {
 	 */
 	public static void main(String[] args) throws Exception {
 		new WrapperGenerator().run(args);
+	}
+
+	/**
+	 * Generates wrappers reading the application resources from an explicit resource stack instead
+	 * of deriving it from the workspace.
+	 * 
+	 * <p>
+	 * The first entry of the stack has the highest priority: a resource found in an entry overrides
+	 * the same resource in all later entries, see {@link MultiFileManager}. Folders given with
+	 * {@link #DEPLOY_OPTION} are put in front of the stack.
+	 * </p>
+	 * 
+	 * @param resourceStack
+	 *        The resource stack, top layer first. An entry is either a directory or the root
+	 *        directory of a zip file system, e.g. of a web fragment archive.
+	 * @param args
+	 *        The arguments to parameterise the {@link WrapperGenerator}, see
+	 *        {@link #main(String[])}.
+	 */
+	public static void generate(List<Path> resourceStack, String[] args) throws Exception {
+		new WrapperGenerator(resourceStack).run(args);
 	}
 
 	private static void help(PrintStream out) {

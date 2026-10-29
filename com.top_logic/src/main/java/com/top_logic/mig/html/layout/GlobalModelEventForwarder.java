@@ -19,7 +19,6 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.meta.MORepository;
-import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -86,7 +85,11 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 
 	}
 
-	private final UpdateChain _updateChain;
+	/**
+	 * The cursor on the update chain of the {@link KnowledgeBase}, <code>null</code> after
+	 * {@link #release()}.
+	 */
+	private UpdateChain _updateChain;
 
 	private boolean _foundFutureEvent = false;
 
@@ -100,8 +103,7 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	 */
 	@CalledByReflection
 	public GlobalModelEventForwarder(InstantiationContext context, PolymorphicConfiguration<?> config) {
-		this(PersistencyLayer.getKnowledgeBase(), PersistencyLayer.getKnowledgeBase().getSessionUpdateChain(),
-			configuredAssociationRelevance());
+		this(configuredSettings(), PersistencyLayer.getKnowledgeBase().getSessionUpdateChain());
 	}
 	
 	/**
@@ -116,11 +118,26 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	 *        means {@link Boolean#TRUE}.
 	 */
 	public GlobalModelEventForwarder(KnowledgeBase kb, UpdateChain updateChain, AssociationEndRelevance relevance) {
-		super(new ModelEventSettings(kb,
-			BasicTypes.getObjectType(kb.getMORepository()),
-			BasicTypes.getKnowledgeAssociationType(kb.getMORepository()),
-			relevance));
+		this(ModelEventSettings.forKnowledgeBase(kb, relevance), updateChain);
+	}
+
+	private GlobalModelEventForwarder(ModelEventSettings settings, UpdateChain updateChain) {
+		super(settings);
 		_updateChain = updateChain;
+	}
+
+	/**
+	 * The {@link ModelEventSettings} of the {@link PersistencyLayer#getKnowledgeBase() application
+	 * knowledge base} with the configured {@link Config#getLinkRelevance() link relevance}.
+	 * 
+	 * <p>
+	 * These are the settings of every {@link GlobalModelEventForwarder} created from configuration
+	 * or by {@link #createForWindow()}.
+	 * </p>
+	 */
+	public static ModelEventSettings configuredSettings() {
+		return ModelEventSettings.forKnowledgeBase(PersistencyLayer.getKnowledgeBase(),
+			configuredAssociationRelevance());
 	}
 
 	private static AssociationEndRelevance configuredAssociationRelevance() {
@@ -143,13 +160,38 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	 * </p>
 	 */
 	public static GlobalModelEventForwarder createForWindow() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		return new GlobalModelEventForwarder(
-			kb, kb.getSessionUpdateChain(), configuredAssociationRelevance());
+		ModelEventSettings settings = configuredSettings();
+		return new GlobalModelEventForwarder(settings, settings.kb().getSessionUpdateChain());
+	}
+
+	/**
+	 * Gives up the cursor on the {@link UpdateChain} of the {@link KnowledgeBase}.
+	 *
+	 * <p>
+	 * Afterwards this forwarder holds no revision of the {@link KnowledgeBase} anymore, so that a
+	 * reference to it keeps no {@link UpdateEvent} in memory. A released forwarder delivers no
+	 * events: {@link #synthesizeModelEvents()} returns <code>false</code> without touching the
+	 * session revision. Releasing an already released forwarder has no effect.
+	 * </p>
+	 */
+	public void release() {
+		_updateChain = null;
+		_foundFutureEvent = false;
+	}
+
+	/**
+	 * Whether {@link #release()} has been called.
+	 */
+	private boolean isReleased() {
+		return _updateChain == null;
 	}
 
 	@Override
 	public boolean synthesizeModelEvents() {
+		if (isReleased()) {
+			/* The cursor on the update chain is given up, no events are delivered anymore. */
+			return false;
+		}
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		if (subSession == null || subSession.isLocked()) {
 			/* Sub session is currently locked. No updates must occur. */
@@ -176,17 +218,21 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	}
 
 	private EventBuilder createEventBuilder(KnowledgeBase knowledgeBase, long newSessionRevision) {
+		UpdateChain updateChain = _updateChain;
+		if (updateChain == null) {
+			return null;
+		}
 		EventBuilder eventBuilder = null;
 
 		// Aggregate potentially multiple updates into a single update.
 		while (true) {
 			if (!_foundFutureEvent) {
-				if (!_updateChain.next()) {
+				if (!updateChain.next()) {
 					_foundFutureEvent = false;
 					break;
 				}
 			}
-			UpdateEvent event = _updateChain.getUpdateEvent();
+			UpdateEvent event = updateChain.getUpdateEvent();
 			assert knowledgeBase == event.getKnowledgeBase() : "UpdateEvent for foreign knowledge base: expected: '"
 				+ knowledgeBase
 				+ "' actual: '" + event.getKnowledgeBase() + "'";

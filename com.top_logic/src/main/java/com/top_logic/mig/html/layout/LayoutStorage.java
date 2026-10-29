@@ -44,11 +44,13 @@ import com.top_logic.basic.config.misc.NamedRegexp;
 import com.top_logic.basic.io.FileSystemCache;
 import com.top_logic.basic.io.PathUpdate;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ResKey;
@@ -91,6 +93,7 @@ import com.top_logic.util.error.TopLogicException;
 	FileSystemCache.Module.class,
 })
 @Label("Layout storage")
+@ServiceCategory.Of(UICategory.class)
 public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 	/**
@@ -140,7 +143,26 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 	private Map<String, List<BinaryData>> _overlays = Collections.emptyMap();
 
-	private Iterator<PathUpdate> _updates;
+	/**
+	 * The pending file system updates, <code>null</code> when this service is not started.
+	 * 
+	 * <p>
+	 * Drained while holding {@link #_updateLock}, see {@link #updateFilesystemCache()}.
+	 * </p>
+	 */
+	private volatile Iterator<PathUpdate> _updates;
+
+	/**
+	 * Monitor guarding the draining of {@link #_updates}.
+	 * 
+	 * <p>
+	 * Separate from the monitor of this service, which guards the loading state ({@link #_loading},
+	 * {@link #_everythingLoaded}) and is held by {@link #shutDown()} while waiting for the loading
+	 * thread. While holding this lock, the monitor of this service may be acquired, but not vice
+	 * versa.
+	 * </p>
+	 */
+	private final Object _updateLock = new Object();
 
 	/**
 	 * Whether the layouts are being loaded for one of the themes.
@@ -272,7 +294,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 			/* Schedule delayed to ensure that "isStarted" is set. */
 			schedulerService.getImplementationInstance()
-				.schedule(() -> ThreadContextManager.inSystemInteraction(LayoutStorage.class,
+				.schedule(() -> ThreadContext.inSystemContext(LayoutStorage.class,
 					() -> loadLayoutsForNonDefaultThemes(layoutNames, choosableThemes)), 10, TimeUnit.MILLISECONDS);
 		} else {
 			loadLayoutsForAllThemes(layoutNames, choosableThemes);
@@ -727,10 +749,29 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 		return getLayoutFromFilesystem(theme, layoutKey);
 	}
 
+	/**
+	 * Applies the pending file system updates to the file system layout cache.
+	 * 
+	 * <p>
+	 * Called from every thread that accesses the file system layouts, including the thread loading
+	 * the layouts for the non-default themes. The iterator of pending updates is shared by all these
+	 * threads and its {@link Iterator#hasNext()} and {@link Iterator#next()} calls are not atomic as
+	 * a pair. Therefore, the updates are drained while holding {@link #_updateLock}: A concurrent
+	 * caller waits until the updates fetched so far are applied. The lock is reentrant, because
+	 * applying an update installs layouts, which calls this method again.
+	 * </p>
+	 */
 	private void updateFilesystemCache() {
-		FileSystemCache.getCache().fetchUpdates();
-		while (_updates.hasNext()) {
-			processFilesystemUpdate(_updates.next());
+		synchronized (_updateLock) {
+			Iterator<PathUpdate> updates = _updates;
+			if (updates == null) {
+				// Not started.
+				return;
+			}
+			FileSystemCache.getCache().fetchUpdates();
+			while (updates.hasNext()) {
+				processFilesystemUpdate(updates.next());
+			}
 		}
 	}
 

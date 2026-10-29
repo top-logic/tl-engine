@@ -66,6 +66,8 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue.PendingDownload;
+import com.top_logic.layout.servlet.ContentDisposition;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
@@ -104,6 +106,19 @@ import com.top_logic.util.TopLogicServlet;
  */
 @MultipartConfig
 public class ReactServlet extends TopLogicServlet {
+
+	/**
+	 * Header of a command's answer naming the number of the last event the server has written for
+	 * the window, the command's own events included.
+	 *
+	 * <p>
+	 * A proxy that forwards the event stream only in blocks of some kilobytes lets its start through
+	 * and holds back each small event that follows. The client compares the number with the last
+	 * event its stream brought and changes to polling when the stream stays behind, see
+	 * {@link SSEUpdateQueue#poll(jakarta.servlet.AsyncContext, long, boolean)}.
+	 * </p>
+	 */
+	public static final String LAST_EVENT_HEADER = "X-TL-Last-Event";
 
 	/**
 	 * Machine-readable error code signaling that the server-side UI state for the requesting page
@@ -155,7 +170,7 @@ public class ReactServlet extends TopLogicServlet {
 
 	/**
 	 * Name of the global command the client sends when it refused a selected file because it
-	 * exceeds {@link UploadSupport#maxUploadSize()}.
+	 * exceeds the {@link UploadHandler#maxUploadSize() size limit} of the addressed control.
 	 */
 	private static final String CMD_UPLOAD_REJECTED = "uploadRejected";
 
@@ -172,9 +187,10 @@ public class ReactServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * Set before the parts are requested, it supersedes the {@code multipart-config} of the servlet
-	 * declaration, so the size limit is taken from the application configuration instead of the
-	 * deployment descriptor. Containers that do not know the attribute ignore it; there, the limit
-	 * is enforced by the explicit checks in {@link #handleUpload}.
+	 * declaration, so the size limit of a single file is taken from the application configuration
+	 * instead of the deployment descriptor, while the request as a whole stays unlimited: several
+	 * files uploaded at once each may use the full limit. Containers that do not know the attribute
+	 * ignore it; there, the limit is enforced by the explicit check in {@link #handleUpload}.
 	 * </p>
 	 */
 	private static final String MULTIPART_CONFIG_ATTRIBUTE = "org.eclipse.jetty.multipartConfig";
@@ -207,27 +223,6 @@ public class ReactServlet extends TopLogicServlet {
 		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
 	}
 
-	/**
-	 * Announces the request to the session's windows before answering it.
-	 *
-	 * <p>
-	 * Every request through this servlet restarts the session's inactivity timeout as a side effect.
-	 * A control counting down to the end of the session has no other way of learning that, so it is
-	 * told here, at the one point every React request passes through.
-	 * </p>
-	 *
-	 * @see ReactWindowRegistry#noteActivity(HttpSession)
-	 */
-	@Override
-	protected void doService(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			ReactWindowRegistry.forSession(session).noteActivity(session);
-		}
-		super.doService(request, response);
-	}
-
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -240,6 +235,8 @@ public class ReactServlet extends TopLogicServlet {
 		String pathInfo = request.getPathInfo();
 		if ("/data".equals(pathInfo)) {
 			handleDataDownload(request, response, session);
+		} else if ("/download".equals(pathInfo)) {
+			handleDownload(request, response, session);
 		} else if ("/tooltip".equals(pathInfo)) {
 			handleTooltipRequest(request, response, session);
 		} else if ("/i18n".equals(pathInfo)) {
@@ -277,14 +274,53 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
+		sendData(response, data);
+	}
+
+	/**
+	 * Sends the content of the given file as the response, with its content type and - where it is
+	 * known - its size.
+	 */
+	private static void sendData(HttpServletResponse response, BinaryData data) throws IOException {
 		response.setContentType(data.getContentType());
 		long size = data.getSize();
 		if (size >= 0) {
 			response.setContentLengthLong(size);
 		}
-
 		try (OutputStream out = response.getOutputStream()) {
 			data.deliverTo(out);
+		}
+	}
+
+	/**
+	 * Sends a file a command {@link SSEUpdateQueue#deliverDownload(BinaryData) delivered} to the
+	 * window as an attachment, so that the browser saves it instead of displaying it.
+	 *
+	 * <p>
+	 * A delivered file is sent once: a second request for the same key, like a request for a key
+	 * that was never delivered, is answered as not found.
+	 * </p>
+	 */
+	private void handleDownload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		String windowName = request.getParameter("windowName");
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		PendingDownload download = window.queue().takeDownload(request.getParameter("key"));
+		if (download == null) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "No such download.");
+			return;
+		}
+		try {
+			BinaryData data = download.data();
+			ContentDisposition.setAttachment(response, data.getName());
+			response.setHeader("Cache-Control", "no-store");
+			sendData(response, data);
+		} finally {
+			download.discard();
 		}
 	}
 
@@ -635,14 +671,15 @@ public class ReactServlet extends TopLogicServlet {
 			// from this command before the interaction delivers its updates.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
-			if (result.isSuccess()) {
-				sendSuccess(response);
-			} else {
+			if (!result.isSuccess()) {
 				// Show error in snackbar instead of returning HTTP 500.
 				CommandErrors.show(errorSink(control), result);
-				sendSuccess(response);
 			}
 		}
+		// Answered once the interaction has delivered its events, so that the answer can name the
+		// last of them: the client checks that its stream brings them (see LAST_EVENT_HEADER).
+		response.setHeader(LAST_EVENT_HEADER, Long.toString(queue.lastSeq()));
+		sendSuccess(response);
 	}
 
 	/**
@@ -894,8 +931,8 @@ public class ReactServlet extends TopLogicServlet {
 	 * uploaded files are inspected when the parts are requested here. A file refused by a content
 	 * checker makes {@link HttpServletRequest#getParts()} throw an
 	 * {@link UploadRejectedException}, which is answered like the refusal of an upload exceeding
-	 * {@link UploadSupport#maxUploadSize()}: the message is shown in the window of the addressed
-	 * control and the request is answered with an error status, see
+	 * the {@link UploadHandler#maxUploadSize() size limit} of the control: the message is shown in
+	 * the window of the addressed control and the request is answered with an error status, see
 	 * {@link #rejectUpload(HttpServletResponse, ReactCommandTarget, int, ResKey, String)}.
 	 * </p>
 	 */
@@ -921,24 +958,19 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		long limit = UploadSupport.maxUploadSize();
+		long limit = ((UploadHandler) control).maxUploadSize();
 		if (limit > 0) {
-			// Let the container apply the configured limit while it parses the body, instead of the
-			// fixed one from the deployment descriptor.
+			// Let the container apply the limit of the control to each file while it parses the body,
+			// instead of the fixed one from the deployment descriptor. The request as a whole is not
+			// limited: the limit is one per file, however many are uploaded at once.
 			request.setAttribute(MULTIPART_CONFIG_ATTRIBUTE,
-				new MultipartConfigElement("", limit, limit, FILE_SIZE_THRESHOLD));
+				new MultipartConfigElement("", limit, -1, FILE_SIZE_THRESHOLD));
 		}
 
 		DisplayContext displayContext = window.displayContext();
 		SubsessionHandler rootHandler = window.rootHandler();
 
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
-			if (limit > 0 && request.getContentLengthLong() > limit) {
-				rejectTooLarge(response, control, limit,
-					"request of " + request.getContentLengthLong() + " bytes");
-				return;
-			}
-
 			HandlerResult result;
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
@@ -956,13 +988,13 @@ public class ReactServlet extends TopLogicServlet {
 						// reason - report it like any other failure of the upload.
 						throw ex;
 					}
-					// The size check of the container tripped while it parsed the body.
+					// The file size check of the container tripped while it parsed the body.
 					rejectTooLarge(response, control, limit, ex.getMessage());
 					return;
 				}
 				if (limit > 0) {
-					// A request sent with chunked transfer encoding announces no content length; its
-					// size is only known from the parts the container has parsed.
+					// A container that ignores the multipart configuration attribute has not checked
+					// the file sizes while parsing the body.
 					Part oversized = oversizedPart(parts, limit);
 					if (oversized != null) {
 						rejectTooLarge(response, control, limit,
@@ -1079,8 +1111,8 @@ public class ReactServlet extends TopLogicServlet {
 
 	/**
 	 * Handles the {@link #CMD_UPLOAD_REJECTED} global command: the client refused a selected file
-	 * as larger than {@link UploadSupport#maxUploadSize()} and did not transmit it, so the notice
-	 * the user must see is produced here.
+	 * as larger than the {@link UploadHandler#maxUploadSize() size limit} of the addressed control
+	 * and did not transmit it, so the notice the user must see is produced here.
 	 */
 	private void handleUploadRejected(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, String windowName, String controlId, Map<String, Object> arguments)
@@ -1094,10 +1126,11 @@ public class ReactServlet extends TopLogicServlet {
 		Object fileName = arguments != null ? arguments.get(ARG_FILE_NAME) : null;
 		Object size = arguments != null ? arguments.get(ARG_SIZE) : null;
 		Logger.info("Upload of '" + fileName + "' (" + size + " bytes) refused by the client, larger than the "
-			+ "configured limit.", ReactServlet.class);
+			+ "upload limit.", ReactServlet.class);
 
+		long limit = control instanceof UploadHandler handler ? handler.maxUploadSize() : UploadSupport.maxUploadSize();
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
-			showUploadNotice(control, uploadTooLarge(UploadSupport.maxUploadSize()));
+			showUploadNotice(control, uploadTooLarge(limit));
 		}
 		sendSuccess(response);
 	}

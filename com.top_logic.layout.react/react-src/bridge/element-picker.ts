@@ -1,4 +1,6 @@
 import { getApiBase, isMountedControl } from './tl-react-bridge';
+import { addBinding, createScope, registerScope } from './keyboard-dispatcher';
+import { addStateWord, removeStateWord } from './css';
 
 /** What a click in pick mode is resolved to (the external names of the server's PickKind). */
 export type PickKind = 'view' | 'control';
@@ -10,9 +12,17 @@ export interface PickEventData {
   kind: PickKind;
 }
 
-const HIGHLIGHT_ID = 'tl-pick-highlight';
+/**
+ * Class of the frame over the element a click would report: `tl-pick-highlight` of the design
+ * system package (drag.css), on the layer of the drag.
+ */
+const HIGHLIGHT_CLASS = 'tl-pick-highlight';
 
-const ACTIVE_CLASS = 'tlPick--active';
+/**
+ * The `data-tl-state` word of the document body while the picker chooses (crosshair cursor over the
+ * whole window, drag.css).
+ */
+const PICKING = 'picking';
 
 /** JSON field names of the pick result, mirroring the server's ElementPicker constants. */
 const TOKEN_FIELD = 'token';
@@ -31,6 +41,9 @@ let _active = false;
 let _token: string | null = null;
 let _kind: PickKind = 'view';
 let _highlight: HTMLDivElement | null = null;
+
+/** Removes the keyboard scope binding Escape to ending the pick mode; `null` while not picking. */
+let _unregisterKeys: (() => void) | null = null;
 
 /** Walks up from the clicked element to the nearest view source. */
 function nearestViewSource(start: EventTarget | null): PickTarget | null {
@@ -79,13 +92,21 @@ function onPointerMove(e: PointerEvent): void {
   }
 }
 
-function onClick(e: MouseEvent): void {
+/**
+ * Completes the pick on the press of the primary button rather than on its click: a disabled
+ * element - a button whose command is not executable right now - receives the press, but no click.
+ */
+function onPointerDown(e: PointerEvent): void {
+  if (e.button !== 0) {
+    return;
+  }
   e.preventDefault();
   e.stopPropagation();
   const target = nearestTarget(e.target);
   const token = _token;
   const kind = _kind;
   stop();
+  swallowClickOfPress();
   if (target && token) {
     const body: Record<string, string> = { [TOKEN_FIELD]: token, [KIND_FIELD]: kind };
     body[kind === 'control' ? CONTROL_ID_FIELD : PATH_FIELD] = target.value;
@@ -97,12 +118,25 @@ function onClick(e: MouseEvent): void {
   }
 }
 
-function onKeyDown(e: KeyboardEvent): void {
-  if (e.key === 'Escape') {
+/**
+ * Keeps the click that ends the press which completed the pick from reaching the picked element,
+ * so that picking a button does not execute it. The press of a disabled element ends without a
+ * click, so the click is awaited only until the press is released.
+ */
+function swallowClickOfPress(): void {
+  const swallow = (e: MouseEvent): void => {
     e.preventDefault();
     e.stopPropagation();
-    stop();
-  }
+  };
+  const release = (): void => {
+    document.removeEventListener('pointerup', release, true);
+    document.removeEventListener('pointercancel', release, true);
+    // The click of a press is dispatched right after its release, in the same task.
+    setTimeout(() => document.removeEventListener('click', swallow, true), 0);
+  };
+  document.addEventListener('click', swallow, true);
+  document.addEventListener('pointerup', release, true);
+  document.addEventListener('pointercancel', release, true);
 }
 
 function start(token: string, kind: PickKind): void {
@@ -112,23 +146,35 @@ function start(token: string, kind: PickKind): void {
   _kind = kind;
 
   _highlight = document.createElement('div');
-  _highlight.id = HIGHLIGHT_ID;
+  _highlight.className = HIGHLIGHT_CLASS;
   _highlight.style.display = 'none';
   document.body.appendChild(_highlight);
 
-  document.body.classList.add(ACTIVE_CLASS);
+  addStateWord(document.body, PICKING);
   document.addEventListener('pointermove', onPointerMove, true);
-  document.addEventListener('click', onClick, true);
-  document.addEventListener('keydown', onKeyDown, true);
+  document.addEventListener('pointerdown', onPointerDown, true);
+
+  // Escape ends the pick mode through the keyboard dispatcher. The picker has no React host, so it
+  // opens a scope of its own: created now, it is the innermost one, above a dialog that is open
+  // already - Escape ends the pick mode and does not reach the dialog. Unbound keys fall through.
+  const scope = createScope(() => true);
+  addBinding(scope, 'Escape', () => {
+    stop();
+    return true;
+  });
+  _unregisterKeys = registerScope(scope);
 }
 
 function stop(): void {
   _active = false;
   _token = null;
-  document.body.classList.remove(ACTIVE_CLASS);
+  removeStateWord(document.body, PICKING);
   document.removeEventListener('pointermove', onPointerMove, true);
-  document.removeEventListener('click', onClick, true);
-  document.removeEventListener('keydown', onKeyDown, true);
+  document.removeEventListener('pointerdown', onPointerDown, true);
+  if (_unregisterKeys) {
+    _unregisterKeys();
+    _unregisterKeys = null;
+  }
   if (_highlight) {
     _highlight.remove();
     _highlight = null;

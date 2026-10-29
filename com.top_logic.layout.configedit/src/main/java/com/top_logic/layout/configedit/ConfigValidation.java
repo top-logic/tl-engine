@@ -541,13 +541,15 @@ public final class ConfigValidation {
 	 * typed over what was there and left it blank - calls {@code update} with {@code null} (or, for
 	 * a {@link String} property, whatever the framework normalizes that {@code null} to, typically
 	 * {@code ""}) just as much as a field the user filled in calls it with the entered value;
-	 * {@code valueSet} reads "set" either way. So this also rejects a {@code null} value outright,
-	 * and an empty {@link String} - the only type whose "empty" value is not itself {@code null}.
+	 * {@code valueSet} reads "set" either way. So this also rejects an empty value outright, see
+	 * {@link #isEmpty(Object)}: {@code null}, an empty {@link String}, and an empty collection - the
+	 * value of a {@link PropertyKind#PLAIN} property holding a list in a text format, like a
+	 * selection of several options, whose field the user cleared.
 	 * </p>
 	 *
 	 * <p>
-	 * Deliberately narrow: only a {@code null} value or an empty {@link String} count as missing,
-	 * and only for a property this editor actually renders as a field, or as a type selector. A
+	 * Deliberately narrow: only an empty value counts as missing, and only for a property this
+	 * editor actually renders as a field, or as a type selector. A
 	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or monomorphic
 	 * {@link PropertyKind#ITEM} property is never flagged here, whatever it holds. The first three
 	 * mirror
@@ -569,8 +571,8 @@ public final class ConfigValidation {
 	 * </p>
 	 *
 	 * <p>
-	 * A polymorphic ITEM property renders a {@link PolymorphicItemControl}, whose type selector is a
-	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} the {@link ConfigFieldIndex}
+	 * A polymorphic ITEM property renders a {@link PolymorphicItemControl}, whose
+	 * {@link PolymorphicItemControl#getTypeModel() type selector field} the {@link ConfigFieldIndex}
 	 * does not carry either. Left unset, a mandatory one is nevertheless missing: it would be
 	 * written as an empty element the configuration cannot read back. The refusal lists it, so it
 	 * does not point at nothing, and the type selector carries the mandatory marker.
@@ -621,11 +623,7 @@ public final class ConfigValidation {
 		if (!item.valueSet(property)) {
 			return true;
 		}
-		Object value = item.value(property);
-		if (value == null) {
-			return true;
-		}
-		return value instanceof String string && string.isEmpty();
+		return isEmpty(item.value(property));
 	}
 
 	/**

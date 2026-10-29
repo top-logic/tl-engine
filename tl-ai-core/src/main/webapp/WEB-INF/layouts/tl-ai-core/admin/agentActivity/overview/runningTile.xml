@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Läuft jetzt". The one panel an operator opens first, and the one with the strongest pull
+	towards a live console - which classic TopLogic tables do not have. The honest answer is the
+	Aktualisieren command on the table: a number that only moves when asked is better than one that
+	looks live and is not.
+-->
+<securityLayout name="aiOverviewRunningTile"
+	titleKey="admin.ai.agentActivity.overview.running.label"
+>
+	<tile-info name="aiOverviewRunning"
+		label="admin.ai.agentActivity.overview.running.label"
+	>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						running = all(`tl.ai.execution:AgentExecution`)
+							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#RUNNING`);
+						first = $running.sort(comparator(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`))).firstElement();
+						oldest = ifElse(isEmpty($first), null, $first.get(`tl.ai.execution:AgentExecution#startedAt`));
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$running.size()}</div>
+								<div class="aiKpiNote">
+									{ isEmpty($oldest)
+										? #('nothing running'@en, 'nichts in Arbeit'@de)
+										: #('oldest started {0}'@en, 'ältester gestartet {0}'@de).fill(dateFormat('dd.MM. HH:mm').format($oldest)) }
+								</div>
+							</div>
+						}}};
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewRunningTable"
+			objectType="tl.ai.execution:AgentExecution"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.running.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> all(`tl.ai.execution:AgentExecution`)
+						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#RUNNING`)
+				]]></elements>
+				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,session,model,startedAt,runningSeconds,cancelRequested"
+				defaultSortOrder="startedAt:ascending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="250px"
+						visibility="mandatory"
+					/>
+					<column name="session"
+						columnWidth="200px"
+					/>
+					<column name="model"
+						columnWidth="170px"
+					/>
+					<column name="startedAt"
+						columnWidth="150px"
+					/>
+					<column name="cancelRequested"
+						columnWidth="180px"
+					/>
+					<column name="transcript"
+						visibility="excluded"
+					/>
+					<column name="transcriptHtml"
+						visibility="excluded"
+					/>
+					<column name="response"
+						visibility="excluded"
+					/>
+					<column name="runningSeconds"
+						columnWidth="120px"
+					/>
+				</columns>
+				<configurationProviders>
+					<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+						columnId="runningSeconds"
+						columnLabel="admin.ai.agentActivity.overview.running.seconds"
+						columnType="tl.core:Long"
+					>
+						<accessor><![CDATA[
+							e -> {
+								started = $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+								isEmpty($started) ? null : (now().toMillis() - $started.toMillis()) / 1000;
+							}
+						]]></accessor>
+					</configurationProvider>
+				</configurationProviders>
+			</table>
+			<buttons>
+				<button id="requestCancel"
+					class="com.top_logic.tl.ai.core.execution.layout.RequestCancelCommand"
+					clique="additional"
+					target="selection(self())"
+				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+						<confirmMessage key="admin.ai.agentActivity.executions.requestCancel.confirm"/>
+					</confirmation>
+				</button>
+				<button id="refreshRunning"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

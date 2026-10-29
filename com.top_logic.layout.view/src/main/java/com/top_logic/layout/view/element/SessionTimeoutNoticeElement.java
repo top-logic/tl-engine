@@ -155,7 +155,7 @@ public class SessionTimeoutNoticeElement implements UIElement {
 	 * The session of the request currently being handled, or {@code null} if the control is built
 	 * outside a request - a headless consumer, a test.
 	 */
-	private static HttpSession currentSession() {
+	static HttpSession currentSession() {
 		InteractionContext interaction = ThreadContextManager.getInteraction();
 		if (interaction == null) {
 			return null;

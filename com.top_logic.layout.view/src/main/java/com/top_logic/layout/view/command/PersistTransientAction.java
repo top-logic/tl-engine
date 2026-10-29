@@ -19,7 +19,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.security.ModelAccessRule;
+import com.top_logic.layout.view.security.IntrinsicAccessRules;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -41,7 +41,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * a default. With a {@link Config#getContainer() container}, the object is created in the context
  * of the container and, with a {@link Config#getReference() reference}, added to that reference of
  * the container, the way {@code $container.add(reference, $created)} adds it. The action results in
- * the persistent object.
+ * the persistent object; its follow-up actions (see {@link WithResultActions}) see it only after the
+ * creation is committed.
  * </p>
  *
  * <p>
@@ -59,8 +60,10 @@ import com.top_logic.model.util.TLModelPartRef;
  * The action brings its executability: the command is offered only where the user may create the
  * object. The created type is the {@link Config#getType() type}, when given; otherwise the type of
  * the {@link Config#getReference() reference}, or the type of the command input - the draft, when
- * the command's input is the dialog's model channel. See {@link ModelAccessRule} for how a refusal
- * is displayed.
+ * the command's input is the dialog's model channel. An empty {@link Config#getContainer()
+ * container} channel creates the object without container, checked against the security root; with
+ * a reference, it leaves nothing to add the object to and disables the command. See
+ * {@link IntrinsicAccessRules} for how a refusal is displayed.
  * </p>
  *
  * <p>
@@ -68,11 +71,14 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <pre>
- * &lt;generic-command input="model"&gt;
+ * &lt;generic-command inputs="model"&gt;
  *   &lt;store-form-state/&gt;
- *   &lt;persist-transient container="container" reference="milestones"/&gt;
- *   &lt;write-channel name="selection"/&gt;
- *   &lt;close-dialog/&gt;
+ *   &lt;persist-transient container="container" reference="milestones"&gt;
+ *     &lt;with-result&gt;
+ *       &lt;write-channel name="selection"/&gt;
+ *       &lt;close-dialog/&gt;
+ *     &lt;/with-result&gt;
+ *   &lt;/persist-transient&gt;
  * &lt;/generic-command&gt;
  * </pre>
  *
@@ -88,7 +94,7 @@ public class PersistTransientAction implements ViewAction {
 	 * Configuration for {@link PersistTransientAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<PersistTransientAction>, CreationContainer, WithCommitMessage {
+	public interface Config extends PolymorphicConfiguration<PersistTransientAction>, CreationContainer, WithCommitMessage, WithResultActions, WithValueArgument {
 
 		/** Tag name of a {@link PersistTransientAction} in an action chain. */
 		String TAG_NAME = "persist-transient";
@@ -149,7 +155,7 @@ public class PersistTransientAction implements ViewAction {
 	 */
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
-		return ModelAccessRule.creation(_config.getType(), _config.getContainer(), _config.getReference());
+		return IntrinsicAccessRules.creation(_config.getType(), _config.getContainer(), _config.getReference());
 	}
 
 	@Override

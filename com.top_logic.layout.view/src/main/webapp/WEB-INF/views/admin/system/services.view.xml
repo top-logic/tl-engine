@@ -1,105 +1,60 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Services management: list the application services (runtime modules) and start / stop / restart the
-	selected one. The ServiceTable shows a live snapshot when opened and rebuilds from the services
-	channel after a command. It writes the selected module to the selection channel and its running
-	status ('ACTIVE' / 'INACTIVE') to the state channel; the commands gate on that state via the
-	reusable <visible-if> rule so Start (while stopped) and Stop / Restart (while running) are mutually
-	exclusive. Each command runs the ServiceLifecycleAction (which reads the module from the selection
-	channel), writes the refreshed service list to the services channel, then writes the new state. A
-	titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar commands.
+	Services management as a drill-down: the initial frame lists the application services (runtime
+	modules) and starts / stops / restarts the selected one (services/overview.view.xml); activating
+	a row pushes the detail frame of that service (services/service-detail.view.xml), which shows
+	and edits its configuration.
+	- The serviceNavPath channel holds the drill-down path; the breadcrumb ("Services > <service>")
+	is raised into the app bar of the shell with <slot-content to="appbar-content">. Every frame
+	sees the path as navPath (bind-path-to), so the detail frame offers a "Back" command.
+	- The services channel holds the ServiceSnapshot the overview table displays. It is bound into
+	every frame, so that a command of the detail frame (save, reset, restart) writes a new snapshot
+	the covered overview frame shows when the user comes back to it.
+	- The <frame id="service"> declaration is the detail frame the overview pushes (frame="service").
+	It puts the frame into the address bar as .../service/<implementation class name>, and names
+	its crumb by the service label.
 -->
 <view>
 	<channels>
 		<channel name="services"/>
-		<channel name="selection"/>
-		<channel name="state"/>
+		<channel name="serviceNavPath"/>
 	</channels>
-	<panel fill="true">
-		<title>
-			<en>Services</en>
-			<de>Dienste</de>
-		</title>
-		<commands>
-			<generic-command
-				image="css:bi bi-play"
-				input="state"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Start</en>
-					<de>Starten</de>
-				</label>
-				<executability>
-					<visible-if expr="state -> $state == 'INACTIVE'"/>
-				</executability>
-				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
-					mode="START"
-					selection="selection"
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="serviceNavPath">
+				<home-label>
+					<en>Services</en>
+					<de>Dienste</de>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			bind-path-to="navPath"
+			initial="admin/system/services/overview.view.xml"
+			path="serviceNavPath"
+		>
+			<bindings>
+				<bind
+					channel="services"
+					to="services"
 				/>
-				<write-channel name="services"/>
-				<execute-script function="'ACTIVE'"/>
-				<write-channel name="state"/>
-			</generic-command>
-			<generic-command
-				image="css:bi bi-stop"
-				input="state"
-				placement="TOOLBAR"
+			</bindings>
+			<frame id="service"
+				route="service/:module"
+				view="admin/system/services/service-detail.view.xml"
 			>
-				<label>
-					<en>Stop</en>
-					<de>Stoppen</de>
-				</label>
-				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
-				</executability>
-				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
-					mode="STOP"
-					selection="selection"
+				<param name="module"
+					expr="serviceName($module)"
+					reverse="serviceByName($value)"
 				/>
-				<write-channel name="services"/>
-				<execute-script function="'INACTIVE'"/>
-				<write-channel name="state"/>
-			</generic-command>
-			<generic-command
-				image="css:bi bi-arrow-repeat"
-				input="state"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Restart</en>
-					<de>Neustart</de>
-				</label>
-				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
-				</executability>
-				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
-					mode="RESTART"
-					selection="selection"
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="serviceLabel($module)"
+					inputs="module"
 				/>
-				<write-channel name="services"/>
-				<execute-script function="'ACTIVE'"/>
-				<write-channel name="state"/>
-			</generic-command>
-			<generic-command
-				image="css:bi bi-arrow-clockwise"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Refresh</en>
-					<de>Aktualisieren</de>
-				</label>
-				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
-					mode="REFRESH"
-				/>
-				<write-channel name="services"/>
-			</generic-command>
-		</commands>
-		<child class="com.top_logic.layout.view.admin.system.ServiceTable"
-			input="services"
-			selection="selection"
-			state="state"
-		/>
-	</panel>
+			</frame>
+		</tile-stack>
+	</stack>
 </view>

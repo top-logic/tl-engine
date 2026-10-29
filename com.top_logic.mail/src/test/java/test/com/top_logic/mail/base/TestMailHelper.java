@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import jakarta.mail.Address;
@@ -63,9 +64,48 @@ public class TestMailHelper extends BasicTestCase {
 
 	private static final String SERVER_ALIAS = "%IMAP_SERVER%";
 
-	private static final String PASSWORD_ALIAS = "%IMAP_PASS%";
-
 	private static final String USER_ALIAS = "%IMAP_USER%";
+
+	/**
+	 * Environment variable whose value prefixes the {@link #getRunId()}, if set.
+	 * 
+	 * <p>
+	 * Jenkins sets this variable to a value naming the build, which identifies the build a
+	 * left-over mail stems from.
+	 * </p>
+	 */
+	private static final String RUN_ID_VARIABLE = "BUILD_TAG";
+
+	/**
+	 * Separator between the value of {@link #RUN_ID_VARIABLE} and the random part of the
+	 * {@link #getRunId()}.
+	 */
+	private static final String RUN_ID_SEPARATOR = "-";
+
+	/**
+	 * Number of characters of a random UUID used in the {@link #getRunId()}.
+	 */
+	private static final int RANDOM_RUN_ID_LENGTH = 8;
+
+	/**
+	 * Text in front of the {@link #getRunId()} in the {@link #getRunMarker()}.
+	 */
+	private static final String RUN_MARKER_START = "[run: ";
+
+	/**
+	 * Text after the {@link #getRunId()} in the {@link #getRunMarker()}.
+	 */
+	private static final String RUN_MARKER_END = "]";
+
+	/**
+	 * @see #getRunId()
+	 */
+	private static final String RUN_ID = createRunId();
+
+	/**
+	 * @see #getRunMarker()
+	 */
+	private static final String RUN_MARKER = RUN_MARKER_START + RUN_ID + RUN_MARKER_END;
     
     public TestMailHelper (String aName) {
         super (aName);
@@ -317,8 +357,58 @@ public class TestMailHelper extends BasicTestCase {
 			+ "\n" + new Date();
 	}
 
+	private static String createRunId() {
+		String random = UUID.randomUUID().toString().substring(0, RANDOM_RUN_ID_LENGTH);
+		String buildTag = System.getenv(RUN_ID_VARIABLE);
+		if (buildTag != null && !buildTag.isBlank()) {
+			return buildTag.trim() + RUN_ID_SEPARATOR + random;
+		}
+		return random;
+	}
+
+	/**
+	 * Identifier of this test run.
+	 * 
+	 * <p>
+	 * All test runs share the same mailbox. The identifier is part of the subject of all mails sent
+	 * by this test run, see {@link #getRunMarker()}, so that a test run can distinguish its own
+	 * mails from the mails of other test runs.
+	 * </p>
+	 * 
+	 * <p>
+	 * A random identifier, created once per JVM, prefixed with the value of the environment
+	 * variable {@link #RUN_ID_VARIABLE}, if set. The random part keeps several JVMs of the same
+	 * build apart.
+	 * </p>
+	 */
+	public static String getRunId() {
+		return RUN_ID;
+	}
+
+	/**
+	 * The text in the subject of a mail that identifies the mail as sent by this test run.
+	 * 
+	 * @see #getRunId()
+	 * @see #isOwnMail(String)
+	 */
+	public static String getRunMarker() {
+		return RUN_MARKER;
+	}
+
+	/**
+	 * Whether a mail with the given subject was sent by this test run.
+	 * 
+	 * @param subject
+	 *        The subject of the mail. May be <code>null</code>.
+	 * 
+	 * @see #getRunMarker()
+	 */
+	public static boolean isOwnMail(String subject) {
+		return subject != null && subject.contains(RUN_MARKER);
+	}
+
     /**
-	 * Creates a new title containing the current time.
+	 * Creates a new title containing the current time and the {@link #getRunMarker()}.
 	 * 
 	 * <p>
 	 * Note: This method is synchronized to ensure that different thread gets different timestamps.
@@ -336,7 +426,7 @@ public class TestMailHelper extends BasicTestCase {
 			// ignore
 		}
 		String time = CalendarUtil.newSimpleDateFormat("HH:mm:ss.SSS", Locale.GERMANY).format(new Date());
-		return "TestMail gesendet von " + System.getProperty("user.name") + " um " + time;
+		return "TestMail gesendet von " + System.getProperty("user.name") + " um " + time + " " + RUN_MARKER;
 	}
 
 	/**
@@ -344,6 +434,11 @@ public class TestMailHelper extends BasicTestCase {
 	 * 
 	 * <p>
 	 * This method returns the mail formerly sent to {@link #getReceiver()} with the given subject.
+	 * </p>
+	 * 
+	 * <p>
+	 * The connection to the server is closed when this method returns. The envelope and all headers
+	 * of the returned mail are loaded and can be read without a connection, its content can not.
 	 * </p>
 	 * 
 	 * @param mailSubject
@@ -376,6 +471,9 @@ public class TestMailHelper extends BasicTestCase {
 			Folder folder = mailServer.getInbox();
 			for (Message m : folder.getMessages()) {
 				if (mailSubject.equals(m.getSubject())) {
+					// Loads all headers (without marking the mail as seen), so that they can be read
+					// after the folder is closed.
+					m.getAllHeaders();
 					return m;
 				}
 			}

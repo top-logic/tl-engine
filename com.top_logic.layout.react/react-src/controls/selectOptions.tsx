@@ -1,19 +1,7 @@
-import { React, ThemeIcon } from 'tl-react-bridge';
-import type { DropdownSelectStateJson } from 'tl-react-bridge';
-import { TLPill } from './pill/TLPill';
+import { React, ThemeIcon, usePart } from 'tl-react-bridge';
+import type { ColorRole, OptionDescriptor } from 'tl-react-bridge';
 
-const { useCallback } = React;
-
-/**
- * One option of a select field, as the server describes it.
- *
- * <p>
- * The same descriptor carries an option of the list to pick from and a value that is picked, so a
- * value looks the same wherever a control shows it. The server always sends its value and label.
- * </p>
- */
-export type OptionDescriptor = Partial<DropdownSelectStateJson.Option>
-  & Required<Pick<DropdownSelectStateJson.Option, 'value' | 'label'>>;
+export type { OptionDescriptor } from 'tl-react-bridge';
 
 /** Command sent when the user follows the link of a displayed option. */
 export const CMD_GOTO = 'goto';
@@ -22,31 +10,18 @@ export const CMD_GOTO = 'goto';
 export const ARG_OPTION = 'option';
 
 /**
- * Wraps a value's presentation in a pill when the model gives that value a color role.
- *
- * <p>
- * Used for every presentation of an option - the rows of an open dropdown, the toggles of a chip
- * cloud, the chosen value while editing, and the read-only display - so a colored value looks the
- * same wherever a control shows it. The pill sets its text in the label style (`tl-type-label`),
- * as the design system's select does.
- * </p>
+ * Command entering a text of the user's own as the value of a select field that accepts free entry
+ * (freeEntry). Must match `EnterTextArguments#COMMAND`.
  */
-export function withPill(role: string | undefined, content: React.ReactNode) {
-  return role ? <TLPill role={role} className="tl-type-label">{content}</TLPill> : content;
-}
+export const CMD_ENTER_TEXT = 'enterText';
 
-/** Renders an option's image, whatever encoded form it arrives in, as a small icon. */
-export function OptionImage({ image }: { image?: string }) {
-  if (!image) return null;
-  if (image.startsWith('/')) {
-    return <img src={image} alt="" className="tl-icon-sm" />;
-  }
-  return <ThemeIcon encoded={image} className="tl-icon-sm" />;
-}
+/** Argument of {@link CMD_ENTER_TEXT}: the text entered. Must match `EnterTextArguments#TEXT`. */
+export const ARG_TEXT = 'text';
 
 /**
- * Renders an option as its image followed by its label, as a pill where the option has a color
- * role.
+ * Renders an option as its image followed by its label, for an element that carries the option's
+ * color role itself (data-tl-role, see {@link optionRoleAttr}): a segment. Image and label are
+ * siblings; nothing is nested in a pill.
  *
  * @param option the option to render
  * @param label what stands for the label, e.g. the label with the search match set off; the
@@ -62,83 +37,43 @@ export function OptionContent({
   label?: React.ReactNode;
   labelClassName?: string;
 }) {
-  return withPill(option.colorRole, (
+  return (
     <>
-      <OptionImage image={option.image} />
+      {option.image && <ThemeIcon encoded={option.image} className="tl-icon-sm" />}
       <span className={labelClassName}>{label ?? option.label}</span>
     </>
-  ));
+  );
 }
 
 /**
- * Renders a selected value of a field that only displays its value: a `tl-field-value`.
+ * Renders an option where the element showing it carries no role of its own - a row of the open list,
+ * the single chosen value, the label of a choice: the part `Chip` of the option's color role, or image
+ * and label as they are for a value without a role (see {@link OptionContent}).
  *
- * <p>A value the application displays somewhere is a link there (an `a` sending {@link CMD_GOTO}),
- * and wears the same look as the linked value of a table cell. The text stands in a
- * `tl-field-value__text`, in a pill where the value has a color role.</p>
+ * @param option the option to render
+ * @param label what stands for the label, e.g. the label with the search match set off; the
+ *        option's label where omitted
+ * @param labelClassName the class of the element holding the label of an option without a color
+ *        role, if any
  */
-export function ReadonlyValue({
+export function OptionLabel({
   option,
-  onGoto,
+  label,
+  labelClassName,
 }: {
   option: OptionDescriptor;
-  onGoto: (value: string) => void;
+  label?: React.ReactNode;
+  labelClassName?: string;
 }) {
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onGoto(option.value);
-    },
-    [onGoto, option.value]
-  );
-
-  const content = <OptionContent option={option} labelClassName="tl-field-value__text" />;
-
-  if (option.link) {
-    return (
-      <a className="tl-field-value tl-type-body" href="#" onClick={handleClick}>
-        {content}
-      </a>
-    );
+  const Chip = usePart('Chip');
+  if (!option.colorRole) {
+    return <OptionContent option={option} label={label} labelClassName={labelClassName} />;
   }
-  return <span className="tl-field-value tl-type-body">{content}</span>;
+  return <Chip colorRole={option.colorRole as ColorRole} icon={option.image} label={label ?? option.label} />;
 }
 
-/** Stands between two values shown as plain text, as in the other lists of values on one line. */
-const VALUE_SEPARATOR = ', ';
-
-/**
- * Renders the values of a select field that only displays its value: a `tl-select__values` holding
- * one {@link ReadonlyValue} per value. Two values shown as plain text are separated by a comma, so
- * that they do not run into each other; a value shown as a pill is set apart by its pill. An empty
- * selection renders an empty list - the "empty option" label is an edit affordance and would
- * mislead in a read-only display.
- *
- * @param id the id of the element, the control id of the field
- * @param className further classes, e.g. the result of rootClassName
- * @param value the selected values
- * @param onGoto what follows the link of a value
- */
-export function ReadonlyValues({
-  id,
-  className,
-  value,
-  onGoto,
-}: {
-  id?: string;
-  className?: string;
-  value: OptionDescriptor[];
-  onGoto: (value: string) => void;
-}) {
-  return (
-    <span id={id} className={className ? 'tl-select__values ' + className : 'tl-select__values'}>
-      {value.map((v, n) => (
-        <React.Fragment key={v.value}>
-          {n > 0 && !value[n - 1].colorRole && !v.colorRole
-            && <span className="tl-select__separator">{VALUE_SEPARATOR}</span>}
-          <ReadonlyValue option={v} onGoto={onGoto} />
-        </React.Fragment>
-      ))}
-    </span>
-  );
+/** The data-tl-role an element showing the option carries: its color role, none for a neutral one. */
+export function optionRoleAttr(option: OptionDescriptor): string | undefined {
+  const role = option.colorRole;
+  return role && role !== 'neutral' ? role : undefined;
 }

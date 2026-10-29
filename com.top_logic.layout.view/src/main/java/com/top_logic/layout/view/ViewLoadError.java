@@ -5,14 +5,12 @@
  */
 package com.top_logic.layout.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.common.ReactAlertControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.util.Resources;
 
 /**
@@ -22,13 +20,11 @@ import com.top_logic.util.Resources;
  * A view that fails to load replaces only itself, so the rest of the application keeps working and
  * the defect stays reachable: the navigation and the app bar still render, and the View Designer can
  * still be opened to repair the view. The placeholder names the view and reports why loading failed,
- * so the problem is visible where it occurs rather than only in the log.
+ * so the problem is visible where it occurs rather than only in the log — as an error message of the design system
+ * ({@code tl-alert}), inset from the border like a page.
  * </p>
  */
 public class ViewLoadError {
-
-	/** CSS class of the placeholder, and prefix of the CSS classes of its parts. */
-	private static final String CSS_CLASS = "tlViewError";
 
 	/**
 	 * Creates the placeholder control for a view that could not be loaded.
@@ -42,20 +38,32 @@ public class ViewLoadError {
 	 * @return A control to render instead of the view.
 	 */
 	public static ReactControl createControl(ReactContext context, String viewPath, Throwable problem) {
-		List<ReactControl> lines = new ArrayList<>();
-		lines.add(new ReactTextControl(context,
-			Resources.getInstance().getString(I18NConstants.ERROR_VIEW_NOT_LOADED),
-			CSS_CLASS + "__title"));
-		lines.add(new ReactTextControl(context, viewPath, CSS_CLASS + "__view"));
+		String title = Resources.getInstance().getString(I18NConstants.ERROR_VIEW_NOT_LOADED);
+		return new ReactInsetControl(context, createAlert(context, title, viewPath, problem));
+	}
 
+	/**
+	 * The error message naming the view and, below it, the cause of the failure.
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param title
+	 *        The title of the message.
+	 * @param viewPath
+	 *        The view that failed to load.
+	 * @param problem
+	 *        The reason loading failed.
+	 * @return The error message.
+	 */
+	public static ReactAlertControl createAlert(ReactContext context, String title, String viewPath,
+			Throwable problem) {
+		ReactAlertControl alert = new ReactAlertControl(context);
+		alert.setVariant(Variant.ERROR);
+		alert.setTitle(title);
 		String detail = detail(problem);
-		if (!detail.isEmpty()) {
-			lines.add(new ReactTextControl(context, detail, CSS_CLASS + "__detail"));
-		}
-
-		ReactStackControl placeholder = new ReactStackControl(context, lines);
-		placeholder.setCssClass(CSS_CLASS);
-		return placeholder;
+		alert.setMessage(detail.isEmpty() ? viewPath : viewPath + "\n" + detail);
+		alert.show();
+		return alert;
 	}
 
 	/**

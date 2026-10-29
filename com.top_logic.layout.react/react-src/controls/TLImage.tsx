@@ -1,6 +1,5 @@
-import { React, useTLState, useI18N, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useImageSrc, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { useImageSrc } from './imageSource';
 
 const I18N_KEYS = {
   'js.image.alt': 'Image',
@@ -30,7 +29,6 @@ const TLImage: React.FC<TLCellProps> = ({ controlId }) => {
   const t = useI18N(I18N_KEYS);
 
   const fit = (state.fit as string) ?? 'cover';
-  const className = rootClassName(state, 'tlImage', `tlImage--fit-${fit}`);
 
   const style: React.CSSProperties = {};
   if (state.aspectRatio) {
@@ -44,16 +42,16 @@ const TLImage: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={rootClassName(state, className)} style={style}>
+    <div id={controlId} className={rootClassName(state, 'tl-media', `tl-media--${fit}`)} style={style}>
       {src ? (
         <img
-          className="tlImage__image"
+          className="tl-media__frame"
           src={src}
           loading={state.lazy ? 'lazy' : undefined}
           alt={(state.alt as string | undefined) || t['js.image.alt']}
         />
       ) : (
-        <div className="tlImage__placeholder" />
+        <div className="tl-media__placeholder" />
       )}
     </div>
   );

@@ -123,7 +123,7 @@ public abstract class AbstractEditor implements Editor {
 			linkStorage(input, modelValue, storageConversion);
 		}
 
-		editorFactory.processControlProviderAnnotation(model.getProperty(), field);
+		editorFactory.installControlProvider(model.getProperty(), field);
 	}
 
 	private boolean isMandatory(AnnotationCustomizations customizations, PropertyDescriptor property) {

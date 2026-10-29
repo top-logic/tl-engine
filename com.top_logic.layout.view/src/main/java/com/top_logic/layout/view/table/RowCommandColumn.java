@@ -7,6 +7,7 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
@@ -20,12 +21,13 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
- * Table columns offering a command on every row: one icon-only button per row, running the command
- * with that row as its input.
+ * Table columns offering a command on every row: one icon-only button per row, running the
+ * command's action for that row.
  *
  * <p>
  * Such a column is {@link Column#pinnedEnd() pinned} to the end of the table - it acts on a row
@@ -37,6 +39,11 @@ import com.top_logic.util.Resources;
  * <p>
  * The columns are built from {@link ViewCommandModel}s, so any place holding configured commands
  * can offer them per row - a table's activation command, a row action, a row-level workflow step.
+ * The model decides the button's icon, label and state for a row; what pressing the button does is
+ * the {@link RowCommand#action() action} of the command. A plain command runs its model with the
+ * row as input ({@link RowCommand#of(ReactContext, ViewCommandModel, ThemeImage, ResKey)}); a
+ * table's activation command activates the row through its table instead, so the row becomes the
+ * selection before the command runs, exactly as for the activation gesture.
  * </p>
  */
 public class RowCommandColumn {
@@ -62,23 +69,47 @@ public class RowCommandColumn {
 	 *
 	 * <p>
 	 * A cell of such a column holds a button rather than text: it drops the padding a text cell
-	 * needs and centers the button in the width the column has.
+	 * needs and centers the button in the width the column has. The class is the shape the design
+	 * system gives such a cell ({@code tl-table__cell--command}); it lands on the header cell of the
+	 * column as well as on its data cells.
 	 * </p>
 	 */
-	public static final String CSS_CLASS = "tlRowCommandCell";
+	public static final String CSS_CLASS = "tl-table__cell--command";
 
 	/**
 	 * A command offered on every row of a table.
 	 *
+	 * @param <R>
+	 *        The type of the rows.
 	 * @param model
-	 *        Runs the command with a row as its input and decides the button's state for that row.
+	 *        Decides the button's icon, label and state for a row.
+	 * @param action
+	 *        What pressing the button of a row runs, called with that row.
 	 * @param image
 	 *        The button's icon for a command whose configuration declares none.
 	 * @param label
 	 *        The button's tooltip for a command whose configuration declares no label.
 	 */
-	public record RowCommand(ViewCommandModel model, ThemeImage image, ResKey label) {
-		// Pure value type.
+	public record RowCommand<R>(ViewCommandModel model, Function<? super R, HandlerResult> action,
+			ThemeImage image, ResKey label) {
+
+		/**
+		 * A row command whose button runs the given model with its row as input.
+		 *
+		 * @param context
+		 *        The context the command executes in - the context of the element hosting it, as
+		 *        for every other way of running a configured command.
+		 * @param model
+		 *        The command to offer, deciding the button's state and run on a press.
+		 * @param image
+		 *        See {@link #image()}.
+		 * @param label
+		 *        See {@link #label()}.
+		 */
+		public static <R> RowCommand<R> of(ReactContext context, ViewCommandModel model, ThemeImage image,
+				ResKey label) {
+			return new RowCommand<>(model, row -> model.execute(context, row), image, label);
+		}
 	}
 
 	/**
@@ -90,17 +121,14 @@ public class RowCommandColumn {
 	 * instead of shifting the buttons beside it.
 	 * </p>
 	 *
-	 * @param context
-	 *        The context the commands execute in - the context of the element hosting them, as for
-	 *        every other way of running a configured command.
 	 * @param commands
 	 *        The commands to offer, in display order.
 	 * @return The columns, to be appended to the table's columns.
 	 */
-	public static <R> List<Column<R, R>> columns(ReactContext context, List<RowCommand> commands) {
+	public static <R> List<Column<R, R>> columns(List<? extends RowCommand<R>> commands) {
 		List<Column<R, R>> result = new ArrayList<>(commands.size());
 		for (int n = 0, cnt = commands.size(); n < cnt; n++) {
-			result.add(column(context, COLUMN_NAME_PREFIX + n, commands.get(n)));
+			result.add(column(COLUMN_NAME_PREFIX + n, commands.get(n)));
 		}
 		return result;
 	}
@@ -108,21 +136,19 @@ public class RowCommandColumn {
 	/**
 	 * Builds the column offering a single command.
 	 *
-	 * @param context
-	 *        The context the command executes in.
 	 * @param name
 	 *        The {@link Column#name() name} of the column.
 	 * @param command
 	 *        The command to offer on every row.
 	 * @return The column holding one button per row.
-	 * @see #columns(ReactContext, List)
+	 * @see #columns(List)
 	 */
-	public static <R> Column<R, R> column(ReactContext context, String name, RowCommand command) {
+	public static <R> Column<R, R> column(String name, RowCommand<R> command) {
 		return DefaultColumn.<R, R> builder(name, row -> row)
 			// A button column carries no header label - it would not fit the narrow width, and the
 			// button in the cell names the command itself.
 			.label(ResKey.text(""))
-			.renderer(row -> renderCell(context, command, row))
+			.renderer(row -> renderCell(command, row))
 			.width(WIDTH)
 			.cssClass(CSS_CLASS)
 			.pinnedEnd(true)
@@ -133,13 +159,13 @@ public class RowCommandColumn {
 	 * The cell content for one row: the button, or nothing where the command is hidden for that
 	 * row.
 	 */
-	private static CellContent renderCell(ReactContext context, RowCommand command, Object row) {
+	private static <R> CellContent renderCell(RowCommand<R> command, R row) {
 		ExecutableState state = command.model().executability(row);
 		if (state.isHidden()) {
 			return CellContent.EMPTY;
 		}
 		return new CellContent.Raw(
-			(CellControlFactory) cellContext -> button(cellContext, context, command, row, state));
+			(CellControlFactory) cellContext -> button(cellContext, command, row, state));
 	}
 
 	/**
@@ -147,17 +173,15 @@ public class RowCommandColumn {
 	 *
 	 * @param cellContext
 	 *        The context the cell control is created in.
-	 * @param context
-	 *        The context the command executes in.
 	 * @param state
 	 *        The command's executability for {@code row}, already known to be visible.
 	 */
-	private static ReactButtonControl button(ReactContext cellContext, ReactContext context, RowCommand command,
-			Object row, ExecutableState state) {
+	private static <R> ReactButtonControl button(ReactContext cellContext, RowCommand<R> command, R row,
+			ExecutableState state) {
 		ViewCommandModel model = command.model();
 		String label = label(command);
-		ReactButtonControl button =
-			new ReactButtonControl(cellContext, label, unused -> model.execute(context, row));
+		Function<? super R, HandlerResult> action = command.action();
+		ReactButtonControl button = new ReactButtonControl(cellContext, label, unused -> action.apply(row));
 		ThemeImage image = model.getImage();
 		button.setImage(image != null ? image : command.image());
 		button.setTooltip(label);
@@ -172,7 +196,7 @@ public class RowCommandColumn {
 	 * The button's label: the command's own, or the fallback the caller supplied for a command
 	 * declaring none.
 	 */
-	private static String label(RowCommand command) {
+	private static String label(RowCommand<?> command) {
 		ResKey key = command.model().getLabelKey();
 		return Resources.getInstance().getString(key != null ? key : command.label());
 	}

@@ -100,11 +100,14 @@ public class Referers extends SearchExpressionWithSecurity implements WithFlatMa
 			return Collections.emptySet();
 		}
 		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(self)) {
-			// No read access to the base object - cannot look up its referrers. The referrers are
-			// returned unfiltered; the final result of a script must be secured by the caller.
+			// No read access to the base object - cannot look up its referrers.
 			return Collections.emptySet();
 		}
-		return self.tReferers(reference);
+		// Only discoverable referrers are delivered (R4 of the Discover specification).
+		@SuppressWarnings("unchecked")
+		Set<? extends TLObject> result =
+			(Set<? extends TLObject>) SearchExpression.discoverable(self.tReferers(reference), usesSecurity);
+		return result;
 	}
 
 	@Override

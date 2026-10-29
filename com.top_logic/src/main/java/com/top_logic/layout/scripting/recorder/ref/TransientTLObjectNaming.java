@@ -31,13 +31,13 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLObjectProxy;
 
 /**
  * {@link ModelNamingScheme} of transient {@link TLObject} values.
  * 
- * @implSpec The class is not parameterized with {@link TransientObject} to support
- *           {@link TLObjectProxy} which wrap a transient item.
+ * @implSpec The class is not parameterized with {@link TransientObject}: it names every
+ *           {@link TLObject#tTransient() transient} {@link TLObject}, whatever its implementation
+ *           class.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

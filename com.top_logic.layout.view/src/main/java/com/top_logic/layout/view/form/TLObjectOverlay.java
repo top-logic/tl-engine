@@ -331,18 +331,30 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * </p>
 	 *
 	 * <p>
+	 * A changed reference must not add an object the current user may not discover, see
+	 * {@link Update#checkNewTargets(TLObject, TLStructuredTypePart, Object)}. Objects the reference
+	 * already holds may stay, also when the user cannot discover them (e.g. the masked elements of
+	 * a reference field).
+	 * </p>
+	 *
+	 * <p>
 	 * A save writing several overlays checks all of them before the first one is applied, so a
 	 * refused save leaves every overlay with its changes.
 	 * </p>
 	 *
 	 * @throws TopLogicException
-	 *         If the current user is not allowed to modify one of the changed attributes.
+	 *         If the current user is not allowed to modify one of the changed attributes, or a changed
+	 *         reference adds an object the user may not discover.
 	 */
 	public void checkApply() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
 			TLStructuredTypePart part = entry.getKey();
-			if (isChange(entry.getValue(), baseValue(part))) {
+			Object value = entry.getValue();
+			if (isChange(value, baseValue(part))) {
 				Update.checkWritePermission(_base, part);
+				// Rows of a composition are buffered in overlays, which stand for their objects.
+				Update.checkNewTargets(_base, part,
+					value instanceof Collection<?> values ? resolveAll(values) : resolve(value));
 			}
 		}
 	}

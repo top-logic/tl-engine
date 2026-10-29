@@ -327,9 +327,30 @@
 							</format>
 						</annotations>
 					</property>
+					<property name="dateTimeSeconds"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<format>
+								<date-time
+									date-style="medium"
+									time-style="medium"
+								/>
+							</format>
+						</annotations>
+					</property>
 					<property name="time"
 						type="tl.core:Time"
 					/>
+					<property name="timeSeconds"
+						type="tl.core:Time"
+					>
+						<annotations>
+							<format>
+								<time style="medium"/>
+							</format>
+						</annotations>
+					</property>
 					<property name="duration"
 						type="tl.core:Duration"
 					/>
@@ -394,6 +415,26 @@
 									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
 								/>
 							</dynamic-visibility>
+						</annotations>
+					</property>
+					<property name="attachments"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<max-upload-size value="5m"/>
+						</annotations>
+					</property>
+					<property name="documents"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<accepted-types value="*.pdf, *.txt, *.md"/>
+							<binary-display presentation="list"/>
+							<max-upload-size value="1m"/>
 						</annotations>
 					</property>
 

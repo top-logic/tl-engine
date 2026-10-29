@@ -1,7 +1,11 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, tooltipProps, ThemeIcon, ButtonDefaults } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, stateAttr,
+  ThemeIcon, ButtonDefaults, useStandaloneKeyboardScope, usePart, SurfaceProvider, useSurface, cardSurfaceClass, panelSurface, isInteractiveWithin,
+  useFloatingFrame, FloatingFrame, FloatingRail,
+} from 'tl-react-bridge';
+import type { TLCellProps, Surface } from 'tl-react-bridge';
 
-const { useCallback } = React;
+const { useCallback, useMemo } = React;
 
 const I18N_KEYS = {
   'js.panel.minimize': 'Minimize',
@@ -10,42 +14,29 @@ const I18N_KEYS = {
   'js.panel.popOut': 'Pop out',
 };
 
-/* Inline SVG icon components (stroke-based, 24x24 viewBox). */
+/** Icon of the button minimizing the panel. */
+const MINIMIZE_ICON = 'css:fa-solid fa-window-minimize';
 
-/** Horizontal line: minimize indicator. */
-const IconMinimize = () => (
-  <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12" /></svg>
-);
+/** Icon of the button maximizing the panel. */
+const MAXIMIZE_ICON = 'css:fa-solid fa-window-maximize';
 
-/** Small box with upward chevron: restore from minimized. */
-const IconRestoreFromMin = () => (
-  <svg viewBox="0 0 24 24">
-    <rect x="6" y="9" width="12" height="10" rx="1" />
-    <polyline points="9,7 12,4 15,7" />
-  </svg>
-);
+/** Icon of the button restoring a minimized or maximized panel. */
+const RESTORE_ICON = 'css:fa-solid fa-window-restore';
 
-/** Full box outline: maximize indicator. */
-const IconMaximize = () => (
-  <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" /></svg>
-);
+/** Icon of the button opening the panel in a window of its own. */
+const POP_OUT_ICON = 'css:fa-solid fa-arrow-up-right-from-square';
 
-/** Two overlapping boxes: restore from maximized. */
-const IconRestoreFromMax = () => (
-  <svg viewBox="0 0 24 24">
-    <rect x="4" y="8" width="12" height="12" rx="1" />
-    <polyline points="8,8 8,4 20,4 20,16 16,16" />
-  </svg>
-);
-
-/** Arrow pointing out of a box: pop-out indicator. */
-const IconPopOut = () => (
-  <svg viewBox="0 0 24 24">
-    <polyline points="15,3 21,3 21,9" />
-    <line x1="21" y1="3" x2="12" y2="12" />
-    <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" />
-  </svg>
-);
+/**
+ * Whether a pointer gesture on the head of a panel is the head's: not on a button or another interactive element of
+ * the head, and not anywhere in the toolbar's slot - its empty space included (spec §3: clicks on the toolbar stay
+ * its own). React events bubble through portals: a gesture whose target lies outside the head's DOM - a menu of the
+ * toolbar, opened on the page - is never the head's.
+ */
+function ownedByHead(event: React.MouseEvent<HTMLElement>): boolean {
+  return event.target instanceof Node && event.currentTarget.contains(event.target)
+    && !isInteractiveWithin(event.target, event.currentTarget)
+    && !(event.target instanceof Element && event.target.closest('.tl-titlebar__actions'));
+}
 
 /**
  * A panel with a titled toolbar header wrapping a single child content area.
@@ -64,17 +55,25 @@ const IconPopOut = () => (
  *     container offers; capped at the available width, so the panel stays visible on a narrow
  *     screen)
  * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
- * - appearance: "default" | "card" (card renders a bordered, rounded panel with compact insets)
+ * - appearance: "default" | "card" (card draws the panel as a card (tl-card), insets inside compact)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
  * - errorMessage: string (validation error displayed below the content, may be absent)
  * - errorIcon: string (encoded theme icon displayed in front of the error message)
+ *
+ * The panel is a frame for floating elements (useFloatingFrame): an element floating in its content - a floating
+ * action button - is placed against the edges of its body and stays there while the body scrolls.
+ *
+ * Handles like a window: a double click on the head maximizes and restores, Escape restores a maximized panel (through
+ * the keyboard dispatcher, so a popup inside it closes first), a click anywhere on the head of a minimized panel opens
+ * it. The buttons stay the way for the keyboard.
  */
 const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const surface = useSurface();
 
   const title = state.title as string;
   const expansionState = (state.expansionState as string) ?? 'NORMALIZED';
@@ -92,6 +91,11 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
   const isHidden = expansionState === 'HIDDEN';
+  const bodyId = `${controlId}-body`;
+
+  // What the panel is for the components inside: drawn as a card it is a surface and raises the level, plain it
+  // paints none and passes on the level it lies on; its insets are those of a card or a panel.
+  const inner = useMemo<Surface>(() => panelSurface(surface, card), [surface, card]);
 
   const handleMinimize = useCallback(() => {
     sendCommand('toggleMinimize');
@@ -105,37 +109,51 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('popOut');
   }, [sendCommand]);
 
+  // The head as a window's: a double click maximizes or restores, a click opens a minimized panel (ownedByHead).
+  const handleHeadDoubleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    if (!showMaximize || isMinimized || !ownedByHead(event)) {
+      return;
+    }
+    handleMaximize();
+  }, [showMaximize, isMinimized, handleMaximize]);
+
+  const handleHeadClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    if (!showMinimize || !isMinimized || !ownedByHead(event)) {
+      return;
+    }
+    handleMinimize();
+  }, [showMinimize, isMinimized, handleMinimize]);
+
+  // Escape restores a maximized panel. It goes through the keyboard dispatcher, not through this panel's own key
+  // handler: the newest scope wins, so a popup opened inside the maximized panel closes first, and the dispatcher
+  // stands down for an Escape an inner element has used already.
+  useStandaloneKeyboardScope(isMaximized, { ESCAPE: handleMaximize });
+
   // The panel takes part in the fill contract as a container: it fills while it is configured to,
   // or while its content fills - a table, a split - which can only resolve its height against a
   // body of definite height. A hidden panel renders no content and occupies no space, so it asks
   // its container for none either. A panel configured not to fill ends the chain at its body
   // instead: the request of its content reaches no container.
   const [fillClass, fillHost] = useFillHost(alwaysFill && !isHidden);
+  const floating = useFloatingFrame();
+  const Button = usePart('Button');
 
   if (isHidden) {
     return null;
   }
 
-  // The height spans a container of definite height that is no flex column - a split pane - where
-  // the fill class cannot size the panel. In a container as high as its content the percentage has
-  // nothing to resolve against, and the panel is as high as its content, unless it fills.
-  const panelStyle: React.CSSProperties = isMaximized
-    ? { position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }
-    : {
-        display: 'flex',
-        flexDirection: 'column',
-        width: width ?? '100%',
-        ...(width ? { maxWidth: '100%' } : {}),
-        height: '100%',
-      };
+  // The height comes from the container: a bounded region (a split pane, a tab content) stretches the panel to its
+  // own height, a column (a stack) leaves it the height of its content unless it fills. Maximized, the design system
+  // places the panel over its container.
+  const panelStyle: React.CSSProperties | undefined = isMaximized
+    ? undefined
+    : { width: width ?? '100%', ...(width ? { maxWidth: '100%' } : {}) };
 
-  // Render the header only when it carries something: a title, a toolbar, or an action button.
-  // A chrome-less panel (e.g. a fill panel whose tab already labels it) then shows just its
-  // content, without an empty header bar wasting space.
-  const hasActionButtons =
-    (showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut;
-  const hasHeader =
-    (!!title && title.trim() !== '') || !!state.titleContent || !!state.toolbar || hasActionButtons;
+  // Render the head only when it carries something: a title, a toolbar, or a button. A chrome-less panel (a fill
+  // panel whose tab already labels it) then shows just its content.
+  const hasTitle = !!title && title.trim() !== '';
+  const hasButtons = (showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut;
+  const hasHeader = hasTitle || !!state.titleContent || !!state.toolbar || hasButtons;
 
   const minimizeLabel = isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize'];
   const maximizeLabel = isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize'];
@@ -143,77 +161,90 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={rootClassName(state, `tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fillClass ? ' ' + fillClass : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`)}
+      className={rootClassName(state, 'tl-panel', card && 'tl-card', card && cardSurfaceClass(surface.level),
+        fullLine && 'tl-panel--full-line', hoverActions && 'tl-panel--hover-actions', fillClass)}
+      data-tl-state={stateAttr(isMinimized && 'minimized', isMaximized && 'maximized')}
       style={panelStyle}
     >
       {hasHeader && (
-      <div className="tlPanel__header">
-        {!!title && title.trim() !== '' && <span className="tlPanel__title">{title}</span>}
-        {!!state.titleContent && (
-          <div className="tlPanel__titleContent">
-            <TLChild control={state.titleContent} />
-          </div>
-        )}
-        <div className="tlPanel__toolbar">
-          {!!state.toolbar && <TLChild control={state.toolbar} />}
-          {showMinimize && !isMaximized && (
-            <button
-              type="button"
-              className="tlPanel__actionButton"
-              onClick={handleMinimize}
-              aria-label={minimizeLabel}
-              {...tooltipProps(minimizeLabel)}
-            >
-              {isMinimized ? <IconRestoreFromMin /> : <IconMinimize />}
-            </button>
+        <div className="tl-titlebar" onDoubleClick={handleHeadDoubleClick} onClick={handleHeadClick}>
+          {hasTitle && <h2 className="tl-titlebar__title tl-type-heading-sm">{title}</h2>}
+          {!!state.titleContent && (
+            <div className="tl-titlebar__content">
+              <TLChild control={state.titleContent} />
+            </div>
           )}
-          {showMaximize && !isMinimized && (
-            <button
-              type="button"
-              className="tlPanel__actionButton"
-              onClick={handleMaximize}
-              aria-label={maximizeLabel}
-              {...tooltipProps(maximizeLabel)}
-            >
-              {isMaximized ? <IconRestoreFromMax /> : <IconMaximize />}
-            </button>
+          {!!state.toolbar && (
+            <div className="tl-titlebar__actions">
+              <TLChild control={state.toolbar} />
+            </div>
           )}
-          {showPopOut && (
-            <button
-              type="button"
-              className="tlPanel__actionButton"
-              onClick={handlePopOut}
-              aria-label={i18n['js.panel.popOut']}
-              {...tooltipProps(i18n['js.panel.popOut'])}
-            >
-              <IconPopOut />
-            </button>
+          {hasButtons && (
+            <div className="tl-titlebar__buttons">
+              {showMinimize && !isMaximized && (
+                <Button
+                  label={minimizeLabel}
+                  image={isMinimized ? RESTORE_ICON : MINIMIZE_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  aria-expanded={!isMinimized}
+                  aria-controls={isMinimized ? undefined : bodyId}
+                  onClick={handleMinimize}
+                />
+              )}
+              {showMaximize && !isMinimized && (
+                <Button
+                  label={maximizeLabel}
+                  image={isMaximized ? RESTORE_ICON : MAXIMIZE_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  onClick={handleMaximize}
+                />
+              )}
+              {showPopOut && (
+                <Button
+                  label={i18n['js.panel.popOut']}
+                  image={POP_OUT_ICON}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  onClick={handlePopOut}
+                />
+              )}
+            </div>
           )}
         </div>
-      </div>
       )}
+      {!isMinimized && <FloatingRail host={floating} edge="top" />}
       {!isMinimized && (
-        <div className="tlPanel__content">
-          {neverFill ? (
-            <FillBarrier>
-              <TLChild control={state.child} />
-            </FillBarrier>
-          ) : (
-            <FillProvider host={fillHost}>
-              <TLChild control={state.child} />
-            </FillProvider>
-          )}
+        <div id={bodyId} className="tl-panel__body">
+          <SurfaceProvider value={inner}>
+            <FloatingFrame host={floating}>
+              {neverFill ? (
+                <FillBarrier>
+                  <TLChild control={state.child} />
+                </FillBarrier>
+              ) : (
+                <FillProvider host={fillHost}>
+                  <TLChild control={state.child} />
+                </FillProvider>
+              )}
+            </FloatingFrame>
+          </SurfaceProvider>
         </div>
       )}
+      {!isMinimized && <FloatingRail host={floating} edge="bottom" />}
       {!isMinimized && errorMessage && (
-        <div className="tl-form-field__message tl-type-label tlPanel__error" role="alert">
+        <div className="tl-form-field__message tl-type-label" role="alert">
           {typeof state.errorIcon === 'string' && <ThemeIcon encoded={state.errorIcon} className="tl-icon-sm" />}
           <span>{errorMessage}</span>
         </div>
       )}
       {!isMinimized && !!state.buttonBar && (
         <ButtonDefaults appearance="secondary">
-          <div className="tlPanel__buttonBar">
+          <div className="tl-button-bar">
             <TLChild control={state.buttonBar} />
           </div>
         </ButtonDefaults>

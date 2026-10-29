@@ -21,6 +21,13 @@
 
 	<packaging>pom</packaging>
 	
+	<properties>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+		<!-- Fail on imports that are not used. -->
+		<tl.unused-imports.skip>false</tl.unused-imports.skip>
+	</properties>
+
 	<dependencies>
 		<!-- Alternative databases for test. -->
 
@@ -67,7 +74,7 @@
 			<id>with-h2</id>
 			
 			<properties>
-				<tl.app.metaConfAddons>db-h2.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-h2.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -85,7 +92,7 @@
 			<id>with-mysql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-mysql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-mysql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -99,7 +106,7 @@
 			<id>with-oracle</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-oracle.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-oracle.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -113,7 +120,7 @@
 			<id>with-postgresql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-postgresql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-postgresql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -127,7 +134,7 @@
 			<id>with-db2</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-db2.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-db2.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -142,7 +149,7 @@
 			<id>with-mssql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-mssql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-mssql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -153,28 +160,6 @@
 				</dependency>
 			</dependencies>
 		</profile>
-		
-	  	<profile>
-	  		<id>bos</id>
-	  		
-	  		<activation>
-	  			<activeByDefault>false</activeByDefault>
-	  		</activation>
-	  		
-	  		<dependencies>
-			    <dependency>
-					<groupId>com.top-logic</groupId>
-					<artifactId>bos-deepl</artifactId>
-					<version>7.8.1</version>
-			    </dependency>
-
-			    <dependency>
-			      <groupId>com.top-logic</groupId>
-			      <artifactId>bos-ldap</artifactId>
-			      <version>7.8.1</version>
-			    </dependency>
-	  		</dependencies>
-	  	</profile>
 	</profiles>
 
 </project>

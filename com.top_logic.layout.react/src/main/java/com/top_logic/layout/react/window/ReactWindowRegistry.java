@@ -6,11 +6,13 @@
 package com.top_logic.layout.react.window;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
@@ -25,7 +27,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.WindowFocusEvent;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -40,7 +42,9 @@ import com.top_logic.util.TLContextManager;
  * Stored as an HTTP session attribute, so it dies with the session - a login or logout therefore
  * discards every window it knows. Each window is represented by one {@link WindowEntry} that owns its
  * per-window state; the registry only maps window IDs to entries, resolves singleton windows, and
- * decides when a window whose page was unloaded has stayed away long enough to be torn down.
+ * decides when a window has stayed away long enough to be torn down: one whose page was unloaded
+ * ({@link #sweepUnloadedWindows()}) and one whose client went away
+ * ({@link #tearDownIfAbandoned(String, long)}).
  * </p>
  */
 public class ReactWindowRegistry implements HttpSessionBindingListener {
@@ -106,6 +110,20 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	private static final long UNLOAD_GRACE_MILLIS = 30_000;
 
 	/**
+	 * How long a window whose client went away - no event stream is connected and no poll arrives -
+	 * is kept before it is torn down.
+	 *
+	 * <p>
+	 * Above the few seconds a browser needs to reconnect its event stream, and above
+	 * {@link SSEUpdateQueue#POLL_ORPHAN_MILLIS}, after which a polling client counts as gone in the
+	 * first place, so that a client that reconnects is never torn down.
+	 * </p>
+	 *
+	 * @see SSEUpdateQueue#clientGoneSince(long)
+	 */
+	public static final long DISCONNECT_GRACE_MILLIS = 60_000;
+
+	/**
 	 * The picks started in this session and not yet reported, by correlation token.
 	 *
 	 * @see ElementPicker
@@ -139,6 +157,15 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	public ReactWindowRegistry(String sessionId) {
 		_sessionId = sessionId;
+	}
+
+	/**
+	 * The registry of the given session, or {@code null} if the session has none yet.
+	 *
+	 * @see #forSession(HttpSession)
+	 */
+	public static ReactWindowRegistry lookup(HttpSession session) {
+		return (ReactWindowRegistry) session.getAttribute(SESSION_ATTRIBUTE_KEY);
 	}
 
 	/**
@@ -193,6 +220,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @param session
 	 *        The session the request belongs to, read for its inactivity interval.
 	 *
+	 * @see com.top_logic.layout.react.servlet.SessionActivityFilter
+	 *
 	 * @implNote The reference point passed on is the current time rather than
 	 *           {@link HttpSession#getLastAccessedTime()}: the latter reports the request before
 	 *           this one, while the container measures the inactivity that ends the session from
@@ -222,6 +251,25 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	public SSEUpdateQueue getOrCreateQueue(String windowId) {
 		WindowEntry entry = getOrCreateWindow(windowId);
 		// The window is being displayed again - a reload rather than a close.
+		entry.markDisplayed();
+		return entry.getQueue();
+	}
+
+	/**
+	 * The {@link SSEUpdateQueue} of the given window that a client connects its event stream to, or
+	 * {@code null} if the window does not exist.
+	 *
+	 * <p>
+	 * Unlike {@link #getOrCreateQueue(String)}, a connection never creates a window: a window that
+	 * is unknown was torn down, or belongs to a session that was replaced, and its page has to be
+	 * reloaded. An existing window is being displayed again - a reload rather than a close.
+	 * </p>
+	 */
+	public SSEUpdateQueue connectQueue(String windowId) {
+		WindowEntry entry = _windows.get(windowId);
+		if (entry == null) {
+			return null;
+		}
 		entry.markDisplayed();
 		return entry.getQueue();
 	}
@@ -319,7 +367,37 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The open interaction, to be closed when the change is complete.
 	 */
 	public Interaction beginInteraction() {
-		return new Interaction(_requestLock);
+		return Interaction.begin(_requestLock);
+	}
+
+	/**
+	 * Begins an {@link Interaction} with the control trees of this session, unless another thread
+	 * keeps one open for longer than the given time.
+	 *
+	 * <p>
+	 * For a thread that must not wait for a long command, such as a background thread that
+	 * delivers model events to a window: it either acts within an interaction, as
+	 * {@link #beginInteraction()} does, or leaves the trees alone. A thread that already has an
+	 * interaction open gets a nested one at once.
+	 * </p>
+	 *
+	 * <pre>
+	 * try (Interaction interaction = registry.tryBeginInteraction(timeout)) {
+	 * 	if (interaction != null) {
+	 * 		registry.synthesizeModelEvents(windowId);
+	 * 	}
+	 * }
+	 * </pre>
+	 *
+	 * @param timeoutMillis
+	 *        The time in milliseconds to wait at most for another thread's interaction to end,
+	 *        {@code 0} not to wait.
+	 * @return The open interaction, to be closed when the change is complete, or {@code null} if
+	 *         another thread kept its interaction open for the given time, or the calling thread
+	 *         was interrupted while it waited.
+	 */
+	public Interaction tryBeginInteraction(long timeoutMillis) {
+		return Interaction.tryBegin(_requestLock, timeoutMillis);
 	}
 
 	/**
@@ -467,13 +545,21 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	/**
 	 * Called when a window is closed (either by the user or programmatically).
-	 * Invokes the close callback (if any), then cleans up the control tree and removes the entry.
+	 * Removes the entry, invokes the close callback (if any), then disposes the control tree, shuts
+	 * the queue down, releases the window's {@link WindowEntry#releaseModelScope() model scope} and
+	 * removes the window's subsession from the session.
 	 *
 	 * <p>
 	 * The close callback and the disposal of the tree run in the window's own subsession, whatever
 	 * window the calling request serves, so that they see the user and the locale of the window. The
 	 * caller's subsession is restored afterwards. A window whose page was never rendered has no
 	 * subsession; it is closed in the caller's context.
+	 * </p>
+	 *
+	 * <p>
+	 * Afterwards nothing of the window is left that observes the knowledge base: the released model
+	 * scope and the removed subsession were the window's cursors on the update chain, which would
+	 * otherwise keep every later commit in memory.
 	 * </p>
 	 */
 	public void windowClosed(String windowId) {
@@ -493,8 +579,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Runs the close callback of the given window that was just removed, then disposes its tree
-	 * and its queue.
+	 * Runs the close callback of the given window that was just removed, then disposes its tree,
+	 * its queue, its model scope and its subsession.
 	 */
 	private static void disposeWindow(WindowEntry entry) {
 		String windowId = entry.getWindowId();
@@ -521,6 +607,22 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 		// After the tree: disposing it unregisters its controls from the queue.
 		entry.getQueue().shutdown();
+		entry.releaseModelScope();
+
+		// Last, because the close callback and the disposal of the tree need the subsession. The
+		// thread keeps the subsession installed until the caller's is restored.
+		removeSubSession(windowId);
+	}
+
+	/**
+	 * Removes the subsession of the given window from the session of the current thread, if there is
+	 * one.
+	 */
+	private static void removeSubSession(String windowId) {
+		TLSessionContext session = TLContextManager.getSession();
+		if (session != null) {
+			session.removeSubSession(windowId);
+		}
 	}
 
 	/**
@@ -670,6 +772,55 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 	}
 
+	/**
+	 * Tears the given window down if its client has been gone for longer than
+	 * {@link #DISCONNECT_GRACE_MILLIS}.
+	 *
+	 * <p>
+	 * A browser tab killed without an unload report, a closed laptop or a lost network leave a window
+	 * whose client never comes back, while its controls keep observing the model: the window's model
+	 * scope and subsession keep every later commit in memory. Its {@link SSEUpdateQueue} reports it
+	 * from its heartbeat, see {@link SSEUpdateQueue#checkAbandoned(long)}, and the window is torn
+	 * down by {@link #windowClosed(String)}, as one {@link Interaction}, like a window whose page was
+	 * unloaded and did not come back ({@link #sweepUnloadedWindows()}). A client that comes back later
+	 * finds its window unknown and reloads the page.
+	 * </p>
+	 *
+	 * <p>
+	 * The absence of the client is checked once more within the interaction, so that a client
+	 * reconnecting while the teardown waits for it keeps its window.
+	 * </p>
+	 *
+	 * <p>
+	 * Called in the subsession of the window, if it has one.
+	 * </p>
+	 *
+	 * @param windowId
+	 *        The window whose client is gone.
+	 * @param now
+	 *        The current time in milliseconds.
+	 * @return Whether the window is not kept: it was torn down now, or it is unknown.
+	 */
+	public boolean tearDownIfAbandoned(String windowId, long now) {
+		if (_windows.get(windowId) == null) {
+			return true;
+		}
+		try (Interaction interaction = beginInteraction()) {
+			WindowEntry entry = _windows.get(windowId);
+			if (entry == null) {
+				return true;
+			}
+			long goneSince = entry.getQueue().clientGoneSince(now);
+			if (goneSince == 0 || now - goneSince < DISCONNECT_GRACE_MILLIS) {
+				return false;
+			}
+			Logger.info("Window '" + windowId + "' lost its client " + (now - goneSince)
+				+ " ms ago; tearing it down.", ReactWindowRegistry.class);
+			windowClosed(windowId);
+			return true;
+		}
+	}
+
 	@Override
 	public void valueBound(HttpSessionBindingEvent event) {
 		// Nothing to do.
@@ -685,6 +836,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 				rootControl.cleanupTree();
 			}
 			entry.getQueue().shutdown();
+			// The subsessions go with the session context itself.
+			entry.releaseModelScope();
 		}
 		_windows.clear();
 		_singletonKeys.clear();
@@ -739,6 +892,85 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * Performs the given action for every window of every live session.
+	 *
+	 * <p>
+	 * May be called from any thread. A window opened or torn down concurrently may or may not be
+	 * visited.
+	 * </p>
+	 *
+	 * @param action
+	 *        The action to perform for each window.
+	 */
+	public static void forEachWindow(Consumer<? super WindowEntry> action) {
+		for (ReactWindowRegistry registry : REGISTRIES_BY_SESSION_ID.values()) {
+			registry._windows.values().forEach(action);
+		}
+	}
+
+	/**
+	 * The sub-sessions displayed by the browser windows of all live sessions.
+	 *
+	 * <p>
+	 * May be called from any thread, see {@link #forEachWindow(Consumer)}. A caller looking for the
+	 * windows of a certain user filters the result by {@link TLSubSessionContext#getPerson()}.
+	 * </p>
+	 *
+	 * @return A snapshot, one entry per window that displays a sub-session, see
+	 *         {@link WindowEntry#getSubSession()}.
+	 */
+	public static List<TLSubSessionContext> windowSubSessions() {
+		List<TLSubSessionContext> result = new ArrayList<>();
+		forEachWindow(entry -> {
+			TLSubSessionContext subSession = entry.getSubSession();
+			if (subSession != null) {
+				result.add(subSession);
+			}
+		});
+		return result;
+	}
+
+	/**
+	 * The registry holding the browser window that displays the given sub-session, or {@code null}
+	 * if no live window displays it.
+	 *
+	 * <p>
+	 * May be called from any thread.
+	 * </p>
+	 *
+	 * @see #windowDisplaying(TLSubSessionContext)
+	 */
+	public static ReactWindowRegistry registryDisplaying(TLSubSessionContext subSession) {
+		if (subSession == null) {
+			return null;
+		}
+		for (ReactWindowRegistry registry : REGISTRIES_BY_SESSION_ID.values()) {
+			if (registry.windowDisplaying(subSession) != null) {
+				return registry;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The name of the window of this registry that displays the given sub-session, or {@code null}
+	 * if none does.
+	 *
+	 * @see WindowEntry#getSubSession()
+	 */
+	public String windowDisplaying(TLSubSessionContext subSession) {
+		if (subSession == null) {
+			return null;
+		}
+		for (WindowEntry entry : _windows.values()) {
+			if (entry.getSubSession() == subSession) {
+				return entry.getWindowId();
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Tells the browser of the given window to reload, so that it does not keep displaying a page the
 	 * server no longer stands behind.
 	 *
@@ -759,7 +991,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	private static void requestReload(SSEUpdateQueue queue) {
 		try {
-			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+			queue.enqueue(PageNavigationEvent.create());
 		} catch (RuntimeException ex) {
 			// A window that cannot be reached must not keep the remaining ones from being told.
 			Logger.error("Failed to request a reload of a window.", ex,

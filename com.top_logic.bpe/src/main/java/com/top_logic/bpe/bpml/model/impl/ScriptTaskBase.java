@@ -17,4 +17,9 @@ public interface ScriptTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	 */
 	String SCRIPT_TASK_TYPE = "ScriptTask";
 
+	/**
+	 * Name of the table storing {@link #SCRIPT_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

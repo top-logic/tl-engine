@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.export;
 
+import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.tool.export.ExcelCellRenderer.RenderContext;
@@ -49,6 +50,11 @@ public abstract class RenderContextProxy implements RenderContext {
 	@Override
 	public Object getCellValue() {
 		return impl().getCellValue();
+	}
+
+	@Override
+	public ResourceProvider resourceProvider() {
+		return impl().resourceProvider();
 	}
 
 	/**

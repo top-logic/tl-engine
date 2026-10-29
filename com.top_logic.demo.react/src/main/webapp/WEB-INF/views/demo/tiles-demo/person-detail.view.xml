@@ -10,19 +10,20 @@
 	
 	The second tab lists the accounts again and pushes yet another detail frame on activation,
 	which makes the state a covered frame keeps observable: coming back to this frame shows the
-	tab that was selected, the row that was selected in it and the values being edited. The
-	pushed frame carries no label of its own, the stack names it through its <frame> declaration.
+	tab that was selected, the row that was selected in it and the values being edited. The push
+	names the person frame, which its <frame> declaration allows to follow itself by a
+	<frame-ref>; the declaration names the pushed frame.
 -->
 <view>
 	<channels>
 		<channel name="person"/>
 		<channel name="navPath"/>
 		<derived-channel name="contact"
-			expr="p -> if($p != null, $p.get(`tl.accounts:Person#contact`), null)"
+			expr="if($person != null, $person.get(`tl.accounts:Person#contact`), null)"
 			inputs="person"
 		/>
 		<derived-channel name="depth"
-			expr="p -> $p.size()"
+			expr="$navPath.size()"
 			inputs="navPath"
 		/>
 	</channels>
@@ -44,7 +45,7 @@
 					<commands>
 						<generic-command
 							image="css:bi bi-arrow-left"
-							input="depth"
+							inputs="depth"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -52,7 +53,7 @@
 								<de>Zurück</de>
 							</label>
 							<executability>
-								<visible-if expr="d -> $d > 0"/>
+								<visible-if expr="$depth > 0"/>
 							</executability>
 							<navigate-pop/>
 						</generic-command>
@@ -83,7 +84,7 @@
 					<commands>
 						<generic-command
 							image="css:bi bi-arrow-left"
-							input="depth"
+							inputs="depth"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -91,7 +92,7 @@
 								<de>Zurück</de>
 							</label>
 							<executability>
-								<visible-if expr="d -> $d > 0"/>
+								<visible-if expr="$depth > 0"/>
 							</executability>
 							<navigate-pop/>
 						</generic-command>
@@ -100,7 +101,7 @@
 						<rows>all(`tl.accounts:Person`)</rows>
 						<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 							bind-input-to="person"
-							view="demo/tiles-demo/person-detail.view.xml"
+							frame="person"
 						/>
 					</table>
 				</panel>

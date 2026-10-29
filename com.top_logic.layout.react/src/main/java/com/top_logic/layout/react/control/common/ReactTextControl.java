@@ -62,7 +62,8 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 * @param text
 	 *        The text to display, or {@code null}.
 	 * @param cssClass
-	 *        Additional CSS class to append to the default {@code tlText} class, or {@code null}.
+	 *        Additional CSS class to append to the design system's classes of the text, or
+	 *        {@code null}.
 	 */
 	public ReactTextControl(ReactContext context, String text, String cssClass) {
 		super(context, null, REACT_MODULE);
@@ -144,7 +145,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *
 	 * @param tone
 	 *        What the color of the text means: the color it is read in, a lesser weight, an
-	 *        explanation, an outcome.
+	 *        explanation, a placeholder, an outcome.
 	 */
 	public void setTone(TextTone tone) {
 		putState(TextState.TONE__PROP, tone.getExternalName());

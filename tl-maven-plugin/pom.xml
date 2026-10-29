@@ -37,6 +37,10 @@
 		<!-- Maven has internal duplications in its utilities. -->		
 		<skipDependencyCheck>true</skipDependencyCheck>
 		<dependency-check.skip>true</dependency-check.skip>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+		<!-- Fail on imports that are not used. -->
+		<tl.unused-imports.skip>false</tl.unused-imports.skip>
 	</properties>
 
 	<dependencies>
@@ -213,6 +217,22 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<!-- Generates the Sisu index META-INF/sisu/javax.inject.Named of the components (packaging, parent injection). -->
+					<annotationProcessors>
+						<annotationProcessor>org.eclipse.sisu.space.SisuIndexAPT6</annotationProcessor>
+					</annotationProcessors>
+					<annotationProcessorPaths>
+						<annotationProcessorPath>
+							<groupId>org.eclipse.sisu</groupId>
+							<artifactId>org.eclipse.sisu.inject</artifactId>
+							<version>0.9.0.M4</version>
+						</annotationProcessorPath>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
@@ -230,43 +250,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>run-its</id>
-			<build>
-
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-invoker-plugin</artifactId>
-						<configuration>
-							<debug>true</debug>
-							<cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-							<pomIncludes>
-								<pomInclude>*/pom.xml</pomInclude>
-							</pomIncludes>
-							<postBuildHookScript>verify</postBuildHookScript>
-							<localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
-							<settingsFile>src/it/settings.xml</settingsFile>
-							<goals>
-								<goal>clean</goal>
-								<goal>test-compile</goal>
-							</goals>
-						</configuration>
-						<executions>
-							<execution>
-								<id>integration-test</id>
-								<goals>
-									<goal>install</goal>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>

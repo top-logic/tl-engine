@@ -11,13 +11,15 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -30,13 +32,16 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ExpressionCalendarModel.EventExprs;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -57,6 +62,7 @@ public class CalendarElement implements UIElement {
 	 * Configuration for {@link CalendarElement}.
 	 */
 	@TagName("calendar")
+	@TypeIcon("css:bi bi-calendar3")
 	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
@@ -102,16 +108,37 @@ public class CalendarElement implements UIElement {
 		/** Configuration name for {@link #getOnCreate()}. */
 		String ON_CREATE = "on-create";
 
+		/** Configuration name for {@link #getEntryAs()}. */
+		String ENTRY_AS = "entry-as";
+
+		/** Name of the variable holding the business object of an event when no other name is given. */
+		String DEFAULT_ENTRY_AS = "entry";
+
+		/** Name of the variable holding the start of an event in an edit. */
+		String START_VARIABLE = "start";
+
+		/** Name of the variable holding the end of an event in an edit. */
+		String END_VARIABLE = "end";
+
+		/** Name of the variable holding whether a created event spans whole days. */
+		String ALL_DAY_VARIABLE = "allDay";
+
+		/** Name of the variable holding the title typed for a created event. */
+		String TITLE_VARIABLE = "title";
+
 		/**
-		 * TL-Script function computing the business objects shown as events (a {@link Collection}).
+		 * TL-Script expression computing the business objects shown as events (a
+		 * {@link Collection}).
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names.
 		 * </p>
 		 */
 		@Name(OBJECTS)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getObjects();
 
 		/**
@@ -120,6 +147,22 @@ public class CalendarElement implements UIElement {
 		@Name(EVENT)
 		@Mandatory
 		EventConfig getEvent();
+
+		/**
+		 * The name of the variable holding the business object of an event in the scripts evaluated
+		 * for an event: the fields of the {@link #getEvent() event} and the write-back expressions
+		 * {@link #getOnMove()} and {@link #getOnResize()}.
+		 *
+		 * <p>
+		 * Unset, the variable is named {@value #DEFAULT_ENTRY_AS}. With
+		 * <code>entry-as="appointment"</code>, the start of an event is computed by
+		 * <code>$appointment.get(`my:Appointment#start`)</code>. An input of the same name is a
+		 * configuration error and is renamed with <code>as</code>.
+		 * </p>
+		 */
+		@Name(ENTRY_AS)
+		@Nullable
+		String getEntryAs();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected event's business object to.
@@ -181,33 +224,80 @@ public class CalendarElement implements UIElement {
 		int getDayEndHour();
 
 		/**
-		 * Write-back function <code>object, newStart, newEnd -&gt; …</code> applied when the user
-		 * drag-moves an event. Without it, moving is disabled.
+		 * Write-back expression applied when the user drag-moves an event. Without it, moving is
+		 * disabled.
+		 *
+		 * <p>
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, the business object of the event as the
+		 * variable {@value #DEFAULT_ENTRY_AS} (or by the name given with {@value #ENTRY_AS}), and its
+		 * new start and end as the variables {@value #START_VARIABLE} and {@value #END_VARIABLE}:
+		 * </p>
+		 *
+		 * <pre>
+		 * { $entry.set(`my:Appointment#start`, $start); $entry.set(`my:Appointment#end`, $end); }
+		 * </pre>
 		 */
 		@Name(ON_MOVE)
+		@Supplies(value = DEFAULT_ENTRY_AS, renamedBy = ENTRY_AS)
+		@Supplies(START_VARIABLE)
+		@Supplies(END_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOnMove();
 
 		/**
-		 * Write-back function <code>object, newEnd -&gt; …</code> applied when the user resizes an
-		 * event. Without it, resizing is disabled.
+		 * Write-back expression applied when the user resizes an event. Without it, resizing is
+		 * disabled.
+		 *
+		 * <p>
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, the business object of the event as the
+		 * variable {@value #DEFAULT_ENTRY_AS} (or by the name given with {@value #ENTRY_AS}), and its
+		 * new end as the variable {@value #END_VARIABLE}.
+		 * </p>
 		 */
 		@Name(ON_RESIZE)
+		@Supplies(value = DEFAULT_ENTRY_AS, renamedBy = ENTRY_AS)
+		@Supplies(END_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOnResize();
 
 		/**
-		 * Write-back function <code>start, end, allDay, title -&gt; object</code> applied when the
-		 * user selects an empty slot and confirms the title typed into the calendar. Without it,
-		 * creation is disabled.
+		 * Write-back expression applied when the user selects an empty slot and confirms the title
+		 * typed into the calendar, returning the created business object. Without it, creation is
+		 * disabled.
+		 *
+		 * <p>
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, the start and end of the selected slot as the
+		 * variables {@value #START_VARIABLE} and {@value #END_VARIABLE}, whether the slot spans whole
+		 * days as {@value #ALL_DAY_VARIABLE}, and the typed title as {@value #TITLE_VARIABLE}.
+		 * </p>
 		 */
 		@Name(ON_CREATE)
+		@Supplies(START_VARIABLE)
+		@Supplies(END_VARIABLE)
+		@Supplies(ALL_DAY_VARIABLE)
+		@Supplies(TITLE_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOnCreate();
 	}
 
 	/**
-	 * The per-field expressions deriving a calendar event from a business object. Each is a
-	 * single-argument function receiving the object.
+	 * The per-field expressions deriving a calendar event from a business object.
+	 *
+	 * <p>
+	 * Each expression sees the values of the calendar's {@link Config#getInputs() inputs} as
+	 * variables named after their channels, or by their {@code as} names, and the business object
+	 * as the variable {@value Config#DEFAULT_ENTRY_AS}, or by the name the calendar gives it with
+	 * {@value Config#ENTRY_AS}:
+	 * </p>
+	 *
+	 * <pre>
+	 * &lt;start&gt;$entry.get(`my:Appointment#start`)&lt;/start&gt;
+	 * </pre>
 	 */
-	public interface EventConfig extends ConfigurationItem {
+	public interface EventConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getStart()}. */
 		String START = "start";
@@ -237,61 +327,79 @@ public class CalendarElement implements UIElement {
 		String RESIZABLE = "resizable";
 
 		/**
-		 * Function computing the event's start time (a date), required.
+		 * Expression computing the event's start time (a date), required.
 		 */
 		@Name(START)
 		@Mandatory
 		@NonNullable
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getStart();
 
 		/**
-		 * Function computing the event's end time (a date). Without it, events last one hour.
+		 * Expression computing the event's end time (a date). Without it, events last one hour.
 		 */
 		@Name(END)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getEnd();
 
 		/**
-		 * Function computing whether the event spans whole days. Without it, events are timed.
+		 * Expression computing whether the event spans whole days. Without it, events are timed.
 		 */
 		@Name(ALL_DAY)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getAllDay();
 
 		/**
-		 * Function computing the event's title.
+		 * Expression computing the event's title.
 		 */
 		@Name(TITLE)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTitle();
 
 		/**
-		 * Function computing the event's hover tooltip.
+		 * Expression computing the event's hover tooltip.
 		 */
 		@Name(TOOLTIP)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTooltip();
 
 		/**
-		 * Function computing the event's category key, which selects its color.
+		 * Expression computing the event's category key, which selects its color.
 		 */
 		@Name(CATEGORY)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCategory();
 
 		/**
-		 * Function computing the event's CSS color, taking precedence over the color that the
+		 * Expression computing the event's CSS color, taking precedence over the color that the
 		 * category key selects. A value of the model type <code>tl.util:Color</code> is accepted
 		 * directly.
 		 */
 		@Name(COLOR)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getColor();
 
 		/**
-		 * Function computing whether the event may be moved. Without it, events are movable.
+		 * Expression computing whether the event may be moved. Without it, events are movable.
 		 */
 		@Name(MOVABLE)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getMovable();
 
 		/**
-		 * Function computing whether the event may be resized. Without it, events are resizable.
+		 * Expression computing whether the event may be resized. Without it, events are resizable.
 		 */
 		@Name(RESIZABLE)
+		@Supplies(value = Config.DEFAULT_ENTRY_AS, renamedBy = Config.ENTRY_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getResizable();
 	}
 
@@ -313,23 +421,23 @@ public class CalendarElement implements UIElement {
 	@CalledByReflection
 	public CalendarElement(InstantiationContext context, Config config) {
 		_config = config;
-		_objectsExecutor = QueryExecutor.compile(config.getObjects());
+		_objectsExecutor = InputScript.compile(config, Config.OBJECTS);
 
 		EventConfig event = config.getEvent();
 		_eventExprs = new EventExprs(
-			QueryExecutor.compile(event.getStart()),
-			QueryExecutor.compileOptional(event.getEnd()),
-			QueryExecutor.compileOptional(event.getAllDay()),
-			QueryExecutor.compileOptional(event.getTitle()),
-			QueryExecutor.compileOptional(event.getTooltip()),
-			QueryExecutor.compileOptional(event.getCategory()),
-			QueryExecutor.compileOptional(event.getColor()),
-			QueryExecutor.compileOptional(event.getMovable()),
-			QueryExecutor.compileOptional(event.getResizable()));
+			InputScript.compile(event, EventConfig.START),
+			InputScript.compile(event, EventConfig.END),
+			InputScript.compile(event, EventConfig.ALL_DAY),
+			InputScript.compile(event, EventConfig.TITLE),
+			InputScript.compile(event, EventConfig.TOOLTIP),
+			InputScript.compile(event, EventConfig.CATEGORY),
+			InputScript.compile(event, EventConfig.COLOR),
+			InputScript.compile(event, EventConfig.MOVABLE),
+			InputScript.compile(event, EventConfig.RESIZABLE));
 
-		_onMove = QueryExecutor.compileOptional(config.getOnMove());
-		_onResize = QueryExecutor.compileOptional(config.getOnResize());
-		_onCreate = QueryExecutor.compileOptional(config.getOnCreate());
+		_onMove = InputScript.compile(config, Config.ON_MOVE);
+		_onResize = InputScript.compile(config, Config.ON_RESIZE);
+		_onCreate = InputScript.compile(config, Config.ON_CREATE);
 	}
 
 	@Override
@@ -338,7 +446,7 @@ public class CalendarElement implements UIElement {
 		Collection<?> objects = executeObjectsQuery(_objectsExecutor, ChannelInputs.arguments(inputChannels));
 
 		ExpressionCalendarModel model =
-			new ExpressionCalendarModel(objects, _eventExprs, _onMove, _onResize, _onCreate);
+			new ExpressionCalendarModel(inputChannels, objects, _eventExprs, _onMove, _onResize, _onCreate);
 
 		CalendarViewControl control = new CalendarViewControl(context, model);
 		Granularity granularity = _config.getGranularity();

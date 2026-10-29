@@ -168,7 +168,8 @@ function tokenAt(text: string, offset: number): { start: number; end: number; to
 /** Wraps documentation HTML delivered by the server into an element. */
 function docElement(docHTML: string, className?: string): HTMLElement {
   const div = document.createElement('div');
-  if (className) div.className = className;
+  // The help text is body text of the design system, whatever popup of the library holds it.
+  div.className = className ? 'tl-type-body ' + className : 'tl-type-body';
   div.innerHTML = docHTML;
   return div;
 }
@@ -307,7 +308,8 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       diagnostics={diagnostics}
       onChange={handleChange}
       onBlur={handleBlur}
-      className={rootClassName(state, 'tlScriptEditor')}
+      className={rootClassName(state, 'tlScriptEditor tl-field tl-type-code')}
+      invalid={state.hasError === true}
       contentAttributes={{ id: inputId, ...labelProps }}
     />
   );

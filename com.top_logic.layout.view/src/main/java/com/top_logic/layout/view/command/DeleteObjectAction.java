@@ -19,7 +19,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
-import com.top_logic.layout.view.security.ModelAccessRule;
+import com.top_logic.layout.view.security.IntrinsicAccessRules;
 import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -31,8 +31,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * parts of its compositions, in a transaction of its own (a transaction nested in an enclosing
  * {@link WithTransactionAction} commits together with that one). The current user must hold the
  * right to delete the object; a refusal aborts the chain with the message of {@code delete()}.
- * The action results in {@code null}, so that a following {@link WriteChannelAction} clears the
- * channel that held the deleted object.
+ * A {@link WriteChannelAction} with {@link WriteChannelAction.Config#isClear() clear} following it
+ * empties the channel that held the deleted object.
  * </p>
  *
  * <p>
@@ -42,7 +42,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  *
  * <p>
  * The action brings its executability: a command deleting its input is offered only where the
- * user may delete that input (see {@link ModelAccessRule} for how a refusal is displayed), and it
+ * user may delete that input (see {@link IntrinsicAccessRules} for how a refusal is displayed), and it
  * is disabled for an input that vetoes its deletion (see {@link DeleteVetoDisabled}).
  * </p>
  *
@@ -51,12 +51,12 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * </p>
  *
  * <pre>
- * &lt;generic-command input="project"&gt;
+ * &lt;generic-command inputs="project"&gt;
  *   &lt;executability&gt;
  *     &lt;null-input-disabled/&gt;
  *   &lt;/executability&gt;
  *   &lt;delete-object/&gt;
- *   &lt;write-channel name="project"/&gt;
+ *   &lt;write-channel name="project" clear="true"/&gt;
  * &lt;/generic-command&gt;
  * </pre>
  *
@@ -69,7 +69,7 @@ public class DeleteObjectAction implements ViewAction {
 	 * Configuration for {@link DeleteObjectAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<DeleteObjectAction>, WithCommitMessage {
+	public interface Config extends PolymorphicConfiguration<DeleteObjectAction>, WithCommitMessage, WithValueArgument {
 
 		/** Tag name of a {@link DeleteObjectAction} in an action chain. */
 		String TAG_NAME = "delete-object";
@@ -111,7 +111,7 @@ public class DeleteObjectAction implements ViewAction {
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
 		return CombinedViewExecutabilityRule.combine(List.of(
-			ModelAccessRule.onInput(SimpleBoundCommandGroup.DELETE),
+			IntrinsicAccessRules.onInput(SimpleBoundCommandGroup.DELETE),
 			DeleteVetoDisabled.INSTANCE));
 	}
 

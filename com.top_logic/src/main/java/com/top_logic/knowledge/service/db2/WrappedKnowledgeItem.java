@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.service.db2;
 
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.WrapperLifecycle;
 import com.top_logic.model.TLObject;
 
 /**
@@ -28,15 +29,15 @@ abstract class WrappedKnowledgeItem extends DBKnowledgeObjectBase {
 			return;
 		}
 		wrapper = KnowledgeItemImpl.createWrapper(this);
-		if (wrapper instanceof PersistentObject) {
-			((PersistentObject) wrapper).handleLoad();
+		if (wrapper instanceof WrapperLifecycle lifecycle) {
+			lifecycle.handleLoad();
 		}
 	}
 
 	@Override
 	protected void invalidateWrapper() {
-		if (wrapper instanceof PersistentObject) {
-			((PersistentObject) wrapper).handleDelete();
+		if (wrapper instanceof WrapperLifecycle lifecycle) {
+			lifecycle.handleDelete();
 		}
 	}
 

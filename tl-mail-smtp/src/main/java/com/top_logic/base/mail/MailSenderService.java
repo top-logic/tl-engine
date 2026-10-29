@@ -50,7 +50,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
@@ -60,14 +60,19 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.func.IfTrue;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.version.Version;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -78,10 +83,17 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("Mail sender (SMTP)")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class MailSenderService extends ConfiguredManagedClass<MailSenderService.Config> implements Reloadable {
 
 	private Config _config;
+
+	/**
+	 * Source of {@link Config#getPassword()}, <code>null</code> if no password is configured.
+	 */
+	private final SecretSource _password;
 
 	private ObjectPool _transports;
     
@@ -205,11 +217,29 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 
 		/**
 		 * The password to authenticate this system to the SMTP server.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the password by its secret name, so that the password is
+		 * not part of the configuration, e.g. <code>&lt;password name="smtp_pass"/&gt;</code>,
+		 * which the default secret store reads from the environment variable of that name holding
+		 * the plain password. An attribute value is an encrypted password, or a plain password
+		 * with the prefix <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The password is read each time a new connection to the SMTP server is opened. A password
+		 * its source does not hold, e.g. an unset named secret, is sent empty, for a server without
+		 * login.
+		 * </p>
 		 */
 		@Name(PASSWORD)
-		@Encrypted
-		@Nullable
-		String getPassword();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getPassword();
+
+		/**
+		 * @see #getPassword()
+		 */
+		void setPassword(PolymorphicConfiguration<? extends SecretSource> value);
 		
 		/**
 		 * A comma separated list of e-mail address to send a startup notification mail to.
@@ -239,7 +269,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		 * </p>
 		 */
 		@Name(STARTUP_NOTIFICATION_BODY)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		@Nullable
 		String getStartUpNotificationBody();
 
@@ -262,6 +292,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 	public MailSenderService(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_config = config;
+		_password = context.getInstance(config.getPassword());
 
 		GenericObjectPool.Config poolConfig = new GenericObjectPool.Config();
 
@@ -874,6 +905,15 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		return MailSenderService.Module.INSTANCE.isActive() && MailSenderService.getInstance().isActivated();
     }
     
+	/**
+	 * The current value of the configured password, the empty string if none is configured or its
+	 * source does not hold it (e.g. the named secret is not set for a server without login).
+	 */
+	private String password() {
+		String password = _password == null ? null : _password.lookup();
+		return password == null ? StringServices.EMPTY_STRING : password;
+	}
+
     /**
      * The PooledTransportFactory will create, connect and disconnect a {@link Transport} 
      * 
@@ -900,7 +940,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
         @Override
 		public Object makeObject() throws Exception {
 			Transport result = getSession().getTransport();
-			result.connect(_server, _config.getPort(), _config.getUser(), _config.getPassword());
+			result.connect(_server, _config.getPort(), _config.getUser(), password());
 			return result;
         }
         

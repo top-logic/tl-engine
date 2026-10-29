@@ -16,3 +16,15 @@
 .tlSelected .tlSelectionFill { fill: var(--layer-selected); }
 /* Edge selection: highlight the visible edge stroke (not the transparent click target). */
 g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); stroke-width: 2; }
+
+/*
+ * The rectangle drawn while dragging with Ctrl held, selecting the elements inside it. Only shown
+ * on the screen, it never takes a pointer event itself.
+ */
+.tlSelectionRectangle {
+	fill: var(--layer-selected);
+	fill-opacity: 0.5;
+	stroke: var(--focus);
+	stroke-dasharray: 4 2;
+	pointer-events: none;
+}

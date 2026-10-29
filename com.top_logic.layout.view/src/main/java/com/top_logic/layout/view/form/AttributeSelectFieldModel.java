@@ -15,7 +15,10 @@ import java.util.Set;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.util.Pointer;
@@ -35,7 +38,15 @@ import com.top_logic.model.util.Pointer;
  * <p>
  * Options come from an {@link OptionSource} and are recomputed whenever a dependency of the (possibly
  * TL-Script) options expression changes in the form, so that options depending on other fields stay
- * up to date.
+ * up to date, and whenever the field is bound to another object.
+ * </p>
+ *
+ * <p>
+ * While a control {@link #observeWhileDisplayed(ReactControl) displays} the field, the options also
+ * follow the model: an object of one of the observed types that is created, changed or deleted, and
+ * an offered option that is changed or deleted, compute the options again. An object created after
+ * the field was built is therefore offered, and a deleted one no longer is, without building the
+ * field anew.
  * </p>
  */
 public class AttributeSelectFieldModel extends AttributeFieldModel implements SelectFieldModel {
@@ -77,6 +88,14 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 
 	private final FormControl.FieldChangeListener _fieldChangeListener = this::onFieldChanged;
 
+	private final Set<TLStructuredType> _observedTypes;
+
+	/**
+	 * The observation of the model while a control displays the field, {@code null} if no control
+	 * observes it.
+	 */
+	private RowSourceObserver<Object> _observer;
+
 	/**
 	 * Creates a new {@link AttributeSelectFieldModel} and computes its initial options.
 	 *
@@ -91,9 +110,26 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	 */
 	public AttributeSelectFieldModel(TLObject object, TLStructuredTypePart part, FormControl formControl,
 			OptionSource optionSource) {
+		this(object, part, formControl, optionSource, Set.of());
+	}
+
+	/**
+	 * Creates an {@link AttributeSelectFieldModel} whose options follow the changes of objects of the
+	 * given types while the field is {@link #observeWhileDisplayed(ReactControl) displayed}.
+	 *
+	 * @param observedTypes
+	 *        The types whose object changes compute the options again, typically the class the
+	 *        attribute refers to. Empty for options that do not follow the model, such as the
+	 *        classifiers of an enumeration.
+	 *
+	 * @see #AttributeSelectFieldModel(TLObject, TLStructuredTypePart, FormControl, OptionSource)
+	 */
+	public AttributeSelectFieldModel(TLObject object, TLStructuredTypePart part, FormControl formControl,
+			OptionSource optionSource, Set<TLStructuredType> observedTypes) {
 		super(object, part, formControl);
 		_formControl = formControl;
 		_optionSource = optionSource;
+		_observedTypes = observedTypes;
 		_multiple = part.isMultiple();
 		recomputeOptions();
 		_formControl.addFieldChangeListener(_fieldChangeListener);
@@ -147,9 +183,11 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 		if (isObjectDeleted()) {
 			return;
 		}
-		Object newValue = toAttributeValue(selection);
+		Object value = toAttributeValue(selection);
+		Object newValue = normalize(value);
 		Object oldValue = super.getValue();
 		if (Objects.equals(oldValue, newValue)) {
+			fireIfRewritten(value, newValue);
 			return;
 		}
 		getObject().tUpdate(getPart(), newValue);
@@ -188,21 +226,62 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 		}
 	}
 
+	/**
+	 * Follows the model while the given control displays this field.
+	 *
+	 * <p>
+	 * From the moment the control is attached until it is detached, an object of one of the
+	 * observed types that is created, changed or deleted, and an offered option that is changed or
+	 * deleted, compute the options again - for the object the field is bound to now, over the edits
+	 * of the form, exactly as a change of a field the options depend on does. The value the field
+	 * holds stays as it is. A control attached again catches up with what happened while it was
+	 * detached.
+	 * </p>
+	 *
+	 * <p>
+	 * A field that observes no types does not follow the model.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control displaying this field.
+	 */
+	public void observeWhileDisplayed(ReactControl control) {
+		if (_observedTypes.isEmpty()) {
+			return;
+		}
+		if (_observer == null) {
+			_observer = new RowSourceObserver<>(new ArrayList<Object>(_options), args -> computeOptions(),
+				_observedTypes, List.of(), this::setOptions);
+		}
+		_observer.observeWhileAttached(control);
+	}
+
 	private void recomputeOptions() {
+		setOptions(computeOptions());
+	}
+
+	/**
+	 * Computes the options for the object the field is bound to now, and records the fields they
+	 * depend on.
+	 */
+	private List<?> computeOptions() {
 		Set<TLStructuredTypePart> dependencies = new HashSet<>();
 		Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
 		OverlayLookup overlays = _formControl.getValidationModel();
 		List<?> options = _optionSource.compute(getObject(), overlays, sink);
 		_dependencies = dependencies;
-		setOptions(options);
+		return options;
 	}
 
 	/**
-	 * Detaches this model from the form's field-change notifications.
+	 * Detaches this model from the form's field-change notifications and from the model.
 	 */
 	@Override
 	public void dispose() {
 		_formControl.removeFieldChangeListener(_fieldChangeListener);
+		if (_observer != null) {
+			_observer.detach();
+		}
 		super.dispose();
 	}
 

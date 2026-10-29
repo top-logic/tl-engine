@@ -17,4 +17,9 @@ public interface UserTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	 */
 	String USER_TASK_TYPE = "UserTask";
 
+	/**
+	 * Name of the table storing {@link #USER_TASK_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPNode";
+
 }

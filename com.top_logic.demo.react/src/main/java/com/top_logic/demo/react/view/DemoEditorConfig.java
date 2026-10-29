@@ -5,6 +5,7 @@
  */
 package com.top_logic.demo.react.view;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -21,23 +22,45 @@ import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 
 /**
  * Self-contained sample configuration edited by the config-editor demo.
  *
  * <p>
- * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item, a list
- * of items, an array of items, a map of items, a list of plain strings written as one comma
- * separated text, a duration, and a {@link ResKey}) so the React configuration editor renders each
- * editor variant.
+ * Exercises a spread of property kinds (text, multi-line text, {@link CommonMark} text, JSON
+ * source code, HTML text, number, boolean, enumeration, a date with its time of day, a nested
+ * item, a nested item displayed without a group, a list of items, an array of items, a map of
+ * items, a list of plain strings written as one comma separated text, a duration, and a
+ * {@link ResKey}) so the React configuration editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getTitle()}. */
 	String TITLE = "title";
+
+	/** Configuration name for the value of {@link #getDescription()}. */
+	String DESCRIPTION = "description";
+
+	/** Configuration name for the value of {@link #getNotes()}. */
+	String NOTES = "notes";
+
+	/** Configuration name for the value of {@link #getSettings()}. */
+	String SETTINGS = "settings";
+
+	/** Configuration name for the value of {@link #getContent()}. */
+	String CONTENT = "content";
+
+	/** Configuration name for the value of {@link #getSourceContent()}. */
+	String SOURCE_CONTENT = "sourceContent";
 
 	/** Configuration name for the value of {@link #getCount()}. */
 	String COUNT = "count";
@@ -48,8 +71,14 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	/** Configuration name for the value of {@link #getPriority()}. */
 	String PRIORITY = "priority";
 
+	/** Configuration name for the value of {@link #getDueDate()}. */
+	String DUE_DATE = "dueDate";
+
 	/** Configuration name for the value of {@link #getAddress()}. */
 	String ADDRESS = "address";
+
+	/** Configuration name for the value of {@link #getBillingAddress()}. */
+	String BILLING_ADDRESS = "billingAddress";
 
 	/** Configuration name for the value of {@link #getItems()}. */
 	String ITEMS = "items";
@@ -96,6 +125,66 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	String getTitle();
 
 	/**
+	 * A longer free-text description spanning several lines.
+	 *
+	 * <p>
+	 * The {@link MultiLine} annotation makes the property a text area rather than the single-line
+	 * input of {@link #getTitle()}.
+	 * </p>
+	 */
+	@Name(DESCRIPTION)
+	@MultiLine
+	String getDescription();
+
+	/**
+	 * Notes written in <i>CommonMark</i> syntax.
+	 *
+	 * <p>
+	 * The {@link CommonMark} annotation makes the property a text area while the form is edited,
+	 * and displays the formatted text while it is not.
+	 * </p>
+	 */
+	@Name(NOTES)
+	@CommonMark
+	@MultiLine(rows = 4)
+	String getNotes();
+
+	/**
+	 * Settings written as a <i>JSON</i> object.
+	 *
+	 * <p>
+	 * The {@link Code} annotation makes the property a code editor for <i>JSON</i>.
+	 * </p>
+	 */
+	@Name(SETTINGS)
+	@Code(language = CodeLanguage.JSON)
+	String getSettings();
+
+	/**
+	 * Formatted content written as HTML.
+	 *
+	 * <p>
+	 * The {@link Html} annotation makes the property a WYSIWYG editor while the form is edited,
+	 * and displays the formatted text while it is not.
+	 * </p>
+	 */
+	@Name(CONTENT)
+	@Html
+	String getContent();
+
+	/**
+	 * Formatted content whose HTML source can be edited as well.
+	 *
+	 * <p>
+	 * The <code>macro</code> feature set of the {@link Html} annotation adds a button to the
+	 * WYSIWYG editor switching to the HTML source.
+	 * </p>
+	 */
+	@Name(SOURCE_CONTENT)
+	@Html(features = "macro")
+	String getSourceContent();
+
+	/**
 	 * A bounded item count.
 	 *
 	 * <p>
@@ -121,12 +210,32 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	Priority getPriority();
 
 	/**
-	 * A nested address rendered inline as a monomorphic item.
+	 * The point in time by which the configuration must be in effect, a date together with its
+	 * time of day.
+	 */
+	@Name(DUE_DATE)
+	Date getDueDate();
+
+	/**
+	 * A nested address rendered as a monomorphic item in a group of its own.
 	 */
 	@Name(ADDRESS)
 	@ItemDefault
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	Address getAddress();
+
+	/**
+	 * The address to send invoices to.
+	 *
+	 * <p>
+	 * The {@link Inline} annotation displays the street and city of this address as fields of the
+	 * form itself, unlike the group of {@link #getAddress()}.
+	 * </p>
+	 */
+	@Name(BILLING_ADDRESS)
+	@ItemDefault
+	@Inline
+	Address getBillingAddress();
 
 	/**
 	 * A list of named items with quantities.

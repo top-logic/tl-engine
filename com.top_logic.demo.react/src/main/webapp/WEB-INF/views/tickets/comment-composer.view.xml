@@ -4,6 +4,8 @@
 	<channels>
 		<channel name="comment"/>
 		<channel name="ticket"/>
+		<!-- The files to attach to the new comment. -->
+		<channel name="files"/>
 	</channels>
 	<anchor name="composer">
 		<panel appearance="card">
@@ -28,7 +30,7 @@
 						<commands>
 							<generic-command
 								image="css:ri-links-line"
-								input="ticket"
+								inputs="ticket"
 							>
 								<label>
 									<en>Reference ticket...</en>
@@ -51,7 +53,12 @@
 						</commands>
 					</input-control>
 				</field>
-				<file-list attribute="attachments"/>
+				<value-input
+					label="model.demo.tickets.Comment.attachments"
+					multiple="true"
+					type="tl.core:Binary"
+					value="files"
+				/>
 				<commands>
 					<generic-command
 						image="css:bi bi-send"
@@ -61,15 +68,25 @@
 							<en>Add comment</en>
 							<de>Kommentar hinzufügen</de>
 						</label>
-						<executability>
-							<model-access
-								container="ticket"
-								operation="Create"
-								reference="comments"
-							/>
-						</executability>
-						<store-form-state/>
-						<link-element/>
+						<store-form-state>
+							<with-result>
+								<link-element>
+									<with-result as="comment">
+										<with-transaction>
+											<execute-script
+												function="demoTicketsStoreAttachments($comment, $files)"
+												inputs="files"
+											/>
+										</with-transaction>
+										<execute-script function="[]">
+											<with-result>
+												<write-channel name="files"/>
+											</with-result>
+										</execute-script>
+									</with-result>
+								</link-element>
+							</with-result>
+						</store-form-state>
 					</generic-command>
 				</commands>
 			</form>

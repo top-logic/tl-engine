@@ -62,4 +62,12 @@ public class DiscardFormStateAction implements ViewAction {
 		((FormControl) formModel).executeCancel();
 		return input;
 	}
+
+	/**
+	 * Discards the edit session of the form.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

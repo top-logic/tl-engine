@@ -6,10 +6,10 @@
 package com.top_logic.service.openapi.server.authentication.http.basic;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Derived;
@@ -102,16 +102,34 @@ public class BasicAuthentication extends AbstractConfiguredInstance<BasicAuthent
 		if (config.getInUserContext()) {
 			return new BasicUserAuthenticator();
 		} else {
-			Set<LoginCredentials> authentications =
+			List<LoginCredentials> authentications =
 				OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, HTTPSecret.class)
 					.map(HTTPSecret::getLogin)
-					.collect(Collectors.toSet());
+					.filter(this::hasPassword)
+					.collect(Collectors.toList());
 			if (authentications.isEmpty()) {
 				return NeverAuthenticated.missingSecret();
 			} else {
 				return new BasicTechnicalAuthenticator(authentications);
 			}
 		}
+	}
+
+	/**
+	 * Whether the given credentials have a password.
+	 * 
+	 * <p>
+	 * Credentials without password (e.g. an empty password attribute) are ignored and reported as
+	 * configuration error, since they would accept requests sending an empty password.
+	 * </p>
+	 */
+	private boolean hasPassword(LoginCredentials login) {
+		if (login.getPassword() == null) {
+			Logger.error("Ignoring basic authentication secret with empty password for user '" + login.getUser()
+				+ "' in authentication domain '" + getConfig().getDomain() + "'.", BasicAuthentication.class);
+			return false;
+		}
+		return true;
 	}
 
 }

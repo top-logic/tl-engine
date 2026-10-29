@@ -77,6 +77,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FILE_UPLOAD_FAILED;
 
 	/**
+	 * @en No file data received.
+	 */
+	public static ResKey ERROR_NO_FILE_DATA_RECEIVED;
+
+	/**
 	 * @en Download data cleared.
 	 */
 	public static ResKey REACT_DOWNLOAD_CLEAR;
@@ -191,6 +196,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.sidebar.openDrawer")
 	public static ResKey JS_SIDEBAR_OPEN_DRAWER;
+
+	/**
+	 * @en Bottom navigation
+	 */
+	@CustomKey("js.bottomBar.ariaLabel")
+	public static ResKey JS_BOTTOM_BAR_ARIA_LABEL;
 
 	// -- Dialog client-side i18n keys --
 
@@ -390,6 +401,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Split panel client-side i18n keys --
+
+	/**
+	 * @en Change the size of the areas
+	 */
+	@CustomKey("js.splitPanel.handle")
+	public static ResKey JS_SPLIT_PANEL_HANDLE;
+
 	// -- Breadcrumb client-side i18n keys --
 
 	/**
@@ -411,6 +430,42 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.toolbar.overflow")
 	public static ResKey JS_TOOLBAR_OVERFLOW;
+
+	// -- Tab strip client-side i18n keys --
+
+	/**
+	 * @en Show previous tabs
+	 */
+	@CustomKey("js.tabs.scrollStart")
+	public static ResKey JS_TABS_SCROLL_START;
+
+	/**
+	 * @en Show next tabs
+	 */
+	@CustomKey("js.tabs.scrollEnd")
+	public static ResKey JS_TABS_SCROLL_END;
+
+	// -- Dashboard client-side i18n keys --
+
+	/**
+	 * @en Hide tile
+	 */
+	@CustomKey("js.dashboard.hideTile")
+	public static ResKey JS_DASHBOARD_HIDE_TILE;
+
+	/**
+	 * @en Tile {0}
+	 */
+	@CustomKey("js.dashboard.tile")
+	public static ResKey JS_DASHBOARD_TILE;
+
+	// -- Kanban board client-side i18n keys --
+
+	/**
+	 * @en Moved to {0}, position {1} of {2}.
+	 */
+	@CustomKey("js.kanbanBoard.moved")
+	public static ResKey JS_KANBAN_BOARD_MOVED;
 
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
@@ -439,6 +494,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_URL__VALUE;
 
+	/**
+	 * @en The suggestions for the text could not be computed.
+	 */
+	public static ResKey ERROR_SUGGESTIONS_FAILED;
+
 	// -- Text input client-side i18n keys --
 
 	/**
@@ -462,6 +522,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_VALUE_LIST_ADD;
 
 	/**
+	 * @en Add files
+	 */
+	@CustomKey("js.valueList.addFiles")
+	public static ResKey JS_VALUE_LIST_ADD_FILES;
+
+	/**
 	 * @en Remove this value
 	 */
 	@CustomKey("js.valueList.remove")
@@ -473,10 +539,41 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.valueList.move")
 	public static ResKey JS_VALUE_LIST_MOVE;
 
+	// -- Reordering client-side i18n keys --
+
+	/**
+	 * @en Move {0}
+	 */
+	@CustomKey("js.reorder.handle")
+	public static ResKey JS_REORDER_HANDLE;
+
+	/**
+	 * @en Alt + arrow key moves the entry
+	 */
+	@CustomKey("js.reorder.hint")
+	public static ResKey JS_REORDER_HINT;
+
+	/**
+	 * @en {0}, position {1} of {2}
+	 */
+	@CustomKey("js.reorder.moved")
+	public static ResKey JS_REORDER_MOVED;
+
+	/**
+	 * @en Position {0} of {1}
+	 */
+	@CustomKey("js.reorder.position")
+	public static ResKey JS_REORDER_POSITION;
+
 	/**
 	 * @en No value
 	 */
 	public static ResKey VALUE_NONE;
+
+	/**
+	 * @en *****
+	 */
+	public static ResKey MASKED_VALUE;
 
 	/**
 	 * @en Languages…
@@ -555,6 +652,18 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.treeView.collapse")
 	public static ResKey JS_TREE_VIEW_COLLAPSE;
 
+	/**
+	 * @en Tree
+	 */
+	@CustomKey("js.tree.label")
+	public static ResKey JS_TREE_LABEL;
+
+	/**
+	 * @en Loading entries\u2026
+	 */
+	@CustomKey("js.tree.loading")
+	public static ResKey JS_TREE_LOADING;
+
 	// -- Form group client-side i18n keys --
 
 	/**
@@ -570,6 +679,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_FORM_GROUP_EXPAND;
 
 	// -- Table client-side i18n keys --
+
+	/**
+	 * @en Select all rows
+	 */
+	@CustomKey("js.table.selectAll")
+	public static ResKey JS_TABLE_SELECT_ALL;
+
+	/**
+	 * @en Select this row
+	 */
+	@CustomKey("js.table.selectRow")
+	public static ResKey JS_TABLE_SELECT_ROW;
+
+	/**
+	 * @en No entries
+	 */
+	@CustomKey("js.table.empty")
+	public static ResKey JS_TABLE_EMPTY;
 
 	/**
 	 * @en Freeze up to here
@@ -590,10 +717,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_FREEZE_SPLITTER;
 
 	/**
+	 * @en Change the width of {0}
+	 */
+	@CustomKey("js.table.columnWidth")
+	public static ResKey JS_TABLE_COLUMN_WIDTH;
+
+	/**
 	 * @en Filter
 	 */
 	@CustomKey("js.table.filter")
 	public static ResKey JS_TABLE_FILTER;
+
+	/**
+	 * @en Filter (active)
+	 */
+	@CustomKey("js.table.filterActive")
+	public static ResKey JS_TABLE_FILTER_ACTIVE;
 
 	/**
 	 * @en Reset
@@ -612,6 +751,78 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.columnSearch")
 	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.table.columnShow")
+	public static ResKey JS_TABLE_COLUMN_SHOW;
+
+	/**
+	 * @en Hide {0}
+	 */
+	@CustomKey("js.table.columnHide")
+	public static ResKey JS_TABLE_COLUMN_HIDE;
+
+	/**
+	 * @en Freeze {0}
+	 */
+	@CustomKey("js.table.columnLock")
+	public static ResKey JS_TABLE_COLUMN_LOCK;
+
+	/**
+	 * @en Unfreeze {0}
+	 */
+	@CustomKey("js.table.columnUnlock")
+	public static ResKey JS_TABLE_COLUMN_UNLOCK;
+
+	/**
+	 * @en Show and freeze {0}
+	 */
+	@CustomKey("js.table.columnShowLock")
+	public static ResKey JS_TABLE_COLUMN_SHOW_LOCK;
+
+	/**
+	 * @en Hide and unfreeze {0}
+	 */
+	@CustomKey("js.table.columnHideUnlock")
+	public static ResKey JS_TABLE_COLUMN_HIDE_UNLOCK;
+
+	/**
+	 * @en Show
+	 */
+	@CustomKey("js.table.columnShowShort")
+	public static ResKey JS_TABLE_COLUMN_SHOW_SHORT;
+
+	/**
+	 * @en Hide
+	 */
+	@CustomKey("js.table.columnHideShort")
+	public static ResKey JS_TABLE_COLUMN_HIDE_SHORT;
+
+	/**
+	 * @en Freeze
+	 */
+	@CustomKey("js.table.columnLockShort")
+	public static ResKey JS_TABLE_COLUMN_LOCK_SHORT;
+
+	/**
+	 * @en Unfreeze
+	 */
+	@CustomKey("js.table.columnUnlockShort")
+	public static ResKey JS_TABLE_COLUMN_UNLOCK_SHORT;
+
+	/**
+	 * @en Frozen
+	 */
+	@CustomKey("js.table.columnsLocked")
+	public static ResKey JS_TABLE_COLUMNS_LOCKED;
+
+	/**
+	 * @en At least one column stays visible
+	 */
+	@CustomKey("js.table.columnLastVisible")
+	public static ResKey JS_TABLE_COLUMN_LAST_VISIBLE;
 
 	/**
 	 * @en Group by this column
@@ -753,6 +964,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.dropdownSelect.error")
 	public static ResKey JS_DROPDOWN_SELECT_ERROR;
 
+	/**
+	 * @en Use "{0}"
+	 */
+	@CustomKey("js.dropdownSelect.useText")
+	public static ResKey JS_DROPDOWN_SELECT_USE_TEXT;
+
 	// -- Color input client-side i18n keys --
 
 	/**
@@ -840,6 +1057,30 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_COLOR_INPUT_CLEAR;
 
 	/**
+	 * @en Colors
+	 */
+	@CustomKey("js.colorInput.colors")
+	public static ResKey JS_COLOR_INPUT_COLORS;
+
+	/**
+	 * @en Saturation and brightness
+	 */
+	@CustomKey("js.colorInput.saturationBrightness")
+	public static ResKey JS_COLOR_INPUT_SATURATION_BRIGHTNESS;
+
+	/**
+	 * @en Saturation {0} %, brightness {1} %
+	 */
+	@CustomKey("js.colorInput.saturationBrightnessValue")
+	public static ResKey JS_COLOR_INPUT_SATURATION_BRIGHTNESS_VALUE;
+
+	/**
+	 * @en Hue
+	 */
+	@CustomKey("js.colorInput.hue")
+	public static ResKey JS_COLOR_INPUT_HUE;
+
+	/**
 	 * @en Simple
 	 */
 	@CustomKey("js.iconSelect.simpleTab")
@@ -870,7 +1111,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_ICON_SELECT_LOADING;
 
 	/**
-	 * @en Failed to load. Click to retry.
+	 * @en The icons could not be loaded.
 	 */
 	@CustomKey("js.iconSelect.loadError")
 	public static ResKey JS_ICON_SELECT_LOAD_ERROR;
@@ -917,6 +1158,24 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
 
+	/**
+	 * @en Icons
+	 */
+	@CustomKey("js.iconSelect.icons")
+	public static ResKey JS_ICON_SELECT_ICONS;
+
+	/**
+	 * @en Load again
+	 */
+	@CustomKey("js.iconSelect.retry")
+	public static ResKey JS_ICON_SELECT_RETRY;
+
+	/**
+	 * @en No icon
+	 */
+	@CustomKey("js.iconSelect.noIcon")
+	public static ResKey JS_ICON_SELECT_NO_ICON;
+
 	// -- Alert client-side i18n keys --
 
 	/**
@@ -932,6 +1191,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.snackbar.dismiss")
 	public static ResKey JS_SNACKBAR_DISMISS;
+
+	// -- Wizard client-side i18n keys --
+
+	/**
+	 * @en Steps
+	 */
+	@CustomKey("js.wizard.steps")
+	public static ResKey JS_WIZARD_STEPS;
 
 	// -- Window client-side i18n keys --
 
@@ -960,6 +1227,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
 
 	/**
+	 * @en The field accepts only a value chosen from its options, no text of your own.
+	 */
+	public static ResKey ERROR_NO_FREE_ENTRY;
+
+	/**
 	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
 	 */
 	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
@@ -968,6 +1240,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cannot select card: the business key no longer resolves to a card on this board: {0}
 	 */
 	public static ResKey1 ERROR_CARD_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot select item: the business key no longer resolves to an item of this list: {0}
+	 */
+	public static ResKey1 ERROR_ITEM_KEY_UNRESOLVED__KEY;
 
 	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.
@@ -1057,6 +1334,24 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.calendar.more")
 	public static ResKey JS_CALENDAR_MORE;
 
+	/**
+	 * @en Calendar
+	 */
+	@CustomKey("js.calendar.toolbar")
+	public static ResKey JS_CALENDAR_TOOLBAR;
+
+	/**
+	 * @en View
+	 */
+	@CustomKey("js.calendar.view")
+	public static ResKey JS_CALENDAR_VIEW;
+
+	/**
+	 * @en Events
+	 */
+	@CustomKey("js.calendar.events")
+	public static ResKey JS_CALENDAR_EVENTS;
+
 	// -- Job status client-side i18n keys --
 
 	/**
@@ -1094,6 +1389,25 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.jobStatus.cancel")
 	public static ResKey JS_JOB_STATUS_CANCEL;
+
+	/**
+	 * @en Step: {0}
+	 */
+	@CustomKey("js.jobStatus.currentStep")
+	public static ResKey JS_JOB_STATUS_CURRENT_STEP;
+
+	/**
+	 * @en Steps
+	 */
+	@CustomKey("js.jobStatus.steps")
+	public static ResKey JS_JOB_STATUS_STEPS;
+
+	/**
+	 * @en {0} – {1}
+	 *
+	 * @see com.top_logic.layout.react.routing.RouteManager#currentTitle()
+	 */
+	public static ResKey2 PAGE_TITLE__LABEL_APP;
 
 	static {
 		initConstants(I18NConstants.class);

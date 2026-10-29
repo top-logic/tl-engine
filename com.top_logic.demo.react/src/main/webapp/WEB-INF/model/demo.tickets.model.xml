@@ -89,6 +89,75 @@
 						ordered="true"
 						type="Comment"
 					/>
+					<property name="category"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<options-by-expression function="t -&gt; all(`demo.tickets:Ticket`).map(x -&gt; $x.get(`demo.tickets:Ticket#category`)).filter(c -&gt; $c != null).toSet()"/>
+							</options>
+							<free-entry/>
+						</annotations>
+					</property>
+					<property name="tags"
+						multiple="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<options-by-expression function="t -&gt; all(`demo.tickets:Ticket`).map(x -&gt; $x.get(`demo.tickets:Ticket#tags`)).flatten().toSet()"/>
+							</options>
+							<free-entry/>
+						</annotations>
+					</property>
+					<reference name="keywords"
+						kind="forwards"
+						multiple="true"
+						type="Keyword"
+					>
+						<annotations>
+							<free-entry create="text -&gt; self -&gt; new(`demo.tickets:Keyword`, transient: true)..set(`demo.tickets:Keyword#name`, $text)"/>
+						</annotations>
+					</reference>
+					<property name="estimate"
+						type="tl.core:Long"
+					>
+						<annotations>
+							<options>
+								<options-by-expression
+									alphabetic-order="false"
+									function="t -&gt; all(`demo.tickets:Ticket`).map(x -&gt; $x.get(`demo.tickets:Ticket#estimate`)).filter(e -&gt; $e != null).toSet().sort()"
+								/>
+							</options>
+							<free-entry/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+			<class name="Keyword">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="catalog"
+						kind="forwards"
+						type="KeywordCatalog"
+					/>
+				</attributes>
+			</class>
+			<class name="KeywordCatalog">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
 				</attributes>
 			</class>
 			<class name="Comment">
@@ -132,15 +201,7 @@
 						multiple="true"
 						ordered="true"
 						type="Attachment"
-					>
-						<annotations>
-							<dynamic-visibility>
-								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
-									function="comment -> editMode -> if ($editMode || $comment.get(`demo.tickets:Comment#attachments`).size() > 0, &quot;default&quot;, &quot;hidden&quot;)"
-								/>
-							</dynamic-visibility>
-						</annotations>
-					</reference>
+					/>
 				</attributes>
 			</class>
 			<class name="Attachment">

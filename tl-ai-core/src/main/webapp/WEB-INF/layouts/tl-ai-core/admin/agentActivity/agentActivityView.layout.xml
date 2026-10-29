@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The "KI-Agenten" tab of Administration -> Monitor, with one tab per question an operator arrives
+	with:
+	
+	Überblick    "is anything wrong right now" - the numbers, each one a way into its rows
+	Sitzungen    "what has this account / this job been doing"
+	Läufe        "what did this single run do, and what did it cost"
+	Rückfragen   "what is waiting for a human" - the queue, oldest first
+	Verbrauch    "what did all of this consume" - the token charts
+	
+	In that order, because that is the order the questions arrive in: first the alarm, then the
+	context, then the detail, then the queue an operator comes back to, and consumption last -
+	nobody opens a monitor to read a token count first.
+	
+	Everything here reads. The single write is "Abbruch anfordern" on a running run, and that goes
+	through AgentExecutionStore rather than through a UI transaction - see RequestCancelCommand.
+-->
+<securityLayout name="aiAgentActivityView"
+	titleKey="admin.ai.agentActivity.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentActivity.tabber"/>
+	<components>
+		<tabbar name="aiAgentActivityView_tabBar">
+			<components>
+				<include name="tl-ai-core/admin/agentActivity/overviewView.xml"/>
+				<include name="tl-ai-core/admin/agentActivity/sessionsView.xml"/>
+				<include name="tl-ai-core/admin/agentActivity/executionsView.xml"/>
+				<include name="tl-ai-core/admin/agentActivity/interactionsView.xml"/>
+				<include name="tl-ai-core/admin/agentActivity/usageView.xml"/>
+			</components>
+		</tabbar>
+	</components>
+</securityLayout>

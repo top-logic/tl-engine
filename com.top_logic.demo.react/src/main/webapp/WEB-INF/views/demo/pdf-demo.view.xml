@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The document viewer of the React UI: the table on the left lists the documents, the panel on
-	the right previews the selected one - a picture in the image element (<image>), a PDF in the PDF
-	viewer (<pdf>), an HTML file as a document of its own (<html display="document">). A <switch>
-	on the content type of the document chooses the viewer. The toolbar uploads further documents
-	and deletes the selected one; an uploaded file becomes a document named after the file and is
-	selected right away. Above the viewer, a read-only binary field (<value-input type="tl.core:Binary">)
-	shows the file of the selected document with a download link.
+	The document viewer of the React UI: the table on the left lists the documents, the pane on the
+	right previews the selected one. The preview has one panel per kind of document - a picture in
+	the image element (<image>), a PDF in the PDF viewer (<pdf>), an HTML file as a document of its
+	own (<html display="document">) - chosen by a <switch> on the content type of the document that
+	stands directly in the split pane, so the panel shown spans the whole pane. Without a selected
+	document, a preview panel with a hint stands there instead. Above its viewer, each document panel
+	shows the file of the selected document in a read-only binary field
+	(<value-input type="tl.core:Binary">) with a download link. The toolbar of the list uploads
+	further documents and deletes the selected one; an uploaded file becomes a document named after
+	the file and is selected right away.
 	
 	Every viewer reads the "data" channel, which is derived from the "document" channel the
 	<switch> switches on. They therefore change within the same notification - the viewer being
@@ -17,11 +20,11 @@
 	<channels>
 		<channel name="document"/>
 		<derived-channel name="data"
-			expr="d -> $d.get(`demo.documents:Document#data`)"
+			expr="$document.get(`demo.documents:Document#data`)"
 			inputs="document"
 		/>
 		<derived-channel name="name"
-			expr="d -> $d.get(`demo.documents:Document#name`)"
+			expr="$document.get(`demo.documents:Document#name`)"
 			inputs="document"
 		/>
 	</channels>
@@ -51,24 +54,23 @@
 								<en>Upload</en>
 								<de>Hochladen</de>
 							</label>
-							<executability>
-								<model-access
-									operation="Create"
-									type="demo.documents:Document"
-								/>
-							</executability>
+							<access>
+								<create type="demo.documents:Document"/>
+							</access>
 							<with-transaction>
 								<commitMessage>
 									<en>Uploaded document {0}.</en>
 									<de>Dokument {0} hochgeladen.</de>
 								</commitMessage>
-								<execute-script function="file -> { doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
+								<execute-script function="{ doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
+								<with-result>
+									<write-channel name="document"/>
+								</with-result>
 							</with-transaction>
-							<write-channel name="document"/>
 						</upload-command>
 						<generic-command
 							image="css:bi bi-trash"
-							input="document"
+							inputs="document"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -79,7 +81,9 @@
 								<null-input-disabled/>
 							</executability>
 							<delete-object/>
-							<write-channel name="document"/>
+							<write-channel name="document"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<inset>
@@ -106,48 +110,103 @@
 				size="70"
 				unit="%"
 			>
-				<panel>
-					<title>
-						<en>Preview</en>
-						<de>Vorschau</de>
-					</title>
-					<title-content>
-						<text input="name"/>
-					</title-content>
-					<inset>
-						<fields>
-							<value-input
-								readonly="true"
-								type="tl.core:Binary"
-								value="data"
-							>
-								<label>
-									<en>File</en>
-									<de>Datei</de>
-								</label>
-							</value-input>
-						</fields>
-					</inset>
-					<switch input="document">
-						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('image/')">
+				<switch input="document">
+					<case test="$document != null &amp;&amp; binaryContentType($document.get(`demo.documents:Document#data`)).stringStartsWith('image/')">
+						<panel>
+							<title>
+								<en>Picture</en>
+								<de>Bild</de>
+							</title>
+							<title-content>
+								<text input="name"/>
+							</title-content>
+							<inset>
+								<fields>
+									<value-input
+										readonly="true"
+										type="tl.core:Binary"
+										value="data"
+									>
+										<label>
+											<en>File</en>
+											<de>Datei</de>
+										</label>
+									</value-input>
+								</fields>
+							</inset>
 							<image input="data">
 								<alt>
 									<en>The selected picture.</en>
 									<de>Das gewählte Bild.</de>
 								</alt>
 							</image>
-						</case>
-						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('application/pdf')">
+						</panel>
+					</case>
+					<case test="$document != null &amp;&amp; binaryContentType($document.get(`demo.documents:Document#data`)).stringStartsWith('application/pdf')">
+						<panel>
+							<title>
+								<en>PDF document</en>
+								<de>PDF-Dokument</de>
+							</title>
+							<title-content>
+								<text input="name"/>
+							</title-content>
+							<inset>
+								<fields>
+									<value-input
+										readonly="true"
+										type="tl.core:Binary"
+										value="data"
+									>
+										<label>
+											<en>File</en>
+											<de>Datei</de>
+										</label>
+									</value-input>
+								</fields>
+							</inset>
 							<pdf input="data"/>
-						</case>
-						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('text/html')">
+						</panel>
+					</case>
+					<case test="$document != null &amp;&amp; binaryContentType($document.get(`demo.documents:Document#data`)).stringStartsWith('text/html')">
+						<panel>
+							<title>
+								<en>HTML document</en>
+								<de>HTML-Dokument</de>
+							</title>
+							<title-content>
+								<text input="name"/>
+							</title-content>
+							<inset>
+								<fields>
+									<value-input
+										readonly="true"
+										type="tl.core:Binary"
+										value="data"
+									>
+										<label>
+											<en>File</en>
+											<de>Datei</de>
+										</label>
+									</value-input>
+								</fields>
+							</inset>
 							<html
 								display="document"
 								input="data"
 								print="true"
 							/>
-						</case>
-						<default>
+						</panel>
+					</case>
+					<default>
+						<panel>
+							<title>
+								<en>Preview</en>
+								<de>Vorschau</de>
+							</title>
+							<title-content>
+								<text input="name"/>
+							</title-content>
 							<inset>
 								<text>
 									<label>
@@ -156,9 +215,9 @@
 									</label>
 								</text>
 							</inset>
-						</default>
-					</switch>
-				</panel>
+						</panel>
+					</default>
+				</switch>
 			</pane>
 		</panes>
 	</split-panel>

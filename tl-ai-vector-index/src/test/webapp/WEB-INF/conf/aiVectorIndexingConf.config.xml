@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
+				</modules>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.util.monitor.ApplicationMonitor">
+			<instance class="com.top_logic.util.monitor.ApplicationMonitor">
+				<components>
+					<component name="search" class="com.top_logic.ai.vector.index.VectorMonitor" />
+				</components>
+			</instance>
+		</config>
+		
+		<!-- Production Vector Store Configuration overriding Java defaults -->
+		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
+			<instance class="com.top_logic.ai.vector.index.VectorIndex"
+				embedding-model-type="local"
+			>
+				<mistral-api-key name="tl_mistral_api_key"/>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
+				<protocols>
+					<protocol value="knowledgerepository" />
+					<protocol value="knowledge" />
+					<protocol value="repository" />
+				</protocols>
+				<meta-objects>
+					<meta-object value="Document" />
+					<meta-object value="GenericObject" />
+				</meta-objects>
+			</instance>
+		</config>
+	</services>
+</application>

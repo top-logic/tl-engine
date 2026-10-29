@@ -12,8 +12,6 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.config.TLModelPartMapping;
@@ -41,7 +39,6 @@ public interface WithDefaultFor extends ConfigurationItem {
 	 */
 	@Name(DEFAULT_FOR)
 	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
-	@ControlProvider(SelectionControlProvider.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
 	@Format(CommaSeparatedStrings.class)
 	List<String> getDefaultFor();

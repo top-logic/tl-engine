@@ -56,10 +56,31 @@ public abstract class DefaultDataSourceProxy extends DataSourceProxy {
 	 *        The datasource configuration.
 	 */
 	protected DefaultDataSourceProxy(String defaultClassName, Properties config) throws SQLException, ConfigurationException {
-		this.impl = createDataSource(defaultClassName, config);
+		this(createImplementation(defaultClassName, config));
 	}
 
-	private DataSource createDataSource(String defaultClassName, Properties config)
+	/**
+	 * Creates a {@link DefaultDataSourceProxy} for the given implementation.
+	 * 
+	 * @param impl
+	 *        The {@link DataSource} to delegate to.
+	 * 
+	 * @see #createImplementation(String, Properties)
+	 */
+	protected DefaultDataSourceProxy(DataSource impl) {
+		this.impl = impl;
+	}
+
+	/**
+	 * Creates the {@link DataSource} implementation described by the given configuration.
+	 * 
+	 * @param defaultClassName
+	 *        The {@link DataSource} class to instantiate, if the given configuration does neither
+	 *        contain a {@link #IMPL_CLASS_PROPERTY} nor a {@link #IMPL_JNDI_NAME_PROPERTY}.
+	 * @param config
+	 *        The datasource configuration.
+	 */
+	protected static DataSource createImplementation(String defaultClassName, Properties config)
 			throws ConfigurationException, SQLException {
 		String jndiName = config.getProperty(IMPL_JNDI_NAME_PROPERTY);
 		if (!StringServices.isEmpty(jndiName)) {
@@ -75,7 +96,7 @@ public abstract class DefaultDataSourceProxy extends DataSourceProxy {
 		return SQLH.createDataSource(implClassName, implConfig(config));
 	}
 	
-	private Properties implConfig(Properties config) {
+	private static Properties implConfig(Properties config) {
 		Properties result = new Properties();
 		result.putAll(config);
 		result.remove(IMPL_CLASS_PROPERTY);

@@ -26,7 +26,7 @@
 					<en>Search</en>
 				</placeholder>
 				<on-submit>
-					<execute-script function="entered -> $entered"/>
+					<execute-script function="$value"/>
 					<write-channel name="state"/>
 				</on-submit>
 			</value-input>
@@ -50,7 +50,7 @@
 			</value-input>
 			<value-input
 				multiple="true"
-				options="p -> all(`tl.accounts:Person`)"
+				options="all(`tl.accounts:Person`)"
 				type="tl.accounts:Person"
 				value="owners"
 			>
@@ -171,6 +171,54 @@
 				value="term"
 			>
 				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				options="['No day', 'Monday', 'Tuesday']"
+				value="term"
+			>
+				<inputs>
+					<input channel="flag"/>
+				</inputs>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				option-order="by-label"
+				options="['No day', 'Monday', 'Tuesday']"
+				value="term"
+			>
+				<inputs>
+					<input channel="flag"/>
+				</inputs>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				type="tl.model:TLModule"
+				value="term"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				observed-types="tl.model:TLModule"
+				options="all(`tl.model:TLModule`)"
+				value="term"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				options="all(`tl.model:TLModule`)"
+				value="term"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
 			</value-input>
 		</children>
 	</panel>

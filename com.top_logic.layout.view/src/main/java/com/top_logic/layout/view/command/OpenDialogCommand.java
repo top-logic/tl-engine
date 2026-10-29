@@ -12,13 +12,17 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -54,6 +58,7 @@ public class OpenDialogCommand implements ViewCommand {
 	 * Configuration for {@link OpenDialogCommand}.
 	 */
 	@TagName("open-dialog")
+	@TypeIcon("css:bi bi-window-plus")
 	public interface Config extends ViewCommand.Config {
 
 		@Override
@@ -81,7 +86,8 @@ public class OpenDialogCommand implements ViewCommand {
 		 */
 		@Name(DIALOG_VIEW)
 		@Mandatory
-		String getDialogView();
+		@Format(ViewRefFormat.class)
+		ViewRef getDialogView();
 
 		/**
 		 * Whether clicking the backdrop (outside the dialog) closes it.
@@ -115,7 +121,7 @@ public class OpenDialogCommand implements ViewCommand {
 		List<ChannelBindingConfig> getOutputs();
 
 		/**
-		 * Dialog channel name to receive the command's input parameter.
+		 * Dialog channel name to receive the command's main argument.
 		 */
 		@Name(BIND_INPUT_TO)
 		@Nullable
@@ -124,6 +130,8 @@ public class OpenDialogCommand implements ViewCommand {
 
 	private final OpenDialogAction _action;
 
+	private final CommandArguments _arguments;
+
 	/**
 	 * Creates a new {@link OpenDialogCommand}.
 	 */
@@ -131,12 +139,25 @@ public class OpenDialogCommand implements ViewCommand {
 	public OpenDialogCommand(InstantiationContext context, Config config) {
 		_action = new OpenDialogAction(config.getDialogView(), config.getCloseOnBackdrop(),
 			config.getBindInputTo(), config.getBindings());
+		_arguments = CommandArguments.of(config, ActionScope.of(context));
 	}
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		// Run through the chain: opening may suspend to ask about unsaved changes first.
-		ViewActionChain.run(context, List.of(_action), input, null);
+		return execute(context, _arguments.arguments(context, input));
+	}
+
+	/**
+	 * Opens the dialog for the main argument.
+	 *
+	 * @implNote Runs through the chain: opening may suspend to ask about unsaved changes first.
+	 */
+	@Override
+	public HandlerResult execute(ReactContext context, ActionArguments arguments) {
+		if (arguments == null) {
+			return execute(context, (Object) null);
+		}
+		ViewActionChain.run(context, List.of(_action), arguments, null);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

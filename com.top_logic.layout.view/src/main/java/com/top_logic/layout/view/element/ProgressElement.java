@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
@@ -21,13 +22,17 @@ import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.SingleInput;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -48,8 +53,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <p>
- * Every expression is called with the current value of the {@link Config#getInput() input} channel,
- * and the bar is recomputed whenever that value changes, whenever the object on it changes, and
+ * Every expression sees the current value of the {@link Config#getInput() input} channel as a
+ * variable named after the channel, or by its {@code as} name, and the bar is recomputed whenever that value changes, whenever the object on it changes, and
  * whenever an object of an {@link Config#getObservedTypes() observed type} is created, changed or
  * deleted - a bar counting the members of a collection follows a member joining or leaving it only
  * through the latter.
@@ -62,10 +67,8 @@ public class ProgressElement implements UIElement {
 	 * Configuration for {@link ProgressElement}.
 	 */
 	@TagName("progress")
-	public interface Config extends UIElement.Config {
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
+	@TypeIcon("css:bi bi-reception-4")
+	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getFraction()}. */
 		String FRACTION = "fraction";
@@ -87,18 +90,20 @@ public class ProgressElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * Channel whose value every expression of this element is called with, and whose change
-		 * recomputes the bar.
+		 * Channel whose value every expression of this element sees, and whose change recomputes the
+		 * bar.
 		 *
 		 * <p>
-		 * A bar computed from the model as a whole needs none; its expressions are then called with
-		 * no value.
+		 * The expressions see the value as a variable named after the channel, or by the name given
+		 * with {@code as}: {@code input="job as upload"} with
+		 * {@code fraction="$upload.get(`my.module:Upload#share`)"}. A bar computed from the model as a whole needs none; its expressions then see no variable.
 		 * </p>
 		 */
+		@Override
 		@Name(INPUT)
 		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getInput();
+		@Format(InputRefFormat.class)
+		InputRef getInput();
 
 		/**
 		 * TL-Script expression answering the filled part of the bar, a number between 0 and 1.
@@ -111,6 +116,7 @@ public class ProgressElement implements UIElement {
 		 */
 		@Name(FRACTION)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getFraction();
 
 		/**
@@ -122,6 +128,7 @@ public class ProgressElement implements UIElement {
 		 */
 		@Name(DONE)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getDone();
 
 		/**
@@ -134,6 +141,7 @@ public class ProgressElement implements UIElement {
 		 */
 		@Name(TOTAL)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTotal();
 
 		/**
@@ -146,6 +154,7 @@ public class ProgressElement implements UIElement {
 		 */
 		@Name(LABEL)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getLabel();
 
 		/**
@@ -194,11 +203,12 @@ public class ProgressElement implements UIElement {
 	 */
 	@CalledByReflection
 	public ProgressElement(InstantiationContext context, Config config) {
-		_inputRef = config.getInput();
-		_fraction = QueryExecutor.compileOptional(config.getFraction());
-		_done = QueryExecutor.compileOptional(config.getDone());
-		_total = QueryExecutor.compileOptional(config.getTotal());
-		_label = QueryExecutor.compileOptional(config.getLabel());
+		InputRef input = config.getInput();
+		_inputRef = input == null ? null : input.getChannel();
+		_fraction = InputScript.compile(config, Config.FRACTION);
+		_done = InputScript.compile(config, Config.DONE);
+		_total = InputScript.compile(config, Config.TOTAL);
+		_label = InputScript.compile(config, Config.LABEL);
 		_observedTypeRefs = config.getObservedTypes();
 
 		if (_fraction != null) {
@@ -218,8 +228,8 @@ public class ProgressElement implements UIElement {
 	 * Creates a {@link ProgressElement}.
 	 *
 	 * @param input
-	 *        The channel every expression is called with, {@code null} for a bar computed from the
-	 *        model as a whole.
+	 *        The channel whose value every expression is called with, {@code null} for a bar
+	 *        computed from the model as a whole, whose expressions are called without arguments.
 	 * @param fraction
 	 *        The expression answering the filled part of the bar, {@code null} for a bar stated as
 	 *        two counts.
@@ -277,15 +287,16 @@ public class ProgressElement implements UIElement {
 	 * The progress displayed for the given input value.
 	 *
 	 * @param input
-	 *        The value of the input channel, {@code null} for an element without one.
+	 *        The value of the input channel, ignored for an element without one.
 	 * @return The fraction and the label of the bar.
 	 */
 	public Progress progressOf(Object input) {
-		String label = _label == null ? null : ValueLabel.label(_label.execute(input));
+		Object[] arguments = _inputRef == null ? new Object[0] : new Object[] { input };
+		String label = _label == null ? null : ValueLabel.label(_label.execute(arguments));
 		if (_fraction != null) {
-			return new Progress(fraction(_fraction.execute(input)), label);
+			return new Progress(fraction(_fraction.execute(arguments)), label);
 		}
-		return counted(number(_done.execute(input)), number(_total.execute(input)), label);
+		return counted(number(_done.execute(arguments)), number(_total.execute(arguments)), label);
 	}
 
 	/**

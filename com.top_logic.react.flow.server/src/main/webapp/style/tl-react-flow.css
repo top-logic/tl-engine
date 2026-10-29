@@ -17,12 +17,41 @@
 .tlCanSelect { cursor: pointer; }
 
 /* Color-change selection for graph nodes and edges. CSS overrides SVG presentation attributes. */
-.tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
-.tlSelected .tlSelectionFill { fill: var(--layer-selected); }
+.tlSelected .tlSelectionStroke { stroke: var(--tl-border-interactive); stroke-width: var(--tl-border-width-md); }
+.tlSelected .tlSelectionFill { fill: var(--tl-surface-brand-subtle); }
 /* Edge selection: highlight the visible edge stroke (not the transparent click target). */
-g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); stroke-width: 2; }
+g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-border-interactive); stroke-width: var(--tl-border-width-md); }
 /* Marking a chart draws for its own selection: shown on the selected element, hidden elsewhere. */
 .tlSelected .tlSelectionMarker { display: initial; }
+
+/*
+ * The rectangle drawn while dragging with Ctrl held, selecting the elements inside it. Only shown
+ * on the screen, it never takes a pointer event itself.
+ */
+.tlSelectionRectangle {
+	fill: var(--tl-surface-brand-subtle);
+	fill-opacity: 0.5;
+	stroke: var(--tl-border-interactive);
+	stroke-dasharray: 4 2;
+	pointer-events: none;
+}
+
+/*
+ * The fixed parts of a Gantt chart: the row labels at the side, the time axis at the top and the
+ * corner between them. The model paints their backdrop white, which an exported PDF keeps; on the
+ * screen it is the surface of the panel, in either mode. A label the model gives no color of its
+ * own takes the text color: SVG text is black otherwise, unreadable on a dark surface.
+ */
+.tl-gantt-vp-sidebar > rect:first-child,
+.tl-gantt-vp-header > rect:first-child,
+.tl-gantt-vp-corner > rect:first-child {
+	fill: var(--tl-surface-layer);
+}
+.tl-gantt-vp-sidebar text:not([fill]),
+.tl-gantt-vp-header text:not([fill]),
+.tl-gantt-vp-corner text:not([fill]) {
+	fill: var(--tl-text-primary);
+}
 
 /*
  * The zoom indicator the diagram control shows while zooming. An HTML element overlaying the
@@ -32,10 +61,10 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); 
 	position: absolute;
 	top: 0;
 	right: 0;
-	padding: var(--spacing-02);
-	background-color: var(--background-inverse);
-	color: var(--text-inverse);
-	border-bottom-left-radius: var(--border-radius-02);
+	padding: var(--tl-space-xs);
+	background-color: var(--tl-surface-inverse);
+	color: var(--tl-text-inverse);
+	border-bottom-left-radius: var(--tl-radius-md);
 }
 
 /* The indicator hides itself once the zoom level has been shown for a moment. */

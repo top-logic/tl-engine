@@ -63,6 +63,11 @@ public interface ProcessBase extends com.top_logic.bpe.bpml.model.Externalized, 
 	String PARTICIPANT_ATTR = "participant";
 
 	/**
+	 * Name of the table storing {@link #PROCESS_TYPE} objects.
+	 */
+	String TABLE_NAME = "BPElement";
+
+	/**
 	 * Getter for part {@link #COLLABORATION_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Collaboration getCollaboration() {

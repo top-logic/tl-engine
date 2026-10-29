@@ -35,6 +35,9 @@ public class ReactStackControl extends ReactLayoutControl {
 	/** @see #setGrowFirst(boolean) */
 	private static final String GROW_FIRST = "growFirst";
 
+	/** @see #setStateWords(String) */
+	private static final String STATE_WORDS = "stateWords";
+
 	/**
 	 * Flex direction.
 	 */
@@ -227,11 +230,28 @@ public class ReactStackControl extends ReactLayoutControl {
 	}
 
 	/**
-	 * Structural: this control is a flex layout container and is elided from the headless projection.
+	 * Marks the stack with state words, which the design system reads from the attribute
+	 * <code>data-tl-state</code> of the root element.
+	 *
+	 * <p>
+	 * Use where a control built on a stack is in a state its look depends on, for instance a
+	 * compact field that may be edited.
+	 * </p>
+	 *
+	 * @param stateWords
+	 *        The state words separated by a space, or <code>null</code> for none.
+	 */
+	public void setStateWords(String stateWords) {
+		putState(STATE_WORDS, stateWords == null ? "" : stateWords);
+	}
+
+	/**
+	 * Structural: this control is a flex layout container and is elided from the headless projection,
+	 * unless its items are {@link #isSelectable() selectable}: the selection is state of its own.
 	 */
 	@Override
 	public boolean scriptingTransparent() {
-		return true;
+		return !isSelectable();
 	}
 
 	/**
@@ -244,6 +264,7 @@ public class ReactStackControl extends ReactLayoutControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DIRECTION, GAP, ALIGN, JUSTIFY, WRAP, GROW_FIRST);
+		return presentationKeys(super.scriptingPresentationKeys(), DIRECTION, GAP, ALIGN, JUSTIFY, WRAP, GROW_FIRST,
+			STATE_WORDS);
 	}
 }

@@ -4,17 +4,17 @@
 	<channels>
 		<channel name="selectedRole"/>
 	</channels>
-	<split-panel
+	<split-panel id="main"
 		orientation="horizontal"
 		resizable="true"
 	>
 		<panes>
-			<pane
+			<pane id="list"
 				min-size="200"
 				size="40"
 				unit="%"
 			>
-				<panel>
+				<panel id="list-panel">
 					<title>
 						<en>Roles</en>
 						<de>Rollen</de>
@@ -28,21 +28,24 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`tl.accounts:Role`, transient: true)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="admin/access-control/create-role.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedRole"
-								/>
-							</open-dialog>
+							<execute-script function="new(`tl.accounts:Role`, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/create-role.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedRole"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedRole"
+							inputs="selectedRole"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -52,18 +55,20 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<confirm expr="r -> #('Delete role {0}?'@en, 'Rolle {0} löschen?'@de).fill($r.get(`tl.accounts:Role#name`))"/>
+							<confirm expr="#('Delete role {0}?'@en, 'Rolle {0} löschen?'@de).fill($selectedRole.get(`tl.accounts:Role#name`))"/>
 							<with-transaction>
 								<commitMessage>
 									<en>Deleted role {0}.</en>
 									<de>Rolle {0} gelöscht.</de>
 								</commitMessage>
-								<execute-script function="obj -> $obj.delete()"/>
+								<execute-script function="$selectedRole.delete()"/>
 							</with-transaction>
-							<write-channel name="selectedRole"/>
+							<write-channel name="selectedRole"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
-					<table
+					<table id="table"
 						observed-types="tl.accounts:Role"
 						selection="selectedRole"
 						types="tl.accounts:Role"
@@ -75,16 +80,16 @@
 					</table>
 				</panel>
 			</pane>
-			<pane
+			<pane id="detail"
 				size="60"
 				unit="%"
 			>
-				<panel>
+				<panel id="detail-panel">
 					<title>
 						<en>Role</en>
 						<de>Rolle</de>
 					</title>
-					<form
+					<form id="form"
 						input="selectedRole"
 						with-inset="true"
 					>

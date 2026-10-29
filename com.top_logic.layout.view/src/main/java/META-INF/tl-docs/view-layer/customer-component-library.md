@@ -1,6 +1,6 @@
 ---
-description: Read when the React UI must appear in a customer's own React component library - a theme from its design tokens, root wrappers and replace-based adapter components registered through tl-react-bridge, the state.proto state contract, and the Material UI module com.top_logic.layout.react.mui as the worked example.
-order: 38
+description: Read when the React UI must appear in a customer's own React component library - a theme from its design tokens, root wrappers, adapters for parts (replacePart) and for whole controls (replace) registered through tl-react-bridge, when to replace which, the state.proto state contract, and the Material UI module com.top_logic.layout.react.mui as the worked example.
+order: 37
 ---
 
 # Rendering the React UI with a customer's component library
@@ -11,8 +11,8 @@ no data. This article describes how to attach it so that the applications built 
 (`.view.xml`) appear in the customer's design — and which extension points of `tl-react-bridge` serve
 that purpose.
 
-A runnable reference is the Material UI module `com.top_logic.layout.react.mui`, which renders
-every replaceable component with Material UI, and the demo project `com.top_logic.demo.react.mui`,
+A runnable reference is the Material UI module `com.top_logic.layout.react.mui`, which draws
+every part and renders every replaceable composite control with Material UI, and the demo project `com.top_logic.demo.react.mui`,
 which installs it with a theme of its own the way an application does (see
 [The Material UI module](#the-material-ui-module)). The excerpts below are taken from them.
 
@@ -26,13 +26,18 @@ deployment: the same views appear in the customer's design.
 
 The seam between server and client consists of exactly three things:
 
-- the **component name** — the third constructor argument of `ReactControl`, e.g. `"TLButton"`;
+- the **component name** — the third constructor argument of `ReactControl`, e.g. `"TLWindow"`;
 - the **state keys** the control publishes with `putState` and the component reads with
   `useTLState()`;
 - the **commands** the component sends back with `useTLCommand()` (e.g. `click`, `valueChanged`).
 
-The adaptation has three levels. Level 1 always applies, level 2 covers the leaf widgets the library
-has a counterpart for, level 3 is the exception.
+On the client, the controls draw themselves with **parts** (atoms): a button, a checkbox, a text
+box, a chip. A part only draws; the control maps its state to the props of the part and sends the
+commands ([Parts: the atoms of the React UI](doc:view-layer/parts)). A library can therefore
+replace a part, which changes the atom wherever a control draws it, or a whole control.
+
+The adaptation has three levels. Level 1 always applies, level 2 covers the parts and controls the
+library has a counterpart for, level 3 is the exception.
 
 ## Level 1: a theme from the customer's design tokens
 
@@ -73,11 +78,32 @@ instance — that theme is the source, and the TopLogic properties can be derive
 instead of being copied into a theme of the `UIThemeService`; the Material UI module does so (see
 [Following the MUI theme](#following-the-mui-theme)).
 
-## Level 2: adapter components for leaf widgets
+## Level 2: adapters for parts and controls
 
-For every TopLogic component the library has a counterpart for, an adapter module contains a small
-adapter: it maps the control state to the props of the library component and the library's
-callbacks to TopLogic commands.
+For every part and every composite control the library has a counterpart for, an adapter module
+contains a small adapter that draws it with the library component.
+
+### Parts and controls
+
+There are two levels of replacement:
+
+- **A part, with `replacePart`.** The adapter takes the typed props of the part (`PartProps`) and
+  draws them; it holds no server state and sends no command. The part appears as a control of its
+  own and inline in toolbars, menus, tables, trees, form groups and the sidebar, so one replacement
+  reaches all of them. The parts are `Button`, `MenuTrigger`, `DisclosureToggle`, `Checkbox`,
+  `TextInput`, `FieldValue`, `Chip`, `Badge`, `Divider`, `ProgressBar`, `Spinner` and `Listbox`; the list
+  with the places each is drawn, the registry and a part adapter are in
+  [Parts: the atoms of the React UI](doc:view-layer/parts).
+- **A control, with `replace`.** The adapter renders the complete state of a control under its
+  component name and sends its commands — a window, a dialog, a menu, a select, a tab bar, the
+  frame of a form field (see [The replaceable components](#the-replaceable-components)).
+
+Replace a part when the library has a counterpart for the atom; replace a control when the library
+has a counterpart for the whole composite, its layout and its behaviour included. The atomic
+controls (`TLButton`, `TLToggleButton`, `TLCheckbox`, `TLTextInput`, `TLPasswordInput`,
+`TLNumberInput`, `TLOptionChips`, `TLProgress`) draw their look through parts only: replace their
+parts, which also reach the inline places these controls never cover. A replaced control may itself
+draw parts (`usePart`), so the parts of the library appear inside it as well.
 
 ### The module
 
@@ -117,21 +143,31 @@ application makes with its theme before the controls of the page are mounted
 (`com.top_logic.layout.react.mui/react-src/install.ts`, shortened):
 
 ```ts
-import { registerRootWrapper, replace } from 'tl-react-bridge';
+import { registerRootWrapper, replace, replacePart } from 'tl-react-bridge';
 
-const ADAPTERS = {
-  TLButton: MuiButtonAdapter,
-  TLCheckbox: MuiCheckboxAdapter,
-  // ... one adapter per component of the state contract
+const PART_ADAPTERS = {
+  Button: MuiButtonAdapter,
+  Checkbox: MuiCheckboxAdapter,
+  // ... one adapter per part
+} as const satisfies { [K in PartName]?: PartComponent<K> };
+
+const CONTROL_ADAPTERS = {
+  TLWindow: MuiWindowAdapter,
+  TLSelect: MuiSelectAdapter,
+  // ... one adapter per replaced control of the state contract
 } as const satisfies Record<string, React.ComponentType<TLCellProps>>;
 
 export function installMui(options: MuiOptions): void {
-  // ... checks: installed once, known component names
+  // ... checks: installed once, known names
   const themes = createPageThemes(options.theme);
   installThemeProperties(pageTheme(themes));
   registerRootWrapper(createMuiRoot(themes));
   for (const name of names) {         // the selection of options.replace
-    replace(name, ADAPTERS[name]);
+    if (isPartAdapterName(name)) {
+      replacePartByAdapter(name);     // replacePart(name, PART_ADAPTERS[name])
+    } else {
+      replace(name, CONTROL_ADAPTERS[name]);
+    }
   }
 }
 ```
@@ -165,139 +201,151 @@ export function createMuiRoot(themes: PageThemes) {
   the bridge renders: each control mounted with `mount`, and the tooltip host. Nested controls render
   through `TLChild` inside their parent's tree and portals inherit the context of the tree they are
   created in, so both are covered as well. A wrapper must render its `children`.
+- **`replacePart(name, component)`** (`bridge/parts.ts`) draws the part with the given component
+  wherever a control draws it (`usePart`); the component takes the props of the part
+  (`PartProps[name]`). See [Parts: the atoms of the React UI](doc:view-layer/parts#the-registry).
 - **`replace(name, component)`** (`bridge/registry.ts`) renders the component name with the given
   component instead of the TopLogic one. The replacement receives the same props (`TLCellProps`) and
-  runs in the same control context. The compositions of TopLogic obtain their leaf components through
-  the registry (`TLChild`), so a replaced button also appears inside toolbars, dialogs and forms.
+  runs in the same control context. The compositions of TopLogic obtain their child controls through
+  the registry (`TLChild`), so a replaced select also appears inside forms, dialogs and tables.
 - **`useFormLayout()`** (`bridge/form-layout.ts`) returns what the form layout (`TLFormLayout`)
   around a control tells its fields through `FormLayoutContext`: whether the form is read-only and
   the label position it resolved for fields that state none. A replacement of `TLFormField` reads
   it to omit the required mark, the messages and the help in a read-only form and to place the
   label as `TLFormField` does. With `FieldLabelContext` (`bridge/field-label.ts`) such a frame
   names its input by the label, as `TLFormField` does.
-- **`useButtonDefaults()`** and **`menuItemProps(defaults, checked?)`** (`bridge/button-defaults.ts`)
-  tell a replacement of `TLButton` or `TLToggleButton` what the container around it suggests,
-  which `<ButtonDefaults appearance=… iconOnly=…>` provides: the appearance (`ghost` in a toolbar
-  and an app bar, `secondary` in the button bar of a window), the icon-only presentation of a
-  compact toolbar, and `menu-item` inside a menu. A menu entry carries the role and the roving
-  tabindex `menuItemProps` returns, by which the menu's keyboard navigation (arrows, Escape) finds
-  it. A replacement of a container (`TLAppBar`, `TLWindow`) provides the same defaults to its
-  buttons with `ButtonDefaults`.
+- **`ButtonDefaults`** and **`useButtonDefaults()`** (`bridge/button-defaults.ts`) carry what a
+  container suggests to the buttons inside it: the appearance (`ghost` in a toolbar and an app bar,
+  `secondary` in the button bar of a window), the icon-only presentation of a compact toolbar, and
+  `menu-item` inside a menu. The button controls resolve these defaults before they draw the part
+  `Button`, so a part adapter receives the resolved `appearance` and `display`. A replacement of a
+  container (`TLAppBar`, `TLWindow`) provides the defaults to its buttons with
+  `<ButtonDefaults appearance=… iconOnly=…>`. A menu entry carries the role and the roving tabindex
+  `menuItemProps` returns (part of `buttonPartAttributes`), by which the menu's keyboard navigation
+  (arrows, Escape) finds it.
+- **`useFloatingFrame()`**, **`FloatingFrame`**, **`FloatingRail`** (`bridge/floating-anchor.ts`)
+  make a container a frame for floating elements: the rails around its body take an element floating
+  over a corner of the body (a floating action button), which then stays in place while the body
+  scrolls. `TLPanel` and `TLWindow` are frames; a replacement of `TLWindow` renders the rails directly
+  before and after its scrolling body and the content inside `FloatingFrame`, as `MuiWindowAdapter.tsx`
+  does. A floating element finds its rail with `useFloatingAnchor(edge)`.
+- **`useTransientOverlay(ref, active)`** (`bridge/transient-overlay.ts`) reports the element of a
+  transient overlay - a snackbar while it shows a message - so that floating actions it would cover
+  move aside. A replacement of `TLSnackbar` reports its element the way `TLSnackbar` does; one whose
+  element changes while shown (a new element per message, as `MuiSnackbarAdapter.tsx` keys it) calls
+  `registerTransientOverlay(element)` for each element instead. A replacement of
+  `TLFloatingAction` moves aside with `useOverlayClearance(ref, edge, layout)`, the shift
+  `TLFloatingAction` applies (`useTransientOverlayRects()` and `clearance(…)` underneath).
+- **`useChildStates(controls)`** and **`useChildCommand()`** (`bridge/child-states.ts`) let a
+  container draw child controls with components of its own instead of rendering them with
+  `TLChild`: the first reads their live states (the `ButtonState` of an action: label, icon,
+  disabled, hidden), the second sends a command to a child (`click` presses a button).
 - **`<ThemeIcon encoded={…}/>`** (`bridge/ThemeIcon.tsx`) renders a theme image from the encoded
   form a control sends in its state (`ButtonState.image`, the icons of menu entries and tabs, …): an
   icon font class, an image file, or nothing for the invisible image. An adapter passes the element
   to the library wherever the library takes an icon.
 
-### An adapter
+### A control adapter
 
-An adapter reads the typed state with `useTLState<Partial<XStateJson>>()` — the state types are exported by
+A part adapter takes the props of its part, see
+[Parts: the atoms of the React UI](doc:view-layer/parts#a-part-adapter). A control adapter reads
+the typed state with `useTLState<Partial<XStateJson>>()` — the state types are exported by
 `tl-react-bridge` — and sends commands with `useTLCommand()` (shortened from
-`react-src/adapters/MuiButtonAdapter.tsx`, which in addition renders a menu entry, an icon-only
-button and a link):
+`react-src/adapters/MuiAlertAdapter.tsx`):
 
 ```tsx
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon,
-  useButtonDefaults } from 'tl-react-bridge';
-import type { TLCellProps, ButtonStateJson, ButtonAppearance } from 'tl-react-bridge';
-import Button from '@mui/material/Button';
+import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName } from 'tl-react-bridge';
+import type { TLCellProps, AlertStateJson, ChildControlJson } from 'tl-react-bridge';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 
-const CMD_CLICK = 'click';
+/** Command dismissing the alert. */
+const CMD_DISMISS = 'dismiss';
 
-const VARIANTS = { secondary: 'outlined', primary: 'contained', ghost: 'text', link: 'text' } as const;
+/** Argument of CMD_DISMISS: the generation of the content dismissed. */
+const ARG_GENERATION = 'generation';
 
-const MuiButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<ButtonStateJson>>();
+const MuiAlertAdapter: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<AlertStateJson>>();
   const sendCommand = useTLCommand();
-  const defaults = useButtonDefaults();
-  const disabled = state.disabled === true;
-  const hidden = state.hidden === true;
-  // The default appearance of the server is the one the container suggests.
-  const serverAppearance = state.appearance === 'default' ? undefined : state.appearance;
-  const appearance: ButtonAppearance = serverAppearance ?? defaults.appearance ?? 'secondary';
-  const handleClick = () => sendCommand(CMD_CLICK);   // the full adapter also honours navigateUrl
+  const i18n = useI18N(I18N_KEYS);
+  const generation = state.generation ?? 0;
+  const dismiss = () => sendCommand(CMD_DISMISS, { [ARG_GENERATION]: generation });
 
-  // A hidden or disabled button declines the gesture, so it falls through to an outer binding.
-  useKeyboardBinding(state.keyGesture, () => {
-    if (disabled || hidden) return false;
-    handleClick();
-    return true;
-  });
-
-  if (hidden) return null;
-  const showIcon = !!state.image && (state.displayMode ?? 'label-only') !== 'label-only';
+  if (state.hidden === true) return null;
+  const actions: ChildControlJson[] = state.actions ?? [];
   return (
-    <Button id={controlId} disabled={disabled} onClick={handleClick}
-      variant={VARIANTS[appearance]}
-      color={state.tone === 'danger' ? 'error' : 'primary'}
-      startIcon={showIcon ? <ThemeIcon encoded={state.image!} className="tl-icon-sm" /> : undefined}
-      aria-label={showIcon ? state.label : undefined}   // the full adapter also sets the tooltip
-      aria-pressed={state.active === true ? true : undefined}
-      className={rootClassName(state, state.cssClasses)}>
-      {state.label}
-    </Button>
+    <Alert id={controlId} className={rootClassName(state)} severity={state.variant ?? 'info'}
+      icon={state.icon ? <ThemeIcon encoded={state.icon} className="tl-icon-md" /> : undefined}
+      onClose={state.closable === true ? dismiss : undefined}
+      closeText={i18n['js.alert.dismiss']}>
+      {state.title && <AlertTitle>{state.title}</AlertTitle>}
+      {state.message}
+      {actions.map(action => <TLChild key={action.controlId} control={action} />)}
+    </Alert>
   );
 };
 ```
 
-Theme images reach an adapter in their encoded form (`state.image`); `ThemeIcon` from
-`tl-react-bridge` turns them into an element the library shows as its icon. An icon-only button is
-named by its label: the full adapter sets it as `aria-label` and declares it as tooltip through
-`TOOLTIP_ATTR` — always for an icon-only button, and with `TOOLTIP_WHEN_ATTR` = `WHEN_TRUNCATED`
-(shown only while the label is clipped or hidden) otherwise, as `TLButton` does. Text that the
-library cuts off with `text-overflow: ellipsis` (or a `line-clamp`) needs no declaration: the
-tooltip host offers the full text of a cut-off element by itself; `WHEN_TRUNCATED` is for a label
-that is hidden or clipped without an ellipsis.
+Theme images reach an adapter in their encoded form (`state.icon`, `state.image`); `ThemeIcon` from
+`tl-react-bridge` turns them into an element the library shows as its icon. Embedded controls — the
+action buttons of the alert — are rendered with `TLChild` and draw their parts, replaced or not.
+Text that the library cuts off with `text-overflow: ellipsis` (or a `line-clamp`) needs no tooltip
+declaration: the tooltip host offers the full text of a cut-off element by itself; `TOOLTIP_ATTR`
+with `TOOLTIP_WHEN_ATTR` = `WHEN_TRUNCATED` is for a label that is hidden or clipped without an
+ellipsis.
 
 A field adapter reads and writes its value through `useTLFieldValue()`, which sends `valueChanged`
-and so makes the library component part of the form's edit and save cycle (shortened from
-`react-src/adapters/MuiCheckboxAdapter.tsx`, which in addition handles the tri-state and the switch
-presentation):
+and so makes the library component part of the form's edit and save cycle. A field that is not
+editable shows its value with the part `FieldValue`, as the TopLogic fields do (shortened from
+`react-src/adapters/MuiSliderAdapter.tsx`, which in addition shows the label of the value beside
+the slider):
 
 ```tsx
-const state = useTLState<Partial<CheckboxStateJson>>();
-const labelProps = useFieldLabelProps(controlId, controlId);
-const [value, setValue] = useTLFieldValue();
-const editable = state.editable !== false;
-const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  if (editable) setValue(event.target.checked);
-};
+const state = useTLState<Partial<SliderStateJson>>();
+const FieldValue = usePart('FieldValue');
+const inputId = fieldInputId(controlId);
+const labelProps = useFieldLabelProps(controlId, inputId);
+const [value, setValue, flush] = useTLFieldValue({ debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS });
+
 if (state.hidden === true) return null;
-return <Checkbox id={controlId} checked={value === true} onChange={handleChange}
-  readOnly={!editable} disabled={state.disabled === true}
-  color={state.hasError === true ? 'error' : fieldColor(state)}
+if (showsValueOnly(state)) {
+  return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={state.valueLabel ?? ''} />;
+}
+return <Slider id={controlId} value={typeof value === 'number' ? value : min} min={min} max={max}
+  onChange={(_event, newValue) => setValue(newValue as number)} onChangeCommitted={() => void flush()}
+  disabled={state.disabled === true}
+  color={state.hasError === true ? 'error' : state.hasWarnings === true ? 'warning' : 'primary'}
   className={rootClassName(state)}
-  slotProps={{ input: { ...labelProps, ...fieldAriaProps(state) } }} />;
+  slotProps={{ input: { id: inputId, ...labelProps, ...fieldAriaProps(state) } }} />;
 ```
 
-MUI puts the `id` of a checkbox on its `input`; the label of the surrounding form field refers to it
-through `useFieldLabelProps`. `fieldColor` and `fieldAriaProps` are shared helpers of the module
-(`react-src/adapters/field.tsx`) mapping the error, warning and mandatory flags of a field.
+The label of the surrounding form field refers to the input through `useFieldLabelProps`.
+`showsValueOnly` and `fieldAriaProps` are shared helpers of the module
+(`react-src/adapters/field.tsx`) deciding whether a field shows its value only and mapping the
+error, warning and mandatory flags of a field.
 
 `rootClassName(state, …classes)` appends the CSS class configured for the control (`cssClass`) to
-the component's own classes — use it on the root element of every adapter.
+the component's own classes — use it on the root element of every control adapter. A part receives
+the class in its `className` prop.
 
 ### The replaceable components
 
 The state contract is `com.top_logic.layout.react/src/main/java/com/top_logic/layout/react/state/state.proto`,
-**the source of truth**: its file header lists the replaceable components, and each message documents
-every property, its type, its default (an absent property has its documented default) and the
-commands the component sends. The list in the header:
+**the source of truth**: its file header lists the components with a state message, and each message
+documents every property, its type, its default (an absent property has its documented default) and
+the commands the component sends. The controls a library replaces as a whole:
 
 | Component | State message |
 |---|---|
-| `TLButton` | `ButtonState` |
-| `TLToggleButton` | `ToggleButtonState` |
-| `TLCheckbox` | `CheckboxState` |
-| `TLTextInput` | `TextInputState` |
-| `TLPasswordInput` | `PasswordInputState` |
-| `TLNumberInput` | `NumberInputState` |
 | `TLDatePicker` | `DatePickerState` |
 | `TLSelect` | `SelectState` |
-| `TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`, `TLChoiceGroup` | `DropdownSelectState` |
+| `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup` | `DropdownSelectState` |
 | `TLTabBar` | `TabBarState` |
 | `TLAccordion` | `AccordionState` |
 | `TLWindow` | `WindowState` |
 | `TLDialog` | `DialogState` |
+| `TLPopover` | `PopoverState` |
 | `TLMenu` | `MenuState` |
 | `TLSnackbar` | `SnackbarState` |
 | `TLAlert` | `AlertState` |
@@ -306,8 +354,13 @@ commands the component sends. The list in the header:
 | `TLCard` | `CardState` |
 | `TLAppBar` | `AppBarState` |
 | `TLBreadcrumb` | `BreadcrumbState` |
-| `TLProgress` | `ProgressState` |
+| `TLAvatar` | `AvatarState` |
 | `TLSlider` | `SliderState` |
+| `TLFloatingAction` | `FloatingActionState` |
+
+The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
+`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips` and `TLProgress`. Their look is
+drawn by parts ([Parts and controls](#parts-and-controls)); a library replaces those parts.
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,
 `disabled`, `mandatory`, error and warning flags, label, placeholder, …), `TypingFieldState` (debounce, send on
@@ -367,8 +420,9 @@ it generic and parameterized by configuration, not tailored to one view.
   takes its position from that first mention.
 - **Portals, focus, outside press.** Dialogs and popovers that portal into `document.body` must
   cooperate with the focus trap (`useFocusTrap`; a portaled popup anchored inside a modal surface
-  carries `anchoredOverlayProps`), with closing on an outside press (`useCloseOnOutsidePress`) and
-  with the window manager. Most integration defects are to be expected here.
+  carries `anchoredOverlayProps`), with closing on an outside press (`useCloseOnOutsidePress`; a
+  press in a popup carrying `anchoredOverlayProps` does not close the surfaces it was opened from)
+  and with the window manager. Most integration defects are to be expected here.
 
 ## Behaviour details and limits
 
@@ -379,16 +433,19 @@ it generic and parameterized by configuration, not tailored to one view.
   immediately: the mounted roots re-render with the extended chain. Since that changes the element
   tree above the control, the subtree is remounted and loses its local React state (the server state
   is kept). Register wrappers when the script loads.
-- **Replacement precedence.** A `replace` wins over every `register` of the same name, independent
-  of the order in which the scripts load. A second `register` or a second `replace` of the same name
-  logs a console warning; the later one wins.
+- **Replacement precedence.** A `replace` wins over every `register` of the same name, and a
+  `replacePart` over every `registerPart` of the same part, independent of the order in which the
+  scripts load. A second registration or a second replacement of the same name logs a console
+  warning; the later one wins.
 - **Lookup timing.** A top-level control looks up its component when it is mounted, a nested control
-  each time it is rendered. Register replacements when the script loads, before the page's controls
-  are mounted.
-- **Parts not rendered through the registry keep the TopLogic look.** A composition that draws a
-  part itself, rather than through `TLChild`, is not affected by a replacement: the help and close
-  buttons of a window's title bar, for instance, are plain `<button>`s inside `TLWindow`, not
-  `TLButton`s. To restyle them, replace `TLWindow` (or style them through tokens).
+  and every part each time they are rendered. Register replacements when the script loads, before
+  the page's controls are mounted.
+- **What a control draws with its own markup keeps the TopLogic look.** A replacement of a part
+  reaches what is drawn through `usePart`, a replacement of a control what is rendered through
+  `TLChild`. The buttons, checkboxes, text boxes, chips, toggles, dividers and busy indicators of
+  the compositions are parts. The maximize and close buttons of a window's title bar are drawn by
+  the window itself: `TLWindow` draws them as plain `<button>`s, `MuiWindowAdapter` as MUI
+  `IconButton`s. To restyle them, replace `TLWindow` (or style them through tokens).
 - **Field values are untyped.** `value` is declared in `FieldState` as `json` and is `unknown` in
   TypeScript for every field; msgbuf cannot narrow an inherited field. Its shape is documented per
   message (a string for `TextInputState`, `true`/`false`/`null` for `CheckboxState`, a list of
@@ -405,7 +462,11 @@ it generic and parameterized by configuration, not tailored to one view.
 
 ## Extending the contract (engine developers)
 
-To make another component replaceable:
+A part is added by its props interface in `bridge/parts.ts`, its entry in `PartProps`, a default
+registered in `controls-entry.ts`, the adapters of the library modules and their tests, see
+[Adding a part](doc:view-layer/parts#adding-a-part-engine-developers).
+
+To make another control replaceable as a whole:
 
 1. Add its state message to `state.proto` (extending `ControlState` or `FieldState`), document
    every property, and add the component to the list in the file header. The file carries
@@ -429,8 +490,8 @@ as a map and sends patches of it.
 
 ## The Material UI module
 
-`com.top_logic.layout.react.mui` (artifact `tl-layout-react-mui`) renders every replaceable component
-with [Material UI](https://mui.com/) — a complete adapter module for a real component library. It
+`com.top_logic.layout.react.mui` (artifact `tl-layout-react-mui`) draws every part and renders every
+replaceable control with [Material UI](https://mui.com/) — a complete adapter module for a real component library. It
 uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emotion/*` and `dayjs`.
 An application that wants the Material UI look depends on it and installs it with its own theme
 (see [An application on Material UI](#an-application-on-material-ui)).
@@ -440,10 +501,10 @@ components, is [A TopLogic React application in a customer's Material UI theme](
 | Path | Content |
 |---|---|
 | `react-src/mui-entry.ts` | the entry of the bundle `tl-react-mui`: `installMui` and the re-exports of Material UI |
-| `react-src/install.ts` | `installMui`: theme, derived properties, root wrapper, the selected replacements |
+| `react-src/install.ts` | `installMui`: theme, derived properties, root wrapper, the selected replacements of parts (`PART_ADAPTERS`) and controls (`CONTROL_ADAPTERS`) |
 | `react-src/themeProperties.ts` | derives the styling properties of the TopLogic components from the MUI theme and writes them into the page |
 | `react-src/MuiRoot.tsx` | the root wrapper: emotion cache, MUI theme and date localization |
-| `react-src/adapters/` | one adapter per component of the state contract, each with a wire test (`*.test.tsx`); the shared parts are `field.tsx` (field state, typing fields), `choice.tsx` (selection fields) and `window-frame.ts` (moving and resizing a window) |
+| `react-src/adapters/` | one adapter per part and per replaced control, each with a test (`*.test.tsx`: the props of a part drawn as its interface states, the wire of a control); tests mounting the TopLogic controls with the MUI parts (`checkboxes.test.tsx`, `chips.test.tsx`, …); the shared helpers are `field.tsx` (field state, typing fields), `choice.tsx` (selection fields) and `window-frame.ts` (moving and resizing a window) |
 | `react-src/react-*-shim.ts` | the shims the aliases of `vite.config.ts` point to; `react-shim.ts` and `react-dom-shim.ts` name the complete public API, as prebuilt library code needs |
 | `src/main/webapp/WEB-INF/conf/tl-layout-react-mui.conf.config.xml` | `ClientResources` registration of the bundle under the import specifier `tl-react-mui` |
 
@@ -490,10 +551,12 @@ Loading the bundle changes nothing on the page; `installMui` does. How it attach
   resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
   since every one of its mechanisms already has an owner. Menus are positioned with `usePopover`
   and close through `useCloseOnOutsidePress`, like `TLMenu`. Popups of selects and date pickers
-  carry `anchoredOverlayProps`, so the focus trap of a surrounding window accepts them.
-- **Container context.** Form fields read `useFormLayout()`, buttons read `useButtonDefaults()`
-  and apply `menuItemProps` inside a menu, so they behave like the TopLogic components in forms,
-  toolbars, menus, app bars and windows.
+  carry `anchoredOverlayProps`, so the focus trap of a surrounding window accepts them and a press
+  in them does not close a popover they were opened from.
+- **Container context.** The form field frame reads `useFormLayout()`; the app bar and the window
+  provide `ButtonDefaults` to their buttons, so the button controls resolve the same appearance as
+  under the TopLogic components, and the part `Button` draws a menu entry with the attributes of
+  `buttonPartAttributes`.
 
 The wire tests and the tests of `installMui` run with vitest (`npm test` in the module directory).
 
@@ -527,11 +590,13 @@ installMui({ theme: customerTheme, replace: 'all' });
 
 - `theme: ThemeOptions` — the options of the application's theme, as `createTheme` takes them,
   functions included (e.g. a `typography` computed from the palette);
-- `replace?: 'all' | readonly ComponentName[]` — the TopLogic components rendered with Material UI,
-  `'all'` (the default, `ALL_COMPONENTS`) or a selection of `COMPONENT_NAMES` (the 25 names of the
-  table [The replaceable components](#the-replaceable-components), typed as the union
-  `ComponentName`), e.g. `replace: ['TLButton', 'TLCheckbox']`. The components not selected keep
-  their TopLogic rendering and follow the theme through the derived properties.
+- `replace?: 'all' | readonly ComponentName[]` — the parts and controls rendered with Material UI,
+  `'all'` (the default, `ALL_COMPONENTS`) or a selection of `COMPONENT_NAMES`, typed as the union
+  `ComponentName`: the 11 part names ([The parts](doc:view-layer/parts#the-parts)) and the 18
+  control names of [The replaceable components](#the-replaceable-components) that have an adapter
+  (all but `TLAccordion`), e.g. `replace: ['Button', 'Checkbox', 'TLWindow']`. A part is drawn
+  with Material UI wherever a control draws it, a control is replaced as a whole. What is not
+  selected keeps its TopLogic rendering and follows the theme through the derived properties.
 
 A second call fails, as does a name without adapter: the installation is made once, before the
 controls of the page are mounted, and cannot be changed afterwards.

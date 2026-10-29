@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +23,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -51,9 +54,10 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
+import com.top_logic.layout.view.routing.WithFinalTitle;
 import com.top_logic.layout.view.security.AccessChecks;
-import com.top_logic.layout.view.security.AccessControl;
-import com.top_logic.layout.view.security.SecurityScope;
+import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
@@ -74,6 +78,7 @@ public class SidebarElement implements UIElement {
 	 * Configuration for {@link SidebarElement}.
 	 */
 	@TagName("sidebar")
+	@TypeIcon("css:bi bi-layout-sidebar")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -134,16 +139,16 @@ public class SidebarElement implements UIElement {
 
 		/**
 		 * Name of the slot into which the sidebar contributes a hamburger button that opens the
-		 * mobile drawer.
+		 * drawer while the app shell is compact.
 		 *
 		 * <p>
 		 * If non-empty, the sidebar emits a {@code SlotContentControl} carrying a
 		 * {@code DrawerToggleControl} addressed to {@code <slot name="<this-value>"/>}. By
 		 * convention the placeholder is declared in the app bar's leading area (e.g.
 		 * {@code <leading><slot name="appbar-leading"/></leading>}), so the button surfaces in
-		 * the app bar at mobile breakpoints. Leave empty to suppress the contribution entirely
-		 * — useful when the sidebar is used in a layout without an app bar or with a different
-		 * mobile entry point.
+		 * the app bar, rendered only while the app shell is compact. Leave empty to suppress the
+		 * contribution entirely — useful when the sidebar is used in a layout without an app bar or
+		 * with a different entry point for the compact drawer.
 		 * </p>
 		 */
 		@Name(DRAWER_OPEN_SLOT_NAME)
@@ -160,11 +165,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its header content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(HEADER)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
+		List<UIElement.Config> getHeader();
 
 		/**
 		 * What the rail shows above its items while it is folded to a narrow strip.
@@ -176,11 +184,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its collapsed header content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(HEADER_COLLAPSED)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getHeaderCollapsed();
+		List<UIElement.Config> getHeaderCollapsed();
 
 		/**
 		 * What the rail shows below its items: the account area, a version note, a help link.
@@ -192,11 +203,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its footer content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(FOOTER)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
+		List<UIElement.Config> getFooter();
 
 		/**
 		 * What the rail shows below its items while it is folded to a narrow strip.
@@ -208,11 +222,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its collapsed footer content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(FOOTER_COLLAPSED)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getFooterCollapsed();
+		List<UIElement.Config> getFooterCollapsed();
 	}
 
 	/**
@@ -282,6 +299,51 @@ public class SidebarElement implements UIElement {
 		 *        What connects an item to the control displaying it.
 		 */
 		void addBinding(Consumer<ReactSidebarControl> binding);
+
+		/**
+		 * The access checks of the groups enclosing the items built at this site, outermost first.
+		 *
+		 * <p>
+		 * The content of a navigation item is displayed only as far as each of them allows, see
+		 * {@link #guardedBy(UnitAccess)}.
+		 * </p>
+		 */
+		default List<UnitAccess> guards() {
+			return Collections.emptyList();
+		}
+
+		/**
+		 * The site for the items of a group with the given access check.
+		 *
+		 * @param access
+		 *        The access check of the group, {@code null} for a group without one.
+		 * @return A site adding the given check to the {@link #guards()} of this site.
+		 */
+		default ItemSite guardedBy(UnitAccess access) {
+			if (access == null) {
+				return this;
+			}
+			ItemSite outer = this;
+			List<UnitAccess> guards = new ArrayList<>(guards());
+			guards.add(access);
+			List<UnitAccess> allGuards = Collections.unmodifiableList(guards);
+			return new ItemSite() {
+				@Override
+				public ViewContext contentContext(ViewContext itemContext, String itemKey) {
+					return outer.contentContext(itemContext, itemKey);
+				}
+
+				@Override
+				public void addBinding(Consumer<ReactSidebarControl> binding) {
+					outer.addBinding(binding);
+				}
+
+				@Override
+				public List<UnitAccess> guards() {
+					return allGuards;
+				}
+			};
+		}
 	}
 
 	/**
@@ -289,9 +351,8 @@ public class SidebarElement implements UIElement {
 	 *
 	 * @implNote {@link #getId()} is the merge key of the items list: a configuration fragment in
 	 *           another module positions ({@code config:position}) or overrides an item by
-	 *           referencing this id. A {@code <separator>} usually leaves it empty; at most one
-	 *           anonymous entry (empty id) may occur, so give separators an explicit id when more
-	 *           than one is needed.
+	 *           referencing this id. A {@code <separator>} usually leaves it empty: an entry
+	 *           without id is anonymous, appended in order and addressed by no fragment.
 	 */
 	public interface SidebarItemConfig extends PolymorphicConfiguration<SidebarItemElement> {
 
@@ -299,9 +360,10 @@ public class SidebarElement implements UIElement {
 		String ID = "id";
 
 		/**
-		 * The unique item identifier.
+		 * The item identifier, unique in the whole view, see {@link UIElement.Config#getId()}.
 		 */
 		@Name(ID)
+		@GlobalKey
 		String getId();
 	}
 
@@ -309,7 +371,8 @@ public class SidebarElement implements UIElement {
 	 * A navigation item with content.
 	 */
 	@TagName("nav-item")
-	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl {
+	@TypeIcon("css:bi bi-link-45deg")
+	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithFinalTitle {
 
 		@Override
 		@ClassDefault(NavItemElement.class)
@@ -388,18 +451,23 @@ public class SidebarElement implements UIElement {
 
 		/**
 		 * The content elements shown when this item is selected.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	/**
 	 * A separator line between sidebar items.
 	 */
 	@TagName("separator")
+	@TypeIcon("css:bi bi-dash-lg")
 	public interface SeparatorConfig extends SidebarItemConfig {
 
 		@Override
@@ -424,7 +492,9 @@ public class SidebarElement implements UIElement {
 
 		private final boolean _hidden;
 
-		private final AccessControl _accessControl;
+		private final boolean _finalTitle;
+
+		private final UnitAccess _access;
 
 		private final List<UIElement> _children;
 
@@ -439,7 +509,8 @@ public class SidebarElement implements UIElement {
 			_route = config.getRoute();
 			_badgeRef = config.getBadge();
 			_hidden = config.getHidden();
-			_accessControl = config.getAccessControl();
+			_finalTitle = config.getFinalTitle();
+			_access = UnitAccess.create(context, config.getAccessControl());
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
@@ -452,7 +523,7 @@ public class SidebarElement implements UIElement {
 
 		@Override
 		public SidebarItem createSidebarItem(ViewContext context, ItemSite site) {
-			if (!AccessChecks.isAccessible(_accessControl)) {
+			if (!AccessChecks.isOffered(_access)) {
 				// Access denied for the current user: omit the navigation item entirely.
 				return null;
 			}
@@ -461,14 +532,19 @@ public class SidebarElement implements UIElement {
 			// The item lies within the scope enclosing the sidebar, so what a form of the item
 			// holds unsaved is held unsaved there as well.
 			DirtyChannel dirtyChannel = new DirtyChannel(context.getDirtyChannel());
-			SecurityScope scope = AccessChecks.resolveScope(_accessControl);
+			List<UnitAccess> guards = new ArrayList<>(site.guards());
+			if (_access != null) {
+				guards.add(_access);
+			}
 			NavigationItem item = new NavigationItem(_id, label, _icon,
-				() -> createContent(_children, itemContext, dirtyChannel, scope), dirtyChannel);
+				() -> createContent(_children, itemContext, dirtyChannel, guards), dirtyChannel);
 			String effectiveRoute = resolveRoute(_route, _id);
 			if (effectiveRoute != null) {
 				item.withRoute(effectiveRoute);
+				item.withFinalTitle(_finalTitle);
 			}
 			item.withHidden(_hidden);
+			withholdWhileDenied(item, _access, context, site);
 			if (_badgeRef != null) {
 				bindBadge(context, site, item);
 			}
@@ -503,6 +579,36 @@ public class SidebarElement implements UIElement {
 			String text = ValueLabel.label(value);
 			return text == null || text.isEmpty() ? null : text;
 		}
+	}
+
+	/**
+	 * Leaves the entry of the given item out of the sidebar while its access check fails on its
+	 * object, if the item is {@link com.top_logic.layout.view.security.DeniedUnitDisplay#HIDE
+	 * hidden} then.
+	 *
+	 * <p>
+	 * Used by navigation items and groups alike. An open navigation item whose entry is left out
+	 * stays open: its content shows the "no access" placeholder.
+	 * </p>
+	 *
+	 * @param item
+	 *        The item built.
+	 * @param access
+	 *        The access check of the item, {@code null} for an item without one.
+	 * @param context
+	 *        The context the sidebar is built in.
+	 * @param site
+	 *        The site the item is built at, binding the item to the sidebar control.
+	 */
+	public static void withholdWhileDenied(SidebarItem item, UnitAccess access, ViewContext context,
+			ItemSite site) {
+		UnitHiding hiding = AccessChecks.hiding(access, context);
+		if (hiding == null) {
+			return;
+		}
+		item.setWithheld(hiding.isHidden());
+		site.addBinding(
+			sidebar -> hiding.bind(sidebar, hidden -> sidebar.setItemWithheld(item.getId(), hidden.booleanValue())));
 	}
 
 	/** Value for the {@code route} attribute that explicitly disables routing. */
@@ -595,7 +701,7 @@ public class SidebarElement implements UIElement {
 	}
 
 	private static List<UIElement> createElements(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> configs) {
+			List<UIElement.Config> configs) {
 		List<UIElement> result = new ArrayList<>(configs.size());
 		for (PolymorphicConfiguration<? extends UIElement> elementConfig : configs) {
 			result.add(context.getInstance(elementConfig));
@@ -692,9 +798,10 @@ public class SidebarElement implements UIElement {
 			binding.accept(sidebar);
 		}
 
-		// If a slot name is configured, contribute a hamburger button that toggles the mobile
-		// drawer. The placeholder must be declared elsewhere in the view tree (typically the app
-		// bar's leading area). Empty/missing -> no contribution, no drawer entry point on mobile.
+		// If a slot name is configured, contribute a hamburger button that toggles the drawer while
+		// the app shell is compact. The placeholder must be declared elsewhere in the view tree
+		// (typically the app bar's leading area). Empty/missing -> no contribution, no drawer entry
+		// point while the app shell is compact.
 		if (_drawerOpenSlotName != null && !_drawerOpenSlotName.isEmpty()) {
 			DrawerToggleControl toggleButton = new DrawerToggleControl(context, sidebar);
 			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,
@@ -772,13 +879,29 @@ public class SidebarElement implements UIElement {
 		return ContentControls.toControl(elements, context.childContext(segment));
 	}
 
+	/**
+	 * Creates the content of a navigation item.
+	 *
+	 * @param guards
+	 *        The access checks of the enclosing groups and of the item itself, outermost first. The
+	 *        content is displayed as far as each of them allows, and sees the object of the
+	 *        innermost one as its {@link com.top_logic.layout.view.security.SecuredObject}.
+	 */
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
-			DirtyChannel dirtyChannel, SecurityScope scope) {
-		ViewContext baseContext = context.childContext("sidebar-item");
-		// Establish the nav-item's security scope so command rules in its content default to it.
-		ViewContext itemContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
+			DirtyChannel dirtyChannel, List<UnitAccess> guards) {
+		ViewContext itemContext = context.childContext("sidebar-item");
 		itemContext.setDirtyChannel(dirtyChannel);
 
-		return ContentControls.toControl(elements, itemContext);
+		return guarded(elements, itemContext, guards, 0);
+	}
+
+	private static ReactControl guarded(List<UIElement> elements, ViewContext context, List<UnitAccess> guards,
+			int index) {
+		if (index == guards.size()) {
+			return ContentControls.toControl(elements, context);
+		}
+		UnitAccess access = guards.get(index);
+		return AccessChecks.guard(access, AccessChecks.contentContext(access, context),
+			inner -> guarded(elements, inner, guards, index + 1));
 	}
 }

@@ -6,9 +6,10 @@
 
 package com.top_logic.model.security;
 
+import java.util.Collections;
 import java.util.Set;
 
-import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLFormObjectBase;
@@ -39,6 +40,23 @@ public interface ModelAccessRights {
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+	/**
+	 * The roles granted the given command group on the given type before the rules of the access
+	 * rights entry of the type itself are applied: those the generalizations of the type pass on,
+	 * and those the entry of its module grants.
+	 *
+	 * <p>
+	 * Applying the rules of the type's own entry to this set in order yields the roles granted the
+	 * command group on the type, without the roles holding it through an implying operation. An
+	 * editor of that entry computes from it what a changed rule sequence grants.
+	 * </p>
+	 *
+	 * @return An empty set for an implementation without rule sequences.
+	 */
+	default Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Whether objects of the given type are not access controlled at all.
@@ -136,23 +154,112 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
-	 * object-level rights to perform the given command group on the given attribute. Relevant for
-	 * READ and WRITE command groups to implement attribute-level access restrictions.
+	 * The types the access parent of an object of the given type may have.
 	 *
 	 * <p>
-	 * The returned roles further restrict access on top of the {@link #getAllowedRoles(TLClass,
-	 * BoundCommandGroup) object-level rights}: the user may perform the command group on the
-	 * attribute only if he is allowed to perform it on the object <em>and</em> holds one of the
-	 * returned roles.
+	 * A check that depends on no concrete object follows the {@link #getAccessParent(TLClass)
+	 * access parent} of a type to these types. A type whose access parent types are not known
+	 * statically counts as accessible in such a check: only the check of a concrete object, which
+	 * resolves its access parent, decides.
+	 * </p>
+	 *
+	 * @param type
+	 *        The delegating type.
+	 * @return The possible types of the access parent, empty for a type without access parent,
+	 *         <code>null</code> when they are not known statically.
+	 * @implSpec The default asks the {@link AccessParentFunction#getParentTypes(TLClass) relation}
+	 *           to the access parent.
+	 */
+	default Set<TLClass> getAccessParentTypes(TLClass type) {
+		AccessParentFunction parent = getAccessParent(type);
+		if (parent == null) {
+			return Collections.emptySet();
+		}
+		return parent.getParentTypes(type);
+	}
+
+	/**
+	 * Whether a singleton of the given type or of one of its specializations has rights of its own.
+	 *
+	 * <p>
+	 * The rights of such a singleton take precedence over the rights of its type, therefore
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup)} does not describe the access to all
+	 * instances of the type.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @implSpec An implementation without a notion of singleton rights answers <code>false</code>
+	 *           for every type.
+	 */
+	default boolean hasSingletonRights(TLClass type) {
+		return false;
+	}
+
+	/**
+	 * The operations that apply to the objects of the given type.
+	 *
+	 * <p>
+	 * Only an operation applying to a type can be granted on it. The
+	 * {@link ApplicableOperations#BUILT_IN built-in operations} apply to every type; any other
+	 * operation applies to a type when the type, one of its generalizations or its module declares
+	 * it. The result also tells which operations imply which others.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects.
+	 *
+	 * @implSpec An implementation without operation declarations answers
+	 *           {@link ApplicableOperations#BUILT_IN_ONLY} for every type.
+	 *
+	 * @see #getObjectOperations(TLObject)
+	 */
+	default ApplicableOperations getOperations(TLClass type) {
+		return ApplicableOperations.BUILT_IN_ONLY;
+	}
+
+	/**
+	 * Whether the given operation applies to the objects of the given type.
+	 *
+	 * @see #getOperations(TLClass)
+	 */
+	default boolean appliesTo(TLClass type, BoundCommandGroup operation) {
+		return getOperations(type).appliesTo(operation);
+	}
+
+	/**
+	 * The operations that apply to the given object.
+	 *
+	 * <p>
+	 * For a module singleton, these are the {@link #getOperations(TLClass) operations of its type}
+	 * plus those declared for the singleton itself. For any other object, these are the operations
+	 * of its type.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object. An object whose type is no {@link TLClass} has the
+	 *        {@link ApplicableOperations#BUILT_IN built-in operations} only.
+	 */
+	default ApplicableOperations getObjectOperations(TLObject object) {
+		return object.tType() instanceof TLClass type ? getOperations(type) : ApplicableOperations.BUILT_IN_ONLY;
+	}
+
+	/**
+	 * Returns the roles granted the given command group on the given attribute. Relevant for READ
+	 * and WRITE command groups to implement attribute-level access rights.
+	 *
+	 * <p>
+	 * If the attribute has a grant for the command group (see
+	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the returned roles
+	 * <b>replace</b> the {@link #getAllowedRoles(TLClass, BoundCommandGroup) object-level grant}
+	 * for this attribute: the user may perform the command group on the attribute if he holds one
+	 * of the returned roles, no matter whether the class grants him the command group on the object
+	 * as a whole. A grant listing no role at all denies the command group to everyone.
 	 * </p>
 	 *
 	 * <p>
-	 * An empty set has two meanings, which {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}
-	 * tells apart: without an attribute-level grant for the command group, there is no additional
-	 * restriction, the user may perform the command group on the attribute whenever he has the
-	 * corresponding rights on the object. With an attribute-level grant, an empty set means that no
-	 * role may perform the command group on the attribute.
+	 * Without a grant for the command group, the result is empty and the decision on the object
+	 * applies to the attribute.
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
@@ -161,8 +268,10 @@ public interface ModelAccessRights {
 	 * Whether the given attribute has an attribute-level grant for the given command group.
 	 *
 	 * <p>
-	 * Only an attribute with such a grant restricts the command group beyond the rights on the
-	 * object, to the roles {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists.
+	 * An attribute with such a grant decides the command group by its own roles instead of the
+	 * rights on the object: the user needs one of the roles
+	 * {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists, no matter whether the
+	 * class grants him the command group on the object as a whole.
 	 * A grant listing no role at all denies the command group on the attribute to every user except
 	 * one bypassing the model security, independent of the object the attribute is accessed on.
 	 * </p>
@@ -253,6 +362,11 @@ public interface ModelAccessRights {
 	/**
 	 * Checks whether the given person can perform the given command group on the given instance.
 	 * Works for both built-in and custom operations.
+	 *
+	 * <p>
+	 * A deleted object is accessible for nobody, not even for a person bypassing the model
+	 * security.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup);
 
@@ -267,8 +381,39 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * Checks whether the current person may discover the given instance.
+	 *
+	 * @implSpec Just calls {@link #isDiscoverAllowed(Person, TLObject)} with the current user.
+	 */
+	default boolean isDiscoverAllowed(TLObject instance) {
+		return isDiscoverAllowed(TLContext.currentUser(), instance);
+	}
+
+	/**
+	 * Checks whether the given person may discover the given instance.
+	 *
+	 * <p>
+	 * A discoverable object appears in references, enumerations and option lists and shows its
+	 * label; its attributes are readable only by their own read right. A person holds
+	 * {@link SimpleBoundCommandGroup#DISCOVER} on an object if they hold a role on it that is granted
+	 * {@link SimpleBoundCommandGroup#DISCOVER}, any other operation on the object's type, any right on
+	 * one of its attributes, or the right to create objects in one of its compositions.
+	 * </p>
+	 *
+	 * @implSpec Just calls {@link #isAllowed(Person, TLObject, BoundCommandGroup)} with
+	 *           {@link SimpleBoundCommandGroup#DISCOVER}.
+	 */
+	default boolean isDiscoverAllowed(Person person, TLObject instance) {
+		return isAllowed(person, instance, SimpleBoundCommandGroup.DISCOVER);
+	}
+
+	/**
 	 * Checks whether the given person can perform the given command group on the given attribute of
 	 * the given instance.
+	 *
+	 * <p>
+	 * No attribute of a deleted object is accessible to anybody.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
@@ -353,6 +498,9 @@ public interface ModelAccessRights {
 	 * without a context is not restricted, since the object is inaccessible until it is put into a
 	 * container, which is a write of the container.
 	 * </p>
+	 * <p>
+	 * Nobody may create an object in a deleted context.
+	 * </p>
 	 */
 	boolean isAllowedCreate(Person person, TLClass type, TLObject context);
 
@@ -372,64 +520,26 @@ public interface ModelAccessRights {
 	 * Determines the single {@link ModelAccessRights} instance.
 	 *
 	 * <p>
-	 * Within an {@link #uncheckedSecurity(Runnable) unchecked scope}, an implementation granting
-	 * every access is delivered. Otherwise the {@link SecurityConfigurationService} must be started;
-	 * asking for access rights without a security configuration is an error and is reported as one.
+	 * The {@link SecurityConfigurationService} decides the access rights; while the
+	 * {@link ThreadContext#isSecurityBypassed() security checks are bypassed}, it grants every access.
+	 * </p>
+	 *
+	 * <p>
+	 * Code with bypassed security checks may run before the {@link SecurityConfigurationService} has been
+	 * started: the service resolves the configured type and attribute names against the application
+	 * model and therefore depends on the {@link com.top_logic.util.model.ModelService}. Setting up the
+	 * model in turn touches the model itself - allocating the module singletons applies the default
+	 * values of their attributes, and a {@code default-by-expression} default that allocates objects
+	 * executes <i>TL-Script</i>. In this case, an implementation granting every access is delivered.
+	 * Without bypassed security checks, the {@link SecurityConfigurationService} must be started; asking
+	 * for access rights without a security configuration is an error and is reported as one.
 	 * </p>
 	 */
 	static ModelAccessRights getInstance() {
-		ModelAccessRights unchecked = UncheckedAccessRights.active();
-		if (unchecked != null) {
-			return unchecked;
+		if (ThreadContext.isSecurityBypassed() && !SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			return UncheckedAccessRights.INSTANCE;
 		}
 		return SecurityConfigurationService.Module.INSTANCE.getImplementationInstance();
 	}
 
-	/**
-	 * Runs the given job without any access check.
-	 *
-	 * <p>
-	 * Within the job (and everything it calls in the current thread), {@link #getInstance()} delivers
-	 * an implementation that grants every access. This is required where the security configuration
-	 * cannot exist yet: the {@link SecurityConfigurationService} resolves the configured type and
-	 * attribute names against the application model and therefore depends on the
-	 * {@link com.top_logic.util.model.ModelService}. Setting up the model in turn touches the model
-	 * itself - allocating the module singletons applies the default values of their attributes, and a
-	 * {@code default-by-expression} default that allocates objects executes <i>TL-Script</i>. An
-	 * access check at that point would ask for a service that is still starting up.
-	 * </p>
-	 *
-	 * <p>
-	 * The scope must be opened deliberately and kept as small as possible. It is not a fallback for
-	 * a security configuration that failed to start: outside such a scope, a missing security
-	 * configuration must fail loudly instead of silently operating an application without access
-	 * control.
-	 * </p>
-	 *
-	 * <p>
-	 * Note that this switches off the <em>model based</em> access rights only. It neither affects the
-	 * rights of a command, nor does it establish a
-	 * {@link com.top_logic.basic.thread.ThreadContext#isSystemContext() system context}.
-	 * </p>
-	 *
-	 * @param job
-	 *        The job to run without an access check. A surrounding scope stays open afterwards.
-	 * @return The result of the given job.
-	 */
-	static <T, E1 extends Throwable, E2 extends Throwable> T uncheckedSecurity(ComputationEx2<T, E1, E2> job)
-			throws E1, E2 {
-		return UncheckedAccessRights.execute(job);
-	}
-
-	/**
-	 * Runs the given job without any access check.
-	 *
-	 * @see #uncheckedSecurity(ComputationEx2)
-	 */
-	static void uncheckedSecurity(Runnable job) {
-		UncheckedAccessRights.execute(() -> {
-			job.run();
-			return null;
-		});
-	}
 }

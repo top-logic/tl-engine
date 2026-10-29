@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-ai-mcp-server.app-messages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-ai-mcp-server" />
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<!--
+						The MCP server is opt-in, because /mcp/* authenticates nobody.
+
+						Enabling it publishes the application's model and business data to
+						everyone who can reach the endpoint. See the developer article
+						ai/security/mcp-endpoint for what exactly is exposed and how to switch it on. Transport
+						authentication is issue #261.
+					-->
+					<module key="com.top_logic.ai.mcp.server.MCPServerService$Module" value="false"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
+			<instance class="com.top_logic.ai.mcp.server.MCPServerService"
+				server-name="TopLogic MCP Server"
+				server-version="1.0.0"
+				keep-alive-interval="30"
+			/>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl-ai-mcp-serverMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

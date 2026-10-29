@@ -22,6 +22,18 @@
 						<property name="name" type="tl.core:String" mandatory="true" />
 					</attributes>
 				</interface>
+				<enum name="AddressSpace">
+					<classifier name="LcFilterMemory"/>
+					<classifier name="Global"/>
+				</enum>
+				<enum name="MemoryAddressSpace">
+					<classifier name="LcFilter"/>
+					<classifier name="Local"/>
+				</enum>
+				<enum name="federal.states">
+					<classifier name="Baden-Wuerttemberg"/>
+					<classifier name="Rheinland.Pfalz"/>
+				</enum>
 			</types>
 		</module>
 		<module name="bar">

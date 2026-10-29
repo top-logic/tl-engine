@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a sensor of the temperature demo inside the selected site.
+	
+	"model" carries the transient sensor (bound by the opening command), which belongs to no site
+	while the dialog is open: its temperature fields have no unit of a site to work in, so a number
+	typed without unit is taken in degrees Celsius. "container" is bound to the selected site. The
+	Create button stores the entered values, makes the sensor persistent and adds it to the sensors
+	of the site; from then on its temperatures are displayed in the unit of the site. The created
+	sensor is written to "selection" (bound to the selected sensor).
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="container"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New Sensor</en>
+			<de>Neuer Sensor</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="minTemperature"/>
+			<field attribute="maxTemperature"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="{ created = $model.copy(transient: false); $container.add(`demo.temperature:DemoSite#sensors`, $created); $created; }">
+							<inputs>
+								<input channel="container"/>
+							</inputs>
+						</execute-script>
+						<with-result>
+							<write-channel name="selection"/>
+						</with-result>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

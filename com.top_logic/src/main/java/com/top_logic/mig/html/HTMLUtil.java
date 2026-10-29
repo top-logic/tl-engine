@@ -1221,7 +1221,7 @@ public class HTMLUtil {
 	 * true, whether the given node is an element node and belongs to the class of void
 	 *         elements, false otherwise.
 	 * 
-	 * @see #VOID_ELEMENTS
+	 * @see HTMLConstants#VOID_ELEMENTS
 	 */
 	public static boolean isVoidElement(Node node) {
 		return node.getNodeType() == Node.ELEMENT_NODE && isVoidElement(node.getLocalName());
@@ -1231,7 +1231,7 @@ public class HTMLUtil {
 	 * true, whether the given node name represents a node, which is an element node and
 	 *         belongs to the class of void elements, false otherwise.
 	 *
-	 * @see #VOID_ELEMENTS
+	 * @see HTMLConstants#VOID_ELEMENTS
 	 */
 	public static boolean isVoidElement(String elementName) {
 		return HTMLConstants.VOID_ELEMENTS.contains(elementName);

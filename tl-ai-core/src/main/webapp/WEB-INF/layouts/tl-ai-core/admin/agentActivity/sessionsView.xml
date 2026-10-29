@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Sitzungen: master-detail over AgentSession. The table on the left, the selected session on the
+	right.
+	
+	No filter strip of our own: the table already filters, sorts and hides columns per column, and a
+	second filter mechanism above it would only compete with that one. What the table cannot do is
+	limit the rows *before* they are built, and that is the one filter the model builder applies -
+	see the note there.
+-->
+<securityLayout name="aiAgentSessionsView"
+	titleKey="admin.ai.agentActivity.sessions.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentActivity.sessions.tabber"/>
+	<components>
+		<layout name="aiAgentSessionsLayout"
+			horizontal="true"
+			resizable="true"
+		>
+			<components>
+				<include name="tl-ai-core/admin/agentActivity/sessionsTable.xml"/>
+				<layout-reference resource="tl-ai-core/admin/agentActivity/sessionDetail.layout.xml"/>
+			</components>
+		</layout>
+	</components>
+</securityLayout>

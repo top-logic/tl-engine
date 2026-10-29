@@ -1,5 +1,5 @@
 ---
-description: Read before calling a TL-Script expression from Java with arguments, or before configuring a script property whose arguments or variables come from its context - how positional arguments are bound (Args, QueryExecutor.execute/executeWith, lambda currying), what happens with surplus or missing arguments, and how to give a script implicitly defined variables (Define.create / SearchExpressionFactory.lambda, @ScriptContextVariables, CheckExprWithAdditionalParams).
+description: Read before calling a TL-Script expression from Java with arguments, or before configuring a script property whose arguments or variables come from its context - how positional arguments are bound (Args, QueryExecutor.execute/executeWith, lambda currying), what happens with surplus or missing arguments, and how to give a script implicitly defined variables (QueryExecutor.compile(Expr, List), Define.withVariables, ModelReferenceChecker.checkModelElements(Expr, List), @ScriptContextVariables, CheckExprWithAdditionalParams).
 order: 40
 ---
 
@@ -44,23 +44,27 @@ implementation uses its declared parameters as variables.
 
 ### Wrapping and calling
 
-Wrap at the configuration level with `Define.create(name, expr)` (on `Expr`), or at the compiled
-level with `SearchExpressionFactory.lambda(name, searchExpression)`. The outermost lambda binds the
-first argument, so the wrapping order decides the argument order:
+Compile the configured expression together with the variable names using
+`QueryExecutor.compile(expr, names)` (`compileOptional(expr, names)` for an optional property). The
+values are passed as leading positional arguments in the order of the names:
 
 ```java
 // Variables a, b, c, called as executeWith(Args.some(valueA, valueB, valueC)):
-Expr expr = config.getImplementation();
-for (int n = names.size() - 1; n >= 0; n--) {   // wrap in reverse order
-    expr = Define.create(names.get(n), expr);
-}
-QueryExecutor executor = QueryExecutor.compile(expr);
+QueryExecutor executor = QueryExecutor.compile(config.getImplementation(), List.of("a", "b", "c"));
 ```
 
-Wrapping in forward order and prepending the values with `Args.cons` in the same forward order is
-equivalent (`ScriptFlowChartBuilder` does this for its handler variables): both loops reverse the
-order. Arguments left over after the implicit variables reach the configured expression itself, so a
-script may still be a function of further positional arguments.
+The wrapping itself is `Define.withVariables(names, expr)` (on `Expr`): one `Define` per name, the
+outermost binding the first argument. Use it directly where an `Expr` (not an executor) is needed. At
+the compiled level, `SearchExpressionFactory.lambda(name, searchExpression)` wraps a single
+variable.
+
+- **Binding is by name.** The script refers to `$a`, `$b`, `$c` in any order and need not use all of
+  them; only the order of the values must match the order of the names.
+- **Surplus arguments.** Arguments left over after the implicit variables reach the configured
+  expression itself, so a script may still be a function of further positional arguments
+  (`ScriptFlowChartBuilder` binds its handlers as variables and passes the business model to the
+  configured function after them).
+- **No names.** An empty name list compiles the expression unchanged.
 
 The variable names must be known when the expression is compiled - they come from the configuration
 (a list of parameter names, a map of handlers, the inputs of a command), never from the runtime
@@ -69,11 +73,13 @@ values.
 ### Configuration support
 
 - **Syntax check.** A configured expression with implicit variables does not compile on its own (its
-  variables are undefined). Check it together with the names: `CheckExprWithAdditionalParams` as a
+  variables are undefined). Check it together with the names:
+  `ModelReferenceChecker.checkModelElements(expr, names)` applies the same wrapping as
+  `QueryExecutor.compile(expr, names)`. `CheckExprWithAdditionalParams` as a
   `@Constraint` on the `Expr` property, with the property holding the names (a list of
   `NamedConfiguration`) as its argument, wraps the expression and reports problems on the field. A
-  property whose names live elsewhere uses its own `GenericValueDependency` doing the same wrapping
-  (see `ScriptFlowChartBuilder.Config.SyntaxCheck`).
+  property whose names live elsewhere uses its own `GenericValueDependency` (see
+  `ScriptFlowChartBuilder.Config.SyntaxCheck`) or `ValueConstraint` calling that check.
 - **Completion in the script editor.** Annotate the `Expr` property with
   `@ScriptContextVariables(MyVariables.class)`, where `MyVariables` implements
   `ScriptContextVariablesProvider` and returns the variable names for the edited configuration item

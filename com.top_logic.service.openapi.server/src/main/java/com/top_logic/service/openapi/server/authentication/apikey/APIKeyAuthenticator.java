@@ -5,13 +5,17 @@
  */
 package com.top_logic.service.openapi.server.authentication.apikey;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -32,10 +36,49 @@ public class APIKeyAuthenticator implements Authenticator {
 	private String _parameterName;
 
 	/**
-	 * Map of API key to technical user name for request processing, or the empty string, if request
-	 * processing should happen in system context.
+	 * The accepted API keys with the technical user name for request processing.
 	 */
-	private Map<String, String> _accountByApiKey;
+	private List<AllowedKey> _allowedKeys;
+
+	/**
+	 * An API key accepted by an {@link APIKeyAuthenticator}.
+	 */
+	public static final class AllowedKey {
+
+		private final SecretSource _key;
+
+		private final String _userName;
+
+		/**
+		 * Creates an {@link AllowedKey}.
+		 *
+		 * @param key
+		 *        The source of the accepted key, read at each check.
+		 * @param userName
+		 *        The login name of the technical user to process the request with, or the empty
+		 *        string (not <code>null</code>), if request processing should happen in system
+		 *        context.
+		 */
+		public AllowedKey(SecretSource key, String userName) {
+			_key = Objects.requireNonNull(key);
+			_userName = Objects.requireNonNull(userName);
+		}
+
+		/**
+		 * The source of the accepted key.
+		 */
+		public SecretSource getKey() {
+			return _key;
+		}
+
+		/**
+		 * The login name of the technical user, the empty string for system context.
+		 */
+		public String getUserName() {
+			return _userName;
+		}
+
+	}
 
 	/**
 	 * Creates a new {@link APIKeyAuthenticator}.
@@ -45,13 +88,12 @@ public class APIKeyAuthenticator implements Authenticator {
 	 * @param parameterName
 	 *        Name of the parameter holding the secret.
 	 * @param allowedKeys
-	 *        The API keys that are allowed to be authenticated mapped to the login name of the
-	 *        system user to process the request with. If no technical user should be used for a
-	 *        certain API key, the user name value must be the empty string, not <code>null</code>.
+	 *        The API keys that are allowed to be authenticated with the login name of the system
+	 *        user to process the request with.
 	 */
-	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, Map<String, String> allowedKeys) {
+	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, List<AllowedKey> allowedKeys) {
 		_location = location;
-		_accountByApiKey = allowedKeys;
+		_allowedKeys = allowedKeys;
 		_parameterName = Objects.requireNonNull(parameterName);
 	}
 
@@ -88,8 +130,33 @@ public class APIKeyAuthenticator implements Authenticator {
 		return checkKey(apikey);
 	}
 
+	/**
+	 * The account name assigned to the given API key, <code>null</code> if the key is not
+	 * configured.
+	 *
+	 * <p>
+	 * The configured keys are read from their sources and compared with the given key in constant
+	 * time, so that a configured key cannot be guessed from response times.
+	 * </p>
+	 */
+	private String accountFor(String apikey) {
+		String result = null;
+		for (AllowedKey allowed : _allowedKeys) {
+			try {
+				// No early exit, so that the time taken does not reveal which key matched.
+				if (allowed.getKey().matches(apikey)) {
+					result = allowed.getUserName();
+				}
+			} catch (I18NRuntimeException ex) {
+				Logger.error("API key for parameter '" + _parameterName + "' is not available.", ex,
+					APIKeyAuthenticator.class);
+			}
+		}
+		return result;
+	}
+
 	private Person checkKey(String apikey) throws AuthenticationFailure {
-		String userName = _accountByApiKey.get(apikey);
+		String userName = StringServices.isEmpty(apikey) ? null : accountFor(apikey);
 		if (userName == null) {
 			throw new AuthenticationFailure(
 				I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));

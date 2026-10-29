@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -69,6 +70,7 @@ public class TextElement implements UIElement {
 	 * Configuration for {@link TextElement}.
 	 */
 	@TagName("text")
+	@TypeIcon("css:bi bi-file-text")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -133,7 +135,7 @@ public class TextElement implements UIElement {
 		/**
 		 * What the color of the text means: the {@link TextTone#PRIMARY color it is read in} (the
 		 * default), a {@link TextTone#SECONDARY lesser weight}, an explaining
-		 * {@link TextTone#HELPER hint}, an {@link TextTone#ACCENT accent}, or an outcome
+		 * {@link TextTone#HELPER hint}, a {@link TextTone#PLACEHOLDER placeholder}, or an outcome
 		 * ({@link TextTone#SUCCESS success}, {@link TextTone#WARNING warning},
 		 * {@link TextTone#ERROR error}); {@link TextTone#ON_COLOR on-color} for text on a filled
 		 * surface.

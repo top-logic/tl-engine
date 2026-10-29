@@ -34,7 +34,9 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
 
 /**
@@ -43,6 +45,7 @@ import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */
 @Label("Chart theme")
+@ServiceCategory.Of(UICategory.class)
 public class ChartThemeConfigurator extends ManagedClass {
 
 	/**

@@ -6,15 +6,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.apache.maven.archiver.MavenArchiveConfiguration;
@@ -24,8 +21,6 @@ import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.DefaultModelReader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -42,8 +37,6 @@ import org.codehaus.plexus.archiver.jar.ManifestException;
 import org.codehaus.plexus.archiver.war.WarArchiver;
 import org.codehaus.plexus.util.StringUtils;
 
-import com.top_logic.basic.core.workspace.DependencyResolver;
-import com.top_logic.build.maven.resolve.EngineResolver;
 import com.top_logic.build.maven.war.tasks.AppOverlay;
 import com.top_logic.build.maven.war.tasks.DeployOverlay;
 import com.top_logic.build.maven.war.tasks.FragmentOverlay;
@@ -59,6 +52,19 @@ public class TLAppWar extends AbstractMojo {
 	 * The name of the goal implemented by {@link TLAppWar}.
 	 */
 	public static final String GOAL = "app";
+
+	/**
+	 * Name of the property with the configuration references to add to the
+	 * <code>metaConf.txt</code> of the application.
+	 */
+	public static final String META_CONF_ADDONS = "tl.app.metaConfAddons";
+
+	/**
+	 * Name prefix of further properties with configuration references to add to the
+	 * <code>metaConf.txt</code> of the application, e.g.
+	 * <code>tl.app.metaConfAddons.ldap</code>.
+	 */
+	public static final String META_CONF_ADDONS_PREFIX = META_CONF_ADDONS + ".";
 
 	@Parameter(defaultValue = "${project}", readonly = true)
 	private MavenProject project;
@@ -159,12 +165,16 @@ public class TLAppWar extends AbstractMojo {
 	 * during deployment.
 	 * 
 	 * <p>
-	 * To to prepare the deployed application to use the H2 database, you can e.g. set the value to
-	 * <code>db-h2.xml</code> to include the corresponding configuration reference to its
-	 * configuration.
+	 * The value holds the references of the application itself, e.g. <code>enable-debug.xml</code>.
+	 * Further references are given in project properties whose names start with
+	 * {@link #META_CONF_ADDONS_PREFIX}, see {@link #metaConfAddons(String, Properties)}. Several
+	 * Maven profiles can so contribute references at the same time: the database profiles of
+	 * <code>tl-parent-app</code> set <code>tl.app.metaConfAddons.db</code> (e.g. to
+	 * <code>db-h2.xml</code>), the profile <code>with-ldap</code> sets
+	 * <code>tl.app.metaConfAddons.ldap</code>.
 	 * </p>
 	 */
-	@Parameter(defaultValue = "", property = "tl.app.metaConfAddons")
+	@Parameter(defaultValue = "", property = META_CONF_ADDONS)
 	private String metaConfAddons;
 
     /**
@@ -377,66 +387,45 @@ public class TLAppWar extends AbstractMojo {
 	}
 
 	private void buildWebapp() throws IOException, MojoExecutionException {
-		Map<String, WarTask> tasks = new HashMap<>();
-		Map<String, Artifact> fragmentById = new HashMap<>();
-		
-		DependencyResolver resolver = new DependencyResolver();
-		String appId = resolver.enter(project.getModel(), false);
-		
 		ResolveHelper resolveHelper =
 			new ResolveHelper(session, repositorySystem, pomRemoteRepositories, artifactResolver, artifactHandlerManager);
 
 		Artifact appFragment = resolveHelper.resolveWebFragment(project.getArtifact());
-		tasks.put(appId, new AppOverlay(project, appFragment, split(metaConfExcludes), split(metaConfAddons)));
-		fragmentById.put(appId, appFragment);
 
-		DefaultModelReader analyzer = new DefaultModelReader();
-
-		for (Artifact dependency : project.getArtifacts()) {
-			if ("jar".equals(dependency.getType())) {
-				File file = dependency.getFile();
-				if (file == null) {
-					getLog().info("Missing artifact: " + dependency);
-					continue;
-				}
-				try {
-					if (!EngineResolver.isWebComponent(file)) {
-						continue;
+		try (AppModuleStack modules = AppModuleStack.resolve(project, resolveHelper, getLog(), true)) {
+			String appId = modules.getAppId();
+			List<WarTask> warTasks = new ArrayList<>();
+			for (String id : modules.getBuildOrder()) {
+				if (id.equals(appId)) {
+					warTasks.add(new AppOverlay(project, appFragment, split(metaConfExcludes),
+						metaConfAddons(metaConfAddons, project.getProperties())));
+				} else {
+					Artifact fragment = modules.getFragment(id);
+					if (fragment != null) {
+						warTasks.add(new FragmentOverlay(fragment));
 					}
-				} catch (IOException ex) {
-					getLog().error("Failed to access '" + file + "': " + ex.getMessage(), ex);
-					continue;
-				}
-
-				Artifact webFragment = resolveHelper.resolveWebFragment(dependency);
-				Artifact pom = resolveHelper.resolve(dependency, "pom", null);
-				try {
-					Model dependencyModel = analyzer.read(pom.getFile(), null);
-					String id = resolver.enter(dependencyModel, false);
-
-					tasks.put(id, new FragmentOverlay(webFragment));
-					fragmentById.put(id, webFragment);
-				} catch (IOException ex) {
-					throw error("Failed to access project model of '" + dependency + "'", ex);
 				}
 			}
-		}
-		List<String> buildOrder = resolver.createBuildOrder();
-		
-		List<Path> resourcePath = new ArrayList<>();
-		for (Path fragment : buildOrder.stream()
-			.map(fragmentById::get)
-			.filter(Objects::nonNull)
-			.map(a -> a.getFile().toPath())
-			.collect(Collectors.toList())) {
-			for (Path root : FileSystems.newFileSystem(fragment).getRootDirectories()) {
-				resourcePath.add(root);
+
+			List<Path> overlayPath = new ArrayList<>();
+			addOverlays(modules, overlayPath, warTasks);
+			Collections.reverse(overlayPath);
+
+			List<Path> resourcePath = new ArrayList<>(overlayPath);
+			resourcePath.addAll(modules.resourceStack(modules.openArchive(appFragment.getFile().toPath())));
+
+			WarContext context = new WarContext(getLog(), getWebappDirectory().toPath(), resourcePath);
+
+			for (WarTask task : warTasks) {
+				task.run(context);
 			}
+
+			createLayouts(resolveHelper, resourcePath);
 		}
+	}
 
-		List<WarTask> warTasks =
-			buildOrder.stream().map(tasks::get).filter(Objects::nonNull).collect(Collectors.toList());
-
+	private void addOverlays(AppModuleStack modules, List<Path> resourcePath, List<WarTask> warTasks)
+			throws IOException {
 		for (Overlay overlay : overlays) {
 			if (overlay.isSkip()) {
 				continue;
@@ -463,7 +452,7 @@ public class TLAppWar extends AbstractMojo {
 							ref.setArtifactId(suffix);
 						}
 						ref.setType("war");
-						addArtifactOverlay(resourcePath, warTasks, ref);
+						addArtifactOverlay(modules, resourcePath, warTasks, ref);
 					} else {
 						addDeployOverlay(resourcePath, warTasks, deployAspect);
 					}
@@ -471,28 +460,38 @@ public class TLAppWar extends AbstractMojo {
 			} else if (overlay.getPath() != null) {
 				addPathOverlay(resourcePath, warTasks, overlay.getPath());
 			} else {
-				addArtifactOverlay(resourcePath, warTasks, overlay);
+				addArtifactOverlay(modules, resourcePath, warTasks, overlay);
 			}
 		}
-		
-		Collections.reverse(resourcePath);
-
-		WarContext context = new WarContext(getLog(), getWebappDirectory().toPath(), resourcePath);
-		
-		for (WarTask task : warTasks) {
-			task.run(context);
-		}
-
-		createLayouts(resolveHelper, resourcePath);
 	}
 
-	private String[] split(String commaSeparatedStrings) {
+	/**
+	 * All configuration references to add to the <code>metaConf.txt</code> of the application.
+	 * 
+	 * @param addons
+	 *        Comma-separated references of the property {@link #META_CONF_ADDONS}.
+	 * @param properties
+	 *        The project properties. Each property whose name starts with
+	 *        {@link #META_CONF_ADDONS_PREFIX} contributes its comma-separated references after the
+	 *        given ones, in the order of the property names.
+	 */
+	public static String[] metaConfAddons(String addons, Properties properties) {
+		List<String> result = new ArrayList<>(Arrays.asList(split(addons)));
+		properties.stringPropertyNames().stream()
+			.filter(name -> name.startsWith(META_CONF_ADDONS_PREFIX))
+			.sorted()
+			.forEach(name -> result.addAll(Arrays.asList(split(properties.getProperty(name)))));
+		return result.toArray(new String[0]);
+	}
+
+	private static String[] split(String commaSeparatedStrings) {
 		if (commaSeparatedStrings == null || commaSeparatedStrings.isEmpty()) {
 			return new String[0];
 		}
 		return Arrays.asList(commaSeparatedStrings.split(","))
 			.stream()
 			.map(s -> s.trim())
+			.filter(s -> !s.isEmpty())
 			.collect(Collectors.toList())
 			.toArray(new String[0]);
 	}
@@ -525,13 +524,11 @@ public class TLAppWar extends AbstractMojo {
 		return new File(deployDir, webapp);
 	}
 
-	private void addArtifactOverlay(List<Path> resourcePath, List<WarTask> warTasks, Overlay overlay)
-			throws IOException {
+	private void addArtifactOverlay(AppModuleStack modules, List<Path> resourcePath, List<WarTask> warTasks,
+			Overlay overlay) throws IOException {
 		Artifact deployArtifact = project.getArtifacts().stream().filter(overlay::matches).findFirst().orElse(null);
 		if (deployArtifact != null) {
-			for (Path root : FileSystems.newFileSystem(deployArtifact.getFile().toPath()).getRootDirectories()) {
-				resourcePath.add(root);
-			}
+			resourcePath.addAll(modules.openArchive(deployArtifact.getFile().toPath()));
 			warTasks.add(new FragmentOverlay(deployArtifact));
 		} else {
 			getLog().error("Overlay not found in project dependencies: " + overlay.id());
@@ -576,13 +573,21 @@ public class TLAppWar extends AbstractMojo {
 		List<URL> cp = new ArrayList<>();
 
 		addToClassPath(cp, resolveHelper, project.getArtifact());
+		addDependenciesToClassPath(cp, resolveHelper, project);
+
+		return cp;
+	}
+
+	/**
+	 * Adds the JARs of all dependencies of the given project to the given class path.
+	 */
+	public static void addDependenciesToClassPath(List<URL> cp, ResolveHelper resolveHelper, MavenProject project)
+			throws MalformedURLException, MojoExecutionException {
 		for (Artifact dependency : project.getArtifacts()) {
 			if ("jar".equals(dependency.getType())) {
 				addToClassPath(cp, resolveHelper, dependency);
 			}
 		}
-
-		return cp;
 	}
 
 	/**

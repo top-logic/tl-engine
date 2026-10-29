@@ -7,6 +7,7 @@ package com.top_logic.model.cache;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -20,6 +21,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
@@ -37,6 +39,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
@@ -53,6 +56,7 @@ import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
 import com.top_logic.model.initializer.TLObjectInitializer;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -278,6 +282,62 @@ public class TLModelOperations {
 			}
 		}
 		return allParts;
+	}
+
+	/**
+	 * The part of the given type that is used when the given part is accessed on an object of that
+	 * type.
+	 * 
+	 * <p>
+	 * This is the (potential) override of the accessed part in the given type. If the accessed part
+	 * is defined in a subtype of the given type, the definition in the given type is returned. This
+	 * allows to use the overriding part of a subtype to access a value of an object of the super
+	 * type. This is allowed only for convenience. Being pedantic makes object access in some
+	 * scenarios more complicated (e.g. copying values of common attributes of an object to an
+	 * instance of a supertype).
+	 * </p>
+	 * 
+	 * @param actualType
+	 *        The concrete type of the accessed object, must not be <code>null</code>.
+	 * @param accessedPart
+	 *        A part of the given type, of a super type thereof, or of a subtype thereof that
+	 *        overrides a part of the given type.
+	 * @return The part of the given type to use for accessing the given part, or <code>null</code>,
+	 *         if the given part does not belong to the given type (or did not exist in the revision
+	 *         of the given type).
+	 */
+	public TLStructuredTypePart resolvePart(TLStructuredType actualType, TLStructuredTypePart accessedPart) {
+		// The accessed type may be a historic type, look up the part in the revision of that type.
+		TLStructuredTypePart partInTypeRev = WrapperHistoryUtils.getWrapper(actualType.tRevision(), accessedPart);
+		if (partInTypeRev == null) {
+			// Part does not exist at the time of the accessed type.
+			return null;
+		}
+		if (actualType == partInTypeRev.getOwner()) {
+			// Short-cut for the case where the matching/correct part override was given.
+			return partInTypeRev;
+		}
+
+		// Check whether the given part has a definition in the actual type.
+		TLStructuredTypePart definition = partInTypeRev.getDefinition();
+		TLStructuredType definingType = definition.getOwner();
+		if (definingType == null || !TLModelUtil.isGeneralization(definingType, actualType)) {
+			// Part of an unrelated type.
+
+			// Note: This still allows to use the overridden part of a subtype to access a value of
+			// an object of the super type. This is allowed only for convenience. Being pedantic
+			// makes object access in some scenarios more complicated (e.g. copying values of
+			// common attributes of an object to an instance of a supertype).
+			return null;
+		}
+		if (actualType == definingType) {
+			// Short-cut for the case where an overriding part was used to access the defining
+			// type.
+			return definition;
+		}
+
+		// Lookup by name in the concrete type.
+		return actualType.getPart(partInTypeRev.getName());
 	}
 
 	/**
@@ -557,6 +617,55 @@ public class TLModelOperations {
 	 */
 	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
 		return TLAnnotations.getInitializers(type);
+	}
+
+	/**
+	 * The {@link DefaultProvider}s of the parts of the given type, which are applied to a newly
+	 * created instance of that type.
+	 * 
+	 * <p>
+	 * The result contains an entry for each non-derived part of {@link TLStructuredType#getAllParts()}
+	 * for which {@link DisplayAnnotations#getDefaultProvider(TLStructuredTypePart)} resolves a
+	 * provider, in the order of {@link TLStructuredType#getAllParts()}.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type whose parts are inspected.
+	 * @return An unmodifiable list of {@link PartDefault} entries.
+	 * 
+	 * @implNote For a persistent part, the {@link DefaultProvider} resolved by
+	 *           {@link DisplayAnnotations#getDefaultProvider(TLStructuredTypePart)} is already a
+	 *           single instance cached at the part's knowledge item, so sharing one provider instance
+	 *           per part for all created objects is consistent with the per-part resolution.
+	 */
+	public List<PartDefault> getDefaultProviders(TLStructuredType type) {
+		List<PartDefault> result = new ArrayList<>();
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (part.isDerived()) {
+				// For safety reasons, ignore default value annotations on derived attributes.
+				continue;
+			}
+			DefaultProvider provider = DisplayAnnotations.getDefaultProvider(part);
+			if (provider == null) {
+				continue;
+			}
+			result.add(new PartDefault(part, provider));
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+	/**
+	 * A part of a type together with the {@link DefaultProvider} creating its default value.
+	 * 
+	 * @param part
+	 *        The part receiving the default value.
+	 * @param provider
+	 *        The {@link DefaultProvider} computing the default value of {@link #part()}.
+	 * 
+	 * @see TLModelOperations#getDefaultProviders(TLStructuredType)
+	 */
+	public record PartDefault(TLStructuredTypePart part, DefaultProvider provider) {
+		// Pure data.
 	}
 
 	/**

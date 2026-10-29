@@ -10,8 +10,8 @@ import java.util.List;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.view.UIElement;
 
@@ -34,9 +34,13 @@ public interface LoginCommandsConfig extends ConfigurationItem {
 
 	/**
 	 * The contributed login-dialog elements (typically {@code <button>}s opening a dialog).
+	 *
+	 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+	 *           an element.
 	 */
+	@Key(UIElement.Config.ID)
 	@Name(COMMANDS)
 	@DefaultContainer
 	@Options(fun = AllInAppImplementations.class)
-	List<PolymorphicConfiguration<? extends UIElement>> getCommands();
+	List<UIElement.Config> getCommands();
 }

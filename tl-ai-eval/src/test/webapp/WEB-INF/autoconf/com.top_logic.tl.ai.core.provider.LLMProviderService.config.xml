@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The models the eval can run on.
+
+	Two kinds, and the difference is the whole cost story of this module:
+
+	  * "eval-scripted" is answered by ScriptedProvider, a provider whose replies a test writes. Every
+	    plumbing test of the harness - matrix, runner, graders, CSV, report - runs against it, in an
+	    ordinary build, with no key and at no cost.
+	  * "claude-sonnet-4-6" and "claude-haiku-4-5-20251001" are real. They are reached only behind
+	    -Dtl.ai.eval=true, and only when a key is in the environment; without one the arms report as
+	    "could not run" rather than failing.
+
+	"gpt-5.6-luna" is the model the research questions (research-scenarios.config.xml) run on, behind
+	-Dtl.ai.research.e2e=true and with tl_openai_api_key in the environment.
+
+	"qwen3.8-27b" is a local model on an OpenAI-compatible server in the company network (vLLM, one
+	request at a time per key), the research workers' model of one arm of the research questions;
+	key in tl_qwen_api_key.
+
+	"eval-no-tools" exists to be a model that cannot call tools, so that the harness's own
+	"could not run" path is exercised by a test rather than only by a model nobody has today.
+
+	Which agent runs on which of them is not here: the default model and the agent overrides are in
+	com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml next to this file.
+
+	Model metadata is in <model-overrides>: the catalog the service resolves at startup is not part
+	of its configuration. The Anthropic entry carries catalog-provider-id="" - a test must not depend
+	on reaching the internet, and everything the eval reads about a model (tool-call, the context
+	window) is written here.
+
+	In autoconf rather than in WEB-INF/conf, because that is the layer an application overrides a
+	framework default in.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+				<providers>
+					<provider class="com.top_logic.tl.ai.eval.ScriptedProvider"
+						models="eval-scripted, eval-no-tools"
+						name="scripted"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						catalog-provider-id=""
+						models="claude-sonnet-4-6, claude-haiku-4-5-20251001"
+						name="anthropic"
+					>
+						<api-key name="tl_anthropic_api_key"/>
+					</provider>
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+						catalog-provider-id=""
+						models="gpt-5.6-luna"
+						name="openai"
+					>
+						<api-key name="tl_openai_api_key"/>
+					</provider>
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
+						base-url="http://ki.bos.local:8080"
+						catalog-provider-id=""
+						models="qwen3.8-27b"
+						name="qwen"
+					>
+						<api-key name="tl_qwen_api_key"/>
+					</provider>
+				</providers>
+				<model-catalog fetch-remote-catalog="false">
+					<model-overrides>
+						<model name="eval-scripted"
+							context-window="200000"
+							max-output="8192"
+							reasoning="false"
+							temperature="false"
+							tool-call="true"
+						/>
+						<model name="eval-no-tools"
+							context-window="200000"
+							max-output="8192"
+							reasoning="false"
+							temperature="false"
+							tool-call="false"
+						/>
+						<model name="claude-sonnet-4-6"
+							context-window="1000000"
+							max-output="64000"
+							reasoning="true"
+							temperature="true"
+							tool-call="true"
+						/>
+						<model name="claude-haiku-4-5-20251001"
+							context-window="200000"
+							max-output="64000"
+							reasoning="true"
+							temperature="true"
+							tool-call="true"
+						/>
+						<model name="gpt-5.6-luna"
+							context-window="400000"
+							max-output="64000"
+							reasoning="true"
+							temperature="false"
+							tool-call="true"
+						/>
+						<model name="qwen3.8-27b"
+							context-window="230000"
+							max-output="16000"
+							reasoning="false"
+							temperature="true"
+							tool-call="true"
+						/>
+					</model-overrides>
+				</model-catalog>
+			</instance>
+		</config>
+	</services>
+</application>

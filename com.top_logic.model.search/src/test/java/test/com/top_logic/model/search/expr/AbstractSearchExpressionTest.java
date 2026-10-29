@@ -10,6 +10,7 @@ import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +25,8 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dob.meta.MOClass;
@@ -32,6 +35,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLClass;
@@ -49,7 +53,7 @@ import com.top_logic.model.search.expr.parser.SearchExpressionParserTokenManager
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -97,11 +101,53 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	}
 
 	/**
-	 * Establishes a person context for the given user, so that the security check is not bypassed by
-	 * a system context and the results of an execution are filtered by that user's read rights.
+	 * Whether the test body runs with security checks.
+	 *
+	 * <p>
+	 * A test runs in a system context, in which every access is allowed. A test that asserts
+	 * denials or filtered results overrides this method to return <code>true</code>: its body then
+	 * runs in a {@link TLContextManager#inPersonContext(Person, ComputationEx2) person context} of
+	 * the {@link #initialUser()}, and {@link #becomeUser(Person)} switches the user whose rights are
+	 * checked. The fixture created in {@link #setUp()} is not affected.
+	 * </p>
+	 */
+	protected boolean checksSecurity() {
+		return false;
+	}
+
+	/**
+	 * The user whose access rights are checked at the start of a test that
+	 * {@link #checksSecurity() checks the security}.
+	 *
+	 * @return The initial user, or <code>null</code> for a test body that starts without a person.
+	 */
+	protected Person initialUser() {
+		return null;
+	}
+
+	@Override
+	protected void runTest() throws Throwable {
+		if (checksSecurity()) {
+			TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(initialUser(), () -> {
+				super.runTest();
+				return null;
+			});
+		} else {
+			super.runTest();
+		}
+	}
+
+	/**
+	 * Switches the person whose access rights are checked for the rest of the test body.
+	 *
+	 * <p>
+	 * Only allowed in a test that {@link #checksSecurity() checks the security}.
+	 * </p>
 	 */
 	protected static void becomeUser(Person person) {
-		TLContext.getContext().setCurrentPerson(person);
+		assertFalse("A user switch has no effect on the access checks: the test does not check security.",
+			ThreadContext.isSecurityBypassed());
+		TLContextManager.getSubSession().setPerson(person);
 	}
 
 	/**
@@ -240,15 +286,18 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	}
 
 	/**
-	 * The service modules a test of a {@link SearchExpression} needs, followed by the given ones.
+	 * The service modules a test of a {@link SearchExpression} needs, followed by the given ones not
+	 * yet among them.
 	 */
 	protected static BasicRuntimeModule<?>[] getModules(BasicRuntimeModule<?>... additionalModules) {
-		ArrayList<BasicRuntimeModule<?>> modules = new ArrayList<>();
+		LinkedHashSet<BasicRuntimeModule<?>> modules = new LinkedHashSet<>();
 
 		modules.add(SearchBuilder.Module.INSTANCE);
 		modules.add(ModelService.Module.INSTANCE);
 		modules.add(LabelProviderService.Module.INSTANCE);
-		
+		// Provides the root user, e.g. as the initialUser() of a test that checks security.
+		modules.add(PersonManager.Module.INSTANCE);
+
 		modules.addAll(Arrays.asList(additionalModules));
 
 		return modules.toArray(new BasicRuntimeModule<?>[modules.size()]);

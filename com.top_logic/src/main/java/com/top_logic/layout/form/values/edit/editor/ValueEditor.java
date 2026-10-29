@@ -22,7 +22,6 @@ import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
-import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.util.ResKey;
@@ -30,8 +29,8 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.ColorControlProvider;
-import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
@@ -42,7 +41,6 @@ import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.ValueModel;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -52,8 +50,10 @@ import com.top_logic.util.error.TopLogicException;
  * The input element is chosen by the property type: a {@link String} property is edited in a text
  * line, a {@link Boolean} property with a checkbox, a {@link Date} property with a calendar, an
  * enumeration or a property with options with a select field, and a {@link Color} property with the
- * color chooser of {@link ColorControlProvider}. A property with a {@link ControlProvider}
- * annotation is displayed with the annotated control.
+ * color chooser of {@link ColorControlProvider}. A single-valued select field with tree options or
+ * with more options than {@link EditorFactory.Config#getSelectionDialogThreshold()} is displayed
+ * with a selection dialog. A control chosen for the property by its annotations or by the configuration of the
+ * {@link EditorFactory} takes precedence.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -76,13 +76,14 @@ public class ValueEditor extends AbstractEditor {
 	protected FormField addField(EditorFactory editorFactory, FormContainer container, ValueModel model,
 			String fieldName) {
 		final FormField field;
+		boolean selectionDialog = false;
 		PropertyDescriptor property = model.getProperty();
 		Class<?> type = property.getType();
 
 		Mapping<Object, Object> uiConversion = Identity.INSTANCE;
 		Mapping<Object, Object> storageConversion = Converters.valueConverter(property);
 
-		DeclarativeFormOptions formOptions = editorFactory.formOptions(property);
+		DeclarativeFormOptions formOptions = editorFactory.formOptions(property, container);
 		DerivedProperty<? extends Iterable<?>> optionProvider = optionProvider(formOptions);
 		boolean hasOptionProvider = optionProvider != null;
 		boolean hasFormatAnnotation = property.getAnnotation(Format.class) != null;
@@ -143,6 +144,7 @@ public class ValueEditor extends AbstractEditor {
 					}
 				}
 				field = select;
+				selectionDialog = !select.isMultiple() && editorFactory.useSelectionDialog(select);
 
 				uiConversion = new UIConversion(select);
 				if (optionProvider != null) {
@@ -170,19 +172,18 @@ public class ValueEditor extends AbstractEditor {
 				}
 			} else {
 				FormField plainField = PlainEditor.INSTANCE.addField(editorFactory, container, model, fieldName);
-				if (type == Color.class
-					&& editorFactory.getAnnotation(property, ControlProvider.class) == null) {
+				if (type == Color.class && editorFactory.resolveControlProvider(property) == null) {
 					plainField.setControlProvider(ColorControlProvider.INSTANCE);
 				}
 				return plainField;
 			}
 		}
 
-		if (editorFactory.getAnnotation(property, Encrypted.class) != null) {
-			field.setControlProvider(PasswordInputControlProvider.INSTANCE);
-		}
-
 		init(editorFactory, model, field, uiConversion, storageConversion);
+
+		if (selectionDialog && editorFactory.resolveControlProvider(property) == null) {
+			field.setControlProvider(SelectionControlProvider.INSTANCE);
+		}
 
 		return field;
 	}

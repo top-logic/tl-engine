@@ -1,0 +1,24 @@
+<handler>
+	<tag name="r">
+		<object model-type="test.com.top_logic.xio.importer.test7:R">
+			<dispatch>
+				<tag name="a">
+					<object model-type="test.com.top_logic.xio.importer.test7:A" id-attribute="name" join-duplicates="true">
+						<property name="name" xml-attribute="name"/>
+						<property name="value" xml-attribute="value"/>
+						
+						<linking>
+							<list-linking name="test.com.top_logic.xio.importer.test7:R#set"/>
+						</linking>
+						
+						<linking>
+							<list-linking name="test.com.top_logic.xio.importer.test7:R#list"/>
+						</linking>
+						
+						<dispatch/>
+					</object>
+				</tag>
+			</dispatch>
+		</object>
+	</tag>
+</handler>

@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.form.model.FieldModel;
@@ -19,6 +20,8 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * {@link ReactFieldControlProvider} for string, tristate, binary, and other text-representable
@@ -35,6 +38,11 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
  * <p>
  * Also serves as the ultimate fallback when no other provider matches, where the text is a plain
  * one.
+ * </p>
+ *
+ * <p>
+ * With {@link Config#getSuggestions() suggestions}, the field offers a list of suggestions while
+ * the user types, computed by a TL-Script function, see {@link ScriptSuggestionSource}.
  * </p>
  *
  * @implNote A text displayed on {@link FieldControlRegistry#isMultiline(FieldSpec) several rows}
@@ -54,6 +62,9 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 		/** The {@link #getInputType()} of a field that states none. */
 		String DEFAULT_INPUT_TYPE = "TEXT";
 
+		/** Configuration name for {@link #getSuggestions()}. */
+		String SUGGESTIONS = "suggestions";
+
 		@Override
 		@ClassDefault(TextInputControlProvider.class)
 		Class<? extends TextInputControlProvider> getImplementationClass();
@@ -69,9 +80,38 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 		@Name(INPUT_TYPE)
 		@FormattedDefault(DEFAULT_INPUT_TYPE)
 		InputType getInputType();
+
+		/**
+		 * Function computing the suggestions offered while the user types.
+		 *
+		 * <p>
+		 * The function has the signature {@code self -> text -> caret -> entries}: {@code self} is
+		 * the edited object (empty for a field editing no attribute of an object), {@code text} the
+		 * text typed so far, and {@code caret} the position of the caret in it, counted in
+		 * characters from the start.
+		 * </p>
+		 *
+		 * <p>
+		 * Each entry of the result is a suggestion, either a dictionary
+		 * {@code {"label": ..., "text": ..., "from": ..., "to": ...}} - the text replacing the
+		 * characters from position {@code from} up to (excluding) position {@code to} of the typed
+		 * text, shown by its label - or a plain string, which is inserted at the caret. The label
+		 * defaults to the text, the positions default to the caret. A malformed entry is skipped.
+		 * </p>
+		 *
+		 * <p>
+		 * The function decides which suggestions fit what is typed: its entries are offered as
+		 * they are, in their order. Without a function, the field offers no suggestions.
+		 * </p>
+		 */
+		@Name(SUGGESTIONS)
+		@Nullable
+		Expr getSuggestions();
 	}
 
 	private final InputType _inputType;
+
+	private final QueryExecutor _suggestions;
 
 	/**
 	 * Creates a configured {@link TextInputControlProvider}.
@@ -79,6 +119,7 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 	@CalledByReflection
 	public TextInputControlProvider(InstantiationContext context, Config config) {
 		_inputType = config.getInputType();
+		_suggestions = QueryExecutor.compileOptional(config.getSuggestions());
 	}
 
 	/**
@@ -95,6 +136,9 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 			// A field that states no kind edits a plain text, so a plain text field is left as it
 			// is built.
 			control.setInputType(_inputType);
+		}
+		if (_suggestions != null) {
+			control.setSuggestionSource(new ScriptSuggestionSource(_suggestions, model));
 		}
 		int rows = field.getMultilineRows();
 		if (rows > 0) {

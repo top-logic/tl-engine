@@ -47,12 +47,14 @@ public class StyleSheetApplyHandler extends AbstractApplyCommandHandler {
 		FormField field = formContext.getField(StyleSheetFormBuilder.STYLE_DATA_FIELD);
 		String fileName = field.get(StyleSheetFormBuilder.FILE_NAME);
 		try {
-			File file = FileManager.getInstance().getIDEFile(fileName);
+			FileManager fileManager = FileManager.getInstance();
+			File file = fileManager.getIDEFile(fileName);
 			try (OutputStream out = new FileOutputStream(file)) {
 				try (Writer writer = new OutputStreamWriter(out, StyleSheetFormBuilder.styleSheetCharSet())) {
 					writer.write((String) field.getValue());
 				}
 			}
+			fileManager.refresh(fileName);
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}

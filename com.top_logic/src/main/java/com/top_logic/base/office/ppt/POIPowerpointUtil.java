@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
 import org.apache.poi.hslf.usermodel.HSLFTextRun;
@@ -53,6 +51,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.layout.image.util.ImageUtils;
 import com.top_logic.util.Utils;
 
 /**
@@ -1047,14 +1046,13 @@ public class POIPowerpointUtil {
 			return POIPowerpointXUtil.adaptToAspectRatio(aBox, (ImageReplacerData) anImage);
 		}
 		try {
-			ImageInputStream theIOS = POIPowerpointXUtil.getImageInputStream(anImage);
-			Iterator<ImageReader> theIter  = ImageIO.getImageReaders(theIOS);
-			
-			if (theIter.hasNext()) {
-				ImageReader theReader = theIter.next();
-				theReader.setInput(theIOS);
-				
-				float aspectRatio = theReader.getAspectRatio(0);
+			Dimension imageSize;
+			try (ImageInputStream theIOS = POIPowerpointXUtil.getImageInputStream(anImage)) {
+				imageSize = ImageUtils.getImageSize(theIOS);
+			}
+
+			if (imageSize != null) {
+				float aspectRatio = (float) imageSize.width / imageSize.height;
 				Dimension inputDim = new Dimension(Math.round((float)aBox.getWidth()),
 												   Math.round((float)aBox.getHeight()));
 				Dimension outDim = Utils.getImageDimension(inputDim, aspectRatio);

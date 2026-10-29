@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Effektive Rechte: the simulator. One row per capability group for a chosen account or role, in
+	either run mode, each row naming the rule that decided and the rule it overrode. The one tab that
+	answers for the RUNNING service - the other two report the saved policy, and the Richtlinie tab
+	says so while the two differ.
+	
+	The component renders itself (ControlRepresentableCP): the two inputs, the tree table and the
+	footer notes are one view, and the notes have to change with the inputs - a warning about a role
+	the reader is not looking at is noise.
+-->
+<securityLayout name="aiEffectiveAccessView"
+	titleKey="admin.ai.agentSecurity.effective.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentSecurity.effective.tabber"/>
+	<components>
+		<component class="com.top_logic.tl.ai.core.security.layout.EffectiveToolAccessComponent"
+			name="aiEffectiveAccessComponent"
+			resPrefix="admin.ai.agentSecurity.effective."
+			securityObject="securityRoot"
+		>
+			<componentControlProvider class="com.top_logic.layout.structure.ControlRepresentableCP"/>
+			<tables>
+				<table name="rows"
+					defaultColumns="subject,verdict,risk,toolCount,provenance"
+					fixedColumns="1"
+					resPrefix="admin.ai.agentSecurity.effective.rows."
+				>
+					<column-default
+						accessor="com.top_logic.tl.ai.core.security.layout.EffectiveAccessAccessor"
+						columnWidth="200px"
+					/>
+					<columns>
+						<column name="subject"
+							columnWidth="350px"
+							visibility="mandatory"
+						>
+							<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+						</column>
+						<column name="verdict"
+							columnWidth="95px"
+						/>
+						<column name="risk"
+							columnWidth="135px"
+						/>
+						<column name="toolCount"
+							columnWidth="85px"
+						/>
+						<column name="provenance"
+							columnWidth="700px"
+						/>
+					</columns>
+				</table>
+			</tables>
+		</component>
+	</components>
+</securityLayout>

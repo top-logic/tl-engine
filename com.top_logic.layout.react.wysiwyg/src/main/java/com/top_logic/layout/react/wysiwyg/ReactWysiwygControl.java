@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,10 +23,15 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
@@ -33,6 +39,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.state.FieldState;
@@ -46,9 +53,11 @@ import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.form.AttributeFieldModel;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
@@ -76,6 +85,25 @@ import com.top_logic.util.error.TopLogicException;
  * download URL in the HTML received from the client is turned back into the reference. A plain
  * {@code <img src="name">} naming an image of the text is shown as well and stored as a reference
  * after the next edit.
+ * </p>
+ *
+ * <p>
+ * An editor {@link #setTextOnly(boolean) for text only} edits a model holding the HTML source as
+ * {@link String}. Such a text cannot store images, so the editor offers no image upload. An editor
+ * {@link #setSourceEditing(boolean) with source editing} offers switching between the formatted
+ * text and its HTML source.
+ * </p>
+ *
+ * <p>
+ * A text received from the client is stored only if it passes the application's HTML safety check
+ * ({@link SafeHTML}), see {@link #setCheckHtml(boolean)}.
+ * </p>
+ *
+ * <p>
+ * An editor {@link #setMentions(List) with mentions} tells the client their trigger characters in
+ * {@link #MENTIONS}. While a mention is typed, the client asks for the objects matching the text
+ * typed after the trigger with the command {@link MentionArguments#COMMAND}, sending nothing but
+ * the trigger and that text, and receives them in {@link #MENTION_OPTIONS}.
  * </p>
  */
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
@@ -128,6 +156,69 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	private static final String IMAGE_URL = "imageUrl";
 
+	/**
+	 * State telling whether the editor offers uploading images, absent for an editor that does.
+	 *
+	 * @see #setTextOnly(boolean)
+	 */
+	private static final String IMAGES = "images";
+
+	/**
+	 * State telling whether the editor offers switching to the HTML source of the text.
+	 *
+	 * @see #setSourceEditing(boolean)
+	 */
+	public static final String SOURCE_EDITING = "sourceEditing";
+
+	/**
+	 * State listing the {@link #setMentions(List) mentions} the editor offers, each an object
+	 * holding {@link #MENTION_TRIGGER} and {@link #MENTION_PRESENTATION}; absent for an editor
+	 * offering none.
+	 */
+	public static final String MENTIONS = "mentions";
+
+	/** Field of a {@link #MENTIONS} entry holding the trigger character of the mention. */
+	public static final String MENTION_TRIGGER = "trigger";
+
+	/**
+	 * Field of a {@link #MENTIONS} entry holding the {@link MentionPresentation#getExternalName()
+	 * external name} of the presentation of a reference inserted by the mention.
+	 */
+	public static final String MENTION_PRESENTATION = "presentation";
+
+	/**
+	 * State holding the answer to the last {@link MentionArguments#COMMAND} command, an object
+	 * holding {@link #OPTIONS_TRIGGER}, {@link #OPTIONS_QUERY} and {@link #OPTIONS_ENTRIES}.
+	 *
+	 * <p>
+	 * The trigger and the query the answer is computed for are part of it, so that the client can
+	 * tell an outdated answer from the one to the text currently typed.
+	 * </p>
+	 */
+	public static final String MENTION_OPTIONS = "mentionOptions";
+
+	/** Field of {@link #MENTION_OPTIONS} holding the trigger character the answer is for. */
+	public static final String OPTIONS_TRIGGER = "trigger";
+
+	/** Field of {@link #MENTION_OPTIONS} holding the query the answer is for. */
+	public static final String OPTIONS_QUERY = "query";
+
+	/**
+	 * Field of {@link #MENTION_OPTIONS} listing the objects offered, each an object holding
+	 * {@link #ENTRY_LABEL} and {@link #ENTRY_LINK}.
+	 */
+	public static final String OPTIONS_ENTRIES = "entries";
+
+	/** Field of an {@link #OPTIONS_ENTRIES} entry holding the label of the object. */
+	public static final String ENTRY_LABEL = "label";
+
+	/**
+	 * Field of an {@link #OPTIONS_ENTRIES} entry holding the destination of a link to the object,
+	 * the {@link TLObjectLinkUtil#getLinkDestination(TLObject, String) href} of an
+	 * {@link TLObjectLinkUtil#TL_OBJECT object link}.
+	 */
+	public static final String ENTRY_LINK = "link";
+
 	/** Path of the download URLs the images are served under by {@link #getDownloadData(String)}. */
 	private static final String DATA_PATH = "/react-api/data?";
 
@@ -151,6 +242,15 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	/** Number of insertions requested so far, the value of {@link #INSERT_SEQ}. */
 	private int _insertions;
 
+	/** Whether the model holds the HTML source as {@link String}, see {@link #setTextOnly(boolean)}. */
+	private boolean _textOnly;
+
+	/** Whether the text received from the client is checked, see {@link #setCheckHtml(boolean)}. */
+	private boolean _checkHtml = true;
+
+	/** The mentions the editor offers by their trigger characters, see {@link #setMentions(List)}. */
+	private Map<String, Mention> _mentions = Map.of();
+
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
 	 *
@@ -161,6 +261,25 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	public ReactWysiwygControl(ReactContext context, FieldModel model) {
 		this(context, model, List.of(), List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link ReactWysiwygControl} {@link #setTextOnly(boolean) for text only}, which
+	 * offers no commands of its own.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model holding the HTML source as {@link String}.
+	 * @param sourceEditing
+	 *        Whether the editor offers switching to the HTML source, see
+	 *        {@link #setSourceEditing(boolean)}.
+	 */
+	public static ReactWysiwygControl forText(ReactContext context, FieldModel model, boolean sourceEditing) {
+		ReactWysiwygControl editor = new ReactWysiwygControl(context, model);
+		editor.setTextOnly(true);
+		editor.setSourceEditing(sourceEditing);
+		return editor;
 	}
 
 	/**
@@ -266,24 +385,186 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		_insertChannel.set(null);
 	}
 
-	private void initShadowCopy() {
-		StructuredText value = (StructuredText) getFieldModel().getValue();
-		if (value != null) {
-			_shadowCopy = value.copy();
-		} else {
-			_shadowCopy = new StructuredText();
+	/**
+	 * Whether the edited model holds the HTML source of the text as {@link String} rather than a
+	 * {@link StructuredText}.
+	 */
+	public boolean isTextOnly() {
+		return _textOnly;
+	}
+
+	/**
+	 * Sets whether the edited model holds the HTML source of the text as {@link String} rather
+	 * than a {@link StructuredText}.
+	 *
+	 * <p>
+	 * A text held as {@link String} has no place for images, so an editor for text only offers no
+	 * image upload.
+	 * </p>
+	 */
+	public void setTextOnly(boolean textOnly) {
+		_textOnly = textOnly;
+		putState(IMAGES, textOnly ? Boolean.FALSE : null);
+	}
+
+	/**
+	 * Whether the editor offers switching between the formatted text and its HTML source.
+	 */
+	public boolean isSourceEditing() {
+		return getState(SOURCE_EDITING) == Boolean.TRUE;
+	}
+
+	/**
+	 * Sets whether the editor offers switching between the formatted text and its HTML source.
+	 *
+	 * <p>
+	 * The source is edited as it is: markup the formatted view cannot show is kept as long as the
+	 * text is not changed in the formatted view.
+	 * </p>
+	 */
+	public void setSourceEditing(boolean sourceEditing) {
+		putState(SOURCE_EDITING, sourceEditing ? Boolean.TRUE : null);
+	}
+
+	/**
+	 * Whether a text received from the client is stored only if it passes the application's HTML
+	 * safety check ({@link SafeHTML}).
+	 */
+	public boolean isCheckHtml() {
+		return _checkHtml;
+	}
+
+	/**
+	 * Sets whether a text received from the client is stored only if it passes the application's
+	 * HTML safety check ({@link SafeHTML}).
+	 *
+	 * <p>
+	 * A text the check rejects is not stored: the field reports the problem the check finds and
+	 * keeps its last accepted value, while the editor still shows the rejected text.
+	 * </p>
+	 *
+	 * <p>
+	 * An editor checks the text unless told otherwise.
+	 * </p>
+	 */
+	public void setCheckHtml(boolean checkHtml) {
+		_checkHtml = checkHtml;
+	}
+
+	/**
+	 * The ways of referring to objects the editor offers by typing a trigger character.
+	 *
+	 * @see #setMentions(List)
+	 */
+	public Collection<Mention> getMentions() {
+		return _mentions.values();
+	}
+
+	/**
+	 * Sets the ways of referring to objects the editor offers by typing a trigger character.
+	 *
+	 * @param mentions
+	 *        The mentions, each with a trigger character of its own. A mention whose trigger an
+	 *        earlier one uses is ignored.
+	 */
+	public void setMentions(List<Mention> mentions) {
+		Map<String, Mention> byTrigger = new LinkedHashMap<>();
+		List<Map<String, Object>> announced = new ArrayList<>();
+		for (Mention mention : mentions) {
+			if (byTrigger.putIfAbsent(mention.getTrigger(), mention) != null) {
+				Logger.warn("Ignoring a second mention with the trigger '" + mention.getTrigger() + "'.",
+					ReactWysiwygControl.class);
+				continue;
+			}
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put(MENTION_TRIGGER, mention.getTrigger());
+			entry.put(MENTION_PRESENTATION, mention.getPresentation().getExternalName());
+			announced.add(entry);
 		}
+		_mentions = byTrigger;
+
+		Object tx = beginUpdate();
+		putState(MENTIONS, announced.isEmpty() ? null : announced);
+		putState(MENTION_OPTIONS, null);
+		commitUpdate(tx);
+	}
+
+	/**
+	 * Handles the command {@link MentionArguments#COMMAND}: computes the objects the mention with
+	 * the given trigger offers for the given query and sends them to the client in
+	 * {@link #MENTION_OPTIONS}, together with the trigger and query they are computed for.
+	 *
+	 * <p>
+	 * Computing the objects leaves the value of the field alone. A trigger of no mention of the
+	 * editor is answered with no objects. When the function of the mention fails, the client
+	 * receives no objects and the failure is reported.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = MentionArguments.COMMAND, technical = true)
+	HandlerResult handleMention(MentionArguments args) {
+		String trigger = args.getTrigger();
+		String query = args.getQuery() == null ? "" : args.getQuery();
+
+		List<Map<String, Object>> entries = new ArrayList<>();
+		HandlerResult result = HandlerResult.DEFAULT_RESULT;
+		Mention mention = trigger == null ? null : _mentions.get(trigger);
+		if (mention != null) {
+			try {
+				for (TLObject object : mention.options(editedObject(), query)) {
+					Map<String, Object> entry = new LinkedHashMap<>();
+					entry.put(ENTRY_LABEL, MetaLabelProvider.INSTANCE.getLabel(object));
+					entry.put(ENTRY_LINK, TLObjectLinkUtil.getLinkDestination(object, null));
+					entries.add(entry);
+				}
+			} catch (RuntimeException ex) {
+				Logger.error("Failed to compute the objects for the mention '" + trigger + query + "'.", ex,
+					ReactWysiwygControl.class);
+				entries.clear();
+				result = HandlerResult.error(I18NConstants.ERROR_MENTION_FAILED);
+			}
+		}
+
+		Map<String, Object> answer = new LinkedHashMap<>();
+		answer.put(OPTIONS_TRIGGER, trigger);
+		answer.put(OPTIONS_QUERY, query);
+		answer.put(OPTIONS_ENTRIES, entries);
+		putState(MENTION_OPTIONS, answer);
+		return result;
+	}
+
+	/**
+	 * The object the edited text is an attribute of, {@code null} for a field editing no attribute
+	 * of an object.
+	 */
+	private Object editedObject() {
+		FieldModel model = getFieldModel();
+		if (model instanceof I18NLocalizedFieldModel localized) {
+			model = localized.getDelegate();
+		}
+		return model instanceof AttributeFieldModel attributeModel ? attributeModel.getObject() : null;
+	}
+
+	private void initShadowCopy() {
+		_shadowCopy = toStructuredText(getFieldModel().getValue());
+	}
+
+	/**
+	 * A copy of the given model value as {@link StructuredText}, an empty text for no value.
+	 */
+	private static StructuredText toStructuredText(Object value) {
+		if (value instanceof StructuredText text) {
+			return text.copy();
+		}
+		if (value instanceof String source) {
+			return new StructuredText(source);
+		}
+		return new StructuredText();
 	}
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		if (newValue instanceof StructuredText) {
-			_shadowCopy = ((StructuredText) newValue).copy();
-			putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
-		} else {
-			_shadowCopy = new StructuredText();
-			putState(FieldState.VALUE__PROP, "");
-		}
+		_shadowCopy = toStructuredText(newValue);
+		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
 	}
 
 	@Override
@@ -298,6 +579,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return null;
 		}
 		_shadowCopy.setSourceCode(cleanHtml);
+		if (_textOnly) {
+			return cleanHtml;
+		}
 		return _shadowCopy.copy();
 	}
 
@@ -447,12 +731,47 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
-		super.applyRawClientValue(rawValue);
+		if (_checkHtml) {
+			ResKey problem = rawValue == null ? null : htmlProblem(stripImageUrls(rawValue.toString()));
+			setInputError(problem);
+			if (problem == null) {
+				super.applyRawClientValue(rawValue);
+			}
+		} else {
+			super.applyRawClientValue(rawValue);
+		}
 
 		if (getState(INSERT) == null) {
 			return;
 		}
 		putState(INSERT, null);
+	}
+
+	/**
+	 * The problem the application's HTML safety check ({@link SafeHTML}) finds in the given text,
+	 * {@code null} if it is safe.
+	 */
+	private static ResKey htmlProblem(String html) {
+		try {
+			SafeHTML.getInstance().check(html);
+			return null;
+		} catch (I18NException ex) {
+			return I18NConstants.ERROR_UNSAFE_HTML__PROBLEM.fill(ex.getErrorKey());
+		}
+	}
+
+	/**
+	 * Reports the given problem with the text received from the client on the model, so that the
+	 * field shows it, or clears a reported problem.
+	 */
+	private void setInputError(ResKey problem) {
+		FieldModel model = getFieldModel();
+		if (model instanceof I18NLocalizedFieldModel localized) {
+			model = localized.getDelegate();
+		}
+		if (model instanceof AbstractFieldModel abstractModel) {
+			abstractModel.setError(problem);
+		}
 	}
 
 	private String uniqueImageKey(String name) {

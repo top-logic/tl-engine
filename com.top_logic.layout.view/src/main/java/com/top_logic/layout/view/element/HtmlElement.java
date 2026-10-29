@@ -5,6 +5,13 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -15,6 +22,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.exception.I18NException;
@@ -63,7 +72,18 @@ public class HtmlElement implements UIElement {
 	 * Configuration for {@link HtmlElement}.
 	 */
 	@TagName("html")
-	public interface Config extends UIElement.Config {
+	@TypeIcon("css:bi bi-filetype-html")
+	public interface Config extends UIElement.Config, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnLinkAs()}. */
+		String LINK_AS = "link-as";
+
+		/** Name of the value the target of the followed link when no other name is given. */
+		String DEFAULT_LINK_AS = "link";
+
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
@@ -169,7 +189,32 @@ public class HtmlElement implements UIElement {
 		@Name(ON_LINK)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getOnLink();
+
+		/**
+		 * The name of the argument holding the target of the followed link, the main argument of the
+		 * {@link #getOnLink() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(LINK_AS)
+		@StringDefault(DEFAULT_LINK_AS)
+		String getOnLinkAs();
+
+		/**
+		 * The {@link #getOnLink() command} runs with the target of the followed link as argument named by
+		 * {@link #getOnLinkAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnLink()) {
+				return ActionScope.single(getOnLinkAs());
+			}
+			return outer;
+		}
 	}
 
 	private final ChannelRef _inputRef;
@@ -187,6 +232,8 @@ public class HtmlElement implements UIElement {
 	/** The command following a link of the content, {@code null} without one. */
 	private final ViewCommand _onLink;
 
+	private final String _onLinkAs;
+
 	/** The configuration {@link #_onLink} was instantiated from, {@code null} without one. */
 	private final ViewCommand.Config _onLinkConfig;
 
@@ -203,7 +250,8 @@ public class HtmlElement implements UIElement {
 		_thumbnailHeight = config.getThumbnailHeight();
 		PolymorphicConfiguration<? extends ViewCommand> onLink = config.getOnLink();
 		_onLinkConfig = onLink instanceof ViewCommand.Config linkConfig ? linkConfig : null;
-		_onLink = context.getInstance(onLink);
+		_onLink = ViewCommands.instantiate(context, onLink, config.getOnLinkAs());
+		_onLinkAs = config.getOnLinkAs();
 	}
 
 	@Override
@@ -219,7 +267,7 @@ public class HtmlElement implements UIElement {
 		control.addCleanupAction(registration::dispose);
 
 		if (_onLink != null && _onLinkConfig != null) {
-			ViewCommandModel command = ViewCommandModel.forCommand(context, _onLink, _onLinkConfig);
+			ViewCommandModel command = ViewCommandModel.forCommand(context, _onLink, _onLinkConfig, _onLinkAs);
 			control.setLinkHandler(link -> command.execute(context, link));
 		}
 

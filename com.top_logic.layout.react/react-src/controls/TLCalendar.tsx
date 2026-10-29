@@ -1,5 +1,9 @@
-import { React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, tooltipProps } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, stateAttr, tooltipProps, usePart,
+  useStandaloneKeyboardScope, categoryOf, textOn, isInteractiveWithin, ICON_PREVIOUS, ICON_NEXT,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { useRovingFocus } from './useRovingFocus';
 
 const { useState, useRef, useCallback, useMemo, useEffect } = React;
 
@@ -7,9 +11,21 @@ const { useState, useRef, useCallback, useMemo, useEffect } = React;
  * Outlook-style calendar view. Renders the {@code events} pushed by the server-side
  * {@code CalendarViewControl} at day / work-week / week / month / year granularity and reports
  * navigation, selection and drag edits back through commands.
+ *
+ * Design system: `tl-calendar` (calendar.contract.md). The toolbar is a `tl-toolbar` with the view
+ * choice as a `tl-segmented` radio group. The events of a grid - the row of whole days, the time
+ * grid, the month - are one list box with one tab stop (useRovingFocus, in the time grid linear):
+ * the arrows move through them in the order of time, Enter or Space selects one. An event is drawn
+ * in its category (`data-tl-role="category-N"`, categoryOf), in the brand without one, or in the
+ * color the server sends with the text readable on it (textOn). The days are buttons named by their
+ * full date; today is `aria-current="date"`, every other state of a day a word of `data-tl-state`.
+ * Moving, resizing and creating events is done with the pointer.
  */
 
 const I18N_KEYS = {
+  'js.calendar.toolbar': 'Calendar',
+  'js.calendar.view': 'View',
+  'js.calendar.events': 'Events',
   'js.calendar.today': 'Today',
   'js.calendar.previous': 'Previous',
   'js.calendar.next': 'Next',
@@ -32,8 +48,8 @@ interface Ev {
   allDay: boolean;
   title: string;
   tooltip?: string;
-  category?: string;
-  color?: string;
+  category?: string | null;
+  color?: string | null;
   movable: boolean;
   resizable: boolean;
   selected: boolean;
@@ -44,7 +60,6 @@ const SNAP_MIN = 15;
 const MS_MIN = 60000;
 const MS_HOUR = 3600000;
 const MS_DAY = 86400000;
-const PALETTE_SIZE = 8;
 
 // --- date helpers (client-local time zone) ------------------------------
 
@@ -80,25 +95,6 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-function categoryClass(category?: string): string {
-  if (!category) {
-    return 'tlCalEvent--default';
-  }
-  let hash = 0;
-  for (let i = 0; i < category.length; i++) {
-    hash = (hash * 31 + category.charCodeAt(i)) | 0;
-  }
-  return 'tlCalEvent--c' + (Math.abs(hash) % PALETTE_SIZE);
-}
-
-/**
- * Style of an event bar, feeding an explicitly configured color into the custom property the
- * renderers paint with. Without one, the palette class of the category applies.
- */
-function eventStyle(ev: Ev, style?: React.CSSProperties): React.CSSProperties | undefined {
-  return ev.color ? ({ ...style, '--cal-ev-bg': ev.color } as React.CSSProperties) : style;
-}
-
 function parseEvents(raw: unknown): Ev[] {
   if (!Array.isArray(raw)) {
     return [];
@@ -110,12 +106,59 @@ function parseEvents(raw: unknown): Ev[] {
     allDay: e.allDay === true,
     title: (e.title as string) ?? '',
     tooltip: e.tooltip as string | undefined,
-    category: e.category as string | undefined,
-    color: e.color as string | undefined,
+    category: e.category as string | null | undefined,
+    color: e.color as string | null | undefined,
     movable: e.movable === true,
     resizable: e.resizable === true,
     selected: e.selected === true,
   }));
+}
+
+// --- paint of an event ---------------------------------------------------
+
+/**
+ * How an event is drawn: in its category role, in the brand without one (the block's own rule), or
+ * in the color the server sends, with the text readable on it.
+ */
+interface Paint {
+  /** The `data-tl-role` of the event: its category; absent for the brand and for a server color. */
+  role?: string;
+
+  /** The color the server sends; absent where none is sent or no readable text exists on it. */
+  color?: string;
+
+  /** The text role readable on {@link color} (textOn). */
+  text?: string;
+}
+
+/**
+ * The paint of the given event. A server color stands only where a readable text on it is known;
+ * otherwise the event falls back to its category, without one to the brand.
+ */
+function paintOf(ev: Ev, readable: (color: string) => string | null): Paint {
+  if (ev.color) {
+    const text = readable(ev.color);
+    if (text !== null) {
+      return { color: ev.color, text };
+    }
+  }
+  return ev.category ? { role: 'category-' + categoryOf(ev.category) } : {};
+}
+
+/** The attributes of a filled event in the given paint; the server color stands inline as data. */
+function filledProps(paint: Paint, placement?: React.CSSProperties) {
+  return {
+    'data-tl-role': paint.role,
+    style: paint.color ? { ...placement, background: paint.color, color: paint.text } : placement,
+  };
+}
+
+/** The attributes of the dot of a chip in the given paint: the surface alone, without text. */
+function dotProps(paint: Paint) {
+  return {
+    'data-tl-role': paint.role,
+    style: paint.color ? { background: paint.color } : undefined,
+  };
 }
 
 // --- shared render context ---------------------------------------------
@@ -131,6 +174,7 @@ interface Ctx {
   events: Ev[];
   send: (command: string, args?: Record<string, unknown>) => void;
   i18n: Record<string, string>;
+  paint: (ev: Ev) => Paint;
 }
 
 function fmt(locale: string, options: Intl.DateTimeFormatOptions, ms: number): string {
@@ -140,6 +184,40 @@ function fmt(locale: string, options: Intl.DateTimeFormatOptions, ms: number): s
 function timeRange(locale: string, ev: Ev): string {
   const opts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
   return fmt(locale, opts, ev.start) + '–' + fmt(locale, opts, ev.end);
+}
+
+/** The full date of a day, the name of the button standing for it. */
+function fullDate(locale: string, day: number): string {
+  return fmt(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }, day);
+}
+
+/** The name of an event in its list: its time and title, for a whole-day event its title and "all day". */
+function eventName(ctx: Ctx, ev: Ev): string {
+  return ev.allDay
+    ? ev.title + ', ' + ctx.i18n['js.calendar.allDay']
+    : timeRange(ctx.locale, ev) + ', ' + ev.title;
+}
+
+/**
+ * The attributes and handlers making an event an option of its list box: a click, Enter or Space
+ * selects it.
+ */
+function optionProps(ctx: Ctx, ev: Ev, tabIndex: number) {
+  const select = () => ctx.send('selectEvent', { eventId: ev.id });
+  return {
+    role: 'option',
+    'aria-selected': ev.selected,
+    'aria-label': eventName(ctx, ev),
+    tabIndex,
+    ...tooltipProps(ev.tooltip),
+    onClick: select,
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        select();
+      }
+    },
+  };
 }
 
 // --- Toolbar ------------------------------------------------------------
@@ -152,48 +230,95 @@ const GRANULARITIES: { key: Granularity; label: keyof typeof I18N_KEYS }[] = [
   { key: 'YEAR', label: 'js.calendar.year' },
 ];
 
+/**
+ * The choice of the view: a radio group of segments. Exactly the chosen segment is in the tab
+ * order; the arrows choose the next or previous view, as in every radio group (TLSegmentedChoice).
+ */
+const ViewChoice: React.FC<{
+  granularity: Granularity;
+  i18n: Record<string, string>;
+  send: Ctx['send'];
+}> = ({ granularity, i18n, send }) => {
+  const segmentRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const chosen = GRANULARITIES.findIndex((g) => g.key === granularity);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    let step = 0;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      step = 1;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      step = -1;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    // From the focused segment: a second press goes on from the first, before the server answered it.
+    const focused = segmentRefs.current.indexOf(e.target as HTMLButtonElement);
+    const from = focused >= 0 ? focused : chosen;
+    const next = (from + step + GRANULARITIES.length) % GRANULARITIES.length;
+    segmentRefs.current[next]?.focus();
+    send('switchGranularity', { granularity: GRANULARITIES[next].key });
+  };
+
+  return (
+    <div className="tl-segmented" role="radiogroup" aria-label={i18n['js.calendar.view']} onKeyDown={onKeyDown}>
+      {GRANULARITIES.map((g, index) => (
+        <button
+          key={g.key}
+          ref={(element) => {
+            segmentRefs.current[index] = element;
+          }}
+          type="button"
+          role="radio"
+          aria-checked={index === chosen}
+          tabIndex={index === (chosen < 0 ? 0 : chosen) ? 0 : -1}
+          className="tl-segmented__segment tl-type-label"
+          onClick={() => send('switchGranularity', { granularity: g.key })}
+        >
+          <span className="tl-segmented__label">{i18n[g.label]}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const Toolbar: React.FC<{
   title: string;
   granularity: Granularity;
   i18n: Record<string, string>;
   send: Ctx['send'];
-}> = ({ title, granularity, i18n, send }) => (
-  <div className="tlCalToolbar">
-    <div className="tlCalNav">
-      <button className="tlCalBtn" onClick={() => send('navigate', { direction: 'TODAY' })}>
-        {i18n['js.calendar.today']}
-      </button>
-      <button
-        className="tlCalBtn tlCalBtn--icon"
-        aria-label={i18n['js.calendar.previous']}
-        {...tooltipProps(i18n['js.calendar.previous'])}
-        onClick={() => send('navigate', { direction: 'PREV' })}
-      >
-        <span className="bi bi-chevron-left" />
-      </button>
-      <button
-        className="tlCalBtn tlCalBtn--icon"
-        aria-label={i18n['js.calendar.next']}
-        {...tooltipProps(i18n['js.calendar.next'])}
-        onClick={() => send('navigate', { direction: 'NEXT' })}
-      >
-        <span className="bi bi-chevron-right" />
-      </button>
+}> = ({ title, granularity, i18n, send }) => {
+  const Button = usePart('Button');
+  return (
+    <div className="tl-toolbar tl-calendar__toolbar" role="toolbar" aria-label={i18n['js.calendar.toolbar']}>
+      <div className="tl-toolbar__group">
+        <Button
+          label={i18n['js.calendar.today']}
+          display="label-only"
+          appearance="secondary"
+          onClick={() => send('navigate', { direction: 'TODAY' })}
+        />
+        <Button
+          label={i18n['js.calendar.previous']}
+          image={ICON_PREVIOUS}
+          display="icon-only"
+          appearance="secondary"
+          onClick={() => send('navigate', { direction: 'PREV' })}
+        />
+        <Button
+          label={i18n['js.calendar.next']}
+          image={ICON_NEXT}
+          display="icon-only"
+          appearance="secondary"
+          onClick={() => send('navigate', { direction: 'NEXT' })}
+        />
+      </div>
+      <div className="tl-calendar__title tl-type-heading-sm">{title}</div>
+      <ViewChoice granularity={granularity} i18n={i18n} send={send} />
     </div>
-    <div className="tlCalTitle">{title}</div>
-    <div className="tlCalGranularity">
-      {GRANULARITIES.map((g) => (
-        <button
-          key={g.key}
-          className={'tlCalBtn' + (g.key === granularity ? ' tlCalBtn--active' : '')}
-          onClick={() => send('switchGranularity', { granularity: g.key })}
-        >
-          {i18n[g.label]}
-        </button>
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 // --- Time grid (day / work week / week) --------------------------------
 
@@ -246,6 +371,29 @@ function layoutDay(events: Ev[]): Placed[] {
   return placed;
 }
 
+/** The positions of the items of the given groups in one sequence: the position of each group's first item. */
+function offsetsOf(groups: readonly unknown[][]): number[] {
+  const offsets: number[] = [];
+  let next = 0;
+  for (const group of groups) {
+    offsets.push(next);
+    next += group.length;
+  }
+  return offsets;
+}
+
+/** Selects the events of the time grid, evaluated on its list box. */
+const TIMED_OPTIONS = ':scope > .tl-calendar__column > [role="option"]';
+
+/** Selects the events of the row of whole days, evaluated on its list box. */
+const ALL_DAY_OPTIONS = ':scope > .tl-calendar__all-day-cell > [role="option"]';
+
+/** Selects the events of the month, evaluated on its list box. */
+const MONTH_OPTIONS = ':scope > .tl-calendar__week > .tl-calendar__overlay > [role="option"]';
+
+/** Selects the days of a mini month, evaluated on its grid. */
+const MINI_DAYS = ':scope > .tl-calendar__mini-day';
+
 type TimeDrag =
   | { mode: 'move'; id: string; grabMin: number; dur: number; dayStart: number; startMin: number; origStartMs: number }
   | { mode: 'resize'; id: string; dayStart: number; startMin: number; endMin: number; origEndMs: number }
@@ -256,69 +404,113 @@ type PendingCreate = { start: number; end: number; allDay: boolean };
 
 /**
  * Title input of an event that is not created yet: Enter creates it with the entered title,
- * Escape and losing the focus drop the stub without contacting the server.
+ * Escape drops the stub without contacting the server. Leaving the input, e.g. by a press elsewhere,
+ * creates the event if a title is entered and drops the stub otherwise. A press on the stub beside
+ * the input keeps it: it neither reaches the grid below nor takes the focus from the input.
+ *
+ * Escape reaches the stub through the keyboard dispatcher: while the stub exists, a scope of its
+ * own binds Escape to dropping the stub - and to nothing else, so a window around the calendar
+ * stays open.
  */
 const CreateStub: React.FC<{
-  className: string;
   placeholder: string;
   style?: React.CSSProperties;
   onCommit: (title: string) => void;
   onDiscard: () => void;
-}> = ({ className, placeholder, style, onCommit, onDiscard }) => {
+  onLeave: () => void;
+  onTitle: (title: string) => void;
+}> = ({ placeholder, style, onCommit, onDiscard, onLeave, onTitle }) => {
   // Enter both commits and blurs the input: whichever event arrives first decides.
   const settled = useRef(false);
-  const settle = (title: string | null) => {
+  const settle = (end: () => void) => {
     if (settled.current) {
       return;
     }
     settled.current = true;
-    if (title === null) {
-      onDiscard();
-    } else {
-      onCommit(title);
-    }
+    end();
   };
+  const inputRef = useRef<HTMLInputElement>(null);
+  useStandaloneKeyboardScope(true, {
+    ESCAPE: () => {
+      settle(onDiscard);
+      return true;
+    },
+  });
   return (
-    <div className={className} style={style}>
+    <div
+      className="tl-calendar__event tl-type-label"
+      data-tl-state="preview"
+      style={style}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        inputRef.current?.focus();
+      }}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={(e) => e.stopPropagation()}
+    >
       <input
-        className="tlCalCreateInput"
+        ref={inputRef}
+        className="tl-field tl-calendar__create tl-type-label"
         autoFocus
         placeholder={placeholder}
+        aria-label={placeholder}
         onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
+        onChange={(e) => onTitle(e.currentTarget.value)}
         onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            // The dispatcher's: the binding of the stub drops it (see above).
+            return;
+          }
           e.stopPropagation();
           if (e.key === 'Enter') {
-            settle(e.currentTarget.value);
-          } else if (e.key === 'Escape') {
-            settle(null);
+            const title = e.currentTarget.value;
+            settle(() => onCommit(title));
           }
         }}
-        onBlur={() => settle(null)}
+        onBlur={() => settle(onLeave)}
       />
     </div>
   );
 };
 
-/** The slot a grid currently offers for creation, and the ways to end that state. */
+/**
+ * The slot a grid currently offers for creation, and the ways to end that state: committing it with a
+ * title, discarding it, or leaving it - which commits it if a title is entered. Each ends the slot
+ * once: an end reaching a slot already ended, e.g. the blur of the input removed by it, does nothing.
+ */
 const usePendingCreate = (send: Ctx['send']) => {
   const [pending, setPending] = useState<PendingCreate | null>(null);
-  // Read through a ref so that committing does not have to be re-created per keystroke.
+  // Read through refs so that ending does not have to be re-created per keystroke.
   const pendingRef = useRef<PendingCreate | null>(null);
   pendingRef.current = pending;
-  const open = useCallback((slot: PendingCreate) => setPending(slot), []);
-  const discard = useCallback(() => setPending(null), []);
-  const commit = useCallback(
-    (title: string) => {
+  const titleRef = useRef('');
+  const open = useCallback((slot: PendingCreate) => {
+    pendingRef.current = slot;
+    titleRef.current = '';
+    setPending(slot);
+  }, []);
+  const end = useCallback(
+    (title: string | null) => {
       const slot = pendingRef.current;
-      if (slot) {
+      pendingRef.current = null;
+      titleRef.current = '';
+      if (slot && title !== null) {
         send('createSlot', { ...slot, title });
       }
       setPending(null);
     },
     [send]
   );
-  return { pending, open, commit, discard };
+  const commit = useCallback((title: string) => end(title), [end]);
+  const discard = useCallback(() => end(null), [end]);
+  const leave = useCallback(() => end(titleRef.current.trim() === '' ? null : titleRef.current), [end]);
+  const setTitle = useCallback((title: string) => {
+    titleRef.current = title;
+  }, []);
+  return { pending, open, commit, discard, leave, setTitle };
 };
 
 const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularity }> = ({
@@ -344,6 +536,8 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
   const create = usePendingCreate(send);
   const colsRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const timedListRef = useRef<HTMLDivElement>(null);
+  const allDayListRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<TimeDrag | null>(null);
   const dragRef = useRef<TimeDrag | null>(null);
   dragRef.current = drag;
@@ -375,7 +569,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
   // dragRef, which every render keeps current - so they always act on the state the grid shows.
   const beginDrag = (e: React.PointerEvent, initial: TimeDrag, cursor?: string) => {
     e.preventDefault();
-    create.discard();
+    create.leave();
     dragRef.current = initial;
     setDrag(initial);
 
@@ -503,151 +697,188 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     return days.map((day) => displayEvents.filter((ev) => ev.allDay && ev.start < day + MS_DAY && ev.end > day));
   }, [days, displayEvents]);
 
+  // Each list box holds its events day after day, a day's in the order of time (layoutDay): the
+  // order the arrows follow.
+  const timedOffsets = offsetsOf(timedByDay);
+  const timedOrder = timedByDay.flat();
+  const timedRoving = useRovingFocus(
+    timedListRef, TIMED_OPTIONS, timedOrder.length, timedOrder.findIndex((p) => p.ev.selected), { linear: true });
+  const allDayOffsets = offsetsOf(allDayByDay);
+  const allDayOrder = allDayByDay.flat();
+  const allDayRoving = useRovingFocus(
+    allDayListRef, ALL_DAY_OPTIONS, allDayOrder.length, allDayOrder.findIndex((ev) => ev.selected), { linear: true });
+
   const workTop = dayStartHour * HOUR_HEIGHT;
   const workBot = dayEndHour * HOUR_HEIGHT;
 
   return (
-    <div className="tlCalTimeGrid">
-      <div className="tlCalTimeHeader">
-        <div className="tlCalGutter" />
+    <div className="tl-calendar__time-grid">
+      <div className="tl-calendar__head">
+        <div className="tl-calendar__gutter" />
         {days.map((day) => {
           const weekend = nonWorkingDays.includes(new Date(day).getDay());
-          const today = isSameDay(day, ctx.now);
+          const today = isSameDay(day, now);
           return (
-            <div
+            <button
               key={day}
-              className={'tlCalDayHead' + (weekend ? ' tlCalDayHead--nonworking' : '') + (today ? ' tlCalDayHead--today' : '')}
+              type="button"
+              className="tl-calendar__day-head"
+              aria-label={fullDate(locale, day)}
+              aria-current={today ? 'date' : undefined}
+              data-tl-state={stateAttr(weekend && 'nonworking')}
               onClick={() => send('goto', { date: day, granularity: 'DAY' })}
             >
-              <span className="tlCalDayName">{fmt(locale, { weekday: 'short' }, day)}</span>
-              <span className="tlCalDayNum">{new Date(day).getDate()}</span>
-            </div>
+              <span className="tl-calendar__weekday tl-type-label">{fmt(locale, { weekday: 'short' }, day)}</span>
+              <span className="tl-calendar__day-number tl-type-heading-sm">{new Date(day).getDate()}</span>
+            </button>
           );
         })}
       </div>
 
-      <div className="tlCalAllDayRow">
-        <div className="tlCalGutter tlCalAllDayLabel">{i18n['js.calendar.allDay']}</div>
-        {days.map((day, di) => (
-          <div
-            key={day}
-            className="tlCalAllDayCell"
-            onClick={() => editable && create.open({ start: day, end: day + MS_DAY, allDay: true })}
-          >
-            {create.pending && create.pending.allDay && create.pending.start === day && (
-              <CreateStub
-                className="tlCalAllDayEvent tlCalEvent--preview"
-                placeholder={i18n['js.calendar.newEventTitle']}
-                onCommit={create.commit}
-                onDiscard={create.discard}
-              />
-            )}
-            {allDayByDay[di].map((ev) => (
-              <div
-                key={ev.id}
-                className={'tlCalAllDayEvent ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
-                style={eventStyle(ev)}
-                {...tooltipProps(ev.tooltip)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  send('selectEvent', { eventId: ev.id });
-                }}
-              >
-                {ev.title}
-              </div>
-            ))}
-          </div>
-        ))}
+      <div className="tl-calendar__all-day">
+        <div className="tl-calendar__gutter tl-calendar__all-day-label tl-type-label">{i18n['js.calendar.allDay']}</div>
+        <div
+          ref={allDayListRef}
+          className="tl-calendar__events"
+          role="listbox"
+          aria-label={i18n['js.calendar.events'] + ', ' + i18n['js.calendar.allDay']}
+          onKeyDown={allDayRoving.onKeyDown}
+          onFocus={allDayRoving.onFocus}
+        >
+          {days.map((day, di) => (
+            <div
+              key={day}
+              className="tl-calendar__all-day-cell"
+              onClick={(e) => {
+                if (editable && !isInteractiveWithin(e.target, e.currentTarget)) {
+                  create.open({ start: day, end: day + MS_DAY, allDay: true });
+                }
+              }}
+            >
+              {create.pending && create.pending.allDay && create.pending.start === day && (
+                <CreateStub
+                  placeholder={i18n['js.calendar.newEventTitle']}
+                  onCommit={create.commit}
+                  onDiscard={create.discard}
+                  onLeave={create.leave}
+                  onTitle={create.setTitle}
+                />
+              )}
+              {allDayByDay[di].map((ev, k) => (
+                <div
+                  key={ev.id}
+                  className="tl-calendar__event tl-type-label"
+                  {...filledProps(ctx.paint(ev))}
+                  {...optionProps(ctx, ev, allDayRoving.tabIndexOf(allDayOffsets[di] + k))}
+                >
+                  {ev.title}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="tlCalScroll" ref={scrollRef}>
-        <div className="tlCalTimeBody" style={{ height: 24 * HOUR_HEIGHT }}>
-          <div className="tlCalHourAxis">
+      <div className="tl-calendar__scroll" ref={scrollRef}>
+        <div className="tl-calendar__time-body" style={{ height: 24 * HOUR_HEIGHT }}>
+          <div className="tl-calendar__hours">
             {hours.map((h) => (
-              <div key={h} className="tlCalHourLabel" style={{ top: h * HOUR_HEIGHT }}>
+              <div key={h} className="tl-calendar__hour tl-type-label" style={{ top: h * HOUR_HEIGHT }}>
                 {h === 0 ? '' : fmt(locale, { hour: 'numeric' }, startOfDay(rangeStart) + h * MS_HOUR)}
               </div>
             ))}
           </div>
-          <div className="tlCalColumns" ref={colsRef} style={{ gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
-            {days.map((day, di) => {
-              const weekend = nonWorkingDays.includes(new Date(day).getDay());
-              const preview = drag && (('dayStart' in drag && drag.dayStart === day) || false) ? drag : null;
-              return (
-                <div
-                  key={day}
-                  className={'tlCalCol' + (weekend ? ' tlCalCol--nonworking' : '')}
-                  onPointerDown={(e) => startCreate(e, day)}
-                >
-                  {hours.map((h) => (
-                    <div key={h} className="tlCalHourLine" style={{ top: h * HOUR_HEIGHT }} />
-                  ))}
-                  <div className="tlCalWorkBand" style={{ top: workTop, height: workBot - workTop }} />
+          <div className="tl-calendar__columns" ref={colsRef} style={{ gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
+            <div
+              ref={timedListRef}
+              className="tl-calendar__events"
+              role="listbox"
+              aria-label={i18n['js.calendar.events']}
+              onKeyDown={timedRoving.onKeyDown}
+              onFocus={timedRoving.onFocus}
+            >
+              {days.map((day, di) => {
+                const weekend = nonWorkingDays.includes(new Date(day).getDay());
+                const preview = drag && (('dayStart' in drag && drag.dayStart === day) || false) ? drag : null;
+                return (
+                  <div
+                    key={day}
+                    className="tl-calendar__column"
+                    data-tl-state={stateAttr(weekend && 'nonworking')}
+                    onPointerDown={(e) => startCreate(e, day)}
+                  >
+                    {/* The working time lies under the hour lines; a non-working day has none. */}
+                    {!weekend && (
+                      <div className="tl-calendar__work" style={{ top: workTop, height: workBot - workTop }} />
+                    )}
+                    {hours.map((h) => (
+                      <div key={h} className="tl-calendar__hour-line" style={{ top: h * HOUR_HEIGHT }} />
+                    ))}
 
-                  {isSameDay(day, tick) && (
-                    <div className="tlCalNowLine" style={{ top: (minutesOfDay(Date.now()) / 60) * HOUR_HEIGHT }} />
-                  )}
+                    {isSameDay(day, tick) && (
+                      <div className="tl-calendar__now" style={{ top: (minutesOfDay(Date.now()) / 60) * HOUR_HEIGHT }} />
+                    )}
 
-                  {timedByDay[di].map((p) => {
-                    const dragging = drag !== null && 'id' in drag && drag.id === p.ev.id;
-                    const top = (p.topMin / 60) * HOUR_HEIGHT;
-                    const height = ((p.botMin - p.topMin) / 60) * HOUR_HEIGHT;
-                    const widthPct = 100 / p.cols;
-                    return (
-                      <div
-                        key={p.ev.id}
-                        className={
-                          'tlCalEvent ' + categoryClass(p.ev.category) +
-                          (p.ev.selected ? ' tlCalEvent--selected' : '') +
-                          (dragging ? ' tlCalEvent--dragging' : '')
-                        }
-                        style={eventStyle(p.ev, {
-                          top,
-                          height,
-                          left: `${p.col * widthPct}%`,
-                          width: `calc(${widthPct}% - 2px)`,
-                        })}
-                        {...tooltipProps(p.ev.tooltip)}
-                        onPointerDown={(e) => startMove(e, p.ev, day)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          send('selectEvent', { eventId: p.ev.id });
+                    {timedByDay[di].map((p, k) => {
+                      const dragging = drag !== null && 'id' in drag && drag.id === p.ev.id;
+                      const top = (p.topMin / 60) * HOUR_HEIGHT;
+                      const height = ((p.botMin - p.topMin) / 60) * HOUR_HEIGHT;
+                      const widthPct = 100 / p.cols;
+                      return (
+                        <div
+                          key={p.ev.id}
+                          className="tl-calendar__event tl-type-label"
+                          data-tl-state={stateAttr(dragging && 'dragging')}
+                          {...filledProps(ctx.paint(p.ev), {
+                            top,
+                            height,
+                            left: `${p.col * widthPct}%`,
+                            width: `calc(${widthPct}% - 2px)`,
+                          })}
+                          {...optionProps(ctx, p.ev, timedRoving.tabIndexOf(timedOffsets[di] + k))}
+                          onPointerDown={(e) => startMove(e, p.ev, day)}
+                        >
+                          <span className="tl-calendar__event-time tl-type-label">{timeRange(locale, p.ev)}</span>
+                          <span className="tl-calendar__event-title tl-type-label-strong">{p.ev.title}</span>
+                          {editable && p.ev.resizable && (
+                            <span className="tl-calendar__resize" onPointerDown={(e) => startResize(e, p.ev, day)} />
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {create.pending && !create.pending.allDay && startOfDay(create.pending.start) === day && (
+                      <CreateStub
+                        placeholder={i18n['js.calendar.newEventTitle']}
+                        style={{
+                          top: (minutesOfDay(create.pending.start) / 60) * HOUR_HEIGHT,
+                          height: ((create.pending.end - create.pending.start) / MS_MIN / 60) * HOUR_HEIGHT,
+                          left: 0,
+                          width: 'calc(100% - 2px)',
                         }}
-                      >
-                        <span className="tlCalEventTime">{timeRange(locale, p.ev)}</span>
-                        <span className="tlCalEventTitle">{p.ev.title}</span>
-                        {editable && p.ev.resizable && (
-                          <span className="tlCalResizeHandle" onPointerDown={(e) => startResize(e, p.ev, day)} />
-                        )}
-                      </div>
-                    );
-                  })}
+                        onCommit={create.commit}
+                        onDiscard={create.discard}
+                        onLeave={create.leave}
+                        onTitle={create.setTitle}
+                      />
+                    )}
 
-                  {create.pending && !create.pending.allDay && startOfDay(create.pending.start) === day && (
-                    <CreateStub
-                      className="tlCalEvent tlCalEvent--preview"
-                      placeholder={i18n['js.calendar.newEventTitle']}
-                      style={{
-                        top: (minutesOfDay(create.pending.start) / 60) * HOUR_HEIGHT,
-                        height: ((create.pending.end - create.pending.start) / MS_MIN / 60) * HOUR_HEIGHT,
-                      }}
-                      onCommit={create.commit}
-                      onDiscard={create.discard}
-                    />
-                  )}
-
-                  {preview && preview.mode === 'create' && (
-                    <div
-                      className="tlCalEvent tlCalEvent--preview"
-                      style={{
-                        top: (Math.min(preview.fromMin, preview.toMin) / 60) * HOUR_HEIGHT,
-                        height: (Math.abs(preview.toMin - preview.fromMin) / 60) * HOUR_HEIGHT,
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
+                    {preview && preview.mode === 'create' && (
+                      <div
+                        className="tl-calendar__event"
+                        data-tl-state="preview"
+                        style={{
+                          top: (Math.min(preview.fromMin, preview.toMin) / 60) * HOUR_HEIGHT,
+                          height: (Math.abs(preview.toMin - preview.fromMin) / 60) * HOUR_HEIGHT,
+                          left: 0,
+                          width: 'calc(100% - 2px)',
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -659,10 +890,29 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
 
 const MAX_CHIPS = 3;
 
+/** An event as the month shows it in a week: a filled bar over its days, or a chip on its day. */
+interface MonthEntry {
+  ev: Ev;
+  bar: boolean;
+  placement: React.CSSProperties;
+}
+
+/** The "+n more" of a day of a week. */
+interface MoreEntry {
+  day: number;
+  count: number;
+  placement: React.CSSProperties;
+}
+
 const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }> = ({ ctx, rangeStart, anchorMonth }) => {
   const { events, locale, nonWorkingDays, send, editable, now, i18n } = ctx;
 
   const create = usePendingCreate(send);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // The event dragged from this month, and the day it is dragged over.
+  const [dragged, setDragged] = useState<string | null>(null);
+  const [dropDay, setDropDay] = useState<number | null>(null);
 
   const weeks = useMemo(() => {
     const w: number[][] = [];
@@ -676,8 +926,77 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
     return w;
   }, [rangeStart]);
 
+  // The events of each week: the bars over several days, then per day the chips of the timed events
+  // and the "+n more" of those not shown, placed explicitly. In the list box they stand in the
+  // order of time, the order the arrows follow.
+  const layout = useMemo(() => weeks.map((row) => {
+    const rowStart = row[0];
+    const rowEnd = addDays(rowStart, 7);
+    const spanning = events
+      .filter((ev) => (ev.allDay || ev.end - ev.start >= MS_DAY) && ev.start < rowEnd && ev.end > rowStart)
+      .sort((a, b) => a.start - b.start)
+      .slice(0, 3);
+    const barRows = spanning.length;
+    const entries: MonthEntry[] = spanning.map((ev, si) => {
+      const from = Math.max(0, Math.floor((startOfDay(Math.max(ev.start, rowStart)) - rowStart) / MS_DAY));
+      const toExcl = Math.min(7, Math.ceil((ev.end - rowStart) / MS_DAY));
+      return {
+        ev,
+        bar: true,
+        placement: { gridColumn: `${from + 1} / ${Math.max(from + 1, toExcl) + 1}`, gridRow: si + 1 },
+      };
+    });
+    const more: MoreEntry[] = [];
+    row.forEach((day, ci) => {
+      const timed = events
+        .filter((ev) => !ev.allDay && ev.end - ev.start < MS_DAY && isSameDay(ev.start, day))
+        .sort((a, b) => a.start - b.start);
+      const shown = timed.slice(0, MAX_CHIPS);
+      shown.forEach((ev, k) => entries.push({ ev, bar: false, placement: { gridColumn: ci + 1, gridRow: barRows + 1 + k } }));
+      if (timed.length > shown.length) {
+        more.push({
+          day, count: timed.length - shown.length, placement: { gridColumn: ci + 1, gridRow: barRows + 1 + shown.length },
+        });
+      }
+    });
+    entries.sort((a, b) => a.ev.start - b.ev.start);
+    return { entries, more };
+  }), [weeks, events]);
+
+  const offsets = offsetsOf(layout.map((week) => week.entries));
+  const order = layout.flatMap((week) => week.entries);
+  const roving = useRovingFocus(listRef, MONTH_OPTIONS, order.length, order.findIndex((entry) => entry.ev.selected));
+
+  const draggedEvent = dragged === null ? undefined : events.find((ev) => ev.id === dragged);
+
+  const startDrag = (e: React.DragEvent, ev: Ev) => {
+    e.dataTransfer.setData('text/plain', ev.id);
+    setDragged(ev.id);
+  };
+
+  const endDrag = () => {
+    setDragged(null);
+    setDropDay(null);
+  };
+
+  const onDragOverDay = (e: React.DragEvent, day: number) => {
+    e.preventDefault();
+    // Marked only for an event of this month that may be moved: the drop moves nothing else.
+    if (editable && draggedEvent?.movable && dropDay !== day) {
+      setDropDay(day);
+    }
+  };
+
+  const onDragLeaveDay = (e: React.DragEvent, day: number) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null) && dropDay === day) {
+      setDropDay(null);
+    }
+  };
+
   const onDropDay = (e: React.DragEvent, day: number) => {
     e.preventDefault();
+    // Ended here as well: the event may move to another week before its drag end arrives.
+    endDrag();
     const id = e.dataTransfer.getData('text/plain');
     const ev = events.find((x) => x.id === id);
     if (!ev || !editable || !ev.movable) {
@@ -688,25 +1007,25 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
   };
 
   return (
-    <div className="tlCalMonth">
-      <div className="tlCalMonthHead">
+    <div className="tl-calendar__month">
+      <div className="tl-calendar__month-head">
         {weeks[0].map((day) => (
-          <div key={day} className="tlCalMonthWeekday">{fmt(locale, { weekday: 'short' }, day)}</div>
+          <div key={day} className="tl-calendar__month-weekday tl-type-label">{fmt(locale, { weekday: 'short' }, day)}</div>
         ))}
       </div>
-      <div className="tlCalMonthBody">
-        {weeks.map((row, ri) => {
-          const rowStart = row[0];
-          const rowEnd = addDays(rowStart, 7);
-          const spanning = events
-            .filter((ev) => (ev.allDay || ev.end - ev.start >= MS_DAY) && ev.start < rowEnd && ev.end > rowStart)
-            .sort((a, b) => a.start - b.start)
-            .slice(0, 3);
-          const barRows = spanning.length;
-          return (
-            <div key={ri} className="tlCalMonthWeek">
+      <div className="tl-calendar__month-body">
+        <div
+          ref={listRef}
+          className="tl-calendar__events"
+          role="listbox"
+          aria-label={i18n['js.calendar.events']}
+          onKeyDown={roving.onKeyDown}
+          onFocus={roving.onFocus}
+        >
+          {weeks.map((row, ri) => (
+            <div key={ri} className="tl-calendar__week">
               {/* Base layer: full-height day cells providing borders, backgrounds and day numbers. */}
-              <div className="tlCalMonthDays">
+              <div className="tl-calendar__days">
                 {row.map((day) => {
                   const inMonth = new Date(day).getMonth() === new Date(anchorMonth).getMonth();
                   const weekend = nonWorkingDays.includes(new Date(day).getDay());
@@ -714,102 +1033,83 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                   return (
                     <div
                       key={day}
-                      className={
-                        'tlCalMonthCell' + (inMonth ? '' : ' tlCalMonthCell--other') +
-                        (weekend ? ' tlCalMonthCell--nonworking' : '')
-                      }
-                      onDragOver={(e) => e.preventDefault()}
+                      className="tl-calendar__day"
+                      aria-current={today ? 'date' : undefined}
+                      data-tl-state={stateAttr(!inMonth && 'other', weekend && 'nonworking', dropDay === day && 'drop-onto')}
+                      onDragOver={(e) => onDragOverDay(e, day)}
+                      onDragLeave={(e) => onDragLeaveDay(e, day)}
                       onDrop={(e) => onDropDay(e, day)}
-                      onClick={() => editable && create.open({ start: day, end: day + MS_DAY, allDay: true })}
+                      onClick={(e) => {
+                        if (editable && !isInteractiveWithin(e.target, e.currentTarget)) {
+                          create.open({ start: day, end: day + MS_DAY, allDay: true });
+                        }
+                      }}
                     >
-                      <div
-                        className={'tlCalMonthDayNum' + (today ? ' tlCalMonthDayNum--today' : '')}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          send('goto', { date: day, granularity: 'DAY' });
-                        }}
+                      <button
+                        type="button"
+                        className="tl-calendar__day-number tl-type-heading-sm"
+                        aria-label={fullDate(locale, day)}
+                        onClick={() => send('goto', { date: day, granularity: 'DAY' })}
                       >
                         {new Date(day).getDate()}
-                      </div>
+                      </button>
                       {create.pending && create.pending.start === day && (
                         <CreateStub
-                          className="tlCalMonthBar tlCalEvent--preview tlCalMonthCreate"
                           placeholder={i18n['js.calendar.newEventTitle']}
                           onCommit={create.commit}
                           onDiscard={create.discard}
+                          onLeave={create.leave}
+                          onTitle={create.setTitle}
                         />
                       )}
                     </div>
                   );
                 })}
               </div>
-              {/* Overlay layer: multi-day spanning bars, then per-day timed chips, placed explicitly. */}
-              <div className="tlCalMonthOverlay">
-                {spanning.map((ev, si) => {
-                  const from = Math.max(0, Math.floor((startOfDay(Math.max(ev.start, rowStart)) - rowStart) / MS_DAY));
-                  const toExcl = Math.min(7, Math.ceil((ev.end - rowStart) / MS_DAY));
-                  return (
-                    <div
-                      key={ev.id}
-                      className={'tlCalMonthBar ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
-                      style={eventStyle(ev, {
-                        gridColumn: `${from + 1} / ${Math.max(from + 1, toExcl) + 1}`,
-                        gridRow: si + 1,
-                      })}
-                      draggable={editable && ev.movable}
-                      onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
-                      {...tooltipProps(ev.tooltip)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        send('selectEvent', { eventId: ev.id });
-                      }}
-                    >
+              {/* Overlay layer: multi-day bars and per-day timed chips, placed explicitly. */}
+              <div className="tl-calendar__overlay">
+                {layout[ri].entries.map(({ ev, bar, placement }, k) => {
+                  const paint = ctx.paint(ev);
+                  const common = {
+                    ...optionProps(ctx, ev, roving.tabIndexOf(offsets[ri] + k)),
+                    'data-tl-state': stateAttr(dragged === ev.id && 'dragging'),
+                    draggable: editable && ev.movable,
+                    onDragStart: (e: React.DragEvent) => startDrag(e, ev),
+                    onDragEnd: endDrag,
+                  };
+                  return bar ? (
+                    <div key={ev.id} className="tl-calendar__event tl-type-label" {...filledProps(paint, placement)} {...common}>
                       {ev.title}
+                    </div>
+                  ) : (
+                    <div key={ev.id} className="tl-calendar__chip tl-type-label" style={placement} {...common}>
+                      <span className="tl-calendar__chip-dot" {...dotProps(paint)} />
+                      <span className="tl-calendar__event-time tl-type-label">
+                        {fmt(locale, { hour: 'numeric', minute: '2-digit' }, ev.start)}
+                      </span>
+                      <span className="tl-calendar__event-title tl-type-label">{ev.title}</span>
                     </div>
                   );
                 })}
-                {row.map((day, ci) => {
-                  const timed = events
-                    .filter((ev) => !ev.allDay && ev.end - ev.start < MS_DAY && isSameDay(ev.start, day))
-                    .sort((a, b) => a.start - b.start);
-                  const shown = timed.slice(0, MAX_CHIPS);
-                  const more = timed.length - shown.length;
-                  return shown.map((ev, k) => (
-                    <div
-                      key={ev.id}
-                      className={'tlCalChip ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
-                      style={eventStyle(ev, { gridColumn: ci + 1, gridRow: barRows + 1 + k })}
-                      draggable={editable && ev.movable}
-                      onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
-                      {...tooltipProps(ev.tooltip)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        send('selectEvent', { eventId: ev.id });
-                      }}
+                {layout[ri].more.map(({ day, count, placement }) => {
+                  const text = '+' + count + ' ' + i18n['js.calendar.more'];
+                  return (
+                    <button
+                      key={'more-' + day}
+                      type="button"
+                      className="tl-calendar__more tl-type-label"
+                      style={placement}
+                      aria-label={text + ', ' + fullDate(locale, day)}
+                      onClick={() => send('goto', { date: day, granularity: 'DAY' })}
                     >
-                      <span className="tlCalChipDot" />
-                      <span className="tlCalChipTime">{fmt(locale, { hour: 'numeric', minute: '2-digit' }, ev.start)}</span>
-                      <span className="tlCalChipTitle">{ev.title}</span>
-                    </div>
-                  )).concat(
-                    more > 0
-                      ? [
-                          <div
-                            key={'more-' + day}
-                            className="tlCalMore"
-                            style={{ gridColumn: ci + 1, gridRow: barRows + 1 + shown.length }}
-                            onClick={() => send('goto', { date: day, granularity: 'DAY' })}
-                          >
-                            +{more} {ctx.i18n['js.calendar.more']}
-                          </div>,
-                        ]
-                      : []
+                      {text}
+                    </button>
                   );
                 })}
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -817,8 +1117,76 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
 
 // --- Year grid ----------------------------------------------------------
 
+/**
+ * A month of the year: its name, a button to the month, and its days as buttons in a grid with one
+ * tab stop - today, in a month without today the first of the month. The arrows move from day to
+ * day and from week to week, Enter opens the day.
+ */
+const MiniMonth: React.FC<{
+  ctx: Ctx;
+  monthStart: number;
+  eventDays: Set<number>;
+  weekdayHeader: string[];
+}> = ({ ctx, monthStart, eventDays, weekdayHeader }) => {
+  const { locale, firstDayOfWeek, nonWorkingDays, send, now } = ctx;
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const first = new Date(monthStart);
+  const gridStart = startOfDay(addDays(monthStart, -(((first.getDay() - firstDayOfWeek + 7) % 7))));
+  const cells = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+  const inMonth = (day: number) => new Date(day).getMonth() === first.getMonth();
+  const todayIndex = cells.findIndex((day) => inMonth(day) && isSameDay(day, now));
+  const preferred = todayIndex >= 0 ? todayIndex : cells.findIndex((day) => isSameDay(day, monthStart));
+  const roving = useRovingFocus(gridRef, MINI_DAYS, cells.length, preferred);
+  const name = fmt(locale, { month: 'long', year: 'numeric' }, monthStart);
+
+  return (
+    <div className="tl-calendar__mini">
+      <button
+        type="button"
+        className="tl-calendar__mini-title tl-type-label-strong"
+        aria-label={name}
+        onClick={() => send('goto', { date: monthStart, granularity: 'MONTH' })}
+      >
+        {fmt(locale, { month: 'long' }, monthStart)}
+      </button>
+      <div
+        ref={gridRef}
+        className="tl-calendar__mini-grid"
+        role="group"
+        aria-label={name}
+        onKeyDown={roving.onKeyDown}
+        onFocus={roving.onFocus}
+      >
+        {weekdayHeader.map((w, i) => (
+          <span key={'h' + i} className="tl-calendar__mini-weekday tl-type-label" aria-hidden="true">{w}</span>
+        ))}
+        {cells.map((day, index) => {
+          const weekend = nonWorkingDays.includes(new Date(day).getDay());
+          const today = isSameDay(day, now);
+          const has = eventDays.has(dayKey(day));
+          return (
+            <button
+              key={day}
+              type="button"
+              className={'tl-calendar__mini-day ' + (has ? 'tl-type-label-strong' : 'tl-type-label')}
+              aria-label={fullDate(locale, day)}
+              aria-current={today ? 'date' : undefined}
+              data-tl-state={stateAttr(!inMonth(day) && 'other', weekend && 'nonworking', has && 'event')}
+              tabIndex={roving.tabIndexOf(index)}
+              onClick={() => send('goto', { date: day, granularity: 'DAY' })}
+            >
+              {new Date(day).getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const YearGrid: React.FC<{ ctx: Ctx; rangeStart: number }> = ({ ctx, rangeStart }) => {
-  const { events, locale, firstDayOfWeek, nonWorkingDays, send, now } = ctx;
+  const { events, locale, firstDayOfWeek } = ctx;
 
   const eventDays = useMemo(() => {
     const s = new Set<number>();
@@ -846,46 +1214,10 @@ const YearGrid: React.FC<{ ctx: Ctx; rangeStart: number }> = ({ ctx, rangeStart 
   }, [locale, firstDayOfWeek]);
 
   return (
-    <div className="tlCalYear">
-      {months.map((monthStart) => {
-        const first = new Date(monthStart);
-        const gridStart = startOfDay(addDays(monthStart, -(((first.getDay() - firstDayOfWeek + 7) % 7))));
-        const cells = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-        return (
-          <div key={monthStart} className="tlCalMini">
-            <div
-              className="tlCalMiniTitle"
-              onClick={() => send('goto', { date: monthStart, granularity: 'MONTH' })}
-            >
-              {fmt(locale, { month: 'long' }, monthStart)}
-            </div>
-            <div className="tlCalMiniGrid">
-              {weekdayHeader.map((w, i) => (
-                <div key={'h' + i} className="tlCalMiniWd">{w}</div>
-              ))}
-              {cells.map((day) => {
-                const inMonth = new Date(day).getMonth() === first.getMonth();
-                const weekend = nonWorkingDays.includes(new Date(day).getDay());
-                const today = isSameDay(day, now);
-                const has = eventDays.has(dayKey(day));
-                return (
-                  <div
-                    key={day}
-                    className={
-                      'tlCalMiniDay' + (inMonth ? '' : ' tlCalMiniDay--other') +
-                      (weekend ? ' tlCalMiniDay--nonworking' : '') + (today ? ' tlCalMiniDay--today' : '') +
-                      (has ? ' tlCalMiniDay--event' : '')
-                    }
-                    onClick={() => send('goto', { date: day, granularity: 'DAY' })}
-                  >
-                    {new Date(day).getDate()}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+    <div className="tl-calendar__year">
+      {months.map((monthStart) => (
+        <MiniMonth key={monthStart} ctx={ctx} monthStart={monthStart} eventDays={eventDays} weekdayHeader={weekdayHeader} />
+      ))}
     </div>
   );
 };
@@ -902,6 +1234,16 @@ const TLCalendar: React.FC<TLCellProps> = ({ controlId }) => {
   const anchor = (state.anchor as number) ?? rangeStart;
   const title = (state.title as string) ?? '';
 
+  // The text readable on a server color, asked once per color and rendering: the candidates are
+  // read from the theme in force, which may have changed since the last one.
+  const readable = new Map<string, string | null>();
+  const readableOn = (color: string) => {
+    if (!readable.has(color)) {
+      readable.set(color, textOn(color));
+    }
+    return readable.get(color)!;
+  };
+
   const ctx: Ctx = {
     locale: (state.locale as string) ?? 'en',
     firstDayOfWeek: (state.firstDayOfWeek as number) ?? 0,
@@ -913,12 +1255,13 @@ const TLCalendar: React.FC<TLCellProps> = ({ controlId }) => {
     events: parseEvents(state.events),
     send,
     i18n,
+    paint: (ev) => paintOf(ev, readableOn),
   };
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlCalendar')}>
+    <div id={controlId} className={rootClassName(state, 'tl-calendar')}>
       <Toolbar title={title} granularity={granularity} i18n={i18n} send={send} />
-      <div className="tlCalBody">
+      <div className="tl-calendar__body">
         {granularity === 'MONTH' ? (
           <MonthGrid ctx={ctx} rangeStart={rangeStart} anchorMonth={anchor} />
         ) : granularity === 'YEAR' ? (

@@ -5,10 +5,14 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import java.util.List;
+
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.routing.ParamBindingConfig;
 
 /**
  * Strategy producing the breadcrumb label of a {@link TileFrame} at push time.
@@ -18,6 +22,13 @@ import com.top_logic.layout.view.ViewContext;
  * thereafter does not re-evaluate. To compute a label that depends on a value already on a
  * channel of the caller's scope (e.g. the name of the selected business object), pick the
  * {@link ScriptedTileLabel} implementation; for fixed text use {@link StaticTileLabel}.
+ * </p>
+ *
+ * <p>
+ * A user of the provider that names something for as long as it is displayed - a
+ * {@link ParamBindingConfig#getLabel() route parameter} naming the page in the browser tab -
+ * computes the label again whenever one of the {@link #observedChannels(ViewContext) observed
+ * channels} takes a new value.
  * </p>
  */
 public interface TileLabelProvider {
@@ -31,6 +42,24 @@ public interface TileLabelProvider {
 	 * @return The label, or {@code null} for an unlabeled frame.
 	 */
 	ResKey compute(ViewContext context);
+
+	/**
+	 * The channels the label {@link #compute(ViewContext) computed} in the given context depends
+	 * on.
+	 *
+	 * <p>
+	 * A user of the provider that keeps a label up to date follows them and computes the label
+	 * again whenever one takes a new value, so that the label follows what the channels hold.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the label is computed in, the same one {@link #compute(ViewContext)} is
+	 *        asked with.
+	 * @return The channels; empty for a label that is the same for the whole session.
+	 */
+	default List<ViewChannel> observedChannels(ViewContext context) {
+		return List.of();
+	}
 
 	/**
 	 * The label a computed value stands for.

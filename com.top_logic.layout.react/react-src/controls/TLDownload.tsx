@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, stateAttr, usePart, downloadBlob, ICON_CLEAR, ICON_DOWNLOAD } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -28,25 +28,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
 
     setDownloading(true);
     try {
-      const url = dataUrl + (dataUrl.includes('?') ? '&' : '?') + 'rev=' + dataRevision;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error('[TLDownload] Failed to fetch data:', resp.status);
-        return;
-      }
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      console.error('[TLDownload] Fetch error:', e);
+      await downloadBlob(dataUrl + (dataUrl.includes('?') ? '&' : '?') + 'rev=' + dataRevision, fileName);
     } finally {
       setDownloading(false);
     }
@@ -60,11 +42,12 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   }, [hasData, sendCommand]);
 
   const t = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   if (!hasData) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlDownload tlDownload--empty')}>
-        <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
+      <div id={controlId} className={rootClassName(state, 'tl-file')} data-tl-state={stateAttr('empty')}>
+        <span className="tl-file__name">{t['js.download.noFile']}</span>
       </div>
     );
   }
@@ -74,32 +57,27 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
     : t['js.download.file'].replace('{0}', fileName);
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlDownload')}>
-      <button
-        type="button"
-        className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}
-        onClick={handleDownload}
+    <div id={controlId} className={rootClassName(state, 'tl-file')}>
+      <Button
+        label={downloadLabel}
+        image={ICON_DOWNLOAD}
+        display="icon-only"
+        appearance="ghost"
         disabled={downloading}
-        aria-label={downloadLabel}
-        {...tooltipProps(downloadLabel)}
-      >
-        <svg className="tlDownload__downloadIcon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
-      </button>
-      <span className="tlDownload__fileName">{fileName}</span>
+        aria-busy={downloading ? true : undefined}
+        onClick={handleDownload}
+      />
+      <span className="tl-file__name">{fileName}</span>
       {clearable && (
-        <button
-          type="button"
-          className="tlDownload__clearBtn"
+        <Button
+          label={t['js.download.clearFile']}
+          image={ICON_CLEAR}
+          display="icon-only"
+          appearance="ghost"
+          small
+          tooltip={t['js.download.clear']}
           onClick={handleClear}
-          aria-label={t['js.download.clearFile']}
-          {...tooltipProps(t['js.download.clear'])}
-        >
-          <svg className="tlDownload__clearIcon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        />
       )}
     </div>
   );

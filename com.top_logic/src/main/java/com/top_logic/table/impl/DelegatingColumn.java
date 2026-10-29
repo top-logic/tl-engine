@@ -68,6 +68,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public Object exportValue(R row) {
+		return _inner.exportValue(row);
+	}
+
+	@Override
 	public CellRenderer<V> renderer() {
 		return _inner.renderer();
 	}
@@ -113,6 +118,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public boolean exportable() {
+		return _inner.exportable();
+	}
+
+	@Override
 	public boolean pinnedEnd() {
 		return _inner.pinnedEnd();
 	}
@@ -147,6 +157,46 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 			@Override
 			public int defaultWidth() {
 				return width;
+			}
+		};
+	}
+
+	/**
+	 * The given column, left out of every export of the table.
+	 *
+	 * @param column
+	 *        The column to keep out of exports.
+	 * @return A column identical to the given one, except that it is not
+	 *         {@link Column#exportable() exportable}.
+	 */
+	public static <R, V> Column<R, V> notExportable(Column<R, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public boolean exportable() {
+				return false;
+			}
+		};
+	}
+
+	/**
+	 * The given column, offering no sorting.
+	 *
+	 * <p>
+	 * The table cannot be sorted by the column, and a table grouped by it keeps its groups in the
+	 * order of the rows it is given, whatever it is sorted by; a sort orders the rows within each
+	 * group.
+	 * </p>
+	 *
+	 * @param column
+	 *        The column to keep from sorting.
+	 * @return A column identical to the given one, except that it has no {@link Column#sort()
+	 *         sort capability}.
+	 */
+	public static <R, V> Column<R, V> notSortable(Column<R, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public Optional<Sort<V>> sort() {
+				return Optional.empty();
 			}
 		};
 	}

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Web research in the demo: Albert's skill TL_deepResearch starts research workers
+	(TL_ResearchWorker) that search and read the public web (#723).
+
+	Two things make that work:
+
+	  * A search engine. Brave, with the plain key from the environment variable tl_brave_api_key.
+	    Without the variable webSearch answers with an error of the search engine; webFetch works
+	    without it.
+	  * A background allowlist. A research worker is a spawned subagent, which runs unattended, and
+	    without a declared allowlist an unattended run reaches nothing but interaction and
+	    introspection - the worker would not even be started. "egress" admits webSearch and webFetch;
+	    "model.read" and "data.read" let other spawned subagents read the model and the data.
+
+	This also applies to every other unattended run of the demo: a scheduled task and the MCP
+	endpoint get the same ceiling. Turn this aspect off in metaConf.txt when the security test bed
+	(secdemo.config.xml) is on: the test bed keeps egress out of its allowlist on purpose, and this
+	file would add it.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+			<instance>
+				<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
+					<api-key name="tl_brave_api_key"/>
+				</search-engine>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance>
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+					<grant group="egress"/>
+				</background-allowlist>
+			</instance>
+		</config>
+	</services>
+</application>

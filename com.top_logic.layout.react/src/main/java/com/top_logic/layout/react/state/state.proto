@@ -2,27 +2,22 @@
  * The state contract between the server-side controls and the React components rendering them.
  *
  * Each message describes the state object a control sends to its component: the property names,
- * their types and their meaning. A component library replacing a TopLogic component (see
+ * their types and their meaning. A component library replacing a TopLogic control (see
  * "replace" of 'tl-react-bridge') renders the state described here.
  *
- * The message of a replaceable component, by the component name it is registered under:
+ * The message of a control a component library replaces as a whole with "replace", by the
+ * component name it is registered under:
  *
- *   TLButton          - ButtonState
- *   TLToggleButton    - ToggleButtonState
- *   TLCheckbox        - CheckboxState
- *   TLTextInput       - TextInputState
- *   TLPasswordInput   - PasswordInputState
- *   TLNumberInput     - NumberInputState
  *   TLDatePicker      - DatePickerState
  *   TLSelect          - SelectState
  *   TLDropdownSelect  - DropdownSelectState
- *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
  *   TLChoiceGroup     - DropdownSelectState
  *   TLTabBar          - TabBarState
  *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
+ *   TLPopover         - PopoverState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
  *   TLAlert           - AlertState
@@ -31,8 +26,22 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLProgress        - ProgressState
+ *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
+ *   TLFloatingAction  - FloatingActionState
+ *
+ * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
+ * (see "replacePart" and the developer article view-layer/parts). A component library replaces
+ * these parts, not the controls:
+ *
+ *   TLButton          - ButtonState
+ *   TLToggleButton    - ToggleButtonState
+ *   TLCheckbox        - CheckboxState
+ *   TLTextInput       - TextInputState
+ *   TLPasswordInput   - PasswordInputState
+ *   TLNumberInput     - NumberInputState
+ *   TLOptionChips     - DropdownSelectState
+ *   TLProgress        - ProgressState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -132,6 +141,12 @@ message FieldState extends ControlState {
 	 * Whether pressing Enter in the field sends the submit command with the value typed.
 	 */
 	bool submitOnEnter;
+
+	/**
+	 * Whether the field is displayed in little room, a table cell for instance: the height of a
+	 * single line of text, with spacing reduced to what keeps its parts apart.
+	 */
+	bool compact;
 }
 
 /**
@@ -460,6 +475,66 @@ message TextInputState extends TypingFieldState {
 	 * The number of visible rows of a {@link #multiline} field.
 	 */
 	int32 rows;
+
+	/**
+	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
+	 *
+	 * The field asks for them with the command {@code suggest}, giving the text typed as argument
+	 * {@code text} and the caret position in it as argument {@code caret}; the answer arrives in
+	 * {@link #suggestions}. Asking never changes the value of the field; a suggestion the user
+	 * picks is entered like any other text.
+	 */
+	bool offersSuggestions;
+
+	/**
+	 * The suggestions computed for the text {@link #suggestionsText} with the caret at
+	 * {@link #suggestionsCaret}, in the order they are offered. The list is shown as it is, without
+	 * filtering it further.
+	 */
+	repeated SuggestionEntry suggestions;
+
+	/**
+	 * The text the {@link #suggestions} were computed for. A client that has been typed into since
+	 * it asked ignores suggestions computed for another text or caret position.
+	 */
+	string suggestionsText;
+
+	/**
+	 * The caret position in {@link #suggestionsText} the {@link #suggestions} were computed for.
+	 */
+	int32 suggestionsCaret;
+}
+
+/**
+ * A suggestion offered for a text being typed: a replacement for a range of that text.
+ *
+ * Picking the suggestion replaces the characters {@link #from} (inclusive) to {@link #to}
+ * (exclusive) of the text it was computed for by {@link #text}, and puts the caret behind the
+ * inserted text. With {@link #from} equal to {@link #to}, the suggestion inserts its text at that
+ * position.
+ */
+message SuggestionEntry {
+	/**
+	 * What the list of suggestions shows for this suggestion.
+	 */
+	string label;
+
+	/**
+	 * The text replacing the range {@link #from} to {@link #to}.
+	 */
+	string text;
+
+	/**
+	 * The position of the first character replaced, a character offset in the text the suggestion
+	 * was computed for.
+	 */
+	int32 from;
+
+	/**
+	 * The position behind the last character replaced, a character offset in the text the
+	 * suggestion was computed for.
+	 */
+	int32 to;
 }
 
 /**
@@ -505,7 +580,9 @@ message NumberInputState extends TypingFieldState {
  * State of a field for a date, a time of day, or both, the component {@code TLDatePicker}.
  *
  * The {@link #value} is the ISO form of the value for the HTML input of the {@link #inputType}, a
- * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}).
+ * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}). A time of day is
+ * written with its seconds when the field has the {@link #precision} of seconds (e.g.
+ * {@code 14:30:15}, {@code 2026-06-01T14:30:15}).
  */
 message DatePickerState extends FieldState {
 
@@ -530,6 +607,27 @@ message DatePickerState extends FieldState {
 	 * The part of a point in time the field edits.
 	 */
 	InputType inputType;
+
+	/**
+	 * The smallest unit of a time of day a field edits.
+	 */
+	enum Precision {
+		/** A time of day is edited in hours and minutes. */
+		@Name("minutes")
+		MINUTES;
+
+		/** A time of day is edited in hours, minutes and seconds. */
+		@Name("seconds")
+		SECONDS;
+	}
+
+	/**
+	 * The smallest unit of a time of day the field edits, the one its display format writes.
+	 *
+	 * A field with the precision of seconds lets the seconds be entered and writes them in the ISO
+	 * {@link #value}. A date without a time of day has the precision of minutes.
+	 */
+	Precision precision;
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not
@@ -699,6 +797,15 @@ message DropdownSelectState extends FieldState {
 	bool noFilter;
 
 	/**
+	 * Whether the user may enter a text that is no option: the text becomes the value, or a value
+	 * created from it, and is sent with the command {@code enterText} as argument {@code text}.
+	 * A text matching the label of an option or of a value entered before, ignoring case, chooses
+	 * that one instead. Absent means the user only chooses among the options. Only the shape
+	 * {@link Display#DROPDOWN} reads it.
+	 */
+	bool freeEntry;
+
+	/**
 	 * The label of the choice of no object: the option of its own a group of radio buttons offers
 	 * for it, the text the other shapes show while nothing is chosen.
 	 */
@@ -731,6 +838,13 @@ message TabBarState extends ControlState {
 		 * The icon of the tab, the encoded form of a theme image.
 		 */
 		string icon;
+
+		/**
+		 * Whether the tab is left out of the strip, e.g. because the current user may not see it
+		 * for the object displayed. A hidden tab is never the {@link TabBarState#activeTabId}
+		 * while another tab is visible.
+		 */
+		bool hidden;
 	}
 
 	/**
@@ -784,6 +898,12 @@ message AccordionState extends ControlState {
 		 * Whether the body of the section is displayed.
 		 */
 		bool expanded;
+
+		/**
+		 * Whether the section is left out of the accordion, header included, e.g. because the
+		 * current user may not see it for the object displayed.
+		 */
+		bool hidden;
 
 		/**
 		 * The actions displayed at the end of the header of the section, a toolbar for instance.
@@ -907,6 +1027,144 @@ message DialogState extends ControlState {
 }
 
 /**
+ * State of a non-modal surface of arbitrary content anchored to the trigger that opens it, the
+ * component {@code TLPopover}.
+ *
+ * The component renders a trigger button in place and, while the popover is {@link #open}, the
+ * {@link #content} on a surface portaled to the document body and placed at the trigger as
+ * {@link #placement} says. The trigger button shows the {@link #trigger} content if there is one,
+ * else the {@link #icon} alone (with the {@link #label} as its accessible name) or the
+ * {@link #label}. The surface is a dialog labelled by the trigger.
+ *
+ * The client asks for the popover to open with the command {@code open} and for it to close with
+ * the command {@code close}, both without arguments. It sends {@code close} on Escape, on a press
+ * outside of trigger and surface, and on a click on the trigger of an open popover in mode
+ * {@code click}. In mode {@code hover}, it sends {@code open} after the pointer has rested on the
+ * trigger for a moment or when the trigger receives the keyboard focus, and {@code close} after the
+ * pointer has left trigger and surface for a moment or when the focus leaves both. The server may
+ * open and close the popover on its own as well.
+ */
+message PopoverState extends ControlState {
+
+	/**
+	 * The side of the trigger the surface stands on, and its alignment along that side: {@code start}
+	 * and {@code end} align the surface with the start or end edge of the trigger, no alignment
+	 * centers it. A surface that does not fit on its side flips to the opposite one.
+	 */
+	enum Placement {
+		/** Above the trigger, centered. */
+		@Name("top")
+		TOP;
+
+		/** Above the trigger, aligned with its start edge. */
+		@Name("top-start")
+		TOP_START;
+
+		/** Above the trigger, aligned with its end edge. */
+		@Name("top-end")
+		TOP_END;
+
+		/** Below the trigger, centered. */
+		@Name("bottom")
+		BOTTOM;
+
+		/** Below the trigger, aligned with its start edge. */
+		@Name("bottom-start")
+		BOTTOM_START;
+
+		/** Below the trigger, aligned with its end edge. */
+		@Name("bottom-end")
+		BOTTOM_END;
+
+		/** Left of the trigger, centered. */
+		@Name("left")
+		LEFT;
+
+		/** Left of the trigger, aligned with its top edge. */
+		@Name("left-start")
+		LEFT_START;
+
+		/** Left of the trigger, aligned with its bottom edge. */
+		@Name("left-end")
+		LEFT_END;
+
+		/** Right of the trigger, centered. */
+		@Name("right")
+		RIGHT;
+
+		/** Right of the trigger, aligned with its top edge. */
+		@Name("right-start")
+		RIGHT_START;
+
+		/** Right of the trigger, aligned with its bottom edge. */
+		@Name("right-end")
+		RIGHT_END;
+	}
+
+	/**
+	 * The gesture opening the popover.
+	 */
+	enum Mode {
+		/**
+		 * A click on the trigger opens the popover and a further click closes it. Opening moves the
+		 * keyboard focus into the surface, closing returns it to the trigger.
+		 */
+		@Name("click")
+		CLICK;
+
+		/**
+		 * Resting the pointer on the trigger opens the popover, and it stays open while the pointer
+		 * moves on into the surface. Opening by the pointer leaves the keyboard focus where it is;
+		 * opening by the keyboard focus on the trigger moves it into the surface. A click on the
+		 * trigger opens the popover, too.
+		 */
+		@Name("hover")
+		HOVER;
+	}
+
+	/**
+	 * Whether the surface is shown.
+	 */
+	bool open;
+
+	/**
+	 * Where the surface stands at the trigger. Absent: {@code bottom-start}.
+	 */
+	Placement placement;
+
+	/**
+	 * The gesture opening the popover. Absent: {@code click}.
+	 */
+	Mode mode;
+
+	/**
+	 * The label of the trigger button, its accessible name when it shows an {@link #icon} alone or
+	 * {@link #trigger} content, and with it the name of the surface. Absent: none.
+	 */
+	string label;
+
+	/**
+	 * The icon of the trigger button, the encoded form of a theme image. Absent: none.
+	 */
+	string icon;
+
+	/**
+	 * Content shown inside the trigger button instead of {@link #label} and {@link #icon}: text, an
+	 * icon, a badge. The trigger button is the interactive element, so the content holds no
+	 * interactive controls of its own. Absent: the trigger button shows {@link #label} and
+	 * {@link #icon}.
+	 */
+	ChildControl trigger;
+
+	/**
+	 * The content of the surface. Present while the popover is {@link #open}: the content is created
+	 * when the popover opens for the first time and kept on the server while it is closed, so that
+	 * it shows what the user left there when it opens again.
+	 */
+	ChildControl content;
+}
+
+/**
  * State of a popup menu, the component {@code TLMenu}.
  *
  * Choosing an item sends the command {@code selectItem} with the {@link Entry#id} as argument
@@ -1010,6 +1268,10 @@ message MenuState extends ControlState {
  *
  * Dismissing the message sends the command {@code dismiss} with the {@link #generation} of the
  * message as argument {@code generation}.
+ *
+ * While the message is shown, the component reports the element it occupies with
+ * {@code useTransientOverlay} of 'tl-react-bridge', so that floating actions (see
+ * {@link FloatingActionState}) move out of its way.
  */
 message SnackbarState extends ControlState {
 
@@ -1111,6 +1373,84 @@ message AlertState extends ControlState {
 	 * reporting another number refers to a content that is no longer shown.
 	 */
 	int32 generation;
+}
+
+/**
+ * State of a floating action button, the component {@code TLFloatingAction}: one or more actions
+ * floating over a corner of the frame they stand in, staying in place while the content beneath
+ * them scrolls.
+ *
+ * The frame is the body of the panel or of the window the control is placed in, which offers a
+ * layer for it through {@code useFloatingAnchor} of 'tl-react-bridge'; outside of such a frame,
+ * the corner of the browser window. A transient overlay the actions would cover - a snackbar
+ * reported through {@code useTransientOverlay} of 'tl-react-bridge' - moves them aside, read with
+ * {@code useTransientOverlayRects}.
+ *
+ * Each action is a button ({@link #actions}): its label, icon, tooltip, display mode, whether it is
+ * disabled and whether it is hidden are the state of that button ({@link ButtonState}), which
+ * follows the executability and visibility of its command. The component renders the actions with
+ * TLChild. A component drawing them with components of its own reads their current states with
+ * {@code useChildStates} of 'tl-react-bridge' and presses an action by sending the command
+ * {@code click} to it with {@code useChildCommand}.
+ *
+ * The actions not hidden decide on the presentation:
+ *
+ * - none: nothing is rendered;
+ * - one: a round button with the icon of the action, also with its label when the display mode of
+ *   the action asks for the label (an extended floating action button);
+ * - several: a speed dial, a round button ({@link #triggerImage}, named by {@link #triggerLabel})
+ *   that shows the actions as small round buttons beside it, their labels as tooltips. The dial
+ *   marks the trigger with {@code aria-expanded}; it closes on Escape, on a press outside of it and
+ *   after an action was pressed.
+ *
+ * The component sends no command of its own.
+ */
+message FloatingActionState extends ControlState {
+
+	/**
+	 * The corner of the frame the actions float over. Start and end follow the direction of the
+	 * text: the end is the right corner in a left-to-right text.
+	 *
+	 * The control does not send {@link #BOTTOM_END}: an absent position means the default.
+	 */
+	enum Position {
+		/** The bottom corner at the end of the line, the default. */
+		@Name("bottom-end")
+		BOTTOM_END;
+
+		/** The bottom corner at the start of the line. */
+		@Name("bottom-start")
+		BOTTOM_START;
+
+		/** The top corner at the end of the line. */
+		@Name("top-end")
+		TOP_END;
+
+		/** The top corner at the start of the line. */
+		@Name("top-start")
+		TOP_START;
+	}
+
+	/**
+	 * The actions, button controls with the state of a {@link ButtonState}, in the order they are
+	 * offered: in a speed dial, the first stands next to the trigger.
+	 */
+	repeated ChildControl actions;
+
+	/**
+	 * The corner the actions float over. Absent: {@link Position#BOTTOM_END}.
+	 */
+	Position position;
+
+	/**
+	 * The icon of the button opening a speed dial, the encoded form of a theme image.
+	 */
+	string triggerImage;
+
+	/**
+	 * The label of the button opening a speed dial: its accessible name and its tooltip.
+	 */
+	string triggerLabel;
 }
 
 /**
@@ -1304,9 +1644,9 @@ message TextState extends ControlState {
 		@Name("helper")
 		HELPER;
 
-		/** Text the application draws attention to, in the color interactive elements share. */
-		@Name("accent")
-		ACCENT;
+		/** Text that stands in for a value not yet there: a name not given, a list without entries. */
+		@Name("placeholder")
+		PLACEHOLDER;
 
 		/** An outcome that went well. */
 		@Name("success")
@@ -1559,6 +1899,77 @@ message ProgressState extends ControlState {
 	 * The text beside the bar, plain text (e.g. {@code 3 / 4}). Absent: the bar stands alone.
 	 */
 	string label;
+}
+
+/**
+ * State properties of a control displaying a picture.
+ *
+ * The client only ever loads an address: either the {@link #url} naming the picture, or - while
+ * {@link #hasData} is set - the address of the data endpoint of the control itself, which serves the
+ * picture. The client appends the {@link #dataRevision} to the latter, so that a picture which was
+ * replaced is loaded again instead of being taken from the browser cache.
+ */
+message ImageSourceState extends ControlState {
+	/**
+	 * The address the picture is loaded from. Absent or {@code null}: no picture, unless
+	 * {@link #hasData} is set.
+	 */
+	string url;
+
+	/**
+	 * Whether the control serves the picture itself from its data endpoint. The {@link #url} is
+	 * then absent.
+	 */
+	bool hasData;
+
+	/**
+	 * How often the picture the control serves was replaced, the revision the client appends to the
+	 * address of the data endpoint. Absent: 0.
+	 */
+	int32 dataRevision;
+}
+
+/**
+ * State of a circular avatar for a person or object, the component {@code TLAvatar}.
+ *
+ * The circle shows the picture of the one it represents. Where there is none, it shows the
+ * initials of the {@link #name} on one of the eight category roles of the design system, which the
+ * client derives from the name; without a name, the neutral circle. The component sends no
+ * commands.
+ */
+message AvatarState extends ImageSourceState {
+
+	/**
+	 * The diameter of an avatar, chosen by where the avatar stands, independent of the density.
+	 */
+	enum Size {
+		/** An avatar in a table cell or a row. */
+		@Name("small")
+		SMALL;
+
+		/** The rule: beside text, in lists and in comment headers. */
+		@Name("medium")
+		MEDIUM;
+
+		/** An avatar in the header of a detail view. */
+		@Name("large")
+		LARGE;
+
+		/** A profile page: the picture is the content. */
+		@Name("x-large")
+		EXTRA_LARGE;
+	}
+
+	/**
+	 * The display name of the one the avatar represents, plain text, the source of the initials,
+	 * the category and the accessible name. Absent or {@code null}: the neutral circle.
+	 */
+	string name;
+
+	/**
+	 * The diameter of the circle. Absent means {@link Size#MEDIUM}.
+	 */
+	Size size;
 }
 
 /**

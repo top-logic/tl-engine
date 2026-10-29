@@ -25,6 +25,8 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.react.flow.data.Diagram;
+import com.top_logic.react.flow.data.GraphEdge;
+import com.top_logic.react.flow.data.GraphLayout;
 import com.top_logic.react.flow.data.SelectableBox;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
@@ -59,6 +61,12 @@ public class TestDiagramSelectionBinding extends TestCase {
 
 	/** An object no node of the diagram carries. */
 	private static final String ELSEWHERE = "elsewhere";
+
+	/** The object of an edge the user cannot select. */
+	private static final String FIXED_EDGE = "fixedEdge";
+
+	/** The object of an edge the user can select. */
+	private static final String SELECTABLE_EDGE = "selectableEdge";
 
 	private ReactContext _context;
 
@@ -111,6 +119,28 @@ public class TestDiagramSelectionBinding extends TestCase {
 		assertFalse(isMarked(NODE_B));
 		assertEquals(ELSEWHERE, _channel.get());
 		assertEquals(List.of(ELSEWHERE), _notifiedValues);
+	}
+
+	/**
+	 * Tests that an edge the user cannot select is not marked for the user object it carries: the
+	 * value is shown as no selection and stays on the channel, as one no element carries.
+	 */
+	public void testValueOfAnEdgeThatCannotBeSelectedMarksNothing() {
+		GraphEdge fixedEdge = edge(FIXED_EDGE, false);
+		GraphEdge selectableEdge = edge(SELECTABLE_EDGE, true);
+		bind(graph(fixedEdge, selectableEdge));
+
+		_channel.set(FIXED_EDGE);
+
+		assertEquals(Set.of(), selectedUserObjects());
+		assertFalse(SelectionUtil.isSelected(fixedEdge));
+		assertFalse(_control.hasElementFor(FIXED_EDGE));
+		assertEquals(FIXED_EDGE, _channel.get());
+
+		_channel.set(SELECTABLE_EDGE);
+
+		assertEquals(Set.of(SELECTABLE_EDGE), selectedUserObjects());
+		assertTrue(SelectionUtil.isSelected(selectableEdge));
 	}
 
 	/**
@@ -514,6 +544,29 @@ public class TestDiagramSelectionBinding extends TestCase {
 				.setUserObject(userObject));
 		}
 		return Diagram.create().setRoot(root).setMultiSelect(multiSelect);
+	}
+
+	/**
+	 * A multi-select diagram of a graph connecting the nodes {@link #NODE_A} and {@link #NODE_B} by
+	 * the given edges.
+	 */
+	private static Diagram graph(GraphEdge... edges) {
+		SelectableBox a = SelectableBox.create().setContent(Text.create().setValue(NODE_A)).setUserObject(NODE_A);
+		SelectableBox b = SelectableBox.create().setContent(Text.create().setValue(NODE_B)).setUserObject(NODE_B);
+		GraphLayout graph = GraphLayout.create();
+		graph.addNode(a);
+		graph.addNode(b);
+		for (GraphEdge edge : edges) {
+			graph.addEdge(edge.setSource(a).setTarget(b));
+		}
+		return Diagram.create().setRoot(graph).setMultiSelect(true);
+	}
+
+	/** An edge carrying the given user object. */
+	private static GraphEdge edge(String userObject, boolean selectable) {
+		GraphEdge edge = GraphEdge.create().setSelectable(selectable);
+		edge.setUserObject(userObject);
+		return edge;
 	}
 
 	/**

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Contributes the stylesheets of the administration views this module adds.
+
+	agentSecurity.css: the cells and column headers of the Richtlinie matrices are
+	controls of this module that no theme knows, so their look has to come from a stylesheet - and a
+	library module contributes one the same way tl-chat contributes its own.
+
+	agentActivity.css: the transcript panel of the agent activity monitor is HTML produced by a
+	TL-Script macro, which no framework control shapes.
+-->
+<theme>
+	<styles>
+		<style name="/style/agentSecurity.css"/>
+		<style name="/style/agentActivity.css"/>
+	</styles>
+</theme>

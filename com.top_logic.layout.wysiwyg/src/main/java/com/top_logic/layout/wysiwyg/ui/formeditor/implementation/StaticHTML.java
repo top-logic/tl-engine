@@ -8,10 +8,9 @@ package com.top_logic.layout.wysiwyg.ui.formeditor.implementation;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.definition.FormElement;
 
@@ -33,7 +32,7 @@ public interface StaticHTML extends FormElement<StaticHTMLTemplateProvider> {
 	 * String representation of the static HTML to render.
 	 */
 	@Name(CONTENT)
-	@ControlProvider(StructuredTextControlProvider.class)
+	@Html
 	@Mandatory
 	@RenderWholeLine
 	@LabelPositioning(LabelPosition.ABOVE)

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The application shell of tl-layout-view, extended by a same-path overlay naming the application in
+	the app bar and the header of the sidebar; the footer of the sidebar keeps the TopLogic credit.
+	The sidebar items leading to the pages of the application go before the system section:
+	<nav-item id="..." config:position="before" config:reference="system-separator">.
+-->
+#set($initials = "")
+#foreach($x in $DisplayName.split(" "))#if($x.length() > 0)#set($initials = "$initials$x.substring(0,1).toUpperCase()")#end#end
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<sidebar config:ref="sidebar">
+		<header config:override="true">
+			<text>
+				<label>
+					<en>${DisplayName}</en>
+					<de>${DisplayName}</de>
+				</label>
+			</text>
+		</header>
+		<header-collapsed config:override="true">
+			<text>
+				<label>
+					<en>${initials}</en>
+					<de>${initials}</de>
+				</label>
+			</text>
+		</header-collapsed>
+	</sidebar>
+	<app-bar config:ref="app-bar">
+		<title>
+			<en>${DisplayName}</en>
+			<de>${DisplayName}</de>
+		</title>
+	</app-bar>
+</view>

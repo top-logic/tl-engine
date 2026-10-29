@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.list;
 
+import com.top_logic.layout.view.command.WithValueArgument;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -13,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 
 /**
  * {@link ViewAction} that removes the chain's current input value through the enclosing
@@ -24,7 +27,7 @@ import com.top_logic.layout.view.command.ViewAction;
  * </p>
  *
  * <pre>
- * &lt;generic-command placement="TOOLBAR" input="comment"&gt;
+ * &lt;generic-command placement="TOOLBAR" inputs="comment"&gt;
  *   &lt;remove-element/&gt;
  * &lt;/generic-command&gt;
  * </pre>
@@ -36,7 +39,7 @@ public class RemoveElementAction implements ViewAction {
 	 * Configuration for {@link RemoveElementAction}.
 	 */
 	@TagName("remove-element")
-	public interface Config extends PolymorphicConfiguration<RemoveElementAction> {
+	public interface Config extends PolymorphicConfiguration<RemoveElementAction>, WithResultActions, WithValueArgument {
 
 		@Override
 		@ClassDefault(RemoveElementAction.class)
@@ -49,6 +52,15 @@ public class RemoveElementAction implements ViewAction {
 	@CalledByReflection
 	public RemoveElementAction(InstantiationContext context, Config config) {
 		// No configuration state.
+	}
+
+	/**
+	 * The access checks the enclosing list declares for removing the processed element, see
+	 * {@link ObjectListElement.Config#getRemoveAccess()}, applied to the main argument of the command.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return new ListAccessRule(ObjectListScope::removeAccess);
 	}
 
 	@Override

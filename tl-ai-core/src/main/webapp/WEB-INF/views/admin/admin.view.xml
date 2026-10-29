@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the sections of tl-ai-core to the administration defined by tl-layout-view
+	(WEB-INF/views/admin/admin.view.xml). A same-path overlay, merged onto the base in dependency
+	order.
+	- "Access tokens": every personal access token of every account, which an administrator may
+	revoke (Issue #671).
+	- "AI models": the models the configured LLM providers serve, with the metadata of the model
+	catalog and the state of the remote catalog (ticket #29954).
+	
+	Sections of their own rather than tabs inside an existing section such as "Access control": a
+	tab's content is an unkeyed list, so an overlay naming that tab's inner tab bar appends a second
+	tab bar beside it instead of merging into it. The top-level tab list is keyed, which is where a
+	module adds a section - the way tl-model-search-react adds "Development".
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="sections">
+		<tabs>
+			<tab id="access-tokens"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>Access tokens</en>
+					<de>Zugriffstokens</de>
+				</label>
+				<view-ref view="tl-ai-core/admin/access-tokens.view.xml"/>
+			</tab>
+			<tab id="model-catalog"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>AI models</en>
+					<de>KI-Modelle</de>
+				</label>
+				<view-ref view="tl-ai-core/admin/model-catalog.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

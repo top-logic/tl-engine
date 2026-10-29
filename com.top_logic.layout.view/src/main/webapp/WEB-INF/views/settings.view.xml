@@ -3,11 +3,10 @@
 <!--
 	Personal settings of the logged-in user: the window, whose content is the tabs.
 
-	The tabs are a view of their own so that a module can contribute one. A window's content is an
-	unkeyed list, in which a same-path overlay can only append - a contributed <tab-bar> would
-	become a second tab bar beside this one. At the root of its own view the tab bar is a single
-	property instead, which the ViewLoader merges, the way tl-model-search-react extends
-	admin/admin.view.xml. See tl-layout-view-contact for the module contributing the profile tab.
+	The tabs are a view of their own so that a module contributes one with a same-path overlay of
+	settings-tabs.view.xml alone: at the root of that view the tab bar is the single content, which
+	the ViewLoader merges, so the overlay names neither this window nor anything else in it. See
+	tl-layout-view-contact for the module contributing the profile tab.
 -->
 <view>
 	<!--

@@ -21,6 +21,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.basic.DefaultFileManager;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.io.FileUtilities;
@@ -29,6 +30,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.Resources;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.Transaction;
@@ -57,6 +59,7 @@ import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.layout.view.navigation.Binding;
 import com.top_logic.layout.view.navigation.ObjectNavigation;
 import com.top_logic.layout.view.navigation.ShowStep;
+import com.top_logic.layout.view.tiles.FrameRoute;
 import com.top_logic.layout.view.tiles.ReactTileStackControl;
 import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.layout.view.tiles.TileStackScope;
@@ -90,6 +93,9 @@ public class TestTileStackDirtyCheck extends TestCase {
 
 	/** The frame parameter delivering the object the form of a frame displays. */
 	private static final String EDITED = "edited";
+
+	/** The id of the declaration of the form frame. */
+	private static final String FORM = "form";
 
 	/** The command a button executes when it is clicked. */
 	private static final String CLICK = "click";
@@ -146,7 +152,8 @@ public class TestTileStackDirtyCheck extends TestCase {
 		_root.write(new TagWriter());
 
 		_path = viewContext.resolveChannel(new ChannelRef(PATH));
-		_scope = new TileStackScope(_path);
+		_scope = new TileStackScope(_path, List.of(
+			new FrameRoute(FORM, FORM_VIEW, null, Map.of(), Map.of(), List.of(EDITED), null, false)));
 		_inStack = viewContext.withScope(TileStackScope.class, _scope);
 		_path.addListener((sender, oldValue, newValue) -> _writes++);
 	}
@@ -336,14 +343,14 @@ public class TestTileStackDirtyCheck extends TestCase {
 	 */
 	public void testShowObjectOfDisplayedFrameKeepsIt() {
 		MockTLObject edited = new MockTLObject();
-		_scope.push(FORM_VIEW, ResKey.text("Named by the push"), Map.of(EDITED, edited));
+		_scope.push(FORM, ResKey.text("Named by the push"), Map.of(EDITED, edited));
 		FormControl form = editForm(1);
 		ReactControl frame = frameControl(1);
 		Object pathBefore = _path.get();
 		int writesBefore = _writes;
 		Recorder chain = new Recorder();
 
-		ObjectNavigation.show(_inStack, List.of(formShow()), edited, chain);
+		ObjectNavigation.show(_inStack, List.of(formShow()), ActionArguments.of(EDITED, edited), chain);
 
 		assertEquals("Nothing is dropped, so nothing is asked.", 0, _dialogs.opened());
 		assertEquals("The path is not written.", writesBefore, _writes);
@@ -367,7 +374,7 @@ public class TestTileStackDirtyCheck extends TestCase {
 		MockTLObject shown = new MockTLObject();
 		Recorder chain = new Recorder();
 
-		ObjectNavigation.show(_inStack, List.of(formShow()), shown, chain);
+		ObjectNavigation.show(_inStack, List.of(formShow()), ActionArguments.of(EDITED, shown), chain);
 
 		assertEquals("The user is asked about the frame holding unsaved input.", 1, _dialogs.opened());
 		assertSame("Until they answered, the path stays.", pathBefore, _path.get());
@@ -386,21 +393,21 @@ public class TestTileStackDirtyCheck extends TestCase {
 	}
 
 	private void pushFrame(String label) {
-		_scope.push(FORM_VIEW, ResKey.text(label), Map.of(EDITED, new MockTLObject()));
+		_scope.push(FORM, ResKey.text(label), Map.of(EDITED, new MockTLObject()));
 	}
 
 	/**
 	 * An unnamed frame displaying the given object in its form.
 	 */
 	private static TileFrame formFrame(Object edited) {
-		return new TileFrame(FORM_VIEW, null, Map.of(EDITED, edited));
+		return new TileFrame(FORM, FORM_VIEW, null, Map.of(EDITED, edited));
 	}
 
 	/**
 	 * Displaying the form frame with the shown object, named by nothing of its own.
 	 */
 	private static ShowStep formShow() {
-		return new ShowStep(FORM_VIEW, false, null, null, List.of(new Binding(EDITED, null)));
+		return ShowStep.ofFrame(FORM, List.of(new Binding(EDITED, null)));
 	}
 
 	/**
@@ -621,7 +628,8 @@ public class TestTileStackDirtyCheck extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestTileStackDirtyCheck.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 
 }

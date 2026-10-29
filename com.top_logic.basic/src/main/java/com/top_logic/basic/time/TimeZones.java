@@ -27,7 +27,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -36,6 +38,7 @@ import com.top_logic.basic.util.ResKey;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Time zones")
+@ServiceCategory.Of(I18NCategory.class)
 public class TimeZones extends ManagedClass {
 
 	/**

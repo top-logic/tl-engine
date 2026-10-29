@@ -9,6 +9,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -24,6 +25,8 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -76,7 +79,8 @@ public class OpenViewWindowCommand implements ViewCommand {
 		 */
 		@Name(VIEW)
 		@Mandatory
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 
 		/**
 		 * The window title shown in the browser window chrome (resolved in the user's locale when the
@@ -131,7 +135,7 @@ public class OpenViewWindowCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public OpenViewWindowCommand(InstantiationContext context, Config config) {
-		_viewPath = ViewLoader.VIEW_BASE_PATH + config.getView();
+		_viewPath = config.getView().fullPath();
 		_title = config.getTitle();
 		_width = config.getWidth();
 		_height = config.getHeight();

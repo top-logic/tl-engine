@@ -6,6 +6,7 @@
 package com.top_logic.util;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -33,6 +34,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/** @en Initialized view permissions. */
 	public static ResKey INITIALIZING_LAYOUT_BASED_SECURITY;
+
+	/** @en Performed startup hook: {0} */
+	public static ResKey1 PERFORMED_STARTUP_HOOK__ID;
 
 	static {
 		initConstants(I18NConstants.class);

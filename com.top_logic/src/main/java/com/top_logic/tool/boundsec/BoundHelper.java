@@ -28,7 +28,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.MetaObject;
@@ -48,7 +50,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
-import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
+import com.top_logic.tool.boundsec.wrap.BoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 
@@ -61,6 +63,7 @@ import com.top_logic.util.TLContext;
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 @Label("Security helper functions")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class BoundHelper extends ManagedClass {
 
     /** When asking for groups this will merge in the groups of the SuperObject */
@@ -788,10 +791,6 @@ public class BoundHelper extends ManagedClass {
             if (currPerson == null)
                 return false;   // no Person, no Security
 
-			if (Person.isAdmin(currPerson)) {
-				return true;
-			}
-
             return hasAnyRole(anObject, currPerson);
         }
     }
@@ -815,17 +814,10 @@ public class BoundHelper extends ManagedClass {
      */
     public void copyRoles (BoundObject aSource, BoundObject aDest) {
 
-        if ( (aSource instanceof AbstractBoundWrapper)
-          && (aDest   instanceof AbstractBoundWrapper)) {
-
-			{
-                AbstractBoundWrapper sBW = (AbstractBoundWrapper) aSource;
-                AbstractBoundWrapper dBW = (AbstractBoundWrapper) aDest;
-
-                BoundedRole.removeRoleAssignments(sBW);
-                BoundedRole.copyRoleAssignments(dBW, sBW);
-            }
-        }
+		if ((aSource instanceof BoundWrapper) && (aDest instanceof BoundWrapper)) {
+			BoundedRole.removeRoleAssignments(aSource);
+			BoundedRole.copyRoleAssignments(aDest, aSource);
+		}
     }
 
 	/**
@@ -883,7 +875,7 @@ public class BoundHelper extends ManagedClass {
     }
 
     /** Remove all Roles from aDest and Copy the Roles from aSource */
-    public static void inheritSecurity (AbstractBoundWrapper aSource, AbstractBoundWrapper aDest) {
+    public static void inheritSecurity(BoundObject aSource, BoundObject aDest) {
 		BoundedRole.removeRoleAssignments(aDest);
 		BoundedRole.copyRoleAssignments(aDest, aSource);
     }

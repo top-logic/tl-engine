@@ -15,11 +15,11 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
@@ -58,6 +58,7 @@ public class AppShellElement implements UIElement {
 	 * Configuration for {@link AppShellElement}.
 	 */
 	@TagName("app-shell")
+	@TypeIcon("css:bi bi-window-desktop")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -83,7 +84,7 @@ public class AppShellElement implements UIElement {
 		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
+		List<UIElement.Config> getHeader();
 
 		/**
 		 * Optional system-wide notices displayed between header and content.
@@ -97,7 +98,7 @@ public class AppShellElement implements UIElement {
 		@Name(NOTICES)
 		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getNotices();
+		List<UIElement.Config> getNotices();
 
 		/**
 		 * The main content element.
@@ -106,7 +107,7 @@ public class AppShellElement implements UIElement {
 		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		List<UIElement.Config> getContent();
 
 		/**
 		 * Optional footer element (e.g. a bottom bar).
@@ -115,7 +116,7 @@ public class AppShellElement implements UIElement {
 		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
+		List<UIElement.Config> getFooter();
 	}
 
 	private final List<UIElement> _header;
@@ -198,7 +199,7 @@ public class AppShellElement implements UIElement {
 	}
 
 	private static List<UIElement> instantiateAll(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> configs) {
+			List<UIElement.Config> configs) {
 		if (configs == null || configs.isEmpty()) {
 			return List.of();
 		}

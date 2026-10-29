@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,15 +22,19 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
@@ -46,6 +51,12 @@ public class TestSelectControlProvider extends TestCase {
 
 	/** The options the fields under test are picked from. */
 	private static final List<String> OPTIONS = List.of("red", "green", "blue");
+
+	/** Options given in an order that is not the alphabetical one. */
+	private static final List<String> FRUITS = List.of("pear", "apple", "fig");
+
+	/** {@link #FRUITS} sorted by label. */
+	private static final List<String> FRUITS_BY_LABEL = List.of("apple", "fig", "pear");
 
 	/** The state key telling the client whether it holds the option list. */
 	private static final String OPTIONS_LOADED = "optionsLoaded";
@@ -180,6 +191,7 @@ public class TestSelectControlProvider extends TestCase {
 
 		assertNull(config.getDisplay());
 		assertNull(config.getOrientation());
+		assertNull(config.getOrder());
 		assertTrue(config.hasFilter());
 	}
 
@@ -193,6 +205,80 @@ public class TestSelectControlProvider extends TestCase {
 		assertEquals(SelectDisplay.RADIO, config.getDisplay());
 		assertEquals(Orientation.HORIZONTAL, config.getOrientation());
 		assertFalse(config.hasFilter());
+	}
+
+	/** Without an order configured or asked for by the field, the options are offered as given. */
+	public void testTheOptionsAreOfferedAsGivenWhereNothingAsksForAnOrder() throws Exception {
+		SelectControlProvider provider = instantiate(readConfig("<input-control "
+			+ SelectControlProvider.Config.DISPLAY + "='" + SelectDisplay.CHIPS.getExternalName() + "'/>"));
+
+		assertNull(provider.getOrder());
+		assertEquals(FRUITS, offered(fruits(provider, null)));
+	}
+
+	/** A configured order by label sorts the options, although the field asks for none. */
+	public void testAConfiguredOrderByLabelSortsTheOptions() throws Exception {
+		SelectControlProvider provider = instantiate(orderConfig(OptionOrder.BY_LABEL));
+
+		assertEquals(OptionOrder.BY_LABEL, provider.getOrder());
+		assertEquals(FRUITS_BY_LABEL, offered(fruits(provider, null)));
+	}
+
+	/** A configured order as given keeps the given order, although the field asks for a sorted one. */
+	public void testAConfiguredOrderAsGivenOverridesTheField() throws Exception {
+		SelectControlProvider provider = instantiate(orderConfig(OptionOrder.AS_GIVEN));
+
+		assertEquals(OptionOrder.AS_GIVEN, provider.getOrder());
+		assertEquals(FRUITS, offered(fruits(provider, byLabel())));
+	}
+
+	/** Without an order configured, the order the field asks for applies. */
+	public void testTheFieldDecidesTheOrderWhereTheConfigurationSaysNothing() throws Exception {
+		assertEquals(FRUITS_BY_LABEL, offered(fruits(provider(SelectDisplay.CHIPS), byLabel())));
+	}
+
+	/** The configuration of a provider offering its options in the given order, as chips. */
+	private static SelectControlProvider.Config orderConfig(OptionOrder order) throws Exception {
+		return readConfig("<input-control "
+			+ SelectControlProvider.Config.DISPLAY + "='" + SelectDisplay.CHIPS.getExternalName() + "' "
+			+ SelectControlProvider.Config.ORDER + "='" + order.getExternalName() + "'/>");
+	}
+
+	/** An order sorting the options by their labels. */
+	private static LabelComparator byLabel() {
+		return LabelComparator.newCachingInstance(MetaResourceProvider.INSTANCE);
+	}
+
+	/**
+	 * The control the given provider builds for a field picked from {@link #FRUITS} that asks for
+	 * the given order of its options.
+	 */
+	private ReactDropdownSelectControl fruits(SelectControlProvider provider, LabelComparator fieldOrder) {
+		FieldSpec field = FieldSpec.of(String.class, LABEL).setOptionOrder(fieldOrder);
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, FRUITS, false);
+
+		ReactControl control = provider.createControl(_context, field, model);
+		assertTrue("A selection is made on a select control, but is made on " + control.getClass(),
+			control instanceof ReactDropdownSelectControl);
+		return (ReactDropdownSelectControl) control;
+	}
+
+	/** The labels of the options the given control hands to its client, in the order handed over. */
+	private static List<String> offered(ReactDropdownSelectControl control) {
+		Map<String, Object> state = control.scriptingScalarState();
+		assertEquals("The client is told that it holds the option list.",
+			Boolean.TRUE, state.get(OPTIONS_LOADED));
+		List<String> result = new ArrayList<>();
+		for (Object option : (List<?>) state.get(OPTION_LIST)) {
+			result.add((String) ((Map<?, ?>) option).get(DropdownSelectState.Option.LABEL__PROP));
+		}
+		return result;
+	}
+
+	/** The provider the given configuration describes. */
+	private static SelectControlProvider instantiate(SelectControlProvider.Config config) {
+		return (SelectControlProvider) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(config);
 	}
 
 	/** Asserts that the given control holds the complete option list for its client. */

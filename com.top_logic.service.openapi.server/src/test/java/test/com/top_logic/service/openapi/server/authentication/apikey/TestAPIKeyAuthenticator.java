@@ -20,6 +20,8 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -95,7 +97,7 @@ public class TestAPIKeyAuthenticator extends TestCase {
 
 		assertNotNull(person);
 		assertEquals(_accountName,
-			ThreadContextManager.inSystemInteraction(TestAPIKeyAuthenticator.class, () -> person.getName()));
+			ThreadContext.inSystemContext(TestAPIKeyAuthenticator.class, () -> person.getName()));
 	}
 
 	public void testKeyForSystemContext() throws AuthenticationFailure {
@@ -127,7 +129,9 @@ public class TestAPIKeyAuthenticator extends TestCase {
 	private static ServerSecret secret(String apiKey, String userId) {
 		ServerAPIKeySecret secret = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
 		set(secret, APIKeySecret.DOMAIN, DOMAIN);
-		set(secret, APIKeySecret.API_KEY, apiKey);
+		LiteralSecretSource.Config key = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		key.setValue(apiKey);
+		set(secret, APIKeySecret.API_KEY, key);
 		set(secret, ServerAPIKeySecret.USER_ID, userId);
 		return secret;
 	}

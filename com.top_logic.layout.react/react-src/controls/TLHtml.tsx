@@ -1,4 +1,7 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, tooltipProps, pushLocalStep } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart, ICON_PRINT,
+  useFieldLabelProps,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /** Command following a link that names its target for the server (ReactHtmlControl.FOLLOW_LINK_COMMAND). */
@@ -79,12 +82,17 @@ const I18N_KEYS = {
  * content is shown in its own proportions rather than reflowed into a small one. It is looked at
  * rather than used - it takes no clicks, no focus and no print button - and it is fetched only once
  * it comes near the viewport, so a grid of previews loads what the reader actually reaches.
+ *
+ * Content in a form field's input slot - the value of a read-only field shown as HTML - is a group
+ * named by the field's label (see FieldLabelContext).
  */
 const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
   const sendCommand = useTLCommand();
   const t = useI18N(I18N_KEYS);
+  const labelProps = useFieldLabelProps(controlId, controlId);
+  const labelled = labelProps['aria-labelledby'] === undefined ? {} : { role: 'group', ...labelProps };
 
   const display = (state.display as string) || 'inline';
   const html = (state.html as string) ?? '';
@@ -196,37 +204,48 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     frameWindow.print();
   }, []);
 
+  const Button = usePart('Button');
+
   if (error) {
+    // A fragment that is not shown says why in its place, as an error message of the design system.
     return (
-      <div id={controlId} className={rootClassName(state, 'tlHtml tlHtml__error')} role="alert">{error}</div>
+      <div id={controlId} {...labelled} className={rootClassName(state, 'tl-alert')} data-tl-role="error" role="alert">
+        <div className="tl-alert__body"><div className="tl-alert__message tl-type-body">{error}</div></div>
+      </div>
     );
   }
 
-  const className = rootClassName(state, 'tlHtml', `tlHtml--${display}`, fillClass);
-
   if (display === 'document') {
+    // The document is the base of an overlay filling its place; the print button lies in a layer over it, on a
+    // surface of its own, since the paper of the document is white in either mode.
     return (
-      <div id={controlId} className={rootClassName(state, className)}>
-        <iframe
-          ref={frameRef}
-          className="tlHtml__frame"
-          // No "allow-scripts": a document brought along from elsewhere is displayed, not run.
-          // "allow-same-origin" keeps it reachable for the print button, "allow-modals" lets the
-          // print dialog open on it.
-          sandbox="allow-same-origin allow-modals"
-          src={dataUrl + '&rev=' + dataRevision}
-          title={t['js.html.document']}
-        />
+      <div id={controlId} {...labelled} className={rootClassName(state, 'tl-overlay', 'tl-overlay--fill', fillClass)}>
+        <div className="tl-overlay__base">
+          <div className="tl-media tl-media--document">
+            <iframe
+              ref={frameRef}
+              className="tl-media__frame"
+              // No "allow-scripts": a document brought along from elsewhere is displayed, not run.
+              // "allow-same-origin" keeps it reachable for the print button, "allow-modals" lets the
+              // print dialog open on it.
+              sandbox="allow-same-origin allow-modals"
+              src={dataUrl + '&rev=' + dataRevision}
+              title={t['js.html.document']}
+            />
+          </div>
+        </div>
         {print && (
-          <button
-            type="button"
-            className="tl-button tl-button--ghost tl-type-body tlHtml__print"
-            aria-label={t['js.html.print']}
-            {...tooltipProps(t['js.html.print'])}
-            onClick={handlePrint}
-          >
-            <i className="bi bi-printer" aria-hidden="true" />
-          </button>
+          <div className="tl-overlay__layer tl-overlay__layer--top-right">
+            <div className="tl-overlay__action">
+              <Button
+                label={t['js.html.print']}
+                image={ICON_PRINT}
+                display="icon-only"
+                appearance="ghost"
+                onClick={handlePrint}
+              />
+            </div>
+          </div>
         )}
       </div>
     );
@@ -237,11 +256,11 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         id={controlId}
         ref={boxRef}
-        className={rootClassName(state, className)}
+        className={rootClassName(state, 'tl-media', 'tl-media--document', 'tl-media--preview')}
         style={{ aspectRatio: `${thumbnailWidth} / ${thumbnailHeight}` }}
       >
         <iframe
-          className="tlHtml__page"
+          className="tl-media__frame"
           // As for a document: no script runs in the frame, and same-origin keeps it readable.
           sandbox="allow-same-origin"
           // A preview is fetched once it comes near the viewport, not with the page holding it.
@@ -250,11 +269,12 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
           title={t['js.html.document']}
           tabIndex={-1}
           aria-hidden="true"
+          // The page keeps the size it is written for and is scaled to the width the box measures; the design system
+          // (tl-media--preview) takes it out of the flow, scales it from its top left corner and lets clicks pass.
           style={{
             width: thumbnailWidth + 'px',
             height: thumbnailHeight + 'px',
             transform: `scale(${boxWidth > 0 ? boxWidth / thumbnailWidth : 0})`,
-            transformOrigin: 'top left',
           }}
         />
       </div>
@@ -262,14 +282,15 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   if (display !== 'inline') {
-    return <div id={controlId} className={rootClassName(state, className)}/>;
+    return <div id={controlId} {...labelled} className={rootClassName(state)}/>;
   }
 
   return (
     <div
       id={controlId}
+      {...labelled}
       ref={contentRef}
-      className={rootClassName(state, className)}
+      className={rootClassName(state, 'tl-prose')}
       onClick={handleContentClick}
       dangerouslySetInnerHTML={{ __html: html }}
     />

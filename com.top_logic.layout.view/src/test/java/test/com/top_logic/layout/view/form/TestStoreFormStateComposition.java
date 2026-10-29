@@ -30,6 +30,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.command.I18NConstants;
+import com.top_logic.layout.view.command.LeaveEditModeAction;
 import com.top_logic.layout.view.command.StoreFormStateAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithTransactionAction;
@@ -45,13 +46,16 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Tests that {@link StoreFormStateAction} stores the rows added to a composition of the form
  * object, within an outer {@link WithTransactionAction} as well as on its own, and how an
- * {@link AbstractCompositionControl} takes part in the edit session of its form.
+ * {@link AbstractCompositionControl} takes part in the edit session of its form. Tests that a
+ * {@link LeaveEditModeAction} following the store ends the edit session and keeps what is stored.
  */
 public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 
 	private static final String STORE_FORM_STATE = "store-form-state";
 
 	private static final String WITH_TRANSACTION = "with-transaction";
+
+	private static final String LEAVE_EDIT_MODE = "leave-edit-mode";
 
 	private static final String NEW_TASK = "new task";
 
@@ -186,6 +190,60 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * Leaving the edit mode after the form state is stored shows the form in view mode, and the
+	 * stored row remains.
+	 */
+	public void testLeaveEditModeAfterStore() throws ConfigurationException {
+		becomeUser(_responsible);
+		FormControl form = newForm(_project);
+
+		DefaultViewContext context = viewContext(form);
+		action("<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/></" + WITH_TRANSACTION + ">").execute(context,
+			_project);
+		Object result = action("<" + LEAVE_EDIT_MODE + "/>").execute(context, _project);
+
+		assertSame(_project, result);
+		assertFalse(form.isEditMode());
+		assertFalse(form.isDirty());
+		assertNewTaskStored();
+	}
+
+	/**
+	 * Leaving the edit mode while the form holds unsaved changes is refused: the form stays in edit
+	 * mode with its changes, and nothing is stored.
+	 */
+	public void testLeaveEditModeRefusesUnsavedChanges() throws ConfigurationException {
+		becomeUser(_responsible);
+		FormControl form = newForm(_project);
+		assertTrue(form.isDirty());
+
+		ViewAction action = action("<" + LEAVE_EDIT_MODE + "/>");
+		try {
+			action.execute(viewContext(form), _project);
+			fail("Leaving the edit mode must not drop unsaved changes.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_FORM_HAS_UNSAVED_CHANGES, ex.getErrorKey());
+		}
+
+		assertTrue(form.isEditMode());
+		assertTrue(form.isDirty());
+		assertNothingStored();
+	}
+
+	/**
+	 * Leaving the edit mode of a form in view mode leaves the form as it is and passes the input on.
+	 */
+	public void testLeaveEditModeInViewMode() throws ConfigurationException {
+		becomeUser(_responsible);
+		FormControl form = new FormControl(reactContext(), _project, "no model", NoTokenHandling.INSTANCE);
+
+		Object result = action("<" + LEAVE_EDIT_MODE + "/>").execute(viewContext(form), _project);
+
+		assertSame(_project, result);
+		assertFalse(form.isEditMode());
+	}
+
+	/**
 	 * A row added to a persistent form object is contained in the form object.
 	 */
 	public void testRowContainerPersistentOwner() {
@@ -271,6 +329,7 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 		Map<String, ConfigurationDescriptor> descriptors = new HashMap<>();
 		descriptors.put(STORE_FORM_STATE, TypedConfiguration.getConfigurationDescriptor(StoreFormStateAction.Config.class));
 		descriptors.put(WITH_TRANSACTION, TypedConfiguration.getConfigurationDescriptor(WithTransactionAction.Config.class));
+		descriptors.put(LEAVE_EDIT_MODE, TypedConfiguration.getConfigurationDescriptor(LeaveEditModeAction.Config.class));
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		reader.setSource(CharacterContents.newContent(xml));
 		@SuppressWarnings("unchecked")

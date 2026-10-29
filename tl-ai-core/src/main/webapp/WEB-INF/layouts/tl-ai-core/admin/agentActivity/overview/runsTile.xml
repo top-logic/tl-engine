@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Läufe", over the period the tab's selector names, with the sub-agent share named separately: a
+	day of 18 runs made of 12 top-level runs and 6 delegations is a different day from 18
+	independent ones.
+-->
+<securityLayout name="aiOverviewRunsTile"
+	titleKey="admin.ai.agentActivity.overview.runs.label"
+>
+	<tile-info name="aiOverviewRuns"
+		label="admin.ai.agentActivity.overview.runs.label"
+	>
+		<!--
+			The label is a TL-Script expression exactly like the number, so that the period the
+			number counts is written next to it and cannot drift from the control:
+			ModelBasedTilePreview takes its label from a TilePreviewPartProvider.Text just as it
+			takes its description, and evaluates both against the model configured here - which is
+			the period the tab's control publishes. A period says what it is called, so a custom
+			range names its two days here rather than the word "Benutzerdefiniert", which would name
+			the control and not the stretch of time the number covers. The tile-info label below
+			stays a plain resource; it is what the drill-down breadcrumb says, and a breadcrumb does
+			not need the period.
+		-->
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			model="model(aiOverviewPeriod)"
+		>
+			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model),
+							new(`tl.ai.monitor:Period`, transient: true)
+								..set(`tl.ai.monitor:Period#preset`, 30),
+							$model);
+						#('Runs ({0})'@en, 'Läufe ({0})'@de)
+							.fill($period.get(`tl.ai.monitor:Period#label`)).localize();
+					}
+				]]></text>
+			</label>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model),
+							new(`tl.ai.monitor:Period`, transient: true)
+								..set(`tl.ai.monitor:Period#preset`, 30),
+							$model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+						start = $period.get(`tl.ai.monitor:Period#windowStart`);
+						end = $period.get(`tl.ai.monitor:Period#windowEnd`);
+						// A bound that is empty is dropped rather than tested. A period is normally a closed day
+						// range with both ends filled - even "Alle", which reads them off the data - but one that
+						// was never filled has no edges, and then it selects everything.
+						recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+							&& (isEmpty($end) || $startedAt($e) < $end));
+						children = $recent.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#parentExecution`))).size();
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{numberFormat('#,##0').format($recent.size())}</div>
+								<div class="aiKpiNote">
+									{#('{0} of them sub-agents'@en, 'davon {0} Teilagenten'@de).fill($children)}
+								</div>
+							</div>
+						}}};
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewRunsTable"
+			model="model(aiOverviewPeriod)"
+			objectType="tl.ai.execution:AgentExecution"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.runs.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model),
+							new(`tl.ai.monitor:Period`, transient: true)
+								..set(`tl.ai.monitor:Period#preset`, 30),
+							$model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+						start = $period.get(`tl.ai.monitor:Period#windowStart`);
+						end = $period.get(`tl.ai.monitor:Period#windowEnd`);
+						// A bound that is empty is dropped rather than tested. A period is normally a closed day
+						// range with both ends filled - even "Alle", which reads them off the data - but one that
+						// was never filled has no edges, and then it selects everything.
+						recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+							&& (isEmpty($end) || $startedAt($e) < $end));
+						$recent;
+					}
+				]]></elements>
+				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,session,status,model,startedAt,parentExecution"
+				defaultSortOrder="startedAt:descending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="280px"
+						visibility="mandatory"
+					/>
+					<column name="session"
+						columnWidth="220px"
+					/>
+					<column name="status"
+						columnWidth="150px"
+					/>
+					<column name="model"
+						columnWidth="170px"
+					/>
+					<column name="startedAt"
+						columnWidth="150px"
+					/>
+					<column name="parentExecution"
+						columnWidth="260px"
+					/>
+					<column name="transcript"
+						visibility="excluded"
+					/>
+					<column name="transcriptHtml"
+						visibility="excluded"
+					/>
+					<column name="response"
+						visibility="excluded"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="refreshRuns"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

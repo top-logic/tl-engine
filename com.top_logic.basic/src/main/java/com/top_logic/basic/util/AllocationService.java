@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.format.MemorySizeFormat;
 import com.top_logic.basic.config.fun.PercentToFactor;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 
 /**
  * Service for conditionally performing bulk memory allocations for heap-intensive computations.
@@ -28,6 +30,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Memory allocation service")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class AllocationService extends ConfiguredManagedClass<AllocationService.Config> {
 
 	/**

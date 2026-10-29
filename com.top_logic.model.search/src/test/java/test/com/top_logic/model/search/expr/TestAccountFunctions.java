@@ -69,6 +69,12 @@ public class TestAccountFunctions extends AbstractSearchExpressionTest {
 		public String getName() {
 			return "test";
 		}
+
+		/** Not stored, the account exists only in the test. */
+		@Override
+		public boolean tTransient() {
+			return true;
+		}
 	}
 
 	/**

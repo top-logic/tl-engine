@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.layout.react.control;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -22,14 +25,19 @@ import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.suggest.SuggestArguments;
+import com.top_logic.layout.react.control.suggest.Suggestion;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.SuggestionEntry;
 import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
- * Tests that {@link ReactTextInputControl} tells the client what kind of value it edits and that a
- * {@link InputType#URL} field only takes an address a browser can follow.
+ * Tests that {@link ReactTextInputControl} tells the client what kind of value it edits, that a
+ * {@link InputType#URL} field only takes an address a browser can follow, and that a field with a
+ * {@link ReactTextInputControl#setSuggestionSource(com.top_logic.layout.react.control.suggest.SuggestionSource)
+ * suggestion source} offers the suggestions it computes.
  */
 public class TestReactTextInputControl extends TestCase {
 
@@ -162,6 +170,98 @@ public class TestReactTextInputControl extends TestCase {
 		assertFalse(model(phone).hasError());
 	}
 
+	/**
+	 * A field without a suggestion source says nothing about suggestions, and asking it for some
+	 * leaves its state alone.
+	 */
+	public void testNoSuggestionsWithoutSource() {
+		TextControl field = control("Kitchen");
+
+		field.suggest("@\"Kit", 5);
+
+		assertNull(field.getState(TextInputState.OFFERS_SUGGESTIONS__PROP));
+		assertNull(field.getState(TextInputState.SUGGESTIONS__PROP));
+		assertNull(field.getState(TextInputState.SUGGESTIONS_TEXT__PROP));
+		assertNull(field.getState(TextInputState.SUGGESTIONS_CARET__PROP));
+	}
+
+	/**
+	 * The suggestions of the source reach the client in the order computed, together with the text
+	 * and caret position they are computed for.
+	 */
+	public void testSuggestionsArePublished() {
+		TextControl field = control(null);
+		List<Object> asked = new ArrayList<>();
+		field.setSuggestionSource((text, caret) -> {
+			asked.add(text);
+			asked.add(caret);
+			return List.of(
+				new Suggestion("Kitchen sensor", "@\"Kitchen\"", 0, text.length()),
+				Suggestion.insert(" > ", caret));
+		});
+		assertEquals(Boolean.TRUE, field.getState(TextInputState.OFFERS_SUGGESTIONS__PROP));
+
+		field.suggest("@\"Kit", 5);
+
+		assertEquals(List.of("@\"Kit", 5), asked);
+		assertEquals(List.of(
+			entry("Kitchen sensor", "@\"Kitchen\"", 0, 5),
+			entry(" > ", " > ", 5, 5)),
+			field.getState(TextInputState.SUGGESTIONS__PROP));
+		assertEquals("@\"Kit", field.getState(TextInputState.SUGGESTIONS_TEXT__PROP));
+		assertEquals(5, field.getState(TextInputState.SUGGESTIONS_CARET__PROP));
+	}
+
+	/**
+	 * A suggestion replacing characters behind the end of the text is not offered, the others are.
+	 */
+	public void testSuggestionNotFittingTheTextIsDropped() {
+		TextControl field = control(null);
+		field.setSuggestionSource((text, caret) -> List.of(
+			new Suggestion(null, "x", 0, text.length() + 1),
+			Suggestion.insert("y", caret)));
+
+		field.suggest("ab", 1);
+
+		assertEquals(List.of(entry("y", "y", 1, 1)), field.getState(TextInputState.SUGGESTIONS__PROP));
+	}
+
+	/**
+	 * Computing suggestions never changes the value of the field.
+	 */
+	public void testSuggestingKeepsTheValue() {
+		TextControl field = control("stored");
+		field.setSuggestionSource((text, caret) -> List.of(Suggestion.insert("more", caret)));
+
+		field.suggest("typed", 5);
+
+		assertEquals("stored", field.getFieldModel().getValue());
+		assertFalse(model(field).hasError());
+	}
+
+	/**
+	 * Removing the source withdraws the offer and the suggestions computed so far.
+	 */
+	public void testRemovedSourceWithdrawsSuggestions() {
+		TextControl field = control(null);
+		field.setSuggestionSource((text, caret) -> List.of(Suggestion.insert("x", caret)));
+		field.suggest("a", 1);
+
+		field.setSuggestionSource(null);
+
+		assertNull(field.getState(TextInputState.OFFERS_SUGGESTIONS__PROP));
+		assertNull(field.getState(TextInputState.SUGGESTIONS__PROP));
+	}
+
+	private static Map<String, Object> entry(String label, String text, int from, int to) {
+		Map<String, Object> result = new HashMap<>();
+		result.put(SuggestionEntry.LABEL__PROP, label);
+		result.put(SuggestionEntry.TEXT__PROP, text);
+		result.put(SuggestionEntry.FROM__PROP, from);
+		result.put(SuggestionEntry.TO__PROP, to);
+		return result;
+	}
+
 	private static AbstractFieldModel model(TextControl field) {
 		return (AbstractFieldModel) field.getFieldModel();
 	}
@@ -193,6 +293,16 @@ public class TestReactTextInputControl extends TestCase {
 
 		Object sendValueOnBlur() {
 			return getState(TypingFieldState.SEND_VALUE_ON_BLUR__PROP);
+		}
+
+		@Override
+		public Object getState(String key) {
+			return super.getState(key);
+		}
+
+		void suggest(String text, int caret) {
+			executeClientCommand(SuggestArguments.COMMAND,
+				Map.of(SuggestArguments.TEXT, text, SuggestArguments.CARET, caret));
 		}
 
 		void type(String text) {

@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.ui;
 
+import java.util.List;
+
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -15,6 +17,7 @@ import com.top_logic.layout.form.constraints.AbstractConstraint;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
@@ -76,5 +79,28 @@ public final class ModelReferenceChecker extends AbstractConstraint {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Checks an expression with implicitly defined variables.
+	 * 
+	 * <p>
+	 * The expression is checked as compiled by {@link QueryExecutor#compile(Expr, List)}: the given
+	 * variables are defined, so that references to them are no errors.
+	 * </p>
+	 * 
+	 * @param expression
+	 *        The expression to analyze.
+	 * @param variables
+	 *        The names of the implicitly defined variables, see
+	 *        {@link Define#withVariables(List, Expr)}.
+	 * 
+	 * @throws I18NRuntimeException
+	 *         When compiling the {@link Expr} fails.
+	 * 
+	 * @see #checkModelElements(Expr)
+	 */
+	public static void checkModelElements(Expr expression, List<String> variables) throws I18NRuntimeException {
+		checkModelElements(Define.withVariables(variables, expression));
 	}
 }

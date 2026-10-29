@@ -19,10 +19,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.comment.wrap.Comment;
 import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
@@ -308,10 +308,10 @@ public class CommentDialogComponent extends FormComponent {
                         return ExecutableState.EXECUTABLE;
                     }
                     else {
-                        AbstractWrapper theComment;
+                        Wrapper theComment;
 
                         if (someValues.containsKey(WRAPPER_ATTRIBUTE)) {
-                            theComment = (AbstractWrapper) someValues.get(WRAPPER_ATTRIBUTE);
+                            theComment = (Wrapper) someValues.get(WRAPPER_ATTRIBUTE);
                         }
                         else if (someValues.containsKey(AbstractCommandHandler.OBJECT_ID)) {
 							TLID theID =
@@ -319,7 +319,7 @@ public class CommentDialogComponent extends FormComponent {
 									AbstractCommandHandler.OBJECT_ID));
                             String theType = LayoutComponent.getParameter(someValues, AbstractCommandHandler.TYPE);
 
-							theComment = (AbstractWrapper) WrapperFactory.getWrapper(theID, theType);
+							theComment = WrapperFactory.getWrapper(theID, theType);
                         }
                         else {
                             throw new TopLogicException(OwnerExecutabilityRule.class, "comment.get.noInfo");
@@ -330,7 +330,7 @@ public class CommentDialogComponent extends FormComponent {
                         if (theCreator != null) {
                             Person thePerson = TLContext.getContext().getCurrentPersonWrapper();
 
-                            return WrapperHistoryUtils.equalsUnversioned(theCreator, thePerson) || TLContext.isAdmin()
+                            return WrapperHistoryUtils.equalsUnversioned(theCreator, thePerson) || ThreadContext.isAdmin()
                                 ? ExecutableState.EXECUTABLE
                                 : ExecutableState.NOT_EXEC_HIDDEN;
                         }

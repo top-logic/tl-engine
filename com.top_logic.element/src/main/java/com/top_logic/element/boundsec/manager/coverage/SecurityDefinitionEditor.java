@@ -1000,9 +1000,11 @@ public class SecurityDefinitionEditor {
 	 * Reads {@link #getAccessManagerFile()}.
 	 *
 	 * <p>
-	 * A removal entry refers to a rule of the underlying configuration layers, so reading it
-	 * without these layers would fail. The removal entries are therefore taken out before the file
-	 * is read and kept by their ids, so that writing the file back keeps them.
+	 * A removal entry refers to a rule of the underlying configuration layers. The read
+	 * configuration does not keep removal entries, but writing the file back must, so their ids
+	 * are taken from the document. The removal entries are taken out before the file is read,
+	 * because reading the file alone would warn about each removal of an entry of the (there
+	 * empty) underlying list.
 	 * </p>
 	 */
 	private StoredRules readAccessManagerFile() throws ConfigurationException {

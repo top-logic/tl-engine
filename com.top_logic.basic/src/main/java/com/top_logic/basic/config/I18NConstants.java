@@ -83,4 +83,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_INVALID_DEFAULT_VALUE_FOR_TYPE__TYPE___VALUE;
 
+	/**
+	 * @en The service class "{0}" has no service configuration interface.
+	 */
+	public static ResKey1 ERROR_NO_SERVICE_CONFIGURATION_INTERFACE__CLASS;
+
 }

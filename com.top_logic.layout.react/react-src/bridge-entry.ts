@@ -163,7 +163,7 @@ export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
 export { isEditorTarget } from './bridge/editor-target';
-export { filterOptions } from './bridge/filter-options';
+export { filterOptions, labelMatches } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';
 export type { FocusAfterRemove } from './bridge/focus-after-remove';
 export * from './bridge/icons';

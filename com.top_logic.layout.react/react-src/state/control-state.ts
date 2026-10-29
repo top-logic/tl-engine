@@ -721,6 +721,15 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	noFilter: boolean;
 
 	/**
+	 * Whether the user may enter a text that is no option: the text becomes the value, or a value
+	 * created from it, and is sent with the command `enterText` as argument `text`.
+	 * A text matching the label of an option or of a value entered before, ignoring case, chooses
+	 * that one instead. Absent means the user only chooses among the options. Only the shape
+	 * `'dropdown'` reads it.
+	 */
+	freeEntry: boolean;
+
+	/**
 	 * The label of the choice of no object: the option of its own a group of radio buttons offers
 	 * for it, the text the other shapes show while nothing is chosen.
 	 */

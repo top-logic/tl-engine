@@ -8,6 +8,7 @@ package com.top_logic.model;
 import java.util.List;
 
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.check.InstanceCheck;
 
 /**
@@ -94,6 +95,28 @@ public interface StorageDetail {
 	 */
 	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object oldEntry)
 			throws NoSuchAttributeException;
+
+	/**
+	 * Whether the values of the given attribute contain the given entry.
+	 *
+	 * <p>
+	 * The default implementation reads the {@link #getAttributeValue(TLObject, TLStructuredTypePart)
+	 * value} of the attribute (see {@link TLModelUtil#containsValue(Object, Object)}). A storage
+	 * that can look up a single entry without reading the whole value overrides it.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to look up the entry in.
+	 * @param attribute
+	 *        The attribute to access.
+	 * @param entry
+	 *        The entry to look up.
+	 *
+	 * @see TLObject#tContains(TLStructuredTypePart, Object)
+	 */
+	default boolean containsAttributeValue(TLObject object, TLStructuredTypePart attribute, Object entry) {
+		return TLModelUtil.containsValue(getAttributeValue(object, attribute), entry);
+	}
 
 	/**
 	 * Retrieves constraints for the given attribute.

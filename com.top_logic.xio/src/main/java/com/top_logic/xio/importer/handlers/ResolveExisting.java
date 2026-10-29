@@ -41,6 +41,13 @@ import com.top_logic.xio.importer.binding.ImportContext;
  * </p>
  * 
  * <p>
+ * Without a {@link Config#getPartition() partition}, all existing objects are computed and indexed
+ * at once. With a {@link Config#getPartition() partition}, only the existing objects of the
+ * partition an ID belongs to are computed and indexed, when an ID of this partition is not found
+ * for the first time.
+ * </p>
+ * 
+ * <p>
  * When handlers of this kind are nested, the innermost one is asked first.
  * </p>
  *
@@ -75,20 +82,36 @@ public class ResolveExisting<C extends ResolveExisting.Config<?>> extends Nested
 		String ARGUMENT_VAR = "argument-var";
 
 		/**
+		 * @see #getPartition()
+		 */
+		String PARTITION = "partition";
+
+		/**
 		 * Expression computing the existing objects to resolve IDs against.
 		 * 
 		 * <p>
 		 * The expression receives the value of the {@link #getArgumentVar() argument variable} as
-		 * single argument. An expression that does not need it can ignore it, e.g.
+		 * first argument. An expression that does not need it can ignore it, e.g.
 		 * <code>all(`my.module:MyType`)</code>; one that needs it is a function, e.g.
 		 * <code>scope -> $scope.get(`my.module:Container#items`)</code>.
 		 * </p>
 		 * 
 		 * <p>
-		 * The expression is evaluated only once per import, when an ID within the content of this
-		 * handler is not found for the first time. The argument is the value of the
-		 * {@link #getArgumentVar() argument variable} at the application of this handler in which
-		 * this happens.
+		 * Without a {@link #getPartition() partition}, the expression is evaluated only once per
+		 * import, when an ID within the content of this handler is not found for the first time.
+		 * </p>
+		 * 
+		 * <p>
+		 * With a {@link #getPartition() partition}, the expression receives the partition key as
+		 * second argument and computes the existing objects of this partition only, e.g.
+		 * <code>scope -> program -> $scope.get(`my.module:Container#programs`).filter(p -> $p.get(`my.module:Program#name`) == $program).get(`my.module:Program#parts`)</code>.
+		 * It is evaluated only once per import and partition, when an ID of this partition is not
+		 * found for the first time.
+		 * </p>
+		 * 
+		 * <p>
+		 * The first argument is the value of the {@link #getArgumentVar() argument variable} at the
+		 * application of this handler in which the evaluation happens.
 		 * </p>
 		 */
 		@Name(OBJECTS)
@@ -118,13 +141,43 @@ public class ResolveExisting<C extends ResolveExisting.Config<?>> extends Nested
 		@Nullable
 		String getArgumentVar();
 
+		/**
+		 * Optional function computing the partition key of an ID.
+		 * 
+		 * <p>
+		 * The function receives an ID that is not known to the import as argument, e.g.
+		 * <code>id -> $id.split("_", limit: 2).firstElement()</code> for IDs of the form
+		 * <code>&lt;partition&gt;_&lt;local-id&gt;</code>. A partition key that is not a string is
+		 * converted to its string representation. An ID with an empty partition key is not found.
+		 * </p>
+		 * 
+		 * <p>
+		 * With this function, an ID is only looked up among the existing objects of its partition,
+		 * which {@link #getObjects()} computes from the partition key. Objects of partitions that
+		 * are not referenced by the import are never computed. Without this function, all existing
+		 * objects form a single partition.
+		 * </p>
+		 */
+		@Name(PARTITION)
+		@Nullable
+		Expr getPartition();
+
 	}
 
 	/**
-	 * The index of existing objects by key, built once per import.
+	 * The index of existing objects by key, built once per import, if no
+	 * {@link Config#getPartition() partition} is configured.
 	 */
 	@SuppressWarnings("unchecked")
 	private final Property<Map<String, Object>> _index = TypedAnnotatable.propertyRaw(Map.class, Config.TAG_NAME);
+
+	/**
+	 * The indices of existing objects by key, built once per import for each partition key, if a
+	 * {@link Config#getPartition() partition} is configured.
+	 */
+	@SuppressWarnings("unchecked")
+	private final Property<Map<String, Map<String, Object>>> _partitionIndices =
+		TypedAnnotatable.propertyRaw(Map.class, Config.PARTITION);
 
 	/**
 	 * Creates a {@link ResolveExisting} from configuration.
@@ -142,17 +195,45 @@ public class ResolveExisting<C extends ResolveExisting.Config<?>> extends Nested
 	@Override
 	public Object importXml(ImportContext context, XMLStreamReader in) throws XMLStreamException {
 		Object argument = context.getVarOrNull(getConfig().getArgumentVar());
-		IdLookup lookup = (location, id) -> index(context, location, argument).get(id);
+		IdLookup lookup;
+		if (getConfig().getPartition() == null) {
+			lookup = (location, id) -> index(context, location, argument).get(id);
+		} else {
+			lookup = (location, id) -> lookupInPartition(context, location, argument, id);
+		}
 		return context.withIdLookup(lookup, in, this::importXmlInScope);
 	}
 
 	private Map<String, Object> index(ImportContext context, Location location, Object argument) {
 		Map<String, Object> result = context.get(_index);
 		if (result == null) {
-			result = buildIndex(context, location, argument);
+			result = buildIndex(context, location, context.eval(getConfig().getObjects(), argument));
 			context.set(_index, result);
 		}
 		return result;
+	}
+
+	private Object lookupInPartition(ImportContext context, Location location, Object argument, String id) {
+		Object partitionValue = context.eval(getConfig().getPartition(), id);
+		if (partitionValue == null) {
+			return null;
+		}
+		String partition = partitionValue.toString();
+		if (partition.isEmpty()) {
+			return null;
+		}
+
+		Map<String, Map<String, Object>> indices = context.get(_partitionIndices);
+		if (indices == null) {
+			indices = new HashMap<>();
+			context.set(_partitionIndices, indices);
+		}
+		Map<String, Object> index = indices.get(partition);
+		if (index == null) {
+			index = buildIndex(context, location, context.eval(getConfig().getObjects(), argument, partition));
+			indices.put(partition, index);
+		}
+		return index.get(id);
 	}
 
 	/**
@@ -160,9 +241,9 @@ public class ResolveExisting<C extends ResolveExisting.Config<?>> extends Nested
 	 *           import, so that the security setting of the import applies, see
 	 *           {@link com.top_logic.xio.importer.binding.AbstractModelBinding#usesSecurity()}.
 	 */
-	private Map<String, Object> buildIndex(ImportContext context, Location location, Object argument) {
+	private Map<String, Object> buildIndex(ImportContext context, Location location, Object objects) {
 		Map<String, Object> result = new HashMap<>();
-		for (Object obj : asCollection(context.eval(getConfig().getObjects(), argument))) {
+		for (Object obj : asCollection(objects)) {
 			if (obj == null) {
 				continue;
 			}

@@ -91,6 +91,19 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * </p>
  *
  * <p>
+ * <b>A stream that reconnects.</b> A new stream sends the full state of the displayed controls,
+ * then - if it names the last event its client received, see
+ * {@link #setConnection(AsyncContext, long)} - the events written after it that address no
+ * displayed control, with their numbers, and then a heartbeat numbered with the last event the
+ * queue has written. Only then do further events follow. So an event the full state does not
+ * contain - a navigation, a script - is not lost with the stream it was written to, and a client
+ * that received it does not get it again. Events the queue no longer holds are not replayed; a poll
+ * after them reads the full state, as above. The numbers of a {@link #beginPage() page} start above
+ * those of the page before it, so that the stream of a previous page replays nothing of the page
+ * displayed now.
+ * </p>
+ *
+ * <p>
  * <b>A client that went away.</b> The heartbeat keeps running while the queue has no client, see
  * {@link #clientGoneSince(long)}. A browser tab killed without an unload report, a closed laptop, a
  * lost network leave such a queue behind. The heartbeat reports it to its
@@ -175,6 +188,12 @@ public class SSEUpdateQueue {
 	 * full state. Guarded by {@code this}.
 	 */
 	private long _unreadableUpTo;
+
+	/**
+	 * The number the current {@link #beginPage() page} starts from: the events of earlier pages have
+	 * lower numbers. Guarded by {@code this}.
+	 */
+	private long _pageStart;
 
 	/**
 	 * Whether the client polls instead of reading a stream. Written while holding {@code this},
@@ -680,11 +699,38 @@ public class SSEUpdateQueue {
 	 *
 	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
 	 *         connection was closed.
+	 *
+	 * @see #setConnection(AsyncContext, long)
 	 */
 	public boolean setConnection(AsyncContext asyncContext) {
+		return setConnection(asyncContext, -1);
+	}
+
+	/**
+	 * Sets the SSE connection for this queue, replacing any existing one, for a client that names
+	 * the last event it received.
+	 *
+	 * <p>
+	 * The connection receives the full state of the displayed controls, then the events written
+	 * after {@code lastEventId} that address no displayed control, with their numbers, then a
+	 * heartbeat numbered with the last event written. Events enqueued meanwhile wait until then.
+	 * Nothing is replayed for a number from before the current {@link #beginPage() page}: it is the
+	 * number of a stream of the page the window displayed before.
+	 * </p>
+	 *
+	 * @param lastEventId
+	 *        The number of the last event the client received, negative if unknown.
+	 *
+	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
+	 *         connection was closed.
+	 *
+	 * @see #setConnection(AsyncContext)
+	 */
+	public boolean setConnection(AsyncContext asyncContext, long lastEventId) {
 		SSEConnection old;
 		SSEConnection newConn = new SSEConnection(asyncContext);
 		long base;
+		List<Written> replay;
 		synchronized (this) {
 			if (_shutdown) {
 				Logger.info("SSE connection REFUSED for window '" + _windowName + "' (queue@"
@@ -699,9 +745,13 @@ public class SSEUpdateQueue {
 			old = _connection;
 			_connection = newConn;
 			_streamLostAt = 0;
-			// The client starts again from the state this connection sends; what was written before
-			// is not to be replayed to it.
+			replay = replayAfter(lastEventId);
+			// The client starts again from the state this connection sends and the events replayed
+			// after it.
 			forgetWritten();
+			for (Written written : replay) {
+				retain(written);
+			}
 			base = _lastSeq;
 			_polling = false;
 			answerWaitingPoll();
@@ -723,8 +773,9 @@ public class SSEUpdateQueue {
 		// stream arrives. It carries the number the full state stands for: a page loaded anew starts
 		// without a number, while the numbering of its window continues, and would take the number a
 		// command answer names for events its stream did not bring.
-		if (sendFullState(newConn)) {
-			writeOrDisconnect(newConn, ID_FIELD + base + "\n" + HEARTBEAT_MESSAGE);
+		if (sendFullState(newConn) && sendReplay(newConn, replay)
+			&& writeOrDisconnect(newConn, ID_FIELD + base + "\n" + HEARTBEAT_MESSAGE)) {
+			newConn.markPrimed();
 		}
 		// Flush any events that were enqueued before the SSE connection was
 		// established (e.g. RouteChangeEvent from initial RoutingParticipant
@@ -766,6 +817,43 @@ public class SSEUpdateQueue {
 		_connection = null;
 		if (!_polling) {
 			_streamLostAt = now;
+		}
+		return true;
+	}
+
+	/**
+	 * The retained events after the given number that address no displayed control, for a stream
+	 * whose client received the event with that number. Called while holding the lock.
+	 */
+	private List<Written> replayAfter(long lastEventId) {
+		if (lastEventId < _pageStart) {
+			// Unknown, or a number of the page before.
+			return List.of();
+		}
+		if (lastEventId < _unreadableUpTo) {
+			Logger.info("Window '" + _windowName + "' reconnects after event " + lastEventId
+				+ ", the events up to " + _unreadableUpTo + " are no longer held; the stream replays "
+				+ "the full state and the events after them.", SSEUpdateQueue.class);
+		}
+		List<Written> result = new ArrayList<>();
+		for (Written written : _written) {
+			if (written.seq() > lastEventId && !addressesDisplayedControl(written.event())) {
+				result.add(written);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Writes the given events to the given connection with their numbers.
+	 *
+	 * @return Whether all were written.
+	 */
+	private boolean sendReplay(SSEConnection connection, List<Written> replay) {
+		for (Written written : replay) {
+			if (!writeOrDisconnect(connection, ID_FIELD + written.seq() + "\n" + toDataMessage(written.json()))) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -832,6 +920,10 @@ public class SSEUpdateQueue {
 		SSEConnection previous;
 		synchronized (this) {
 			_pendingEvents.clear();
+			// A number of its own that no event carries: the numbers of the new page start above
+			// every number the previous page received.
+			_lastSeq++;
+			_pageStart = _lastSeq;
 			forgetWritten();
 			previous = _connection;
 			_connection = null;
@@ -969,6 +1061,10 @@ public class SSEUpdateQueue {
 	public synchronized void flush() {
 		SSEConnection conn = _connection;
 		if (conn == null && !_polling) {
+			return;
+		}
+		if (conn != null && !conn.isPrimed()) {
+			// The connection is sending its full state and replay; the events follow them.
 			return;
 		}
 		SSEEvent event;
@@ -1205,13 +1301,19 @@ public class SSEUpdateQueue {
 
 	/** Called while holding the lock. */
 	private void remember(Written written) {
-		_written.addLast(written);
-		_writtenChars += written.json().length();
+		retain(written);
 		while (_writtenChars > MAX_RETAINED_CHARS && _written.size() > 1) {
 			Written dropped = _written.removeFirst();
 			_writtenChars -= dropped.json().length();
-			_unreadableUpTo = dropped.seq();
+			// A replayed event may have a number below the last forgetting.
+			_unreadableUpTo = Math.max(_unreadableUpTo, dropped.seq());
 		}
+	}
+
+	/** Adds the given event to {@link #_written}. Called while holding the lock. */
+	private void retain(Written written) {
+		_written.addLast(written);
+		_writtenChars += written.json().length();
 	}
 
 	/** Called while holding the lock. */
@@ -1779,6 +1881,8 @@ public class SSEUpdateQueue {
 
 		private final AtomicBoolean _closed = new AtomicBoolean();
 
+		private volatile boolean _primed;
+
 		SSEConnection(AsyncContext context) {
 			_context = context;
 		}
@@ -1801,6 +1905,21 @@ public class SSEUpdateQueue {
 		 */
 		boolean markClosed() {
 			return _closed.compareAndSet(false, true);
+		}
+
+		/**
+		 * Whether this connection has received its full state, its replay and its numbered
+		 * heartbeat, so that events are written to it.
+		 */
+		boolean isPrimed() {
+			return _primed;
+		}
+
+		/**
+		 * Marks this connection as {@link #isPrimed() primed}.
+		 */
+		void markPrimed() {
+			_primed = true;
 		}
 
 		/**

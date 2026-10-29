@@ -95,7 +95,8 @@ public class TestNewPageDelivery extends TestCase {
 
 		String body = nextStream.body();
 		assertTrue(body, body.contains("\"title\":\"Events\""));
-		assertTrue("numbered, so the client knows it arrived: " + body, body.contains("id: 1\ndata: "));
+		// The page starts with a number of its own (1), above every number of the previous page.
+		assertTrue("numbered, so the client knows it arrived: " + body, body.contains("id: 2\ndata: "));
 	}
 
 	/**
@@ -132,7 +133,7 @@ public class TestNewPageDelivery extends TestCase {
 		_queue.poll(firstPoll.context(), 0, true);
 		assertTrue(firstPoll.done());
 		long last = _queue.lastSeq();
-		assertEquals("the events of the previous page were written", 2, last);
+		assertEquals("the events of the previous page and the number the new page starts with", 3, last);
 		assertTrue(firstPoll.body(), firstPoll.body().startsWith("{\"last\":" + last + ","));
 
 		assertFalse(_queue.needsFullState(last));
@@ -160,7 +161,8 @@ public class TestNewPageDelivery extends TestCase {
 		_queue.beginPage();
 
 		assertTrue(_queue.needsFullState(1));
-		assertFalse("the new page's first poll is full anyway", _queue.needsFullState(2));
+		assertTrue("the last number of the previous page", _queue.needsFullState(2));
+		assertFalse("the number the new page starts with", _queue.needsFullState(3));
 	}
 
 	/**
@@ -178,7 +180,7 @@ public class TestNewPageDelivery extends TestCase {
 		_queue.setConnection(stream.context());
 
 		String body = stream.body();
-		assertTrue(body, body.contains("id: 2\ndata: [\"Heartbeat\""));
+		assertTrue("the number the new page starts with: " + body, body.contains("id: 3\ndata: [\"Heartbeat\""));
 		assertFalse("no event of the previous page: " + body, body.contains("\"Old"));
 	}
 

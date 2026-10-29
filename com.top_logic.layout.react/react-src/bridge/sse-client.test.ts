@@ -102,7 +102,8 @@ describe('an event stream the browser aborts for a navigation', () => {
     vi.advanceTimersByTime(NAVIGATION_START_GRACE_MS);
 
     expect(sources).toHaveLength(2);
-    expect(sources[1].url).toBe('/ctx/react-api/events?windowName=v1a2b');
+    // Names the last event received, so that the server replays what the first stream lost.
+    expect(sources[1].url).toBe('/ctx/react-api/events?windowName=v1a2b&after=1');
     expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
   });
 
@@ -216,6 +217,13 @@ describe('a page loaded again while the numbering of its window continues', () =
     await vi.advanceTimersByTimeAsync(5_000);
 
     expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+  });
+
+  it('opens its first stream without naming an event', async () => {
+    const { connect } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+
+    expect(sources[0].url).toBe('/ctx/react-api/events?windowName=v1a2b');
   });
 
   it('polls when the events a command names do not arrive', async () => {

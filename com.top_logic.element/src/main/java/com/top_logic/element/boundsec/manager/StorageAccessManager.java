@@ -30,9 +30,12 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.CommitHandler;
+import com.top_logic.knowledge.service.InteractionRevisionMemo;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -40,6 +43,7 @@ import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -125,6 +129,17 @@ public class StorageAccessManager extends ElementAccessManager {
 	 */
 	private static final Property<RoleComputation> PERSON_ROLE_CACHE =
 		TypedAnnotatable.property(RoleComputation.class, "personRoleCache");
+
+	/**
+	 * Answers of {@link #internalHasRoleOnAnyObject(Person, Collection)} in the current
+	 * interaction.
+	 * <p>
+	 * The groups of a person are part of the committed state the memo is valid for, so the answers
+	 * are kept by person.
+	 * </p>
+	 */
+	private static final InteractionRevisionMemo<Map<RolesOfPerson, Boolean>> ROLE_ON_ANY_OBJECT_MEMO =
+		new InteractionRevisionMemo<>("roleOnAnyObject", kb -> new HashMap<>());
 
     /** Saves the security storage instance. */
     private final SecurityStorage securityStorage;
@@ -358,6 +373,58 @@ public class StorageAccessManager extends ElementAccessManager {
 		return getRoleComputation(aPerson).hasRole(aBO, accessRoles);
     }
 
+	/**
+	 * Answers from the {@link SecurityStorage}, which holds an entry for each object a group has a
+	 * role on, inherited roles included through the entry on the role parent.
+	 * <p>
+	 * The answer is <code>true</code> while the storage is rebuilding or cannot be read. Answers are
+	 * kept in an {@link InteractionRevisionMemo}.
+	 * </p>
+	 */
+	@Override
+	protected boolean internalHasRoleOnAnyObject(Person person, Collection<? extends BoundRole> roles) {
+		if (securityStorage.isRebuilding()) {
+			return true;
+		}
+		Set<TLID> roleIDs = roleIDs(roles);
+		if (roleIDs.isEmpty()) {
+			return false;
+		}
+		Map<RolesOfPerson, Boolean> memo = ROLE_ON_ANY_OBJECT_MEMO.current(PersistencyLayer.getKnowledgeBase());
+		if (memo == null) {
+			return lookupRoleOnAnyObject(person, roleIDs);
+		}
+		RolesOfPerson key = new RolesOfPerson(person.tId(), roleIDs);
+		Boolean result = memo.get(key);
+		if (result == null) {
+			result = Boolean.valueOf(lookupRoleOnAnyObject(person, roleIDs));
+			if (!securityStorage.isRebuilding()) {
+				memo.put(key, result);
+			}
+		}
+		return result.booleanValue();
+	}
+
+	private boolean lookupRoleOnAnyObject(Person person, Collection<TLID> roleIDs) {
+		try {
+			return securityStorage.hasRoleOnAnyObject(getGroupIDs(person), roleIDs);
+		} catch (StorageException ex) {
+			Logger.error("Unable to determine whether person '" + person.getName()
+				+ "' has a role on any object, assuming it has.", ex, StorageAccessManager.class);
+			return true;
+		}
+	}
+
+	private static Set<TLID> roleIDs(Collection<? extends BoundRole> roles) {
+		Set<TLID> result = new HashSet<>();
+		for (BoundRole role : roles) {
+			if (role instanceof BoundedRole withId) {
+				result.add(withId.tIdLocal());
+			}
+		}
+		return result;
+	}
+
     @Override
 	protected <T extends BoundObject> Collection<T> internalAllowedBusinessObjects(Person user,
 			Collection<? extends BoundRole> someRoles, Collection<T> objects) {
@@ -569,6 +636,18 @@ public class StorageAccessManager extends ElementAccessManager {
 		} else {
 			return new SimpleRoleComputation(person, this);
 		}
+	}
+
+	/**
+	 * Key of an answer of {@link StorageAccessManager#internalHasRoleOnAnyObject(Person, Collection)}.
+	 *
+	 * @param person
+	 *        The identifier of the person asked for.
+	 * @param roleIDs
+	 *        The identifiers of the roles asked for.
+	 */
+	private record RolesOfPerson(ObjectKey person, Set<TLID> roleIDs) {
+		// Pure value.
 	}
 
 }

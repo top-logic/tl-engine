@@ -49,23 +49,54 @@ public class MoveLinksProcessor extends AbstractConfiguredInstance<MoveLinksProc
 	 */
 	@TagName("move-links")
 	public interface Config<I extends MoveLinksProcessor> extends PolymorphicConfiguration<I> {
+
+		/**
+		 * Configuration name of {@link #getSourceTable()}.
+		 */
+		String SOURCE_TABLE = "source-table";
+
+		/**
+		 * Configuration name of {@link #getDestTable()}.
+		 */
+		String DEST_TABLE = "dest-table";
+
+		/**
+		 * Configuration name of {@link #getReferenceColumn()}.
+		 */
+		String REFERENCE_COLUMN = "reference-column";
+
+		/**
+		 * Configuration name of {@link #getReference()}.
+		 */
+		String REFERENCE = "reference";
+
 		/**
 		 * Name of the table to take the links from.
 		 */
-		@Name("source-table")
+		@Name(SOURCE_TABLE)
 		String getSourceTable();
+
+		/**
+		 * @see #getSourceTable()
+		 */
+		void setSourceTable(String value);
 
 		/**
 		 * Name of the table to move the links to.
 		 */
-		@Name("dest-table")
+		@Name(DEST_TABLE)
 		String getDestTable();
+
+		/**
+		 * @see #getDestTable()
+		 */
+		void setDestTable(String value);
 
 		/**
 		 * Name of the reference column of the given {@link #getSourceTable()} that contains the
 		 * reference associated with the link stored in a table row.
 		 */
-		@Name("reference-column")
+		@Name(REFERENCE_COLUMN)
 		@StringDefault(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)
 		String getReferenceColumn();
 
@@ -73,8 +104,13 @@ public class MoveLinksProcessor extends AbstractConfiguredInstance<MoveLinksProc
 		 * The reference whose links should be moved.
 		 */
 		@Mandatory
-		@Name("reference")
+		@Name(REFERENCE)
 		QualifiedPartName getReference();
+
+		/**
+		 * @see #getReference()
+		 */
+		void setReference(QualifiedPartName value);
 	}
 
 	/**
@@ -143,6 +179,9 @@ public class MoveLinksProcessor extends AbstractConfiguredInstance<MoveLinksProc
 
 			int cntDelete = delete.executeUpdate(connection);
 			log.info("Deleted " + cntDelete + " rows from table '" + sourceTableName + ".");
+
+			context.invalidateXRef(sourceTable);
+			context.invalidateXRef(destTable);
 		} catch (SQLException | MigrationException ex) {
 			log.error(
 				"Failed to move links of reference '" + getConfig().getReference().getName() + "' from '"

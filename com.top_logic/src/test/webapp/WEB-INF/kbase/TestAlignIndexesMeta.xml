@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<!--
+	Changed index definitions of the association "hasGroupMembers": the index of the source
+	reference becomes unique over source and destination, and an additional index is declared.
+	Used by TestAlignIndexesProcessor.
+-->
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<association object_name="hasGroupMembers">
+			<index>
+				<mo_index name="source"
+					unique="true"
+				>
+					<index-parts>
+						<index_part name="source"
+							part="name"
+						/>
+						<index_part name="dest"
+							part="name"
+						/>
+					</index-parts>
+				</mo_index>
+				<mo_index name="members">
+					<index-parts>
+						<index_part name="dest"
+							part="name"
+						/>
+						<index_part name="source"
+							part="name"
+						/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</association>
+	</metaobjects>
+</objectlist>

@@ -42,7 +42,7 @@ public class SecurityListModelBuilder extends ListModelBuilderProxy
 		 */
 		@Mandatory
 		@Name(BuilderComponent.MODEL_BUILDER_ELEMENT)
-		PolymorphicConfiguration<ListModelBuilder> getModelBuilder();
+		PolymorphicConfiguration<? extends ListModelBuilder> getModelBuilder();
 
 		/**
 		 * Configuration of the {@link SecurityFilter} used to filter the list model.

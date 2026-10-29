@@ -36,7 +36,7 @@ public class ValueDisplayFieldProvider extends AbstractFieldProvider
 		 * Configuration of the renderer which is used to render the value of the field.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<Renderer<?>> getRenderer();
+		PolymorphicConfiguration<? extends Renderer<?>> getRenderer();
 	}
 
 	private Config _config;

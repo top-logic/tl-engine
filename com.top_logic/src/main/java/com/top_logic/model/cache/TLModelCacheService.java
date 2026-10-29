@@ -53,7 +53,7 @@ public class TLModelCacheService extends ConfiguredManagedClass<TLModelCacheServ
 		@NonNullable
 		@ItemDefault
 		@ImplementationClassDefault(TLModelCacheImpl.class)
-		PolymorphicConfiguration<TLModelCache> getCache();
+		PolymorphicConfiguration<? extends TLModelCache> getCache();
 
 	}
 

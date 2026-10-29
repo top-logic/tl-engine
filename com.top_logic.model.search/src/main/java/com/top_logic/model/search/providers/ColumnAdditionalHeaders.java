@@ -55,7 +55,7 @@ public class ColumnAdditionalHeaders
 		@Name(ADDITIONAL_HEADERS)
 		@Mandatory
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<HTMLFragmentProvider>> getAdditionalHeaders();
+		List<PolymorphicConfiguration<? extends HTMLFragmentProvider>> getAdditionalHeaders();
 	}
 
 	private List<HTMLFragmentProvider> _headers;

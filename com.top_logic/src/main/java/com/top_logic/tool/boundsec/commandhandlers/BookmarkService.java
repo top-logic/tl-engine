@@ -53,7 +53,7 @@ public class BookmarkService extends KBBasedManagedClass<BookmarkService.Config>
 		 * configured for object's type.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<BookmarkHandler> getDefaultBookmarkHandler();
+		PolymorphicConfiguration<? extends BookmarkHandler> getDefaultBookmarkHandler();
 
 		/**
 		 * {@link BookmarkHandler} for identified by the type, the handler is responsible for.
@@ -78,7 +78,7 @@ public class BookmarkService extends KBBasedManagedClass<BookmarkService.Config>
 		 * The {@link BookmarkHandler} used for {@link #getTypeSpec()}.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<BookmarkHandler> getImpl();
+		PolymorphicConfiguration<? extends BookmarkHandler> getImpl();
 
 	}
 

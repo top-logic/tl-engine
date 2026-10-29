@@ -356,7 +356,7 @@ public class TestConfigurationReader extends AbstractTypedConfigurationTestCase 
 	public interface InvalidConfiguration extends ConfigurationItem {
 
 		@Subtypes({})
-		PolymorphicConfiguration<Object> getInner();
+		PolymorphicConfiguration<?> getInner();
 
 		public class InnerImpl {
 

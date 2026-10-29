@@ -63,12 +63,12 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
 		/**
 		 * The {@link AbstractDataImporter} to use by this task.
 		 */
-		PolymorphicConfiguration<AbstractDataImporter> getImporter();
+		PolymorphicConfiguration<? extends AbstractDataImporter> getImporter();
 
 		/**
 		 * Setter for {@link #getImporter()}.
 		 */
-		void setImporter(PolymorphicConfiguration<AbstractDataImporter> value);
+		void setImporter(PolymorphicConfiguration<? extends AbstractDataImporter> value);
 
 		/**
 		 * Flag indicating that the import should not be run on errors, even if possible.

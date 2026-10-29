@@ -107,7 +107,7 @@ public class SecurityObjectProviderManager extends ManagedClass {
 		 * @see #getName()
 		 */
 		@Format(SecurityObjectProviderFormat.class)
-		PolymorphicConfiguration<SecurityObjectProvider> getImpl();
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getImpl();
 	}
 
 	private ConcurrentHashMap<String, SecurityObjectProvider> _providers;

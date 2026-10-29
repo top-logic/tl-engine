@@ -33,12 +33,12 @@ public class ComparatorProxy<T> implements Comparator<T>, ConfiguredInstance<Com
 		 * The delegate {@link Comparator}.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<Comparator<S>> getBaseComparator();
+		PolymorphicConfiguration<? extends Comparator<S>> getBaseComparator();
 
 		/**
 		 * Setter for {@link #getBaseComparator()}.
 		 */
-		void setBaseComparator(PolymorphicConfiguration<Comparator<S>> base);
+		void setBaseComparator(PolymorphicConfiguration<? extends Comparator<S>> base);
 
 	}
 

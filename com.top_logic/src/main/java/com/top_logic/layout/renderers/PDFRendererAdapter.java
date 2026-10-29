@@ -34,12 +34,12 @@ public class PDFRendererAdapter extends AbstractConfiguredInstance<PDFRendererAd
 		 * The {@link Renderer} to delegate writing to.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<Renderer<Object>> getRenderer();
+		PolymorphicConfiguration<? extends Renderer<Object>> getRenderer();
 
 		/**
 		 * Setter for {@link #getRenderer()}.
 		 */
-		void setRenderer(PolymorphicConfiguration<Renderer<Object>> value);
+		void setRenderer(PolymorphicConfiguration<? extends Renderer<Object>> value);
 	}
 
 	private final Renderer<Object> _renderer;

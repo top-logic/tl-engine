@@ -26,7 +26,7 @@ public class ElementModelCacheService extends TLModelCacheService {
 
 		@Override
 		@ImplementationClassDefault(ElementModelCacheImpl.class)
-		PolymorphicConfiguration<TLModelCache> getCache();
+		PolymorphicConfiguration<? extends TLModelCache> getCache();
 	}
 
 	/**

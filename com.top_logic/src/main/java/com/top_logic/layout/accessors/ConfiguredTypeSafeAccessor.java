@@ -50,7 +50,7 @@ public abstract class ConfiguredTypeSafeAccessor<T, C extends ConfiguredTypeSafe
 		 * {@link #getType()}.
 		 */
 		@Name("defaultAccessor")
-		PolymorphicConfiguration<Accessor<?>> getDefaultAccessor();
+		PolymorphicConfiguration<? extends Accessor<?>> getDefaultAccessor();
 
 	}
 
@@ -80,7 +80,7 @@ public abstract class ConfiguredTypeSafeAccessor<T, C extends ConfiguredTypeSafe
 	}
 
 	private Accessor<Object> createDefaultAccessor(InstantiationContext context, Config<?, T> config) {
-		PolymorphicConfiguration<Accessor<?>> defautConfig = config.getDefaultAccessor();
+		PolymorphicConfiguration<? extends Accessor<?>> defautConfig = config.getDefaultAccessor();
 		if (defautConfig == null) {
 			return NullAccessor.INSTANCE;
 		}

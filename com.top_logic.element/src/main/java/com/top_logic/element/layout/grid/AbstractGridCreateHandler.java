@@ -75,7 +75,7 @@ public abstract class AbstractGridCreateHandler extends PreconditionCommandHandl
 		@Override
 		@ImplementationClassDefault(SelfCheckProvider.class)
 		@ItemDefault
-		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> getCheckScopeProvider();
 	}
 
 	/**

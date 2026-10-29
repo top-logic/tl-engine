@@ -53,7 +53,7 @@ public class ChangeSetDeserializer extends TLDeserializer<TLSyncRecord<ChangeSet
 		 * Mapping that resolves the serialised type names.
 		 */
 		@ItemDefault(FuzzyTableNameMapping.Config.class)
-		PolymorphicConfiguration<TypeMapping> getTypeMapping();
+		PolymorphicConfiguration<? extends TypeMapping> getTypeMapping();
 
 	}
 

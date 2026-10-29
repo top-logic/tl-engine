@@ -52,7 +52,7 @@ public class BreadcrumbComponent extends BuilderComponent implements ControlRepr
 		@Override
 		@ItemDefault
 		@ImplementationClassDefault(ControlRepresentableCP.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/**
 		 * The {@link BreadcrumbRenderer} to display the {@link BreadcrumbData} created by
@@ -61,7 +61,7 @@ public class BreadcrumbComponent extends BuilderComponent implements ControlRepr
 		@Name(RENDERER)
 		@ItemDefault
 		@ImplementationClassDefault(DefaultBreadcrumbRenderer.class)
-		PolymorphicConfiguration<BreadcrumbRenderer> getRenderer();
+		PolymorphicConfiguration<? extends BreadcrumbRenderer> getRenderer();
 	}
 
 	/** The configured renderer used for the {@link BreadcrumbControl}. */

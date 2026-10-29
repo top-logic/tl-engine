@@ -57,12 +57,12 @@ public abstract class AbstractConfiguredConnectionPoolBase extends AbstractConne
 		 * </p>
 		 */
 		@Name("sql-dialect")
-		PolymorphicConfiguration<DBHelper> getSQLDialect();
+		PolymorphicConfiguration<? extends DBHelper> getSQLDialect();
 
 		/**
 		 * @see #getSQLDialect()
 		 */
-		void setSQLDialect(PolymorphicConfiguration<DBHelper> value);
+		void setSQLDialect(PolymorphicConfiguration<? extends DBHelper> value);
 	}
 
 	/**
@@ -254,7 +254,7 @@ public abstract class AbstractConfiguredConnectionPoolBase extends AbstractConne
 		dbHelper = null;
 
 		DBHelper result;
-		PolymorphicConfiguration<DBHelper> sqlDialectConfig = config().getSQLDialect();
+		PolymorphicConfiguration<? extends DBHelper> sqlDialectConfig = config().getSQLDialect();
 		if (sqlDialectConfig != null) {
 			result =
 				SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(sqlDialectConfig);

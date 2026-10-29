@@ -75,7 +75,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		@Mandatory
 		@Name(MQ_SYSTEM_CLIENT)
 		@ImplementationClassDefault(JNDIMQClient.class)
-		PolymorphicConfiguration<MQSystemClient> getMQSystemClient();
+		PolymorphicConfiguration<? extends MQSystemClient> getMQSystemClient();
 	}
 
 	/**

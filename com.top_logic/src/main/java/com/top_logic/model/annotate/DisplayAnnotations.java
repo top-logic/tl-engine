@@ -726,7 +726,7 @@ public class DisplayAnnotations {
 			return null;
 		}
 
-		PolymorphicConfiguration<DefaultProvider> config = annotation.getProvider();
+		PolymorphicConfiguration<? extends DefaultProvider> config = annotation.getProvider();
 		return TypedConfigUtil.createInstance(config);
 	}
 

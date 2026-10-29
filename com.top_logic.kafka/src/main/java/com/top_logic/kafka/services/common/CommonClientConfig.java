@@ -861,7 +861,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@ImplementationClassDefault(KafkaNoContentsLogWriter.class)
 	@ItemDefault
 	@NonNullable
-	PolymorphicConfiguration<KafkaLogWriter<? super V>> getLogWriter();
+	PolymorphicConfiguration<? extends KafkaLogWriter<? super V>> getLogWriter();
 
 	/**
 	 * The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A new,

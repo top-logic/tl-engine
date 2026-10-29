@@ -46,7 +46,7 @@ public class GotoSelection extends PreconditionCommandHandler {
 		 * {@link Mapping} to apply the the component's selection before using it as model.
 		 */
 		@ItemDefault(IdentityConfig.class)
-		PolymorphicConfiguration<Mapping<Object, Object>> getSelectionMapping();
+		PolymorphicConfiguration<? extends Mapping<Object, Object>> getSelectionMapping();
 
 		/**
 		 * Name of component to send the new model to.

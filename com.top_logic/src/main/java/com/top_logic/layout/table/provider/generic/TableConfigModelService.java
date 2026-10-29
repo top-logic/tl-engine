@@ -60,7 +60,7 @@ public class TableConfigModelService extends ConfiguredManagedClass<TableConfigM
 		@NonNullable
 		@ItemDefault
 		@ImplementationClassDefault(TableConfigModelCache.class)
-		PolymorphicConfiguration<TableConfigModelInfoProvider> getModelInfoProvider();
+		PolymorphicConfiguration<? extends TableConfigModelInfoProvider> getModelInfoProvider();
 
 	}
 

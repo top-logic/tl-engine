@@ -41,7 +41,7 @@ public class ProgressTableComponent extends TableComponent implements Runnable {
 
         /** Helper class for finding rows to be updated. */
         @Mandatory
-        PolymorphicConfiguration<TableComponentValueUpdater> getUpdater();
+        PolymorphicConfiguration<? extends TableComponentValueUpdater> getUpdater();
     }
 
     private boolean _active;
@@ -101,7 +101,7 @@ public class ProgressTableComponent extends TableComponent implements Runnable {
     protected void updateMonitoringState() {
         if (_active) {
             if (_timer == null) {
-                PolymorphicConfiguration<TableComponentValueUpdater> theUpdater = this.getConfig().getUpdater();
+                PolymorphicConfiguration<? extends TableComponentValueUpdater> theUpdater = this.getConfig().getUpdater();
                 ScheduledExecutorService theService = getMainLayout().getWindowScope().getUIExecutor();
 
                 _timer = theService.scheduleWithFixedDelay(this, _updateInterval, _updateInterval, TimeUnit.MILLISECONDS);

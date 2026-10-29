@@ -50,7 +50,7 @@ public class GridExcelExportHandler extends ExcelExportHandler {
 		@Override
 		@ImplementationClassDefault(SelfCheckProvider.class)
 		@ItemDefault
-		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> getCheckScopeProvider();
 
 	}
 

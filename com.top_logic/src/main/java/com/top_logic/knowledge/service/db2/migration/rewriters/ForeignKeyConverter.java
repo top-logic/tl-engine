@@ -43,7 +43,7 @@ public class ForeignKeyConverter extends ConfiguredItemChangeRewriter<ForeignKey
 		 * {@link ReferenceConversion} to apply to the referenced object.
 		 */
 		@Name("reference-conversion")
-		PolymorphicConfiguration<ReferenceConversion> getReferenceConversion();
+		PolymorphicConfiguration<? extends ReferenceConversion> getReferenceConversion();
 
 	}
 

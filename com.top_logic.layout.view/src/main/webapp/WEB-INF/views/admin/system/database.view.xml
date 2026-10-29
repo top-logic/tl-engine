@@ -8,6 +8,10 @@
 	write.
 	- Export dump downloads the dump of all data (databaseDump). The file is written while the browser
 	downloads it, so the command itself returns at once and needs no background job.
+	- Import dump clears the job channel of the last run and opens the dialog import-dump.view.xml,
+	which loads an uploaded dump: it converts it into an SQL script or SQL*Loader scripts to download,
+	or replaces all data of the application by it, restarting the persistency layer. The conversion
+	runs as a background job on the job channel, shown like the one of Compact history.
 	- Compact history clears the job channel of the last run and opens the dialog
 	compact-history.view.xml, which runs the analysis or the compaction as a background job on the job
 	channel; while it runs, a job-status below the toolbar shows it, also after the dialog was closed.
@@ -48,6 +52,33 @@
 						<download/>
 					</with-result>
 				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-upload"
+				inputs="job as jobState"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Import dump</en>
+					<de>Dump importieren</de>
+				</label>
+				<tooltip>
+					<en>Loads a dump written by "Export dump": converts it into scripts loading it into an empty database, or replaces all data of the application by it irrevocably. The replacement needs an active maintenance window; the persistency layer is restarted for it, which ends all sessions.</en>
+					<de>Lädt einen mit "Dump exportieren" geschriebenen Dump: wandelt ihn in Skripte um, die ihn in eine leere Datenbank laden, oder ersetzt alle Daten der Anwendung unwiderruflich durch ihn. Das Ersetzen erfordert einen aktiven Wartungsmodus; dafür wird die Persistenzschicht neu gestartet, wodurch alle Sitzungen beendet werden.</de>
+				</tooltip>
+				<executability>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<write-channel
+					clear="true"
+					name="job"
+				/>
+				<open-dialog dialog-view="admin/system/import-dump.view.xml">
+					<bind
+						channel="job"
+						to="job"
+					/>
+				</open-dialog>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-scissors"

@@ -40,6 +40,9 @@ import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.knowledge.KnowledgeReferenceStorageImpl;
+import com.top_logic.knowledge.event.ChangeSet;
+import com.top_logic.knowledge.event.ChangeSetReader;
+import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -47,6 +50,7 @@ import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.ReaderConfigBuilder;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
@@ -562,6 +566,46 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		assertEquals("live-changed", reloaded.getAttributeValue(A1_NAME));
 		assertEquals("The change outdated the compacted row.", cut,
 			kb().getCreateRevision(reloaded));
+	}
+
+	/**
+	 * The change sets read from the first revision of a compacted history create every object that
+	 * lives at the compaction revision, so that a dump written from them is complete.
+	 */
+	public void testChangeSetsAfterCompaction() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject early = newD("cs-early");
+		commit(tx);
+
+		tx = begin();
+		setA1(early, "cs-early-changed");
+		newD("cs-at-cut");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+
+		tx = begin();
+		setA1(early, "cs-after-cut");
+		commit(tx);
+
+		newCompaction().compactRevisions(0, cut, _log);
+		KBTestUtils.clearCache(kb());
+
+		boolean created = false;
+		ReaderConfigBuilder config =
+			ReaderConfigBuilder.createConfig(HistoryUtils.getInitialRevision(kb().getHistoryManager()),
+				Revision.CURRENT);
+		try (ChangeSetReader reader = kb().getChangeSetReader(config)) {
+			for (ChangeSet cs = reader.read(); cs != null; cs = reader.read()) {
+				for (ObjectCreation creation : cs.getCreations()) {
+					if (creation.getObjectId().getObjectName().equals(early.getObjectName())) {
+						assertEquals("Created in the compaction revision.", cut, cs.getRevision());
+						created = true;
+					}
+				}
+			}
+		}
+		assertTrue("The change sets of a compacted history must create the objects living at the cut.",
+			created);
 	}
 
 	/**

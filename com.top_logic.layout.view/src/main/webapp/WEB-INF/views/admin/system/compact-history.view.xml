@@ -97,7 +97,7 @@
 					<executability>
 						<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 					</executability>
-					<execute-script function="databaseCheckCompaction()"/>
+					<execute-script function="databaseCheckMaintenance()"/>
 					<confirm expr="#('Discard the history before {0} irrevocably?\n\nWhen the compaction has completed, the persistency layer is restarted and all sessions are ended, this one included.'@en, 'Die Historie vor {0} unwiderruflich verwerfen?\n\nNach Abschluss der Verdichtung wird die Persistenzschicht neu gestartet, und alle Sitzungen werden beendet, auch diese.'@de).fill($before)"/>
 					<start-job job="job">
 						<function><![CDATA[{

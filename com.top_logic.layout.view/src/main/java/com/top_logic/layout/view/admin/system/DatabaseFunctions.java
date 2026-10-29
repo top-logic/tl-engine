@@ -6,6 +6,8 @@
 package com.top_logic.layout.view.admin.system;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
@@ -17,10 +19,14 @@ import com.top_logic.basic.util.ResKeyN;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.compact.HistoryCompactionOperation;
 import com.top_logic.knowledge.service.db2.HistoryCompaction.Report;
+import com.top_logic.knowledge.service.maintenance.PersistencyMaintenance;
 import com.top_logic.knowledge.service.migration.dump.KBDump;
+import com.top_logic.knowledge.service.migration.load.KBLoad;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
+import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -42,6 +48,12 @@ import com.top_logic.util.error.TopLogicException;
  * application log and return the totals as a message.
  * </p>
  *
+ * <p>
+ * A dump is loaded again by converting it into an SQL script, {@link #dumpToSql(BinaryData)},
+ * which also runs as a background job, and replacing all data of the application by the data of
+ * that script, {@link #replaceData(BinaryData)}.
+ * </p>
+ *
  * @implNote Every public static method here is a TL-Script function named by the
  *           {@link ScriptPrefix} of this class followed by the capitalized method name, so
  *           {@link #dump()} is called <code>databaseDump</code>. The functions read all data and
@@ -56,11 +68,28 @@ public class DatabaseFunctions extends TLScriptFunctions {
 	public static final String PREFIX = "database";
 
 	/**
+	 * Key of the data version of a dump in the result of {@link #dumpInfo(BinaryData)}.
+	 */
+	public static final String DUMP_VERSIONS = "versions";
+
+	/**
+	 * Key of the migration applied while loading a dump in the result of
+	 * {@link #dumpInfo(BinaryData)}.
+	 */
+	public static final String DUMP_MIGRATION = "migration";
+
+	/**
+	 * Key of the reason why a dump cannot be loaded in the result of {@link #dumpInfo(BinaryData)}.
+	 */
+	public static final String DUMP_PROBLEM = "problem";
+
+	/**
 	 * The dump of all data of the application, a gzip-compressed XML file.
 	 *
 	 * <p>
 	 * The dump is written while the file is read, e.g. downloaded, so producing it costs nothing
-	 * before. The security storage is left out, since it is computed from the role rules.
+	 * before. The security storage is left out, since it is computed from the role rules, and so is
+	 * the cluster state of the installation, e.g. the state of the maintenance window.
 	 * </p>
 	 *
 	 * @return The file, named after the application, its version and the current revision.
@@ -85,24 +114,22 @@ public class DatabaseFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Fails unless the history can be compacted now.
+	 * Fails unless an operation rewriting the stored data may run now: a compaction of the history
+	 * or the replacement of all data by an imported dump.
 	 *
 	 * <p>
-	 * A compaction needs an active maintenance window and, in a cluster, that this node is the only
-	 * active one.
+	 * Such an operation needs an active maintenance window and, in a cluster, that this node is the
+	 * only active one.
 	 * </p>
 	 *
 	 * @throws TopLogicException
 	 *         With the message describing the violated precondition.
 	 *
-	 * @see HistoryCompactionOperation#checkPreconditions()
+	 * @see PersistencyMaintenance#checkPreconditions()
 	 */
-	@Label("Check that the history can be compacted")
-	public static void checkCompaction() {
-		ResKey problem = HistoryCompactionOperation.checkPreconditions();
-		if (problem != null) {
-			throw new TopLogicException(problem);
-		}
+	@Label("Check that the stored data may be rewritten")
+	public static void checkMaintenance() {
+		PersistencyMaintenance.requirePreconditions();
 	}
 
 	/**
@@ -137,7 +164,7 @@ public class DatabaseFunctions extends TLScriptFunctions {
 	 *         log.
 	 *
 	 * @throws TopLogicException
-	 *         If the compaction cannot run now, see {@link #checkCompaction()}, or fails.
+	 *         If the compaction cannot run now, see {@link #checkMaintenance()}, or fails.
 	 *
 	 * @see HistoryCompactionOperation#compact(long, Log)
 	 */
@@ -160,6 +187,112 @@ public class DatabaseFunctions extends TLScriptFunctions {
 			Long.valueOf(report.getRewrittenPins()),
 			Long.valueOf(report.getClearedPins()),
 			Long.valueOf(report.getRowsDeletedForDanglingPins()));
+	}
+
+	/**
+	 * What the given dump contains and whether it can be loaded into this application.
+	 *
+	 * @param dump
+	 *        A dump as written by {@link #dump()}.
+	 * @return A map with the entries {@link #DUMP_VERSIONS} (the versions of the modules the data
+	 *         of the dump was written with, one line per module), {@link #DUMP_MIGRATION} (the
+	 *         versions the data is migrated to while loading it, one line per module) and
+	 *         {@link #DUMP_PROBLEM} (the reason why the dump cannot be loaded, the other entries
+	 *         are then <code>null</code>; <code>null</code> if it can be loaded). <code>null</code>
+	 *         without a dump.
+	 *
+	 * @see KBLoad#open(Log, BinaryData)
+	 */
+	@Label("Description of a dump")
+	@SideEffectFree
+	public static Map<String, Object> dumpInfo(BinaryData dump) {
+		if (dump == null) {
+			return null;
+		}
+		Map<String, Object> result = new HashMap<>();
+		KBLoad load;
+		try {
+			load = KBLoad.open(log(), dump);
+		} catch (TopLogicException ex) {
+			result.put(DUMP_VERSIONS, null);
+			result.put(DUMP_MIGRATION, null);
+			result.put(DUMP_PROBLEM, Resources.getInstance().getString(ex.getErrorKey()));
+			return result;
+		}
+
+		Resources resources = Resources.getInstance();
+		String versions = load.hasDataVersion() ? KBLoad.toText(load.getDataVersions())
+			: resources.getString(com.top_logic.knowledge.service.migration.load.I18NConstants.NO_DATA_VERSION);
+		String migrated = KBLoad.toText(load.getMigratedVersions());
+		if (migrated.isEmpty()) {
+			migrated = resources.getString(com.top_logic.knowledge.service.migration.load.I18NConstants.NO_MIGRATIONS);
+		}
+		result.put(DUMP_VERSIONS, versions.strip());
+		result.put(DUMP_MIGRATION, migrated.strip());
+		result.put(DUMP_PROBLEM, null);
+		return result;
+	}
+
+	/**
+	 * Converts the given dump into a gzip-compressed SQL script loading its data into an empty
+	 * database of the kind this application uses.
+	 *
+	 * <p>
+	 * The conversion migrates the data to the version of this application and may take a long time.
+	 * </p>
+	 *
+	 * @param dump
+	 *        A dump as written by {@link #dump()}.
+	 * @return The SQL script, named after the dump.
+	 *
+	 * @see KBLoad#createSqlScript(Log)
+	 */
+	@Label("Convert a dump to an SQL script")
+	public static BinaryData dumpToSql(@Mandatory BinaryData dump) {
+		Log log = log();
+		return KBLoad.open(log, dump).createSqlScript(log);
+	}
+
+	/**
+	 * Converts the given dump into control files of the Oracle SQL*Loader, packed as ZIP archive.
+	 *
+	 * <p>
+	 * The conversion migrates the data to the version of this application and may take a long time.
+	 * </p>
+	 *
+	 * @param dump
+	 *        A dump as written by {@link #dump()}.
+	 * @return The archive, named after the dump.
+	 *
+	 * @see KBLoad#createLoaderScript(Log)
+	 */
+	@Label("Convert a dump to SQL*Loader scripts")
+	public static BinaryData dumpToLoaderScript(@Mandatory BinaryData dump) {
+		Log log = log();
+		return KBLoad.open(log, dump).createLoaderScript(log);
+	}
+
+	/**
+	 * Replaces all data of the application by the data of the given SQL script a few seconds from
+	 * now, irrevocably.
+	 *
+	 * <p>
+	 * All tables of the application are dropped and created again while the persistency layer is
+	 * stopped, then the script is executed. Restarting the persistency layer ends every session,
+	 * the one of the caller included.
+	 * </p>
+	 *
+	 * @param sqlScript
+	 *        The SQL script created by {@link #dumpToSql(BinaryData)}.
+	 *
+	 * @throws TopLogicException
+	 *         If the data cannot be replaced now, see {@link #checkMaintenance()}.
+	 *
+	 * @see KBLoad#replaceDatabase(Log, BinaryData)
+	 */
+	@Label("Replace all data")
+	public static void replaceData(@Mandatory BinaryData sqlScript) {
+		KBLoad.replaceDatabase(new LogProtocol(DatabaseFunctions.class), sqlScript);
 	}
 
 	/**

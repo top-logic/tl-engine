@@ -110,6 +110,11 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 
 		/**
 		 * Minimum delay in milliseconds for entering maintenance mode in cluster.
+		 *
+		 * <p>
+		 * It applies only while other nodes of the cluster are running, which learn about the
+		 * switch within this time. The only running node of a cluster switches immediately.
+		 * </p>
 		 */
 		@Name(MIN_INTERVALL_IN_CLUSTER_NAME)
 		long getMinIntervallInCluster();
@@ -372,7 +377,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 	 */
 	private void internalEnterMaintenanceMode(ClusterManager cm) {
 		if (cm.isClusterMode() && minIntervallInCluster > 1000
-			&& getMaintenanceModeState() != IN_MAINTENANCE_MODE) {
+			&& getMaintenanceModeState() != IN_MAINTENANCE_MODE && hasOtherActiveNodes(cm)) {
 			enterMaintenanceWindow(minIntervallInCluster);
 		}
 		else {
@@ -382,6 +387,24 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 		}
 	}
 
+
+	/**
+	 * Whether other nodes of the cluster are running, which must learn about a switch to
+	 * maintenance mode before it takes effect, so that they can inform their users.
+	 *
+	 * <p>
+	 * If the nodes cannot be determined, other nodes are assumed.
+	 * </p>
+	 */
+	private static boolean hasOtherActiveNodes(ClusterManager cm) {
+		try {
+			return cm.getActiveNodes().size() > 1;
+		} catch (SQLException ex) {
+			Logger.warn("Cannot determine the active cluster nodes, assuming other nodes.", ex,
+				MaintenanceWindowManager.class);
+			return true;
+		}
+	}
 
     /**
      * Sets the system into a maintenance window after the given delay, in which only users

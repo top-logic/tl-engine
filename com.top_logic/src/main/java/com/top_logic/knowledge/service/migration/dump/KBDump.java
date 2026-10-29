@@ -8,9 +8,11 @@ package com.top_logic.knowledge.service.migration.dump;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
+import com.top_logic.base.cluster.ClusterManager.ClusterManagerDBExecutor;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.version.Version;
@@ -43,14 +45,33 @@ public class KBDump {
 	public static final String DUMP_EXT = "-dump.xml";
 
 	/**
+	 * The tables holding the runtime state of the running installation, not data of the
+	 * application: the registered nodes of a cluster and the cluster properties, e.g. the state of
+	 * the maintenance window.
+	 *
+	 * <p>
+	 * A dump leaves them out by default, and loading a dump into a running installation keeps them
+	 * untouched, so that the installation keeps its own state.
+	 * </p>
+	 */
+	public static final Set<String> INSTALLATION_TABLES =
+		Set.of(ClusterManagerDBExecutor.TABLE_NODE, ClusterManagerDBExecutor.TABLE_VALUE);
+
+	/**
 	 * The names of the types and tables that a dump leaves out unless told otherwise.
 	 *
 	 * <p>
 	 * The {@link SecurityStorage} is computed from the role rules and is built again after an
-	 * import.
+	 * import. The {@link #INSTALLATION_TABLES} are no data of the application.
 	 * </p>
 	 */
-	public static final Set<String> DEFAULT_EXCLUDE_TYPES = Collections.singleton(SecurityStorage.TABLE_NAME);
+	public static final Set<String> DEFAULT_EXCLUDE_TYPES = defaultExcludeTypes();
+
+	private static Set<String> defaultExcludeTypes() {
+		Set<String> result = new HashSet<>(INSTALLATION_TABLES);
+		result.add(SecurityStorage.SECURITY_STORAGE_OBJECT_NAME);
+		return Collections.unmodifiableSet(result);
+	}
 
 	/**
 	 * The name of a dump of the given {@link KnowledgeBase} taken now: the name and version of the

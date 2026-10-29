@@ -11,10 +11,12 @@ import java.io.Reader;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
@@ -23,6 +25,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.sql.ConnectionPool;
@@ -436,13 +439,36 @@ public class DataMigration {
 	 *        The SQL script produced by
 	 *        {@link #createInsertSQL(Log, KnowledgeBaseConfiguration, ConnectionPool, long, InputStream, InsertWriter)}.
 	 */
-	public void dropAndRecreateDatabase(PooledConnection connection, KnowledgeBaseConfiguration kbConfig, Reader in)
+	public static void dropAndRecreateDatabase(PooledConnection connection, KnowledgeBaseConfiguration kbConfig, Reader in)
+			throws SQLException, ConfigurationException, DataObjectException, IOException {
+		dropAndRecreateDatabase(connection, kbConfig, in, Collections.emptySet());
+	}
+
+	/**
+	 * Loads the transformed data, keeping the given tables.
+	 *
+	 * <p>
+	 * All tables of the schema are dropped and created again before the script is executed, except
+	 * the given ones, which keep their content.
+	 * </p>
+	 *
+	 * @param in
+	 *        The SQL script produced by
+	 *        {@link #createInsertSQL(Log, KnowledgeBaseConfiguration, ConnectionPool, long, InputStream, InsertWriter)}.
+	 *        It must not insert rows into the kept tables.
+	 * @param keepTables
+	 *        The names of the tables that are neither dropped nor created again.
+	 */
+	public static void dropAndRecreateDatabase(PooledConnection connection, KnowledgeBaseConfiguration kbConfig,
+			Reader in, Set<String> keepTables)
 			throws SQLException, ConfigurationException, DataObjectException, IOException {
 		SchemaSetup schemaSetup = KBUtils.getSchemaConfigResolved(kbConfig);
 		DBHelper dbHelper = connection.getSQLDialect();
 		DBTypeRepository newRepository = DBTypeRepository.newRepository(dbHelper, schemaSetup,
 			!kbConfig.getDisableVersioning());
-		DBSchemaUtils.recreateTables(connection, schemaSetup.buildSchema(newRepository));
+		DBSchema schema = schemaSetup.buildSchema(newRepository);
+		schema.getTables().removeIf(table -> keepTables.contains(table.getName()));
+		DBSchemaUtils.recreateTables(connection, schema);
 
 		new SQLLoader(connection)
 			.setAutoCommit(true)

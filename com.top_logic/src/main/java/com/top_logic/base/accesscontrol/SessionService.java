@@ -777,7 +777,11 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		cookieBuffer.append("JSESSIONID=");
 		cookieBuffer.append(session.getId());
 		cookieBuffer.append("; Path=");
-		cookieBuffer.append(request.getContextPath());
+		// An application at the root of the server has the empty context path. An empty Path
+		// attribute is the folder of the requested page for the browser, which would not send
+		// the cookie to the other paths of the application.
+		String contextPath = request.getContextPath();
+		cookieBuffer.append(contextPath.isEmpty() ? "/" : contextPath);
 		cookieBuffer.append("; HttpOnly");
 		if (secure) {
 			cookieBuffer.append("; Secure");

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30051_rename_group_users_to_user"
+		module="tl-demo-react"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29852_binary_attribute_values"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+	</dependencies>
+	<processors>
+		<update-object
+			no-type-column="true"
+			table="Group"
+			type="tl.accounts:Group"
+		>
+			<key-values>
+				<key-value
+					column="NAME"
+					column-type="String"
+					value="users"
+				/>
+			</key-values>
+			<values>
+				<value
+					column="NAME"
+					column-type="String"
+					value="user"
+				/>
+			</values>
+		</update-object>
+	</processors>
+</migration>

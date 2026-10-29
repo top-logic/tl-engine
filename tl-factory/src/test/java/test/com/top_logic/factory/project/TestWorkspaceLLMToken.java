@@ -35,7 +35,7 @@ import com.top_logic.tl.ai.core.access.SecretTokens;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test of the tokens of the LLM proxy against a knowledge base: a token issued for a stored
+ * Test of the tokens of the workspace proxy against a knowledge base: a token issued for a stored
  * workspace is valid until it is revoked, its lifetime ends or its workspace is removed.
  */
 public class TestWorkspaceLLMToken extends BasicTestCase {
@@ -162,7 +162,7 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 
 	/**
 	 * The tests of this class, with a knowledge base holding the model of the control application
-	 * and the LLM proxy switched on by the test configuration.
+	 * and the workspace proxy switched on by the test configuration.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(

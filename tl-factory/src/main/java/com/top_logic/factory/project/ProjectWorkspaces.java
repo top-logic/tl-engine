@@ -787,8 +787,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * {@link ApplicationWorkspaces.Config#getContextPath() configured pattern}.
 	 *
 	 * <p>
-	 * This is a workspace whose container was created before the context path of a workspace
-	 * started with the one of the control application, or with another pattern.
+	 * This is a workspace whose container has no recorded context path, or one of another
+	 * pattern.
 	 * </p>
 	 *
 	 * @see #previewUrl(TLObject)

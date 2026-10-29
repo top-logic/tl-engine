@@ -1045,9 +1045,8 @@ public class ApplicationWorkspaces {
 	 * <p>
 	 * The route forwards the requests below {@code <control context>/preview/<workspace>} that are
 	 * below the context path of the application of the workspace, unchanged. So the application is
-	 * reached through it only if its context path is that path of the route or below it; it is not
-	 * for a context path created with another pattern or before the context path of a workspace
-	 * started with the one of the control application, until the workspace is updated.
+	 * reached through it only if its context path is that path of the route or below it; a context
+	 * path of another pattern is not, until the workspace is updated.
 	 * </p>
 	 *
 	 * @param controlContextPath

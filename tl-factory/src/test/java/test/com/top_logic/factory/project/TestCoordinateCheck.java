@@ -74,7 +74,7 @@ public class TestCoordinateCheck extends TestCase {
 	}
 
 	/**
-	 * Values outside the allowed characters are rejected as before.
+	 * Values outside the allowed characters are rejected.
 	 */
 	public void testInvalidCharacters() {
 		assertEquals(I18NConstants.ERROR_INVALID_ARTIFACT_ID__VALUE.fill("My-App"),

@@ -24,6 +24,8 @@ cd "$(dirname "$0")"
 
 GITEA_PORT="${TL_FACTORY_DEVEL_GITEA_PORT:-3300}"
 JENKINS_PORT="${TL_FACTORY_DEVEL_JENKINS_PORT:-8380}"
+# The port of the workspace proxy, tl_factory_proxy_port of the control application.
+PROXY_PORT="${tl_factory_proxy_port:-8091}"
 GITEA_URL="http://localhost:${GITEA_PORT}/"
 JENKINS_URL="http://localhost:${JENKINS_PORT}/"
 # The defaults of tl_factory_gitea_owner and tl_factory_jenkins_user of the control application.
@@ -121,7 +123,7 @@ up() {
 		curl -fsS -o /dev/null -u "${GITEA_ADMIN}:${GITEA_PASSWORD}" -H 'Content-Type: application/json' \
 			-d "{\"username\": \"${GITEA_ORG}\"}" "${GITEA_URL}api/v1/orgs"
 	fi
-	# A token without one of the scopes (an older setup lacks read:user) is replaced.
+	# A token that lacks one of the scopes or no longer works is replaced.
 	if [ -z "${GITEA_TOKEN}" ] || [ "$(api_status -H "Authorization: token ${GITEA_TOKEN}" \
 			"${GITEA_URL}api/v1/orgs/${GITEA_ORG}")" != 200 ] || [ "$(api_status \
 			-H "Authorization: token ${GITEA_TOKEN}" "${GITEA_URL}api/v1/user")" != 200 ]; then
@@ -158,6 +160,10 @@ TL_JENKINS_SCM_PASSWORD=${GITEA_READ_TOKEN}
 	docker compose up -d --build --force-recreate jenkins
 	await Jenkins -u "${JENKINS_ADMIN}:${TL_JENKINS_API_TOKEN}" "${JENKINS_URL}api/json"
 
+	# The workspace proxy listens on the gateway of Docker's default bridge, which the workspace
+	# containers reach as host.docker.internal.
+	BRIDGE_GATEWAY="$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}' 2>/dev/null || true)"
+
 	cat <<EOF
 
 Gitea:   ${GITEA_URL} (user ${GITEA_ADMIN}, password ${GITEA_PASSWORD})
@@ -169,7 +175,14 @@ Environment of tl-factory-app:
   export tl_factory_gitea_url=${GITEA_URL}
   export tl_factory_jenkins_url=${JENKINS_URL}
   export tl_factory_jenkins_scm_credentials=${SCM_CREDENTIALS}
+  export tl_factory_proxy_url=http://host.docker.internal:${PROXY_PORT}
+  export tl_factory_proxy_address=${BRIDGE_GATEWAY:-172.17.0.1}
+  export tl_factory_docker_extra_hosts=host.docker.internal:host-gateway
+  export tl_factory_proxy_allowed_sources=workspace-network
 EOF
+	if [ "${PROXY_PORT}" != 8091 ]; then
+		echo "  export tl_factory_proxy_port=${PROXY_PORT}"
+	fi
 }
 
 down() {

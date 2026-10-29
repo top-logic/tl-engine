@@ -472,7 +472,7 @@ credentials with 401 and `WWW-Authenticate: Basic realm="Gitea"`, finds reposito
 
 ### Configuration
 
-`tl-factory` configures the route next to the LLM route:
+`tl-factory` configures the route next to the LLM route and the [CI route](doc:factory/ci#the-ci-route):
 
 ```xml
 <routes>
@@ -481,6 +481,7 @@ credentials with 401 and `WWW-Authenticate: Basic realm="Gitea"`, finds reposito
 		user-email="%FACTORY_GIT_USER_EMAIL%"
 		user-name="%FACTORY_GIT_USER_NAME%"
 	/>
+	<route class="com.top_logic.factory.ci.CIRoute"/>
 </routes>
 ```
 
@@ -561,8 +562,7 @@ resolving the provider of the connection of the project of a workspace.
 Without a reachable Docker daemon, run without the build's system property (e.g. from the IDE
 without `-Dtl.factory.gitea.image=gitea/gitea:<version>`), or - for `TestGitRouteGitea` - without
 `git` on the path, the suite is empty. `TestGitRoute` and `TestGitRouteServlet` of `tl-factory`
-test the route against a fake hosting service. `TestGiteaSwitch` checks that an empty `base-url`
-switches git hosting off. The whole flow of a new project and the set up of its CI with its first
+test the route against a fake hosting service. The whole flow of a new project and the set up of its CI with its first
 build against an external Gitea and Jenkins is `TestProjectCI` of `tl-factory-jenkins`, see [the tests of
 CI](doc:factory/ci#the-tests).
 

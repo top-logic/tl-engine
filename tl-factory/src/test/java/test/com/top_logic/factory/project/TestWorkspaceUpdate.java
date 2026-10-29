@@ -44,7 +44,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * Test of the bookkeeping of updating a workspace to the current workspace image, against a
  * knowledge base and a {@link RecordingWorkspaceProvider}: the stored image, the outdated flag, the
- * kept initial password, the URL of the LLM proxy, the stored context path and whether a browser
+ * kept initial password, the URL of the LLM route, the stored context path and whether a browser
  * opens the application through the preview route.
  */
 public class TestWorkspaceUpdate extends BasicTestCase {
@@ -61,7 +61,7 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 
 	/**
 	 * A created workspace runs the current image; after the image changed, the update creates the
-	 * container anew on the same volumes with the initial password, the URL of the LLM proxy and the
+	 * container anew on the same volumes with the initial password, the URL of the LLM route and the
 	 * context path of the configured pattern, which the workspace records.
 	 */
 	public void testUpdate() throws Exception {
@@ -182,7 +182,7 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 
 	/**
 	 * The tests of this class, with a knowledge base holding the model of the control application
-	 * and the LLM proxy switched on by the test configuration.
+	 * and the workspace proxy switched on by the test configuration.
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(

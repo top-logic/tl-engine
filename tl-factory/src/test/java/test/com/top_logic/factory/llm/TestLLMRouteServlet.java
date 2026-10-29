@@ -67,10 +67,10 @@ import com.top_logic.factory.proxy.WorkspaceProxyServlet;
  * recording what it receives.
  *
  * <p>
- * {@link TestLLMProxyListener} runs the same tests against the proxy on a port of its own.
+ * {@link TestLLMRouteListener} runs the same tests against the proxy on a port of its own.
  * </p>
  */
-public class TestLLMProxyServlet extends TestCase {
+public class TestLLMRouteServlet extends TestCase {
 
 	private static final String CONTEXT_PATH = "/app";
 

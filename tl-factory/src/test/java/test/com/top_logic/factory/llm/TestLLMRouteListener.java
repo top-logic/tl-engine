@@ -17,10 +17,10 @@ import com.top_logic.factory.proxy.WorkspaceProxy;
 import com.top_logic.factory.proxy.WorkspaceProxyListener;
 
 /**
- * The tests of {@link TestLLMProxyServlet} against the proxy on a port of its own, the
+ * The tests of {@link TestLLMRouteServlet} against the proxy on a port of its own, the
  * {@link WorkspaceProxyListener}.
  */
-public class TestLLMProxyListener extends TestLLMProxyServlet {
+public class TestLLMRouteListener extends TestLLMRouteServlet {
 
 	private WorkspaceProxyListener _listener;
 

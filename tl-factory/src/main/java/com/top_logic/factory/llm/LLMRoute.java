@@ -299,7 +299,7 @@ public class LLMRoute implements ProxyRoute {
 		try {
 			upstream.credentials().authenticate(RequestAuthentication.of(request));
 		} catch (I18NRuntimeException ex) {
-			Logger.warn("LLM proxy: no credentials for " + target + ": " + ex.getMessage(), LLMRoute.class);
+			Logger.warn("LLM route: no credentials for " + target + ": " + ex.getMessage(), LLMRoute.class);
 			error(exchange, SC_SERVICE_UNAVAILABLE, API_ERROR, "The LLM API credentials are not available.");
 			return;
 		}
@@ -317,7 +317,7 @@ public class LLMRoute implements ProxyRoute {
 				}
 				ProxyForwarding.passBack(response, exchange, answer);
 			} catch (IOException | RuntimeException ex) {
-				Logger.info("LLM proxy: answer to the client failed: " + ex.getMessage(), LLMRoute.class);
+				Logger.info("LLM route: answer to the client failed: " + ex.getMessage(), LLMRoute.class);
 				answer.complete();
 			}
 		});
@@ -328,10 +328,10 @@ public class LLMRoute implements ProxyRoute {
 	 */
 	private static void failed(ProxyExchange exchange, URI target, Throwable failure) throws IOException {
 		if (failure instanceof HttpTimeoutException) {
-			Logger.warn("LLM proxy: " + target + " did not answer in time.", LLMRoute.class);
+			Logger.warn("LLM route: " + target + " did not answer in time.", LLMRoute.class);
 			error(exchange, SC_GATEWAY_TIMEOUT, API_ERROR, "The LLM API did not answer in time.");
 		} else {
-			Logger.warn("LLM proxy: " + target + " not reachable: " + failure.getClass().getName() + ": "
+			Logger.warn("LLM route: " + target + " not reachable: " + failure.getClass().getName() + ": "
 				+ failure.getMessage(), LLMRoute.class);
 			error(exchange, SC_BAD_GATEWAY, API_ERROR, "The LLM API is not reachable.");
 		}
@@ -364,17 +364,17 @@ public class LLMRoute implements ProxyRoute {
 	public static LLMUpstream providerUpstream(String name) {
 		LLMProviderService providers = LLMProviderService.getInstance();
 		if (providers == null) {
-			Logger.warn("LLM proxy: the LLM providers are not running.", LLMRoute.class);
+			Logger.warn("LLM route: the LLM providers are not running.", LLMRoute.class);
 			return null;
 		}
 		LLMProviderConfig provider = providers.getProvider(name);
 		if (!(provider instanceof AnthropicProviderConfig)) {
-			Logger.warn("LLM proxy: no Anthropic provider '" + name + "' is configured.", LLMRoute.class);
+			Logger.warn("LLM route: no Anthropic provider '" + name + "' is configured.", LLMRoute.class);
 			return null;
 		}
 		LLMUpstream result = LLMUpstream.fromProvider((AnthropicProviderConfig) provider);
 		if (result == null) {
-			Logger.warn("LLM proxy: the provider '" + name + "' has neither API key nor credentials.",
+			Logger.warn("LLM route: the provider '" + name + "' has neither API key nor credentials.",
 				LLMRoute.class);
 		}
 		return result;

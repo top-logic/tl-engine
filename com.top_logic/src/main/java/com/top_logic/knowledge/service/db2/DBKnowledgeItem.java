@@ -1156,7 +1156,7 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		DBKnowledgeBase kb = getKnowledgeBase();
 		Set<String> keyAttributes = kb.getKeyAttributes(tTable());
 		for (MOAttribute attribute : tTable().getAttributes()) {
-			if (attribute.isSystem()) {
+			if (!contributesToChange(attribute, keyAttributes)) {
 				continue;
 			}
 
@@ -1176,6 +1176,32 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		}
 
 		return event;
+	}
+
+	/**
+	 * Whether the value of the given attribute is reported in the {@link ItemChange} of a commit.
+	 * 
+	 * <p>
+	 * An attribute without database mapping (e.g. a computed attribute) only derives its value from
+	 * other attributes. Its change is visible through the attributes it is derived from, and events
+	 * read from the database never contain it. Therefore, its value is neither computed for the old
+	 * nor for the new state, unless it is a key attribute.
+	 * </p>
+	 *
+	 * @param attribute
+	 *        The attribute of {@link #tTable()} to check.
+	 * @param keyAttributes
+	 *        The names of the key attributes of {@link #tTable()}, see
+	 *        {@link DBKnowledgeBase#getKeyAttributes(com.top_logic.dob.MetaObject)}.
+	 */
+	private static boolean contributesToChange(MOAttribute attribute, Set<String> keyAttributes) {
+		if (attribute.isSystem()) {
+			return false;
+		}
+		if (attribute.getDbMapping().length == 0) {
+			return keyAttributes.contains(attribute.getName());
+		}
+		return true;
 	}
 
 	private Object getOldValue(DBKnowledgeBase kb, MOAttribute attribute, Object[] oldValues) {

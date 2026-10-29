@@ -7,8 +7,9 @@ package com.top_logic.model.listen.impl;
 
 import static java.util.Objects.*;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.listener.ListenerRegistration;
 import com.top_logic.basic.listener.Registration;
@@ -29,6 +30,11 @@ import com.top_logic.model.listen.ModelScope;
  * object or type. A registry is dropped as soon as its last registration is disposed.
  * </p>
  * 
+ * <p>
+ * Listeners are registered and notified by a single thread at a time. Whether a change reaches any
+ * listener ({@link #isAffectedBy(ModelChangeSummary)}) may be asked by any thread concurrently.
+ * </p>
+ * 
  * @see #eventBuilder()
  */
 public class DefaultModelScope implements ModelScope {
@@ -37,9 +43,9 @@ public class DefaultModelScope implements ModelScope {
 
 	private final ModelListeners _globalListeners = new ModelListeners();
 
-	private final Map<TLStructuredType, ModelListeners> _typeListeners = new LinkedHashMap<>();
+	private final Map<TLStructuredType, ModelListeners> _typeListeners = new ConcurrentHashMap<>();
 
-	private final Map<ObjectKey, ModelListeners> _objectListeners = new LinkedHashMap<>();
+	private final Map<ObjectKey, ModelListeners> _objectListeners = new ConcurrentHashMap<>();
 
 	/**
 	 * Creates a {@link DefaultModelScope}.
@@ -62,6 +68,9 @@ public class DefaultModelScope implements ModelScope {
 
 	@Override
 	public Registration addModelListener(TLStructuredType type, ModelListener listener) {
+		if (type == null) {
+			return Registration.NONE;
+		}
 		return register(_typeListeners, type, listener);
 	}
 
@@ -86,6 +95,9 @@ public class DefaultModelScope implements ModelScope {
 	@Deprecated
 	@Override
 	public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
+		if (type == null) {
+			return false;
+		}
 		return remove(_typeListeners, type, listener);
 	}
 
@@ -121,6 +133,53 @@ public class DefaultModelScope implements ModelScope {
 		if (!registry.hasRegisteredListeners()) {
 			registries.remove(key, registry);
 		}
+	}
+
+	/**
+	 * Whether the summarized change reaches a listener registered in this scope.
+	 * 
+	 * <p>
+	 * This is the case, if a listener for all changes is registered, if a listener is registered
+	 * for one of the {@link ModelChangeSummary#getChangedObjects() changed objects}, or if a listener
+	 * is registered for one of the {@link ModelChangeSummary#getAffectedTypes() affected types}.
+	 * </p>
+	 * 
+	 * <p>
+	 * The check consists of key lookups only and may be called from any thread, also while the
+	 * thread of this scope registers or disposes listeners. A registration that is made or disposed
+	 * concurrently may or may not be seen.
+	 * </p>
+	 * 
+	 * @param change
+	 *        The change to check, built with the {@link #settings()} of this scope, see
+	 *        {@link EventBuilder#summarize(ModelEventSettings, UpdateEvent)}.
+	 */
+	public boolean isAffectedBy(ModelChangeSummary change) {
+		if (_globalListeners.hasRegisteredListeners()) {
+			return true;
+		}
+		return containsAny(_objectListeners, change.getChangedObjects())
+			|| containsAny(_typeListeners, change.getAffectedTypes());
+	}
+
+	private static <K> boolean containsAny(Map<K, ModelListeners> registries, Set<K> keys) {
+		if (registries.isEmpty()) {
+			return false;
+		}
+		if (keys.size() > registries.size()) {
+			for (K key : registries.keySet()) {
+				if (keys.contains(key)) {
+					return true;
+				}
+			}
+		} else {
+			for (K key : keys) {
+				if (registries.containsKey(key)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

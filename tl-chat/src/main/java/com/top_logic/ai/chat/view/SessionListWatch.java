@@ -34,9 +34,9 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
  * </p>
  *
  * <p>
- * The server does know: {@code aiSessionRename} commits through the {@code AgentExecutionStore},
- * whose change notification makes {@link AgentViewRefreshService} synthesize the model events in
- * every window of the owner, and those reach this listener on the window's own model scope. This
+ * The server does know: {@code aiSessionRename} commits through the {@code AgentExecutionStore}, the
+ * engine delivers that commit to every window whose model listeners it affects, and the events
+ * reach this listener on the window's own model scope. This
  * counts the changes that concern the account's chats into {@link #REVISION}; the browser re-reads
  * the list whenever that count moves. The count, not the titles, because the list is what the
  * browser has to follow - a rename moves a chat to "today" in the rail as well.

@@ -7,11 +7,14 @@ package com.top_logic.layout.react.scripting;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -32,11 +35,17 @@ import com.top_logic.util.TLContextManager;
  * side-window, or for any server-side command into a sibling React window of the same session.
  *
  * <p>
- * The target window has its own subsession and {@link SSEUpdateQueue}, so {@link #inWindow} installs
+ * The target window has its own subsession and {@link SSEUpdateQueue}, so {@link #inWindow(ReactWindowRegistry, String, Runnable)} installs
  * the target's subsession, runs the action under the session-wide
  * {@link ReactWindowRegistry#beginInteraction() interaction} and settles derived state, then restores
  * the caller's subsession. The command's control updates enqueue to the target window's queue, which
  * flushes them to that window's SSE connection — the effect appears in the target browser window.
+ * </p>
+ *
+ * <p>
+ * A thread that knows no window name but a sub-session - a background thread such as an agent run -
+ * enters the window displaying that sub-session through
+ * {@link #inWindow(TLSubSessionContext, long, Consumer)}.
  * </p>
  */
 public final class ReactWindowReplay {
@@ -77,6 +86,12 @@ public final class ReactWindowReplay {
 	}
 
 	/**
+	 * Timeout for {@link #inWindow(TLSubSessionContext, long, Consumer)} to wait for another
+	 * thread's interaction as long as it lasts.
+	 */
+	public static final long WAIT = -1;
+
+	/**
 	 * Runs the given action against the control tree of the given window: in that window's
 	 * subsession, as one {@link Interaction}, with the derived state settled afterwards.
 	 *
@@ -98,13 +113,98 @@ public final class ReactWindowReplay {
 	 *         longer - is not acted on.
 	 */
 	public static boolean inWindow(ReactWindowRegistry registry, String windowName, Runnable action) {
-		if (registry == null || registry.getQueue(windowName) == null) {
+		if (registry == null) {
 			return false;
+		}
+		return enter(registry, windowName, WAIT, action) == WindowAccess.DONE;
+	}
+
+	/**
+	 * Runs the given action in the browser window that displays the given sub-session, waiting for
+	 * another thread's interaction with the window's session as long as it lasts.
+	 *
+	 * @see #inWindow(TLSubSessionContext, long, Consumer)
+	 */
+	public static WindowAccess inWindow(TLSubSessionContext subSession, Consumer<? super ReactControl> action) {
+		return inWindow(subSession, WAIT, action);
+	}
+
+	/**
+	 * Runs the given action in the browser window that displays the given sub-session, from any
+	 * thread - a background thread such as an agent run included.
+	 *
+	 * <p>
+	 * The window is the live browser window whose session context holds the given sub-session
+	 * under the window's name, see {@link ReactWindowRegistry#registryDisplaying(TLSubSessionContext)}.
+	 * The action runs on the calling thread with the sub-session installed, within the
+	 * {@link Interaction} of the window's session, and receives the window's root control. The
+	 * window's pending model events are synthesized before the action, so that it sees the state of
+	 * the model the calling thread sees, and after it, so that what it changes reaches the browser
+	 * page. The caller's context is restored afterwards.
+	 * </p>
+	 *
+	 * <p>
+	 * A thread that already holds the interaction of the window's session, such as a request of
+	 * that session, acts within it at once.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The sub-session whose window to act in. May be {@code null}, which is
+	 *        {@link WindowAccess#NO_WINDOW}.
+	 * @param timeoutMillis
+	 *        The time in milliseconds to wait at most for another thread's interaction with the
+	 *        window's session to end, {@code 0} not to wait, {@link #WAIT} to wait as long as it
+	 *        lasts.
+	 * @param action
+	 *        What to do in the window. Receives the window's root control, {@code null} while the
+	 *        window has no rendered tree. An exception it throws is thrown here.
+	 * @return What became of the action; never {@code null}.
+	 */
+	public static WindowAccess inWindow(TLSubSessionContext subSession, long timeoutMillis,
+			Consumer<? super ReactControl> action) {
+		ReactWindowRegistry registry = ReactWindowRegistry.registryDisplaying(subSession);
+		if (registry == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		String windowName = registry.windowDisplaying(subSession);
+		if (windowName == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		return ThreadContextManager.inContext(subSession,
+			(ComputationEx2<WindowAccess, RuntimeException, RuntimeException>) () -> enter(registry, windowName,
+				timeoutMillis, () -> {
+					registry.synthesizeModelEvents(windowName);
+					SSEUpdateQueue queue = registry.getQueue(windowName);
+					action.accept(queue == null ? null : queue.getRootControl());
+				}));
+	}
+
+	/**
+	 * Runs the given action in the given window: in the window's subsession, within the
+	 * {@link Interaction} of its session, and synthesizes the window's model events afterwards.
+	 *
+	 * @param timeoutMillis
+	 *        See {@link #inWindow(TLSubSessionContext, long, Consumer)}.
+	 * @return {@link WindowAccess#NO_WINDOW} if the registry holds no queue for the window, before
+	 *         or after the interaction was entered.
+	 */
+	private static WindowAccess enter(ReactWindowRegistry registry, String windowName, long timeoutMillis,
+			Runnable action) {
+		if (registry.getQueue(windowName) == null) {
+			return WindowAccess.NO_WINDOW;
 		}
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		TLSubSessionContext callerSubSession = displayContext.getSubSessionContext();
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
-		try (Interaction interaction = registry.beginInteraction()) {
+		try (Interaction interaction = timeoutMillis < 0 ? registry.beginInteraction()
+			: registry.tryBeginInteraction(timeoutMillis)) {
+			if (interaction == null) {
+				return WindowAccess.BUSY;
+			}
+			if (registry.getQueue(windowName) == null) {
+				// Closed while waiting for the interaction.
+				return WindowAccess.NO_WINDOW;
+			}
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
 				action.run();
@@ -119,7 +219,7 @@ public final class ReactWindowReplay {
 				displayContext.installSubSessionContext(callerSubSession);
 			}
 		}
-		return true;
+		return WindowAccess.DONE;
 	}
 
 	/**

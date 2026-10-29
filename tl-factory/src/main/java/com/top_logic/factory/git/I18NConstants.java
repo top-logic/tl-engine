@@ -190,7 +190,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en It is unknown whether the access token of the git connection may create repositories in
-	 *     "{0}": {1} Enter an existing repository, or choose another git connection.
+	 *     "{0}". Enter an existing repository, or choose another git connection. Reason: {1}
 	 */
 	public static ResKey2 ERROR_NEW_REPOSITORY_UNKNOWN__OWNER_PROBLEM;
 

@@ -11,20 +11,13 @@
 	agent (factory/assign-task.view.xml).
 	
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
-	and state while they run. The source channel "commits" brings these commits to the window as
-	soon as they are made, so the list, the state and the output follow the operation without a
-	click. The commands are offered according to the state of the selected workspace.
+	and state while they run. The engine brings these commits to the window, so the list, the state
+	and the output follow the operation without a click. The commands are offered according to the
+	state of the selected workspace.
 -->
 <view>
 	<channels>
 		<channel name="project"/>
-		<source-channel name="commits"
-			update-interval="1000"
-		>
-			<source class="com.top_logic.layout.view.channel.CommitSource"
-				types="tl.factory:Project, tl.factory:Workspace"
-			/>
-		</source-channel>
 		<derived-channel name="workspace"
 			expr="$project.get(`tl.factory:Project#workspace`)"
 			inputs="project"

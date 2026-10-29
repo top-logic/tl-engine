@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, usePart, tokenMs, ICON_CLOSE } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, usePart, tokenMs, ICON_CLOSE, useTransientOverlay } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
@@ -36,6 +36,9 @@ const FADEOUT_AFTER_HOVER_MS = 250;
  * Hovering the message pins it, so a long text stays readable for as long as the user needs;
  * leaving resumes the fade-out after a short grace period. A close button at the end of the message
  * dismisses it right away; the next queued message, if any, is shown afterwards.
+ *
+ * While shown, the message is a transient overlay (useTransientOverlay): a floating action button it would cover moves
+ * aside.
  */
 const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SnackbarStateJson>>();
@@ -83,10 +86,14 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
 
   const Button = usePart('Button');
 
-  if (!visible && !exiting) return null;
+  const shown = visible || exiting;
+  const ref = useRef<HTMLDivElement>(null);
+  useTransientOverlay(ref, shown);
+
+  if (!shown) return null;
 
   return (
-    <div id={controlId}
+    <div id={controlId} ref={ref}
       className={rootClassName(state, 'tl-alert tl-snackbar tl-type-body')}
       data-tl-role={variant}
       data-tl-state={exiting ? 'exiting' : undefined}

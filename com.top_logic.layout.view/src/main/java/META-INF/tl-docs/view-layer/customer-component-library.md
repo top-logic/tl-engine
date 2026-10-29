@@ -223,6 +223,20 @@ export function createMuiRoot(themes: PageThemes) {
   `<ButtonDefaults appearance=… iconOnly=…>`. A menu entry carries the role and the roving tabindex
   `menuItemProps` returns (part of `buttonPartAttributes`), by which the menu's keyboard navigation
   (arrows, Escape) finds it.
+- **`useFloatingFrame()`**, **`FloatingFrame`**, **`FloatingRail`** (`bridge/floating-anchor.ts`)
+  make a container a frame for floating elements: the rails around its body take an element floating
+  over a corner of the body (a floating action button), which then stays in place while the body
+  scrolls. `TLPanel` and `TLWindow` are frames; a replacement of `TLWindow` renders the rails directly
+  before and after its scrolling body and the content inside `FloatingFrame`, as `MuiWindowAdapter.tsx`
+  does. A floating element finds its rail with `useFloatingAnchor(edge)`.
+- **`useTransientOverlay(ref, active)`** (`bridge/transient-overlay.ts`) reports the element of a
+  transient overlay - a snackbar while it shows a message - so that floating actions it would cover
+  move aside (`useTransientOverlayRects()`). A replacement of `TLSnackbar` reports its element the
+  way `TLSnackbar` does.
+- **`useChildStates(controls)`** and **`useChildCommand()`** (`bridge/child-states.ts`) let a
+  container draw child controls with components of its own instead of rendering them with
+  `TLChild`: the first reads their live states (the `ButtonState` of an action: label, icon,
+  disabled, hidden), the second sends a command to a child (`click` presses a button).
 - **`<ThemeIcon encoded={…}/>`** (`bridge/ThemeIcon.tsx`) renders a theme image from the encoded
   form a control sends in its state (`ButtonState.image`, the icons of menu entries and tabs, …): an
   icon font class, an image file, or nothing for the invisible image. An adapter passes the element
@@ -339,6 +353,7 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLBreadcrumb` | `BreadcrumbState` |
 | `TLAvatar` | `AvatarState` |
 | `TLSlider` | `SliderState` |
+| `TLFloatingAction` | `FloatingActionState` |
 
 The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
 `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips` and `TLProgress`. Their look is

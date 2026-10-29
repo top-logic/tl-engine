@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * I18N constants for {@link MessageButtons}.
+ * I18N constants for {@link MessageButtons} and {@link ReactFloatingActionControl}.
  */
 public class I18NConstants extends I18NConstantsBase {
 
@@ -28,6 +28,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     "Escape", "Ctrl+S" or "Shift+ArrowDown".
 	 */
 	public static ResKey ERROR_INVALID_KEY_GESTURE;
+
+	/**
+	 * @en Actions
+	 */
+	public static ResKey FLOATING_ACTION_DIAL;
 
 	static {
 		initConstants(I18NConstants.class);

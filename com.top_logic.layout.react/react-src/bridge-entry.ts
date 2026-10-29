@@ -155,6 +155,7 @@ export type {
   ImageSourceStateJson,
   AvatarStateJson,
   SliderStateJson,
+  FloatingActionStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
@@ -174,7 +175,10 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { useChildStates } from './bridge/child-states';
+export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
+export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
+export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects } from './bridge/transient-overlay';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

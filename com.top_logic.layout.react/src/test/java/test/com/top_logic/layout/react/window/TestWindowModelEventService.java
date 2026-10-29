@@ -42,6 +42,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -221,6 +222,31 @@ public class TestWindowModelEventService extends BasicTestCase {
 			+ delay + "ms.", delay <= _interval + TOLERANCE_MILLIS);
 	}
 
+	/**
+	 * A synchronization that finds the window busy writes nothing to the client: the events the
+	 * busy interaction holds back are delivered when it closes, after the controls it retires are
+	 * known, and never by the synchronization in the middle of it.
+	 */
+	public void testBusyWindowIsNotFlushed() throws Exception {
+		FakeAsyncRequest stream = displayWindow(WINDOW);
+		SSEUpdateQueue queue = _registry.getQueue(WINDOW);
+		Person changed = createPerson();
+		Recorder recorder = observe(WINDOW, changed);
+
+		String written;
+		try (Interaction interaction = _registry.beginInteraction()) {
+			written = stream.body();
+			queue.enqueue(PageNavigationEvent.create());
+			inOtherThread(() -> changeLanguage(changed));
+			Thread.sleep(2 * _interval);
+			assertEquals("A synchronization must not write while another thread's interaction holds the window.",
+				written, stream.body());
+		}
+		assertFalse("The interaction must deliver its events when it closes.", written.equals(stream.body()));
+		assertTrue("The commit must be delivered once the window is no longer busy.",
+			recorder.await(event -> updates(event, changed), _interval + TOLERANCE_MILLIS));
+	}
+
 	private static boolean updates(ModelChangeEvent event, TLObject object) {
 		return event.getUpdated().anyMatch(object::equals);
 	}
@@ -291,8 +317,10 @@ public class TestWindowModelEventService extends BasicTestCase {
 	/**
 	 * Creates the given window with its subsession, as rendering its page does, and connects a
 	 * client to its queue, as connecting its stream does.
+	 *
+	 * @return The connected stream, whose body is what the client received.
 	 */
-	private void displayWindow(String window) {
+	private FakeAsyncRequest displayWindow(String window) {
 		TLSessionContext sessionContext = sessionContext(_session);
 		SSEUpdateQueue queue = _registry.getOrCreateQueue(window);
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -301,7 +329,9 @@ public class TestWindowModelEventService extends BasicTestCase {
 		sessionContext.setIfAbsent(window, subSession);
 		subSession.updateSessionRevision(kb.getHistoryManager(), ((UpdateChainView) kb.getUpdateChain()).current());
 		queue.setWindowContext(window, sessionContext, _registry);
-		queue.setConnection(new FakeAsyncRequest().context());
+		FakeAsyncRequest stream = new FakeAsyncRequest();
+		queue.setConnection(stream.context());
+		return stream;
 	}
 
 	private void inWindow(String window, Runnable action) {

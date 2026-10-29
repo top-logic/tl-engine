@@ -44,6 +44,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CancelDialogCommand;
+import com.top_logic.layout.view.command.CloseDialogAction;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -240,6 +241,31 @@ public class TestSuspendedCommands extends TestCase {
 	}
 
 	/**
+	 * Tests that a command closing its own dialog after it was taken up again closes the dialog as
+	 * soon as it has settled, although the dialog does not close while the command runs.
+	 */
+	public void testCloseAfterSuspensionClosesOnceSettled() {
+		Suspend suspend = new Suspend();
+		run(suspend, closeDialog(), downstream());
+
+		assertTrue("The command waits, nothing is closed yet.", _dialogs.isOpen());
+
+		suspend.resume("late");
+
+		assertEquals("The actions after the close still run.", List.of("in"), _downstream);
+		assertFalse("The command has settled, so its close took effect.", _dialogs.isOpen());
+	}
+
+	/**
+	 * Tests that a command running through closes its dialog at once.
+	 */
+	public void testCloseWithoutSuspensionClosesAtOnce() {
+		run(closeDialog());
+
+		assertFalse(_dialogs.isOpen());
+	}
+
+	/**
 	 * Tests that a command running outside a region that follows its commands is not tracked,
 	 * which is what a command of the page itself does.
 	 */
@@ -253,6 +279,11 @@ public class TestSuspendedCommands extends TestCase {
 		suspend.resume("late");
 
 		assertEquals("The chain goes on with its unchanged argument.", List.of("in"), _downstream);
+	}
+
+	private static ViewAction closeDialog() {
+		CloseDialogAction.Config config = TypedConfiguration.newConfigItem(CloseDialogAction.Config.class);
+		return new CloseDialogAction(new DefaultInstantiationContext(TestSuspendedCommands.class), config);
 	}
 
 	/** Runs the given actions as a command of the dialog, starting with {@code "in"}. */
@@ -354,6 +385,11 @@ public class TestSuspendedCommands extends TestCase {
 		@Override
 		public void closeDialogsAbove(DialogHandle dialog) {
 			throw new UnsupportedOperationException("Nothing is stacked on the dialog of these tests.");
+		}
+
+		/** Whether the dialog is still open. */
+		boolean isOpen() {
+			return _open != null;
 		}
 
 		/** The content of the dialog the user is shown. */

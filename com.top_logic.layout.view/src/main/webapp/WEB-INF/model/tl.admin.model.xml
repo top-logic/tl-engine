@@ -106,5 +106,32 @@
 				/>
 			</attributes>
 		</class>
+		<!--
+			Transient-only type holding the input of the "reindex types" dialog of the indexing service:
+			the object types whose objects are fed to the index (options: the types the running indexing
+			service indexes; none selected means all of them), and whether only objects not yet in the
+			index are indexed. Instances are created with new(`tl.admin:Reindexing`, transient: true) and
+			are never persisted (the dialog passes the input to indexingReindex), so no table is declared.
+		-->
+		<class name="Reindexing">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="types"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="r -&gt; indexingTypes()"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="onlyNew"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

@@ -25,6 +25,18 @@
 	displays (serviceHasSettings) - shows a message instead of an empty form. A service whose
 	implementation refuses a configuration changed in the application shows its settings in a form
 	that does not offer Edit.
+	- Commands for one kind of service: the toolbar also offers commands acting on what a certain
+	kind of service maintains, each shown only for a service whose running instance is of that kind
+	(<visible-if expr="serviceInstanceOf($module, '<qualified class or interface name>')"/>):
+	"Rebuild index" and "Reindex types" (dialog reindex.view.xml) for the full-text indexing
+	service, "Rebuild security storage" for an access manager keeping a security storage. They run
+	as background jobs on the job channel, which the job-status below the notice displays; a command
+	taking job as input is disabled while a job runs.
+	- Extension point: another module adds commands for its own kind of service with a same-path
+	overlay of this view, appending them to the toolbar of the panel "detail":
+	<panel config:ref="detail"><commands><generic-command inputs="module, services, job as
+	jobState">...</generic-command></commands></panel>. Taking services as input re-evaluates the
+	visibility after a restart; a long-running command starts its work with <start-job job="job">.
 -->
 <view>
 	<channels>
@@ -67,9 +79,10 @@
 			init="serviceConfiguration($module)"
 			inputs="module"
 		/>
+		<channel name="job"/>
 	</channels>
 
-	<panel
+	<panel id="detail"
 		fill="true"
 		with-inset="true"
 	>
@@ -156,6 +169,97 @@
 					</with-result>
 				</execute-script>
 			</generic-command>
+			<generic-command
+				image="css:bi bi-database-gear"
+				inputs="module, services, job as jobState"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Rebuild index</en>
+					<de>Index neu aufbauen</de>
+				</label>
+				<tooltip>
+					<en>Drops the full-text index and indexes all objects of the indexed types again. This may take hours.</en>
+					<de>Verwirft den Volltextindex und indiziert alle Objekte der indizierten Typen neu. Dies kann Stunden dauern.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="serviceInstanceOf($module, 'com.top_logic.knowledge.indexing.IndexingService')"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<confirm expr="#('Rebuild the full-text index? This may take hours, and searches find nothing until the objects are indexed again.\n\nNo data should be created, changed or deleted while the index is rebuilt, so put the application into maintenance mode first. In a cluster, stop the index on all other cluster nodes.'@en, 'Den Volltextindex neu aufbauen? Dies kann Stunden dauern, und Suchen finden nichts, bis die Objekte wieder indiziert sind.\n\nWährend des Neuaufbaus sollten keine Daten angelegt, geändert oder gelöscht werden; versetzen Sie die Anwendung daher zuvor in den Wartungsmodus. In einem Cluster stoppen Sie den Index auf allen anderen Knoten.'@de)"/>
+				<start-job job="job">
+					<function><![CDATA[{
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Rebuilding the full-text index.'@en, 'Der Volltextindex wird neu aufgebaut.'@de));
+	indexingRebuild();
+	#('The full-text index has been rebuilt.'@en, 'Der Volltextindex wurde neu aufgebaut.'@de);
+}]]></function>
+					<with-result>
+						<notify expr="$result"/>
+					</with-result>
+				</start-job>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-card-checklist"
+				inputs="module, services, job as jobState"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Reindex types</en>
+					<de>Typen neu indizieren</de>
+				</label>
+				<tooltip>
+					<en>Feeds all objects of selected types to the full-text index.</en>
+					<de>Übergibt alle Objekte ausgewählter Typen an den Volltextindex.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="serviceInstanceOf($module, 'com.top_logic.knowledge.indexing.IndexingService')"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<execute-script function="new(`tl.admin:Reindexing`, transient: true)">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/system/services/reindex.view.xml"
+						>
+							<bind
+								channel="job"
+								to="job"
+							/>
+						</open-dialog>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-shield-lock"
+				inputs="module, services, job as jobState"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Rebuild security storage</en>
+					<de>Sicherheitsspeicher neu aufbauen</de>
+				</label>
+				<tooltip>
+					<en>Computes the roles all users have on all objects again from the role rules. This may take a few minutes.</en>
+					<de>Berechnet die Rollen aller Benutzer auf allen Objekten neu aus den Rollenregeln. Dies kann einige Minuten dauern.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="serviceInstanceOf($module, 'com.top_logic.element.boundsec.manager.StorageAccessManager')"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<confirm expr="#('Rebuild the security storage? This may take a few minutes.'@en, 'Den Sicherheitsspeicher neu aufbauen? Dies kann einige Minuten dauern.'@de)"/>
+				<start-job job="job">
+					<function><![CDATA[{
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Rebuilding the security storage.'@en, 'Der Sicherheitsspeicher wird neu aufgebaut.'@de));
+	securityStorageRebuild();
+	#('The security storage has been rebuilt.'@en, 'Der Sicherheitsspeicher wurde neu aufgebaut.'@de);
+}]]></function>
+					<with-result>
+						<notify expr="$result"/>
+					</with-result>
+				</start-job>
+			</generic-command>
 		</commands>
 		<alert
 			inputs="changed"
@@ -197,6 +301,7 @@
 				</execute-script>
 			</generic-command>
 		</alert>
+		<job-status input="job"/>
 		<visible-if
 			expr="$editable == true"
 			input="editable"

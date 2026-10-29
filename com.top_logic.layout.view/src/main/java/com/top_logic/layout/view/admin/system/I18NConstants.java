@@ -103,6 +103,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SERVICE_LIFECYCLE__NAME;
 
 	/**
+	 * @en No full-text indexing service is running.
+	 */
+	public static ResKey ERROR_NO_INDEXING_SERVICE;
+
+	/**
+	 * @en The running access manager has no security storage.
+	 */
+	public static ResKey ERROR_NO_SECURITY_STORAGE;
+
+	/**
+	 * @en The security storage was not rebuilt: a rebuild is already running, or it failed. See the
+	 *     log of the application for details.
+	 */
+	public static ResKey ERROR_SECURITY_STORAGE_NOT_REBUILT;
+
+	/**
 	 * @en The system is operating normally.
 	 */
 	public static ResKey MAINTENANCE_STATUS_NORMAL;

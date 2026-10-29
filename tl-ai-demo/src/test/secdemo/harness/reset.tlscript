@@ -24,7 +24,7 @@
 //
 // The alternative reset is a fresh database (delete tl-ai-demo/tmp).
 //
-// See tl-ai-demo/doc/secdemo/testbed.md, "Enabling and resetting the fixture".
+// See the developer article ai/security/test-bed, "Enabling and resetting".
 // ===========================================================================
 {
 	// The tickets SecDemoSetup seeds, as [project, title, body] - kept in

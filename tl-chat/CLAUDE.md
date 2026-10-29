@@ -153,7 +153,7 @@ no window sets it - today, the task, and it sets it for `AUTO_APPROVE` only. A t
 account can, and is therefore an ordinary attended run started by a clock.
 
 Approval prompts never blocked in `AUTO_APPROVE` - the callback answers on the calling thread - so
-`askUser` was the one thing that could park an unattended run. See `doc/scheduled-agent.md`.
+`askUser` was the one thing that could park an unattended run. See the developer article `ai/script-and-scheduled-runs` (agents on a schedule).
 
 ### The switch reaches the running turn, and no answer is lost (#943, #944)
 
@@ -174,7 +174,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
 - **`ConversationBackend`** (`…chat.backend`) – What answers a conversation instead of the framework's agent (an external process); chosen per run by the `ConversationBackendResolver`s of `ConversationBackendService` (none configured here). `ChatProcessor.executeOrchestrator` is the run frame both share, `runInternal` the framework agent's part, `BackendRun` the backend's (recording through `RunRecording`, events only on the worker thread). Its `BackendFeatures` reach the browser as `features` of `GET /chat/sessions/{id}` and `POST /chat/send`, where `ui/src/features.ts` gates the controls; `ChatServlet` refuses an unsupported regenerate, edit or attachment and skips the agent policy for such a chat. See the developer article `ai/chat-ui`
-- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
+- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See the developer article `ai/limits-and-caching` (run limits)
 - **`TaskProgressTracker`** – One window's chat: its processing states, and accessors that read and write the `ChatState` of the chat the window shows
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
@@ -784,7 +784,7 @@ host kind (returning nothing leaves the web default, which opens the page).
 own kinds once through the `CitationKinds` service (name, `types` its objects belong to, label,
 whether a passage applies). The model never names a kind - the reading tool decides it - and the
 validator drops a citation of an undeclared kind at DEBUG. A host that cites another way than with
-links registers a `CitationMarkerSyntax`. See `doc/citation-contract.md`.
+links registers a `CitationMarkerSyntax`. See the developer article `ai/memory-and-citations` (citations).
 
 Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's sources. The rail's
 `Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers
@@ -1210,7 +1210,7 @@ The block is composed per run (`TurnContext`, from the same facts), attached by 
 request is built - so a compaction cannot lose the newest one - and stored on the turn
 (`Turn#turnContext`), apart from the user's text: the bubble shows what the user wrote, the
 transcript and the run detail show both. A page that states no per-turn fact gets no block at all.
-See `tl-ai-core/doc/environment-block.md`.
+See the developer article `ai/environment`.
 
 A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
 middle of a sentence.
@@ -1317,7 +1317,7 @@ the answer on the session state and binds it for every run of that conversation
 (`UserMemoryBinding`). A memory the agent writes in turn 3 therefore shows up in the user's memory
 list at once, and in the agent's block in the *next* conversation. The rail section that lists them
 is an ordinary `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`,
-with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environment-block.md`.
+with a Forget command that calls `aiMemoryDelete`. See the developer article `ai/environment`.
 
 #### The first questions a page offers: `<prompts>` (#529)
 
@@ -1607,7 +1607,7 @@ decided nothing - see "what survives a reload, and who decides it".
 
 Exported types and `App` / `extensions` are the contract. File splits inside `ui/src` are not.
 
-Citations: see `doc/citation-contract.md`. Albert points at its sources with links; the server keeps a
+Citations: see the developer article `ai/memory-and-citations`. Albert points at its sources with links; the server keeps a
 link as a footnote only when a tool of the run read that source, and drops the link of any other id
 or address.
 

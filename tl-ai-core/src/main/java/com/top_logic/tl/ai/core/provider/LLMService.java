@@ -64,8 +64,9 @@ import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
  */
 public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
-	/** The migration page every refusal points to. */
-	public static final String MIGRATION_PAGE = "tl-ai-core/doc/llm-service-migration.md";
+	/** The migration instructions every refusal points to: a section of a developer article. */
+	public static final String MIGRATION_PAGE =
+		"the developer article ai/providers, section \"Migrating from LLMService\"";
 
 	/**
 	 * The old agent execution section.

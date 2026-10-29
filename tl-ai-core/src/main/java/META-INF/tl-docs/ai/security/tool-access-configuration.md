@@ -86,6 +86,6 @@ Tool access is one of two independent authorizations. It answers "may this accou
 
 ## Trying it out
 
-The demo carries a working example behind one switch: uncomment `secdemo.config.xml` in `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt`. That brings six roles, six accounts, a `<tool-access>` granting each of them a different set of capabilities, and three TL-Script tool factories - the tool of two of them named in `<tool-groups>`, the third deliberately not. `tl-ai-demo/doc/secdemo/testbed.md` maps every behaviour of this layer to a persona, a thing to type and an expected result.
+The demo carries a working example behind one switch: uncomment `secdemo.config.xml` in `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt`. That brings two roles, four persona accounts holding them in different combinations, a `<tool-access>` granting the two roles different sets of capabilities, and three TL-Script tool factories - the tools of two of them named in `<tool-groups>`, the third deliberately not. [The test bed](doc:ai/security/test-bed) maps every behaviour of this layer to a persona, a thing to type and an expected result.
 
 Further: [recipes and diagnosis](doc:ai/security/tool-access-recipes), [the policy editor](doc:ai/security/tool-access-editor), the precise [administration reference](doc:ai/security/administration#the-tool-access-policy).

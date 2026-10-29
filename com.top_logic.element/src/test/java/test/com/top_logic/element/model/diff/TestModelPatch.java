@@ -8,7 +8,9 @@ package test.com.top_logic.element.model.diff;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import junit.framework.Test;
@@ -31,6 +33,7 @@ import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.annotation.ConfigType;
+import com.top_logic.element.meta.kbbased.storage.LinkStorage;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.model.DefaultModelFactory;
 import com.top_logic.element.model.ModelCopy;
@@ -43,6 +46,10 @@ import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.element.model.i18n.I18NAttributeStorageMapping;
 import com.top_logic.element.model.migration.model.DeleteTLModuleProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
+import com.top_logic.element.model.migration.model.refactor.MoveLinksProcessor;
+import com.top_logic.element.model.migration.model.refactor.RemoveDuplicatesProcessor;
+import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -72,6 +79,10 @@ import com.top_logic.model.util.TLModelUtil;
  */
 @SuppressWarnings("javadoc")
 public class TestModelPatch extends AbstractModelPatchTest {
+
+	private static final String BAG_TEST_TYPE = "A";
+
+	private static final String BAG_TEST_REFERENCE = "refs";
 
 	public void testPatch() throws SQLException {
 		doTestMigrate("test1-left.model.xml", "test1-right.model.xml");
@@ -342,6 +353,99 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		assertEquals(expectedName, association.getName());
 		assertEquals(expectedModule, association.getModule().getName());
 		assertTrue(association.getModule().getTypes().contains(association));
+	}
+
+	/**
+	 * Checks that the links of a reference are moved to the bag table, when the reference becomes
+	 * a bag.
+	 */
+	public void testPatchMakesBag() throws SQLException {
+		doTestBagChange("test-bag-left.model.xml", "test-bag-right.model.xml", "makeBag",
+			(a, b) -> List.of(a, b), (a, b) -> List.of(a, b));
+	}
+
+	/**
+	 * Checks that the links of a bag reference are moved to the table of references that are no
+	 * bag, when the reference stops being a bag, and that duplicate values are removed.
+	 */
+	public void testPatchMakesUnique() throws SQLException {
+		doTestBagChange("test-bag-right.model.xml", "test-bag-left.model.xml", "makeUnique",
+			(a, b) -> List.of(a, b, a, b), (a, b) -> List.of(a, b));
+	}
+
+	/**
+	 * Migrates a persistent model with a value in the reference {@link #BAG_TEST_REFERENCE} from
+	 * the left to the right fixture, which differ in the bag state of the reference.
+	 *
+	 * @param before
+	 *        The value of the reference before the migration, given two objects.
+	 * @param expected
+	 *        The expected value of the reference after the migration, given the same two objects.
+	 */
+	private void doTestBagChange(String leftResource, String rightResource, String moduleName,
+			BiFunction<TLObject, TLObject, List<TLObject>> before,
+			BiFunction<TLObject, TLObject, List<TLObject>> expected) throws SQLException {
+		ModelConfig leftConfig = fixture(leftResource, moduleName);
+		ModelConfig rightConfig = fixture(rightResource, moduleName);
+
+		TLModel left = setupModel(leftConfig);
+		TLStructuredTypePart leftRef = localPart(left, moduleName, BAG_TEST_TYPE, BAG_TEST_REFERENCE);
+		String sourceTable = linkTable(leftRef);
+
+		TLObject owner;
+		TLObject a;
+		TLObject b;
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLClass type = (TLClass) leftRef.getOwner();
+			DefaultModelFactory factory = new DefaultModelFactory();
+			owner = factory.createObject(type);
+			a = factory.createObject(type);
+			b = factory.createObject(type);
+			owner.tUpdate(leftRef, before.apply(a, b));
+			tx.commit();
+		}
+		assertEquals(before.apply(a, b), owner.tValue(leftRef));
+		assertEquals(before.apply(a, b).size(), countLinks(owner, sourceTable));
+
+		TLModel base = loadModelTransient(leftConfig);
+		TLModel right = loadModelTransient(rightConfig);
+		List<MigrationProcessor> processors = applyPatch(base, new DefaultModelFactory(), createPatch(base, right));
+		assertTrue(processors.stream().anyMatch(MoveLinksProcessor.class::isInstance));
+		assertEquals(!localPart(right, moduleName, BAG_TEST_TYPE, BAG_TEST_REFERENCE).isBag(),
+			processors.stream().anyMatch(RemoveDuplicatesProcessor.class::isInstance));
+
+		TLModel migrated = migrate(left, processors);
+		assertEmpty(createPatch(migrated, right));
+
+		TLStructuredTypePart migratedRef = localPart(migrated, moduleName, BAG_TEST_TYPE, BAG_TEST_REFERENCE);
+		String destTable = linkTable(migratedRef);
+		assertFalse(sourceTable.equals(destTable));
+
+		TLObject migratedOwner = reload(kb(), owner);
+		TLObject migratedA = reload(kb(), a);
+		TLObject migratedB = reload(kb(), b);
+		List<TLObject> expectedValue = expected.apply(migratedA, migratedB);
+		assertEquals(0, countLinks(migratedOwner, sourceTable));
+		assertEquals(expectedValue.size(), countLinks(migratedOwner, destTable));
+		// Note: The value is read through the storage of the reloaded reference. The type of the
+		// owner is resolved through lookup indexes that still hold the wrappers from before the
+		// SQL migration, whose storage reads the old table.
+		assertEquals(expectedValue,
+			migratedRef.getStorageImplementation().getAttributeValue(migratedOwner, migratedRef));
+	}
+
+	private static String linkTable(TLStructuredTypePart reference) {
+		return ((LinkStorage<?>) reference.getStorageImplementation()).getTable();
+	}
+
+	private static int countLinks(TLObject owner, String table) {
+		int result = 0;
+		Iterator<KnowledgeAssociation> it = ((KnowledgeObject) owner.tHandle()).getOutgoingAssociations(table);
+		while (it.hasNext()) {
+			it.next();
+			result++;
+		}
+		return result;
 	}
 
 	public void testPatchBecomesOverrideTransient() {

@@ -28,6 +28,8 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.dob.meta.MOReference.HistoryType;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.element.config.AssociationConfig;
 import com.top_logic.element.config.AssociationConfig.EndConfig;
@@ -42,7 +44,11 @@ import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
 import com.top_logic.element.config.SingletonConfig;
+import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.element.meta.kbbased.StorageImplementationFactory;
+import com.top_logic.element.meta.kbbased.storage.LinkStorage;
 import com.top_logic.element.model.ModelResolver;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
@@ -109,6 +115,10 @@ import com.top_logic.element.model.migration.model.UpdateTLDataTypeProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLEnumerationProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
+import com.top_logic.element.model.migration.model.refactor.MoveLinksProcessor;
+import com.top_logic.element.model.migration.model.refactor.RemoveDuplicatesProcessor;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
@@ -151,6 +161,14 @@ import com.top_logic.util.error.TopLogicException;
 public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, Void, RuntimeException> {
 
 	private List<? super PolymorphicConfiguration<? extends MigrationProcessor>> _processors;
+
+	/**
+	 * The links to move after all diffs are applied, indexed by the qualified name of the
+	 * reference whose {@link TLStructuredTypePart#isBag() bag} flag changes.
+	 *
+	 * @see #scheduleBagLinkMove(TLStructuredTypePart)
+	 */
+	private final Map<String, BagLinkMove> _bagLinkMoves = new LinkedHashMap<>();
 
 	/**
 	 * {@link DiffVisitor} computing a priority to sort {@link DiffElement}s before applying a
@@ -1517,6 +1535,10 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				Log.WARN);
 		}
 
+		if (createProcessors()) {
+			scheduleBagLinkMove(part);
+		}
+
 		part.setBag(diff.isBag());
 
 		if (createProcessors()) {
@@ -1974,6 +1996,173 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	@Override
 	public void complete() {
 		super.complete();
+
+		if (createProcessors()) {
+			addBagLinkMoves();
+		}
+	}
+
+	/**
+	 * Records the table that stores the links of the reference whose
+	 * {@link TLStructuredTypePart#isBag() bag} flag is about to change.
+	 *
+	 * <p>
+	 * The default link table of a reference depends on its bag flag. When the flag changes, the
+	 * links are moved from the table used before the patch to the table used after the patch,
+	 * see {@link #addBagLinkMoves()}. The destination table is determined after all diffs are
+	 * applied, since other diffs of the same patch (e.g. a change of the
+	 * {@link TLReference#getDeletionPolicy() deletion policy}) may also change the table.
+	 * </p>
+	 *
+	 * @param part
+	 *        The reference or the association end of a reference, before its bag flag is
+	 *        changed.
+	 */
+	private void scheduleBagLinkMove(TLStructuredTypePart part) {
+		TLReference reference = linkReference(part);
+		if (reference == null) {
+			return;
+		}
+		String name = TLModelUtil.qualifiedName(reference);
+		if (_bagLinkMoves.containsKey(name)) {
+			return;
+		}
+		if (!hasDefaultStorage(reference)) {
+			return;
+		}
+		String sourceTable = defaultLinkTable(reference);
+		if (sourceTable == null) {
+			return;
+		}
+		_bagLinkMoves.put(name, new BagLinkMove(name, sourceTable, reference.getHistoryType()));
+	}
+
+	/**
+	 * Adds the processors moving the links of the references whose bag flag has changed to the
+	 * tables of their final storage.
+	 *
+	 * <p>
+	 * A reference that is no bag must not hold a value more than once. Before moving the links of
+	 * a former bag reference, its duplicate values are removed from the bag table.
+	 * </p>
+	 *
+	 * @see #scheduleBagLinkMove(TLStructuredTypePart)
+	 */
+	private void addBagLinkMoves() {
+		for (BagLinkMove move : _bagLinkMoves.values()) {
+			TLReference reference;
+			try {
+				reference = (TLReference) resolvePart(move.reference());
+			} catch (TopLogicException | ClassCastException ex) {
+				// Deleted in the same patch, no links to move.
+				continue;
+			}
+			if (!hasDefaultStorage(reference)) {
+				continue;
+			}
+			String destTable = defaultLinkTable(reference);
+			if (destTable == null || destTable.equals(move.sourceTable())) {
+				continue;
+			}
+			if (reference.getHistoryType() != move.historyType()) {
+				log().info("Links of reference '" + move.reference() + "' are not moved from table '"
+					+ move.sourceTable() + "' to '" + destTable + "', since its history type changes from '"
+					+ move.historyType() + "' to '" + reference.getHistoryType()
+					+ "'. The links must be migrated manually.", Log.WARN);
+				continue;
+			}
+
+			if (!reference.isBag()) {
+				RemoveDuplicatesProcessor.Config<?> removeDuplicates =
+					newConfigItem(RemoveDuplicatesProcessor.Config.class);
+				removeDuplicates.setAssociationTable(move.sourceTable());
+				removeDuplicates.setReference(qTypePartName(move.reference()));
+				addProcessor(removeDuplicates);
+			}
+
+			MoveLinksProcessor.Config<?> moveLinks = newConfigItem(MoveLinksProcessor.Config.class);
+			moveLinks.setSourceTable(move.sourceTable());
+			moveLinks.setDestTable(destTable);
+			moveLinks.setReference(qTypePartName(move.reference()));
+			addProcessor(moveLinks);
+		}
+	}
+
+	/**
+	 * The reference whose links are stored for the given part, or <code>null</code> if the given
+	 * part is not a reference or the end of a reference.
+	 */
+	private static TLReference linkReference(TLStructuredTypePart part) {
+		if (part instanceof TLReference reference) {
+			return reference;
+		}
+		if (part instanceof TLAssociationEnd end) {
+			return end.getReference();
+		}
+		return null;
+	}
+
+	/**
+	 * Whether the storage of the given reference is computed from its own properties.
+	 *
+	 * <p>
+	 * A reference with an explicit {@link TLStorage} annotation keeps its table, when its bag
+	 * flag changes. If the table does not fit the new flag, the links must be moved manually. An
+	 * override shares the links of the reference it overrides.
+	 * </p>
+	 */
+	private boolean hasDefaultStorage(TLReference reference) {
+		String name = TLModelUtil.qualifiedName(reference);
+		if (reference.getAnnotation(TLStorage.class) != null) {
+			log().info("Reference '" + name + "' has an explicit storage, its links are not moved when its bag"
+				+ " state changes. If its table does not fit the new bag state, the links must be moved manually.",
+				Log.WARN);
+			return false;
+		}
+		if (reference.isOverride()) {
+			log().info("Reference '" + name + "' is an override, its links are not moved when its bag"
+				+ " state changes. If its table does not fit the new bag state, the links must be moved manually.",
+				Log.WARN);
+			return false;
+		}
+		return !reference.isAbstract();
+	}
+
+	/**
+	 * The table, in which the default storage of the given reference stores its links, or
+	 * <code>null</code> if the default storage of the reference does not store links.
+	 */
+	private String defaultLinkTable(TLReference reference) {
+		boolean unversioned = StorageImplementationFactory.unversionedStorage(reference, repository());
+		PolymorphicConfiguration<? extends StorageImplementation> storage =
+			StorageImplementationFactory.defaultReferenceStorage(reference, unversioned);
+		if (storage instanceof LinkStorage.LinkStorageConfig linkStorage) {
+			return linkStorage.getTable();
+		}
+		return null;
+	}
+
+	/**
+	 * The repository defining the tables of the {@link #getModel() patched model}.
+	 */
+	private MORepository repository() {
+		TLModel model = getModel();
+		KnowledgeBase kb = model.tTransient() ? PersistencyLayer.getKnowledgeBase() : model.tKnowledgeBase();
+		return kb.getMORepository();
+	}
+
+	/**
+	 * The links of a reference that must be moved, because its bag flag changes.
+	 *
+	 * @param reference
+	 *        The qualified name of the reference.
+	 * @param sourceTable
+	 *        The table storing the links before the patch.
+	 * @param historyType
+	 *        The history type of the reference before the patch.
+	 */
+	private record BagLinkMove(String reference, String sourceTable, HistoryType historyType) {
+		// Pure value.
 	}
 
 	private boolean addProcessor(PolymorphicConfiguration<? extends MigrationProcessor> p) {

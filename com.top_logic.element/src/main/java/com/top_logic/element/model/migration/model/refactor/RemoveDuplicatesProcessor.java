@@ -192,6 +192,11 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 		QualifiedPartName getReference();
 
 		/**
+		 * @see #getReference()
+		 */
+		void setReference(QualifiedPartName value);
+
+		/**
 		 * Name of the association end that points to the side from which duplicate assignments are
 		 * removed.
 		 */

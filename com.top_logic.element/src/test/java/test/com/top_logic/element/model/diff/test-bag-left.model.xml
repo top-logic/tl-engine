@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m0">
+		<class name="A">
+			<attributes>
+				<reference name="refs"
+					bag="false"
+					multiple="true"
+					ordered="true"
+					type="A"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

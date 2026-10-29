@@ -1156,7 +1156,7 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		DBKnowledgeBase kb = getKnowledgeBase();
 		Set<String> keyAttributes = kb.getKeyAttributes(tTable());
 		for (MOAttribute attribute : tTable().getAttributes()) {
-			if (!contributesToChange(attribute, keyAttributes)) {
+			if (!contributesToChange(attribute, keyAttributes, event instanceof ItemDeletion)) {
 				continue;
 			}
 
@@ -1183,9 +1183,11 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	 * 
 	 * <p>
 	 * An attribute without database mapping (e.g. a computed attribute) only derives its value from
-	 * other attributes. Its change is visible through the attributes it is derived from, and events
-	 * read from the database never contain it. Therefore, its value is neither computed for the old
-	 * nor for the new state, unless it is a key attribute.
+	 * other attributes. In a creation or update, its change is visible through the attributes it is
+	 * derived from, and events read from the database never contain it. Therefore, its value is
+	 * neither computed for the old nor for the new state, unless it is a key attribute. A deletion
+	 * reports the derived values of the deleted object, because they can no longer be computed
+	 * from the object after the commit.
 	 * </p>
 	 *
 	 * @param attribute
@@ -1193,15 +1195,25 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	 * @param keyAttributes
 	 *        The names of the key attributes of {@link #tTable()}, see
 	 *        {@link DBKnowledgeBase#getKeyAttributes(com.top_logic.dob.MetaObject)}.
+	 * @param deletion
+	 *        Whether the change is an {@link ItemDeletion}.
 	 */
-	private static boolean contributesToChange(MOAttribute attribute, Set<String> keyAttributes) {
+	private static boolean contributesToChange(MOAttribute attribute, Set<String> keyAttributes, boolean deletion) {
 		if (attribute.isSystem()) {
 			return false;
 		}
-		if (attribute.getDbMapping().length == 0) {
-			return keyAttributes.contains(attribute.getName());
+		if (isDerived(attribute)) {
+			return deletion || keyAttributes.contains(attribute.getName());
 		}
 		return true;
+	}
+
+	/**
+	 * Whether the given attribute has no database mapping and derives its value from other
+	 * attributes.
+	 */
+	private static boolean isDerived(MOAttribute attribute) {
+		return attribute.getDbMapping().length == 0;
 	}
 
 	private Object getOldValue(DBKnowledgeBase kb, MOAttribute attribute, Object[] oldValues) {
@@ -1209,7 +1221,14 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		try {
 			return attribute.getStorage().getCacheValue(attribute, this, oldValues);
 		} catch (Exception ex) {
-			Logger.error("Failed to access old value of column '" + attribute + "'.", ex, DBKnowledgeItem.class);
+			if (isDerived(attribute)) {
+				/* The rule deriving the value may no longer accept the stored source values, e.g.
+				 * after an update of the application. The stored values are still accessible. */
+				Logger.info("Derived value of column '" + attribute + "' not available for " + tId() + ": "
+					+ ex.getMessage(), DBKnowledgeItem.class);
+			} else {
+				Logger.error("Failed to access old value of column '" + attribute + "'.", ex, DBKnowledgeItem.class);
+			}
 			return null;
 		} finally {
 			kb.installContext(before);

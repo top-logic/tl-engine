@@ -32,6 +32,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -210,7 +211,7 @@ public class TestCacheAttributes extends AbstractDBKnowledgeBaseClusterTest {
 	}
 
 	/**
-	 * Computed attributes are not part of the change event of a commit, neither on the committing
+	 * Computed attributes are not part of the update event of a commit, neither on the committing
 	 * node nor on a node that receives the change through refetch.
 	 */
 	public void testComputedAttributeNotInChangeEvent() throws DataObjectException, RefetchTimeout {
@@ -283,6 +284,70 @@ public class TestCacheAttributes extends AbstractDBKnowledgeBaseClusterTest {
 			FailingValueFactory._failingA1 = null;
 		}
 		assertEquals("computed: current", ko.getAttributeValue(FAILING_ATTRIBUTE));
+	}
+
+	/**
+	 * The deletion event of a commit reports the computed values of the deleted object.
+	 */
+	public void testComputedAttributeInDeletionEvent() throws DataObjectException {
+		Transaction tx = begin();
+		KnowledgeObject ko = kb().createKnowledgeObject(TEST_TYPE);
+		setA1(ko, "a1");
+		tx.commit();
+
+		List<ItemDeletion> deletions = new ArrayList<>();
+		UpdateListener listener = deletionCollector(deletions);
+		kb().addUpdateListener(listener);
+		try {
+			Transaction delTx = begin();
+			ko.delete();
+			delTx.commit();
+		} finally {
+			kb().removeUpdateListener(listener);
+		}
+
+		assertEquals("Deletions: " + deletions, 1, deletions.size());
+		ItemDeletion deletion = deletions.get(0);
+		assertEquals(TestingValueFactory.value("a1"), deletion.getOldValue(TEST_ATTRIBUTE));
+		assertEquals("computed: a1", deletion.getOldValue(FAILING_ATTRIBUTE));
+	}
+
+	/**
+	 * Deleting an object whose computed value can no longer be computed does not log an error.
+	 */
+	public void testNoErrorForUncomputableValueOfDeletedObject() throws DataObjectException {
+		Transaction tx = begin();
+		KnowledgeObject ko = kb().createKnowledgeObject(TEST_TYPE);
+		setA1(ko, "outdated");
+		tx.commit();
+
+		FailingValueFactory._failingA1 = "outdated";
+		List<ItemDeletion> deletions = new ArrayList<>();
+		UpdateListener listener = deletionCollector(deletions);
+		kb().addUpdateListener(listener);
+		AssertNoErrorLogListener logListener = new AssertNoErrorLogListener(false);
+		logListener.activate();
+		try {
+			Transaction delTx = begin();
+			ko.delete();
+			delTx.commit();
+			logListener.assertNoErrorLogged("Deletion of an object with an uncomputable value: ");
+		} finally {
+			logListener.deactivate();
+			kb().removeUpdateListener(listener);
+			FailingValueFactory._failingA1 = null;
+		}
+		assertEquals("Deletions: " + deletions, 1, deletions.size());
+		assertEquals(TestingValueFactory.value("outdated"), deletions.get(0).getOldValue(TEST_ATTRIBUTE));
+	}
+
+	private static UpdateListener deletionCollector(List<ItemDeletion> deletions) {
+		return new UpdateListener() {
+			@Override
+			public void notifyUpdate(KnowledgeBase sender, UpdateEvent event) {
+				deletions.addAll(event.getChanges().getDeletions());
+			}
+		};
 	}
 
 	/**

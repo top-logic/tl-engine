@@ -25,6 +25,7 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.gui.FaviconTag;
 import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
@@ -1131,6 +1132,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.writeText(
 			applicationTitle == null ? DEFAULT_TITLE : Resources.getInstance().getString(applicationTitle));
 		out.endTag(HTMLConstants.TITLE);
+		// The application icon: without it the browser asks for /favicon.ico, which an application
+		// at the root of the server does not have.
+		FaviconTag.write(out, contextPath);
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
 		// Emit the design tokens of every registered theme as CSS custom properties, each scoped by

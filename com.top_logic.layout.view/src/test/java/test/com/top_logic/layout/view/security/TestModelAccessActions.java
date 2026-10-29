@@ -128,7 +128,7 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 		assertSame("No role may delete a category.", ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(_category));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, rule.isExecutable(_project));
 	}
 
@@ -203,7 +203,7 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, rule.isExecutable(null));
 	}
 
@@ -362,7 +362,7 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		assertSame(ExecutableState.EXECUTABLE, byReference.isExecutable(draft));
 		assertSame(ExecutableState.EXECUTABLE, byDraft.isExecutable(draft));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, byReference.isExecutable(draft));
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, byDraft.isExecutable(draft));
 	}

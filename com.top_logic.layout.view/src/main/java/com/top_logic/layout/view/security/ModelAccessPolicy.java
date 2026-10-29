@@ -30,7 +30,9 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.TLContext;
@@ -54,16 +56,19 @@ import com.top_logic.util.TLContext;
  * </p>
  * <ul>
  * <li>The command is <em>hidden</em> when the refusal does not depend on a concrete object: the
- * check runs against the security root (a creation without a container, a check on a type), no
- * role can hold the operation, or the user is restricted (see
- * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}). The operation is then never
- * possible for this user. An operation on an attribute with a grant of its own for the operation
- * (see {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}) is held by no
- * role when that grant lists no role: it replaces the grant of the type for this attribute.
- * Otherwise, no role holds the operation when the type grants it to no role and the operation is
- * not {@link #isOffered(BoundCommandGroup, TLClass) offered} on the type either - not on one of its
- * specializations, and, for a type with an access parent, not on the types the access parent may
- * lead to.</li>
+ * check runs against the security root (a creation without a container, a check on a type), the
+ * user holds none of the roles granted the operation on any object, or the user is restricted (see
+ * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}). The operation is then not
+ * possible for this user on any object. Whether the user holds a granted role on some object is
+ * answered by {@link AccessManager#hasRoleOnAnyObject(Person, Collection)}, which may overestimate
+ * the roles of the user but never hides an operation the user may perform on some object. An
+ * operation on an attribute with a grant of its own for the operation (see
+ * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}) is decided by the
+ * roles that grant lists: it replaces the grant of the type for this attribute. Otherwise, the user
+ * holds no granted role when they hold none of the roles the type grants the operation to and the
+ * operation is not {@link #isOffered(BoundCommandGroup, TLClass) offered} to them on the type either
+ * - not on one of its specializations, and, for a type with an access parent, not on the types the
+ * access parent may lead to.</li>
  * <li>The command is <em>disabled</em> when the check on a concrete object (the object operated on,
  * or the container to create in) fails. It gives the refusal as its reason, naming the
  * operation.</li>
@@ -88,8 +93,8 @@ public final class ModelAccessPolicy {
 	 * <p>
 	 * When the access rights allow the operation, the {@link CommandApprovalService} decides about
 	 * it on the object, see {@link #approval(BoundCommandGroup, TLObject)}. A refusal is hidden when
-	 * the user is restricted or no role can hold the operation on the type of the object (see
-	 * {@link ModelAccessPolicy}), and disabled otherwise.
+	 * the user is restricted or holds none of the roles granted the operation on the type of the
+	 * object on any object (see {@link ModelAccessPolicy}), and disabled otherwise.
 	 * </p>
 	 *
 	 * @param operation
@@ -109,7 +114,7 @@ public final class ModelAccessPolicy {
 			: rights.isAllowed(user, object, attribute, operation);
 		if (!allowed) {
 			boolean hide = restricted(user, operation)
-				|| grantedToNoRole(rights, classOf(object), attribute, operation);
+				|| heldByNoGrantedRole(rights, user, classOf(object), attribute, operation);
 			return refused(hide, () -> objectReason(operation, attribute));
 		}
 		return approval(operation, object, attribute);
@@ -216,8 +221,9 @@ public final class ModelAccessPolicy {
 	 * <li>A transient object (a draft created for a create dialog, or a form object creating an
 	 * object) holds no roles yet. Its attribute rights are decided through its access parent, see
 	 * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
-	 * A refusal is hidden when the attribute grants the operation to no role at all or the user is
-	 * restricted, and disabled otherwise: it depends on the access parent.</li>
+	 * A refusal is hidden when the attribute has a grant of its own for the operation listing no
+	 * role the user holds on any object, or the user is restricted, and disabled otherwise: it
+	 * depends on the access parent.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -264,7 +270,7 @@ public final class ModelAccessPolicy {
 			return ExecutableState.EXECUTABLE;
 		}
 		boolean hide = restricted(user, operation)
-			|| grantedToNoRole(rights, classOf(object), attribute, operation);
+			|| heldByNoGrantedRole(rights, user, classOf(object), attribute, operation);
 		return refused(hide, () -> objectReason(operation, attribute));
 	}
 
@@ -279,12 +285,12 @@ public final class ModelAccessPolicy {
 	 *
 	 * <p>
 	 * The operation is refused independent of an object when the user is restricted (see
-	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or no role can hold it: the
-	 * attribute's own grant for the operation, if it has one (see
-	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}), lists no role,
-	 * or, without one, the type grants the operation to no role and it is not
-	 * {@link #isOffered(BoundCommandGroup, TLClass) offered} on the type either, also through an
-	 * access parent of the type. A refusal is
+	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or the user holds no role
+	 * granted the operation on any object: the attribute's own grant for the operation, if it has one
+	 * (see {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}), lists no
+	 * role the user holds, or, without one, the user holds none of the roles the type grants the
+	 * operation to and it is not {@link #isOffered(BoundCommandGroup, TLClass) offered} to the user on the
+	 * type either, also through an access parent of the type. A refusal is
 	 * {@link ExecutableState#NOT_EXEC_HIDDEN hidden}, like
 	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart)} displays it
 	 * on a concrete object. Everything else depends on the object and is
@@ -308,11 +314,12 @@ public final class ModelAccessPolicy {
 		if (clazz != null && rights.isWithoutSecurity(clazz)) {
 			return ExecutableState.EXECUTABLE;
 		}
-		Boolean bypass = BoundChecker.isAllowedBypass(TLContext.currentUser(), operation);
+		Person user = TLContext.currentUser();
+		Boolean bypass = BoundChecker.isAllowedBypass(user, operation);
 		if (bypass != null) {
 			return bypass.booleanValue() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
 		}
-		if (grantedToNoRole(rights, clazz, attribute, operation)) {
+		if (heldByNoGrantedRole(rights, user, clazz, attribute, operation)) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 		return ExecutableState.EXECUTABLE;
@@ -388,7 +395,7 @@ public final class ModelAccessPolicy {
 		if (rights.isAllowedInitial(user, draft, attribute, operation)) {
 			return ExecutableState.EXECUTABLE;
 		}
-		boolean hide = restricted(user, operation) || attributeGrantedToNoRole(rights, attribute, operation);
+		boolean hide = restricted(user, operation) || attributeHeldByNoGrantedRole(rights, user, attribute, operation);
 		return refused(hide, () -> objectReason(operation, attribute));
 	}
 
@@ -442,10 +449,11 @@ public final class ModelAccessPolicy {
 	 * <p>
 	 * A user bypassing the model security (see
 	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}) holds every operation. The
-	 * operation is out of reach, independent of any concrete object, when the user is
-	 * restricted, or when no
-	 * role is granted the operation (or an operation implying it) on the type or on one of its
-	 * specializations. A type with an access parent is decided by the types its access parent may
+	 * operation is out of reach, independent of any concrete object, when the user is restricted,
+	 * or when the user holds, on any object, none of the roles granted the operation (or an
+	 * operation implying it) on the type or on one of its specializations, as
+	 * {@link AccessManager#hasRoleOnAnyObject(Person, Collection)} answers it. A type with an access
+	 * parent is decided by the types its access parent may
 	 * lead to, with {@link SimpleBoundCommandGroup#WRITE} in place of
 	 * {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
 	 * {@link ModelAccessRights#getAccessParentTypes(TLClass)}). A type without security, one whose
@@ -464,15 +472,23 @@ public final class ModelAccessPolicy {
 	 *        The (static) type of the objects the operation is performed on.
 	 */
 	public static boolean isOffered(BoundCommandGroup operation, TLClass type) {
-		Boolean bypass = BoundChecker.isAllowedBypass(TLContext.currentUser(), operation);
+		Person user = TLContext.currentUser();
+		Boolean bypass = BoundChecker.isAllowedBypass(user, operation);
 		if (bypass != null) {
 			return bypass.booleanValue();
 		}
-		return isGrantable(ModelAccessRights.getInstance(), operation, type, new HashSet<>());
+		return isGrantable(ModelAccessRights.getInstance(), user, operation, type, new HashSet<>());
 	}
 
-	private static boolean isGrantable(ModelAccessRights rights, BoundCommandGroup operation, TLClass type,
-			Set<TLClass> seen) {
+	/**
+	 * Whether the given user may hold the given operation on some object of the given type or of
+	 * one of its specializations, see {@link #isOffered(BoundCommandGroup, TLClass)}.
+	 *
+	 * @param seen
+	 *        The types already visited, to stop at cyclic access parent relations.
+	 */
+	private static boolean isGrantable(ModelAccessRights rights, Person user, BoundCommandGroup operation,
+			TLClass type, Set<TLClass> seen) {
 		for (TLClass candidate : TLModelUtil.getReflexiveTransitiveSpecializations(type)) {
 			if (!seen.add(candidate)) {
 				continue;
@@ -490,13 +506,13 @@ public final class ModelAccessPolicy {
 					? SimpleBoundCommandGroup.WRITE
 					: operation;
 				for (TLClass parentType : parentTypes) {
-					if (isGrantable(rights, parentOperation, parentType, seen)) {
+					if (isGrantable(rights, user, parentOperation, parentType, seen)) {
 						return true;
 					}
 				}
 				continue;
 			}
-			if (!rights.getAllowedRoles(candidate, operation).isEmpty()) {
+			if (holdsAnyOf(user, rights.getAllowedRoles(candidate, operation))) {
 				return true;
 			}
 		}
@@ -523,10 +539,11 @@ public final class ModelAccessPolicy {
 	 * </p>
 	 *
 	 * <p>
-	 * A refusal is hidden when the user is restricted, or when no role can hold the creation on the
-	 * created type or, for a creation into a reference, writing on the type of the container (see
-	 * {@link ModelAccessPolicy}): a type with an access parent is decided by the types its access
-	 * parent may lead to. Otherwise, the refusal depends on the container and is disabled.
+	 * A refusal is hidden when the user is restricted, or when the user holds, on any object, none of
+	 * the roles granted the creation on the created type or, for a creation into a reference, writing
+	 * on the type of the container (see {@link ModelAccessPolicy}): a type with an access parent is
+	 * decided by the types its access parent may lead to. Otherwise, the refusal depends on the container
+	 * and is disabled.
 	 * </p>
 	 *
 	 * @param container
@@ -553,9 +570,9 @@ public final class ModelAccessPolicy {
 			return ExecutableState.EXECUTABLE;
 		}
 		boolean hide = restricted(user, SimpleBoundCommandGroup.CREATE)
-			|| grantedToNoRole(rights, createdType, SimpleBoundCommandGroup.CREATE)
+			|| heldByNoGrantedRole(rights, user, createdType, SimpleBoundCommandGroup.CREATE)
 			|| (reference != null && (restricted(user, SimpleBoundCommandGroup.WRITE)
-				|| grantedToNoRole(rights, classOf(container), SimpleBoundCommandGroup.WRITE)));
+				|| heldByNoGrantedRole(rights, user, classOf(container), SimpleBoundCommandGroup.WRITE)));
 		return refused(hide, () -> createReason(createdType));
 	}
 
@@ -586,7 +603,8 @@ public final class ModelAccessPolicy {
 	 * The creation is out of reach when the {@link SimpleBoundCommandGroup#CREATE creation} is not
 	 * {@link #isOffered(BoundCommandGroup, TLClass) offered} on any of the concrete types, or, for a
 	 * creation into a reference, when writing the reference is out of reach: its own write grant
-	 * lists no role, or, without one, writing is not offered on the type defining the reference.
+	 * lists no role the user holds on any object, or, without one, writing is not offered on the
+	 * type defining the reference.
 	 * </p>
 	 *
 	 * @param concreteTypes
@@ -608,13 +626,14 @@ public final class ModelAccessPolicy {
 		if (reference == null) {
 			return true;
 		}
-		Boolean bypass = BoundChecker.isAllowedBypass(TLContext.currentUser(), SimpleBoundCommandGroup.WRITE);
+		Person user = TLContext.currentUser();
+		Boolean bypass = BoundChecker.isAllowedBypass(user, SimpleBoundCommandGroup.WRITE);
 		if (bypass != null) {
 			return bypass.booleanValue();
 		}
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		if (rights.hasGrant(reference, SimpleBoundCommandGroup.WRITE)) {
-			return !rights.getAllowedRoles(reference, SimpleBoundCommandGroup.WRITE).isEmpty();
+			return holdsAnyOf(user, rights.getAllowedRoles(reference, SimpleBoundCommandGroup.WRITE));
 		}
 		return !(reference.getOwner() instanceof TLClass owner) || isOffered(SimpleBoundCommandGroup.WRITE, owner);
 	}
@@ -745,23 +764,38 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
-	 * Whether no role can hold the operation on objects of the given type.
+	 * Whether the given user holds one of the given granted roles on some object.
 	 *
 	 * <p>
-	 * The type grants the operation to no role of its own, and the operation is not
-	 * {@link #isGrantable(ModelAccessRights, BoundCommandGroup, TLClass, Set) grantable} on it
-	 * either: not on one of its specializations, and, for a type with an access parent, not on the
-	 * types its access parent may lead to.
+	 * The answer of {@link AccessManager#hasRoleOnAnyObject(Person, Collection)}: it may
+	 * overestimate the roles of the user, but is never <code>false</code> when the user holds one
+	 * of the roles on an object. Without roles, it is <code>false</code>.
 	 * </p>
 	 */
-	private static boolean grantedToNoRole(ModelAccessRights rights, TLClass type, BoundCommandGroup operation) {
-		return type != null && rights.getAllowedRoles(type, operation).isEmpty()
-			&& !isGrantable(rights, operation, type, new HashSet<>());
+	private static boolean holdsAnyOf(Person user, Set<BoundedRole> grantedRoles) {
+		return AccessManager.getInstance().hasRoleOnAnyObject(user, grantedRoles);
 	}
 
 	/**
-	 * Whether the grant deciding the operation on the given attribute of objects of the given type
-	 * lists no role at all.
+	 * Whether the given user holds no role granted the operation on objects of the given type, on
+	 * any object.
+	 *
+	 * <p>
+	 * The user holds none of the roles the type grants the operation to, and the operation is not
+	 * {@link #isGrantable(ModelAccessRights, Person, BoundCommandGroup, TLClass, Set) grantable} to
+	 * the user on it either: not on one of its specializations, and, for a type with an access
+	 * parent, not on the types its access parent may lead to.
+	 * </p>
+	 */
+	private static boolean heldByNoGrantedRole(ModelAccessRights rights, Person user, TLClass type,
+			BoundCommandGroup operation) {
+		return type != null && !holdsAnyOf(user, rights.getAllowedRoles(type, operation))
+			&& !isGrantable(rights, user, operation, type, new HashSet<>());
+	}
+
+	/**
+	 * Whether the given user holds no role, on any object, that the grant deciding the operation on
+	 * the given attribute of objects of the given type lists.
 	 *
 	 * <p>
 	 * An attribute with a grant of its own for the operation is decided by that grant, which
@@ -771,20 +805,22 @@ public final class ModelAccessPolicy {
 	 * @param attribute
 	 *        The attribute operated on, {@code null} for an operation on the object itself.
 	 */
-	private static boolean grantedToNoRole(ModelAccessRights rights, TLClass type, TLStructuredTypePart attribute,
-			BoundCommandGroup operation) {
+	private static boolean heldByNoGrantedRole(ModelAccessRights rights, Person user, TLClass type,
+			TLStructuredTypePart attribute, BoundCommandGroup operation) {
 		if (attribute != null && rights.hasGrant(attribute, operation)) {
-			return rights.getAllowedRoles(attribute, operation).isEmpty();
+			return !holdsAnyOf(user, rights.getAllowedRoles(attribute, operation));
 		}
-		return grantedToNoRole(rights, type, operation);
+		return heldByNoGrantedRole(rights, user, type, operation);
 	}
 
 	/**
-	 * Whether the given attribute has a grant of its own for the operation that lists no role.
+	 * Whether the given attribute has a grant of its own for the operation listing no role the
+	 * given user holds on any object.
 	 */
-	private static boolean attributeGrantedToNoRole(ModelAccessRights rights, TLStructuredTypePart attribute,
-			BoundCommandGroup operation) {
-		return rights.hasGrant(attribute, operation) && rights.getAllowedRoles(attribute, operation).isEmpty();
+	private static boolean attributeHeldByNoGrantedRole(ModelAccessRights rights, Person user,
+			TLStructuredTypePart attribute, BoundCommandGroup operation) {
+		return rights.hasGrant(attribute, operation)
+			&& !holdsAnyOf(user, rights.getAllowedRoles(attribute, operation));
 	}
 
 	private static TLClass classOf(TLObject object) {

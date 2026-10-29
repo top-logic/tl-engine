@@ -146,10 +146,16 @@ optional button icon; without a label the client name is shown. A client is offe
 
 A `LoginMethod` answers:
 
-- `getInitiationUrl(returnTo)` - the address the button sends the browser to, a full-page
-  redirect. For pac4j: `/servlet/openid?force_client=<client>&startPage=<returnTo>`; the identity
-  provider authenticates the user, the callback logs the user in through
-  `ExternalAuthenticationServlet` and returns to the page the visitor asked for.
+- `getInitiationUrl(returnTo, windowName)` - the address the button sends the browser to, a
+  full-page redirect. For pac4j:
+  `/servlet/openid?force_client=<client>&startPage=<returnTo>&loginWindow=<windowName>`; the
+  identity provider authenticates the user, the callback logs the user in through
+  `ExternalAuthenticationServlet` and returns to the page the visitor asked for. `<login-methods/>`
+  passes the window it is shown in and returns to that window (`/view/<windowName>/<route>`), so the
+  external login applies to that window only, like the password login: the servlet finds the
+  window's sub-session by `ExternalAuthenticationServlet.WINDOW_PARAM` and calls
+  `SessionService.loginUserInWindow`. Without the parameter, or for a window the session does not
+  know, the whole session is logged in (`SessionService.loginUser`).
 - `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
   the running session once more, or `null` when the method cannot. pac4j answers it only for a
   session its own client established.

@@ -38,8 +38,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Each button is a full-page browser redirect to the method's
- * {@link LoginMethod#getInitiationUrl(String) initiation URL}, returning to the page the visitor
- * asked for. Renders nothing when no login method is configured, so it can be placed in any login
+ * {@link LoginMethod#getInitiationUrl(String, String) initiation URL}, returning to the page the
+ * visitor asked for in the window the login was started from. The login applies to that window
+ * only, like a login with a password. Renders nothing when no login method is configured, so it can be placed in any login
  * view unconditionally.
  * </p>
  *
@@ -191,7 +192,7 @@ public class LoginMethodsElement implements UIElement {
 			String label = Resources.getInstance().getString(method.getLabel());
 			ReactButtonControl button = new ReactButtonControl(_context, label, ctx -> HandlerResult.DEFAULT_RESULT);
 			// Navigate the browser directly to the external login (no server/SSE round-trip).
-			button.setNavigateUrl(method.getInitiationUrl(returnTo));
+			button.setNavigateUrl(method.getInitiationUrl(returnTo, _context.getWindowName()));
 			ThemeImage icon = method.getIcon();
 			if (icon != null) {
 				button.setImage(icon);
@@ -202,23 +203,26 @@ public class LoginMethodsElement implements UIElement {
 	}
 
 	/**
-	 * The page the external login returns to: the one the visitor asked for.
+	 * The page the external login returns to: the one the visitor asked for, in the window the login
+	 * was started from.
 	 *
 	 * <p>
 	 * The requested route is the URL the {@link RouteManager} carries - the login view takes none of
 	 * it up, so it is still the one the visitor entered - and is prefixed with
-	 * {@link ViewServlet#ROOT_PATH} to name a page of the view application. Context-relative: the
-	 * authentication servlet's redirect prepends the context path itself, so including it here would
-	 * double it. A window that routes nothing returns to the application's root.
+	 * {@link ViewServlet#ROOT_PATH} and the name of the window to name that page in that window. The
+	 * window name is part of the path because the browser does not reliably keep the name of a tab
+	 * across the visit to the identity provider. Context-relative: the authentication servlet's
+	 * redirect prepends the context path itself, so including it here would double it.
 	 * </p>
 	 */
 	private static String returnPath(ViewContext context) {
 		RouteManager routeManager = context.getRouteManager();
 		String route = routeManager == null ? null : routeManager.currentUrl();
+		String window = ViewServlet.ROOT_PATH + context.getWindowName() + '/';
 		if (route == null || route.isEmpty()) {
-			return ViewServlet.ROOT_PATH;
+			return window;
 		}
-		return ViewServlet.ROOT_PATH + route;
+		return window + route;
 	}
 
 }

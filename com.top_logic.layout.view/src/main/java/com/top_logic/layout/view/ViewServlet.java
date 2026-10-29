@@ -341,17 +341,18 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		// Reuse is correct only for the same view in the same language.
+		// Reuse is correct only for the same view in the same language for the same user.
 		Locale locale = Resources.getCurrentLocale();
+		Person user = subSession == null ? null : subSession.getPerson();
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && !rebuildRequested && rendered != null
-			&& rendered.matches(viewPath, view, locale)) {
+			&& rendered.matches(viewPath, view, locale, user)) {
 			renderAgain(request, response, displayed, sseQueue, pagePath, url, loginView);
 			return;
 		}
 		if (displayed != null) {
-			// Another view, a view file edited in the meantime, a language the tree was not built in,
-			// or a rebuild asked for because what the tree was built from is gone: the old tree is
+			// Another view, a view file edited in the meantime, a language or a user the tree was not
+			// built for, or a rebuild asked for because what the tree was built from is gone: the old tree is
 			// never rendered again, so release the model listeners its controls hold.
 			displayed.detach();
 			displayed.cleanupTree();
@@ -375,7 +376,7 @@ public class ViewServlet extends TopLogicServlet {
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
 		windowEntry.setRootControl(rootControl);
-		RenderedView.store(subSession, new RenderedView(viewPath, view, locale));
+		RenderedView.store(subSession, new RenderedView(viewPath, view, locale, user));
 
 		renderPage(request, response, rootControl, displayContext);
 	}

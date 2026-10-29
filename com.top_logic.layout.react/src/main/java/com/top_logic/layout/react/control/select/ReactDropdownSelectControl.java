@@ -46,7 +46,6 @@ import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
-import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.model.security.ModelAccessRights;
@@ -427,10 +426,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *        The value to check, may be {@code null}.
 	 */
 	public static boolean isMasked(Object option) {
-		// A model element is meta-data, not a business object, and is never masked (like it is never
-		// filtered, see SearchExpression#filterSecurity).
-		return option instanceof TLObject object && !(object instanceof TLModelPart)
-			&& !ModelAccessRights.getInstance().isDiscoverAllowed(object);
+		return option instanceof TLObject object && !ModelAccessRights.getInstance().isDiscoverAllowed(object);
 	}
 
 	/**

@@ -178,7 +178,8 @@ export type { ChildDescriptor } from './bridge/TLChild';
 export { useChildStates, useChildCommand } from './bridge/child-states';
 export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
 export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
-export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects } from './bridge/transient-overlay';
+export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';
+export type { ClearanceBox } from './bridge/transient-overlay';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

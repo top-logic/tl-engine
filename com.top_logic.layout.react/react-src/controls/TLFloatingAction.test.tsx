@@ -41,11 +41,11 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 // as well, and these must see the mocked SSE client.
 import { mount, unmount } from '../bridge/tl-react-bridge';
 import {
-  React, register, registerPart, registerTransientOverlay, TLChild, useTLState, useChildCommand,
+  React, register, registerPart, registerTransientOverlay, TLChild, useTLState, useChildCommand, clearance,
   useFloatingFrame, FloatingFrame, FloatingRail,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import TLFloatingAction, { clearance } from './TLFloatingAction';
+import TLFloatingAction from './TLFloatingAction';
 import TLButton from './TLButton';
 import ButtonPart from './button/ButtonPart';
 

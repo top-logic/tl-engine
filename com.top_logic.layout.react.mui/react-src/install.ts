@@ -37,6 +37,7 @@ import MuiAppBarAdapter from './adapters/MuiAppBarAdapter';
 import MuiBreadcrumbAdapter from './adapters/MuiBreadcrumbAdapter';
 import MuiAvatarAdapter from './adapters/MuiAvatarAdapter';
 import MuiSliderAdapter from './adapters/MuiSliderAdapter';
+import MuiFloatingActionAdapter from './adapters/MuiFloatingActionAdapter';
 
 /**
  * The adapter around MUI components for each part (see PartProps of 'tl-react-bridge') this module
@@ -93,6 +94,7 @@ const CONTROL_ADAPTERS = {
   TLBreadcrumb: MuiBreadcrumbAdapter,
   TLAvatar: MuiAvatarAdapter,
   TLSlider: MuiSliderAdapter,
+  TLFloatingAction: MuiFloatingActionAdapter,
 } as const satisfies Record<string, React.ComponentType<TLCellProps>>;
 
 /** The name of a part this module draws with Material UI. */

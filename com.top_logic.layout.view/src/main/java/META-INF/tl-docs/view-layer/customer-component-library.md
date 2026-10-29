@@ -231,8 +231,11 @@ export function createMuiRoot(themes: PageThemes) {
   does. A floating element finds its rail with `useFloatingAnchor(edge)`.
 - **`useTransientOverlay(ref, active)`** (`bridge/transient-overlay.ts`) reports the element of a
   transient overlay - a snackbar while it shows a message - so that floating actions it would cover
-  move aside (`useTransientOverlayRects()`). A replacement of `TLSnackbar` reports its element the
-  way `TLSnackbar` does.
+  move aside. A replacement of `TLSnackbar` reports its element the way `TLSnackbar` does; one whose
+  element changes while shown (a new element per message, as `MuiSnackbarAdapter.tsx` keys it) calls
+  `registerTransientOverlay(element)` for each element instead. A replacement of
+  `TLFloatingAction` moves aside with `useOverlayClearance(ref, edge, layout)`, the shift
+  `TLFloatingAction` applies (`useTransientOverlayRects()` and `clearance(…)` underneath).
 - **`useChildStates(controls)`** and **`useChildCommand()`** (`bridge/child-states.ts`) let a
   container draw child controls with components of its own instead of rendering them with
   `TLChild`: the first reads their live states (the `ButtonState` of an action: label, icon,

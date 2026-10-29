@@ -119,7 +119,8 @@ public class SessionTimeoutNoticeElement implements UIElement {
 		control.setLeadMillis(Long.valueOf(_leadMillis));
 
 		// Bind the viewing session's language now: the listener below runs in the thread of whatever
-		// request restarts the timeout, which may belong to another window of this session.
+		// interaction of this session is open when a request restarts the timeout, which may belong
+		// to another window of this session.
 		Resources resources = Resources.getInstance();
 		control.setAction(resources.getString(I18NConstants.SESSION_TIMEOUT_EXTEND), () -> {
 			// Nothing to do: the request carrying this command has restarted the session's timeout
@@ -205,10 +206,10 @@ public class SessionTimeoutNoticeElement implements UIElement {
 	 * Keeps one notice counting down to the end of the session.
 	 *
 	 * @implNote One instance per control, since it remembers what that control's client knows. Its
-	 *           {@link #handleActivity(long, int)} runs in the thread of whichever request
-	 *           restarted the timeout - a request of another window of the same session included -
-	 *           so the remembered deadline is written from several threads. A lost update merely
-	 *           sends one patch more than necessary.
+	 *           {@link #handleActivity(long, int)} may run in the thread of another window of the
+	 *           same session, but always within an interaction of the session, which serializes
+	 *           it with every other change of the control, including the initial
+	 *           {@link #update(long, int)} while the control is built.
 	 */
 	private static final class Countdown implements ActivityListener {
 
@@ -216,7 +217,7 @@ public class SessionTimeoutNoticeElement implements UIElement {
 
 		private final String _text;
 
-		private volatile long _knownDeadline;
+		private long _knownDeadline;
 
 		Countdown(ReactNoticeBarControl control, String text) {
 			_control = control;

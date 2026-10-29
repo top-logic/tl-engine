@@ -77,6 +77,12 @@ import com.top_logic.util.error.TopLogicException;
  * (multiple, unordered) of a project. The account in {@value #READER} holds the role
  * {@value #ROLE_READER}, which grants read on the category and, by a grant of the attribute, writing
  * its {@value #NAME}.</li>
+ * <li>{@value #MILESTONE}: the type of the composition {@value #MILESTONES} of a project,
+ * {@value #NOTE}: the type of the composition {@value #NOTES} of a category. Neither is configured,
+ * so both are decided by their container, the access parent a composition part gets by
+ * default.</li>
+ * <li>{@value #REMARK}: a type whose access parent is computed by a script, so that the types of its
+ * access parents are not known statically.</li>
  * </ul>
  *
  * <p>
@@ -158,6 +164,30 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #STEP} composition of {@link #ITEM}s nobody may write. */
 	protected static final String LOCKED_ITEMS = "lockedItems";
+
+	/**
+	 * Name of the type of the composition {@link #MILESTONES} of a {@link #PROJECT}, deciding by
+	 * its container as composition part without configuration.
+	 */
+	protected static final String MILESTONE = "Milestone";
+
+	/** Name of the {@link #PROJECT} composition of {@link #MILESTONE}s. */
+	protected static final String MILESTONES = "milestones";
+
+	/**
+	 * Name of the type of the composition {@link #NOTES} of a {@link #CATEGORY}, deciding by its
+	 * container as composition part without configuration.
+	 */
+	protected static final String NOTE = "Note";
+
+	/** Name of the {@link #CATEGORY} composition of {@link #NOTE}s. */
+	protected static final String NOTES = "notes";
+
+	/**
+	 * Name of the type whose access parent is computed by a script, with access parent types not
+	 * known statically.
+	 */
+	protected static final String REMARK = "Remark";
 
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_RESPONSIBLE}. */
 	protected static final String RESPONSIBLE = "responsible";
@@ -280,6 +310,24 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	 */
 	protected static TLStructuredTypePart part(String typeName, String partName) {
 		return type(typeName).getPartOrFail(partName);
+	}
+
+	/**
+	 * Creates an object of the test type with the given local name in the given composition of
+	 * the given container, replacing its former contents.
+	 *
+	 * <p>
+	 * The object is deleted with its container.
+	 * </p>
+	 */
+	protected TLObject newPart(TLObject container, String composition, String typeName) {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject result = DynamicModelService.getFactoryFor(MODULE).createObject(type(typeName));
+			result.tUpdateByName(NAME, typeName);
+			container.tUpdateByName(composition, List.of(result));
+			tx.commit();
+			return result;
+		}
 	}
 
 	/**

@@ -154,6 +154,31 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The types the access parent of an object of the given type may have.
+	 *
+	 * <p>
+	 * A check that depends on no concrete object follows the {@link #getAccessParent(TLClass)
+	 * access parent} of a type to these types. A type whose access parent types are not known
+	 * statically counts as accessible in such a check: only the check of a concrete object, which
+	 * resolves its access parent, decides.
+	 * </p>
+	 *
+	 * @param type
+	 *        The delegating type.
+	 * @return The possible types of the access parent, empty for a type without access parent,
+	 *         <code>null</code> when they are not known statically.
+	 * @implSpec The default asks the {@link AccessParentFunction#getParentTypes(TLClass) relation}
+	 *           to the access parent.
+	 */
+	default Set<TLClass> getAccessParentTypes(TLClass type) {
+		AccessParentFunction parent = getAccessParent(type);
+		if (parent == null) {
+			return Collections.emptySet();
+		}
+		return parent.getParentTypes(type);
+	}
+
+	/**
 	 * Whether a singleton of the given type or of one of its specializations has rights of its own.
 	 *
 	 * <p>

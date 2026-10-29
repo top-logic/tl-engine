@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
 order: 50
 ---
 
@@ -196,6 +196,28 @@ A `<button>` (`ButtonElement`) shows its one command the same way, so its mode i
 		<label><en>Close</en><de>Schließen</de></label>
 	</action>
 </button>
+```
+
+## Floating actions: `<floating-action>`
+
+`<floating-action>` (`FloatingActionElement`) offers the one or few actions a page is about - adding an entry to a list, starting a conversation - as round buttons floating over a corner of the content, instead of a button among others in the toolbar. Its commands are written directly inside it, like the `<action>` of a `<button>`, either by the tag of the command or as `<action class="…"/>`; at least one is required. Each command decides with its own rules whether its action is shown and executable, and the element adds no rules of its own.
+
+- **One action** is a round floating action button showing the command's icon, with its label as tooltip; a command with `display="icon-label"` shows its label beside the icon (an extended button).
+- **Several actions** form a speed dial: a round button (`image`, default a plus sign; `label`, its tooltip and accessible name) that opens the actions beside it, their labels as tooltips; the first command stands next to the button. While all commands are hidden, nothing is shown.
+- **Anchoring**: the actions float over the corner `position="bottom-end|bottom-start|top-end|top-start"` (default `bottom-end`; start and end follow the text direction) of the body of the enclosing `<panel>` or `<window>`, and stay there while the body scrolls. Where the element stands within the panel does not matter. Outside any panel or window they float over the corner of the browser window.
+- A snackbar shown in the same corner pushes the actions aside instead of covering them.
+
+```xml
+<panel>
+	<title><en>Notes</en><de>Notizen</de></title>
+	<table …/>
+	<floating-action>
+		<generic-command image="css:bi bi-plus-lg" inputs="project">
+			<label><en>New note</en><de>Neue Notiz</de></label>
+			…
+		</generic-command>
+	</floating-action>
+</panel>
 ```
 
 ## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`

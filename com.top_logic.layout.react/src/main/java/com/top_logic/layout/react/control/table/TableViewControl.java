@@ -125,13 +125,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * <b>Placement requirement:</b> this control virtualizes - it renders only the row window that
- * fits its scroll viewport and scrolls internally - so it must be given a container with a
- * <em>definite (bounded) height</em>. Its root fills its parent ({@code height: 100%}); if every
- * ancestor up to a bounded box is content-sized, there is no viewport to bound against, so the
- * control expands to its full natural height and the <em>surrounding</em> scroller (e.g. the tab
- * content) scrolls instead - showing a large scrollbar while the table never pages in new rows.
- * Inside the {@code com.top_logic.layout.view} layer, place it in a {@code <split-panel>}/
+ * <b>Placement:</b> this control virtualizes - it renders only the row window that fits its
+ * scroll viewport and scrolls internally - when it is given a container with a <em>definite
+ * (bounded) height</em>. Its root fills its parent ({@code height: 100%}); if every ancestor up to
+ * a bounded box is content-sized, the control expands to the full height of its rows and the
+ * <em>surrounding</em> scroller (e.g. the tab content) scrolls them instead: the client then reports
+ * the part of the rows visible in that scroller as its viewport, so the rows still page in as it
+ * scrolls. Each window is limited to {@link #MAX_VIEWPORT_ROWS} rows plus the prefetched rows
+ * around them. Inside the {@code com.top_logic.layout.view} layer, place it in a {@code <split-panel>}/
  * {@code <pane>} or a fill panel ({@code <panel fill="true">}) - the containers between such a
  * filling control and the next bounded box grow with it, so the chain holds however deeply it is
  * nested; standalone (e.g. in a JSP-rendered component) wrap it in a fixed- or flex-bounded
@@ -372,6 +373,17 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String GROUP_HEADER_TYPE_CLASS = "tl-type-body-strong";
 
 	private static final int PREFETCH_ROWS = 20;
+
+	/**
+	 * The largest number of rows a viewport shows, whatever the client reports.
+	 *
+	 * <p>
+	 * The client reports how many rows it shows, and every later update of the rows sends that many
+	 * again. A client measuring a table body that is as high as all its rows would otherwise make
+	 * every update send thousands of rows. No viewport on a screen shows more rows than this.
+	 * </p>
+	 */
+	public static final int MAX_VIEWPORT_ROWS = 200;
 
 	private static final int MIN_WIDTH = 50;
 
@@ -1156,11 +1168,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 *
 	 * @param start
-	 *        The index of the first displayed row.
+	 *        The index of the first displayed row, a negative one is taken as the first row.
 	 * @param count
-	 *        The number of displayed rows.
+	 *        The number of displayed rows, limited to the range from one row to
+	 *        {@link #MAX_VIEWPORT_ROWS}.
 	 */
 	private void updateViewport(int start, int count) {
+		start = Math.max(0, start);
+		count = Math.max(1, Math.min(MAX_VIEWPORT_ROWS, count));
 		int total = _view.rowCount();
 		int bufferedStart = Math.max(0, start - PREFETCH_ROWS);
 		int bufferedEnd = Math.min(total, start + count + PREFETCH_ROWS);
@@ -1745,6 +1760,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Handles a viewport scroll request.
+	 *
+	 * <p>
+	 * The viewport is limited to {@link #MAX_VIEWPORT_ROWS} rows.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SCROLL)
 	void handleScroll(ScrollArguments args) {

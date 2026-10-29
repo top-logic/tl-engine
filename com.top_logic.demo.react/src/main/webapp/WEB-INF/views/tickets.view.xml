@@ -75,7 +75,11 @@
 	has it. "Generate samples" fills them with tickets, some commented by the logged-in user and
 	some by somebody else, which is what the presets of the Open list select over: its Comments
 	and "Commented by me" columns are computed from a ticket's comments, and a preset filters one
-	of them.
+	of them. The command creates as many tickets as the "Number of samples" field above the lists
+	names, eight unless it is changed: the field writes the sampleCount channel, which the command
+	reads as its input, so one script fills the lists with a few tickets or with thousands of
+	them - 15000 give the Open list more than eleven thousand rows. A quarter of the generated
+	tickets is closed, a third has no comment, and a third is commented by the logged-in user.
 	
 	Both lists are drag sources and drop targets: dragging a ticket from Open to Closed
 	closes it and dragging it back reopens it, which is what each list's <drop> does with the
@@ -114,25 +118,25 @@
 	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
 	session once the transaction is committed - the comment appearing in the conversation shows
 	that the script ran on the stored ticket.
-
-The Category, Tags, Keywords and Estimate fields of that form are selections that also take a
-text of their own: the dropdown offers the values used so far, and a typed text naming none of
-them becomes a new value. Free entry is configured on the attributes in the model
-(demo.tickets.model.xml, annotation <free-entry>), so the fields name no control. Category holds
-one text, Tags several texts, and each offers the texts the tickets carry so far. Estimate is a
-number of hours: a typed text is read as a number, and a text that is none is refused.
-Keywords references Keyword objects: a typed text creates a transient Keyword through the create
-function of the annotation, which storing the form makes persistent and Cancel drops.
-
-The Keywords field overrides that create function with the nested <free-entry> of its
-SelectControlProvider, because the catalog a new keyword is put into comes from this view and
-not from the model: the "Catalog for new keywords" select above the form writes the
-keywordCatalog channel, the field reads it through inputs="keywordCatalog as catalog", and its
-create script sets the new keyword's catalog to $catalog. The column "Keywords by catalog" of the
-Open list shows each keyword with its catalog. The catalogs "Technik" and "Fachlich" come with
-the initial data of the application (Z07-tickets-demo.objects.xml). "Generate samples" gives the
-generated tickets a category, tags, an estimate and keywords of these catalogs, so the option
-lists start filled.
+	
+	The Category, Tags, Keywords and Estimate fields of that form are selections that also take a
+	text of their own: the dropdown offers the values used so far, and a typed text naming none of
+	them becomes a new value. Free entry is configured on the attributes in the model
+	(demo.tickets.model.xml, annotation <free-entry>), so the fields name no control. Category holds
+	one text, Tags several texts, and each offers the texts the tickets carry so far. Estimate is a
+	number of hours: a typed text is read as a number, and a text that is none is refused.
+	Keywords references Keyword objects: a typed text creates a transient Keyword through the create
+	function of the annotation, which storing the form makes persistent and Cancel drops.
+	
+	The Keywords field overrides that create function with the nested <free-entry> of its
+	SelectControlProvider, because the catalog a new keyword is put into comes from this view and
+	not from the model: the "Catalog for new keywords" select above the form writes the
+	keywordCatalog channel, the field reads it through inputs="keywordCatalog as catalog", and its
+	create script sets the new keyword's catalog to $catalog. The column "Keywords by catalog" of the
+	Open list shows each keyword with its catalog. The catalogs "Technik" and "Fachlich" come with
+	the initial data of the application (Z07-tickets-demo.objects.xml). "Generate samples" gives the
+	generated tickets a category, tags, an estimate and keywords of these catalogs, so the option
+	lists start filled.
 -->
 <view>
 	<channels>
@@ -144,6 +148,9 @@ lists start filled.
 		<channel name="jump"/>
 		<channel name="ticketEditMode"/>
 		<channel name="keywordCatalog"/>
+		<channel name="sampleCount"
+			init="8"
+		/>
 		<derived-channel name="ticketId"
 			expr="objectId($ticket)"
 			inputs="ticket"
@@ -264,6 +271,7 @@ lists start filled.
 						<commands>
 							<generic-command
 								image="css:bi bi-magic"
+								inputs="sampleCount"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -273,8 +281,11 @@ lists start filled.
 								<access>
 									<create type="demo.tickets:Ticket"/>
 								</access>
+								<executability>
+									<null-input-disabled/>
+								</executability>
 								<with-transaction>
-									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; categories = ['Bug', 'Feature', 'Question']; tags = [['backend'], ['ui', 'urgent'], []]; estimates = [2, 4, 8, 16]; catalogs = ['Technik', 'Fachlich'].map(n -> all(`demo.tickets:KeywordCatalog`).filter(c -> $c.get(`demo.tickets:KeywordCatalog#name`) == $n).firstElement()); keywords = [['Performance', 0], ['Usability', 1], ['Security', 0]].map(e -> { n = $e[0]; existing = all(`demo.tickets:Keyword`).filter(k -> $k.get(`demo.tickets:Keyword#name`) == $n).firstElement(); k = if($existing == null, new(`demo.tickets:Keyword`)..set(`demo.tickets:Keyword#name`, $n), $existing); $k.set(`demo.tickets:Keyword#catalog`, $catalogs[$e[1]]); $k; }); other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#category`, $categories[$i % 3]); $t.set(`demo.tickets:Ticket#tags`, $tags[$i % 3]); $t.set(`demo.tickets:Ticket#estimate`, $estimates[$i % 4]); $t.set(`demo.tickets:Ticket#keywords`, if($i % 2 == 0, [$keywords[$i % 3]], [])); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
+									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; categories = ['Bug', 'Feature', 'Question']; tags = [['backend'], ['ui', 'urgent'], []]; estimates = [2, 4, 8, 16]; catalogs = ['Technik', 'Fachlich'].map(n -> all(`demo.tickets:KeywordCatalog`).filter(c -> $c.get(`demo.tickets:KeywordCatalog#name`) == $n).firstElement()); keywords = [['Performance', 0], ['Usability', 1], ['Security', 0]].map(e -> { n = $e[0]; existing = all(`demo.tickets:Keyword`).filter(k -> $k.get(`demo.tickets:Keyword#name`) == $n).firstElement(); k = if($existing == null, new(`demo.tickets:Keyword`)..set(`demo.tickets:Keyword#name`, $n), $existing); $k.set(`demo.tickets:Keyword#catalog`, $catalogs[$e[1]]); $k; }); other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count($sampleCount).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#category`, $categories[$i % 3]); $t.set(`demo.tickets:Ticket#tags`, $tags[$i % 3]); $t.set(`demo.tickets:Ticket#estimate`, $estimates[$i % 4]); $t.set(`demo.tickets:Ticket#keywords`, if($i % 2 == 0, [$keywords[$i % 3]], [])); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command
@@ -411,6 +422,15 @@ lists start filled.
 									<label>
 										<en>Status</en>
 										<de>Status</de>
+									</label>
+								</value-input>
+								<value-input
+									type="tl.core:Integer"
+									value="sampleCount"
+								>
+									<label>
+										<en>Number of samples</en>
+										<de>Anzahl Beispiele</de>
 									</label>
 								</value-input>
 							</fields>

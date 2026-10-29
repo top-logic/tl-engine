@@ -26,6 +26,7 @@ import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
 
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.util.CachePolicy;
 import com.top_logic.util.TopLogicServlet;
@@ -194,7 +195,8 @@ public class TestTopLogicServletBadRequest extends BasicTestCase {
 	 */
 	public static Test suite() {
 		return PersonManagerSetup.createPersonManagerSetup(
-			ServiceTestSetup.createSetup(TestTopLogicServletBadRequest.class, CachePolicy.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestTopLogicServletBadRequest.class, SessionService.Module.INSTANCE,
+				CachePolicy.Module.INSTANCE));
 	}
 
 }

@@ -8,6 +8,7 @@ package test.com.top_logic.util.sched.model;
 import java.lang.Thread.State;
 import java.util.Calendar;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -28,9 +29,12 @@ import com.top_logic.basic.sched.ScheduledThread;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
@@ -52,6 +56,12 @@ public class TestScheduler extends BasicTestCase {
 
 	/** Timeout in milliseconds when using the {@link BarrierTestTask}. */
 	private static final long BARRIER_TIMEOUT = 2000;
+
+	/**
+	 * Polling interval in milliseconds of a scheduler, that is far longer than any test waits for
+	 * the scheduler to react.
+	 */
+	private static final long LONG_POLLING_INTERVAL = 60 * 60 * 1000;
 
 	// All times must be in ascending order so tests will execute correctly
 
@@ -723,6 +733,63 @@ public class TestScheduler extends BasicTestCase {
 	}
 
 	/**
+	 * {@link Scheduler#startTask(Task) Starting a task manually} starts it right away, not after
+	 * the polling interval of an idle scheduler.
+	 */
+	public void testStartTaskImmediately() throws InterruptedException {
+		createIdleScheduler("testStartTaskImmediately");
+		BarrierTestTask task = createNeverBarrierTestTask("testStartTaskImmediately");
+		scheduler.addTask(task);
+
+		scheduler.startTask(task);
+		// Fails with a timeout, if the task starts only in the next regular round:
+		waitForTaskTerminated(task);
+	}
+
+	/**
+	 * The cluster lock of a {@link Task} that runs once in the cluster is cleared right after its
+	 * run, not after the polling interval of an idle scheduler.
+	 */
+	public void testClusterLockClearedAfterRun() throws InterruptedException {
+		createIdleScheduler("testClusterLockClearedAfterRun");
+		BarrierTestTask task = createNeverClusterGlobalTask("testClusterLockClearedAfterRun");
+		scheduler.addTask(task);
+		TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+		CountDownLatch runProcessed = new CountDownLatch(1);
+
+		scheduler.startTask(task);
+		// Task starts:
+		waitOnBarrier(task.getBarrier());
+		assertTrue(isClusterLockSet(log));
+		scheduler.runAfterTaskDone(task, runProcessed::countDown);
+		// Task finishes:
+		waitOnBarrier(task.getBarrier());
+
+		assertTrue("The end of the run has not been processed in time.",
+			runProcessed.await(BARRIER_TIMEOUT, TimeUnit.MILLISECONDS));
+		assertFalse(isClusterLockSet(log));
+	}
+
+	private static boolean isClusterLockSet(TaskLogWrapper log) {
+		// See the cluster lock changes committed by other threads.
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (MergeConflictException ex) {
+			throw new KnowledgeBaseRuntimeException(ex);
+		}
+		return log.isClusterLockSet();
+	}
+
+	/**
+	 * Creates a started {@link TestingScheduler} that waits for {@link #LONG_POLLING_INTERVAL}
+	 * between its regular rounds, and has attached its tasks.
+	 */
+	private void createIdleScheduler(String name) throws InterruptedException {
+		scheduler = TestingScheduler.newStartedScheduler(name, LONG_POLLING_INTERVAL, 5000, 1000, 1000);
+		scheduler.awaitThreadInitialized(BARRIER_TIMEOUT);
+	}
+
+	/**
 	 * The cluster lock of a {@link Task} can be {@link Scheduler#releaseClusterLock(Task) released}
 	 * only while it is set, and only for a {@link Task} running once in the cluster.
 	 */
@@ -863,6 +930,17 @@ public class TestScheduler extends BasicTestCase {
 		taskConfig.setPersistent(true);
 		taskConfig.setNodeLocal(false);
 		return (AlwaysBarrierTestTask) getInstantiationContext().getInstance(taskConfig);
+	}
+
+	private static BarrierTestTask createNeverClusterGlobalTask(String name) {
+		BarrierTestTaskConfig taskConfig = TypedConfiguration.newConfigItem(BarrierTestTaskConfig.class);
+		taskConfig.setImplementationClass(BarrierTestTask.class);
+		taskConfig.setName(name);
+		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setPersistent(true);
+		taskConfig.setNodeLocal(false);
+		return getInstantiationContext().getInstance(taskConfig);
 	}
 
 	private static BarrierTestTask createNeverBarrierTestTask(String name) {

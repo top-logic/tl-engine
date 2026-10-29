@@ -63,6 +63,8 @@ public class SchedulerEntry {
 
 	private ScheduledThread _thread;
 
+	private boolean _runEnded;
+
 	private State _state = State.WAITING;
 
 	private Throwable _reasonForBroken;
@@ -117,15 +119,46 @@ public class SchedulerEntry {
 	/**
 	 * Create the {@link ScheduledThread} in which this will be executed.
 	 * 
+	 * @param runEndListener
+	 *        Called in the created thread as its last action, after the run of the {@link Task}
+	 *        has ended, normally or with an exception. At that time, {@link #isRunEnded()} is
+	 *        <code>true</code>.
+	 * 
 	 * @throws IllegalStateException
 	 *         If there is already a {@link ScheduledThread}.
 	 */
-	public synchronized ScheduledThread createThread() {
+	public synchronized ScheduledThread createThread(Runnable runEndListener) {
 		if (_thread != null) {
 			throw new IllegalStateException("Thread has already been built. " + toString());
 		}
-		_thread = new ScheduledThread(getTask());
+		_runEnded = false;
+		_thread = new ScheduledThread(getTask()) {
+			@Override
+			public void run() {
+				try {
+					super.run();
+				} finally {
+					markRunEnded();
+					runEndListener.run();
+				}
+			}
+		};
 		return _thread;
+	}
+
+	private synchronized void markRunEnded() {
+		_runEnded = true;
+	}
+
+	/**
+	 * Whether the run of the {@link Task} in the {@link #getThread() thread} has ended.
+	 * 
+	 * <p>
+	 * The thread may still be alive, while it finishes its last actions.
+	 * </p>
+	 */
+	public synchronized boolean isRunEnded() {
+		return _runEnded;
 	}
 
 	/**

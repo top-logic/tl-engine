@@ -22,7 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.cluster.ClusterManager;
@@ -269,6 +273,16 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	}
 
+	/**
+	 * Milliseconds to wait for the thread of a {@link Task} whose run has ended to terminate.
+	 * 
+	 * <p>
+	 * The thread only has to finish its last action. If it takes longer, its termination is
+	 * processed in a later round of the dispatch thread.
+	 * </p>
+	 */
+	private static final long RUN_END_JOIN_TIME = 1000;
+
 	private static final String RESTART_FAILED =
 		"Failed to restart the Scheduler. Tasks are not executed until the system is restarted.";
 
@@ -342,6 +356,28 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
     /** Signals that the Scheduler should stop.
      */
 	private final AtomicBoolean _shouldStop = new AtomicBoolean(false);
+
+	/**
+	 * Guards {@link #_wakeUpPending} and the waits of the scheduler; {@link #_shouldStop} is set
+	 * while holding it.
+	 */
+	private final Lock _waitLock = new ReentrantLock();
+
+	/**
+	 * Signalled when the scheduler {@link #signalStop() should stop} or is {@link #wakeUp() woken
+	 * up}.
+	 */
+	private final Condition _waitCondition = _waitLock.newCondition();
+
+	/**
+	 * Whether a {@link #wakeUp()} has not yet been consumed by {@link #waitForWork()}.
+	 * 
+	 * <p>
+	 * Guarded by {@link #_waitLock}. A wake-up that arrives while the dispatch thread is not
+	 * waiting makes the next wait return immediately, so that no wake-up is lost.
+	 * </p>
+	 */
+	private boolean _wakeUpPending;
     
     private volatile Thread schedulerThread;
 
@@ -612,16 +648,33 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * </p>
 	 */
     public void signalStop() {
-		// Excluding SpotBugs(JLM_JSR166_UTILCONCURRENT_MONITORENTER).
-		// "synchronized" and "notifyAll()" could be replaced by a java.util.concurrent.locks.Lock,
-		// but this would need a lot of refactoring where small mistakes could alter the outcome.
-		// There exist other solutions to this problem, but it is unclear whether they would change
-		// the behavior.
-		synchronized (_shouldStop) {
+		_waitLock.lock();
+		try {
 			_shouldStop.set(true);
-			_shouldStop.notifyAll();
+			_waitCondition.signalAll();
+		} finally {
+			_waitLock.unlock();
 		}
     }
+
+	/**
+	 * Lets the dispatch thread start its next round now instead of after the
+	 * {@link #getPollingInterval() polling interval}.
+	 * 
+	 * <p>
+	 * A wake-up while the scheduler is {@link #isSuspended() suspended} or stopping has no effect
+	 * beyond an additional (empty) round of the dispatch thread.
+	 * </p>
+	 */
+	protected final void wakeUp() {
+		_waitLock.lock();
+		try {
+			_wakeUpPending = true;
+			_waitCondition.signalAll();
+		} finally {
+			_waitLock.unlock();
+		}
+	}
 
     /**
 	 * Signal shutdown to all {@link Task}s.
@@ -693,7 +746,9 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	private void startTaskNow(SchedulerEntry entry) {
-		entry.createThread();
+		// The end of the run is processed (task result, cluster lock, maintenance mode) right away
+		// instead of in the next regular round of the dispatch thread.
+		entry.createThread(this::wakeUp);
 		entry.getThread().setUncaughtExceptionHandler(LoggingExceptionHandler.INSTANCE);
 		entry.getThread().start(now());
 		entry.setState(SchedulerEntry.State.RUNNING);
@@ -1033,9 +1088,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * <p>
 	 * Intended for the running {@link Task} to register work that must happen only after the end of
 	 * its run is completely processed: The task end result has been checked, the cluster lock has
-	 * been released and the maintenance mode has been cleaned up. The end of a run is processed on
-	 * the next round of the dispatch thread, i.e. up to the {@link #getPollingInterval() polling
-	 * interval} after the thread of the task has ended.
+	 * been released and the maintenance mode has been cleaned up. The end of a run is processed by
+	 * the dispatch thread right after the thread of the task has ended.
 	 * </p>
 	 * 
 	 * <p>
@@ -1329,6 +1383,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		storeActiveOverride(task, null);
 		if (entry.isConfiguredActive()) {
 			rescheduleTopLevel(entry);
+			wakeUp();
 		}
 		notifyUpdate(task);
 		Logger.info("Task '" + task.getName() + "' is reset to its configured state: "
@@ -1347,6 +1402,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		storeActiveOverride(task, newValue);
 		if (active) {
 			rescheduleTopLevel(entry);
+			wakeUp();
 		}
 		notifyUpdate(task);
 		Logger.info("Task '" + task.getName() + "' is " + (active ? "activated" : "deactivated")
@@ -1709,7 +1765,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				if (entry.getThread() == null) {
 					// Happens only in error cases
 				}
-				if (entry.getThread().getState() == State.TERMINATED) {
+				if (hasTerminated(entry)) {
 					// fine remove / reshedule it
                     if (done == null) {
                         done = new Stack<>();
@@ -1745,6 +1801,31 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
             handleDone(done);
         }
     }
+
+	/**
+	 * Whether the thread of the given running {@link SchedulerEntry} has terminated.
+	 * 
+	 * <p>
+	 * If the run of the {@link Task} has ended, the thread is about to terminate. It is waited
+	 * for, as the dispatch thread is {@link #wakeUp() woken up} by that thread before it has
+	 * terminated.
+	 * </p>
+	 */
+	private boolean hasTerminated(SchedulerEntry entry) {
+		ScheduledThread thread = entry.getThread();
+		if (thread.getState() == State.TERMINATED) {
+			return true;
+		}
+		if (!entry.isRunEnded()) {
+			return false;
+		}
+		try {
+			thread.join(RUN_END_JOIN_TIME);
+		} catch (InterruptedException ex) {
+			Logger.error("Unexpected InterruptedException", ex, Scheduler.class);
+		}
+		return thread.getState() == State.TERMINATED;
+	}
 
 	/**
 	 * Returns a new {@link Collection} containing the {@link SchedulerEntry}s for all running
@@ -1826,37 +1907,57 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	/**
 	 * Suspends this thread until new work has to be done.
+	 * 
+	 * <p>
+	 * Waits for the {@link #getPollingInterval() polling interval}, or until the scheduler is
+	 * {@link #wakeUp() woken up} or {@link #signalStop() should stop}.
+	 * </p>
 	 */
 	protected void waitForWork() {
 		status.append(" ... sleeping ").append(DebugHelper.getTime(pollingInterval));
 		Logger.info(status.toString(), this);
-		internalWait(pollingInterval);
+		internalWait(pollingInterval, true);
 	}
 
 	/**
 	 * Sleep for the given amount of milliseconds.
 	 * <p>
-	 * Wakes up when the scheduler {@link #_shouldStop}.
+	 * Returns early when the scheduler {@link #signalStop() should stop}.
 	 * </p>
 	 * <p>
 	 * Values <= 0 mean: Don't wait.
 	 * </p>
 	 */
 	private void internalWait(long waitTime) {
+		internalWait(waitTime, false);
+	}
+
+	/**
+	 * Sleep for the given amount of milliseconds.
+	 * 
+	 * @param waitTime
+	 *        Milliseconds to wait at most. Values <= 0 mean: Don't wait.
+	 * @param consumeWakeUp
+	 *        Whether to return early on a {@link #wakeUp()} and consume it. Only the dispatch
+	 *        thread waiting for work does so.
+	 */
+	private void internalWait(long waitTime, boolean consumeWakeUp) {
 		if (waitTime <= 0) {
 			return;
 		}
-		// Excluding SpotBugs(JLM_JSR166_UTILCONCURRENT_MONITORENTER).
-		// See comment in signalStop() for further details.
-		synchronized (_shouldStop) {
-			if (_shouldStop.get()) {
-				return;
+		_waitLock.lock();
+		try {
+			long nanosLeft = TimeUnit.MILLISECONDS.toNanos(waitTime);
+			while (!_shouldStop.get() && !(consumeWakeUp && _wakeUpPending) && nanosLeft > 0) {
+				nanosLeft = _waitCondition.awaitNanos(nanosLeft);
 			}
-			try {
-				_shouldStop.wait(waitTime);
-			} catch (InterruptedException e) {
-				Logger.error("Unexpected InterruptedException", e, this);
+			if (consumeWakeUp) {
+				_wakeUpPending = false;
 			}
+		} catch (InterruptedException ex) {
+			Logger.error("Unexpected InterruptedException", ex, this);
+		} finally {
+			_waitLock.unlock();
 		}
 	}
 
@@ -2387,7 +2488,13 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	/**
 	 * Force the execution of the given {@link Task} in the next possible time slot.
-	 * 
+	 *
+	 * <p>
+	 * The dispatch thread is {@link #wakeUp() woken up}, so that the task starts right away, unless
+	 * the scheduler is {@link #isSuspended() suspended}, the maximum number of tasks is running, or
+	 * the task has to wait (e.g. for the maintenance mode or its cluster lock).
+	 * </p>
+	 *
 	 * <p>
 	 * If the task is run before the given time anyway, the task is run at the requested time,
 	 * again. <br/>
@@ -2407,6 +2514,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			task.forceRun(now);
 			reschedule(entry, now);
 			notifyUpdate(task);
+			wakeUp();
 		}
 	}
 

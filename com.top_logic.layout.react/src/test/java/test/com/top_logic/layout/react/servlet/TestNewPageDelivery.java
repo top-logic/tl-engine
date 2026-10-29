@@ -163,6 +163,25 @@ public class TestNewPageDelivery extends TestCase {
 		assertFalse("the new page's first poll is full anyway", _queue.needsFullState(2));
 	}
 
+	/**
+	 * The stream of the new page tells its client the number the state it sends stands for: the
+	 * client starts without a number, while the numbering of the window continues across pages.
+	 */
+	public void testStreamOfTheNewPageCarriesTheCurrentNumber() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old").setTitle("Old"));
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old2").setTitle("Old2"));
+		assertEquals(2, _queue.lastSeq());
+
+		_queue.beginPage();
+		FakeAsyncRequest stream = new FakeAsyncRequest();
+		_queue.setConnection(stream.context());
+
+		String body = stream.body();
+		assertTrue(body, body.contains("id: 2\ndata: [\"Heartbeat\""));
+		assertFalse("no event of the previous page: " + body, body.contains("\"Old"));
+	}
+
 	/** The poll the previous page left waiting ends without events. */
 	public void testWaitingPollOfThePreviousPageEndsEmpty() throws Exception {
 		FakeAsyncRequest waiting = new FakeAsyncRequest();

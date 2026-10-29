@@ -113,6 +113,9 @@ public class SSEUpdateQueue {
 	 */
 	private static final String HEARTBEAT_MESSAGE = "data: [\"Heartbeat\",{}]\n\n";
 
+	/** The field of an SSE message that carries the number of the event, see {@link #flush()}. */
+	private static final String ID_FIELD = "id: ";
+
 	/**
 	 * Interval between heartbeat messages in seconds.
 	 *
@@ -681,6 +684,7 @@ public class SSEUpdateQueue {
 	public boolean setConnection(AsyncContext asyncContext) {
 		SSEConnection old;
 		SSEConnection newConn = new SSEConnection(asyncContext);
+		long base;
 		synchronized (this) {
 			if (_shutdown) {
 				Logger.info("SSE connection REFUSED for window '" + _windowName + "' (queue@"
@@ -698,6 +702,7 @@ public class SSEUpdateQueue {
 			// The client starts again from the state this connection sends; what was written before
 			// is not to be replayed to it.
 			forgetWritten();
+			base = _lastSeq;
 			_polling = false;
 			answerWaitingPoll();
 		}
@@ -715,9 +720,11 @@ public class SSEUpdateQueue {
 				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
 		// A first event at once, also for a window without controls: what tells the client that its
-		// stream arrives.
+		// stream arrives. It carries the number the full state stands for: a page loaded anew starts
+		// without a number, while the numbering of its window continues, and would take the number a
+		// command answer names for events its stream did not bring.
 		if (sendFullState(newConn)) {
-			writeOrDisconnect(newConn, HEARTBEAT_MESSAGE);
+			writeOrDisconnect(newConn, ID_FIELD + base + "\n" + HEARTBEAT_MESSAGE);
 		}
 		// Flush any events that were enqueued before the SSE connection was
 		// established (e.g. RouteChangeEvent from initial RoutingParticipant
@@ -973,7 +980,7 @@ public class SSEUpdateQueue {
 				continue;
 			}
 			long seq = _lastSeq + 1;
-			if (conn != null && !writeOrDisconnect(conn, "id: " + seq + "\n" + toDataMessage(json))) {
+			if (conn != null && !writeOrDisconnect(conn, ID_FIELD + seq + "\n" + toDataMessage(json))) {
 				// Keep the event queued for retry on the next (re)connection.
 				return;
 			}

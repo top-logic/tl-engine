@@ -186,6 +186,50 @@ describe('an event stream refused without a navigation', () => {
   });
 });
 
+/** A heartbeat of the stream carrying the given number, as the server's first heartbeat does. */
+function numbered(source: FakeEventSource, id: string): void {
+  source.readyState = FakeEventSource.OPEN;
+  source.onmessage?.(new MessageEvent('message', { data: JSON.stringify(['Heartbeat', {}]), lastEventId: id }));
+}
+
+describe('a page loaded again while the numbering of its window continues', () => {
+  it('takes the number its stream starts from, so that a command naming it makes it not poll', async () => {
+    const { connect, expectEvents } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    numbered(sources[0], '120');
+
+    expectEvents(120);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not step back when the number of the stream start arrives after a later event', async () => {
+    const { connect, expectEvents } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    // An event flushed to the new stream before its first heartbeat.
+    numbered(sources[0], '121');
+    numbered(sources[0], '120');
+
+    expectEvents(121);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+  });
+
+  it('polls when the events a command names do not arrive', async () => {
+    const { connect, expectEvents } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    numbered(sources[0], '');
+
+    expectEvents(120);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBe('1');
+  });
+});
+
 describe('a cancelled beforeunload', () => {
   it('does not stop the commands', async () => {
     const { mayBeNavigating, isPageLeaving } = await load();

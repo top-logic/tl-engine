@@ -156,8 +156,11 @@ function createEventSource(url: string): void {
       clearTimeout(_firstMessageTimer);
       _firstMessageTimer = null;
     }
+    // Only forward: the number the first heartbeat of a stream carries - the one its full state
+    // stands for - may arrive after an event written to the stream at the same time, and a message
+    // without a number of its own reports the last one again.
     const seq = Number(event.lastEventId);
-    if (seq > 0) _lastSeq = seq;
+    if (seq > _lastSeq) _lastSeq = seq;
     dispatchMessage(event.data);
   };
 

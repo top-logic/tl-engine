@@ -10,6 +10,7 @@
 						name="TestMailServerDaemon"
 						processor="test.com.top_logic.mail.base.TestingMailProcessor"
 						process-all-mails="false"
+						strategy-for-unknown-mails="DELETE"
 						activated="%IMAP_ACTIVE%" >
 					</task>
 				</tasks>

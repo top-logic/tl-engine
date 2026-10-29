@@ -964,6 +964,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.dropdownSelect.error")
 	public static ResKey JS_DROPDOWN_SELECT_ERROR;
 
+	/**
+	 * @en Use "{0}"
+	 */
+	@CustomKey("js.dropdownSelect.useText")
+	public static ResKey JS_DROPDOWN_SELECT_USE_TEXT;
+
 	// -- Color input client-side i18n keys --
 
 	/**
@@ -1219,6 +1225,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     {0}
 	 */
 	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
+
+	/**
+	 * @en The field accepts only a value chosen from its options, no text of your own.
+	 */
+	public static ResKey ERROR_NO_FREE_ENTRY;
 
 	/**
 	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}

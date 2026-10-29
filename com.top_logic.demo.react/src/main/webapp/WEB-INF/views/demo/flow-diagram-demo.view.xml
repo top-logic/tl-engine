@@ -26,6 +26,14 @@
 	
 	The Details form shows the selected step through the derived channel detailNode, which
 	has a value only while exactly one step is selected.
+	
+	Products are created, edited (also by a double click on the row) and deleted in the Products
+	tile; deleting a product deletes its build steps, which are parts of it. A build step is created
+	in the selected product from the Build steps tile and becomes the only selected step, so Details
+	shows it; Delete in the Build steps tile deletes all selected steps. The steps a build step is
+	built from are its inputs, which the diagram draws as its connections - an input of another
+	product has no node in the diagram and is left out. The tables and the diagram observe the types
+	they display, so an object created, edited or deleted shows everywhere right away.
 -->
 <view>
 	<channels>
@@ -45,7 +53,71 @@
 					<en>Products</en>
 					<de>Produkte</de>
 				</title>
+				<commands>
+					<generic-command
+						image="css:bi bi-plus-lg"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>New</en>
+							<de>Neu</de>
+						</label>
+						<create-transient type="test.flowchart:Product">
+							<with-result>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="demo/create-flow-product.view.xml"
+								>
+									<bind
+										channel="selection"
+										to="selectedProduct"
+									/>
+								</open-dialog>
+							</with-result>
+						</create-transient>
+					</generic-command>
+					<generic-command
+						image="css:bi bi-pencil"
+						inputs="selectedProduct"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Edit</en>
+							<de>Bearbeiten</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="true"
+							dialog-view="demo/edit-flow-product.view.xml"
+						/>
+					</generic-command>
+					<!-- Deleting a product deletes its build steps with it: they are parts of it. -->
+					<generic-command
+						image="css:bi bi-trash"
+						inputs="selectedProduct"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<delete-object/>
+						<write-channel name="selectedProduct"
+							clear="true"
+						/>
+						<write-channel name="selectedNode"
+							clear="true"
+						/>
+					</generic-command>
+				</commands>
 				<table
+					observed-types="test.flowchart:Product"
 					selection="selectedProduct"
 					types="test.flowchart:Product"
 				>
@@ -53,6 +125,19 @@
 						<column attribute="name"/>
 					</columns>
 					<rows>all(`test.flowchart:Product`)</rows>
+					<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+						image="css:bi bi-pencil"
+					>
+						<label>
+							<en>Edit</en>
+							<de>Bearbeiten</de>
+						</label>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="true"
+							dialog-view="demo/edit-flow-product.view.xml"
+						/>
+					</on-activate>
 				</table>
 			</panel>
 		</tile>
@@ -66,6 +151,7 @@
 					<de>Bauplan</de>
 				</title>
 				<flow-diagram
+					observed-types="test.flowchart:FlowNode"
 					selection="selectedNode"
 					selection-mode="multi"
 				>
@@ -162,6 +248,7 @@ $parts.isEmpty()
                     .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty())
                     .map(p -> $p
                         .get(`test.flowchart:FlowNode#inputs`)
+                        .filter(c -> $nodeByPart[$c] != null)
                         .map(c -> reactFlowConnection(
                             parent: $nodeByPart[$p],
                             child: $nodeByPart[$c])))
@@ -181,7 +268,62 @@ $parts.isEmpty()
 					<en>Build steps</en>
 					<de>Bauschritte</de>
 				</title>
+				<commands>
+					<!-- A build step is part of a product: it is created in the product selected in Products. -->
+					<generic-command
+						image="css:bi bi-plus-lg"
+						inputs="selectedProduct"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>New</en>
+							<de>Neu</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<create-transient
+							container="selectedProduct"
+							reference="buildInstructions"
+							type="test.flowchart:FlowNode"
+						>
+							<with-result>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="demo/create-flow-step.view.xml"
+								>
+									<bind
+										channel="container"
+										to="selectedProduct"
+									/>
+									<bind
+										channel="selection"
+										to="selectedNode"
+									/>
+								</open-dialog>
+							</with-result>
+						</create-transient>
+					</generic-command>
+					<generic-command
+						image="css:bi bi-trash"
+						inputs="selectedNode"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<delete-object/>
+						<write-channel name="selectedNode"
+							clear="true"
+						/>
+					</generic-command>
+				</commands>
 				<table
+					observed-types="test.flowchart:FlowNode"
 					selection="selectedNode"
 					selection-mode="multi"
 					types="test.flowchart:FlowNode"
@@ -208,6 +350,7 @@ $parts.isEmpty()
 				>
 					<field attribute="name"/>
 					<field attribute="marker"/>
+					<field attribute="inputs"/>
 					<field attribute="image"/>
 				</form>
 			</panel>

@@ -82,6 +82,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
 
 	/**
+	 * @en View "{0}" cannot be displayed.
+	 */
+	public static ResKey1 ERROR_DISPLAYING_VIEW__PATH;
+
+	/**
 	 * @en View "{0}" was not saved, because it could not be loaded again afterwards. Correct the
 	 *     reported settings and save again. {1}
 	 */
@@ -176,6 +181,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en This target does not accept the dragged objects.
 	 */
 	public static ResKey ERROR_DROP_REFUSED;
+
+	/**
+	 * @en The entry "{0}" contains a comma. The values of this field are stored separated by commas,
+	 *     so a single value cannot contain one.
+	 */
+	public static ResKey1 ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT;
 
 	static {
 		initConstants(I18NConstants.class);

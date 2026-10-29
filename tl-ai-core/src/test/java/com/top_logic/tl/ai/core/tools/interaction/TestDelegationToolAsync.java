@@ -7,7 +7,12 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.Map;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -15,6 +20,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
@@ -86,5 +92,14 @@ public class TestDelegationToolAsync extends TestCase {
 		ToolResult result = tool.execute(Map.of("task", "do sync thing"), ToolContext.EMPTY);
 		// The sync path propagates factory errors as ToolResult error messages.
 		assertTrue("sync path returns an error ToolResult", result.text().startsWith("ERROR:"));
+	}
+
+	/**
+	 * The suite, with the {@link SubagentWorkers} the spawned subagent runs under, which ends it
+	 * before the thread context it runs in stops.
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestDelegationToolAsync.class), SubagentWorkers.Module.INSTANCE));
 	}
 }

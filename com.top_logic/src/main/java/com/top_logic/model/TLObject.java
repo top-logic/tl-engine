@@ -30,6 +30,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.impl.generated.TLObjectBase;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * Instance of a {@link TLStructuredType}, or {@link TLEnumeration}.
@@ -235,6 +236,48 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	 */
 	default void tRemove(TLStructuredTypePart part, Object value) {
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * Whether the values of the multiple reference with the given name contain the given element.
+	 *
+	 * @param partName
+	 *        The name of the multiple reference to look up the element in.
+	 * @param value
+	 *        The element to look up.
+	 *
+	 * @see #tContains(TLStructuredTypePart, Object)
+	 */
+	default boolean tContainsByName(String partName, Object value) {
+		return tContains(tType().getPartOrFail(partName), value);
+	}
+
+	/**
+	 * Whether the values of the given multiple reference contain the given element.
+	 *
+	 * <p>
+	 * This is the check whether {@link #tAdd(TLStructuredTypePart, Object)} would add a duplicate,
+	 * or whether {@link #tRemove(TLStructuredTypePart, Object)} finds the element. For a
+	 * single-valued part, the result is whether the value of the part equals the given value. No
+	 * part contains <code>null</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * The default implementation reads the {@link #tValue(TLStructuredTypePart) value} of the part
+	 * (see {@link TLModelUtil#containsValue(Object, Object)}). An implementation whose storage can
+	 * look up a single element without reading the whole value overrides it.
+	 * </p>
+	 *
+	 * @param part
+	 *        The multiple reference to look up the element in.
+	 * @param value
+	 *        The element to look up.
+	 *
+	 * @see #tAdd(TLStructuredTypePart, Object)
+	 * @see #tRemove(TLStructuredTypePart, Object)
+	 */
+	default boolean tContains(TLStructuredTypePart part, Object value) {
+		return TLModelUtil.containsValue(tValue(part), value);
 	}
 
 	@Override

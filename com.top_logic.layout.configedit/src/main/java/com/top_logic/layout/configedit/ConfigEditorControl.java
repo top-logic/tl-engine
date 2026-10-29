@@ -320,8 +320,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
 				|| property.kind() == PropertyKind.MAP) {
-				ConfigListEditorControl listEditor =
-					new ConfigListEditorControl(context, config, property, _index, groupEditable, _formModel);
+				// The configurations of instances that already exist cannot be changed.
+				ConfigListEditorControl listEditor = new ConfigListEditorControl(context, config, property,
+					_index, groupEditable && !property.isInstanceValued(), _formModel);
 				// Over the full row, like the nested-item group above: a collection holds whole
 				// forms - one per entry, each with its own header and actions - and a third of the
 				// row is not a place to put a form. It also keeps a collection recognizable as one

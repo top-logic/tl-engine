@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -55,6 +55,88 @@ the model.
 		display="segmented"
 	/>
 </field>
+```
+
+**A selection taking a text of its own** — the model annotation `<free-entry>` (`TLFreeEntry`) of an
+attribute, overridden per field by the nested `<free-entry>` of `SelectControlProvider`: the
+dropdown also takes a text the user types into its search field, for a value that is mostly one of
+a known set but now and then a new one (keywords, tags, a place). A text naming an option, ignoring
+case and surrounding blanks, chooses that option; any other text becomes a value of its own - the
+value of a single-valued field, one more value of a multi-valued one (a text entered twice yields
+one value). The list offers the entry `Use "…"` at its end while the text names no option; Enter
+takes the highlighted option or, with none highlighted, the text, and leaving the field (Tab, a
+click outside) takes the text as well, while Escape drops it. With free entry the dropdown always
+has its search field, whatever `filter` says; the shapes showing every option ignore free entry. A
+text the field refuses - a text that is no number in a number attribute, a text with a comma in an
+attribute stored as one comma separated text - is reported like a failed command.
+
+Annotated at the attribute, free entry holds wherever the attribute is edited: the attribute is
+edited by a dropdown select without an `<input-control>` at the field, offering the options of the
+attribute (options annotation, referenced type, enumeration), or, where it has none, the values the
+object holds. A control the field names or an `<input-control>` annotation of the attribute still
+wins - `TextInputControlProvider` at the field edits an annotated text as plain text. Without
+more, the text is read as a value of the attribute's type: a string as it is, a number in the
+number format of the attribute, a point in time in its date format (or the formats a date is
+usually typed in). A number or a point in time equal to an option chooses that option.
+
+```xml
+<property name="place" type="tl.core:String">
+	<annotations>
+		<free-entry/>
+	</annotations>
+</property>
+```
+
+Any other type - a reference, a classification, a boolean - needs `create`, a TL-Script function
+taking the entered text (without surrounding blanks) and the edited object, whose result is the
+value. A new object is created transient, so storing the form creates it and cancelling the form
+drops it; a text naming an option, a value of the field or a value created before chooses that
+value without calling `create`, and a result of nothing leaves the field unchanged. The annotation
+without `create` on an attribute whose values cannot be read from a text is rejected with an error
+when the model is loaded.
+
+```xml
+<reference name="keywords" type="my:Keyword" multiple="true">
+	<annotations>
+		<free-entry create="text -> self -> new(`my:Keyword`, transient: true)..set(`my:Keyword#name`, $text)"/>
+	</annotations>
+</reference>
+```
+
+A field deviates with the nested `<free-entry>` of its `SelectControlProvider`, which overrides
+only what it states: `enabled="false"` offers the options only, although the attribute is
+annotated; `<free-entry/>` switches free entry on - also for a field editing no attribute, such as
+a `<value-input>`, or an attribute without the annotation; its `create` replaces the function of the
+annotation. That `create` follows the view convention: an expression (no parameter declaration)
+seeing `$text`, `$self` (the edited object, nothing where the field edits no attribute) and the
+channels named in `inputs` of the `<free-entry>` element. The value is made by the field's
+`create`, else by the annotation's `create`, else by reading the text as a value of the field's
+type; a field of any other type then accepts no free entry and logs an error.
+
+```xml
+<field attribute="place">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<free-entry enabled="false"/>
+	</input-control>
+</field>
+
+<field attribute="keywords">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<free-entry
+			create="new(`my:Keyword`, transient: true)..set(`my:Keyword#name`, $text)..set(`my:Keyword#owner`, $project)"
+			inputs="selectedProject as project"
+		/>
+	</input-control>
+</field>
+
+<value-input
+	options="['Berlin', 'Hamburg', 'Munich']"
+	value="place"
+>
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<free-entry/>
+	</input-control>
+</value-input>
 ```
 
 **A number** — `NumberInputControlProvider`, option `display` (`NumberDisplay`): `input` (the

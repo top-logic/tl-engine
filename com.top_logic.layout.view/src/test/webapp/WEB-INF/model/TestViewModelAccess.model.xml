@@ -37,6 +37,31 @@
 								<visibility value="read-only"/>
 							</annotations>
 						</property>
+						<property name="keywords"
+							multiple="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<config-type value="STRING_SET"/>
+								<storage-algorithm>
+									<string-set-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="place"
+							type="tl.core:String"
+						>
+							<annotations>
+								<free-entry/>
+							</annotations>
+						</property>
+						<property name="count"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<free-entry/>
+							</annotations>
+						</property>
 						<reference name="responsible"
 							type="tl.accounts:Person"
 						/>
@@ -49,6 +74,13 @@
 						<reference name="category"
 							type="Category"
 						/>
+						<reference name="topic"
+							type="Category"
+						>
+							<annotations>
+								<free-entry create="text -> self -> new(`TestViewModelAccess:Category`, transient: true)..set(`TestViewModelAccess:Category#name`, $text)"/>
+							</annotations>
+						</reference>
 						<reference name="categories"
 							multiple="true"
 							type="Category"

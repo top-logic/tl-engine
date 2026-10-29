@@ -51,6 +51,8 @@
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
 					<!-- Interaction Timeouts: how long an approval / an askUser question waits for the user -->
 					<module key="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService$Module" value="true"/>
+					<!-- Subagent Workers: ends background subagents before the services they use stop -->
+					<module key="com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers$Module" value="true"/>
 					<module key="com.top_logic.tl.ai.core.citation.CitationKinds$Module" value="true"/>
 					<!-- Page Archive: a copy of every web page an agent run read, for its citations -->
 					<module key="com.top_logic.tl.ai.core.citation.PageArchive$Module" value="true"/>
@@ -171,6 +173,10 @@
 		-->
 		<config service-class="com.top_logic.tl.ai.core.research.ResearchRuns">
 			<instance class="com.top_logic.tl.ai.core.research.ResearchRuns"/>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers">
+			<instance class="com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers"/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">

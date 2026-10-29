@@ -38,6 +38,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.WorkspaceAgentService;
 import com.top_logic.factory.ci.CIBuild;
 import com.top_logic.factory.ci.CIBuildStart;
+import com.top_logic.factory.ci.CIJob;
 import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.ci.ProjectCI;
@@ -211,6 +212,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 		_workers = Executors.newCachedThreadPool(DaemonThreadFactory.daemonThreadFactory());
 		_workers.execute(() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::reconcile));
+		_workers.execute(() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::refreshLinks));
 		long interval = getConfig().getApplicationCheckInterval();
 		if (interval > 0) {
 			_applicationCheck = SchedulerService.getInstance().scheduleWithFixedDelay(
@@ -1086,6 +1088,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 	}
 
+	private static String projectName(TLObject project) {
+		return FactoryModel.getString(project, FactoryModel.PROJECT_NAME);
+	}
+
 	private static String message(Throwable ex) {
 		String message = ex.getMessage();
 		return message == null || message.isEmpty() ? ex.getClass().getName() : message;
@@ -1138,6 +1144,108 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			Logger.error("Failed to reconcile the states of the workspaces.", ex, ProjectWorkspaces.class);
 		} finally {
 			_busy.removeAll(workspaces.keySet());
+		}
+	}
+
+	/**
+	 * Updates the pages of the repositories and CI jobs recorded on the projects
+	 * ({@link FactoryModel#PROJECT_REPOSITORY_URL}, {@link FactoryModel#PROJECT_CI_JOB_URL}) to the
+	 * URLs the git hosting services and the CI server report now.
+	 *
+	 * <p>
+	 * A page is recorded when the repository or the job of a project is created or looked up. The
+	 * services report their pages below the URL they are configured with for their users, e.g.
+	 * the {@code ROOT_URL} of Gitea or the Jenkins URL; when an operator changes it, the recorded
+	 * pages are brought in line by this refresh, which runs in the background after every start of
+	 * the service. A project whose service cannot be asked, or no longer knows its repository or
+	 * job, keeps its pages; the problem is logged.
+	 * </p>
+	 *
+	 * @return The number of projects whose pages were updated.
+	 */
+	public int refreshLinks() {
+		int updated = 0;
+		for (TLObject project : FactoryModel.allProjects()) {
+			String repositoryUrl = currentRepositoryUrl(project);
+			String jobUrl = currentJobUrl(project);
+			if (repositoryUrl != null || jobUrl != null) {
+				commit(() -> {
+					if (repositoryUrl != null) {
+						project.tUpdateByName(FactoryModel.PROJECT_REPOSITORY_URL, repositoryUrl);
+					}
+					if (jobUrl != null) {
+						project.tUpdateByName(FactoryModel.PROJECT_CI_JOB_URL, jobUrl);
+					}
+				});
+				updated++;
+			}
+		}
+		if (updated > 0) {
+			Logger.info("Updated the links of " + updated + " projects to the URLs the services report.",
+				ProjectWorkspaces.class);
+		}
+		return updated;
+	}
+
+	/**
+	 * The page of the recorded repository of the given project as its hosting service reports it.
+	 *
+	 * @return The page, {@code null} if it is the recorded one or cannot be told.
+	 */
+	private String currentRepositoryUrl(TLObject project) {
+		String recorded = FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL);
+		if (recorded == null) {
+			// No repository, or an entered one that has not been looked up yet.
+			return null;
+		}
+		try {
+			GitHostingProvider hosting = getGitHosting(project);
+			if (hosting == null) {
+				return null;
+			}
+			String fullName = FactoryModel.getRepository(project).getFullName();
+			GitRepository repository = hosting.findRepository(fullName);
+			if (repository == null) {
+				Logger.warn("The repository " + fullName + " of project " + projectName(project)
+					+ " is not found on its git hosting service; its link stays " + recorded + ".",
+					ProjectWorkspaces.class);
+				return null;
+			}
+			return recorded.equals(repository.getWebUrl()) ? null : repository.getWebUrl();
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to refresh the link of the repository of project " + projectName(project) + ": "
+				+ message(ex), ProjectWorkspaces.class);
+			return null;
+		}
+	}
+
+	/**
+	 * The page of the CI job of the given project as the CI server reports it.
+	 *
+	 * @return The page, {@code null} if it is the recorded one or cannot be told.
+	 */
+	private String currentJobUrl(TLObject project) {
+		String name = FactoryModel.getCIJob(project);
+		if (name == null) {
+			return null;
+		}
+		try {
+			CIProvider ci = getCI(project);
+			if (ci == null) {
+				return null;
+			}
+			CIJob job = ci.findJob(name);
+			String recorded = FactoryModel.getString(project, FactoryModel.PROJECT_CI_JOB_URL);
+			if (job == null) {
+				Logger.warn("The CI job " + name + " of project " + projectName(project)
+					+ " is not found on the CI server; its link stays " + recorded + ".", ProjectWorkspaces.class);
+				return null;
+			}
+			return job.webUrl().equals(recorded) ? null : job.webUrl();
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to refresh the link of the CI job of project " + projectName(project) + ": "
+				+ message(ex), ProjectWorkspaces.class);
+			return null;
 		}
 	}
 

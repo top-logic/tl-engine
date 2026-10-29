@@ -147,6 +147,11 @@ public final class JenkinsTestServer implements AutoCloseable {
 	 */
 	private static final String ENV_SCM_PASSWORD = "TL_JENKINS_SCM_PASSWORD";
 
+	/**
+	 * Environment variable of the image: the Jenkins URL, see {@link #rootUrl()}.
+	 */
+	private static final String ENV_URL = "TL_JENKINS_URL";
+
 	private final DockerClient _docker;
 
 	private final String _network;
@@ -240,7 +245,8 @@ public final class JenkinsTestServer implements AutoCloseable {
 					ENV_API_TOKEN + "=" + token,
 					ENV_SCM_CREDENTIALS_ID + "=" + SCM_CREDENTIALS_ID,
 					ENV_SCM_USER + "=" + GiteaTestServer.ADMIN,
-					ENV_SCM_PASSWORD + "=" + gitea.readToken())
+					ENV_SCM_PASSWORD + "=" + gitea.readToken(),
+					ENV_URL + "=" + rootUrl(port))
 				.withExposedPorts(http)
 				.withHostConfig(HostConfig.newHostConfig()
 					.withNetworkMode(network)
@@ -294,6 +300,19 @@ public final class JenkinsTestServer implements AutoCloseable {
 	 */
 	public String baseUrl() {
 		return _baseUrl;
+	}
+
+	/**
+	 * The Jenkins URL of the server, below which it reports the pages of jobs and builds, with a
+	 * slash at its end: the host name {@link GiteaTestServer#PUBLIC_HOST}, so that it differs from
+	 * the {@link #baseUrl()} the providers of the tests talk to.
+	 */
+	public String rootUrl() {
+		return rootUrl(URI.create(_baseUrl).getPort());
+	}
+
+	private static String rootUrl(int port) {
+		return "http://" + GiteaTestServer.PUBLIC_HOST + ":" + port + "/";
 	}
 
 	/**

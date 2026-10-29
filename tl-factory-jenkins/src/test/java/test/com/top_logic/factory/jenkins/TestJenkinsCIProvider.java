@@ -65,9 +65,11 @@ public class TestJenkinsCIProvider extends TestCase {
 		CIJob job = _provider.ensureJob(repository, "First <description> & \"quotes\"");
 		String fullName = JenkinsCIProvider.DEFAULT_FOLDER + "/" + GiteaTestServer.ORG + "/ci-ensure";
 		assertEquals(fullName, job.name());
-		String jobUrl = _server.baseUrl() + "job/" + JenkinsCIProvider.DEFAULT_FOLDER + "/job/" + GiteaTestServer.ORG
-			+ "/job/ci-ensure/";
-		assertEquals(jobUrl, job.webUrl());
+		String jobPath = "job/" + JenkinsCIProvider.DEFAULT_FOLDER + "/job/" + GiteaTestServer.ORG + "/job/ci-ensure/";
+		assertEquals("The page below the Jenkins URL.", _server.rootUrl() + jobPath, job.webUrl());
+		assertEquals(job, _provider.findJob(fullName));
+		assertNull(_provider.findJob(fullName + "-missing"));
+		String jobUrl = _server.baseUrl() + jobPath;
 
 		String config = get(jobUrl + JenkinsCIProvider.CONFIG_XML);
 		assertTrue(config, config.contains(JenkinsTestServer.cloneUrl("ci-ensure")));

@@ -311,6 +311,13 @@ public class FactoryModel {
 	}
 
 	/**
+	 * All projects stored in the application.
+	 */
+	public static List<TLObject> allProjects() {
+		return new ArrayList<>(MetaElementUtil.getAllInstancesOf(projectType(), TLObject.class));
+	}
+
+	/**
 	 * All workspaces stored in the application.
 	 */
 	public static List<TLObject> allWorkspaces() {

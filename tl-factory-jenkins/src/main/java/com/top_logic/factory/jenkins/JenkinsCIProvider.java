@@ -74,6 +74,13 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
+ * The pages of jobs and builds are the URLs Jenkins reports in the {@link #FIELD_URL} of its
+ * answers, below the Jenkins URL configured in Jenkins (its root URL), which the browsers of the
+ * users reach; the {@link Config#getBaseUrl() base URL} is the address the control application
+ * sends its requests to and may differ from it.
+ * </p>
+ *
+ * <p>
  * The requests are authenticated with the configured {@link Config#getCredentials() credentials};
  * without them, with basic authentication of the user {@link Config#getUser()} and the API token in
  * the secret {@link #TOKEN_SECRET}. Jenkins does not ask a request authenticated with an API token
@@ -428,14 +435,15 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 	public static final String FIELD_CANCELLED = "cancelled";
 
 	/**
-	 * Field of the JSON API: the class of an item.
+	 * Field of the JSON API: the page of an item or build, below the root URL of Jenkins.
 	 */
-	public static final String FIELD_CLASS = "_class";
+	public static final String FIELD_URL = "url";
 
 	private static final String BUILD_FIELDS =
-		String.join(",", FIELD_NUMBER, FIELD_RESULT, FIELD_BUILDING, FIELD_TIMESTAMP, FIELD_DURATION);
+		String.join(",", FIELD_NUMBER, FIELD_RESULT, FIELD_BUILDING, FIELD_TIMESTAMP, FIELD_DURATION, FIELD_URL);
 
-	private static final String QUEUE_FIELDS = FIELD_CANCELLED + "," + FIELD_EXECUTABLE + "[" + FIELD_NUMBER + "]";
+	private static final String QUEUE_FIELDS =
+		FIELD_CANCELLED + "," + FIELD_EXECUTABLE + "[" + FIELD_NUMBER + "," + FIELD_URL + "]";
 
 	private static final String CONTENT_TYPE = "Content-Type";
 
@@ -551,7 +559,8 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 		job.add(repository.getName().getName());
 		String fullName = String.join(SLASH, job);
 		byte[] config = jobConfig(repository, description).getBytes(StandardCharsets.UTF_8);
-		if (exists(job, fullName)) {
+		String page = page(job, fullName);
+		if (page != null) {
 			updateConfig(job, fullName, config);
 		} else {
 			Response created = request(POST, createItemPath(parent, repository.getName().getName()), config,
@@ -562,8 +571,16 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 			} else {
 				expectOk(created, fullName, CREATE_ITEM);
 			}
+			page = existingPage(job, fullName);
 		}
-		return new CIJob(fullName, itemUrl(job));
+		return new CIJob(fullName, page);
+	}
+
+	@Override
+	public CIJob findJob(String job) {
+		List<String> path = segments(job);
+		String page = page(path, job);
+		return page == null ? null : new CIJob(String.join(SLASH, path), page);
 	}
 
 	private void updateConfig(List<String> job, String fullName, byte[] config) {
@@ -656,28 +673,33 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 		}
 		String queueId = queueId(started.header(LOCATION));
 		if (queueId == null) {
-			return new CIBuildStart(null, null, itemUrl(path));
+			return new CIBuildStart(null, null, existingPage(path, job));
 		}
-		Integer number = awaitNumber(job, queueId);
-		return new CIBuildStart(number, queueId, number == null ? itemUrl(path) : buildUrl(path, number.intValue()));
+		JsonNode build = awaitBuild(job, queueId);
+		if (build == null) {
+			return new CIBuildStart(null, queueId, existingPage(path, job));
+		}
+		int number = build.path(FIELD_NUMBER).intValue();
+		return new CIBuildStart(Integer.valueOf(number), queueId, webUrl(build, () -> buildUrl(path, number)));
 	}
 
 	/**
 	 * Waits for the queue item with the given ID to start its build.
 	 *
-	 * @return The number of the build, {@code null} if it waits longer than the
+	 * @return The {@link #FIELD_EXECUTABLE} of the queue item, the started build with its
+	 *         {@link #FIELD_NUMBER} and {@link #FIELD_URL}; {@code null} if it waits longer than the
 	 *         {@link Config#getQueueWait()} or was cancelled.
 	 */
-	private Integer awaitNumber(String job, String queueId) {
+	private JsonNode awaitBuild(String job, String queueId) {
 		long deadline = System.nanoTime() + Duration.ofMillis(getConfig().getQueueWait()).toNanos();
 		String path = QUEUE_ITEM + SLASH + queueId + SLASH + API_JSON + "?" + TREE + "=" + encode(QUEUE_FIELDS);
 		while (true) {
 			Response item = request(GET, path, null, job, QUEUE_ITEM);
 			if (item.status() == HttpURLConnection.HTTP_OK) {
 				JsonNode json = parse(item, job, QUEUE_ITEM);
-				JsonNode number = json.path(FIELD_EXECUTABLE).path(FIELD_NUMBER);
-				if (number.isInt()) {
-					return Integer.valueOf(number.intValue());
+				JsonNode executable = json.path(FIELD_EXECUTABLE);
+				if (executable.path(FIELD_NUMBER).isInt()) {
+					return executable;
 				}
 				if (json.path(FIELD_CANCELLED).asBoolean()) {
 					return null;
@@ -728,7 +750,8 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 		CIBuildState state = state(json);
 		Duration duration = state == CIBuildState.RUNNING ? Duration.between(start, Instant.now())
 			: Duration.ofMillis(json.path(FIELD_DURATION).asLong());
-		return new CIBuild(number, state, buildUrl(path, number), start, duration.isNegative() ? Duration.ZERO : duration);
+		return new CIBuild(number, state, webUrl(json, () -> buildUrl(path, number)), start,
+			duration.isNegative() ? Duration.ZERO : duration);
 	}
 
 	/**
@@ -809,13 +832,48 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 	 * Whether the item of the given path exists.
 	 */
 	private boolean exists(List<String> path, String fullName) {
-		Response response = request(GET, itemPath(path) + API_JSON + "?" + TREE + "=" + FIELD_CLASS, null, fullName,
-			API_JSON);
+		return page(path, fullName) != null;
+	}
+
+	/**
+	 * The page of the item of the given path, as Jenkins reports it.
+	 *
+	 * @return The URL, {@code null} if the item does not exist.
+	 */
+	private String page(List<String> path, String fullName) {
+		Response response =
+			request(GET, itemPath(path) + API_JSON + "?" + TREE + "=" + FIELD_URL, null, fullName, API_JSON);
 		if (response.status() == HttpURLConnection.HTTP_NOT_FOUND) {
-			return false;
+			return null;
 		}
 		expectOk(response, fullName, API_JSON);
-		return true;
+		return webUrl(parse(response, fullName, API_JSON), () -> itemUrl(path));
+	}
+
+	/**
+	 * The page of the item of the given path, which exists.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_CI_JOB_NOT_FOUND__JOB} if it does not exist.
+	 */
+	private String existingPage(List<String> path, String fullName) {
+		String page = page(path, fullName);
+		if (page == null) {
+			throw new TopLogicException(I18NConstants.ERROR_CI_JOB_NOT_FOUND__JOB.fill(fullName));
+		}
+		return page;
+	}
+
+	/**
+	 * The {@link #FIELD_URL} of the given answer of the JSON API.
+	 *
+	 * @param fallback
+	 *        The URL below the {@link Config#getBaseUrl() base URL}, for an answer without
+	 *        {@link #FIELD_URL}.
+	 */
+	private static String webUrl(JsonNode answer, Supplier<String> fallback) {
+		JsonNode url = answer.path(FIELD_URL);
+		return url.isTextual() && !url.asText().isBlank() ? withSlash(url.asText()) : fallback.get();
 	}
 
 	private void expectOk(Response response, String job, String operation) {
@@ -976,14 +1034,14 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 	}
 
 	/**
-	 * The page of the given item.
+	 * The page of the given item below the {@link Config#getBaseUrl() base URL}.
 	 */
 	private String itemUrl(List<String> path) {
 		return _baseUrl + itemPath(path);
 	}
 
 	/**
-	 * The page of a build of the given job.
+	 * The page of a build of the given job below the {@link Config#getBaseUrl() base URL}.
 	 */
 	private String buildUrl(List<String> path, int number) {
 		return itemUrl(path) + number + SLASH;

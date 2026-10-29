@@ -16,6 +16,14 @@
 # reads tl_factory_gitea_token and tl_factory_jenkins_token. The folder also gets the key of the
 # database secret store of the control application, tl_secret_store_key, if it has none; it is
 # never replaced or removed, since the access tokens the tenants entered are unreadable without it.
+#
+# The environment of the script and of compose.yaml:
+#   TL_FACTORY_DEVEL_PUBLIC_HOST   host name under which the browsers reach Gitea and Jenkins
+#                                  (default localhost)
+#   TL_FACTORY_DEVEL_BIND_ADDRESS  address of the host the ports are published on (default 127.0.0.1)
+#   TL_FACTORY_DEVEL_GITEA_PORT    published port of Gitea (default 3300)
+#   TL_FACTORY_DEVEL_JENKINS_PORT  published port of Jenkins (default 8380)
+#
 # See the developer article factory/index, section "Local setup".
 
 set -eu
@@ -24,10 +32,25 @@ cd "$(dirname "$0")"
 
 GITEA_PORT="${TL_FACTORY_DEVEL_GITEA_PORT:-3300}"
 JENKINS_PORT="${TL_FACTORY_DEVEL_JENKINS_PORT:-8380}"
+# The ROOT_URL of Gitea and the Jenkins URL name this host, so that the pages the services report
+# through their APIs, which the control application shows as links, open in the browsers.
+PUBLIC_HOST="${TL_FACTORY_DEVEL_PUBLIC_HOST:-localhost}"
+# An address other than the loopback address exposes Gitea and Jenkins to the network.
+BIND_ADDRESS="${TL_FACTORY_DEVEL_BIND_ADDRESS:-127.0.0.1}"
+export TL_FACTORY_DEVEL_PUBLIC_HOST="${PUBLIC_HOST}" TL_FACTORY_DEVEL_BIND_ADDRESS="${BIND_ADDRESS}"
+# Where this script and the control application on the host reach the published ports: localhost,
+# if they listen on the loopback address or on all addresses, otherwise the one address they
+# listen on. The public host name may not resolve on the host, or not to that address.
+case "${BIND_ADDRESS}" in
+	127.0.0.1 | 0.0.0.0) LOCAL_HOST=localhost ;;
+	*) LOCAL_HOST="${BIND_ADDRESS}" ;;
+esac
 # The port of the workspace proxy, tl_factory_proxy_port of the control application.
 PROXY_PORT="${tl_factory_proxy_port:-8091}"
-GITEA_URL="http://localhost:${GITEA_PORT}/"
-JENKINS_URL="http://localhost:${JENKINS_PORT}/"
+GITEA_URL="http://${LOCAL_HOST}:${GITEA_PORT}/"
+JENKINS_URL="http://${LOCAL_HOST}:${JENKINS_PORT}/"
+GITEA_PUBLIC_URL="http://${PUBLIC_HOST}:${GITEA_PORT}/"
+JENKINS_PUBLIC_URL="http://${PUBLIC_HOST}:${JENKINS_PORT}/"
 # The defaults of tl_factory_gitea_owner and tl_factory_jenkins_user of the control application.
 GITEA_ADMIN=factory-admin
 GITEA_ORG=tl-factory
@@ -166,8 +189,8 @@ TL_JENKINS_SCM_PASSWORD=${GITEA_READ_TOKEN}
 
 	cat <<EOF
 
-Gitea:   ${GITEA_URL} (user ${GITEA_ADMIN}, password ${GITEA_PASSWORD})
-Jenkins: ${JENKINS_URL} (user ${JENKINS_ADMIN}, password ${TL_JENKINS_ADMIN_PASSWORD})
+Gitea:   ${GITEA_PUBLIC_URL} (user ${GITEA_ADMIN}, password ${GITEA_PASSWORD})
+Jenkins: ${JENKINS_PUBLIC_URL} (user ${JENKINS_ADMIN}, password ${TL_JENKINS_ADMIN_PASSWORD})
 Tokens:  ${GITEA_TOKEN_FILE}, ${JENKINS_TOKEN_FILE}
 Key of the secret store: ${SECRET_STORE_KEY_FILE}
 

@@ -85,6 +85,20 @@ public final class GiteaTestServer implements AutoCloseable {
 	public static final String LOOPBACK = "127.0.0.1";
 
 	/**
+	 * The host name of the {@code ROOT_URL} of the server: another name of the {@link #LOOPBACK}
+	 * address, so that the URLs Gitea reports differ from the URL the providers of the tests talk
+	 * to, as a public URL of Gitea does from its address in the network of the control
+	 * application.
+	 */
+	public static final String PUBLIC_HOST = "localhost";
+
+	/**
+	 * The {@code PUBLIC_URL_DETECTION} of the server: the URLs below the {@code ROOT_URL}, not
+	 * below the host of the request.
+	 */
+	public static final String PUBLIC_URL_DETECTION = "legacy";
+
+	/**
 	 * Port of the web interface and the API inside the container.
 	 */
 	public static final int GITEA_PORT = 3000;
@@ -235,7 +249,8 @@ public final class GiteaTestServer implements AutoCloseable {
 			.withEnv(
 				"GITEA__security__INSTALL_LOCK=true",
 				"GITEA__database__DB_TYPE=sqlite3",
-				"GITEA__server__ROOT_URL=" + baseUrl,
+				"GITEA__server__ROOT_URL=" + rootUrl(port),
+				"GITEA__server__PUBLIC_URL_DETECTION=" + PUBLIC_URL_DETECTION,
 				"GITEA__repository__DEFAULT_BRANCH=" + BRANCH,
 				"GITEA__service__DISABLE_REGISTRATION=true")
 			.withExposedPorts(http)
@@ -291,6 +306,18 @@ public final class GiteaTestServer implements AutoCloseable {
 	 */
 	public String baseUrl() {
 		return _baseUrl;
+	}
+
+	/**
+	 * The {@code ROOT_URL} of the server, below which it reports the pages and clone URLs of the
+	 * repositories, with a slash at its end.
+	 */
+	public String rootUrl() {
+		return rootUrl(URI.create(_baseUrl).getPort());
+	}
+
+	private static String rootUrl(int port) {
+		return "http://" + PUBLIC_HOST + ":" + port + "/";
 	}
 
 	/**

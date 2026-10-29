@@ -25,7 +25,9 @@ ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 
-COPY init.groovy.d/ /usr/share/jenkins/ref/init.groovy.d/
+# The suffix .override makes the start script of the image copy the init script into an existing
+# Jenkins home as well, so that the home always runs the script of the image.
+COPY init.groovy.d/tl-factory.groovy /usr/share/jenkins/ref/init.groovy.d/tl-factory.groovy.override
 
 FROM ci AS devel
 

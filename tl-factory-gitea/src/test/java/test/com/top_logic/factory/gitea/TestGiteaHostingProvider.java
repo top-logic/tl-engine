@@ -57,8 +57,8 @@ public class TestGiteaHostingProvider extends TestCase {
 	private static GiteaTestServer _server;
 
 	/**
-	 * A created repository has the clone URL, web URL and default branch of the server, and is
-	 * found by both.
+	 * A created repository has the clone URL, web URL and default branch of the server, below its
+	 * {@code ROOT_URL}, and is found by both and by URLs below the URL of the connection.
 	 */
 	public void testCreate() {
 		GiteaHostingProvider provider = provider(_server.token());
@@ -66,13 +66,15 @@ public class TestGiteaHostingProvider extends TestCase {
 
 		GitRepository created = provider.createRepository("create", "A test repository");
 		assertEquals(ORG + "/create", created.getFullName());
-		assertEquals(_server.baseUrl() + ORG + "/create.git", created.getCloneUrl());
-		assertEquals(_server.baseUrl() + ORG + "/create", created.getWebUrl());
+		assertEquals(_server.rootUrl() + ORG + "/create.git", created.getCloneUrl());
+		assertEquals(_server.rootUrl() + ORG + "/create", created.getWebUrl());
 		assertEquals(BRANCH, created.getDefaultBranch());
 
 		assertEquals(created, provider.findRepository(created.getCloneUrl()));
 		assertEquals(created, provider.findRepository(created.getWebUrl()));
 		assertEquals(created, provider.findRepository(ORG + "/create"));
+		assertEquals(created, provider.findRepository(_server.baseUrl() + ORG + "/create.git"));
+		assertEquals(created, provider.findRepository(_server.baseUrl() + ORG + "/create/src/branch/" + BRANCH));
 	}
 
 	/**

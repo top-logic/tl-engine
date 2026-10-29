@@ -29,7 +29,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * A job is named {@link #FOLDER}{@code /<owner>/<name>} after its repository and has its page below
- * {@link #BASE_URL}. A started build runs until a test {@link #finish(String, CIBuildState) finishes}
+ * {@link #BASE_URL}, or below the URL a test {@link #setRootUrl(String) sets}, as a CI server does
+ * when its public URL is changed. A started build runs until a test {@link #finish(String, CIBuildState) finishes}
  * it; its console output is {@link #setConsole(String, int, String) set} by the test. A test lets the
  * next calls fail with {@link #setFailure(TopLogicException)}.
  * </p>
@@ -55,6 +56,11 @@ public class RecordingCIProvider implements CIProvider {
 	 * Entry of {@link #calls()} for {@link #ensureJob(GitRepository, String)}.
 	 */
 	public static final String ENSURE = "ensure";
+
+	/**
+	 * Entry of {@link #calls()} for {@link #findJob(String)}.
+	 */
+	public static final String FIND = "find";
 
 	/**
 	 * Entry of {@link #calls()} for {@link #startBuild(String)}.
@@ -83,6 +89,8 @@ public class RecordingCIProvider implements CIProvider {
 
 	private boolean _queued;
 
+	private String _rootUrl = BASE_URL;
+
 	private TopLogicException _failure;
 
 	@Override
@@ -95,6 +103,13 @@ public class RecordingCIProvider implements CIProvider {
 	 */
 	public synchronized void setFailure(TopLogicException failure) {
 		_failure = failure;
+	}
+
+	/**
+	 * Sets the URL the pages of the jobs and builds are below, with a slash at its end.
+	 */
+	public synchronized void setRootUrl(String rootUrl) {
+		_rootUrl = rootUrl;
 	}
 
 	/**
@@ -111,7 +126,14 @@ public class RecordingCIProvider implements CIProvider {
 		String name = jobName(repository);
 		_jobs.put(name, repository);
 		_builds.computeIfAbsent(name, x -> new ArrayList<>());
-		return new CIJob(name, jobUrl(name));
+		return new CIJob(name, page(name));
+	}
+
+	@Override
+	public synchronized CIJob findJob(String job) {
+		_calls.add(FIND + " " + job);
+		checkFailure();
+		return _jobs.containsKey(job) ? new CIJob(job, page(job)) : null;
 	}
 
 	/**
@@ -122,10 +144,21 @@ public class RecordingCIProvider implements CIProvider {
 	}
 
 	/**
-	 * The page of the given job.
+	 * The page of the given job below {@link #BASE_URL}.
 	 */
 	public static String jobUrl(String job) {
-		return BASE_URL + "job/" + job + "/";
+		return jobUrl(BASE_URL, job);
+	}
+
+	/**
+	 * The page of the given job below the given URL of the CI server.
+	 */
+	public static String jobUrl(String rootUrl, String job) {
+		return rootUrl + "job/" + job + "/";
+	}
+
+	private String page(String job) {
+		return jobUrl(_rootUrl, job);
 	}
 
 	@Override
@@ -134,10 +167,10 @@ public class RecordingCIProvider implements CIProvider {
 		checkFailure();
 		List<CIBuild> builds = builds(job);
 		if (_queued) {
-			return new CIBuildStart(null, "q" + builds.size(), jobUrl(job));
+			return new CIBuildStart(null, "q" + builds.size(), page(job));
 		}
 		int number = builds.size() + 1;
-		CIBuild build = new CIBuild(number, CIBuildState.RUNNING, jobUrl(job) + number + "/", START_TIME,
+		CIBuild build = new CIBuild(number, CIBuildState.RUNNING, page(job) + number + "/", START_TIME,
 			Duration.ofSeconds(number));
 		builds.add(build);
 		return new CIBuildStart(Integer.valueOf(number), "q" + number, build.webUrl());

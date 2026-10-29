@@ -3,18 +3,22 @@
 # SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
 #
 # Local development setup of the control application tl-factory-app: a Gitea as git hosting service
-# and a Jenkins as CI server, both on the loopback address of the host, where the control
-# application running on the host reaches them.
+# and a Jenkins as CI server, published on the bind address of the host
+# (TL_FACTORY_DEVEL_BIND_ADDRESS, default the loopback address), where the control application
+# running on the host and the browsers reach them.
 #
 # Started, stopped and reset by tl-factory-devel.sh, which also creates the users, the
 # organization and the tokens and writes the generated credentials to the secret folder of the
 # developer (~/.top-logic/secrets). Described in the developer article factory/index, section
 # "Local setup".
 #
-# The URLs: Gitea reports its clone URLs below its ROOT_URL http://localhost:<gitea port>/, which
-# the control application, its workspace proxy and the browsers reach. Jenkins clones from the same
-# URLs; inside its container, git rewrites them to the Gitea service on the network of the setup
-# (http://gitea:3000/, see the config gitconfig below).
+# The URLs: both services know the public host name of the setup (TL_FACTORY_DEVEL_PUBLIC_HOST,
+# default localhost), under which the browsers reach them: Gitea reports its pages and clone URLs
+# below its ROOT_URL http://<public host>:<gitea port>/, Jenkins its pages below its Jenkins URL
+# http://<public host>:<jenkins port>/. The control application talks to both through their
+# published ports. Jenkins clones from the clone URLs of Gitea; inside its container, git rewrites
+# them to the Gitea service on the network of the setup (http://gitea:3000/, see the config
+# gitconfig below).
 
 name: tl-factory-devel
 
@@ -28,12 +32,14 @@ services:
     environment:
       GITEA__security__INSTALL_LOCK: "true"
       GITEA__database__DB_TYPE: sqlite3
-      GITEA__server__ROOT_URL: http://localhost:${TL_FACTORY_DEVEL_GITEA_PORT:-3300}/
+      GITEA__server__ROOT_URL: http://${TL_FACTORY_DEVEL_PUBLIC_HOST:-localhost}:${TL_FACTORY_DEVEL_GITEA_PORT:-3300}/
+      # The URLs below the ROOT_URL, not below the host the request names (the default "auto").
+      GITEA__server__PUBLIC_URL_DETECTION: legacy
       GITEA__server__DISABLE_SSH: "true"
       GITEA__repository__DEFAULT_BRANCH: main
       GITEA__service__DISABLE_REGISTRATION: "true"
     ports:
-      - "127.0.0.1:${TL_FACTORY_DEVEL_GITEA_PORT:-3300}:3000"
+      - "${TL_FACTORY_DEVEL_BIND_ADDRESS:-127.0.0.1}:${TL_FACTORY_DEVEL_GITEA_PORT:-3300}:3000"
     volumes:
       - gitea-data:/data
     restart: unless-stopped
@@ -57,9 +63,9 @@ services:
         required: false
     environment:
       TL_JENKINS_EXECUTORS: "2"
-      TL_JENKINS_URL: http://localhost:${TL_FACTORY_DEVEL_JENKINS_PORT:-8380}/
+      TL_JENKINS_URL: http://${TL_FACTORY_DEVEL_PUBLIC_HOST:-localhost}:${TL_FACTORY_DEVEL_JENKINS_PORT:-8380}/
     ports:
-      - "127.0.0.1:${TL_FACTORY_DEVEL_JENKINS_PORT:-8380}:8080"
+      - "${TL_FACTORY_DEVEL_BIND_ADDRESS:-127.0.0.1}:${TL_FACTORY_DEVEL_JENKINS_PORT:-8380}:8080"
     configs:
       - source: gitconfig
         target: /etc/gitconfig
@@ -68,10 +74,14 @@ services:
     restart: unless-stopped
 
 configs:
-  # The clone URLs of Gitea name the host, which the Jenkins container does not reach as localhost.
+  # The clone URLs of Gitea name the public host, which the Jenkins container need not reach; as
+  # localhost, the default public host, it reaches itself. A job keeps the clone URL it was
+  # configured with until the control application configures it again before its next build, so
+  # both names are rewritten.
   gitconfig:
     content: |
       [url "http://gitea:3000/"]
+        insteadOf = http://${TL_FACTORY_DEVEL_PUBLIC_HOST:-localhost}:${TL_FACTORY_DEVEL_GITEA_PORT:-3300}/
         insteadOf = http://localhost:${TL_FACTORY_DEVEL_GITEA_PORT:-3300}/
 
 volumes:

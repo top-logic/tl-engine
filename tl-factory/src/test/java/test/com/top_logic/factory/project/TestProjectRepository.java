@@ -704,6 +704,46 @@ public class TestProjectRepository extends BasicTestCase {
 	}
 
 	/**
+	 * The pages of repository and CI job recorded on a project follow the URLs the services report
+	 * after their public URLs changed; a project whose service fails keeps its page.
+	 */
+	public void testRefreshLinks() throws Exception {
+		ProjectWorkspaces service = ProjectWorkspaces.getInstance();
+		TestingProjectWorkspaces.setCI(_ci);
+		GitRepository existing = existing("moved-links", pom("moved-links", ENGINE_VERSION));
+		TLObject project = withSources(project("moved-links", existing.getFullName()));
+		service.setUpCI(project);
+		HistoryUtils.updateSessionRevision();
+		String job = RecordingCIProvider.jobName(existing);
+
+		service.refreshLinks();
+		HistoryUtils.updateSessionRevision();
+		assertEquals(existing.getWebUrl(), FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL));
+		assertEquals(RecordingCIProvider.jobUrl(job), FactoryModel.getString(project, FactoryModel.PROJECT_CI_JOB_URL));
+
+		String gitRoot = "https://git.public.test/";
+		String ciRoot = "https://ci.public.test/";
+		_hosting.setRootUrl(gitRoot);
+		_ci.setRootUrl(ciRoot);
+		_ci.setFailure(new TopLogicException(com.top_logic.factory.ci.I18NConstants.ERROR_CI_UNREACHABLE__SERVICE_PROBLEM
+			.fill(RecordingCIProvider.BASE_URL, "down")));
+		service.refreshLinks();
+		HistoryUtils.updateSessionRevision();
+		assertEquals(gitRoot + existing.getFullName(),
+			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL));
+		assertEquals("The CI server is down.", RecordingCIProvider.jobUrl(job),
+			FactoryModel.getString(project, FactoryModel.PROJECT_CI_JOB_URL));
+
+		_ci.setFailure(null);
+		service.refreshLinks();
+		HistoryUtils.updateSessionRevision();
+		assertEquals(RecordingCIProvider.jobUrl(ciRoot, job),
+			FactoryModel.getString(project, FactoryModel.PROJECT_CI_JOB_URL));
+		assertEquals("Found by its public URL.", gitRoot + existing.getFullName(),
+			_hosting.findRepository(gitRoot + existing.getFullName() + RepositoryName.GIT_SUFFIX).getWebUrl());
+	}
+
+	/**
 	 * The pipeline file is protected only with CI: it is removed from the protected files of a
 	 * project without CI job, and added for one with a CI job, unless it is listed.
 	 */

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or working on the CI of the control application (the build of the project repositories on a CI server) - CIService with its optional provider and pipeline-template, CIProvider (pipelineFile, ensureJob, startBuild with the queue, lastBuild, console bounded to its end) and its value types CIJob, CIBuild, CIBuildState, CIBuildStart, CIConsole, the test double RecordingCIProvider, the CI job of a project (tl.factory:Project ciJob and ciJobUrl), CI as opt-in per project (no CI with the creation of a workspace; Set up CI with ProjectWorkspaces.setUpCI and ProjectCI.setUp: the Jenkinsfile from /WEB-INF/factory/ci/Jenkinsfile committed with GitHostingProvider.commitFile unless the repository has one, the protection extended by the pipeline file if the token may administer the repository, ensureJob and the first build, the retry after a failure, ciSetUpUnavailable and its reasons; the pipeline file protected only with a CI job, ProjectWorkspaces.protectedFiles, withPipelineFile, withoutPipelineFile), the CI route of the workspace proxy (CIRoute at /ci with POST /builds, GET /builds/last, GET /builds/<n>/log, max-log-size, TL_FACTORY_CI_URL, the agent instructions with curl), the views (factoryCiEnabled, factoryCiSetUpUnavailable, factorySetUpCI, factoryCiUnavailable, factoryStartBuild, factoryLastBuild, the commands Set up CI, Start CI build and Refresh CI build, the ciBuild channel), the Jenkins implementation JenkinsCIProvider of the module tl-factory-jenkins (its configuration from the environment variables tl_factory_jenkins_url, tl_factory_jenkins_user, tl_factory_jenkins_folder and tl_factory_jenkins_scm_credentials, switched off by an empty base-url through ServerProviderConfig, base-url, user, the secret tl_factory_jenkins_token, credentials, folder, scm-credentials-id, script-path, job-template pipeline-job.xml with its placeholders, timeout, queue-wait, the JSON API, createItem and config.xml, build and the queue item, progressiveText with X-Text-Size and the console notes, no CSRF crumb with an API token), the Jenkins-side prerequisites (user and permissions, SCM credential, agent with JDK and Maven, plugins), its integration test against a Jenkins container next to a Gitea (JenkinsTestServer, TestJenkinsCIProvider, src/test/docker/jenkins with Dockerfile and its targets ci and devel, plugins.txt and the init script tl-factory.groovy with the TL_JENKINS_* variables), the end-to-end test TestProjectCI of a new project, the set up of its CI and its first build against an external Gitea and Jenkins and updating Jenkins and its plugins (Renovate).
+description: Read before configuring or working on the CI of the control application (the build of the project repositories on a CI server) - CIService with its optional provider and pipeline-template, CIProvider (pipelineFile, ensureJob, findJob, startBuild with the queue, lastBuild, console bounded to its end) and its value types CIJob, CIBuild, CIBuildState, CIBuildStart, CIConsole, the test double RecordingCIProvider, the CI job of a project (tl.factory:Project ciJob and ciJobUrl), CI as opt-in per project (no CI with the creation of a workspace; Set up CI with ProjectWorkspaces.setUpCI and ProjectCI.setUp: the Jenkinsfile from /WEB-INF/factory/ci/Jenkinsfile committed with GitHostingProvider.commitFile unless the repository has one, the protection extended by the pipeline file if the token may administer the repository, ensureJob and the first build, the retry after a failure, ciSetUpUnavailable and its reasons; the pipeline file protected only with a CI job, ProjectWorkspaces.protectedFiles, withPipelineFile, withoutPipelineFile), the CI route of the workspace proxy (CIRoute at /ci with POST /builds, GET /builds/last, GET /builds/<n>/log, max-log-size, TL_FACTORY_CI_URL, the agent instructions with curl), the views (factoryCiEnabled, factoryCiSetUpUnavailable, factorySetUpCI, factoryCiUnavailable, factoryStartBuild, factoryLastBuild, the commands Set up CI, Start CI build and Refresh CI build, the ciBuild channel), the Jenkins implementation JenkinsCIProvider of the module tl-factory-jenkins (its configuration from the environment variables tl_factory_jenkins_url, tl_factory_jenkins_user, tl_factory_jenkins_folder and tl_factory_jenkins_scm_credentials, switched off by an empty base-url through ServerProviderConfig, base-url, user, the secret tl_factory_jenkins_token, credentials, folder, scm-credentials-id, script-path, job-template pipeline-job.xml with its placeholders, timeout, queue-wait, the JSON API, createItem and config.xml, build and the queue item, progressiveText with X-Text-Size and the console notes, no CSRF crumb with an API token), the Jenkins-side prerequisites (user and permissions, SCM credential, agent with JDK and Maven, plugins), the public Jenkins URL the pages are reported below and what an operator configures for it, its integration test against a Jenkins container next to a Gitea (JenkinsTestServer, TestJenkinsCIProvider, src/test/docker/jenkins with Dockerfile and its targets ci and devel, plugins.txt and the init script tl-factory.groovy with the TL_JENKINS_* variables), the end-to-end test TestProjectCI of a new project, the set up of its CI and its first build against an external Gitea and Jenkins and updating Jenkins and its plugins (Renovate).
 order: 40
 ---
 
@@ -44,7 +44,7 @@ the environment:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `tl_factory_jenkins_url` | *(empty)* | `base-url`, the URL of the Jenkins; empty switches CI off. |
+| `tl_factory_jenkins_url` | *(empty)* | `base-url`, the URL under which the control application reaches the Jenkins; empty switches CI off. |
 | `tl_factory_jenkins_user` | `tl-factory` | `user`, the Jenkins user of the requests. |
 | `tl_factory_jenkins_folder` | `tl-factory` | `folder` of the jobs; empty for the top level. |
 | `tl_factory_jenkins_scm_credentials` | *(empty)* | `scm-credentials-id`, the Jenkins credential the jobs check out with; empty for none. |
@@ -64,7 +64,7 @@ set up (`ProjectWorkspaces.getCI(project)`, `ERROR_CI_NEEDS_BUILT_IN_CONNECTION_
 
 | Property of `JenkinsCIProvider` | Default | Meaning |
 |---|---|---|
-| `base-url` | *(empty: off)* | URL of the Jenkins, its "Jenkins URL"; the pages of jobs and builds are reported below it. |
+| `base-url` | *(empty: off)* | URL under which the control application reaches the Jenkins. The pages of jobs and builds are the ones Jenkins reports, below its Jenkins URL, see [the public URL](#the-public-url-of-jenkins). |
 | `user` | none | Jenkins user of the requests, if `credentials` is not set. |
 | `credentials` | basic authentication of `user` with the API token in the secret `tl_factory_jenkins_token` | How the requests are authenticated, any `CredentialProvider`, see [credential providers](doc:credentials/credential-providers). |
 | `folder` | `tl-factory` | Folder of the jobs, nested folders separated by `/`; empty for the top level. Created if missing. |
@@ -103,6 +103,28 @@ rejected again, it fails with `ERROR_CI_AUTHENTICATION_FAILED__SERVICE`. Neither
   application generated from `tl-archetype-app` names itself (`https://dev.top-logic.com/nexus/...`),
   or a mirror in the agent's Maven settings. The workspaces fill their Maven repository from
   `tl_factory_repository_url`; the CI agent does not see it.
+
+### The public URL of Jenkins
+
+The links to jobs and builds the control application shows - `ciJobUrl` of a project, the build of
+the `ciBuild` channel - are the pages Jenkins reports in the `url` fields of its JSON API, below
+its Jenkins URL; the control application never rewrites them. For the Jenkins in production, the
+operator therefore configures:
+
+- **The Jenkins URL** (*Manage Jenkins*, *System*, *Jenkins Location*; `TL_JENKINS_URL` of the
+  image of `tl-factory-jenkins`, which its init script applies at every start): the public URL
+  under which the browsers of the users reach Jenkins, e.g. `https://ci.example.com/`. `base-url`
+  may be another address of the same server.
+- **Access to the clone URLs**: the jobs clone from the clone URLs the git hosting service reports,
+  below its [public URL](doc:factory/git-hosting#the-public-url-of-the-hosting-service).
+- **Accounts of the users in Jenkins**: Jenkins shows its pages only to users it knows (the image
+  of `tl-factory-jenkins` gives anonymous users no read access). Single sign-on and access derived
+  from the membership in the tenant are added by ticket #30052.
+
+When the Jenkins URL changes, the recorded job pages follow: the control application refreshes the
+links of the projects after every start (`ProjectWorkspaces.refreshLinks` with `findJob`, see
+[the public URL of the hosting service](doc:factory/git-hosting#the-public-url-of-the-hosting-service)),
+and *Start CI build* records the job anew when its page changed.
 
 ## The pipeline definition
 
@@ -233,13 +255,15 @@ triggers or properties.
 
 | Operation | Requests |
 |---|---|
-| `ensureJob` | `GET <item>/api/json?tree=_class` for each folder and the job (404: missing); `POST <parent>/createItem?name=<name>` with the folder configuration (`<com.cloudbees.hudson.plugins.folder.Folder/>`) or the job configuration as `application/xml`; for an existing job `POST <job>/config.xml`. |
-| `startBuild` | `POST <job>/build?delay=0sec` answers `201` with the queue item in `Location`; `GET queue/item/<id>/api/json?tree=cancelled,executable[number]` until the item has its build, at most `queue-wait`. |
-| `lastBuild` | `GET <job>/lastBuild/api/json?tree=number,result,building,timestamp,duration`; `404` is no build, or no job if `GET <job>/api/json` is 404 as well. `building` or no `result` is `RUNNING`, an unknown result `FAILURE`. |
+| `ensureJob` | `GET <item>/api/json?tree=url` for each folder and the job (404: missing); `POST <parent>/createItem?name=<name>` with the folder configuration (`<com.cloudbees.hudson.plugins.folder.Folder/>`) or the job configuration as `application/xml`; for an existing job `POST <job>/config.xml`; the page of a created job is asked again. |
+| `findJob` | `GET <job>/api/json?tree=url` (404: no job). |
+| `startBuild` | `POST <job>/build?delay=0sec` answers `201` with the queue item in `Location`; `GET queue/item/<id>/api/json?tree=cancelled,executable[number,url]` until the item has its build, at most `queue-wait`; a build still waiting gets the page of the job. |
+| `lastBuild` | `GET <job>/lastBuild/api/json?tree=number,result,building,timestamp,duration,url`; `404` is no build, or no job if `GET <job>/api/json` is 404 as well. `building` or no `result` is `RUNNING`, an unknown result `FAILURE`. |
 | `console` | `HEAD <job>/<number>/logText/progressiveText?start=0` for the size of the output (`X-Text-Size`), then `GET ...?start=<size - max>`; the first, incomplete line is dropped, and the console notes of Jenkins (`ESC[8mha:...ESC[0m`, the hidden annotations of the raw output) are removed. The bound applies to the raw output, so the plain text returned is shorter. |
 
-`<item>` is `job/<segment>/` for each segment of the full name, URL-encoded. The pages the
-provider reports are these paths below `base-url`. Answers with 403 fail with
+`<item>` is `job/<segment>/` for each segment of the full name, URL-encoded, below `base-url`. The
+pages the provider reports are the `url` fields of the answers, below the Jenkins URL; an answer
+without one gets the path below `base-url`. Answers with 403 fail with
 `ERROR_CI_PERMISSION_DENIED__JOB`, 404 of a job with `ERROR_CI_JOB_NOT_FOUND__JOB`, of a build
 with `ERROR_CI_BUILD_NOT_FOUND__JOB_BUILD`, no answer with
 `ERROR_CI_UNREACHABLE__SERVICE_PROBLEM`, anything else with
@@ -276,7 +300,10 @@ the API token `TL_JENKINS_API_TOKEN` (`addFixedNewToken`, kept while it is valid
 logged-in users, the SCM credential `TL_JENKINS_SCM_CREDENTIALS_ID` with `TL_JENKINS_SCM_USER` and
 `TL_JENKINS_SCM_PASSWORD` (here the read token of the Gitea), `TL_JENKINS_EXECUTORS` executors on
 the built-in node (default 2) and optionally the Jenkins URL `TL_JENKINS_URL`; the setup wizard is
-off. The test checks: `ensureJob` creating the folders and the job and replacing its configuration
+off. The image installs the script as `tl-factory.groovy.override`, so that the start script of the
+image copies it into an existing Jenkins home as well. The test Jenkins gets the Jenkins URL on the
+host name `localhost` while the provider talks to `127.0.0.1`, and checks that the pages are reported
+below the Jenkins URL. The test checks: `ensureJob` creating the folders and the job and replacing its configuration
 (clone URL, branch, credential, escaped description), a build of an `echo` pipeline pushed to the
 Gitea ending `SUCCESS` with its console and a cut console, a build of an `error` pipeline ending
 `FAILURE` with the error in its console, missing jobs and builds, and a wrong token failing with

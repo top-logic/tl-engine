@@ -24,6 +24,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The repositories live at {@link #BASE_URL}; their default branch is {@link #DEFAULT_BRANCH}.
+ * Their pages and clone URLs are below {@link #BASE_URL} as well, until a test
+ * {@link #setRootUrl(String) moves} them, as a hosting service does when its public URL is changed.
  * The {@link #gitUrl(RepositoryName) git URLs} are below a {@link #getGitBaseUrl() base URL of its
  * own}, by default {@link #BASE_URL}, so that a test can serve git's protocol itself.
  * </p>
@@ -68,6 +70,8 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 	private final String _owner;
 
 	private final String _gitBaseUrl;
+
+	private String _rootUrl = BASE_URL;
 
 	private final CredentialProvider _gitCredentials;
 
@@ -187,7 +191,21 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 	public synchronized GitRepository findRepository(String reference) {
 		_calls.add(FIND + " " + reference);
 		RepositoryName name = RepositoryName.parse(reference, BASE_URL);
+		if (name == null) {
+			name = RepositoryName.parse(reference, _rootUrl);
+		}
 		return name == null ? null : _repositories.get(name);
+	}
+
+	/**
+	 * Sets the URL the pages and clone URLs of the repositories are below, with a slash at its
+	 * end, and gives the existing repositories their URLs below it.
+	 */
+	public synchronized void setRootUrl(String rootUrl) {
+		_rootUrl = rootUrl;
+		for (Map.Entry<RepositoryName, GitRepository> entry : _repositories.entrySet()) {
+			entry.setValue(repository(entry.getKey(), entry.getValue().canAdminister()));
+		}
 	}
 
 	@Override
@@ -273,8 +291,8 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 		return repository.getFullName() + ':' + branch;
 	}
 
-	private static GitRepository repository(RepositoryName name, boolean canAdminister) {
-		String webUrl = BASE_URL + name.getFullName();
+	private GitRepository repository(RepositoryName name, boolean canAdminister) {
+		String webUrl = _rootUrl + name.getFullName();
 		return new GitRepository(name, webUrl + RepositoryName.GIT_SUFFIX, webUrl, DEFAULT_BRANCH, canAdminister);
 	}
 

@@ -60,6 +60,20 @@ public interface CIProvider {
 	CIJob ensureJob(GitRepository repository, String description);
 
 	/**
+	 * The given job as the CI server reports it now, without changing it.
+	 *
+	 * <p>
+	 * Its {@link CIJob#webUrl() page} is below the URL the CI server reports for itself, which can
+	 * change with its configuration.
+	 * </p>
+	 *
+	 * @param job
+	 *        The {@link CIJob#name() name} of the job.
+	 * @return The job, {@code null} if it does not exist.
+	 */
+	CIJob findJob(String job);
+
+	/**
 	 * Starts a build of the given job.
 	 *
 	 * <p>

@@ -37,6 +37,7 @@ import com.top_logic.factory.gitea.client.model.EditBranchProtectionOption;
 import com.top_logic.factory.gitea.client.model.OrganizationPermissions;
 import com.top_logic.factory.gitea.client.model.Permission;
 import com.top_logic.factory.gitea.client.model.Repository;
+import com.top_logic.factory.gitea.client.model.User;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -55,6 +56,17 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * Git's smart HTTP protocol reaches a repository at its clone URL below the URL of the server,
  * authenticated with the same credentials.
+ * </p>
+ *
+ * <h2>URLs</h2>
+ *
+ * <p>
+ * The URL of the connection is where the control application reaches Gitea. The pages and clone
+ * URLs of the repositories are the ones Gitea reports, below its {@code ROOT_URL}, the URL under
+ * which the browsers of the users reach it; both URLs may differ, e.g. a host name only the
+ * control application resolves and a public one. A repository a user names by a URL is found below
+ * either: the {@code ROOT_URL} is told by the page of the user of the token, its {@code ROOT_URL}
+ * followed by the login.
  * </p>
  *
  * <h2>The access token</h2>
@@ -219,7 +231,7 @@ public class GiteaHostingProvider implements GitHostingProvider {
 	 *
 	 * @param settings
 	 *        The server, owner and credentials of the connection; the URL of the server is the URL
-	 *        under which its web interface is served, its {@code ROOT_URL}, with the REST API at
+	 *        under which the control application reaches Gitea, with the REST API at
 	 *        {@value #API_PATH} below it.
 	 * @param timeout
 	 *        How long a connection to Gitea and each request may take.
@@ -414,6 +426,42 @@ public class GiteaHostingProvider implements GitHostingProvider {
 	}
 
 	/**
+	 * The repository the given reference names below the URL of the connection or below the
+	 * {@code ROOT_URL}.
+	 *
+	 * @see RepositoryName#parse(String, String)
+	 */
+	private RepositoryName parseReference(String reference) {
+		RepositoryName name = RepositoryName.parse(reference, _baseUrl);
+		if (name != null || reference == null || reference.indexOf(':') < 0) {
+			return name;
+		}
+		String rootUrl = rootUrl();
+		return rootUrl == null || rootUrl.equals(_baseUrl) ? null : RepositoryName.parse(reference, rootUrl);
+	}
+
+	/**
+	 * The {@code ROOT_URL} of Gitea, below which it reports the pages and clone URLs: the page of
+	 * the user of the token without the login at its end.
+	 *
+	 * @return The URL with a slash at its end, {@code null} if Gitea does not tell.
+	 */
+	private String rootUrl() {
+		User user;
+		try {
+			user = call(() -> _users.userGetCurrent());
+		} catch (ApiException ex) {
+			return null;
+		}
+		String page = user.getHtmlUrl();
+		String login = user.getLogin();
+		if (page == null || login == null || login.isEmpty() || !page.endsWith("/" + login)) {
+			return null;
+		}
+		return page.substring(0, page.length() - login.length());
+	}
+
+	/**
 	 * Whether the owner is the user of the token; {@code false} if Gitea does not tell.
 	 */
 	private boolean isOwnerTheUser() {
@@ -470,9 +518,13 @@ public class GiteaHostingProvider implements GitHostingProvider {
 		}
 	}
 
+	/**
+	 * Looks the repository up by its full name, or by a URL below the URL of the connection or
+	 * below the {@code ROOT_URL} of Gitea.
+	 */
 	@Override
 	public GitRepository findRepository(String reference) {
-		RepositoryName name = RepositoryName.parse(reference, _baseUrl);
+		RepositoryName name = parseReference(reference);
 		if (name == null) {
 			return null;
 		}

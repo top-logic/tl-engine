@@ -26,6 +26,11 @@ class ListHandler {
 		return _storage.toList();
 	}
 
+	/**
+	 * Removes the entry with the given key value.
+	 *
+	 * @see AbstractListStorage#remove(Object)
+	 */
 	public void remove(Object reference) {
 		_storage.remove(reference);
 	}

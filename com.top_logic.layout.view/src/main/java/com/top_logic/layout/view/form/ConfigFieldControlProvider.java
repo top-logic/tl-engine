@@ -160,6 +160,7 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 			: TypedConfiguration.newConfigItem(type);
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
+		binding.indexedBy(index);
 		ConfigFieldPush push = new ConfigFieldPush(() -> binding.push(edited));
 		index.observeFields(push::watch);
 
@@ -193,6 +194,7 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 		FieldCollectionValue value = new FieldCollectionValue(holder, type, label);
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
+		binding.indexedBy(index);
 		ConfigFieldPush push = new ConfigFieldPush(() -> binding.push(new ArrayList<>(currentOf(holder))));
 		index.observeFields(push::watch);
 		// Adding, removing and reordering never touch a field, so the holder itself is watched too.

@@ -18,6 +18,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -411,6 +412,17 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	@Override
 	public boolean validate() {
 		return _model == null || !_model.hasError();
+	}
+
+	/**
+	 * Lets the input control commit what it holds that is not yet part of the field's value, if it
+	 * is a {@link PendingInput}.
+	 */
+	@Override
+	public void commitPendingInput() {
+		if (_model != null && _innerControl instanceof PendingInput input) {
+			input.commitPendingInput();
+		}
 	}
 
 	@Override

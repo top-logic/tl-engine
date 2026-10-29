@@ -17,7 +17,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.container.ConfigPartUtilInternal;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.provider.MetaLabelProvider;
 
 /**
  * The entries a {@link ConfigListEditorControl} has created but not yet put into the edited
@@ -43,7 +45,7 @@ import com.top_logic.layout.form.values.edit.Labels;
  * <p>
  * Nothing here draws anything. It holds the entries and the rules that decide when one may join the
  * collection; the control renders them and hands each entry's key field back through
- * {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)}, which is where a refused confirmation
+ * {@link PendingEntry#setKeyFieldModel(AbstractFieldModel)}, which is where a refused confirmation
  * reports itself.
  * </p>
  */
@@ -56,7 +58,9 @@ public final class ConfigPendingEntries {
 	private final List<PendingEntry> _entries = new ArrayList<>();
 
 	/**
-	 * One pending entry, paired with the {@link ConfigFieldModel} built for its key field.
+	 * One pending entry, paired with the field model built for its key field: the
+	 * {@link ConfigFieldModel} of a key that is typed, the model of the type selector of a key that
+	 * is the entry's type.
 	 *
 	 * <p>
 	 * The pairing is why this class exists: the entry and its key field model used to be two
@@ -76,12 +80,26 @@ public final class ConfigPendingEntries {
 	 */
 	public static final class PendingEntry {
 
+		private final ConfigPendingEntries _owner;
+
 		private ConfigurationItem _entry;
 
-		private ConfigFieldModel _keyFieldModel;
+		private AbstractFieldModel _keyFieldModel;
 
-		PendingEntry(ConfigurationItem entry) {
+		PendingEntry(ConfigPendingEntries owner, ConfigurationItem entry) {
+			_owner = owner;
 			_entry = entry;
+		}
+
+		/**
+		 * Moves this entry into the edited collection, as its own Confirm button does.
+		 *
+		 * @return The reason it was refused, or {@code null} if it joined the collection.
+		 *
+		 * @see ConfigPendingEntries#confirm(PendingEntry)
+		 */
+		public ResKey confirm() {
+			return _owner.confirm(this);
 		}
 
 		/** The entry itself, not yet part of the edited collection. */
@@ -90,7 +108,8 @@ public final class ConfigPendingEntries {
 		}
 
 		/**
-		 * Remembers the field model of the key field just built for this entry.
+		 * Remembers the field model of the key field just built for this entry - the type selector
+		 * of a collection keyed by its entries' type.
 		 *
 		 * <p>
 		 * Called on every render cycle, so that a refused
@@ -98,8 +117,26 @@ public final class ConfigPendingEntries {
 		 * that is no longer displayed.
 		 * </p>
 		 */
-		public void setKeyFieldModel(ConfigFieldModel keyFieldModel) {
+		public void setKeyFieldModel(AbstractFieldModel keyFieldModel) {
 			_keyFieldModel = keyFieldModel;
+		}
+
+		/**
+		 * The field model of the key field last built for this entry, or {@code null} if it has
+		 * none.
+		 */
+		AbstractFieldModel keyFieldModel() {
+			return _keyFieldModel;
+		}
+
+		/**
+		 * The configuration whose collection this entry joins once confirmed, or {@code null} if
+		 * the collection is part of none.
+		 *
+		 * @see ConfigCollection#container()
+		 */
+		ConfigurationItem collectionOwner() {
+			return _owner._value.container();
 		}
 
 		/**
@@ -116,26 +153,6 @@ public final class ConfigPendingEntries {
 		void setKeyFieldInputError(ResKey message) {
 			if (_keyFieldModel != null) {
 				_keyFieldModel.setError(message);
-			}
-		}
-
-		/**
-		 * Reports the given message at this entry's key field, if it has one yet.
-		 *
-		 * <p>
-		 * Reported as a verdict on the entry rather than on what was typed into the key - the same
-		 * distinction {@link ConfigFieldModel#setModelValidationError(ResKey)} carries everywhere
-		 * else, so that clearing one channel never silently erases the other.
-		 * </p>
-		 */
-		public void setKeyFieldError(ResKey message) {
-			if (_keyFieldModel != null) {
-				_keyFieldModel.setModelValidationError(message);
-				// A model validation error stays hidden until it is revealed - see
-				// AbstractFieldModel#getError, which answers null while isRevealed() is false. The
-				// field has nothing to reveal on its own: nobody typed anything wrong into it, the
-				// entry around it is simply unfinished.
-				_keyFieldModel.setRevealed(true);
 			}
 		}
 	}
@@ -169,7 +186,7 @@ public final class ConfigPendingEntries {
 	/** Starts a new pending entry for the given, freshly created item. */
 	public PendingEntry start(ConfigurationItem entry) {
 		attach(entry);
-		PendingEntry pending = new PendingEntry(entry);
+		PendingEntry pending = new PendingEntry(this, entry);
 		_entries.add(pending);
 		_onChanged.accept(entry);
 		return pending;
@@ -225,7 +242,7 @@ public final class ConfigPendingEntries {
 		}
 		if (_value.hasEntryWithKey(key)) {
 			return refuse(pending, I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
-				.fill(Labels.propertyLabel(keyProperty, false), key));
+				.fill(Labels.propertyLabel(keyProperty, false), keyLabel(key)));
 		}
 		return commit(pending);
 	}
@@ -245,9 +262,10 @@ public final class ConfigPendingEntries {
 	 * Reports the given reason at the entry's key field and hands it back for the caller to show.
 	 *
 	 * <p>
-	 * The field is where the reason belongs when there is one, but a collection keyed by the
-	 * entry's type has no key field at all - and a refusal nobody is told about is the one thing
-	 * this must never be. So the reason travels back either way.
+	 * The field is where the reason belongs when there is one, but an entry need not show one: a
+	 * collection keyed by the entry's type offers no type selector where there is a single type to
+	 * choose from - and a refusal nobody is told about is the one thing this must never be. So the
+	 * reason travels back either way.
 	 * </p>
 	 */
 	private ResKey refuse(PendingEntry pending, ResKey reason) {
@@ -296,14 +314,57 @@ public final class ConfigPendingEntries {
 		}
 		String propertyLabel = Labels.propertyLabel(keyProperty, false);
 		if (_value.hasEntryWithKey(key)) {
-			return I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE.fill(propertyLabel, key);
+			return I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE.fill(propertyLabel, keyLabel(key));
 		}
 		for (PendingEntry other : _entries) {
 			if (other != pending && key.equals(other.entry().value(_value.keyProperty(other.entry())))) {
-				return I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE.fill(propertyLabel, key);
+				return I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE.fill(propertyLabel, keyLabel(key));
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether the given item, not yet started here, would take a key already in use - by an entry
+	 * of the collection or by another pending entry.
+	 *
+	 * <p>
+	 * An empty key takes nothing: it is not yet a key at all.
+	 * </p>
+	 */
+	public boolean isKeyTaken(ConfigurationItem item) {
+		Object key = item.value(_value.keyProperty(item));
+		if (ConfigUtil.isAnonymousKey(key)) {
+			return false;
+		}
+		if (_value.hasEntryWithKey(key)) {
+			return true;
+		}
+		for (PendingEntry other : _entries) {
+			if (key.equals(other.entry().value(_value.keyProperty(other.entry())))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The given key as the user sees it.
+	 *
+	 * <p>
+	 * A collection keyed by its entries' type has a {@link Class} as key: it is named as the type
+	 * selector names it, see {@link PolymorphicOptions#labelFor(Object)}, not by the class's own
+	 * text. A text key is itself, any other key is named by its label.
+	 * </p>
+	 */
+	static String keyLabel(Object key) {
+		if (key instanceof Class<?>) {
+			return PolymorphicOptions.labelFor(key);
+		}
+		if (key instanceof String text) {
+			return text;
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(key);
 	}
 
 	/**

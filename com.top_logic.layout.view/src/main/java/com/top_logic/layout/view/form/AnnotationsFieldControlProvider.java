@@ -30,6 +30,7 @@ import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.TLFormObjectBase;
@@ -185,6 +186,7 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		PolymorphicOptions.Choices choices = PolymorphicOptions.compute(container, annotations);
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
+		binding.indexedBy(index);
 		ConfigFieldPush push = new ConfigFieldPush(() -> {
 			binding.push(new ArrayList<>(container.getAnnotations()));
 			validate(model, container, index);
@@ -215,8 +217,13 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 * {@link ConfigFormControl} reaches by refusing its own Apply has to arrive here as an error on
 	 * the field instead - otherwise the rules a configuration is displayed under would hold in the
 	 * standalone configuration form and nowhere else: the mandatory marker would be drawn on a
-	 * value that may be left empty, an unconfirmed entry would be silently dropped, and an input
-	 * the field could not read would be saved as the value it had before.
+	 * value that may be left empty, and an input the field could not read would be saved as the
+	 * value it had before.
+	 * </p>
+	 *
+	 * <p>
+	 * An unconfirmed entry is no error here: the surrounding form confirms it when it is saved (see
+	 * {@link PendingInput}), and refuses the save if the entry cannot be confirmed.
 	 * </p>
 	 *
 	 * <p>

@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -30,6 +31,28 @@ public interface FormParticipant {
 	 * @return {@code true} if valid, {@code false} if validation errors exist.
 	 */
 	boolean validate();
+
+	/**
+	 * Commits input the user has entered but not yet committed into the participant's value, as if
+	 * the user had committed it.
+	 *
+	 * <p>
+	 * Called by {@link FormControl} for all participants whenever the form hands over its state
+	 * ({@link FormControl#executeSave()}, {@link FormControl#executeApply()},
+	 * {@link FormControl#executeStoreState()}), before it decides whether anything changed and
+	 * before validation. Saving means the user has finished editing, so an entry filled in but not
+	 * yet confirmed is part of what is saved. Input that cannot be committed stays in place with its
+	 * problem shown, and refuses the save.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If some input could not be committed.
+	 *
+	 * @see PendingInput
+	 */
+	default void commitPendingInput() {
+		// Default no-op for participants without input that is not yet part of their value.
+	}
 
 	/**
 	 * Ensures that the current user may write all changes {@link #applyState()} would write.

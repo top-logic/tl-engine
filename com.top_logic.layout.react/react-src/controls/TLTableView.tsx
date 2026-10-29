@@ -104,6 +104,19 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 const RESTORE_TIMEOUT_MS = 1000;
 
+/**
+ * Whether the given table body is bounded by its container, so that its height is a viewport onto
+ * the rows rather than the height of all of them.
+ *
+ * A body that cannot scroll and is taller than the browser window is as high as its canvas: no
+ * container of the page bounds it - it is placed in a content-sized container, or the containers
+ * fill only a render later (fill.ts). A body that cannot scroll but fits into the window shows all
+ * rows of a short table, which is a viewport as well.
+ */
+function isBoundedBody(body: HTMLElement): boolean {
+  return body.scrollHeight > body.clientHeight || body.clientHeight <= window.innerHeight;
+}
+
 interface ColumnState {
   name: string;
   label: string;
@@ -774,15 +787,30 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- The rows the body shows right now, by index: what the server has not sent of them yet is drawn
   //    as a skeleton row, and the grid is aria-busy until it has. Updated when the range changes, not
-  //    on every scrolled pixel. --
-  const [windowRange, setWindowRange] = React.useState<{ first: number; last: number }>({ first: 0, last: -1 });
+  //    on every scrolled pixel. A body its container does not bound (see isBoundedBody) has no
+  //    window to wait for: it reports no viewport, so the server sends no further rows, and a
+  //    skeleton for each of its possibly thousands of rows would only fill the page. --
+  const [windowRange, setWindowRange] = React.useState<{ first: number; last: number; bounded: boolean }>(
+    { first: 0, last: -1, bounded: true });
   const measureWindow = React.useCallback(() => {
     const body = scrollContainerRef.current;
     if (!body || rowHeight <= 0) return;
     const first = Math.floor(body.scrollTop / rowHeight);
     const last = Math.min(totalRowCount - 1, Math.ceil((body.scrollTop + body.clientHeight) / rowHeight) - 1);
-    setWindowRange((p) => (p.first === first && p.last === last ? p : { first, last }));
+    const bounded = isBoundedBody(body);
+    setWindowRange((p) => (p.first === first && p.last === last && p.bounded === bounded ? p : { first, last, bounded }));
   }, [rowHeight, totalRowCount]);
+
+  // The viewport the body reports to the server: the first row it shows and how many rows fit into
+  // it, or null for a body its container does not bound - its height is that of all rows, and the
+  // server would send every one of them - and for a hidden body, which shows no rows at all.
+  const viewportOf = React.useCallback((body: HTMLElement): { start: number; count: number } | null => {
+    if (rowHeight <= 0 || body.clientHeight === 0 || !isBoundedBody(body)) return null;
+    return { start: Math.floor(body.scrollTop / rowHeight), count: Math.ceil(body.clientHeight / rowHeight) };
+  }, [rowHeight]);
+
+  // The viewport last reported with a scroll command, null before the body reported one.
+  const reportedViewportRef = React.useRef<{ start: number; count: number } | null>(null);
   React.useLayoutEffect(measureWindow, [measureWindow]);
 
   // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
@@ -810,12 +838,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     scrollTimeoutRef.current = window.setTimeout(() => {
       const container = scrollContainerRef.current;
       if (!container) return;
-      const scrollTop = container.scrollTop;
-      const visibleCount = Math.ceil(container.clientHeight / rowHeight);
-      const start = Math.floor(scrollTop / rowHeight);
-      sendCommand('scroll', { start, count: visibleCount });
+      const viewport = viewportOf(container);
+      if (!viewport) return;
+      reportedViewportRef.current = viewport;
+      sendCommand('scroll', viewport);
     }, 80);
-  }, [sendCommand, rowHeight, measureWindow]);
+  }, [sendCommand, viewportOf, measureWindow]);
 
   // A density switch changes the row height: the rows the server sends for the viewport change with
   // it. Not for the first measurement - useTokenPx starts from its fallback (36) and reaches the
@@ -1499,7 +1527,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The rows of the visible window the server has not sent yet: skeleton rows of row height.
   const sentIndexes = new Set(rows.map((r) => r.index));
   const missing: number[] = [];
-  for (let i = windowRange.first; i <= windowRange.last; i++) {
+  for (let i = windowRange.first; windowRange.bounded && i <= windowRange.last; i++) {
     if (!sentIndexes.has(i)) missing.push(i);
   }
 
@@ -1512,6 +1540,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // RESTORE_TIMEOUT_MS - the scroll range has shrunk - scrolls as far as it can. Should the rows sent
   // still not cover what the body shows, the body reports its window, which no scroll event does when
   // the position stays.
+  //
+  // Afterwards, a change of the body's height reports the viewport again as soon as it shows a
+  // different number of rows: the server keeps sending the rows of the viewport reported last with
+  // every update, so a viewport measured too large - the body was not bounded yet when it reported -
+  // would otherwise stay the window of the table. The command goes through the debounce of the
+  // scroll handler, so a resize sends one when it comes to rest.
   const scrollRestoredRef = React.useRef(false);
   const restoreTimedOutRef = React.useRef(false);
   const restoreScrollRef = React.useRef<() => void>(() => {});
@@ -1520,6 +1554,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (scrollRestoredRef.current) {
       // The body changed its height: the window measured before is stale.
       measureWindow();
+      const viewport = body ? viewportOf(body) : null;
+      const reported = reportedViewportRef.current;
+      if (viewport && (!reported || reported.start !== viewport.start || reported.count !== viewport.count)) {
+        handleScroll();
+      }
       return;
     }
     if (!body || rowHeight !== tokenPx(gridRef.current, '--tl-size-row', 36)) {
@@ -1540,9 +1579,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     for (let i = first; i <= last; i++) {
       if (!sentIndexes.has(i)) {
         handleScroll();
-        break;
+        return;
       }
     }
+    // The rows sent cover the body: the server's window serves as the one reported. A body not
+    // bounded yet reports its viewport once it is.
+    reportedViewportRef.current = viewportOf(body);
   };
   React.useLayoutEffect(() => {
     if (!scrollRestoredRef.current) {

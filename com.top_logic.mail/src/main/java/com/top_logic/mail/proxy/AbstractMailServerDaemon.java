@@ -36,6 +36,7 @@ import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -77,12 +78,20 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		Boolean isActivated();
 
 		/**
-		 * Strategy to handle unknown mails.
+		 * Strategy to handle mails that cannot be assigned to an object.
+		 * 
+		 * <p>
+		 * By default, such a mail is left untouched in the INBOX ({@link UnknownMailStrategy#KEEP}).
+		 * Deleting it ({@link UnknownMailStrategy#DELETE}) must be configured explicitly.
+		 * </p>
 		 */
+		@FormattedDefault("KEEP")
 		UnknownMailStrategy getStrategyForUnknownMails();
 		
 		/**
 		 * Name of folder to move unknown mails to.
+		 * 
+		 * @see UnknownMailStrategy#MOVE
 		 */
 		@StringDefault("unbekannt")
 		String getFolderNameForUnknownMails();
@@ -123,7 +132,9 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		/** Delete the mail. */
 		DELETE,
 		/** Move the mail to a special folder. */
-		MOVE;
+		MOVE,
+		/** Leave the mail unchanged in the INBOX. */
+		KEEP;
 
 		@Override
 		public String getExternalName() {
@@ -278,6 +289,8 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	 */
     protected boolean processUnknownMail(MailMessage aMail) {
         switch (this.unknownMailStrategy) {
+			case KEEP:
+				return true;
 			case DELETE:
 				return deleteMail(aMail);
 			case MOVE:

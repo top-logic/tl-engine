@@ -7,6 +7,7 @@ package com.top_logic.layout.view.admin.system;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKeyN;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -276,6 +277,51 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     mandatory target deleted.
 	 */
 	public static ResKeyN DATABASE_ANALYSIS__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED_DROPPED;
+
+	/**
+	 * @en No statement given.
+	 */
+	public static ResKey ERROR_SQL_NO_STATEMENT;
+
+	/**
+	 * @en The maximum number of rows must be at least 1.
+	 */
+	public static ResKey ERROR_SQL_MAX_ROWS;
+
+	/**
+	 * @en The data of the application is not stored in a database.
+	 */
+	public static ResKey ERROR_SQL_NO_DATABASE;
+
+	/**
+	 * @en The database rejected the statement: {0}
+	 */
+	public static ResKey1 ERROR_SQL_REJECTED__MESSAGE;
+
+	/**
+	 * @en {0} rows read in {1} ms.
+	 */
+	public static ResKey2 SQL_QUERY__ROWS_DURATION;
+
+	/**
+	 * @en The first {0} rows are shown, the query delivers more. Read in {1} ms.
+	 */
+	public static ResKey2 SQL_QUERY_TRUNCATED__ROWS_DURATION;
+
+	/**
+	 * @en The update affected {0} rows and was committed in {1} ms.
+	 */
+	public static ResKey2 SQL_UPDATE__ROWS_DURATION;
+
+	/**
+	 * @en The update would affect {0} rows; it was rolled back. Run in {1} ms.
+	 */
+	public static ResKey2 SQL_SIMULATION__ROWS_DURATION;
+
+	/**
+	 * @en (binary, {0} bytes)
+	 */
+	public static ResKey1 SQL_BINARY_VALUE__SIZE;
 
 	static {
 		initConstants(I18NConstants.class);

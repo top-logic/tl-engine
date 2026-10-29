@@ -180,6 +180,13 @@
 							</label>
 							<view-ref view="admin/system/database.view.xml"/>
 						</tab>
+						<tab id="sql-console">
+							<label>
+								<en>SQL console</en>
+								<de>SQL-Konsole</de>
+							</label>
+							<view-ref view="admin/system/sql-console.view.xml"/>
+						</tab>
 						<tab id="logs">
 							<label>
 								<en>Logs</en>

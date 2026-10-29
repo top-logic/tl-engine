@@ -35,6 +35,10 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['react-src/**/*.test.{ts,tsx}'],
     setupFiles: ['react-src/test-setup.ts'],
+    // A JUnit report next to the surefire reports of the module, so CI collects the JS test results
+    // together with the Java ones.
+    reporters: ['default', 'junit'],
+    outputFile: { junit: 'target/surefire-reports/TEST-vitest.xml' },
     server: {
       deps: {
         // Dependencies of the bridge that import React are processed by Vite, so the aliases above

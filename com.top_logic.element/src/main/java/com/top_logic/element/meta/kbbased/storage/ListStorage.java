@@ -10,12 +10,16 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.MutableList;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
@@ -49,6 +53,13 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link LinkStorage} that keeps the order of objects.
+ * 
+ * <p>
+ * A reference that is no {@link TLStructuredTypePart#isBag() bag} holds each value at most once:
+ * Adding a value that the reference already contains does nothing, the value keeps its position.
+ * Setting values that contain a value more than once keeps its first occurrence. A
+ * {@link TLStructuredTypePart#isBag() bag} holds each value as often as it is added or set.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -99,10 +110,22 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		return _outgoingQuery;
 	}
 
+	/**
+	 * Appends the given value to the end of the list.
+	 * 
+	 * <p>
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, a value that the list
+	 * already contains is not added again, it keeps its position.
+	 * </p>
+	 */
 	@Override
 	public final void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object newValue)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		this.checkAddValue(object, attribute, newValue);
+
+		if (!attribute.isBag() && containsAttributeValue(object, attribute, newValue)) {
+			return;
+		}
 
 		newValue = toStorageObject(newValue);
 		KnowledgeAssociation link =
@@ -161,8 +184,8 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	 * For a bag, the whole value is read.
 	 * 
 	 * <p>
-	 * The index holds one link per destination, since a reference that is no bag holds each value
-	 * at most once.
+	 * The index holds one link per destination. It is exact, since this storage keeps each value
+	 * of a reference that is no bag at most once.
 	 * </p>
 	 */
 	@Override
@@ -232,8 +255,13 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	 * The longest prefix of the current links whose targets occur in the given values in the same
 	 * order is kept. All other current links are deleted first. Then the links to the remaining new
 	 * values are created and inserted into the sort-order gaps between the kept links. Therefore,
-	 * at no point in time two links point to the same target, unless the new values contain a
-	 * target more than once.
+	 * at no point in time two links point to the same target, unless the attribute is a
+	 * {@link TLStructuredTypePart#isBag() bag} and the new values contain a target more than once.
+	 * </p>
+	 * 
+	 * <p>
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, only the first
+	 * occurrence of a value in the given values is stored, later occurrences are dropped.
 	 * </p>
 	 */
 	private void trySetAttributeValue(TLObject base, TLStructuredTypePart attribute, Object newValue)
@@ -245,6 +273,9 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 
 		List<KnowledgeAssociation> links = links(base);
 
+		// The values already taken, or null for a bag that takes every value.
+		Set<TLObject> taken = attribute.isBag() ? null : new HashSet<>();
+
 		// Match the new values against the current links: For each kept link, the new values in
 		// front of it.
 		List<List<TLObject>> valuesBeforeKept = list();
@@ -252,6 +283,9 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		int keptCount = 0;
 		for (Object value : newValues) {
 			TLObject src = (TLObject) toStorageObject(value);
+			if (taken != null && !taken.add(src)) {
+				continue;
+			}
 			if (keptCount < links.size()
 				&& links.get(keptCount).getDestinationIdentity().equals(src.tHandle().tId())) {
 				valuesBeforeKept.add(pending);
@@ -322,9 +356,111 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		return true;
 	}
 
+	/**
+	 * The live list of the values.
+	 * 
+	 * <p>
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, the list holds each
+	 * value at most once: Adding or setting a value that the list contains at another position
+	 * does nothing.
+	 * </p>
+	 */
 	@Override
 	public List<?> getLiveCollection(TLObject object, TLStructuredTypePart attribute) {
-		return AbstractWrapper.resolveOrderedValue(object, getOutgoingQuery(), TLObject.class);
+		List<TLObject> values = AbstractWrapper.resolveOrderedValue(object, getOutgoingQuery(), TLObject.class);
+		if (attribute.isBag()) {
+			return values;
+		}
+		return new NoDuplicatesList(object, attribute, values);
+	}
+
+	/**
+	 * Live list of a reference that is no {@link TLStructuredTypePart#isBag() bag}.
+	 * 
+	 * <p>
+	 * Adding or setting a value that the list contains at another position does nothing. Whether
+	 * the list contains a value is answered by
+	 * {@link ListStorage#containsAttributeValue(TLObject, TLStructuredTypePart, Object)}.
+	 * </p>
+	 */
+	private final class NoDuplicatesList extends MutableList<TLObject> {
+
+		private final TLObject _object;
+
+		private final TLStructuredTypePart _attribute;
+
+		private final List<TLObject> _values;
+
+		/**
+		 * Creates a {@link NoDuplicatesList}.
+		 * 
+		 * @param object
+		 *        The object whose values are accessed.
+		 * @param attribute
+		 *        The accessed attribute.
+		 * @param values
+		 *        The live list of the values.
+		 */
+		NoDuplicatesList(TLObject object, TLStructuredTypePart attribute, List<TLObject> values) {
+			_object = object;
+			_attribute = attribute;
+			_values = values;
+		}
+
+		@Override
+		public TLObject get(int index) {
+			return _values.get(index);
+		}
+
+		@Override
+		public int size() {
+			return _values.size();
+		}
+
+		@Override
+		public boolean contains(Object o) {
+			return containsAttributeValue(_object, _attribute, o);
+		}
+
+		@Override
+		public TLObject remove(int index) {
+			return _values.remove(index);
+		}
+
+		@Override
+		public TLObject set(int index, TLObject element) {
+			TLObject current = _values.get(index);
+			if (current != element && contains(element)) {
+				return current;
+			}
+			return _values.set(index, element);
+		}
+
+		@Override
+		public boolean add(TLObject element) {
+			if (contains(element)) {
+				return false;
+			}
+			_values.add(element);
+			return true;
+		}
+
+		@Override
+		public void add(int index, TLObject element) {
+			if (index < 0 || index > size()) {
+				throw new IndexOutOfBoundsException("Index: " + index + ", size: " + size());
+			}
+			if (contains(element)) {
+				return;
+			}
+			_values.add(index, element);
+		}
+
+		@Override
+		public void sort(Comparator<? super TLObject> c) {
+			_values.sort(c);
+		}
+
 	}
 
 	private OrderedLinkQuery<KnowledgeAssociation> createLiveListQuery(TLStructuredTypePart attribute) {

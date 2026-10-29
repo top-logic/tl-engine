@@ -26,6 +26,7 @@ import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
+import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -285,30 +286,66 @@ public class TestListStorage extends BasicTestCase {
 	}
 
 	/**
-	 * Checks {@link TLObject#tContains(TLStructuredTypePart, Object)} for an ordered reference that
-	 * is no {@link TLStructuredTypePart#isBag() bag} but holds more than one link to the same
-	 * element, as data stored without duplicate check may do.
+	 * Checks that an ordered reference that is no {@link TLStructuredTypePart#isBag() bag} holds
+	 * each value at most once, and that {@link TLObject#tContains(TLStructuredTypePart, Object)}
+	 * follows each step.
 	 */
-	public void testContainsDuplicateLinks() {
+	public void testNoDuplicatesInNonBag() {
+		assertFalse(getTestedAttribute().isBag());
+
 		TLObject a = _children.get(0);
 		TLObject b = _children.get(1);
+		TLObject c = _children.get(2);
 
 		inTransaction(() -> {
 			addChild(a);
+			assertContainsExactly(List.of(a));
 			addChild(b);
+			assertContainsExactly(List.of(a, b));
 			addChild(a);
+			assertEquals("Adding a contained value keeps its position.", List.of(a, b), getChildren());
 			assertContainsExactly(List.of(a, b));
 		});
-		assertEquals(List.of(a, b, a), getChildren());
+		assertEquals(List.of(a, b), getChildren());
 		assertContainsExactly(List.of(a, b));
 
 		inTransaction(() -> {
 			removeChild(a);
-			assertEquals(List.of(b, a), getChildren());
+			assertEquals(List.of(b), getChildren());
+			assertContainsExactly(List.of(b));
+		});
+		assertEquals(List.of(b), getChildren());
+		assertContainsExactly(List.of(b));
+
+		inTransaction(() -> {
+			setChildren(List.of(a, b, a));
+			assertEquals("Setting duplicates keeps the first occurrence.", List.of(a, b), getChildren());
 			assertContainsExactly(List.of(a, b));
 		});
-		assertEquals(List.of(b, a), getChildren());
+		assertEquals(List.of(a, b), getChildren());
 		assertContainsExactly(List.of(a, b));
+
+		inTransaction(() -> {
+			@SuppressWarnings("unchecked")
+			List<TLObject> live =
+				(List<TLObject>) WrapperMetaAttributeUtil.getLiveCollection(_parent, getTestedAttribute());
+			assertTrue(live.contains(a));
+			assertFalse(live.contains(c));
+
+			assertFalse(live.add(a));
+			live.add(0, b);
+			assertEquals("Inserting a contained value keeps its position.", List.of(a, b), getChildren());
+
+			assertSame("Setting a value contained at another position does nothing.", a, live.set(0, b));
+			assertEquals(List.of(a, b), getChildren());
+
+			assertTrue(live.add(c));
+			live.add(0, live.remove(2));
+			assertEquals(List.of(c, a, b), getChildren());
+			assertContainsExactly(List.of(a, b, c));
+		});
+		assertEquals(List.of(c, a, b), getChildren());
+		assertContainsExactly(List.of(a, b, c));
 
 		inTransaction(() -> setChildren(emptyList()));
 		assertContainsExactly(emptyList());

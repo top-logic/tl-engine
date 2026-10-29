@@ -436,6 +436,11 @@ public class TestMailHelper extends BasicTestCase {
 	 * This method returns the mail formerly sent to {@link #getReceiver()} with the given subject.
 	 * </p>
 	 * 
+	 * <p>
+	 * The connection to the server is closed when this method returns. The envelope and all headers
+	 * of the returned mail are loaded and can be read without a connection, its content can not.
+	 * </p>
+	 * 
 	 * @param mailSubject
 	 *        The subject of the mail to fetch. Use {@link #newSubject()} for unique subject.
 	 */
@@ -466,6 +471,9 @@ public class TestMailHelper extends BasicTestCase {
 			Folder folder = mailServer.getInbox();
 			for (Message m : folder.getMessages()) {
 				if (mailSubject.equals(m.getSubject())) {
+					// Loads all headers (without marking the mail as seen), so that they can be read
+					// after the folder is closed.
+					m.getAllHeaders();
 					return m;
 				}
 			}

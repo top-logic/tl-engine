@@ -77,7 +77,7 @@ public class ReleaseTaskClusterLockCommand extends PreconditionCommandHandler {
 				I18NConstants.MANUAL_LOCK_RELEASE_SELECTION_IS_NO_TASK__SELECTION.fill(model.toString()));
 		}
 		Task task = (Task) model;
-		ResKey problem = Scheduler.getClusterLockReleaseProblem(task);
+		ResKey problem = Scheduler.getSchedulerInstance().getClusterLockReleaseProblem(task);
 		if (problem != null) {
 			return new Failure(problem);
 		}
@@ -103,7 +103,7 @@ public class ReleaseTaskClusterLockCommand extends PreconditionCommandHandler {
 	 * @see Scheduler#releaseClusterLock(Task)
 	 */
 	protected void clearLock(Task task) {
-		Scheduler.releaseClusterLock(task);
+		Scheduler.getSchedulerInstance().releaseClusterLock(task);
 	}
 
 	/**

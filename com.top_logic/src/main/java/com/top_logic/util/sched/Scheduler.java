@@ -2530,6 +2530,18 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	/**
+	 * The configuration the {@link Task} was created from.
+	 *
+	 * @return The entry of the {@link SchedulerConfig#getTasks() configured tasks} of this
+	 *         {@link Scheduler} with the name of the {@link Task}; <code>null</code> for a
+	 *         {@link Task} that is not configured here, e.g. one {@link #addTask(Task) added} by
+	 *         the application or a subtask of a composite task.
+	 */
+	public Task.Config<?> getTaskConfiguration(Task task) {
+		return getConfig().getTasks().get(task.getName());
+	}
+
+	/**
 	 * When the {@link Task} is run next.
 	 *
 	 * @return <code>null</code>, if no run is planned: the {@link Task} is not {@link #isActive(Task)
@@ -2573,21 +2585,42 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	/**
 	 * Why the cluster lock of the {@link Task} cannot be {@link #releaseClusterLock(Task) released}.
 	 *
+	 * <p>
+	 * A lock held by this cluster node for a run in progress here is never stale and is therefore
+	 * not released: the run releases it when it ends.
+	 * </p>
+	 *
 	 * @return <code>null</code>, if the cluster lock is set and can be released.
 	 *
 	 * @see #canReleaseClusterLock(Task)
 	 */
-	public static ResKey getClusterLockReleaseProblem(Task task) {
+	public ResKey getClusterLockReleaseProblem(Task task) {
 		if (task.isNodeLocal()) {
 			return I18NConstants.ERROR_CLUSTER_LOCK_TASK_NODE_LOCAL__TASK.fill(task.getName());
 		}
 		if (!task.isPersistent()) {
 			return I18NConstants.ERROR_CLUSTER_LOCK_TASK_NOT_PERSISTENT__TASK.fill(task.getName());
 		}
-		if (!((TaskLogWrapper) task.getLog()).isClusterLockSet()) {
+		TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+		if (!log.isClusterLockSet()) {
 			return I18NConstants.ERROR_CLUSTER_LOCK_NOT_SET__TASK.fill(task.getName());
 		}
+		if (log.hasClusterLock() && isRunningHere(task)) {
+			return I18NConstants.ERROR_CLUSTER_LOCK_TASK_RUNNING_HERE__TASK.fill(task.getName());
+		}
 		return null;
+	}
+
+	/**
+	 * Whether a run of the {@link Task} is in progress in a thread of this {@link Scheduler}.
+	 */
+	private boolean isRunningHere(Task task) {
+		Maybe<SchedulerEntry> entry = getEntries().get(task);
+		if (!entry.hasValue()) {
+			return false;
+		}
+		SchedulerEntry runningEntry = entry.get();
+		return runningEntry.getThread() != null && !runningEntry.isRunEnded();
 	}
 
 	/**
@@ -2596,7 +2629,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 *
 	 * @see #getClusterLockReleaseProblem(Task)
 	 */
-	public static boolean canReleaseClusterLock(Task task) {
+	public boolean canReleaseClusterLock(Task task) {
 		return getClusterLockReleaseProblem(task) == null;
 	}
 
@@ -2606,8 +2639,10 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 *
 	 * <p>
 	 * This repairs a lock left behind by a cluster node that died while running the {@link Task}.
-	 * <b>If the {@link Task} is still running on the node holding the lock, or about to start,
-	 * releasing the lock lets another node run it at the same time, which can corrupt data.</b>
+	 * <b>If the {@link Task} is still running on another node holding the lock, or about to start,
+	 * releasing the lock lets a further node run it at the same time, which can corrupt data.</b>
+	 * The lock of a run in progress on this node is not released, see
+	 * {@link #getClusterLockReleaseProblem(Task)}.
 	 * The release is therefore logged as a warning, naming the {@link Task}, the node that held
 	 * the lock and the acting user.
 	 * </p>
@@ -2617,7 +2652,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * @throws KnowledgeBaseRuntimeException
 	 *         If the release cannot be committed.
 	 */
-	public static void releaseClusterLock(Task task) {
+	public void releaseClusterLock(Task task) {
 		ResKey problem = getClusterLockReleaseProblem(task);
 		if (problem != null) {
 			throw new TopLogicException(problem);

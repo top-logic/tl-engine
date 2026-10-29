@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Detail frame of the scheduler drill-down (see ../scheduler.view.xml): the properties of one task
+	and the history of its runs.
+	- The task channel holds the task; it is the parameter the frame was pushed with. The navPath
+	channel is the stack's path, the tasks channel the snapshot the covered overview table
+	displays, both bound by the enclosing tile-stack. Every command here writes a new snapshot to
+	the tasks channel: the overview table follows it, and the derived channels reading the state of
+	the task take tasks as input, so they are computed again as well.
+	- The toolbar offers Back (while the frame is pushed onto the overview) and the commands of the
+	overview (overview.view.xml), acting on the task of this frame instead of the selected row:
+	Run now, Stop, Activate, Deactivate, Reset to configured state, Release cluster lock and
+	Refresh, each shown where it applies.
+	- The "Properties" tab shows the state of the task read-only in a grid of value inputs, each
+	bound to a derived channel computing it (scheduler... functions), and below the configuration
+	the task was created from - with its schedules - in a configuration form that does not offer
+	Edit (schedulerConfiguration). A task that is not configured in the scheduler, e.g. a subtask,
+	shows no configuration.
+	- The "Runs" tab lists the results of the runs of the task, the latest first (schedulerResults),
+	the result marked by its severity (schedulerResultKind); the column of the exception is hidden
+	at the start, since a stack trace is read in the details of the run. Activating a run - a double-click,
+	Enter, or the row's chevron button - opens its details in a dialog (run-detail.view.xml): the
+	full message, the warnings, the stack trace of an exception, and the log file for download.
+-->
+<view>
+	<channels>
+		<channel name="task"/>
+		<channel name="navPath"/>
+		<channel name="tasks"/>
+		<derived-channel name="depth"
+			expr="$navPath.size()"
+			inputs="navPath"
+		/>
+		<derived-channel name="label"
+			expr="schedulerLabel($task)"
+			inputs="task"
+		/>
+		<derived-channel name="topLevel"
+			expr="schedulerTopLevel($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="active"
+			expr="schedulerActive($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="override"
+			expr="schedulerActiveOverride($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="running"
+			expr="schedulerRunning($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="releasable"
+			expr="schedulerClusterLockReleasable($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="state"
+			expr="schedulerState($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="execution"
+			expr="schedulerExecution($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="lastRun"
+			expr="schedulerLastRun($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="lastResult"
+			expr="schedulerLastResult($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="nextRun"
+			expr="schedulerNextRun($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="clusterLock"
+			expr="schedulerClusterLock($task)"
+			inputs="task, tasks"
+		/>
+		<derived-channel name="technicalName"
+			expr="schedulerName($task)"
+			inputs="task"
+		/>
+		<derived-channel name="implementation"
+			expr="schedulerImplementation($task)"
+			inputs="task"
+		/>
+		<derived-channel name="nodeLocal"
+			expr="schedulerNodeLocal($task)"
+			inputs="task"
+		/>
+		<derived-channel name="persistent"
+			expr="schedulerPersistent($task)"
+			inputs="task"
+		/>
+		<derived-channel name="maintenance"
+			expr="schedulerNeedsMaintenanceMode($task)"
+			inputs="task"
+		/>
+		<derived-channel name="configured"
+			expr="schedulerConfiguration($task) != null"
+			inputs="task"
+		/>
+		<channel name="config"
+			init="schedulerConfiguration($task)"
+			inputs="task"
+		/>
+	</channels>
+
+	<panel
+		fill="true"
+	>
+		<title>
+			<en>Task</en>
+			<de>Aufgabe</de>
+		</title>
+		<title-content>
+			<text input="label"/>
+		</title-content>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-left"
+				inputs="depth"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Back</en>
+					<de>Zurück</de>
+				</label>
+				<executability>
+					<visible-if expr="$depth > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-play"
+				inputs="task, topLevel"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Run now</en>
+					<de>Jetzt ausführen</de>
+				</label>
+				<tooltip>
+					<en>Starts the task right away, whether it is active or not.</en>
+					<de>Startet die Aufgabe sofort, unabhängig davon, ob sie aktiv ist.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$topLevel == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="RUN_NOW"
+					selection="task"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-stop"
+				inputs="task, running"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Stop</en>
+					<de>Stoppen</de>
+				</label>
+				<tooltip>
+					<en>Tells the running task to stop. It stops at the next point it checks for the request.</en>
+					<de>Fordert die laufende Aufgabe auf anzuhalten. Sie hält an der nächsten Stelle an, an der sie die Aufforderung prüft.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$running == true"/>
+				</executability>
+				<confirm expr="#('Stop the task {0}?'@en, 'Die Aufgabe {0} stoppen?'@de).fill(schedulerLabel($task))"/>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="STOP"
+					selection="task"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-toggle-on"
+				inputs="task, active"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Activate</en>
+					<de>Aktivieren</de>
+				</label>
+				<tooltip>
+					<en>Lets the task run by its schedule again, on all cluster nodes and after a restart.</en>
+					<de>Lässt die Aufgabe wieder nach ihrem Zeitplan laufen, auf allen Clusterknoten und auch nach einem Neustart.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$task != null &amp;&amp; $active == false"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="ACTIVATE"
+					selection="task"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-toggle-off"
+				inputs="task, active"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Deactivate</en>
+					<de>Deaktivieren</de>
+				</label>
+				<tooltip>
+					<en>Keeps the task from running by its schedule, on all cluster nodes and after a restart. A run in progress is not stopped, and the task can still be run manually.</en>
+					<de>Verhindert, dass die Aufgabe nach ihrem Zeitplan läuft, auf allen Clusterknoten und auch nach einem Neustart. Ein laufender Durchlauf wird nicht gestoppt, und die Aufgabe kann weiterhin manuell ausgeführt werden.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$active == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="DEACTIVATE"
+					selection="task"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-counterclockwise"
+				inputs="task, override"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Reset to configured state</en>
+					<de>Auf konfigurierten Zustand zurücksetzen</de>
+				</label>
+				<tooltip>
+					<en>Discards the activation or deactivation by an administrator, so that the task is active or inactive as configured.</en>
+					<de>Verwirft die Aktivierung oder Deaktivierung durch einen Administrator, sodass die Aufgabe wie konfiguriert aktiv oder inaktiv ist.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$override == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="RESET"
+					selection="task"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-unlock"
+				inputs="task, releasable"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Release cluster lock</en>
+					<de>Clustersperre freigeben</de>
+				</label>
+				<tooltip>
+					<en>Releases the lock a cluster node holds while it runs the task, e.g. one left behind by a cluster node that has died.</en>
+					<de>Gibt die Sperre frei, die ein Clusterknoten hält, während er die Aufgabe ausführt, z. B. eine, die ein abgestürzter Clusterknoten hinterlassen hat.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$releasable == true"/>
+				</executability>
+				<confirm expr="#('The cluster lock of the task {0} is held by the cluster node {1}. If the task is still running there, releasing the lock lets another cluster node run it at the same time, which can corrupt data. The release is logged with your name.\n\nRelease the cluster lock?'@en, 'Die Clustersperre der Aufgabe {0} hält der Clusterknoten {1}. Läuft die Aufgabe dort noch, kann nach der Freigabe ein anderer Clusterknoten sie gleichzeitig ausführen, wodurch Daten beschädigt werden können. Die Freigabe wird mit Ihrem Namen protokolliert.\n\nClustersperre freigeben?'@de).fill(schedulerLabel($task), schedulerClusterLock($task))"/>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="RELEASE_CLUSTER_LOCK"
+					selection="task"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<tooltip>
+					<en>Reads the tasks and their state again, e.g. to see a run that has started or ended meanwhile.</en>
+					<de>Liest die Aufgaben und ihren Zustand neu ein, z. B. um einen inzwischen begonnenen oder beendeten Durchlauf zu sehen.</de>
+				</tooltip>
+				<action class="com.top_logic.layout.view.admin.system.SchedulerTaskAction"
+					mode="REFRESH"
+				>
+					<with-result>
+						<write-channel name="tasks"/>
+					</with-result>
+				</action>
+			</generic-command>
+		</commands>
+		<tab-bar id="tabs"
+			active-tab="properties"
+		>
+			<tabs>
+				<tab id="properties">
+					<label>
+						<en>Properties</en>
+						<de>Eigenschaften</de>
+					</label>
+					<inset>
+						<stack direction="column">
+							<fields max-columns="2">
+								<value-input
+									readonly="true"
+									type="tl.core:String"
+									value="state"
+								>
+									<label>
+										<en>State</en>
+										<de>Zustand</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:String"
+									value="execution"
+								>
+									<label>
+										<en>Execution</en>
+										<de>Ausführung</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:DateTime"
+									value="lastRun"
+								>
+									<label>
+										<en>Last run</en>
+										<de>Letzte Ausführung</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:String"
+									value="lastResult"
+								>
+									<label>
+										<en>Last result</en>
+										<de>Letztes Ergebnis</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:DateTime"
+									value="nextRun"
+								>
+									<label>
+										<en>Next run</en>
+										<de>Nächste Ausführung</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:String"
+									value="clusterLock"
+								>
+									<label>
+										<en>Cluster lock</en>
+										<de>Clustersperre</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:String"
+									value="technicalName"
+								>
+									<label>
+										<en>Technical name</en>
+										<de>Technischer Name</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:String"
+									value="implementation"
+								>
+									<label>
+										<en>Implementation</en>
+										<de>Implementierung</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:Boolean"
+									value="nodeLocal"
+								>
+									<label>
+										<en>Runs on every cluster node</en>
+										<de>Läuft auf jedem Clusterknoten</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:Boolean"
+									value="persistent"
+								>
+									<label>
+										<en>Persistent</en>
+										<de>Persistent</de>
+									</label>
+								</value-input>
+								<value-input
+									readonly="true"
+									type="tl.core:Boolean"
+									value="maintenance"
+								>
+									<label>
+										<en>Needs maintenance mode</en>
+										<de>Benötigt Wartungsmodus</de>
+									</label>
+								</value-input>
+							</fields>
+							<visible-if
+								expr="$configured == true"
+								input="configured"
+							>
+								<config-form input="config">
+									<edit-executability>
+										<visible-if expr="false"/>
+									</edit-executability>
+								</config-form>
+							</visible-if>
+						</stack>
+					</inset>
+				</tab>
+				<tab id="runs">
+					<label>
+						<en>Runs</en>
+						<de>Durchläufe</de>
+					</label>
+					<table id="results"
+						filter-bar="true"
+						inputs="task, tasks"
+						personalization-key="admin-scheduler-results"
+					>
+						<columns>
+						<computed-column name="start"
+							type="tl.core:DateTime"
+						>
+							<label>
+								<en>Start</en>
+								<de>Beginn</de>
+							</label>
+							<value>schedulerResultStart($row)</value>
+						</computed-column>
+						<computed-column name="end"
+							type="tl.core:DateTime"
+						>
+							<label>
+								<en>End</en>
+								<de>Ende</de>
+							</label>
+							<value>schedulerResultEnd($row)</value>
+						</computed-column>
+						<computed-column name="duration"
+							type="tl.core:String"
+						>
+							<label>
+								<en>Duration</en>
+								<de>Dauer</de>
+							</label>
+							<value>schedulerResultDuration($row)</value>
+						</computed-column>
+						<computed-column name="result"
+							type="tl.core:String"
+						>
+							<label>
+								<en>Result</en>
+								<de>Ergebnis</de>
+							</label>
+							<value>schedulerResultType($row)</value>
+							<cell-class><![CDATA[{
+	kind = schedulerResultKind($row);
+	switch {
+		$kind == "SUCCESS": "tl-status-success";
+		$kind == "WARNING": "tl-status-warning";
+		$kind == "FAILURE" || $kind == "ERROR": "tl-status-error";
+		default: null;
+	};
+}]]></cell-class>
+						</computed-column>
+						<computed-column name="clusterNode"
+							type="tl.core:String"
+						>
+							<label>
+								<en>Cluster node</en>
+								<de>Clusterknoten</de>
+							</label>
+							<value>schedulerResultClusterNode($row)</value>
+						</computed-column>
+						<computed-column name="message"
+							type="tl.core:String"
+								width="320"
+						>
+							<label>
+								<en>Message</en>
+								<de>Meldung</de>
+							</label>
+							<value>schedulerResultMessage($row)</value>
+						</computed-column>
+						<computed-column name="warnings"
+							type="tl.core:String"
+						>
+							<label>
+								<en>Warnings</en>
+								<de>Warnungen</de>
+							</label>
+							<value>schedulerResultWarnings($row)</value>
+						</computed-column>
+						<computed-column name="exception"
+							type="tl.core:String"
+							visible="false"
+						>
+							<label>
+								<en>Exception</en>
+								<de>Ausnahme</de>
+							</label>
+							<value>schedulerResultException($row)</value>
+						</computed-column>
+						</columns>
+						<rows>schedulerResults($task)</rows>
+						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-card-text"
+						>
+							<label>
+								<en>Show run</en>
+								<de>Durchlauf anzeigen</de>
+							</label>
+							<open-dialog
+								bind-input-to="result"
+								close-on-backdrop="true"
+								dialog-view="admin/system/scheduler/run-detail.view.xml"
+							/>
+						</on-activate>
+					</table>
+				</tab>
+			</tabs>
+		</tab-bar>
+	</panel>
+</view>

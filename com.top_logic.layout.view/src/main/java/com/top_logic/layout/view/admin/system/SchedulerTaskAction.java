@@ -172,7 +172,7 @@ public class SchedulerTaskAction implements ViewAction {
 					scheduler.resetActive(task);
 					break;
 				case RELEASE_CLUSTER_LOCK:
-					Scheduler.releaseClusterLock(task);
+					scheduler.releaseClusterLock(task);
 					break;
 				case REFRESH:
 					break;

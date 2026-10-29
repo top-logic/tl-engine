@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Details of one run of a scheduler task, opened from the "Runs" tab of the task detail frame
+	(task-detail.view.xml) with the task result on the result channel. The values of the run are
+	read-only value inputs, each bound to a derived channel computing it (schedulerResult...
+	functions): the result, the cluster node, start, end and duration, the message, the warnings
+	and the full stack trace of an exception - the last two only if the run has them. The log file
+	of the run is offered for download (schedulerResultLogFile) if the run wrote one and it still
+	exists.
+-->
+<view>
+	<channels>
+		<channel name="result"/>
+		<derived-channel name="type"
+			expr="schedulerResultType($result)"
+			inputs="result"
+		/>
+		<derived-channel name="start"
+			expr="schedulerResultStart($result)"
+			inputs="result"
+		/>
+		<derived-channel name="end"
+			expr="schedulerResultEnd($result)"
+			inputs="result"
+		/>
+		<derived-channel name="duration"
+			expr="schedulerResultDuration($result)"
+			inputs="result"
+		/>
+		<derived-channel name="clusterNode"
+			expr="schedulerResultClusterNode($result)"
+			inputs="result"
+		/>
+		<derived-channel name="message"
+			expr="schedulerResultMessage($result)"
+			inputs="result"
+		/>
+		<derived-channel name="warnings"
+			expr="schedulerResultWarnings($result)"
+			inputs="result"
+		/>
+		<derived-channel name="exception"
+			expr="schedulerResultException($result)"
+			inputs="result"
+		/>
+		<channel name="logFile"
+			init="schedulerResultLogFile($result)"
+			inputs="result"
+		/>
+	</channels>
+	<window width="960px">
+		<title>
+			<en>Run of the task</en>
+			<de>Durchlauf der Aufgabe</de>
+		</title>
+		<inset>
+			<stack direction="column">
+				<fields max-columns="2">
+					<value-input
+						readonly="true"
+						type="tl.core:String"
+						value="type"
+					>
+						<label>
+							<en>Result</en>
+							<de>Ergebnis</de>
+						</label>
+					</value-input>
+					<value-input
+						readonly="true"
+						type="tl.core:String"
+						value="clusterNode"
+					>
+						<label>
+							<en>Cluster node</en>
+							<de>Clusterknoten</de>
+						</label>
+					</value-input>
+					<value-input
+						readonly="true"
+						type="tl.core:DateTime"
+						value="start"
+					>
+						<label>
+							<en>Start</en>
+							<de>Beginn</de>
+						</label>
+					</value-input>
+					<value-input
+						readonly="true"
+						type="tl.core:DateTime"
+						value="end"
+					>
+						<label>
+							<en>End</en>
+							<de>Ende</de>
+						</label>
+					</value-input>
+					<value-input
+						readonly="true"
+						type="tl.core:String"
+						value="duration"
+					>
+						<label>
+							<en>Duration</en>
+							<de>Dauer</de>
+						</label>
+					</value-input>
+				</fields>
+				<fields max-columns="1">
+					<value-input
+						readonly="true"
+						type="tl.core:String"
+						value="message"
+					>
+						<label>
+							<en>Message</en>
+							<de>Meldung</de>
+						</label>
+						<annotations>
+							<multi-line rows="3"/>
+						</annotations>
+					</value-input>
+					<visible-if
+						expr="$warnings != null"
+						input="warnings"
+					>
+						<value-input
+							readonly="true"
+							type="tl.core:String"
+							value="warnings"
+						>
+							<label>
+								<en>Warnings</en>
+								<de>Warnungen</de>
+							</label>
+							<annotations>
+								<multi-line rows="6"/>
+							</annotations>
+						</value-input>
+					</visible-if>
+					<visible-if
+						expr="$exception != null"
+						input="exception"
+					>
+						<value-input
+							readonly="true"
+							type="tl.core:String"
+							value="exception"
+						>
+							<label>
+								<en>Exception</en>
+								<de>Ausnahme</de>
+							</label>
+							<annotations>
+								<multi-line rows="16"/>
+							</annotations>
+						</value-input>
+					</visible-if>
+				</fields>
+				<visible-if
+					expr="$logFile != null"
+					input="logFile"
+				>
+					<download input="logFile"/>
+				</visible-if>
+			</stack>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

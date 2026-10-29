@@ -272,6 +272,9 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 		}
 	}
 
+	/** Milliseconds between two checks of the simulated work whether the task is told to stop. */
+	private static final long STOP_CHECK_INTERVAL = 100;
+
 	private final Random _random;
 
 	/** Used by the typed configuration to instantiate the {@link CompositeTaskImpl}. */
@@ -336,10 +339,14 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 		try {
 			List<String> warnings = getWarnings();
 			long sleepTime = workingTime / (1 + warnings.size());
-			sleep(sleepTime);
+			if (!work(sleepTime)) {
+				return;
+			}
 			for (String warning : warnings) {
 				logGuiWarning(warning);
-				sleep(sleepTime);
+				if (!work(sleepTime)) {
+					return;
+				}
 			}
 			result.causeTaskResult(this);
 		} finally {
@@ -364,14 +371,26 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 		return MaintenanceWindowManager.getInstance().getMaintenanceModeState();
 	}
 
-	private void sleep(long workingTime) {
-		try {
-			if (workingTime > 0) {
-				Thread.sleep(workingTime);
+	/**
+	 * Simulates work of the given duration, ending early when the task is told to stop.
+	 *
+	 * @return Whether the work is done; <code>false</code>, if the task has been told to stop.
+	 */
+	private boolean work(long workingTime) {
+		long end = System.currentTimeMillis() + workingTime;
+		while (!getShouldStop()) {
+			long remaining = end - System.currentTimeMillis();
+			if (remaining <= 0) {
+				return true;
 			}
-		} catch (InterruptedException ex) {
-			throw new RuntimeException(ex);
+			try {
+				Thread.sleep(Math.min(remaining, STOP_CHECK_INTERVAL));
+			} catch (InterruptedException ex) {
+				throw new RuntimeException(ex);
+			}
 		}
+		Logger.info("Task " + getName() + ": Stopped on request.", getClass());
+		return false;
 	}
 
 	private long calcWorkingTime() {
@@ -432,9 +451,8 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 
 	@Override
 	protected boolean signalStopHook() {
-		// This task will try to stop as soon as possible,
-		// but there is no guarantee, how long this can take.
-		return false;
+		// The simulated work checks for the request in steps of STOP_CHECK_INTERVAL.
+		return true;
 	}
 
 	@Override

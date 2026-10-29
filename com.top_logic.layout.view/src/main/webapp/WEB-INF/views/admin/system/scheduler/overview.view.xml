@@ -22,6 +22,9 @@
 	the rows and the derived channels. Stop and Release cluster lock first ask for confirmation;
 	the release warns that a task still running on the node holding the lock may then run twice.
 	- Refresh reads the tasks again, e.g. to see a run that has started or ended meanwhile.
+	- Activating a row - a double-click, Enter, or the row's chevron button - pushes the detail
+	frame of its task, with the task as its "task" channel. The detail frame offers the same
+	commands on that task.
 	- A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
 	commands.
 -->
@@ -68,8 +71,8 @@
 					<de>Jetzt ausführen</de>
 				</label>
 				<tooltip>
-					<en>Runs the task with the next round of the scheduler, whether it is active or not. The scheduler checks its tasks in the configured polling interval.</en>
-					<de>Führt die Aufgabe in der nächsten Runde des Steuerprogramms aus, unabhängig davon, ob sie aktiv ist. Das Steuerprogramm prüft seine Aufgaben im konfigurierten Abfrageintervall.</de>
+					<en>Starts the task right away, whether it is active or not.</en>
+					<de>Startet die Aufgabe sofort, unabhängig davon, ob sie aktiv ist.</de>
 				</tooltip>
 				<executability>
 					<visible-if expr="$topLevel == true"/>
@@ -341,6 +344,10 @@
 					<value>schedulerImplementation($row)</value>
 				</computed-column>
 			</columns>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="task"
+				frame="task"
+			/>
 		</tree-table>
 	</panel>
 </view>

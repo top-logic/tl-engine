@@ -5,10 +5,16 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import java.io.File;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import com.top_logic.basic.DebugHelper;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.label.I18NClassNameProvider;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
@@ -22,6 +28,7 @@ import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskState;
 import com.top_logic.util.sched.task.composite.CompositeTask;
 import com.top_logic.util.sched.task.result.TaskResult;
+import com.top_logic.util.sched.task.result.TaskResultWrapper;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 
 /**
@@ -295,14 +302,16 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	 *
 	 * @param task
 	 *        The task.
-	 * @return Whether a cluster node holds the lock of the task, <code>false</code> without a task.
+	 * @return Whether a cluster node holds the lock of the task - not this node for a run in
+	 *         progress here, whose lock is released when the run ends; <code>false</code> without
+	 *         a task.
 	 *
 	 * @see Scheduler#canReleaseClusterLock(Task)
 	 */
 	@Label("Whether the cluster lock of a scheduler task can be released")
 	@SideEffectFree
 	public static boolean clusterLockReleasable(Task task) {
-		return task != null && Scheduler.canReleaseClusterLock(task);
+		return task != null && Scheduler.getSchedulerInstance().canReleaseClusterLock(task);
 	}
 
 	/**
@@ -316,6 +325,267 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static String implementation(Task task) {
 		return task == null ? null : task.getClass().getName();
+	}
+
+	/**
+	 * The task of the given technical name.
+	 *
+	 * @param name
+	 *        The name of the task, see {@link #name(Task)}.
+	 * @return The task, <code>null</code> if the scheduler has no task of that name.
+	 */
+	@Label("Scheduler task by its name")
+	@SideEffectFree
+	public static Task byName(String name) {
+		return name == null ? null : Scheduler.getSchedulerInstance().getTaskByName(name);
+	}
+
+	/**
+	 * Whether the given task runs on every cluster node on its own, instead of once in the cluster
+	 * under a cluster lock.
+	 *
+	 * @param task
+	 *        The task.
+	 * @return Whether the task is node local, <code>false</code> without a task.
+	 *
+	 * @see Task#isNodeLocal()
+	 */
+	@Label("Whether a scheduler task runs on every cluster node")
+	@SideEffectFree
+	public static boolean nodeLocal(Task task) {
+		return task != null && task.isNodeLocal();
+	}
+
+	/**
+	 * Whether the state and the results of the given task are stored in the database.
+	 *
+	 * @param task
+	 *        The task.
+	 * @return Whether the task is persistent, <code>false</code> without a task.
+	 *
+	 * @see Task#isPersistent()
+	 */
+	@Label("Whether a scheduler task is persistent")
+	@SideEffectFree
+	public static boolean persistent(Task task) {
+		return task != null && task.isPersistent();
+	}
+
+	/**
+	 * Whether the given task runs only while the application is in maintenance mode.
+	 *
+	 * @param task
+	 *        The task.
+	 * @return Whether the task needs the maintenance mode, <code>false</code> without a task.
+	 *
+	 * @see Task#needsMaintenanceMode()
+	 */
+	@Label("Whether a scheduler task needs the maintenance mode")
+	@SideEffectFree
+	public static boolean needsMaintenanceMode(Task task) {
+		return task != null && task.needsMaintenanceMode();
+	}
+
+	/**
+	 * The configuration the given task was created from, e.g. for displaying its schedules.
+	 *
+	 * @param task
+	 *        The task.
+	 * @return A copy of the configuration, <code>null</code> for a task that is not configured in
+	 *         the scheduler, and without a task.
+	 *
+	 * @see Scheduler#getTaskConfiguration(Task)
+	 */
+	@Label("Configuration of a scheduler task")
+	@SideEffectFree
+	public static Task.Config<?> configuration(Task task) {
+		if (task == null) {
+			return null;
+		}
+		Task.Config<?> config = Scheduler.getSchedulerInstance().getTaskConfiguration(task);
+		return config == null ? null : TypedConfiguration.copy(config);
+	}
+
+	/**
+	 * The recorded runs of the given task.
+	 *
+	 * @param task
+	 *        The task.
+	 * @return The results of the runs of the task, the latest first; nothing without a task.
+	 */
+	@Label("Results of a scheduler task")
+	@SideEffectFree
+	public static List<TaskResult> results(Task task) {
+		if (task == null || task.getLog() == null) {
+			return List.of();
+		}
+		return task.getLog().getResults().stream()
+			.filter(SchedulerFunctions::valid)
+			.sorted(Comparator.comparing(TaskResult::getStartDate,
+				Comparator.nullsLast(Comparator.<Date> reverseOrder())))
+			.map(TaskResult.class::cast)
+			.toList();
+	}
+
+	private static boolean valid(TaskResult result) {
+		return !(result instanceof TaskResultWrapper wrapper) || wrapper.tValid();
+	}
+
+	/**
+	 * How the given run of a task ended.
+	 *
+	 * @param result
+	 *        The result of the run, see {@link #results(Task)}.
+	 * @return What the user reads for the result, <code>null</code> without a result.
+	 *
+	 * @see #resultKind(TaskResult)
+	 */
+	@Label("Result of a scheduler task run")
+	@SideEffectFree
+	public static String resultType(TaskResult result) {
+		return result == null ? null : Resources.getInstance().getString(result.getResultType().getMessageI18N());
+	}
+
+	/**
+	 * The kind of the result of the given run of a task, e.g. for marking it by its severity.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The name of the result type - <code>NOT_FINISHED</code>, <code>SUCCESS</code>,
+	 *         <code>CANCELED</code>, <code>WARNING</code>, <code>FAILURE</code>,
+	 *         <code>ERROR</code> or <code>UNKNOWN</code>; <code>null</code> without a result.
+	 *
+	 * @see TaskResult.ResultType
+	 */
+	@Label("Kind of the result of a scheduler task run")
+	@SideEffectFree
+	public static String resultKind(TaskResult result) {
+		return result == null ? null : result.getResultType().name();
+	}
+
+	/**
+	 * When the given run of a task started.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The start of the run, <code>null</code> without a result.
+	 */
+	@Label("Start of a scheduler task run")
+	@SideEffectFree
+	public static Date resultStart(TaskResult result) {
+		return result == null ? null : result.getStartDate();
+	}
+
+	/**
+	 * When the given run of a task ended.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The end of the run, <code>null</code> while it runs, and without a result.
+	 */
+	@Label("End of a scheduler task run")
+	@SideEffectFree
+	public static Date resultEnd(TaskResult result) {
+		return result == null ? null : result.getEndDate();
+	}
+
+	/**
+	 * How long the given run of a task took.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The duration in a readable form, <code>null</code> while the run is not finished,
+	 *         and without a result.
+	 */
+	@Label("Duration of a scheduler task run")
+	@SideEffectFree
+	public static String resultDuration(TaskResult result) {
+		if (result == null) {
+			return null;
+		}
+		Long duration = result.getDuration();
+		return duration == null ? null : DebugHelper.toDuration(duration.longValue());
+	}
+
+	/**
+	 * The cluster node the given run of a task was executed on.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The name of the cluster node, <code>null</code> without a result.
+	 */
+	@Label("Cluster node of a scheduler task run")
+	@SideEffectFree
+	public static String resultClusterNode(TaskResult result) {
+		return result == null ? null : result.getClusterNode();
+	}
+
+	/**
+	 * The message the given run of a task ended with.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The message in the language of the user, <code>null</code> without one.
+	 */
+	@Label("Message of a scheduler task run")
+	@SideEffectFree
+	public static String resultMessage(TaskResult result) {
+		if (result == null || result.getMessage() == null) {
+			return null;
+		}
+		return Resources.getInstance().getString(result.getMessage());
+	}
+
+	/**
+	 * The warnings the given run of a task reported.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The warnings, one per line; <code>null</code> without warnings, and without a
+	 *         result.
+	 */
+	@Label("Warnings of a scheduler task run")
+	@SideEffectFree
+	public static String resultWarnings(TaskResult result) {
+		if (result == null || !result.hasWarnings()) {
+			return null;
+		}
+		return String.join("\n", result.getWarnings());
+	}
+
+	/**
+	 * The exception the given run of a task failed with.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The stack trace of the exception, <code>null</code> if the run did not fail with
+	 *         an exception, and without a result.
+	 */
+	@Label("Exception of a scheduler task run")
+	@SideEffectFree
+	public static String resultException(TaskResult result) {
+		return result == null ? null : result.getExceptionDump();
+	}
+
+	/**
+	 * The log file the given run of a task wrote.
+	 *
+	 * @param result
+	 *        The result of the run.
+	 * @return The content of the log file, e.g. for a download; <code>null</code> if the run
+	 *         wrote no log file, if the file no longer exists, and without a result.
+	 */
+	@Label("Log file of a scheduler task run")
+	@SideEffectFree
+	public static BinaryData resultLogFile(TaskResult result) {
+		if (result == null) {
+			return null;
+		}
+		File logFile = result.getLogFile();
+		if (logFile == null || !logFile.isFile()) {
+			return null;
+		}
+		return BinaryDataFactory.createBinaryDataWithName(logFile, logFile.getName());
 	}
 
 }

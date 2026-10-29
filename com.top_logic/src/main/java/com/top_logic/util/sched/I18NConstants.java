@@ -119,6 +119,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_CLUSTER_LOCK_NOT_SET__TASK;
 
+	/**
+	 * @en The cluster lock of the task "{0}" is held by this cluster node for a run in progress. It
+	 *     is released when the run ends; stop the task to end the run early.
+	 */
+	public static ResKey1 ERROR_CLUSTER_LOCK_TASK_RUNNING_HERE__TASK;
+
 	// Commit message of Scheduler#releaseClusterLock(Task): stored with each commit, so the key
 	// must not change.
 	/**

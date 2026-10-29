@@ -30,10 +30,12 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler;
@@ -805,7 +807,7 @@ public class TestScheduler extends BasicTestCase {
 			assertNull(Scheduler.getClusterLockHolder(localTask));
 			assertReleaseClusterLockRefused(localTask);
 
-			AlwaysBarrierTestTask task = createClusterGlobalTask("testReleaseClusterLock");
+			AlwaysBarrierTestTask task = createClusterGlobalTask("testReleaseClusterLock", AlwaysBarrierTestTask.class);
 			scheduler.addDisabledTask(task);
 			TaskLogWrapper log = (TaskLogWrapper) task.getLog();
 			assertNull(Scheduler.getClusterLockHolder(task));
@@ -818,12 +820,12 @@ public class TestScheduler extends BasicTestCase {
 			} finally {
 				tx.rollback();
 			}
-			assertTrue(Scheduler.canReleaseClusterLock(task));
-			assertNull(Scheduler.getClusterLockReleaseProblem(task));
+			assertTrue(scheduler.canReleaseClusterLock(task));
+			assertNull(scheduler.getClusterLockReleaseProblem(task));
 			assertEquals(log.getClusterLockName() + " (" + log.getClusterLockId() + ")",
 				Scheduler.getClusterLockHolder(task));
 
-			Scheduler.releaseClusterLock(task);
+			scheduler.releaseClusterLock(task);
 			assertFalse(log.isClusterLockSet());
 			assertNull(Scheduler.getClusterLockHolder(task));
 			assertReleaseClusterLockRefused(task);
@@ -832,16 +834,66 @@ public class TestScheduler extends BasicTestCase {
 		}
 	}
 
-	private static void assertReleaseClusterLockRefused(Task task) {
-		assertFalse(Scheduler.canReleaseClusterLock(task));
-		ResKey problem = Scheduler.getClusterLockReleaseProblem(task);
+	/**
+	 * The cluster lock of a {@link Task} held by this cluster node for a run in progress here is
+	 * not {@link Scheduler#releaseClusterLock(Task) released}; the run releases it when it ends.
+	 */
+	public void testReleaseClusterLockOfRunningTask() throws MergeConflictException {
+		createScheduler("testReleaseClusterLockOfRunningTask", TASK_SLEEP, TASK_TIMEOUT, 1);
+		try {
+			BarrierTestTask task = createClusterGlobalTask("testReleaseClusterLockOfRunningTask", BarrierTestTask.class);
+			scheduler.addTask(task);
+			// The scheduler thread attaches the task when it has started:
+			long attachTimeout = System.currentTimeMillis() + BARRIER_TIMEOUT;
+			while (task.getLog() == null && System.currentTimeMillis() < attachTimeout) {
+				Thread.sleep(10);
+			}
+			TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+			assertNotNull("Task not attached to the scheduler.", log);
+			scheduler.startTask(task);
+
+			// Task is running and waits for the test:
+			waitOnBarrier(task.getBarrier());
+			// See the lock the scheduler has committed when starting the run:
+			HistoryUtils.updateSessionRevision();
+			assertTrue(log.hasClusterLock());
+			assertNotNull(Scheduler.getClusterLockHolder(task));
+			ResKey problem = assertReleaseClusterLockRefused(task);
+			assertEquals(
+				com.top_logic.util.sched.I18NConstants.ERROR_CLUSTER_LOCK_TASK_RUNNING_HERE__TASK.fill(task.getName()),
+				problem);
+			assertTrue("The refused release must leave the lock in place.", log.hasClusterLock());
+
+			// Task ends its run:
+			waitOnBarrier(task.getBarrier());
+			waitForEnd(task);
+			long timeout = System.currentTimeMillis() + BARRIER_TIMEOUT;
+			while (log.isClusterLockSet() && System.currentTimeMillis() < timeout) {
+				Thread.sleep(10);
+				HistoryUtils.updateSessionRevision();
+			}
+			assertFalse("The run releases the lock when it ends.", log.isClusterLockSet());
+			assertEquals(
+				com.top_logic.util.sched.I18NConstants.ERROR_CLUSTER_LOCK_NOT_SET__TASK.fill(task.getName()),
+				assertReleaseClusterLockRefused(task));
+		} catch (InterruptedException ex) {
+			throw new RuntimeException(ex);
+		} finally {
+			stopScheduler();
+		}
+	}
+
+	private ResKey assertReleaseClusterLockRefused(Task task) {
+		assertFalse(scheduler.canReleaseClusterLock(task));
+		ResKey problem = scheduler.getClusterLockReleaseProblem(task);
 		assertNotNull(problem);
 		try {
-			Scheduler.releaseClusterLock(task);
+			scheduler.releaseClusterLock(task);
 			fail("Releasing the cluster lock of task '" + task.getName() + "' must be refused.");
 		} catch (TopLogicException ex) {
 			assertEquals(problem, ex.getErrorKey());
 		}
+		return problem;
 	}
 
 	private void assertSchedulerStartsTask(BarrierTestTask task) {
@@ -922,14 +974,16 @@ public class TestScheduler extends BasicTestCase {
 		return (AlwaysBarrierTestTask) getInstantiationContext().getInstance(taskConfig);
 	}
 
-	private static AlwaysBarrierTestTask createClusterGlobalTask(String name) {
+	private static <T extends BarrierTestTask> T createClusterGlobalTask(String name, Class<T> type) {
 		BarrierTestTask.BarrierTestTaskConfig taskConfig =
 			TypedConfiguration.newConfigItem(BarrierTestTask.BarrierTestTaskConfig.class);
-		taskConfig.setImplementationClass(AlwaysBarrierTestTask.class);
+		taskConfig.setImplementationClass(type);
 		taskConfig.setName(name);
+		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
 		taskConfig.setPersistent(true);
 		taskConfig.setNodeLocal(false);
-		return (AlwaysBarrierTestTask) getInstantiationContext().getInstance(taskConfig);
+		return type.cast(getInstantiationContext().getInstance(taskConfig));
 	}
 
 	private static BarrierTestTask createNeverClusterGlobalTask(String name) {

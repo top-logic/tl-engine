@@ -2,13 +2,18 @@
 
 <!--
 	Scheduler administration as a drill-down: the initial frame lists the tasks of the scheduler and
-	acts on the selected one (scheduler/overview.view.xml).
-	- The schedulerNavPath channel holds the drill-down path; the breadcrumb ("Scheduler > ...")
+	acts on the selected one (scheduler/overview.view.xml); activating a row pushes the detail frame
+	of that task (scheduler/task-detail.view.xml), which shows its properties and the history of its
+	runs.
+	- The schedulerNavPath channel holds the drill-down path; the breadcrumb ("Scheduler > <task>")
 	is raised into the app bar of the shell with <slot-content to="appbar-content">. Every frame
-	sees the path as navPath (bind-path-to).
+	sees the path as navPath (bind-path-to), so the detail frame offers a "Back" command.
 	- The tasks channel holds the SchedulerSnapshot the overview table displays. It is bound into
-	every frame, so that a command of a frame pushed onto the overview writes a new snapshot the
-	covered overview frame shows when the user comes back to it.
+	every frame, so that a command of the detail frame writes a new snapshot the covered overview
+	frame shows when the user comes back to it.
+	- The <frame id="task"> declaration is the detail frame the overview pushes (frame="task"). It
+	puts the frame into the address bar as .../task/<technical name of the task>, and names its
+	crumb by the label of the task.
 -->
 <view>
 	<channels>
@@ -37,6 +42,19 @@
 					to="tasks"
 				/>
 			</bindings>
+			<frame id="task"
+				route="task/:task"
+				view="admin/system/scheduler/task-detail.view.xml"
+			>
+				<param name="task"
+					expr="schedulerName($task)"
+					reverse="schedulerByName($value)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="schedulerLabel($task)"
+					inputs="task"
+				/>
+			</frame>
 		</tile-stack>
 	</stack>
 </view>

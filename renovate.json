@@ -28,9 +28,10 @@
     },
     {
       "customType": "regex",
-      "description": "Base image of the workspace image of tl-factory, pinned by the digest of its tag: Renovate moves the digest.",
+      "description": "Base images of the workspace image of tl-factory and of the runtime image tl-app-runtime, pinned by the digest of their tag: Renovate moves the digest.",
       "managerFilePatterns": [
-        "/(^|/)tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile$/"
+        "/(^|/)tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile$/",
+        "/(^|/)tl-app-runtime/Dockerfile$/"
       ],
       "matchStrings": [
         "FROM (?<depName>[a-z0-9./_-]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})"

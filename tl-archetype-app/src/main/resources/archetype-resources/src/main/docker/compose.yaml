@@ -1,0 +1,65 @@
+# ${DisplayName} with its PostgreSQL database on one machine: the reference for any hosting target
+# and the way to try the image.
+#
+#   bin/image.sh                                       # builds \${artifactId}:latest
+#   mkdir -p src/main/docker/secrets                   # one file per secret, see below
+#   openssl rand -base64 24 > src/main/docker/secrets/postgresql_passwd
+#   echo '<password of root>' > src/main/docker/secrets/tl_initial_password
+#   docker compose -f src/main/docker/compose.yaml up -d
+#
+# The application answers at http://127.0.0.1:8080/ (APP_PORT). Each secret is a file of
+# /run/secrets named like the secret; further secrets of the application (provider keys, the client
+# secret of a company login, the SMTP password, ...) are added the same way. src/main/docker/secrets
+# is ignored by git. In operation, the database is a managed PostgreSQL with backups, not this
+# container, and a reverse proxy in front terminates TLS.
+
+#set( $dollar = '$' )
+name: \${artifactId}
+
+services:
+  db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_DB: \${projectName}
+      POSTGRES_USER: \${projectName}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgresql_passwd
+    secrets:
+      - postgresql_passwd
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \${projectName} -d \${projectName}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    image: ${dollar}{APP_IMAGE:-\${artifactId}:latest}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      postgresql_host: db
+      postgresql_database: \${projectName}
+      postgresql_user: \${projectName}
+      postgresql_schema: public
+      postgresql_ssl: "false"
+    secrets:
+      - postgresql_passwd
+      - tl_initial_password
+    volumes:
+      - data:/var/lib/toplogic
+    ports:
+      - "127.0.0.1:${dollar}{APP_PORT:-8080}:8080"
+    restart: unless-stopped
+
+secrets:
+  postgresql_passwd:
+    file: secrets/postgresql_passwd
+  tl_initial_password:
+    file: secrets/tl_initial_password
+
+volumes:
+  db:
+  data:

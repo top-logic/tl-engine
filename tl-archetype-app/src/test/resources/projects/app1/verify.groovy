@@ -7,6 +7,7 @@ def expected = [
 	"deploy": true,
 	"src/main/deb": true,
 	"src/main/docker": true,
+	"bin/image.sh": true,
 	"local.conf.xml.template": true,
 	".mvn/jvm.config": true,
 	"src/main/java/META-INF/web-fragment.xml": false,
@@ -76,4 +77,23 @@ def viewConfigs = { conf ->
 def appViewConfigs = viewConfigs(new File(project, "src/main/webapp/WEB-INF/conf/myapp.conf.config.xml"));
 if (appViewConfigs*.getAttribute("title") != ["tl.title"]) {
 	throw new AssertionError("Expected the view title tl.title in myapp.conf.config.xml.");
+}
+
+// The image of the application is the runtime image of TopLogic plus the application; the
+// variables of Docker and of the shell survive the template engines of the archetype.
+def dockerfile = new File(project, "src/main/docker/Dockerfile").text;
+if (!dockerfile.contains('ARG TL_VERSION=${tlVersion}')
+		|| !dockerfile.contains('FROM top-logic/tl-app-runtime:\${TL_VERSION}')
+		|| !dockerfile.contains('ARG APP=target/my-app-1.0-SNAPSHOT-app')
+		|| !dockerfile.contains('COPY --chown=toplogic:toplogic \${APP}/ /usr/local/tomcat/webapps/ROOT/')) {
+	throw new AssertionError("Unexpected src/main/docker/Dockerfile:\n" + dockerfile);
+}
+def compose = new File(project, "src/main/docker/compose.yaml").text;
+if (!compose.contains('image: \${APP_IMAGE:-my-app:latest}') || !compose.contains('POSTGRES_DB: myapp')
+		|| compose.contains('#set')) {
+	throw new AssertionError("Unexpected src/main/docker/compose.yaml:\n" + compose);
+}
+def imageScript = new File(project, "bin/image.sh");
+if (!imageScript.canExecute() || !imageScript.text.contains('TAG="\${1:-my-app:latest}"')) {
+	throw new AssertionError("Unexpected bin/image.sh:\n" + imageScript.text);
 }

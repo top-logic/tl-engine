@@ -8,6 +8,7 @@ def expected = [
 	"deploy": false,
 	"src/main/deb": false,
 	"src/main/docker": false,
+	"bin/image.sh": false,
 	"local.conf.xml.template": false,
 	".mvn": false,
 	"src/main/webapp/WEB-INF/views/app.view.xml": false,

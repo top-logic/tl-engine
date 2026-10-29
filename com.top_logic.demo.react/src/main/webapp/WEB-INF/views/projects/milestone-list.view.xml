@@ -5,9 +5,11 @@
 	row - a double-click, Enter on the row carrying the keyboard cursor, or its chevron button -
 	pushes the milestone's tickets, announced with the milestone's name.
 	
-	The toolbar creates a milestone in the project and deletes the selected one; the table observes
-	milestones, so both are reflected in the rows without a reload.
-	The toolbar also approves the selected milestone through the privileged script
+	The speed dial in the bottom corner of the panel body creates a milestone in the project and
+	deletes the selected one; the table observes milestones, so both are reflected in the rows
+	without a reload. Delete and Approve are disabled while no milestone is selected, and the dial
+	stays in its corner while a long list of milestones scrolls beneath it.
+	The speed dial also approves the selected milestone through the privileged script
 	approveMilestone. Its access declares the operation "Approve" on the project of the
 	milestone, the check the script makes as well, so the command is enabled only for a user
 	allowed to call it.
@@ -26,11 +28,33 @@
 			<en>Milestones</en>
 			<de>Meilensteine</de>
 		</title>
-		<commands>
+		<table
+			observed-types="tl.demo.projectManagement:Milestone"
+			selection="milestone"
+			types="tl.demo.projectManagement:Milestone"
+		>
+			<columns>
+				<column attribute="name"/>
+				<column attribute="dueDate"/>
+				<column attribute="approved"/>
+			</columns>
+			<inputs>
+				<input channel="project"/>
+			</inputs>
+			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="milestone"
+				frame="milestone"
+			/>
+		</table>
+		<floating-action>
+			<label>
+				<en>Milestone actions</en>
+				<de>Meilenstein-Aktionen</de>
+			</label>
 			<generic-command
 				image="css:bi bi-plus-lg"
 				inputs="project"
-				placement="TOOLBAR"
 			>
 				<label>
 					<en>New Milestone</en>
@@ -64,7 +88,6 @@
 			<generic-command
 				image="css:bi bi-trash"
 				inputs="milestone"
-				placement="TOOLBAR"
 			>
 				<label>
 					<en>Delete</en>
@@ -82,7 +105,6 @@
 			<generic-command
 				image="css:bi bi-patch-check"
 				inputs="milestone"
-				placement="TOOLBAR"
 			>
 				<label>
 					<en>Approve</en>
@@ -101,25 +123,6 @@
 					<execute-script function="approveMilestone($milestone)"/>
 				</with-transaction>
 			</generic-command>
-		</commands>
-		<table
-			observed-types="tl.demo.projectManagement:Milestone"
-			selection="milestone"
-			types="tl.demo.projectManagement:Milestone"
-		>
-			<columns>
-				<column attribute="name"/>
-				<column attribute="dueDate"/>
-				<column attribute="approved"/>
-			</columns>
-			<inputs>
-				<input channel="project"/>
-			</inputs>
-			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
-			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="milestone"
-				frame="milestone"
-			/>
-		</table>
+		</floating-action>
 	</panel>
 </view>

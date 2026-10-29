@@ -32,6 +32,7 @@
  *   TLBreadcrumb      - BreadcrumbState
  *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
+ *   TLFloatingAction  - FloatingActionState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -1269,6 +1270,10 @@ export namespace MenuStateJson {
  *
  * Dismissing the message sends the command `dismiss` with the {@link SnackbarStateJson.generation} of the
  * message as argument `generation`.
+ *
+ * While the message is shown, the component reports the element it occupies with
+ * `useTransientOverlay` of 'tl-react-bridge', so that floating actions (see
+	 * {@link FloatingActionStateJson}) move out of its way.
  */
 export interface SnackbarStateJson extends ControlStateJson {
 	/**
@@ -1369,6 +1374,85 @@ export interface AlertStateJson extends ControlStateJson {
 	 * reporting another number refers to a content that is no longer shown.
 	 */
 	generation: number;
+}
+
+/**
+ * State of a floating action button, the component `TLFloatingAction`: one or more actions
+ * floating over a corner of the frame they stand in, staying in place while the content beneath
+ * them scrolls.
+ *
+ * The frame is the body of the panel or of the window the control is placed in, which offers a
+ * layer for it through `useFloatingAnchor` of 'tl-react-bridge'; outside of such a frame,
+ * the corner of the browser window. A transient overlay the actions would cover - a snackbar
+ * reported through `useTransientOverlay` of 'tl-react-bridge' - moves them aside, read with
+ * `useTransientOverlayRects`.
+ *
+ * Each action is a button ({@link FloatingActionStateJson.actions}): its label, icon, tooltip, display mode, whether it is
+ * disabled and whether it is hidden are the state of that button ({@link ButtonStateJson}), which
+ * follows the executability and visibility of its command. The component renders the actions with
+ * TLChild. A component drawing them with components of its own reads their current states with
+ * `useChildStates` of 'tl-react-bridge' and presses an action by sending the command
+ * `click` to it with `useChildCommand`.
+ *
+ * The actions not hidden decide on the presentation:
+ *
+ * - none: nothing is rendered;
+ * - one: a round button with the icon of the action, also with its label when the display mode of
+ *   the action asks for the label (an extended floating action button);
+ * - several: a speed dial, a round button ({@link FloatingActionStateJson.triggerImage}, named by {@link FloatingActionStateJson.triggerLabel})
+ *   that shows the actions as small round buttons beside it, their labels as tooltips. The dial
+ *   marks the trigger with `aria-expanded`; it closes on Escape, on a press outside of it and
+ *   after an action was pressed.
+ *
+ * The component sends no command of its own.
+ */
+export interface FloatingActionStateJson extends ControlStateJson {
+	/**
+	 * The actions, button controls with the state of a {@link ButtonStateJson}, in the order they are
+	 * offered: in a speed dial, the first stands next to the trigger.
+	 */
+	actions: ChildControlJson[];
+
+	/**
+	 * The corner the actions float over. Absent: `'bottom-end'`.
+	 */
+	position: FloatingActionStateJson.Position;
+
+	/**
+	 * The icon of the button opening a speed dial, the encoded form of a theme image.
+	 */
+	triggerImage: string;
+
+	/**
+	 * The label of the button opening a speed dial: its accessible name and its tooltip.
+	 */
+	triggerLabel: string;
+}
+
+export namespace FloatingActionStateJson {
+	/**
+	 * The corner of the frame the actions float over. Start and end follow the direction of the
+	 * text: the end is the right corner in a left-to-right text.
+	 *
+	 * The control does not send `'bottom-end'`: an absent position means the default.
+	 */
+	export type Position =
+		/**
+		 * The bottom corner at the end of the line, the default.
+		 */
+		| 'bottom-end'
+		/**
+		 * The bottom corner at the start of the line.
+		 */
+		| 'bottom-start'
+		/**
+		 * The top corner at the end of the line.
+		 */
+		| 'top-end'
+		/**
+		 * The top corner at the start of the line.
+		 */
+		| 'top-start';
 }
 
 /**

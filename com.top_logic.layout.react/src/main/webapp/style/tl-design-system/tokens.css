@@ -49,6 +49,8 @@
   --tl-size-sidebar: var(--tl-size-12);
   --tl-size-wizard-progress: var(--tl-size-13);
   --tl-size-toast-max: var(--tl-size-15);
+  --tl-size-fab: var(--tl-size-8);
+  --tl-size-fab-action: var(--tl-height-5);
   --tl-size-choice: var(--tl-size-4);
   --tl-size-switch: var(--tl-size-7);
   --tl-size-switch-knob: var(--tl-size-3);
@@ -326,4 +328,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:0ee47682bf99a9b0fe0ed1c6f6c5b76f75e9cd574f88b26e56fbfffd1182ab73 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:6147a014afe6bd98ab8cdbeb8f8322be52b46f43624ddb319c443d61f5cc49a5 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

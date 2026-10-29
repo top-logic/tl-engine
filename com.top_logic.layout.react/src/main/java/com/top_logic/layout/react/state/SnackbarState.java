@@ -5,6 +5,10 @@ package com.top_logic.layout.react.state;
  *
  * Dismissing the message sends the command {@code dismiss} with the {@link #getGeneration()} of the
  * message as argument {@code generation}.
+ *
+ * While the message is shown, the component reports the element it occupies with
+ * {@code useTransientOverlay} of 'tl-react-bridge', so that floating actions (see
+	 * {@link FloatingActionState}) move out of its way.
  */
 public interface SnackbarState extends com.top_logic.layout.react.state.ControlState {
 

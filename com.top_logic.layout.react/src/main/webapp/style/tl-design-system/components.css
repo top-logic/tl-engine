@@ -2765,6 +2765,116 @@ a.tl-field-value:hover {
   color: var(--tl-text-secondary);
 }
 
+/* --- floating-action/floating-action.css --- */
+/* Floating Action — Ticket #29658. Ein runder Knopf über einer Ecke des Körpers eines Panels oder Fensters; mehrere
+   Aktionen als Speed Dial: ein runder Auslöser, der die Aktionen als kleine runde Knöpfe daneben zeigt. Die Knöpfe
+   zeichnet der Part Button; hier stehen Lage, Ebene, Form und Schatten.
+
+   Der Rahmen bietet zwei Schienen (tl-floating-rail) ohne Höhe direkt vor und nach seinem Körper, positioniert und so
+   breit wie der Rahmen. Die Aktionen liegen in der Schiene ihrer Kante: sie rollen nicht mit dem Körper, und weder
+   Panel noch Körper werden dafür positioniert — ein maximiertes Panel im Körper löst weiter gegen den Körper auf.
+   Ohne Rahmen liegen sie fest über der Ecke des Fensters (data-tl-anchor="viewport"). Eine Snackbar, die sie
+   verdecken würden, schiebt sie per transform beiseite; das TSX misst, hier steht nur der Übergang. */
+
+.tl-floating-rail {
+  position: relative;
+  flex: none;
+  height: 0;
+}
+
+.tl-fab {
+  position: absolute;
+  z-index: var(--tl-layer-overlay);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--tl-space-sm);
+  transition: transform var(--tl-duration-base) var(--tl-easing-standard);
+}
+.tl-fab[hidden] { display: none; }
+
+.tl-fab[data-tl-anchor="viewport"] {
+  position: fixed;
+}
+
+/* Die Lage an der Ecke: unten über der unteren Schiene, oben unter der oberen; Anfang und Ende folgen der
+   Schreibrichtung. Oben öffnet der Dial nach unten. */
+.tl-fab[data-tl-position|="bottom"] {
+  bottom: var(--tl-space-md);
+}
+
+.tl-fab[data-tl-position|="top"] {
+  top: var(--tl-space-md);
+  flex-direction: column;
+}
+
+.tl-fab[data-tl-position$="-end"] {
+  inset-inline-end: var(--tl-space-md);
+}
+
+.tl-fab[data-tl-position$="-start"] {
+  inset-inline-start: var(--tl-space-md);
+}
+
+/* Der Hauptknopf — die eine Aktion oder der Auslöser des Dials: rund, auf size-fab; mit Beschriftung eine Pille
+   (extended FAB). */
+.tl-fab__main {
+  display: grid;
+  border-radius: var(--tl-radius-full);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-fab__main[hidden] { display: none; }
+
+.tl-fab__main > .tl-button {
+  min-width: var(--tl-size-fab);
+  min-height: var(--tl-size-fab);
+  padding-inline: var(--tl-space-md);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-fab__main > .tl-button--icon {
+  width: var(--tl-size-fab);
+  height: var(--tl-size-fab);
+  padding: 0;
+}
+
+/* Die Aktionen des Dials: kleine runde Knöpfe auf der Fläche der Überlagerung, ihre Beschriftung im Tooltip. */
+.tl-fab__actions {
+  display: flex;
+  flex-direction: inherit;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+.tl-fab__actions[hidden] { display: none; }
+
+.tl-fab__action {
+  display: grid;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-overlay);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-fab__action[hidden] { display: none; }
+
+.tl-fab__action > .tl-button {
+  min-width: var(--tl-size-fab-action);
+  min-height: var(--tl-size-fab-action);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-fab__action > .tl-button--icon {
+  width: var(--tl-size-fab-action);
+  height: var(--tl-size-fab-action);
+}
+
+.tl-fab[data-tl-state~="open"] > .tl-fab__actions {
+  animation: tl-fab-open var(--tl-duration-base) var(--tl-easing-entrance);
+}
+
+@keyframes tl-fab-open {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* --- form/form.css --- */
 /* Formular — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“, Spec Welle 2 §6.
    Der Feldrahmen (tl-form-field) legt Label, Eingabe und Meldungen in ein Raster; die Label-Lage ist
@@ -6424,4 +6534,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:f6c447cd47565f1243b87c16babec12aece96ab71ecdaf4dc8f581913e867f00 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:f1548765a886b0cc68209e18442a49631849dce73dda6790e3b9668dcfd9dbbd — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

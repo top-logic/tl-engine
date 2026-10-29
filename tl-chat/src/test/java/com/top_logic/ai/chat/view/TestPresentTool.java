@@ -59,11 +59,11 @@ import com.top_logic.util.model.ModelService;
  * What the {@code present} tool does with a page, and what it refuses.
  *
  * <p>
- * The test drives the real path: a real sub-session, a window registered with
- * {@link AgentViewRefreshService} the way a rendering chat registers one, and a channel opened
- * through {@link ChatViewBinding} the way {@code <chat-conversation present="…">} opens one. What
- * stands in for the browser is the {@link ReactWindowRegistry} - the tool only ever asks it for an
- * interaction - and what stands in for the page is a listener on the channel.
+ * The test drives the real path: a real sub-session displayed by a live browser window of a
+ * logged-in session, and a channel opened through {@link ChatViewBinding} the way
+ * {@code <chat-conversation present="…">} opens one. What stands in for the browser is the
+ * {@link ReactWindowRegistry} - the tool only ever asks it for an interaction - and what stands in
+ * for the page is a listener on the channel.
  * </p>
  *
  * <p>
@@ -96,12 +96,8 @@ public class TestPresentTool extends BasicTestCase {
 
 	private List<Object> _written;
 
-	/**
-	 * The window of this test, kept strongly: {@link AgentViewRefreshService} holds a registered
-	 * registry through a {@code WeakReference} only, so a garbage collection during a test would
-	 * drop it and a later call would be answered with "no page is attached".
-	 */
-	private ReactWindowRegistry _window;
+	/** The browser window displaying the test's sub-session, <code>null</code> for none. */
+	private LiveWindow _window;
 
 	/** The account on the sub-session before the test made it root, restored afterwards. */
 	private Person _previousAccount;
@@ -132,7 +128,10 @@ public class TestPresentTool extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
-		_window = null;
+		if (_window != null) {
+			_window.close();
+			_window = null;
+		}
 		subSession().setPerson(_previousAccount);
 		super.tearDown();
 	}
@@ -142,7 +141,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * is not offered it, nor is a run on a page that names no channel - its model answers a request
 	 * to see objects in text, instead of with a call that is refused.
 	 */
-	public void testTheToolIsOfferedOnlyWhereThePageHasAPlace() {
+	public void testTheToolIsOfferedOnlyWhereThePageHasAPlace() throws Exception {
 		Tool tool = toolOf(_tool);
 		ToolContext run = context(ModelSecurity.UNCHECKED);
 
@@ -162,9 +161,9 @@ public class TestPresentTool extends BasicTestCase {
 	 * table nobody sees.
 	 */
 	public void testAChannelCountsWhileItsConversationIsDisplayed() throws Exception {
-		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
 		String window = "displayedWindow";
-		subSession().getSessionContext().setIfAbsent(window, subSession());
+		_window = LiveWindow.open(user, window, subSession());
+		ReactWindowRegistry registry = _window.registry();
 		DefaultViewContext view = new DefaultViewContext(
 			new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry));
 		view.registerChannel(PANE, _channel);
@@ -209,7 +208,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * The model need not know the channel's name: a page that offers one place is written without
 	 * one (#616), which is what makes "show me" a single call.
 	 */
-	public void testAPageWithOnePlaceNeedsNoChannelName() {
+	public void testAPageWithOnePlaceNeedsNoChannelName() throws Exception {
 		withWindow();
 		allow();
 
@@ -218,7 +217,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A page that offers several places makes the model choose, and names them. */
-	public void testAPageWithSeveralPlacesNeedsAChannelName() {
+	public void testAPageWithSeveralPlacesNeedsAChannelName() throws Exception {
 		withWindow();
 		allow();
 		ViewChannel other = new DefaultViewChannel("dockPane");
@@ -236,7 +235,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A call that names neither a query nor an object is answered before anything is resolved. */
-	public void testWithoutIdsOrQueryNothingHappens() {
+	public void testWithoutIdsOrQueryNothingHappens() throws Exception {
 		withWindow();
 		allow();
 
@@ -246,7 +245,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** Deny by default: a page that opened no channel is not writable, window or no window. */
-	public void testAPageThatOpensNothingIsNotWritable() {
+	public void testAPageThatOpensNothingIsNotWritable() throws Exception {
 		withWindow();
 
 		String result = present(List.of(tid(first)), PANE);
@@ -256,7 +255,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A channel the page did not name is refused, and the refusal says which ones exist. */
-	public void testAnotherChannelIsRefused() {
+	public void testAnotherChannelIsRefused() throws Exception {
 		withWindow();
 		allow();
 
@@ -271,7 +270,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * An object the acting user may not read is refused - and is refused exactly like one that does
 	 * not exist, because saying which of the two it is discloses that it exists.
 	 */
-	public void testAnObjectTheUserMayNotSeeIsRefused() {
+	public void testAnObjectTheUserMayNotSeeIsRefused() throws Exception {
 		withWindow();
 		allow();
 
@@ -283,7 +282,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** An id that names nothing refuses the call the same way. */
-	public void testAnUnknownIdIsRefused() {
+	public void testAnUnknownIdIsRefused() throws Exception {
 		withWindow();
 		allow();
 
@@ -292,7 +291,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** All or nothing: one bad id among good ones presents none of them. */
-	public void testOneBadIdRefusesTheWholeCall() {
+	public void testOneBadIdRefusesTheWholeCall() throws Exception {
 		withWindow();
 		allow();
 
@@ -307,7 +306,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * One object stands on the channel as itself - what every element reading "the open object"
 	 * understands - and the answer names it the way every tool does.
 	 */
-	public void testOneObjectReachesTheChannel() {
+	public void testOneObjectReachesTheChannel() throws Exception {
 		withWindow();
 		allow();
 
@@ -320,7 +319,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** Several stand on it as a table, in the order the model named them. */
-	public void testSeveralObjectsReachTheChannelAsATable() {
+	public void testSeveralObjectsReachTheChannelAsATable() throws Exception {
 		withWindow();
 		allow();
 
@@ -333,7 +332,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A query that fails, or finds something other than objects, says so and shows nothing. */
-	public void testABrokenQueryIsAnsweredWithItsError() {
+	public void testABrokenQueryIsAnsweredWithItsError() throws Exception {
 		withWindow();
 		allow();
 
@@ -345,7 +344,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A form shows one object, and a request for a form of several is refused, not guessed at. */
-	public void testAFormOfSeveralIsRefused() {
+	public void testAFormOfSeveralIsRefused() throws Exception {
 		withWindow();
 		allow();
 
@@ -358,7 +357,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * A chart's functions are tried on every object before anything is shown, so a mistake is the
 	 * model's to correct rather than an empty chart in front of the user.
 	 */
-	public void testAChartIsCheckedBeforeItIsShown() {
+	public void testAChartIsCheckedBeforeItIsShown() throws Exception {
 		withWindow();
 		allow();
 
@@ -377,7 +376,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A point of a chart of objects opens its object, which is what its dataset's metadata says. */
-	public void testAChartOfObjectsOpensItsPoints() {
+	public void testAChartOfObjectsOpensItsPoints() throws Exception {
 		withWindow();
 		allow();
 
@@ -395,7 +394,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * "How many per group" is one call (#655): the query computes the numbers, and they stand on the
 	 * channel as a chart of data - labels and values, no object behind a point.
 	 */
-	public void testACountPerGroupIsOneChart() {
+	public void testACountPerGroupIsOneChart() throws Exception {
 		withWindow();
 		allow();
 
@@ -415,7 +414,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** Several numbers per label are several series, and a table shows them as columns. */
-	public void testSeveralSeriesAsATable() {
+	public void testSeveralSeriesAsATable() throws Exception {
 		withWindow();
 		allow();
 
@@ -434,7 +433,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * A query may return a whole Chart.js configuration, as a chart component's script does - which
 	 * is what draws a chart no short form can say, a line over stacked bars.
 	 */
-	public void testAWholeChartConfigurationIsShown() {
+	public void testAWholeChartConfigurationIsShown() throws Exception {
 		withWindow();
 		allow();
 
@@ -451,7 +450,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** Data that cannot be shown as asked is refused with a sentence the model can act on. */
-	public void testDataIsRefusedWhereItCannotBeShown() {
+	public void testDataIsRefusedWhereItCannotBeShown() throws Exception {
 		withWindow();
 		allow();
 		ToolContext run = context(ModelSecurity.UNCHECKED);
@@ -498,7 +497,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** The same object named twice is one object: the page shows what the model meant. */
-	public void testADuplicateIdIsOneObject() {
+	public void testADuplicateIdIsOneObject() throws Exception {
 		withWindow();
 		allow();
 
@@ -511,7 +510,7 @@ public class TestPresentTool extends BasicTestCase {
 	 * A whole {@code label [id:TID]} entry, as a text tool result writes it, names the object it
 	 * carries - a model that copies what it just read is right rather than wrong.
 	 */
-	public void testAnIdCopiedOutOfATextResultWorks() {
+	public void testAnIdCopiedOutOfATextResultWorks() throws Exception {
 		withWindow();
 		allow();
 
@@ -522,14 +521,9 @@ public class TestPresentTool extends BasicTestCase {
 
 	// --- Fixture ---
 
-	/** Registers the window the run belongs to, as a rendering chat element does. */
-	private void withWindow() {
-		_window = new ReactWindowRegistry("test-session");
-		// The queue a browser window has before its tree is built, and the sub-session its session
-		// holds under the window's name.
-		_window.getOrCreateQueue(windowName());
-		subSession().getSessionContext().setIfAbsent(windowName(), subSession());
-		AgentViewRefreshService.registerWindow(subSession(), windowName(), _window);
+	/** Opens the browser window the run belongs to, displaying the test's sub-session. */
+	private void withWindow() throws Exception {
+		_window = LiveWindow.open(user, windowName(), subSession());
 	}
 
 	/** Opens the fixture's channel to the agent, as {@code <chat-conversation present="…">} does. */
@@ -667,7 +661,7 @@ public class TestPresentTool extends BasicTestCase {
 				new TestSuite(TestPresentTool.class),
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
-				AgentViewRefreshService.Module.INSTANCE,
+				ChatWindowService.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
 				FieldControlService.Module.INSTANCE,
 				SessionService.Module.INSTANCE));

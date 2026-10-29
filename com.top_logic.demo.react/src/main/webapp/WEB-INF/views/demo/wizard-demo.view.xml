@@ -75,9 +75,9 @@
 					</inset>
 					<slot-content to="wizard-actions">
 						<stack
-							align="end"
 							direction="row"
 							gap="default"
+							justify="end"
 						>
 							<button appearance="primary">
 								<action class="com.top_logic.layout.view.command.GenericViewCommand">
@@ -127,9 +127,9 @@
 						<field attribute="email"/>
 						<slot-content to="wizard-actions">
 							<stack
-								align="end"
 								direction="row"
 								gap="default"
+								justify="end"
 							>
 								<button>
 									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
@@ -180,7 +180,7 @@
 				<dynamic-steps
 					element-channel="question"
 					icon="'css:bi bi-question-circle'"
-					label="if($step == 'role', 'Role', if($step == 'phone', 'Phone', 'Notes'))"
+					label="if($step == 'role', #('Role'@en, 'Rolle'@de), if($step == 'phone', #('Phone'@en, 'Telefon'@de), #('Notes'@en, 'Notizen'@de)))"
 					steps="questions"
 				>
 					<form
@@ -202,9 +202,9 @@
 						</switch>
 						<slot-content to="wizard-actions">
 							<stack
-								align="end"
 								direction="row"
 								gap="default"
+								justify="end"
 							>
 								<button>
 									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
@@ -272,9 +272,9 @@
 					</stack>
 					<slot-content to="wizard-actions">
 						<stack
-							align="end"
 							direction="row"
 							gap="default"
+							justify="end"
 						>
 							<button>
 								<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
@@ -301,7 +301,9 @@
 					</slot-content>
 				</step>
 			</wizard>
-			<slot name="wizard-actions"/>
+			<inset>
+				<slot name="wizard-actions"/>
+			</inset>
 		</stack>
 	</panel>
 </view>

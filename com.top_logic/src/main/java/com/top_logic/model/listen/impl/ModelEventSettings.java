@@ -11,7 +11,9 @@ import java.util.Map;
 
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOReference;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.knowledge.objects.KnowledgeItemUtil;
+import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.mig.html.layout.AssociationEndRelevance;
 
@@ -37,6 +39,24 @@ public final class ModelEventSettings {
 		_objectType = requireNonNull(objectType);
 		_associationType = requireNonNull(associationType);
 		_relevanceByType = requireNonNull(relevanceByType);
+	}
+
+	/**
+	 * Creates {@link ModelEventSettings} for the given {@link KnowledgeBase} with its
+	 * {@link BasicTypes#getObjectType(MORepository) object table} and
+	 * {@link BasicTypes#getKnowledgeAssociationType(MORepository) association table}.
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} that is the source of events.
+	 * @param relevanceByType
+	 *        Specification of association end relevance by type and reference attribute.
+	 */
+	public static ModelEventSettings forKnowledgeBase(KnowledgeBase kb, AssociationEndRelevance relevanceByType) {
+		MORepository typeSystem = kb.getMORepository();
+		return new ModelEventSettings(kb,
+			BasicTypes.getObjectType(typeSystem),
+			BasicTypes.getKnowledgeAssociationType(typeSystem),
+			relevanceByType);
 	}
 
 	/**

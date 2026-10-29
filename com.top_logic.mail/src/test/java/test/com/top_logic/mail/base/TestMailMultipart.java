@@ -53,6 +53,7 @@ public class TestMailMultipart extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_kb = PersistencyLayer.getKnowledgeBase();
+		MailTestUtils.initMailServerDaemon();
 	}
 
 	public void testMultipartRelated()

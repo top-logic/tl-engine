@@ -22,7 +22,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.CheckedObjects;
 import com.top_logic.model.security.CheckedObjects.Decision;
 import com.top_logic.model.security.ModelAccessRights;
@@ -55,13 +54,16 @@ import com.top_logic.util.TLContext;
  * </p>
  * <ul>
  * <li>The command is <em>hidden</em> when the refusal does not depend on a concrete object: the
- * check runs against the security root (a creation without a container, a check on a type), the grant
- * deciding the operation lists no role at all, or the user is restricted (see
+ * check runs against the security root (a creation without a container, a check on a type), no
+ * role can hold the operation, or the user is restricted (see
  * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}). The operation is then never
- * possible for this user. The grant deciding an operation on an attribute is the attribute's own
- * grant for the operation, if it has one (see
- * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}): it replaces the
- * grant of the type for this attribute. Otherwise, it is the grant of the type.</li>
+ * possible for this user. An operation on an attribute with a grant of its own for the operation
+ * (see {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}) is held by no
+ * role when that grant lists no role: it replaces the grant of the type for this attribute.
+ * Otherwise, no role holds the operation when the type grants it to no role and the operation is
+ * not {@link #isOffered(BoundCommandGroup, TLClass) offered} on the type either - not on one of its
+ * specializations, and, for a type with an access parent, not on the types the access parent may
+ * lead to.</li>
  * <li>The command is <em>disabled</em> when the check on a concrete object (the object operated on,
  * or the container to create in) fails. It gives the refusal as its reason, naming the
  * operation.</li>
@@ -85,7 +87,9 @@ public final class ModelAccessPolicy {
 	 *
 	 * <p>
 	 * When the access rights allow the operation, the {@link CommandApprovalService} decides about
-	 * it on the object, see {@link #approval(BoundCommandGroup, TLObject)}.
+	 * it on the object, see {@link #approval(BoundCommandGroup, TLObject)}. A refusal is hidden when
+	 * the user is restricted or no role can hold the operation on the type of the object (see
+	 * {@link ModelAccessPolicy}), and disabled otherwise.
 	 * </p>
 	 *
 	 * @param operation
@@ -275,10 +279,12 @@ public final class ModelAccessPolicy {
 	 *
 	 * <p>
 	 * The operation is refused independent of an object when the user is restricted (see
-	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or the grant deciding it lists
-	 * no role at all: the attribute's own grant for the operation, if it has one (see
-	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the grant of the
-	 * type otherwise. A refusal is
+	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or no role can hold it: the
+	 * attribute's own grant for the operation, if it has one (see
+	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}), lists no role,
+	 * or, without one, the type grants the operation to no role and it is not
+	 * {@link #isOffered(BoundCommandGroup, TLClass) offered} on the type either, also through an
+	 * access parent of the type. A refusal is
 	 * {@link ExecutableState#NOT_EXEC_HIDDEN hidden}, like
 	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart)} displays it
 	 * on a concrete object. Everything else depends on the object and is
@@ -441,8 +447,10 @@ public final class ModelAccessPolicy {
 	 * role is granted the operation (or an operation implying it) on the type or on one of its
 	 * specializations. A type with an access parent is decided by the types its access parent may
 	 * lead to, with {@link SimpleBoundCommandGroup#WRITE} in place of
-	 * {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE}. A type
-	 * without security, or one whose singletons have rights of their own, is always in reach.
+	 * {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
+	 * {@link ModelAccessRights#getAccessParentTypes(TLClass)}). A type without security, one whose
+	 * singletons have rights of their own, or one whose access parent types are not known statically
+	 * is always in reach.
 	 * </p>
 	 *
 	 * <p>
@@ -472,12 +480,16 @@ public final class ModelAccessPolicy {
 			if (rights.isWithoutSecurity(candidate) || rights.hasSingletonRights(candidate)) {
 				return true;
 			}
-			AccessParentFunction accessParent = rights.getAccessParent(candidate);
-			if (accessParent != null) {
+			if (rights.getAccessParent(candidate) != null) {
+				Set<TLClass> parentTypes = rights.getAccessParentTypes(candidate);
+				if (parentTypes == null) {
+					// Not known statically: only the check of a concrete object decides.
+					return true;
+				}
 				BoundCommandGroup parentOperation = isCreate(operation) || isDelete(operation)
 					? SimpleBoundCommandGroup.WRITE
 					: operation;
-				for (TLClass parentType : accessParent.getParentTypes(candidate)) {
+				for (TLClass parentType : parentTypes) {
 					if (isGrantable(rights, parentOperation, parentType, seen)) {
 						return true;
 					}
@@ -508,6 +520,13 @@ public final class ModelAccessPolicy {
 	 * The user needs the {@link SimpleBoundCommandGroup#CREATE creation} right on the created type in
 	 * the context of the container and, when the object is added to a reference of the container,
 	 * the {@link SimpleBoundCommandGroup#WRITE write} right on that reference.
+	 * </p>
+	 *
+	 * <p>
+	 * A refusal is hidden when the user is restricted, or when no role can hold the creation on the
+	 * created type or, for a creation into a reference, writing on the type of the container (see
+	 * {@link ModelAccessPolicy}): a type with an access parent is decided by the types its access
+	 * parent may lead to. Otherwise, the refusal depends on the container and is disabled.
 	 * </p>
 	 *
 	 * @param container
@@ -726,10 +745,18 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
-	 * Whether the access controlled type grants the operation to no role at all.
+	 * Whether no role can hold the operation on objects of the given type.
+	 *
+	 * <p>
+	 * The type grants the operation to no role of its own, and the operation is not
+	 * {@link #isGrantable(ModelAccessRights, BoundCommandGroup, TLClass, Set) grantable} on it
+	 * either: not on one of its specializations, and, for a type with an access parent, not on the
+	 * types its access parent may lead to.
+	 * </p>
 	 */
 	private static boolean grantedToNoRole(ModelAccessRights rights, TLClass type, BoundCommandGroup operation) {
-		return type != null && !rights.isWithoutSecurity(type) && rights.getAllowedRoles(type, operation).isEmpty();
+		return type != null && rights.getAllowedRoles(type, operation).isEmpty()
+			&& !isGrantable(rights, operation, type, new HashSet<>());
 	}
 
 	/**

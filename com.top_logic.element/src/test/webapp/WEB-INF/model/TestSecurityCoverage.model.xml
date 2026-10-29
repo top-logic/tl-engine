@@ -150,8 +150,22 @@
 					</attributes>
 				</class>
 
-				<!-- Grants an operation of its own, which another declared operation is implied by. -->
-				<class name="GrantedOperation"/>
+				<!--
+					Grants an operation of its own, which another declared operation is implied by.
+					Holds parts deciding by their container by default.
+				-->
+				<class name="GrantedOperation">
+					<attributes>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="PartOfGranted"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Contained in a GrantedOperation: delegates to its container by default. -->
+				<class name="PartOfGranted"/>
 
 				<!-- Role rule and read grant, declares an operation implied by Read. -->
 				<class name="ImpliedOperation">

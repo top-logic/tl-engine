@@ -101,7 +101,7 @@ describe('installMui', () => {
 
     installMui({ theme: {} });
 
-    expect(COMPONENT_NAMES).toHaveLength(30);
+    expect(COMPONENT_NAMES).toHaveLength(31);
     expect(replacedNames(replacePart)).toEqual(PART_NAMES);
     expect(replacedNames(replace)).toEqual(COMPONENT_NAMES.filter(name => !PART_NAMES.includes(name)));
     expect(replacedNames(replace)).not.toContain('TLButton');

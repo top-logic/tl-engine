@@ -28,6 +28,7 @@
  *   TLBreadcrumb      - BreadcrumbState
  *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
+ *   TLFloatingAction  - FloatingActionState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -1267,6 +1268,10 @@ message MenuState extends ControlState {
  *
  * Dismissing the message sends the command {@code dismiss} with the {@link #generation} of the
  * message as argument {@code generation}.
+ *
+ * While the message is shown, the component reports the element it occupies with
+ * {@code useTransientOverlay} of 'tl-react-bridge', so that floating actions (see
+ * {@link FloatingActionState}) move out of its way.
  */
 message SnackbarState extends ControlState {
 
@@ -1368,6 +1373,84 @@ message AlertState extends ControlState {
 	 * reporting another number refers to a content that is no longer shown.
 	 */
 	int32 generation;
+}
+
+/**
+ * State of a floating action button, the component {@code TLFloatingAction}: one or more actions
+ * floating over a corner of the frame they stand in, staying in place while the content beneath
+ * them scrolls.
+ *
+ * The frame is the body of the panel or of the window the control is placed in, which offers a
+ * layer for it through {@code useFloatingAnchor} of 'tl-react-bridge'; outside of such a frame,
+ * the corner of the browser window. A transient overlay the actions would cover - a snackbar
+ * reported through {@code useTransientOverlay} of 'tl-react-bridge' - moves them aside, read with
+ * {@code useTransientOverlayRects}.
+ *
+ * Each action is a button ({@link #actions}): its label, icon, tooltip, display mode, whether it is
+ * disabled and whether it is hidden are the state of that button ({@link ButtonState}), which
+ * follows the executability and visibility of its command. The component renders the actions with
+ * TLChild. A component drawing them with components of its own reads their current states with
+ * {@code useChildStates} of 'tl-react-bridge' and presses an action by sending the command
+ * {@code click} to it with {@code useChildCommand}.
+ *
+ * The actions not hidden decide on the presentation:
+ *
+ * - none: nothing is rendered;
+ * - one: a round button with the icon of the action, also with its label when the display mode of
+ *   the action asks for the label (an extended floating action button);
+ * - several: a speed dial, a round button ({@link #triggerImage}, named by {@link #triggerLabel})
+ *   that shows the actions as small round buttons beside it, their labels as tooltips. The dial
+ *   marks the trigger with {@code aria-expanded}; it closes on Escape, on a press outside of it and
+ *   after an action was pressed.
+ *
+ * The component sends no command of its own.
+ */
+message FloatingActionState extends ControlState {
+
+	/**
+	 * The corner of the frame the actions float over. Start and end follow the direction of the
+	 * text: the end is the right corner in a left-to-right text.
+	 *
+	 * The control does not send {@link #BOTTOM_END}: an absent position means the default.
+	 */
+	enum Position {
+		/** The bottom corner at the end of the line, the default. */
+		@Name("bottom-end")
+		BOTTOM_END;
+
+		/** The bottom corner at the start of the line. */
+		@Name("bottom-start")
+		BOTTOM_START;
+
+		/** The top corner at the end of the line. */
+		@Name("top-end")
+		TOP_END;
+
+		/** The top corner at the start of the line. */
+		@Name("top-start")
+		TOP_START;
+	}
+
+	/**
+	 * The actions, button controls with the state of a {@link ButtonState}, in the order they are
+	 * offered: in a speed dial, the first stands next to the trigger.
+	 */
+	repeated ChildControl actions;
+
+	/**
+	 * The corner the actions float over. Absent: {@link Position#BOTTOM_END}.
+	 */
+	Position position;
+
+	/**
+	 * The icon of the button opening a speed dial, the encoded form of a theme image.
+	 */
+	string triggerImage;
+
+	/**
+	 * The label of the button opening a speed dial: its accessible name and its tooltip.
+	 */
+	string triggerLabel;
 }
 
 /**

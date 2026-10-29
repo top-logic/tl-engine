@@ -11,6 +11,9 @@
 					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.react.window.WindowModelEventService$Module"
+						value="true"
+					/>
 				</modules>
 			</instance>
 		</config>
@@ -28,6 +31,11 @@
 					</listener>
 				</listeners>
 			</instance>
+		</config>
+
+		<!-- Lets the browser windows follow the commits of other threads. -->
+		<config service-class="com.top_logic.layout.react.window.WindowModelEventService">
+			<instance class="com.top_logic.layout.react.window.WindowModelEventService"/>
 		</config>
 
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">

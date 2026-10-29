@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -51,10 +52,14 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  */
 public class TestChildCompaction extends TestCase {
 
-	/** The loop and the spawn execute inside a TopLogic interaction, as in {@code TestAgentLoop}. */
+	/**
+	 * The loop and the spawn execute inside a TopLogic interaction, as in {@code TestAgentLoop}, and
+	 * the spawned subagent under {@link SubagentWorkers}.
+	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.withThreadContext(new TestSuite(TestChildCompaction.class)));
+			ServiceTestSetup.createSetup(new TestSuite(TestChildCompaction.class),
+				SubagentWorkers.Module.INSTANCE));
 	}
 
 	private static final String MODEL = "test-model";

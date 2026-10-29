@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
@@ -297,6 +298,7 @@ public class TestHeadlessResearch extends BasicTestCase {
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
 				AgentPolicyService.Module.INSTANCE,
-				ResearchRuns.Module.INSTANCE));
+				ResearchRuns.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
@@ -190,6 +191,11 @@ public class SubagentJobRegistry {
 			}
 		}
 		return result;
+	}
+
+	/** Number of jobs started and not ended. */
+	synchronized int startedCount() {
+		return _started;
 	}
 
 	/** Number of jobs currently RUNNING. */
@@ -440,10 +446,17 @@ public class SubagentJobRegistry {
 	 * without running.
 	 * </p>
 	 *
+	 * <p>
+	 * The registry reports to the running {@link SubagentWorkers} service, which stops its jobs when
+	 * the services they use stop. Once that service has begun to stop, the job ends CANCELLED without
+	 * running.
+	 * </p>
+	 *
 	 * @param notStarted
 	 *        Told when the job is cancelled before it started.
 	 */
 	public void spawn(SubagentJob job, SubagentRun run, Runnable notStarted) {
+		SubagentWorkers.track(this);
 		synchronized (this) {
 			_queue.addLast(new Pending(job, run, notStarted));
 		}
@@ -682,5 +695,26 @@ public class SubagentJobRegistry {
 		_executor.shutdown();
 		cancelAll();
 		dispatch();
+	}
+
+	/**
+	 * Waits until the threads of the jobs that were running when this registry was
+	 * {@link #shutdown() shut down} have ended.
+	 *
+	 * <p>
+	 * An interrupt ends the wait early; the thread's interrupt flag is set again.
+	 * </p>
+	 *
+	 * @param timeoutMillis
+	 *        How long to wait at most.
+	 * @return Whether every job thread has ended.
+	 */
+	public boolean awaitTermination(long timeoutMillis) {
+		try {
+			return _executor.awaitTermination(timeoutMillis, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			return _executor.isTerminated();
+		}
 	}
 }

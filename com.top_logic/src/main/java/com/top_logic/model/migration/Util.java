@@ -2143,7 +2143,7 @@ public class Util {
 	 * Creates a new {@link TLPrimitive}.
 	 */
 	public Type createTLDatatype(PooledConnection connection, QualifiedTypeName type, Kind kind,
-			DBColumnType dbType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
+			DBColumnType dbType, PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping,
 			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException, MigrationException {
 		return createTLDatatype(connection, TLContext.TRUNK_ID, type.getModuleName(), type.getTypeName(), kind,
 			dbType, storageMapping, toString(annotations));
@@ -2153,7 +2153,7 @@ public class Util {
 	 * Creates a new {@link TLPrimitive}.
 	 */
 	public Type createTLDatatype(PooledConnection con, long branch, String moduleName, String typeName,
-			Kind kind, DBColumnType dbType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
+			Kind kind, DBColumnType dbType, PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping,
 			String annotations) throws SQLException, MigrationException {
 		Module module = getTLModuleOrFail(con, branch, moduleName);
 		TLID newIdentifier = newID(con);
@@ -2224,7 +2224,7 @@ public class Util {
 
 	}
 
-	private String toString(PolymorphicConfiguration<StorageMapping<?>> storageMapping) {
+	private String toString(PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping) {
 		if (storageMapping == null) {
 			return null;
 		}
@@ -3633,7 +3633,7 @@ public class Util {
 	 * Updates the given {@link TLPrimitive}.
 	 */
 	public void updateTLDataType(PooledConnection con, Type type, Module newModule, String newName, Kind kind,
-			DBColumnType columnType, PolymorphicConfiguration<StorageMapping<?>> storageMapping,
+			DBColumnType columnType, PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping,
 			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException {
 		String dbType;
 		Integer dbSize;

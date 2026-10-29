@@ -136,7 +136,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 		@Override
 		@ItemDefault(DiagramJSGraphControlProvider.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Override
 		@ItemDefault

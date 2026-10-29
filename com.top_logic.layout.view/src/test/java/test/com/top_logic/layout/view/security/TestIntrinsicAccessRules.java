@@ -159,8 +159,8 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Without a processed object there is nothing to delete, which disables the command; an empty
-	 * container channel is nothing to check for a creation.
+	 * Without a processed object there is nothing to delete, and with an empty container channel
+	 * there is nothing to add a created object to: both disable the command.
 	 */
 	public void testNothingToCheck() throws Exception {
 		ViewExecutabilityRule onInput = delete();
@@ -169,7 +169,43 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 
 		becomeUser(_roleless);
 		assertSame(ExecutableState.NO_EXEC_NO_MODEL, onInput.isExecutable(null));
-		assertSame(ExecutableState.EXECUTABLE, inContainer.isExecutable(null));
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, inContainer.isExecutable(null));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, inContainer.isExecutable(null));
+	}
+
+	/**
+	 * With an empty container channel and without reference, the object is created without
+	 * container: the creation is checked against the security root, refused, it is hidden.
+	 */
+	public void testCreateInEmptyContainer() throws Exception {
+		ViewExecutabilityRule rule = creation(TLModelPartRef.ref(qualified(PROJECT)), CHANNEL, null);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(null));
+
+		becomeUser(_roleless);
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(null));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
+	}
+
+	/**
+	 * With an empty container channel and neither type nor reference, the type of the (transient)
+	 * command input is checked against the security root.
+	 */
+	public void testCreateTypeOfInputInEmptyContainer() throws Exception {
+		ViewExecutabilityRule rule = creation(null, CHANNEL, null);
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(PROJECT));
+
+		becomeUser(_responsible);
+		assertSame("Checked against the security root.", ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(draft));
+		assertSame("Nothing to check.", ExecutableState.EXECUTABLE, rule.isExecutable(null));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(draft));
 	}
 
 	/**
@@ -259,9 +295,40 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(null));
 
-		stop.run();
+		_channel.set(null);
+		assertEquals(3, revalidations[0]);
+		assertSame("Nothing to add the created object to.", ExecutableState.NO_EXEC_NO_MODEL,
+			rule.isExecutable(null));
+
 		_channel.set(_project);
+		assertEquals(4, revalidations[0]);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
+
+		stop.run();
+		_channel.set(null);
+		assertEquals(4, revalidations[0]);
+	}
+
+	/**
+	 * Switching the container channel of a creation without reference between a container and no
+	 * container switches between the check in the container and the check against the security
+	 * root.
+	 */
+	public void testEmptyContainerChannelRevalidates() throws Exception {
+		ViewExecutabilityRule rule = creation(TLModelPartRef.ref(qualified(TASK)), CHANNEL, null);
+		int[] revalidations = { 0 };
+		Runnable stop = ((ObservableRule) rule).observe(() -> revalidations[0]++);
+
+		becomeUser(_responsible);
+		_channel.set(_project);
+		assertEquals(1, revalidations[0]);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
+
+		_channel.set(null);
 		assertEquals(2, revalidations[0]);
+		assertSame("Checked against the security root.", ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(null));
+
+		stop.run();
 	}
 
 	/**

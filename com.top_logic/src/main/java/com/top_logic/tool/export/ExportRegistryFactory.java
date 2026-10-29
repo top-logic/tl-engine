@@ -44,7 +44,7 @@ public final class ExportRegistryFactory extends ManagedClass {
 		 * Configuration of the used {@link ExportRegistry}.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<ExportRegistry> getExportRegistry();
+		PolymorphicConfiguration<? extends ExportRegistry> getExportRegistry();
 
 	}
 

@@ -120,11 +120,6 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
                 {counterText(activeIndex, steps.length)}
               </span>
             )}
-            {progress && (
-              <div className="tl-wizard__progress">
-                <TLChild control={progress} />
-              </div>
-            )}
             {showStepList && (
               <ol className="tl-steps" aria-label={i18n['js.wizard.steps']}>
                 {steps.map((step, position) => {
@@ -152,6 +147,11 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
                   );
                 })}
               </ol>
+            )}
+            {progress && (
+              <div className="tl-wizard__progress">
+                <TLChild control={progress} />
+              </div>
             )}
           </div>
         )}

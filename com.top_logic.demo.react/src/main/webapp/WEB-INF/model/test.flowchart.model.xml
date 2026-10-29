@@ -22,11 +22,26 @@
 					<annotations>
 						<constraints>
 							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+							<constraint-by-expression>
+								<check><![CDATA[value -> node -> $value
+    .filter(input -> $input.get(`test.flowchart:FlowNode#usedIn`)
+        .with(user -> $user != null && $user != $node))
+    .firstElement()
+    .with(input -> $input == null
+        ? true
+        : #("''{0}'' is already built into ''{1}''."@en, "''{0}'' ist bereits in ''{1}'' verbaut."@de)
+            .fill($input, $input.get(`test.flowchart:FlowNode#usedIn`)))]]></check>
+							</constraint-by-expression>
 						</constraints>
 						<options>
 							<options-by-expression>
-								<function><![CDATA[node -> $node.container()
-    .get(`test.flowchart:Product#buildInstructions`)]]></function>
+								<function><![CDATA[node -> {
+    consumers = $node.recursion(n -> $n.get(`test.flowchart:FlowNode#usedIn`));
+    $node.container()
+        .get(`test.flowchart:Product#buildInstructions`)
+        .filter(step -> !$consumers.containsElement($step) && $step.get(`test.flowchart:FlowNode#usedIn`)
+            .with(user -> $user == null || $user == $node))
+}]]></function>
 							</options-by-expression>
 						</options>
 					</annotations>
@@ -34,7 +49,7 @@
 				<reference name="usedIn"
 					inverse-reference="inputs"
 					kind="backwards"
-					multiple="true"
+					multiple="false"
 					navigate="true"
 					type="FlowNode"
 				/>

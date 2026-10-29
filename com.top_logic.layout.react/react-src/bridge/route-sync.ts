@@ -26,6 +26,10 @@
  * of the displayed page is not reported to the server, which has nothing to show differently: the
  * entry the browser arrives at shows itself again, e.g. by scrolling to where the reader was.</p>
  *
+ * <p>An entry point other than the default view is a page of its own, whose view file leads every
+ * URL of it. A move to an entry of another page is not reported to the server, whose display
+ * belongs to the page loaded: the browser loads the page of that entry instead.</p>
+ *
  * <p>A RouteChangeEvent also carries the title of the page its URL names, which becomes the title
  * of the document once the history is written, so that the entry is recorded under the title of
  * its page. A change of the title alone arrives with the URL the browser shows already, as a
@@ -69,6 +73,12 @@ const FIELD_REFUSED = 'refused';
  * is left on. Must match {@code ReactServlet#FIELD_CURRENT_URL}.
  */
 const FIELD_CURRENT_URL = 'currentUrl';
+
+/**
+ * The ending by which the leading segments of an address name a view file. Must match
+ * {@code ViewServlet#VIEW_FILE_SUFFIX}.
+ */
+const VIEW_FILE_SUFFIX = '.view.xml';
 
 /** Key under which a history entry carries its {@link NavState}. */
 const NAV_STATE_KEY = 'tlNav';
@@ -125,6 +135,12 @@ const _localSteps = new Map<number, LocalStep>();
 
 /** The address of the history entry the display belongs to. */
 let _displayUrl = '';
+
+/**
+ * The view file of the page the display belongs to, as {@link viewFileOf} determines it; empty for
+ * the default view.
+ */
+let _pageViewFile = '';
 
 /**
  * The title the document was loaded with, shown while the display names no title of its own.
@@ -198,6 +214,13 @@ export function initRouteSync(): void {
     // A move of the user's own supersedes the one that was refused: it is the display's answer to
     // the unsaved changes that is awaited now, not a resume of a move the user has moved on from.
     _refusedMove = null;
+    const route = extractRoutePath() + window.location.search;
+    if (leavesPage(route)) {
+      // The entry belongs to another page: the server displays the page it was loaded for, so the
+      // one the entry names is loaded.
+      window.location.reload();
+      return;
+    }
     const target = readNavState(event.state);
     const url = window.location.pathname + window.location.search;
     const step = target !== null ? _localSteps.get(target.pos) : undefined;
@@ -207,7 +230,7 @@ export function initRouteSync(): void {
       step.show();
       return;
     }
-    void sendRouteCommand(extractRoutePath() + window.location.search, target);
+    void sendRouteCommand(route, target);
   });
 
   initHistoryState();
@@ -230,6 +253,7 @@ export function handleRouteChangeEvent(event: RouteChangeEventData): void {
     _displayPos = pos;
   }
   _displayUrl = fullUrl;
+  _pageViewFile = viewFileOf(event.url);
   // After the history is written: the browser records the title with the entry that is current.
   applyTitle(event.title);
 }
@@ -390,6 +414,43 @@ function initHistoryState(): void {
   _displayPos = 0;
   _displayUrl = visiblePath() + window.location.search;
   history.replaceState(navState(0), '', _displayUrl);
+  _pageViewFile = viewFileOf(extractRoutePath());
+}
+
+/**
+ * Whether the given address names another page than the one the display belongs to.
+ *
+ * @param route
+ *        An address relative to the view base path, as {@link extractRoutePath} answers it.
+ */
+function leavesPage(route: string): boolean {
+  return viewFileOf(route) !== _pageViewFile;
+}
+
+/**
+ * The view file naming the page of the given address, empty where the address names the default
+ * view by its routes alone.
+ *
+ * <p>The view file is the leading part of the path that ends in {@link VIEW_FILE_SUFFIX}, followed
+ * by the end of the path or by the route inside the page; it may consist of several segments.</p>
+ *
+ * @param route
+ *        An address relative to the view base path, with or without its query.
+ */
+function viewFileOf(route: string): string {
+  const queryStart = route.indexOf('?');
+  const pathEnd = queryStart < 0 ? route.length : queryStart;
+  let suffix = route.indexOf(VIEW_FILE_SUFFIX);
+  while (suffix >= 0) {
+    const fileEnd = suffix + VIEW_FILE_SUFFIX.length;
+    if (fileEnd > pathEnd) break;
+    if (fileEnd === pathEnd || route.charAt(fileEnd) === '/') {
+      return route.substring(0, fileEnd);
+    }
+    // Only a segment ending in the suffix names a file.
+    suffix = route.indexOf(VIEW_FILE_SUFFIX, suffix + 1);
+  }
+  return '';
 }
 
 /** The current path with the window name segment removed. */

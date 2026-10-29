@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.ConfigurationAccess;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -93,11 +94,20 @@ public final class ConfigCollectionValue implements ConfigCollection {
 	 * rather than mutating what this returns: only those pair the mutation with the write-back the
 	 * shape needs, and only a LIST would happen to survive without it.
 	 * </p>
+	 *
+	 * <p>
+	 * An {@link PropertyDescriptor#isInstanceValued() instance-valued} property holds instances,
+	 * not configurations. For it, this is a detached list of the configurations of these
+	 * instances, which can be displayed but not changed.
+	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<ConfigurationItem> elements() {
 		Object value = _parentConfig.value(_property);
+		if (_property.isInstanceValued()) {
+			return configurations(value);
+		}
 		if (_property.kind() == PropertyKind.ARRAY) {
 			return value == null ? new ArrayList<>()
 				: new ArrayList<>((List<ConfigurationItem>) PropertyDescriptorImpl.arrayAsList(value));
@@ -107,6 +117,29 @@ public final class ConfigCollectionValue implements ConfigCollection {
 			return map == null ? new ArrayList<>() : new ArrayList<>((Collection<ConfigurationItem>) map.values());
 		}
 		return (List<ConfigurationItem>) value;
+	}
+
+	private List<ConfigurationItem> configurations(Object value) {
+		List<ConfigurationItem> result = new ArrayList<>();
+		if (value == null) {
+			return result;
+		}
+		Collection<?> instances;
+		if (_property.kind() == PropertyKind.ARRAY) {
+			instances = PropertyDescriptorImpl.arrayAsList(value);
+		} else if (_property.kind() == PropertyKind.MAP) {
+			instances = ((Map<?, ?>) value).values();
+		} else {
+			instances = (Collection<?>) value;
+		}
+		ConfigurationAccess access = _property.getConfigurationAccess();
+		for (Object instance : instances) {
+			ConfigurationItem config = access.getConfig(instance);
+			if (config != null) {
+				result.add(config);
+			}
+		}
+		return result;
 	}
 
 	/**

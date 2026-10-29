@@ -191,6 +191,42 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * Tests that a unit on a composition part decided by its container, the access parent it gets
+	 * by default, is offered when its operation is grantable on a type of the container, and hidden
+	 * when it is grantable on none.
+	 */
+	public void testDefaultContainerAccessParent() throws ConfigurationException {
+		UnitAccess deleteMilestone = access(on(DELETE, MILESTONE));
+		UnitAccess deleteNote = access(on(DELETE, NOTE));
+		UnitAccess readNote = access(on(READ, NOTE));
+		TLObject milestone = newPart(_project, MILESTONES, MILESTONE);
+		_object.set(milestone);
+
+		becomeUser(_responsible);
+		assertTrue("Some role may write a project, the container of a milestone.", deleteMilestone.isOffered());
+		assertEquals(Display.CONTENT, decide(deleteMilestone));
+		assertFalse("No role may write a category, the container of a note.", deleteNote.isOffered());
+		assertTrue("Some role may read a category.", readNote.isOffered());
+
+		becomeUser(_roleless);
+		assertTrue(deleteMilestone.isOffered());
+		assertEquals(Display.DENIED, decide(deleteMilestone));
+	}
+
+	/**
+	 * Tests that a unit on a type whose access parents have types not known statically is offered:
+	 * only the check on the concrete object decides.
+	 */
+	public void testUnknownAccessParentTypes() throws ConfigurationException {
+		UnitAccess access = access(on(DELETE, REMARK));
+		_object.set(newObject(qualified(REMARK), "remark"));
+
+		becomeUser(_responsible);
+		assertTrue(access.isOffered());
+		assertEquals("A remark in no container has no access parent.", Display.DENIED, decide(access));
+	}
+
+	/**
 	 * Tests that an object that is no instance of the declared type is denied.
 	 */
 	public void testTypeMismatchIsDenied() throws ConfigurationException {
@@ -425,8 +461,12 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 	}
 
 	private static String onProject(String operation) {
+		return on(operation, PROJECT);
+	}
+
+	private static String on(String operation, String typeName) {
 		return "<access-control operation='" + operation + "' inputs='object' object='$object' type='"
-			+ qualified(PROJECT) + "'/>";
+			+ qualified(typeName) + "'/>";
 	}
 
 	private static UnitAccess access(String xml) throws ConfigurationException {

@@ -74,7 +74,7 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
 
         /** Post processor called when a row has been read from the file. */
 		@ItemDefault(SimpleImportParserPostProcessor.Config.class)
-		PolymorphicConfiguration<ImportParserPostProcessor> getPostProcessor();
+		PolymorphicConfiguration<? extends ImportParserPostProcessor> getPostProcessor();
 
         /** will the names of the excel columns (A, B, C..) be used as names. */
         @BooleanDefault(false)

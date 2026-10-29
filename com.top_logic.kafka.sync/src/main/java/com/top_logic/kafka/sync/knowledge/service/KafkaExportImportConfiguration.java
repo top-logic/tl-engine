@@ -41,13 +41,13 @@ public class KafkaExportImportConfiguration extends ManagedClass {
 		 * Import configuration.
 		 */
 		@ItemDefault(ModelBasedImportConfiguration.class)
-		PolymorphicConfiguration<KafkaImportConfiguration> getImport();
+		PolymorphicConfiguration<? extends KafkaImportConfiguration> getImport();
 
 		/**
 		 * Export configuration.
 		 */
 		@ItemDefault(ModelBasedExportConfiguration.class)
-		PolymorphicConfiguration<KafkaExportConfiguration> getExport();
+		PolymorphicConfiguration<? extends KafkaExportConfiguration> getExport();
 
 	}
 

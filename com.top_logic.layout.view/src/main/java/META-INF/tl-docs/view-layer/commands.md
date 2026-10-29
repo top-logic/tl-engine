@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
 order: 50
 ---
 
@@ -198,12 +198,34 @@ A `<button>` (`ButtonElement`) shows its one command the same way, so its mode i
 </button>
 ```
 
+## Floating actions: `<floating-action>`
+
+`<floating-action>` (`FloatingActionElement`) offers the one or few actions a page is about - adding an entry to a list, starting a conversation - as round buttons floating over a corner of the content, instead of a button among others in the toolbar. Its commands are written directly inside it, like the `<action>` of a `<button>`, either by the tag of the command or as `<action class="…"/>`; at least one is required. Each command decides with its own rules whether its action is shown and executable, and the element adds no rules of its own.
+
+- **One action** is a round floating action button showing the command's icon, with its label as tooltip; a command with `display="icon-label"` shows its label beside the icon (an extended button).
+- **Several actions** form a speed dial: a round button (`image`, default a plus sign; `label`, its tooltip and accessible name) that opens the actions beside it, their labels as tooltips; the first command stands next to the button. While all commands are hidden, nothing is shown.
+- **Anchoring**: the actions float over the corner `position="bottom-end|bottom-start|top-end|top-start"` (default `bottom-end`; start and end follow the text direction) of the body of the enclosing `<panel>` or `<window>`, and stay there while the body scrolls. Where the element stands within the panel does not matter. Outside any panel or window they float over the corner of the browser window.
+- A snackbar shown in the same corner pushes the actions aside instead of covering them.
+
+```xml
+<panel>
+	<title><en>Notes</en><de>Notizen</de></title>
+	<table …/>
+	<floating-action>
+		<generic-command image="css:bi bi-plus-lg" inputs="project">
+			<label><en>New note</en><de>Neue Notiz</de></label>
+			…
+		</generic-command>
+	</floating-action>
+</panel>
+```
+
 ## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
 
 Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* main argument, not on the value the action processes (see `IntrinsicAccessRules` and `ModelAccessPolicy` for hide vs. disable).
 
-- **`<create-transient type="…" [container="ch" reference="attr"]/>`** (`CreateTransientAction`) results in a transient object of the type — the draft the dialog edits, as `new(type, transient: true)` creates it; its follow-up actions (e.g. the `<open-dialog>` binding it into the dialog) see it as `result`. Its rule is the right to create an object of the type: without `container` against the security root (refused → hidden), with `container` in the context of the channel's object and, with `reference`, together with Write on that reference (refused → disabled). `container`/`reference` serve the check only; the dialog gets the container through the `<open-dialog>` bindings.
-- **`<persist-transient [type="…"] [container="ch" reference="attr"]/>`** (`PersistTransientAction`) makes the transient object it processes (its [default argument or `value`](#actions-processing-one-value-value)) persistent the way `$draft.copy(transient: false)` does (values and composition parts; a refusal reports a refused *creation*), in the context of the container if one is given, and with `reference` adds the created object to that reference of the container, the way `$container.add(reference, $created)` does including its Write check. It runs in a transaction of its own and results in the persistent object. Its rule is the same creation check; the created type is `type` if given, else the reference's type, else the type of the command's main argument — so the dialog's Create button names the draft as its input: `inputs="model"`.
+- **`<create-transient type="…" [container="ch" reference="attr"]/>`** (`CreateTransientAction`) results in a transient object of the type — the draft the dialog edits, as `new(type, transient: true)` creates it; its follow-up actions (e.g. the `<open-dialog>` binding it into the dialog) see it as `result`. Its rule is the right to create an object of the type: without `container` against the security root (refused → hidden), with `container` in the context of the channel's object and, with `reference`, together with Write on that reference (refused → disabled). An empty `container` channel creates the draft without container: without `reference` it is checked against the security root (refused → hidden), with `reference` there is nothing to add the object to and the command is disabled. `container`/`reference` serve the check only; the dialog gets the container through the `<open-dialog>` bindings.
+- **`<persist-transient [type="…"] [container="ch" reference="attr"]/>`** (`PersistTransientAction`) makes the transient object it processes (its [default argument or `value`](#actions-processing-one-value-value)) persistent the way `$draft.copy(transient: false)` does (values and composition parts; a refusal reports a refused *creation*), in the context of the container if one is given, and with `reference` adds the created object to that reference of the container, the way `$container.add(reference, $created)` does including its Write check. It runs in a transaction of its own and results in the persistent object. Its rule is the same creation check, an empty `container` channel included; the created type is `type` if given, else the reference's type, else the type of the command's main argument — so the dialog's Create button names the draft as its input: `inputs="model"`.
 - **`<delete-object/>`** (`DeleteObjectAction`) deletes the object (or the objects of a collection) it processes the way `delete()` does, compositions included, in a transaction of its own; a following `<write-channel name="…" clear="true"/>` empties the channel that showed it. Its rule is Delete on the command's main argument (refused → disabled with "You may not delete this object.", hidden when no role may ever delete the type), combined with `<delete-veto-disabled/>` (`DeleteVetoDisabled`): an input whose `TLObject#tDeleteVeto()` refuses the deletion disables the command with the veto as reason. A command deleting by script configures `<delete-veto-disabled/>` explicitly.
 
 A transaction nested in a `<with-transaction>` commits with it, so the actions compose with further script steps in one transaction. A command whose effect is a free script declares what it does in its `<access>` instead: `<create [type="…"] [in="…"] [reference="…"]/>` for a script creating an object, `<operation name="…" object="…" type="…"/>` for an operation on an object (see [the access of a command](doc:view-layer/access-control#commands-the-access-they-declare)).
@@ -240,7 +262,7 @@ The opener and the dialog of a creation in a container:
 </generic-command>
 ```
 
-A top-level creation omits `container` and `reference` on both actions. Deleting the selected object:
+While `selectedScope` is empty, the opener is visible but disabled: with `reference`, there is no container to add the milestone to. A top-level creation omits `container` and `reference` on both actions. Deleting the selected object:
 
 ```xml
 <generic-command image="css:bi bi-trash" inputs="project">

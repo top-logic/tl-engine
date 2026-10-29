@@ -17,9 +17,11 @@ import com.top_logic.basic.config.template.CachedScope;
 import com.top_logic.basic.config.template.Eval;
 import com.top_logic.basic.config.template.Eval.EvalException;
 import com.top_logic.basic.config.template.Expand;
+import com.top_logic.basic.config.template.ExprFactory;
 import com.top_logic.basic.config.template.StringOutput;
 import com.top_logic.basic.config.template.TemplateExpression;
 import com.top_logic.basic.config.template.TemplateScope;
+import com.top_logic.basic.config.template.TextRange;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.LabelProvider;
@@ -108,7 +110,7 @@ public final class ConfigLabelProvider extends AbstractResourceProvider {
 		} else if (object instanceof Class<?>) {
 			return Resources.getInstance().getString(classKey(object));
 		} else {
-			return Resources.getInstance().getString(objectKey(object));
+			return Resources.getInstance().getString(classKey(object.getClass()));
 		}
 	}
 
@@ -141,24 +143,18 @@ public final class ConfigLabelProvider extends AbstractResourceProvider {
 	}
 
 	private ResourceTemplate configurationTemplate(ConfigurationItem config) {
-		String implementationName;
+		Class<?> implementationClass;
 		if (config instanceof PolymorphicConfiguration<?>) {
-			Class<?> implementationClass = ((PolymorphicConfiguration<?>) config).getImplementationClass();
-			if (implementationClass != null) {
-				implementationName = implementationClass.getName();
-			} else {
-				implementationName = null;
-			}
+			implementationClass = ((PolymorphicConfiguration<?>) config).getImplementationClass();
 		} else {
-			implementationName = null;
+			implementationClass = null;
 		}
-		ResourceTemplate template = getTemplate(config, implementationName);
+		ResourceTemplate template = getTemplate(config, implementationClass);
 		return template;
 	}
 
 	private ResourceTemplate implementationTemplate(Object object, ConfigurationItem config) {
-		String implementationName = object.getClass().getName();
-		ResourceTemplate template = getTemplate(config, implementationName);
+		ResourceTemplate template = getTemplate(config, object.getClass());
 		return template;
 	}
 
@@ -208,8 +204,9 @@ public final class ConfigLabelProvider extends AbstractResourceProvider {
 		return buffer.toString();
 	}
 
-	private ResourceTemplate getTemplate(ConfigurationItem config, String implementationName) {
-		if (implementationName != null) {
+	private ResourceTemplate getTemplate(ConfigurationItem config, Class<?> implementationClass) {
+		if (implementationClass != null) {
+			String implementationName = implementationClass.getName();
 			ResourceTemplate template = getTemplate(implementationName, true);
 			if (template != null) {
 				return template;
@@ -230,7 +227,20 @@ public final class ConfigLabelProvider extends AbstractResourceProvider {
 				return template;
 			}
 		}
-		return getTemplateWithoutSuffix(interfaceName, false);
+		if (implementationClass == null) {
+			return getTemplateWithoutSuffix(interfaceName, false);
+		}
+		ResourceTemplate template = getTemplateWithoutSuffix(interfaceName, true);
+		if (template != null) {
+			return template;
+		}
+
+		// Last resort: The label of the implementation class, as for a class, see
+		// classKey(Object). The documentation build creates no label e.g. for an implementation
+		// without configuration constructor (like a shared instance), nor for its configuration
+		// interface.
+		String label = Resources.getInstance().getString(classKey(implementationClass));
+		return ResourceTemplate.create(interfaceName, ExprFactory.literalTextDirect(TextRange.UNDEFINED, label));
 	}
 
 	private ResourceTemplate getTemplate(String baseName, boolean optional) {

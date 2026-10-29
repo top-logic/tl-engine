@@ -1,8 +1,9 @@
 // The wire contract of TLSnackbar, checked against the MUI adapter.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, act } from '@testing-library/react';
+import { screen, cleanup, act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { React, useTransientOverlayRects } from 'tl-react-bridge';
 import type { SnackbarStateJson } from 'tl-react-bridge';
 import MuiSnackbarAdapter from './MuiSnackbarAdapter';
 import { CONTROL_ID, fakeDebounceTimers, mountAdapter, patchState, settle } from './wire-test-support';
@@ -23,6 +24,16 @@ function mountSnackbar(state: Partial<SnackbarStateJson>) {
   return mountAdapter(MuiSnackbarAdapter, {
     visible: true, message: 'Gespeichert', variant: 'success', duration: DURATION_MS, generation: 3, ...state,
   });
+}
+
+/** Shows the number of transient overlays reported on the page. */
+function OverlayCount() {
+  return <output data-testid="overlays">{useTransientOverlayRects().length}</output>;
+}
+
+/** The number of transient overlays reported on the page, as {@link OverlayCount} shows it. */
+function overlayCount(): number {
+  return Number(screen.getByTestId('overlays').textContent);
 }
 
 function dismissed(generation: number) {
@@ -112,5 +123,19 @@ describe('TLSnackbar as MUI Snackbar', () => {
     await settle();
 
     expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('reports itself as a transient overlay while it shows a message', () => {
+    render(<OverlayCount />);
+    expect(overlayCount()).toBe(0);
+
+    mountSnackbar({});
+    expect(overlayCount()).toBe(1);
+
+    patchState({ message: 'Zweite', generation: 4 });
+    expect(overlayCount()).toBe(1);
+
+    patchState({ visible: false });
+    expect(overlayCount()).toBe(0);
   });
 });

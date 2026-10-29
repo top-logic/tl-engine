@@ -1,7 +1,9 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
+  ARG_TEXT,
+  CMD_ENTER_TEXT,
   CMD_GOTO,
   OptionLabel,
 } from './selectOptions';
@@ -143,6 +145,39 @@ function OptionRow({
   );
 }
 
+/**
+ * Renders the entry of the list taking the typed text as the value of a field accepting free entry,
+ * labelled with the text ("Use "xyz""). It is an option of the list like the others: reachable with
+ * the arrow keys, highlighted as they are, and activated by a click or Enter.
+ */
+function EntryRow({
+  label,
+  highlighted,
+  onActivate,
+  onMouseEnter,
+  id,
+}: {
+  label: string;
+  highlighted: boolean;
+  onActivate: () => void;
+  onMouseEnter: () => void;
+  id: string;
+}) {
+  return (
+    <div
+      id={id}
+      role="option"
+      aria-selected={false}
+      data-tl-state={highlighted ? 'highlighted' : undefined}
+      className="tl-select__option"
+      onClick={onActivate}
+      onMouseEnter={onMouseEnter}
+    >
+      <span>{label}</span>
+    </div>
+  );
+}
+
 // -- Main component --
 
 /**
@@ -168,6 +203,19 @@ function OptionRow({
  * the keyboard alone. Besides the arrow keys, Enter and Escape, typing the beginning of a label moves
  * to the option it starts (type-ahead, see useTypeAhead); on the closed field, typing opens the list
  * and moves there.
+ *
+ * A field accepting free entry (`freeEntry`) also takes a text of the user's own, sent with
+ * {@link CMD_ENTER_TEXT}; it always has the search field, whatever `noFilter` says, since the text
+ * is typed there. While the trimmed text names no option and no chosen value (see labelMatches), the
+ * list ends with an entry taking the text ("Use "xyz""), reached with the arrow keys like an option.
+ * While searching, the highlight starts on the option the text names exactly, if any, and on no
+ * option otherwise - a single option merely containing the text is not highlighted, so that Enter
+ * does not replace the text by it. Enter takes the highlighted option, or the text if no option is
+ * highlighted. Closing the list by leaving it - a press outside, Tab, a click on the field - takes a
+ * non-blank text as well; Escape closes the list and drops the text. Once the text is taken, the
+ * search is cleared; a single-valued field closes its list, a multi-valued one keeps it open for
+ * the next entry. A text the server refuses (e.g. one that is no valid value) is reported by the
+ * server like any failed command, in the window's snackbar.
  */
 const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DropdownSelectStateJson>>();
@@ -184,7 +232,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const optionsLoaded = state.optionsLoaded === true;
   const allOptions = (state.options ?? []) as OptionDescriptor[];
   const emptyOptionLabel = state.emptyOptionLabel ?? '';
-  const noFilter = state.noFilter === true;
+  const freeEntry = state.freeEntry === true;
+  // The text of a free entry is typed into the search field, so free entry always has one.
+  const noFilter = state.noFilter === true && !freeEntry;
 
   // Drag-and-drop is enabled only for custom-order multi-select editable fields
   const dragEnabled = customOrder && multiSelect && !disabled && editable;
@@ -197,6 +247,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     'js.dropdownSelect.removeChip': 'Remove {0}',
     'js.dropdownSelect.loading': 'Loading\u2026',
     'js.dropdownSelect.error': 'Failed to load options. Retry',
+    'js.dropdownSelect.useText': 'Use "{0}"',
   });
 
   const nothingFoundLabel = i18n['js.dropdownSelect.nothingFound'];
@@ -244,22 +295,41 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [allOptions, multiSelect, selectedIds, searchTerm]
   );
 
+  // Derived: the text a free entry takes, and whether the list offers the entry taking it - not for a
+  // text naming an option or a chosen value, which the server would choose instead.
+  const entryText = freeEntry ? searchTerm.trim() : '';
+  const offerEntry = entryText !== '' && optionsLoaded
+    && !allOptions.some((o) => labelMatches(o, entryText))
+    && !value.some((v) => labelMatches(v, entryText));
+  // The entry taking the text follows the options; the keyboard moves through both.
+  const entryIndex = filteredOptions.length;
+  const rowCount = filteredOptions.length + (offerEntry ? 1 : 0);
+
   // Derived: the position of the chosen option of a single select in the list, -1 if not listed.
   const chosenIndex = useMemo(
     () => (multiSelect ? -1 : filteredOptions.findIndex((o) => selectedIds.has(o.value))),
     [multiSelect, filteredOptions, selectedIds]
   );
 
-  // The highlight a list starts with: while searching, the single result if there is exactly one;
-  // otherwise the chosen option of a single select (none in a multi select). Set on opening, once
-  // the options are there, and whenever the search changes.
+  // The highlight a list starts with: while searching, the single result if there is exactly one -
+  // with free entry only the option the text names exactly, so that Enter takes a text that merely
+  // occurs in a label as the text; otherwise the chosen option of a single select (none in a multi
+  // select). Set on opening, once the options are there, and whenever the search changes.
+  const exactIndex = useMemo(
+    () => (freeEntry ? filteredOptions.findIndex((o) => labelMatches(o, searchTerm)) : -1),
+    [freeEntry, filteredOptions, searchTerm]
+  );
   useEffect(() => {
     if (searchTerm) {
-      setHighlightedIndex(filteredOptions.length === 1 ? 0 : -1);
+      if (freeEntry) {
+        setHighlightedIndex(exactIndex);
+      } else {
+        setHighlightedIndex(filteredOptions.length === 1 ? 0 : -1);
+      }
     } else {
       setHighlightedIndex(chosenIndex);
     }
-  }, [isOpen, filteredOptions.length, searchTerm, chosenIndex]);
+  }, [isOpen, filteredOptions.length, searchTerm, chosenIndex, freeEntry, exactIndex]);
 
   // A prefix typed while the options were loading moves to its option once they are there.
   useEffect(() => {
@@ -270,13 +340,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     if (match >= 0) setHighlightedIndex(match);
   }, [isOpen, optionsLoaded, filteredOptions]);
 
-  // Focus search input when dropdown is open and options are loaded.
+  // Focus search input when dropdown is open and options are loaded (with free entry at once, its
+  // search field being there while the options load).
   // Re-runs on value changes to restore focus after SSE state updates.
   useEffect(() => {
-    if (isOpen && optionsLoaded && searchRef.current) {
+    if (isOpen && (optionsLoaded || freeEntry) && searchRef.current) {
       searchRef.current.focus();
     }
-  }, [isOpen, optionsLoaded, value]);
+  }, [isOpen, optionsLoaded, freeEntry, value]);
 
   // A chip vanishes with its focused remove button once the server has dropped its value: the focus
   // goes to the neighbour (same place, else the one before), see chipFocusTargets; without any to the
@@ -287,8 +358,20 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     () => containerRef.current,
   );
 
-  // Close the dropdown on a press outside the control and its (portalled) list.
+  /** Sends the given text as a free entry; a blank one is not sent. */
+  const sendText = useCallback(
+    (text: string) => {
+      const entered = text.trim();
+      if (entered === '') return;
+      sendCommand(CMD_ENTER_TEXT, { [ARG_TEXT]: entered });
+    },
+    [sendCommand]
+  );
+
+  // Close the dropdown on a press outside the control and its (portalled) list, taking the text of a
+  // free entry.
   useCloseOnOutsidePress(isOpen, [containerRef, dropdownRef], () => {
+    if (freeEntry) sendText(searchTerm);
     setIsOpen(false);
     setSearchTerm('');
   });
@@ -300,21 +383,20 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Handlers --
 
-  const openDropdown = useCallback(async () => {
+  const openDropdown = useCallback(() => {
     if (disabled || !editable) return;
     setIsOpen(true);
     setSearchTerm('');
     setHighlightedIndex(-1);
     setLoadError(false);
+  }, [disabled, editable]);
 
-    if (!optionsLoaded) {
-      try {
-        await sendCommand('loadOptions');
-      } catch {
-        setLoadError(true);
-      }
-    }
-  }, [disabled, editable, optionsLoaded, sendCommand]);
+  // The open list asks for its options while it has none: on opening, and when the server drops
+  // them while the list stands open (after a free entry, whose value the options then include).
+  useEffect(() => {
+    if (!isOpen || optionsLoaded) return;
+    sendCommand('loadOptions').catch(() => setLoadError(true));
+  }, [isOpen, optionsLoaded, sendCommand]);
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
@@ -360,6 +442,20 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [multiSelect, allOptions, sendCommand, closeDropdown]
   );
 
+  /**
+   * Takes the typed text as a free entry: a single-valued field closes its list, a multi-valued one
+   * keeps it open for the next entry, with the search cleared.
+   */
+  const takeText = useCallback(() => {
+    sendText(searchTerm);
+    if (!multiSelect) {
+      closeDropdown();
+    } else {
+      setSearchTerm('');
+      setHighlightedIndex(-1);
+    }
+  }, [sendText, searchTerm, multiSelect, closeDropdown]);
+
   const removeOption = useCallback(
     (optionValue: string, removed: Element | null = null) => {
       noteRemoval(valueRef.current.findIndex((v) => v.value === optionValue), removed);
@@ -376,12 +472,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     (e: React.MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) return;
       if (isOpen) {
+        if (freeEntry) sendText(searchTerm);
         closeDropdown();
       } else {
         openDropdown();
       }
     },
-    [isOpen, openDropdown, closeDropdown]
+    [isOpen, openDropdown, closeDropdown, freeEntry, sendText, searchTerm]
   );
 
   const clearAll = useCallback(
@@ -444,14 +541,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
           e.preventDefault();
           e.stopPropagation();
           setHighlightedIndex((prev) =>
-            prev < filteredOptions.length - 1 ? prev + 1 : 0
+            prev < rowCount - 1 ? prev + 1 : 0
           );
           break;
         case 'ArrowUp':
           e.preventDefault();
           e.stopPropagation();
           setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredOptions.length - 1
+            prev > 0 ? prev - 1 : rowCount - 1
           );
           break;
         case 'Enter':
@@ -459,6 +556,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
           e.stopPropagation();
           if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
             selectOption(filteredOptions[highlightedIndex].value);
+          } else if (entryText !== '') {
+            // The entry taking the text, or no option highlighted.
+            takeText();
           }
           break;
         case 'Escape':
@@ -467,6 +567,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
           closeDropdown();
           break;
         case 'Tab':
+          if (freeEntry) sendText(searchTerm);
           closeDropdown();
           // Let Tab propagate naturally for focus management.
           break;
@@ -487,8 +588,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       openDropdown,
       closeDropdown,
       filteredOptions,
+      rowCount,
       highlightedIndex,
       selectOption,
+      entryText,
+      takeText,
+      freeEntry,
+      sendText,
       searchTerm,
       multiSelect,
       value,
@@ -565,8 +671,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       style={{ ...popoverStyle, width: containerRef.current?.getBoundingClientRect().width }}
       {...anchoredOverlayProps}
     >
-      {/* Search field - shown when options are loaded, unless the field asks for none */}
-      {!noFilter && (optionsLoaded || loadError) && (
+      {/* Search field - shown when options are loaded (with free entry at once), unless the field
+          asks for none */}
+      {!noFilter && (optionsLoaded || loadError || freeEntry) && (
         <div className="tl-select__search-group">
           <TextInput
             ref={searchRef}
@@ -602,7 +709,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
           />
         </div>
       )}
-      {optionsLoaded && filteredOptions.length === 0 && (
+      {optionsLoaded && filteredOptions.length === 0 && !offerEntry && (
         <div className="tl-status tl-type-body">
           {nothingFoundLabel}
         </div>
@@ -628,6 +735,15 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
               onMouseEnter={() => setHighlightedIndex(idx)}
             />
           ))}
+        {offerEntry && (
+          <EntryRow
+            id={`${controlId}-opt-${entryIndex}`}
+            label={i18n['js.dropdownSelect.useText'].replace('{0}', entryText)}
+            highlighted={highlightedIndex === entryIndex}
+            onActivate={takeText}
+            onMouseEnter={() => setHighlightedIndex(entryIndex)}
+          />
+        )}
       </div>
     </div>
   ) : null;

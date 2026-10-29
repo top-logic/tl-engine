@@ -512,7 +512,8 @@ public class SecurityCoverageAnalysis {
 	/**
 	 * Whether a check on objects of the given checked type is decided on objects of the given
 	 * type: the checked type is a generalization of the type, or an object of the checked type
-	 * delegates to an access parent of the type.
+	 * delegates to an access parent of the type, see
+	 * {@link ModelAccessRights#getAccessParentTypes(TLClass)}.
 	 *
 	 * @param visited
 	 *        The checked types inspected along the access parents, guarding against cycles.
@@ -527,11 +528,7 @@ public class SecurityCoverageAnalysis {
 			return true;
 		}
 		for (TLClass delegating : TLModelUtil.getReflexiveTransitiveSpecializations(checked)) {
-			AccessParentFunction parent = _accessRights.getAccessParent(delegating);
-			if (parent == null) {
-				continue;
-			}
-			Set<TLClass> parentTypes = parent.getParentTypes(delegating);
+			Set<TLClass> parentTypes = _accessRights.getAccessParentTypes(delegating);
 			if (parentTypes == null) {
 				return true;
 			}
@@ -557,9 +554,9 @@ public class SecurityCoverageAnalysis {
 	 * A place checking a type checks the objects of its concrete specializations, so a finding is
 	 * reported for each analyzed one of them it applies to. A type with an access parent is not
 	 * checked for the applicability of an operation: the operation is decided on the access
-	 * parent, whose type is not known statically. A place checking the security root is reported
-	 * for the type of the root. The uses of a finding are those of the same operation on the same
-	 * type, in the order they were given.
+	 * parent, whose type is not always known statically. A place checking the security root is
+	 * reported for the type of the root. The uses of a finding are those of the same operation on
+	 * the same type, in the order they were given.
 	 * </p>
 	 */
 	private Map<TLClass, List<CoverageFinding>> useFindings() {

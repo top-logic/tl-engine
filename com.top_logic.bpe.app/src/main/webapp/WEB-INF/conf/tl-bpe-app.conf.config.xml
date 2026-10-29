@@ -31,46 +31,6 @@
 				</model-filter>
 			</instance>
 		</config>
-
-		<config service-class="com.top_logic.base.services.InitialRolesManager">
-			<instance>
-				<roles>
-					<role name="SecurityStructure.user"/>
-					<role name="SecurityStructure.superuser"/>
-				</roles>
-			</instance>
-		</config>
-		
-		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
-			<instance>
-				<role-rules>
-					<singleton-rule
-						id="user"
-						target="SecurityStructure#ROOT"
-						role="SecurityStructure.user"
-					>
-						<group-with-name name="user"/>
-					</singleton-rule>
-
-					<singleton-rule
-						id="superuser"
-						target="SecurityStructure#ROOT"
-						role="SecurityStructure.superuser"
-					>
-						<group-with-name name="superuser"/>
-					</singleton-rule>
-				</role-rules>
-			</instance>
-		</config>
-
-		<config service-class="com.top_logic.base.services.InitialGroupManager">
-			<instance default-group="user">
-				<groups>
-					<group name="user"/>
-					<group name="superuser"/>
-				</groups>
-			</instance>
-		</config>
 	</services>
 
 	<configs>

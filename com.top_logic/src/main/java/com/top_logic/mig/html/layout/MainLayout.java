@@ -276,7 +276,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		@Name(LAYOUT_FACTORY)
 		@ItemDefault
 		@ImplementationClassDefault(LayoutControlFactory.class)
-		PolymorphicConfiguration<LayoutFactory> getLayoutFactory();
+		PolymorphicConfiguration<? extends LayoutFactory> getLayoutFactory();
 
 		/**
 		 * Whether a dialog with a close button could be closed by a background click.

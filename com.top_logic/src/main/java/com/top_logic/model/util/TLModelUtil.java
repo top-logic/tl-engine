@@ -970,6 +970,32 @@ public class TLModelUtil {
 		return normalizeSingleValue(part, mapping, value);
 	}
 
+	/**
+	 * Whether the given part value contains the given value.
+	 *
+	 * <p>
+	 * A {@link Collection} value (the value of a {@link TLStructuredTypePart#isMultiple() multiple}
+	 * part) contains the value, if it is one of its elements. Any other value contains the given
+	 * value, if both are equal. Nothing contains <code>null</code>.
+	 * </p>
+	 *
+	 * @param partValue
+	 *        The value of a part, as returned by {@link TLObject#tValue(TLStructuredTypePart)}.
+	 * @param value
+	 *        The value to look up.
+	 *
+	 * @see TLObject#tContains(TLStructuredTypePart, Object)
+	 */
+	public static boolean containsValue(Object partValue, Object value) {
+		if (value == null) {
+			return false;
+		}
+		if (partValue instanceof Collection<?> collection) {
+			return collection.contains(value);
+		}
+		return value.equals(partValue);
+	}
+
 	private static Object normalizeSingleValue(TLStructuredTypePart part, StorageMapping<?> mapping, Object value) {
 		if (!mapping.isCompatible(value)) {
 			throw new IllegalArgumentException("Value '" + value + "'"

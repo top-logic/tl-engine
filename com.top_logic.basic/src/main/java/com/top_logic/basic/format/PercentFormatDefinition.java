@@ -36,7 +36,7 @@ public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefin
 		 * The parsed value is afterwards divided by 100 to create the percentage value.
 		 * </p>
 		 */
-		PolymorphicConfiguration<FormatDefinition<?>> getFormat();
+		PolymorphicConfiguration<? extends FormatDefinition<?>> getFormat();
 	}
 
 	private FormatDefinition<?> _format;

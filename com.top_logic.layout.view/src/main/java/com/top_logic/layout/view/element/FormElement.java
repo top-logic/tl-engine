@@ -231,7 +231,7 @@ public class FormElement extends ContainerElement {
 		@ImplementationClassDefault(DefaultLockHandler.class)
 		@Options(fun = AllInAppImplementations.class)
 		@DisplayMinimized
-		PolymorphicConfiguration<LockHandler> getLockHandler();
+		PolymorphicConfiguration<? extends LockHandler> getLockHandler();
 
 		/**
 		 * Commands to contribute to the enclosing command scope.

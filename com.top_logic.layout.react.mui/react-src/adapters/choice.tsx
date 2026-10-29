@@ -12,6 +12,15 @@ export const CMD_GOTO = 'goto';
 /** Argument of {@link CMD_GOTO}: the value of the option to display. */
 export const ARG_OPTION = 'option';
 
+/**
+ * Command entering a text of the user's own as the value of a field that accepts free entry
+ * (freeEntry). Must match `EnterTextArguments#COMMAND`.
+ */
+export const CMD_ENTER_TEXT = 'enterText';
+
+/** Argument of {@link CMD_ENTER_TEXT}: the text entered. Must match `EnterTextArguments#TEXT`. */
+export const ARG_TEXT = 'text';
+
 /** Argument of `valueChanged`: the values of the chosen options. */
 export const ARG_VALUE = 'value';
 

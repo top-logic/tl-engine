@@ -27,6 +27,15 @@ const ARG_OPTION = 'option';
 /** Argument of {@link CMD_VALUE_CHANGED}: the values of the chosen options. */
 const ARG_VALUE = 'value';
 
+/** Command entering a text of the user's own. */
+const CMD_ENTER_TEXT = 'enterText';
+
+/** Argument of {@link CMD_ENTER_TEXT}: the text. */
+const ARG_TEXT = 'text';
+
+/** The key of the label of the entry taking the typed text, which the test translations answer with. */
+const KEY_USE_TEXT = 'js.dropdownSelect.useText';
+
 /** The ID of the input inside the control. */
 const INPUT_ID = CONTROL_ID + '-input';
 
@@ -44,6 +53,10 @@ function mountDropdown(state: Record<string, unknown>, options?: MountOptions) {
 
 function changedTo(...values: string[]) {
   return [CMD_VALUE_CHANGED, { [ARG_VALUE]: values }];
+}
+
+function entered(text: string) {
+  return [CMD_ENTER_TEXT, { [ARG_TEXT]: text }];
 }
 
 /** Opens the list of the field and returns it. */
@@ -218,5 +231,82 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
 
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(sent).not.toHaveBeenCalled();
+  });
+});
+
+describe('TLDropdownSelect accepting free entry as MUI Autocomplete', () => {
+  it('enters a typed text with Enter', async () => {
+    const sent = mountDropdown({ value: [ALPHA], freeEntry: true, optionsLoaded: true, options: OPTIONS });
+
+    const input = screen.getByRole('combobox');
+    await userEvent.clear(input);
+    await userEvent.type(input, ' Delta {Enter}');
+    await settle();
+
+    expect(sent.mock.calls).toEqual([entered('Delta')]);
+  });
+
+  it('chooses the highlighted option with Enter', async () => {
+    const sent = mountDropdown({ value: [], freeEntry: true, optionsLoaded: true, options: OPTIONS });
+
+    const input = screen.getByRole('combobox');
+    await userEvent.type(input, 'Gam{ArrowDown}{Enter}');
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('c')]);
+  });
+
+  it('offers the entry taking a text that names no option, and enters the text from it', async () => {
+    const sent = mountDropdown({ value: [], multiSelect: true, freeEntry: true, optionsLoaded: true, options: OPTIONS });
+
+    await userEvent.type(screen.getByRole('combobox'), 'Al');
+    const list = await screen.findByRole('listbox');
+    expect(within(list).getAllByRole('option').map(option => option.textContent)).toEqual(['Alpha', KEY_USE_TEXT]);
+    await userEvent.click(within(list).getByRole('option', { name: KEY_USE_TEXT }));
+    await settle();
+
+    expect(sent.mock.calls).toEqual([entered('Al')]);
+  });
+
+  it('offers no entry taking a text that names an option', async () => {
+    mountDropdown({ value: [], freeEntry: true, optionsLoaded: true, options: OPTIONS });
+
+    await userEvent.type(screen.getByRole('combobox'), 'alpha');
+    const list = await screen.findByRole('listbox');
+    expect(within(list).getAllByRole('option').map(option => option.textContent)).toEqual(['Alpha']);
+  });
+
+  it('enters a typed text when the field is left', async () => {
+    const sent = mountDropdown({ value: [], freeEntry: true, optionsLoaded: true, options: OPTIONS });
+
+    await userEvent.type(screen.getByRole('combobox'), 'Delta');
+    await userEvent.tab();
+    await settle();
+
+    expect(sent.mock.calls).toEqual([entered('Delta')]);
+  });
+
+  it('drops a typed text on Escape', async () => {
+    const sent = mountDropdown({ value: [], freeEntry: true, optionsLoaded: true, options: OPTIONS });
+
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await userEvent.type(input, 'Delta{Escape}');
+    expect(input.value).toBe('');
+    await userEvent.tab();
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('enters nothing without free entry', async () => {
+    const sent = mountDropdown({ value: [], optionsLoaded: true, options: OPTIONS });
+
+    const input = screen.getByRole('combobox');
+    await userEvent.type(input, 'Delta{Enter}');
+    await userEvent.tab();
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+    expect(screen.queryByRole('option', { name: KEY_USE_TEXT })).toBeNull();
   });
 });

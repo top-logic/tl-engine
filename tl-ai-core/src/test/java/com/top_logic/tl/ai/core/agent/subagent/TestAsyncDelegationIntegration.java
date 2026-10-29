@@ -353,6 +353,8 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 	 * {@code ThreadContextManager} can resolve a proper
 	 * {@link com.top_logic.basic.SubSessionContext} on the background worker threads (the async
 	 * spawn path calls {@code ThreadContext.inSystemContext}).</li>
+	 * <li>{@link SubagentWorkers.Module#INSTANCE} — without it no subagent is spawned; it ends the
+	 * spawned ones before the thread context they run in stops.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -366,7 +368,8 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestAsyncDelegationIntegration.class),
 				ModelService.Module.INSTANCE,
-				AgentExecutionStore.Module.INSTANCE));
+				AgentExecutionStore.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 
 	/**

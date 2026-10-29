@@ -51,6 +51,8 @@
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
 					<!-- Interaction Timeouts: how long an approval / an askUser question waits for the user -->
 					<module key="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService$Module" value="true"/>
+					<!-- Subagent Workers: ends background subagents before the services they use stop -->
+					<module key="com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers$Module" value="true"/>
 					<module key="com.top_logic.tl.ai.core.citation.CitationKinds$Module" value="true"/>
 					<!-- Page Archive: a copy of every web page an agent run read, for its citations -->
 					<module key="com.top_logic.tl.ai.core.citation.PageArchive$Module" value="true"/>
@@ -171,6 +173,10 @@
 		-->
 		<config service-class="com.top_logic.tl.ai.core.research.ResearchRuns">
 			<instance class="com.top_logic.tl.ai.core.research.ResearchRuns"/>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers">
+			<instance class="com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers"/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
@@ -368,7 +374,7 @@
 
 			They replace LLMService (Gitea #691). A configuration that still names LLMService stops the
 			application from starting, with a message saying where each of its sections now belongs;
-			see tl-ai-core/doc/llm-service-migration.md.
+			see the developer article ai/providers (migrating from LLMService).
 		-->
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
@@ -461,7 +467,7 @@
 					  <capacity chat-workers="32" chat-queue="-1"/>       (32 at a time, the rest refused)
 					  <capacity concurrent-runs-per-account="5"/>         (3 to 5 in a shared installation)
 
-					See tl-ai-core/doc/run-limits.md.
+					See the developer article ai/limits-and-caching (run limits).
 				-->
 				<capacity/>
 				<!--
@@ -545,7 +551,7 @@
 
 					The budget counts what the account's recorded runs consumed, so it needs run
 					recording; reading it costs one pass over the account's execution rows for every message.
-					See tl-ai-core/doc/run-limits.md.
+					See the developer article ai/limits-and-caching (run limits).
 				-->
 				<budget/>
 			</instance>

@@ -12,7 +12,7 @@ research.config.xml
 
 # Agent security test bed (pm model, declarative role rules, accounts, tool policy, seed data).
 # Uncomment the following line to enable it, comment it out again to disable it.
-# See tl-ai-demo/doc/secdemo/testbed.md - it maps every behaviour to a persona and a thing to type.
+# See the developer article ai/security/test-bed - it maps every behaviour to a persona and a thing to type.
 #secdemo.config.xml
 
 # The MCP endpoint /mcp with HTTP basic login and three model-reading tools - for a local demo only.

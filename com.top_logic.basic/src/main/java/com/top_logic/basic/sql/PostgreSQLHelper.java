@@ -26,6 +26,7 @@ import org.postgresql.jdbc.AutoSave;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PGTime;
 import org.postgresql.util.PGTimestamp;
+import org.postgresql.util.PSQLState;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -132,9 +133,7 @@ public class PostgreSQLHelper extends DBHelper {
 
 	@Override
 	protected void internalCheck(Statement statement) throws SQLException {
-		AutoSave autosave = getAutosaveMode(statement.getConnection());
-
-		if (autosave == AutoSave.NEVER) {
+		if (!Driver.usesAutosave(statement.getConnection())) {
 			Logger.error("PostgreSQL connection does not use autosave mode.", PostgreSQLHelper.class);
 		}
 
@@ -170,12 +169,6 @@ public class PostgreSQLHelper extends DBHelper {
 					+ CI_COLLATION + "\" for non-binary string columns cannot be created.", PostgreSQLHelper.class);
 			}
 		}
-	}
-
-	private AutoSave getAutosaveMode(Connection connection) throws SQLException {
-		PgConnection pgConnection = connection.unwrap(PgConnection.class);
-
-		return pgConnection.getAutosave();
 	}
 
 	@Override
@@ -322,13 +315,13 @@ public class PostgreSQLHelper extends DBHelper {
 	protected void setTimeFromJava(PreparedStatement pstm, Object val, int col) throws SQLException {
 		Time time;
 
-		if (val instanceof PGTime) {
+		if (Driver.isDriverTime(val)) {
 			time = (Time) val;
 		} else if (val instanceof Time) {
-			time = new PGTime(((Time) val).getTime());
+			time = Driver.newTime(((Time) val).getTime());
 		} else if (val instanceof java.util.Date) {
 			long timeStamp = ((java.util.Date) val).getTime();
-			time = new PGTime(timeStamp);
+			time = Driver.newTime(timeStamp);
 		} else {
 			throw new SQLException("Dont know how to convert a " + val.getClass() + " to a "
 				+ Time.class.getName());
@@ -340,7 +333,7 @@ public class PostgreSQLHelper extends DBHelper {
 	@Override
 	protected void setTimestampFromJava(PreparedStatement pstm, Object val, int col) throws SQLException {
 		Timestamp timeStamp;
-		if (val instanceof PGTimestamp) {
+		if (Driver.isDriverTimestamp(val)) {
 			timeStamp = (Timestamp) val;
 		} else if (val instanceof Timestamp) {
 			/**
@@ -350,7 +343,7 @@ public class PostgreSQLHelper extends DBHelper {
 			 * Using a PGTimestamp sets the local variable oid which apparently results in the
 			 * correct behavior when setTimestamp is invoked on the PgPreparedStatement.
 			 */
-			timeStamp = new PGTimestamp(((Timestamp) val).getTime());
+			timeStamp = Driver.newTimestamp(((Timestamp) val).getTime());
 		} else if (val instanceof java.util.Date) {
 			/**
 			 * Facing error with type Timestamp: column type is timestamp without time zone but
@@ -359,7 +352,7 @@ public class PostgreSQLHelper extends DBHelper {
 			 * Using a PGTimestamp sets the local variable oid which apparently results in the
 			 * correct behavior when setTimestamp is invoked on the PgPreparedStatement.
 			 */
-			timeStamp = new PGTimestamp(((java.util.Date) val).getTime());
+			timeStamp = Driver.newTimestamp(((java.util.Date) val).getTime());
 		} else {
 			throw new SQLException("Dont know how to convert a " + val.getClass() + " to a "
 				+ Timestamp.class.getName());
@@ -466,12 +459,9 @@ public class PostgreSQLHelper extends DBHelper {
 	 */
 	@Override
 	public boolean canRetry(SQLException sqlX) {
-		String sqlState = sqlX.getSQLState();
-
-		if (sqlState != null
-			&& ("08003".equals(sqlState) // connection_does_not_exist
-				|| "40P01".equals(sqlState))) // deadlock detected
+		if (Driver.canRetry(sqlX.getSQLState())) {
 			return true;
+		}
 
 		return super.canRetry(sqlX);
 	}
@@ -505,6 +495,47 @@ public class PostgreSQLHelper extends DBHelper {
 		result.append(columnRef(columnName));
 		result.append(" SET");
 		appendMandatory(result, mandatory);
+	}
+
+	/**
+	 * Access to the classes of the PostgreSQL JDBC driver.
+	 * 
+	 * <p>
+	 * The driver is an optional dependency that is only available in an application using
+	 * PostgreSQL. The bytecode verifier loads a class, when a value of this class is used as a value
+	 * of its JDBC super type (e.g. a {@link PGTime} as {@link Time}). Using the driver classes this
+	 * way directly in {@link PostgreSQLHelper} prevents loading the helper without the driver (e.g.
+	 * when the options for the SQL dialect are computed). This class is only loaded when the driver
+	 * is actually used.
+	 * </p>
+	 */
+	private static final class Driver {
+
+		static boolean canRetry(String sqlState) {
+			return PSQLState.CONNECTION_DOES_NOT_EXIST.getState().equals(sqlState)
+				|| PSQLState.DEADLOCK_DETECTED.getState().equals(sqlState);
+		}
+
+		static boolean usesAutosave(Connection connection) throws SQLException {
+			return connection.unwrap(PgConnection.class).getAutosave() != AutoSave.NEVER;
+		}
+
+		static boolean isDriverTime(Object value) {
+			return value instanceof PGTime;
+		}
+
+		static Time newTime(long time) {
+			return new PGTime(time);
+		}
+
+		static boolean isDriverTimestamp(Object value) {
+			return value instanceof PGTimestamp;
+		}
+
+		static Timestamp newTimestamp(long time) {
+			return new PGTimestamp(time);
+		}
+
 	}
 
 }

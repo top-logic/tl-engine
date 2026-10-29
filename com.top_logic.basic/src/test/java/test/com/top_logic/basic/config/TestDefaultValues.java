@@ -218,7 +218,7 @@ public class TestDefaultValues extends AbstractTypedConfigurationTestCase {
 		Map<Integer, ScenarioTypeEntry> getMap();
 
 		@ImplementationClassDefault(F.class)
-		PolymorphicConfiguration<C> getCConfig();
+		PolymorphicConfiguration<? extends C> getCConfig();
 
 		@ComplexDefault(CreateArrayValue.class)
 		TestValue[] getArray();

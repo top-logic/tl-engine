@@ -101,7 +101,7 @@ public class ConfiguredCommandApprovalService extends CommandApprovalService {
 			@DefaultContainer
 			@ImplementationClassDefault(ConfiguredApprovalRule.class)
 			@Options(fun = AllInAppImplementations.class)
-			List<PolymorphicConfiguration<CommandApprovalRule>> getRules();
+			List<PolymorphicConfiguration<? extends CommandApprovalRule>> getRules();
 		}
 	}
 
@@ -121,7 +121,7 @@ public class ConfiguredCommandApprovalService extends CommandApprovalService {
 			TLClass type = typeCheck.getType().resolveClass();
 
 			CommandApprovalRule checker = null;
-			for (PolymorphicConfiguration<CommandApprovalRule> checkerConfig : typeCheck.getRules()) {
+			for (PolymorphicConfiguration<? extends CommandApprovalRule> checkerConfig : typeCheck.getRules()) {
 				CommandApprovalRule part = context.getInstance(checkerConfig);
 				checker = checker == null ? part : checker.combine(part);
 			}

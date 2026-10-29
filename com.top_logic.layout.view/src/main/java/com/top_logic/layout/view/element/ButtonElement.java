@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -25,6 +27,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -132,8 +135,7 @@ public class ButtonElement implements UIElement {
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
 		control.setCssClass(_config.getCssClass());
-		control.addAttachListener(() -> model.attach(context.getModelScope()));
-		control.addDetachListener(model::detach);
+		ViewCommands.registerLifecycle(context, List.of(model), control);
 		return control;
 	}
 }

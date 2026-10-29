@@ -106,7 +106,7 @@ public class MakeColumnAttributeProcessor extends AbstractConfiguredInstance<Mak
 		/**
 		 * Converter to convert values before they are stored to the column.
 		 */
-		PolymorphicConfiguration<ValueConverter> getValueConverter();
+		PolymorphicConfiguration<? extends ValueConverter> getValueConverter();
 
 	}
 

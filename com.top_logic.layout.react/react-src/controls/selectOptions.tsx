@@ -10,6 +10,15 @@ export const CMD_GOTO = 'goto';
 export const ARG_OPTION = 'option';
 
 /**
+ * Command entering a text of the user's own as the value of a select field that accepts free entry
+ * (freeEntry). Must match `EnterTextArguments#COMMAND`.
+ */
+export const CMD_ENTER_TEXT = 'enterText';
+
+/** Argument of {@link CMD_ENTER_TEXT}: the text entered. Must match `EnterTextArguments#TEXT`. */
+export const ARG_TEXT = 'text';
+
+/**
  * Renders an option as its image followed by its label, for an element that carries the option's
  * color role itself (data-tl-role, see {@link optionRoleAttr}): a segment. Image and label are
  * siblings; nothing is nested in a pill.

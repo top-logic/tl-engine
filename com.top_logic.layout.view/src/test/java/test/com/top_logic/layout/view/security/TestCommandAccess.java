@@ -43,11 +43,14 @@ import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.CommandAccess;
 import com.top_logic.layout.view.security.CreateAccess;
 import com.top_logic.layout.view.security.I18NConstants;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.security.OperationAccess;
 import com.top_logic.layout.view.security.UnitAccess;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
@@ -169,6 +172,103 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_root);
 		assertSame("A user bypassing the model security holds every operation.", ExecutableState.EXECUTABLE,
 			rule.isExecutable(_category));
+	}
+
+	/**
+	 * A command on a composition part decided by its container, the access parent it gets by
+	 * default, is offered when its operation is grantable on a type of the container, and hidden
+	 * when it is grantable on none.
+	 */
+	public void testDefaultContainerAccessParent() throws ConfigurationException {
+		ViewExecutabilityRule deleteMilestone =
+			rule(command(OBJECT_CHANNEL, operation("Delete", MILESTONE)), _context);
+		ViewExecutabilityRule deleteNote = rule(command(OBJECT_CHANNEL, operation("Delete", NOTE)), _context);
+		TLObject milestone = newPart(_project, MILESTONES, MILESTONE);
+		TLObject note = newPart(_category, NOTES, NOTE);
+
+		becomeUser(_responsible);
+		assertSame("The responsible may write the project holding the milestone.", ExecutableState.EXECUTABLE,
+			deleteMilestone.isExecutable(milestone));
+		assertSame("No role may write a category, the container of a note.", ExecutableState.NOT_EXEC_HIDDEN,
+			deleteNote.isExecutable(note));
+
+		becomeUser(_roleless);
+		assertDisabled("Some role may write a project, but not this user.", I18NConstants.ERROR_DELETE_DENIED,
+			deleteMilestone.isExecutable(milestone));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, deleteNote.isExecutable(note));
+	}
+
+	/**
+	 * Creating a composition part decided by its container, the access parent it gets by default,
+	 * is offered when writing a type of the container is grantable, and hidden when it is not.
+	 */
+	public void testCreateDefaultContainerAccessParent() throws ConfigurationException {
+		ViewExecutabilityRule createMilestone =
+			rule(command(OBJECT_CHANNEL, createByReference("$object", MILESTONES)), _context);
+		ViewExecutabilityRule createNote = rule(command(OBJECT_CHANNEL,
+			"<create in='$object' reference='" + qualified(CATEGORY) + "#" + NOTES + "'/>"), _context);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, createMilestone.isExecutable(_project));
+		assertSame("No role may write a category.", ExecutableState.NOT_EXEC_HIDDEN,
+			createNote.isExecutable(_category));
+
+		becomeUser(_roleless);
+		// Some role may write a project, but not this user.
+		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, createMilestone.isExecutable(_project));
+		assertSame("No role may write a category.", ExecutableState.NOT_EXEC_HIDDEN,
+			createNote.isExecutable(_category));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, createNote.isExecutable(_category));
+	}
+
+	/**
+	 * An operation on an object, or on an attribute of objects of a type, decided by an access
+	 * parent is refused for a user without the right on the parent, but not hidden as long as some
+	 * role can hold the operation on a type of the parent.
+	 */
+	public void testDelegatingTypeRefusedNotHidden() {
+		TLObject milestone = newPart(_project, MILESTONES, MILESTONE);
+		TLObject note = newPart(_category, NOTES, NOTE);
+		TLStructuredTypePart milestoneName = part(MILESTONE, NAME);
+		TLStructuredTypePart noteName = part(NOTE, NAME);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE,
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, milestoneName));
+		assertSame(ExecutableState.EXECUTABLE,
+			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(MILESTONE), milestoneName));
+		assertSame("No role may write a category, the container of a note.", ExecutableState.NOT_EXEC_HIDDEN,
+			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(NOTE), noteName));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, note, noteName));
+
+		becomeUser(_roleless);
+		assertTrue("Some role may write a project, but not this user.",
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, null).isDisabled());
+		assertTrue(ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, milestoneName).isDisabled());
+		assertSame("Whether the user may write depends on the object.", ExecutableState.EXECUTABLE,
+			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(MILESTONE), milestoneName));
+	}
+
+	/**
+	 * A command on a type whose access parents have types not known statically is offered: only
+	 * the check on the concrete object decides.
+	 */
+	public void testUnknownAccessParentTypes() throws ConfigurationException {
+		ViewExecutabilityRule rule = rule(command(OBJECT_CHANNEL, operation("Delete", REMARK)), _context);
+		TLObject remark = newObject(qualified(REMARK), "remark");
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutable(null));
+		assertDisabled("A remark in no container has no access parent.", I18NConstants.ERROR_DELETE_DENIED,
+			rule.isExecutable(remark));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(remark));
 	}
 
 	/**

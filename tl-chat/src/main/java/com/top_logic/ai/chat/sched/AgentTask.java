@@ -68,8 +68,8 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  * the default {@link ApprovalMode#AUTO_APPROVE} mode the task marks its tracker
  * {@link TaskProgressTracker#isUnattended() unattended}: the run is bounded by the policy's
  * {@code <background-allowlist>} instead of by an approval prompt, and {@code askUser} answers the
- * model at once rather than parking the run until the interaction timeout. See
- * {@code doc/scheduled-agent.md}.
+ * model at once rather than parking the run until the interaction timeout. See the developer
+ * article {@code ai/script-and-scheduled-runs}.
  * </p>
  *
  * <p>

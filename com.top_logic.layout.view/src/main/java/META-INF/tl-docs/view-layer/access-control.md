@@ -1,5 +1,5 @@
 ---
-description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), and the edit-operation of a <form>.
+description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), the edit-operation of a <form>, and how fields, columns, form saves and option lists follow the Read / Write rights of an attribute (ModelAccessPolicy.onAttribute, BufferSave, isAllowedInitial for drafts).
 order: 75
 ---
 
@@ -219,7 +219,9 @@ the checks decide on the main argument of the command and combine with the comma
 like its own checks:
 
 - `<create-transient>` and `<persist-transient>`: the creation in their container, the check of a
-  `<create>`;
+  `<create>`. An empty container channel means a creation without container: without `reference`
+  it is checked against the security root (refused → hidden), with `reference` there is nothing to
+  add the object to and the command is disabled;
 - `<delete-object>`: `Delete` on every processed object, plus the delete veto;
 - `<link-element>` and `<remove-element>`: the `<link-access>` and `<remove-access>` the enclosing
   `<object-list>` declares, with the same `<operation>` and `<create>` checks over the inputs of the
@@ -248,6 +250,35 @@ The rules of `<edit-executability>` decide in addition.
 	...
 </form>
 ```
+
+## Attributes in forms and tables
+
+Fields and columns over a model attribute follow the access rights of the attribute on the displayed
+object by themselves; a view configures nothing for it (`ModelAccessPolicy.onAttribute`):
+
+- **Reading.** A `<field>` whose attribute the user may not read on the displayed object is hidden,
+  and its value is not sent to the client. In a table, a `<column>` over such an attribute shows an
+  empty cell in that row, and a column whose attribute the user can read on no row at all (no role is
+  granted `Read` of it, or the user is restricted) is not offered.
+- **Writing.** In edit mode, a field the user may not write is read-only; when the refusal depends on
+  the object (the user holds `Write` elsewhere, not here), the field is disabled and names the
+  refusal in its tooltip. A table edits only the cells the user may write.
+- **Saving.** Saving a form checks `Write` for every changed attribute of an existing object before
+  anything is written, and the right to create every new object in its context; a refusal rolls the
+  save back (`BufferSave`). A row-editing table checks the same for its changed and added rows
+  (`RowSetEditSession`).
+- **New objects.** The attributes of a draft - the transient object of a create dialog - are decided
+  by `ModelAccessRights.isAllowedInitial` (see [checking access](doc:access-checks#the-api-modelaccessrights)): for a
+  type with an access parent on the roles at the end of the draft's access-parent chain, while
+  attribute grants of a type deciding by its own roles do not restrict a draft. The locked field is
+  the enforcement - it rejects values from the client -, and persisting the draft writes its values
+  without a check per attribute, so that values the application prefills are kept.
+- **Options.** The options of a reference field leave out the objects the user may not discover,
+  like the result of every TL-Script an application executes (`AttributeOptions.readable`).
+
+Writes a view performs through TL-Script (`set`, `add`, `new`, `copy`, `delete` in an
+`<execute-script>`) are checked by the script functions themselves, see [secured evaluation](doc:access-checks#secured-evaluation-in-own-code).
+
 ## Administration of grants
 
 Units, commands, forms and privileged scripts only name the operation they check; who holds it is

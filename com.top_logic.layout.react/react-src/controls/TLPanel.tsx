@@ -1,6 +1,7 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, stateAttr,
   ThemeIcon, ButtonDefaults, useStandaloneKeyboardScope, usePart, SurfaceProvider, useSurface, cardSurfaceClass, panelSurface, isInteractiveWithin,
+  useFloatingFrame, FloatingFrame, FloatingRail,
 } from 'tl-react-bridge';
 import type { TLCellProps, Surface } from 'tl-react-bridge';
 
@@ -60,6 +61,9 @@ function ownedByHead(event: React.MouseEvent<HTMLElement>): boolean {
  * - child: ChildDescriptor
  * - errorMessage: string (validation error displayed below the content, may be absent)
  * - errorIcon: string (encoded theme icon displayed in front of the error message)
+ *
+ * The panel is a frame for floating elements (useFloatingFrame): an element floating in its content - a floating
+ * action button - is placed against the edges of its body and stays there while the body scrolls.
  *
  * Handles like a window: a double click on the head maximizes and restores, Escape restores a maximized panel (through
  * the keyboard dispatcher, so a popup inside it closes first), a click anywhere on the head of a minimized panel opens
@@ -131,6 +135,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // its container for none either. A panel configured not to fill ends the chain at its body
   // instead: the request of its content reaches no container.
   const [fillClass, fillHost] = useFillHost(alwaysFill && !isHidden);
+  const floating = useFloatingFrame();
   const Button = usePart('Button');
 
   if (isHidden) {
@@ -212,21 +217,25 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       )}
+      {!isMinimized && <FloatingRail host={floating} edge="top" />}
       {!isMinimized && (
         <div id={bodyId} className="tl-panel__body">
           <SurfaceProvider value={inner}>
-            {neverFill ? (
-              <FillBarrier>
-                <TLChild control={state.child} />
-              </FillBarrier>
-            ) : (
-              <FillProvider host={fillHost}>
-                <TLChild control={state.child} />
-              </FillProvider>
-            )}
+            <FloatingFrame host={floating}>
+              {neverFill ? (
+                <FillBarrier>
+                  <TLChild control={state.child} />
+                </FillBarrier>
+              ) : (
+                <FillProvider host={fillHost}>
+                  <TLChild control={state.child} />
+                </FillProvider>
+              )}
+            </FloatingFrame>
           </SurfaceProvider>
         </div>
       )}
+      {!isMinimized && <FloatingRail host={floating} edge="bottom" />}
       {!isMinimized && errorMessage && (
         <div className="tl-form-field__message tl-type-label" role="alert">
           {typeof state.errorIcon === 'string' && <ThemeIcon encoded={state.errorIcon} className="tl-icon-sm" />}

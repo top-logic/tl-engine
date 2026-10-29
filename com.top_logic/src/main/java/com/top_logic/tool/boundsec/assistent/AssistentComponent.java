@@ -88,9 +88,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
 
 		@Name(AssistentComponent.XML_ATTR_CONTROLLER_CLASS)
 		@Mandatory
-		PolymorphicConfiguration<AbstractAssistentController> getController();
+		PolymorphicConfiguration<? extends AbstractAssistentController> getController();
 
-		void setController(PolymorphicConfiguration<AbstractAssistentController> aController);
+		void setController(PolymorphicConfiguration<? extends AbstractAssistentController> aController);
 
 	}
 

@@ -9,7 +9,7 @@
 	per-run diagnostic trace is captured (out of top-logic.main.log via additivity="false").
 	Keep the non-AI parts in sync with the engine base when it changes.
 
-	See tl-ai-core/doc/ai-logging.md for how to read and tune the AI logs.
+	See the developer article ai/logging for how to read and tune the AI logs.
 -->
 <Configuration
 	com.top_logic.basic.Logger.exceptionLevel="DEBUG"
@@ -122,7 +122,7 @@
 			of top-logic.main.log (additivity="false"). "com.top_logic.tl.ai" covers tl-ai-core and
 			tl-ai-tool-api; "com.top_logic.ai" covers tl-chat, tl-ai-mcp-server and
 			tl-ai-vector-index. No prompt/tool payload is written here - that content lives in the
-			persisted AgentExecution records. See tl-ai-core/doc/ai-logging.md.
+			persisted AgentExecution records. See the developer article ai/logging.
 		-->
 		<Logger name="com.top_logic.tl.ai"
 			additivity="false"

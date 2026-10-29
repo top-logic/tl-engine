@@ -54,6 +54,6 @@ What an agent knows and does is configuration:
 - **Agent definitions** (`TopLogicAgentDefinitions`, or agent records in the knowledge base edited in the application) give an agent its system prompt, its tools, its skills, its MCP servers, its delegates and its model.
 - **Skills** are instruction texts with the tools they need, loaded on demand with `loadSkill` - see [tools and skills](doc:ai/tools-and-skills#skills-and-tool-overlays).
 - **Prompt contributors** on `AgentApplicationService` add the application's standing instructions to every agent's prompt, for instance the application context the skill `TL_init` writes.
-- The **environment block** tells every run whom it works for and in which application - see [the agent loop](doc:ai/agent-loop#the-environment-block).
+- The **environment block** tells every run whom it works for and in which application - see [the environment of a run](doc:ai/environment#the-environment-block).
 
 Which agents, models and MCP servers a role may use at all is decided by the administrator, not by the agent definition - see [run access](doc:ai/security/run-access).

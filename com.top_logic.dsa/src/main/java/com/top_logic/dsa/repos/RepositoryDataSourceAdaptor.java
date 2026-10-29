@@ -58,7 +58,7 @@ public class RepositoryDataSourceAdaptor extends AbstractDataSourceAdaptor {
 		/** Filename of Repository */
 		@Mandatory
 		@Name(REPOSITORY)
-		PolymorphicConfiguration<Repository> getRepository();
+		PolymorphicConfiguration<? extends Repository> getRepository();
 
 		/** Path into work area used for ULRs. */
 		@Name(WORKAREAURL)

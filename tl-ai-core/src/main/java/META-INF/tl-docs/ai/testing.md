@@ -92,4 +92,4 @@ mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.research.e2e=true \
 
 ## The security test bed
 
-`tl-ai-demo` carries the agent security test bed behind one line of its `WEB-INF/conf/metaConf.txt` (`secdemo.config.xml`): roles, accounts, a model, model access rights and a tool access policy, with one JUnit test per behaviour (`SecDemo*Test`) against a real application boot. `tl-ai-demo/doc/secdemo/testbed.md` maps every behaviour to a persona, a thing to type and an expected result; the [worked example](doc:ai/security/role-model-worked-example) explains the role model it is built on.
+`tl-ai-demo` carries the agent security test bed behind one line of its `WEB-INF/conf/metaConf.txt` (`secdemo.config.xml`): roles, accounts, a model, model access rights and a tool access policy, with one JUnit test per behaviour (`SecDemo*Test`) against a real application boot. [the test bed](doc:ai/security/test-bed) maps every behaviour to a persona, a thing to type and an expected result; the [worked example](doc:ai/security/role-model-worked-example) explains the role model it is built on.

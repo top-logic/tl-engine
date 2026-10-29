@@ -154,6 +154,31 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The types the access parent of an object of the given type may have.
+	 *
+	 * <p>
+	 * A check that depends on no concrete object follows the {@link #getAccessParent(TLClass)
+	 * access parent} of a type to these types. A type whose access parent types are not known
+	 * statically counts as accessible in such a check: only the check of a concrete object, which
+	 * resolves its access parent, decides.
+	 * </p>
+	 *
+	 * @param type
+	 *        The delegating type.
+	 * @return The possible types of the access parent, empty for a type without access parent,
+	 *         <code>null</code> when they are not known statically.
+	 * @implSpec The default asks the {@link AccessParentFunction#getParentTypes(TLClass) relation}
+	 *           to the access parent.
+	 */
+	default Set<TLClass> getAccessParentTypes(TLClass type) {
+		AccessParentFunction parent = getAccessParent(type);
+		if (parent == null) {
+			return Collections.emptySet();
+		}
+		return parent.getParentTypes(type);
+	}
+
+	/**
 	 * Whether a singleton of the given type or of one of its specializations has rights of its own.
 	 *
 	 * <p>
@@ -418,9 +443,9 @@ public interface ModelAccessRights {
 	 * attribute of the given parent instance.
 	 *
 	 * <p>
-	 * Both conditions of object creation must hold (see the model-based access rights spec, section
-	 * 2.3.6): the person needs the {@link SimpleBoundCommandGroup#CREATE CREATE} right on the created
-	 * type (the composition attribute's target type) in the parent context, <em>and</em> the
+	 * Both conditions of object creation must hold: the person needs the
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} right on the created type (the composition
+	 * attribute's target type) in the parent context, <em>and</em> the
 	 * {@link SimpleBoundCommandGroup#WRITE WRITE} right on the composition attribute of the parent.
 	 * </p>
 	 *
@@ -462,10 +487,11 @@ public interface ModelAccessRights {
 	 * Checks whether the given person can create an instance of the given type in the given context.
 	 *
 	 * <p>
-	 * This is condition 1 of object creation (see the model-based access rights spec, section
-	 * 2.3.6): the person must hold one of the roles granted the {@link SimpleBoundCommandGroup#CREATE
-	 * CREATE} command group on the type, checked on the given context object. When no context is
-	 * given (<code>null</code>), the check uses the global security root.
+	 * This is the first of the two conditions of object creation (see
+	 * {@link #isAllowedCreate(Person, TLObject, TLStructuredTypePart, TLClass)}): the person must
+	 * hold one of the roles granted the {@link SimpleBoundCommandGroup#CREATE CREATE} command group
+	 * on the type, checked on the given context object. When no context is given
+	 * (<code>null</code>), the check uses the global security root.
 	 * </p>
 	 * <p>
 	 * A type with an {@link #getAccessParent(TLClass) access parent} has no create grants of its

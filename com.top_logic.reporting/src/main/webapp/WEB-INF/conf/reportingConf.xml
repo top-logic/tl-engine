@@ -10,6 +10,10 @@
 			<entry name="rmiRegistry_port"  value="8082" />
 		</section>	
 		
+		<section name="ReportQueueConstants" comment="Base directory of the file-system based report queue (QueueReporter).">
+			<entry name="path" value="%TMP_PATH%" />
+		</section>
+		
         <section name="OperatorFactory" comment="List of known operators for processing data.">
             <entry name ="report.data.numeric.min"  value="com.top_logic.reporting.data.processing.operator.common.NumericValueMinOperator"/>
             <entry name ="report.data.numeric.max"  value="com.top_logic.reporting.data.processing.operator.common.NumericValueMaxOperator"/>

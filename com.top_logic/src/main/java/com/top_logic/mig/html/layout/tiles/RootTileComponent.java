@@ -139,7 +139,7 @@ public class RootTileComponent extends SingleLayoutContainer implements LayoutCo
 
 		@Override
 		@ItemDefault(RootTileControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/**
 		 * The title is displayed in the toolbar of the configured component.
@@ -149,7 +149,7 @@ public class RootTileComponent extends SingleLayoutContainer implements LayoutCo
 		 * </p>
 		 */
 		@Name(TITLE)
-		PolymorphicConfiguration<TitleProvider> getTitle();
+		PolymorphicConfiguration<? extends TitleProvider> getTitle();
 
 		/**
 		 * {@link RootTileComponent} needs a {@link ToolBar} to render the title.

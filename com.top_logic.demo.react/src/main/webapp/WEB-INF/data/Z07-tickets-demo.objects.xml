@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!-- Catalogs of the ticket demo, which a keyword typed into the ticket form is put into. -->
+	<object id="catalog-1"
+		type="demo.tickets:KeywordCatalog"
+	>
+		<attribute name="name"
+			value="Technik"
+		/>
+	</object>
+	<object id="catalog-2"
+		type="demo.tickets:KeywordCatalog"
+	>
+		<attribute name="name"
+			value="Fachlich"
+		/>
+	</object>
+</objects>

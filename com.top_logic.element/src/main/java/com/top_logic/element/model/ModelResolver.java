@@ -80,6 +80,7 @@ import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationInheritance;
 import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLAnnotationTargetCheck;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.DatatypeConfig;
@@ -1250,6 +1251,13 @@ public class ModelResolver {
 				if (expectedSuperTypeNames.length > 0 && !isAnyCompatible(expectedSuperTypeNames, targetType)) {
 					log().error("Annotation " + annotation + " at part " + typePart + " is not allowed for target type "
 						+ targetType + ". Only subtypes of " + Arrays.toString(expectedSuperTypeNames) + " allowed.");
+					continue;
+				}
+			}
+			if (annotation instanceof TLAnnotationTargetCheck check) {
+				String problem = check.checkTarget(typePart);
+				if (problem != null) {
+					log().error("Annotation " + annotation + " at part " + typePart + " is not allowed: " + problem);
 					continue;
 				}
 			}

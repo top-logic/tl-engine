@@ -156,8 +156,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 
 	private final boolean _maintenanceModeSafe;
 
-	private final boolean _blockingAllowed;
-
     /**
 	 * Construct a new, empty Task with the given name.
 	 * 
@@ -188,7 +186,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
     }
 
     /**
@@ -232,7 +229,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
    }
 
    	/**
@@ -266,7 +262,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 	}
 
     /**
@@ -311,7 +306,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
     }
 
     /** Helper function to extract Date Parameters from Properties */
@@ -440,7 +434,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
     }
 
 	/**
@@ -507,7 +500,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		}
 		_maintenanceModeDelay = config.getMaintenanceModeDelay();
 		_maintenanceModeSafe = config.isMaintenanceModeSafe();
-		_blockingAllowed = config.isBlockingAllowed();
 	}
 
 	/**
@@ -974,11 +966,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 			throw new IllegalStateException("Gui warnings can only be logged while the task is running.");
 		}
 		getLog().getCurrentResult().addWarning(message);
-	}
-
-	@Override
-	public boolean isBlockingAllowed() {
-		return _blockingAllowed;
 	}
 
 }

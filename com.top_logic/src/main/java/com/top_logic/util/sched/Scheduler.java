@@ -1194,9 +1194,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * overridden it with {@link #activate(Task)} or {@link #deactivate(Task)}. The override is
 	 * stored cluster-wide in the {@link DBProperties} and remembers the configured state it was
 	 * made against. When the configured state changes (e.g. by an application update), the
-	 * override is dropped and the configured state applies. A {@link Task} whose
-	 * {@link #isBlockingAllowed(Task) blocking is not allowed} always follows its configured
-	 * state.
+	 * override is dropped and the configured state applies.
 	 * </p>
 	 *
 	 * <p>
@@ -1205,8 +1203,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * </p>
 	 *
 	 * <p>
-	 * If the override cannot be read from the database, the {@link Task} is considered inactive
-	 * (unless its blocking is not allowed).
+	 * If the override cannot be read from the database, the {@link Task} is considered inactive.
 	 * </p>
 	 *
 	 * @return <code>false</code>, if the {@link Task} is not registered at the {@link Scheduler}.
@@ -1227,10 +1224,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * subclasses.
 	 */
 	protected boolean isActive(SchedulerEntry entry) {
-		boolean configuredActive = entry.isConfiguredActive();
-		if (!isBlockingAllowed(entry.getTask())) {
-			return configuredActive;
-		}
 		Maybe<Boolean> override = fetchActiveOverride(entry);
 		if (override == null) {
 			// Database failure, already logged.
@@ -1239,7 +1232,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		if (override.hasValue()) {
 			return override.get().booleanValue();
 		}
-		return configuredActive;
+		return entry.isConfiguredActive();
 	}
 
 	/**
@@ -1271,15 +1264,14 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * is in effect for the {@link Task}.
 	 *
 	 * @return <code>false</code>, if the {@link Task} is not registered at the {@link Scheduler},
-	 *         its {@link #isBlockingAllowed(Task) blocking is not allowed}, or the override cannot
-	 *         be read from the database.
+	 *         or the override cannot be read from the database.
 	 *
 	 * @see #isActive(Task)
 	 * @see #resetActive(Task)
 	 */
 	public final boolean hasActiveOverride(Task task) {
 		Maybe<SchedulerEntry> entry = getEntries().get(task);
-		if (!entry.hasValue() || !isBlockingAllowed(task)) {
+		if (!entry.hasValue()) {
 			return false;
 		}
 		Maybe<Boolean> override = fetchActiveOverride(entry.get());
@@ -1295,8 +1287,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * </p>
 	 *
 	 * @throws IllegalArgumentException
-	 *         If the {@link Task} is not registered at the {@link Scheduler}, or if it is
-	 *         configured inactive and its {@link #isBlockingAllowed(Task) blocking is not allowed}.
+	 *         If the {@link Task} is not registered at the {@link Scheduler}.
 	 */
 	public final void activate(Task task) {
 		setActive(task, true);
@@ -1312,8 +1303,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * </p>
 	 *
 	 * @throws IllegalArgumentException
-	 *         If the {@link Task} is not registered at the {@link Scheduler}, or if it is
-	 *         configured active and its {@link #isBlockingAllowed(Task) blocking is not allowed}.
+	 *         If the {@link Task} is not registered at the {@link Scheduler}.
 	 */
 	public final void deactivate(Task task) {
 		setActive(task, false);
@@ -1346,10 +1336,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		if (active == configuredActive) {
 			newValue = null;
 		} else {
-			if (!isBlockingAllowed(task)) {
-				throw new IllegalArgumentException("Changing the configured active state of task '"
-					+ task.getName() + "' is not allowed.");
-			}
 			newValue = encodeActiveOverride(active, configuredActive);
 		}
 		storeActiveOverride(task, newValue);
@@ -1545,20 +1531,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			return Boolean.FALSE;
 		}
 		return null;
-	}
-
-	/**
-	 * Whether an administrator may override the {@link #isConfiguredActive(Task) configured active
-	 * state} of the given {@link Task}.
-	 * <p>
-	 * Some system critical tasks cannot be {@link #deactivate(Task) deactivated}. They always follow
-	 * their configured state.
-	 * </p>
-	 *
-	 * @see Task#isBlockingAllowed()
-	 */
-	public boolean isBlockingAllowed(Task task) {
-		return task.isBlockingAllowed();
 	}
 
 	private static String getPropertyNameActiveOverride(Task task) {

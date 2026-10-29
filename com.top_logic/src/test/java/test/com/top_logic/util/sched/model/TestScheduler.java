@@ -568,36 +568,6 @@ public class TestScheduler extends BasicTestCase {
 	}
 
 	/**
-	 * A {@link Task} whose {@link Task.Config#isBlockingAllowed() blocking is not allowed} cannot be
-	 * deactivated and ignores stored overrides.
-	 */
-	public void testDeactivateNotAllowed() {
-		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testDeactivateNotAllowed", schedulerBarrier);
-		String name = "testDeactivateNotAllowed";
-		BarrierTestTaskConfig taskConfig = createNeverBarrierTestTaskConfig(name);
-		taskConfig.update(taskConfig.descriptor().getProperty(Task.Config.BLOCKING_ALLOWED), Boolean.FALSE);
-		BarrierTestTask task = getInstantiationContext().getInstance(taskConfig);
-		try {
-			scheduler.addTask(task);
-			try {
-				scheduler.deactivate(task);
-				fail("Deactivating a task whose blocking is not allowed must fail.");
-			} catch (IllegalArgumentException ex) {
-				// Expected.
-			}
-			assertTrue(scheduler.isActive(task));
-
-			storeBlock(name, true);
-			assertTrue(scheduler.isActive(task));
-			assertFalse(scheduler.hasActiveOverride(task));
-		} finally {
-			storeBlock(name, null);
-			stopBarrierScheduler();
-		}
-	}
-
-	/**
 	 * A stored block is taken over as override on first read and is deleted then.
 	 */
 	public void testTakeOverStoredBlock() {
@@ -825,16 +795,12 @@ public class TestScheduler extends BasicTestCase {
 	}
 
 	private static BarrierTestTask createNeverBarrierTestTask(String name) {
-		return getInstantiationContext().getInstance(createNeverBarrierTestTaskConfig(name));
-	}
-
-	private static BarrierTestTaskConfig createNeverBarrierTestTaskConfig(String name) {
 		BarrierTestTaskConfig taskConfig = TypedConfiguration.newConfigItem(BarrierTestTaskConfig.class);
 		taskConfig.setImplementationClass(BarrierTestTask.class);
 		taskConfig.setName(name);
 		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
 		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
-		return taskConfig;
+		return getInstantiationContext().getInstance(taskConfig);
 	}
 
 	/**

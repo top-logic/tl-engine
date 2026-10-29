@@ -1347,11 +1347,14 @@
 					<handler id="stopTask" class="com.top_logic.util.sched.layout.StopTaskCommand" 
 						group="Write" target="selection(self())" image="theme:STOP_SERVICE"
 					/>
-					<handler id="blockTask" class="com.top_logic.util.sched.layout.block.BlockTaskCommand"
+					<handler id="deactivateTask" class="com.top_logic.util.sched.layout.active.DeactivateTaskCommand"
 						group="Write" target="selection(self())" image="theme:PAUSE"
 					/>
-					<handler id="unblockTask" class="com.top_logic.util.sched.layout.block.UnblockTaskCommand"
+					<handler id="activateTask" class="com.top_logic.util.sched.layout.active.ActivateTaskCommand"
 						group="Write" target="selection(self())" image="theme:RESTART_SERVICE"
+					/>
+					<handler id="resetTaskActive" class="com.top_logic.util.sched.layout.active.ResetTaskActiveCommand"
+						group="Write" target="selection(self())" image="theme:ICON_UNDO"
 					/>
 					<handler id="releaseTaskClusterLock" class="com.top_logic.util.sched.layout.ReleaseTaskClusterLockCommand"
 						group="Write" 

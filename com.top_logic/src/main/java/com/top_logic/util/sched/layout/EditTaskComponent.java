@@ -29,8 +29,8 @@ import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.Resources;
-import com.top_logic.util.sched.layout.block.BlockState;
-import com.top_logic.util.sched.layout.block.BlockStateRenderer;
+import com.top_logic.util.sched.layout.active.ActiveState;
+import com.top_logic.util.sched.layout.active.ActiveStateRenderer;
 import com.top_logic.util.sched.layout.table.TaskAccessor;
 import com.top_logic.util.sched.layout.table.results.TaskResultAccessor;
 import com.top_logic.util.sched.task.Task;
@@ -112,14 +112,12 @@ public class EditTaskComponent extends EditComponent {
         	stateGroup.addMember(createCombinedStateField(theModel));
 			String clusterLock = (String) TaskAccessor.INSTANCE.getValue(theModel, TaskAccessor.CLUSTER_LOCK);
 			stateGroup.addMember(newStringField(TaskAccessor.CLUSTER_LOCK, clusterLock, IMMUTABLE));
-			theGroup.addMember(createBlockingStateField(theModel));
-			theGroup.addMember(createBooleanField(TaskAccessor.IS_BLOCKING_ALLOWED, theModel));
+			theGroup.addMember(createActiveStateField(theModel));
 			stateGroup.addMember(TaskFormUtil.createExceptionField(currentResult));
         	theGroup.addMember(newStringField(TaskAccessor.CLASS_NAME, TaskAccessor.INSTANCE.getValue(theModel, TaskAccessor.CLASS_NAME), IMMUTABLE));
 			ResKey theMessage = (ResKey) TaskResultAccessor.INSTANCE.getValue(currentResult, TaskResultAccessor.MESSAGE);
 			stateGroup.addMember(newStringField(TaskResultAccessor.MESSAGE, Resources.getInstance().getString(theMessage), IMMUTABLE));
 			stateGroup.addMember(TaskLogFileRenderUtil.createLogFileField(currentResult));
-			theGroup.addMember(createBooleanField(TaskAccessor.IS_ENABLED, theModel));
 			theGroup.addMember(createBooleanField(TaskAccessor.PERSISTENT, theModel));
 			theGroup.addMember(createBooleanField(TaskAccessor.PER_NODE, theModel));
 			theGroup.addMember(createBooleanField(TaskAccessor.NEEDS_MAINTENANCE_MODE, theModel));
@@ -176,13 +174,13 @@ public class EditTaskComponent extends EditComponent {
 		};
 	}
 
-	private FormField createBlockingStateField(Task task) {
-		Object value = TaskAccessor.INSTANCE.getValue(task, TaskAccessor.IS_BLOCKED);
+	private FormField createActiveStateField(Task task) {
+		Object value = TaskAccessor.INSTANCE.getValue(task, TaskAccessor.ACTIVE);
 		// Options are necessary when doing scripted tests and making assertions on this field.
-		List<BlockState> options = Arrays.asList(BlockState.values());
-		SelectField field = newSelectField(TaskAccessor.IS_BLOCKED, options, !MULTIPLE, IMMUTABLE);
+		List<ActiveState> options = Arrays.asList(ActiveState.values());
+		SelectField field = newSelectField(TaskAccessor.ACTIVE, options, !MULTIPLE, IMMUTABLE);
 		field.initSingleSelection(value);
-		field.setControlProvider(BlockingStateRendererControlProvider.INSTANCE);
+		field.setControlProvider(ActiveStateRendererControlProvider.INSTANCE);
 		return field;
 	}
 
@@ -190,21 +188,21 @@ public class EditTaskComponent extends EditComponent {
 		return (interval != null) ? DurationRenderer.getLabel(interval) : "";
 	}    
 
-    private static final class BlockingStateRendererControlProvider implements ControlProvider {
+	private static final class ActiveStateRendererControlProvider implements ControlProvider {
 		/**
-		 * Singleton {@link EditTaskComponent.BlockingStateRendererControlProvider} instance.
+		 * Singleton {@link EditTaskComponent.ActiveStateRendererControlProvider} instance.
 		 */
-		public static final BlockingStateRendererControlProvider INSTANCE = new BlockingStateRendererControlProvider();
+		public static final ActiveStateRendererControlProvider INSTANCE = new ActiveStateRendererControlProvider();
 
-		private BlockingStateRendererControlProvider() {
+		private ActiveStateRendererControlProvider() {
 			// Singleton constructor.
 		}
 
 		@Override
 		public Control createControl(Object model, String style) {
 			SelectField selectField = (SelectField) model;
-			BlockState singleSelection = (BlockState) selectField.getSingleSelection();
-			return new SimpleConstantControl<>(singleSelection, BlockStateRenderer.INSTANCE);
+			ActiveState singleSelection = (ActiveState) selectField.getSingleSelection();
+			return new SimpleConstantControl<>(singleSelection, ActiveStateRenderer.INSTANCE);
 		}
 	}
 

@@ -58,14 +58,8 @@ public interface Task extends Batch {
 		/** Default value for {@link #isMaintenanceModeSafe()}. */
 		final boolean DEFAULT_MAINTENANCE_MODE_SAFE = false;
 
-		/** Default value for {@link #isBlockingAllowed()}. */
-		final boolean DEFAULT_BLOCKING_ALLOWED = true;
-
 		/** The name of the property {@link #getSchedules()}. */
 		String SCHEDULES = "schedules";
-
-		/** The name of the property {@link #isBlockingAllowed()}. */
-		String BLOCKING_ALLOWED = "blocking-allowed";
 
 		/**
 		 * The name of the task.
@@ -167,19 +161,6 @@ public interface Task extends Batch {
 		 */
 		@BooleanDefault(DEFAULT_MAINTENANCE_MODE_SAFE)
 		boolean isMaintenanceModeSafe();
-
-		/**
-		 * Whether an administrator may override the configured {@link #isEnabled() active state} of
-		 * this {@link Task}.
-		 * 
-		 * <p>
-		 * If not, the task cannot be {@link Scheduler#deactivate(Task) deactivated} and always
-		 * follows its configured state.
-		 * </p>
-		 */
-		@Name(BLOCKING_ALLOWED)
-		@BooleanDefault(DEFAULT_BLOCKING_ALLOWED)
-		boolean isBlockingAllowed();
 
 	}
 
@@ -409,10 +390,5 @@ public interface Task extends Batch {
 	 */
 	@Override
 	public void signalShutdown();
-
-	/**
-	 * @see Config#isBlockingAllowed()
-	 */
-	boolean isBlockingAllowed();
 
 }

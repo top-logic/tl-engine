@@ -10,11 +10,10 @@ import java.util.Date;
 import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.util.Resources;
 import com.top_logic.util.sched.Scheduler;
-import com.top_logic.util.sched.layout.block.BlockState;
+import com.top_logic.util.sched.layout.active.ActiveState;
 import com.top_logic.util.sched.layout.table.results.TaskResultAccessor;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskState;
-import com.top_logic.util.sched.task.composite.CompositeTask;
 import com.top_logic.util.sched.task.log.TaskLog;
 import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.result.TaskResult;
@@ -38,9 +37,13 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 	 */
 	public static final String COMBINED_STATE = "combinedState";
 
-	public static final String IS_BLOCKED = "isBlocked";
+	/**
+	 * Column containing the {@link ActiveState} of a {@link Task}.
+	 * 
+	 * @see Scheduler#isActive(Task)
+	 */
+	public static final String ACTIVE = "active";
 
-	public static final String IS_BLOCKING_ALLOWED = "isBlockingAllowed";
 
     /** The name of the implementing class. */
     public static final String CLASS_NAME = "className";
@@ -50,9 +53,6 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 
     /** Date of next scheduled. */
     public static final String NEXT_SCHEDULE = "nextSched";
-
-	/** <code>true</code> when {@link Task} {@link Scheduler#isActive(Task) is active}. */
-	public static final String IS_ENABLED = "isEnabled";
 
 	/**
 	 * Whether the {@link TaskResult}s of the given {@link Task} are being persisted.
@@ -99,11 +99,8 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 			}
 			return currentResult.getResultType();
 		}
-		else if (IS_BLOCKED.equals(aProperty)) {
-			return getBlockState(aTask);
-		}
-		else if (IS_BLOCKING_ALLOWED.equals(aProperty)) {
-			return Boolean.valueOf(Scheduler.getSchedulerInstance().isBlockingAllowed(aTask));
+		else if (ACTIVE.equals(aProperty)) {
+			return ActiveState.of(aTask);
 		}
         else if (CLASS_NAME.equals(aProperty)) {
             return aTask.getClass().getName();
@@ -117,9 +114,6 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
         else if (LAST_SCHEDULE.equals(aProperty)) {
 			TaskResult lastResult = aTask.getLog().getLastResult();
 			return lastResult == null ? null : lastResult.getStartDate();
-        }
-		else if (IS_ENABLED.equals(aProperty)) {
-            return Boolean.valueOf(Scheduler.getSchedulerInstance().isActive(aTask));
         }
 		else if (PERSISTENT.equals(aProperty)) {
 			return Boolean.valueOf(aTask.isPersistent());
@@ -158,31 +152,6 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 			return Resources.getInstance().getString(I18NConstants.CLUSTER_LOCK_FREE_BUT_STATE_NOT_INACTIVE);
 		}
 		return null;
-	}
-
-	private BlockState getBlockState(Task task) {
-		if (!Scheduler.getSchedulerInstance().isActive(task)) {
-			return BlockState.BLOCKED;
-		}
-		if (!(task instanceof CompositeTask)) {
-			return BlockState.NOT_BLOCKED;
-		}
-		if (isChildBlocked((CompositeTask) task)) {
-			return BlockState.CHILD_BLOCKED;
-		}
-		return BlockState.NOT_BLOCKED;
-	}
-
-	private boolean isChildBlocked(CompositeTask task) {
-		for (Task child : task.getChildren()) {
-			if (!Scheduler.getSchedulerInstance().isActive(child)) {
-				return true;
-			}
-			if ((child instanceof CompositeTask) && isChildBlocked((CompositeTask) child)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
     /** 

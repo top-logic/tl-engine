@@ -83,8 +83,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * it saw. Its first poll asks for the full state of the controls, because the state the connection
  * sent may not have arrived either; the events written since the connection that address no
  * displayed control - a reload, a frame of a listener that is not a control - follow it. A poll
- * waits up to {@link #POLL_HOLD_MILLIS} for an event, so an event is delivered as soon as it
- * exists, and every poll ends before a proxy's idle timeout.
+ * never continues after a gap: it reads every event after the number it sends, or - where the
+ * queue no longer holds one of them, because it exceeded the retained characters or was written
+ * before a later connection or page - the full state. A poll waits up to {@link #POLL_HOLD_MILLIS}
+ * for an event, so an event is delivered as soon as it exists, and every poll ends before a
+ * proxy's idle timeout.
  * </p>
  *
  * <p>
@@ -162,8 +165,13 @@ public class SSEUpdateQueue {
 	/** The number of the last event written. Guarded by {@code this}. */
 	private long _lastSeq;
 
-	/** The highest number that was dropped from {@link #_written} before a poll read it. Guarded by {@code this}. */
-	private long _droppedUnread;
+	/**
+	 * The highest number of an event the client can no longer read as an event: it was dropped
+	 * from {@link #_written} before a poll read it, or it was written before the
+	 * {@link #forgetWritten() last forgetting}. A poll after an older number is answered with the
+	 * full state. Guarded by {@code this}.
+	 */
+	private long _unreadableUpTo;
 
 	/**
 	 * Whether the client polls instead of reading a stream. Written while holding {@code this},
@@ -979,7 +987,7 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Answers a poll of the client: the events after {@code after}, or - for the first poll, and
-	 * whenever events after {@code after} were dropped unread - the full state of the displayed
+	 * whenever an event after {@code after} can no longer be read - the full state of the displayed
 	 * controls, followed by the events written since the connection that address none of them.
 	 *
 	 * <p>
@@ -1021,7 +1029,7 @@ public class SSEUpdateQueue {
 			// read by the poll.
 			flush();
 			acknowledge(after);
-			if (full || _droppedUnread > after) {
+			if (full || _unreadableUpTo > after) {
 				answer(context, fullAnswer(after));
 			} else if (_lastSeq > after || _shutdown) {
 				answer(context, answerAfter(after));
@@ -1046,11 +1054,11 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Whether a poll after the given number can only be answered with the full state: events after
-	 * it were dropped before the client read them.
+	 * Whether a poll after the given number can only be answered with the full state: the queue no
+	 * longer holds an event after it, see {@link #_unreadableUpTo}.
 	 */
 	public synchronized boolean needsFullState(long after) {
-		return _droppedUnread > after;
+		return _unreadableUpTo > after;
 	}
 
 	/**
@@ -1119,15 +1127,30 @@ public class SSEUpdateQueue {
 		answer(poll.context(), answerAfter(poll.after()));
 	}
 
-	/** Called while holding the lock. */
+	/**
+	 * The events after the given number.
+	 *
+	 * <p>
+	 * Where the queue no longer holds one of them - a waiting poll is answered after a flush wrote
+	 * more than the queue retains -, the answer carries no events and repeats the given number, so
+	 * that the client's next poll asks for the full state instead of continuing after a gap.
+	 * </p>
+	 *
+	 * <p>
+	 * Called while holding the lock.
+	 * </p>
+	 */
 	private String answerAfter(long after) {
+		if (_unreadableUpTo > after) {
+			return pollAnswer(after, List.of());
+		}
 		List<String> events = new ArrayList<>();
 		for (Written written : _written) {
 			if (written.seq() > after) {
 				events.add(written.json());
 			}
 		}
-		return pollAnswer(events);
+		return pollAnswer(_lastSeq, events);
 	}
 
 	/** Called while holding the lock. */
@@ -1147,13 +1170,13 @@ public class SSEUpdateQueue {
 				events.add(written.json());
 			}
 		}
-		return pollAnswer(events);
+		return pollAnswer(_lastSeq, events);
 	}
 
 	/** Called while holding the lock. */
-	private String pollAnswer(List<String> events) {
+	private String pollAnswer(long last, List<String> events) {
 		String token = _pollToken;
-		return "{\"last\":" + _lastSeq + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
+		return "{\"last\":" + last + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
 			+ String.join(",", events) + "]}";
 	}
 
@@ -1180,7 +1203,7 @@ public class SSEUpdateQueue {
 		while (_writtenChars > MAX_RETAINED_CHARS && _written.size() > 1) {
 			Written dropped = _written.removeFirst();
 			_writtenChars -= dropped.json().length();
-			_droppedUnread = dropped.seq();
+			_unreadableUpTo = dropped.seq();
 		}
 	}
 
@@ -1192,13 +1215,24 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Forgets what was written: the client starts from a state that contains it. Called while
-	 * holding the lock.
+	 * Forgets what was written: the client starts from a state that contains it - the full state a
+	 * connection sends, a page rendered anew.
+	 *
+	 * <p>
+	 * Whether that state reaches the client is not known: a stream may be held back as the one
+	 * before it. A client that polls after a number from before the forgetting therefore reads the
+	 * full state, never the events written since as their continuation. A client that received the
+	 * state continues with the numbers written after the forgetting.
+	 * </p>
+	 *
+	 * <p>
+	 * Called while holding the lock.
+	 * </p>
 	 */
 	private void forgetWritten() {
 		_written.clear();
 		_writtenChars = 0;
-		_droppedUnread = 0;
+		_unreadableUpTo = _lastSeq;
 	}
 
 	/**

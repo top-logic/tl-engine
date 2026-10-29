@@ -119,6 +119,50 @@ public class TestNewPageDelivery extends TestCase {
 		assertTrue(reconnect.body(), reconnect.body().contains("\"Later\""));
 	}
 
+	/**
+	 * The new page reads the full state once, with its first poll; its next polls read events.
+	 */
+	public void testNewPageReadsTheFullStateOnce() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old").setTitle("Old"));
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old2").setTitle("Old2"));
+
+		_queue.beginPage();
+		FakeAsyncRequest firstPoll = new FakeAsyncRequest();
+		_queue.poll(firstPoll.context(), 0, true);
+		assertTrue(firstPoll.done());
+		long last = _queue.lastSeq();
+		assertEquals("the events of the previous page were written", 2, last);
+		assertTrue(firstPoll.body(), firstPoll.body().startsWith("{\"last\":" + last + ","));
+
+		assertFalse(_queue.needsFullState(last));
+		FakeAsyncRequest nextPoll = new FakeAsyncRequest();
+		_queue.poll(nextPoll.context(), last, false);
+		assertFalse("nothing to read yet", nextPoll.done(200));
+
+		_queue.enqueue(RouteChangeEvent.create().setUrl("new").setTitle("New"));
+
+		assertTrue(nextPoll.done());
+		String body = nextPoll.body();
+		assertTrue(body, body.contains("\"New\""));
+		assertFalse("no full state: " + body, body.contains("StateEvent"));
+	}
+
+	/**
+	 * A page that polls after a number from before the new page - a poll of the previous page - gets
+	 * the full state, not the events of the new page as a continuation.
+	 */
+	public void testPollFromBeforeTheNewPageGetsFullState() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old").setTitle("Old"));
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old2").setTitle("Old2"));
+
+		_queue.beginPage();
+
+		assertTrue(_queue.needsFullState(1));
+		assertFalse("the new page's first poll is full anyway", _queue.needsFullState(2));
+	}
+
 	/** The poll the previous page left waiting ends without events. */
 	public void testWaitingPollOfThePreviousPageEndsEmpty() throws Exception {
 		FakeAsyncRequest waiting = new FakeAsyncRequest();

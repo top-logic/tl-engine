@@ -1013,12 +1013,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * The types the objects of the given type may delegate their access decision to.
-	 * 
-	 * @return Empty when the type has no access parent, <code>null</code> when the possible types
-	 *         are not known statically.
-	 * @see #getAccessParent(TLClass)
+	 * {@inheritDoc}
+	 *
+	 * @implNote The container, whichever composition holds the object, is followed to the types
+	 *           owning a composition of the type, which this service indexes.
 	 */
+	@Override
 	public Set<TLClass> getAccessParentTypes(TLClass type) {
 		AccessParentFunction parent = getAccessParent(type);
 		if (parent == null) {

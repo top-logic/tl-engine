@@ -73,6 +73,12 @@ public class TestOperationCoverage extends BasicTestCase {
 	/** Type delegating to its container. */
 	private static final String EXPLICIT_PART = MODULE + ":ExplicitPart";
 
+	/** Composition part of {@link #GRANTED_OPERATION}, delegating to its container by default. */
+	private static final String PART_OF_GRANTED = MODULE + ":PartOfGranted";
+
+	/** Composition part of {@link #COVERED}, delegating to its container by default. */
+	private static final String PART_OF_COVERED = MODULE + ":PartOfCovered";
+
 	/** Type with a grant to a role no rule delivers on it. */
 	private static final String DEAD_GRANT = MODULE + ":DeadGrant";
 
@@ -159,6 +165,22 @@ public class TestOperationCoverage extends BasicTestCase {
 	public void testCheckOnAnotherTypeDoesNotUseTheGrant() {
 		OperationUse use = OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(WITH_OPERATIONS), "test.view.xml:8");
 		assertTrue(coverage(List.of(use)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	/**
+	 * A check on a composition part deciding by its container, the access parent it gets by
+	 * default, is a use of the grants of the types that may contain it, and of no other type.
+	 */
+	public void testDefaultContainerIsFollowedToContainerTypes() {
+		OperationUse onPart =
+			OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(PART_OF_GRANTED), "test.view.xml:9");
+		assertFalse("The check on the part is decided on its container.",
+			coverage(List.of(onPart)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+
+		OperationUse onOtherPart =
+			OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(PART_OF_COVERED), "test.view.xml:10");
+		assertTrue("A part of another container does not check the grant.",
+			coverage(List.of(onOtherPart)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
 	}
 
 	public void testBuiltInGrantIsNeverReported() {

@@ -9,6 +9,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -26,7 +30,10 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.knowledge.security.SecurityStorage;
+import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.migration.dump.KBDump;
@@ -111,13 +118,38 @@ public class TestKBLoad extends BasicTestCase {
 
 	private static BinaryData dump() throws IOException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		BinaryData lazyDump = KBDump.newDump(kb, KBDump.DEFAULT_EXCLUDE_TYPES);
+		BinaryData lazyDump = KBDump.newDump(kb, excludeTypes(kb));
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		try (InputStream in = lazyDump.getStream()) {
 			StreamUtilities.copyStreamContents(in, buffer);
 		}
 		return BinaryDataFactory.createBinaryData(buffer.toByteArray(), BinaryData.CONTENT_TYPE_OCTET_STREAM,
 			lazyDump.getName());
+	}
+
+	/**
+	 * The {@link KBDump#DEFAULT_EXCLUDE_TYPES} and the types with data on a branch other than the
+	 * trunk.
+	 *
+	 * <p>
+	 * The conversion of a dump does not copy the objects of a branch from its base branch (see
+	 * #22141), so it refuses a dump with changes of branch-local objects. The knowledge base of the
+	 * test is shared with other tests, which create branches.
+	 * </p>
+	 */
+	private static Set<String> excludeTypes(KnowledgeBase kb) {
+		Set<String> result = new HashSet<>(KBDump.DEFAULT_EXCLUDE_TYPES);
+		List<Branch> branches = new ArrayList<>(kb.getHistoryManager().getTrunk().getChildBranches());
+		for (int n = 0; n < branches.size(); n++) {
+			Branch branch = branches.get(n);
+			branches.addAll(branch.getChildBranches());
+			for (MetaObject type : kb.getMORepository().getMetaObjects()) {
+				if (type instanceof MOClass && branch.getBaseBranchId(type) == branch.getBranchId()) {
+					result.add(type.getName());
+				}
+			}
+		}
+		return result;
 	}
 
 	private static Log log() {

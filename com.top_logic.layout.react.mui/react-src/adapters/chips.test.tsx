@@ -379,12 +379,14 @@ describe('the files of a file chip field (TLFileChips) as MUI chips', () => {
 
     expect(fileChip('report.pdf').getAttribute('role')).toBe('button');
     expect(fileChip('scan.png').getAttribute('role')).toBeNull();
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // The anchor of the download would make jsdom navigate, which it does not implement.
+    const saved = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     await userEvent.click(fileChip('report.pdf'));
     await settle();
 
     const fetched = vi.mocked(fetch).mock.calls.map(([url]) => String(url));
     expect(fetched.some(url => url.includes('react-api/data') && url.endsWith('&key=k1'))).toBe(true);
+    expect(saved).toHaveBeenCalledTimes(1);
   });
 
   it('removes a file by the delete icon of its chip while editable, and adds files by an MUI button', async () => {

@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -700,19 +701,16 @@ public class SSEUpdateQueue {
 			Logger.warn("SSE connection REPLACED for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
 				SSEUpdateQueue.class);
-			try {
-				old.getContext().complete();
-			} catch (Exception ex) {
-				// Old connection already closed, ignore.
-			}
+			old.close();
 		} else {
 			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
-		sendFullState(newConn);
 		// A first event at once, also for a window without controls: what tells the client that its
 		// stream arrives.
-		writeOrDisconnect(newConn, HEARTBEAT_MESSAGE);
+		if (sendFullState(newConn)) {
+			writeOrDisconnect(newConn, HEARTBEAT_MESSAGE);
+		}
 		// Flush any events that were enqueued before the SSE connection was
 		// established (e.g. RouteChangeEvent from initial RoutingParticipant
 		// registration during control tree construction).
@@ -732,6 +730,8 @@ public class SSEUpdateQueue {
 	public void clearConnection(AsyncContext asyncContext) {
 		SSEConnection current = _connection;
 		if (current != null && current.getContext() == asyncContext) {
+			// The stream has ended: a thread still holding the connection does not write to it.
+			current.markClosed();
 			if (dropConnection(current, System.currentTimeMillis())) {
 				Logger.info("SSE connection cleared for window '" + _windowName + "' (queue@"
 					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
@@ -768,19 +768,30 @@ public class SSEUpdateQueue {
 	 * Since a control is registered exactly while it is displayed, this sends the state of the
 	 * controls the window displays.
 	 * </p>
+	 *
+	 * <p>
+	 * Stops at the first write that fails: the connection is lost, and the state of the remaining
+	 * controls is neither serialized nor written.
+	 * </p>
+	 *
+	 * @return Whether the state of all controls was written.
 	 */
-	private void sendFullState(SSEConnection connection) {
+	private boolean sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
+			if (connection.isClosed()) {
+				return false;
+			}
 			if (control instanceof ReactControl rc) {
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
 					.setState(rc.stateAsJSON());
 				String message = toDataMessage(toJson(event));
-				if (message != null) {
-					writeOrDisconnect(connection, message);
+				if (message != null && !writeOrDisconnect(connection, message)) {
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -817,11 +828,7 @@ public class SSEUpdateQueue {
 		if (previous != null) {
 			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
-			try {
-				previous.getContext().complete();
-			} catch (Exception ex) {
-				// Already closed.
-			}
+			previous.close();
 		}
 	}
 
@@ -1026,11 +1033,7 @@ public class SSEUpdateQueue {
 		}
 		if (abandoned != null) {
 			Logger.info("Window '" + _windowName + "' polls; its event stream is closed.", SSEUpdateQueue.class);
-			try {
-				abandoned.getContext().complete();
-			} catch (Exception ex) {
-				// Already closed.
-			}
+			abandoned.close();
 		}
 		ensureHeartbeat();
 	}
@@ -1250,11 +1253,7 @@ public class SSEUpdateQueue {
 		SSEConnection conn = _connection;
 		_connection = null;
 		if (conn != null) {
-			try {
-				conn.getContext().complete();
-			} catch (Exception ex) {
-				// Connection already closed, ignore.
-			}
+			conn.close();
 		}
 		_pendingEvents.clear();
 		_controls.clear();
@@ -1655,14 +1654,29 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Writes a message to the given connection, clearing it if the write fails.
+	 *
+	 * <p>
+	 * A connection that is {@link SSEConnection#isClosed() closed} - lost by an earlier write,
+	 * ended, replaced or given up - is not written to. A thread may still hold it: the heartbeat, a
+	 * {@link #setConnection(AsyncContext) connection} sending the full state, a flush. The loss of a
+	 * connection is therefore reported once, by the write that notices it.
+	 * </p>
+	 *
+	 * @return Whether the message was written; {@code false} if the connection is closed or was lost
+	 *         with this write.
 	 */
 	private boolean writeOrDisconnect(SSEConnection connection, String message) {
+		if (connection.isClosed()) {
+			return false;
+		}
 		try {
 			writeToConnection(connection.getContext(), message);
 			return true;
 		} catch (IOException ex) {
-			Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			if (connection.markClosed()) {
+				Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
+					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			}
 			dropConnection(connection, System.currentTimeMillis());
 			return false;
 		}
@@ -1712,10 +1726,17 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Wraps an {@link AsyncContext} for an SSE connection.
+	 *
+	 * <p>
+	 * A connection is closed once: when a write to it fails, when its stream ends, or when the queue
+	 * gives it up. A closed connection is not written to again.
+	 * </p>
 	 */
 	static final class SSEConnection {
 
 		private final AsyncContext _context;
+
+		private final AtomicBoolean _closed = new AtomicBoolean();
 
 		SSEConnection(AsyncContext context) {
 			_context = context;
@@ -1723,6 +1744,34 @@ public class SSEUpdateQueue {
 
 		AsyncContext getContext() {
 			return _context;
+		}
+
+		/**
+		 * Whether this connection is no longer written to.
+		 */
+		boolean isClosed() {
+			return _closed.get();
+		}
+
+		/**
+		 * Marks this connection as no longer written to.
+		 *
+		 * @return Whether this call closed it, {@code false} if it was closed before.
+		 */
+		boolean markClosed() {
+			return _closed.compareAndSet(false, true);
+		}
+
+		/**
+		 * Marks this connection as closed and ends its stream.
+		 */
+		void close() {
+			markClosed();
+			try {
+				_context.complete();
+			} catch (RuntimeException ex) {
+				// Already completed.
+			}
 		}
 	}
 

@@ -131,6 +131,28 @@ public class TestSessionService extends BasicTestCase {
     }
 
 	/**
+	 * Tests that the session cookie of an application at the root of the server (empty context
+	 * path) is sent to all its paths, not only to the folder of the page the user logged in from.
+	 */
+	public void testSessionCookieAtServerRoot() throws Exception {
+		ServletRunner runner = new ServletRunner();
+		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
+		InvocationContext invocation =
+			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
+		assertEquals("", invocation.getRequest().getContextPath());
+
+		SessionService service = SessionService.getInstance();
+		HttpSession session = ThreadContext.inSystemContext(TestSessionService.class, () -> service
+			.loginUser(invocation.getRequest(), invocation.getResponse(), PersonManager.getManager().getRoot()));
+		try {
+			String cookie = invocation.getResponse().getHeader("Set-Cookie");
+			assertTrue("Session cookie without root path: " + cookie, cookie.contains("; Path=/;"));
+		} finally {
+			service.terminateSession(session.getId());
+		}
+	}
+
+	/**
 	 * Tests that {@link SessionService#terminateSession(String)} ends the {@link HttpSession}.
 	 */
 	public void testTerminateSession() throws Exception {

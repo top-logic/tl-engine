@@ -349,7 +349,8 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 
 	/**
 	 * The change log links an undo as {@link ChangeSet#getRevertedBy()} of the undone commit and a
-	 * redo as {@link ChangeSet#getRevertedBy()} of the undo; the undo is not listed, the redo is.
+	 * redo as {@link ChangeSet#getRevertedBy()} of the undo; the undone commit, the undo and the
+	 * redo are all listed.
 	 */
 	public void testChangeLogLinksRedoToUndo() {
 		TLObject root = createNode(null, "root");
@@ -370,8 +371,41 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertTrue(redo.isRedo());
 		assertNull(redo.getRevertedBy());
 
-		assertFalse("Undo must not be listed.", containsRevision(log, undo));
+		assertTrue("Undone commit must be listed.", containsRevision(log, original));
+		assertTrue("Undo must be listed.", containsRevision(log, undo));
 		assertTrue("Redo must be listed.", containsRevision(log, redo));
+	}
+
+	/**
+	 * An undone commit stays listed with its own message next to its undo, marked as reverted by
+	 * its link {@link ChangeSet#getRevertedBy()} to the undo.
+	 */
+	public void testChangeLogListsUndoneCommit() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("child", child.tValueByName("name"));
+
+		Collection<ChangeSet> log = readLog(root);
+		ChangeSet original = findRevision(log, rename);
+		assertInEffectMessage(original);
+		ChangeSet undo = original.getRevertedBy();
+		assertNotNull("Undone commit must be marked as reverted.", undo);
+		assertTrue("Undo must be listed.", containsRevision(log, undo));
+		assertTrue("Undo keeps its message.", undo.isRevert());
+		assertEquals(rename.getCommitNumber(), undo.origRevision());
+		assertNull("Undo in effect is not reverted.", undo.getRevertedBy());
+		assertTrue(ChangeSetReverter.isUndone(original));
+		assertFalse("Undo in effect is not undone itself.", ChangeSetReverter.isUndone(undo));
+
+		// Undoing the listed undo re-applies the original change.
+		assertEquals(List.of(), ChangeSetReverter.revert(_kb, ChangeSetReverter.revertTarget(undo), false));
+		assertEquals("child-1", child.tValueByName("name"));
+		ChangeSet redone = changeAt(root, rename);
+		assertFalse(ChangeSetReverter.isUndone(redone));
+		assertTrue("Redone undo is undone itself.", ChangeSetReverter.isUndone(redone.getRevertedBy()));
 	}
 
 	/**
@@ -411,7 +445,7 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("child", child.tValueByName("name"));
 		ChangeSet undone = changeAt(root, rename);
 		assertTrue("Undone.", ChangeSetReverter.isUndone(undone));
-		assertRevertedMessage(undone);
+		assertInEffectMessage(undone);
 
 		toggle(root, rename);
 		assertEquals("child-1", child.tValueByName("name"));
@@ -424,10 +458,10 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("child", child.tValueByName("name"));
 		ChangeSet undoneAgain = changeAt(root, rename);
 		assertTrue("Undone again.", ChangeSetReverter.isUndone(undoneAgain));
-		assertRevertedMessage(undoneAgain);
+		assertInEffectMessage(undoneAgain);
 		ChangeSet undoneRedo = undoneAgain.getRevertedBy().getRevertedBy();
-		assertTrue("Undone redo is marked as reverted.", ChangeSetReverter.isUndone(undoneRedo));
-		assertRevertedMessage(undoneRedo);
+		assertTrue("Undone redo is undone.", ChangeSetReverter.isUndone(undoneRedo));
+		assertTrue("Undone redo keeps its message.", undoneRedo.isRedo());
 
 		toggle(root, rename);
 		assertEquals("child-1", child.tValueByName("name"));
@@ -439,13 +473,8 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertTrue("Redo in effect keeps its message.", firstRedo.isRedo());
 	}
 
-	private static void assertRevertedMessage(ChangeSet cs) {
-		assertEquals("Undone change must be marked as reverted.", I18NConstants.REVERTED__MSG.getKey(),
-			cs.getMessage().getKey());
-	}
-
 	private static void assertInEffectMessage(ChangeSet cs) {
-		assertEquals("Change in effect must keep its message.",
+		assertEquals("Listed change must keep its message.",
 			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE.getKey(), cs.getMessage().getKey());
 	}
 
@@ -466,7 +495,11 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 	}
 
 	private ChangeSet changeAt(TLObject root, Revision revision) {
-		for (ChangeSet cs : readLog(root)) {
+		return findRevision(readLog(root), revision);
+	}
+
+	private static ChangeSet findRevision(Collection<ChangeSet> log, Revision revision) {
+		for (ChangeSet cs : log) {
 			if (cs.getRevision().getCommitNumber() == revision.getCommitNumber()) {
 				return cs;
 			}

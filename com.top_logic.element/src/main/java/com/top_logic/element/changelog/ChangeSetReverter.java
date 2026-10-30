@@ -90,11 +90,13 @@ public final class ChangeSetReverter {
 	 * Whether the given change is undone in the current state.
 	 *
 	 * <p>
-	 * The state of a change is decided by the end of its chain of
-	 * {@link ChangeSet#getRevertedBy() reverts} ({@link #revertTarget(ChangeSet)}): the change is
-	 * undone when that end is an undo, and in effect when it is the change itself or a redo. A
-	 * command offering to undo a change is therefore offered when this method returns
-	 * {@code false}, one offering to redo it when this method returns {@code true}.
+	 * The state of a change is decided by its chain of {@link ChangeSet#getRevertedBy() reverts}
+	 * ({@link #revertTarget(ChangeSet)}): every revert in the chain toggles the change, so it is
+	 * undone when the chain following it has an odd length. A change that has been reverted is
+	 * undone, one whose revert has been reverted again is in effect, and so on. This holds for an
+	 * undo or a redo listed in the change log as well: an undo that has been reverted by a redo is
+	 * undone itself. A command offering to undo a change is therefore offered when this method
+	 * returns {@code false}, one offering to redo it when this method returns {@code true}.
 	 * </p>
 	 *
 	 * @param change
@@ -102,7 +104,12 @@ public final class ChangeSetReverter {
 	 * @return Whether the change is undone; {@code false} for {@code null}.
 	 */
 	public static boolean isUndone(ChangeSet change) {
-		return change != null && revertTarget(change).isRevert();
+		boolean undone = false;
+		for (ChangeSet revert = change == null ? null : change.getRevertedBy(); revert != null;
+				revert = revert.getRevertedBy()) {
+			undone = !undone;
+		}
+		return undone;
 	}
 
 	/**

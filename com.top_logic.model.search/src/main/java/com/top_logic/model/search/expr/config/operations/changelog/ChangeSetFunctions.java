@@ -24,11 +24,11 @@ public class ChangeSetFunctions extends TLScriptFunctions {
 	 * Whether the given commit is undone in the current state.
 	 *
 	 * <p>
-	 * A commit is undone when the last of the reverts following it is an undo: a commit that has
-	 * been undone, an undone commit that has been redone and undone again, and so on. A commit that
-	 * has never been undone, or whose last undo has been redone, is in effect. A command undoing a
-	 * commit is offered for <code>!changeSetUndone($commit)</code>, one redoing it for
-	 * <code>changeSetUndone($commit)</code>.
+	 * Every revert following a commit toggles it: a commit that has been reverted is undone, one
+	 * whose revert has been reverted again is in effect, and so on. This holds for an undo or a redo
+	 * listed in the change log as well: an undo that has been reverted by a redo is undone itself. A
+	 * command undoing a commit is offered for <code>!changeSetUndone($commit)</code>, one redoing it
+	 * for <code>changeSetUndone($commit)</code>.
 	 * </p>
 	 *
 	 * <p>

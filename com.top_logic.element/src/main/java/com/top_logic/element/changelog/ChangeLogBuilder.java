@@ -12,10 +12,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -336,15 +334,25 @@ public class ChangeLogBuilder {
 			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy,
 			Map<Long, com.top_logic.element.changelog.model.ChangeSet> redoneBy, long start, long stop) {
 
-		List<com.top_logic.element.changelog.model.ChangeSet> toDelete = new ArrayList<>();
-
 		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange =
 			readChangesDescending(start, stop);
 
-		for (Iterator<com.top_logic.element.changelog.model.ChangeSet> it = logsInRange.iterator(); it
-			.hasNext();) {
-			com.top_logic.element.changelog.model.ChangeSet cs1 = it.next();
+		for (com.top_logic.element.changelog.model.ChangeSet cs1 : logsInRange) {
 			long commitNumber = cs1.getRevision().getCommitNumber();
+
+			/* Reading in descending order, a revert is read before the change set it reverts. Both
+			 * stay listed, the reverted change set keeps its message and is linked to its revert. */
+			com.top_logic.element.changelog.model.ChangeSet redoCS = redoneBy.remove(commitNumber);
+			if (redoCS != null) {
+				// Connect the undo with its redo.
+				cs1.setRevertedBy(redoCS);
+			}
+
+			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
+			if (undoCS != null) {
+				// Connect the change set with its undo.
+				cs1.setRevertedBy(undoCS);
+			}
 
 			if (cs1.isRedo()) {
 				long undoRevision = cs1.origRevision();
@@ -352,58 +360,16 @@ public class ChangeLogBuilder {
 					// Store the redo for later connection with the undo it reverts.
 					redoneBy.put(undoRevision, cs1);
 				}
-			}
-
-			com.top_logic.element.changelog.model.ChangeSet redoCS = redoneBy.remove(commitNumber);
-			if (redoCS != null) {
-				// Connect the undo with its redo. The undo itself stays hidden behind its original.
-				cs1.setRevertedBy(redoCS);
-			}
-
-			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
-			if (undoCS != null) {
-				// Connect CS with its undo CS.
-				cs1.setRevertedBy(undoCS);
-				if (ChangeSetReverter.isUndone(cs1)) {
-					/* Display message "Reverted: ..." while the change is undone. Reading in
-					 * descending order, the whole chain of reverts following cs1 is already linked
-					 * here, and the message of its end is never rewritten (only a change set with
-					 * a revert is), so the end reliably tells whether it is an undo. */
-					cs1.setMessage(I18NConstants.REVERTED__MSG.fill(cs1.getMessage()));
-				}
-				// Undo CS is not displayed
-				toDelete.add(undoCS);
-				continue;
-			}
-
-			if (cs1.isRevert()) {
+			} else if (cs1.isRevert()) {
 				long revertedRevision = cs1.origRevision();
 				if (revertedRevision != -1) {
-					// store cs for later connection with the undone CS.
+					// Store the undo for later connection with the undone change set.
 					revertedBy.put(revertedRevision, cs1);
 				}
 			}
 		}
 
 		log.addAll(logsInRange);
-
-		Comparator<com.top_logic.element.changelog.model.ChangeSet> revisionOrder = Comparator
-			.comparing(com.top_logic.element.changelog.model.ChangeSet::getRevision);
-		// Ensure ascending revision order, log is sorted descending
-		toDelete.sort(revisionOrder);
-
-		Comparator<com.top_logic.element.changelog.model.ChangeSet> reversedRevisionOrder = revisionOrder.reversed();
-		List<com.top_logic.element.changelog.model.ChangeSet> searchList = log;
-		for (com.top_logic.element.changelog.model.ChangeSet cs : toDelete) {
-			int idx = Collections.binarySearch(searchList, cs, reversedRevisionOrder);
-			if (idx < 0) {
-				assert false : "toDelete is a sublist of log.";
-			} else {
-				searchList.remove(idx);
-				// All later CS in toDelete have larger commit number, i.e. before idx in log list
-				searchList = searchList.subList(0, idx);
-			}
-		}
 	}
 
 	private List<com.top_logic.element.changelog.model.ChangeSet> readChangesDescending(

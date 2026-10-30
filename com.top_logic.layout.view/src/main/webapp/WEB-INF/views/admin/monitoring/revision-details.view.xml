@@ -13,8 +13,9 @@
 	and new values.
 	
 	"Undo change" reverts a commit that is in effect, "Redo change" re-applies one that is undone;
-	which of the two is offered is decided by changeSetUndone(), which looks at the end of the chain
-	of reverts (revertedBy) following the commit. Both ask for confirmation, revert the commit with
+	which of the two is offered is decided by changeSetUndone(), which counts the chain of reverts
+	(revertedBy) following the commit. This applies to a listed undo or redo as well: undoing an undo
+	re-applies the commit it undid. Both ask for confirmation, revert the commit with
 	<revert-change-set>, write the current time to the reload channel and close the dialog. An
 	opener whose display depends on the commits binds a channel of its own to reload, so that it is
 	recomputed after the revert; without such a binding, reload is a channel of the dialog alone.

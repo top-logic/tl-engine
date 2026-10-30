@@ -6,7 +6,8 @@
 	dialog) produced by the changeLog() TL-Script function; the global, system-wide log is requested
 	by passing no object and the range of commit numbers to display. The revision column shows the
 	commit number as a number, so that it sorts numerically, written without grouping separators by
-	its format annotation; date, author and message are the ChangeSet attributes. Activating a row
+	its format annotation; date, author and message are the ChangeSet attributes, "Reverted" marks a
+	commit that has been reverted by a later commit (revertedBy). Activating a row
 	opens a dialog listing what the commit changed, from which the commit can be undone or redone. A
 	<full-page> hosts the filter row and the table: the enclosing tab already labels the view, so no
 	panel title is rendered and the table fills the remaining area.
@@ -39,8 +40,8 @@
 	computed from the query and the reload channel alone. The time makes every query a new value, so
 	that refreshing also displays the commits made since the last refresh. The details dialog writes
 	the current time to the reload channel bound into it after undoing or redoing a commit, so that
-	the rows are computed again: the undone commit is marked as reverted, a redo is displayed when it
-	lies within the range of the query. Before the first refresh, the default query (today, no
+	the rows are computed again: the undone commit is marked as reverted, the undo or redo is
+	displayed when it lies within the range of the query. Before the first refresh, the default query (today, no
 	system changes) is displayed.
 -->
 <view>
@@ -478,6 +479,15 @@
 				<column attribute="date"/>
 				<column attribute="author"/>
 				<column attribute="message"/>
+				<computed-column name="reverted"
+					type="tl.core:Boolean"
+				>
+					<label>
+						<en>Reverted</en>
+						<de>Zurückgenommen</de>
+					</label>
+					<value><![CDATA[$row.get(`tl.changelog:ChangeSet#revertedBy`) != null]]></value>
+				</computed-column>
 			</columns>
 			<rows><![CDATA[{
 	f = $query["filter"];

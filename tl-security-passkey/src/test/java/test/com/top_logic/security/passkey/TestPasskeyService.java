@@ -45,11 +45,14 @@ import com.top_logic.util.model.ModelService;
  */
 public class TestPasskeyService extends BasicTestCase {
 
-	private static final String HOST = "localhost";
+	/** The host of the {@link #request(String, String, int) requests} of the tests. */
+	public static final String HOST = "localhost";
 
-	private static final int PORT = 8080;
+	/** The port of the {@link #request(String, String, int) requests} of the tests. */
+	public static final int PORT = 8080;
 
-	private static final String ORIGIN = "http://" + HOST + ":" + PORT;
+	/** The origin of a page served for a request to {@link #HOST} and {@link #PORT}. */
+	public static final String ORIGIN = "http://" + HOST + ":" + PORT;
 
 	private static final String LABEL = "Test device";
 
@@ -285,7 +288,10 @@ public class TestPasskeyService extends BasicTestCase {
 		}
 	}
 
-	private static HttpServletRequest request(String scheme, String host, int port) {
+	/**
+	 * A request answering only the questions of the relying party: scheme, host and port.
+	 */
+	public static HttpServletRequest request(String scheme, String host, int port) {
 		return (HttpServletRequest) Proxy.newProxyInstance(TestPasskeyService.class.getClassLoader(),
 			new Class<?>[] { HttpServletRequest.class }, (proxy, method, args) -> {
 				switch (method.getName()) {

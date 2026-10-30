@@ -30,6 +30,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.UserIdentity;
@@ -513,8 +514,24 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 			.attestationConveyancePreference(AttestationConveyancePreference.NONE)
 			.allowUntrustedAttestation(true)
 			.validateSignatureCounter(true)
+			.preferredPubkeyParams(PUBKEY_PARAMS)
 			.build();
 	}
+
+	/**
+	 * The signature algorithms offered to an authenticator, in order of preference.
+	 *
+	 * <p>
+	 * The algorithms the JVM verifies without an additional security provider. The library's
+	 * default also lists ML-DSA, which the JVM cannot verify.
+	 * </p>
+	 */
+	private static final List<PublicKeyCredentialParameters> PUBKEY_PARAMS = List.of(
+		PublicKeyCredentialParameters.ES256,
+		PublicKeyCredentialParameters.EdDSA,
+		PublicKeyCredentialParameters.ES384,
+		PublicKeyCredentialParameters.ES512,
+		PublicKeyCredentialParameters.RS256);
 
 	/**
 	 * The origin of the given request as a browser sends it: scheme, host and the port, unless it

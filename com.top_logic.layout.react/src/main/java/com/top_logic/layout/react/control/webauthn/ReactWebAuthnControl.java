@@ -31,6 +31,14 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <p>
+ * Options with a {@code publicKey.timeout} expire: shortly before, while no ceremony runs, the
+ * client asks for fresh ones with the {@link #CMD_REFRESH} command, so that a button left alone
+ * for a long time still runs a ceremony the server accepts. The command reaches
+ * {@link WebAuthnListener#onExpired(ReactContext)}, whose owner supplies fresh options with
+ * {@link #setOptions(String)}.
+ * </p>
+ *
+ * <p>
  * The control is generic: it neither creates the options nor verifies the credential, and keeps no
  * challenge. The options are the JSON a Web Authentication server library produces for the browser, an object
  * with the property {@code publicKey} holding the {@code PublicKeyCredentialCreationOptionsJSON} or
@@ -86,6 +94,9 @@ public class ReactWebAuthnControl extends ReactControl {
 
 	/** Command sent for a failed or cancelled ceremony, see {@link WebAuthnFailureArguments}. */
 	public static final String CMD_FAILURE = "failure";
+
+	/** Command sent shortly before the {@link #setOptions(String) options} expire, without arguments. */
+	public static final String CMD_REFRESH = "refresh";
 
 	private final WebAuthnListener _listener;
 
@@ -232,6 +243,20 @@ public class ReactWebAuthnControl extends ReactControl {
 	}
 
 	/**
+	 * Handles the request of the client for fresh options, because the current ones are about to
+	 * expire.
+	 */
+	@ReactCommandHandler(value = CMD_REFRESH, technical = true)
+	HandlerResult handleRefresh(ReactContext context) {
+		ExecutableState offered = offeredState();
+		if (!offered.isExecutable()) {
+			return HandlerResult.notExecutable(offered);
+		}
+		_listener.onExpired(context);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
 	 * Whether the button is offered to the user, and if not, why: a hidden or disabled control
 	 * accepts no outcome of a ceremony, whatever the client sends.
 	 */
@@ -250,6 +275,7 @@ public class ReactWebAuthnControl extends ReactControl {
 		Set<String> result = new LinkedHashSet<>(super.nonRecordableCommands());
 		result.add(CMD_CREDENTIAL);
 		result.add(CMD_FAILURE);
+		result.add(CMD_REFRESH);
 		return result;
 	}
 

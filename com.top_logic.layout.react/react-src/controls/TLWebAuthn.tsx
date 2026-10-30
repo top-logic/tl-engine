@@ -2,6 +2,7 @@ import { React, useTLState, useTLCommand, usePart, rootClassName } from 'tl-reac
 import type { TLCellProps, ButtonAppearance } from 'tl-react-bridge';
 import { failureOf, startCeremony, KIND_CREATE, KIND_GET } from './webauthn/webauthn-json';
 import type { WebAuthnKind } from './webauthn/webauthn-json';
+import { watchExpiry } from './webauthn/options-expiry';
 
 /** The command carrying the credential of a completed ceremony (`ReactWebAuthnControl.CMD_CREDENTIAL`). */
 const CMD_CREDENTIAL = 'credential';
@@ -17,6 +18,9 @@ const ARG_ERROR_NAME = 'errorName';
 
 /** The argument of {@link CMD_FAILURE}: the technical message of the error. */
 const ARG_MESSAGE = 'message';
+
+/** The command asking for fresh options shortly before the current ones expire (`ReactWebAuthnControl.CMD_REFRESH`). */
+const CMD_REFRESH = 'refresh';
 
 /** The error name of an aborted ceremony; an abort comes from this component and is not reported. */
 const ABORT_ERROR = 'AbortError';
@@ -45,7 +49,8 @@ interface WebAuthnState extends Record<string, unknown> {
  *
  * <p>While a ceremony runs, while the server has no options, and while the server disables it, the
  * button is disabled; a running ceremony marks it busy. With `autoStart`, the ceremony starts once
- * when the component is mounted. The error message of the server is announced in the status line
+ * when the component is mounted. Shortly before options with a `publicKey.timeout` expire, the
+ * component asks with the command `refresh` for fresh ones, unless a ceremony runs. The error message of the server is announced in the status line
  * beside the button. Unmounted during a ceremony, the component aborts it.</p>
  */
 const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
@@ -90,6 +95,21 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
       }
     });
   }, [kind, options, sendCommand]);
+
+  // When the current options arrived, as the start of their timeout.
+  const receivedRef = React.useRef<{ options: string | null; at: number }>({ options, at: Date.now() });
+  if (receivedRef.current.options !== options) {
+    receivedRef.current = { options, at: Date.now() };
+  }
+
+  // Fresh options shortly before the current ones expire, not while a ceremony runs.
+  const refreshable = !running && !disabled;
+  React.useEffect(() => {
+    if (!refreshable) {
+      return undefined;
+    }
+    return watchExpiry(options, receivedRef.current.at, () => sendCommand(CMD_REFRESH));
+  }, [options, refreshable, sendCommand]);
 
   // Automatic start: once, when mounted.
   const autoStartRef = React.useRef(state.autoStart === true && !disabled);

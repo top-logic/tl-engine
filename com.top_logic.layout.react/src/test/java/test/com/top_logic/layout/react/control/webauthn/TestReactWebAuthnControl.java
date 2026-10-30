@@ -52,6 +52,12 @@ public class TestReactWebAuthnControl extends TestCase {
 			assertNotNull(context);
 			_calls.add("failure:" + errorName + ":" + message);
 		}
+
+		@Override
+		public void onExpired(ReactContext context) {
+			assertNotNull(context);
+			_calls.add("expired");
+		}
 	}
 
 	private Trace _trace;
@@ -79,6 +85,39 @@ public class TestReactWebAuthnControl extends TestCase {
 			arguments.put(WebAuthnFailureArguments.MESSAGE, message);
 		}
 		return _control.executeClientCommand(ReactWebAuthnControl.CMD_FAILURE, arguments);
+	}
+
+	private HandlerResult sendRefresh() {
+		return _control.executeClientCommand(ReactWebAuthnControl.CMD_REFRESH, Map.of());
+	}
+
+	/** The request of the client for fresh options reaches the listener. */
+	public void testRefreshReachesTheListener() {
+		HandlerResult result = sendRefresh();
+
+		assertTrue(result.isSuccess());
+		assertEquals(List.of("expired"), _trace._calls);
+	}
+
+	/** A listener that does not handle expiry ignores the request for fresh options. */
+	public void testRefreshIgnoredByDefault() {
+		WebAuthnListener listener = new WebAuthnListener() {
+			@Override
+			public void onCredential(ReactContext context, String credentialJson) {
+				fail("No credential sent.");
+			}
+
+			@Override
+			public void onFailure(ReactContext context, String errorName, String message) {
+				fail("No failure sent.");
+			}
+		};
+		ReactWebAuthnControl control = new ReactWebAuthnControl(
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")),
+			WebAuthnCeremony.GET, OPTIONS, "Sign in", listener);
+
+		assertTrue(control.executeClientCommand(ReactWebAuthnControl.CMD_REFRESH, Map.of()).isSuccess());
+		assertEquals(OPTIONS, control.getOptions());
 	}
 
 	/** The credential of a completed ceremony reaches the listener unchanged. */
@@ -110,6 +149,7 @@ public class TestReactWebAuthnControl extends TestCase {
 
 		assertFalse(sendCredential().isSuccess());
 		assertFalse(sendFailure("NotAllowedError", "").isSuccess());
+		assertFalse(sendRefresh().isSuccess());
 		assertEquals(List.of(), _trace._calls);
 	}
 
@@ -118,6 +158,7 @@ public class TestReactWebAuthnControl extends TestCase {
 		_control.setHidden(true);
 
 		assertFalse(sendCredential().isSuccess());
+		assertFalse(sendRefresh().isSuccess());
 		assertEquals(List.of(), _trace._calls);
 	}
 
@@ -147,6 +188,7 @@ public class TestReactWebAuthnControl extends TestCase {
 	public void testCommandsAreNotRecorded() {
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_CREDENTIAL));
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_FAILURE));
+		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_REFRESH));
 	}
 
 }

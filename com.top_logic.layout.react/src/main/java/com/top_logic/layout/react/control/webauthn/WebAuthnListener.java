@@ -53,4 +53,21 @@ public interface WebAuthnListener {
 	 */
 	void onFailure(ReactContext context, String errorName, String message);
 
+	/**
+	 * Called shortly before the options of the control expire, while no ceremony runs.
+	 *
+	 * <p>
+	 * The client asks for fresh options when the {@code publicKey.timeout} of the current ones has
+	 * nearly passed. A listener whose challenges expire gives the control fresh options with
+	 * {@link ReactWebAuthnControl#setOptions(String)}; it should not show an error, since the user
+	 * did nothing. Does nothing by default.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the control.
+	 */
+	default void onExpired(ReactContext context) {
+		// Options without expiry need no refresh.
+	}
+
 }

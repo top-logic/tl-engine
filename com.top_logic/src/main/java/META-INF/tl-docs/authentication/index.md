@@ -79,9 +79,12 @@ the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The 
    (`ChangePasswordApplyAction`), which continues with the next step.
 2. An account with a stored secret gets `otp.view.xml` (`<verify-otp/>`); an account with
    `MfaRequirement` `required` and no secret gets `mfa-enroll.view.xml` (`<verify-otp persist="true"/>`).
-3. The last step re-checks maintenance mode and allowed groups, records the pending login on the
-   HTTP session and reloads the page; `PendingSessionAction` performs the session switch on that
-   reload.
+3. The last step re-checks maintenance mode and allowed groups and logs the user in within the
+   current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept and only
+   its ID is changed, other open tabs keep their user, and a tab opened later starts with the user
+   logged in. The window's control tree is discarded and the window reloads
+   (`ReactWindowRegistry.rebuildWindow`). The logout swaps the session through
+   `PendingSessionAction` on the reload it triggers.
 
 The partially authenticated account travels on the dialog channel `account` of the step dialogs; the
 TOTP secret on the channel `secret`, server side only. The step dialogs do not close on a backdrop
@@ -143,10 +146,16 @@ optional button icon; without a label the client name is shown. A client is offe
 
 A `LoginMethod` answers:
 
-- `getInitiationUrl(returnTo)` - the address the button sends the browser to, a full-page
-  redirect. For pac4j: `/servlet/openid?force_client=<client>&startPage=<returnTo>`; the identity
-  provider authenticates the user, the callback logs the user in through
-  `ExternalAuthenticationServlet` and returns to the page the visitor asked for.
+- `getInitiationUrl(returnTo, windowName)` - the address the button sends the browser to, a
+  full-page redirect. For pac4j:
+  `/servlet/openid?force_client=<client>&startPage=<returnTo>&loginWindow=<windowName>`; the
+  identity provider authenticates the user, the callback logs the user in through
+  `ExternalAuthenticationServlet` and returns to the page the visitor asked for. `<login-methods/>`
+  passes the window it is shown in and returns to that window (`/view/<windowName>/<route>`), so the
+  external login applies to that window only, like the password login: the servlet finds the
+  window's sub-session by `ExternalAuthenticationServlet.WINDOW_PARAM` and calls
+  `SessionService.loginUserInWindow`. Without the parameter, or for a window the session does not
+  know, the whole session is logged in (`SessionService.loginUser`).
 - `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
   the running session once more, or `null` when the method cannot. pac4j answers it only for a
   session its own client established.

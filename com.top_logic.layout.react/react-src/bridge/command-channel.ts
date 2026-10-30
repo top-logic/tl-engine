@@ -17,7 +17,7 @@
  * says nothing about the page that comes next.</p>
  */
 
-import { isPageLeaving, reloadForStaleUi } from './page-leave';
+import { isPageLeaving, leavePage, reloadForStaleUi } from './page-leave';
 import { expectEvents } from './sse-client';
 
 /** Command name for transmitting a form-field value to the server. */
@@ -173,6 +173,20 @@ export function enqueueCommand(
   const result = _chain.then(() => post(url, payload));
   _chain = result;
   return result;
+}
+
+/**
+ * Leaves the page (see {@link leavePage}) once every command sent so far has been answered.
+ *
+ * <p>A navigation the server asks for through its event stream may be the outcome of a command
+ * whose answer is still on its way, and that answer may carry a cookie the next page needs - the
+ * changed session ID of a login. Leaving the page before would cancel the answer and load the next
+ * page without the cookie. Commands enqueued after this call are not waited for.</p>
+ *
+ * @param url the address to load, as for {@link leavePage}.
+ */
+export function leavePageWhenAnswered(url?: string): void {
+  void _chain.then(() => leavePage(url));
 }
 
 /**

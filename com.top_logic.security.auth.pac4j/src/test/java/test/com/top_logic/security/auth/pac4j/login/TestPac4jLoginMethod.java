@@ -124,16 +124,20 @@ public class TestPac4jLoginMethod extends TestCase {
 
 	/**
 	 * Tests that a login hands the browser to this method's client, naming it in the parameter the
-	 * pac4j security filter selects a client by, and appends the page to return to.
+	 * pac4j security filter selects a client by, and appends the page to return to and the window
+	 * the login applies to.
 	 */
 	public void testInitiationUrl() {
 		DefaultDisplayContext.setupDisplayContext(_request, _context);
 		try {
 			String servletUrl = _request.getContextPath() + "/servlet/openid";
 
-			assertEquals(servletUrl + "?force_client=" + CLIENT, loginMethod().getInitiationUrl(null));
+			assertEquals(servletUrl + "?force_client=" + CLIENT, loginMethod().getInitiationUrl(null, null));
 			assertEquals(servletUrl + "?force_client=" + CLIENT + "&startPage=%2Fview%2Fw1%2F",
-				loginMethod().getInitiationUrl("/view/w1/"));
+				loginMethod().getInitiationUrl("/view/w1/", null));
+			assertEquals(servletUrl + "?force_client=" + CLIENT + "&startPage=%2Fview%2Fw1%2F&"
+				+ ExternalAuthenticationServlet.WINDOW_PARAM + "=w1",
+				loginMethod().getInitiationUrl("/view/w1/", "w1"));
 		} finally {
 			DefaultDisplayContext.teardownDisplayContext(_request);
 		}

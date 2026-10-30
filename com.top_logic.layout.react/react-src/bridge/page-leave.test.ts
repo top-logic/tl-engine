@@ -170,6 +170,35 @@ describe('a page that is leaving', () => {
   });
 });
 
+describe('a navigation the server asks for', () => {
+  it('waits for the answer of the command already sent', async () => {
+    const pending = deferredAnswer();
+    vi.stubGlobal('fetch', vi.fn().mockReturnValueOnce(pending.promise));
+    const { enqueueCommand, leavePageWhenAnswered, isPageLeaving } = await load();
+
+    const sent = enqueueCommand(COMMAND_URL, PAYLOAD);
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    leavePageWhenAnswered();
+    await Promise.resolve();
+
+    expect(isPageLeaving()).toBe(false);
+    expect(nav.reload).not.toHaveBeenCalled();
+
+    pending.answer(200, '{"success":true}');
+
+    await expect(sent).resolves.toEqual({ success: true });
+    await vi.waitFor(() => expect(nav.reload).toHaveBeenCalledTimes(1));
+  });
+
+  it('leaves at once without a command on its way', async () => {
+    const { leavePageWhenAnswered } = await load();
+
+    leavePageWhenAnswered('/ctx/next');
+
+    await vi.waitFor(() => expect(nav.assign).toHaveBeenCalledWith('/ctx/next'));
+  });
+});
+
 describe('a page the server no longer knows', () => {
   it('is entered again through the address without the window name', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(STALE_ANSWER.body, { status: STALE_ANSWER.status })));

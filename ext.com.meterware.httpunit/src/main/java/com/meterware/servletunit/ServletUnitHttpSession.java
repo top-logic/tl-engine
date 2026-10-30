@@ -74,6 +74,23 @@ public class ServletUnitHttpSession implements HttpSession {
 
 
     /**
+     * Assigns a fresh identifier to this session, as {@link jakarta.servlet.http.HttpServletRequest#changeSessionId()} does.
+     *
+     * @return The new identifier.
+     **/
+    String changeId() {
+        if (_invalid) throw new IllegalStateException();
+        _id = nextId();
+        return _id;
+    }
+
+
+    private static synchronized String nextId() {
+        return Integer.toString( _NextID++ );
+    }
+
+
+    /**
      * Returns the time when this session was created, measured
      * in milliseconds since midnight January 1, 1970 GMT.
      *
@@ -272,7 +289,7 @@ public class ServletUnitHttpSession implements HttpSession {
 
     private final long _creationTime = new Date().getTime();
 
-    private final String _id = Integer.toString( _NextID++ );
+    private String _id = nextId();
 
 
 

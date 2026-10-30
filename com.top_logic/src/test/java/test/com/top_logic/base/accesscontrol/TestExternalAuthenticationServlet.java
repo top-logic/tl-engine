@@ -13,9 +13,12 @@ import junit.framework.TestSuite;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.monitor.UserSessionCleanup;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -29,11 +32,23 @@ import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.base.accesscontrol.I18NConstants;
 import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
+import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
+import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
 
 /**
@@ -65,6 +80,12 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request,
 				HttpServletResponse response) {
 			throw new UnsupportedOperationException("No external authentication in this test.");
+		}
+
+		@Override
+		public void loginUser(Person person, HttpServletRequest request, HttpServletResponse response)
+				throws InMaintenanceModeException {
+			super.loginUser(person, request, response);
 		}
 
 	}
@@ -142,9 +163,12 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 
 	private ServletUnitClient _client;
 
+	private UserSessionCleanup _userSessions;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		_userSessions = UserSessionCleanup.snapshot(PersistencyLayer.getKnowledgeBase());
 
 		ServletRunner runner = new ServletRunner();
 		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
@@ -158,6 +182,9 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		_client = null;
+		// The logins of this test are recorded as user sessions, which must not be seen by later
+		// tests that share the knowledge base.
+		_userSessions.deleteCreated();
 
 		super.tearDown();
 	}
@@ -254,6 +281,106 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	}
 
 	/**
+	 * A login naming a window of its session applies to that window only: the session and its other
+	 * windows are kept, and the session ID changes.
+	 */
+	public void testLoginInWindow() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person guest = createPerson("externalWindowGuest");
+		Person user = createPerson("externalWindowUser");
+		try {
+			InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest(
+				"http://ignore/lpServlet?" + ExternalAuthenticationServlet.WINDOW_PARAM + "=windowA"));
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			String oldId = session.getId();
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+			TLSubSessionContext otherWindow = newWindow(sessionContext, "windowB", guest);
+
+			new TestingServlet().loginUser(user, request, invocation.getResponse());
+
+			assertSame("Session must be kept.", session, request.getSession(false));
+			assertSame("Session context must be kept.", sessionContext, service.getSession(session));
+			assertNotEquals("Session ID not changed.", oldId, session.getId());
+			assertEquals(user, service.getUser(session.getId()));
+			assertEquals(user, window.getPerson());
+			assertEquals("Other window must keep its user.", guest, otherWindow.getPerson());
+			assertEquals(user, sessionContext.getOriginalUser());
+
+			service.terminateSession(session.getId());
+		} finally {
+			deleteIfValid(user);
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * A login naming a window its session does not know applies to the whole session.
+	 */
+	public void testLoginInUnknownWindow() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person guest = createPerson("externalSessionGuest");
+		Person user = createPerson("externalSessionUser");
+		try {
+			InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest(
+				"http://ignore/lpServlet?" + ExternalAuthenticationServlet.WINDOW_PARAM + "=noSuchWindow"));
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			TLSessionContext guestContext = service.getSession(session);
+
+			ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class, () -> {
+				new TestingServlet().loginUser(user, request, invocation.getResponse());
+				return null;
+			});
+
+			assertEquals(user, service.getUser(session.getId()));
+			assertNotSame("The whole session is logged in anew.", guestContext, service.getSession(session));
+			assertEquals(user, service.getSession(session).getOriginalUser());
+
+			service.terminateSession(session.getId());
+		} finally {
+			deleteIfValid(user);
+			deleteIfValid(guest);
+		}
+	}
+
+	private static TLSubSessionContext newWindow(TLSessionContext session, String name, Person person) {
+		TLSubSessionContext result =
+			(TLSubSessionContext) ThreadContextManager.getManager().newSubSessionContext();
+		result.setSessionContext(session);
+		result = session.setIfAbsent(name, result);
+		result.setPerson(person);
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		result.updateSessionRevision(kb.getHistoryManager(),
+			((UpdateChainView) kb.getUpdateChain()).current());
+		return result;
+	}
+
+	private static Person createPerson(String name) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			Person result = Person.create(kb, name,
+				PersonManager.getManager().getRoot().getAuthenticationDevice());
+			tx.commit();
+			return result;
+		}
+	}
+
+	private static void deleteIfValid(Person person) {
+		if (!person.tValid()) {
+			return;
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			person.tDelete();
+			tx.commit();
+		}
+	}
+
+	/**
 	 * Lets the servlet registered under the given name answer a request to it.
 	 */
 	private WebResponse service(String servletName) throws Exception {
@@ -272,8 +399,9 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	 * The suite of tests to execute.
 	 */
 	public static Test suite() {
-		return PersonManagerSetup
-			.createPersonManagerSetup(new TestSuite(TestExternalAuthenticationServlet.class));
+		Test test = ServiceTestSetup.createSetup(new TestSuite(TestExternalAuthenticationServlet.class),
+			SessionService.Module.INSTANCE, Login.Module.INSTANCE);
+		return PersonManagerSetup.createPersonManagerSetup(test);
 	}
 
 }

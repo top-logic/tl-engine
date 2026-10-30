@@ -594,7 +594,7 @@ public class TestVerifyIdentityAction extends TestCase {
 		}
 
 		@Override
-		public String getInitiationUrl(String returnToUrl) {
+		public String getInitiationUrl(String returnToUrl, String windowName) {
 			return "https://provider.example/login";
 		}
 

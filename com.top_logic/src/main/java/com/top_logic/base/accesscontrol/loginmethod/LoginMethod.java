@@ -14,7 +14,7 @@ import com.top_logic.layout.basic.ThemeImage;
  *
  * <p>
  * A login method is presented in a login UI as an additional action besides the built-in
- * username/password form. Activating it is a full browser redirect to {@link #getInitiationUrl(String)
+ * username/password form. Activating it is a full browser redirect to {@link #getInitiationUrl(String, String)
  * an initiation URL}, which typically hands off to an external identity provider (OAuth/OIDC/SAML)
  * and, after authentication, returns the browser to the application.
  * </p>
@@ -56,9 +56,14 @@ public interface LoginMethod {
 	 *        The application URL the user should be returned to after a successful login (e.g.
 	 *        {@code /<context>/view/<windowName>/}). Implementations encode it into the initiation
 	 *        URL so the external authentication round-trip lands back on it.
+	 * @param windowName
+	 *        The browser window the login applies to, or <code>null</code> for a login of the whole
+	 *        session. Implementations encode it into the initiation URL as
+	 *        {@link ExternalAuthenticationServlet#WINDOW_PARAM}, so that it reaches the
+	 *        authentication servlet when the external authentication returns.
 	 * @return The URL to redirect the browser to.
 	 */
-	String getInitiationUrl(String returnToUrl);
+	String getInitiationUrl(String returnToUrl, String windowName);
 
 	/**
 	 * Builds the URL a browser is sent to so that the identity provider authenticates the user of

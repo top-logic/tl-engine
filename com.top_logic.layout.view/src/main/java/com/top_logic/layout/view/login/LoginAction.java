@@ -14,6 +14,7 @@ import java.util.Map;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
@@ -69,13 +70,24 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * @implNote The login is performed by {@link #completeLogin}; the per-step MFA branching is in
- *           {@link #proceedAfterPassword}.
+ *           {@link #proceedAfterPassword}. The password checks are counted by the
+ *           {@link LoginFailuresModule} per account and client address
+ *           ({@link LoginFailuresModule#accountKey(String, jakarta.servlet.ServletRequest)}),
+ *           together with the logins of the classic UI and the identity confirmations of
+ *           {@link VerifyIdentityAction}: after repeated wrong passwords, further logins are refused
+ *           for a growing time without the password being checked.
  */
 @InApp
 public class LoginAction implements ViewAction {
 
 	/** Name of the transient model type holding the change-password form input. */
 	public static final String PASSWORD_CHANGE_TYPE = "tl.login:PasswordChange";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the newly chosen password. */
+	public static final String NEW_PASSWORD_ATTR = "newPassword";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the repetition of the new password. */
+	public static final String NEW_PASSWORD_CONFIRM_ATTR = "newPasswordConfirm";
 
 	/** Dialog view (relative to {@link ViewLoader#VIEW_BASE_PATH}) for the forced password change. */
 	public static final String CHANGE_PASSWORD_VIEW = "change-password.view.xml";
@@ -136,7 +148,13 @@ public class LoginAction implements ViewAction {
 		char[] decryptedPassword = password.toCharArray();
 		Person account;
 		boolean passwordChangeRequired;
+		LoginFailuresModule<?> loginFailures = LoginFailuresModule.getInstance();
+		String accountKey = LoginFailuresModule.accountKey(userName, displayContext.asRequest());
 		try {
+			// Refuses with the too-many-attempts message while the account is backing off.
+			loginFailures.checkRetry(accountKey,
+				com.top_logic.layout.component.configuration.I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT);
+
 			boolean success;
 			try {
 				success = Login.getInstance()
@@ -151,7 +169,7 @@ public class LoginAction implements ViewAction {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED, ex);
 			}
 
-			if (!success) {
+			if (!loginFailures.recordAttempt(accountKey, success)) {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED);
 			}
 

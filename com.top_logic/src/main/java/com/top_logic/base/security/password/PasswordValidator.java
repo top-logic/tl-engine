@@ -37,6 +37,11 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 	public interface Config extends PolymorphicConfiguration<PasswordValidator> {
 
 		/**
+		 * Configuration name of {@link #getRepeatCycle()}.
+		 */
+		String REPEAT_CYCLE = "repeat-cycle";
+
+		/**
 		 * Whether validation is enabled.
 		 * 
 		 * <p>
@@ -65,7 +70,7 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 		 * means not to to restrict password reuse.
 		 * </p>
 		 */
-		@Name("repeat-cycle")
+		@Name(REPEAT_CYCLE)
 		int getRepeatCycle();
 
 		/**

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project child.project.url.inherit.append.path="false" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" child.project.url.inherit.append.path="false" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<!--
@@ -26,7 +26,7 @@
 
 	<groupId>com.top-logic</groupId>
 	<artifactId>tl-bom</artifactId>
-	<version>8.0.0-SNAPSHOT</version>
+	<version>8.0.0-alpha12</version>
 
 	<name>${project.artifactId}</name>
 	<description>Dependency versions of the TopLogic application engine (bill of materials).</description>
@@ -64,7 +64,7 @@
 		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
 		<developerConnection>scm:git:https://git.top-logic.com/TopLogic/tl-engine-7.git</developerConnection>
 		<url>https://github.com/top-logic/tl-engine</url>
-		<tag>HEAD</tag>
+		<tag>TL_8.0.0-alpha12</tag>
 	</scm>
 
 	<properties>
@@ -72,7 +72,7 @@
 			The engine version, equal to the version of this POM. A literal instead of ${project.version},
 			because an inheriting project interpolates the property in its own context.
 		-->
-		<tl.version>8.0.0-SNAPSHOT</tl.version>
+		<tl.version>8.0.0-alpha12</tl.version>
 		<jetty.version>12.1.14</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>

@@ -107,6 +107,7 @@ import com.top_logic.util.sched.task.log.TaskLog;
 import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResultWrapper;
+import com.top_logic.util.sched.task.schedule.OnStartup;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 
 /**
@@ -2416,12 +2417,22 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
     }
 
+	/**
+	 * Starts the dispatch thread.
+	 *
+	 * <p>
+	 * The first round of the dispatch thread does not wait for the {@link #getPollingInterval()
+	 * polling interval} but starts the due {@link Task}s, e.g. those scheduled
+	 * {@link OnStartup on startup}, right away.
+	 * </p>
+	 */
 	private void startDispatch() {
 		synchronized (_dispatchLock) {
 			if (!_active || schedulerThread != null) {
 				return;
 			}
 			_dispatchStart = now();
+			wakeUp();
 			startNewThread();
 		}
 	}

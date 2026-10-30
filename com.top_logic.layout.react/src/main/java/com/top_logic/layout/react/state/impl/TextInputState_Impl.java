@@ -15,6 +15,8 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 
 	private int _rows = 0;
 
+	private boolean _preformatted = false;
+
 	private boolean _offersSuggestions = false;
 
 	private final java.util.List<com.top_logic.layout.react.state.SuggestionEntry> _suggestions = new java.util.ArrayList<>();
@@ -111,6 +113,22 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	/** Internal setter for {@link #getRows()} without chain call utility. */
 	protected final void internalSetRows(int value) {
 		_rows = value;
+	}
+
+	@Override
+	public final boolean isPreformatted() {
+		return _preformatted;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.TextInputState setPreformatted(boolean value) {
+		internalSetPreformatted(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isPreformatted()} without chain call utility. */
+	protected final void internalSetPreformatted(boolean value) {
+		_preformatted = value;
 	}
 
 	@Override
@@ -321,6 +339,8 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 		out.value(isMultiline());
 		out.name(ROWS__PROP);
 		out.value(getRows());
+		out.name(PREFORMATTED__PROP);
+		out.value(isPreformatted());
 		out.name(OFFERS_SUGGESTIONS__PROP);
 		out.value(isOffersSuggestions());
 		out.name(SUGGESTIONS__PROP);
@@ -343,6 +363,7 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 			case CLEARABLE__PROP: setClearable(in.nextBoolean()); break;
 			case MULTILINE__PROP: setMultiline(in.nextBoolean()); break;
 			case ROWS__PROP: setRows(in.nextInt()); break;
+			case PREFORMATTED__PROP: setPreformatted(in.nextBoolean()); break;
 			case OFFERS_SUGGESTIONS__PROP: setOffersSuggestions(in.nextBoolean()); break;
 			case SUGGESTIONS__PROP: {
 				java.util.List<com.top_logic.layout.react.state.SuggestionEntry> newValue = new java.util.ArrayList<>();

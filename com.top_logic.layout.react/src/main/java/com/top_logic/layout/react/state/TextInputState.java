@@ -104,6 +104,9 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	/** @see #getRows() */
 	String ROWS__PROP = "rows";
 
+	/** @see #isPreformatted() */
+	String PREFORMATTED__PROP = "preformatted";
+
 	/** @see #isOffersSuggestions() */
 	String OFFERS_SUGGESTIONS__PROP = "offersSuggestions";
 
@@ -165,6 +168,18 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	 * @see #getRows()
 	 */
 	com.top_logic.layout.react.state.TextInputState setRows(int value);
+
+	/**
+	 * Whether the text of a {@link #isMultiline()} field is shown as it is written: in a font of fixed
+	 * width, each line without wrapping it, a line wider than the field scrolling horizontally. This
+	 * holds for the text area and for the value of a field that is not editable.
+	 */
+	boolean isPreformatted();
+
+	/**
+	 * @see #isPreformatted()
+	 */
+	com.top_logic.layout.react.state.TextInputState setPreformatted(boolean value);
 
 	/**
 	 * Whether the field offers suggestions while the user types. Absent: the field offers none.

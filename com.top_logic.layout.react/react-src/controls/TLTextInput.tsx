@@ -71,7 +71,7 @@ const SuggestionList: React.FC<ListboxPartProps> = props => {
 /**
  * A text input field rendered via React, drawn by the part `TextInput`: a single-line box by
  * default, or a multi-line text area when the field state requests it (state.multiline with
- * state.rows).
+ * state.rows, state.preformatted for a text shown as it is written).
  *
  * Typing updates the local value immediately but the server `valueChanged` is debounced (and
  * always flushed on blur), so a field is not round-tripped on every keystroke. When
@@ -137,6 +137,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   const multiline = state.multiline === true;
+  const preformatted = multiline && state.preformatted === true;
   const disabled = state.disabled === true;
   const offersSuggestions = state.offersSuggestions === true && !disabled && !showsValueOnly(state);
 
@@ -213,7 +214,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   if (showsValueOnly(state)) {
     return (
       <FieldValue id={controlId} className={rootClassName(state) || undefined} text={text} href={href ?? undefined}
-        multiline={multiline} />
+        multiline={multiline} preformatted={preformatted} />
     );
   }
 
@@ -261,6 +262,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
         type={multiline ? undefined : inputType}
         multiline={multiline}
         rows={multiline ? state.rows : undefined}
+        preformatted={preformatted}
         placeholder={state.placeholder}
         icon={hasIcon ? icon : undefined}
         action={action}

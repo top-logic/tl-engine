@@ -2633,6 +2633,14 @@ body[data-tl-state~="picking"] * {
   resize: vertical;
 }
 
+/* Vorformatiert (Schrift tl-type-code aus dem TSX): jede Zeile bleibt eine Zeile, eine breite Zeile
+   rollt waagrecht statt umzubrechen. */
+.tl-field--preformatted {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
 /* --- Feld mit Icon oder Endknopf ------------------------------------------------- */
 
 /* Das echte Eingabefeld trägt den Rahmen und den Fokusring; Icon und Endknopf liegen darüber, das
@@ -2729,6 +2737,21 @@ body[data-tl-state~="picking"] * {
 .tl-field-value--multiline > .tl-field-value__text {
   white-space: inherit;
   overflow-wrap: anywhere;
+}
+
+/* Vorformatierter Lesewert (Schrift tl-type-code aus dem TSX): die Zeilen brechen nicht um und sind
+   so breit wie ihr Text und stehen ohne Abstand untereinander; ist eine breiter als der Wert, rollt
+   der Wert waagrecht. */
+.tl-field-value--preformatted {
+  align-items: flex-start;
+  row-gap: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.tl-field-value--preformatted > .tl-field-value__text {
+  overflow: visible;
+  overflow-wrap: normal;
 }
 
 /* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */

@@ -52,6 +52,13 @@ describe('the part FieldValue as MUI Typography', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
+  it('draws a preformatted multi-line value without wrapping its lines', () => {
+    const value = draw({ text: 'a\n\tb', multiline: true, preformatted: true });
+
+    expect(getComputedStyle(value).whiteSpace).toBe('pre');
+    expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', '\tb']);
+  });
+
   it('draws an empty value as an empty element', () => {
     const value = draw({ text: '' });
 

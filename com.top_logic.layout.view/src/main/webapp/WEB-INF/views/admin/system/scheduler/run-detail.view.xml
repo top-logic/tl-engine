@@ -154,7 +154,10 @@
 								<de>Ausnahme</de>
 							</label>
 							<annotations>
-								<multi-line rows="16"/>
+								<multi-line
+									preformatted="true"
+									rows="16"
+								/>
 							</annotations>
 						</value-input>
 					</visible-if>

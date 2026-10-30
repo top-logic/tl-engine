@@ -468,6 +468,13 @@ export interface TextInputPartProps extends PartAttributes {
   rows?: number;
 
   /**
+   * Whether a {@link multiline} box shows its text as it is written: in a font of fixed width, each
+   * line without wrapping it, a line wider than the box scrolling horizontally. Ignored for a
+   * single-line box.
+   */
+  preformatted?: boolean;
+
+  /**
    * The icon shown inside a single-line box ahead of the text, a theme image in its encoded form
    * (see `ThemeIcon`); absent: none. It is decoration, hidden from assistive technology.
    */
@@ -568,6 +575,13 @@ export interface FieldValuePartProps extends PartAttributes {
 
   /** Whether the text is shown with its line breaks. */
   multiline?: boolean;
+
+  /**
+   * Whether a {@link multiline} value shows its text as it is written: in a font of fixed width,
+   * each line without wrapping it, a line wider than the value scrolling horizontally. Ignored for
+   * a single-line value.
+   */
+  preformatted?: boolean;
 
   /**
    * The icon shown ahead of the text, a theme image in its encoded form (see `ThemeIcon`), e.g. the

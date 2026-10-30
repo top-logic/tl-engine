@@ -491,6 +491,26 @@ describe('the TopLogic drawing of the parts', () => {
     expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
   });
 
+  it('draws a preformatted multi-line box in the code type, without wrapping its lines', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<TextInputPart value={'a\nb'} multiline preformatted aria-label="Text" />);
+
+    const area = screen.getByRole('textbox', { name: 'Text' });
+    expect(area.className).toBe('tl-field tl-field--multiline tl-field--preformatted tl-type-code');
+    expect(area.getAttribute('wrap')).toBe('off');
+  });
+
+  it('ignores preformatted for a single-line box', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<TextInputPart value="a" preformatted aria-label="Text" />);
+
+    const box = screen.getByRole('textbox', { name: 'Text' });
+    expect(box.className).toBe('tl-field tl-type-body');
+    expect(box.hasAttribute('wrap')).toBe(false);
+  });
+
   it('puts the combobox role of a box offering suggestions on the input', async () => {
     const { TextInputPart } = await defaults();
 
@@ -555,6 +575,16 @@ describe('the TopLogic drawing of the parts', () => {
     expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', ' ', 'c']);
     expect(screen.queryByRole('link')).toBeNull();
   });
+  it('draws a preformatted multi-line field value in the code type', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text={'a\n\tb'} multiline preformatted />);
+
+    const value = document.getElementById('v1')!;
+    expect(value.className).toBe('tl-field-value tl-field-value--multiline tl-field-value--preformatted tl-type-code');
+    expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', '\tb']);
+  });
+
   it('draws a field value with an icon ahead of its text', async () => {
     const { FieldValuePart } = await defaults();
 

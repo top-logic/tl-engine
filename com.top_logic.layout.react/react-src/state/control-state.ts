@@ -451,6 +451,13 @@ export interface TextInputStateJson extends TypingFieldStateJson {
 	rows: number;
 
 	/**
+	 * Whether the text of a {@link TextInputStateJson.multiline} field is shown as it is written: in a font of fixed
+	 * width, each line without wrapping it, a line wider than the field scrolling horizontally. This
+	 * holds for the text area and for the value of a field that is not editable.
+	 */
+	preformatted: boolean;
+
+	/**
 	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
 	 *
 	 * The field asks for them with the command `suggest`, giving the text typed as argument

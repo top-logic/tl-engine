@@ -148,21 +148,75 @@ function marksOf(options: KeyedTransitionOptions): Marks {
   return 'state' in options ? STATE_MARKS : CLASS_MARKS(options.enterClass, options.exitClass);
 }
 
+/** Elements that load what they show from an address, in the attributes naming that address. */
+const LOADING_ATTRIBUTES: Record<string, readonly string[]> = {
+  IFRAME: ['src', 'srcdoc'],
+  EMBED: ['src'],
+  OBJECT: ['data'],
+  VIDEO: ['src', 'poster'],
+  AUDIO: ['src'],
+  SOURCE: ['src', 'srcset'],
+};
+
+/**
+ * A copy of the given node that loads nothing.
+ *
+ * A picture is not copied but taken over: an `img` (or the `picture` holding one) that is out of
+ * the document keeps the picture it has loaded when it is moved into the copy, while a copy of it
+ * would be a new element that loads its address again. Every other element is copied without the
+ * attributes it would load an address from, so that a frame or a media element of the copy stays
+ * empty.
+ *
+ * Both matter because what is copied belongs to a control the server disposes the moment it is
+ * gone: an address served by that control - the picture data of an image control, for instance -
+ * answers with an error by the time the copy would ask for it, and whether the browser asks at all
+ * would be left to its cache.
+ */
+function loadFreeCopy(node: Node): Node {
+  if ((node instanceof HTMLImageElement || node instanceof HTMLPictureElement) && !node.isConnected) {
+    return node;
+  }
+  const copy = node.cloneNode(false);
+  if (copy instanceof Element) {
+    // Removed before the copy is inserted and before a media element of it gets to select a
+    // resource, which it does only once the running script has finished.
+    for (const attribute of LOADING_ATTRIBUTES[copy.tagName] ?? []) {
+      copy.removeAttribute(attribute);
+    }
+  }
+  // A snapshot of the children: a picture taken over leaves the list it is taken from.
+  for (const child of Array.from(node.childNodes)) {
+    copy.appendChild(loadFreeCopy(child));
+  }
+  return copy;
+}
+
 /**
  * An inert copy of the given element, to be shown in its place while it leaves.
  *
  * The copy is a picture, not a control: the control it pictures is disposed on the server, so there
- * is nothing left to render. It is hidden from assistive technology, takes no input and carries no
- * ids, so that nothing addresses it by the ids of what it copies.
+ * is nothing left to render, and nothing left to load from it either (see {@link loadFreeCopy}). It
+ * is hidden from assistive technology, takes no input and carries no ids, so that nothing addresses
+ * it by the ids of what it copies.
+ *
+ * Exported for the tests.
  */
-function snapshot(element: HTMLElement, marks: Marks): HTMLElement {
-  const copy = element.cloneNode(true) as HTMLElement;
+export function inertCopy(element: HTMLElement): HTMLElement {
+  const copy = loadFreeCopy(element) as HTMLElement;
   copy.removeAttribute('id');
   copy.querySelectorAll('[id]').forEach((inner) => inner.removeAttribute('id'));
-  marks.remove(copy, marks.enter);
-  marks.add(copy, marks.exit);
   copy.setAttribute('aria-hidden', 'true');
   copy.setAttribute('inert', '');
+  return copy;
+}
+
+/**
+ * The {@link inertCopy} of the given element, marked as leaving.
+ */
+function snapshot(element: HTMLElement, marks: Marks): HTMLElement {
+  const copy = inertCopy(element);
+  marks.remove(copy, marks.enter);
+  marks.add(copy, marks.exit);
   return copy;
 }
 

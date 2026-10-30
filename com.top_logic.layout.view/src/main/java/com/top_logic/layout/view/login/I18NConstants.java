@@ -136,6 +136,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 MFA_ENABLED__USER;
 
 	/**
+	 * @en Changed the authenticator app of "{0}".
+	 */
+	public static ResKey1 MFA_CHANGED__USER;
+
+	/**
 	 * @en No account selected to configure multi-factor authentication for.
 	 */
 	public static ResKey MFA_NO_ACCOUNT;

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
@@ -45,7 +46,8 @@ import com.top_logic.util.error.TopLogicException;
  * In the login flow - the window is not logged in yet - a valid code completes the deferred login.
  * In a window that is already logged in - an enrollment the user started from their settings - the
  * window keeps its session: the dialog closes and the user is told that the second factor is set
- * up.
+ * up, or - where the confirmed secret took the place of a stored one - that the authenticator app
+ * was changed.
  * </p>
  *
  * @implNote Verification is delegated to {@link MfaSupport#isValidCode(Password, String)}; the
@@ -116,9 +118,15 @@ public class VerifyOtpAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.MFA_INVALID_CODE);
 		}
 
+		// What the user is told: a secret taking the place of a stored one changes the authenticator
+		// app, every other confirmation sets the second factor up.
+		ResKey1 done = _persist && account.getMFASecret() != null
+			? I18NConstants.MFA_CHANGED__USER
+			: I18NConstants.MFA_ENABLED__USER;
+
 		if (_persist) {
 			try (Transaction tx = account.tKnowledgeBase()
-				.beginTransaction(I18NConstants.MFA_ENABLED__USER.fill(account.getName()))) {
+				.beginTransaction(done.fill(account.getName()))) {
 				account.tUpdateByName(Person.MFA_SECRET_ATTR, secret);
 				tx.commit();
 			}
@@ -131,7 +139,7 @@ public class VerifyOtpAction implements ViewAction {
 			if (dialogManager != null) {
 				dialogManager.closeTopDialog(DialogResult.ok(null));
 			}
-			ViewMessages.info(context, I18NConstants.MFA_ENABLED__USER.fill(account.getName()));
+			ViewMessages.info(context, done.fill(account.getName()));
 		}
 		return input;
 	}

@@ -952,7 +952,7 @@
 			<dependency>
 			    <groupId>com.oracle.database.jdbc</groupId>
 			    <artifactId>ojdbc11</artifactId>
-			    <version>23.26.3.0.0</version>
+			    <version>23.26.4.0.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.postgresql</groupId>
@@ -1334,7 +1334,7 @@
 				<!-- Headless Chromium for the browser tool of tl-ai-core. -->
 				<groupId>com.microsoft.playwright</groupId>
 				<artifactId>playwright</artifactId>
-				<version>1.63.0</version>
+				<version>1.64.0</version>
 			</dependency>
 			<dependency>
 				<!-- In-process embedder of tl-ai-index-onnx (MIT). -->
@@ -1346,7 +1346,7 @@
 				<!-- Hugging Face tokenizers of DJL for tl-ai-index-onnx (Apache-2.0). -->
 				<groupId>ai.djl.huggingface</groupId>
 				<artifactId>tokenizers</artifactId>
-				<version>0.39.0</version>
+				<version>0.40.0</version>
 			</dependency>
 			<dependency>
 				<!-- Qdrant vector store client of tl-ai-vector-index. -->

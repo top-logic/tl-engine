@@ -826,7 +826,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		try (Reader in = sqlIn()) {
 			log.info("Adapting database");
 			StopWatch sw = StopWatch.createStartedWatch();
-			migration.dropAndRecreateDatabase(connection, kbConfig, in);
+			DataMigration.dropAndRecreateDatabase(connection, kbConfig, in);
 			log.info("Database adapted in " + sw);
 		} catch (Exception ex) {
 			log.error("Unable to install SQL.", ex);

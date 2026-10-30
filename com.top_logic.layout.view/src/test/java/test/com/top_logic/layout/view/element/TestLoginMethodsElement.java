@@ -64,7 +64,7 @@ public class TestLoginMethodsElement extends TestCase {
 		}
 
 		@Override
-		public String getInitiationUrl(String returnToUrl) {
+		public String getInitiationUrl(String returnToUrl, String windowName) {
 			return "/servlet/switched";
 		}
 

@@ -400,6 +400,16 @@ public interface ModelAccessRights {
 	 * one of its attributes, or the right to create objects in one of its compositions.
 	 * </p>
 	 *
+	 * <p>
+	 * Every person may discover a {@link TLModelPart model element} (a type, an attribute, a module,
+	 * a classifier of an enumeration) that is not deleted. A model element is meta-data that a
+	 * computation works with, not a business object - a script may e.g. deliver the type of an
+	 * object, a table column may be described by its attribute, and the value of an enumeration
+	 * attribute is chosen from the classifiers of its enumeration. Hiding such an element would break
+	 * the computation instead of protecting data. Reading the <em>attribute values</em> of a model
+	 * element is a separate question that is decided by the access check of the attribute itself.
+	 * </p>
+	 *
 	 * @implSpec Just calls {@link #isAllowed(Person, TLObject, BoundCommandGroup)} with
 	 *           {@link SimpleBoundCommandGroup#DISCOVER}.
 	 */

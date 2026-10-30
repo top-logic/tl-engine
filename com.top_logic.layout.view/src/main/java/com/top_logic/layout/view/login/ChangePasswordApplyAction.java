@@ -18,11 +18,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -38,12 +35,14 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expects its input to be the transient {@link LoginAction#PASSWORD_CHANGE_TYPE} model (carrying
- * {@code newPassword} and {@code newPasswordConfirm}), e.g. as the result of an enclosing
+ * {@link LoginAction#NEW_PASSWORD_ATTR} and {@link LoginAction#NEW_PASSWORD_CONFIRM_ATTR}), e.g. as the result of an enclosing
  * {@code <store-form-state>}.
  * Password policy validation and the actual change are delegated to the
  * {@link AuthenticationDevice}, which also clears the expiry flag and maintains the password
  * history. On a policy violation or mismatch a {@link TopLogicException} is raised so the form shows
- * the error.
+ * the error. The checks that say nothing about the account are the ones of
+ * {@link CheckPasswordChangeAction}, which a view runs in front of an identity confirmation; this
+ * action runs them again itself, since the forced change of a login has no such step in front of it.
  * </p>
  *
  * <p>
@@ -56,7 +55,8 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])}.
  *           Only a pending login continues through {@link LoginAction#proceedAfterPassword} (which
  *           runs any required MFA step before completing the login); that is decided by where the
- *           account came from, see {@link #pendingLogin(ReactContext)}.
+ *           account came from, see
+ *           {@link CheckPasswordChangeAction#pendingLogin(ReactContext)}.
  */
 @InApp
 public class ChangePasswordApplyAction implements ViewAction {
@@ -87,29 +87,10 @@ public class ChangePasswordApplyAction implements ViewAction {
 		}
 		// A pending login names the account it authenticated; otherwise the session's own account is
 		// the one whose password is changed.
-		Person pending = pendingLogin(context);
-		Person account = pending != null ? pending : TLContext.currentUser();
-		if (account == null) {
-			throw new TopLogicException(I18NConstants.LOGIN_FAILED);
-		}
-
-		// The device owns the password, so an account whose device keeps it elsewhere is refused
-		// before anything is asked of it.
-		AuthenticationDevice device = account.getAuthenticationDevice();
-		if (device == null || !device.allowPwdChange()) {
-			throw new TopLogicException(I18NConstants.ERROR_PASSWORD_CHANGE_NOT_ALLOWED);
-		}
-
-		TLObject form = (TLObject) input;
-		String newPassword = asString(form.tValueByName("newPassword"));
-		String newPasswordConfirm = asString(form.tValueByName("newPasswordConfirm"));
-
-		if (!equalPasswords(newPassword, newPasswordConfirm)) {
-			throw new TopLogicException(I18NConstants.PASSWORD_MISMATCH);
-		}
-		if (isEmpty(newPassword)) {
-			throw new TopLogicException(I18NConstants.PASSWORD_EMPTY);
-		}
+		Person pending = CheckPasswordChangeAction.pendingLogin(context);
+		Person account = CheckPasswordChangeAction.account(pending);
+		AuthenticationDevice device = CheckPasswordChangeAction.checkedDevice(account);
+		String newPassword = CheckPasswordChangeAction.checkedPassword((TLObject) input, account, device);
 
 		char[] password = newPassword.toCharArray();
 		try {
@@ -128,39 +109,6 @@ public class ChangePasswordApplyAction implements ViewAction {
 			LoginAction.proceedAfterPassword(context, pending);
 		}
 		return input;
-	}
-
-	/**
-	 * The account of a login waiting for this password change, or {@code null} when the password is
-	 * being changed from an established session.
-	 *
-	 * <p>
-	 * The distinguishing mark is {@link LoginAction#ACCOUNT_CHANNEL}, which only
-	 * {@link LoginAction} puts in scope.
-	 * </p>
-	 */
-	private static Person pendingLogin(ReactContext context) {
-		if (!(context instanceof ViewContext)) {
-			return null;
-		}
-		ViewContext viewContext = (ViewContext) context;
-		if (!viewContext.hasChannel(LoginAction.ACCOUNT_CHANNEL)) {
-			return null;
-		}
-		Object value = viewContext.resolveChannel(new ChannelRef(LoginAction.ACCOUNT_CHANNEL)).get();
-		return value instanceof Person ? (Person) value : null;
-	}
-
-	private static boolean equalPasswords(String a, String b) {
-		return a == null ? b == null : a.equals(b);
-	}
-
-	private static String asString(Object value) {
-		return value == null ? null : value.toString();
-	}
-
-	private static boolean isEmpty(String value) {
-		return value == null || value.isEmpty();
 	}
 
 }

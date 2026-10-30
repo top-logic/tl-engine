@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -522,6 +523,27 @@ public class TestConfigFormControl extends TestCase {
 	 * uses down to the {@link ConfigFieldModel} the field control's {@link ReactControl#getModel()}
 	 * carries - the way {@code TestConfigEditorControl#countKeyFields} reaches a field model too.
 	 */
+	/**
+	 * The key field of the entry pending in a {@link KeyedCollectionConfig}: the last
+	 * {@link ListEntry#TITLE} field, since pending entries are rendered after the committed ones.
+	 */
+	private ConfigFieldModel pendingKeyField(ReactControl control) {
+		List<ConfigFieldModel> found = new ArrayList<>();
+		collectFields(control, ListEntry.TITLE, found);
+		assertFalse("No key field rendered.", found.isEmpty());
+		return found.get(found.size() - 1);
+	}
+
+	private void collectFields(ReactControl control, String propertyName, List<ConfigFieldModel> found) {
+		if (control.getModel() instanceof ConfigFieldModel fieldModel
+			&& propertyName.equals(fieldModel.getProperty().getPropertyName())) {
+			found.add(fieldModel);
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			collectFields(child, propertyName, found);
+		}
+	}
+
 	private FieldModel fieldOf(ReactControl control, String propertyName) {
 		if (control.getModel() instanceof ConfigFieldModel fieldModel
 			&& propertyName.equals(fieldModel.getProperty().getPropertyName())) {
@@ -1010,13 +1032,7 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
-	 * An entry that is still being filled in is not yet an entry to be told to confirm or discard.
-	 *
-	 * <p>
-	 * Only asking for the configuration to be handed over - Apply - marks it, because only then is
-	 * it about to be dropped. Marking it while the user is still typing its key would be a
-	 * complaint about having begun.
-	 * </p>
+	 * An entry that is still being filled in is not complained about while it is being filled in.
 	 */
 	public void testALiveCheckDoesNotMarkAnUnconfirmedEntry() {
 		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
@@ -1028,53 +1044,70 @@ public class TestConfigFormControl extends TestCase {
 
 		assertNull("An entry being filled in must not be complained about.",
 			fieldOf(form, ListEntry.TITLE).getError());
-
-		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, applyRefusal(form));
-		assertNotNull("Asking for it to be handed over is what says the entry has to be confirmed.",
-			fieldOf(form, ListEntry.TITLE).getError());
 	}
 
 	/**
-	 * An entry the user started but never confirmed blocks Apply, rather than being thrown away
-	 * without a word.
-	 *
-	 * <p>
-	 * A pending entry is not in the configuration - that is what "pending" means - so
-	 * {@link com.top_logic.layout.configedit.ConfigValidation} cannot see it, and applying would
-	 * rebuild the form over the original and drop it. The user typed something and would watch it
-	 * vanish, which is the same silent discard a rejected input once was.
-	 * </p>
+	 * Apply confirms an entry the user filled in but did not confirm, as if the user had confirmed
+	 * it, and applies it together with the rest.
 	 */
-	public void testApplyIsRefusedWhileAnEntryIsUnconfirmed() {
-		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
-		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
-		click(findButton(form, label(I18NConstants.EDIT)));
-		click(findAddButton(form));
-
-		ResKey refusal = applyRefusal(form);
-
-		assertNotNull("An unconfirmed entry must keep edit mode open.",
-			findButton(form, label(I18NConstants.APPLY)));
-		assertEquals("The unconfirmed entry must not have been applied.", 0, config.getEntries().size());
-		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, refusal);
-	}
-
-	/** Naming the entry is not enough either - it is confirming that puts it into the collection. */
-	public void testApplyIsRefusedWhileANamedEntryIsUnconfirmed() {
+	public void testApplyConfirmsANamedEntry() {
 		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
 		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
 		click(findButton(form, label(I18NConstants.EDIT)));
 		click(findAddButton(form));
 		fieldOf(form, ListEntry.TITLE).setValue("typed but not confirmed");
 
+		assertNull("Apply must go through.", applyRefusal(form));
+
+		assertNotNull("Applying must have returned to view mode.", findButton(form, label(I18NConstants.EDIT)));
+		assertEquals(1, config.getEntries().size());
+		assertEquals("typed but not confirmed", config.getEntries().get(0).getTitle());
+	}
+
+	/**
+	 * Of two new entries given the same key, only the first can be confirmed: the second refuses
+	 * Apply, rather than being thrown away without a word, and stays pending with the reason at its
+	 * key field. Nothing is applied.
+	 */
+	public void testApplyIsRefusedWhileAnEntryCannotBeConfirmed() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+		pendingKeyField(form).setValue("same");
+		click(findAddButton(form));
+		pendingKeyField(form).setValue("same");
+
 		ResKey refusal = applyRefusal(form);
 
-		assertNotNull("A named but unconfirmed entry must keep edit mode open.",
-			findButton(form, label(I18NConstants.APPLY)));
-		assertEquals(0, config.getEntries().size());
-		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, refusal);
-		assertNotNull("The entry itself must say what to do about it.",
-			fieldOf(form, ListEntry.TITLE).getError());
+		assertNotNull("Apply must be refused.", refusal);
+		assertEquals(I18NConstants.ERROR_ENTRY_NOT_TAKEN__REASON, refusal.plain());
+		assertNotNull("The form must stay in edit mode.", findButton(form, label(I18NConstants.APPLY)));
+		assertEquals("Nothing must have been applied.", 0, config.getEntries().size());
+		assertNotNull("The refused entry must still be pending.", findButton(form, "\u2713"));
+		assertNotNull("The refused entry itself must say why it was not taken.",
+			pendingKeyField(form).getError());
+	}
+
+	/** A key already taken refuses Apply the same way, and leaves the entry pending. */
+	public void testApplyIsRefusedForATakenKey() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		ListEntry existing = TypedConfiguration.newConfigItem(ListEntry.class);
+		existing.setTitle("taken");
+		config.getEntries().add(existing);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+		ConfigFieldModel pendingKey = pendingKeyField(form);
+		pendingKey.setValue("taken");
+
+		ResKey refusal = applyRefusal(form);
+
+		assertNotNull("Apply must be refused.", refusal);
+		assertEquals(I18NConstants.ERROR_ENTRY_NOT_TAKEN__REASON, refusal.plain());
+		assertNotNull("The form must stay in edit mode.", findButton(form, label(I18NConstants.APPLY)));
+		assertEquals("Nothing must have been applied.", 1, config.getEntries().size());
+		assertNotNull("The entry must still be pending.", findButton(form, "\u2713"));
 	}
 
 	/** Confirming the entry clears the way: Apply then goes through and keeps the entry. */

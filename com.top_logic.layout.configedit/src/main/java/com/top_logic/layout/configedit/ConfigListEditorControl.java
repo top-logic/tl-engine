@@ -274,7 +274,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * the committed entries and before the add button, always expanded, with its key field
 	 * editable. Every rebuild recreates all of them afresh (see
 	 * {@link #createPendingElementGroup(PendingEntry)}), which is also why that method
-	 * re-registers each entry's {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)} and key-change listener every
+	 * re-registers each entry's {@link PendingEntry#setKeyFieldModel(AbstractFieldModel)} and key-change listener every
 	 * time, rather than relying on a registration made once when the entry was created: a rebuild
 	 * triggered by something unrelated (moving a different entry, say) discards and recreates
 	 * every pending group exactly like every other child.
@@ -464,7 +464,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * Always rendered expanded, and refreshes {@code pending}'s
-	 * {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)} every time it runs - see
+	 * {@link PendingEntry#setKeyFieldModel(AbstractFieldModel)} every time it runs - see
 	 * {@link #rebuild(ConfigurationItem)}.
 	 * </p>
 	 */
@@ -607,7 +607,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *        The {@link PendingEntry} {@code entry} is one of, or {@code null} if it is already
 	 *        committed. The key may still be changed only while pending - once the entry is in
 	 *        the collection, changing it would re-index the collection under a new key. When
-	 *        non-{@code null}, the built model is also kept as {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)}.
+	 *        non-{@code null}, the built model is also kept as {@link PendingEntry#setKeyFieldModel(AbstractFieldModel)}.
 	 */
 	private ReactControl createKeyField(ConfigurationItem entry, PropertyDescriptor keyProperty,
 			PendingEntry pending) {
@@ -732,6 +732,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		// joins the collection, fixed afterwards. Otherwise it is an ordinary property of the entry
 		// and may be changed for as long as the form is editable.
 		typeModel.setEditable(key ? _editable && pending != null : _editable);
+		if (key && pending != null) {
+			// The type is the key: a refused confirmation reports at the selector, as it would at a
+			// typed key.
+			pending.setKeyFieldModel(typeModel);
+		}
 
 		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(options, _choices.mapping());
 
@@ -843,12 +848,34 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Creates a new element of this property's element type, of a polymorphic collection's
 	 * {@link PolymorphicOptions.Choices#newOption() default option}.
+	 *
+	 * <p>
+	 * In a keyed collection whose key the chosen type determines - a collection keyed by its
+	 * entries' type, say - the default is the first option whose entry would not take a key that
+	 * is already used, see {@link ConfigPendingEntries#isKeyTaken(ConfigurationItem)}: accepting
+	 * the preselected type must not lead into a refusal. Where every option's key is taken, the
+	 * default option stays.
+	 * </p>
 	 */
 	private ConfigurationItem newEntry() {
-		if (_choices.hasOptions()) {
-			return (ConfigurationItem) _choices.mapping().toSelection(_choices.newOption());
+		if (!_choices.hasOptions()) {
+			return _value.newElement();
 		}
-		return _value.newElement();
+		Object defaultOption = _choices.newOption();
+		ConfigurationItem result = (ConfigurationItem) _choices.mapping().toSelection(defaultOption);
+		if (!_value.isKeyed() || !_pending.isKeyTaken(result)) {
+			return result;
+		}
+		for (Object option : _choices.options()) {
+			if (option == defaultOption) {
+				continue;
+			}
+			ConfigurationItem candidate = (ConfigurationItem) _choices.mapping().toSelection(option);
+			if (!_pending.isKeyTaken(candidate)) {
+				return candidate;
+			}
+		}
+		return result;
 	}
 
 	/**

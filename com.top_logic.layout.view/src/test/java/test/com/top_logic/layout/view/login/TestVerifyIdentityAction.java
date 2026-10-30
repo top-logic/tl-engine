@@ -25,6 +25,8 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.base.accesscontrol.LoginFailure;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -50,6 +52,8 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.login.I18NConstants;
+import com.top_logic.layout.view.login.PasswordPromptDialogControl.Verifier;
 import com.top_logic.layout.view.login.VerifyIdentityAction;
 import com.top_logic.util.error.TopLogicException;
 
@@ -79,6 +83,13 @@ public class TestVerifyIdentityAction extends TestCase {
 
 	/** What was shown to the user of the window the chain belongs to. */
 	private final List<HTMLFragment> _shown = new ArrayList<>();
+
+	@Override
+	protected void tearDown() throws Exception {
+		// Each test starts without the failures an earlier one has recorded.
+		LoginFailuresModule.getInstance().notifyLoginSuccessed(Fixture.ATTEMPT_KEY);
+		super.tearDown();
+	}
 
 	/**
 	 * Tests that a context without a dialog manager - a chain running headless - aborts instead of
@@ -142,6 +153,64 @@ public class TestVerifyIdentityAction extends TestCase {
 
 		assertTrue("The next attempt is accepted.", guard.enter("secret"));
 		assertEquals(List.of("in"), _downstream);
+	}
+
+	/**
+	 * Tests that a wrong password is counted for the account and says so under the input, and that
+	 * the accepted password clears the count.
+	 */
+	public void testWrongPasswordRecordsFailure() {
+		Fixture guard = new Fixture(password -> "secret".equals(new String(password)));
+
+		run(guard, "in");
+
+		assertFalse(guard.enter("wrong"));
+		assertEquals("The user reads that the password was wrong.",
+			I18NConstants.ERROR_WRONG_PASSWORD, guard.rejection());
+		LoginFailure failure = LoginFailuresModule.getInstance().getFailureFor(Fixture.ATTEMPT_KEY);
+		assertNotNull("The wrong password is counted for the account.", failure);
+		assertEquals(1, failure.getFailureCnt());
+
+		assertTrue(guard.enter("secret"));
+		assertNull("The accepted password clears the count.",
+			LoginFailuresModule.getInstance().getFailureFor(Fixture.ATTEMPT_KEY));
+	}
+
+	/**
+	 * Tests that an account backing off after repeated wrong passwords is refused without asking
+	 * its device, and that the user reads how long to wait instead of a wrong password.
+	 */
+	public void testBackingOffDoesNotAskDevice() {
+		int[] asked = { 0 };
+		Fixture guard = new Fixture(password -> {
+			asked[0]++;
+			return "secret".equals(new String(password));
+		});
+
+		run(guard, "in");
+
+		// The attempts accepted without delay, each answered by the device.
+		while (LoginFailuresModule.getInstance().getFailureFor(Fixture.ATTEMPT_KEY) == null
+			|| LoginFailuresModule.getInstance().getFailureFor(Fixture.ATTEMPT_KEY).allowRetry()) {
+			assertFalse(guard.enter("wrong"));
+			assertEquals(I18NConstants.ERROR_WRONG_PASSWORD, guard.rejection());
+			assertTrue("The account backs off after a few wrong passwords.", asked[0] < 10);
+		}
+		int askedBeforeBackOff = asked[0];
+
+		assertFalse("Even the right password is refused while backing off.", guard.enter("secret"));
+		assertEquals("The device is not asked while backing off.", askedBeforeBackOff, asked[0]);
+
+		ResKey rejection = guard.rejection();
+		assertEquals("The user reads that there were too many attempts.",
+			com.top_logic.layout.component.configuration.I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT
+				.getKey(),
+			rejection.getKey());
+		long seconds = ((Number) rejection.arguments()[0]).longValue();
+		assertTrue("The message names the seconds to wait: " + seconds, seconds > 0);
+
+		assertTrue("A refused password neither completes nor aborts the chain.", _completions.isEmpty());
+		assertTrue(_downstream.isEmpty());
 	}
 
 	/**
@@ -411,6 +480,9 @@ public class TestVerifyIdentityAction extends TestCase {
 		/** The token the fixture issues for the confirmation it is asked to await. */
 		static final String TOKEN = "verification-token";
 
+		/** The key the fixture counts the entered passwords under. */
+		static final String ATTEMPT_KEY = "test-verify-identity@127.0.0.1";
+
 		private final Predicate<char[]> _verifier;
 
 		private final List<LoginMethod> _loginMethods = new ArrayList<>();
@@ -451,13 +523,18 @@ public class TestVerifyIdentityAction extends TestCase {
 		}
 
 		@Override
-		protected Predicate<char[]> createVerifier() {
+		protected Predicate<char[]> createPasswordCheck() {
 			return _verifier;
 		}
 
 		@Override
+		protected String attemptKey() {
+			return ATTEMPT_KEY;
+		}
+
+		@Override
 		protected void openPrompt(ReactContext context, DialogManager dialogManager, ResKey title, ResKey message,
-				Predicate<char[]> verifier, Runnable onVerified, Runnable onCancel) {
+				Verifier verifier, Runnable onVerified, Runnable onCancel) {
 			_prompt = new Prompt(verifier, onVerified, onCancel);
 		}
 
@@ -482,6 +559,11 @@ public class TestVerifyIdentityAction extends TestCase {
 		/** Enters the given password, as the user confirming the prompt does. */
 		boolean enter(String password) {
 			return _prompt.enter(password);
+		}
+
+		/** What the prompt shows under the input after the last rejected password. */
+		ResKey rejection() {
+			return _prompt.rejection();
 		}
 
 		/** Leaves the prompt without an accepted password. */
@@ -594,7 +676,7 @@ public class TestVerifyIdentityAction extends TestCase {
 		}
 
 		@Override
-		public String getInitiationUrl(String returnToUrl) {
+		public String getInitiationUrl(String returnToUrl, String windowName) {
 			return "https://provider.example/login";
 		}
 
@@ -605,29 +687,38 @@ public class TestVerifyIdentityAction extends TestCase {
 	}
 
 	/**
-	 * Stands in for the password dialog: it applies the verifier to what is entered and reports
-	 * only an accepted password, exactly as the dialog does.
+	 * Stands in for the password dialog: it applies the verifier to what is entered, keeps the
+	 * reason of a rejection as the dialog shows it, and reports only an accepted password, exactly
+	 * as the dialog does.
 	 */
 	private static class Prompt {
 
-		private final Predicate<char[]> _verifier;
+		private final Verifier _verifier;
 
 		private final Runnable _onVerified;
 
 		private final Runnable _onCancel;
 
-		Prompt(Predicate<char[]> verifier, Runnable onVerified, Runnable onCancel) {
+		private ResKey _rejection;
+
+		Prompt(Verifier verifier, Runnable onVerified, Runnable onCancel) {
 			_verifier = verifier;
 			_onVerified = onVerified;
 			_onCancel = onCancel;
 		}
 
 		boolean enter(String password) {
-			if (!_verifier.test(password.toCharArray())) {
+			_rejection = _verifier.verify(password.toCharArray());
+			if (_rejection != null) {
 				return false;
 			}
 			_onVerified.run();
 			return true;
+		}
+
+		/** The reason of the last rejection, or {@code null} if the last password was accepted. */
+		ResKey rejection() {
+			return _rejection;
 		}
 
 		void cancel() {
@@ -636,13 +727,14 @@ public class TestVerifyIdentityAction extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module and the resources the reported messages are
-	 * resolved from.
+	 * Test suite requiring the {@link TypeIndex} module, the resources the reported messages are
+	 * resolved from, and the {@link LoginFailuresModule} counting the entered passwords.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestVerifyIdentityAction.class, TypeIndex.Module.INSTANCE,
-				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE,
+				LoginFailuresModule.Module.INSTANCE));
 	}
 
 	/** The given value as the single argument of a chain. */

@@ -7,6 +7,7 @@ package test.com.top_logic.layout.react.servlet;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +27,15 @@ public final class FakeAsyncRequest {
 
 	private final AsyncContext _context;
 
+	private int _writes;
+
+	private int _failAfter = -1;
+
 	/**
 	 * Creates a {@link FakeAsyncRequest}.
 	 */
 	public FakeAsyncRequest() {
-		PrintWriter writer = new PrintWriter(_out);
+		PrintWriter writer = new BreakableWriter(_out);
 		ServletResponse response = (ServletResponse) Proxy.newProxyInstance(getClass().getClassLoader(),
 			new Class<?>[] { ServletResponse.class },
 			(proxy, method, args) -> method.getName().equals("getWriter") ? writer : null);
@@ -74,5 +79,47 @@ public final class FakeAsyncRequest {
 	 */
 	public String body() {
 		return _out.toString();
+	}
+
+	/**
+	 * Lets every write after the given number of writes fail, as the writes to a connection the
+	 * client has dropped do.
+	 */
+	public void failWritesAfter(int writes) {
+		_failAfter = writes;
+	}
+
+	/**
+	 * The number of writes to the response, the failed ones included.
+	 */
+	public int writes() {
+		return _writes;
+	}
+
+	private boolean failing() {
+		return _failAfter >= 0 && _writes > _failAfter;
+	}
+
+	/**
+	 * The writer of the response, which reports an error once its writes fail.
+	 */
+	private final class BreakableWriter extends PrintWriter {
+
+		BreakableWriter(Writer out) {
+			super(out);
+		}
+
+		@Override
+		public void write(String s) {
+			_writes++;
+			if (!failing()) {
+				super.write(s);
+			}
+		}
+
+		@Override
+		public boolean checkError() {
+			return failing() || super.checkError();
+		}
 	}
 }

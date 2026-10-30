@@ -38,6 +38,12 @@
 		<tl.port>8080</tl.port>
 
 		<!--
+			The context path the development-mode application is started under, with or without leading
+			slash; it may have several segments, e.g. /preview/ws-1/my-app.
+		-->
+		<tl.contextPath>${project.artifactId}</tl.contextPath>
+
+		<!--
 			Debian package of the application (plugin jdeb, phase package), built from the control files in
 			src/main/deb/control and the data files in src/main/deb/data. Set tl.deb.skip to false to build it.
 		-->
@@ -379,7 +385,7 @@
 						<argument>-port</argument>
 						<argument>${tl.port}</argument>
 						<argument>-contextPath</argument>
-						<argument>${project.artifactId}</argument>
+						<argument>${tl.contextPath}</argument>
 					</arguments>
 
 					<includePluginDependencies>true</includePluginDependencies>

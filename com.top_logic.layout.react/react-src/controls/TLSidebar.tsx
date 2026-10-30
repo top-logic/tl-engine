@@ -6,6 +6,11 @@ import {
 import type { TLCellProps } from 'tl-react-bridge';
 import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from 'tl-react-bridge';
 
+import { childrenOf, drawnItems, flyoutEntries, hasDividerBefore } from './sidebarItems';
+import type {
+  NavItem, CommandItemInfo, GroupItemInfo, SectionItemInfo, SidebarItemData,
+} from './sidebarItems';
+
 const { useCallback, useMemo, useState, useEffect, useRef } = React;
 
 const I18N_KEYS = {
@@ -13,56 +18,6 @@ const I18N_KEYS = {
   'js.sidebar.expand': 'Expand sidebar',
   'js.sidebar.collapse': 'Collapse sidebar',
 };
-
-interface SidebarItemBase {
-  id: string;
-  type: string;
-  label?: string;
-  icon?: string;
-  /** Not drawn, together with what it contains; an open navigation item stays open nevertheless. */
-  hidden?: boolean;
-}
-
-interface NavItem extends SidebarItemBase {
-  type: 'nav';
-  badge?: string;
-  hidden?: boolean;
-}
-
-interface CommandItemInfo extends SidebarItemBase {
-  type: 'command';
-  /** Withheld from the rail and the flyout, and not reachable by keyboard. */
-  hidden?: boolean;
-  /** Shown greyed out, not activatable and skipped by keyboard navigation. */
-  disabled?: boolean;
-  /** Explaining text, the reason for the disabling where a rule gave one. */
-  tooltip?: string;
-}
-
-interface HeaderItemInfo extends SidebarItemBase {
-  type: 'header';
-}
-
-interface SeparatorItemInfo extends SidebarItemBase {
-  type: 'separator';
-}
-
-interface GroupItemInfo extends SidebarItemBase {
-  type: 'group';
-  expanded: boolean;
-  children: SidebarItemData[];
-}
-
-type SidebarItemData = NavItem | CommandItemInfo | HeaderItemInfo | SeparatorItemInfo | GroupItemInfo;
-
-/** The items to draw: an item marked hidden is left out, within a group as well. */
-function drawnItems(items: SidebarItemData[]): SidebarItemData[] {
-  return items
-    .filter(item => !item.hidden)
-    .map(item => item.type === 'group'
-      ? { ...item, children: drawnItems((item as GroupItemInfo).children) }
-      : item);
-}
 
 /* ---------- Keyboard helpers ---------- */
 
@@ -95,8 +50,10 @@ function collectFocusable(
       if (expanded && !collapsed) {
         result.push(...collectFocusable(item.children, collapsed, groupStates, item.id));
       }
+    } else if (item.type === 'section') {
+      // The items of a section stand at its own level, within the group around it if any.
+      result.push(...collectFocusable(item.children, collapsed, groupStates, parentGroupId));
     }
-    // headers and separators are not focusable
   }
   return result;
 }
@@ -108,10 +65,10 @@ const SidebarIcon: React.FC<{ icon?: string }> = ({ icon }) => {
   return <ThemeIcon encoded={icon} className="tl-menu__icon tl-icon-sm" />;
 };
 
-/** Whether the page the user is on lies in the given group, at any depth. */
-function containsCurrent(item: GroupItemInfo, activeItemId: string): boolean {
-  return item.children.some(child => (child.type === 'nav' && child.id === activeItemId)
-    || (child.type === 'group' && containsCurrent(child as GroupItemInfo, activeItemId)));
+/** Whether the page the user is on lies in the given group or section, at any depth. */
+function containsCurrent(item: SidebarItemData, activeItemId: string): boolean {
+  return childrenOf(item).some(child => (child.type === 'nav' && child.id === activeItemId)
+    || containsCurrent(child, activeItemId));
 }
 
 const SidebarNavItem: React.FC<{
@@ -177,8 +134,9 @@ const SidebarCommandItem: React.FC<{
   </button>
 );
 
-const SidebarHeaderItem: React.FC<{
-  item: HeaderItemInfo;
+/** The heading of a labelled section in the rail. */
+const SidebarSectionHeading: React.FC<{
+  item: SectionItemInfo;
   collapsed: boolean;
 }> = ({ item, collapsed }) => {
   if (collapsed && !item.icon) return null;
@@ -202,33 +160,46 @@ const SidebarGroupFlyout: React.FC<{
   onClose: () => void;
 }> = ({ item, activeItemId, anchor, onSelect, onExecute, onClose }) => {
   const Badge = usePart('Badge');
+  const entries = (children: SidebarItemData[]): React.ReactNode[] => children.map((child, index) => (
+    <React.Fragment key={child.id}>
+      {hasDividerBefore(children, index) && <MenuSeparator />}
+      {entry(child)}
+    </React.Fragment>
+  ));
+  const entry = (child: SidebarItemData): React.ReactNode => {
+    if (child.type === 'nav') {
+      const nav = child as NavItem;
+      if (nav.hidden) return null;
+      return (
+        <MenuItem icon={nav.icon} label={nav.label ?? ''}
+          current={nav.id === activeItemId ? 'page' : false}
+          trailing={nav.badge ? <Badge content={nav.badge} /> : undefined}
+          onSelect={() => { onSelect(nav.id); onClose(); }} />
+      );
+    }
+    if (child.type === 'command') {
+      const command = child as CommandItemInfo;
+      if (command.hidden) return null;
+      return (
+        <MenuItem icon={command.icon} label={command.label ?? ''}
+          disabled={command.disabled} tooltip={command.tooltip}
+          onSelect={() => { onExecute(command.id); onClose(); }} />
+      );
+    }
+    if (child.type === 'section') {
+      return (
+        <>
+          {child.label && <MenuHeader label={child.label} />}
+          {entries(child.children)}
+        </>
+      );
+    }
+    return null;
+  };
   return (
     <Menu open anchor={anchor} placement="right-start" onClose={onClose}>
       <MenuHeader label={item.label ?? ''} />
-      {item.children.map(child => {
-        if (child.type === 'nav') {
-          const nav = child as NavItem;
-          if (nav.hidden) return null;
-          return (
-            <MenuItem key={nav.id} icon={nav.icon} label={nav.label ?? ''}
-              current={nav.id === activeItemId ? 'page' : false}
-              trailing={nav.badge ? <Badge content={nav.badge} /> : undefined}
-              onSelect={() => { onSelect(nav.id); onClose(); }} />
-          );
-        }
-        if (child.type === 'command') {
-          const command = child as CommandItemInfo;
-          if (command.hidden) return null;
-          return (
-            <MenuItem key={command.id} icon={command.icon} label={command.label ?? ''}
-              disabled={command.disabled} tooltip={command.tooltip}
-              onSelect={() => { onExecute(command.id); onClose(); }} />
-          );
-        }
-        if (child.type === 'header') return <MenuHeader key={child.id} label={child.label ?? ''} />;
-        if (child.type === 'separator') return <MenuSeparator key={child.id} />;
-        return null;
-      })}
+      {entries(flyoutEntries(item.children))}
     </Menu>
   );
 };
@@ -306,32 +277,29 @@ const SidebarGroup: React.FC<{
       )}
       {expanded && !collapsed && (
         <div className="tl-sidebar__children">
-          {item.children.map(child => (
-            <SidebarItemRenderer
-              key={child.id}
-              item={child}
-              activeItemId={activeItemId}
-              collapsed={collapsed}
-              onSelect={onSelect}
-              onExecute={onExecute}
-              onToggleGroup={onToggleGroup}
-              focusedId={focusedId}
-              setItemRef={setItemRef}
-              onItemFocus={onItemFocus}
-              groupStates={null as any}
-              flyoutGroupId={flyoutGroupId}
-              onOpenFlyout={onOpenFlyout}
-              onCloseFlyout={onCloseFlyout}
-            />
-          ))}
+          <SidebarItemList
+            items={item.children}
+            activeItemId={activeItemId}
+            collapsed={collapsed}
+            onSelect={onSelect}
+            onExecute={onExecute}
+            onToggleGroup={onToggleGroup}
+            focusedId={focusedId}
+            setItemRef={setItemRef}
+            onItemFocus={onItemFocus}
+            groupStates={null as any}
+            flyoutGroupId={flyoutGroupId}
+            onOpenFlyout={onOpenFlyout}
+            onCloseFlyout={onCloseFlyout}
+          />
         </div>
       )}
     </div>
   );
 };
 
-const SidebarItemRenderer: React.FC<{
-  item: SidebarItemData;
+/** What the entries of the rail are drawn with, wherever they stand. */
+interface SidebarEntryContext {
   activeItemId: string;
   collapsed: boolean;
   onSelect: (id: string) => void;
@@ -344,9 +312,24 @@ const SidebarItemRenderer: React.FC<{
   flyoutGroupId: string | null;
   onOpenFlyout: (id: string) => void;
   onCloseFlyout: () => void;
-}> = ({ item, activeItemId, collapsed, onSelect, onExecute, onToggleGroup,
-       focusedId, setItemRef, onItemFocus, groupStates,
-       flyoutGroupId, onOpenFlyout, onCloseFlyout }) => {
+}
+
+/** The drawn entries of one list - the rail, a group's children, a section's items - with the dividers between them. */
+const SidebarItemList: React.FC<SidebarEntryContext & { items: SidebarItemData[] }> = ({ items, ...context }) => (
+  <>
+    {items.map((item, index) => (
+      <React.Fragment key={item.id}>
+        {hasDividerBefore(items, index) && <MenuSeparator />}
+        <SidebarItemRenderer item={item} {...context} />
+      </React.Fragment>
+    ))}
+  </>
+);
+
+const SidebarItemRenderer: React.FC<SidebarEntryContext & { item: SidebarItemData }> = ({ item, ...context }) => {
+  const { activeItemId, collapsed, onSelect, onExecute, onToggleGroup,
+    focusedId, setItemRef, onItemFocus, groupStates,
+    flyoutGroupId, onOpenFlyout, onCloseFlyout } = context;
   switch (item.type) {
     case 'nav':
       if ((item as NavItem).hidden) return null;
@@ -359,10 +342,13 @@ const SidebarItemRenderer: React.FC<{
       return <SidebarCommandItem item={item} collapsed={collapsed} onExecute={onExecute}
         tabIndex={focusedId === item.id ? 0 : -1}
         itemRef={setItemRef(item.id)} onFocus={onItemFocus} />;
-    case 'header':
-      return <SidebarHeaderItem item={item} collapsed={collapsed} />;
-    case 'separator':
-      return <MenuSeparator />;
+    case 'section':
+      return (
+        <>
+          {item.label && <SidebarSectionHeading item={item} collapsed={collapsed} />}
+          <SidebarItemList items={item.children} {...context} />
+        </>
+      );
     case 'group': {
       const expanded = groupStates ? (groupStates.get(item.id) ?? item.expanded) : item.expanded;
       return <SidebarGroup item={item} expanded={expanded} activeItemId={activeItemId} collapsed={collapsed}
@@ -408,8 +394,8 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       for (const item of list) {
         if (item.type === 'group') {
           map.set(item.id, item.expanded);
-          init(item.children);
         }
+        init(childrenOf(item));
       }
     };
     init(items);
@@ -617,24 +603,21 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       )}
 
       <div className="tl-sidebar__items" onKeyDown={handleKeyDown}>
-        {items.map(item => (
-          <SidebarItemRenderer
-            key={item.id}
-            item={item}
-            activeItemId={activeItemId}
-            collapsed={collapsed}
-            onSelect={handleSelect}
-            onExecute={handleExecute}
-            onToggleGroup={handleToggleGroup}
-            focusedId={focusedId}
-            setItemRef={setItemRef}
-            onItemFocus={onItemFocus}
-            groupStates={groupStates}
-            flyoutGroupId={flyoutGroupId}
-            onOpenFlyout={handleOpenFlyout}
-            onCloseFlyout={handleCloseFlyout}
-          />
-        ))}
+        <SidebarItemList
+          items={items}
+          activeItemId={activeItemId}
+          collapsed={collapsed}
+          onSelect={handleSelect}
+          onExecute={handleExecute}
+          onToggleGroup={handleToggleGroup}
+          focusedId={focusedId}
+          setItemRef={setItemRef}
+          onItemFocus={onItemFocus}
+          groupStates={groupStates}
+          flyoutGroupId={flyoutGroupId}
+          onOpenFlyout={handleOpenFlyout}
+          onCloseFlyout={handleCloseFlyout}
+        />
       </div>
 
       {collapsed ? (

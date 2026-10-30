@@ -219,6 +219,8 @@ public class HistoryCompaction {
 
 	private final CompiledStatement _resolveRevision;
 
+	private final CompiledStatement _resolveRevisionNumber;
+
 	private final CompiledStatement _revisionExists;
 
 	private final WindowedStatement _deleteRevisions;
@@ -289,6 +291,7 @@ public class HistoryCompaction {
 		_flexDataAccess = flexData == null ? null : new TableAccess(flexData);
 
 		_resolveRevision = createResolveRevision();
+		_resolveRevisionNumber = createResolveRevisionNumber();
 		_revisionExists = createRevisionExists();
 		_deleteRevisions = new WindowedStatement(createDeleteRevisions(),
 			"Deleted revisions of '" + ((DBTableMetaObject) _revisionType).getDBName() + "'");
@@ -367,9 +370,48 @@ public class HistoryCompaction {
 	 *         early.
 	 */
 	public long resolveCompactionRevision(long beforeDate) throws SQLException {
+		return resolve(_resolveRevision, beforeDate);
+	}
+
+	/**
+	 * The newest existing revision whose commit number is at most the given one.
+	 *
+	 * <p>
+	 * The commit numbers of the history have gaps where an earlier compaction discarded revisions,
+	 * so the given number need not name an existing revision.
+	 * </p>
+	 *
+	 * @param revision
+	 *        A commit number.
+	 * @return The commit number of that revision, or {@code 0} if there is none.
+	 */
+	public long resolveCompactionRevisionByNumber(long revision) throws SQLException {
+		return resolve(_resolveRevisionNumber, revision);
+	}
+
+	/**
+	 * The number of revisions a compaction into the given revision discards.
+	 *
+	 * @param upper
+	 *        The compaction revision.
+	 * @return The number of existing revisions below it, the initial revision not counted.
+	 */
+	public int countDiscardedRevisions(long upper) throws SQLException {
+		if (upper <= 1) {
+			return 0;
+		}
 		PooledConnection connection = _pool.borrowReadConnection();
 		try {
-			try (ResultSet result = _resolveRevision.executeQuery(connection, Long.valueOf(beforeDate))) {
+			return countRows(connection, _countRevisions, Long.valueOf(0), Long.valueOf(upper));
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
+	}
+
+	private long resolve(CompiledStatement statement, long argument) throws SQLException {
+		PooledConnection connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = statement.executeQuery(connection, Long.valueOf(argument))) {
 				if (!result.next()) {
 					return 0;
 				}
@@ -1382,6 +1424,20 @@ public class HistoryCompaction {
 					RESULT_REVISION)),
 				table((DBTableMetaObject) _revisionType, NO_TABLE_ALIAS),
 				le(column(NO_TABLE_ALIAS, _revisionDate, NOT_NULL), parameter(_revisionDate, PARAM_DATE))))
+					.toSql(_sqlDialect);
+	}
+
+	/**
+	 * {@code SELECT max(rev) AS rev FROM REVISION WHERE rev <= upper}
+	 */
+	private CompiledStatement createResolveRevisionNumber() {
+		return query(
+			parameters(parameterDef(_revisionRev, PARAM_UPPER)),
+			select(
+				Collections.singletonList(columnDef(max(column(NO_TABLE_ALIAS, _revisionRev, NOT_NULL)),
+					RESULT_REVISION)),
+				table((DBTableMetaObject) _revisionType, NO_TABLE_ALIAS),
+				le(column(NO_TABLE_ALIAS, _revisionRev, NOT_NULL), parameter(_revisionRev, PARAM_UPPER))))
 					.toSql(_sqlDialect);
 	}
 

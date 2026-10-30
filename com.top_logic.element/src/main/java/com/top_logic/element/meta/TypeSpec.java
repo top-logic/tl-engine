@@ -78,6 +78,12 @@ public abstract class TypeSpec {
 	/** Qualified name for the core icon type. */
 	public static final String ICON_TYPE = "tl.core:Icon";
 
+	/** Qualified name for the color type. */
+	public static final String COLOR_TYPE = "tl.util:Color";
+
+	/** Qualified name for the internationalized string type. */
+	public static final String I18N_STRING_TYPE = "tl.model.i18n:I18NString";
+
 	/** Qualified name for the core JSON type. */
 	public static final String JSON_TYPE = "tl.util:JSON";
 

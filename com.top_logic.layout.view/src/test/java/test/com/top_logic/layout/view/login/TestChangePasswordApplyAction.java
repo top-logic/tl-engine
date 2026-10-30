@@ -18,6 +18,7 @@ import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.password.PasswordValidator;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -32,7 +33,9 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.login.ChangePasswordApplyAction;
+import com.top_logic.layout.view.login.CheckPasswordChangeAction;
 import com.top_logic.layout.view.login.I18NConstants;
 import com.top_logic.layout.view.login.LoginAction;
 import com.top_logic.model.TLObject;
@@ -41,7 +44,8 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests {@link ChangePasswordApplyAction}, which applies a newly chosen password to the account it
- * belongs to.
+ * belongs to, and {@link CheckPasswordChangeAction}, which checks the password in front of the
+ * identity confirmation.
  *
  * <p>
  * What is exercised here is the refusal: the device owns the password, and an account whose device
@@ -94,12 +98,106 @@ public class TestChangePasswordApplyAction extends TestCase {
 	}
 
 	/**
-	 * Runs the action for an account authenticated by the given device and returns what it refused
-	 * with.
+	 * Tests that the apply action rejects a password the device's policy rejects before it begins
+	 * to store anything.
+	 */
+	public void testApplyRefusesPolicyViolation() {
+		TopLogicException problem = refused(new Device(true, minLength(8)), form("short", "short"));
+
+		assertEquals(PasswordValidator.ValidationResult.TO_SHORT.messageKey(), problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check refuses a confirmation that does not match the password.
+	 */
+	public void testCheckRefusesMismatch() {
+		TopLogicException problem = checkRefused(new Device(true, minLength(4)), form("secret", "typo"));
+
+		assertEquals(I18NConstants.PASSWORD_MISMATCH, problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check refuses an empty password.
+	 */
+	public void testCheckRefusesEmpty() {
+		TopLogicException problem = checkRefused(new Device(true, minLength(0)), form("", ""));
+
+		assertEquals(I18NConstants.PASSWORD_EMPTY, problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check refuses an absent password the same way as an empty one.
+	 */
+	public void testCheckRefusesMissing() {
+		TopLogicException problem = checkRefused(new Device(true, minLength(0)), form(null, null));
+
+		assertEquals(I18NConstants.PASSWORD_EMPTY, problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check refuses a password the device's policy rejects, with the policy's reason.
+	 */
+	public void testCheckRefusesPolicyViolation() {
+		TopLogicException problem = checkRefused(new Device(true, minLength(8)), form("short", "short"));
+
+		assertEquals(PasswordValidator.ValidationResult.TO_SHORT.messageKey(), problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check refuses an account whose device does not allow a password change, without
+	 * asking the device for a policy it may not have.
+	 */
+	public void testCheckRefusesDeviceKeepingThePassword() {
+		TopLogicException problem = checkRefused(new Device(false), form("secret", "typo"));
+
+		assertEquals(I18NConstants.ERROR_PASSWORD_CHANGE_NOT_ALLOWED, problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check refuses an account without a device.
+	 */
+	public void testCheckRefusesAccountWithoutDevice() {
+		TopLogicException problem = checkRefused(null, form("secret", "secret"));
+
+		assertEquals(I18NConstants.ERROR_PASSWORD_CHANGE_NOT_ALLOWED, problem.getErrorKey());
+	}
+
+	/**
+	 * Tests that the check passes an acceptable password on unchanged, without storing anything: the
+	 * device's {@link AuthenticationDevice#setPassword(Person, char[])} and the account's knowledge
+	 * base both refuse to be used here.
+	 */
+	public void testCheckPassesValidPassword() {
+		TLObject form = form("long enough", "long enough");
+
+		Object result = newCheck().execute(context(new Account(new Device(true, minLength(8)))), form);
+
+		assertSame(form, result);
+	}
+
+	/**
+	 * Runs the check action for an account authenticated by the given device and returns what it
+	 * refused with.
+	 */
+	private TopLogicException checkRefused(AuthenticationDevice device, TLObject form) {
+		return refused(newCheck(), device, form);
+	}
+
+	/**
+	 * Runs the apply action for an account authenticated by the given device and returns what it
+	 * refused with.
 	 */
 	private TopLogicException refused(AuthenticationDevice device, TLObject form) {
+		return refused(newAction(), device, form);
+	}
+
+	/**
+	 * Runs the given action for an account authenticated by the given device and returns what it
+	 * refused with.
+	 */
+	private TopLogicException refused(ViewAction action, AuthenticationDevice device, TLObject form) {
 		try {
-			newAction().execute(context(new Account(device)), form);
+			action.execute(context(new Account(device)), form);
 		} catch (TopLogicException ex) {
 			return ex;
 		}
@@ -111,6 +209,28 @@ public class TestChangePasswordApplyAction extends TestCase {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestChangePasswordApplyAction.class);
 		return new ChangePasswordApplyAction(context,
 			TypedConfiguration.newConfigItem(ChangePasswordApplyAction.Config.class));
+	}
+
+	/** The production check action, with nothing replaced. */
+	private static CheckPasswordChangeAction newCheck() {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestChangePasswordApplyAction.class);
+		return new CheckPasswordChangeAction(context,
+			TypedConfiguration.newConfigItem(CheckPasswordChangeAction.Config.class));
+	}
+
+	/**
+	 * The production password policy, enabled and requiring nothing but the given minimum length.
+	 */
+	private static PasswordValidator minLength(int minLength) {
+		PasswordValidator.Config config = TypedConfiguration.newConfigItem(PasswordValidator.Config.class);
+		set(config, "enabled", true);
+		set(config, "min-password-length", minLength);
+		set(config, "criteria-count", 0);
+		return new PasswordValidator(new DefaultInstantiationContext(TestChangePasswordApplyAction.class), config);
+	}
+
+	private static void set(ConfigurationItem config, String property, Object value) {
+		config.update(config.descriptor().getProperty(property), value);
 	}
 
 	/**
@@ -129,8 +249,8 @@ public class TestChangePasswordApplyAction extends TestCase {
 	/** The model the dialog's form stores what was entered in. */
 	private static TLObject form(String newPassword, String confirmation) {
 		Map<String, Object> values = new HashMap<>();
-		values.put("newPassword", newPassword);
-		values.put("newPasswordConfirm", confirmation);
+		values.put(LoginAction.NEW_PASSWORD_ATTR, newPassword);
+		values.put(LoginAction.NEW_PASSWORD_CONFIRM_ATTR, confirmation);
 		return new Form(values);
 	}
 
@@ -180,15 +300,22 @@ public class TestChangePasswordApplyAction extends TestCase {
 	}
 
 	/**
-	 * A device that only states whether it allows a password change; a device that allows one is
-	 * never asked to store anything here.
+	 * A device that states whether it allows a password change and answers with the password policy
+	 * it was created with; it is never asked to store anything here.
 	 */
 	private static class Device implements AuthenticationDevice {
 
 		private final boolean _allowPwdChange;
 
+		private final PasswordValidator _validator;
+
 		Device(boolean allowPwdChange) {
+			this(allowPwdChange, null);
+		}
+
+		Device(boolean allowPwdChange, PasswordValidator validator) {
 			_allowPwdChange = allowPwdChange;
+			_validator = validator;
 		}
 
 		@Override
@@ -213,7 +340,11 @@ public class TestChangePasswordApplyAction extends TestCase {
 
 		@Override
 		public PasswordValidator getPasswordValidator() {
-			throw new UnsupportedOperationException();
+			if (_validator == null) {
+				// Like a device that keeps the password elsewhere.
+				throw new UnsupportedOperationException();
+			}
+			return _validator;
 		}
 
 		@Override

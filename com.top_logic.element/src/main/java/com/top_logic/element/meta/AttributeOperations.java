@@ -35,6 +35,8 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.shared.collection.map.MappedIterator;
+import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOClass;
@@ -56,6 +58,7 @@ import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.element.meta.kbbased.TLOptionsFactory;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
+import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.CompiledQuery;
 import com.top_logic.knowledge.search.Expression;
@@ -565,6 +568,65 @@ public class AttributeOperations {
 					}
 				}
 			});
+	}
+
+	/**
+	 * The instances of the given type and its subtypes whose primitive attribute of the given name
+	 * has the given value, found by a query of the {@link KnowledgeBase} instead of reading all
+	 * instances.
+	 *
+	 * <p>
+	 * The value is compared in the storage of the attribute: the column of the table of a type
+	 * that has one, otherwise the flex attribute of that name. Like
+	 * {@link MetaElementUtil#getAllInstancesOf(TLClass, Class)}, only committed objects are found.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects to find.
+	 * @param attributeName
+	 *        The name of a primitive attribute of the type, stored in a column or as flex
+	 *        attribute of the objects.
+	 * @param value
+	 *        The value of the attribute, not {@code null}.
+	 * @param expectedType
+	 *        The Java type of the results.
+	 * @return The objects whose attribute has the given value.
+	 */
+	public static <T extends TLObject> List<T> instancesWithValue(TLClass type, String attributeName, Object value,
+			Class<T> expectedType) {
+		if (value == null) {
+			throw new IllegalArgumentException("No value given for '" + attributeName + "' of '" + type + "'.");
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		MORepository repository = kb.getMORepository();
+		List<T> result = new ArrayList<>();
+		for (Entry<String, Set<TLClass>> tableEntry : typesByTableName(type).entrySet()) {
+			MOClass table;
+			try {
+				table = (MOClass) repository.getType(tableEntry.getKey());
+			} catch (UnknownTypeException ex) {
+				Logger.error("Undefined table '" + tableEntry.getKey() + "' for type '" + type + "'.", ex);
+				continue;
+			}
+			TLStructuredTypePart attribute = tableEntry.getValue().iterator().next().getPartOrFail(attributeName);
+			if (!(attribute.getType() instanceof TLPrimitive primitive)
+				|| !(attribute.getStorageImplementation() instanceof ColumnStorage storage)) {
+				throw new IllegalArgumentException(
+					"Not a primitive attribute stored with its object: '" + attributeName + "' of '" + type + "'.");
+			}
+			Object storageValue = primitive.getStorageMapping().getStorageObject(value);
+			String storageAttribute = storage.getStorageAttribute();
+			MOAttribute column = table.getAttributeOrNull(storageAttribute);
+			Expression stored = column != null ? attribute(column)
+				: flex(MOPrimitive.getPrimitive(storageValue.getClass()), storageAttribute);
+			SetExpression query = filter(tableQuery(table, tableEntry.getValue()), eqBinary(stored, literal(storageValue)));
+			for (T candidate : kb.search(queryResolved(query, expectedType))) {
+				if (value.equals(candidate.tValueByName(attributeName))) {
+					result.add(candidate);
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

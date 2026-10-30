@@ -33,8 +33,25 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
  * service is shut down.
  * </p>
  *
+ * <p>
+ * A logout announced for a session that is still registered with the {@link SessionService} is no
+ * session end: it ends the login record of the previous user when a user logs in within one of the
+ * session's windows or for the whole session, while the session and its windows continue. Its
+ * windows are therefore not reloaded; a window whose user changed with a login for the whole session
+ * rebuilds its content for the user on its next reload.
+ * </p>
+ *
  * @implNote A session is dropped from the session table without being invalidated by
- *           {@link SessionService#invalidateSession(String)}. Ending a session with
+ *           {@link SessionService#invalidateSession(String)}. A session that ends is dropped from
+ *           the session table before its logout is announced, which tells it from a continuing
+ *           one. A login within a window
+ *           ({@link SessionService#loginUserInWindow(jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse, com.top_logic.knowledge.wrap.person.Person)})
+ *           or for the whole session
+ *           ({@link SessionService#loginUser(jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse, com.top_logic.knowledge.wrap.person.Person)})
+ *           announces the logout while the session is still registered. Reloading the other windows
+ *           then would be wrong: a reload racing the cookie with the changed session ID would lose
+ *           the session, and after a login within a window they even keep their user. Ending a
+ *           session with
  *           {@link SessionService#terminateSession(String)} invalidates it and reaches
  *           {@link ReactWindowRegistry#valueUnbound(jakarta.servlet.http.HttpSessionBindingEvent)}.
  *
@@ -65,6 +82,10 @@ public class SessionEndReloadListener extends AbstractConfiguredInstance<Session
 	@Override
 	public void notifyUserEvent(UserEvent event) {
 		if (event.type() != UserEvent.EventType.LOGGED_OUT) {
+			return;
+		}
+		if (SessionService.getInstance().getUser(event.sessionID()) != null) {
+			// The session continues, see the class comment.
 			return;
 		}
 		ReactWindowRegistry.reloadWindowsOfSession(event.sessionID());

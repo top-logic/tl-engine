@@ -66,14 +66,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_INPUT_NOT_READABLE;
 
 	/**
-	 * @en The configuration cannot be applied because an entry has not been confirmed yet.
+	 * @en An entry could not be taken over: {0}
 	 */
-	public static ResKey ERROR_ENTRY_NOT_CONFIRMED;
-
-	/**
-	 * @en Confirm this entry, or discard it.
-	 */
-	public static ResKey ERROR_CONFIRM_OR_DISCARD_ENTRY;
+	public static ResKey1 ERROR_ENTRY_NOT_TAKEN__REASON;
 
 	/**
 	 * @en Another new entry already uses {0} "{1}".

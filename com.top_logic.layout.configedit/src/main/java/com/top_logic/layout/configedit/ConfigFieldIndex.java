@@ -11,12 +11,14 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
-
-import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyDescriptorImpl;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 
 /**
  * Looks up the {@link ConfigFieldModel} that displays a given {@link PropertyDescriptor} of a
@@ -57,7 +59,8 @@ public final class ConfigFieldIndex {
 	 * <p>
 	 * A pending entry is not in the configuration - that is what pending means - so validation
 	 * cannot see it, and applying would rebuild the form over the original and drop it without a
-	 * word. Whoever renders one registers it here, so the form can refuse instead.
+	 * word. Whoever renders one registers it here, so the form can confirm it before handing the
+	 * configuration over, see {@link #confirmPending()}.
 	 * </p>
 	 */
 	private final List<PendingEntry> _pending = new ArrayList<>();
@@ -229,12 +232,30 @@ public final class ConfigFieldIndex {
 	 * be read" and refuse every further Apply with nothing on screen to correct.
 	 * </p>
 	 *
+	 * <p>
+	 * The key field of a {@link #pending() pending entry} does not count: its complaint is one
+	 * about a key already spoken for, not about input that could not be read. It is the reason
+	 * confirming the entry would be refused, and it is reported as such by whoever confirms it, see
+	 * {@link #confirmPending()}.
+	 * </p>
+	 *
 	 * @see com.top_logic.layout.form.model.AbstractFieldModel#getInputError()
 	 */
 	public boolean hasInputError() {
+		Set<Object> keyFields = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (PendingEntry pending : _pending) {
+			Object keyField = pending.keyFieldModel();
+			if (keyField != null) {
+				keyFields.add(keyField);
+			}
+		}
+		return hasInputError(keyFields);
+	}
+
+	private boolean hasInputError(Set<Object> ignored) {
 		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
 			for (ConfigFieldModel field : byProperty.values()) {
-				if (field.getInputError() != null) {
+				if (field.getInputError() != null && !ignored.contains(field)) {
 					return true;
 				}
 			}
@@ -291,6 +312,145 @@ public final class ConfigFieldIndex {
 	/** The entries below the form that are still waiting to be confirmed. */
 	public List<PendingEntry> pending() {
 		return Collections.unmodifiableList(_pending);
+	}
+
+	/**
+	 * Confirms every entry still waiting to be confirmed, exactly as if the user had confirmed each
+	 * of them with its own Confirm button.
+	 *
+	 * <p>
+	 * What a form surrounding the editor runs before it hands the edited configuration over: the
+	 * user who saves has finished editing, and an entry filled in but not confirmed is part of what
+	 * is saved, not something to be dropped or to block the save with.
+	 * </p>
+	 *
+	 * <p>
+	 * An entry is confirmed only after every pending entry nested inside it: confirming an entry
+	 * rebuilds the editor around it, which would drop an entry still pending within. An entry inside
+	 * which a confirmation was refused therefore stays pending as well, so nothing the user entered
+	 * is lost. Each refused entry shows its reason at its key field, see
+	 * {@link ConfigPendingEntries#confirm(PendingEntry)}.
+	 * </p>
+	 *
+	 * @return The reason the first refused entry gave, or {@code null} if every entry joined its
+	 *         collection.
+	 */
+	public ResKey confirmPending() {
+		Set<PendingEntry> tried = Collections.newSetFromMap(new IdentityHashMap<>());
+		Map<PendingEntry, ResKey> refused = new IdentityHashMap<>();
+		ResKey result = null;
+		while (true) {
+			PendingEntry next = nextToConfirm(tried, refused.keySet());
+			if (next == null) {
+				break;
+			}
+			tried.add(next);
+			ResKey refusal = next.confirm();
+			if (refusal != null) {
+				refused.put(next, refusal);
+				if (result == null) {
+					result = refusal;
+				}
+			}
+		}
+		// Confirming an entry re-examines the keys of all others and rebuilds the editor, which
+		// takes back what an earlier refusal reported. The reasons are reported once more, where the
+		// refused entries are displayed now.
+		for (Map.Entry<PendingEntry, ResKey> entry : refused.entrySet()) {
+			entry.getKey().setKeyFieldInputError(entry.getValue());
+		}
+		return result;
+	}
+
+	/**
+	 * A pending entry not yet tried that holds no other pending entry still in the way, or
+	 * {@code null} if there is none.
+	 *
+	 * <p>
+	 * An entry is in the way if it is neither confirmed yet nor refused, or if it was refused.
+	 * </p>
+	 */
+	private PendingEntry nextToConfirm(Set<PendingEntry> tried, Set<PendingEntry> refused) {
+		List<PendingEntry> pending = List.copyOf(_pending);
+		for (PendingEntry candidate : pending) {
+			if (tried.contains(candidate)) {
+				continue;
+			}
+			boolean blocked = false;
+			for (PendingEntry other : pending) {
+				if (other == candidate || (tried.contains(other) && !refused.contains(other))) {
+					continue;
+				}
+				ConfigurationItem target = other.collectionOwner();
+				if (target != null && reaches(candidate.entry(), target,
+					Collections.newSetFromMap(new IdentityHashMap<>()))) {
+					blocked = true;
+					break;
+				}
+			}
+			if (!blocked) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Whether the given target is the given item or lies somewhere within it, reached through its
+	 * ITEM, LIST, ARRAY and MAP properties.
+	 *
+	 * <p>
+	 * Walks down rather than up along the containers: only a
+	 * {@link com.top_logic.basic.config.container.ConfigPart} knows its container, so walking up
+	 * would miss an entry pending below an item that is none, and drop it.
+	 * </p>
+	 *
+	 * @param visited
+	 *        Items already walked, guarding against an item reachable twice and against a cycle.
+	 */
+	private static boolean reaches(ConfigurationItem item, ConfigurationItem target, Set<ConfigurationItem> visited) {
+		if (item == null || !visited.add(item)) {
+			return false;
+		}
+		if (item == target) {
+			return true;
+		}
+		for (PropertyDescriptor property : item.descriptor().getProperties()) {
+			if (property.isDerived()) {
+				// Computed from elsewhere, possibly from outside the item.
+				continue;
+			}
+			for (Object value : nestedValues(item, property)) {
+				if (value instanceof ConfigurationItem nested && reaches(nested, target, visited)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The values of the given property that may be nested items.
+	 */
+	private static Collection<?> nestedValues(ConfigurationItem item, PropertyDescriptor property) {
+		switch (property.kind()) {
+			case ITEM:
+				return Collections.singletonList(item.value(property));
+			case LIST: {
+				Collection<?> entries = (Collection<?>) item.value(property);
+				return entries == null ? Collections.emptyList() : entries;
+			}
+			case ARRAY: {
+				List<?> entries = PropertyDescriptorImpl.arrayAsList(item.value(property));
+				return entries == null ? Collections.emptyList() : entries;
+			}
+			case MAP: {
+				Map<?, ?> entries = (Map<?, ?>) item.value(property);
+				return entries == null ? Collections.emptyList() : entries.values();
+			}
+			default:
+				return Collections.emptyList();
+		}
 	}
 
 	/**

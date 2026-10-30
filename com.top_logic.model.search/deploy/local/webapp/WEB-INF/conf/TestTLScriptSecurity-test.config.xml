@@ -297,6 +297,19 @@
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
+					<!-- The path writer may set the enumeration attributes of a B. -->
+					<part name="TestTLScriptSecurity:PathB#priority">
+						<grant
+							operation="Write"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
+					</part>
+					<part name="TestTLScriptSecurity:PathB#tags">
+						<grant
+							operation="Write"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
+					</part>
 					<part name="TestTLScriptSecurity:PathB#cs">
 						<grant
 							operation="Read"

@@ -8,6 +8,7 @@ package test.com.top_logic.model.search.expr;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -33,6 +34,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.constraint.DeleteConstraintByExpression;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
@@ -552,6 +554,66 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, 0, $c)", _b1, c3);
 		becomeUser(PersonManager.getManager().getRoot());
 		assertEquals(Arrays.asList(c3, _c1, _c2), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * A model element is discoverable for every user, also for one holding no role at all (ticket
+	 * #30016): a classifier, whose type is an enumeration and no class, and a type.
+	 */
+	public void testModelElementDiscoverable() {
+		TLObject high = classifier("HIGH");
+		assertTrue(rights().isDiscoverAllowed(_stranger, high));
+		assertTrue(rights().isDiscoverAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB")));
+		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * R7: A user may set an enumeration attribute to a classifier (ticket #30016).
+	 */
+	public void testSetClassifier() throws Exception {
+		grantWrite(_pathUser, _b1);
+		becomeUser(_pathUser);
+		eval("b -> $b.set(`TestTLScriptSecurity:PathB#priority`, `TestTLScriptSecurity:PathPriority#HIGH`)",
+			_b1);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(classifier("HIGH"), _b1.tValueByName("priority"));
+	}
+
+	/**
+	 * The dynamic set accepts a classifier, too.
+	 */
+	public void testDynamicSetClassifier() throws Exception {
+		grantWrite(_pathUser, _b1);
+		becomeUser(_pathUser);
+		eval("b -> $b.dynamicSet(`TestTLScriptSecurity:PathB#priority`, `TestTLScriptSecurity:PathPriority#LOW`)",
+			_b1);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(classifier("LOW"), _b1.tValueByName("priority"));
+	}
+
+	/**
+	 * R7: A user may add a classifier to a multiple enumeration attribute (ticket #30016).
+	 */
+	public void testAddClassifier() throws Exception {
+		grantWrite(_pathUser, _b1);
+		becomeUser(_pathUser);
+		eval("b -> $b.add(`TestTLScriptSecurity:PathB#tags`, `TestTLScriptSecurity:PathPriority#LOW`)", _b1);
+		eval("b -> $b.add(`TestTLScriptSecurity:PathB#tags`, 0, `TestTLScriptSecurity:PathPriority#HIGH`)", _b1);
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(classifier("HIGH"), classifier("LOW")), _b1.tValueByName("tags"));
+	}
+
+	/**
+	 * The security filter keeps model elements, since every user may discover them.
+	 */
+	public void testModelElementsNotFiltered() {
+		List<?> modelElements =
+			Arrays.asList(classifier("LOW"), TLModelUtil.findType("TestTLScriptSecurity:PathB"));
+		assertEquals(modelElements, SearchExpression.filterSecurity(_stranger, modelElements));
+	}
+
+	static TLObject classifier(String name) {
+		return TLModelUtil.resolveQualifiedName("TestTLScriptSecurity:PathPriority#" + name);
 	}
 
 	/**

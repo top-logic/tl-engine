@@ -6,6 +6,8 @@
 package test.com.top_logic.base.accesscontrol;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -28,16 +30,28 @@ import com.meterware.servletunit.ServletUnitClient;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.accesscontrol.SessionService.UserEventListener;
+import com.top_logic.base.accesscontrol.SessionService.UserEventListenerConfig;
+import com.top_logic.base.bus.UserEvent;
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.InteractionContext;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.monitor.UserSession;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.util.Resources;
 
 
 /**
@@ -204,6 +218,272 @@ public class TestSessionService extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Tests that {@link SessionService#loginUserInWindow(HttpServletRequest, HttpServletResponse, Person)}
+	 * logs in only the current window, keeps the session, changes the session ID, and ends the login
+	 * record of the previous user under the former ID.
+	 */
+	public void testLoginUserInWindow() throws Exception {
+		SessionService service = SessionService.getInstance();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		String userName = "windowLoginUser";
+		String guestName = "windowLoginGuest";
+		Person guest = createPerson(guestName);
+		Person user = createPerson(userName);
+		try {
+			InvocationContext invocation = newInvocation();
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			String oldId = session.getId();
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+			TLSubSessionContext otherWindow = newWindow(sessionContext, "windowB", guest);
+			assertNotNull("Guest login not recorded.", UserSession.findUserSession(kb, guestName, oldId));
+
+			HttpSession result = ThreadContextManager.inContext(window,
+				() -> service.loginUserInWindow(request, invocation.getResponse(), user));
+
+			assertSame("Session must be kept.", session, result);
+			assertSame("Session must be kept.", session, request.getSession(false));
+			assertSame("Session context must be kept.", sessionContext, service.getSession(session));
+			String newId = session.getId();
+			assertNotEquals("Session ID not changed.", oldId, newId);
+			assertFalse("Former session ID still registered.", service.getSessionIDs().contains(oldId));
+			assertNull(service.getUser(oldId));
+			assertTrue("Changed session ID not registered.", service.getSessionIDs().contains(newId));
+			assertEquals(user, service.getUser(newId));
+			assertTrue(service.validateSession(request));
+
+			assertEquals(user, window.getPerson());
+			assertEquals(Resources.findBestLocale(user), window.getCurrentLocale());
+			assertEquals("Other window must keep its user.", guest, otherWindow.getPerson());
+			assertEquals(user, sessionContext.getOriginalUser());
+			assertSame(window, sessionContext.getSubSession("windowA"));
+			assertSame(otherWindow, sessionContext.getSubSession("windowB"));
+
+			kb.getHistoryManager().updateSessionRevision();
+			assertNull("Guest login record under the former ID not ended.",
+				UserSession.findUserSession(kb, guestName, oldId));
+			assertNotNull("Login not recorded.", UserSession.findUserSession(kb, userName, newId));
+
+			service.terminateSession(newId);
+			assertInvalidated(session);
+		} finally {
+			deleteIfValid(user);
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * Tests that {@link SessionService#loginUserInWindow(HttpServletRequest, HttpServletResponse, Person)}
+	 * creates a session, if the request has none.
+	 */
+	public void testLoginUserInWindowWithoutSession() throws Exception {
+		SessionService service = SessionService.getInstance();
+		InvocationContext invocation = newInvocation();
+		HttpServletRequest request = invocation.getRequest();
+		Person root = PersonManager.getManager().getRoot();
+
+		HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+			() -> service.loginUserInWindow(request, invocation.getResponse(), root));
+
+		String sessionId = session.getId();
+		assertEquals(root, service.getUser(sessionId));
+		assertEquals(root, service.getSession(session).getOriginalUser());
+
+		service.terminateSession(sessionId);
+	}
+
+	/**
+	 * Tests that {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}
+	 * for a registered session keeps the session, logs in all its windows, changes the session ID,
+	 * and announces the logout of the previous user under the former ID while the session is still
+	 * registered under it.
+	 */
+	public void testLoginUserInRegisteredSession() throws Exception {
+		SessionService service = newRecordingService();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		String userName = "sessionLoginUser";
+		String guestName = "sessionLoginGuest";
+		Person guest = createPerson(guestName);
+		Person user = createPerson(userName);
+		try {
+			InvocationContext invocation = newInvocation();
+			HttpServletRequest request = invocation.getRequest();
+			HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+				() -> service.loginUser(request, invocation.getResponse(), guest));
+			String oldId = session.getId();
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
+			TLSubSessionContext otherWindow = newWindow(sessionContext, "windowB", guest);
+			assertNotNull("Guest login not recorded.", UserSession.findUserSession(kb, guestName, oldId));
+			RecordingListener.EVENTS.clear();
+
+			HttpSession result = ThreadContext.inSystemContext(TestSessionService.class, () -> {
+				HttpSession loggedIn = service.loginUser(request, invocation.getResponse(), user);
+				InteractionContext interaction = ThreadContextManager.getInteraction();
+				assertSame("Session context not installed in the interaction.", sessionContext,
+					interaction.getSessionContext());
+				TLSubSessionContext current = (TLSubSessionContext) interaction.getSubSessionContext();
+				assertSame(sessionContext, current.getSessionContext());
+				assertEquals(user, current.getPerson());
+				assertEquals(Resources.findBestLocale(user), current.getCurrentLocale());
+				return loggedIn;
+			});
+
+			assertSame("Session must be kept.", session, result);
+			assertSame("Session must be kept.", session, request.getSession(false));
+			assertSame("Session context must be kept.", sessionContext, service.getSession(session));
+			String newId = session.getId();
+			assertNotEquals("Session ID not changed.", oldId, newId);
+			assertFalse("Former session ID still registered.", service.getSessionIDs().contains(oldId));
+			assertNull(service.getUser(oldId));
+			assertEquals(user, service.getUser(newId));
+			assertTrue(service.validateSession(request));
+
+			assertEquals(user, sessionContext.getOriginalUser());
+			assertEquals(user, window.getPerson());
+			assertEquals(Resources.findBestLocale(user), window.getCurrentLocale());
+			assertEquals(user, otherWindow.getPerson());
+			assertSame(window, sessionContext.getSubSession("windowA"));
+			assertSame(otherWindow, sessionContext.getSubSession("windowB"));
+
+			List<RecordedEvent> events = RecordingListener.EVENTS;
+			assertEquals(2, events.size());
+			RecordedEvent logout = events.get(0);
+			assertEquals(UserEvent.EventType.LOGGED_OUT, logout.event().type());
+			assertEquals(guest, logout.event().passiveUser());
+			assertEquals(oldId, logout.event().sessionID());
+			assertEquals("Logout must be announced while the session is still registered.", guest,
+				logout.registeredUser());
+			RecordedEvent login = events.get(1);
+			assertEquals(UserEvent.EventType.LOGGED_IN, login.event().type());
+			assertEquals(user, login.event().passiveUser());
+			assertEquals(newId, login.event().sessionID());
+			assertEquals(user, login.registeredUser());
+
+			kb.getHistoryManager().updateSessionRevision();
+			assertNull("Guest login record under the former ID not ended.",
+				UserSession.findUserSession(kb, guestName, oldId));
+			assertNotNull("Login not recorded.", UserSession.findUserSession(kb, userName, newId));
+
+			service.terminateSession(newId);
+			assertInvalidated(session);
+		} finally {
+			deleteIfValid(user);
+			deleteIfValid(guest);
+		}
+	}
+
+	/**
+	 * Tests that {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}
+	 * changes the ID of a session that is not registered.
+	 */
+	public void testLoginUserInUnregisteredSession() throws Exception {
+		SessionService service = SessionService.getInstance();
+		InvocationContext invocation = newInvocation();
+		HttpServletRequest request = invocation.getRequest();
+		HttpSession session = request.getSession(true);
+		String oldId = session.getId();
+		Person root = PersonManager.getManager().getRoot();
+
+		HttpSession result = ThreadContext.inSystemContext(TestSessionService.class,
+			() -> service.loginUser(request, invocation.getResponse(), root));
+
+		assertSame("Session must be kept.", session, result);
+		String newId = result.getId();
+		assertNotEquals("Session ID not changed.", oldId, newId);
+		assertNull(service.getUser(oldId));
+		assertEquals(root, service.getUser(newId));
+		assertEquals(root, service.getSession(result).getOriginalUser());
+
+		service.terminateSession(newId);
+	}
+
+	/**
+	 * Tests that {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}
+	 * creates a session, if the request has none.
+	 */
+	public void testLoginUserWithoutSession() throws Exception {
+		SessionService service = SessionService.getInstance();
+		InvocationContext invocation = newInvocation();
+		HttpServletRequest request = invocation.getRequest();
+		assertNull(request.getSession(false));
+		Person root = PersonManager.getManager().getRoot();
+
+		HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+			() -> service.loginUser(request, invocation.getResponse(), root));
+
+		assertSame(session, request.getSession(false));
+		String sessionId = session.getId();
+		assertEquals(root, service.getUser(sessionId));
+		assertEquals(root, service.getSession(session).getOriginalUser());
+
+		service.terminateSession(sessionId);
+	}
+
+	/**
+	 * Creates a {@link SessionService} with the configuration of the application and a
+	 * {@link RecordingListener}.
+	 */
+	private static SessionService newRecordingService() throws Exception {
+		SessionService.Config config = TypedConfiguration.copy(
+			(SessionService.Config) ApplicationConfig.getInstance().getServiceConfiguration(SessionService.class));
+		UserEventListenerConfig listener = TypedConfiguration.newConfigItem(UserEventListenerConfig.class);
+		listener.setName("recording");
+		listener.update(listener.descriptor().getProperty(UserEventListenerConfig.IMPL),
+			TypedConfiguration.createConfigItemForImplementationClass(RecordingListener.class));
+		config.getListeners().add(listener);
+		SessionService result = new SessionService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		RecordingListener.EVENTS.clear();
+		RecordingListener._service = result;
+		return result;
+	}
+
+	/**
+	 * A {@link UserEvent} together with the user the {@link SessionService} had registered for its
+	 * session when the event was announced.
+	 */
+	private record RecordedEvent(UserEvent event, Person registeredUser) {
+		// Pure value.
+	}
+
+	/**
+	 * {@link UserEventListener} recording the events of the service created by
+	 * {@link TestSessionService#newRecordingService()}.
+	 */
+	public static class RecordingListener implements UserEventListener {
+
+		static final List<RecordedEvent> EVENTS = new CopyOnWriteArrayList<>();
+
+		static volatile SessionService _service;
+
+		@Override
+		public void notifyUserEvent(UserEvent event) {
+			EVENTS.add(new RecordedEvent(event, _service.getUser(event.sessionID())));
+		}
+
+	}
+
+	private static TLSubSessionContext newWindow(TLSessionContext session, String name, Person person) {
+		TLSubSessionContext result =
+			(TLSubSessionContext) ThreadContextManager.getManager().newSubSessionContext();
+		result.setSessionContext(session);
+		result = session.setIfAbsent(name, result);
+		result.setPerson(person);
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		result.updateSessionRevision(kb.getHistoryManager(),
+			((UpdateChainView) kb.getUpdateChain()).current());
+		return result;
+	}
+
+	private static InvocationContext newInvocation() throws Exception {
+		ServletRunner runner = new ServletRunner();
+		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
+		return runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
+	}
+
 	private static void assertInvalidated(HttpSession session) {
 		assertFalse("Session was not invalidated.", isValid(session));
 	}
@@ -218,10 +498,7 @@ public class TestSessionService extends BasicTestCase {
 	}
 
 	private static HttpSession login(Person user) throws Exception {
-		ServletRunner runner = new ServletRunner();
-		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
-		InvocationContext invocation =
-			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
+		InvocationContext invocation = newInvocation();
 		// Keep the session context of the test thread.
 		return ThreadContext.inSystemContext(TestSessionService.class,
 			() -> {

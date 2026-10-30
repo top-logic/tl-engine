@@ -24,6 +24,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
@@ -36,6 +37,8 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests displaying a field in little room, see {@link FieldSpec#isCompact()} and
@@ -197,6 +200,45 @@ public class TestCompactField extends TestCase {
 		assertEquals("B", model.getValue());
 		assertEquals("B", compact.getPreviewText());
 		assertNull("The dialog is closed", _dialogs._open);
+	}
+
+	/**
+	 * OK lets an editor holding input not yet in the edited copy commit it first, so that the
+	 * input is written rather than dropped.
+	 */
+	public void testOkCommitsPendingInput() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		PendingProvider provider = new PendingProvider("B", null);
+		ReactCompactFieldControl compact = compactText(model, provider);
+
+		open(compact);
+		dialogButtons().get(1).executeCommand(CLICK, Map.of());
+
+		assertEquals("The pending input must have been written.", "B", model.getValue());
+		assertNull("The dialog is closed", _dialogs._open);
+	}
+
+	/**
+	 * Input the editor cannot commit refuses OK: nothing is written and the dialog stays open.
+	 */
+	public void testOkRefusedWhenPendingInputCannotBeCommitted() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		PendingProvider provider = new PendingProvider("B", ResKey.text("Cannot be taken over."));
+		ReactCompactFieldControl compact = compactText(model, provider);
+
+		open(compact);
+		ReactControl dialog = _dialogs._open;
+		boolean refused;
+		try {
+			HandlerResult result = dialogButtons().get(1).executeCommand(CLICK, Map.of());
+			refused = !result.isSuccess();
+		} catch (TopLogicException ex) {
+			refused = true;
+		}
+
+		assertTrue("OK must be refused.", refused);
+		assertEquals("A", model.getValue());
+		assertSame("The dialog stays open", dialog, _dialogs._open);
 	}
 
 	/**
@@ -590,6 +632,64 @@ public class TestCompactField extends TestCase {
 		assertTrue("Expected a " + expected.getSimpleName() + ", got: " + actual,
 			expected.isInstance(actual));
 		return expected.cast(actual);
+	}
+
+	/**
+	 * A text provider whose control holds input not yet in its value, committed on request.
+	 */
+	private static class PendingProvider implements ReactFieldControlProvider {
+
+		private final String _pending;
+
+		private final ResKey _refusal;
+
+		/**
+		 * @param pending
+		 *        The input the control holds.
+		 * @param refusal
+		 *        Why the input cannot be committed, {@code null} if it can.
+		 */
+		PendingProvider(String pending, ResKey refusal) {
+			_pending = pending;
+			_refusal = refusal;
+		}
+
+		@Override
+		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+			return new PendingTextInput(context, model, _pending, _refusal);
+		}
+
+		@Override
+		public boolean isLarge(FieldSpec field) {
+			return true;
+		}
+	}
+
+	/**
+	 * A text input holding input not yet in its value.
+	 */
+	private static class PendingTextInput extends ReactTextInputControl implements PendingInput {
+
+		private final FieldModel _field;
+
+		private final String _pending;
+
+		private final ResKey _refusal;
+
+		PendingTextInput(ReactContext context, FieldModel model, String pending, ResKey refusal) {
+			super(context, model);
+			_field = model;
+			_pending = pending;
+			_refusal = refusal;
+		}
+
+		@Override
+		public void commitPendingInput() {
+			if (_refusal != null) {
+				throw new TopLogicException(_refusal);
+			}
+			_field.setValue(_pending);
+		}
 	}
 
 	/**

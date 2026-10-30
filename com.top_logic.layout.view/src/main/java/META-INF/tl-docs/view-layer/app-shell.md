@@ -7,12 +7,12 @@ order: 80
 
 ## The application shell: extending `app.view.xml`
 
-`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order. The general merge rules - keys, positions, overrides, anonymous elements - are described in [extending a view with a same-path overlay](doc:view-layer/overlays); what follows is what they mean for the shell.
+`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` of two sections - `application`, left empty for the application, and `system` with the `administration` item - and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order. The general merge rules - keys, positions, overrides, anonymous elements - are described in [extending a view with a same-path overlay](doc:view-layer/overlays); what follows is what they mean for the shell.
 
-- The overlay addresses the shell's sidebar and app bar by their ids, wherever the shell keeps them: `<sidebar config:ref="sidebar">` and `<app-bar config:ref="app-bar">`, written directly in the `<view>`. (The slots of `<app-shell>` — `header`, `notices`, `content`, `footer` — hold **at most one element of a kind**, the slot lists being keyed by the configuration interface of their entries, so an overlay that writes the path, `<app-shell><content><sidebar>`, extends the same sidebar; two elements of the same kind in one slot are rejected.)
+- The overlay addresses the shell's sidebar and app bar by their ids, wherever the shell keeps them: `<sidebar config:ref="sidebar">` and `<app-bar config:ref="app-bar">`, written directly in the `<view>`; the two slots of the app bar by their names, e.g. `<slot config:ref="appbar-content">` to give it an `<empty>` fallback (see [the slots](doc:view-layer/layout#content-shown-in-an-enclosing-region-slot-and-slot-content)). (The slots of `<app-shell>` — `header`, `notices`, `content`, `footer` — hold **at most one element of a kind**, the slot lists being keyed by the configuration interface of their entries, so an overlay that writes the path, `<app-shell><content><sidebar>`, extends the same sidebar; two elements of the same kind in one slot are rejected.)
 - Single-valued properties written in the overlay replace the shell's: the `<title>` of the app bar, the `active-item` of the sidebar.
 - The rail chrome (`<header>`, `<footer>`, … of the sidebar) is a list of arbitrary elements; the overlay marks its list with `config:override="true"` to replace the shell's neutral texts instead of adding to them.
-- Sidebar items are keyed by `id`. An item without a position is appended — after the `administration` item; an item for the application's own section names the separator: `config:position="before" config:reference="system-separator"`.
+- Sidebar items are keyed by `id`, the items of a section as well. The application writes its items into the shell's section `application`, which the overlay reaches by naming its id among the items of the sidebar: `<section id="application">…</section>`. The section stands before the `system` section, and both are set off from each other by a divider that disappears with a section none of whose items is shown — for a user without the Administration right, the system section and its divider are gone. An item written directly into the items of the sidebar, without a position, is appended after the system section.
 - Channels the items read go in the `<channels>` of the overlay's `<view>`; they are added to the (empty) channels of the shell.
 
 ```xml
@@ -21,10 +21,12 @@ order: 80
         <header config:override="true">
             <text><label><en>My App</en></label></text>
         </header>
-        <nav-item id="home" config:position="before" config:reference="system-separator">
-            <view-ref view="home.view.xml"/>
-            <label><en>Home</en></label>
-        </nav-item>
+        <section id="application">
+            <nav-item id="home">
+                <view-ref view="home.view.xml"/>
+                <label><en>Home</en></label>
+            </nav-item>
+        </section>
     </sidebar>
     <app-bar config:ref="app-bar">
         <title><en>My App</en></title>
@@ -40,15 +42,14 @@ An application that defines its whole shell itself writes `<app-shell config:ove
 
 `<sidebar>` (`SidebarElement`) is the navigation rail of an application shell. It holds a list of items and the chrome of the rail itself; the items are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single item.
 
-Five kinds of item:
+Four kinds of item:
 
 - `<nav-item id icon route badge hidden>` leads to a page. Its content — written directly inside it, usually a `<view-ref>` — is built when the item is first selected, and its `id` is the route segment it contributes (see [URL routing](doc:view-layer/navigation#url-routing-what-ends-up-in-the-address-bar)).
 - `<group id icon expanded>` gathers further items under a heading the user folds away. A group holds items, not content: the navigation items inside it lead to the same places and are addressed at the sidebar itself, so a group nests inside a group without changing where anything is displayed. Whether it is folded is remembered per user under the group's `id` (`PersonalizingExpandable`, the states stored as one JSON map beside the rail's own collapsed state), and applied to a group at any depth when the item list is pushed. On a folded rail a group opens as a flyout listing its items.
-- `<header-item id icon>` is a caption naming the items that follow it. It leads nowhere and cannot be activated; it divides a long navigation into named sections that all stay visible, where a group would fold them away.
+- `<section id icon>` sets the items written inside it off from the ones around it by a divider and heads them by its `label` where it has one. A section does not fold: its items stand in the rail as if they were written at the level of the section, all of them visible, where a group would fold them away. Which dividers and headings are drawn follows from the sections that currently show something: a divider stands between two neighbouring entries of which at least one is a section, never at the start of a list, and a section none of whose items is drawn — every item denied, hidden or not written yet — is left out together with its heading and its divider. A section nests in a section and in a group; on a folded rail only its icon stays of the heading, and in the flyout of a group it is drawn under its label between dividers. Like the menu groups of a `<menu>` (see [commands](doc:view-layer/commands)), a section is how an extensible list offers its contributors a place: a fragment names the section's `id` and adds its items to it.
 - `<command-item id>` runs a command instead of leading somewhere. The `<action>` it hosts is a `ViewCommand`, whose label and image the item displays, so the item reads like the button of the same command elsewhere. The item follows the command's executability for as long as the rail stands: invisible is not displayed, not executable is displayed out of reach (greyed), and the item takes its place back as soon as the rules allow it. The reason a rule gives for disabling the command (the text of a `<disabled-if>` expression, say) is what the item shows when the pointer rests on it, as the button of the same command does. The control refuses an activation of an item in either state, so a client addressing the command directly does not bypass the rules.
-- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`: an entry without id is anonymous, appended in order and addressed by no fragment, so any number of separators may stay anonymous. Give a separator an id where a fragment positions items against it, as the shell's `system-separator`.
 
-`<nav-item>` and `<group>` take an `<access-control operation="…"/>` (see [access control of UI units](doc:view-layer/access-control)): an item the current user can never reach is not built at all, a group whose access is denied withholds everything inside it, and the check of a group applies to the content of every item in it.
+`<nav-item>`, `<group>` and `<section>` take an `<access-control operation="…"/>` (see [access control of UI units](doc:view-layer/access-control)): an item the current user can never reach is not built at all, a group or section whose access is denied withholds everything inside it, and the check of a group or section applies to the content of every item in it.
 
 ```xml
 <sidebar active-item="attributes">
@@ -69,26 +70,26 @@ Five kinds of item:
         </text>
     </header-collapsed>
     <items>
-        <header-item id="data">
+        <section id="data">
             <label>
                 <en>Data</en>
                 <de>Daten</de>
             </label>
-        </header-item>
-        <nav-item id="attributes" icon="css:bi bi-card-list">
-            <view-ref view="attributes.view.xml"/>
-            <label>
-                <en>Attributes</en>
-                <de>Attribute</de>
-            </label>
-        </nav-item>
-        <nav-item id="tickets" badge="ticketCount" icon="css:bi bi-chat-left-text">
-            <view-ref view="tickets.view.xml"/>
-            <label>
-                <en>Tickets</en>
-                <de>Tickets</de>
-            </label>
-        </nav-item>
+            <nav-item id="attributes" icon="css:bi bi-card-list">
+                <view-ref view="attributes.view.xml"/>
+                <label>
+                    <en>Attributes</en>
+                    <de>Attribute</de>
+                </label>
+            </nav-item>
+            <nav-item id="tickets" badge="ticketCount" icon="css:bi bi-chat-left-text">
+                <view-ref view="tickets.view.xml"/>
+                <label>
+                    <en>Tickets</en>
+                    <de>Tickets</de>
+                </label>
+            </nav-item>
+        </section>
         <group id="demos" expanded="false" icon="css:bi bi-collection">
             <label>
                 <en>Demos</en>
@@ -109,21 +110,22 @@ Five kinds of item:
                 <de>Druckansicht</de>
             </label>
         </nav-item>
-        <separator/>
-        <command-item id="about">
-            <action class="com.top_logic.layout.view.command.GenericViewCommand"
-                image="css:bi bi-info-circle" inputs="ticketCount"
-            >
-                <label>
-                    <en>About</en>
-                    <de>Info</de>
-                </label>
-                <executability>
-                    <null-input-disabled/>
-                </executability>
-                <notify expr="#('{0} tickets.'@en, '{0} Tickets.'@de).fill($ticketCount)"/>
-            </action>
-        </command-item>
+        <section id="info">
+            <command-item id="about">
+                <action class="com.top_logic.layout.view.command.GenericViewCommand"
+                    image="css:bi bi-info-circle" inputs="ticketCount"
+                >
+                    <label>
+                        <en>About</en>
+                        <de>Info</de>
+                    </label>
+                    <executability>
+                        <null-input-disabled/>
+                    </executability>
+                    <notify expr="#('{0} tickets.'@en, '{0} Tickets.'@de).fill($ticketCount)"/>
+                </action>
+            </command-item>
+        </section>
     </items>
     <footer>
         <view-ref view="user-menu.view.xml"/>
@@ -156,8 +158,8 @@ A label is written as a `<label><en>…</en><de>…</de></label>` child; the `la
 
 **`SidebarItemElement` is the extension point** for an item kind the configuration does not cover — items computed from the model, say, one per project of the current user. An implementation answers two things:
 
-- `createSidebarItem(ViewContext, ItemSite)` builds the `SidebarItem` (`NavigationItem`, `GroupItem`, `HeaderItem`, `CommandItem`, `SeparatorItem`), or `null` for an item that must be omitted, e.g. because access is denied. The item is built *before* the control that displays it exists, so whatever the item has to say to that control — a badge to keep up to date, an executability to follow — is registered through `ItemSite.addBinding(Consumer<ReactSidebarControl>)` and run as soon as the control is there. Inside such a binding, `addAttachListener` / `addDetachListener` start and stop model observation, `addCleanupAction` removes listeners again, and `updateBadge(id, text)` / `refreshItems()` push a changed item list to the client (items are held as objects and serialized as a whole, so a change to one of them reaches the display only with the list it belongs to). The content of a navigation item is built later still, in `ItemSite.contentContext(context, key)` — the context that says where that content will sit, which is what makes an item's page revealable before it has ever been selected.
-- `getChildGroups()` reports the content the item holds, keyed by the id of the item displaying it. An item displaying no content of its own holds nothing; an item holding further items (a group) answers what those hold, so that every navigation item of a sidebar — nested or not — is addressed at the sidebar itself. An element that holds content and does not report it hides every view below it from navigation (see [Where a view is mounted is known statically](doc:view-layer/navigation#where-a-view-is-mounted-is-known-statically)).
+- `createSidebarItem(ViewContext, ItemSite)` builds the `SidebarItem` (`NavigationItem`, `GroupItem`, `SectionItem`, `CommandItem`), or `null` for an item that must be omitted, e.g. because access is denied. The item is built *before* the control that displays it exists, so whatever the item has to say to that control — a badge to keep up to date, an executability to follow — is registered through `ItemSite.addBinding(Consumer<ReactSidebarControl>)` and run as soon as the control is there. Inside such a binding, `addAttachListener` / `addDetachListener` start and stop model observation, `addCleanupAction` removes listeners again, and `updateBadge(id, text)` / `refreshItems()` push a changed item list to the client (items are held as objects and serialized as a whole, so a change to one of them reaches the display only with the list it belongs to). The content of a navigation item is built later still, in `ItemSite.contentContext(context, key)` — the context that says where that content will sit, which is what makes an item's page revealable before it has ever been selected.
+- `getChildGroups()` reports the content the item holds, keyed by the id of the item displaying it. An item displaying no content of its own holds nothing; an item holding further items (a group, a section) answers what those hold, so that every navigation item of a sidebar — nested or not — is addressed at the sidebar itself. An element that holds content and does not report it hides every view below it from navigation (see [Where a view is mounted is known statically](doc:view-layer/navigation#where-a-view-is-mounted-is-known-statically)).
 
 Build the items of a nested list with `SidebarElement.createItems(elements, context, site)`, passing the site on unchanged: an item then behaves the same wherever it is written.
 
@@ -167,7 +169,7 @@ Every visitor reaches the application under an anonymous session, so who is let 
 
 An application that has nothing to show a visitor names a login view in its `ViewConfig` instead: `<config config:interface="com.top_logic.layout.view.ViewConfig" login-view="login-page.view.xml">`. `ViewServlet` then renders that view for every request of a session that belongs to no account, whatever the URL names — a route, the default view, an entry point, or a view that is none of them — so the visitor sees the login and nothing else. `login-page.view.xml` is what the framework ships for this: the credentials form on a centered `<panel appearance="card" width="380px">` and nothing else, where `width` is the general option of `<panel>` for a panel that is not to take the width it is offered. An application with a login display of its own names that one. Both displays reference the same `login-form.view.xml` — the fields, the login action, the `<login-commands/>` a feature module contributes to and the `<login-methods/>` buttons of the configured SSO providers — so the dialog and the page offer the same login.
 
-**The requested URL survives the login.** The login page is not the application the URL addresses, so it takes the URL up not at all: the route manager *holds* the requested route (`RouteManager.holdUrl`) instead of adopting it. Nothing is composed from the display and nothing is corrected, so the address bar keeps showing `/view/my-refunds` while the form is displayed. The login swaps the session and reloads the page (`PendingSessionAction`), and the reload carries that same URL into the application: a URL that names a route always gets that page, and the personal start page (`StartPage`, written by the user menu's "Start on this page") applies only to a URL that names no route. The redirects that establish the session in the first place — the cookie check, the anonymous login — return to the page that was asked for as well (`ViewServlet.requestedPage`), and an SSO button hands its provider the held route as the return path, so an external login lands on the requested page too.
+**The requested URL survives the login.** The login page is not the application the URL addresses, so it takes the URL up not at all: the route manager *holds* the requested route (`RouteManager.holdUrl`) instead of adopting it. Nothing is composed from the display and nothing is corrected, so the address bar keeps showing `/view/my-refunds` while the form is displayed. The login logs the user in within the window and reloads it (`LoginAction`), and the reload carries that same URL into the application: a URL that names a route always gets that page, and the personal start page (`StartPage`, written by the user menu's "Start on this page") applies only to a URL that names no route. The redirects that establish the session in the first place — the cookie check, the anonymous login — return to the page that was asked for as well (`ViewServlet.requestedPage`), and an SSO button hands its provider the held route as the return path, so an external login lands on the requested page too.
 
 **A page for a visitor without an account.** An entry point marked `<entry-point view="unknown-account.view.xml" anonymous="true"/>` is the one exception to the login view: a URL naming it shows that view to an anonymous session, and because the page is the one the URL addresses, its route is adopted like any other (`ViewServlet.resolveView` decides view and login-view flag together). `tl-layout-view` ships `unknown-account.view.xml` for exactly this and points the `unknownAccountPage` of `ApplicationPages` at it: the external authentication servlet sends a visitor whose identity an SSO provider confirmed but for whom the application has no account there, with the authenticated name in the `login` query parameter, which the view's `<query-bindings>` put on a channel and its message names.
 

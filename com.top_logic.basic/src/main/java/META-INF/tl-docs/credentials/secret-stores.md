@@ -1,5 +1,5 @@
 ---
-description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, development secrets (devel-secrets.xml / devel-secrets.config.xml of com.top_logic.basic: ChainSecretStore of env-store, directory-store on ~/.top-logic/secrets and literal-store with h2_passwd), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
+description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure, the writable DatabaseSecretStore of com.top_logic with its key secret tl_secret_store_key), writing secrets from the application (WritableSecretStore, SecretStoreService#getWritableStore()), prefix and per-secret overrides, development secrets (devel-secrets.xml / devel-secrets.config.xml of com.top_logic.basic: ChainSecretStore of env-store, directory-store on ~/.top-logic/secrets and literal-store with h2_passwd), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
 order: 15
 ---
 
@@ -104,7 +104,7 @@ Asks several stores in turn; the first store holding the secret delivers it. A s
 </store>
 ```
 
-Inside `<stores>` the tag names are `env-store`, `directory-store`, `literal-store`, `chain-store` and `azure-key-vault-store`.
+Inside `<stores>` the tag names are `env-store`, `directory-store`, `literal-store`, `chain-store`, `database-store` and `azure-key-vault-store`.
 
 ### KeyVaultSecretStore (Azure)
 
@@ -121,6 +121,41 @@ Module `tl-credential-azure`. Keeps all named secrets in one Azure Key Vault:
 - `cache-time` (default `5min`) is how long a read secret - and the absence of a secret - is kept. A rotated or newly created secret is seen after this time at the latest.
 - A secret that does not exist in the vault (HTTP 404) is not held by the store, so a `ChainSecretStore` asks its next store. Any other failure (403, vault unreachable) is an error naming the vault and the secret.
 - `connect-timeout` and `request-timeout` limit the requests to the vault.
+
+## Secrets written by the application
+
+A secret that the application itself receives - an access token a user enters in the UI - is written to a `WritableSecretStore`. It is a `SecretStore` with two more operations:
+
+- `store(name, secret)` stores the secret under the name, replacing a secret of that name.
+- `remove(name)` removes it and answers whether the store held it.
+
+A written secret is read like every other named secret, through a `NamedSecretSource` or `SecretStoreService#getSecret(name)`; a consumer cannot tell where it lives. The plain secret is never cached, logged or put into an exception message.
+
+The writable store of the installation is `SecretStoreService.writableSecretStore()` (instance method `getWritableStore()`): the configured store if it is writable, the first writable store of a `ChainSecretStore` otherwise, with the prefix of the chain applied to the names. It is `null` if the installation has no writable store; a feature writing secrets reports that as a configuration error. An override of the service for a name takes precedence over a written secret of that name.
+
+### DatabaseSecretStore
+
+Module `com.top_logic`. Keeps the written secrets in the database of the application, so they are shared by the nodes of a cluster and backed up with the database:
+
+```xml
+<config service-class="com.top_logic.basic.credential.SecretStoreService">
+	<instance class="com.top_logic.basic.credential.SecretStoreService">
+		<store class="com.top_logic.basic.credential.ChainSecretStore">
+			<stores>
+				<env-store/>
+				<directory-store directory="/run/secrets"/>
+				<database-store key-secret="tl_secret_store_key"/>
+			</stores>
+		</store>
+	</instance>
+</config>
+```
+
+- Each secret is a row of the table `StoredSecret` (name and cipher text). The table is declared in `SecretMeta.xml` of the type system `Default`; on an existing database the knowledge base creates it at startup, no migration is needed. The table is not versioned, so a replaced or removed secret leaves no cipher text behind. Its rows are no model objects: they have no model type and cannot be reached through TL-Script, the model or the generic UI.
+- The secret is encrypted with `AuthenticatedEncryption` (AES/GCM); the cipher text is bound to the name of the secret. A cipher text that does not authenticate - modified, written with another key, copied from another row - is an error naming the secret.
+- The key is the named secret `key-secret` (default `tl_secret_store_key`), the Base64 encoding of an AES key of 128, 192 or 256 bits (`openssl rand -base64 32`). It is never stored in the database: the other stores of the chain or an override deliver it. The store never holds its own key and holds no secret while it fetches the key. A missing or invalid key is an error naming the key secret. Losing the key makes all written secrets unreadable.
+- While the knowledge base is not started the store holds no secrets, so it is placed last in the chain, behind the stores delivering the key and the secrets needed at startup (the database password).
+- Each `store` and `remove` runs in a transaction of its own.
 
 ## Prefix
 
@@ -231,4 +266,4 @@ An element with `class` attribute selects a secret source for this one property,
 
 ## An own store
 
-A store implements `SecretStore`: `lookup(name)` returns the secret, or `null` if the store does not hold it, and throws an `I18NRuntimeException` if it holds the secret but cannot deliver it; `getSecret(name)` turns `null` into an error. Deriving from `AbstractSecretStore` adds the `prefix`: the subclass implements `lookupKey(key)` and `missing(key)` (the error for a secret it does not hold). A store asking a remote service caches the secrets itself, like `KeyVaultSecretStore` does with `KeyVaultClient`.
+A store implements `SecretStore`: `lookup(name)` returns the secret, or `null` if the store does not hold it, and throws an `I18NRuntimeException` if it holds the secret but cannot deliver it; `getSecret(name)` turns `null` into an error. Deriving from `AbstractSecretStore` adds the `prefix`: the subclass implements `lookupKey(key)` and `missing(key)` (the error for a secret it does not hold). A store asking a remote service caches the secrets itself, like `KeyVaultSecretStore` does with `KeyVaultClient`. A store the application writes to implements `WritableSecretStore`; a store composed of other stores overrides `SecretStore#getWritableStore()` to expose a writable one of them, like `ChainSecretStore` does.

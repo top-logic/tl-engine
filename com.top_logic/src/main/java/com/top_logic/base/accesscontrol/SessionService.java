@@ -25,6 +25,7 @@ import jakarta.servlet.http.HttpSessionBindingListener;
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
@@ -51,6 +52,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -75,6 +77,8 @@ import com.top_logic.util.TLContext;
 	/* The SessionService caches Persons which depend on the KB and listens for deleted Persons.
 	 * Therefore it must be restarted, when the KB is restarted. */
 	PersistencyLayer.Module.class,
+	/* Ending a session, also on shutdown, stores the personal configuration of its user. */
+	PersonManager.Module.class,
 	SchedulerService.Module.class
 })
 @Label("User sessions")
@@ -114,8 +118,14 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	public interface UserEventListenerConfig extends NamedConfigMandatory {
 
 		/**
+		 * @see #getImpl()
+		 */
+		String IMPL = "impl";
+
+		/**
 		 * Configuration of the event listener.
 		 */
+		@Name(IMPL)
 		PolymorphicConfiguration<? extends UserEventListener> getImpl();
 	}
 
@@ -515,39 +525,217 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		return new ArrayList<>(_sessionMap.keySet());
     }
 
-    /**
+	/**
+	 * Logs the given user in for the whole session of the given request.
+	 *
 	 * <p>
-	 * This method creates a new session for the given request and binds the given user to it.
+	 * If the request has a session that is registered with this service, the {@link HttpSession}
+	 * and its {@link TLSessionContext} are kept. The user becomes the
+	 * {@link TLSessionContext#getOriginalUser() original user} of the session and is set on all its
+	 * {@link TLSessionContext#getSubSessions() sub-sessions}, which also take the user's locale. The
+	 * sub-session of the current interaction, if any, gets the session context and the user as
+	 * well. A window that shows content of the previous user rebuilds it for the given user on its
+	 * next reload.
+	 * </p>
+	 *
+	 * <p>
+	 * As protection against session fixation, the session ID is changed with
+	 * {@link HttpServletRequest#changeSessionId()}. The session stays registered under the new ID
+	 * with the given user, and the login is announced to the {@link UserEventListener}s under the
+	 * new ID. Before, the logout of the previous user of the session is announced under the former
+	 * ID, while the session is still registered under it, which ends the login record of the
+	 * previous user. The session itself continues; a listener telling a session end from this case
+	 * finds the session still registered with {@link #getUser(String)}.
+	 * </p>
+	 *
+	 * <p>
+	 * If the request has a session that is not registered with this service, its ID is changed, and
+	 * a {@link TLSessionContext} for the given user is installed in it and registered. If the
+	 * request has no session, a session is created for the given user.
 	 * </p>
 	 *
 	 * @param request
-	 *        the request to create the session from
+	 *        The current request.
 	 * @param response
-	 *        The current response.
+	 *        The current response, which receives the cookie with the session ID.
 	 * @param aUser
-	 *        Owner of the new session
+	 *        The user to log in.
+	 * @return The session of the request.
 	 */
 	@FrameworkInternal
 	public HttpSession loginUser(HttpServletRequest request, HttpServletResponse response, Person aUser) {
-		return login(request, response, aUser);
-    }
-
-	private HttpSession login(HttpServletRequest request, HttpServletResponse response, Person aUser) {
-        return (getNewSessionForUser (request, response, aUser));
-    }    
+		return login(request, response, aUser, this::assignToSession);
+	}
 
 	/**
-     * Creates a new session for the given request an binds the given
-     * User to it.If the given request already has a session, it will be invalidated
-     * and a new one will be created.
-     *
-     * @param request The request to get the Session from
-	 * @param response The current response.
-     * @param aUser   The User for which the session should be created.
-     * @exception     NullPointerException if the given User is null
-     *
-     * @return always a new session
-     */
+	 * Logs the given user in within the window of the current request, keeping the session and its
+	 * other windows.
+	 *
+	 * <p>
+	 * The {@link HttpSession} and its {@link TLSessionContext} are kept. The user is set on the
+	 * {@link TLSubSessionContext} of the current interaction, which also takes the user's locale,
+	 * and becomes the {@link TLSessionContext#getOriginalUser() original user} of the session, so
+	 * that a window opened later starts with that user. All other sub-sessions of the session keep
+	 * their user.
+	 * </p>
+	 *
+	 * <p>
+	 * The session ID is changed and the logout and login are announced as for
+	 * {@link #loginUser(HttpServletRequest, HttpServletResponse, Person)}: the session and its other
+	 * windows continue.
+	 * </p>
+	 *
+	 * <p>
+	 * If the request has no session that is registered with this service, the call is equivalent to
+	 * {@link #loginUser(HttpServletRequest, HttpServletResponse, Person)}.
+	 * </p>
+	 *
+	 * <p>
+	 * Whether the user may log in at all (e.g. in maintenance mode) is checked by the caller.
+	 * </p>
+	 *
+	 * @param request
+	 *        The current request. Its session, if registered, must be the session of the
+	 *        {@link TLSubSessionContext} installed in the current interaction.
+	 * @param response
+	 *        The current response, which receives the cookie with the changed session ID.
+	 * @param user
+	 *        The user to log in.
+	 * @return The session of the request.
+	 * @throws IllegalStateException
+	 *         If the session of the request is registered, but the current interaction has no
+	 *         sub-session of that session installed.
+	 */
+	public HttpSession loginUserInWindow(HttpServletRequest request, HttpServletResponse response, Person user) {
+		return login(request, response, user, this::assignToWindow);
+	}
+
+	/**
+	 * Logs the given user in, changing the ID of an existing session.
+	 *
+	 * @param assignment
+	 *        Sets the user in a session that is registered with this service.
+	 */
+	private HttpSession login(HttpServletRequest request, HttpServletResponse response, Person user,
+			UserAssignment assignment) {
+		if (user == null) {
+			throw new NullPointerException("Given User is null.");
+		}
+
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			return getNewSessionForUser(request, response, user);
+		}
+
+		String oldId = session.getId();
+		Registration registration = _sessionMap.get(oldId);
+		if (registration == null) {
+			request.changeSessionId();
+			return getNewSessionForUser(request, response, user);
+		}
+
+		TLSessionContext sessionContext = registration.context();
+		Runnable setUser = assignment.prepare(sessionContext, user);
+
+		sendEvent(oldId, registration.info().getUser(), user, UserEvent.EventType.LOGGED_OUT);
+
+		String newId = request.changeSessionId();
+		setSecureSessionCookie(request, response, session);
+
+		((DefaultSessionContext) sessionContext).setOriginalUser(user);
+		setUser.run();
+
+		reRegister(oldId, new Registration(createSessionInfo(session, request, user), session, sessionContext));
+
+		sendEvent(newId, user, user, UserEvent.EventType.LOGGED_IN);
+		return session;
+	}
+
+	/**
+	 * Sets a user logging in in the sub-sessions of a session that is registered with this service.
+	 */
+	private interface UserAssignment {
+
+		/**
+		 * Checks whether the given user can be set in the given session.
+		 *
+		 * @return The operation setting the user in the sub-sessions, executed after the session ID
+		 *         has changed.
+		 */
+		Runnable prepare(TLSessionContext sessionContext, Person user);
+
+	}
+
+	/**
+	 * {@link UserAssignment} setting the user in all sub-sessions of the session and in the
+	 * sub-session of the current interaction.
+	 */
+	private Runnable assignToSession(TLSessionContext sessionContext, Person user) {
+		return () -> {
+			for (TLSubSessionContext subSession : sessionContext.getSubSessions().values()) {
+				subSession.setPerson(user);
+			}
+
+			InteractionContext interaction = ThreadContextManager.getInteraction();
+			if (interaction != null) {
+				SubSessionContext current = interaction.getSubSessionContext();
+				if (current != null) {
+					if (current.getSessionContext() != sessionContext) {
+						current.setSessionContext(sessionContext);
+					}
+					if (current instanceof TLSubSessionContext tlCurrent) {
+						tlCurrent.setPerson(user);
+					} else {
+						current.setCurrentLocale(user.getLocale());
+					}
+				}
+				interaction.installSessionContext(sessionContext);
+			}
+		};
+	}
+
+	/**
+	 * {@link UserAssignment} setting the user in the sub-session of the current interaction only.
+	 *
+	 * @throws IllegalStateException
+	 *         If the current interaction has no sub-session of the given session installed.
+	 */
+	private Runnable assignToWindow(TLSessionContext sessionContext, Person user) {
+		InteractionContext interaction = ThreadContextManager.getInteraction();
+		SubSessionContext subSession = interaction == null ? null : interaction.getSubSessionContext();
+		if (!(subSession instanceof TLSubSessionContext window) || window.getSessionContext() != sessionContext) {
+			throw new IllegalStateException("No window of the session installed in the current interaction.");
+		}
+		return () -> window.setPerson(user);
+	}
+
+	/**
+	 * Registers a session under its current ID that was registered under the given former ID.
+	 *
+	 * <p>
+	 * The session continues, so no logout is announced for the former registration.
+	 * </p>
+	 */
+	private void reRegister(String formerId, Registration registration) {
+		_sessionMap.put(registration.info().getSessionId(), registration);
+		_sessionMap.remove(formerId);
+	}
+
+	/**
+	 * Installs a {@link TLSessionContext} for the given user in the session of the given request
+	 * and registers the session, creating the session if the request has none.
+	 *
+	 * @param request
+	 *        The request to get the session from.
+	 * @param response
+	 *        The current response.
+	 * @param aUser
+	 *        The user for which the session is registered.
+	 * @exception NullPointerException
+	 *            if the given user is null
+	 *
+	 * @return The session of the request.
+	 */
     private HttpSession getNewSessionForUser (HttpServletRequest request, 
 			HttpServletResponse response, Person aUser) {
         //checking if the given user is null. If so return null.       
@@ -559,23 +747,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		// Create a new session, if none does exist yet.
 		HttpSession session = request.getSession(true);
 		
-		if (getSecureSessionCookie()) {
-			boolean secure = "https".equalsIgnoreCase(request.getScheme());
-
-			// Ticket #8127: Workaround for pre Servlet 3.0 applications: Ensure that the session
-			// cookie cannot be stolen with injected JavaScript. Note: The HttpOnly flag seems only 
-			// to be honored, if combined with the path attribute.
-			StringBuilder cookieBuffer = new StringBuilder();
-			cookieBuffer.append("JSESSIONID=");
-			cookieBuffer.append(session.getId());
-			cookieBuffer.append("; Path=");
-			cookieBuffer.append(request.getContextPath());
-			cookieBuffer.append("; HttpOnly");
-			if (secure) {
-				cookieBuffer.append("; Secure");
-			}
-			response.setHeader("SET-COOKIE", cookieBuffer.toString());
-		}
+		setSecureSessionCookie(request, response, session);
 
 		TLSessionContext sessionContext = installSession(aUser, session);
         
@@ -585,6 +757,33 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
         return (session);
     }
+
+	/**
+	 * Sends the cookie of the given session with the <code>HttpOnly</code> option (and the
+	 * <code>Secure</code> option, if HTTPS is used), if {@link #getSecureSessionCookie()} is
+	 * configured.
+	 */
+	private void setSecureSessionCookie(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session) {
+		if (!getSecureSessionCookie()) {
+			return;
+		}
+		boolean secure = "https".equalsIgnoreCase(request.getScheme());
+
+		// Ticket #8127: Workaround for pre Servlet 3.0 applications: Ensure that the session
+		// cookie cannot be stolen with injected JavaScript. Note: The HttpOnly flag seems only
+		// to be honored, if combined with the path attribute.
+		StringBuilder cookieBuffer = new StringBuilder();
+		cookieBuffer.append("JSESSIONID=");
+		cookieBuffer.append(session.getId());
+		cookieBuffer.append("; Path=");
+		cookieBuffer.append(request.getContextPath());
+		cookieBuffer.append("; HttpOnly");
+		if (secure) {
+			cookieBuffer.append("; Secure");
+		}
+		response.setHeader("SET-COOKIE", cookieBuffer.toString());
+	}
 
 	private TLSessionContext installSession(Person aUser, HttpSession session) {
 		DefaultSessionContext context = (DefaultSessionContext) _threadContextManager.newSessionContext(session);
@@ -776,8 +975,17 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			_kb.removeUpdateListener(_personDeletionListener);
 			_kb = null;
 		}
+		/* The HTTP sessions are invalidated, not only removed: their contexts hold objects of the
+		 * knowledge base that is shut down together with this service, e.g. during a restart of the
+		 * persistency layer, and must not be used by a later request. */
 		for (String sessionId : new ArrayList<>(_sessionMap.keySet())) {
-			invalidateSession(sessionId);
+			try {
+				terminateSession(sessionId);
+			} catch (RuntimeException ex) {
+				// The service must shut down completely, also when the logout of one session cannot
+				// be processed.
+				Logger.error("Failed to end session '" + sessionId + "' on shutdown.", ex, SessionService.class);
+			}
 		}
 		_sessionMap.clear();
 		super.shutDown();

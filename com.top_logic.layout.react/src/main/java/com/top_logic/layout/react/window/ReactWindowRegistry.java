@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -39,8 +40,9 @@ import com.top_logic.util.TLContextManager;
  * Per-session registry of the browser windows of that session.
  *
  * <p>
- * Stored as an HTTP session attribute, so it dies with the session - a login or logout therefore
- * discards every window it knows. Each window is represented by one {@link WindowEntry} that owns its
+ * Stored as an HTTP session attribute, so it dies with the session - a logout therefore discards
+ * every window it knows. A login within a window keeps the session and changes only its ID, which
+ * the registry follows ({@link #handleSessionIdChange(HttpSession, String)}). Each window is represented by one {@link WindowEntry} that owns its
  * per-window state; the registry only maps window IDs to entries, resolves singleton windows, and
  * decides when a window has stayed away long enough to be torn down: one whose page was unloaded
  * ({@link #sweepUnloadedWindows()}) and one whose client went away
@@ -62,7 +64,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *
 	 * @implNote Entries are removed in {@link #valueUnbound(HttpSessionBindingEvent)}, which the
 	 *           container calls for every attribute of an ending session, so the index cannot
-	 *           outlive the sessions it points to.
+	 *           outlive the sessions it points to. A session whose ID changes is re-indexed by
+	 *           {@link #handleSessionIdChange(HttpSession, String)}.
 	 */
 	private static final ConcurrentHashMap<String, ReactWindowRegistry> REGISTRIES_BY_SESSION_ID =
 		new ConcurrentHashMap<>();
@@ -77,8 +80,15 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	public interface ActivityListener {
 
 		/**
-		 * Called while a request of the session is being handled, which is when the container
-		 * restarts the session's inactivity timeout.
+		 * Called for a request of the session, which restarted the session's inactivity timeout.
+		 *
+		 * <p>
+		 * Called within an {@link Interaction} of the session, so it may change the control trees
+		 * of the session's windows. That interaction is not necessarily the request's own: if
+		 * another thread keeps the trees busy when the request arrives, the call happens in that
+		 * thread, when its interaction closes. Only the latest of the requests that arrived in the
+		 * meantime is reported then.
+		 * </p>
 		 *
 		 * @param accessTime
 		 *        When the request arrived, as epoch milliseconds. This is the reference point of the
@@ -139,8 +149,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	private final AtomicLong _pageLoads = new AtomicLong();
 
-	/** The ID of the session this registry belongs to, remembered for the index. */
-	private final String _sessionId;
+	/**
+	 * The current ID of the session this registry belongs to, remembered for the index.
+	 *
+	 * @see #handleSessionIdChange(HttpSession, String)
+	 */
+	private volatile String _sessionId;
 
 	/**
 	 * The listeners to inform about the requests of this session.
@@ -148,6 +162,52 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @see #noteActivity(HttpSession)
 	 */
 	private final List<ActivityListener> _activityListeners = new CopyOnWriteArrayList<>();
+
+	/**
+	 * The latest request of this session that the {@link #_activityListeners} have not been told
+	 * about yet, or {@code null} if there is none.
+	 *
+	 * @see #noteActivity(HttpSession)
+	 */
+	private final AtomicReference<Activity> _pendingActivity = new AtomicReference<>();
+
+	/**
+	 * What every {@link Interaction} of this session does when it closes: tell the
+	 * {@link #_activityListeners} about the {@link #_pendingActivity}.
+	 */
+	private final Interaction.DeferredWork _deferredWork = new Interaction.DeferredWork() {
+		@Override
+		public boolean isPending() {
+			return _pendingActivity.get() != null;
+		}
+
+		@Override
+		public void run() {
+			announceActivity();
+		}
+	};
+
+	/**
+	 * A request of the session, as reported to an {@link ActivityListener}.
+	 *
+	 * @param accessTime
+	 *        When the request arrived, as epoch milliseconds.
+	 * @param maxInactiveSeconds
+	 *        How long the session survives without a request.
+	 */
+	private record Activity(long accessTime, int maxInactiveSeconds) {
+
+		/**
+		 * The later of the two given activities, the second one if they arrived at the same time.
+		 */
+		static Activity later(Activity recorded, Activity arrived) {
+			if (recorded == null || arrived.accessTime() >= recorded.accessTime()) {
+				return arrived;
+			}
+			return recorded;
+		}
+
+	}
 
 	/**
 	 * Creates a new {@link ReactWindowRegistry}.
@@ -188,6 +248,36 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * Follows a change of the ID of the given session, e.g. by
+	 * {@link jakarta.servlet.http.HttpServletRequest#changeSessionId()} on a login.
+	 *
+	 * <p>
+	 * The registry of the session stays the same, and so do its windows: only the ID it is known
+	 * by changes, both in the index of all registries and for asking the {@link SessionService}
+	 * about the session's user.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session, already carrying its new ID.
+	 * @param formerId
+	 *        The ID the session had before.
+	 *
+	 * @see SessionIdChangeListener
+	 */
+	static void handleSessionIdChange(HttpSession session, String formerId) {
+		synchronized (session) {
+			ReactWindowRegistry registry = lookup(session);
+			if (registry == null) {
+				return;
+			}
+			String newId = session.getId();
+			registry._sessionId = newId;
+			REGISTRIES_BY_SESSION_ID.put(newId, registry);
+			REGISTRIES_BY_SESSION_ID.remove(formerId, registry);
+		}
+	}
+
+	/**
 	 * Registers a listener on the requests of this session.
 	 *
 	 * <p>
@@ -198,9 +288,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * </p>
 	 *
 	 * @param listener
-	 *        Informed about every request of this session until it is
-	 *        {@link #removeActivityListener(ActivityListener) removed}. A control registering one
-	 *        must remove it when it is disposed, since the registry outlives the windows it holds.
+	 *        Informed about the requests of this session until it is
+	 *        {@link #removeActivityListener(ActivityListener) removed}, within an
+	 *        {@link Interaction} of this session - possibly in another thread than the request's
+	 *        and later than the request, see {@link #noteActivity(HttpSession)}. A control
+	 *        registering one must remove it when it is disposed, since the registry outlives the
+	 *        windows it holds.
 	 */
 	public void addActivityListener(ActivityListener listener) {
 		_activityListeners.add(listener);
@@ -217,6 +310,16 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Reports that a request of this registry's session is being handled, restarting the session's
 	 * inactivity timeout.
 	 *
+	 * <p>
+	 * The {@link ActivityListener}s change control trees, so they are informed within an
+	 * {@link Interaction}. This method never waits for one: it is called for every request of the
+	 * session, a stylesheet request included. If no other thread keeps the trees busy, the
+	 * listeners are informed before this method returns. Otherwise the activity is recorded, and
+	 * the thread holding the trees informs the listeners when its interaction closes, together
+	 * with the updates of that interaction. Of the activities recorded in the meantime, only the
+	 * latest is reported, since it supersedes the earlier ones.
+	 * </p>
+	 *
 	 * @param session
 	 *        The session the request belongs to, read for its inactivity interval.
 	 *
@@ -231,14 +334,36 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (_activityListeners.isEmpty()) {
 			return;
 		}
-		long accessTime = System.currentTimeMillis();
-		int maxInactiveSeconds = session.getMaxInactiveInterval();
+		Activity activity = new Activity(System.currentTimeMillis(), session.getMaxInactiveInterval());
+		_pendingActivity.accumulateAndGet(activity, Activity::later);
+
+		// Closing the interaction announces the activity; without one, the thread holding the
+		// trees announces it when it closes its own.
+		Interaction interaction = tryBeginInteraction(0);
+		if (interaction != null) {
+			interaction.close();
+		}
+	}
+
+	/**
+	 * Informs the {@link ActivityListener}s about the activity recorded by
+	 * {@link #noteActivity(HttpSession)}, if any.
+	 *
+	 * <p>
+	 * Done when an {@link Interaction} of this session closes, see {@link #_deferredWork}.
+	 * </p>
+	 */
+	private void announceActivity() {
+		Activity activity = _pendingActivity.getAndSet(null);
+		if (activity == null) {
+			return;
+		}
 		for (ActivityListener listener : _activityListeners) {
 			try {
-				listener.handleActivity(accessTime, maxInactiveSeconds);
+				listener.handleActivity(activity.accessTime(), activity.maxInactiveSeconds());
 			} catch (RuntimeException ex) {
-				// A listener that fails must not keep the request from being answered, nor the
-				// remaining listeners from being informed.
+				// A listener that fails must not keep the interaction from being completed, nor
+				// the remaining listeners from being informed.
 				Logger.error("Failed to announce the activity of session '" + _sessionId + "'.", ex,
 					ReactWindowRegistry.class);
 			}
@@ -342,8 +467,16 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	/**
 	 * Whether this registry's session is registered with the {@link SessionService} and belongs to
 	 * an account that still exists.
+	 *
+	 * <p>
+	 * While the {@link SessionService} is stopped, e.g. during a restart of the persistency layer,
+	 * no session has a live user.
+	 * </p>
 	 */
 	private boolean hasLiveUser() {
+		if (!SessionService.Module.INSTANCE.isActive()) {
+			return false;
+		}
 		// The user may be deleted: nothing but tValid() may be asked of it.
 		Person user = SessionService.getInstance().getUser(_sessionId);
 		return user != null && user.tValid();
@@ -367,7 +500,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The open interaction, to be closed when the change is complete.
 	 */
 	public Interaction beginInteraction() {
-		return Interaction.begin(_requestLock);
+		return Interaction.begin(_requestLock, _deferredWork);
 	}
 
 	/**
@@ -397,7 +530,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *         was interrupted while it waited.
 	 */
 	public Interaction tryBeginInteraction(long timeoutMillis) {
-		return Interaction.tryBegin(_requestLock, timeoutMillis);
+		return Interaction.tryBegin(_requestLock, timeoutMillis, _deferredWork);
 	}
 
 	/**
@@ -864,6 +997,28 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			entry.requestRebuild();
 			requestReload(entry.getQueue());
 		}
+	}
+
+	/**
+	 * Rebuilds the given window of this session from scratch.
+	 *
+	 * <p>
+	 * Called when what the window's tree was built from has changed for this window alone - the user
+	 * of the window, after a login in it. The window is {@link WindowEntry#requestRebuild() marked}
+	 * and told to reload, as in {@link #rebuildWindows()}; the other windows of the session are left
+	 * alone.
+	 * </p>
+	 *
+	 * @param windowName
+	 *        The name of the window to rebuild; an unknown name is ignored.
+	 */
+	public void rebuildWindow(String windowName) {
+		WindowEntry entry = _windows.get(windowName);
+		if (entry == null) {
+			return;
+		}
+		entry.requestRebuild();
+		requestReload(entry.getQueue());
 	}
 
 	/**

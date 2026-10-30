@@ -272,12 +272,8 @@ public final class ConfigValidation {
 	 * </p>
 	 *
 	 * <p>
-	 * Deliberately blind to the two things {@link #refusalFor(Iterable, ConfigFieldIndex)} refuses
-	 * over. An {@link ConfigFieldIndex#pending() unconfirmed entry} is marked as one to confirm or
-	 * discard only when the user asks for the configuration to be handed over - while editing, an
-	 * entry that was just started is exactly where it is supposed to be, and telling the user off
-	 * for it is telling them off for having begun. An
-	 * {@link ConfigFieldIndex#hasInputError() unreadable input} keeps Apply from discarding what was
+	 * Deliberately blind to the {@link ConfigFieldIndex#hasInputError() unreadable input}
+	 * {@link #refusalFor(Iterable, ConfigFieldIndex)} refuses over. It keeps Apply from discarding what was
 	 * typed, which is nothing this method is in a position to discard; the field that rejected the
 	 * input already says so on its own, and the configuration behind it still holds the last value
 	 * the field accepted, which is what is checked here.
@@ -374,23 +370,22 @@ public final class ConfigValidation {
 	 * </p>
 	 *
 	 * <p>
-	 * The order matters. An unconfirmed entry whose key is already spoken for carries an input
-	 * error of its own, and "an entry could not be read" would then be said about a key that reads
-	 * perfectly well and is merely taken.
+	 * An {@link ConfigFieldIndex#pending() unconfirmed entry} refuses nothing here: whoever hands
+	 * the configuration over confirms it first, see {@link #confirmPending(ConfigFieldIndex)}.
 	 * </p>
 	 *
 	 * <p>
 	 * The check itself, and the placing of what it found, is
 	 * {@link #recheck(Iterable, ConfigFieldIndex)} - the very step a form runs while the user is
 	 * still editing. What this adds is only what handing the configuration over may refuse over:
-	 * an unconfirmed entry, an unreadable input, and the refusal a violation amounts to.
+	 * an unreadable input, and the refusal a violation amounts to.
 	 * </p>
 	 *
 	 * @param edited
 	 *        The configuration to check.
 	 * @param index
 	 *        The fields the configuration is rendered in, both to report on and to ask about
-	 *        unreadable input and unconfirmed entries.
+	 *        unreadable input.
 	 * @return Why the configuration may not be handed over, or {@code null} if nothing stands in the
 	 *         way. {@code null} is not "nothing was found": the warnings are placed on their fields
 	 *         either way, and only the violations decide the answer.
@@ -428,19 +423,39 @@ public final class ConfigValidation {
 		return refusalFor(edited, index, Collections.emptySet());
 	}
 
+	/**
+	 * Confirms every {@link ConfigFieldIndex#pending() unconfirmed entry}, as the user would with
+	 * its Confirm button, and tells why one of them could not be confirmed.
+	 *
+	 * <p>
+	 * The step before {@link #refusalFor(Iterable, ConfigFieldIndex)} whenever the edited
+	 * configuration is handed over: the user who saves has finished editing, and an entry filled in
+	 * but not yet confirmed is part of what is saved. An entry that cannot be confirmed - its key is
+	 * missing or already taken - stays pending with the reason at its key field, and refuses the
+	 * hand-over.
+	 * </p>
+	 *
+	 * @param index
+	 *        The fields the configuration is rendered in, knowing its unconfirmed entries.
+	 * @return Why an entry could not be confirmed, or {@code null} if every entry joined its
+	 *         collection.
+	 *
+	 * @see ConfigFieldIndex#confirmPending()
+	 */
+	public static Refusal confirmPending(ConfigFieldIndex index) {
+		ResKey reason = index.confirmPending();
+		if (reason == null) {
+			return null;
+		}
+		return new Refusal(I18NConstants.ERROR_ENTRY_NOT_TAKEN__REASON.fill(reason), Collections.emptyList());
+	}
+
 	private static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index,
 			Set<PropertyDescriptor> mandatory) {
-		// Also cleared here, not only in the recheck further down: the two refusals in between
-		// never reach it, and a finding the previous attempt placed must not outlive them either.
+		// Also cleared here, not only in the recheck further down: the refusal in between never
+		// reaches it, and a finding the previous attempt placed must not outlive it either.
 		index.clearFindings();
 
-		List<ConfigPendingEntries.PendingEntry> pending = index.pending();
-		if (!pending.isEmpty()) {
-			for (ConfigPendingEntries.PendingEntry entry : pending) {
-				entry.setKeyFieldError(I18NConstants.ERROR_CONFIRM_OR_DISCARD_ENTRY);
-			}
-			return new Refusal(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, Collections.emptyList());
-		}
 		if (index.hasInputError()) {
 			return new Refusal(I18NConstants.ERROR_INPUT_NOT_READABLE, Collections.emptyList());
 		}

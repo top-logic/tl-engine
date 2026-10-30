@@ -18,13 +18,16 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * {@link ViewExecutabilityRule} that shows a command only while a step precedes the one the
- * enclosing wizard displays.
+ * {@link ViewExecutabilityRule} that shows a command only while a step the user can return to
+ * precedes the one the enclosing wizard displays.
  *
  * <p>
- * Guards the command that steps back, so that it is offered on every step but the first, where
- * stepping back would do nothing. Outside a wizard the command stays hidden.
+ * Guards the command that steps back, so that it is offered wherever stepping back leads somewhere:
+ * not on the first step, and not on a step only pass-through {@link WizardStep steps}
+ * precede. Outside a wizard the command stays hidden.
  * </p>
+ *
+ * @see WizardScope#hasBack()
  */
 public class WizardHasBack implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
 

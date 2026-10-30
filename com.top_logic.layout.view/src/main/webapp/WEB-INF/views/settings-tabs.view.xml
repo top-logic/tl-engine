@@ -7,7 +7,12 @@
 	overlay (WEB-INF/views/settings-tabs.view.xml) into its own module and adding an entry to the
 	<tabs> of a <tab-bar config:ref="settings-tabs"> element; the ViewLoader merges all copies in
 	dependency order. See tl-layout-view-contact, which adds the profile of the person behind the
-	account.
+	account. The security tab is a column of sections, <stack config:ref="security-sections">,
+	each a column of its own: password-section, deputies-section and two-factor-section. A further
+	topic is a section appended to security-sections; a further second factor is a block appended
+	to <stack config:ref="two-factor-methods">, the column of the methods inside two-factor-section,
+	beside the block authenticator-app. See tl-security-passkey, which adds the passkeys of the
+	account there.
 	
 	Deliberately small. What a user changes with a single decision - the language, the theme, where
 	they start - is an entry of the user menu (user-menu.view.xml), one click from the app bar, so
@@ -37,6 +42,17 @@
 			inputs="representativeGroup"
 		/>
 		<!--
+			The names of the second factor methods the account has set up, asked of every method the
+			login offers. Observing the accounts follows the methods stored with the account; a
+			module whose method keeps its state in objects of its own adds their type to the
+			observed types with an overlay of this channel.
+		-->
+		<derived-channel name="secondFactors"
+			expr="secondFactorEnrolled($account)"
+			inputs="account"
+			observed-types="tl.accounts:Person"
+		/>
+		<!--
 			The accounts this account may act for: those whose representative group it is a member
 			of. Asked of the accounts rather than of the groups, because a representative group
 			names its owner only through the back-reference of the owner's own attribute, and that
@@ -46,6 +62,23 @@
 		<derived-channel name="deputyFor"
 			expr="all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
 			inputs="account"
+		/>
+		<!--
+			The lines stating the deputies, the accounts stood in for, and the second factor, each a
+			single text: a sentence split into texts side by side would read with gaps between its
+			words.
+		-->
+		<derived-channel name="deputiesLine"
+			expr="if($deputies.isEmpty(), #('Deputies: none'@en, 'Stellvertreter: keine'@de), #('Deputies: {0}'@en, 'Stellvertreter: {0}'@de).fill($deputies.join(', ')))"
+			inputs="deputies"
+		/>
+		<derived-channel name="deputyForLine"
+			expr="#('You stand in for: {0}'@en, 'Sie vertreten: {0}'@de).fill($deputyFor.join(', '))"
+			inputs="deputyFor"
+		/>
+		<derived-channel name="secondFactorsLine"
+			expr="if($secondFactors.isEmpty(), #('Not active'@en, 'Nicht aktiv'@de), #('Active: {0}'@en, 'Aktiv: {0}'@de).fill($secondFactors.join(', ')))"
+			inputs="secondFactors"
 		/>
 	</channels>
 	<tab-bar id="settings-tabs"
@@ -91,11 +124,14 @@
 
 			<!--
 				Each entry here acts on the account rather than holding a value of it, so the tab is
-				a list of buttons and not a form. They stretch across the tab because the list is
-				what the tab is - nothing else competes for the width, and a row of differently
-				sized buttons would only invite guessing which one matters. The <inset> gives the
-				list the breathing room a form brings along by itself, so both tabs of this dialog
-				hold their content at the same distance from the border.
+				not a form but one section per topic, each built the same way: a heading, the current
+				state as text, then the buttons changing it - what a button changes is what the line
+				above it names. The buttons stretch across the tab because nothing else competes for
+				the width, and a row of differently sized buttons would only invite guessing which one
+				matters. The sections stand further apart than the lines inside a section, so the
+				topics read as groups. The <inset> gives the column the breathing room a form brings
+				along by itself, so both tabs of this dialog hold their content at the same distance
+				from the border.
 			-->
 			<tab id="security"
 				icon="css:bi bi-shield-lock"
@@ -105,207 +141,241 @@
 					<de>Sicherheit</de>
 				</label>
 				<inset>
-					<stack
+					<stack id="security-sections"
 						align="stretch"
 						direction="column"
-						gap="compact"
+						gap="loose"
 					>
-						<!--
-							The state of the second factor, stated rather than left to be inferred
-							from which of the two buttons below is offered. Having a second factor is
-							having a secret stored, the same condition the buttons are offered by.
-						-->
-						<switch input="account">
-							<case test="$account.get(`tl.accounts:Person#mfaSecret`) != null">
-								<text>
-									<label>
-										<en>Two-factor authentication: active</en>
-										<de>Zwei-Faktor-Authentifizierung: aktiv</de>
-									</label>
-								</text>
-							</case>
-							<default>
-								<text>
-									<label>
-										<en>Two-factor authentication: not active</en>
-										<de>Zwei-Faktor-Authentifizierung: nicht aktiv</de>
-									</label>
-								</text>
-							</default>
-						</switch>
-
-						<!--
-							Offered only to an account whose password this application holds: a device
-							that keeps it elsewhere - a directory service, an identity provider - refuses
-							to change it, and a button leading to that refusal is one the user has no way
-							of knowing not to press. The action itself refuses the same accounts, so what
-							is hidden here is not what is guarded.
-						-->
-						<button>
-							<action class="com.top_logic.layout.view.command.GenericViewCommand"
-								image="css:bi bi-key"
-								inputs="account"
-							>
+						<stack id="password-section"
+							align="stretch"
+							direction="column"
+							gap="compact"
+						>
+							<text variant="title">
 								<label>
-									<en>Change password</en>
-									<de>Passwort ändern</de>
+									<en>Password</en>
+									<de>Passwort</de>
 								</label>
-								<executability>
-									<visible-if expr="$account.accountPasswordChangeAllowed()"/>
-								</executability>
-								<execute-script function="new(`tl.login:PasswordChange`, transient: true)">
-									<with-result>
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="change-password.view.xml"
-										/>
-									</with-result>
-								</execute-script>
-							</action>
-						</button>
+							</text>
+
+							<!--
+								Offered only to an account whose password this application holds: a
+								device that keeps it elsewhere - a directory service, an identity
+								provider - refuses to change it, and a button leading to that refusal
+								is one the user has no way of knowing not to press. The action itself
+								refuses the same accounts, so what is hidden here is not what is
+								guarded.
+							-->
+							<button>
+								<action class="com.top_logic.layout.view.command.GenericViewCommand"
+									image="css:bi bi-key"
+									inputs="account"
+								>
+									<label>
+										<en>Change password</en>
+										<de>Passwort ändern</de>
+									</label>
+									<executability>
+										<visible-if expr="$account.accountPasswordChangeAllowed()"/>
+									</executability>
+									<execute-script function="new(`tl.login:PasswordChange`, transient: true)">
+										<with-result>
+											<open-dialog
+												bind-input-to="model"
+												dialog-view="change-password.view.xml"
+											/>
+										</with-result>
+									</execute-script>
+								</action>
+							</button>
+						</stack>
 
 						<!--
 							Who acts in the account's name, and for whom the account acts. Naming a
 							deputy is an action of its own and not a field of the account form: it
 							hands the deputy every role the account holds, which is a decision taken
 							deliberately and confirmed with the password, not one saved along with a
-							time zone. The state is stated here for the same reason the second factor
-							is - what the button changes is what the line above it names.
+							time zone.
 						-->
-						<switch input="deputies">
-							<case test="!$deputies.isEmpty()">
-								<stack
-									direction="row"
-									gap="compact"
+						<stack id="deputies-section"
+							align="stretch"
+							direction="column"
+							gap="compact"
+						>
+							<text variant="title">
+								<label>
+									<en>Deputies</en>
+									<de>Stellvertreter</de>
+								</label>
+							</text>
+							<text input="deputiesLine"/>
+
+							<!--
+								Shown only where there is something to show: an account nobody named
+								as their deputy stands in for nobody, and a line saying so would be
+								noise.
+							-->
+							<switch input="deputyFor">
+								<case test="!$deputyFor.isEmpty()">
+									<text input="deputyForLine"/>
+								</case>
+							</switch>
+
+							<button>
+								<action class="com.top_logic.layout.view.command.GenericViewCommand"
+									image="css:bi bi-people"
+									inputs="representativeGroup"
 								>
-									<text>
-										<label>
-											<en>Deputies:</en>
-											<de>Stellvertreter:</de>
-										</label>
-									</text>
-									<text input="deputies"/>
-								</stack>
-							</case>
-							<default>
-								<text>
 									<label>
-										<en>Deputies: none</en>
-										<de>Stellvertreter: keine</de>
+										<en>Name deputies</en>
+										<de>Stellvertreter benennen</de>
 									</label>
-								</text>
-							</default>
-						</switch>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="deputies.view.xml"
+									/>
+								</action>
+							</button>
+						</stack>
 
 						<!--
-							Shown only where there is something to show: an account nobody named as
-							their deputy stands in for nobody, and a line saying so would be noise.
+							The second factor: whether it is active, by which of the methods the
+							application offers, stated rather than left to be inferred from the
+							buttons; then one block per method with its own state and buttons, in
+							the column two-factor-methods.
 						-->
-						<switch input="deputyFor">
-							<case test="!$deputyFor.isEmpty()">
-								<stack
-									direction="row"
+						<stack id="two-factor-section"
+							align="stretch"
+							direction="column"
+							gap="compact"
+						>
+							<text variant="title">
+								<label>
+									<en>Two-factor authentication</en>
+									<de>Zwei-Faktor-Authentifizierung</de>
+								</label>
+							</text>
+							<text input="secondFactorsLine"/>
+							<stack id="two-factor-methods"
+								align="stretch"
+								direction="column"
+								gap="default"
+							>
+								<!--
+									Setting the authenticator app up happens here and now, in the same
+									enrollment dialog the login flow uses: the account keeps its
+									requirement, since a factor the user chose is one they may drop
+									again. State and buttons follow whether a secret is stored, which
+									is what having the authenticator app is; each button is offered
+									only in the state where it means something. An account required
+									to use a second factor keeps that requirement whatever this view
+									offers, and drops the app only while another second factor of the
+									login is set up for it, which the action itself enforces.
+
+									Changing or removing an authenticator app that is set up asks for a
+									current code of it first: whoever does so must hold the device it lives
+									on, not only a session someone left logged in. The code prompt says what
+									it is asked for and is the consent at the same time, so no confirmation
+									follows it. Changing the authenticator app enrolls a fresh secret; the
+									stored one stays valid until a code of the fresh one confirms it.
+								-->
+								<stack id="authenticator-app"
+									align="stretch"
+									direction="column"
 									gap="compact"
 								>
-									<text>
+									<text variant="label">
 										<label>
-											<en>You stand in for:</en>
-											<de>Sie vertreten:</de>
+											<en>Authenticator app</en>
+											<de>Authenticator-App</de>
 										</label>
 									</text>
-									<text input="deputyFor"/>
+									<switch input="account">
+										<case test="$account.get(`tl.accounts:Person#mfaSecret`) == null">
+											<text>
+												<label>
+													<en>Not set up</en>
+													<de>Nicht eingerichtet</de>
+												</label>
+											</text>
+										</case>
+										<default>
+											<text>
+												<label>
+													<en>Set up</en>
+													<de>Eingerichtet</de>
+												</label>
+											</text>
+										</default>
+									</switch>
+									<button>
+										<action class="com.top_logic.layout.view.command.GenericViewCommand"
+											image="css:bi bi-shield-plus"
+											inputs="account"
+										>
+											<label>
+												<en>Set up</en>
+												<de>Einrichten</de>
+											</label>
+											<tooltip>
+												<en>Set up two-factor authentication with an authenticator app</en>
+												<de>Zwei-Faktor-Authentifizierung mit einer Authenticator-App einrichten</de>
+											</tooltip>
+											<executability>
+												<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) == null"/>
+											</executability>
+											<enroll-mfa/>
+										</action>
+									</button>
+									<button>
+										<action class="com.top_logic.layout.view.command.GenericViewCommand"
+											image="css:bi bi-arrow-repeat"
+											inputs="account"
+										>
+											<label>
+												<en>Change authenticator app</en>
+												<de>Authenticator-App wechseln</de>
+											</label>
+											<executability>
+												<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+											</executability>
+											<verify-second-factor>
+												<message>
+													<en>Enter the code your current authenticator app shows before setting up another one.</en>
+													<de>Geben Sie den Code ein, den Ihre bisherige Authenticator-App gerade anzeigt, bevor Sie eine andere einrichten.</de>
+												</message>
+											</verify-second-factor>
+											<enroll-mfa/>
+										</action>
+									</button>
+									<button>
+										<action class="com.top_logic.layout.view.command.GenericViewCommand"
+											image="css:bi bi-shield-minus"
+											inputs="account"
+										>
+											<label>
+												<en>Switch off</en>
+												<de>Abschalten</de>
+											</label>
+											<tooltip>
+												<en>Switch two-factor authentication with the authenticator app off</en>
+												<de>Zwei-Faktor-Authentifizierung mit der Authenticator-App abschalten</de>
+											</tooltip>
+											<executability>
+												<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+											</executability>
+											<verify-second-factor>
+												<message>
+													<en>Enter the code your authenticator app currently shows to log in with your password alone from now on.</en>
+													<de>Geben Sie den Code ein, den Ihre Authenticator-App gerade anzeigt, um sich künftig nur noch mit dem Passwort anzumelden.</de>
+												</message>
+											</verify-second-factor>
+											<disable-mfa/>
+										</action>
+									</button>
 								</stack>
-							</case>
-						</switch>
-
-						<button>
-							<action class="com.top_logic.layout.view.command.GenericViewCommand"
-								image="css:bi bi-people"
-								inputs="representativeGroup"
-							>
-								<label>
-									<en>Name deputies</en>
-									<de>Stellvertreter benennen</de>
-								</label>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="deputies.view.xml"
-								/>
-							</action>
-						</button>
-
-						<!--
-							Setting a second factor up happens here and now, in the same enrollment
-							dialog the login flow uses: the account keeps its requirement, since a
-							factor the user chose is one they may drop again. Each button is offered
-							only in the state where it means something - by whether a secret is stored,
-							which is what having a second factor is. An account required to use one
-							keeps it whatever this view offers, which the action itself enforces.
-							
-							Changing or removing a second factor that exists asks for a current code of
-							it first: whoever does so must hold the device it lives on, not only a session
-							someone left logged in. The code prompt says what it is asked for and is the
-							consent at the same time, so no confirmation follows it. Changing the
-							authenticator app enrolls a fresh secret; the stored one stays valid until a
-							code of the fresh one confirms it.
-						-->
-						<button>
-							<action class="com.top_logic.layout.view.command.GenericViewCommand"
-								image="css:bi bi-shield-plus"
-								inputs="account"
-							>
-								<label>
-									<en>Set up two-factor authentication</en>
-									<de>Zwei-Faktor-Authentifizierung einrichten</de>
-								</label>
-								<executability>
-									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) == null"/>
-								</executability>
-								<enroll-mfa/>
-							</action>
-						</button>
-						<button>
-							<action class="com.top_logic.layout.view.command.GenericViewCommand"
-								image="css:bi bi-arrow-repeat"
-								inputs="account"
-							>
-								<label>
-									<en>Change authenticator app</en>
-									<de>Authenticator-App wechseln</de>
-								</label>
-								<executability>
-									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
-								</executability>
-								<verify-second-factor>
-									<message>
-										<en>Enter the code your current authenticator app shows before setting up another one.</en>
-										<de>Geben Sie den Code ein, den Ihre bisherige Authenticator-App gerade anzeigt, bevor Sie eine andere einrichten.</de>
-									</message>
-								</verify-second-factor>
-								<enroll-mfa/>
-							</action>
-						</button>
-						<button>
-							<action class="com.top_logic.layout.view.command.GenericViewCommand"
-								image="css:bi bi-shield-minus"
-								inputs="account"
-							>
-								<label>
-									<en>Switch two-factor authentication off</en>
-									<de>Zwei-Faktor-Authentifizierung abschalten</de>
-								</label>
-								<executability>
-									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
-								</executability>
-								<verify-second-factor>
-									<message>
-										<en>Enter the code your authenticator app currently shows to log in with your password alone from now on.</en>
-										<de>Geben Sie den Code ein, den Ihre Authenticator-App gerade anzeigt, um sich künftig nur noch mit dem Passwort anzumelden.</de>
-									</message>
-								</verify-second-factor>
-								<disable-mfa/>
-							</action>
-						</button>
+							</stack>
+						</stack>
 					</stack>
 				</inset>
 			</tab>

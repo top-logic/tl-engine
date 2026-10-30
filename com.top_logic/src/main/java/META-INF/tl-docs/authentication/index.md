@@ -1,5 +1,5 @@
 ---
-description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), the order of the login steps (password, expired password, second factor), login throttling with LoginFailuresModule, and where multi-factor authentication and the self-service flows are described.
+description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), the order of the login steps (password, expired password, second factor through the configured SecondFactor methods), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
 order: 25
 ---
 
@@ -7,8 +7,9 @@ order: 25
 
 How a user gets from an anonymous session to a session of their own account, and the places where
 an application or a feature module hooks into that. The second factor is described in
-[Multi-factor authentication](doc:authentication/mfa), password reset and invitations in the
-self-service article of this chapter (module `tl-security-selfservice`).
+[Multi-factor authentication](doc:authentication/mfa), the login with passkeys (passwordless and as
+second factor) in the passkeys article of this chapter (module `tl-security-passkey`), password reset
+and invitations in the self-service article of this chapter (module `tl-security-selfservice`).
 
 ## Credentials check
 
@@ -77,8 +78,12 @@ the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The 
 
 1. An expired password replaces the dialog with `change-password.view.xml`
    (`ChangePasswordApplyAction`), which continues with the next step.
-2. An account with a stored secret gets `otp.view.xml` (`<verify-otp/>`); an account with
-   `MfaRequirement` `required` and no secret gets `mfa-enroll.view.xml` (`<verify-otp persist="true"/>`).
+2. The second factor: `SecondFactorStep.decide(account)` asks the methods of `SecondFactorsConfig`.
+   An account with a method set up confirms itself with it (the authenticator app in `otp.view.xml`
+   with `<verify-otp/>`, a passkey in `passkey-verify.view.xml`); an account with `MfaRequirement`
+   `required` and none set up sets one up (e.g. `mfa-enroll.view.xml` with
+   `<verify-otp persist="true"/>`). With several methods, `second-factor-choice.view.xml` lets the
+   user choose. See [the second factor of the React login](doc:authentication/mfa#second-factor-methods-of-the-react-login).
 3. The last step re-checks maintenance mode and allowed groups and logs the user in within the
    current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept and only
    its ID is changed, other open tabs keep their user, and a tab opened later starts with the user
@@ -87,7 +92,7 @@ the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The 
    `PendingSessionAction` on the reload it triggers.
 
 The partially authenticated account travels on the dialog channel `account` of the step dialogs; the
-TOTP secret on the channel `secret`, server side only. The step dialogs do not close on a backdrop
+TOTP secret of the authenticator app on the channel `secret`, server side only. The step dialogs do not close on a backdrop
 click.
 
 ### Contributing a login command
@@ -121,6 +126,13 @@ depending on it. The self-service module `com.top_logic.layout.view.selfservice`
 ```
 
 The entries are keyed by `id`, so an overlay can address a contributed element.
+
+A further way to log in that belongs beside the single sign-on buttons is added with a same-path
+overlay of `login-form.view.xml` instead: an element in `<form config:ref="credentials">`, placed
+with `config:position="after" config:reference="login-methods"`. `tl-security-passkey` adds its
+button "Sign in with passkey" (`<passkey-login>`) this way; it logs in with a passkey alone and
+completes the login with `LoginAction.completeLogin(...)` without the password steps (see the
+passkeys article of this chapter).
 
 ### External login methods (single sign-on)
 

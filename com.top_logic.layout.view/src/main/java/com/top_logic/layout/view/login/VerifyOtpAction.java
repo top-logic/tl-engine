@@ -52,7 +52,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @implNote Verification is delegated to {@link MfaSupport#isValidCode(Password, String)}; the
  *           secret is persisted via {@link com.top_logic.model.TLObject#tUpdateByName(String, Object)}
- *           on {@link Person#MFA_SECRET_ATTR} (avoiding the broken {@link Person#setMFASecret(Password)}).
+ *           on {@link Person#MFA_SECRET_ATTR}.
  *           The codes checked against one secret are counted by the {@link LoginFailuresModule}
  *           (key {@link LoginFailuresModule#secretKey(Password)}): after repeated wrong codes,
  *           further codes are refused for a growing time without being checked. Whether the window

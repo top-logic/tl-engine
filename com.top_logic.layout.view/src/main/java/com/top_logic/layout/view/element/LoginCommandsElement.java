@@ -80,6 +80,8 @@ public class LoginCommandsElement implements UIElement {
 		ReactStackControl result =
 			new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.END, false, children);
 		result.setCssClass(_cssClass);
+		// Without contributed commands the column is hidden, so that it takes no gap in the form.
+		result.setHidden(children.isEmpty());
 		return result;
 	}
 

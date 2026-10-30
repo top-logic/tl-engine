@@ -15,8 +15,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.bpe.BPEUtil;
 import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
@@ -45,32 +53,59 @@ import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.TimerEventDefinition;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.model.ModelService;
 
 /**
+ * Service executing the automatic steps of {@link ProcessExecution}s.
+ * 
+ * <p>
+ * The engine evaluates queries against the knowledge base and model of the running application.
+ * Therefore, it lives as long as these services and is restarted together with them.
+ * </p>
+ * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
-public class ExecutionEngine {
+@ServiceDependencies({
+	PersistencyLayer.Module.class,
+	ModelService.Module.class,
+	SearchBuilder.Module.class,
+})
+@Label("Process execution engine")
+@ServiceCategory.Of(RuntimeCategory.class)
+public class ExecutionEngine extends ManagedClass {
 
-	private static ExecutionEngine INSTANCE = new ExecutionEngine();
-	private QueryExecutor _activeExecutions;
+	private final QueryExecutor _activeExecutions;
 
 	/**
-	 * The singleton {@link ExecutionEngine} instance.
+	 * The {@link ExecutionEngine} service of the running application.
 	 */
 	public static ExecutionEngine getInstance() {
-		return INSTANCE;
+		return Module.INSTANCE.getImplementationInstance();
 	}
 
-	private ExecutionEngine() {
+	/**
+	 * Creates a {@link ExecutionEngine} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
+	 */
+	@CalledByReflection
+	public ExecutionEngine(InstantiationContext context, ServiceConfiguration<ExecutionEngine> config) {
+		super(context, config);
+
 		try {
 			Expr expr = new SearchExpressionParser(
 				new StringReader(
@@ -691,6 +726,27 @@ public class ExecutionEngine {
 		return nodes
 			.filter(n -> n instanceof StartEvent)
 			.map(n -> ((StartEvent) n));
+	}
+
+	/**
+	 * {@link TypedRuntimeModule} of the {@link ExecutionEngine}.
+	 */
+	public static final class Module extends TypedRuntimeModule<ExecutionEngine> {
+
+		/**
+		 * Singleton {@link ExecutionEngine.Module} instance.
+		 */
+		public static final ExecutionEngine.Module INSTANCE = new Module();
+
+		private Module() {
+			// Singleton constructor.
+		}
+
+		@Override
+		public Class<ExecutionEngine> getImplementation() {
+			return ExecutionEngine.class;
+		}
+
 	}
 
 }

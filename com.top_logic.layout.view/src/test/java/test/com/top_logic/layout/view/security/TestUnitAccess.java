@@ -86,6 +86,9 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 	/** A sidebar whose group is checked on the security root. */
 	private static final String DENIED_SIDEBAR = "sidebar-denied-group.view.xml";
 
+	/** A sidebar with a section the user can never see beside an unguarded item. */
+	private static final String DENIED_SECTION_SIDEBAR = "sidebar-denied-section.view.xml";
+
 	/** A tab bar whose selected tab is hidden while denied. */
 	private static final String HIDE_TABS = "tabs-hide.view.xml";
 
@@ -355,6 +358,23 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 		becomeUser(_root);
 		items = maps(state((ReactSidebarControl) sidebar.createControl(_context)).get(ITEMS));
 		assertEquals("Root sees the group: " + items, 2, items.size());
+	}
+
+	/**
+	 * Tests that a sidebar section the user can never see is left out with everything it holds.
+	 */
+	public void testGuardedSidebarSectionIsOmitted() throws ConfigurationException {
+		becomeUser(_roleless);
+		SidebarElement sidebar = (SidebarElement) content(DENIED_SECTION_SIDEBAR);
+		List<Map<String, Object>> items =
+			maps(state((ReactSidebarControl) sidebar.createControl(_context)).get(ITEMS));
+		assertEquals("Only the unguarded item is offered: " + items, 1, items.size());
+		assertEquals("open", items.get(0).get(ID));
+
+		becomeUser(_root);
+		items = maps(state((ReactSidebarControl) sidebar.createControl(_context)).get(ITEMS));
+		assertEquals("Root sees the section: " + items, 2, items.size());
+		assertEquals(GUARDED, items.get(0).get(ID));
 	}
 
 	/**

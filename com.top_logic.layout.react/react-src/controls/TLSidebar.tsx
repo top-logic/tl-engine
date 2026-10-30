@@ -8,7 +8,7 @@ import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from 'tl
 
 import { childrenOf, drawnItems, flyoutEntries, hasDividerBefore } from './sidebarItems';
 import type {
-  NavItem, CommandItemInfo, HeaderItemInfo, GroupItemInfo, SectionItemInfo, SidebarItemData,
+  NavItem, CommandItemInfo, GroupItemInfo, SectionItemInfo, SidebarItemData,
 } from './sidebarItems';
 
 const { useCallback, useMemo, useState, useEffect, useRef } = React;
@@ -54,7 +54,6 @@ function collectFocusable(
       // The items of a section stand at its own level, within the group around it if any.
       result.push(...collectFocusable(item.children, collapsed, groupStates, parentGroupId));
     }
-    // headers and separators are not focusable
   }
   return result;
 }
@@ -135,9 +134,9 @@ const SidebarCommandItem: React.FC<{
   </button>
 );
 
-/** A heading in the rail: that of a header item or of a labelled section. */
-const SidebarHeaderItem: React.FC<{
-  item: HeaderItemInfo | SectionItemInfo;
+/** The heading of a labelled section in the rail. */
+const SidebarSectionHeading: React.FC<{
+  item: SectionItemInfo;
   collapsed: boolean;
 }> = ({ item, collapsed }) => {
   if (collapsed && !item.icon) return null;
@@ -187,8 +186,6 @@ const SidebarGroupFlyout: React.FC<{
           onSelect={() => { onExecute(command.id); onClose(); }} />
       );
     }
-    if (child.type === 'header') return <MenuHeader label={child.label ?? ''} />;
-    if (child.type === 'separator') return <MenuSeparator />;
     if (child.type === 'section') {
       return (
         <>
@@ -345,14 +342,10 @@ const SidebarItemRenderer: React.FC<SidebarEntryContext & { item: SidebarItemDat
       return <SidebarCommandItem item={item} collapsed={collapsed} onExecute={onExecute}
         tabIndex={focusedId === item.id ? 0 : -1}
         itemRef={setItemRef(item.id)} onFocus={onItemFocus} />;
-    case 'header':
-      return <SidebarHeaderItem item={item} collapsed={collapsed} />;
-    case 'separator':
-      return <MenuSeparator />;
     case 'section':
       return (
         <>
-          {item.label && <SidebarHeaderItem item={item} collapsed={collapsed} />}
+          {item.label && <SidebarSectionHeading item={item} collapsed={collapsed} />}
           <SidebarItemList items={item.children} {...context} />
         </>
       );

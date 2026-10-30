@@ -92,10 +92,10 @@ public class GroupItemElement implements SidebarItemElement {
 		/**
 		 * The items gathered under the heading.
 		 *
-		 * @implNote Written directly as {@code <nav-item>}, {@code <group>}, {@code <header-item>},
-		 *           {@code <command-item>} or {@code <separator>} children of the {@code <group>}
-		 *           (the {@code <items>} wrapper is optional), keyed by
-		 *           {@link SidebarItemConfig#getId()} as the items of the sidebar itself are.
+		 * @implNote Written directly as {@code <nav-item>}, {@code <group>}, {@code <section>} or
+		 *           {@code <command-item>} children of the {@code <group>} (the {@code <items>}
+		 *           wrapper is optional), keyed by {@link SidebarItemConfig#getId()} as the items of
+		 *           the sidebar itself are.
 		 */
 		@Name(ITEMS)
 		@Key(SidebarItemConfig.ID)

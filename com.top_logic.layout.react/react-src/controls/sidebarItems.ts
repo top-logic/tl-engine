@@ -28,14 +28,6 @@ export interface CommandItemInfo extends SidebarItemBase {
   tooltip?: string;
 }
 
-export interface HeaderItemInfo extends SidebarItemBase {
-  type: 'header';
-}
-
-export interface SeparatorItemInfo extends SidebarItemBase {
-  type: 'separator';
-}
-
 export interface GroupItemInfo extends SidebarItemBase {
   type: 'group';
   expanded: boolean;
@@ -49,7 +41,7 @@ export interface SectionItemInfo extends SidebarItemBase {
 }
 
 export type SidebarItemData =
-  NavItem | CommandItemInfo | HeaderItemInfo | SeparatorItemInfo | GroupItemInfo | SectionItemInfo;
+  NavItem | CommandItemInfo | GroupItemInfo | SectionItemInfo;
 
 /** The items the given item holds: those of a group or a section, none for any other item. */
 export function childrenOf(item: SidebarItemData): SidebarItemData[] {

@@ -162,10 +162,11 @@ describe('the dividers of a menu (TLMenu) as MUI dividers', () => {
 describe('the dividers of the sidebar (TLSidebar) as MUI dividers', () => {
   const INBOX = { id: 'inbox', type: 'nav', label: 'Eingang', icon: 'css:fa-solid fa-inbox' };
   const ARCHIVE = { id: 'archive', type: 'nav', label: 'Archiv', icon: 'css:fa-solid fa-box' };
-  const SEPARATOR = { id: 'sep', type: 'separator' };
+  const MAIL = { id: 'mail', type: 'section', children: [INBOX] };
+  const STORAGE = { id: 'storage', type: 'section', children: [ARCHIVE] };
 
-  it('draws a separator item as a horizontal MUI divider with the space of the sidebar', async () => {
-    mountAdapter(TLSidebar, { items: [INBOX, SEPARATOR, ARCHIVE], activeItemId: 'inbox', collapsed: false, drawerOpen: false });
+  it('draws the divider between two sections as a horizontal MUI divider with the space of the sidebar', async () => {
+    mountAdapter(TLSidebar, { items: [MAIL, STORAGE], activeItemId: 'inbox', collapsed: false, drawerOpen: false });
     await settle();
 
     const dividers = document.querySelectorAll('hr');
@@ -175,7 +176,7 @@ describe('the dividers of the sidebar (TLSidebar) as MUI dividers', () => {
     expect(dividers[0].parentElement!.classList).toContain('tl-menu__separator');
   });
 
-  it('draws no divider for a sidebar without separator items', async () => {
+  it('draws no divider for a sidebar without sections', async () => {
     mountAdapter(TLSidebar, { items: [INBOX, ARCHIVE], activeItemId: 'inbox', collapsed: false, drawerOpen: false });
     await settle();
 

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.security.passkey.PasskeyService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<!--
+			The relying party of the passkeys. Without rp-id and origins, both are derived from the
+			request that starts a ceremony; set them when the application runs behind a reverse proxy
+			that does not forward the original host, e.g.
+
+				rp-id="example.com"
+				origins="https://app.example.com"
+		-->
+		<config service-class="com.top_logic.security.passkey.PasskeyService">
+			<instance class="com.top_logic.security.passkey.PasskeyService"
+				timeout="5min"
+				user-verification="REQUIRED"
+			/>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl.security.passkey.Meta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

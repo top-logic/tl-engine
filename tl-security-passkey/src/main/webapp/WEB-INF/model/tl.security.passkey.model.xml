@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.security.passkey">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.security.passkey.model.impl"
+				interface-package="com.top_logic.security.passkey.model"
+			/>
+		</annotations>
+		<types>
+			<!--
+				A passkey (WebAuthn credential) registered for an account. It is a part of the account
+				(tl.accounts:Person#passkeys): deleting the account deletes its passkeys.
+
+				The private key never leaves the authenticator. What is stored is what the relying party
+				needs to verify a login: the credential ID the authenticator presents, the public key in
+				COSE format and the signature counter of the last login.
+			-->
+			<class name="Passkey">
+				<annotations>
+					<table name="Passkey"/>
+					<id-column value="label"/>
+					<main-properties properties="label,createdAt,lastUsed,backedUp"/>
+				</annotations>
+				<attributes>
+					<property name="label"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The credential ID in base64url encoding without padding; the key a login looks the passkey up by. -->
+					<property name="credentialId"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<!-- The COSE-encoded public key in base64url encoding without padding. -->
+					<property name="publicKey"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<!-- The signature counter of the last login; zero for an authenticator without a counter. -->
+					<property name="signatureCount"
+						mandatory="true"
+						type="tl.core:Long"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<!-- The comma-separated transport hints of the authenticator, e.g. "internal,hybrid". -->
+					<property name="transports"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="backupEligible"
+						mandatory="true"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="backedUp"
+						mandatory="true"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="lastUsed"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

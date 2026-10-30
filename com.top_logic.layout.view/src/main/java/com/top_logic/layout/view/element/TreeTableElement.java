@@ -228,8 +228,10 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			return binding;
 		};
 
+		Object[] inputValues = ChannelInputs.arguments(inputChannels);
+		RowTypes types = types(inputValues);
 		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>, TreeSelectionBinding> table = createTable(context,
-			resolveRowType(structure.topLevelObjects()), ChannelInputs.arguments(inputChannels),
+			types, resolveRowType(types, structure.topLevelObjects()), inputValues,
 			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, rowCssClass,
 			selectionBinder);
 		TableViewControl<Object> control = table.control();

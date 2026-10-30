@@ -412,7 +412,7 @@ public class XMLInstanceExporter {
 	
 		if (downloadName == null) {
 			downloadName =
-				new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName
+				new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + "_" + typeName
 					+ InitialDataSetup.FILE_SUFFIX;
 		}
 		InstanceXmlData instanceData = new InstanceXmlData(downloadName, export);

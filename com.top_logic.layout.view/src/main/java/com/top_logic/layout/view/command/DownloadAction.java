@@ -14,6 +14,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.io.binary.StreamIOConverter;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -30,9 +32,10 @@ import com.top_logic.util.error.TopLogicException;
  * actions it is nested in, or the argument selected with {@code value}.
  *
  * <p>
- * The value must be {@link BinaryData}, as a TL-Script function producing a file returns it - an
- * Excel workbook from {@code excelFile(...)}, a document from a template, the content of a file
- * attribute. The browser saves the file under its name.
+ * The value must be a file ({@link BinaryDataSource}), as a TL-Script function producing a file
+ * returns it - an Excel workbook from {@code excelFile(...)}, a document from a template, the
+ * content of a file attribute, an XML export of objects from {@code instanceExport(...)}. The
+ * browser saves the file under its name.
  * </p>
  *
  * <p>
@@ -115,12 +118,12 @@ public class DownloadAction extends ArgumentsViewAction {
 		if (input == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOTHING_TO_DOWNLOAD);
 		}
-		if (!(input instanceof BinaryData file)) {
+		if (!(input instanceof BinaryDataSource source)) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_NOT_A_FILE__VALUE.fill(MetaLabelProvider.INSTANCE.getLabel(input)));
 		}
 
-		BinaryData download = rename(context, arguments, file);
+		BinaryData download = rename(context, arguments, StreamIOConverter.toData(source));
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue == null) {
 			// A chain running headless has no browser to save the file in.

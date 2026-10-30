@@ -2,14 +2,14 @@
 
 <!--
 	Root view of the tl-ai demo, served under /view/ and resolved through ViewConfig#getDefaultView.
-
+	
 	An overlay of the engine's application shell (tl-layout-view, WEB-INF/views/app.view.xml): the
 	engine brings the app bar with its development and user menus (designer, login, logout, theme,
 	language), the system notices and the Administration item; this file adds what the demo is
 	about. That is the agent chat, the start item, the event-management domain the agent works on
 	(events, venues, invoices of the demo.events model), the user's settings for the agent, and the
 	chat dock in the footer.
-
+	
 	Everything here is built from the standard view elements, the chat included, so the demo shows
 	what an application gets for free rather than what this module wrote itself.
 -->
@@ -17,7 +17,7 @@
 	<channels>
 		<!--
 			The dock's wiring, declared here because the dock lives in the shell's footer.
-
+			
 			Its conversation is "chat" - the SAME one the Chat page shows. The dock is a second
 			PLACE for that conversation, not a second conversation, and it hides itself (launcher
 			included) while the Chat page has it on screen: two views of one conversation would give
@@ -25,7 +25,7 @@
 			id of its own would be a second conversation and would work - since #502 every /chat/*
 			call names its conversation beside its window, and the server holds an active session,
 			a run and a stream for each.
-
+			
 			The channels are the dock's own, because the page declares its own in
 			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
 		-->
@@ -36,7 +36,7 @@
 			the dock floats over every page. The pages do not <bind> it: <chat-channels> in the footer
 			makes it reachable from the whole window, and a <page-selection> in a page writes into it
 			while that page is on screen - also from a tile-stack frame, which no <bind> reaches.
-
+			
 			Only <page-selection> writes it, and no table uses it as its selection: a page states what
 			it has open, it does not select rows on another page. When the page leaves the screen, the
 			value goes, so on "My settings" the dock states "none".
@@ -80,120 +80,116 @@
 						</label>
 					</text>
 				</header-collapsed>
-				<!--
-					The chat first and active on entry: this application exists to demonstrate the
-					agent, and the events are the data it works on rather than the point. Every item
-					goes before the separator of the engine's shell, ahead of its Administration.
-
-					It is built from view elements; the one-element form that used to exist is gone -
-					a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
-					whose sections are configured (Issue #415). See
-					tl-ai-demo/chat-grouped.view.xml.
-				-->
-				<nav-item id="chat"
-					config:position="before"
-					config:reference="system-separator"
-					icon="css:bi bi-chat-dots"
-				>
-					<label>
-						<en>Chat</en>
-						<de>Chat</de>
-					</label>
+				<section id="application">
 					<!--
-						The chat page declares a "chatDraft" of its own, so it also works standalone;
-						this binding hands it *this* view's channel instead, which is the one the
-						Events and Invoices pages below write.
+						The chat first and active on entry: this application exists to demonstrate the
+						agent, and the events are the data it works on rather than the point. Every item
+						goes into the application section of the engine's shell, ahead of its
+						Administration.
+						
+						It is built from view elements; the one-element form that used to exist is gone -
+						a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
+						whose sections are configured (Issue #415). See
+						tl-ai-demo/chat-grouped.view.xml.
 					-->
-					<view-ref view="tl-ai-demo/chat-grouped.view.xml">
-						<bind channel="chatDraft"
-							to="chatDraft"
-						/>
-					</view-ref>
-				</nav-item>
+					<nav-item id="chat"
+						icon="css:bi bi-chat-dots"
+					>
+						<label>
+							<en>Chat</en>
+							<de>Chat</de>
+						</label>
+						<!--
+							The chat page declares a "chatDraft" of its own, so it also works standalone;
+							this binding hands it *this* view's channel instead, which is the one the
+							Events and Invoices pages below write.
+						-->
+						<view-ref view="tl-ai-demo/chat-grouped.view.xml">
+							<bind
+								channel="chatDraft"
+								to="chatDraft"
+							/>
+						</view-ref>
+					</nav-item>
 
-				<!--
-					The event-management domain, one page per kind of thing the user looks for.
-					Each page tells the dock's conversation what it has open with a <page-selection>
-					in its detail view (Issue #928); the Events and Invoices pages also write the
-					chat's draft with their "Ask about this" command (Issue #440). Venues is a tile
-					stack: a double-click opens a venue as a frame over the list.
-				-->
-				<nav-item id="events"
-					config:position="before"
-					config:reference="system-separator"
-					icon="css:bi bi-calendar-event"
-				>
-					<label>
-						<en>Events</en>
-						<de>Veranstaltungen</de>
-					</label>
-					<view-ref view="tl-ai-demo/events/events.view.xml">
-						<bind channel="chatDraft"
-							to="chatDraft"
-						/>
-					</view-ref>
-				</nav-item>
+					<!--
+						The event-management domain, one page per kind of thing the user looks for.
+						Each page tells the dock's conversation what it has open with a <page-selection>
+						in its detail view (Issue #928); the Events and Invoices pages also write the
+						chat's draft with their "Ask about this" command (Issue #440). Venues is a tile
+						stack: a double-click opens a venue as a frame over the list.
+					-->
+					<nav-item id="events"
+						icon="css:bi bi-calendar-event"
+					>
+						<label>
+							<en>Events</en>
+							<de>Veranstaltungen</de>
+						</label>
+						<view-ref view="tl-ai-demo/events/events.view.xml">
+							<bind
+								channel="chatDraft"
+								to="chatDraft"
+							/>
+						</view-ref>
+					</nav-item>
 
-				<nav-item id="venues"
-					config:position="before"
-					config:reference="system-separator"
-					icon="css:bi bi-geo-alt"
-				>
-					<label>
-						<en>Venues</en>
-						<de>Veranstaltungsorte</de>
-					</label>
-					<view-ref view="tl-ai-demo/venues/venues-stack.view.xml"/>
-				</nav-item>
+					<nav-item id="venues"
+						icon="css:bi bi-geo-alt"
+					>
+						<label>
+							<en>Venues</en>
+							<de>Veranstaltungsorte</de>
+						</label>
+						<view-ref view="tl-ai-demo/venues/venues-stack.view.xml"/>
+					</nav-item>
 
-				<nav-item id="invoices"
-					config:position="before"
-					config:reference="system-separator"
-					icon="css:bi bi-receipt"
-				>
-					<label>
-						<en>Invoices</en>
-						<de>Rechnungen</de>
-					</label>
-					<view-ref view="tl-ai-demo/invoices/invoices.view.xml">
-						<bind channel="chatDraft"
-							to="chatDraft"
-						/>
-					</view-ref>
-				</nav-item>
+					<nav-item id="invoices"
+						icon="css:bi bi-receipt"
+					>
+						<label>
+							<en>Invoices</en>
+							<de>Rechnungen</de>
+						</label>
+						<view-ref view="tl-ai-demo/invoices/invoices.view.xml">
+							<bind
+								channel="chatDraft"
+								to="chatDraft"
+							/>
+						</view-ref>
+					</nav-item>
 
-				<!--
-					What this account tells every agent about itself (Issue #437): one free-text
-					field on tl.accounts:Person, which the harness renders into the environment block
-					of every run this user triggers.
-				-->
-				<nav-item id="profile"
-					config:position="before"
-					config:reference="system-separator"
-					icon="css:bi bi-person-gear"
-				>
-					<label>
-						<en>My settings</en>
-						<de>Meine Einstellungen</de>
-					</label>
-					<view-ref view="tl-ai-demo/profile.view.xml"/>
-				</nav-item>
+					<!--
+						What this account tells every agent about itself (Issue #437): one free-text
+						field on tl.accounts:Person, which the harness renders into the environment block
+						of every run this user triggers.
+					-->
+					<nav-item id="profile"
+						icon="css:bi bi-person-gear"
+					>
+						<label>
+							<en>My settings</en>
+							<de>Meine Einstellungen</de>
+						</label>
+						<view-ref view="tl-ai-demo/profile.view.xml"/>
+					</nav-item>
+				</section>
 			</sidebar>
 		</content>
 		<!--
 			The chat as a dock: a launcher in the corner of every page, and a panel over the page
 			when it is opened (Issue #415).
-
+			
 			The <footer> is a mounting point and nothing more - the dock is fixed-position, so it
 			takes no room in the shell's layout and every page keeps its full height.
-
+			
 			Two things about this are worth reading twice.
-
+			
 			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
 			the id: a chat scope reaches descendants only. The id is therefore written twice, here
 			and on the <chat> inside, and the two must agree. ChatJoinLog warns about an element that
 			joined nobody, which is the shape a typo here produces.
-
+			
 			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
 			every other page without leaving it. On the Chat page itself there
 			is nothing for the dock to open, so it hides - and showing it there would put two
@@ -205,7 +201,8 @@
 				<page-selection> elements of the pages (Issue #928). It draws nothing.
 			-->
 			<chat-channels channels="pageSelection"/>
-			<chat-dock chat-id="chat"
+			<chat-dock
+				chat-id="chat"
 				icon="css:bi bi-stars"
 			>
 				<label>
@@ -218,7 +215,8 @@
 					panel's direct child or the conversation grows with its transcript instead of
 					scrolling inside the panel.
 				-->
-				<chat chat-id="chat"
+				<chat
+					chat-id="chat"
 					direction="row"
 				>
 					<!--
@@ -308,7 +306,7 @@
 								of the system prompt, and a block that gained or lost a line between
 								two turns of one chat would miss the provider's prompt cache on every
 								turn after it.
-
+								
 								"Open event" is this dock's own rail pane, the way it is the page's
 								rail pane over there.
 							-->
@@ -347,7 +345,8 @@
 						the section column with its form, inside the dock's panel, exactly as it does
 						on the page. The pane is the rail's own and renders any type (#616).
 					-->
-					<chat-rail input="dockPaneObject"
+					<chat-rail
+						input="dockPaneObject"
 						open="false"
 						strip="true"
 					>
@@ -422,7 +421,8 @@
 								</empty-text>
 								<lines>
 									<line attribute="name"/>
-									<line attribute="startDate"
+									<line
+										attribute="startDate"
 										emphasis="secondary"
 									/>
 								</lines>

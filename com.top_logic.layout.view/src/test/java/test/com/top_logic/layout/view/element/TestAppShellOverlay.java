@@ -35,6 +35,7 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.element.AppBarElement;
 import com.top_logic.layout.view.element.AppShellElement;
+import com.top_logic.layout.view.element.SectionItemElement;
 import com.top_logic.layout.view.element.SidebarElement;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
 import com.top_logic.layout.view.element.TextElement;
@@ -61,15 +62,19 @@ public class TestAppShellOverlay extends TestCase {
 	/** The account area, which closes the app bar of the shell. */
 	private static final String USER_MENU = "user-menu.view.xml";
 
-	/** The separator the shell places in front of its system section. */
-	private static final String SYSTEM_SEPARATOR = "system-separator";
+	/** The section of the shell an application fills with its items. */
+	private static final String APPLICATION_SECTION = "application";
+
+	/** The section of the shell holding the system pages. */
+	private static final String SYSTEM_SECTION = "system";
 
 	/** The administration item of the shell. */
 	private static final String ADMINISTRATION = "administration";
 
 	/**
-	 * An application overlay: names the application, sets the start item, adds a channel and places
-	 * items before and after the system section.
+	 * An application overlay: names the application, sets the start item, adds a channel, places
+	 * items into the application section of the shell - the first of them a section of its own - and
+	 * one item after the system section.
 	 */
 	private static final String OVERLAY = """
 			<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
@@ -87,15 +92,19 @@ public class TestAppShellOverlay extends TestCase {
 								</text>
 							</header>
 							<items>
-								<header-item id="pages"
-									config:position="before" config:reference="system-separator">
-									<label><en>Pages</en></label>
-								</header-item>
-								<nav-item id="home" badge="count"
-									config:position="before" config:reference="system-separator">
-									<view-ref view="home.view.xml"/>
-									<label><en>Home</en></label>
-								</nav-item>
+								<section id="application">
+									<section id="pages">
+										<label><en>Pages</en></label>
+										<nav-item id="home" badge="count">
+											<view-ref view="home.view.xml"/>
+											<label><en>Home</en></label>
+										</nav-item>
+									</section>
+									<nav-item id="start">
+										<view-ref view="start.view.xml"/>
+										<label><en>Start</en></label>
+									</nav-item>
+								</section>
 								<nav-item id="about">
 									<view-ref view="about.view.xml"/>
 									<label><en>About</en></label>
@@ -152,7 +161,11 @@ public class TestAppShellOverlay extends TestCase {
 		ViewElement.Config view = view(base());
 		AppShellElement.Config shell = shell(view);
 
-		assertEquals(List.of(SYSTEM_SEPARATOR, ADMINISTRATION), ids(sidebar(shell).getItems()));
+		List<SidebarItemConfig> items = sidebar(shell).getItems();
+		assertEquals(List.of(APPLICATION_SECTION, SYSTEM_SECTION), ids(items));
+		assertEquals("The application section is left to the application.", List.of(),
+			ids(section(items.get(0)).getItems()));
+		assertEquals(List.of(ADMINISTRATION), ids(section(items.get(1)).getItems()));
 		assertEquals(text("TopLogic", "TopLogic"), appBar(shell).getTitle());
 		assertEquals(List.of(DEV_MENU, USER_MENU), views(appBar(shell).getTrailing()));
 		assertEquals("Maintenance and session timeout notice.", 2, shell.getNotices().size());
@@ -162,7 +175,8 @@ public class TestAppShellOverlay extends TestCase {
 
 	/**
 	 * An overlay extends the sidebar and the app bar of the shell instead of placing second ones
-	 * beside them, and positions its items relative to the system section.
+	 * beside them, and fills the application section of the shell, which stands before the system
+	 * section.
 	 */
 	public void testOverlayExtendsShell() throws Exception {
 		ViewElement.Config view = view(base(), OVERLAY);
@@ -173,8 +187,16 @@ public class TestAppShellOverlay extends TestCase {
 
 		assertEquals("The overlay extends the one sidebar of the shell.", 1, shell.getContent().size());
 		SidebarElement.Config sidebar = sidebar(shell);
-		assertEquals("Items before the system section, the item without position after it.",
-			List.of("pages", "home", SYSTEM_SEPARATOR, ADMINISTRATION, "about"), ids(sidebar.getItems()));
+		List<SidebarItemConfig> items = sidebar.getItems();
+		assertEquals("The sections of the shell first, the item written beside them after them.",
+			List.of(APPLICATION_SECTION, SYSTEM_SECTION, "about"), ids(items));
+		SectionItemElement.Config application = section(items.get(0));
+		assertEquals("The overlay's items are placed into the section addressed by its id.",
+			List.of("pages", "start"), ids(application.getItems()));
+		assertEquals(List.of("home"), ids(section(application.getItems().get(0)).getItems()));
+		assertEquals(text("Pages"), section(application.getItems().get(0)).getLabel());
+		assertEquals("The system section keeps its item.", List.of(ADMINISTRATION),
+			ids(section(items.get(1)).getItems()));
 		assertEquals("home", sidebar.getActiveItem());
 		assertEquals("The base keeps the drawer toggle.", "appbar-leading", sidebar.getDrawerOpenSlotName());
 
@@ -285,6 +307,11 @@ public class TestAppShellOverlay extends TestCase {
 	private static AppBarElement.Config appBar(AppShellElement.Config shell) {
 		assertEquals("One element in the header slot.", 1, shell.getHeader().size());
 		return (AppBarElement.Config) shell.getHeader().get(0);
+	}
+
+	private static SectionItemElement.Config section(SidebarItemConfig item) {
+		assertTrue("A section: " + item, item instanceof SectionItemElement.Config);
+		return (SectionItemElement.Config) item;
 	}
 
 	private static List<String> ids(List<SidebarItemConfig> items) {

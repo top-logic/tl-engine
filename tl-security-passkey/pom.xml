@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<relativePath>../tl-parent-core/internal</relativePath>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core-internal</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>tl-security-passkey</artifactId>
+	<name>${project.artifactId}</name>
+	<description>Login with passkeys (WebAuthn) for the React view UI.</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.yubico</groupId>
+			<artifactId>webauthn-server-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<!-- Encodes the attestation objects of the software authenticator of the tests. -->
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-cbor</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- Checks the scripts of the views of this module (TestViewScripts). -->
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-binding</id>
+						<phase>none</phase>
+						<goals>
+							<goal>generate-java</goal>
+						</goals>
+						<configuration>
+							<modules>tl.security.passkey</modules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

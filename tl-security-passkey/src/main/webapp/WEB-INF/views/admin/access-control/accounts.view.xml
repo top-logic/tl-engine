@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the passkeys of the selected account to the account administration of
+	tl-layout-view (WEB-INF/views/admin/access-control/accounts.view.xml): a same-path overlay,
+	appended below the form of the detail panel (<panel config:ref="detail-panel">).
+	
+	The administrator sees which passkeys an account has and removes one that is lost or no longer
+	trusted. The deletion is not restricted to passkeys the account can spare: an account required
+	to use a second factor that loses its last one sets a new one up at its next login.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<!-- The passkey selected in the table of the selected account's passkeys. -->
+		<channel name="selectedPasskey"
+			config:operation="add"
+		/>
+	</channels>
+	<panel config:ref="detail-panel">
+		<panel id="passkeys"
+			fill="false"
+		>
+			<title>
+				<en>Passkeys</en>
+				<de>Passkeys</de>
+			</title>
+			<commands>
+				<generic-command
+					image="css:bi bi-trash"
+					inputs="selectedPasskey"
+					placement="TOOLBAR"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<executability>
+						<null-input-disabled/>
+					</executability>
+					<confirm expr="#('Delete the passkey &quot;{0}&quot;? The account can no longer log in with it.'@en, 'Den Passkey „{0}“ löschen? Das Konto kann sich damit nicht mehr anmelden.'@de).fill($selectedPasskey.get(`tl.security.passkey:Passkey#label`))"/>
+					<delete-object/>
+					<write-channel name="selectedPasskey"
+						clear="true"
+					/>
+				</generic-command>
+			</commands>
+			<table
+				inputs="selectedAccount"
+				observed-types="tl.security.passkey:Passkey"
+				row-count="false"
+				selection="selectedPasskey"
+				types="tl.security.passkey:Passkey"
+			>
+				<columns>
+					<column attribute="label"/>
+					<column attribute="createdAt"/>
+					<column attribute="lastUsed"/>
+					<column attribute="backedUp"/>
+				</columns>
+				<rows><![CDATA[if($selectedAccount == null, list(), $selectedAccount.get(`tl.accounts:Person#passkeys`).sort((p -> $p.get(`tl.security.passkey:Passkey#createdAt`)).comparator()))]]></rows>
+			</table>
+		</panel>
+	</panel>
+</view>

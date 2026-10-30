@@ -165,6 +165,19 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		putState(DIALOGS, dialogs);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A modal dialog is not a page: opening it, switching its tabs and closing it leave the address
+	 * of the page it is shown on as it is.
+	 * </p>
+	 */
+	@Override
+	public boolean isContentOutsidePage() {
+		return true;
+	}
+
 	@Override
 	protected void cleanupChildren() {
 		super.cleanupChildren();

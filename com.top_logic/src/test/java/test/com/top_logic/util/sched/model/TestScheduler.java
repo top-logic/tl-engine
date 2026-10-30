@@ -64,6 +64,9 @@ public class TestScheduler extends BasicTestCase {
 	/** Timeout in milliseconds when using the {@link BarrierTestTask}. */
 	private static final long BARRIER_TIMEOUT = 2000;
 
+	/** Timeout in milliseconds for waiting until a scheduled task has been started. */
+	private static final long START_TIMEOUT = 10000;
+
 	/**
 	 * Polling interval in milliseconds of a scheduler, that is far longer than any test waits for
 	 * the scheduler to react.
@@ -242,9 +245,7 @@ public class TestScheduler extends BasicTestCase {
 		ExampleTask zombieTask = new ExampleTask("Zombie", LegacySchedulesCommon.ONCE, 0, curHour, curMinute, INFINITLY);
         zombieTask.setAllowStop(false);
 		scheduler.addTask(zombieTask);
-        
-        // Sleep until Task was executed
-        Thread.sleep(100);
+		waitUntilStarted(zombieTask);
         
         // Suppress ERRORs which are quite OK in this case 
         Logger.configureStdout("FATAL"); //***********
@@ -283,7 +284,7 @@ public class TestScheduler extends BasicTestCase {
 		scheduler.addTask(deadTask);
 		scheduler.addTask(slowTask);
 		scheduler.addTask(fastTask);
-        
+		waitUntilStarted(deadTask, slowTask);
         Thread.sleep(SHORT_SLEEP); // Sleep a bit to get things going
                
         // Suppress ERROR which is quite OK in this case 
@@ -314,7 +315,7 @@ public class TestScheduler extends BasicTestCase {
 
 		scheduler.addTask(slowTask);
 		scheduler.addTask(fastTask);
-        
+		waitUntilStarted(slowTask);
         Thread.sleep(3 * TASK_SLEEP + TASK_TIMEOUT); // give some time for Tasks/Batches to run
         
 		stopAndJoin();
@@ -343,7 +344,7 @@ public class TestScheduler extends BasicTestCase {
             curHour, curMinute, TASK_SLEEP << 2, curHour + 1, curMinute, 10);  
             // May fail when run around midnight, well
 		scheduler.addTask(periodTask);
-        
+		waitUntilStarted(periodTask);
         Thread.sleep(TASK_SLEEP << 4); // give some time for periodTask to run
         
 		stopAndJoin();
@@ -401,6 +402,26 @@ public class TestScheduler extends BasicTestCase {
 				} catch (InterruptedException ex) {
 					throw new RuntimeException(ex);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Waits until the scheduler has started the given tasks.
+	 *
+	 * <p>
+	 * A time budget of a test starts with the runs of its tasks, not with the scheduler start:
+	 * Starting the dispatch thread can take longer than the budget on a loaded machine.
+	 * </p>
+	 */
+	private static void waitUntilStarted(ExampleTask... tasks) throws InterruptedException {
+		long timeout = System.currentTimeMillis() + START_TIMEOUT;
+		for (ExampleTask task : tasks) {
+			while (!task.isRunning() && task.getRunTimes() == 0) {
+				if (System.currentTimeMillis() > timeout) {
+					fail("Task '" + task.getName() + "' has not been started within " + START_TIMEOUT + "ms.");
+				}
+				Thread.sleep(5);
 			}
 		}
 	}
@@ -620,10 +641,7 @@ public class TestScheduler extends BasicTestCase {
 			assertFalse(scheduler.hasActiveOverride(redundant));
 			assertNull(fetchBlock(redundant.getName()));
 		} finally {
-			scheduler.resetActive(blocked);
-			scheduler.resetActive(unblocked);
-			scheduler.resetActive(redundant);
-			stopBarrierScheduler();
+			resetAndStop(blocked, unblocked, redundant);
 		}
 	}
 
@@ -641,13 +659,22 @@ public class TestScheduler extends BasicTestCase {
 		assertEquals(expectedStartedTasks, scheduler.getStartedTasks());
 	}
 
-	private void resetAndStop(Task task) {
-		try {
-			if (scheduler.isKnown(task)) {
-				scheduler.resetActive(task);
+	/**
+	 * Stops the scheduler and then removes the active state overrides of the given tasks.
+	 *
+	 * <p>
+	 * The scheduler is stopped first: Resetting a configured active task wakes the scheduler, which
+	 * would otherwise start the task in its last round, so that the task would still run into the
+	 * next test.
+	 * </p>
+	 */
+	private void resetAndStop(Task... tasks) {
+		TestingScheduler stopped = scheduler;
+		stopBarrierScheduler();
+		for (Task task : tasks) {
+			if (stopped.isKnown(task)) {
+				stopped.resetActive(task);
 			}
-		} finally {
-			stopBarrierScheduler();
 		}
 	}
 

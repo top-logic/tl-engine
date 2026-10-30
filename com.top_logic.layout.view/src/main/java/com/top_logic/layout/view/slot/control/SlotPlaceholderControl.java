@@ -25,7 +25,14 @@ import com.top_logic.layout.view.slot.SlotRegistry;
  * unregisters. While registered, the registry calls
  * {@link #setRoutedContributions(java.util.List)} whenever the set of contributions routed to
  * this placeholder changes; the placeholder updates its React state with the current contributed
- * controls (in registration order, flattened across contributions).
+ * controls (in registration order, flattened across contributions). Before it is written, the
+ * placeholder lets the registry {@link SlotRegistry#settleRouting() settle} the routing, so that it
+ * is written with the contributions the display routes to it.
+ * </p>
+ *
+ * <p>
+ * Detached, the placeholder no longer receives routing and drops the controls routed to it, which
+ * belong to contributions that may be disposed before it is displayed again.
  * </p>
  *
  * <p>
@@ -104,6 +111,9 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 		for (SlotContribution c : contributions) {
 			flat.addAll(c.getControls());
 		}
+		if (flat.equals(_routedControls)) {
+			return;
+		}
 		boolean showedEmpty = _routedControls.isEmpty();
 		_routedControls = flat;
 		boolean showsEmpty = flat.isEmpty();
@@ -131,7 +141,22 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 			_handle.close();
 			_handle = null;
 		}
+		// The routed controls are already detached together with this placeholder, as is the
+		// fallback; shown again, the fallback is attached with the placeholder until the routing
+		// replaces it.
+		_routedControls = List.of();
+		putState(CHILDREN, _emptyControls);
 		super.onDetach();
+	}
+
+	/**
+	 * Settles the routing of the {@link SlotRegistry}, so that the state written shows the
+	 * contributions the display routes to this placeholder.
+	 */
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		_slotRegistry.settleRouting();
 	}
 
 	// Note: attach and detach do reach the routed controls and the displayed fallback controls through

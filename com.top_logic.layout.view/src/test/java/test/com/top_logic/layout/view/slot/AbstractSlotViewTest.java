@@ -14,6 +14,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -46,6 +48,9 @@ import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.slot.SlotContribution;
 import com.top_logic.layout.view.slot.SlotRegistry;
 import com.top_logic.model.listen.ModelScope;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletResponse;
@@ -62,6 +67,9 @@ import jakarta.servlet.ServletResponse;
  */
 public abstract class AbstractSlotViewTest extends TestCase {
 
+	/** The prefix of a line of the event stream carrying an event. */
+	private static final String DATA_FIELD = "data: ";
+
 	private File _webapp;
 
 	private FileManager _fileManagerBefore;
@@ -75,6 +83,11 @@ public abstract class AbstractSlotViewTest extends TestCase {
 	private ViewContext _viewContext;
 
 	private ReactControl _root;
+
+	/**
+	 * What the event stream opened by {@link #openEventStream()} received, or {@code null} before.
+	 */
+	private StringWriter _eventSink;
 
 	/**
 	 * The names of the {@code .view.xml} fixtures the test builds its views from.
@@ -170,8 +183,10 @@ public abstract class AbstractSlotViewTest extends TestCase {
 	 * Unloads the page being left and renders the tree the window holds for the given URL, the way
 	 * {@link com.top_logic.layout.view.ViewServlet} re-renders a display for an adopted URL - within
 	 * one interaction, whose {@link DeliveryScope} completes when the page is rendered.
+	 *
+	 * @return The rendered page.
 	 */
-	protected void renderPage(String url) throws IOException {
+	protected String renderPage(String url) throws IOException {
 		DeliveryScope.enter();
 		try {
 			_root.detach();
@@ -180,8 +195,10 @@ public abstract class AbstractSlotViewTest extends TestCase {
 			_routeManager.adoptUrl(url);
 			_root.attach();
 			_routeManager.resolvePending();
-			_root.write(new TagWriter());
+			TagWriter out = new TagWriter();
+			_root.write(out);
 			_routeManager.finishAdoption();
+			return out.toString();
 		} finally {
 			DeliveryScope.exit();
 		}
@@ -193,7 +210,22 @@ public abstract class AbstractSlotViewTest extends TestCase {
 	 * {@link SSEUpdateQueue#setConnection}.
 	 */
 	protected void openEventStream() {
-		_sseQueue.setConnection(sseConnection());
+		_eventSink = new StringWriter();
+		_sseQueue.setConnection(sseConnection(_eventSink));
+	}
+
+	/**
+	 * The events the event stream opened by {@link #openEventStream()} has received so far, in the
+	 * order they were written.
+	 */
+	protected List<SSEEvent> sentEvents() throws IOException {
+		List<SSEEvent> result = new ArrayList<>();
+		for (String line : _eventSink.toString().split("\n")) {
+			if (line.startsWith(DATA_FIELD)) {
+				result.add(SSEEvent.readSSEEvent(new JsonReader(new StringR(line.substring(DATA_FIELD.length())))));
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -212,8 +244,7 @@ public abstract class AbstractSlotViewTest extends TestCase {
 	 * The event stream of a loaded page: an {@link AsyncContext} whose response collects what is
 	 * written to it.
 	 */
-	private static AsyncContext sseConnection() {
-		StringWriter sink = new StringWriter();
+	private static AsyncContext sseConnection(StringWriter sink) {
 		PrintWriter writer = new PrintWriter(sink);
 		ServletResponse response = (ServletResponse) Proxy.newProxyInstance(
 			AbstractSlotViewTest.class.getClassLoader(), new Class<?>[] { ServletResponse.class },

@@ -140,6 +140,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_NOT_A_FILE__VALUE;
 
+	/**
+	 * @en Conflicting changes
+	 */
+	public static ResKey REVERT_CONFLICTS_TITLE;
+
+	/**
+	 * @en "{0}" has been reverted despite conflicting changes:
+	 */
+	public static ResKey1 REVERTED_DESPITE_CONFLICTS__REV;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

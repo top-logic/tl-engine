@@ -14,11 +14,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.ChangeSet;
-import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -34,6 +32,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link CommandHandler} for reverting a {@link ChangeSet}.
+ *
+ * <p>
+ * A change that has already been reverted is re-applied (its revert is reverted).
+ * </p>
+ *
+ * @see ChangeSetReverter#revertTarget(ChangeSet)
  */
 public class RevertCommandHandler extends AbstractCommandHandler {
 
@@ -72,27 +76,15 @@ public class RevertCommandHandler extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
 
-		ChangeSet change = (ChangeSet) model;
-		ChangeSet revertedBy = change.getRevertedBy();
-		if (revertedBy != null) {
-			change = revertedBy;
-		}
-
-		TransientChangeSet undo = change.revert();
+		ChangeSet target = ChangeSetReverter.revertTarget((ChangeSet) model);
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
-			List<ResKey> problems = undo.apply();
-
-			if (!problems.isEmpty()) {
-				if (config().isCheckConflicts()) {
-					tx.rollback(I18NConstants.UNDO_CANCELED_BY_USER);
-					return openConfirmDialog(context, component, kb, change, undo, problems);
-				}
-				InfoService.showWarningList(problems);
+		List<ResKey> problems = ChangeSetReverter.revert(kb, target, !config().isCheckConflicts());
+		if (!problems.isEmpty()) {
+			if (config().isCheckConflicts()) {
+				return openConfirmDialog(context, component, kb, target, problems);
 			}
-
-			tx.commit();
+			InfoService.showWarningList(problems);
 		}
 
 		component.invalidate();
@@ -101,17 +93,14 @@ public class RevertCommandHandler extends AbstractCommandHandler {
 	}
 
 	private HandlerResult openConfirmDialog(DisplayContext openContext, LayoutComponent component, KnowledgeBase kb,
-			ChangeSet change, TransientChangeSet undo, List<ResKey> problems) {
+			ChangeSet target, List<ResKey> problems) {
 		CommandModel okButton = MessageBox.button(ButtonType.OK, confirmCtx -> {
-			try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
-				undo.apply();
-				tx.commit();
-			}
+			ChangeSetReverter.revert(kb, target, true);
 			component.invalidate();
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		HTMLFragment confirmMessage = InfoService.getMessageList(problems,
-			I18NConstants.CONFLICTS_WHEN_UNDO_REVISION__REV.fill(change));
+			I18NConstants.CONFLICTS_WHEN_UNDO_REVISION__REV.fill(target));
 
 		return MessageBox.newBuilder(MessageType.CONFIRM)
 			.message(confirmMessage)

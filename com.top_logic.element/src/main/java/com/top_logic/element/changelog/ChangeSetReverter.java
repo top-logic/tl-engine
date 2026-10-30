@@ -37,14 +37,16 @@ import com.top_logic.util.model.ModelService;
  * Technical (non-UI) utility that reverts one or more model {@link ChangeSet}s.
  *
  * <p>
- * Unlike {@code RevertCommandHandler}, this class operates without any UI
- * state, selection, or revert/redo pairing. It performs the raw model-level
- * undo: for every given {@link ChangeSet} it applies {@link ChangeSet#revert()
- * its inverse} in descending revision order, within a single transaction.
+ * It performs the model-level undo without any UI state or selection: a single change set is
+ * reverted with {@link #revert(KnowledgeBase, ChangeSet, boolean)} (after
+ * {@link #revertTarget(ChangeSet)} has chosen between undo and redo), a set of change sets with
+ * {@link #revertAll(Collection)}, which applies {@link ChangeSet#revert() their inverses} in
+ * descending revision order within a single transaction.
  * </p>
  *
  * <p>
- * Intended primarily as a building block for higher-level operations such as
+ * The command handlers {@link RevertCommandHandler}, {@link UndoCommandHandler} and
+ * {@link RedoCommandHandler} are built on it, as are higher-level operations such as
  * {@link #revertSubtreeTo(TLObject, Revision, ResKey) subtree rollback}.
  * </p>
  */
@@ -55,13 +57,65 @@ public final class ChangeSetReverter {
 	}
 
 	/**
+	 * The change set whose revert undoes the effect of the given one in the current state.
+	 *
+	 * <p>
+	 * A change that has not been reverted is its own target: reverting it undoes it. A change that
+	 * has already been {@link ChangeSet#getRevertedBy() reverted} has its revert as target:
+	 * reverting the revert re-applies (redoes) the change.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change the user wants to toggle.
+	 * @return The change set to pass to {@link #revert(KnowledgeBase, ChangeSet, boolean)}.
+	 */
+	public static ChangeSet revertTarget(ChangeSet change) {
+		ChangeSet revertedBy = change.getRevertedBy();
+		return revertedBy != null ? revertedBy : change;
+	}
+
+	/**
+	 * Reverts the given change set in a transaction of its own, committed with the
+	 * {@link TransientChangeSet#getMessage() message} of its {@link ChangeSet#revert() revert}.
+	 *
+	 * <p>
+	 * The revert does not follow {@link ChangeSet#getRevertedBy()}; a caller toggling a change
+	 * passes {@link #revertTarget(ChangeSet)}.
+	 * </p>
+	 *
+	 * @param kb
+	 *        The {@link KnowledgeBase} to open the transaction on.
+	 * @param change
+	 *        The change set to revert.
+	 * @param force
+	 *        Whether the revert is committed although applying it reported problems (conflicts
+	 *        with later changes of the same objects). Without, a revert with problems is rolled
+	 *        back with {@link I18NConstants#UNDO_CANCELED_BY_USER} and nothing is committed; the
+	 *        caller may ask the user and call again with {@code true}.
+	 * @return The problems applying the revert reported, empty for a clean revert. The revert has
+	 *         been committed if the list is empty or {@code force} is set.
+	 */
+	public static List<ResKey> revert(KnowledgeBase kb, ChangeSet change, boolean force) {
+		TransientChangeSet undo = change.revert();
+		try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
+			List<ResKey> problems = new ArrayList<>(undo.apply());
+			if (!problems.isEmpty() && !force) {
+				tx.rollback(I18NConstants.UNDO_CANCELED_BY_USER);
+				return problems;
+			}
+			tx.commit();
+			return problems;
+		}
+	}
+
+	/**
 	 * Reverts all given {@link ChangeSet}s <strong>within the caller's active transaction</strong>.
 	 *
 	 * <p>
 	 * The change sets are processed in descending revision order (newest first), so that each
 	 * revert is applied on top of a state consistent with having already undone the later
 	 * changes. Redo-of-revert semantics are <em>not</em> applied; callers that want them should
-	 * follow {@code getRevertedBy()} before calling.
+	 * follow {@link #revertTarget(ChangeSet)} before calling.
 	 * </p>
 	 *
 	 * <p>
@@ -188,11 +242,11 @@ public final class ChangeSetReverter {
 	 * </p>
 	 *
 	 * <p>
-	 * Callers that need fine-grained control over transaction and conflict handling (e.g. a
-	 * {@link com.top_logic.tool.boundsec.CommandHandler}) use this method to identify the target
-	 * and then open their own transaction with {@code target.revert().getMessage()} as the commit
-	 * message. For simple programmatic use cases, {@link #undoLast(TLObject, int, boolean)}
-	 * wraps both steps.
+	 * Callers that need control over conflict handling (e.g. a
+	 * {@link com.top_logic.tool.boundsec.CommandHandler} asking the user) use this method to
+	 * identify the target and revert it with {@link #revert(KnowledgeBase, ChangeSet, boolean)}.
+	 * For simple programmatic use cases, {@link #undoLast(TLObject, int, boolean)} wraps both
+	 * steps.
 	 * </p>
 	 *
 	 * @param root
@@ -243,8 +297,8 @@ public final class ChangeSetReverter {
 	 * No {@link ChangeLogOptions} restrictions are applied: changes of all users over the whole
 	 * history are considered. A no-op (empty result) is returned when no change is eligible. For
 	 * callers that need conflict-aware commit control, use
-	 * {@link #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean)} directly and manage
-	 * the transaction themselves.
+	 * {@link #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean)} and
+	 * {@link #revert(KnowledgeBase, ChangeSet, boolean)}.
 	 * </p>
 	 */
 	public static List<ResKey> undoLast(TLObject root, int windowSize, boolean includeSubtree) {
@@ -273,12 +327,7 @@ public final class ChangeSetReverter {
 
 	private static List<ResKey> runSingleRevert(TLObject root, ChangeSet target) {
 		KnowledgeBase kb = root != null ? root.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
-		TransientChangeSet undo = target.revert();
-		try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
-			List<ResKey> problems = new ArrayList<>(undo.apply());
-			tx.commit();
-			return problems;
-		}
+		return revert(kb, target, true);
 	}
 
 	private static Collection<ChangeSet> readLog(TLObject root, ChangeLogOptions options, int windowSize,

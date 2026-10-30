@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, reverting a commit with <revert-change-set>, and long-running jobs with <start-job> / <job-status>.
 order: 50
 ---
 
@@ -271,6 +271,19 @@ While `selectedScope` is empty, the opener is visible but disabled: with `refere
   </executability>
   <delete-object/>
   <write-channel name="project" clear="true"/>
+</generic-command>
+```
+
+## Reverting a commit: `<revert-change-set>`
+
+`<revert-change-set/>` (`RevertChangeSetAction`) reverts the commit (`tl.changelog:ChangeSet`) it processes, in a transaction of its own committed with the revert message of that commit, as the classic `RevertCommandHandler` does: a commit not yet reverted is undone, an already reverted commit is re-applied by reverting its revert (`ChangeSetReverter#revertTarget`). When later commits modified the same objects, the revert reports conflicts. With `check-conflicts="true"` (the default) the revert is rolled back and a dialog lists the conflicts — confirming applies the revert anyway and resumes the chain, declining aborts it; a chain without a dialog aborts. With `check-conflicts="false"` the revert is committed and the conflicts are reported as a warning. The action results in the commit it processed; any other value is left alone and results in nothing. Since it may ask the user, it is not placed in a `<with-transaction>`.
+
+```xml
+<generic-command inputs="changeSet">
+  <executability>
+    <null-input-disabled/>
+  </executability>
+  <revert-change-set/>
 </generic-command>
 ```
 

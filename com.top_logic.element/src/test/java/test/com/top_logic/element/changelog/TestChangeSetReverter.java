@@ -14,20 +14,25 @@ import junit.framework.Test;
 import test.com.top_logic.element.meta.TestWithModelExtension;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.ChangeSetReverter;
 import com.top_logic.element.changelog.I18NConstants;
+import com.top_logic.element.changelog.SubtreeFilter;
+import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests for {@link ChangeSetReverter}.
@@ -277,6 +282,83 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("Sibling subtree must be untouched.", "other-2", other.tValueByName("name"));
 	}
 
+	/**
+	 * {@link ChangeSetReverter#revert(KnowledgeBase, ChangeSet, boolean)} undoes the change of a
+	 * commit.
+	 */
+	public void testRevertCommit() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSet change = changeAt(root, rename);
+		assertSame(change, ChangeSetReverter.revertTarget(change));
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, change, false);
+		assertEquals(List.of(), problems);
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting the {@link ChangeSetReverter#revertTarget(ChangeSet) revert target} of an already
+	 * reverted commit re-applies its change.
+	 */
+	public void testRevertRevertedCommitRedoes() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.revert(_kb, ChangeSetReverter.revertTarget(changeAt(root, rename)), false);
+		assertEquals("child", child.tValueByName("name"));
+
+		ChangeSet reverted = changeAt(root, rename);
+		assertNotNull("Commit must be marked as reverted.", reverted.getRevertedBy());
+		ChangeSet target = ChangeSetReverter.revertTarget(reverted);
+		assertTrue("Target must be the revert.", target.isRevert());
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, target, false);
+		assertEquals(List.of(), problems);
+		assertEquals("child-1", child.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting a commit whose attribute was modified by a later commit reports a conflict: without
+	 * force nothing is committed, with force the revert is applied.
+	 */
+	public void testRevertConflict() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision first = rename(child, "child-1");
+		rename(child, "child-2");
+
+		ChangeSet change = changeAt(root, first);
+		Revision before = currentRevision();
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, change, false);
+		assertFalse("Conflict must be reported.", problems.isEmpty());
+		assertEquals("Nothing must be committed without force.", before.getCommitNumber(),
+			currentRevision().getCommitNumber());
+		assertEquals("child-2", child.tValueByName("name"));
+
+		List<ResKey> forcedProblems = ChangeSetReverter.revert(_kb, change, true);
+		assertFalse("Conflict is reported also when forced.", forcedProblems.isEmpty());
+		assertTrue("Forced revert must be committed.",
+			currentRevision().getCommitNumber() > before.getCommitNumber());
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	private ChangeSet changeAt(TLObject root, Revision revision) {
+		ChangeLogBuilder builder = new ChangeLogBuilder(_kb, ModelService.getApplicationModel());
+		builder.setFilter(new SubtreeFilter(root, true));
+		for (ChangeSet cs : builder.build()) {
+			if (cs.getRevision().getCommitNumber() == revision.getCommitNumber()) {
+				return cs;
+			}
+		}
+		fail("No change set for revision " + revision + ".");
+		return null;
+	}
+
 	private TLObject createNode(TLObject parent, String name) {
 		try (Transaction tx = beginTX()) {
 			TLObject node = _factory.createObject(_nodeType, parent);
@@ -291,10 +373,11 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		}
 	}
 
-	private void rename(TLObject node, String newName) {
+	private Revision rename(TLObject node, String newName) {
 		try (Transaction tx = beginTX()) {
 			node.tUpdateByName("name", newName);
 			tx.commit();
+			return tx.getCommitRevision();
 		}
 	}
 

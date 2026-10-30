@@ -20,7 +20,8 @@
 	
 	Between the profile and the questions sits an interstitial: "Setting up" carries an
 	auto-advance="2s" and no buttons at all, so it shows itself for two seconds and then moves on by
-	itself. The footer slot simply stays empty while it is displayed.
+	itself. No step content raises buttons into the footer slot then, so the slot shows the hint of
+	its <empty> fallback instead, until the next step's buttons take its place.
 	
 	A question step chooses its display by the question it asks: a <switch input="question"> picks
 	the field to fill in, so the three questions are three different inputs on one content template.
@@ -302,7 +303,16 @@
 				</step>
 			</wizard>
 			<inset>
-				<slot name="wizard-actions"/>
+				<slot name="wizard-actions">
+					<empty>
+						<text tone="helper">
+							<label>
+								<en>No actions in this step — the flow continues by itself.</en>
+								<de>Keine Aktionen in diesem Schritt — der Ablauf geht von selbst weiter.</de>
+							</label>
+						</text>
+					</empty>
+				</slot>
 			</inset>
 		</stack>
 	</panel>

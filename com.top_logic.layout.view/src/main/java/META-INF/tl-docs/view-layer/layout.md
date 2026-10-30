@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -329,6 +329,21 @@ A view sometimes owns content that is to be displayed elsewhere - its breadcrumb
 - **The content belongs to the declaring view.** The children of `<slot-content>` are built in the context of the view declaring them, so they see its channels; the slot only displays the controls. They live as long as the `<slot-content>` is displayed: when it leaves the display (another tab, another case of a switch, the next frame), its content disappears from the slot, and it reappears when the contribution is displayed again. At its own position, `<slot-content>` displays nothing.
 - **Routing by tree distance.** A contribution goes to the slot of the same name nearest to it in the element tree - the smallest number of steps up to a common ancestor and down again (`SlotRegistry`, `SlotPath`). A slot inside an element therefore catches the contributions inside it before a slot of the same name further out: a `<slot name="wizard-actions"/>` beside a `<wizard>` receives the buttons of its steps (see [the wizard](doc:view-layer/navigation)), while a contribution elsewhere in the view goes on to the outer slot. Routing is recomputed whenever a slot or a contribution is displayed or leaves the display.
 - **Several contributions** to one slot are all displayed, in the order they were registered.
+- **Fallback content.** `<empty>` inside `<slot>` holds elements the slot shows while no contribution is routed to it. The first contribution that reaches the slot replaces them, and they come back when the last one leaves the display - the hint of a wizard footer for a step that raises no buttons, or a default text in the app bar that a view's breadcrumb takes the place of. The elements are built in the context of the view declaring the slot and belong to the slot: they keep their state while a contribution covers them and are disposed with the slot. An application puts such a default into the shipped shell with an overlay of `app.view.xml` (see [extending a view with a same-path overlay](doc:view-layer/overlays)), addressing the slot by its `id`:
+
+```xml
+<!-- WEB-INF/views/app.view.xml of the application -->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<slot config:ref="appbar-content">
+		<empty>
+			<text tone="helper">
+				<label><en>Start page</en><de>Startseite</de></label>
+			</text>
+		</empty>
+	</slot>
+</view>
+```
+
 - **Shipped slots.** The shell `app.view.xml` offers `appbar-leading` (the sidebar puts its drawer toggle there, `drawer-open-slot-name` of `<sidebar>`) and `appbar-content`, see [the application shell](doc:view-layer/app-shell).
 
 Pitfalls:

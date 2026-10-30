@@ -113,7 +113,9 @@
 						hamburger button into this slot via the slot-content registry; it renders
 						only while the app shell is compact (below its breakpoint). The two names must match.
 					-->
-					<slot name="appbar-leading"/>
+					<slot id="appbar-leading"
+						name="appbar-leading"
+					/>
 				</leading>
 				<children>
 					<!--
@@ -122,7 +124,9 @@
 						slot routes contributions to the nearest matching <slot> by tree distance,
 						e.g. to raise a drill-down breadcrumb to the app bar.
 					-->
-					<slot name="appbar-content"/>
+					<slot id="appbar-content"
+						name="appbar-content"
+					/>
 				</children>
 				<trailing>
 					<!--

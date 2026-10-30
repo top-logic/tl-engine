@@ -230,6 +230,24 @@
 		</config>
 
 		<!--
+			The second-factor methods of the login. The list is keyed by the method name, so a
+			feature module adds its own method through a configuration fragment of its own.
+		-->
+		<config config:interface="com.top_logic.layout.view.login.SecondFactorsConfig">
+			<methods>
+				<method name="totp"
+					class="com.top_logic.layout.view.login.TotpSecondFactor"
+					image="css:bi bi-phone"
+				>
+					<label>
+						<en>Code from an authenticator app</en>
+						<de>Code aus einer Authenticator-App</de>
+					</label>
+				</method>
+			</methods>
+		</config>
+
+		<!--
 			The views a URL may name as the contents of a browser tab, contributed by this module.
 			The list is keyed by the view, so the entry points of an application merge with these.
 		-->

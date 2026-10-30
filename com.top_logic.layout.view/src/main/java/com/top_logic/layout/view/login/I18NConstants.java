@@ -145,6 +145,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_MFA_NOT_ALLOWED__USER;
 
+	/**
+	 * @en A second factor is required for "{0}", but none can be set up.
+	 */
+	public static ResKey1 ERROR_NO_SECOND_FACTOR__USER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

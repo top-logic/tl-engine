@@ -148,6 +148,35 @@
 							</executability>
 							<enable-mfa/>
 						</generic-command>
+						<!--
+							Removes the authenticator app of the selected account, for a user who lost
+							the device it ran on. The account keeps its MFA requirement: one required
+							to use a second factor sets up a new one at its next login, one that chose
+							it logs in with the password alone and may set one up again.
+						-->
+						<generic-command
+							clique="more"
+							image="css:bi bi-shield-x"
+							inputs="selectedAccount"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Reset MFA</en>
+								<de>MFA zurücksetzen</de>
+							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($selectedAccount.get(`tl.accounts:Person#mfaSecret`) == null, #('The account has no authenticator app set up.'@en, 'Für das Konto ist keine Authenticator-App eingerichtet.'@de), null)"/>
+							</executability>
+							<confirm expr="#('Remove the authenticator app of this account? The user must set up their authenticator app again.'@en, 'Die Authenticator-App dieses Kontos entfernen? Der Benutzer muss seine Authenticator-App neu einrichten.'@de)"/>
+							<reset-mfa/>
+						</generic-command>
 					</commands>
 					<table id="table"
 						observed-types="tl.accounts:Person"

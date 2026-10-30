@@ -3,9 +3,10 @@
 
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TOOLTIP_ATTR } from 'tl-react-bridge';
+import { describeCopyButton } from './adapters/copy-button-test-support';
 import type { ButtonPartProps, MenuTriggerPartProps } from 'tl-react-bridge';
 
 /** The address of a link. */
@@ -111,7 +112,6 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: ProgressBarPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/ProgressBarPart');
     const { default: SpinnerPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/SpinnerPart');
     const { default: ListboxPart } = await import('../../com.top_logic.layout.react/react-src/controls/listbox/ListboxPart');
-    const { default: CopyButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/CopyButtonPart');
     // A chip draws its remove button with the part Button, a disclosure toggle its busy indicator
     // with the part Spinner, a field value of a color role its pill with the part Chip.
     const { registerPart } = await import('tl-react-bridge');
@@ -121,7 +121,7 @@ describe('the TopLogic drawing of the parts', () => {
     registerPart('Chip', ChipPart);
     return {
       ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart, ChipPart, BadgePart,
-      DividerPart, ProgressBarPart, SpinnerPart, ListboxPart, CopyButtonPart,
+      DividerPart, ProgressBarPart, SpinnerPart, ListboxPart,
     };
   }
 
@@ -913,74 +913,13 @@ describe('the TopLogic drawing of the parts', () => {
     expect(document.activeElement).toBe(anchor);
     anchor.remove();
   });
+});
 
-  describe('the copy button', () => {
-    /** Installs the given clipboard on the navigator, undefined for none. */
-    function installClipboard(clipboard: { writeText: (text: string) => Promise<void> } | undefined) {
-      Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
-    }
-
-    afterEach(() => {
-      installClipboard(undefined);
-      vi.useRealTimers();
-    });
-
-    it('copies its text, shows and announces the copy, and returns after a while', async () => {
-      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-      const writeText = vi.fn(() => Promise.resolve());
-      installClipboard({ writeText });
-      const { CopyButtonPart } = await defaults();
-
-      render(<CopyButtonPart text={'a\n\tb'} label="In die Zwischenablage kopieren" copiedLabel="Kopiert" />);
-
-      const button = screen.getByRole('button', { name: 'In die Zwischenablage kopieren' });
-      expect(button.querySelector('.fa-copy')).not.toBeNull();
-      expect(screen.getByRole('status').textContent).toBe('');
-
-      await act(async () => {
-        fireEvent.click(button);
-      });
-
-      expect(writeText).toHaveBeenCalledWith('a\n\tb');
-      expect(button.querySelector('.fa-check')).not.toBeNull();
-      expect(screen.getByRole('status').textContent).toBe('Kopiert');
-
-      act(() => {
-        vi.advanceTimersByTime(1500);
-      });
-
-      expect(button.querySelector('.fa-copy')).not.toBeNull();
-      expect(screen.getByRole('status').textContent).toBe('');
-    });
-
-    it('stays as it is where the clipboard refuses the text', async () => {
-      const writeText = vi.fn(() => Promise.reject(new Error('denied')));
-      installClipboard({ writeText });
-      const { CopyButtonPart } = await defaults();
-
-      render(<CopyButtonPart text="a" label="Kopieren" copiedLabel="Kopiert" />);
-      const button = screen.getByRole('button', { name: 'Kopieren' });
-      await act(async () => {
-        fireEvent.click(button);
-      });
-
-      expect(writeText).toHaveBeenCalledWith('a');
-      expect(button.querySelector('.fa-copy')).not.toBeNull();
-      expect(screen.getByRole('status').textContent).toBe('');
-    });
-
-    it('stays as it is where there is no clipboard', async () => {
-      installClipboard(undefined);
-      const { CopyButtonPart } = await defaults();
-
-      render(<CopyButtonPart text="a" label="Kopieren" copiedLabel="Kopiert" />);
-      const button = screen.getByRole('button', { name: 'Kopieren' });
-      await act(async () => {
-        fireEvent.click(button);
-      });
-
-      expect(button.querySelector('.fa-copy')).not.toBeNull();
-      expect(screen.getByRole('status').textContent).toBe('');
-    });
-  });
+describeCopyButton('TopLogic drawing', async props => {
+  const { registerPart } = await import('tl-react-bridge');
+  const { default: ButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/ButtonPart');
+  const { default: CopyButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/CopyButtonPart');
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  registerPart('Button', ButtonPart);
+  render(<CopyButtonPart {...props} />);
 });

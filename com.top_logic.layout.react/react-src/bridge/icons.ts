@@ -35,6 +35,9 @@ export const ICON_COPY = 'css:fa-regular fa-copy';
 /** Tells that a text was copied to the clipboard a moment ago. */
 export const ICON_COPIED = 'css:fa-solid fa-check';
 
+/** Tells that a text could not be copied to the clipboard. */
+export const ICON_COPY_FAILED = 'css:fa-solid fa-triangle-exclamation';
+
 /** Cancels a form without applying it. */
 export const ICON_CANCEL = 'css:fa-solid fa-xmark';
 

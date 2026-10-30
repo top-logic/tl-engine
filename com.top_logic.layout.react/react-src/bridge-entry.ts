@@ -160,7 +160,7 @@ export type {
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';
-export type { CopyToClipboard } from './bridge/clipboard';
+export type { CopyToClipboard, CopyOutcome } from './bridge/clipboard';
 export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';

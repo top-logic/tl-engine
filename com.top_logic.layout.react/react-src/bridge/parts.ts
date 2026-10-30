@@ -923,9 +923,10 @@ export interface ListboxPartProps extends PartAttributes {
  * <ul>
  * <li>The button is named by {@link label}, which also is its tooltip.</li>
  * <li>Pressing it copies {@link text} to the clipboard (see `useCopyToClipboard` of
- *     'tl-react-bridge'). After a successful copy, the button shows for a short while that it did,
- *     and {@link copiedLabel} is announced politely (`role="status"`). Where the clipboard is
- *     unavailable or refuses the text, nothing changes and no error surfaces.</li>
+ *     'tl-react-bridge'), also in a page that is no secure context. After a successful copy, the
+ *     button shows for a short while that it did, and {@link copiedLabel} is announced politely
+ *     (`role="status"`). Where the text cannot be copied, the button shows a warning for a short
+ *     while, {@link failedLabel} is announced and is its tooltip; no error surfaces.</li>
  * </ul>
  */
 export interface CopyButtonPartProps extends PartAttributes {
@@ -937,6 +938,12 @@ export interface CopyButtonPartProps extends PartAttributes {
 
   /** What is announced after a successful copy, e.g. "Copied". */
   copiedLabel: string;
+
+  /**
+   * What is announced, and shown as tooltip, where the text could not be copied, e.g. "Could not
+   * copy - select the text and press Ctrl+C".
+   */
+  failedLabel: string;
 
   /**
    * Classes added to the outermost drawn element. They mark the part and carry no layout.

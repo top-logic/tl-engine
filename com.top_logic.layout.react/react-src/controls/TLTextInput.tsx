@@ -29,6 +29,7 @@ const I18N_KEYS = {
   'js.textInput.clear': 'Clear the input',
   'js.textInput.copy': 'Copy to clipboard',
   'js.textInput.copied': 'Copied',
+  'js.textInput.copyFailed': 'Could not copy – select the text and press Ctrl+C',
 };
 
 /** The icon of the link that opens what the field holds. */
@@ -230,7 +231,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
       <FieldValue id={controlId} className={rootClassName(state) || undefined} text={text} href={href ?? undefined}
         multiline={multiline} preformatted={preformatted}
         action={preformatted && text !== ''
-          ? <ValueCopyButton text={text} label={t['js.textInput.copy']} copiedLabel={t['js.textInput.copied']} />
+          ? <ValueCopyButton text={text} label={t['js.textInput.copy']} copiedLabel={t['js.textInput.copied']}
+            failedLabel={t['js.textInput.copyFailed']} />
           : undefined} />
     );
   }

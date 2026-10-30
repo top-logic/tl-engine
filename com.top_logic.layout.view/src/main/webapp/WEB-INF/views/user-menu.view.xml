@@ -116,13 +116,22 @@
 
 				<groups>
 					<group id="account">
-						<!-- What describes the account, and what secures it. -->
+						<!-- What describes the account, what secures it, and what was done with it. -->
 						<generic-command image="css:bi bi-sliders">
 							<label>
 								<en>Settings</en>
 								<de>Einstellungen</de>
 							</label>
 							<open-dialog dialog-view="settings.view.xml"/>
+						</generic-command>
+
+						<!-- What the user changed recently, each commit to be undone or redone. -->
+						<generic-command image="css:bi bi-clock-history">
+							<label>
+								<en>My latest changes</en>
+								<de>Meine letzten Änderungen</de>
+							</label>
+							<open-dialog dialog-view="recent-changes.view.xml"/>
 						</generic-command>
 
 						<!--

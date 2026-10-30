@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The latest changes of the logged-in user, opened from the user menu: a table of the last 30
+	commits (tl.changelog:ChangeSet) the current user is the author of, produced by the changeLog()
+	TL-Script function. The revision column shows the commit number as a number, so that it sorts
+	numerically, written without grouping separators by its format annotation; date and message are
+	the ChangeSet attributes, and "Reverted" tells whether the commit has been undone.
+	
+	Activating a row opens the details of the commit (admin/monitoring/revision-details.view.xml),
+	from which it can be undone or redone. The details dialog writes the current time to the reload
+	channel bound into it after such a revert, which recomputes the rows. The change log lists an
+	undo not as a commit of its own but marks the undone commit as reverted; a redo is listed as a
+	commit of its own.
+-->
+<view>
+	<channels>
+		<channel name="reload"/>
+	</channels>
+	<window width="800px">
+		<title>
+			<en>My latest changes</en>
+			<de>Meine letzten Änderungen</de>
+		</title>
+		<table id="table"
+			types="tl.changelog:ChangeSet"
+		>
+			<inputs>
+				<input channel="reload"/>
+			</inputs>
+			<columns>
+				<computed-column name="revision"
+					sort="DESC"
+					type="tl.core:Long"
+				>
+					<label>
+						<en>Revision</en>
+						<de>Revision</de>
+					</label>
+					<annotations>
+						<format>
+							<decimal pattern="0"/>
+						</format>
+					</annotations>
+					<value><![CDATA[$row.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`)]]></value>
+				</computed-column>
+				<column attribute="date"/>
+				<column attribute="message"/>
+				<computed-column name="reverted"
+					type="tl.core:Boolean"
+				>
+					<label>
+						<en>Reverted</en>
+						<de>Zurückgenommen</de>
+					</label>
+					<value><![CDATA[$row.get(`tl.changelog:ChangeSet#revertedBy`) != null]]></value>
+				</computed-column>
+			</columns>
+			<rows><![CDATA[changeLog(null, 30, true, null, null, currentUser())]]></rows>
+			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-list-ul"
+			>
+				<label>
+					<en>Show changes</en>
+					<de>Änderungen anzeigen</de>
+				</label>
+				<open-dialog
+					bind-input-to="changeSet"
+					close-on-backdrop="true"
+					dialog-view="admin/monitoring/revision-details.view.xml"
+				>
+					<bind
+						channel="reload"
+						to="reload"
+					/>
+				</open-dialog>
+			</on-activate>
+		</table>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

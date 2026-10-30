@@ -1,19 +1,28 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Details of one commit, opened from the revision monitor with the tl.changelog:ChangeSet on the
-	changeSet channel. The header shows the commit number, date, author and message read-only; the
-	commit number is written as plain digits.
+	Details of one commit, opened from the revision monitor and from "My latest changes"
+	(recent-changes.view.xml) with the tl.changelog:ChangeSet on the changeSet channel. The header
+	shows the commit number, date, author and message read-only; the commit number is written as
+	plain digits.
 	
 	The table lists what the commit changed, one row per creation and per deletion and one row per
 	modified attribute of an updated object. Its rows are dictionaries built from the changes of the
 	ChangeSet: the kind of change as a tl.changelog:ChangeType classifier, the object (for a deleted
 	object its last version before the deletion), and for a modification the attribute with its old
 	and new values.
+	
+	"Undo change" reverts a commit that has not been reverted, "Redo change" re-applies a reverted
+	one; which of the two is offered is decided by the revertedBy reference of the ChangeSet. Both
+	ask for confirmation, revert the commit with <revert-change-set>, write the current time to the
+	reload channel and close the dialog. An opener whose display depends on the commits binds a
+	channel of its own to reload, so that it is recomputed after the revert; without such a
+	binding, reload is a channel of the dialog alone.
 -->
 <view>
 	<channels>
 		<channel name="changeSet"/>
+		<channel name="reload"/>
 		<derived-channel name="revision"
 			expr="toString($changeSet.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`))"
 			inputs="changeSet"
@@ -114,6 +123,50 @@
 })]]></rows>
 		</table>
 		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-backspace-fill"
+					inputs="changeSet"
+				>
+					<label>
+						<en>Undo change</en>
+						<de>Änderung zurücknehmen</de>
+					</label>
+					<executability>
+						<visible-if expr="$changeSet != null &amp;&amp; $changeSet.get(`tl.changelog:ChangeSet#revertedBy`) == null"/>
+					</executability>
+					<confirm expr="#('Are you sure you want to undo the change “{0}”?'@en, 'Sind Sie sicher, dass Sie die Änderung „{0}“ zurücknehmen wollen?'@de).fill($changeSet.get(`tl.changelog:ChangeSet#message`))"/>
+					<revert-change-set/>
+					<execute-script function="now()">
+						<with-result>
+							<write-channel name="reload"/>
+						</with-result>
+					</execute-script>
+					<close-dialog/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-backspace-reverse-fill"
+					inputs="changeSet"
+				>
+					<label>
+						<en>Redo change</en>
+						<de>Änderung wiederherstellen</de>
+					</label>
+					<executability>
+						<visible-if expr="$changeSet != null &amp;&amp; $changeSet.get(`tl.changelog:ChangeSet#revertedBy`) != null"/>
+					</executability>
+					<confirm expr="#('Are you sure you want to redo the change “{0}”?'@en, 'Sind Sie sicher, dass Sie die Änderung „{0}“ wiederherstellen wollen?'@de).fill($changeSet.get(`tl.changelog:ChangeSet#message`))"/>
+					<revert-change-set/>
+					<execute-script function="now()">
+						<with-result>
+							<write-channel name="reload"/>
+						</with-result>
+					</execute-script>
+					<close-dialog/>
+				</action>
+			</button>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
 					<label>

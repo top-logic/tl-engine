@@ -7,9 +7,9 @@
 	by passing no object and the range of commit numbers to display. The revision column shows the
 	commit number as a number, so that it sorts numerically, written without grouping separators by
 	its format annotation; date, author and message are the ChangeSet attributes. Activating a row
-	opens a dialog listing what the commit changed. A <full-page> hosts the filter row and the table:
-	the enclosing tab already labels the view, so no panel title is rendered and the table fills the
-	remaining area.
+	opens a dialog listing what the commit changed, from which the commit can be undone or redone. A
+	<full-page> hosts the filter row and the table: the enclosing tab already labels the view, so no
+	panel title is rendered and the table fills the remaining area.
 	
 	The filter row selects the displayed commits either by a time range or by a range of commit
 	numbers, as chosen in the mandatory "Range" selection. Its two options are internationalized
@@ -29,15 +29,18 @@
 	the last revision becomes the begin of the day following the last revision.
 	
 	The table is not updated while the filter is edited. The filter channel holds the current filter
-	values, normalized so that the start of a range does not lie behind its end; shiftedFilters holds
-	the ranges of the same width directly before and after it (a range of whole days is moved by
-	calendar days). A revision range is not moved before the first revision or behind the revision
-	following the last one; a time range containing the current time is not moved forwards, and one
-	starting at or before the first revision is not moved backwards. The "Refresh" button writes the filter, the arrow buttons the previous or next
-	range, together with the current time as a query to queryInput, and write the displayed bounds
-	back to the inputs. The rows are computed from the query alone. The time makes every query a new
-	value, so that refreshing also displays the commits made since the last refresh. Before the
-	first refresh, the default query (today, no system changes) is displayed.
+	values, normalized so that the start of a range does not lie behind its end; shiftedFilters
+	holds the ranges of the same width directly before and after it (a range of whole days is moved
+	by calendar days). A revision range is not moved before the first revision or behind the
+	revision following the last one; a time range containing the current time is not moved forwards,
+	and one starting at or before the first revision is not moved backwards. The "Refresh" button
+	writes the filter, the arrow buttons the previous or next range, together with the current time
+	as a query to queryInput, and write the displayed bounds back to the inputs. The rows are
+	computed from the query and the reload channel alone. The time makes every query a new value, so
+	that refreshing also displays the commits made since the last refresh. The details dialog writes
+	the current time to the reload channel bound into it after undoing or redoing a commit, so that
+	the rows are computed again: the undone commit is marked as reverted, a redo is displayed when it
+	lies within the range of the query. Before the first refresh, the default query (today, no system changes) is displayed.
 -->
 <view>
 	<channels>
@@ -126,6 +129,7 @@
 }]]></expr>
 		</derived-channel>
 		<channel name="queryInput"/>
+		<channel name="reload"/>
 		<derived-channel name="query"
 			inputs="queryInput"
 		>
@@ -452,6 +456,7 @@
 		>
 			<inputs>
 				<input channel="query"/>
+				<input channel="reload"/>
 			</inputs>
 			<columns>
 				<computed-column name="revision"
@@ -508,7 +513,12 @@
 					bind-input-to="changeSet"
 					close-on-backdrop="true"
 					dialog-view="admin/monitoring/revision-details.view.xml"
-				/>
+				>
+					<bind
+						channel="reload"
+						to="reload"
+					/>
+				</open-dialog>
 			</on-activate>
 		</table>
 	</full-page>

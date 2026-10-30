@@ -1522,6 +1522,29 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * {@inheritDoc}
 	 *
+	 * @implNote Follows the chain of access parents as {@link #getRoleHolder(TLObject)} does and
+	 *           maps the operation at every step as
+	 *           {@link #isAllowed(Person, TLObject, BoundCommandGroup)} does.
+	 */
+	@Override
+	public BoundCommandGroup getOperationOnRoleHolder(TLObject object, BoundCommandGroup operation) {
+		Set<TLObject> seen = new HashSet<>();
+		TLObject current = object;
+		BoundCommandGroup result = operation;
+		while (current != null && seen.add(current)) {
+			AccessParentFunction parent = accessParentOf(current);
+			if (parent == null) {
+				break;
+			}
+			result = operationOnParent(result);
+			current = parent.resolve(current);
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
 	 * @implNote Follows the delegation of
 	 *           {@link #isAllowed(Person, TLObject, BoundCommandGroup)}: an object with an access
 	 *           parent is admitted by the roles admitting the operation checked on the parent in its

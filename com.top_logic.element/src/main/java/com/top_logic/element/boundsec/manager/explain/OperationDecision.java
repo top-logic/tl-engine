@@ -19,6 +19,11 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *
  * @param operation
  *        The operation, one that applies to the object.
+ * @param checkedOperation
+ *        The operation checked on the {@link AccessExplanation#decidingObject() deciding object} in
+ *        place of the {@link #operation()}, see
+ *        {@link ModelAccessRights#getOperationOnRoleHolder(TLObject, BoundCommandGroup)}. The
+ *        operation itself for an object deciding for itself.
  * @param allowed
  *        The decision of the access check
  *        {@link ModelAccessRights#isAllowed(Person, TLObject, BoundCommandGroup)},
@@ -38,7 +43,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public record OperationDecision(BoundCommandGroup operation, boolean allowed, Set<BoundedRole> admittingRoles,
+public record OperationDecision(BoundCommandGroup operation, BoundCommandGroup checkedOperation, boolean allowed, Set<BoundedRole> admittingRoles,
 		Set<BoundedRole> grantingRoles, boolean restricted) {
 	// Pure value.
 }

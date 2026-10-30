@@ -193,7 +193,8 @@ public class EffectiveAccess {
 			Set<BoundedRole> admitting = _rights.getAdmittingRoles(object, operation);
 			Set<BoundedRole> granting = new HashSet<>(admitting);
 			granting.retainAll(held);
-			result.add(new OperationDecision(operation, allowed.get(operation).booleanValue(),
+			result.add(new OperationDecision(operation, _rights.getOperationOnRoleHolder(object, operation),
+				allowed.get(operation).booleanValue(),
 				Collections.unmodifiableSet(admitting), Collections.unmodifiableSet(granting),
 				restricted.contains(operation)));
 		}

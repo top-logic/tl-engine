@@ -247,6 +247,10 @@ public class TestEffectiveAccess extends BasicTestCase {
 		OperationDecision delete = decision(explanation, SimpleBoundCommandGroup.DELETE);
 		assertTrue("Deleting a part is writing its container.", delete.allowed());
 		assertEquals(Set.of(_reader), delete.admittingRoles());
+		assertSame("Deleting a part is checked as writing its container.", SimpleBoundCommandGroup.WRITE,
+			delete.checkedOperation());
+		assertSame("Reading a part is checked as reading its container.", SimpleBoundCommandGroup.READ,
+			read.checkedOperation());
 
 		RoleAssignment source = singleSource(explanation, _reader);
 		assertFalse(explanation.isInherited(source));

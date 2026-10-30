@@ -278,6 +278,7 @@ public class ChangeLogBuilder {
 		}
 
 		Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy = new HashMap<>();
+		Map<Long, com.top_logic.element.changelog.model.ChangeSet> redoneBy = new HashMap<>();
 
 		Revision effectiveStartRev = _filter == null ? _startRev : _filter.adjustStartRev(_startRev);
 
@@ -302,7 +303,7 @@ public class ChangeLogBuilder {
 					chunkSize = Long.max(estimate, Long.min(MAX_CHUNK_SIZE, chunkSize * CHUNK_GROWTH_FACTOR));
 
 					long chunkStart = Long.max(start, stop - chunkSize);
-					readDescending(log, revertedBy, chunkStart, stop);
+					readDescending(log, revertedBy, redoneBy, chunkStart, stop);
 
 					int remaining = _numberEntries - log.size();
 					if (remaining == 0) {
@@ -321,7 +322,7 @@ public class ChangeLogBuilder {
 					stop = chunkStart - 1;
 				}
 			} else {
-				readDescending(log, revertedBy, start, stop);
+				readDescending(log, revertedBy, redoneBy, start, stop);
 			}
 
 		}
@@ -332,8 +333,8 @@ public class ChangeLogBuilder {
 	}
 
 	private void readDescending(List<com.top_logic.element.changelog.model.ChangeSet> log,
-			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy, long start,
-			long stop) {
+			Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy,
+			Map<Long, com.top_logic.element.changelog.model.ChangeSet> redoneBy, long start, long stop) {
 
 		List<com.top_logic.element.changelog.model.ChangeSet> toDelete = new ArrayList<>();
 
@@ -344,6 +345,20 @@ public class ChangeLogBuilder {
 			.hasNext();) {
 			com.top_logic.element.changelog.model.ChangeSet cs1 = it.next();
 			long commitNumber = cs1.getRevision().getCommitNumber();
+
+			if (cs1.isRedo()) {
+				long undoRevision = cs1.origRevision();
+				if (undoRevision != -1) {
+					// Store the redo for later connection with the undo it reverts.
+					redoneBy.put(undoRevision, cs1);
+				}
+			}
+
+			com.top_logic.element.changelog.model.ChangeSet redoCS = redoneBy.remove(commitNumber);
+			if (redoCS != null) {
+				// Connect the undo with its redo. The undo itself stays hidden behind its original.
+				cs1.setRevertedBy(redoCS);
+			}
 
 			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
 			if (undoCS != null) {

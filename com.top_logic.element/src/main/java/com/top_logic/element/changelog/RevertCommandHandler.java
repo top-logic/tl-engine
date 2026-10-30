@@ -34,7 +34,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link CommandHandler} for reverting a {@link ChangeSet}.
  *
  * <p>
- * A change that has already been reverted is re-applied (its revert is reverted).
+ * A change that has already been reverted is re-applied (its undo is reverted), a change that
+ * has been redone is undone again (its redo is reverted).
  * </p>
  *
  * @see ChangeSetReverter#revertTarget(ChangeSet)

@@ -46,7 +46,7 @@
 				</resourceKey>
 				<executability>
 					<rule-by-expression decision="x -> $x != null"/>
-					<rule-by-expression decision="x -> $x.get(`tl.changelog:ChangeSet#revertedBy`) == null"/>
+					<rule-by-expression decision="x -> !changeSetUndone($x)"/>
 				</executability>
 				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
 					<confirmMessage key="dynamic.80918be2-05d0-49c6-8706-007118f4ab98">
@@ -67,7 +67,7 @@
 				</resourceKey>
 				<executability>
 					<rule-by-expression decision="x -> $x != null"/>
-					<rule-by-expression decision="x -> $x.get(`tl.changelog:ChangeSet#revertedBy`) != null"/>
+					<rule-by-expression decision="x -> changeSetUndone($x)"/>
 				</executability>
 				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
 					<confirmMessage key="dynamic.a264d894-c206-4886-a8df-3d421b869423">

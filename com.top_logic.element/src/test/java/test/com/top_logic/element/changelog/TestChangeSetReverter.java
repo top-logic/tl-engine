@@ -347,10 +347,100 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("child", child.tValueByName("name"));
 	}
 
-	private ChangeSet changeAt(TLObject root, Revision revision) {
+	/**
+	 * The change log links an undo as {@link ChangeSet#getRevertedBy()} of the undone commit and a
+	 * redo as {@link ChangeSet#getRevertedBy()} of the undo; the undo is not listed, the redo is.
+	 */
+	public void testChangeLogLinksRedoToUndo() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		ChangeSetReverter.redoLast(root, 0, true);
+		assertEquals("child-1", child.tValueByName("name"));
+
+		Collection<ChangeSet> log = readLog(root);
+		ChangeSet original = changeAt(root, rename);
+		ChangeSet undo = original.getRevertedBy();
+		assertNotNull("Undone commit must be linked to its undo.", undo);
+		assertTrue(undo.isRevert());
+		ChangeSet redo = undo.getRevertedBy();
+		assertNotNull("Undo must be linked to its redo.", redo);
+		assertTrue(redo.isRedo());
+		assertNull(redo.getRevertedBy());
+
+		assertFalse("Undo must not be listed.", containsRevision(log, undo));
+		assertTrue("Redo must be listed.", containsRevision(log, redo));
+	}
+
+	/**
+	 * {@link ChangeSetReverter#revertTarget(ChangeSet)} of a redone commit is its redo: toggling
+	 * the commit undoes it again instead of reverting its undo a second time.
+	 */
+	public void testRevertRedoneCommitUndoesAgain() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		ChangeSetReverter.redoLast(root, 0, true);
+
+		ChangeSet target = ChangeSetReverter.revertTarget(changeAt(root, rename));
+		assertTrue("Target must be the redo.", target.isRedo());
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, target, false);
+		assertEquals(List.of(), problems);
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
+	 * {@link ChangeSetReverter#isUndone(ChangeSet)} follows the chain undo, redo, undo, redo of a
+	 * commit read from the change log.
+	 */
+	public void testIsUndoneOverChain() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		assertFalse(ChangeSetReverter.isUndone(changeAt(root, rename)));
+		assertFalse(ChangeSetReverter.isUndone(null));
+
+		toggle(root, rename);
+		assertEquals("child", child.tValueByName("name"));
+		assertTrue("Undone.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+
+		toggle(root, rename);
+		assertEquals("child-1", child.tValueByName("name"));
+		assertFalse("Redone.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+
+		toggle(root, rename);
+		assertEquals("child", child.tValueByName("name"));
+		assertTrue("Undone again.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+
+		toggle(root, rename);
+		assertEquals("child-1", child.tValueByName("name"));
+		assertFalse("Redone again.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+	}
+
+	private void toggle(TLObject root, Revision revision) {
+		ChangeSet target = ChangeSetReverter.revertTarget(changeAt(root, revision));
+		assertEquals(List.of(), ChangeSetReverter.revert(_kb, target, false));
+	}
+
+	private Collection<ChangeSet> readLog(TLObject root) {
 		ChangeLogBuilder builder = new ChangeLogBuilder(_kb, ModelService.getApplicationModel());
 		builder.setFilter(new SubtreeFilter(root, true));
-		for (ChangeSet cs : builder.build()) {
+		return builder.build();
+	}
+
+	private static boolean containsRevision(Collection<ChangeSet> log, ChangeSet cs) {
+		long rev = cs.getRevision().getCommitNumber();
+		return log.stream().anyMatch(x -> x.getRevision().getCommitNumber() == rev);
+	}
+
+	private ChangeSet changeAt(TLObject root, Revision revision) {
+		for (ChangeSet cs : readLog(root)) {
 			if (cs.getRevision().getCommitNumber() == revision.getCommitNumber()) {
 				return cs;
 			}

@@ -31,8 +31,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A commit that has not been reverted is undone; a commit that has already been reverted is
- * re-applied by reverting its revert. The revert is committed in a transaction of its own with
- * the revert message of the reverted commit. An input that is not a {@link ChangeSet} is left
+ * re-applied by reverting its undo; a commit that has been redone is undone again by reverting its
+ * redo. The revert is committed in a transaction of its own with the revert message of the
+ * reverted change set. An input that is not a {@link ChangeSet} is left
  * alone; the chain continues with {@code null} as result.
  * </p>
  *

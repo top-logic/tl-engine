@@ -12,12 +12,12 @@
 	object its last version before the deletion), and for a modification the attribute with its old
 	and new values.
 	
-	"Undo change" reverts a commit that has not been reverted, "Redo change" re-applies a reverted
-	one; which of the two is offered is decided by the revertedBy reference of the ChangeSet. Both
-	ask for confirmation, revert the commit with <revert-change-set>, write the current time to the
-	reload channel and close the dialog. An opener whose display depends on the commits binds a
-	channel of its own to reload, so that it is recomputed after the revert; without such a
-	binding, reload is a channel of the dialog alone.
+	"Undo change" reverts a commit that is in effect, "Redo change" re-applies one that is undone;
+	which of the two is offered is decided by changeSetUndone(), which looks at the end of the chain
+	of reverts (revertedBy) following the commit. Both ask for confirmation, revert the commit with
+	<revert-change-set>, write the current time to the reload channel and close the dialog. An
+	opener whose display depends on the commits binds a channel of its own to reload, so that it is
+	recomputed after the revert; without such a binding, reload is a channel of the dialog alone.
 -->
 <view>
 	<channels>
@@ -133,7 +133,7 @@
 						<de>Änderung zurücknehmen</de>
 					</label>
 					<executability>
-						<visible-if expr="$changeSet != null &amp;&amp; $changeSet.get(`tl.changelog:ChangeSet#revertedBy`) == null"/>
+						<visible-if expr="$changeSet != null &amp;&amp; !changeSetUndone($changeSet)"/>
 					</executability>
 					<confirm expr="#('Are you sure you want to undo the change “{0}”?'@en, 'Sind Sie sicher, dass Sie die Änderung „{0}“ zurücknehmen wollen?'@de).fill($changeSet.get(`tl.changelog:ChangeSet#message`))"/>
 					<revert-change-set/>
@@ -155,7 +155,7 @@
 						<de>Änderung wiederherstellen</de>
 					</label>
 					<executability>
-						<visible-if expr="$changeSet != null &amp;&amp; $changeSet.get(`tl.changelog:ChangeSet#revertedBy`) != null"/>
+						<visible-if expr="changeSetUndone($changeSet)"/>
 					</executability>
 					<confirm expr="#('Are you sure you want to redo the change “{0}”?'@en, 'Sind Sie sicher, dass Sie die Änderung „{0}“ wiederherstellen wollen?'@de).fill($changeSet.get(`tl.changelog:ChangeSet#message`))"/>
 					<revert-change-set/>

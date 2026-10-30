@@ -57,12 +57,18 @@ public final class ChangeSetReverter {
 	}
 
 	/**
-	 * The change set whose revert undoes the effect of the given one in the current state.
+	 * The change set whose revert toggles the effect of the given one in the current state.
 	 *
 	 * <p>
-	 * A change that has not been reverted is its own target: reverting it undoes it. A change that
-	 * has already been {@link ChangeSet#getRevertedBy() reverted} has its revert as target:
-	 * reverting the revert re-applies (redoes) the change.
+	 * Follows the chain of {@link ChangeSet#getRevertedBy() reverts} to its end, the change set
+	 * of the chain that is currently in effect: a change that has not been reverted is its own
+	 * target, reverting it undoes it. A reverted change has its undo as target, reverting the undo
+	 * redoes the change. A redone change has its redo as target, reverting the redo undoes the
+	 * change again, and so on. A change set is therefore never reverted twice.
+	 * </p>
+	 *
+	 * <p>
+	 * The chain is the one the {@link ChangeLogBuilder} linked when reading the change log.
 	 * </p>
 	 *
 	 * @param change
@@ -70,8 +76,33 @@ public final class ChangeSetReverter {
 	 * @return The change set to pass to {@link #revert(KnowledgeBase, ChangeSet, boolean)}.
 	 */
 	public static ChangeSet revertTarget(ChangeSet change) {
-		ChangeSet revertedBy = change.getRevertedBy();
-		return revertedBy != null ? revertedBy : change;
+		ChangeSet result = change;
+		while (true) {
+			ChangeSet revertedBy = result.getRevertedBy();
+			if (revertedBy == null) {
+				return result;
+			}
+			result = revertedBy;
+		}
+	}
+
+	/**
+	 * Whether the given change is undone in the current state.
+	 *
+	 * <p>
+	 * The state of a change is decided by the end of its chain of
+	 * {@link ChangeSet#getRevertedBy() reverts} ({@link #revertTarget(ChangeSet)}): the change is
+	 * undone when that end is an undo, and in effect when it is the change itself or a redo. A
+	 * command offering to undo a change is therefore offered when this method returns
+	 * {@code false}, one offering to redo it when this method returns {@code true}.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change to check, may be {@code null}.
+	 * @return Whether the change is undone; {@code false} for {@code null}.
+	 */
+	public static boolean isUndone(ChangeSet change) {
+		return change != null && revertTarget(change).isRevert();
 	}
 
 	/**

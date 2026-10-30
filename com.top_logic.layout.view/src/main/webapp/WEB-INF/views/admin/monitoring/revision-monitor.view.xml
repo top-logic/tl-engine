@@ -40,7 +40,8 @@
 	that refreshing also displays the commits made since the last refresh. The details dialog writes
 	the current time to the reload channel bound into it after undoing or redoing a commit, so that
 	the rows are computed again: the undone commit is marked as reverted, a redo is displayed when it
-	lies within the range of the query. Before the first refresh, the default query (today, no system changes) is displayed.
+	lies within the range of the query. Before the first refresh, the default query (today, no
+	system changes) is displayed.
 -->
 <view>
 	<channels>

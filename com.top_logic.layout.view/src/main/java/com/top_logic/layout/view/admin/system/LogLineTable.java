@@ -26,14 +26,21 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.monitoring.log.LogFile;
 import com.top_logic.monitoring.log.LogLine;
@@ -48,6 +55,7 @@ import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.util.Resources;
 
 /**
  * Sortable, per-column filterable table of the parsed log entries of the file held by the configured
@@ -60,11 +68,26 @@ import com.top_logic.table.impl.ListRowSource;
  * collapsed into the entry details); only the last {@link #TAIL_BYTES} bytes are parsed so that large
  * files stay cheap to view. Rows are ordered newest first.
  * </p>
+ *
+ * <p>
+ * The details of an entry, usually a stack trace of many lines, are shown in their cell by their
+ * first line and a button opening the full details read-only in a dialog, keeping the line breaks
+ * and the indentation of the trace. Sorting, filtering and searching the column use the full
+ * details text.
+ * </p>
+ *
+ * @see FieldSpec#isCompact()
+ * @see FieldControlRegistry#createControl(ReactContext, FieldSpec,
+ *      com.top_logic.layout.form.model.FieldModel,
+ *      com.top_logic.layout.react.field.ReactFieldControlProvider)
  */
 public class LogLineTable implements UIElement {
 
 	/** Maximum number of trailing bytes parsed from a log file. */
 	private static final long TAIL_BYTES = 4 * 1024 * 1024;
+
+	/** Number of rows of the text area displaying the details of an entry in the dialog. */
+	private static final int DETAILS_ROWS = 20;
 
 	private static final LogParser PARSER = TypedConfigUtil.createInstance(LogParser.Config.class);
 
@@ -136,7 +159,14 @@ public class LogLineTable implements UIElement {
 		columns.add(textColumn("category", I18NConstants.LOG_COLUMN_CATEGORY, LogLine::getCategory, 300));
 		columns.add(textColumn("thread", I18NConstants.LOG_COLUMN_THREAD, LogLine::getThread, 180));
 		columns.add(textColumn("message", I18NConstants.LOG_COLUMN_MESSAGE, LogLine::getMessage, 600));
-		columns.add(textColumn("details", I18NConstants.LOG_COLUMN_DETAILS, LogLine::getDetails, 300));
+		columns.add(DefaultColumn.<LogLine, String> builder("details", LogLine::getDetails)
+			.label(I18NConstants.LOG_COLUMN_DETAILS)
+			.renderer(LogLineTable::detailsCell)
+			.searchText(text -> text == null ? "" : text)
+			.sort(() -> Comparator.nullsFirst(Comparator.naturalOrder()))
+			.filter(new TextColumnFilter<>(text -> text == null ? "" : text))
+			.width(300)
+			.build());
 
 		ViewChannel input = _inputRef != null ? context.resolveChannel(_inputRef) : null;
 		ListRowSource<LogLine> source = new ListRowSource<>(lines(input == null ? null : input.get()), columns);
@@ -181,6 +211,29 @@ public class LogLineTable implements UIElement {
 			Logger.warn("Failed to read log file '" + file.getName() + "'.", ex, LogLineTable.class);
 			return new ArrayList<>();
 		}
+	}
+
+	/**
+	 * The cell displaying the details of an entry: a read-only text field of several rows, shown in
+	 * the cell by its first line and a button opening the full text in a dialog.
+	 */
+	private static CellContent detailsCell(String details) {
+		if (details == null || details.isEmpty()) {
+			return CellContent.text(details);
+		}
+		return new CellContent.Raw((CellControlFactory) context -> detailsControl(context, details));
+	}
+
+	/**
+	 * The read-only control displaying the given details of an entry in a table cell.
+	 */
+	private static ReactControl detailsControl(ReactContext context, String details) {
+		String label = Resources.getInstance().getString(I18NConstants.LOG_COLUMN_DETAILS);
+		FieldSpec field =
+			FieldControlService.cellSpec(FieldSpec.of(String.class, label).setMultilineRows(DETAILS_ROWS));
+		AbstractFieldModel model = new AbstractFieldModel(details);
+		model.setEditable(false);
+		return FieldControlRegistry.getInstance().createControl(context, field, model, FieldControlRegistry.TEXT);
 	}
 
 	/**

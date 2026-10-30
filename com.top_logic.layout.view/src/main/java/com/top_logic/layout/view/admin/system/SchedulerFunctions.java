@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.admin.system;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -58,6 +59,11 @@ public class SchedulerFunctions extends TLScriptFunctions {
 
 	/** Prefix all function names of this class start with. */
 	public static final String PREFIX = "scheduler";
+
+	/**
+	 * Content type of the log file of a task run: tasks write their log files as UTF-8 text.
+	 */
+	private static final String LOG_FILE_CONTENT_TYPE = "text/plain;charset=" + StandardCharsets.UTF_8.name();
 
 	/**
 	 * The given snapshot of the tasks, or one taken now.
@@ -585,7 +591,7 @@ public class SchedulerFunctions extends TLScriptFunctions {
 		if (logFile == null || !logFile.isFile()) {
 			return null;
 		}
-		return BinaryDataFactory.createBinaryDataWithName(logFile, logFile.getName());
+		return BinaryDataFactory.createBinaryData(logFile, LOG_FILE_CONTENT_TYPE, logFile.getName());
 	}
 
 }

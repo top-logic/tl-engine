@@ -333,7 +333,10 @@ public interface Task extends Batch {
 	/**
 	 * Getter for the {@link TaskLog} of this {@link Task}.
 	 * 
-	 * @return Never <code>null</code>
+	 * @return <code>null</code>, as long as this {@link Task} is not {@link #attachTo(Scheduler)
+	 *         attached} to the {@link Scheduler}.
+	 *
+	 * @see Scheduler#getState(Task)
 	 */
 	public TaskLog getLog();
 

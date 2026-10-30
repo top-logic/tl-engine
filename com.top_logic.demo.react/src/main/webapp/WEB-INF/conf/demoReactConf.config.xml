@@ -64,6 +64,7 @@
 					rate-gui-warnings="0.8"
 					working-time-max="2000"
 					working-time-min="1000"
+					write-log-file="true"
 				>
 					<schedules>
 						<daily time-of-day="03:20"/>

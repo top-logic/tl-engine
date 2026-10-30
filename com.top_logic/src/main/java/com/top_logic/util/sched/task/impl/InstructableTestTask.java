@@ -5,6 +5,12 @@
  */
 package com.top_logic.util.sched.task.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,12 +21,14 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.composite.CompositeTaskImpl;
 import com.top_logic.util.sched.task.log.TaskLog;
+import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
 /**
@@ -165,6 +173,20 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 		@FloatDefault(0)
 		float getRateThrowThrowable();
 
+		/**
+		 * Whether each run writes its progress to a log file of its own.
+		 * 
+		 * <p>
+		 * The file is created in the logging directory and is recorded as
+		 * {@link TaskResult#getLogFile() log file} of the run.
+		 * </p>
+		 */
+		@Name(WRITE_LOG_FILE)
+		boolean isWriteLogFile();
+
+		/** Configuration name of {@link #isWriteLogFile()}. */
+		String WRITE_LOG_FILE = "write-log-file";
+
 	}
 
 	private enum InstructedTaskResult {
@@ -277,6 +299,9 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 
 	private final Random _random;
 
+	/** The log file of the current run, <code>null</code> if none is written. */
+	private volatile File _logFile;
+
 	/** Used by the typed configuration to instantiate the {@link CompositeTaskImpl}. */
 	@CalledByReflection
 	public InstructableTestTask(InstantiationContext context, C config) {
@@ -331,11 +356,11 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 
 	@Override
 	protected void runHook() {
+		startLogFile();
 		checkMaintenanceMode();
 		long workingTime = calcWorkingTime();
 		InstructedTaskResult result = calcResult();
-		Logger.info("Task " + getName() + ": Started. Execution will take: " + workingTime + " ms and end with: "
-			+ result, getClass());
+		logProgress("Started. Execution will take: " + workingTime + " ms and end with: " + result);
 		try {
 			List<String> warnings = getWarnings();
 			long sleepTime = workingTime / (1 + warnings.size());
@@ -344,13 +369,45 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 			}
 			for (String warning : warnings) {
 				logGuiWarning(warning);
+				logProgress("Warning: " + warning);
 				if (!work(sleepTime)) {
 					return;
 				}
 			}
 			result.causeTaskResult(this);
 		} finally {
-			Logger.info("Task " + getName() + ": Finished.", getClass());
+			logProgress("Finished.");
+			_logFile = null;
+		}
+	}
+
+	private void startLogFile() {
+		if (!getConfig().isWriteLogFile()) {
+			return;
+		}
+		TaskResult currentResult = getLog().getCurrentResult();
+		File logFile = createLogFile(currentResult.getStartDate());
+		currentResult.setLogFile(logFile);
+		_logFile = logFile;
+	}
+
+	/**
+	 * Logs a progress message of the current run, and writes it to the log file of the run, if
+	 * {@link Config#isWriteLogFile() configured}.
+	 */
+	private void logProgress(String message) {
+		Logger.info("Task " + getName() + ": " + message, getClass());
+		File logFile = _logFile;
+		if (logFile == null) {
+			return;
+		}
+		try (Writer out = Files.newBufferedWriter(logFile.toPath(), StandardCharsets.UTF_8,
+			StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+			out.write(message);
+			out.write(System.lineSeparator());
+		} catch (IOException ex) {
+			Logger.error("Task " + getName() + ": Failed to write to the log file '" + logFile + "'.", ex,
+				getClass());
 		}
 	}
 
@@ -389,7 +446,7 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 				throw new RuntimeException(ex);
 			}
 		}
-		Logger.info("Task " + getName() + ": Stopped on request.", getClass());
+		logProgress("Stopped on request.");
 		return false;
 	}
 

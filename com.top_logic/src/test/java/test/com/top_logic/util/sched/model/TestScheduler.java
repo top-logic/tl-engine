@@ -5,7 +5,11 @@
  */
 package test.com.top_logic.util.sched.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.Thread.State;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Calendar;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
@@ -41,6 +45,7 @@ import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.task.Task;
+import com.top_logic.util.sched.task.impl.InstructableTestTask;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.schedule.legacy.LegacyOnceSchedule;
@@ -770,6 +775,36 @@ public class TestScheduler extends BasicTestCase {
 		assertTrue("The end of the run has not been processed in time.",
 			runProcessed.await(BARRIER_TIMEOUT, TimeUnit.MILLISECONDS));
 		assertFalse(isClusterLockSet(log));
+	}
+
+	/**
+	 * An {@link InstructableTestTask} configured to {@link InstructableTestTask.Config#isWriteLogFile()
+	 * write a log file} records the log file of its run, which contains the progress of the run.
+	 */
+	public void testInstructableTestTaskWritesLogFile() throws InterruptedException, IOException {
+		createIdleScheduler("testInstructableTestTaskWritesLogFile");
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		InstructableTestTask.Config taskConfig = TypedConfiguration.newConfigItem(InstructableTestTask.Config.class);
+		taskConfig.setImplementationClass(InstructableTestTask.class);
+		taskConfig.setName("testInstructableTestTaskWritesLogFile");
+		taskConfig.update(taskConfig.descriptor().getProperty(InstructableTestTask.Config.WRITE_LOG_FILE),
+			Boolean.TRUE);
+		Task task = (Task) getInstantiationContext().getInstance(taskConfig);
+		scheduler.addTask(task);
+		CountDownLatch runProcessed = new CountDownLatch(1);
+
+		scheduler.runAfterTaskDone(task, runProcessed::countDown);
+		scheduler.startTask(task);
+
+		assertTrue("The run has not ended in time.", runProcessed.await(BARRIER_TIMEOUT, TimeUnit.MILLISECONDS));
+		File logFile = task.getLog().getLastResult().getLogFile();
+		assertNotNull("No log file recorded.", logFile);
+		try {
+			String content = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
+			assertTrue(content, content.contains("Finished."));
+		} finally {
+			logFile.delete();
+		}
 	}
 
 	private static boolean isClusterLockSet(TaskLogWrapper log) {

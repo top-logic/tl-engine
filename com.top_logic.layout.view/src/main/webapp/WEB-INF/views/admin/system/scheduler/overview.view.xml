@@ -22,6 +22,10 @@
 	the rows and the derived channels. Stop and Release cluster lock first ask for confirmation;
 	the release warns that a task still running on the node holding the lock may then run twice.
 	- Refresh reads the tasks again, e.g. to see a run that has started or ended meanwhile.
+	- Configuration shows the scheduler service in the services administration, where the scheduler
+	and its tasks are configured: it brings the initial frame of the services drill-down
+	(services/overview.view.xml) into view and drills down from it to the frame "service" with the
+	scheduler service (schedulerService()) as its "module" parameter.
 	- Activating a row - a double-click, Enter, or the row's chevron button - pushes the detail
 	frame of its task, with the task as its "task" channel. The detail frame offers the same
 	commands on that task.
@@ -212,6 +216,28 @@
 						<write-channel name="tasks"/>
 					</with-result>
 				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-gear"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Configuration</en>
+					<de>Konfiguration</de>
+				</label>
+				<tooltip>
+					<en>Opens the configuration of the scheduler and its tasks in the services administration.</en>
+					<de>Öffnet die Konfiguration des Steuerprogramms und seiner Aufgaben in der Verwaltung der Dienste.</de>
+				</tooltip>
+				<show-views>
+					<show view="admin/system/services/overview.view.xml"/>
+					<show frame="service">
+						<bind
+							channel="module"
+							expr="schedulerService()"
+						/>
+					</show>
+				</show-views>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.label.I18NClassNameProvider;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
@@ -77,6 +78,18 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static SchedulerSnapshot snapshot(SchedulerSnapshot snapshot) {
 		return snapshot == null ? SchedulerSnapshot.current() : snapshot;
+	}
+
+	/**
+	 * The application service of the scheduler, e.g. to open its configuration in the services
+	 * administration.
+	 *
+	 * @return The runtime module of the {@link Scheduler}.
+	 */
+	@Label("Service of the scheduler")
+	@SideEffectFree
+	public static BasicRuntimeModule<?> service() {
+		return Scheduler.Module.INSTANCE;
 	}
 
 	/**

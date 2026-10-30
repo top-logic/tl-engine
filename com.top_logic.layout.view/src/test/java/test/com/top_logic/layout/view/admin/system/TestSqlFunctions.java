@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.admin.system;
 
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
@@ -22,6 +23,7 @@ import com.top_logic.layout.view.admin.system.SqlResult;
 import com.top_logic.layout.view.admin.system.SqlResult.Column;
 import com.top_logic.layout.view.admin.system.SqlResult.Row;
 import com.top_logic.layout.view.admin.system.SqlStatementKind;
+import com.top_logic.layout.view.form.ScriptSuggestionSource;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -153,6 +155,44 @@ public class TestSqlFunctions extends BasicTestCase {
 		}
 		assertEquals(SqlFunctions.MAX_HISTORY, history.size());
 		assertEquals("SELECT " + (SqlFunctions.MAX_HISTORY - 1), SqlFunctions.historyStatement(history.get(0)));
+	}
+
+	public void testHistoryWithoutRepetition() {
+		List<SqlHistoryEntry> history = SqlFunctions.remember(null, "SELECT 1", SqlStatementKind.QUERY);
+		history = SqlFunctions.remember(history, "SELECT 2", SqlStatementKind.QUERY);
+		history = SqlFunctions.remember(history, " SELECT 1", SqlStatementKind.SIMULATION);
+
+		assertEquals(2, history.size());
+		assertEquals("SELECT 1", SqlFunctions.historyStatement(history.get(0)));
+		assertEquals(SqlStatementKind.SIMULATION, SqlFunctions.historyKind(history.get(0)));
+		assertEquals(Integer.valueOf(3), SqlFunctions.historyNumber(history.get(0)));
+		assertEquals("SELECT 2", SqlFunctions.historyStatement(history.get(1)));
+	}
+
+	public void testTables() {
+		assertTrue(SqlFunctions.tables().contains(TABLE));
+	}
+
+	public void testTableSuggestions() {
+		String text = "SELECT * FROM test_sql_c";
+		List<Map<String, Object>> suggestions = SqlFunctions.tableSuggestions(text, text.length());
+		Map<String, Object> suggestion = suggestions.stream()
+			.filter(entry -> TABLE.equals(entry.get(ScriptSuggestionSource.LABEL)))
+			.findFirst().orElseThrow();
+		assertTrue(((String) suggestion.get(ScriptSuggestionSource.TEXT)).contains(TABLE));
+		assertEquals(Integer.valueOf("SELECT * FROM ".length()), suggestion.get(ScriptSuggestionSource.FROM));
+		assertEquals(Integer.valueOf(text.length()), suggestion.get(ScriptSuggestionSource.TO));
+		for (Map<String, Object> entry : suggestions) {
+			assertTrue(((String) entry.get(ScriptSuggestionSource.LABEL)).toUpperCase().startsWith("TEST_SQL_C"));
+		}
+
+		String quoted = "SELECT * FROM A JOIN \"TEST_SQL";
+		Map<String, Object> afterQuote = SqlFunctions.tableSuggestions(quoted, quoted.length()).get(0);
+		assertEquals(Integer.valueOf(quoted.indexOf('"')), afterQuote.get(ScriptSuggestionSource.FROM));
+
+		// No table name is expected at the caret.
+		assertEquals(List.of(), SqlFunctions.tableSuggestions("SELECT * FROM X WHERE ", 22));
+		assertEquals(List.of(), SqlFunctions.tableSuggestions("SELECT TEST_SQL", 15));
 	}
 
 	private static int countChanged() {

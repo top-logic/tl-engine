@@ -16,7 +16,11 @@
 	clears the result, so that a statement the database rejects is kept in the history and no
 	result of an earlier statement stays on display. The rejection is shown as the message of the
 	failed command.
-	- The history on the right lists the statements of this view, the newest first; activating one
+	- Ctrl+Enter in the statement runs it as query. After FROM or JOIN, the statement input
+	suggests the names of the tables of the database (sqlTableSuggestions).
+	- The result table offers a search over its columns and an export of the displayed rows.
+	- The history on the right lists the statements of this view, the newest first, each once: a
+	statement run again moves to the front. Activating one
 	puts it back into the input, the tooltip of a statement shows it in full. Clear history
 	empties it. It is a channel of the view and ends
 	with the session.
@@ -66,6 +70,7 @@
 								<commands>
 									<generic-command
 										image="css:bi bi-play"
+										key="Ctrl+Enter"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -73,8 +78,8 @@
 											<de>Abfrage ausführen</de>
 										</label>
 										<tooltip>
-											<en>Runs the statement as query and shows the rows it delivers, at most the given maximum.</en>
-											<de>Führt die Anweisung als Abfrage aus und zeigt die gelieferten Zeilen an, höchstens das angegebene Maximum.</de>
+											<en>Runs the statement as query and shows the rows it delivers, at most the given maximum (Ctrl+Enter).</en>
+											<de>Führt die Anweisung als Abfrage aus und zeigt die gelieferten Zeilen an, höchstens das angegebene Maximum (Strg+Enter).</de>
 										</tooltip>
 										<execute-script
 											function="sqlRemember($history, $statement, 'QUERY')"
@@ -183,6 +188,9 @@
 										<annotations>
 											<multi-line rows="5"/>
 										</annotations>
+										<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+											<suggestions><![CDATA[self -> text -> caret -> sqlTableSuggestions($text, $caret)]]></suggestions>
+										</input-control>
 										<label>
 											<en>Statement</en>
 											<de>Anweisung</de>
@@ -311,7 +319,9 @@
 						<case id="query-result"
 							test="sqlIsQuery($result)"
 						>
-							<table id="result-table">
+							<table id="result-table"
+								filter-bar="true"
+							>
 								<inputs>
 									<input channel="result"/>
 								</inputs>
@@ -331,6 +341,12 @@
 									</dynamic-columns>
 								</columns>
 								<rows><![CDATA[sqlRows($result)]]></rows>
+								<export download-name="#('Query result'@en, 'Abfrageergebnis'@de)">
+									<sheet-name>
+										<en>Query result</en>
+										<de>Abfrageergebnis</de>
+									</sheet-name>
+								</export>
 							</table>
 						</case>
 					</switch>

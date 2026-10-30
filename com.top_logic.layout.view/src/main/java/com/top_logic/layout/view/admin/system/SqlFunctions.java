@@ -5,16 +5,22 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.sql.ConnectionPool;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -24,6 +30,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.admin.system.SqlResult.Column;
 import com.top_logic.layout.view.admin.system.SqlResult.Row;
+import com.top_logic.layout.view.form.ScriptSuggestionSource;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
@@ -84,6 +91,25 @@ public class SqlFunctions extends TLScriptFunctions {
 	 * Prefix of the {@link #columnName(Column) name of a column}, followed by its position.
 	 */
 	private static final String COLUMN_NAME_PREFIX = "c";
+
+	/**
+	 * Kinds of tables {@link #tables()} lists.
+	 */
+	private static final String[] TABLE_TYPES = { "TABLE", "VIEW" };
+
+	/**
+	 * Column of {@link DatabaseMetaData#getTables(String, String, String, String[])} holding the
+	 * table name.
+	 */
+	private static final int TABLE_NAME_COLUMN = 3;
+
+	/**
+	 * The end of a statement where a table name is expected: a word introducing a table, followed
+	 * by what is typed of the name (group 1), which is an optional opening quote and the start of
+	 * the name itself (group 2).
+	 */
+	private static final Pattern TABLE_NAME_POSITION =
+		Pattern.compile("\\b(?:FROM|JOIN)\\s+([\"`\\[]?([\\w$]*))$", Pattern.CASE_INSENSITIVE);
 
 	/**
 	 * Runs a query against the database of the application.
@@ -197,6 +223,85 @@ public class SqlFunctions extends TLScriptFunctions {
 			// Rolls back what was not completed and drops the connection after a failure.
 			db.closeTransaction();
 		}
+	}
+
+	/**
+	 * The names of the tables and views in the database of the application.
+	 *
+	 * @return The names in the schema the application works in, sorted ignoring case.
+	 *
+	 * @throws TopLogicException
+	 *         If the database cannot describe its tables.
+	 */
+	@SideEffectFree
+	@Label("Tables of the database")
+	public static List<String> tables() {
+		ConnectionPool pool = pool();
+		PooledConnection connection = pool.borrowReadConnection();
+		try {
+			DatabaseMetaData metaData = connection.getMetaData();
+			String schema = pool.getSQLDialect().getCurrentSchema(connection);
+			List<String> result = new ArrayList<>();
+			try (ResultSet tables = metaData.getTables(connection.getCatalog(), schema, "%", TABLE_TYPES)) {
+				while (tables.next()) {
+					result.add(tables.getString(TABLE_NAME_COLUMN));
+				}
+			}
+			result.sort(String.CASE_INSENSITIVE_ORDER);
+			return result;
+		} catch (SQLException ex) {
+			throw rejected(ex);
+		} finally {
+			pool.releaseReadConnection(connection);
+		}
+	}
+
+	/**
+	 * Suggestions for a table name completing an SQL statement being typed.
+	 *
+	 * <p>
+	 * A table name is suggested where one is expected: after the word <code>FROM</code> or
+	 * <code>JOIN</code>, ignoring case. The suggestions are the {@link #tables() tables} whose
+	 * name starts with what is typed of it, ignoring case and an opening quote. A suggestion
+	 * replaces what is typed of the name by the name quoted for the database.
+	 * </p>
+	 *
+	 * @param text
+	 *        The statement typed so far.
+	 * @param caret
+	 *        The position of the caret in the statement.
+	 * @return The suggestions as expected by the suggestions of a text input, empty where no
+	 *         table name is expected.
+	 */
+	@SideEffectFree
+	@Label("Table name suggestions for an SQL statement")
+	public static List<Map<String, Object>> tableSuggestions(String text, int caret) {
+		if (text == null || caret < 0 || caret > text.length()) {
+			return List.of();
+		}
+		Matcher matcher = TABLE_NAME_POSITION.matcher(text.substring(0, caret));
+		if (!matcher.find()) {
+			return List.of();
+		}
+		String prefix = matcher.group(2);
+		DBHelper sqlDialect;
+		try {
+			sqlDialect = pool().getSQLDialect();
+		} catch (SQLException ex) {
+			throw rejected(ex);
+		}
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (String table : tables()) {
+			if (table.regionMatches(true, 0, prefix, 0, prefix.length())) {
+				Map<String, Object> suggestion = new HashMap<>();
+				suggestion.put(ScriptSuggestionSource.LABEL, table);
+				suggestion.put(ScriptSuggestionSource.TEXT, sqlDialect.tableRef(table));
+				suggestion.put(ScriptSuggestionSource.FROM, Integer.valueOf(matcher.start(1)));
+				suggestion.put(ScriptSuggestionSource.TO, Integer.valueOf(caret));
+				result.add(suggestion);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -343,7 +448,9 @@ public class SqlFunctions extends TLScriptFunctions {
 	 * @param kind
 	 *        How the statement is run.
 	 * @return The history with the statement in front, holding at most the {@link #MAX_HISTORY}
-	 *         newest statements. The given history unchanged, if no statement is given.
+	 *         newest statements. A statement run before is taken out of its old place, so that
+	 *         the history holds each statement once. The given history unchanged, if no statement
+	 *         is given.
 	 */
 	@SideEffectFree
 	@Label("Add a statement to a history")
@@ -360,7 +467,9 @@ public class SqlFunctions extends TLScriptFunctions {
 			return entries;
 		}
 		int number = entries.isEmpty() ? 1 : entries.get(0).number() + 1;
-		entries.add(0, new SqlHistoryEntry(number, kind, statement.strip()));
+		String sql = statement.strip();
+		entries.removeIf(entry -> entry.statement().equals(sql));
+		entries.add(0, new SqlHistoryEntry(number, kind, sql));
 		while (entries.size() > MAX_HISTORY) {
 			entries.remove(entries.size() - 1);
 		}

@@ -44,7 +44,8 @@ import com.top_logic.util.Resources;
  * element wrapped in an item - and, around it, a column carrying that container, the text shown
  * instead of elements while there are none, and the content for entering a new element. The empty
  * text and the entry content are therefore no elements of the arrangement: they are not placed in a
- * column of a grid, and they carry no item position.
+ * column of a grid, and they carry no item position. While there are no elements, the container is
+ * hidden, so that it takes no place - and no gap - beside the empty text.
  * </p>
  *
  * <p>
@@ -335,6 +336,9 @@ public class ObjectListItems {
 		} else {
 			_elements.setChildren(items);
 		}
+		// An empty arrangement takes no place beside the empty text: no gap of the display on
+		// either side of it.
+		_elements.setHidden(_shownElements.isEmpty());
 
 		if (items.isEmpty() && _emptyText != null) {
 			if (_emptyTextControl == null) {

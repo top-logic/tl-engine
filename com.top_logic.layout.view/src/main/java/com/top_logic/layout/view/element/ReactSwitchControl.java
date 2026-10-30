@@ -43,7 +43,9 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
- * The React component {@code TLDeckPane} renders the single {@code activeChild}.
+ * The React component {@code TLDeckPane} renders the single {@code activeChild}. While the chosen
+ * content is empty - no case matches and there is no {@code <default>} - the switch is
+ * {@link #setHidden(boolean) hidden}, so that it takes no place in its container.
  * </p>
  */
 public class ReactSwitchControl extends ReactControl {
@@ -123,12 +125,16 @@ public class ReactSwitchControl extends ReactControl {
 		_activeIndex = index;
 		_shownValue = value;
 
-		ReactControl built = buildContent(index);
+		List<UIElement> content = content(index);
+		ReactControl built = buildContent(index, content);
 		ReactControl old = _current;
 		_current = built;
 
 		Object token = beginUpdate();
 		putState(ACTIVE_CHILD, built);
+		// With nothing to show, the switch takes no place among its siblings - no gap of the
+		// enclosing container on either side of it.
+		setHidden(content.isEmpty());
 		commitUpdate(token);
 
 		if (isAttached()) {
@@ -148,8 +154,11 @@ public class ReactSwitchControl extends ReactControl {
 		return _cases.size();
 	}
 
-	private ReactControl buildContent(int index) {
-		List<UIElement> elements = index < _cases.size() ? _cases.get(index)._content() : _default;
+	private List<UIElement> content(int index) {
+		return index < _cases.size() ? _cases.get(index)._content() : _default;
+	}
+
+	private ReactControl buildContent(int index, List<UIElement> elements) {
 		ViewContext childContext = _context.childContext("switch").withChildSlotPath(String.valueOf(index));
 		return ContentControls.toControl(elements, childContext);
 	}

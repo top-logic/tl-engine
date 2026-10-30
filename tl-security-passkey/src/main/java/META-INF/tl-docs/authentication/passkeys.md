@@ -163,8 +163,9 @@ account already has, so an authenticator does not create a second one for it.
 
 ## Managing passkeys
 
-- **Settings**: the overlay of `settings-tabs.view.xml` appends a "Passkeys" section to the
-  "Security" tab (`<stack config:ref="security-actions">`): an `<object-list>` of the passkeys of the
+- **Settings**: the overlay of `settings-tabs.view.xml` appends a "Passkeys" block to the section
+  "Two-factor authentication" of the "Security" tab, after the authenticator app
+  (`<stack config:ref="two-factor-methods">`): an `<object-list>` of the passkeys of the
   account (`passkey-item.view.xml`: name, creation and last use, rename via
   `passkey-rename.view.xml`, delete) and "Add passkey", visible for `passkeyMayUse($account)`. Adding
   and deleting ask for the password first (`<verify-identity/>`); adding then opens

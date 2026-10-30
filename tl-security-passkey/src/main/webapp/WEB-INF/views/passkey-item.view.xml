@@ -13,13 +13,15 @@
 	<channels>
 		<!-- The passkey shown (bound by the list). -->
 		<channel name="passkey"/>
-		<derived-channel name="created"
-			expr="$passkey.get(`tl.security.passkey:Passkey#createdAt`)"
+		<!--
+			When the passkey was created and last used, as one line: a sentence split into texts side
+			by side would read with gaps between its words. The dates are written by their label, as a
+			text of the date alone would show them.
+		-->
+		<derived-channel name="usage"
+			expr="if($passkey.get(`tl.security.passkey:Passkey#lastUsed`) == null, #('Created {0} · not used yet'@en, 'Erstellt {0} · noch nicht verwendet'@de).fill(toString($passkey.get(`tl.security.passkey:Passkey#createdAt`))), #('Created {0} · last used {1}'@en, 'Erstellt {0} · zuletzt verwendet {1}'@de).fill(toString($passkey.get(`tl.security.passkey:Passkey#createdAt`)), toString($passkey.get(`tl.security.passkey:Passkey#lastUsed`))))"
 			inputs="passkey"
-		/>
-		<derived-channel name="lastUsed"
-			expr="$passkey.get(`tl.security.passkey:Passkey#lastUsed`)"
-			inputs="passkey"
+			observed-types="tl.security.passkey:Passkey"
 		/>
 	</channels>
 	<stack
@@ -30,60 +32,11 @@
 	>
 		<stack gap="compact">
 			<text input="passkey"/>
-			<stack
-				direction="row"
-				gap="compact"
-				wrap="true"
-			>
-				<text
-					tone="secondary"
-					variant="caption"
-				>
-					<label>
-						<en>Created</en>
-						<de>Erstellt</de>
-					</label>
-				</text>
-				<text
-					input="created"
-					tone="secondary"
-					variant="caption"
-				/>
-				<switch input="lastUsed">
-					<case test="$lastUsed == null">
-						<text
-							tone="secondary"
-							variant="caption"
-						>
-							<label>
-								<en>· not used yet</en>
-								<de>· noch nicht verwendet</de>
-							</label>
-						</text>
-					</case>
-					<default>
-						<stack
-							direction="row"
-							gap="compact"
-						>
-							<text
-								tone="secondary"
-								variant="caption"
-							>
-								<label>
-									<en>· last used</en>
-									<de>· zuletzt verwendet</de>
-								</label>
-							</text>
-							<text
-								input="lastUsed"
-								tone="secondary"
-								variant="caption"
-							/>
-						</stack>
-					</default>
-				</switch>
-			</stack>
+			<text
+				input="usage"
+				tone="secondary"
+				variant="caption"
+			/>
 		</stack>
 		<stack
 			direction="row"

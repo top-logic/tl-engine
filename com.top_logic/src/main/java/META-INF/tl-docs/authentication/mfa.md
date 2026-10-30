@@ -213,10 +213,14 @@ in the settings and the account administration, see the passkeys article of this
 
 `secondFactorEnrolled(account)` (`SecondFactorFunctions`, TL-Script) lists the labels of the
 configured methods the account has set up, empty for an account logging in with its password alone.
-The "Security" tab of `settings-tabs.view.xml` computes its status line from it in the derived
-channel `secondFactors` (`observed-types="tl.accounts:Person"`); a module whose method keeps its
-state in objects of its own adds their type to the `observed-types` of that channel with an overlay,
-as `tl-security-passkey` does for `tl.security.passkey:Passkey`.
+The section "Two-factor authentication" of the "Security" tab of `settings-tabs.view.xml`
+(`two-factor-section`) computes its status from it in the derived channel `secondFactors`
+(`observed-types="tl.accounts:Person"`); a module whose method keeps its state in objects of its
+own adds their type to the `observed-types` of that channel with an overlay, as
+`tl-security-passkey` does for `tl.security.passkey:Passkey`. Below the status, the column
+`two-factor-methods` holds one block per method - the authenticator app (`authenticator-app`) in
+the base view; a module appends the block of its own method with
+`<stack config:ref="two-factor-methods">`.
 
 ## Pitfalls
 

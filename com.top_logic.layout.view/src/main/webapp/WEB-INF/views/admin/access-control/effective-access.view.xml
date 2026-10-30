@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Effective access: why an account may or may not perform an operation on an object. The left side
+	picks the object: the type tree of the security coverage (SecurityCoverageTable) writes the
+	selected type to the selectedType channel, the table below it lists the objects of that type and
+	writes the picked one to the object channel; "Clear object" empties it again. The account is
+	chosen in the field above the explanation on the right side and written to the account channel.
+	
+	The explanation channel derives the analysis of the account's access to the object
+	(effectiveAccessExplain), again when "Refresh" writes the current time to the reload channel, so
+	that role changes made elsewhere are shown. The info channel derives the paragraphs shown below
+	the account field: the bypasses that apply to the account (administrator, restricted user) and to
+	the type of the object (without access control, internal), the object deciding for an object
+	delegating to an access parent, and whether the sources of the roles are available from the
+	security storage of the access manager.
+	
+	With an object, the right side shows two tables, one above the other: the decision for every
+	operation applying to the object - allowed or not, the granting roles (the admitting roles the
+	account holds), the admitting roles, the restriction of a restricted user, and the reason - and
+	the roles the account holds on the deciding object, one row per source of a role: direct
+	assignment or role rule (with its id), the object the role is held on (the deciding object or a
+	role parent it is inherited from), and the group holding it (the representative group of the
+	account or a group the account is a member of). A role whose sources are not known is listed once
+	without them.
+	
+	Without an object, the right side lists all role assignments of the account on any object, which
+	the role column's filter narrows to a role.
+-->
+<view>
+	<channels>
+		<channel name="rows"/>
+		<channel name="selection"/>
+		<channel name="selectedType"/>
+		<channel name="object"/>
+		<channel name="account"/>
+		<channel name="reload"/>
+		<derived-channel name="explanation"
+			expr="effectiveAccessExplain($account, $object)"
+			inputs="account, object, reload"
+		/>
+		<derived-channel name="info"
+			expr="effectiveAccessInfo($account, $explanation)"
+			inputs="account, explanation"
+		/>
+	</channels>
+	<split-panel id="main"
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane id="selection"
+				min-size="250"
+				size="35"
+				unit="%"
+			>
+				<split-panel id="selection-split"
+					orientation="vertical"
+					resizable="true"
+				>
+					<panes>
+						<pane id="types"
+							size="50"
+							unit="%"
+						>
+							<panel id="types-panel"
+								fill="true"
+							>
+								<title>
+									<en>Types</en>
+									<de>Typen</de>
+								</title>
+								<child id="types-table"
+									class="com.top_logic.layout.view.admin.SecurityCoverageTable"
+									input="rows"
+									selected-type="selectedType"
+									selection="selection"
+								/>
+							</panel>
+						</pane>
+						<pane id="objects"
+							size="50"
+							unit="%"
+						>
+							<panel id="objects-panel"
+								fill="true"
+							>
+								<title>
+									<en>Objects</en>
+									<de>Objekte</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-x-lg"
+										inputs="object"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Clear object</en>
+											<de>Objekt abwählen</de>
+										</label>
+										<tooltip>
+											<en>Shows all role assignments of the account instead of its access to the selected object.</en>
+											<de>Zeigt alle Rollenzuweisungen des Kontos statt seiner Rechte am ausgewählten Objekt.</de>
+										</tooltip>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<write-channel name="object"
+											clear="true"
+										/>
+									</generic-command>
+								</commands>
+								<table id="objects-table"
+									selection="object"
+								>
+									<inputs>
+										<input channel="selectedType"/>
+									</inputs>
+									<columns>
+										<computed-column name="object">
+											<label>
+												<en>Object</en>
+												<de>Objekt</de>
+											</label>
+											<value><![CDATA[$row]]></value>
+										</computed-column>
+										<computed-column name="type"
+											type="tl.model:TLClass"
+										>
+											<label>
+												<en>Type</en>
+												<de>Typ</de>
+											</label>
+											<value><![CDATA[$row.type()]]></value>
+										</computed-column>
+									</columns>
+									<rows><![CDATA[if($selectedType == null, list(), all($selectedType))]]></rows>
+								</table>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+			<pane id="access"
+				size="65"
+				unit="%"
+			>
+				<panel id="access-panel"
+					fill="true"
+				>
+					<title>
+						<en>Effective access</en>
+						<de>Wirksame Rechte</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-arrow-clockwise"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Refresh</en>
+								<de>Aktualisieren</de>
+							</label>
+							<tooltip>
+								<en>Computes the access of the account again, to show role changes made since.</en>
+								<de>Berechnet die Rechte des Kontos neu, um seither vorgenommene Rollenänderungen anzuzeigen.</de>
+							</tooltip>
+							<execute-script function="now()">
+								<with-result>
+									<write-channel name="reload"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+					</commands>
+					<inset>
+						<fields>
+							<value-input
+								type="tl.accounts:Person"
+								value="account"
+							>
+								<label>
+									<en>Account</en>
+									<de>Konto</de>
+								</label>
+							</value-input>
+						</fields>
+						<visible-if
+							expr="$info != null"
+							input="info"
+						>
+							<html input="info"/>
+						</visible-if>
+					</inset>
+					<switch id="access-switch"
+						input="explanation"
+					>
+						<case id="with-object"
+							test="$explanation != null"
+						>
+							<split-panel id="explanation-split"
+								orientation="vertical"
+								resizable="true"
+							>
+								<panes>
+									<pane id="operations"
+										size="55"
+										unit="%"
+									>
+										<panel id="operations-panel"
+											fill="true"
+										>
+											<title>
+												<en>Operations</en>
+												<de>Operationen</de>
+											</title>
+											<table id="operations-table"
+												personalization-key="effective-access-operations"
+												row-class="if(effectiveAccessAllowed($row), null, 'tl-status-error')"
+											>
+												<inputs>
+													<input channel="explanation"/>
+												</inputs>
+												<columns>
+													<computed-column name="operation"
+														width="120"
+													>
+														<label>
+															<en>Operation</en>
+															<de>Operation</de>
+														</label>
+														<value><![CDATA[effectiveAccessOperationLabel($row)]]></value>
+													</computed-column>
+													<computed-column name="allowed"
+														type="tl.core:Boolean"
+														width="80"
+													>
+														<label>
+															<en>Allowed</en>
+															<de>Erlaubt</de>
+															<tooltip>
+																<en>The decision of the access check, made for the account.</en>
+																<de>Die Entscheidung der Zugriffsprüfung, getroffen für das Konto.</de>
+															</tooltip>
+														</label>
+														<value><![CDATA[effectiveAccessAllowed($row)]]></value>
+													</computed-column>
+													<computed-column name="grantingRoles"
+														multiple="true"
+														type="tl.accounts:Role"
+														width="170"
+													>
+														<label>
+															<en>Granting roles</en>
+															<de>Gewährende Rollen</de>
+															<tooltip>
+																<en>The admitting roles the account holds on the deciding object.</en>
+																<de>Die zulassenden Rollen, die das Konto am entscheidenden Objekt hat.</de>
+															</tooltip>
+														</label>
+														<value><![CDATA[effectiveAccessGrantingRoles($row)]]></value>
+													</computed-column>
+													<computed-column name="admittingRoles"
+														multiple="true"
+														type="tl.accounts:Role"
+														width="170"
+													>
+														<label>
+															<en>Admitting roles</en>
+															<de>Zulassende Rollen</de>
+															<tooltip>
+																<en>The roles that are granted the operation on the deciding object.</en>
+																<de>Die Rollen, denen die Operation am entscheidenden Objekt gewährt ist.</de>
+															</tooltip>
+														</label>
+														<value><![CDATA[effectiveAccessAdmittingRoles($row)]]></value>
+													</computed-column>
+													<computed-column name="restricted"
+														type="tl.core:Boolean"
+														width="90"
+													>
+														<label>
+															<en>Restricted</en>
+															<de>Eingeschränkt</de>
+															<tooltip>
+																<en>The account is a restricted user and the operation modifies or deletes, so it is denied whatever roles the account holds.</en>
+																<de>Das Konto ist ein eingeschränkter Benutzer und die Operation ändert oder löscht, daher ist sie unabhängig von den Rollen des Kontos verboten.</de>
+															</tooltip>
+														</label>
+														<value><![CDATA[effectiveAccessRestricted($row)]]></value>
+													</computed-column>
+													<computed-column name="reason"
+														type="tl.core:String"
+														width="220"
+													>
+														<label>
+															<en>Reason</en>
+															<de>Begründung</de>
+														</label>
+														<inputs>
+															<input channel="explanation"/>
+														</inputs>
+														<value><![CDATA[effectiveAccessReason($explanation, $row)]]></value>
+													</computed-column>
+												</columns>
+												<rows><![CDATA[effectiveAccessOperations($explanation)]]></rows>
+											</table>
+										</panel>
+									</pane>
+									<pane id="roles"
+										size="45"
+										unit="%"
+									>
+										<panel id="roles-panel"
+											fill="true"
+										>
+											<title>
+												<en>Held roles</en>
+												<de>Gehaltene Rollen</de>
+											</title>
+											<table id="roles-table"
+												personalization-key="effective-access-roles"
+											>
+												<inputs>
+													<input channel="explanation"/>
+												</inputs>
+												<columns>
+													<computed-column name="role"
+														type="tl.accounts:Role"
+														width="170"
+													>
+														<label>
+															<en>Role</en>
+															<de>Rolle</de>
+														</label>
+														<value><![CDATA[effectiveAccessRole($row)]]></value>
+													</computed-column>
+													<computed-column name="source"
+														width="80"
+													>
+														<label>
+															<en>Source</en>
+															<de>Quelle</de>
+															<tooltip>
+																<en>Why the account holds the role: assigned directly, or delivered by a role rule. Empty when the sources are not available.</en>
+																<de>Warum das Konto die Rolle hat: direkt zugewiesen oder von einer Rollenregel vergeben. Leer, wenn die Quellen nicht verfügbar sind.</de>
+															</tooltip>
+														</label>
+														<value><![CDATA[effectiveAccessSource($row)]]></value>
+													</computed-column>
+													<computed-column name="rule"
+														type="tl.core:String"
+														width="170"
+													>
+														<label>
+															<en>Rule</en>
+															<de>Regel</de>
+														</label>
+														<value><![CDATA[effectiveAccessRuleId($row)]]></value>
+													</computed-column>
+													<computed-column name="heldOn"
+														width="170"
+													>
+														<label>
+															<en>Held on</en>
+															<de>Gehalten an</de>
+															<tooltip>
+																<en>The object the role is held on: the deciding object, or a role parent of it from which the role is inherited.</en>
+																<de>Das Objekt, an dem die Rolle besteht: das entscheidende Objekt oder ein Rollen-Elternobjekt davon, von dem die Rolle geerbt ist.</de>
+															</tooltip>
+														</label>
+														<inputs>
+															<input channel="explanation"/>
+														</inputs>
+														<value><![CDATA[effectiveAccessObject($row)]]></value>
+														<tooltip><![CDATA[effectiveAccessObjectTooltip($explanation, $row)]]></tooltip>
+													</computed-column>
+													<computed-column name="inherited"
+														type="tl.core:Boolean"
+														width="80"
+													>
+														<label>
+															<en>Inherited</en>
+															<de>Geerbt</de>
+															<tooltip>
+																<en>The role is held on a role parent of the deciding object.</en>
+																<de>Die Rolle besteht an einem Rollen-Elternobjekt des entscheidenden Objekts.</de>
+															</tooltip>
+														</label>
+														<inputs>
+															<input channel="explanation"/>
+														</inputs>
+														<value><![CDATA[effectiveAccessInherited($explanation, $row)]]></value>
+													</computed-column>
+													<computed-column name="group"
+														type="tl.accounts:Group"
+														width="150"
+													>
+														<label>
+															<en>Group</en>
+															<de>Gruppe</de>
+															<tooltip>
+																<en>The group holding the role: the representative group of the account, or a group the account is a member of.</en>
+																<de>Die Gruppe, die die Rolle hat: die Stellvertretergruppe des Kontos oder eine Gruppe, in der das Konto Mitglied ist.</de>
+															</tooltip>
+														</label>
+														<value><![CDATA[effectiveAccessGroup($row)]]></value>
+													</computed-column>
+												</columns>
+												<rows><![CDATA[effectiveAccessRoleRows($explanation)]]></rows>
+											</table>
+										</panel>
+									</pane>
+								</panes>
+							</split-panel>
+						</case>
+						<default>
+							<table id="assignments-table"
+								personalization-key="effective-access-assignments"
+							>
+								<inputs>
+									<input channel="account"/>
+									<input channel="reload"/>
+								</inputs>
+								<columns>
+									<computed-column name="object"
+										width="200"
+									>
+										<label>
+											<en>Object</en>
+											<de>Objekt</de>
+										</label>
+										<value><![CDATA[effectiveAccessObject($row)]]></value>
+									</computed-column>
+									<computed-column name="role"
+										type="tl.accounts:Role"
+										width="170"
+									>
+										<label>
+											<en>Role</en>
+											<de>Rolle</de>
+										</label>
+										<value><![CDATA[effectiveAccessRole($row)]]></value>
+									</computed-column>
+									<computed-column name="source"
+										width="80"
+									>
+										<label>
+											<en>Source</en>
+											<de>Quelle</de>
+										</label>
+										<value><![CDATA[effectiveAccessSource($row)]]></value>
+									</computed-column>
+									<computed-column name="rule"
+										type="tl.core:String"
+										width="190"
+									>
+										<label>
+											<en>Rule</en>
+											<de>Regel</de>
+										</label>
+										<value><![CDATA[effectiveAccessRuleId($row)]]></value>
+									</computed-column>
+									<computed-column name="group"
+										type="tl.accounts:Group"
+										width="150"
+									>
+										<label>
+											<en>Group</en>
+											<de>Gruppe</de>
+										</label>
+										<value><![CDATA[effectiveAccessGroup($row)]]></value>
+									</computed-column>
+								</columns>
+								<rows><![CDATA[effectiveAccessAssignments($account, list())]]></rows>
+							</table>
+						</default>
+					</switch>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

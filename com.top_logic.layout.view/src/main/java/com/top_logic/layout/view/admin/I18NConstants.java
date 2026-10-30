@@ -8,6 +8,7 @@ package com.top_logic.layout.view.admin;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -411,6 +412,110 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     role ("Coverage" tab).
 	 */
 	public static ResKey GRANTS_INEFFECTIVE;
+
+	/**
+	 * @en Choose an account to see the access it has.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_NO_ACCOUNT;
+
+	/**
+	 * @en Listed are all roles the account holds on any object. Choose a type and one of its objects
+	 *     to see which operations the account may perform on that object and why.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_NO_OBJECT;
+
+	/**
+	 * @en "{0}" is an administrator and may perform every operation on every object, whatever roles
+	 *     the account holds.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_ADMINISTRATOR__ACCOUNT;
+
+	/**
+	 * @en "{0}" is a restricted user and must not perform any operation that modifies or deletes,
+	 *     whatever roles the account holds.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_RESTRICTED_USER__ACCOUNT;
+
+	/**
+	 * @en The type "{0}" is without access control: every account may perform every operation on
+	 *     its objects.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_WITHOUT_SECURITY__TYPE;
+
+	/**
+	 * @en The type "{0}" is marked internal: its objects are not meant to be accessed on behalf of an
+	 *     account.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_INTERNAL__TYPE;
+
+	/**
+	 * @en The type "{0}" delegates its access decisions to an access parent: the grants of the type
+	 *     of "{1}" and the roles the account holds on "{1}" decide.
+	 */
+	public static ResKey2 EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT;
+
+	/**
+	 * @en The access parents of the object lead to no object deciding its access, or run in a
+	 *     cycle, so no role grants an operation on it.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_NO_DECIDING_OBJECT;
+
+	/**
+	 * @en The security storage of the access manager is not available - the access manager keeps
+	 *     none, or it is being rebuilt. The decisions and the held roles are shown without their
+	 *     sources, and the role assignments of an account cannot be listed.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_SOURCES_UNAVAILABLE;
+
+	/**
+	 * @en Allowed through: {0}.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_ALLOWED_BY_ROLES__ROLES;
+
+	/**
+	 * @en Allowed, because the account is an administrator.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_ALLOWED_AS_ADMINISTRATOR;
+
+	/**
+	 * @en Allowed, because the type is without access control.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_ALLOWED_WITHOUT_SECURITY;
+
+	/**
+	 * @en Allowed by the access check, although the account holds none of the admitting roles.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_ALLOWED_OTHERWISE;
+
+	/**
+	 * @en Denied, because the account is a restricted user and the operation modifies or deletes.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_DENIED_RESTRICTED;
+
+	/**
+	 * @en Denied: no role is granted the operation on the deciding object.
+	 */
+	public static ResKey EFFECTIVE_ACCESS_DENIED_NOT_GRANTED;
+
+	/**
+	 * @en Denied, admitting roles not held: {0}.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_DENIED_NO_ROLE__ROLES;
+
+	/**
+	 * @en Denied by the access check, although held: {0}.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_DENIED_OTHERWISE__ROLES;
+
+	/**
+	 * @en Checked as "{0}" on "{1}". {2}
+	 */
+	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON;
+
+	/**
+	 * @en Inherited from the role parent "{0}".
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_INHERITED__PARENT;
 
 	static {
 		initConstants(I18NConstants.class);

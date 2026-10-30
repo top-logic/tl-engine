@@ -72,6 +72,13 @@
 							</label>
 							<view-ref view="admin/access-control/coverage.view.xml"/>
 						</tab>
+						<tab id="effective-access">
+							<label>
+								<en>Effective access</en>
+								<de>Wirksame Rechte</de>
+							</label>
+							<view-ref view="admin/access-control/effective-access.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

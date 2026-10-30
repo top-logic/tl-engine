@@ -14,6 +14,7 @@ import java.util.Map;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
@@ -69,7 +70,12 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * @implNote The login is performed by {@link #completeLogin}; the per-step MFA branching is in
- *           {@link #proceedAfterPassword}.
+ *           {@link #proceedAfterPassword}. The password checks are counted by the
+ *           {@link LoginFailuresModule} per account and client address
+ *           ({@link LoginFailuresModule#accountKey(String, jakarta.servlet.ServletRequest)}),
+ *           together with the logins of the classic UI and the identity confirmations of
+ *           {@link VerifyIdentityAction}: after repeated wrong passwords, further logins are refused
+ *           for a growing time without the password being checked.
  */
 @InApp
 public class LoginAction implements ViewAction {
@@ -142,7 +148,13 @@ public class LoginAction implements ViewAction {
 		char[] decryptedPassword = password.toCharArray();
 		Person account;
 		boolean passwordChangeRequired;
+		LoginFailuresModule<?> loginFailures = LoginFailuresModule.getInstance();
+		String accountKey = LoginFailuresModule.accountKey(userName, displayContext.asRequest());
 		try {
+			// Refuses with the too-many-attempts message while the account is backing off.
+			loginFailures.checkRetry(accountKey,
+				com.top_logic.layout.component.configuration.I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT);
+
 			boolean success;
 			try {
 				success = Login.getInstance()
@@ -157,7 +169,7 @@ public class LoginAction implements ViewAction {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED, ex);
 			}
 
-			if (!success) {
+			if (!loginFailures.recordAttempt(accountKey, success)) {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED);
 			}
 

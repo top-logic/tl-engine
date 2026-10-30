@@ -12,15 +12,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginHookFailedException;
-import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
+import com.top_logic.base.accesscontrol.RetryDeniedException;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.security.util.Password;
@@ -214,35 +213,25 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 		PasswordField passwordField = (PasswordField) fc.getField(PASSWORD_FIELD);
 		String userName = userField.getAsString();
 		char[] decryptedPassword = passwordField.getDecryptedPassword().toCharArray();
-		LoginFailuresModule<?> loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
-		
-		// Separate failed login counter per client address to prevent denial of service attacks
-		// preventing a user from logging in (by iteratively trying to authenticate with wrong
-		// credentials).
-		String userKey = userName.toLowerCase() + '@' + context.asRequest().getRemoteAddr();
-
-		LoginFailure failure = loginFailures.getFailureFor(userKey);
-		if (failure != null && !failure.allowRetry()) {
-			long retryTimeout = TimeUnit.MILLISECONDS.toSeconds(failure.retryTimeout());
-			return loginDenied(userName, I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT.fill(retryTimeout));
-		}
+		LoginFailuresModule<?> loginFailures = LoginFailuresModule.getInstance();
+		String userKey = LoginFailuresModule.accountKey(userName, context.asRequest());
 
 		try {
 			boolean success;
 			try {
+				loginFailures.checkRetry(userKey, I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT);
 				success = Login.getInstance().checkUserPassword(userName, decryptedPassword, context.asRequest(),
 					context.asResponse());
+			} catch (RetryDeniedException ex) {
+				return loginDenied(userName, ex.getErrorKey());
 			} catch (InMaintenanceModeException ex) {
 				return loginDenied(userName, Login.getMaintenanceMessage(userName));
 			} catch (LoginHookFailedException ex) {
 				return loginDenied(userName, ex.getErrorKey());
 			}
 
-			if (!success) {
-				loginFailures.notifyLoginFailed(userKey);
+			if (!loginFailures.recordAttempt(userKey, success)) {
 				return loginDenied(userName, ResKey.NONE);
-			} else {
-				loginFailures.notifyLoginSuccessed(userKey);
 			}
 			Person user = Person.byName(userName);
 			boolean withPasswordChange = !Login.isPasswordValidAndNotExpired(decryptedPassword, user);

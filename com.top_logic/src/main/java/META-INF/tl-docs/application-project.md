@@ -1,5 +1,5 @@
 ---
-description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
+description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
 order: 10
 ---
 
@@ -241,6 +241,24 @@ The fragment's configuration, model and views are picked up from its jar through
 `META-INF/web-fragment.xml` and its `metaConf.txt`. Application and fragments can live in one
 multi-module build with an aggregator POM listing them as modules; Maven builds each fragment
 before the application depending on it.
+
+## Starting the application in development mode
+
+`mvn` without goal in the directory of an application builds it and starts it in an embedded Jetty
+(the default goals of `tl-parent-app`, ending with `exec:java` running
+`com.top_logic.ide.jetty.Bootstrap`); `/` of the server redirects to the application. Two
+properties, set in the POM or on the command line, choose where it answers:
+
+| Property | Default | Meaning |
+|---|---|---|
+| `tl.port` | `8080` | The HTTP port of the server. |
+| `tl.contextPath` | `<artifactId>` | The context path of the application, with or without leading slash. It may have several segments, e.g. `-Dtl.contextPath=/preview/ws-1/my-app`; no segment may be `view` or `servlet`, and `/admin` is taken by the server. |
+
+The server takes the external URL of the application (`%HOST%` of the configuration) from the
+variable `tl_host`; without it, `http://localhost:<tl.port>`. On start, it requests
+`<tl_host>/admin/stop` to stop an instance started before on the same port: any answer but `200`
+with the body `OK` counts as "nothing running", `200` with another body ends the start with "Port
+is occupied".
 
 ## Debian package
 

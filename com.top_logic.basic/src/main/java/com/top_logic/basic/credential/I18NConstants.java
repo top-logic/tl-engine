@@ -59,6 +59,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SECRET_STORE_NOT_STARTED__NAME;
 
 	/**
+	 * @en No secret can be written: the secret store service is not started. A service writing
+	 *     secrets must declare a dependency on the secret store service.
+	 */
+	public static ResKey ERROR_WRITABLE_SECRET_STORE_NOT_STARTED;
+
+	/**
 	 * @en The override of the secret "{0}" refers to itself.
 	 */
 	public static ResKey1 ERROR_SECRET_OVERRIDE_CYCLE__NAME;

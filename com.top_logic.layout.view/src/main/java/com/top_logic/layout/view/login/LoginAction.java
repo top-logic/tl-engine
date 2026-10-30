@@ -98,6 +98,12 @@ public class LoginAction implements ViewAction {
 	/** Dialog channel carrying the QR-code image shown during MFA enrollment. */
 	public static final String QR_CHANNEL = "qr";
 
+	/**
+	 * Dialog channel carrying the freshly generated TOTP secret as plain text, for entering it into
+	 * an authenticator app by hand during MFA enrollment.
+	 */
+	public static final String SECRET_TEXT_CHANNEL = "secret-text";
+
 	/** Name of the transient model type holding the OTP form input. */
 	public static final String OTP_ENTRY_TYPE = "tl.login:OtpEntry";
 
@@ -214,18 +220,31 @@ public class LoginAction implements ViewAction {
 	}
 
 	/**
-	 * Replaces the current (login) dialog with the MFA-enrollment dialog, generating a fresh secret
-	 * and its QR code and transferring them on the {@link #SECRET_CHANNEL} / {@link #QR_CHANNEL}
-	 * channels (the secret is persisted only once {@link VerifyOtpAction} confirms a valid code).
+	 * Replaces the current (login) dialog with the MFA-enrollment dialog on the
+	 * {@link #mfaEnrollChannels(Person) channels} of a fresh secret.
 	 */
 	private static void openMfaEnrollDialog(ReactContext context, Person account) {
+		replaceDialog(context, MFA_ENROLL_VIEW, mfaEnrollChannels(account));
+	}
+
+	/**
+	 * The channel values of the {@link #MFA_ENROLL_VIEW enrollment dialog} for the given account.
+	 *
+	 * <p>
+	 * Generates a fresh secret and transfers it on the {@link #SECRET_CHANNEL}, as
+	 * {@link #QR_CHANNEL QR code} and in plain text on the {@link #SECRET_TEXT_CHANNEL}. The secret is
+	 * persisted only once {@link VerifyOtpAction} confirms a valid code.
+	 * </p>
+	 */
+	public static Map<String, Object> mfaEnrollChannels(Person account) {
 		Password secret = MfaSupport.generateSecret();
 		Map<String, Object> channels = new LinkedHashMap<>();
 		channels.put(MODEL_CHANNEL, newOtpEntry());
 		channels.put(ACCOUNT_CHANNEL, account);
 		channels.put(SECRET_CHANNEL, secret);
 		channels.put(QR_CHANNEL, MfaSupport.createQrCode(account, secret));
-		replaceDialog(context, MFA_ENROLL_VIEW, channels);
+		channels.put(SECRET_TEXT_CHANNEL, secret.decrypt());
+		return channels;
 	}
 
 	/**

@@ -10,6 +10,8 @@
 		<channel name="secret"/>
 		<!-- The QR-code PNG encoding the otpauth:// provisioning URI (set by LoginAction). -->
 		<channel name="qr"/>
+		<!-- The secret in plain text, for entering it by hand (set by LoginAction). -->
+		<channel name="secret-text"/>
 	</channels>
 	<window
 		resizable="false"
@@ -27,8 +29,8 @@
 		>
 			<text>
 				<label>
-					<en>Scan this QR code with your authenticator app, then enter the generated code to confirm.</en>
-					<de>Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie zur Bestätigung den erzeugten Code ein.</de>
+					<en>Scan this QR code with your authenticator app or enter the key below in it by hand, then enter the generated code to confirm.</en>
+					<de>Scannen Sie diesen QR-Code mit Ihrer Authenticator-App oder geben Sie dort den Schlüssel darunter von Hand ein. Geben Sie zur Bestätigung anschließend den erzeugten Code ein.</de>
 				</label>
 			</text>
 			<image input="qr">
@@ -37,6 +39,22 @@
 					<de>QR-Code, der dieses Konto in Ihrer Authenticator-App einrichtet</de>
 				</alt>
 			</image>
+			<value-input
+				readonly="true"
+				type="tl.core:String"
+				value="secret-text"
+			>
+				<label>
+					<en>Key for manual entry</en>
+					<de>Schlüssel zur manuellen Eingabe</de>
+				</label>
+				<annotations>
+					<multi-line
+						preformatted="true"
+						rows="1"
+					/>
+				</annotations>
+			</value-input>
 			<field attribute="code"/>
 			<commands>
 				<generic-command

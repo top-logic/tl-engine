@@ -7,6 +7,8 @@
 	overlay (WEB-INF/views/settings-tabs.view.xml) into its own module and adding an entry to the
 	<tabs> of a <tab-bar config:ref="settings-tabs"> element; the ViewLoader merges all copies in
 	dependency order. See tl-layout-view-contact, which adds the profile of the person behind the
+	account. Content of the security tab is appended to the column of its entries, the
+	<stack config:ref="security-actions">; see tl-security-passkey, which adds the passkeys of the
 	account.
 	
 	Deliberately small. What a user changes with a single decision - the language, the theme, where
@@ -43,6 +45,17 @@
 			navigation answers with what the user may read - which for a group they are only a
 			member of is nothing.
 		-->
+		<!--
+			The names of the second factor methods the account has set up, asked of every method the
+			login offers. Observing the accounts follows the methods stored with the account; a
+			module whose method keeps its state in objects of its own adds their type to the
+			observed types with an overlay of this channel.
+		-->
+		<derived-channel name="secondFactors"
+			expr="secondFactorEnrolled($account)"
+			inputs="account"
+			observed-types="tl.accounts:Person"
+		/>
 		<derived-channel name="deputyFor"
 			expr="all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
 			inputs="account"
@@ -105,32 +118,38 @@
 					<de>Sicherheit</de>
 				</label>
 				<inset>
-					<stack
+					<stack id="security-actions"
 						align="stretch"
 						direction="column"
 						gap="compact"
 					>
 						<!--
 							The state of the second factor, stated rather than left to be inferred
-							from which of the two buttons below is offered. Having a second factor is
-							having a secret stored, the same condition the buttons are offered by.
+							from which of the buttons below is offered: the methods the account has
+							set up, whichever methods the application offers.
 						-->
-						<switch input="account">
-							<case test="$account.get(`tl.accounts:Person#mfaSecret`) != null">
-								<text>
-									<label>
-										<en>Two-factor authentication: active</en>
-										<de>Zwei-Faktor-Authentifizierung: aktiv</de>
-									</label>
-								</text>
-							</case>
-							<default>
+						<switch input="secondFactors">
+							<case test="$secondFactors.isEmpty()">
 								<text>
 									<label>
 										<en>Two-factor authentication: not active</en>
 										<de>Zwei-Faktor-Authentifizierung: nicht aktiv</de>
 									</label>
 								</text>
+							</case>
+							<default>
+								<stack
+									direction="row"
+									gap="compact"
+								>
+									<text>
+										<label>
+											<en>Two-factor authentication active:</en>
+											<de>Zwei-Faktor-Authentifizierung aktiv:</de>
+										</label>
+									</text>
+									<text input="secondFactors"/>
+								</stack>
 							</default>
 						</switch>
 
@@ -239,8 +258,10 @@
 							dialog the login flow uses: the account keeps its requirement, since a
 							factor the user chose is one they may drop again. Each button is offered
 							only in the state where it means something - by whether a secret is stored,
-							which is what having a second factor is. An account required to use one
-							keeps it whatever this view offers, which the action itself enforces.
+							which is what having the authenticator app is. An account required to use a
+							second factor keeps that requirement whatever this view offers, and drops
+							the app only while another second factor of the login is set up for it,
+							which the action itself enforces.
 						-->
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"

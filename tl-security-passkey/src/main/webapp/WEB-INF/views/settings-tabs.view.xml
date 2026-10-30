@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the passkeys of the account to the security tab of the settings dialog of
+	tl-layout-view (WEB-INF/views/settings-tabs.view.xml): a same-path overlay, appended to the
+	column of the tab's entries, the <stack config:ref="security-actions">.
+	
+	The account holder lists, adds, renames and deletes their own passkeys here: a heading, one
+	entry per passkey with its own buttons (passkey-item.view.xml), and the button adding one, all
+	standing in the column of the tab like its other entries. A list rather than a table, because
+	it is as high as its entries, where a table keeps the height of several rows.
+	
+	Adding a passkey changes how the account logs in, so it asks for the password first
+	(<verify-identity/>); the browser then creates the passkey on a click in a dialog of its own
+	(passkey-add.view.xml), because it asks for the authenticator only in answer to a click of the
+	user.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<!-- A passkey added or deleted changes the second factors of the account. -->
+		<derived-channel name="secondFactors"
+			config:operation="update"
+			observed-types="tl.accounts:Person, tl.security.passkey:Passkey"
+		/>
+	</channels>
+	<stack config:ref="security-actions">
+		<text variant="title">
+			<label>
+				<en>Passkeys</en>
+				<de>Passkeys</de>
+			</label>
+		</text>
+		<object-list
+			element-channel="passkey"
+			gap="compact"
+			inputs="account"
+			observed-types="tl.security.passkey:Passkey"
+		>
+			<items><![CDATA[$account.get(`tl.accounts:Person#passkeys`).sort((p -> $p.get(`tl.security.passkey:Passkey#createdAt`)).comparator())]]></items>
+			<item>
+				<view-ref view="passkey-item.view.xml">
+					<bind
+						channel="passkey"
+						to="passkey"
+					/>
+				</view-ref>
+			</item>
+			<empty-text>
+				<en>No passkeys yet. A passkey logs you in without a password, confirmed by your fingerprint, face or PIN.</en>
+				<de>Noch keine Passkeys. Ein Passkey meldet Sie ohne Passwort an, bestätigt mit Fingerabdruck, Gesicht oder PIN.</de>
+			</empty-text>
+		</object-list>
+		<!-- Offered only to an account that may have passkeys; the registration itself refuses the others. -->
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-plus-lg"
+				inputs="account"
+			>
+				<label>
+					<en>Add passkey</en>
+					<de>Passkey hinzufügen</de>
+				</label>
+				<executability>
+					<visible-if expr="passkeyMayUse($account)"/>
+				</executability>
+				<verify-identity>
+					<message>
+						<en>Enter your password to add a passkey to your account.</en>
+						<de>Geben Sie Ihr Passwort ein, um Ihrem Konto einen Passkey hinzuzufügen.</de>
+					</message>
+				</verify-identity>
+				<open-dialog dialog-view="passkey-add.view.xml"/>
+			</action>
+		</button>
+	</stack>
+</view>

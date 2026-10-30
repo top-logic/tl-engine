@@ -42,6 +42,13 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<!-- Checks the scripts of the views of this module (TestViewScripts). -->
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

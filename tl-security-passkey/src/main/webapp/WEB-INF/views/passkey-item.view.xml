@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One passkey of the logged-in account in the list of the security tab of the settings dialog
+	(settings-tabs.view.xml of this module): its name and when it was created and last used, with
+	the buttons renaming and deleting it.
+	
+	Deleting changes how the account logs in, so it asks for the password first
+	(<verify-identity/>); <delete-passkey/> refuses the last second factor of an account required
+	to use one, and its button tells why it is disabled.
+-->
+<view>
+	<channels>
+		<!-- The passkey shown (bound by the list). -->
+		<channel name="passkey"/>
+		<derived-channel name="created"
+			expr="$passkey.get(`tl.security.passkey:Passkey#createdAt`)"
+			inputs="passkey"
+		/>
+		<derived-channel name="lastUsed"
+			expr="$passkey.get(`tl.security.passkey:Passkey#lastUsed`)"
+			inputs="passkey"
+		/>
+	</channels>
+	<stack
+		align="center"
+		direction="row"
+		gap="compact"
+		justify="space-between"
+	>
+		<stack gap="compact">
+			<text input="passkey"/>
+			<stack
+				direction="row"
+				gap="compact"
+				wrap="true"
+			>
+				<text
+					tone="secondary"
+					variant="caption"
+				>
+					<label>
+						<en>Created</en>
+						<de>Erstellt</de>
+					</label>
+				</text>
+				<text
+					input="created"
+					tone="secondary"
+					variant="caption"
+				/>
+				<switch input="lastUsed">
+					<case test="$lastUsed == null">
+						<text
+							tone="secondary"
+							variant="caption"
+						>
+							<label>
+								<en>· not used yet</en>
+								<de>· noch nicht verwendet</de>
+							</label>
+						</text>
+					</case>
+					<default>
+						<stack
+							direction="row"
+							gap="compact"
+						>
+							<text
+								tone="secondary"
+								variant="caption"
+							>
+								<label>
+									<en>· last used</en>
+									<de>· zuletzt verwendet</de>
+								</label>
+							</text>
+							<text
+								input="lastUsed"
+								tone="secondary"
+								variant="caption"
+							/>
+						</stack>
+					</default>
+				</switch>
+			</stack>
+		</stack>
+		<stack
+			direction="row"
+			gap="compact"
+		>
+			<button appearance="ghost">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					display="icon-only"
+					image="css:bi bi-pencil"
+					inputs="passkey"
+				>
+					<label>
+						<en>Rename</en>
+						<de>Umbenennen</de>
+					</label>
+					<access>
+						<operation name="Write"
+							object="$passkey"
+							type="tl.security.passkey:Passkey"
+						/>
+					</access>
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="passkey-rename.view.xml"
+					/>
+				</action>
+			</button>
+			<button appearance="ghost">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					display="icon-only"
+					image="css:bi bi-trash"
+					inputs="passkey"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<confirm expr="#('Delete the passkey &quot;{0}&quot;? You can no longer log in with it.'@en, 'Den Passkey „{0}“ löschen? Sie können sich damit nicht mehr anmelden.'@de).fill($passkey.get(`tl.security.passkey:Passkey#label`))"/>
+					<verify-identity>
+						<message>
+							<en>Enter your password to delete the passkey.</en>
+							<de>Geben Sie Ihr Passwort ein, um den Passkey zu löschen.</de>
+						</message>
+					</verify-identity>
+					<delete-passkey/>
+				</action>
+			</button>
+		</stack>
+	</stack>
+</view>

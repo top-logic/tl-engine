@@ -165,12 +165,7 @@ public final class SecondFactorStep {
 	 *         none of the methods.
 	 */
 	public static SecondFactorStep decide(Person account, List<? extends SecondFactor> methods) {
-		List<SecondFactor> enrolled = new ArrayList<>();
-		for (SecondFactor method : methods) {
-			if (method.isEnrolled(account)) {
-				enrolled.add(method);
-			}
-		}
+		List<SecondFactor> enrolled = enrolled(account, methods);
 		if (!enrolled.isEmpty()) {
 			return new SecondFactorStep(Kind.VERIFY, Collections.unmodifiableList(enrolled));
 		}
@@ -188,6 +183,20 @@ public final class SecondFactorStep {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SECOND_FACTOR__USER.fill(account.getName()));
 		}
 		return new SecondFactorStep(Kind.ENROLL, Collections.unmodifiableList(enrollable));
+	}
+
+	/**
+	 * The methods of the given ones the given account has {@link SecondFactor#isEnrolled(Person) set
+	 * up}, in the given order.
+	 */
+	public static List<SecondFactor> enrolled(Person account, List<? extends SecondFactor> methods) {
+		List<SecondFactor> result = new ArrayList<>();
+		for (SecondFactor method : methods) {
+			if (method.isEnrolled(account)) {
+				result.add(method);
+			}
+		}
+		return result;
 	}
 
 	/**

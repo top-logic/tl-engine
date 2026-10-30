@@ -26,6 +26,24 @@
 				user-verification="REQUIRED"
 			/>
 		</config>
+
+		<!--
+			A passkey is accessed as a part of its account: reading it is reading the account,
+			renaming and deleting it is editing the account. Whoever may edit an account - the
+			account holder through the role PersonalProfile, an administrator - manages its passkeys,
+			and nobody else sees them.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.security.passkey:Passkey">
+						<access-parent>
+							<container reference="tl.accounts:Person#passkeys"/>
+						</access-parent>
+					</class>
+				</security-config>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

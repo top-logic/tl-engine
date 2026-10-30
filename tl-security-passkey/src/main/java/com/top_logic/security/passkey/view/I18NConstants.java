@@ -55,6 +55,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_NOT_CURRENT_USER;
 
+	/**
+	 * @en The passkey is the last second factor of the account "{0}", which is required to use one.
+	 *     Set up another passkey or another second factor before deleting it.
+	 */
+	public static ResKey1 ERROR_LAST_SECOND_FACTOR__ACCOUNT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

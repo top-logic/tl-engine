@@ -42,7 +42,6 @@ import com.top_logic.util.Resources;
 import com.top_logic.layout.react.control.sidebar.DrawerToggleControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
-import com.top_logic.layout.react.control.sidebar.SeparatorItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
@@ -67,8 +66,8 @@ import com.top_logic.layout.view.slot.control.SlotContentControl;
  *
  * <p>
  * Renders a sidebar of items: navigation items with content that is lazily created when the item is
- * selected, collapsible groups of further items, headings, items executing a command, and
- * separators.
+ * selected, collapsible groups of further items, items executing a command, and sections that set
+ * items off from the ones around them under a heading.
  * </p>
  */
 @InApp
@@ -112,9 +111,9 @@ public class SidebarElement implements UIElement {
 		/**
 		 * The sidebar items.
 		 *
-		 * @implNote Written directly as {@code <nav-item>}, {@code <group>}, {@code <header-item>},
-		 *           {@code <command-item>} or {@code <separator>} children of the {@code <sidebar>}
-		 *           (the {@code <items>} wrapper is optional). Keyed by
+		 * @implNote Written directly as {@code <nav-item>}, {@code <group>}, {@code <section>} or
+		 *           {@code <command-item>} children of the {@code <sidebar>} (the {@code <items>}
+		 *           wrapper is optional). Keyed by
 		 *           {@link SidebarItemConfig#getId()} so that a configuration fragment in another
 		 *           module can add, reposition ({@code config:position}) or override individual items.
 		 */
@@ -149,6 +148,11 @@ public class SidebarElement implements UIElement {
 		 * the app bar, rendered only while the app shell is compact. Leave empty to suppress the
 		 * contribution entirely — useful when the sidebar is used in a layout without an app bar or
 		 * with a different entry point for the compact drawer.
+		 * </p>
+		 *
+		 * <p>
+		 * A name for which no slot is displayed leaves the compact drawer without an entry point and
+		 * is reported like a {@code <slot-content>} that reaches no slot.
 		 * </p>
 		 */
 		@Name(DRAWER_OPEN_SLOT_NAME)
@@ -301,7 +305,8 @@ public class SidebarElement implements UIElement {
 		void addBinding(Consumer<ReactSidebarControl> binding);
 
 		/**
-		 * The access checks of the groups enclosing the items built at this site, outermost first.
+		 * The access checks of the groups and sections enclosing the items built at this site,
+		 * outermost first.
 		 *
 		 * <p>
 		 * The content of a navigation item is displayed only as far as each of them allows, see
@@ -313,10 +318,10 @@ public class SidebarElement implements UIElement {
 		}
 
 		/**
-		 * The site for the items of a group with the given access check.
+		 * The site for the items of a group or section with the given access check.
 		 *
 		 * @param access
-		 *        The access check of the group, {@code null} for a group without one.
+		 *        The access check of the group or section, {@code null} for one without.
 		 * @return A site adding the given check to the {@link #guards()} of this site.
 		 */
 		default ItemSite guardedBy(UnitAccess access) {
@@ -351,8 +356,8 @@ public class SidebarElement implements UIElement {
 	 *
 	 * @implNote {@link #getId()} is the merge key of the items list: a configuration fragment in
 	 *           another module positions ({@code config:position}) or overrides an item by
-	 *           referencing this id. A {@code <separator>} usually leaves it empty: an entry
-	 *           without id is anonymous, appended in order and addressed by no fragment.
+	 *           referencing this id. An entry without id is anonymous, appended in order and
+	 *           addressed by no fragment.
 	 */
 	public interface SidebarItemConfig extends PolymorphicConfiguration<SidebarItemElement> {
 
@@ -461,18 +466,6 @@ public class SidebarElement implements UIElement {
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<UIElement.Config> getChildren();
-	}
-
-	/**
-	 * A separator line between sidebar items.
-	 */
-	@TagName("separator")
-	@TypeIcon("css:bi bi-dash-lg")
-	public interface SeparatorConfig extends SidebarItemConfig {
-
-		@Override
-		@ClassDefault(SeparatorElement.class)
-		Class<? extends SidebarItemElement> getImplementationClass();
 	}
 
 	/**
@@ -587,7 +580,7 @@ public class SidebarElement implements UIElement {
 	 * hidden} then.
 	 *
 	 * <p>
-	 * Used by navigation items and groups alike. An open navigation item whose entry is left out
+	 * Used by navigation items, groups and sections alike. An open navigation item whose entry is left out
 	 * stays open: its content shows the "no access" placeholder.
 	 * </p>
 	 *
@@ -643,25 +636,28 @@ public class SidebarElement implements UIElement {
 	}
 
 	/**
-	 * Implementation of a separator sidebar item.
+	 * Segment naming the {@link Config#getHeader() header} of the rail in the context its content is
+	 * built in.
 	 */
-	public static class SeparatorElement implements SidebarItemElement {
+	private static final String HEADER_SEGMENT = "sidebar-header";
 
-		private static int _counter;
+	/**
+	 * Segment naming the {@link Config#getHeaderCollapsed() collapsed header} of the rail in the
+	 * context its content is built in.
+	 */
+	private static final String HEADER_COLLAPSED_SEGMENT = "sidebar-header-collapsed";
 
-		/**
-		 * Creates a {@link SeparatorElement}.
-		 */
-		@CalledByReflection
-		public SeparatorElement(InstantiationContext context, SeparatorConfig config) {
-			// No configuration needed.
-		}
+	/**
+	 * Segment naming the {@link Config#getFooter() footer} of the rail in the context its content is
+	 * built in.
+	 */
+	private static final String FOOTER_SEGMENT = "sidebar-footer";
 
-		@Override
-		public SidebarItem createSidebarItem(ViewContext context, ItemSite site) {
-			return new SeparatorItem("sep" + (_counter++));
-		}
-	}
+	/**
+	 * Segment naming the {@link Config#getFooterCollapsed() collapsed footer} of the rail in the
+	 * context its content is built in.
+	 */
+	private static final String FOOTER_COLLAPSED_SEGMENT = "sidebar-footer-collapsed";
 
 	private final List<SidebarItemElement> _items;
 
@@ -682,6 +678,12 @@ public class SidebarElement implements UIElement {
 	private final List<UIElement> _footerCollapsed;
 
 	/**
+	 * Where the {@link Config#getDrawerOpenSlotName() drawer toggle} is declared, for the report of
+	 * a toggle that reaches no slot.
+	 */
+	private final String _drawerToggleSource;
+
+	/**
 	 * Creates a new {@link SidebarElement} from configuration.
 	 */
 	@CalledByReflection
@@ -693,6 +695,7 @@ public class SidebarElement implements UIElement {
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();
 		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+		_drawerToggleSource = "'" + Config.DRAWER_OPEN_SLOT_NAME + "' of the sidebar at " + config.location();
 		_cssClass = config.getCssClass();
 		_header = createElements(context, config.getHeader());
 		_headerCollapsed = createElements(context, config.getHeaderCollapsed());
@@ -735,8 +738,8 @@ public class SidebarElement implements UIElement {
 	 * Builds the items of a sidebar, dropping the ones that are not offered to the current user.
 	 *
 	 * <p>
-	 * Used by the sidebar for its own items and by a group for the items it contains, so that an
-	 * item behaves the same wherever it is written.
+	 * Used by the sidebar for its own items and by a group or section for the items it contains, so
+	 * that an item behaves the same wherever it is written.
 	 * </p>
 	 *
 	 * @param itemElements
@@ -744,7 +747,7 @@ public class SidebarElement implements UIElement {
 	 * @param context
 	 *        The context the sidebar is built in.
 	 * @param site
-	 *        What the sidebar offers its items, passed on unchanged by a group.
+	 *        What the sidebar offers its items, passed on unchanged by a group or section.
 	 * @return The items to display.
 	 */
 	public static List<SidebarItem> createItems(List<SidebarItemElement> itemElements, ViewContext context,
@@ -772,8 +775,10 @@ public class SidebarElement implements UIElement {
 			@Override
 			public ViewContext contentContext(ViewContext itemContext, String itemKey) {
 				// The content of an item is created only when the item is first selected, so the
-				// item's context must already say where that content will sit.
-				return itemContext.withScope(RevealPath.class, here.append(SidebarElement.this, itemKey));
+				// item's context must already say where that content will sit. Each item is a
+				// position of its own for slots, apart from the other items and the chrome of the rail.
+				return itemContext.withScope(RevealPath.class, here.append(SidebarElement.this, itemKey))
+					.withChildSlotPath(itemKey);
 			}
 
 			@Override
@@ -789,10 +794,10 @@ public class SidebarElement implements UIElement {
 			collapsed, groupStates,
 			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
 			(gid, exp) -> saveGroupState(key, gid, exp),
-			createChrome(_header, context, "sidebar-header"),
-			createChrome(_headerCollapsed, context, "sidebar-header-collapsed"),
-			createChrome(_footer, context, "sidebar-footer"),
-			createChrome(_footerCollapsed, context, "sidebar-footer-collapsed"));
+			createChrome(_header, context, HEADER_SEGMENT),
+			createChrome(_headerCollapsed, context, HEADER_COLLAPSED_SEGMENT),
+			createChrome(_footer, context, FOOTER_SEGMENT),
+			createChrome(_footerCollapsed, context, FOOTER_COLLAPSED_SEGMENT));
 
 		for (Consumer<ReactSidebarControl> binding : bindings) {
 			binding.accept(sidebar);
@@ -805,7 +810,8 @@ public class SidebarElement implements UIElement {
 		if (_drawerOpenSlotName != null && !_drawerOpenSlotName.isEmpty()) {
 			DrawerToggleControl toggleButton = new DrawerToggleControl(context, sidebar);
 			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,
-				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
+				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton), false,
+				_drawerToggleSource);
 			sidebar.setDrawerToggleContribution(drawerToggleSlot);
 		}
 
@@ -869,23 +875,24 @@ public class SidebarElement implements UIElement {
 	 * @param context
 	 *        The context the sidebar is built in.
 	 * @param segment
-	 *        Names this part of the rail in the context its content is built in.
+	 *        Names this part of the rail in the context its content is built in, both in the
+	 *        personalization key and in the slot path.
 	 * @return The control displaying that content, or {@code null} for nothing to display.
 	 */
 	private static ReactControl createChrome(List<UIElement> elements, ViewContext context, String segment) {
 		if (elements.isEmpty()) {
 			return null;
 		}
-		return ContentControls.toControl(elements, context.childContext(segment));
+		return ContentControls.toControl(elements, context.childContext(segment).withChildSlotPath(segment));
 	}
 
 	/**
 	 * Creates the content of a navigation item.
 	 *
 	 * @param guards
-	 *        The access checks of the enclosing groups and of the item itself, outermost first. The
-	 *        content is displayed as far as each of them allows, and sees the object of the
-	 *        innermost one as its {@link com.top_logic.layout.view.security.SecuredObject}.
+	 *        The access checks of the enclosing groups and sections and of the item itself,
+	 *        outermost first. The content is displayed as far as each of them allows, and sees the
+	 *        object of the innermost one as its {@link com.top_logic.layout.view.security.SecuredObject}.
 	 */
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
 			DirtyChannel dirtyChannel, List<UnitAccess> guards) {

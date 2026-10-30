@@ -152,8 +152,8 @@ public class SplitPanelElement implements UIElement {
 				List<UIElement> children = paneConfig.getChildren().stream()
 					.map(context::getInstance)
 					.collect(Collectors.toList());
-				return new PaneEntry(new ChildConstraint(paneConfig.getSize(), paneConfig.getUnit(),
-					paneConfig.getMinSize(), Scrolling.AUTO), children);
+				return new PaneEntry(paneConfig.getId(), new ChildConstraint(paneConfig.getSize(),
+					paneConfig.getUnit(), paneConfig.getMinSize(), Scrolling.AUTO), children);
 			})
 			.collect(Collectors.toList());
 		_cssClass = config.getCssClass();
@@ -178,19 +178,31 @@ public class SplitPanelElement implements UIElement {
 		splitPanel.setCssClass(_cssClass);
 
 		for (int i = 0; i < _panes.size(); i++) {
+			PaneEntry pane = _panes.get(i);
 			// Descend the personalization path per pane so that nested split panels get distinct
-			// personalization keys instead of all sharing the parent's key.
-			ViewContext paneContext = context.childContext(String.valueOf(i));
-			personalization.addPane(splitPanel, i, createContent(_panes.get(i)._children(), paneContext));
+			// personalization keys instead of all sharing the parent's key. Each pane is a position
+			// of its own for slots, so that a slot-content in a pane reaches the slot of its own pane.
+			ViewContext paneContext =
+				context.childContext(String.valueOf(i)).withChildSlotPath(slotSegment(pane, i));
+			personalization.addPane(splitPanel, i, createContent(pane._children(), paneContext));
 		}
 
 		return splitPanel;
+	}
+
+	/**
+	 * The segment by which the pane at the given index extends the slot path of its content: the
+	 * {@link PaneConfig#getId() id} of the pane, or its index for a pane without id.
+	 */
+	private static String slotSegment(PaneEntry pane, int index) {
+		String id = pane._id();
+		return id == null || id.isEmpty() ? String.valueOf(index) : id;
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {
 		return ContentControls.toControl(elements, context);
 	}
 
-	private record PaneEntry(ChildConstraint _constraint, List<UIElement> _children) {
+	private record PaneEntry(String _id, ChildConstraint _constraint, List<UIElement> _children) {
 	}
 }

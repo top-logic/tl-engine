@@ -20,7 +20,12 @@
 	
 	Between the profile and the questions sits an interstitial: "Setting up" carries an
 	auto-advance="2s" and no buttons at all, so it shows itself for two seconds and then moves on by
-	itself. The footer slot simply stays empty while it is displayed.
+	itself. No step content raises buttons into the footer slot then, so the slot shows the hint of
+	its <empty> fallback instead, until the next step's buttons take its place. A step with a time of
+	its own is a pass-through step: the flow leads through it, and the user never returns to it. The
+	Back button of the first question leads past it to the profile, the indicator offers no jump to
+	it, and it has no address of its own - while it is shown, the address bar keeps naming the
+	profile, and the browser back button leads from the first question to the profile as well.
 	
 	A question step chooses its display by the question it asks: a <switch input="question"> picks
 	the field to fill in, so the three questions are three different inputs on one content template.
@@ -302,7 +307,16 @@
 				</step>
 			</wizard>
 			<inset>
-				<slot name="wizard-actions"/>
+				<slot name="wizard-actions">
+					<empty>
+						<text tone="helper">
+							<label>
+								<en>No actions in this step — the flow continues by itself.</en>
+								<de>Keine Aktionen in diesem Schritt — der Ablauf geht von selbst weiter.</de>
+							</label>
+						</text>
+					</empty>
+				</slot>
 			</inset>
 		</stack>
 	</panel>

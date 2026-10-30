@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.util.ResKey;
@@ -44,7 +45,14 @@ import com.top_logic.util.Resources;
  * unregisters when it is detached. The composed URL is built from the participants the display
  * currently contains, in the order in which the display contains them - see
  * {@link #setDisplayedParticipants(Supplier)}. A deep link, in contrast, is resolved in registration
- * order, because its segments are consumed by the participants as they appear.
+ * order, because its segments are consumed by the participants as they appear. Only a registered
+ * participant contributes: one that is detached has left the display, even where the container
+ * that showed it still holds it in its state at that moment.
+ * </p>
+ *
+ * <p>
+ * Content shown on top of the page without being part of it - a modal dialog - has no address: a
+ * participant inside it does not register at all, see {@link #setOutsidePage(Predicate)}.
  * </p>
  *
  * <p>
@@ -124,6 +132,8 @@ public final class RouteManager {
 
 	private Supplier<List<RoutingParticipant>> _titlingParticipants;
 
+	private Predicate<RoutingParticipant> _outsidePage;
+
 	private boolean _adopting;
 
 	private boolean _holding;
@@ -160,6 +170,11 @@ public final class RouteManager {
 	 *        The participant to register.
 	 */
 	public void register(RoutingParticipant participant) {
+		if (isOutsidePage(participant)) {
+			// Shown on top of the page, not as part of it: what it displays is no address of the page,
+			// so it neither takes up a segment of a URL nor contributes one.
+			return;
+		}
 		_participants.add(participant);
 		participant.addRouteChangeListener(_internalListener);
 
@@ -208,13 +223,20 @@ public final class RouteManager {
 	/**
 	 * Unregisters a {@link RoutingParticipant} and unsubscribes from its route changes.
 	 *
+	 * <p>
+	 * A participant that is not registered - one displayed outside the page, see
+	 * {@link #setOutsidePage(Predicate)} - leaves nothing to correct.
+	 * </p>
+	 *
 	 * @param participant
 	 *        The participant to unregister.
 	 */
 	public void unregister(RoutingParticipant participant) {
 		participant.removeRouteChangeListener(_internalListener);
 
-		_participants.remove(participant);
+		if (!_participants.remove(participant)) {
+			return;
+		}
 
 		if (_holding) {
 			// A held URL stays the one the client shows, whatever leaves the display that holds it.
@@ -233,7 +255,9 @@ public final class RouteManager {
 		// The participant may have contributed a segment that is gone with it: a tab bar shown for
 		// one case of a <switch>, for instance, leaves the display when another case is selected.
 		// Its segment must not stay in the address bar, where it would point at something not
-		// displayed - and would be silently dropped on the next reload.
+		// displayed - and would be silently dropped on the next reload. The container may still hold
+		// it in its state at this moment (a closing dialog is detached before it is taken off the
+		// dialog stack); the URL is composed from the registered participants, which it no longer is.
 		//
 		// Replacing rather than pushing: what disappeared from the display is not a navigation the
 		// user should have to undo with the back button.
@@ -275,6 +299,39 @@ public final class RouteManager {
 	 */
 	public void setTitlingParticipants(Supplier<List<RoutingParticipant>> source) {
 		_titlingParticipants = source;
+	}
+
+	/**
+	 * Installs the test whether a participant is displayed outside the page the URL addresses.
+	 *
+	 * <p>
+	 * Content shown on top of the page without being part of it - a modal dialog - has no address
+	 * of its own and names nothing of the page. A participant inside it is not registered: it is not
+	 * offered a segment or the query of a URL that is adopted, and neither it nor its route changes
+	 * reach the URL or the title of the page. It keeps working for its own display - a tab bar in a
+	 * dialog switches its tabs - without the address bar following.
+	 * </p>
+	 *
+	 * <p>
+	 * Asked when a participant {@link #register(RoutingParticipant) registers}, which is when its
+	 * control is attached and therefore already displayed where it belongs.
+	 * </p>
+	 *
+	 * @param test
+	 *        Whether a participant is displayed outside the page, or {@code null} for a display that
+	 *        consists of the page alone.
+	 */
+	public void setOutsidePage(Predicate<RoutingParticipant> test) {
+		_outsidePage = test;
+	}
+
+	/**
+	 * Whether the given participant is displayed outside the page, see
+	 * {@link #setOutsidePage(Predicate)}.
+	 */
+	private boolean isOutsidePage(RoutingParticipant participant) {
+		Predicate<RoutingParticipant> test = _outsidePage;
+		return test != null && test.test(participant);
 	}
 
 	/**
@@ -405,6 +462,23 @@ public final class RouteManager {
 	 */
 	public long adoptionId() {
 		return _adoptionId;
+	}
+
+	/**
+	 * Whether a URL is being adopted: the display is settling into the URL the client shows, from
+	 * {@link #adoptUrl(String)} or {@link #navigateToRoute(String)} until {@link #finishAdoption()}
+	 * or {@link #cancelAdoption()}.
+	 *
+	 * <p>
+	 * A participant tells by this a value written into the display by an address - a bookmark, a
+	 * typed URL, a move through the browser history - from one the user brought about inside the
+	 * display. An address may name a state the display does not offer as an address of its own, and
+	 * the display then settles into the nearest state that is one; the address bar is corrected to it
+	 * when the adoption finishes.
+	 * </p>
+	 */
+	public boolean isAdopting() {
+		return _adopting;
 	}
 
 	/**
@@ -1036,12 +1110,31 @@ public final class RouteManager {
 
 	private List<RoutingParticipant> composingParticipants() {
 		Supplier<List<RoutingParticipant>> source = _displayedParticipants;
-		return source == null ? _participants : source.get();
+		return source == null ? _participants : registered(source.get());
 	}
 
 	private List<RoutingParticipant> titlingParticipants() {
 		Supplier<List<RoutingParticipant>> source = _titlingParticipants;
-		return source == null ? composingParticipants() : source.get();
+		return source == null ? composingParticipants() : registered(source.get());
+	}
+
+	/**
+	 * The given participants of the display that are registered, in the given order.
+	 *
+	 * <p>
+	 * A participant that has unregistered is detached and has left the display, even where the
+	 * display still reaches it: a container may detach what it drops before it removes it from its
+	 * state.
+	 * </p>
+	 */
+	private List<RoutingParticipant> registered(List<RoutingParticipant> displayed) {
+		List<RoutingParticipant> result = new ArrayList<>(displayed.size());
+		for (RoutingParticipant participant : displayed) {
+			if (_participants.contains(participant)) {
+				result.add(participant);
+			}
+		}
+		return result;
 	}
 
 	/**

@@ -14,8 +14,8 @@ import java.util.Map;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -57,25 +57,36 @@ import com.top_logic.util.error.TopLogicException;
  * <ul>
  * <li>An expired password forces a {@link #CHANGE_PASSWORD_VIEW change-password dialog}
  * ({@link ChangePasswordApplyAction}).</li>
- * <li>An account with a TOTP secret must pass an {@link #OTP_VIEW OTP-verification dialog}
- * ({@link VerifyOtpAction}).</li>
- * <li>An account for which MFA is {@link MfaRequirement#REQUIRED required} but has no secret yet is
- * sent through an {@link #MFA_ENROLL_VIEW enrollment dialog} that generates a secret, shows its QR
- * code and confirms it via {@link VerifyOtpAction}.</li>
+ * <li>An account with a {@link SecondFactor} set up confirms itself with it, e.g. in the
+ * {@link #OTP_VIEW OTP-verification dialog} of the {@link TotpSecondFactor}.</li>
+ * <li>An account for which MFA is {@link MfaRequirement#REQUIRED required} but that has no second
+ * factor set up yet sets one up, e.g. in the {@link #MFA_ENROLL_VIEW enrollment dialog} of the
+ * {@link TotpSecondFactor}.</li>
  * </ul>
  *
  * <p>
  * The user is logged in only once the final step completes the login.
  * </p>
  *
- * @implNote The login is performed by {@link #completeLogin}; the per-step MFA branching is in
- *           {@link #proceedAfterPassword}.
+ * @implNote The login is performed by {@link #completeLogin}; the second-factor step is decided by
+ *           {@link SecondFactorStep}, see {@link #proceedAfterPassword}. The password checks are
+ *           counted by the {@link LoginFailuresModule} per account and client address
+ *           ({@link LoginFailuresModule#accountKey(String, jakarta.servlet.ServletRequest)}),
+ *           together with the logins of the classic UI and the identity confirmations of
+ *           {@link VerifyIdentityAction}: after repeated wrong passwords, further logins are refused
+ *           for a growing time without the password being checked.
  */
 @InApp
 public class LoginAction implements ViewAction {
 
 	/** Name of the transient model type holding the change-password form input. */
 	public static final String PASSWORD_CHANGE_TYPE = "tl.login:PasswordChange";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the newly chosen password. */
+	public static final String NEW_PASSWORD_ATTR = "newPassword";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the repetition of the new password. */
+	public static final String NEW_PASSWORD_CONFIRM_ATTR = "newPasswordConfirm";
 
 	/** Dialog view (relative to {@link ViewLoader#VIEW_BASE_PATH}) for the forced password change. */
 	public static final String CHANGE_PASSWORD_VIEW = "change-password.view.xml";
@@ -142,7 +153,13 @@ public class LoginAction implements ViewAction {
 		char[] decryptedPassword = password.toCharArray();
 		Person account;
 		boolean passwordChangeRequired;
+		LoginFailuresModule<?> loginFailures = LoginFailuresModule.getInstance();
+		String accountKey = LoginFailuresModule.accountKey(userName, displayContext.asRequest());
 		try {
+			// Refuses with the too-many-attempts message while the account is backing off.
+			loginFailures.checkRetry(accountKey,
+				com.top_logic.layout.component.configuration.I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT);
+
 			boolean success;
 			try {
 				success = Login.getInstance()
@@ -157,7 +174,7 @@ public class LoginAction implements ViewAction {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED, ex);
 			}
 
-			if (!success) {
+			if (!loginFailures.recordAttempt(accountKey, success)) {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED);
 			}
 
@@ -179,20 +196,16 @@ public class LoginAction implements ViewAction {
 
 	/**
 	 * Continues the login flow after the password has been verified (and, when it was expired, a new
-	 * one applied): opens the {@link #OTP_VIEW OTP-verification dialog} if the account has a TOTP
-	 * secret, opens the {@link #MFA_ENROLL_VIEW enrollment dialog} if MFA is
-	 * {@link MfaRequirement#REQUIRED required} but no secret is set yet, and otherwise completes the
-	 * login.
+	 * one applied): confirms the account with a second factor, sets one up, or completes the login,
+	 * as {@link SecondFactorStep#decide(Person)} decides for the configured {@link SecondFactor}s.
+	 *
+	 * @param context
+	 *        The context of the dialog the login is in.
+	 * @param account
+	 *        The account whose password has been checked.
 	 */
-	static void proceedAfterPassword(ReactContext context, Person account) {
-		Password secret = account.getMFASecret();
-		if (secret != null) {
-			openOtpDialog(context, account, secret);
-		} else if (account.getMFARequirement() == MfaRequirement.REQUIRED) {
-			openMfaEnrollDialog(context, account);
-		} else {
-			completeLogin(context, account.getName());
-		}
+	public static void proceedAfterPassword(ReactContext context, Person account) {
+		SecondFactorStep.decide(account).perform(context, account);
 	}
 
 	/**
@@ -208,50 +221,23 @@ public class LoginAction implements ViewAction {
 	}
 
 	/**
-	 * Replaces the current (login) dialog with the OTP-verification dialog, transferring the account
-	 * and its existing TOTP secret on the {@link #ACCOUNT_CHANNEL} / {@link #SECRET_CHANNEL} channels.
-	 */
-	private static void openOtpDialog(ReactContext context, Person account, Password secret) {
-		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put(MODEL_CHANNEL, newOtpEntry());
-		channels.put(ACCOUNT_CHANNEL, account);
-		channels.put(SECRET_CHANNEL, secret);
-		replaceDialog(context, OTP_VIEW, channels);
-	}
-
-	/**
-	 * Replaces the current (login) dialog with the MFA-enrollment dialog on the
-	 * {@link #mfaEnrollChannels(Person) channels} of a fresh secret.
-	 */
-	private static void openMfaEnrollDialog(ReactContext context, Person account) {
-		replaceDialog(context, MFA_ENROLL_VIEW, mfaEnrollChannels(account));
-	}
-
-	/**
-	 * The channel values of the {@link #MFA_ENROLL_VIEW enrollment dialog} for the given account.
+	 * Closes the current top dialog and opens the given view as a modal dialog seeded with the given
+	 * channel values: the way a step of the login takes over from the previous one.
 	 *
 	 * <p>
-	 * Generates a fresh secret and transfers it on the {@link #SECRET_CHANNEL}, as
-	 * {@link #QR_CHANNEL QR code} and in plain text on the {@link #SECRET_TEXT_CHANNEL}. The secret is
-	 * persisted only once {@link VerifyOtpAction} confirms a valid code.
+	 * The dialog does not close on a click on the backdrop, so that an accidental click does not
+	 * abort the login.
 	 * </p>
+	 *
+	 * @param context
+	 *        The context of the dialog the login is in.
+	 * @param view
+	 *        The dialog view, relative to {@link ViewLoader#VIEW_BASE_PATH}.
+	 * @param channels
+	 *        The values of the dialog's channels, by channel name, e.g. the account on the
+	 *        {@link #ACCOUNT_CHANNEL} channel.
 	 */
-	public static Map<String, Object> mfaEnrollChannels(Person account) {
-		Password secret = MfaSupport.generateSecret();
-		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put(MODEL_CHANNEL, newOtpEntry());
-		channels.put(ACCOUNT_CHANNEL, account);
-		channels.put(SECRET_CHANNEL, secret);
-		channels.put(QR_CHANNEL, MfaSupport.createQrCode(account, secret));
-		channels.put(SECRET_TEXT_CHANNEL, secret.decrypt());
-		return channels;
-	}
-
-	/**
-	 * Closes the current top dialog and opens the given view as a modal dialog seeded with the given
-	 * channel values.
-	 */
-	private static void replaceDialog(ReactContext context, String view, Map<String, ?> channels) {
+	public static void replaceDialog(ReactContext context, String view, Map<String, ?> channels) {
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager != null) {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
@@ -290,12 +276,21 @@ public class LoginAction implements ViewAction {
 	 * </p>
 	 *
 	 * <p>
-	 * Re-checks the maintenance mode before the login: the follow-up steps (OTP verification, forced
-	 * password change) can complete long after the password check, so maintenance mode may have been
-	 * activated in between.
+	 * Re-checks the maintenance mode before the login: the follow-up steps (second-factor
+	 * verification, forced password change) can complete long after the password check, so
+	 * maintenance mode may have been activated in between.
 	 * </p>
+	 *
+	 * <p>
+	 * A {@link SecondFactor} calls this once the account has proven itself.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the dialog the login is in.
+	 * @param userName
+	 *        The name of the account to log in.
 	 */
-	static void completeLogin(ReactContext context, String userName) {
+	public static void completeLogin(ReactContext context, String userName) {
 		Person account = Person.byName(userName);
 		try {
 			Login.getInstance().checkAllowedGroups(account);

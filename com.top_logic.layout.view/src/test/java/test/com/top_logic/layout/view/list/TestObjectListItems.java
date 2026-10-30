@@ -213,7 +213,8 @@ public class TestObjectListItems extends TestCase {
 	}
 
 	/**
-	 * The empty text takes the place of the elements, not a place among them.
+	 * The empty text takes the place of the elements, not a place among them: the empty arrangement
+	 * is hidden, so that it takes no place - and no gap - beside the empty text.
 	 */
 	public void testEmptyTextBesideTheArrangement() {
 		ObjectListItems items = list(List.of(_containerChannel), Layout.LIST, ResKey.text("Nothing here."));
@@ -223,10 +224,13 @@ public class TestObjectListItems extends TestCase {
 		assertEquals("The empty text and the new-element template follow the arrangement.", 3,
 			displayed().size());
 		assertSame("The arrangement leads the display.", elements(), displayed().get(0));
+		assertTrue("The empty arrangement is hidden.", elements().isHidden());
 		assertEquals("The new-element template is displayed last.", _newElementTemplate.created().get(0),
 			displayed().get(2));
 
 		items.showElements(List.of("element"));
+
+		assertFalse("The arrangement holding an element is shown.", elements().isHidden());
 
 		assertEquals("The element replaces the empty text.",
 			List.of(elements(), _newElementTemplate.created().get(0)), displayed());

@@ -360,32 +360,32 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	}
 
 	/**
-     * Attempt to login the specified user **after** successful NTLM Authentication.
-     *
-     * That means no further authentication is done here. This method just assumes
-     * authentication was okay before it was called and now just creates a user object and a
-     * new session for the given userid
-     *
-     * @param aRequest
-     *        the request of the user; must not be null
+	 * Logs the specified user in for the whole session of the given request **after** a successful
+	 * external authentication.
+	 *
+	 * <p>
+	 * No further authentication is done here; the authentication is assumed to have succeeded
+	 * before. Only the groups allowed in maintenance mode are checked. The login itself is
+	 * {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}.
+	 * </p>
+	 *
+	 * @param aRequest
+	 *        the request of the user; must not be null
 	 * @param response
 	 *        the current response
-     * @param aUser
-     *        the user logging in
-     * @throws Exception
-     *         if the system is in maintenance mode and the user is not member of one of the
-     *         specified groups
-     *
-     * #author Thomas Richter
-     */
+	 * @param aUser
+	 *        the user logging in
+	 * @throws Exception
+	 *         if the system is in maintenance mode and the user is not member of one of the
+	 *         specified groups
+	 */
 	public void loginFromExternalAuth(HttpServletRequest aRequest, HttpServletResponse response, Person aUser)
 			throws Exception {
         boolean debug = Logger.isDebugEnabled(this);
 		checkAllowedGroups(aUser);
         if (debug) {
-			Logger.debug("Get new Session for user " + aUser.getName(), this);
+			Logger.debug("Log in user " + aUser.getName(), this);
         }
-        // always get a new session for the User...
         SessionService.getInstance().loginUser(aRequest, response, aUser);
     }
 

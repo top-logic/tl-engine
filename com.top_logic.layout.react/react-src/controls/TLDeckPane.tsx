@@ -8,6 +8,8 @@ import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
  * - activeIndex: number
  * - activeChild: ChildDescriptor | null
  * - childCount: number
+ * - hidden: boolean (default: false) - the deck pane is not displayed: neither the child it shows
+ *   nor a place of its own in its container, so its container puts no gap beside it
  *
  * The deck pane generates no box of its own (tl-deck is `display: contents`): the child it shows is
  * laid out as if it stood in the deck pane's container itself - inline in an app bar or beside a
@@ -37,7 +39,8 @@ const TLDeckPane: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={rootClassName(state, 'tl-deck')}>
+      <div id={controlId} className={rootClassName(state, 'tl-deck')}
+        style={state.hidden === true ? { display: 'none' } : undefined}>
         <FieldLabelContext.Provider value={childLabel}>
           {!!activeChild && <TLChild control={activeChild} />}
         </FieldLabelContext.Provider>

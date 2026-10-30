@@ -35,8 +35,8 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * The counterpart in the login flow is {@link LoginAction}, which opens the same dialog for an
- * account that is required to use a second factor and has none yet. The difference is only who
+ * The counterpart in the login flow is the {@link TotpSecondFactor}, which opens the same dialog
+ * for an account that is required to use a second factor and has none yet. The difference is only who
  * asked: there the application insists before letting the user in, here the user asked for it while
  * already logged in.
  * </p>
@@ -78,7 +78,7 @@ public class EnrollMfaAction implements ViewAction {
 		// Not closing on a backdrop click: an accidental click outside must not abort a setup
 		// halfway, where a secret is on screen but not yet stored.
 		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + LoginAction.MFA_ENROLL_VIEW,
-			false, LoginAction.mfaEnrollChannels(account), Collections.emptyList());
+			false, TotpSecondFactor.enrollmentChannels(account), Collections.emptyList());
 		return input;
 	}
 

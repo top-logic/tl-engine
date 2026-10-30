@@ -14,6 +14,8 @@ interface StepInfo {
   key: string;
   label: string;
   icon?: string;
+  /** Whether the flow only leads through the step, which is then no step to jump back to. */
+  transit?: boolean;
 }
 
 /**
@@ -52,7 +54,8 @@ function stepState(position: number, activeIndex: number): string {
  * - autoAdvance: number | null - how long this step stays before the wizard moves on by itself
  *
  * A step already done is a button that jumps back to it; a step still ahead is not, because the way
- * there leads through the steps in between.
+ * there leads through the steps in between. Neither is a pass-through step (`transit`), one that
+ * moves on by itself: the flow only leads through it, and the user never returns to it.
  *
  * The step change is a transition the stylesheet owns: this component only says what is happening -
  * the direction as `data-tl-state~="backward"` on the root - and leaves the marking of the step arriving and the
@@ -124,6 +127,7 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
               <ol className="tl-steps" aria-label={i18n['js.wizard.steps']}>
                 {steps.map((step, position) => {
                   const status = stepState(position, activeIndex);
+                  const jump = status === 'done' && step.transit !== true;
                   return (
                     <li
                       key={step.key}
@@ -132,7 +136,7 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
                       aria-current={status === 'current' ? 'step' : undefined}
                     >
                       <span className="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">{position + 1}</span>
-                      {status === 'done' ? (
+                      {jump ? (
                         <button type="button" className={buttonClassName({ appearance: 'link' })} onClick={() => goTo(step.key)}>
                           {step.icon && <ThemeIcon encoded={step.icon} className="tl-button__icon tl-icon-sm" />}
                           <span className="tl-button__label">{step.label}</span>

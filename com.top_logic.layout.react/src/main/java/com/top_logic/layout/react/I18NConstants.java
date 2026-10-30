@@ -513,6 +513,24 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.textInput.clear")
 	public static ResKey JS_TEXT_INPUT_CLEAR;
 
+	/**
+	 * @en Copy to clipboard
+	 */
+	@CustomKey("js.textInput.copy")
+	public static ResKey JS_TEXT_INPUT_COPY;
+
+	/**
+	 * @en Copied
+	 */
+	@CustomKey("js.textInput.copied")
+	public static ResKey JS_TEXT_INPUT_COPIED;
+
+	/**
+	 * @en Could not copy – select the text and press Ctrl+C
+	 */
+	@CustomKey("js.textInput.copyFailed")
+	public static ResKey JS_TEXT_INPUT_COPY_FAILED;
+
 	// -- Value list client-side i18n keys --
 
 	/**

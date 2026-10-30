@@ -2633,6 +2633,14 @@ body[data-tl-state~="picking"] * {
   resize: vertical;
 }
 
+/* Vorformatiert (Schrift tl-type-code aus dem TSX): jede Zeile bleibt eine Zeile, eine breite Zeile
+   rollt waagrecht statt umzubrechen. */
+.tl-field--preformatted {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
 /* --- Feld mit Icon oder Endknopf ------------------------------------------------- */
 
 /* Das echte Eingabefeld trägt den Rahmen und den Fokusring; Icon und Endknopf liegen darüber, das
@@ -2718,18 +2726,54 @@ body[data-tl-state~="picking"] * {
 
 /* Mehrzeiliger Lesewert: eine Zeile je __text, untereinander, und jede Zeile bricht um — ein langer
    Absatz endet nicht in einer Ellipse. In der Tabellenzelle stellt die Engine ihn wieder in eine Reihe
-   ohne Umbruch. */
+   ohne Umbruch. Wert und Zeilen schrumpfen nicht: in einem Flex-Container (der Rumpf eines Dialogs)
+   hätten sie wegen overflow: hidden die Mindesthöhe 0 und würden auf dessen Höhe zusammengedrückt,
+   statt ihn scrollen zu lassen. */
 .tl-field-value--multiline {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   align-items: stretch;
   white-space: pre-wrap;
 }
 
 .tl-field-value--multiline > .tl-field-value__text {
+  flex-shrink: 0;
   white-space: inherit;
   overflow-wrap: anywhere;
 }
+
+/* Vorformatierter Lesewert (Schrift tl-type-code aus dem TSX): die Zeilen brechen nicht um und sind
+   so breit wie ihr Text und stehen ohne Abstand untereinander; ist eine breiter als der Wert, rollt
+   der Wert waagrecht. */
+.tl-field-value--preformatted {
+  align-items: flex-start;
+  row-gap: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.tl-field-value--preformatted > .tl-field-value__text {
+  overflow: visible;
+  overflow-wrap: normal;
+}
+
+/* Mehrzeiliger Lesewert mit Aktion (etwa dem Kopierknopf): die Aktion steht oben am Ende in einer Spalte
+   für sich, neben dem Wert, der ihr Platz lässt — sie verdeckt keine Zeile, auch nicht, wenn der Wert
+   waagrecht rollt, und ist ohne Hover sichtbar, also auch auf Touch-Geräten. */
+.tl-field-value-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--tl-space-xs);
+}
+.tl-field-value-group[hidden] { display: none; }
+
+.tl-field-value-group__action,
+.tl-copy-button {
+  display: inline-flex;
+}
+.tl-copy-button[hidden] { display: none; }
 
 /* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */
 a.tl-field-value {
@@ -5685,6 +5729,12 @@ button.tl-swatch:not(:disabled):hover {
   flex-shrink: 0;
 }
 
+/* In der Reihe schrumpfen Wert und Zeilen wieder, damit eine lange Zeile mit Ellipse endet. */
+.tl-table__cell .tl-field-value--multiline,
+.tl-table__cell .tl-field-value--multiline > .tl-field-value__text {
+  flex-shrink: 1;
+}
+
 .tl-table__cell .tl-field-value--multiline {
   flex-direction: row;
   white-space: nowrap;
@@ -6534,4 +6584,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:f1548765a886b0cc68209e18442a49631849dce73dda6790e3b9668dcfd9dbbd — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:fe56db88de29f272e290e1e16d79568d4f4a690b72e5c78a7945e8c8f2884a0c — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

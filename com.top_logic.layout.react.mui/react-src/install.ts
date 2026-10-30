@@ -19,6 +19,7 @@ import MuiDividerAdapter from './adapters/MuiDividerAdapter';
 import MuiProgressBarAdapter from './adapters/MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './adapters/MuiSpinnerAdapter';
 import MuiListboxAdapter from './adapters/MuiListboxAdapter';
+import MuiCopyButtonAdapter from './adapters/MuiCopyButtonAdapter';
 import MuiDatePickerAdapter from './adapters/MuiDatePickerAdapter';
 import MuiSelectAdapter from './adapters/MuiSelectAdapter';
 import MuiDropdownSelectAdapter from './adapters/MuiDropdownSelectAdapter';
@@ -72,6 +73,7 @@ const PART_ADAPTERS = {
   ProgressBar: MuiProgressBarAdapter,
   Spinner: MuiSpinnerAdapter,
   Listbox: MuiListboxAdapter,
+  CopyButton: MuiCopyButtonAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */

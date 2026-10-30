@@ -154,16 +154,6 @@ public final class NoTask implements Task {
 		throw fail();
 	}
 
-	@Override
-	public boolean isBlockingAllowed() {
-		throw fail();
-	}
-
-	@Override
-	public boolean isBlockedByDefault() {
-		throw fail();
-	}
-
 	private UnreachableAssertion fail() {
 		return new UnreachableAssertion("Unexpected Task usage.");
 	}

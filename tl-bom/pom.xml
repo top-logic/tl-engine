@@ -89,6 +89,8 @@
 		<langchain4j.version>1.22.0</langchain4j.version>
 		<langchain4j.beta.version>1.22.0-beta32</langchain4j.beta.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
+		<!-- WebAuthn relying party library (passkeys), see tl-security-passkey. -->
+		<yubico-webauthn.version>2.10.1</yubico-webauthn.version>
 		<batik.version>1.20</batik.version>
 		<commonmark.version>0.31.0</commonmark.version>
 		<tl.license.version>7.8.2</tl.license.version>
@@ -876,6 +878,11 @@
 				<artifactId>tl-security-selfservice</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-security-passkey</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<!-- License-Tool -->
 			<dependency>
@@ -1020,6 +1027,17 @@
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
 				<version>33.7.2-jre</version>
+			</dependency>
+			<dependency>
+				<groupId>com.yubico</groupId>
+				<artifactId>webauthn-server-core</artifactId>
+				<version>${yubico-webauthn.version}</version>
+			</dependency>
+			<dependency>
+				<!-- CBOR library of webauthn-server-core, which declares it as a version range. -->
+				<groupId>com.upokecenter</groupId>
+				<artifactId>cbor</artifactId>
+				<version>4.5.6</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.librepdf</groupId>

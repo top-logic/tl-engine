@@ -21,9 +21,11 @@
 	Between the profile and the questions sits an interstitial: "Setting up" carries an
 	auto-advance="2s" and no buttons at all, so it shows itself for two seconds and then moves on by
 	itself. No step content raises buttons into the footer slot then, so the slot shows the hint of
-	its <empty> fallback instead, until the next step's buttons take its place. A step that was left
-	waits when it is entered again rather than moving on, so the Back button of the first question
-	leads past the interstitial to the profile instead of into a step without buttons.
+	its <empty> fallback instead, until the next step's buttons take its place. A step with a time of
+	its own is a pass-through step: the flow leads through it, and the user never returns to it. The
+	Back button of the first question leads past it to the profile, the indicator offers no jump to
+	it, and it has no address of its own - while it is shown, the address bar keeps naming the
+	profile, and the browser back button leads from the first question to the profile as well.
 	
 	A question step chooses its display by the question it asks: a <switch input="question"> picks
 	the field to fill in, so the three questions are three different inputs on one content template.
@@ -209,33 +211,17 @@
 								gap="default"
 								justify="end"
 							>
-								<switch input="question">
-									<case test="$question == 'role'">
-										<button>
-											<action class="com.top_logic.layout.view.wizard.WizardGotoCommand"
-												step="profile"
-											>
-												<label>
-													<en>Back</en>
-													<de>Zurück</de>
-												</label>
-											</action>
-										</button>
-									</case>
-									<default>
-										<button>
-											<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
-												<label>
-													<en>Back</en>
-													<de>Zurück</de>
-												</label>
-												<executability>
-													<wizard-has-back/>
-												</executability>
-											</action>
-										</button>
-									</default>
-								</switch>
+								<button>
+									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
+										<label>
+											<en>Back</en>
+											<de>Zurück</de>
+										</label>
+										<executability>
+											<wizard-has-back/>
+										</executability>
+									</action>
+								</button>
 								<button appearance="primary">
 									<action class="com.top_logic.layout.view.command.GenericViewCommand">
 										<label>

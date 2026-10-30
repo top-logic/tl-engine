@@ -20,7 +20,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
@@ -38,7 +37,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @implNote Verification is delegated to {@link MfaSupport#isValidCode(Password, String)}; the
  *           secret is persisted via {@link com.top_logic.model.TLObject#tUpdateByName(String, Object)}
- *           on {@link Person#MFA_SECRET_ATTR} (avoiding the broken {@link Person#setMFASecret(Password)}).
+ *           on {@link Person#MFA_SECRET_ATTR}.
  *           The codes checked against one secret are counted by the {@link LoginFailuresModule}
  *           (key {@link LoginFailuresModule#secretKey(Password)}): after repeated wrong codes,
  *           further codes are refused for a growing time without being checked.
@@ -115,24 +114,13 @@ public class VerifyOtpAction implements ViewAction {
 	}
 
 	private static Person resolveAccount(ReactContext context) {
-		Object value = resolveChannel(context, LoginAction.ACCOUNT_CHANNEL);
+		Object value = ViewContext.channelValue(context, LoginAction.ACCOUNT_CHANNEL);
 		return value instanceof Person ? (Person) value : null;
 	}
 
 	private static Password resolveSecret(ReactContext context) {
-		Object value = resolveChannel(context, LoginAction.SECRET_CHANNEL);
+		Object value = ViewContext.channelValue(context, LoginAction.SECRET_CHANNEL);
 		return value instanceof Password ? (Password) value : null;
-	}
-
-	private static Object resolveChannel(ReactContext context, String name) {
-		if (!(context instanceof ViewContext)) {
-			return null;
-		}
-		ViewContext viewContext = (ViewContext) context;
-		if (!viewContext.hasChannel(name)) {
-			return null;
-		}
-		return viewContext.resolveChannel(new ChannelRef(name)).get();
 	}
 
 	private static String asString(Object value) {

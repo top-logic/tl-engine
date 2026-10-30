@@ -364,8 +364,13 @@ public class ChangeLogBuilder {
 			if (undoCS != null) {
 				// Connect CS with its undo CS.
 				cs1.setRevertedBy(undoCS);
-				// Display message "Reverted: ..."
-				cs1.setMessage(I18NConstants.REVERTED__MSG.fill(cs1.getMessage()));
+				if (ChangeSetReverter.isUndone(cs1)) {
+					/* Display message "Reverted: ..." while the change is undone. Reading in
+					 * descending order, the whole chain of reverts following cs1 is already linked
+					 * here, and the message of its end is never rewritten (only a change set with
+					 * a revert is), so the end reliably tells whether it is an undo. */
+					cs1.setMessage(I18NConstants.REVERTED__MSG.fill(cs1.getMessage()));
+				}
 				// Undo CS is not displayed
 				toDelete.add(undoCS);
 				continue;

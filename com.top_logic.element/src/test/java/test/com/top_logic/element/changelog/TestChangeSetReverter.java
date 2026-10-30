@@ -405,22 +405,48 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 
 		assertFalse(ChangeSetReverter.isUndone(changeAt(root, rename)));
 		assertFalse(ChangeSetReverter.isUndone(null));
+		assertInEffectMessage(changeAt(root, rename));
 
 		toggle(root, rename);
 		assertEquals("child", child.tValueByName("name"));
-		assertTrue("Undone.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+		ChangeSet undone = changeAt(root, rename);
+		assertTrue("Undone.", ChangeSetReverter.isUndone(undone));
+		assertRevertedMessage(undone);
 
 		toggle(root, rename);
 		assertEquals("child-1", child.tValueByName("name"));
-		assertFalse("Redone.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+		ChangeSet redone = changeAt(root, rename);
+		assertFalse("Redone.", ChangeSetReverter.isUndone(redone));
+		assertInEffectMessage(redone);
+		assertTrue("Redo in effect keeps its message.", redone.getRevertedBy().getRevertedBy().isRedo());
 
 		toggle(root, rename);
 		assertEquals("child", child.tValueByName("name"));
-		assertTrue("Undone again.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+		ChangeSet undoneAgain = changeAt(root, rename);
+		assertTrue("Undone again.", ChangeSetReverter.isUndone(undoneAgain));
+		assertRevertedMessage(undoneAgain);
+		ChangeSet undoneRedo = undoneAgain.getRevertedBy().getRevertedBy();
+		assertTrue("Undone redo is marked as reverted.", ChangeSetReverter.isUndone(undoneRedo));
+		assertRevertedMessage(undoneRedo);
 
 		toggle(root, rename);
 		assertEquals("child-1", child.tValueByName("name"));
-		assertFalse("Redone again.", ChangeSetReverter.isUndone(changeAt(root, rename)));
+		ChangeSet redoneAgain = changeAt(root, rename);
+		assertFalse("Redone again.", ChangeSetReverter.isUndone(redoneAgain));
+		assertInEffectMessage(redoneAgain);
+		ChangeSet firstRedo = redoneAgain.getRevertedBy().getRevertedBy();
+		assertFalse("Redone redo is in effect.", ChangeSetReverter.isUndone(firstRedo));
+		assertTrue("Redo in effect keeps its message.", firstRedo.isRedo());
+	}
+
+	private static void assertRevertedMessage(ChangeSet cs) {
+		assertEquals("Undone change must be marked as reverted.", I18NConstants.REVERTED__MSG.getKey(),
+			cs.getMessage().getKey());
+	}
+
+	private static void assertInEffectMessage(ChangeSet cs) {
+		assertEquals("Change in effect must keep its message.",
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE.getKey(), cs.getMessage().getKey());
 	}
 
 	private void toggle(TLObject root, Revision revision) {

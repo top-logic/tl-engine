@@ -18,7 +18,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
 
@@ -138,7 +137,7 @@ public class LoggerLevelAction implements ViewAction {
 	 * Configures the logger named in the model channel at the {@link #DEFAULT_LEVEL default level}.
 	 */
 	private void add(ReactContext context, LogConfigurator configurator) {
-		TLObject model = channelValue(context, _modelChannel) instanceof TLObject object ? object : null;
+		TLObject model = ViewContext.channelValue(context, _modelChannel) instanceof TLObject object ? object : null;
 		if (model != null && model.tValueByName(NAME) instanceof String name && !name.isBlank()) {
 			configurator.setLoggerLevel(name.trim(), DEFAULT_LEVEL);
 		}
@@ -148,18 +147,8 @@ public class LoggerLevelAction implements ViewAction {
 	 * Removes the explicit configuration of the logger held by the selection channel.
 	 */
 	private void remove(ReactContext context, LogConfigurator configurator) {
-		if (channelValue(context, _selectionChannel) instanceof String name && !name.isEmpty()) {
+		if (ViewContext.channelValue(context, _selectionChannel) instanceof String name && !name.isEmpty()) {
 			configurator.removeLoggerLevel(name);
 		}
-	}
-
-	/**
-	 * The current value of the named channel, or {@code null} when unavailable.
-	 */
-	private static Object channelValue(ReactContext context, String channel) {
-		if (channel == null || !(context instanceof ViewContext viewContext) || !viewContext.hasChannel(channel)) {
-			return null;
-		}
-		return viewContext.resolveChannel(new ChannelRef(channel)).get();
 	}
 }

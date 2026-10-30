@@ -326,6 +326,25 @@ public interface ViewContext extends ReactContext {
 	ViewChannel resolveChannel(ChannelRef ref);
 
 	/**
+	 * The current value of the channel with the given name, e.g. the selection an action applies
+	 * to.
+	 *
+	 * @param context
+	 *        The context the channel is looked up in.
+	 * @param channelName
+	 *        The name of the channel, <code>null</code> for none.
+	 * @return The value of the channel; <code>null</code> without a name, if the context is no
+	 *         {@link ViewContext}, or if it has no channel of that name.
+	 */
+	static Object channelValue(ReactContext context, String channelName) {
+		if (channelName == null || !(context instanceof ViewContext viewContext)
+			|| !viewContext.hasChannel(channelName)) {
+			return null;
+		}
+		return viewContext.resolveChannel(new ChannelRef(channelName)).get();
+	}
+
+	/**
 	 * Registers a listener that is notified when view files change.
 	 *
 	 * <p>

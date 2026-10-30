@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.util.sched.layout.block;
+package com.top_logic.util.sched.layout.active;
 
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
@@ -16,8 +16,8 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	public static ThemeImage PAUSED_RED;
+	public static ThemeImage ACTIVE_STATE_INACTIVE;
 
-	public static ThemeImage PAUSED_YELLOW;
+	public static ThemeImage ACTIVE_STATE_CHILD_INACTIVE;
 
 }

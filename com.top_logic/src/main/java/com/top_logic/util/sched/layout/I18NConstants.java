@@ -18,8 +18,6 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public final class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 MANUAL_LOCK_RELEASE_NO_LOCK_EXISTING;
-
 	public static ResKey MANUAL_LOCK_RELEASE_COMPONENT_IS_NULL;
 
 	public static ResKey1 MANUAL_LOCK_RELEASE_COMPONENT_IS_NO_SELECTABLE__COMPONENT;
@@ -27,12 +25,6 @@ public final class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 MANUAL_LOCK_RELEASE_SELECTION_IS_NO_TASK__SELECTION;
 
 	public static ResKey MANUAL_LOCK_RELEASE_TASK_IS_NULL;
-
-	public static ResKey1 MANUAL_LOCK_RELEASE_NO_LOCK_TASK_IS_NOT_GLOBAL__TASK;
-
-	public static ResKey1 MANUAL_LOCK_RELEASE_NO_LOCK_TASK_IS_NOT_PERSISTENT__TASK;
-
-	public static ResKey1 MANUAL_LOCK_RELEASE_TASK_END_BY_MANUAL_LOCK_RELEASE__TASK;
 
 	public static ResKey1 MANUAL_LOCK_RELEASE_DONE__TASK;
 
@@ -50,8 +42,6 @@ public final class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey SCHEDULER_SUSPENDED;
 
-	public static ResKey1 TASK_BLOCKED__TASK;
-
 	public static ResKey1 TASK_RUNNING__TASK;
 
 	public static ResKey1 TASK_IS_NOT_TOP_LEVEL__TASK;
@@ -67,11 +57,6 @@ public final class I18NConstants extends I18NConstantsBase {
 
 	@CustomKey("tl.task.stop.signaled")
 	public static ResKey TASK_STOP_SIGNALED;
-
-	/**
-	 * @en Released cluster lock for task: {0}
-	 */
-	public static ResKey1 RELEASED_CLUSTER_LOCK__TASK;
 
 	static {
 		initConstants(I18NConstants.class);

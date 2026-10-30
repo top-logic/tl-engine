@@ -9,7 +9,7 @@
  *
  * <p>
  * Provides {@link com.top_logic.layout.react.control.sidebar.ReactSidebarControl} which renders a
- * vertical sidebar with navigation items, command buttons, collapsible groups, and optional
+ * vertical sidebar with navigation items, command buttons, collapsible groups, sections, and optional
  * header/footer slots.
  * </p>
  */

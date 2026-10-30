@@ -15,6 +15,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.sidebar.GroupItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
+import com.top_logic.layout.react.control.sidebar.SectionItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.react.control.sidebar.ToggleGroupArguments;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -52,6 +53,10 @@ public class TestSidebarGroupState extends TestCase {
 
 	private static final String SIBLING = "sibling";
 
+	private static final String SECTION = "section";
+
+	private static final String SECTIONED = "sectioned";
+
 	/** A group nested in a group starts out in the state that was persisted for it. */
 	public void testANestedGroupIsRestored() {
 		ReactSidebarControl sidebar = sidebar(Map.of(INNER, Boolean.FALSE));
@@ -83,6 +88,14 @@ public class TestSidebarGroupState extends TestCase {
 			+ "reports it as expanded again.", Boolean.FALSE, expanded(sidebar, OUTER, INNER));
 		assertEquals("Only the group the user toggled changes.",
 			Boolean.TRUE, expanded(sidebar, OUTER, SIBLING));
+	}
+
+	/** A group within a section starts out in the state that was persisted for it. */
+	public void testAGroupInASectionIsRestored() {
+		ReactSidebarControl sidebar = sidebar(Map.of(SECTIONED, Boolean.FALSE));
+
+		assertEquals("The state persisted for the group in the section was not applied.",
+			Boolean.FALSE, expanded(sidebar, SECTION, SECTIONED));
 	}
 
 	/**
@@ -120,7 +133,8 @@ public class TestSidebarGroupState extends TestCase {
 	}
 
 	/**
-	 * A sidebar of a group holding two groups, all of them configured expanded.
+	 * A sidebar of a group holding two groups and of a section holding a group, all groups
+	 * configured expanded.
 	 *
 	 * @param initialGroupStates
 	 *        The expansion states persisted for an earlier visit.
@@ -130,8 +144,10 @@ public class TestSidebarGroupState extends TestCase {
 			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		GroupItem inner = new GroupItem(INNER, "Inner", null, List.of(), true);
 		GroupItem sibling = new GroupItem(SIBLING, "Sibling", null, List.of(), true);
-		List<SidebarItem> items =
-			List.of(new GroupItem(OUTER, "Outer", null, List.of(inner, sibling), true));
+		GroupItem sectioned = new GroupItem(SECTIONED, "Sectioned", null, List.of(), true);
+		List<SidebarItem> items = List.of(
+			new GroupItem(OUTER, "Outer", null, List.of(inner, sibling), true),
+			new SectionItem(SECTION, null, null, List.of(sectioned)));
 		return new ReactSidebarControl(context, items, null, false, initialGroupStates,
 			null, null, null, null, null, null);
 	}

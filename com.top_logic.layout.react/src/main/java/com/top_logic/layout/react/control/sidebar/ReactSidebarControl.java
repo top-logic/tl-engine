@@ -416,10 +416,10 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * {@link #handleToggleGroup(ToggleGroupArguments)} to every {@link GroupItem} it names.
 	 *
 	 * <p>
-	 * A group nested in a group is as much a group as one at the top, so the descent follows
-	 * {@link GroupItem#getChildren()} all the way down: the state the user last chose is applied
-	 * wherever the group sits, and the sidebar comes back as it was left rather than snapping the
-	 * inner groups back to their configured default.
+	 * A group nested in a group or a section is as much a group as one at the top, so the descent
+	 * follows {@link ContainerItem#getChildren()} all the way down: the state the user last chose
+	 * is applied wherever the group sits, and the sidebar comes back as it was left rather than
+	 * snapping the inner groups back to their configured default.
 	 * </p>
 	 *
 	 * @param items
@@ -435,7 +435,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 				if (tracked != null) {
 					itemMap.put(GroupItem.EXPANDED, tracked);
 				}
-				itemMap.put(GroupItem.CHILDREN, serializeItems(((GroupItem) item).getChildren()));
+			}
+			if (item instanceof ContainerItem) {
+				itemMap.put(ContainerItem.CHILDREN, serializeItems(((ContainerItem) item).getChildren()));
 			}
 			itemList.add(itemMap);
 		}
@@ -443,7 +445,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	/**
-	 * Finds a sidebar item by ID, searching recursively into groups.
+	 * Finds a sidebar item by ID, searching recursively into groups and sections.
 	 *
 	 * @param itemId
 	 *        The item ID to search for.
@@ -458,8 +460,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			if (item.getId().equals(itemId)) {
 				return item;
 			}
-			if (item instanceof GroupItem) {
-				SidebarItem found = findItemRecursive(itemId, ((GroupItem) item).getChildren());
+			if (item instanceof ContainerItem) {
+				SidebarItem found = findItemRecursive(itemId, ((ContainerItem) item).getChildren());
 				if (found != null) {
 					return found;
 				}
@@ -485,8 +487,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			if (item instanceof NavigationItem && item.getId().equals(itemId)) {
 				return (NavigationItem) item;
 			}
-			if (item instanceof GroupItem) {
-				NavigationItem found = findNavItem(itemId, ((GroupItem) item).getChildren());
+			if (item instanceof ContainerItem) {
+				NavigationItem found = findNavItem(itemId, ((ContainerItem) item).getChildren());
 				if (found != null) {
 					return found;
 				}
@@ -500,8 +502,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			if (item instanceof CommandItem && item.getId().equals(itemId)) {
 				return (CommandItem) item;
 			}
-			if (item instanceof GroupItem) {
-				CommandItem found = findCommandItem(itemId, ((GroupItem) item).getChildren());
+			if (item instanceof ContainerItem) {
+				CommandItem found = findCommandItem(itemId, ((ContainerItem) item).getChildren());
 				if (found != null) {
 					return found;
 				}
@@ -515,8 +517,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			if (item instanceof NavigationItem) {
 				return item.getId();
 			}
-			if (item instanceof GroupItem) {
-				String found = findFirstNavItemId(((GroupItem) item).getChildren());
+			if (item instanceof ContainerItem) {
+				String found = findFirstNavItemId(((ContainerItem) item).getChildren());
 				if (found != null) {
 					return found;
 				}
@@ -542,8 +544,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 					routes.add(RoutePattern.compile(route, item.getId()));
 				}
 			}
-			if (item instanceof GroupItem) {
-				collectRoutes(routes, ((GroupItem) item).getChildren());
+			if (item instanceof ContainerItem) {
+				collectRoutes(routes, ((ContainerItem) item).getChildren());
 			}
 		}
 	}

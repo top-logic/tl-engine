@@ -524,6 +524,34 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		}
 	}
 
+	public void testResolveCompactionRevisionByNumber() throws Exception {
+		Transaction tx = begin();
+		newB("b1");
+		commit(tx);
+
+		tx = begin();
+		newB("b2");
+		commit(tx);
+		long middle = tx.getCommitRevision().getCommitNumber();
+
+		tx = begin();
+		newB("b3");
+		commit(tx);
+		long last = tx.getCommitRevision().getCommitNumber();
+
+		HistoryCompaction compaction = newCompaction();
+		assertEquals(middle, compaction.resolveCompactionRevisionByNumber(middle));
+		assertEquals("A number behind the last revision resolves to the last one.", last,
+			compaction.resolveCompactionRevisionByNumber(last + 1000));
+		assertEquals(middle - 1, compaction.countDiscardedRevisions(middle));
+		assertEquals("Nothing is discarded below the first revision.", 0, compaction.countDiscardedRevisions(1));
+
+		// After a compaction, the discarded numbers resolve to the newest revision kept below them.
+		newCompaction().compactRevisions(1, last, _log);
+		assertEquals(1, compaction.resolveCompactionRevisionByNumber(middle));
+		assertEquals(1, compaction.countDiscardedRevisions(last));
+	}
+
 	public void testCompactHistoryByDate() throws Exception {
 		Scenario scenario = setupScenario();
 		long cut = scenario._compactionRevision;

@@ -73,6 +73,59 @@ public class HistoryCompactionOperation {
 	}
 
 	/**
+	 * The revision a compaction of the history before the given point in time collapses the
+	 * history into.
+	 *
+	 * @param beforeDate
+	 *        Point in time in milliseconds since the epoch.
+	 * @return The commit number of the newest revision committed at or before that point in time,
+	 *         {@code 0} if there is none.
+	 *
+	 * @see #compact(long, Log)
+	 */
+	public static long compactionRevision(long beforeDate) {
+		try {
+			return newCompaction().resolveCompactionRevision(beforeDate);
+		} catch (SQLException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_ANALYSIS_FAILED, ex);
+		}
+	}
+
+	/**
+	 * The revision a compaction of the history before the given revision collapses the history
+	 * into.
+	 *
+	 * @param revision
+	 *        A commit number.
+	 * @return The commit number of the newest existing revision not newer than the given one,
+	 *         {@code 0} if there is none.
+	 *
+	 * @see #compactRevisions(long, Log)
+	 */
+	public static long compactionRevisionByNumber(long revision) {
+		try {
+			return newCompaction().resolveCompactionRevisionByNumber(revision);
+		} catch (SQLException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_ANALYSIS_FAILED, ex);
+		}
+	}
+
+	/**
+	 * The number of revisions a compaction into the given revision discards.
+	 *
+	 * @param upper
+	 *        The compaction revision, see {@link #compactionRevision(long)}.
+	 * @return The number of revisions committed before it.
+	 */
+	public static int discardedRevisions(long upper) {
+		try {
+			return newCompaction().countDiscardedRevisions(upper);
+		} catch (SQLException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_ANALYSIS_FAILED, ex);
+		}
+	}
+
+	/**
 	 * Counts what {@link #compact(long, Log)} would change, without changing anything.
 	 *
 	 * @param beforeDate
@@ -82,8 +135,21 @@ public class HistoryCompactionOperation {
 	 * @return What a compaction would change.
 	 */
 	public static Report analyze(long beforeDate, Log log) {
+		return analyzeRevisions(compactionRevision(beforeDate), log);
+	}
+
+	/**
+	 * Counts what {@link #compactRevisions(long, Log)} would change, without changing anything.
+	 *
+	 * @param upper
+	 *        The compaction revision, an existing revision or {@code 0} for none.
+	 * @param log
+	 *        Receives progress information and the resulting report.
+	 * @return What a compaction would change.
+	 */
+	public static Report analyzeRevisions(long upper, Log log) {
 		try {
-			return newCompaction().analyzeHistory(beforeDate, log);
+			return newCompaction().analyzeRevisions(0, upper, log);
 		} catch (SQLException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_ANALYSIS_FAILED, ex);
 		}
@@ -115,11 +181,33 @@ public class HistoryCompactionOperation {
 	 */
 	public static Report compact(long beforeDate, Log log) {
 		PersistencyMaintenance.requirePreconditions();
+		return compactRevisions(compactionRevision(beforeDate), log);
+	}
+
+	/**
+	 * Collapses all revisions before the given revision into that revision.
+	 *
+	 * <p>
+	 * Runs as {@link #compact(long, Log)} does, under the same preconditions.
+	 * </p>
+	 *
+	 * @param upper
+	 *        The compaction revision, an existing revision or {@code 0} for none, see
+	 *        {@link #compactionRevisionByNumber(long)}.
+	 * @param log
+	 *        Receives progress information and the resulting report.
+	 * @return What was changed.
+	 *
+	 * @throws TopLogicException
+	 *         If a precondition is violated, or if the compaction fails.
+	 */
+	public static Report compactRevisions(long upper, Log log) {
+		PersistencyMaintenance.requirePreconditions();
 
 		DBKnowledgeBase kb = PersistencyMaintenance.defaultKnowledgeBase();
 		Report report;
 		try {
-			report = HistoryCompaction.newInstance(kb).compactHistory(beforeDate, log);
+			report = HistoryCompaction.newInstance(kb).compactRevisions(0, upper, log);
 		} catch (SQLException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_COMPACTION_FAILED, ex);
 		}

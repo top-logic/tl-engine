@@ -317,7 +317,8 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	}
 
 	/**
-	 * A login naming a window its session does not know applies to the whole session.
+	 * A login naming a window its session does not know applies to the whole session: the session
+	 * is kept, and the session ID changes.
 	 */
 	public void testLoginInUnknownWindow() throws Exception {
 		SessionService service = SessionService.getInstance();
@@ -329,16 +330,22 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 			HttpServletRequest request = invocation.getRequest();
 			HttpSession session = ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class,
 				() -> service.loginUser(request, invocation.getResponse(), guest));
-			TLSessionContext guestContext = service.getSession(session);
+			String oldId = session.getId();
+			TLSessionContext sessionContext = service.getSession(session);
+			TLSubSessionContext window = newWindow(sessionContext, "windowA", guest);
 
 			ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class, () -> {
 				new TestingServlet().loginUser(user, request, invocation.getResponse());
 				return null;
 			});
 
+			assertSame("Session must be kept.", session, request.getSession(false));
+			assertSame("Session context must be kept.", sessionContext, service.getSession(session));
+			assertNotEquals("Session ID not changed.", oldId, session.getId());
+			assertNull(service.getUser(oldId));
 			assertEquals(user, service.getUser(session.getId()));
-			assertNotSame("The whole session is logged in anew.", guestContext, service.getSession(session));
-			assertEquals(user, service.getSession(session).getOriginalUser());
+			assertEquals(user, sessionContext.getOriginalUser());
+			assertEquals("The whole session is logged in.", user, window.getPerson());
 
 			service.terminateSession(session.getId());
 		} finally {

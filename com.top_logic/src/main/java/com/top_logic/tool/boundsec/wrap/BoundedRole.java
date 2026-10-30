@@ -170,6 +170,14 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 		return findRoleAssigmenents(role, ATTRIBUTE_ROLE);
 	}
 
+	/**
+	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} which assign a role to
+	 * the given group.
+	 */
+	public static CloseableIterator<KnowledgeObject> roleAssignmentsForGroup(KnowledgeItem group) {
+		return findRoleAssigmenents(group, ATTRIBUTE_OWNER);
+	}
+
 	private static CloseableIterator<KnowledgeObject> findRoleAssigmenents(KnowledgeItem item, String refAttrName) {
 		KnowledgeBase kb = item.getKnowledgeBase();
 

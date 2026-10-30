@@ -764,11 +764,16 @@ public class ElementAccessManager extends AccessManager {
     /**
 	 * Gets the groups the given person is member of.
 	 *
+	 * <p>
+	 * These are the groups the roles of the person are looked up for: the representative group of
+	 * the person and every group the person is a member of, directly or through a nested group.
+	 * </p>
+	 *
 	 * @param aPerson
 	 *        the person to get the groups from
 	 * @return {@link List} with the {@link Group}s the given person is member of.
 	 */
-    protected List<Group> getGroups(Person aPerson) {
+    public List<Group> getGroups(Person aPerson) {
         if (aPerson == null || !aPerson.tValid()) return Collections.emptyList();
         Group theGroup = aPerson.getRepresentativeGroup();
         List<Group> theGroupList = (theGroup == null ? new ArrayList<>() : CollectionUtil.intoList(theGroup));

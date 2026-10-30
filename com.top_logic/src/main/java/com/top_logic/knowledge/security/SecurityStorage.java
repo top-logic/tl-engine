@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +25,7 @@ import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DebugHelper;
+import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Reloadable;
@@ -496,6 +498,69 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     }
 
 
+
+	/**
+	 * The entries of the storage restricted to the given groups, business objects and roles.
+	 *
+	 * <p>
+	 * Each restriction is optional: <code>null</code> does not restrict the column, an empty
+	 * collection matches no entry.
+	 * </p>
+	 *
+	 * @param groupIDs
+	 *        The identifiers of the {@link Group}s whose entries are requested, <code>null</code>
+	 *        for the entries of all groups.
+	 * @param businessObjectIDs
+	 *        The identifiers of the business objects whose entries are requested,
+	 *        <code>null</code> for the entries on all objects.
+	 * @param roleIDs
+	 *        The identifiers of the {@link BoundedRole}s whose entries are requested,
+	 *        <code>null</code> for the entries of all roles.
+	 * @return The matching entries, without duplicates.
+	 * @throws StorageException
+	 *         If some error occurs while requesting the database.
+	 */
+	public List<Entry> getEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
+			Collection<TLID> roleIDs) throws StorageException {
+		if (isEmptyRestriction(groupIDs) || isEmptyRestriction(businessObjectIDs) || isEmptyRestriction(roleIDs)) {
+			return Collections.emptyList();
+		}
+		try {
+			return executor.getEntries(groupIDs, businessObjectIDs, roleIDs);
+		} catch (SQLException e) {
+			throw new StorageException("Error while requesting the database.", e);
+		}
+	}
+
+	private static boolean isEmptyRestriction(Collection<TLID> ids) {
+		return ids != null && ids.isEmpty();
+	}
+
+	/**
+	 * An entry of the storage: the {@link #group()} has the {@link #role()} on the
+	 * {@link #businessObject()} for the {@link #reason()}.
+	 *
+	 * @param group
+	 *        The identifier of the {@link Group} holding the role.
+	 * @param businessObject
+	 *        The identifier of the business object the role is held on.
+	 * @param role
+	 *        The identifier of the {@link BoundedRole} held.
+	 * @param reason
+	 *        Why the role is held: {@link SecurityStorage#REASON_HAS_ROLE} for a direct role
+	 *        assignment, otherwise the persistency identifier of the role rule delivering the
+	 *        role.
+	 */
+	public record Entry(TLID group, TLID businessObject, TLID role, int reason) {
+
+		/**
+		 * Whether the role is held by a direct role assignment.
+		 */
+		public boolean isDirectAssignment() {
+			return reason == REASON_HAS_ROLE.intValue();
+		}
+
+	}
 
     /**
      * Gets all groups which have the given role on the given business object. The
@@ -1349,6 +1414,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 					+ securityStorageTableRef + dbHelper.selectNoBlockHint();
 			SQL_GET_GROUPS_PREFIX = SQL_SELECT_PREFIX + "DISTINCT " + attributeGroupColumnRef + " FROM "
 				+ securityStorageTableRef + dbHelper.selectNoBlockHint();
+			SQL_GET_ENTRIES_PREFIX = SQL_SELECT_PREFIX + "DISTINCT " + attributeGroupColumnRef + ","
+				+ attributeBusinessObjectColumnRef + "," + attributeRoleColumnRef + "," + attributeReasonColumnRef
+				+ " FROM " + securityStorageTableRef + dbHelper.selectNoBlockHint();
 			SQL_GET_GROUPS_BY_OBJECTS_PREFIX =
 				"SELECT DISTINCT " + attributeBusinessObjectColumnRef + "," + attributeGroupColumnRef
 					+ " FROM " + securityStorageTableRef + dbHelper.selectNoBlockHint();
@@ -1456,6 +1524,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         protected final String SQL_GET_GROUPS_PREFIX;
 
         protected final String SQL_GET_GROUPS_BY_OBJECTS_PREFIX;
+
+		/** Selection of all columns of the entries, see {@link #getEntries(Collection, Collection, Collection)}. */
+		protected final String SQL_GET_ENTRIES_PREFIX;
 
         protected final String SQL_REMOVE_PREFIX;
 
@@ -1619,6 +1690,53 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			}
 			return result == null ? Collections.<TLID> emptyList() : result;
         }
+
+		/**
+		 * The entries of the storage matching the given restrictions.
+		 *
+		 * @see SecurityStorage#getEntries(Collection, Collection, Collection)
+		 */
+		public List<Entry> getEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
+				Collection<TLID> roleIDs) throws SQLException {
+			if (businessObjectIDs == null) {
+				return queryEntries(groupIDs, null, roleIDs);
+			}
+			List<TLID> objects = List.copyOf(businessObjectIDs);
+			List<Entry> result = new ArrayList<>();
+			int chunkSize = dbHelper.getMaxSetSize();
+			for (int low = 0; low < objects.size(); low += chunkSize) {
+				result.addAll(
+					queryEntries(groupIDs, objects.subList(low, Math.min(low + chunkSize, objects.size())), roleIDs));
+			}
+			return result;
+		}
+
+		private List<Entry> queryEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
+				Collection<TLID> roleIDs) throws SQLException {
+			StringBuilder sb = new StringBuilder(4096);
+			sb.append(SQL_GET_ENTRIES_PREFIX);
+			boolean where = appendRestriction(sb, ATTRIBUTE_GROUP, groupIDs, false);
+			where = appendRestriction(sb, ATTRIBUTE_BUSINESS_OBJECT, businessObjectIDs, where);
+			appendRestriction(sb, ATTRIBUTE_ROLE, roleIDs, where);
+			return DBUtil.executeQuery(sb.toString(), null, result -> {
+				List<Entry> entries = new ArrayList<>();
+				while (result.next()) {
+					entries.add(new Entry(IdentifierUtil.getId(result, 1), IdentifierUtil.getId(result, 2),
+						IdentifierUtil.getId(result, 3), result.getInt(4)));
+				}
+				return entries;
+			});
+		}
+
+		private boolean appendRestriction(StringBuilder sb, String column, Collection<TLID> ids, boolean where) {
+			if (ids == null) {
+				return where;
+			}
+			sb.append(where ? " AND " : " WHERE ");
+			sb.append(dbHelper.columnRef(column)).append(" IN ");
+			dbHelper.literalSet(sb, DBType.ID, ids);
+			return true;
+		}
 
 		public List<Integer> getReasons(Object[] aVector) throws SQLException {
             checkVector(aVector);

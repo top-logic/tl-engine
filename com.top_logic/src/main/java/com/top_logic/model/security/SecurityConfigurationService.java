@@ -1514,6 +1514,57 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return operation;
 	}
 
+	@Override
+	public TLObject getRoleHolder(TLObject object) {
+		return roleHolder(object);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @implNote Follows the delegation of
+	 *           {@link #isAllowed(Person, TLObject, BoundCommandGroup)}: an object with an access
+	 *           parent is admitted by the roles admitting the operation checked on the parent in its
+	 *           place, or an operation implying it on the object.
+	 */
+	@Override
+	public Set<BoundedRole> getAdmittingRoles(TLObject object, BoundCommandGroup operation) {
+		Set<BoundedRole> result = new HashSet<>();
+		collectAdmittingRoles(object, operation, new HashSet<>(), result);
+		return result;
+	}
+
+	private void collectAdmittingRoles(TLObject instance, BoundCommandGroup operation,
+			Set<AdmittingRolesKey> visiting, Set<BoundedRole> result) {
+		AccessParentFunction parent = accessParentOf(instance);
+		if (parent == null) {
+			result.addAll(getRoles(instance, operation));
+			return;
+		}
+		AdmittingRolesKey key = new AdmittingRolesKey(instance, operation);
+		if (!visiting.add(key)) {
+			// The chain of access parents runs in a cycle, which admits nobody.
+			return;
+		}
+		TLObject parentObject = parent.resolve(instance);
+		if (parentObject != null) {
+			collectAdmittingRoles(parentObject, operationOnParent(operation), visiting, result);
+			for (BoundCommandGroup implying : getObjectOperations(instance).getImplying(operation)) {
+				if (implying != operation) {
+					collectAdmittingRoles(parentObject, operationOnParent(implying), visiting, result);
+				}
+			}
+		}
+		visiting.remove(key);
+	}
+
+	/**
+	 * An operation on an object, whose admitting roles are being collected.
+	 */
+	private record AdmittingRolesKey(TLObject object, BoundCommandGroup operation) {
+		// Pure value.
+	}
+
 	/**
 	 * The object whose roles decide access to the given object: the end of its chain of access
 	 * parents, or the object itself when it has none.

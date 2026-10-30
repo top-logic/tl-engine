@@ -272,8 +272,7 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * For an object delegating to an access parent, the reason names the operation checked on the
-	 * deciding object in place of the operation of the decision, see
-	 * {@link OperationDecision#checkedOperation()}.
+	 * deciding object in place of the operation of the decision.
 	 * </p>
 	 *
 	 * @param explanation
@@ -281,6 +280,9 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 * @param decision
 	 *        A decision of it, see {@link #operations(AccessExplanation)}.
 	 * @return The reason in the language of the user.
+	 *
+	 * @implNote The operation checked on the deciding object is
+	 *           {@link OperationDecision#checkedOperation()}.
 	 */
 	@Label("Reason of a decision")
 	@SideEffectFree

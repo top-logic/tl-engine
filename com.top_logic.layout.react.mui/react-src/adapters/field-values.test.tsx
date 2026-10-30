@@ -18,6 +18,7 @@ import MuiChipAdapter from './MuiChipAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
+import MuiCopyButtonAdapter from './MuiCopyButtonAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 
 replacePart('FieldValue', MuiFieldValueAdapter);
@@ -26,6 +27,8 @@ replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Button', MuiButtonAdapter);
 // An object with a color role is drawn as a chip.
 replacePart('Chip', MuiChipAdapter);
+// A preformatted value offers to copy it.
+replacePart('CopyButton', MuiCopyButtonAdapter);
 
 /** The class of the MUI typography of a value. */
 const MUI_BODY = 'MuiTypography-body2';
@@ -86,6 +89,24 @@ describe('the value of a read-only text field as MUI Typography', () => {
     expectMuiValue(shown());
     expect(shown().tagName).toBe('DIV');
     expect(Array.from(shown().children).map(line => line.textContent)).toEqual(['eins', ' ', 'drei']);
+  });
+
+  it('offers to copy a preformatted multi-line text, and only that', () => {
+    mountAdapter(TLTextInput, { value: 'eins\n\tzwei', multiline: true, preformatted: true, editable: false });
+
+    expectMuiValue(shown());
+    // The stubbed server answers each text with its key, the button is named by the key or its default.
+    expect(screen.getByRole('button', { name: /^(js\.textInput\.copy|Copy to clipboard)$/ }).classList)
+      .toContain('MuiIconButton-root');
+    cleanup();
+
+    mountAdapter(TLTextInput, { value: 'eins\nzwei', multiline: true, editable: false });
+    expect(screen.queryByRole('button')).toBeNull();
+    cleanup();
+
+    mountAdapter(TLTextInput, { value: 'eins\nzwei', multiline: true, preformatted: true });
+    expect(screen.getByRole('textbox')).toBeDefined();
+    expect(screen.queryByRole('button', { name: /^(js\.textInput\.copy|Copy to clipboard)$/ })).toBeNull();
   });
 
   it('shows an input, not the value, while only disabled', async () => {

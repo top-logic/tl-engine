@@ -477,6 +477,13 @@ message TextInputState extends TypingFieldState {
 	int32 rows;
 
 	/**
+	 * Whether the text of a {@link #multiline} field is shown as it is written: in a font of fixed
+	 * width, each line without wrapping it, a line wider than the field scrolling horizontally. This
+	 * holds for the text area and for the value of a field that is not editable.
+	 */
+	bool preformatted;
+
+	/**
 	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
 	 *
 	 * The field asks for them with the command {@code suggest}, giving the text typed as argument

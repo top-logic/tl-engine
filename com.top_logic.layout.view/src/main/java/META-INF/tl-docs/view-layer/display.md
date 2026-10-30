@@ -1,5 +1,5 @@
 ---
-description: Read before showing text, pictures or values in a .view.xml - <text> variant/tone/appearance, <image>, <overlay>, <avatar>, <html>, colored values and progress display.
+description: Read before showing text, pictures or values in a .view.xml - <text> variant/tone/appearance, <image>, <overlay>, <avatar>, <html>, colored values and progress display, and where a multi-line value whose indentation matters (a stack trace) goes instead of a <text>.
 order: 30
 ---
 
@@ -44,7 +44,12 @@ is how text on the primary app bar reads in the bar's colour. A strong text name
 class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
 role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
 while runs of spaces collapse and the text wraps at the width available (`white-space: pre-line`). A
-text with `overflow="ellipsis"` and a text in a table cell stay on one line.
+text with `overflow="ellipsis"` and a text in a table cell stay on one line. Indentation collapses
+as well, so a multi-line value whose indentation matters (a stack trace, source code) is no
+`<text>`: it is shown as a read-only multi-line field, preformatted (monospace, lines not wrapped)
+where it is written for a fixed-width font, in a table cell by a one-line preview
+opening the full value in a dialog, see
+[Long values in a cell](doc:view-layer/tables#long-values-in-a-cell).
 
 ```html
 <span class="tl-text tl-type-label" data-tl-tone="helper">Figures as of yesterday.</span>

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations (sortable, comparator, aggregate, tooltip), row and node selection, activation, grouping, CSS classes marking rows and cells by their data (row-class on <table>, <tree-table> and <composition-table>, cell-class on a column, tl-status-error / -warning / -success / -info), the filter bar and its presets (with a row count and a CSS class of their own: count, css-class), the Excel export (<export> of a <table> or a <tree-table>, groups and tree levels as an outline, canExpandAll="false" exporting only the displayed rows), pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered"> with its arguments objects / target / parent / before, as / target-as / parent-as / before-as, refuse-if), the display of a cell or a tree node (display on a column, nodeContent on a <tree>, ResourceDisplayByExpression computing label / icon / css-class / tooltip), the name of the activated row or node (activate-as), and the variables of the column, row-class and cell-class scripts (row-as, column-as, value-as, $members, $left / $right).
+description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations (sortable, comparator, aggregate, tooltip), row and node selection, activation, grouping, CSS classes marking rows and cells by their data (row-class on <table>, <tree-table> and <composition-table>, cell-class on a column, tl-status-error / -warning / -success / -info), the filter bar and its presets (with a row count and a CSS class of their own: count, css-class), the Excel export (<export> of a <table> or a <tree-table>, groups and tree levels as an outline, canExpandAll="false" exporting only the displayed rows), pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered"> with its arguments objects / target / parent / before, as / target-as / parent-as / before-as, refuse-if), the display of a cell or a tree node (display on a column, nodeContent on a <tree>, ResourceDisplayByExpression computing label / icon / css-class / tooltip), the name of the activated row or node (activate-as), long or multi-line values in a cell (a stack trace, a text area, code, HTML) shown by a one-line preview with a button opening a dialog (FieldSpec#isCompact, ReactCompactFieldControl), and the variables of the column, row-class and cell-class scripts (row-as, column-as, value-as, $members, $left / $right).
 order: 60
 ---
 
@@ -205,6 +205,20 @@ A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit
       types-expr="$type" create-type-expr="$type"/>
   ```
 - **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type` or `create-type-expr`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one.
+
+## Long values in a cell
+
+A value whose control needs more room than a row offers - a multi-line text, a code editor, an HTML or rich text, a field holding several values each in a control of its own - is displayed in a cell by a one-line preview (for a text its first line) and a button opening the full control in a dialog; a read-only value is just shown there, a multi-line text with its line breaks and indentation. A tooltip is not the way to show a long value.
+
+- The mechanism: a cell's `FieldSpec` is `FieldSpec#isCompact()` (set by `FieldControlService.cellSpec`), and where its provider says `ReactFieldControlProvider#isLarge(FieldSpec)` (`FieldControlRegistry.TEXT` with more than one `setMultilineRows`), `FieldControlRegistry#createControl` builds a `ReactCompactFieldControl` instead of the control itself. No button is offered for an empty value or when the preview shows everything.
+- Columns of model attributes get it without further ado (`FieldControlService.createCellControl` / `createDisplayControl`).
+- A column built in Java - a `UIElement` assembling `DefaultColumn`s, like `LogLineTable` showing the stack trace of a log entry - gets it with a `CellContent.Raw` around the control over a non-editable `AbstractFieldModel` holding the value, keeping sort, filter and `searchText` on the plain value. `FieldSpec#setPreformatted(boolean)` shows a text written for a fixed-width font - a stack trace, source, a log - as it is written: monospace, its lines not wrapped, with a button copying it (for a model attribute: `preformatted="true"` on its `<multi-line>` annotation):
+
+  ```java
+  FieldSpec spec = FieldControlService.cellSpec(
+      FieldSpec.of(String.class, label).setMultilineRows(20).setPreformatted(true));
+  new CellContent.Raw((CellControlFactory) ctx -> FieldControlRegistry.getInstance().createControl(ctx, spec, model, FieldControlRegistry.TEXT));
+  ```
 
 ## Filtering: the filter bar and its presets
 

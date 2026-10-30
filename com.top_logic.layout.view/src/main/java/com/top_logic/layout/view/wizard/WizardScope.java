@@ -10,6 +10,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 
@@ -35,6 +37,19 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * <p>
  * The step sequence is read afresh on every question, because how many steps a wizard has can change
  * while it is displayed.
+ * </p>
+ *
+ * <p>
+ * A move is a {@link RouteManager#navigate(Runnable) navigation} of the display, where the scope is
+ * given a {@link RouteManager}: the address the wizard arrives at is reported once the move is
+ * complete, not by the first listener of the step channel that happens to hear of it. This is what
+ * lets the wizard keep the address of the step the flow came from while a
+ * {@link WizardStep#passThrough() pass-through step} is displayed.
+ * </p>
+ *
+ * <p>
+ * A move back never ends on a pass-through step: the flow only leads through such a step, so the
+ * step before it is the one the user returns to.
  * </p>
  */
 public class WizardScope {
@@ -67,6 +82,9 @@ public class WizardScope {
 
 	private final Supplier<List<WizardStep>> _steps;
 
+	/** The routing of the display the wizard is part of, {@code null} for none. */
+	private final RouteManager _routes;
+
 	/**
 	 * Creates a {@link WizardScope} over a fixed step sequence.
 	 *
@@ -89,8 +107,24 @@ public class WizardScope {
 	 *        Answers the steps, in the order the wizard walks them, as they are now.
 	 */
 	public WizardScope(ViewChannel stepChannel, Supplier<List<WizardStep>> steps) {
+		this(stepChannel, steps, null);
+	}
+
+	/**
+	 * Creates a {@link WizardScope} whose moves are navigations of a routed display.
+	 *
+	 * @param stepChannel
+	 *        The channel holding the key of the current step.
+	 * @param steps
+	 *        Answers the steps, in the order the wizard walks them, as they are now.
+	 * @param routes
+	 *        The routing of the display the wizard is part of, {@code null} for a display without
+	 *        one.
+	 */
+	public WizardScope(ViewChannel stepChannel, Supplier<List<WizardStep>> steps, RouteManager routes) {
 		_stepChannel = stepChannel;
 		_steps = steps;
+		_routes = routes;
 	}
 
 	/**
@@ -148,10 +182,37 @@ public class WizardScope {
 	}
 
 	/**
-	 * Whether a step precedes the one displayed.
+	 * Whether a step the user can return to precedes the one displayed.
+	 *
+	 * <p>
+	 * Only {@link WizardStep#passThrough() pass-through steps} before the one displayed are no such
+	 * step: the flow only leads through them.
+	 * </p>
 	 */
 	public boolean hasBack() {
-		return currentIndex() > 0;
+		return backIndex(currentIndex()) >= 0;
+	}
+
+	/**
+	 * The position of the step a move back from the step at the given position reaches, {@code -1}
+	 * if there is none.
+	 *
+	 * <p>
+	 * That is the nearest step before the given position that is no
+	 * {@link WizardStep#passThrough() pass-through step}.
+	 * </p>
+	 *
+	 * @param index
+	 *        A position in the {@link #steps() sequence}.
+	 */
+	public int backIndex(int index) {
+		List<WizardStep> steps = steps();
+		for (int target = Math.min(index, steps.size()) - 1; target >= 0; target--) {
+			if (!steps.get(target).passThrough()) {
+				return target;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -162,10 +223,17 @@ public class WizardScope {
 	}
 
 	/**
-	 * Moves to the preceding step, or does nothing on the first one.
+	 * Moves to the nearest preceding step the user can return to, or does nothing where there is
+	 * none.
+	 *
+	 * @see #hasBack()
 	 */
 	public void back() {
-		move(-1);
+		int target = backIndex(currentIndex());
+		if (target < 0) {
+			return;
+		}
+		show(steps().get(target).key());
 	}
 
 	/**
@@ -185,7 +253,7 @@ public class WizardScope {
 		if (index < 0) {
 			return;
 		}
-		_stepChannel.set(steps.get(index).key());
+		show(steps.get(index).key());
 	}
 
 	/**
@@ -201,7 +269,37 @@ public class WizardScope {
 		if (target < 0 || target >= steps.size()) {
 			return;
 		}
-		_stepChannel.set(steps.get(target).key());
+		show(steps.get(target).key());
+	}
+
+	/**
+	 * Displays the step with the given key, as one navigation of the display.
+	 *
+	 * <p>
+	 * A move vetoed by unsaved changes is retried as a navigation as well, once the user has decided
+	 * about them: the retry is the same move, and reporting its address as the step channel hears of
+	 * it would put a pass-through step into the address bar.
+	 * </p>
+	 */
+	private void show(Object key) {
+		if (_routes == null) {
+			_stepChannel.set(key);
+		} else {
+			navigate(() -> _stepChannel.set(key));
+		}
+	}
+
+	/**
+	 * Applies the given change of the step channel as one navigation, and the retry of a veto it
+	 * raises as one navigation, too.
+	 */
+	private void navigate(Runnable change) {
+		try {
+			_routes.navigate(change);
+		} catch (ChannelVetoException veto) {
+			Runnable retry = veto.getContinuation();
+			throw veto.withContinuation(() -> navigate(retry));
+		}
 	}
 
 	/**

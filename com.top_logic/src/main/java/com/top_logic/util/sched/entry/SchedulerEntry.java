@@ -59,9 +59,11 @@ public class SchedulerEntry {
 
 	private final boolean _isChild;
 
-	private boolean _enabled = false;
+	private final boolean _configuredActive;
 
 	private ScheduledThread _thread;
+
+	private boolean _runEnded;
 
 	private State _state = State.WAITING;
 
@@ -73,13 +75,21 @@ public class SchedulerEntry {
 
 	/**
 	 * Creates an {@link SchedulerEntry}.
+	 * 
+	 * @param task
+	 *        See {@link #getTask()}.
+	 * @param isChild
+	 *        See {@link #isChild()}.
+	 * @param configuredActive
+	 *        See {@link #isConfiguredActive()}.
 	 */
-	public SchedulerEntry(Task task, boolean isChild) {
+	public SchedulerEntry(Task task, boolean isChild, boolean configuredActive) {
 		if (task == null) {
 			throw new NullPointerException("Task is not allowed to be null.");
 		}
 		_task = task;
 		_isChild = isChild;
+		_configuredActive = configuredActive;
 	}
 
 	/**
@@ -97,31 +107,58 @@ public class SchedulerEntry {
 	}
 
 	/**
-	 * @see Scheduler#isEnabled(Task)
+	 * Whether the {@link Task} is active by configuration, i.e. as long as no administrator
+	 * overrides it.
+	 * 
+	 * @see Scheduler#isConfiguredActive(Task)
 	 */
-	public synchronized void setEnabled(boolean enabled) {
-		_enabled = enabled;
-	}
-
-	/**
-	 * @see Scheduler#isEnabled(Task)
-	 */
-	public synchronized boolean isEnabled() {
-		return _enabled;
+	public boolean isConfiguredActive() {
+		return _configuredActive;
 	}
 
 	/**
 	 * Create the {@link ScheduledThread} in which this will be executed.
 	 * 
+	 * @param runEndListener
+	 *        Called in the created thread as its last action, after the run of the {@link Task}
+	 *        has ended, normally or with an exception. At that time, {@link #isRunEnded()} is
+	 *        <code>true</code>.
+	 * 
 	 * @throws IllegalStateException
 	 *         If there is already a {@link ScheduledThread}.
 	 */
-	public synchronized ScheduledThread createThread() {
+	public synchronized ScheduledThread createThread(Runnable runEndListener) {
 		if (_thread != null) {
 			throw new IllegalStateException("Thread has already been built. " + toString());
 		}
-		_thread = new ScheduledThread(getTask());
+		_runEnded = false;
+		_thread = new ScheduledThread(getTask()) {
+			@Override
+			public void run() {
+				try {
+					super.run();
+				} finally {
+					markRunEnded();
+					runEndListener.run();
+				}
+			}
+		};
 		return _thread;
+	}
+
+	private synchronized void markRunEnded() {
+		_runEnded = true;
+	}
+
+	/**
+	 * Whether the run of the {@link Task} in the {@link #getThread() thread} has ended.
+	 * 
+	 * <p>
+	 * The thread may still be alive, while it finishes its last actions.
+	 * </p>
+	 */
+	public synchronized boolean isRunEnded() {
+		return _runEnded;
 	}
 
 	/**
@@ -152,7 +189,7 @@ public class SchedulerEntry {
 		return new NameBuilder(this)
 			.add("task", getTask())
 			.add("isChild", isChild())
-			.add("enabled", isEnabled())
+			.add("configuredActive", isConfiguredActive())
 			.add("state", getState())
 			.add("isOvertimeIgnored", isOvertimeIgnored())
 			.add("thread", getThread())

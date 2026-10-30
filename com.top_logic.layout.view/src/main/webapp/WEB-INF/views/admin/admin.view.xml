@@ -159,6 +159,13 @@
 							</label>
 							<view-ref view="admin/system/services.view.xml"/>
 						</tab>
+						<tab id="scheduler">
+							<label>
+								<en>Scheduler</en>
+								<de>Steuerprogramm</de>
+							</label>
+							<view-ref view="admin/system/scheduler.view.xml"/>
+						</tab>
 						<tab id="secrets">
 							<label>
 								<en>Secrets</en>

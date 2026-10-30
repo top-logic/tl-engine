@@ -9,6 +9,16 @@ const ICON_CLASS = 'tl-icon-sm';
 /** The number of visible lines of a multi-line box that names none. */
 const DEFAULT_ROWS = 3;
 
+/**
+ * The style of a text area showing its text as it is written: the code font of the design system,
+ * lines not wrapped, a wide line scrolling horizontally.
+ */
+const PREFORMATTED_SX = {
+  '& textarea': {
+    fontFamily: 'var(--tl-font-family-mono)', whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto',
+  },
+} as const;
+
 /** Hides the browser's own clear button of a search box, which the action of the box replaces. */
 const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display: 'none' } } as const;
 
@@ -21,7 +31,8 @@ const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display:
  * <ul>
  * <li>value → `value`, onChange → `onChange` with the text of the input; type → `type`;
  *     placeholder → `placeholder`;</li>
- * <li>multiline, rows → a multi-line `TextField`;</li>
+ * <li>multiline, rows → a multi-line `TextField`; preformatted → its text area in the code font of
+ *     the design system, without wrapping its lines (`wrap="off"`);</li>
  * <li>icon → a start adornment ({@link ThemeIcon}); action → an end adornment;</li>
  * <li>disabled → `disabled`; readOnly → `readOnly` of the input;</li>
  * <li>validation → `error` (with `aria-invalid`) or color `warning`; required →
@@ -33,8 +44,8 @@ const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display:
  * </ul>
  */
 const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
-  id, ref, role, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
-  validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
+  id, ref, role, value, type, inputMode, placeholder, multiline, rows, preformatted, icon, action, disabled, readOnly,
+  required, validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
   ...attributes
 }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -62,7 +73,7 @@ const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
       size="small"
       fullWidth
       className={className}
-      sx={!multiline && action ? NO_NATIVE_CLEAR_SX : undefined}
+      sx={!multiline && action ? NO_NATIVE_CLEAR_SX : multiline && preformatted ? PREFORMATTED_SX : undefined}
       slotProps={{
         input: {
           readOnly,
@@ -77,6 +88,7 @@ const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
           ...attributes,
           role,
           inputMode,
+          wrap: multiline && preformatted ? 'off' : undefined,
           maxLength,
           min,
           max,

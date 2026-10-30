@@ -144,19 +144,23 @@ public class SchedulerEntryStorage {
 	 *        Is not allowed to be null. Has to have a case-insensitive unique {@link Task#getName()
 	 *        name} among {@link #getAllEntries()}. The same rules apply for the children of
 	 *        {@link CompositeTask} s, too, recursively.
+	 * @param configuredActive
+	 *        Whether the {@link Task} is {@link SchedulerEntry#isConfiguredActive() active by
+	 *        configuration}. The children of a {@link CompositeTask} are configured active, they
+	 *        run whenever their parent runs.
 	 */
-	public synchronized SchedulerEntry add(Task task) {
+	public synchronized SchedulerEntry add(Task task, boolean configuredActive) {
 		checkPreAdd(task);
 
-		SchedulerEntry taskEntry = new SchedulerEntry(task, false);
+		SchedulerEntry taskEntry = new SchedulerEntry(task, false, configuredActive);
 		_entries.put(task.getName(), taskEntry);
 		for (Task descendant : CompositeTaskUtil.getChildrenRecursive(task)) {
-			_entries.put(descendant.getName(), new SchedulerEntry(descendant, true));
+			_entries.put(descendant.getName(), new SchedulerEntry(descendant, true, true));
 		}
 		return taskEntry;
 	}
 
-	/** Has to be called by {@link #add(Task)} before a {@link Task} is added. */
+	/** Has to be called by {@link #add(Task, boolean)} before a {@link Task} is added. */
 	protected void checkPreAdd(Task task) {
 		for (Task descendant : CompositeTaskUtil.getDescendents(task)) {
 			checkPreAddNonRecursive(descendant);

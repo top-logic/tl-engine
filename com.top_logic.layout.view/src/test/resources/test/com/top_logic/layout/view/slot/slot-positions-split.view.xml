@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<split-panel orientation="horizontal">
+		<panes>
+			<pane id="left">
+				<slot name="pane-content"/>
+				<slot-content to="pane-content">
+					<panel title="Left"/>
+				</slot-content>
+			</pane>
+			<pane>
+				<slot name="pane-content"/>
+				<slot-content to="pane-content">
+					<panel title="Right"/>
+				</slot-content>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -25,8 +25,9 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * The decision for the current user, as {@link ModelAccessPolicy} decides for a command:
  * </p>
  * <ul>
- * <li>{@link Display#HIDDEN}: the user can never hold the operation - no role is granted it on the
- * type (see {@link ModelAccessPolicy#isOffered(BoundCommandGroup, TLClass)}), or, for a unit without
+ * <li>{@link Display#HIDDEN}: the user can never hold the operation - they hold none of the roles
+ * granted it on the type on any object (see
+ * {@link ModelAccessPolicy#isOffered(BoundCommandGroup, TLClass)}), or, for a unit without
  * object, it is denied on the security root. The unit is not built at all.</li>
  * <li>{@link Display#EMPTY}: there is no object to check ({@code null} or an empty collection). The
  * unit is shown without content.</li>

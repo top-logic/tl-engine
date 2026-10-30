@@ -21,8 +21,8 @@ public interface SelectObject extends ComponentAction {
 	@ClassDefault(SelectObjectOp.class)
 	public Class<SelectObjectOp> getImplementationClass();
 
-	PolymorphicConfiguration<Filter<Object>> getMatcherConfig();
+	PolymorphicConfiguration<? extends Filter<Object>> getMatcherConfig();
 
-	void setMatcherConfig(PolymorphicConfiguration<Filter<Object>> value);
+	void setMatcherConfig(PolymorphicConfiguration<? extends Filter<Object>> value);
 	
 }

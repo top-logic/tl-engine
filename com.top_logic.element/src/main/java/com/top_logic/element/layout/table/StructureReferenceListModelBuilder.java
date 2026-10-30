@@ -57,7 +57,7 @@ public class StructureReferenceListModelBuilder<C extends StructureReferenceList
 		 * {@link #getReference()}.
 		 */
 		@Name(STRUCTURE)
-		PolymorphicConfiguration<StructureView<TLObject>> getStructure();
+		PolymorphicConfiguration<? extends StructureView<TLObject>> getStructure();
 
 		/**
 		 * (Optional) additional types (in addition to the type defining the {@link #getReference()

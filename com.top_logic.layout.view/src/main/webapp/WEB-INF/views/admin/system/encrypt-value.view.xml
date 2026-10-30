@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the secrets view (opened from secrets.view.xml) encrypting a value for a
+	configuration. The plain value and the format are values of the view (value-input on the
+	channels value and format, the format starting with the recommended one); no model object is
+	involved. Encrypt runs secretEncrypt and writes the encrypted value together with the input it
+	was computed from to the converted channel. The result channel derives the encrypted value from
+	it while the input is unchanged, so that no result of another input is shown; a read-only
+	multi-line input below shows it as wrapped text to select and copy, once there is one. The
+	explanation says which configuration properties accept which format. The dialog stays open, so
+	that further values can be encrypted.
+-->
+<view>
+	<channels>
+		<channel name="value"/>
+		<channel name="format"
+			init="secretFormats().firstElement()"
+		/>
+		<!-- The last conversion: the value and format converted, and the result. -->
+		<channel name="converted"/>
+		<!-- The result, only while it belongs to the value and format entered. -->
+		<derived-channel name="result"
+			expr="if($converted != null and $converted['value'] == $value and $converted['format'] == $format, $converted['result'], null)"
+			inputs="converted, value, format"
+		/>
+	</channels>
+	<window
+		resizable="false"
+		width="640px"
+	>
+		<title>
+			<en>Encrypt value</en>
+			<de>Wert verschlüsseln</de>
+		</title>
+		<fields
+			label-position="top"
+			max-columns="1"
+			with-inset="true"
+		>
+			<text>
+				<label>
+					<en>Encrypts a value, e.g. a password, to be written into a configuration. "Configuration encryption" is accepted by every encrypted configuration property, e.g. a secret given in the configuration itself (a secret attribute or literal-secret), and by an entry marked with encrypt="true" in the application properties. "RSA encoding" is accepted only by the master credential of an LDAP server given as attribute and by crypt-support-secret. The configuration encryption gives a different text each time, all of which decrypt to the same value.</en>
+					<de>Verschlüsselt einen Wert, z. B. ein Passwort, zum Eintragen in eine Konfiguration. Die "Konfigurationsverschlüsselung" akzeptiert jede verschlüsselte Konfigurationseigenschaft, z. B. ein in der Konfiguration selbst angegebenes Geheimnis (ein Geheimnis-Attribut oder literal-secret), sowie ein mit encrypt="true" markierter Eintrag der Anwendungseigenschaften. Die "RSA-Kodierung" akzeptieren nur die als Attribut angegebene Master-Anmeldung eines LDAP-Servers und crypt-support-secret. Die Konfigurationsverschlüsselung ergibt jedes Mal einen anderen Text, die alle zum selben Wert entschlüsselt werden.</de>
+				</label>
+			</text>
+			<value-input
+				mandatory="true"
+				type="tl.core:String"
+				value="value"
+			>
+				<label>
+					<en>Plain value</en>
+					<de>Klartext</de>
+				</label>
+			</value-input>
+			<value-input
+				mandatory="true"
+				type="tl.admin:EncryptionFormat"
+				value="format"
+			>
+				<label>
+					<en>Format</en>
+					<de>Format</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="radio"
+					orientation="vertical"
+				/>
+			</value-input>
+			<visible-if
+				expr="$result != null"
+				input="result"
+			>
+				<value-input
+					readonly="true"
+					type="tl.core:String"
+					value="result"
+				>
+					<annotations>
+						<multi-line/>
+					</annotations>
+					<label>
+						<en>Encrypted value</en>
+						<de>Verschlüsselter Wert</de>
+					</label>
+				</value-input>
+			</visible-if>
+		</fields>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-lock"
+				>
+					<label>
+						<en>Encrypt</en>
+						<de>Verschlüsseln</de>
+					</label>
+					<execute-script inputs="value, format">
+						<function><![CDATA[{"value": $value, "format": $format, "result": secretEncrypt($value, $format)}]]></function>
+						<with-result>
+							<write-channel name="converted"/>
+						</with-result>
+					</execute-script>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

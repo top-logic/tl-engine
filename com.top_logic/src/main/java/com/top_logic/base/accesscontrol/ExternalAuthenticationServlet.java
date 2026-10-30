@@ -20,6 +20,7 @@ import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
@@ -100,6 +101,27 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	 * @see LoginMethod#getReauthenticationUrl(String)
 	 */
 	public static final String VERIFICATION_PARAM = "verification";
+
+	/**
+	 * Name of the request parameter naming the browser window a login applies to.
+	 *
+	 * <p>
+	 * Its value is the ID of a {@link TLSubSessionContext sub-session} of the session the login
+	 * arrives in, see {@link TLSessionContext#getSubSession(String)}. The user is then logged in
+	 * within that window only
+	 * ({@link SessionService#loginUserInWindow(HttpServletRequest, HttpServletResponse, Person)}):
+	 * the other windows of the session keep their user. Without it, or for a window the session does
+	 * not know, the user is logged in for the whole session
+	 * ({@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}).
+	 * </p>
+	 *
+	 * <p>
+	 * Like the start page, the parameter travels to the external authentication and back.
+	 * </p>
+	 *
+	 * @see LoginMethod#getInitiationUrl(String, String)
+	 */
+	public static final String WINDOW_PARAM = "loginWindow";
 
 	/**
 	 * Request attribute holding the resolved message for the visitor when the
@@ -459,6 +481,12 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 
 	/**
 	 * Login the given {@link Person}.
+	 * 
+	 * <p>
+	 * A request naming a window of its session in {@link #WINDOW_PARAM} logs the user in within that
+	 * window, any other request for the whole session.
+	 * </p>
+	 * 
 	 * @param response The current response.
 	 * 
 	 * @throws LoginFailedException
@@ -468,7 +496,14 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	protected void loginUser(Person person, HttpServletRequest request, HttpServletResponse response)
 			throws InMaintenanceModeException {
 		try {
-			Login.getInstance().loginFromExternalAuth(request, response, person);
+			TLSubSessionContext window = loginWindow(request);
+			if (window == null) {
+				Login.getInstance().loginFromExternalAuth(request, response, person);
+			} else {
+				Login.getInstance().checkAllowedGroups(person);
+				ThreadContextManager.inContext(window,
+					() -> SessionService.getInstance().loginUserInWindow(request, response, person));
+			}
 			String message = "The user with the loginName '" + getLoginName(person) + "' logged in successfully.";
 			Logger.debug(message, ExternalAuthenticationServlet.class);
 		} catch (InMaintenanceModeException exception) {
@@ -482,6 +517,28 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 				+ "' had passed all checks and was about to be logged in. But an error occurred!";
 			throw new LoginFailedException(message, exception);
 		}
+	}
+
+	/**
+	 * The window of the current session the login of the given request applies to, or
+	 * <code>null</code> if the login applies to the whole session.
+	 *
+	 * @see #WINDOW_PARAM
+	 */
+	private static TLSubSessionContext loginWindow(HttpServletRequest request) {
+		String windowName = request.getParameter(WINDOW_PARAM);
+		if (StringServices.isEmpty(windowName)) {
+			return null;
+		}
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			return null;
+		}
+		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
+		if (sessionContext == null) {
+			return null;
+		}
+		return sessionContext.getSubSession(windowName);
 	}
 
 	/**

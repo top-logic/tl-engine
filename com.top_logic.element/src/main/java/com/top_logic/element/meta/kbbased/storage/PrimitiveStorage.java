@@ -86,10 +86,10 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 		 * @see DatatypeConfig#getStorageMapping()
 		 */
 		@Name(STORAGE_MAPPING)
-		PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
+		PolymorphicConfiguration<? extends StorageMapping<?>> getStorageMapping();
 
 		/** @see #getStorageMapping() */
-		void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
+		void setStorageMapping(PolymorphicConfiguration<? extends StorageMapping<?>> value);
 	}
 
 	private String _storageAttribute;

@@ -54,7 +54,7 @@ public class KBDataProcessor implements ConsumerProcessor<String, TLSyncRecord<C
 		/**
 		 * List of {@link EventRewriter} that rewrites the received {@link ChangeSet}s.
 		 */
-		List<PolymorphicConfiguration<EventRewriter>> getRewriters();
+		List<PolymorphicConfiguration<? extends EventRewriter>> getRewriters();
 
 	}
 	

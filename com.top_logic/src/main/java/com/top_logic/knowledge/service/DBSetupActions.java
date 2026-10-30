@@ -39,7 +39,7 @@ public class DBSetupActions {
 		/**
 		 * All actions that take part in the setup process.
 		 */
-		List<PolymorphicConfiguration<DBSetupAction>> getActions();
+		List<PolymorphicConfiguration<? extends DBSetupAction>> getActions();
 
 	}
 

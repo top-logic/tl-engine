@@ -33,7 +33,7 @@ public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.C
 		/**
 		 * The format used to format objects for display.
 		 */
-		PolymorphicConfiguration<FormatDefinition<?>> getFormat();
+		PolymorphicConfiguration<? extends FormatDefinition<?>> getFormat();
 
 		/**
 		 * The format used to parse inputs, if {@link #getFormat()} fails to parse the input.
@@ -46,7 +46,7 @@ public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.C
 		 * and a parsing format without it.
 		 * </p>
 		 */
-		PolymorphicConfiguration<FormatDefinition<?>> getParser();
+		PolymorphicConfiguration<? extends FormatDefinition<?>> getParser();
 
 	}
 

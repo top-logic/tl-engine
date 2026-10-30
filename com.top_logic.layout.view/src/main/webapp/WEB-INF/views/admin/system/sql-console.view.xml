@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SQL console: runs an SQL statement entered by the administrator against the database of the
+	application (SqlFunctions). The statement and the maximum number of rows to read are values of
+	the view (value-input on the channels statement and maxRows); no model object is involved.
+	The view is split into the input (the statement, beside the history) above and the result
+	below, which gets the remaining height of the view.
+	- Execute query runs sqlQuery and writes the result to the result channel; the table of the
+	result panel shows its rows, a column per column of the query. The columns of a table are computed when
+	it is built, so the switch rebuilds the table for every new result. The message above it says
+	how many rows were read and whether the query delivers more than the maximum.
+	- Execute update asks for confirmation and runs sqlUpdate, which commits the update; Simulate
+	update runs sqlSimulate, which rolls it back. The message says how many rows were affected.
+	- Each command first puts the statement in front of the history channel (sqlRemember) and
+	clears the result, so that a statement the database rejects is kept in the history and no
+	result of an earlier statement stays on display. The rejection is shown as the message of the
+	failed command.
+	- Ctrl+Enter in the statement runs it as query. After FROM or JOIN, the statement input
+	suggests the names of the tables of the database (sqlTableSuggestions).
+	- The result table offers a search over its columns and an export of the displayed rows. Its
+	cells show whole numbers without grouping (sqlText), since they are keys, revisions and time
+	stamps as often as amounts.
+	- The history on the right lists the statements of this view, the newest first, each once: a
+	statement run again moves to the front. Activating one
+	puts it back into the input, the tooltip of a statement shows it in full. Clear history
+	empties it. It is a channel of the view and ends
+	with the session.
+	Titled <panel>s are used (not the chrome-less <full-page>) because the input and the history
+	carry toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="statement"/>
+		<channel name="maxRows"
+			init="1000"
+		/>
+		<channel name="result"/>
+		<derived-channel name="message"
+			expr="sqlMessage($result)"
+			inputs="result"
+		/>
+		<channel name="history"/>
+	</channels>
+	<split-panel id="main"
+		orientation="vertical"
+		resizable="true"
+	>
+		<panes>
+			<pane id="input"
+				min-size="250"
+				size="50"
+				unit="%"
+			>
+				<split-panel id="input-split"
+					orientation="horizontal"
+					resizable="true"
+				>
+					<panes>
+						<pane id="console"
+							min-size="400"
+							size="65"
+							unit="%"
+						>
+							<panel id="sql-console"
+								fill="true"
+							>
+								<title>
+									<en>SQL console</en>
+									<de>SQL-Konsole</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-play"
+										key="Ctrl+Enter"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Execute query</en>
+											<de>Abfrage ausführen</de>
+										</label>
+										<tooltip>
+											<en>Runs the statement as query and shows the rows it delivers, at most the given maximum (Ctrl+Enter).</en>
+											<de>Führt die Anweisung als Abfrage aus und zeigt die gelieferten Zeilen an, höchstens das angegebene Maximum (Strg+Enter).</de>
+										</tooltip>
+										<execute-script
+											function="sqlRemember($history, $statement, 'QUERY')"
+											inputs="history, statement"
+										>
+											<with-result>
+												<write-channel name="history"/>
+											</with-result>
+										</execute-script>
+										<write-channel
+											clear="true"
+											name="result"
+										/>
+										<execute-script
+											function="sqlQuery($statement, $maxRows)"
+											inputs="statement, maxRows"
+										>
+											<with-result>
+												<write-channel name="result"/>
+											</with-result>
+										</execute-script>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-pencil-square"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Execute update</en>
+											<de>Änderung ausführen</de>
+										</label>
+										<tooltip>
+											<en>Runs the statement as update and commits it irrevocably. The running application does not see changed rows of its tables in the objects it holds in its caches, until the persistency layer is restarted.</en>
+											<de>Führt die Anweisung als Änderung aus und schreibt sie unwiderruflich fest. Die laufende Anwendung sieht geänderte Zeilen ihrer Tabellen nicht in den Objekten, die sie in ihren Caches hält, bis die Persistenzschicht neu gestartet wird.</de>
+										</tooltip>
+										<confirm expr="#('The statement is run and committed irrevocably. The running application does not see changed rows of its tables until the persistency layer is restarted.\nRun the update?'@en, 'Die Anweisung wird ausgeführt und unwiderruflich festgeschrieben. Die laufende Anwendung sieht geänderte Zeilen ihrer Tabellen erst nach einem Neustart der Persistenzschicht.\nÄnderung ausführen?'@de)"/>
+										<execute-script
+											function="sqlRemember($history, $statement, 'UPDATE')"
+											inputs="history, statement"
+										>
+											<with-result>
+												<write-channel name="history"/>
+											</with-result>
+										</execute-script>
+										<write-channel
+											clear="true"
+											name="result"
+										/>
+										<execute-script
+											function="sqlUpdate($statement)"
+											inputs="statement"
+										>
+											<with-result>
+												<write-channel name="result"/>
+											</with-result>
+										</execute-script>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-eye"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Simulate update</en>
+											<de>Änderung simulieren</de>
+										</label>
+										<tooltip>
+											<en>Runs the statement as update and rolls it back, to see how many rows it affects. A statement the database commits implicitly, e.g. one changing the schema or TRUNCATE TABLE in many databases, cannot be rolled back.</en>
+											<de>Führt die Anweisung als Änderung aus und nimmt sie wieder zurück, um zu sehen, wie viele Zeilen sie betrifft. Eine Anweisung, die die Datenbank implizit festschreibt, z. B. eine Änderung des Schemas oder TRUNCATE TABLE in vielen Datenbanken, kann nicht zurückgenommen werden.</de>
+										</tooltip>
+										<execute-script
+											function="sqlRemember($history, $statement, 'SIMULATION')"
+											inputs="history, statement"
+										>
+											<with-result>
+												<write-channel name="history"/>
+											</with-result>
+										</execute-script>
+										<write-channel
+											clear="true"
+											name="result"
+										/>
+										<execute-script
+											function="sqlSimulate($statement)"
+											inputs="statement"
+										>
+											<with-result>
+												<write-channel name="result"/>
+											</with-result>
+										</execute-script>
+									</generic-command>
+								</commands>
+								<fields
+									label-position="top"
+									max-columns="1"
+									with-inset="true"
+								>
+									<text>
+										<label>
+											<en>Runs SQL statements directly against the database of the application, bypassing the access control and the knowledge base. Every statement is written to the application log.</en>
+											<de>Führt SQL-Anweisungen direkt auf der Datenbank der Anwendung aus, an der Zugriffskontrolle und der Wissensbasis vorbei. Jede Anweisung wird in das Protokoll der Anwendung geschrieben.</de>
+										</label>
+									</text>
+									<value-input
+										type="tl.core:String"
+										value="statement"
+									>
+										<annotations>
+											<multi-line rows="5"/>
+										</annotations>
+										<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+											<suggestions><![CDATA[self -> text -> caret -> sqlTableSuggestions($text, $caret)]]></suggestions>
+										</input-control>
+										<label>
+											<en>Statement</en>
+											<de>Anweisung</de>
+										</label>
+									</value-input>
+									<value-input
+										mandatory="true"
+										type="tl.core:Integer"
+										value="maxRows"
+									>
+										<label>
+											<en>Maximum rows</en>
+											<de>Maximale Zeilenzahl</de>
+										</label>
+									</value-input>
+								</fields>
+							</panel>
+						</pane>
+						<pane id="history"
+							min-size="250"
+							size="35"
+							unit="%"
+						>
+							<panel id="history-panel"
+								fill="true"
+							>
+								<title>
+									<en>History</en>
+									<de>Verlauf</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-trash"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Clear history</en>
+											<de>Verlauf leeren</de>
+										</label>
+										<write-channel
+											clear="true"
+											name="history"
+										/>
+									</generic-command>
+								</commands>
+								<table id="history-table">
+									<inputs>
+										<input channel="history"/>
+									</inputs>
+									<columns>
+										<computed-column name="number"
+											type="tl.core:Integer"
+											width="80"
+										>
+											<label>
+												<en>No.</en>
+												<de>Nr.</de>
+											</label>
+											<value><![CDATA[sqlHistoryNumber($row)]]></value>
+										</computed-column>
+										<computed-column name="kind"
+											width="120"
+										>
+											<label>
+												<en>Kind</en>
+												<de>Art</de>
+											</label>
+											<value><![CDATA[sqlHistoryKind($row)]]></value>
+										</computed-column>
+										<computed-column name="statement"
+											type="tl.core:String"
+											width="200"
+										>
+											<label>
+												<en>Statement</en>
+												<de>Anweisung</de>
+											</label>
+											<value><![CDATA[sqlHistoryStatement($row)]]></value>
+											<tooltip><![CDATA[sqlHistoryStatement($row)]]></tooltip>
+										</computed-column>
+									</columns>
+									<rows><![CDATA[$history]]></rows>
+									<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+										image="css:bi bi-box-arrow-in-left"
+									>
+										<label>
+											<en>Use statement</en>
+											<de>Anweisung übernehmen</de>
+										</label>
+										<execute-script function="sqlHistoryStatement($row)">
+											<with-result>
+												<write-channel name="statement"/>
+											</with-result>
+										</execute-script>
+									</on-activate>
+								</table>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+			<pane id="result"
+				min-size="150"
+				size="50"
+				unit="%"
+			>
+				<panel id="result-panel"
+					fill="true"
+				>
+					<title>
+						<en>Result</en>
+						<de>Ergebnis</de>
+					</title>
+					<visible-if
+						expr="$message != null"
+						input="message"
+					>
+						<inset>
+							<text input="message"/>
+						</inset>
+					</visible-if>
+					<switch id="result-switch"
+						input="result"
+						rebuild="true"
+					>
+						<case id="query-result"
+							test="sqlIsQuery($result)"
+						>
+							<table id="result-table"
+								filter-bar="true"
+							>
+								<inputs>
+									<input channel="result"/>
+								</inputs>
+								<columns>
+									<dynamic-columns name="columns"
+										column-as="column"
+										readonly="true"
+									>
+										<inputs>
+											<input channel="result"/>
+										</inputs>
+										<columns><![CDATA[sqlColumns($result)]]></columns>
+										<column-name><![CDATA[sqlColumnName($column)]]></column-name>
+										<column-label><![CDATA[sqlColumnLabel($column)]]></column-label>
+										<column-type><![CDATA[sqlColumnType($column)]]></column-type>
+										<value><![CDATA[sqlValue($row, $column)]]></value>
+										<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression">
+											<label><![CDATA[sqlText($value)]]></label>
+										</display>
+									</dynamic-columns>
+								</columns>
+								<rows><![CDATA[sqlRows($result)]]></rows>
+								<export download-name="#('Query result'@en, 'Abfrageergebnis'@de)">
+									<sheet-name>
+										<en>Query result</en>
+										<de>Abfrageergebnis</de>
+									</sheet-name>
+								</export>
+							</table>
+						</case>
+					</switch>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

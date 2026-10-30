@@ -45,6 +45,12 @@
       <artifactId>tl-layout-configedit</artifactId>
     </dependency>
 
+    <!-- Full-text index of the demo objects (table GenericObject), maintained in the administration. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-search-lucene</artifactId>
+    </dependency>
+
     <!-- Websocket API of the demo endpoint; the servlet container provides the implementation. -->
     <dependency>
       <groupId>jakarta.websocket</groupId>

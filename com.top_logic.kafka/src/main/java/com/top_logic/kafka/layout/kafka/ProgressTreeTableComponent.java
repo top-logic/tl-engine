@@ -43,7 +43,7 @@ public class ProgressTreeTableComponent extends TreeTableComponent implements Ru
 
 		/** Helper class for finding rows to be updated. */
 		@Mandatory
-		PolymorphicConfiguration<TreeTableComponentValueUpdater> getUpdater();
+		PolymorphicConfiguration<? extends TreeTableComponentValueUpdater> getUpdater();
 
 	}
 
@@ -107,7 +107,7 @@ public class ProgressTreeTableComponent extends TreeTableComponent implements Ru
 	protected void updateMonitoringState() {
 		if (_active) {
 			if (_timer == null) {
-				PolymorphicConfiguration<TreeTableComponentValueUpdater> theUpdater = getConfig().getUpdater();
+				PolymorphicConfiguration<? extends TreeTableComponentValueUpdater> theUpdater = getConfig().getUpdater();
 				ScheduledExecutorService theService = getMainLayout().getWindowScope().getUIExecutor();
 
 				_timer =

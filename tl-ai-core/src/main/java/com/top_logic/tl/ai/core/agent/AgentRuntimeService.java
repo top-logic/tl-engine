@@ -485,7 +485,7 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		@Name(SECURITY_CONTEXT)
 		@ItemDefault
 		@ImplementationClassDefault(DefaultSecurityContextFactory.class)
-		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
+		PolymorphicConfiguration<? extends SecurityContextFactory> getSecurityContext();
 
 		/**
 		 * What learns of every agent run of this application, from its start to its end.
@@ -498,7 +498,7 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		 * @see #RUN_OBSERVERS
 		 */
 		@Name(RUN_OBSERVERS)
-		List<PolymorphicConfiguration<RunObserver>> getRunObservers();
+		List<PolymorphicConfiguration<? extends RunObserver>> getRunObservers();
 	}
 
 	/**

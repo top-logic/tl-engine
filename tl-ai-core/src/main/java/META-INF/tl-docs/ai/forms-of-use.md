@@ -35,7 +35,7 @@ The built-in assistant is a chat inside the application (`tl-chat`, in React pag
 
 ### From chatbot to copilot
 
-A chatbot answers questions. A copilot works along - it sees what the user sees and acts in the same context. The step that makes the difference is access to the user's context: the assistant knows which view is open, which object is selected, which filters are active and which fields of a form are filled or invalid (the `<turn-context>` block, see [the agent loop](doc:ai/agent-loop#turn-context)). It can react to "this one here" instead of asking for type names and object ids.
+A chatbot answers questions. A copilot works along - it sees what the user sees and acts in the same context. The step that makes the difference is access to the user's context: the assistant knows which view is open, which object is selected, which filters are active and which fields of a form are filled or invalid (the `<turn-context>` block, see [the per-turn block](doc:ai/environment#the-per-turn-block)). It can react to "this one here" instead of asking for type names and object ids.
 
 *Example: the user opens a customer list and asks "Why is Müller Ltd. missing here?" The assistant sees the active view and its filters and answers: "Müller Ltd. has the status 'inactive'; your current filter shows active customers only."*
 
@@ -60,7 +60,7 @@ Integrations between applications are usually purpose-built interfaces: a REST A
 
 ### From assistance to automation
 
-The built-in assistant reacts to requests: a person asks a question or gives an order. Internal agents go one step further - they act on their own, triggered by time or by an event, without anybody starting them. An internal agent is set up for one task in one concrete application. It knows the business domain, has the same tools as the assistant and works in the background. An application runs one through the scheduler task `com.top_logic.ai.chat.sched.AgentTask` (a prompt to a named agent, run as a configured account, recorded as a chat session - see `tl-chat/doc/scheduled-agent.md`), or from TL-Script with `aiAgentChat` / `aiAgentChatAsync`.
+The built-in assistant reacts to requests: a person asks a question or gives an order. Internal agents go one step further - they act on their own, triggered by time or by an event, without anybody starting them. An internal agent is set up for one task in one concrete application. It knows the business domain, has the same tools as the assistant and works in the background. An application runs one through the scheduler task `com.top_logic.ai.chat.sched.AgentTask` (a prompt to a named agent, run as a configured account, recorded as a chat session - see [agents on a schedule](doc:ai/script-and-scheduled-runs#agents-on-a-schedule)), or from TL-Script with `aiAgentChat` / `aiAgentChatAsync`.
 
 On a schedule:
 

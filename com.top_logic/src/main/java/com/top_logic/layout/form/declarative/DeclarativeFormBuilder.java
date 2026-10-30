@@ -168,7 +168,7 @@ public abstract class DeclarativeFormBuilder<T, C extends ConfigurationItem> imp
 		 * @see DeclarativeFormBuilder#createFormModel(Object)
 		 */
 		@Name(MODEL_TO_FORM_MAPPING)
-		PolymorphicConfiguration<Function<Object, ConfigurationItem>> getModelToFormMapping();
+		PolymorphicConfiguration<? extends Function<Object, ConfigurationItem>> getModelToFormMapping();
 
 		/**
 		 * Additional context object to be added to the {@link DeclarativeFormOptions} context

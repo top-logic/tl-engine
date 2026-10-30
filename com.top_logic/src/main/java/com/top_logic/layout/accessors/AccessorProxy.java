@@ -34,12 +34,12 @@ public class AccessorProxy<C extends AccessorProxy<C, T>, T> implements Accessor
 		 */
 		@Name(IMPL)
 		@Mandatory
-		PolymorphicConfiguration<Accessor<T>> getImpl();
+		PolymorphicConfiguration<? extends Accessor<T>> getImpl();
 
 		/**
 		 * Setter for {@link #getImpl()}.
 		 */
-		void setImpl(PolymorphicConfiguration<Accessor<T>> impl);
+		void setImpl(PolymorphicConfiguration<? extends Accessor<T>> impl);
 
 	}
 

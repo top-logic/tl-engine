@@ -6,10 +6,13 @@
 package com.top_logic.layout.view;
 
 import java.util.Locale;
+import java.util.Objects;
 
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.WindowEntry;
 
 /**
@@ -25,16 +28,16 @@ import com.top_logic.layout.react.window.WindowEntry;
  * </p>
  *
  * <p>
- * Reusing it is only correct for the same view rendered in the same language, which is what this
- * record establishes: a different view path, or a view file that {@link ViewLoader} has re-read
+ * Reusing it is only correct for the same view rendered in the same language for the same user,
+ * which is what this record establishes: a different view path, or a view file that {@link ViewLoader} has re-read
  * after an edit, yields a different {@link ViewElement} instance and hence a rebuild - and so does a
  * language the tree was not built in, because a control resolves its labels when it is created. That
  * a language change costs the tab its transient view state is the point at which the two interests
- * part: the labels the user came for are worth more than a scroll position. Kept in the browser
- * tab's
- * {@link SubSessionContext}, which dies together with the window registry when
- * {@link com.top_logic.layout.view.login.PendingSessionAction a login or logout} replaces the
- * session - so a tree is never reused for a different user.
+ * part: the labels the user came for are worth more than a scroll position. A tree is never reused
+ * for a different user: a login applies to the window it happens in and keeps the session, so the
+ * window's tree, built for the previous user, must be replaced however the login reached the window.
+ * Kept in the browser tab's {@link SubSessionContext}, which dies together with the window registry
+ * when {@link com.top_logic.layout.view.login.PendingSessionAction a logout} replaces the session.
  * </p>
  *
  * @param viewPath
@@ -44,8 +47,10 @@ import com.top_logic.layout.react.window.WindowEntry;
  *        that has been edited in the meantime.
  * @param locale
  *        The language the tree resolved its labels in.
+ * @param user
+ *        The user the tree was built for, see {@link TLSubSessionContext#getPerson()}.
  */
-public record RenderedView(String viewPath, ViewElement source, Locale locale) {
+public record RenderedView(String viewPath, ViewElement source, Locale locale, Person user) {
 
 	private static final Property<RenderedView> CURRENT =
 		TypedAnnotatable.property(RenderedView.class, "renderedView");
@@ -80,9 +85,13 @@ public record RenderedView(String viewPath, ViewElement source, Locale locale) {
 	 *        The {@link ViewElement} currently loaded for that path.
 	 * @param requestedLocale
 	 *        The language the request renders in.
+	 * @param requestedUser
+	 *        The user the request renders for.
 	 */
-	public boolean matches(String requestedPath, ViewElement loaded, Locale requestedLocale) {
-		return viewPath.equals(requestedPath) && source == loaded && locale.equals(requestedLocale);
+	public boolean matches(String requestedPath, ViewElement loaded, Locale requestedLocale,
+			Person requestedUser) {
+		return viewPath.equals(requestedPath) && source == loaded && locale.equals(requestedLocale)
+			&& Objects.equals(user, requestedUser);
 	}
 
 }

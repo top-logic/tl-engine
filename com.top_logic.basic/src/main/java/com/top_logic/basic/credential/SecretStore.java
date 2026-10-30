@@ -67,4 +67,20 @@ public interface SecretStore {
 		return secret;
 	}
 
+	/**
+	 * The store to which secrets are written that this store delivers afterwards.
+	 *
+	 * <p>
+	 * A secret written to the result is found by {@link #lookup(String)} of this store under the
+	 * same name.
+	 * </p>
+	 *
+	 * @return This store, if it is a {@link WritableSecretStore}, a writable store this store
+	 *         consists of (e.g. one of the stores of a {@link ChainSecretStore}), or
+	 *         <code>null</code> if secrets cannot be written to this store.
+	 */
+	default WritableSecretStore getWritableStore() {
+		return null;
+	}
+
 }

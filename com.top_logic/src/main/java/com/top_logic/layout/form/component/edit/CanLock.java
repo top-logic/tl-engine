@@ -48,7 +48,7 @@ public interface CanLock extends IComponent {
 		@ImplementationClassDefault(ConfiguredLockHandler.class)
 		@Options(fun = AllInAppImplementations.class)
 		@DisplayMinimized
-		PolymorphicConfiguration<LockHandler> getLockHandler();
+		PolymorphicConfiguration<? extends LockHandler> getLockHandler();
 
 		/**
 		 * Name of operation performed by this component.
@@ -99,7 +99,7 @@ public interface CanLock extends IComponent {
 	 * Initializes the configured {@link LockHandler}.
 	 */
 	static LockHandler createLockHandler(InstantiationContext context, CanLock.Config config) {
-		PolymorphicConfiguration<LockHandler> handlerConfig = config.getLockHandler();
+		PolymorphicConfiguration<? extends LockHandler> handlerConfig = config.getLockHandler();
 		if (handlerConfig != null) {
 			return context.getInstance(handlerConfig);
 		}

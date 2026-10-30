@@ -52,6 +52,47 @@ public class SSEServlet extends HttpServlet {
 	 */
 	private static final String CONNECTED_COMMENT = ": connected" + " ".repeat(2048) + "\n\n";
 
+	/**
+	 * The header in which the browser names the last event a stream brought when it reconnects the
+	 * stream by itself.
+	 */
+	public static final String LAST_EVENT_ID_HEADER = "Last-Event-ID";
+
+	/**
+	 * The parameter in which the client names the last event it received when it opens a stream
+	 * again by itself, which sends no {@link #LAST_EVENT_ID_HEADER}. A page that has received no
+	 * event leaves it out.
+	 */
+	public static final String AFTER_PARAM = "after";
+
+	/**
+	 * The number of the last event the client of the given stream request received, from the
+	 * {@link #LAST_EVENT_ID_HEADER}, else from the {@link #AFTER_PARAM}.
+	 *
+	 * @return The number, negative if the request names none: the client is a page that has not
+	 *         received an event yet, or a number cannot be read.
+	 */
+	public static long lastEventId(HttpServletRequest request) {
+		long header = parseNumber(request.getHeader(LAST_EVENT_ID_HEADER));
+		if (header >= 0) {
+			return header;
+		}
+		long after = parseNumber(request.getParameter(AFTER_PARAM));
+		// No event of a page has the number 0: a page starts above it.
+		return after > 0 ? after : -1;
+	}
+
+	private static long parseNumber(String value) {
+		if (value == null || value.isEmpty()) {
+			return -1;
+		}
+		try {
+			return Long.parseLong(value.trim());
+		} catch (NumberFormatException ex) {
+			return -1;
+		}
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		HttpSession session = request.getSession(false);
@@ -83,6 +124,7 @@ public class SSEServlet extends HttpServlet {
 		Logger.info("SSEServlet: windowName='" + windowName + "', registry@" + System.identityHashCode(registry),
 			SSEServlet.class);
 		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
+		long lastEventId = lastEventId(request);
 
 		// Sending the state of the whole tree attaches it, which changes the display like any command
 		// does, so it is an interaction. It ends before this request hands its thread back: the
@@ -109,7 +151,7 @@ public class SSEServlet extends HttpServlet {
 			TLContextManager.inInteraction(sessionContext, getServletContext(), request, response, () -> {
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 				ReactWindowReplay.installSubSession(displayContext, windowName);
-				accepted[0] = queue.setConnection(asyncContext);
+				accepted[0] = queue.setConnection(asyncContext, lastEventId);
 			});
 			if (!accepted[0]) {
 				// The queue closed the stream: its window is torn down.

@@ -119,7 +119,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		ExecutableState denied = rule.isExecutable(null);
 		assertDisabled(I18NConstants.ERROR_OPERATION_DENIED__OPERATION, denied);
 		assertEquals("You are not allowed to perform the operation \"Finish\" on this object.",
@@ -192,8 +192,8 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertSame("No role may write a category, the container of a note.", ExecutableState.NOT_EXEC_HIDDEN,
 			deleteNote.isExecutable(note));
 
-		becomeUser(_roleless);
-		assertDisabled("Some role may write a project, but not this user.", I18NConstants.ERROR_DELETE_DENIED,
+		becomeUser(_outsider);
+		assertDisabled("The user may write another project, but not this one.", I18NConstants.ERROR_DELETE_DENIED,
 			deleteMilestone.isExecutable(milestone));
 
 		becomeUser(_root);
@@ -215,8 +215,8 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertSame("No role may write a category.", ExecutableState.NOT_EXEC_HIDDEN,
 			createNote.isExecutable(_category));
 
-		becomeUser(_roleless);
-		// Some role may write a project, but not this user.
+		becomeUser(_outsider);
+		// The user may write another project, but not this one.
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, createMilestone.isExecutable(_project));
 		assertSame("No role may write a category.", ExecutableState.NOT_EXEC_HIDDEN,
 			createNote.isExecutable(_category));
@@ -227,8 +227,8 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 
 	/**
 	 * An operation on an object, or on an attribute of objects of a type, decided by an access
-	 * parent is refused for a user without the right on the parent, but not hidden as long as some
-	 * role can hold the operation on a type of the parent.
+	 * parent is refused for a user without the right on the parent, but not hidden as long as the
+	 * user holds a role granted the operation on a type of the parent on some object.
 	 */
 	public void testDelegatingTypeRefusedNotHidden() {
 		TLObject milestone = newPart(_project, MILESTONES, MILESTONE);
@@ -246,12 +246,57 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, note, noteName));
 
-		becomeUser(_roleless);
-		assertTrue("Some role may write a project, but not this user.",
+		becomeUser(_outsider);
+		assertTrue("The user may write another project, but not this one.",
 			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, null).isDisabled());
 		assertTrue(ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, milestone, milestoneName).isDisabled());
 		assertSame("Whether the user may write depends on the object.", ExecutableState.EXECUTABLE,
 			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(MILESTONE), milestoneName));
+	}
+
+	/**
+	 * An operation is hidden from a user holding none of the roles granted it on any object, and
+	 * only disabled for a user holding a granted role on another object.
+	 */
+	public void testRoleHeldOnNoObjectHidden() throws ConfigurationException {
+		ViewExecutabilityRule delete = onObject("Delete");
+		ViewExecutabilityRule createTask = rule(command(OBJECT_CHANNEL, create(TASK, "$object", TASKS)), _context);
+		TLStructuredTypePart rating = part(PROJECT, RATING);
+		TLObject step = newPart(_project, STEPS, STEP);
+
+		becomeUser(_outsider);
+		assertTrue("The user may delete another project.",
+			ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.DELETE, type(PROJECT)));
+		assertTrue("The user may delete the steps of another project.",
+			ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.DELETE, type(STEP)));
+		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, delete.isExecutable(_project));
+		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, createTask.isExecutable(_project));
+		assertTrue("The user may rate another project.",
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, _project, rating).isDisabled());
+		assertSame(ExecutableState.EXECUTABLE,
+			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(PROJECT), rating));
+		assertTrue("The user may delete the steps of another project.",
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.DELETE, step, null).isDisabled());
+
+		becomeUser(_roleless);
+		assertFalse(ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.DELETE, type(PROJECT)));
+		assertFalse("Decided by the project, the access parent of a step.",
+			ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.DELETE, type(STEP)));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, delete.isExecutable(_project));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, createTask.isExecutable(_project));
+		assertSame("The attribute has a grant of its own.", ExecutableState.NOT_EXEC_HIDDEN,
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, _project, rating));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
+			ModelAccessPolicy.onAttributeOfType(SimpleBoundCommandGroup.WRITE, type(PROJECT), rating));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN,
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.DELETE, step, null));
+
+		becomeUser(_root);
+		assertTrue(ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.DELETE, type(PROJECT)));
+		assertSame(ExecutableState.EXECUTABLE, delete.isExecutable(_project));
+		assertSame(ExecutableState.EXECUTABLE, createTask.isExecutable(_project));
+		assertSame(ExecutableState.EXECUTABLE,
+			ModelAccessPolicy.onObject(SimpleBoundCommandGroup.WRITE, _project, rating));
 	}
 
 	/**
@@ -296,7 +341,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, rule.isExecutable(_project));
 	}
 
@@ -418,7 +463,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		ViewExecutabilityRule rule = rule("<generic-command inputs='object'><access>" + operation("Delete", PROJECT)
 			+ "</access><executability><disabled-if expr='true'/></executability></generic-command>", _context);
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled("The access check comes first.", I18NConstants.ERROR_DELETE_DENIED, rule.isExecutable(_project));
 
 		becomeUser(_responsible);
@@ -474,7 +519,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, rule.isExecutable(_project));
 	}
 
@@ -487,7 +532,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, rule.isExecutable(_project));
 	}
 
@@ -519,7 +564,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		_object.set(_project);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, rule.isExecutable(null));
 	}
 
@@ -559,7 +604,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, rule.isExecutable(_project));
 	}
 
@@ -579,8 +624,8 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			byReference.isExecutable(List.of(_project, other)));
 
-		becomeUser(_roleless);
-		// Some role may create a spec, but not this user.
+		becomeUser(_outsider);
+		// The user may create a spec in another project, but not in this one.
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, byReference.isExecutable(_project));
 	}
 
@@ -624,7 +669,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, both.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, both.isExecutable(_project));
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, createFirst.isExecutable(_project));
 		assertSame("A check that can never pass hides the command.", ExecutableState.NOT_EXEC_HIDDEN,

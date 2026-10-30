@@ -39,7 +39,7 @@ public class WikiTextRenderer extends AbstractConfiguredInstance<WikiTextRendere
 		 * Algorithm extracting wiki text from an object.
 		 */
 		@ItemDefault(MetaLabelProvider.class)
-		PolymorphicConfiguration<LabelProvider> getTextExtractor();
+		PolymorphicConfiguration<? extends LabelProvider> getTextExtractor();
 	}
 
 	/**

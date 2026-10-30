@@ -477,14 +477,14 @@ public interface TableConfig
 	 * Operation that controls dragging data from a table.
 	 */
 	@Name(DRAG_SOURCE_ATTRIBUTE)
-	PolymorphicConfiguration<TableDragSource> getDragSource();
+	PolymorphicConfiguration<? extends TableDragSource> getDragSource();
 
 	/**
 	 * Operations that control element drops in a table.
 	 */
 	@Name(DROP_TARGETS_ATTRIBUTE)
 	@EntryTag(DROP_TARGET_ENTRY_TAG)
-	List<PolymorphicConfiguration<TableDropTarget>> getDropTargets();
+	List<PolymorphicConfiguration<? extends TableDropTarget>> getDropTargets();
 
 	/**
 	 * Default column.

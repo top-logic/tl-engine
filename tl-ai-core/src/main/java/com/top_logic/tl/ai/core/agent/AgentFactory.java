@@ -1193,7 +1193,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * Injected into every agent's catalog rather than declared in {@code <tools>}, for the same reason
 	 * {@code loadSkill} is: it is a property of being an agent, not a capability an application decides
 	 * to hand out. An agent that could be configured without it would answer a question about a named
-	 * tool by guessing - see {@link ListToolsTool} and {@code tl-ai-demo/doc/secdemo/testbed.md} rows C3/C4.
+	 * tool by guessing - see {@link ListToolsTool} and the developer article
+	 * {@code ai/security/test-bed}, rows C3/C4.
 	 * </p>
 	 *
 	 * @param ownTools

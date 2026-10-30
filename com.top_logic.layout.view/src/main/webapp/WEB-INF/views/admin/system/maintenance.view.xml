@@ -17,6 +17,7 @@
 	</channels>
 	<panel id="panel"
 		fill="true"
+		with-inset="true"
 	>
 		<title>
 			<en>Maintenance mode</en>

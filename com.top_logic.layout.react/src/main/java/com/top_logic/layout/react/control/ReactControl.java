@@ -988,8 +988,50 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			if (_pendingPatch != null) {
 				_pendingPatch.put(key, value);
 			} else {
-				sendPatch(java.util.Collections.singletonMap(key, value));
+				sendPatch(Collections.singletonMap(key, value));
 			}
+		}
+	}
+
+	/**
+	 * Sends a value to the client in a state update, without making it part of the state.
+	 *
+	 * <p>
+	 * For a value that describes a change rather than a state - an incremental patch of something
+	 * the state holds as a whole: it is meaningful only to the client that holds what it changes,
+	 * at the moment it receives it. Recorded in the state, every full state of the control sent
+	 * later (the rendered output, the state sent when the client connects again) would carry the
+	 * change once more, and the client would apply it to what already contains it.
+	 * </p>
+	 *
+	 * <p>
+	 * Like {@link #putState(String, Object)}, the value is sent as a {@link PatchEvent}, as part of a
+	 * batch between {@link #beginUpdate()} and {@link #commitUpdate(Object)}. Nothing is sent
+	 * where {@link #putState(String, Object)} sends no event: before the control is rendered, while
+	 * it is not displayed, and while its state is written silently.
+	 * </p>
+	 *
+	 * <p>
+	 * The control keeps the changed whole in its state: a full state is sent whenever the client
+	 * needs one - when the control is rendered, when the client connects again, when it polls after
+	 * missing events - and the client replaces what it holds by it. A full state requested by the
+	 * client is read outside of the control's own processing, so the control records the changed
+	 * whole together with sending the change, e.g. with {@link #updateStateSilently(Runnable)}.
+	 * </p>
+	 *
+	 * @param key
+	 *        The state key the client reads the value from.
+	 * @param value
+	 *        The value to send.
+	 */
+	protected void sendTransientState(String key, Object value) {
+		if (_silentUpdates || !_rendered) {
+			return;
+		}
+		if (_pendingPatch != null) {
+			_pendingPatch.put(key, value);
+		} else {
+			sendPatch(Collections.singletonMap(key, value));
 		}
 	}
 

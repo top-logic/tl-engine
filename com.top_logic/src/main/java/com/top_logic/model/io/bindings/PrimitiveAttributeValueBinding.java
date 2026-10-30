@@ -35,7 +35,7 @@ public class PrimitiveAttributeValueBinding<C extends PrimitiveAttributeValueBin
 		/**
 		 * The format to store the primitive value with.
 		 */
-		PolymorphicConfiguration<ConfigurationValueProvider<?>> getFormat();
+		PolymorphicConfiguration<? extends ConfigurationValueProvider<?>> getFormat();
 	}
 
 	private C _config;

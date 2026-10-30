@@ -241,6 +241,40 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 	}
 
 	/**
+	 * The store to which the application writes secrets, e.g. access tokens entered by users.
+	 *
+	 * <p>
+	 * A secret written to it is delivered by {@link #getSecret(String)} and {@link #lookup(String)}
+	 * of this service under the same name, unless an {@link Config#getOverrides() override} is
+	 * configured for the name: the override takes precedence over every store.
+	 * </p>
+	 *
+	 * @return The {@link SecretStore#getWritableStore() writable store} of the
+	 *         {@link #getStore() store}, <code>null</code> if the configured store is not writable.
+	 *
+	 * @see WritableSecretStore
+	 */
+	public WritableSecretStore getWritableStore() {
+		return _store.getWritableStore();
+	}
+
+	/**
+	 * The {@link #getWritableStore() writable store} of the started {@link SecretStoreService}.
+	 *
+	 * @return The writable store, <code>null</code> if the installation has no writable store
+	 *         configured.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the {@link SecretStoreService} has not been started.
+	 */
+	public static WritableSecretStore writableSecretStore() {
+		if (!Module.INSTANCE.isActive()) {
+			throw new I18NRuntimeException(I18NConstants.ERROR_WRITABLE_SECRET_STORE_NOT_STARTED);
+		}
+		return Module.INSTANCE.getImplementationInstance().getWritableStore();
+	}
+
+	/**
 	 * The current value of the secret with the given name from the started
 	 * {@link SecretStoreService}.
 	 *

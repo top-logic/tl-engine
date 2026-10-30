@@ -34,12 +34,12 @@ public class CellExistenceTesterProxy implements CellExistenceTester {
 		 */
 		@Name(TESTER)
 		@Mandatory
-		PolymorphicConfiguration<CellExistenceTester> getTester();
+		PolymorphicConfiguration<? extends CellExistenceTester> getTester();
 
 		/**
 		 * Setter for {@link #getTester()}.
 		 */
-		void setTester(PolymorphicConfiguration<CellExistenceTester> tester);
+		void setTester(PolymorphicConfiguration<? extends CellExistenceTester> tester);
 
 	}
 

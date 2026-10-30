@@ -95,7 +95,7 @@
 		<!--
 			The roles of this application: the administrator role that may open the administration
 			area, granted the operation "Administration" on the security root below; the account reader and user roles that the role rules below
-			give to the members of the "users" group; the project member and project administrator
+			give to the members of the "user" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
 			on that project only; the project manager role that a role rule below gives to the members
 			of the "DemoProjectManagers" group on the security root; the chart reader role that
@@ -249,20 +249,32 @@
 			</instance>
 		</config>
 		<!--
-			Every newly created account joins the "users" group. The administration hub shows the
-			default-group flag on that group. The members of the "DemoProjectManagers" group create
-			projects; an administrator adds an account to it in the administration hub.
+			The database of this application was created before it had migrations of its own. The
+			minimum module makes the migrations of "tl-demo-react" run on such a database instead of
+			being skipped as migrations of a module new to the application.
+		-->
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance minimum-modules="tl-demo-react">
+				<modules>
+					<module name="tl-demo-react"/>
+				</modules>
+			</instance>
+		</config>
+		<!--
+			Every newly created account joins the "user" group defined by the engine. The
+			administration hub shows the default-group flag on that group. The members of the
+			"DemoProjectManagers" group create projects; an administrator adds an account to it in
+			the administration hub.
 		-->
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
-			<instance default-group="users">
+			<instance>
 				<groups>
-					<group name="users"/>
 					<group name="DemoProjectManagers"/>
 				</groups>
 			</instance>
 		</config>
 		<!--
-			Every member of the "users" group reads every account and every group, so that the
+			Every member of the "user" group reads every account and every group, so that the
 			deputy settings can offer the other accounts and show who stands in for whom. This is a
 			decision of this demo; a real application decides for itself whether and which accounts
 			a user may see. The engine grants an account read access to its own account only.
@@ -323,21 +335,24 @@
 						the rights of a project are given by its members and administrators, which a
 						project being created does not have yet.
 						
-						A user - every member of the "users" group - reads the person contacts, which
+						A user - every member of the "user" group - reads the person contacts, which
 						belong to no project and are the assignees of the project tickets, and the
 						tickets of the ticket demo.
 						
 						The views follow these rights: for an account that is a member of P1 but not
 						of P2 and no project manager, the project list shows P1 only; "New Project" is
 						not offered at all;
-						"Delete" of P1 is offered but disabled with the reason; "New Milestone", "New
+						"Delete" of P1 is not offered once P1 is selected, since the account administers
+						no project at all, whereas for an account administering another project it is
+						offered but disabled with the reason; "New Milestone", "New
 						Note" and the deletion of a milestone work in P1; a save that changes the
 						members or the administrators of P1 is refused. In the cockpit of P1, the
 						budget field is missing, and editing the project offers the name and the
 						description but shows the members and the administrators read-only; the budget
 						column of the project list stays empty for P1. An administrator of P1 deletes
 						P1, changes its members, and reads and edits its budget. "Approved" of a
-						milestone of P1 is disabled for a member and editable for an administrator, both
+						milestone of P1 is read-only for a member administering no project, disabled for
+						a member administering another project and editable for an administrator, both
 						in the "New Milestone" dialog and when editing the milestone; a member creates a
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
@@ -519,7 +534,7 @@
 						/>
 					</module>
 					<!--
-						A user - every member of the "users" group, by the role rules below - reads and
+						A user - every member of the "user" group, by the role rules below - reads and
 						edits the sites and the sensors of the temperature demo, and creates and deletes
 						sensors.
 					-->
@@ -571,14 +586,14 @@
 							meta-element="tl.accounts:Person"
 							role="demo.react.AccountReader"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<rule id="GroupsReadableByUsers"
 							inherit="true"
 							meta-element="tl.accounts:Group"
 							role="demo.react.AccountReader"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<!--
 							An account listed in the members of a project is a project member, and an
@@ -693,7 +708,7 @@
 							</path>
 						</inheritance-rule>
 						<!--
-							Every member of the "users" group is a user on the person contacts and on every
+							Every member of the "user" group is a user on the person contacts and on every
 							object of the ticket demo.
 						-->
 						<rule id="PersonContactsOfUsers"
@@ -701,31 +716,31 @@
 							meta-element="Contacts:PersonContact"
 							role="demo.react.User"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<rule id="TicketsOfUsers"
 							inherit="true"
 							meta-element="demo.tickets:Ticket"
 							role="demo.react.User"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<rule id="CommentsOfUsers"
 							inherit="true"
 							meta-element="demo.tickets:Comment"
 							role="demo.react.User"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<rule id="AttachmentsOfUsers"
 							inherit="true"
 							meta-element="demo.tickets:Attachment"
 							role="demo.react.User"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<!--
-							Every member of the "users" group is a user on the sites and the sensors of the
+							Every member of the "user" group is a user on the sites and the sensors of the
 							temperature demo.
 						-->
 						<rule id="TemperatureSitesOfUsers"
@@ -733,14 +748,14 @@
 							meta-element="demo.temperature:DemoSite"
 							role="demo.react.User"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<rule id="TemperatureSensorsOfUsers"
 							inherit="true"
 							meta-element="demo.temperature:DemoSensor"
 							role="demo.react.User"
 						>
-							<group-with-name name="users"/>
+							<group-with-name name="user"/>
 						</rule>
 						<rule id="ChartsReadableByAnonymous"
 							inherit="true"

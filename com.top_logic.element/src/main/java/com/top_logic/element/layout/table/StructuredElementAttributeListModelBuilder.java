@@ -33,7 +33,7 @@ public class StructuredElementAttributeListModelBuilder<C extends StructuredElem
 		@Override
 		@ImplementationClassDefault(StructuredElementStructureView.class)
 		@ItemDefault
-		PolymorphicConfiguration<StructureView<TLObject>> getStructure();
+		PolymorphicConfiguration<? extends StructureView<TLObject>> getStructure();
 
 	}
 

@@ -92,7 +92,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	public void testAllowlistedCapabilitiesSurviveABackgroundRun() {
 		for (String toolName : List.of(MODEL_READ_TOOL, LIST_TOOL, SCRIPT_TOOL)) {
 			assertNull("Ben must reach '" + toolName + "' in a background run: the harness of"
-				+ " tl-ai-demo/doc/secdemo/testbed.md depends on it.",
+				+ " the test bed (developer article ai/security/test-bed) depends on it.",
 				securityFor(BEN, true).toolDenialReason(tool(toolName)));
 		}
 	}
@@ -155,7 +155,8 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 
 	/**
 	 * The dry run of a change is unaffected: it saves nothing, so {@code script} on the allowlist is
-	 * all it needs - and the harness of {@code tl-ai-demo/doc/secdemo/testbed.md} runs unattended.
+	 * all it needs - and the harness of the developer article {@code ai/security/test-bed} runs
+	 * unattended.
 	 */
 	public void testBackgroundRunStillDryRunsAChange() {
 		List<TLObject> seeded = tickets();

@@ -593,7 +593,7 @@ public interface CommandHandler
 		 * @see CommandHandler#checkScopeProvider()
 		 */
 		@Name(CHECK_SCOPE_PROVIDER)
-		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> getCheckScopeProvider();
 
 		/**
 		 * Function computing the internationalization of a {@link ResKey} in the current user's

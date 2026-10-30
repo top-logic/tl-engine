@@ -11,8 +11,10 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionEvent;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -23,15 +25,20 @@ import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.SessionIdChangeListener;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.listen.ModelChangeEvent;
 
@@ -158,6 +165,54 @@ public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 	}
 
 	/**
+	 * The windows of a session whose ID changes by a login within one of them keep following the
+	 * model, and the session is found by its new ID.
+	 */
+	public void testSessionIdChange() throws Exception {
+		Person guest = createPerson();
+		Person user = createPerson();
+		InvocationContext invocation = loginInvocation(guest);
+		HttpServletRequest request = invocation.getRequest();
+		HttpSession session = request.getSession(false);
+		String oldId = session.getId();
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		List<ModelChangeEvent> events = observe(registry);
+		WindowEntry entry = registry.getWindow(WINDOW);
+		int reloadsBefore = entry.getQueue().pendingEventCount();
+
+		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
+		TLSubSessionContext window = (TLSubSessionContext) ThreadContextManager.getManager().newSubSessionContext();
+		window.setSessionContext(sessionContext);
+		window = sessionContext.setIfAbsent(WINDOW, window);
+		window.setPerson(guest);
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		window.updateSessionRevision(kb.getHistoryManager(), ((UpdateChainView) kb.getUpdateChain()).current());
+		TLSubSessionContext loginWindow = window;
+		ThreadContextManager.inContext(loginWindow,
+			() -> SessionService.getInstance().loginUserInWindow(request, invocation.getResponse(), user));
+		String newId = session.getId();
+		assertNotEquals(oldId, newId);
+		// The test container does not report the change of the ID to its listeners; the change is
+		// reported as a servlet container does.
+		new SessionIdChangeListener().sessionIdChanged(new HttpSessionEvent(session), oldId);
+
+		assertEquals("The end of the previous login record must not reload the windows.", reloadsBefore,
+			entry.getQueue().pendingEventCount());
+		createPerson();
+		registry.synthesizeModelEvents(WINDOW);
+		assertFalse("The windows must keep following the model.", events.isEmpty());
+
+		ReactWindowRegistry.reloadWindowsOfSession(oldId);
+		assertEquals("The former ID must not reach the windows.", reloadsBefore,
+			entry.getQueue().pendingEventCount());
+		ReactWindowRegistry.reloadWindowsOfSession(newId);
+		assertEquals("The windows must be reached by the new ID.", reloadsBefore + 1,
+			entry.getQueue().pendingEventCount());
+
+		SessionService.getInstance().terminateSession(newId);
+	}
+
+	/**
 	 * Asserts that the given window, observed by the given events, receives the events of a commit,
 	 * and forgets them afterwards.
 	 */
@@ -193,13 +248,18 @@ public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 	}
 
 	private static HttpSession login(Person user) throws Exception {
+		return loginInvocation(user).getRequest().getSession(false);
+	}
+
+	private static InvocationContext loginInvocation(Person user) throws Exception {
 		ServletRunner runner = new ServletRunner();
 		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
 		// Keep the session context of the test thread.
-		return ThreadContext.inSystemContext(TestWindowModelEventsOfEndedSession.class,
+		ThreadContext.inSystemContext(TestWindowModelEventsOfEndedSession.class,
 			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user));
+		return invocation;
 	}
 
 	private Person createPerson() {

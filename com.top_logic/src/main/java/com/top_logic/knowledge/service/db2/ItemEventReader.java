@@ -34,6 +34,7 @@ import com.top_logic.knowledge.event.MutableObjectContext;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.BasicTypes;
+import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeItemQuery;
@@ -48,6 +49,12 @@ import com.top_logic.util.TLContext;
 public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 
 	private static final String TABLE_ALIAS = NO_TABLE_ALIAS;
+
+	/**
+	 * Value of {@link #currentBranchCreateRev} for a branch whose creation copied no objects: a
+	 * revision no event has.
+	 */
+	private static final long NO_BRANCH_COPIES = -1;
 
 	private final boolean keepOldValues;
 	
@@ -127,6 +134,10 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	 * on a branch or not. Those events must not be reported.
 	 */
 	private long currentBranchId = -1;
+	/**
+	 * The revision in which the {@link #currentBranchId current branch} was created by copying the
+	 * objects of its base branch, {@link #NO_BRANCH_COPIES} for a branch without base branch.
+	 */
 	private long currentBranchCreateRev;
 
 	private final MutableObjectContext _objectContext;
@@ -495,7 +506,13 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 					final long newBranch = result.getOwnerBranch();
 					if (currentBranchId != newBranch) {
 						currentBranchId = newBranch;
-						currentBranchCreateRev = kb.getBranch(currentBranchId).getCreateRevision().getCommitNumber();
+						Branch branch = kb.getBranch(currentBranchId);
+						/* Only a branch with a base branch starts with copies of the objects of its
+						 * base branch. The trunk is created empty, its creation revision holds
+						 * genuine creations once a compaction of the history has moved the creation
+						 * of the trunk to the compaction revision. */
+						currentBranchCreateRev = branch.getBaseBranch() == null ? NO_BRANCH_COPIES
+							: branch.getCreateRevision().getCommitNumber();
 					}
 					if (result.getRevision() == currentBranchCreateRev) {
 						// result event has the same revision as its branch, i.e.

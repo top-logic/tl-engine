@@ -156,7 +156,7 @@ public class RootTileBreadcrumbControlProvider extends
 		 * The {@link BreadcrumbRenderer} that should render the breadcrumb.
 		 */
 		@Name(RENDERER)
-		PolymorphicConfiguration<BreadcrumbRenderer> getRenderer();
+		PolymorphicConfiguration<? extends BreadcrumbRenderer> getRenderer();
 
 	}
 

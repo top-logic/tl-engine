@@ -88,8 +88,10 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The fixture created for each test: the {@link #_responsible} user is responsible for
  * {@link #_project} (holding {@link #_task}) and reader of {@link #_category}, but not of
- * {@link #_hiddenCategory}. The {@link #_roleless} user holds no role at all, and {@link #_root}
- * bypasses the model access rights.
+ * {@link #_hiddenCategory}. The {@link #_outsider} holds every role, but on other objects only:
+ * the user is responsible for and viewer of {@link #_otherProject} and reader of {@link #_otherCategory}.
+ * The {@link #_roleless} user holds no role on any object, and {@link #_root} bypasses the model
+ * access rights.
  * </p>
  */
 public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTest {
@@ -233,6 +235,13 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Holds {@link #ROLE_RESPONSIBLE} on {@link #_project} and {@link #ROLE_READER} on {@link #_category}. */
 	protected Person _responsible;
 
+	/**
+	 * Holds {@link #ROLE_RESPONSIBLE} and {@link #ROLE_VIEWER} on {@link #_otherProject} and
+	 * {@link #ROLE_READER} on {@link #_otherCategory}, but no role on {@link #_project},
+	 * {@link #_task} and {@link #_category}.
+	 */
+	protected Person _outsider;
+
 	/** Holds no role on any object. */
 	protected Person _roleless;
 
@@ -248,20 +257,32 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** The only task of {@link #_project}. */
 	protected TLObject _task;
 
+	/** The project {@link #_outsider} is responsible for and viewer of. */
+	protected TLObject _otherProject;
+
+	/** The category {@link #_outsider} may read. */
+	protected TLObject _otherCategory;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_root = PersonManager.getManager().getRoot();
 		_responsible = newPerson("viewModelAccessResponsible");
+		_outsider = newPerson("viewModelAccessOutsider");
 		_roleless = newPerson("viewModelAccessRoleless");
 
 		_category = newObject(qualified(CATEGORY), "category");
 		_hiddenCategory = newObject(qualified(CATEGORY), "hiddenCategory");
 		_project = newObject(qualified(PROJECT), "project");
+		_otherCategory = newObject(qualified(CATEGORY), "otherCategory");
+		_otherProject = newObject(qualified(PROJECT), "otherProject");
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			_category.tUpdateByName(READER, _responsible);
 			_project.tUpdateByName(RESPONSIBLE, _responsible);
 			_project.tUpdateByName(CATEGORY_REF, _category);
+			_otherCategory.tUpdateByName(READER, _outsider);
+			_otherProject.tUpdateByName(RESPONSIBLE, _outsider);
+			_otherProject.tUpdateByName(VIEWER, _outsider);
 
 			_task = DynamicModelService.getFactoryFor(MODULE).createObject(type(TASK));
 			_task.tUpdateByName(NAME, "task");

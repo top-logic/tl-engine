@@ -28,7 +28,8 @@ import {
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
 import { handleDownload, type DownloadEventData } from './download';
-import { afterNavigationGrace, isPageLeaving, leavePage, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
+import { afterNavigationGrace, isPageLeaving, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
+import { leavePageWhenAnswered } from './command-channel';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -67,6 +68,12 @@ const FIRST_MESSAGE_TIMEOUT_MS = 3_000;
 
 /** The longest wait between two failed polls. */
 const MAX_POLL_BACKOFF_MS = 10_000;
+
+/**
+ * The parameter naming the last event the client received, for a poll and for a stream the client
+ * opens again by itself (`AFTER_PARAM` of `SSEServlet`).
+ */
+const AFTER_PARAM = 'after';
 
 /**
  * Type code of the event telling the page to leave. Must match
@@ -134,13 +141,18 @@ function disconnect(): void {
 
 /**
  * Creates (or re-creates) the EventSource connection.
+ *
+ * A stream opened again names the last event received, so that the server replays the events
+ * written after it that the full state does not contain. The browser does so by itself only when it
+ * reconnects a stream; a page that has received no event yet names none.
  */
 function createEventSource(url: string): void {
   if (_eventSource) {
     _eventSource.close();
   }
 
-  const source = new EventSource(url);
+  const source = new EventSource(
+    _lastSeq > 0 ? url + (url.includes('?') ? '&' : '?') + AFTER_PARAM + '=' + _lastSeq : url);
   _eventSource = source;
   _lastMessageTime = Date.now();
 
@@ -156,8 +168,11 @@ function createEventSource(url: string): void {
       clearTimeout(_firstMessageTimer);
       _firstMessageTimer = null;
     }
+    // Only forward: the number the first heartbeat of a stream carries - the one its full state
+    // stands for - may arrive after an event written to the stream at the same time, and a message
+    // without a number of its own reports the last one again.
     const seq = Number(event.lastEventId);
-    if (seq > 0) _lastSeq = seq;
+    if (seq > _lastSeq) _lastSeq = seq;
     dispatchMessage(event.data);
   };
 
@@ -244,8 +259,8 @@ async function pollLoop(): Promise<void> {
     try {
       const withToken = !full && _pollToken !== '';
       const url = withToken
-        ? base.replace(/\?.*$/, '') + '?token=' + encodeURIComponent(_pollToken) + '&after=' + _lastSeq
-        : base + (base.includes('?') ? '&' : '?') + 'after=' + _lastSeq + (full ? '&full=true' : '');
+        ? base.replace(/\?.*$/, '') + '?token=' + encodeURIComponent(_pollToken) + '&' + AFTER_PARAM + '=' + _lastSeq
+        : base + (base.includes('?') ? '&' : '?') + AFTER_PARAM + '=' + _lastSeq + (full ? '&full=true' : '');
       const response = await fetch(url, {
         cache: 'no-store',
         credentials: withToken ? 'omit' : 'same-origin',
@@ -498,7 +513,7 @@ function dispatch(data: unknown): void {
       handleDownload(payload as unknown as DownloadEventData);
       break;
     case PAGE_NAVIGATION_EVENT:
-      leavePage((payload as unknown as PageNavigationEventData).url);
+      leavePageWhenAnswered((payload as unknown as PageNavigationEventData).url);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

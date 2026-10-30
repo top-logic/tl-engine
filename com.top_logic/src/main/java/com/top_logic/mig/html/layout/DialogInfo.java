@@ -144,10 +144,10 @@ public interface DialogInfo extends AbstractWindowInfo {
 	@Name(TITLE)
 	@DefaultContainer
 	@ImplementationClassDefault(ConstantTitle.class)
-	PolymorphicConfiguration<TitleProvider> getTitle();
+	PolymorphicConfiguration<? extends TitleProvider> getTitle();
 
 	/**
 	 * Setter for {@link #getTitle()}
 	 */
-	void setTitle(PolymorphicConfiguration<TitleProvider> value);
+	void setTitle(PolymorphicConfiguration<? extends TitleProvider> value);
 }

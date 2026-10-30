@@ -139,6 +139,52 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	}
 
 	/**
+	 * Whether the given person may hold one of the given roles on some object.
+	 * <p>
+	 * The answer is never narrower than {@link #hasRole(Person, BoundObject, Collection)}: whenever
+	 * that method answers <code>true</code> for the same person and roles on any object, this
+	 * method answers <code>true</code> as well. The reverse does not hold: when it cannot tell
+	 * cheaply, this method answers <code>true</code>. A <code>false</code> answer therefore means
+	 * that the person holds none of the given roles on any object.
+	 * </p>
+	 *
+	 * @param person
+	 *        The person to check, <code>null</code> holds no role.
+	 * @param roles
+	 *        The roles to look for. Without roles, the answer is <code>false</code>.
+	 * @return Whether the given person may hold one of the given roles on some object.
+	 */
+	public boolean hasRoleOnAnyObject(Person person, Collection<? extends BoundRole> roles) {
+		if (person == null) {
+			return false;
+		}
+		if (person.isAdmin()) {
+			return true;
+		}
+		if (CollectionUtil.isEmptyOrNull(roles)) {
+			return false;
+		}
+		return internalHasRoleOnAnyObject(person, roles);
+	}
+
+	/**
+	 * Implementation of {@link #hasRoleOnAnyObject(Person, Collection)} without (again) checking
+	 * for admin access and empty roles.
+	 * <p>
+	 * This implementation computes the roles of a person per object and has no query for the roles
+	 * held on any object, so it answers <code>true</code>.
+	 * </p>
+	 *
+	 * @param person
+	 *        The person to check, not <code>null</code>.
+	 * @param roles
+	 *        The roles to look for, not empty.
+	 */
+	protected boolean internalHasRoleOnAnyObject(Person person, Collection<? extends BoundRole> roles) {
+		return true;
+	}
+
+	/**
 	 * Check if the current person has one of the given roles at the given bound object.
 	 *
 	 * <p>

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the database view (opened from database.view.xml) loading a dump as written by Export
+	dump. The uploaded file is a value of the view (value-input of type tl.core:Binary on the channel
+	dump); no model object is involved. The info channel describes it (databaseDumpInfo): the data
+	version of the dump and the migration applied while loading it, shown read-only below the upload
+	field, or the reason why the dump cannot be loaded, which disables the commands. Every command
+	converts the dump as a background job on the job channel, which is bound to the job channel of
+	the database view, so the job-status shows the conversion while it runs.
+	- SQL script downloads the dump converted into an SQL script for an empty database of the kind
+	this application uses (databaseDumpToSql).
+	- SQL*Loader scripts downloads the dump converted into control files of the Oracle SQL*Loader, as
+	ZIP archive (databaseDumpToLoaderScript).
+	- Replace all data first checks that the stored data may be rewritten now (an active maintenance
+	window, the only active node of a cluster) and asks for confirmation, converts the dump into an
+	SQL script, asks a second time, and then replaces all data of the application by the data of the
+	script (databaseReplaceData): the persistency layer is stopped, all tables are dropped and created
+	again, the script is executed, and the persistency layer is started again, which ends all
+	sessions, this one included.
+-->
+<view>
+	<channels>
+		<channel name="dump"/>
+		<derived-channel name="info"
+			expr="databaseDumpInfo($dump)"
+			inputs="dump"
+		/>
+		<derived-channel name="versions"
+			expr="if($info == null, null, $info['versions'])"
+			inputs="info"
+		/>
+		<derived-channel name="migration"
+			expr="if($info == null, null, $info['migration'])"
+			inputs="info"
+		/>
+		<derived-channel name="problem"
+			expr="if($info == null, null, $info['problem'])"
+			inputs="info"
+		/>
+		<channel name="job"/>
+	</channels>
+	<window
+		resizable="false"
+		width="760px"
+	>
+		<title>
+			<en>Import dump</en>
+			<de>Dump importieren</de>
+		</title>
+		<fields
+			label-position="top"
+			max-columns="1"
+			with-inset="true"
+		>
+			<text>
+				<label>
+					<en>Loads a dump written by "Export dump", migrating its data to the version of this application. The dump can be converted into an SQL script or into scripts of the Oracle SQL*Loader, each loading the data into an empty database, or it can replace all data of this application. The replacement deletes every object and the whole history currently stored irrevocably; export a dump or create a database backup first. It needs an active maintenance window and, in a cluster, that this node is the only active one. The persistency layer is restarted for it, which ends all sessions, this one included.</en>
+					<de>Lädt einen mit "Dump exportieren" geschriebenen Dump und migriert seine Daten auf die Version dieser Anwendung. Der Dump kann in ein SQL-Skript oder in Skripte für den Oracle SQL*Loader umgewandelt werden, die die Daten jeweils in eine leere Datenbank laden, oder er kann alle Daten dieser Anwendung ersetzen. Das Ersetzen löscht jedes Objekt und die gesamte derzeit gespeicherte Historie unwiderruflich; exportieren Sie zuvor einen Dump oder legen Sie eine Sicherung der Datenbank an. Es erfordert einen aktiven Wartungsmodus und in einem Cluster, dass dieser Knoten der einzige aktive ist. Dafür wird die Persistenzschicht neu gestartet, wodurch alle Sitzungen beendet werden, auch diese.</de>
+				</label>
+			</text>
+			<value-input
+				mandatory="true"
+				type="tl.core:Binary"
+				value="dump"
+			>
+				<annotations>
+					<accepted-types value="*.gz, *.xml"/>
+				</annotations>
+				<label>
+					<en>Dump</en>
+					<de>Dump</de>
+				</label>
+			</value-input>
+			<visible-if
+				expr="$problem != null"
+				input="problem"
+			>
+				<value-input
+					readonly="true"
+					type="tl.core:String"
+					value="problem"
+				>
+					<annotations>
+						<multi-line/>
+					</annotations>
+					<label>
+						<en>The dump cannot be loaded</en>
+						<de>Der Dump kann nicht geladen werden</de>
+					</label>
+				</value-input>
+			</visible-if>
+			<visible-if
+				expr="$versions != null"
+				input="versions"
+			>
+				<value-input
+					readonly="true"
+					type="tl.core:String"
+					value="versions"
+				>
+					<annotations>
+						<multi-line/>
+					</annotations>
+					<label>
+						<en>Data version</en>
+						<de>Datenversion</de>
+					</label>
+				</value-input>
+				<value-input
+					readonly="true"
+					type="tl.core:String"
+					value="migration"
+				>
+					<annotations>
+						<multi-line/>
+					</annotations>
+					<label>
+						<en>Migration</en>
+						<de>Migration</de>
+					</label>
+				</value-input>
+			</visible-if>
+			<job-status input="job"/>
+		</fields>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-filetype-sql"
+					inputs="dump, problem, job as jobState"
+				>
+					<label>
+						<en>SQL script</en>
+						<de>SQL-Skript</de>
+					</label>
+					<tooltip>
+						<en>Downloads the dump converted into an SQL script that loads the data into an empty database of the kind this application uses.</en>
+						<de>Lädt den Dump umgewandelt in ein SQL-Skript herunter, das die Daten in eine leere Datenbank der Art lädt, die diese Anwendung verwendet.</de>
+					</tooltip>
+					<executability>
+						<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), if($dump == null, #('Upload a dump first.'@en, 'Laden Sie zuerst einen Dump hoch.'@de), $problem))"/>
+					</executability>
+					<start-job job="job">
+						<function><![CDATA[{
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Converting the dump into an SQL script.'@en, 'Der Dump wird in ein SQL-Skript umgewandelt.'@de));
+	databaseDumpToSql($dump);
+}]]></function>
+						<with-result>
+							<download/>
+						</with-result>
+					</start-job>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-file-zip"
+					inputs="dump, problem, job as jobState"
+				>
+					<label>
+						<en>SQL*Loader scripts</en>
+						<de>SQL*Loader-Skripte</de>
+					</label>
+					<tooltip>
+						<en>Downloads the dump converted into control files of the Oracle SQL*Loader as ZIP archive, e.g. for loading a large dump into an Oracle database.</en>
+						<de>Lädt den Dump umgewandelt in Steuerdateien für den Oracle SQL*Loader als ZIP-Archiv herunter, z. B. um einen großen Dump in eine Oracle-Datenbank zu laden.</de>
+					</tooltip>
+					<executability>
+						<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), if($dump == null, #('Upload a dump first.'@en, 'Laden Sie zuerst einen Dump hoch.'@de), $problem))"/>
+					</executability>
+					<start-job job="job">
+						<function><![CDATA[{
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Converting the dump into SQL*Loader scripts.'@en, 'Der Dump wird in SQL*Loader-Skripte umgewandelt.'@de));
+	databaseDumpToLoaderScript($dump);
+}]]></function>
+						<with-result>
+							<download/>
+						</with-result>
+					</start-job>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-database-exclamation"
+					inputs="dump, problem, job as jobState"
+				>
+					<label>
+						<en>Replace all data</en>
+						<de>Alle Daten ersetzen</de>
+					</label>
+					<tooltip>
+						<en>Replaces all data of the application by the data of the dump irrevocably.</en>
+						<de>Ersetzt alle Daten der Anwendung unwiderruflich durch die Daten des Dumps.</de>
+					</tooltip>
+					<executability>
+						<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), if($dump == null, #('Upload a dump first.'@en, 'Laden Sie zuerst einen Dump hoch.'@de), $problem))"/>
+					</executability>
+					<execute-script function="databaseCheckMaintenance()"/>
+					<confirm expr="#('Replace all data of the application by the data of {0}?\n\nEvery object and the whole history currently stored are deleted irrevocably. Export a dump or create a database backup first.\n\nThe dump is converted first, then you are asked once more.'@en, 'Alle Daten der Anwendung durch die Daten aus {0} ersetzen?\n\nJedes Objekt und die gesamte derzeit gespeicherte Historie werden unwiderruflich gelöscht. Exportieren Sie zuvor einen Dump oder legen Sie eine Sicherung der Datenbank an.\n\nDer Dump wird zuerst umgewandelt, danach werden Sie noch einmal gefragt.'@de).fill(label($dump))">
+						<confirm-label>
+							<en>Convert and continue</en>
+							<de>Umwandeln und fortfahren</de>
+						</confirm-label>
+						<cancel-label>
+							<en>Cancel</en>
+							<de>Abbrechen</de>
+						</cancel-label>
+					</confirm>
+					<start-job job="job">
+						<function><![CDATA[{
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Preparing the replacement: converting the dump into an SQL script.'@en, 'Das Ersetzen wird vorbereitet: Der Dump wird in ein SQL-Skript umgewandelt.'@de));
+	databaseDumpToSql($dump);
+}]]></function>
+						<with-result as="script">
+							<confirm expr="#('The dump has been converted. Delete all data of the application now and load the data of {0}?\n\nThe persistency layer is restarted for it, which ends all sessions, this one included. Log in again once the application is available.'@en, 'Der Dump wurde umgewandelt. Jetzt alle Daten der Anwendung löschen und die Daten aus {0} laden?\n\nDafür wird die Persistenzschicht neu gestartet, wodurch alle Sitzungen beendet werden, auch diese. Melden Sie sich erneut an, sobald die Anwendung verfügbar ist.'@de).fill(label($dump))">
+								<confirm-label>
+									<en>Replace all data</en>
+									<de>Alle Daten ersetzen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+							</confirm>
+							<execute-script function="databaseReplaceData($script)"/>
+						</with-result>
+					</start-job>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

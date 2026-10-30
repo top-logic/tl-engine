@@ -126,7 +126,7 @@
 			<property name="com.top_logic.model.annotate.ui.Format#definition">
 				<annotations>
 					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
-						fun="com.top_logic.model.annotate.ui.Format$FormatOptions"
+						fun="com.top_logic.layout.form.values.edit.TargetTypeInAppImplementations"
 						mapping="com.top_logic.layout.form.values.ImplOptionMapping"
 					>
 						<args>

@@ -309,11 +309,8 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 *
 	 * <p>
 	 * Only <em>business objects</em> are filtered. A {@link TLModelPart model element} (a type, an
-	 * attribute, a module) is meta-data that a computation works with - a script may e.g. deliver the
-	 * type of an object, or a table column may be described by its attribute. Dropping such a value
-	 * would break the computation instead of protecting data, therefore model elements are kept.
-	 * Reading the <em>attribute values</em> of a model element is a separate question that is decided
-	 * by the access check of the attribute access itself.
+	 * attribute, a module, a classifier) is discoverable for every user and therefore kept, see
+	 * {@link ModelAccessRights#isDiscoverAllowed(Person, TLObject)}.
 	 * </p>
 	 *
 	 * <p>
@@ -359,10 +356,6 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	public static Object filterSecurity(Person user, Object value, SecurityFilterReport report) {
 		if (value == null) {
 			return null;
-		}
-		if (value instanceof TLModelPart) {
-			// Meta-data, not a business object, see above.
-			return value;
 		}
 		if (value instanceof TLObject object) {
 			return filterSecurityTLObject(user, object, report);

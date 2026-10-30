@@ -159,9 +159,29 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 		assertTrue(access.isOffered());
 		assertEquals(Display.CONTENT, decide(access));
 
-		becomeUser(_roleless);
-		assertTrue("Some role may finish a project, so the unit is offered.", access.isOffered());
+		becomeUser(_outsider);
+		assertTrue("The user may finish another project, so the unit is offered.", access.isOffered());
 		assertEquals(Display.DENIED, decide(access));
+	}
+
+	/**
+	 * Tests that a unit is hidden from a user holding none of the roles granted its operation on
+	 * any object, and shown denied to a user holding a granted role on another object.
+	 */
+	public void testRoleHeldOnNoObjectHidden() throws ConfigurationException {
+		UnitAccess access = access(onProject(FINISH));
+		_object.set(_project);
+
+		becomeUser(_outsider);
+		assertTrue("The user may finish another project.", access.isOffered());
+		assertEquals(Display.DENIED, decide(access));
+
+		becomeUser(_roleless);
+		assertFalse("The user may finish no project.", access.isOffered());
+
+		becomeUser(_root);
+		assertTrue(access.isOffered());
+		assertEquals(Display.CONTENT, decide(access));
 	}
 
 	/**
@@ -208,7 +228,7 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 		assertFalse("No role may write a category, the container of a note.", deleteNote.isOffered());
 		assertTrue("Some role may read a category.", readNote.isOffered());
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertTrue(deleteMilestone.isOffered());
 		assertEquals(Display.DENIED, decide(deleteMilestone));
 	}

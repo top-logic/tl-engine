@@ -57,7 +57,7 @@ public class ControlProviderModificator<C extends ControlProviderModificator.Con
 		 */
 		@Mandatory
 		@Name(CONTROL_PROVIDER)
-		PolymorphicConfiguration<ControlProvider> getControlProvider();
+		PolymorphicConfiguration<? extends ControlProvider> getControlProvider();
 
 	}
 

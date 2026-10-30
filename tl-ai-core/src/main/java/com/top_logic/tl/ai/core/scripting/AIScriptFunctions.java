@@ -112,7 +112,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * What {@code aiChat} can ask a model for, what each provider makes of it, and how a run that never
- * answered is reported: {@code tl-ai-core/doc/script-chat.md}.
+ * answered is reported: the developer article {@code ai/script-and-scheduled-runs}.
  * </p>
  */
 @ScriptPrefix("ai")
@@ -854,7 +854,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * The research is Albert's {@code TL_deepResearch} skill: Albert plans sub-questions, research
 	 * workers read the web in parallel, and Albert writes one report that links the pages the workers
 	 * read. This function starts it without a chat window - from a script, or from a scheduled
-	 * {@code ScriptTask}. See {@code tl-ai-core/doc/deep-research.md}.
+	 * {@code ScriptTask}. The developer article {@code ai/deep-research} describes the run.
 	 * </p>
 	 *
 	 * <p>

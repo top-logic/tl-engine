@@ -38,7 +38,7 @@ public abstract class AbstractGraphComponent extends BuilderComponent {
 		 */
 		@Name(GRAPH_DROP)
 		@ItemDefault(NoGraphDrop.class)
-		PolymorphicConfiguration<GraphDropTarget> getGraphDrop();
+		PolymorphicConfiguration<? extends GraphDropTarget> getGraphDrop();
 	}
 
 	/**

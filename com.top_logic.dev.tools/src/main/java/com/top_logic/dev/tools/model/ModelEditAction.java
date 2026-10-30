@@ -17,6 +17,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
@@ -24,6 +25,7 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -177,7 +179,13 @@ public class ModelEditAction implements ViewAction {
 	}
 
 	/**
-	 * Adds a new property described by the input to the container type.
+	 * Adds a new attribute described by the input to the container type.
+	 *
+	 * <p>
+	 * An attribute with a {@link TLPrimitive} value type becomes a {@link TLProperty}; an attribute
+	 * referring to a class or an enumeration becomes a navigable, non-composite {@link TLReference}
+	 * (see {@link TLModelUtil#addForwardReference(TLClass, String, TLType)}).
+	 * </p>
 	 */
 	private TLStructuredTypePart createAttribute(ReactContext context, Object input) {
 		TLObject model = asTransient(input);
@@ -190,14 +198,21 @@ public class ModelEditAction implements ViewAction {
 		if (multiple && !supportsMultiple(valueType)) {
 			throw new TopLogicException(I18NConstants.ERROR_MULTIPLE_NOT_SUPPORTED__TYPE.fill(valueType));
 		}
-		TLProperty property = TLModelUtil.addProperty(owner, name, valueType);
+		TLStructuredTypePart part;
+		if (valueType instanceof TLPrimitive) {
+			part = TLModelUtil.addProperty(owner, name, valueType);
+		} else if (owner instanceof TLClass ownerClass) {
+			part = TLModelUtil.addForwardReference(ownerClass, name, valueType);
+		} else {
+			throw new TopLogicException(I18NConstants.ERROR_REFERENCE_NOT_SUPPORTED__OWNER.fill(owner));
+		}
 		if (Boolean.TRUE.equals(model.tValueByName(MANDATORY))) {
-			property.setMandatory(true);
+			part.setMandatory(true);
 		}
 		if (multiple) {
-			property.setMultiple(true);
+			part.setMultiple(true);
 		}
-		return property;
+		return part;
 	}
 
 	/**

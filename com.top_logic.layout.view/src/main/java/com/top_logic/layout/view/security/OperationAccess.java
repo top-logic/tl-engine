@@ -41,7 +41,8 @@ import com.top_logic.tool.execution.ExecutableState;
  * The decision for the current user:
  * </p>
  * <ul>
- * <li>Hidden: the user can never hold the operation - no role can hold it on the checked type - or,
+ * <li>Hidden: the user can never hold the operation - they hold none of the roles granted it on the
+ * checked type on any object - or,
  * on the security root, it is not allowed there.</li>
  * <li>Disabled: there is no object to check ({@code null} or an empty collection), or the operation
  * is refused on a checked object, giving the refusal as reason. An object that is no instance of the

@@ -107,7 +107,7 @@ public class SafeHTML extends ManagedClass {
 		 * {@link Map} of {@link AttributeChecker}'s.
 		 */
 		@Key(NamedPolymorphicConfiguration.NAME_ATTRIBUTE)
-		Map<String, NamedPolymorphicConfiguration<AttributeChecker>> getAttributeCheckers();
+		Map<String, NamedPolymorphicConfiguration<? extends AttributeChecker>> getAttributeCheckers();
 	}
 
 	static final HTMLChecker NO_CHECK = new HTMLChecker() {

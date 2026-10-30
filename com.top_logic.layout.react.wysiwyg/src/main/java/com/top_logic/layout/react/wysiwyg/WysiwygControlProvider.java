@@ -19,9 +19,11 @@ import org.jsoup.select.NodeTraversor;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -37,6 +39,8 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.wysiwyg:Html} attributes.
@@ -56,7 +60,13 @@ import com.top_logic.mig.html.HTMLConstants;
  * @implNote The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the
  *           {@link #htmlPreview(StructuredText) first line} of the formatted text stands for it.
  */
+@Label("Formatted text editor")
+@InApp
+@TargetType(value = TLTypeKind.STRING, name = WysiwygControlProvider.HTML_TYPE)
 public class WysiwygControlProvider implements ReactFieldControlProvider {
+
+	/** Qualified name of the model type of the formatted texts edited here. */
+	public static final String HTML_TYPE = "tl.model.wysiwyg:Html";
 
 	/**
 	 * Configuration options for {@link WysiwygControlProvider}.

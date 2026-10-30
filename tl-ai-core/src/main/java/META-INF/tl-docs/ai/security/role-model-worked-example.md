@@ -314,7 +314,7 @@ Three things this table teaches:
 
 ## The test bed
 
-The example is the agent security test bed of `tl-ai-demo`, behind one line of its `metaConf.txt`: the model is `WEB-INF/model/pm.model.xml`, everything else is `WEB-INF/conf/secdemo.config.xml`, and `tl-ai-demo/doc/secdemo/testbed.md` describes how to drive it. Every row of the walkthrough is a JUnit test that runs against a real application boot, so this article and the test bed cannot drift apart:
+The example is the agent security test bed of `tl-ai-demo`, behind one line of its `metaConf.txt`: the model is `WEB-INF/model/pm.model.xml`, everything else is `WEB-INF/conf/secdemo.config.xml`, and [the test bed](doc:ai/security/test-bed) describes how to drive it. Every row of the walkthrough is a JUnit test that runs against a real application boot, so this article and the test bed cannot drift apart:
 
 | Claim | Asserted by |
 |---|---|

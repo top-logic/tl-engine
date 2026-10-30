@@ -37,7 +37,7 @@ public class FilteringListModelBuilder extends ProxyListModelBuilder<FilteringLi
 
 		/** Only elements matching this {@link Filter} are returned as model. */
 		@Name(FILTER)
-		PolymorphicConfiguration<Filter<Object>> getFilter();
+		PolymorphicConfiguration<? extends Filter<Object>> getFilter();
 
 	}
 

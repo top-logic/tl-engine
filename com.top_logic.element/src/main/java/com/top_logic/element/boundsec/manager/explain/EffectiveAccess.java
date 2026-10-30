@@ -159,11 +159,11 @@ public class EffectiveAccess {
 		}
 		Map<TLID, Group> groups = groups(person);
 		Collection<TLID> roleIDs = roles == null || roles.isEmpty() ? null : ids(roles);
-		List<SecurityStorage.Entry> entries = entries(storage, groups.keySet(), null, roleIDs);
+		List<SecurityStorage.StorageEntry> entries = entries(storage, groups.keySet(), null, roleIDs);
 
 		ObjectResolver resolver = new ObjectResolver(groups);
 		List<RoleAssignment> result = new ArrayList<>(entries.size());
-		for (SecurityStorage.Entry entry : entries) {
+		for (SecurityStorage.StorageEntry entry : entries) {
 			RoleProvider rule = rule(entry);
 			result.add(assignment(entry, resolver.resolve(entry, rule), groups, rule));
 		}
@@ -222,7 +222,7 @@ public class EffectiveAccess {
 		Map<TLID, Group> groups = groups(person);
 
 		Map<BoundedRole, List<RoleAssignment>> result = new HashMap<>();
-		for (SecurityStorage.Entry entry : entries(storage, groups.keySet(), objects.keySet(), null)) {
+		for (SecurityStorage.StorageEntry entry : entries(storage, groups.keySet(), objects.keySet(), null)) {
 			RoleAssignment assignment = assignment(entry, objects.get(entry.businessObject()), groups, rule(entry));
 			if (assignment.role() != null) {
 				result.computeIfAbsent(assignment.role(), x -> new ArrayList<>()).add(assignment);
@@ -231,7 +231,7 @@ public class EffectiveAccess {
 		return result;
 	}
 
-	private static RoleAssignment assignment(SecurityStorage.Entry entry, TLObject object, Map<TLID, Group> groups,
+	private static RoleAssignment assignment(SecurityStorage.StorageEntry entry, TLObject object, Map<TLID, Group> groups,
 			RoleProvider rule) {
 		RoleSource source;
 		if (entry.isDirectAssignment()) {
@@ -245,14 +245,14 @@ public class EffectiveAccess {
 			rule);
 	}
 
-	private RoleProvider rule(SecurityStorage.Entry entry) {
+	private RoleProvider rule(SecurityStorage.StorageEntry entry) {
 		if (entry.isDirectAssignment()) {
 			return null;
 		}
 		return elementAccessManager().getRulefromPersitancyId(Integer.valueOf(entry.reason()));
 	}
 
-	private static List<SecurityStorage.Entry> entries(SecurityStorage storage, Collection<TLID> groupIDs,
+	private static List<SecurityStorage.StorageEntry> entries(SecurityStorage storage, Collection<TLID> groupIDs,
 			Collection<TLID> objectIDs, Collection<TLID> roleIDs) {
 		try {
 			return storage.getEntries(groupIDs, objectIDs, roleIDs);
@@ -335,7 +335,7 @@ public class EffectiveAccess {
 			_groups = groups;
 		}
 
-		TLObject resolve(SecurityStorage.Entry entry, RoleProvider rule) {
+		TLObject resolve(SecurityStorage.StorageEntry entry, RoleProvider rule) {
 			TLID id = entry.businessObject();
 			TLObject known = _resolved.get(id);
 			if (known != null) {

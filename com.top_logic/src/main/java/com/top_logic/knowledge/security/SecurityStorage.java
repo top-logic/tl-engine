@@ -520,7 +520,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 	 * @throws StorageException
 	 *         If some error occurs while requesting the database.
 	 */
-	public List<Entry> getEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
+	public List<StorageEntry> getEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
 			Collection<TLID> roleIDs) throws StorageException {
 		if (isEmptyRestriction(groupIDs) || isEmptyRestriction(businessObjectIDs) || isEmptyRestriction(roleIDs)) {
 			return Collections.emptyList();
@@ -551,7 +551,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 	 *        assignment, otherwise the persistency identifier of the role rule delivering the
 	 *        role.
 	 */
-	public record Entry(TLID group, TLID businessObject, TLID role, int reason) {
+	public record StorageEntry(TLID group, TLID businessObject, TLID role, int reason) {
 
 		/**
 		 * Whether the role is held by a direct role assignment.
@@ -1696,13 +1696,13 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		 *
 		 * @see SecurityStorage#getEntries(Collection, Collection, Collection)
 		 */
-		public List<Entry> getEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
+		public List<StorageEntry> getEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
 				Collection<TLID> roleIDs) throws SQLException {
 			if (businessObjectIDs == null) {
 				return queryEntries(groupIDs, null, roleIDs);
 			}
 			List<TLID> objects = List.copyOf(businessObjectIDs);
-			List<Entry> result = new ArrayList<>();
+			List<StorageEntry> result = new ArrayList<>();
 			int chunkSize = dbHelper.getMaxSetSize();
 			for (int low = 0; low < objects.size(); low += chunkSize) {
 				result.addAll(
@@ -1711,7 +1711,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return result;
 		}
 
-		private List<Entry> queryEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
+		private List<StorageEntry> queryEntries(Collection<TLID> groupIDs, Collection<TLID> businessObjectIDs,
 				Collection<TLID> roleIDs) throws SQLException {
 			StringBuilder sb = new StringBuilder(4096);
 			sb.append(SQL_GET_ENTRIES_PREFIX);
@@ -1719,9 +1719,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			where = appendRestriction(sb, ATTRIBUTE_BUSINESS_OBJECT, businessObjectIDs, where);
 			appendRestriction(sb, ATTRIBUTE_ROLE, roleIDs, where);
 			return DBUtil.executeQuery(sb.toString(), null, result -> {
-				List<Entry> entries = new ArrayList<>();
+				List<StorageEntry> entries = new ArrayList<>();
 				while (result.next()) {
-					entries.add(new Entry(IdentifierUtil.getId(result, 1), IdentifierUtil.getId(result, 2),
+					entries.add(new StorageEntry(IdentifierUtil.getId(result, 1), IdentifierUtil.getId(result, 2),
 						IdentifierUtil.getId(result, 3), result.getInt(4)));
 				}
 				return entries;

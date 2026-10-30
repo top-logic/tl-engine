@@ -1346,7 +1346,7 @@
 				<!-- Hugging Face tokenizers of DJL for tl-ai-index-onnx (Apache-2.0). -->
 				<groupId>ai.djl.huggingface</groupId>
 				<artifactId>tokenizers</artifactId>
-				<version>0.39.0</version>
+				<version>0.40.0</version>
 			</dependency>
 			<dependency>
 				<!-- Qdrant vector store client of tl-ai-vector-index. -->

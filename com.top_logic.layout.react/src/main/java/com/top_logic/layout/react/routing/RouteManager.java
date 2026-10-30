@@ -465,6 +465,23 @@ public final class RouteManager {
 	}
 
 	/**
+	 * Whether a URL is being adopted: the display is settling into the URL the client shows, from
+	 * {@link #adoptUrl(String)} or {@link #navigateToRoute(String)} until {@link #finishAdoption()}
+	 * or {@link #cancelAdoption()}.
+	 *
+	 * <p>
+	 * A participant tells by this a value written into the display by an address - a bookmark, a
+	 * typed URL, a move through the browser history - from one the user brought about inside the
+	 * display. An address may name a state the display does not offer as an address of its own, and
+	 * the display then settles into the nearest state that is one; the address bar is corrected to it
+	 * when the adoption finishes.
+	 * </p>
+	 */
+	public boolean isAdopting() {
+		return _adopting;
+	}
+
+	/**
 	 * Resolves the pending URL against the participants that are registered now.
 	 *
 	 * <p>

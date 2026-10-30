@@ -7,6 +7,7 @@ package com.top_logic.layout.view.login;
 
 import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -37,7 +38,10 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @implNote Verification is delegated to {@link MfaSupport#isValidCode(Password, String)}; the
  *           secret is persisted via {@link com.top_logic.model.TLObject#tUpdateByName(String, Object)}
- *           on {@link Person#MFA_SECRET_ATTR} (avoiding the broken {@link Person#setMFASecret(Password)}).
+ *           on {@link Person#MFA_SECRET_ATTR}.
+ *           The codes checked against one secret are counted by the {@link LoginFailuresModule}
+ *           (key {@link LoginFailuresModule#secretKey(Password)}): after repeated wrong codes,
+ *           further codes are refused for a growing time without being checked.
  */
 @InApp
 public class VerifyOtpAction implements ViewAction {
@@ -90,7 +94,11 @@ public class VerifyOtpAction implements ViewAction {
 		}
 
 		String code = asString(((TLObject) input).tValueByName("code"));
-		if (!MfaSupport.isValidCode(secret, code)) {
+		// Refuses with the too-many-attempts message while the secret is backing off.
+		boolean valid = LoginFailuresModule.getInstance().attempt(LoginFailuresModule.secretKey(secret),
+			com.top_logic.layout.component.configuration.I18NConstants.CHECK_OTP_TOO_MANY_ATTEMPTS__TIMEOUT,
+			() -> MfaSupport.isValidCode(secret, code));
+		if (!valid) {
 			throw new TopLogicException(I18NConstants.MFA_INVALID_CODE);
 		}
 

@@ -174,12 +174,12 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 			data = account.tKnowledgeBase().createKnowledgeObject(PASSWORD_TABLE);
 			data.setAttributeValue(ACCOUNT_REF, account.tHandle());
 		} else {
+			String oldHash = (String) data.getAttributeValue(PASSWORD_ATTR);
 			List<String> previousPwdHashes = getPWDHistory(data);
-			if (alreadyUsed(previousPwdHashes, password)) {
+			if (alreadyUsed(oldHash, previousPwdHashes, password)) {
 				throw new TopLogicException(I18NConstants.PWD_USED_BEFORE);
 			}
 
-			String oldHash = (String) data.getAttributeValue(PASSWORD_ATTR);
 			addPwdToHistory(data, oldHash);
 		}
 
@@ -248,12 +248,23 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 		return (long) data.getAttributeValue(LifecycleAttributes.MODIFIED);
 	}
 
-	private boolean alreadyUsed(List<String> previousPwdHashes, char[] thePwd) {
+	/**
+	 * Whether the given password must not be set, because it is the current password or one of the
+	 * passwords in the history that are still within the configured repeat cycle.
+	 * 
+	 * <p>
+	 * Without a repeat cycle, no password counts as used.
+	 * </p>
+	 */
+	private boolean alreadyUsed(String currentPwdHash, List<String> previousPwdHashes, char[] thePwd) {
 		int repeatCycle = _validator.getPwdRepeatCycle();
 		if (repeatCycle <= 0) {
 			return false;
 		}
 		PasswordHashingService phs = PasswordHashingService.getInstance();
+		if (!StringServices.isEmpty(currentPwdHash) && phs.verify(thePwd, currentPwdHash).success()) {
+			return true;
+		}
 		int hashCnt = previousPwdHashes.size();
 		List<String> relevantHashes = previousPwdHashes.subList(Math.max(0, hashCnt - repeatCycle), hashCnt);
 		for (String aPwdHash : relevantHashes) {

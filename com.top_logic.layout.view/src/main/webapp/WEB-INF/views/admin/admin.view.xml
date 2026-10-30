@@ -133,6 +133,13 @@
 							</label>
 							<view-ref view="admin/monitoring/revision-monitor.view.xml"/>
 						</tab>
+						<tab id="logs">
+							<label>
+								<en>Logs</en>
+								<de>Protokolle</de>
+							</label>
+							<view-ref view="admin/monitoring/logs.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>
@@ -186,20 +193,6 @@
 								<de>SQL-Konsole</de>
 							</label>
 							<view-ref view="admin/system/sql-console.view.xml"/>
-						</tab>
-						<tab id="reload">
-							<label>
-								<en>Reload</en>
-								<de>Neu laden</de>
-							</label>
-							<view-ref view="admin/system/reload.view.xml"/>
-						</tab>
-						<tab id="logs">
-							<label>
-								<en>Logs</en>
-								<de>Protokolle</de>
-							</label>
-							<view-ref view="admin/system/logs.view.xml"/>
 						</tab>
 						<tab id="logger-levels">
 							<label>

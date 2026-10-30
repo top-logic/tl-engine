@@ -12,6 +12,7 @@ import java.util.Objects;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.knowledge.indexing.DefaultIndexingService;
 import com.top_logic.knowledge.indexing.IndexingService;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -77,10 +78,10 @@ public class IndexingFunctions extends TLScriptFunctions {
 	 * @see IndexingService#reindex(Collection, Collection, boolean)
 	 */
 	@Label("Re-index objects")
-	public static int reindex(Collection<?> types, boolean onlyNew) {
+	public static Double reindex(Collection<?> types, boolean onlyNew) {
 		List<String> typeNames = types == null ? List.of()
 			: types.stream().filter(Objects::nonNull).map(Object::toString).toList();
-		return service().reindex(typeNames.isEmpty() ? null : typeNames, null, onlyNew);
+		return SearchExpression.toNumber(service().reindex(typeNames.isEmpty() ? null : typeNames, null, onlyNew));
 	}
 
 	/**

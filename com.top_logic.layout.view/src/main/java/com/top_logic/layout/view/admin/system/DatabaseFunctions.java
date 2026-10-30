@@ -22,6 +22,7 @@ import com.top_logic.knowledge.service.db2.HistoryCompaction.Report;
 import com.top_logic.knowledge.service.maintenance.PersistencyMaintenance;
 import com.top_logic.knowledge.service.migration.dump.KBDump;
 import com.top_logic.knowledge.service.migration.load.KBLoad;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -35,7 +36,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * {@link #dump()} hands out the data of the application as a file, written while the browser
- * downloads it. {@link #compactHistory(Date)} discards the history before a point in time and may
+ * downloads it. {@link #compactHistory(Object)} discards the history before a point in time or a revision and may
  * take a long time, so a view runs it as the body of a background job:
  * </p>
  *
@@ -133,25 +134,77 @@ public class DatabaseFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Counts what a compaction of the history before the given point in time would change, without
+	 * The revision a compaction of the history before the given bound collapses the history into.
+	 *
+	 * @param before
+	 *        The bound before which the history is discarded: a point in time, or the commit
+	 *        number of a revision.
+	 * @return The commit number of the compaction revision: for a point in time the newest
+	 *         revision committed at or before it, for a commit number the newest existing revision
+	 *         not newer than it; <code>null</code> if there is none or no bound is given.
+	 *
+	 * @throws TopLogicException
+	 *         If the bound is neither a point in time nor a number.
+	 */
+	@SideEffectFree
+	@Label("Revision a compaction of the history collapses into")
+	public static Double compactionRevision(Object before) {
+		if (before == null) {
+			return null;
+		}
+		long revision = resolveCompactionRevision(before);
+		return revision > 0 ? SearchExpression.toNumber(revision) : null;
+	}
+
+	/**
+	 * Describes what a compaction of the history before the given bound discards: the revision the
+	 * history is collapsed into, the time it was committed at and the number of revisions before
+	 * it.
+	 *
+	 * @param before
+	 *        The bound before which the history is discarded, see {@link #compactionRevision(Object)}.
+	 * @return The description, <code>null</code> without a bound.
+	 */
+	@SideEffectFree
+	@Label("Description of a compaction of the history")
+	public static String compactionInfo(Object before) {
+		if (before == null) {
+			return null;
+		}
+		long upper = resolveCompactionRevision(before);
+		int discarded = HistoryCompactionOperation.discardedRevisions(upper);
+		ResKey info;
+		if (discarded == 0) {
+			info = I18NConstants.DATABASE_COMPACTION_NOTHING;
+		} else {
+			Date date = new Date(PersistencyLayer.getKnowledgeBase().getHistoryManager().getRevision(upper).getDate());
+			info = I18NConstants.DATABASE_COMPACTION_TARGET__REVISION_DATE_DISCARDED.fill(Long.valueOf(upper), date,
+				Integer.valueOf(discarded));
+		}
+		return Resources.getInstance().getString(info);
+	}
+
+	/**
+	 * Counts what a compaction of the history before the given bound would change, without
 	 * changing anything.
 	 *
 	 * @param before
-	 *        The point in time before which the history would be discarded.
+	 *        The bound before which the history would be discarded, see
+	 *        {@link #compactionRevision(Object)}.
 	 * @return What a compaction would change. The numbers per table are written to the
 	 *         application log.
 	 *
-	 * @see HistoryCompactionOperation#analyze(long, Log)
+	 * @see HistoryCompactionOperation#analyzeRevisions(long, Log)
 	 */
 	@Label("Analyze a compaction of the history")
-	public static ResKey analyzeHistory(@Mandatory Date before) {
-		Report report = HistoryCompactionOperation.analyze(before.getTime(), log());
+	public static ResKey analyzeHistory(@Mandatory Object before) {
+		Report report = HistoryCompactionOperation.analyzeRevisions(resolveCompactionRevision(before), log());
 		return summary(I18NConstants.DATABASE_ANALYSIS__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED_DROPPED, report);
 	}
 
 	/**
-	 * Collapses all revisions committed before the given point in time into the newest revision
-	 * committed at or before that point in time, discarding the history before it irrevocably.
+	 * Collapses all revisions before the given bound into the {@link #compactionRevision(Object)
+	 * compaction revision}, discarding the history before it irrevocably.
 	 *
 	 * <p>
 	 * The running application keeps the discarded revisions in its caches until
@@ -159,21 +212,37 @@ public class DatabaseFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param before
-	 *        The point in time before which the history is discarded.
+	 *        The bound before which the history is discarded: a point in time, or the commit
+	 *        number of a revision.
 	 * @return What the compaction changed. The numbers per table are written to the application
 	 *         log.
 	 *
 	 * @throws TopLogicException
 	 *         If the compaction cannot run now, see {@link #checkMaintenance()}, or fails.
 	 *
-	 * @see HistoryCompactionOperation#compact(long, Log)
+	 * @see HistoryCompactionOperation#compactRevisions(long, Log)
 	 */
 	@Label("Compact the history")
-	public static ResKey compactHistory(@Mandatory Date before) {
-		Report report = HistoryCompactionOperation.compact(before.getTime(), log());
+	public static ResKey compactHistory(@Mandatory Object before) {
+		PersistencyMaintenance.requirePreconditions();
+		Report report = HistoryCompactionOperation.compactRevisions(resolveCompactionRevision(before), log());
 		return summary(
 			com.top_logic.knowledge.service.compact.I18NConstants.TASK_COMPACTION_DONE__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED_DROPPED,
 			report);
+	}
+
+	/**
+	 * The commit number of the revision a compaction before the given bound collapses into,
+	 * {@code 0} for none.
+	 */
+	private static long resolveCompactionRevision(Object before) {
+		if (before instanceof Date date) {
+			return HistoryCompactionOperation.compactionRevision(date.getTime());
+		}
+		if (before instanceof Number number) {
+			return HistoryCompactionOperation.compactionRevisionByNumber(number.longValue());
+		}
+		throw new TopLogicException(I18NConstants.ERROR_COMPACTION_BOUND);
 	}
 
 	/**

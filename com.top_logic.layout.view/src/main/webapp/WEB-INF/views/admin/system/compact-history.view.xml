@@ -3,8 +3,18 @@
 <!--
 	Dialog of the database view (opened from database.view.xml) compacting the history: all revisions
 	committed before a date are collapsed into the newest revision committed at or before that date,
-	the intermediate states are discarded irrevocably. The date is a value of the view (value-input on
-	the channel before, starting one year ago); no model object is involved. Both commands run as a
+	the intermediate states are discarded irrevocably. The bound is a value of the view; no model
+	object is involved. As in the revision monitor, the mandatory "Bound" selection chooses whether it
+	is a date (value-input on the channel before, starting one year ago) or a revision (channel
+	beforeRevision, starting with the revision that date resolves to): all revisions before the given
+	revision are collapsed into it, or into the newest existing one before it where an earlier
+	compaction discarded it. The options are internationalized texts on the modes channel, the
+	selection defaults to the first one. Switching converts the bound: a date into the revision it
+	collapses into, a revision into the time that revision was committed at. The input of the bound
+	not selected is hidden and ignored; the channel bound holds the one in effect. Below the input,
+	info (databaseCompactionInfo) names the revision the history is collapsed into, its date and the
+	number of revisions discarded, so that the effect of a bound is visible before anything runs.
+	Both commands run as a
 	background job on the job channel, which is bound to the job channel of the database view, and the
 	job-status shows what is being done while it runs and the totals at the end; the numbers per table
 	are written to the application log.
@@ -18,8 +28,32 @@
 -->
 <view>
 	<channels>
+		<derived-channel name="modes">
+			<expr><![CDATA[list(#("Date"@en, "Datum"@de), #("Revision"@en, "Revision"@de))]]></expr>
+		</derived-channel>
+		<channel name="modeInput"/>
+		<derived-channel name="mode"
+			expr="if($modeInput == null, $modes.firstElement(), $modeInput)"
+			inputs="modeInput, modes"
+			reverse="$value"
+		/>
+		<derived-channel name="byRevision"
+			expr="$mode == $modes.lastElement()"
+			inputs="mode, modes"
+		/>
 		<channel name="before"
 			init="databaseDefaultCompactionDate()"
+		/>
+		<channel name="beforeRevision"
+			init="databaseCompactionRevision(databaseDefaultCompactionDate())"
+		/>
+		<derived-channel name="bound"
+			expr="if($byRevision, $beforeRevision, $before)"
+			inputs="byRevision, before, beforeRevision"
+		/>
+		<derived-channel name="info"
+			expr="databaseCompactionInfo($bound)"
+			inputs="bound"
 		/>
 		<channel name="job"/>
 		<channel name="refresh"/>
@@ -39,27 +73,95 @@
 		>
 			<text>
 				<label>
-					<en>All revisions committed before the given date are collapsed into the newest revision committed at or before that date. The state of that revision and of every newer one is preserved, all intermediate states are discarded and cannot be restored; create a database backup first. The compaction needs an active maintenance window and, in a cluster, that this node is the only active one. Afterwards the persistency layer is restarted, which ends all sessions, this one included. The maintenance window stays active and has to be left manually. The analysis only counts what a compaction would change.</en>
-					<de>Alle vor dem angegebenen Datum festgeschriebenen Revisionen werden in die neueste bis zu diesem Datum festgeschriebene Revision zusammengefasst. Der Stand dieser und jeder neueren Revision bleibt erhalten, alle Zwischenstände werden verworfen und können nicht wiederhergestellt werden; legen Sie zuvor eine Sicherung der Datenbank an. Die Verdichtung erfordert einen aktiven Wartungsmodus und in einem Cluster, dass dieser Knoten der einzige aktive ist. Danach wird die Persistenzschicht neu gestartet, wodurch alle Sitzungen beendet werden, auch diese. Der Wartungsmodus bleibt aktiv und muss manuell beendet werden. Die Analyse zählt nur, was eine Verdichtung ändern würde.</de>
+					<en>All revisions committed before the given date or revision are collapsed into the newest revision committed at or before that date, or into the given revision. The state of that revision and of every newer one is preserved, all intermediate states are discarded and cannot be restored; create a database backup first. The compaction needs an active maintenance window and, in a cluster, that this node is the only active one. Afterwards the persistency layer is restarted, which ends all sessions, this one included. The maintenance window stays active and has to be left manually. The analysis only counts what a compaction would change.</en>
+					<de>Alle vor dem angegebenen Datum oder der angegebenen Revision festgeschriebenen Revisionen werden in die neueste bis zu diesem Datum festgeschriebene Revision bzw. in die angegebene Revision zusammengefasst. Der Stand dieser und jeder neueren Revision bleibt erhalten, alle Zwischenstände werden verworfen und können nicht wiederhergestellt werden; legen Sie zuvor eine Sicherung der Datenbank an. Die Verdichtung erfordert einen aktiven Wartungsmodus und in einem Cluster, dass dieser Knoten der einzige aktive ist. Danach wird die Persistenzschicht neu gestartet, wodurch alle Sitzungen beendet werden, auch diese. Der Wartungsmodus bleibt aktiv und muss manuell beendet werden. Die Analyse zählt nur, was eine Verdichtung ändern würde.</de>
 				</label>
 			</text>
 			<value-input
+				inputs="modes"
 				mandatory="true"
-				type="tl.core:DateTime"
-				value="before"
+				options="$modes"
+				value="mode"
 			>
 				<label>
-					<en>Discard history before</en>
-					<de>Historie verwerfen vor</de>
+					<en>Bound</en>
+					<de>Grenze</de>
 				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="segmented"
+				/>
+				<on-submit>
+					<if test="$byRevision">
+						<inputs>
+							<input channel="byRevision"/>
+						</inputs>
+						<then>
+							<execute-script
+								function="databaseCompactionRevision($before)"
+								inputs="before"
+							>
+								<with-result>
+									<write-channel name="beforeRevision"/>
+								</with-result>
+							</execute-script>
+						</then>
+						<else>
+							<execute-script inputs="beforeRevision, before">
+								<function><![CDATA[{
+	revision = databaseCompactionRevision($beforeRevision);
+	if($revision == null, $before, revisionForCommit($revision).get(`tl.core:Revision#date`));
+}]]></function>
+								<with-result>
+									<write-channel name="before"/>
+								</with-result>
+							</execute-script>
+						</else>
+					</if>
+				</on-submit>
 			</value-input>
+			<visible-if
+				expr="!$byRevision"
+				input="byRevision"
+			>
+				<value-input
+					mandatory="true"
+					type="tl.core:DateTime"
+					value="before"
+				>
+					<label>
+						<en>Discard history before</en>
+						<de>Historie verwerfen vor</de>
+					</label>
+				</value-input>
+			</visible-if>
+			<visible-if
+				expr="$byRevision"
+				input="byRevision"
+			>
+				<value-input
+					mandatory="true"
+					type="tl.core:Long"
+					value="beforeRevision"
+				>
+					<label>
+						<en>Discard history before revision</en>
+						<de>Historie verwerfen vor Revision</de>
+					</label>
+					<annotations>
+						<format>
+							<decimal pattern="0"/>
+						</format>
+					</annotations>
+				</value-input>
+			</visible-if>
+			<text input="info"/>
 			<job-status input="job"/>
 		</fields>
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					image="css:bi bi-search"
-					inputs="before, job as jobState"
+					inputs="bound, job as jobState"
 				>
 					<label>
 						<en>Analyze</en>
@@ -76,7 +178,7 @@
 						<function><![CDATA[{
 	$job.jobIndeterminate();
 	$job.jobMessage(#('Analyzing the history.'@en, 'Die Historie wird analysiert.'@de));
-	databaseAnalyzeHistory($before);
+	databaseAnalyzeHistory($bound);
 }]]></function>
 					</start-job>
 				</action>
@@ -84,7 +186,7 @@
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					image="css:bi bi-scissors"
-					inputs="before, job as jobState"
+					inputs="bound, job as jobState"
 				>
 					<label>
 						<en>Compact</en>
@@ -98,12 +200,12 @@
 						<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 					</executability>
 					<execute-script function="databaseCheckMaintenance()"/>
-					<confirm expr="#('Discard the history before {0} irrevocably?\n\nWhen the compaction has completed, the persistency layer is restarted and all sessions are ended, this one included.'@en, 'Die Historie vor {0} unwiderruflich verwerfen?\n\nNach Abschluss der Verdichtung wird die Persistenzschicht neu gestartet, und alle Sitzungen werden beendet, auch diese.'@de).fill($before)"/>
+					<confirm expr="#('{0}\nDiscard this history irrevocably?\n\nWhen the compaction has completed, the persistency layer is restarted and all sessions are ended, this one included.'@en, '{0}\nDiese Historie unwiderruflich verwerfen?\n\nNach Abschluss der Verdichtung wird die Persistenzschicht neu gestartet, und alle Sitzungen werden beendet, auch diese.'@de).fill(databaseCompactionInfo($bound))"/>
 					<start-job job="job">
 						<function><![CDATA[{
 	$job.jobIndeterminate();
 	$job.jobMessage(#('Compacting the history.'@en, 'Die Historie wird verdichtet.'@de));
-	databaseCompactHistory($before);
+	databaseCompactHistory($bound);
 }]]></function>
 						<with-result>
 							<execute-script function="now()">

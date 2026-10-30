@@ -15,6 +15,7 @@ import test.com.top_logic.TLTestSetup;
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.ReloadableManager.ReloadFailure;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.view.admin.system.ReloadOutcome;
 import com.top_logic.layout.view.admin.system.ReloadableFunctions;
 
@@ -59,20 +60,19 @@ public class TestReloadableFunctions extends TestCase {
 		super.tearDown();
 	}
 
-	public void testKeys() {
-		List<String> keys = ReloadableFunctions.keys();
-		assertTrue(keys.contains(COUNTING));
-		assertTrue(keys.contains(FAILING));
-		assertTrue(keys.contains(REFUSING));
-		assertFalse(keys.contains(UNKNOWN));
-		assertEquals(List.of(ReloadableManager.getInstance().getKnown()), keys);
+	public void testOfService() {
+		ResourcesModule.Module module = ResourcesModule.Module.INSTANCE;
+		assertTrue("The resources service is running in the test setup.", module.isActive());
+		String key = ReloadableFunctions.ofService(module);
+		assertNotNull("The resources service is a registered reloadable.", key);
+		assertSame(module.getImplementationInstance(), ReloadableManager.getInstance().get(key));
+
+		assertNull(ReloadableFunctions.ofService(null));
 	}
 
 	public void testDescribe() {
-		assertEquals("Description of " + COUNTING, ReloadableFunctions.description(COUNTING));
 		assertEquals(CountingReloadable.class.getSimpleName(), ReloadableFunctions.label(COUNTING));
 		assertNull(ReloadableFunctions.label(UNKNOWN));
-		assertNull(ReloadableFunctions.description(UNKNOWN));
 		assertNull(ReloadableFunctions.label(null));
 	}
 

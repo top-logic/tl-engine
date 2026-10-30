@@ -8,6 +8,7 @@ package com.top_logic.layout.view.admin.system;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.basic.util.ResKeyN;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -277,6 +278,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     mandatory target deleted.
 	 */
 	public static ResKeyN DATABASE_ANALYSIS__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED_DROPPED;
+
+	/**
+	 * @en The history is collapsed into revision {0} of {1}; {2} older revisions are discarded.
+	 */
+	public static ResKey3 DATABASE_COMPACTION_TARGET__REVISION_DATE_DISCARDED;
+
+	/**
+	 * @en There is no older revision to discard.
+	 */
+	public static ResKey DATABASE_COMPACTION_NOTHING;
+
+	/**
+	 * @en The history is to be compacted either before a point in time or before a revision.
+	 */
+	public static ResKey ERROR_COMPACTION_BOUND;
 
 	/**
 	 * @en No statement given.

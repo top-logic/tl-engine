@@ -31,7 +31,9 @@
 	"Rebuild index" and "Reindex types" (dialog reindex.view.xml) for the full-text indexing
 	service, "Rebuild security storage" for an access manager keeping a security storage. They run
 	as background jobs on the job channel, which the job-status below the notice displays; a command
-	taking job as input is disabled while a job runs.
+	taking job as input is disabled while a job runs. "Reload" is shown for a service whose running
+	instance is registered as Reloadable (reloadableOfService) and reloads it, as the Reload view
+	does for the entry of that service.
 	- Extension point: another module adds commands for its own kind of service with a same-path
 	overlay of this view, appending them to the toolbar of the panel "detail":
 	<panel config:ref="detail"><commands><generic-command inputs="module, services, job as
@@ -259,6 +261,39 @@
 						<notify expr="$result"/>
 					</with-result>
 				</start-job>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-journal-arrow-down"
+				inputs="module, services"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Reload</en>
+					<de>Neu laden</de>
+				</label>
+				<tooltip>
+					<en>Reads the configuration the service reloads on request again, without restarting it, e.g. the translations of the resource bundles.</en>
+					<de>Liest die Konfiguration, die der Dienst auf Anforderung neu lädt, erneut ein, ohne ihn neu zu starten, z. B. die Übersetzungen der Ressourcendateien.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="reloadableOfService($module) != null"/>
+				</executability>
+				<execute-script function="reloadableReload(list(reloadableOfService($module)))">
+					<with-result as="outcome">
+						<if test="reloadableFailed($outcome)">
+							<then>
+								<notify
+									display="dialog"
+									expr="reloadableReport($outcome)"
+									kind="error"
+								/>
+							</then>
+							<else>
+								<notify expr="reloadableReport($outcome)"/>
+							</else>
+						</if>
+					</with-result>
+				</execute-script>
 			</generic-command>
 		</commands>
 		<alert

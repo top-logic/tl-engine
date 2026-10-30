@@ -71,10 +71,10 @@ public class TestSqlFunctions extends BasicTestCase {
 
 		List<Row> rows = SqlFunctions.rows(result);
 		assertEquals(5, rows.size());
-		assertEquals(Long.valueOf(1), SqlFunctions.value(rows.get(0), columns.get(0)));
+		assertEquals(Double.valueOf(1), SqlFunctions.value(rows.get(0), columns.get(0)));
 		assertEquals("name1", SqlFunctions.value(rows.get(0), columns.get(1)));
 		assertEquals("1.50", SqlFunctions.value(rows.get(0), columns.get(2)));
-		assertEquals(Long.valueOf(5), SqlFunctions.value(rows.get(4), columns.get(0)));
+		assertEquals(Double.valueOf(5), SqlFunctions.value(rows.get(4), columns.get(0)));
 
 		assertNotNull(SqlFunctions.message(result));
 	}
@@ -147,7 +147,7 @@ public class TestSqlFunctions extends BasicTestCase {
 		assertEquals(2, history.size());
 		assertEquals("UPDATE X SET A = 1", SqlFunctions.historyStatement(history.get(0)));
 		assertEquals(SqlStatementKind.SIMULATION, SqlFunctions.historyKind(history.get(0)));
-		assertEquals(Integer.valueOf(2), SqlFunctions.historyNumber(history.get(0)));
+		assertEquals(Double.valueOf(2), SqlFunctions.historyNumber(history.get(0)));
 		assertEquals("SELECT 1", SqlFunctions.historyStatement(history.get(1)));
 
 		for (int n = 0; n < SqlFunctions.MAX_HISTORY; n++) {
@@ -165,8 +165,16 @@ public class TestSqlFunctions extends BasicTestCase {
 		assertEquals(2, history.size());
 		assertEquals("SELECT 1", SqlFunctions.historyStatement(history.get(0)));
 		assertEquals(SqlStatementKind.SIMULATION, SqlFunctions.historyKind(history.get(0)));
-		assertEquals(Integer.valueOf(3), SqlFunctions.historyNumber(history.get(0)));
+		assertEquals(Double.valueOf(3), SqlFunctions.historyNumber(history.get(0)));
 		assertEquals("SELECT 2", SqlFunctions.historyStatement(history.get(1)));
+	}
+
+	public void testText() {
+		assertEquals("1793297509597", SqlFunctions.text(Double.valueOf(1793297509597L)));
+		assertEquals("-3", SqlFunctions.text(Double.valueOf(-3)));
+		assertFalse(SqlFunctions.text(Double.valueOf(1.5)).equals("1"));
+		assertEquals("name1", SqlFunctions.text("name1"));
+		assertNull(SqlFunctions.text(null));
 	}
 
 	public void testTables() {

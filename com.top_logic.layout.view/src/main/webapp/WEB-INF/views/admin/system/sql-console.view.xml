@@ -18,7 +18,9 @@
 	failed command.
 	- Ctrl+Enter in the statement runs it as query. After FROM or JOIN, the statement input
 	suggests the names of the tables of the database (sqlTableSuggestions).
-	- The result table offers a search over its columns and an export of the displayed rows.
+	- The result table offers a search over its columns and an export of the displayed rows. Its
+	cells show whole numbers without grouping (sqlText), since they are keys, revisions and time
+	stamps as often as amounts.
 	- The history on the right lists the statements of this view, the newest first, each once: a
 	statement run again moves to the front. Activating one
 	puts it back into the input, the tooltip of a statement shows it in full. Clear history
@@ -338,6 +340,9 @@
 										<column-label><![CDATA[sqlColumnLabel($column)]]></column-label>
 										<column-type><![CDATA[sqlColumnType($column)]]></column-type>
 										<value><![CDATA[sqlValue($row, $column)]]></value>
+										<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression">
+											<label><![CDATA[sqlText($value)]]></label>
+										</display>
 									</dynamic-columns>
 								</columns>
 								<rows><![CDATA[sqlRows($result)]]></rows>

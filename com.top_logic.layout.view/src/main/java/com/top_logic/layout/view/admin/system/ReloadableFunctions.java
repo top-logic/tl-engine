@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.admin.system;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.ReloadableManager.ReloadFailure;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.label.I18NClassNameProvider;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
@@ -29,18 +29,18 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A {@link Reloadable} is identified by its key, the {@link Reloadable#getName() name} it is
- * registered under. {@link #keys()} lists the keys, the other functions describe or reload the
- * {@link Reloadable}s given by their keys, e.g. the rows of a table, and {@link #report(ReloadOutcome)}
- * tells the user what became of a reload, including why a {@link Reloadable} could not be
- * reloaded. A key no {@link Reloadable}
- * is registered under is described by nothing and cannot be reloaded.
+ * registered under. {@link #ofService(BasicRuntimeModule)} gives the key of a service that is a
+ * {@link Reloadable}, the other functions describe or reload the {@link Reloadable}s given by their
+ * keys, and {@link #report(ReloadOutcome)} tells the user what became of a reload, including why a
+ * {@link Reloadable} could not be reloaded. A key no {@link Reloadable} is registered under is
+ * described by nothing and cannot be reloaded.
  * </p>
  *
  * @implNote Every public static method here is a TL-Script function named by the
  *           {@link ScriptPrefix} of this class followed by the capitalized method name, so
- *           {@link #keys()} is called <code>reloadableKeys</code>. Reloading changes the state of
- *           the running application, which only an administrator may do from a script entered
- *           interactively.
+ *           {@link #reload(Collection)} is called <code>reloadableReload</code>. Reloading
+ *           changes the state of the running application, which only an administrator may do from
+ *           a script entered interactively.
  */
 @ScriptPrefix(ReloadableFunctions.PREFIX)
 @AdminOnly
@@ -53,15 +53,27 @@ public class ReloadableFunctions extends TLScriptFunctions {
 	public static final String LABEL_SEPARATOR = ", ";
 
 	/**
-	 * The keys of all registered {@link Reloadable}s.
+	 * The key of the {@link Reloadable} a service is.
 	 *
-	 * @return The keys in alphabetical order.
-	 *
-	 * @see ReloadableManager#getKnown()
+	 * @param module
+	 *        The module of the service.
+	 * @return The key the running instance of the service is registered under as
+	 *         {@link Reloadable}, <code>null</code> if the service is not running, is no
+	 *         {@link Reloadable} or is not registered as one.
 	 */
-	@Label("Keys of the reloadables")
-	public static List<String> keys() {
-		return Arrays.asList(manager().getKnown());
+	@Label("Key of the reloadable a service is")
+	public static String ofService(BasicRuntimeModule<?> module) {
+		if (module == null || !module.isActive()) {
+			return null;
+		}
+		if (!(module.getImplementationInstance() instanceof Reloadable reloadable)) {
+			return null;
+		}
+		String key = reloadable.getName();
+		if (StringServices.isEmpty(key) || !manager().isReloadableRegistered(reloadable)) {
+			return null;
+		}
+		return key;
 	}
 
 	/**
@@ -76,22 +88,6 @@ public class ReloadableFunctions extends TLScriptFunctions {
 	public static String label(String key) {
 		Reloadable reloadable = reloadable(key);
 		return reloadable == null ? null : I18NClassNameProvider.INSTANCE.getLabel(reloadable.getClass());
-	}
-
-	/**
-	 * What the {@link Reloadable} registered under the given key provides.
-	 *
-	 * @param key
-	 *        The key of the {@link Reloadable}.
-	 * @return The description the {@link Reloadable} gives of itself, <code>null</code> if none is
-	 *         registered under the given key or it gives no description.
-	 *
-	 * @see Reloadable#getDescription()
-	 */
-	@Label("Description of a reloadable")
-	public static String description(String key) {
-		Reloadable reloadable = reloadable(key);
-		return reloadable == null ? null : StringServices.nonEmpty(reloadable.getDescription());
 	}
 
 	/**

@@ -28,10 +28,12 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.SimpleDBExecutor;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.admin.system.SqlResult.Column;
 import com.top_logic.layout.view.admin.system.SqlResult.Row;
 import com.top_logic.layout.view.form.ScriptSuggestionSource;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -91,6 +93,11 @@ public class SqlFunctions extends TLScriptFunctions {
 	 * Prefix of the {@link #columnName(Column) name of a column}, followed by its position.
 	 */
 	private static final String COLUMN_NAME_PREFIX = "c";
+
+	/**
+	 * The greatest whole number a {@link Double} represents exactly, and with it every smaller one.
+	 */
+	private static final double MAX_EXACT_WHOLE_NUMBER = 1L << 53;
 
 	/**
 	 * Kinds of tables {@link #tables()} lists.
@@ -393,12 +400,54 @@ public class SqlFunctions extends TLScriptFunctions {
 	 *        A row of a query result.
 	 * @param column
 	 *        A column of the same result.
-	 * @return The value, <code>null</code> for an SQL <code>NULL</code>.
+	 * @return The value, <code>null</code> for an SQL <code>NULL</code>. A whole number is given
+	 *         as {@link Double}, as TL-Script represents every number.
 	 */
 	@SideEffectFree
 	@Label("Value of a result row")
 	public static Object value(Row row, Column column) {
-		return row == null || column == null ? null : row.value(column);
+		if (row == null || column == null) {
+			return null;
+		}
+		Object value = row.value(column);
+		if (value instanceof Long number) {
+			// TL-Script represents every number as Double.
+			return SearchExpression.toNumber(number.longValue());
+		}
+		return value;
+	}
+
+	/**
+	 * The text a cell of a query result shows for the given value.
+	 *
+	 * <p>
+	 * A whole number is written with its digits alone, since the columns of a query hold keys,
+	 * revisions and time stamps in milliseconds as often as amounts, and a grouped key is hard to
+	 * compare and to copy into the next statement. Every other value is written as its type writes
+	 * it.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value of a cell, see {@link #value(Row, Column)}.
+	 * @return The text, <code>null</code> for an SQL <code>NULL</code>.
+	 */
+	@SideEffectFree
+	@Label("Text of a value of a query result")
+	public static String text(Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof Double number && isWhole(number.doubleValue())) {
+			return Long.toString(number.longValue());
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(value);
+	}
+
+	/**
+	 * Whether the given number is a whole number a {@link Double} represents exactly.
+	 */
+	private static boolean isWhole(double number) {
+		return number == Math.rint(number) && Math.abs(number) <= MAX_EXACT_WHOLE_NUMBER;
 	}
 
 	/**
@@ -485,8 +534,8 @@ public class SqlFunctions extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Number of a statement in the history")
-	public static Integer historyNumber(SqlHistoryEntry entry) {
-		return entry == null ? null : Integer.valueOf(entry.number());
+	public static Double historyNumber(SqlHistoryEntry entry) {
+		return entry == null ? null : SearchExpression.toNumber(entry.number());
 	}
 
 	/**

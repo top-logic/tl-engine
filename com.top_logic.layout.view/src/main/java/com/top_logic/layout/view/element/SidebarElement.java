@@ -663,6 +663,30 @@ public class SidebarElement implements UIElement {
 		}
 	}
 
+	/**
+	 * Segment naming the {@link Config#getHeader() header} of the rail in the context its content is
+	 * built in.
+	 */
+	private static final String HEADER_SEGMENT = "sidebar-header";
+
+	/**
+	 * Segment naming the {@link Config#getHeaderCollapsed() collapsed header} of the rail in the
+	 * context its content is built in.
+	 */
+	private static final String HEADER_COLLAPSED_SEGMENT = "sidebar-header-collapsed";
+
+	/**
+	 * Segment naming the {@link Config#getFooter() footer} of the rail in the context its content is
+	 * built in.
+	 */
+	private static final String FOOTER_SEGMENT = "sidebar-footer";
+
+	/**
+	 * Segment naming the {@link Config#getFooterCollapsed() collapsed footer} of the rail in the
+	 * context its content is built in.
+	 */
+	private static final String FOOTER_COLLAPSED_SEGMENT = "sidebar-footer-collapsed";
+
 	private final List<SidebarItemElement> _items;
 
 	private final String _activeItem;
@@ -772,8 +796,10 @@ public class SidebarElement implements UIElement {
 			@Override
 			public ViewContext contentContext(ViewContext itemContext, String itemKey) {
 				// The content of an item is created only when the item is first selected, so the
-				// item's context must already say where that content will sit.
-				return itemContext.withScope(RevealPath.class, here.append(SidebarElement.this, itemKey));
+				// item's context must already say where that content will sit. Each item is a
+				// position of its own for slots, apart from the other items and the chrome of the rail.
+				return itemContext.withScope(RevealPath.class, here.append(SidebarElement.this, itemKey))
+					.withChildSlotPath(itemKey);
 			}
 
 			@Override
@@ -789,10 +815,10 @@ public class SidebarElement implements UIElement {
 			collapsed, groupStates,
 			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
 			(gid, exp) -> saveGroupState(key, gid, exp),
-			createChrome(_header, context, "sidebar-header"),
-			createChrome(_headerCollapsed, context, "sidebar-header-collapsed"),
-			createChrome(_footer, context, "sidebar-footer"),
-			createChrome(_footerCollapsed, context, "sidebar-footer-collapsed"));
+			createChrome(_header, context, HEADER_SEGMENT),
+			createChrome(_headerCollapsed, context, HEADER_COLLAPSED_SEGMENT),
+			createChrome(_footer, context, FOOTER_SEGMENT),
+			createChrome(_footerCollapsed, context, FOOTER_COLLAPSED_SEGMENT));
 
 		for (Consumer<ReactSidebarControl> binding : bindings) {
 			binding.accept(sidebar);
@@ -869,14 +895,15 @@ public class SidebarElement implements UIElement {
 	 * @param context
 	 *        The context the sidebar is built in.
 	 * @param segment
-	 *        Names this part of the rail in the context its content is built in.
+	 *        Names this part of the rail in the context its content is built in, both in the
+	 *        personalization key and in the slot path.
 	 * @return The control displaying that content, or {@code null} for nothing to display.
 	 */
 	private static ReactControl createChrome(List<UIElement> elements, ViewContext context, String segment) {
 		if (elements.isEmpty()) {
 			return null;
 		}
-		return ContentControls.toControl(elements, context.childContext(segment));
+		return ContentControls.toControl(elements, context.childContext(segment).withChildSlotPath(segment));
 	}
 
 	/**

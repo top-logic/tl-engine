@@ -181,10 +181,11 @@ A value whose control needs more room than a row offers - a multi-line text, a c
 
 - The mechanism: a cell's `FieldSpec` is `FieldSpec#isCompact()` (set by `FieldControlService.cellSpec`), and where its provider says `ReactFieldControlProvider#isLarge(FieldSpec)` (`FieldControlRegistry.TEXT` with more than one `setMultilineRows`), `FieldControlRegistry#createControl` builds a `ReactCompactFieldControl` instead of the control itself. No button is offered for an empty value or when the preview shows everything.
 - Columns of model attributes get it without further ado (`FieldControlService.createCellControl` / `createDisplayControl`).
-- A column built in Java - a `UIElement` assembling `DefaultColumn`s, like `LogLineTable` showing the stack trace of a log entry - gets it with a `CellContent.Raw` around the control over a non-editable `AbstractFieldModel` holding the value, keeping sort, filter and `searchText` on the plain value:
+- A column built in Java - a `UIElement` assembling `DefaultColumn`s, like `LogLineTable` showing the stack trace of a log entry - gets it with a `CellContent.Raw` around the control over a non-editable `AbstractFieldModel` holding the value, keeping sort, filter and `searchText` on the plain value. `FieldSpec#setPreformatted(boolean)` shows a text written for a fixed-width font - a stack trace, source, a log - as it is written: monospace, its lines not wrapped, with a button copying it (for a model attribute: `preformatted="true"` on its `<multi-line>` annotation):
 
   ```java
-  FieldSpec spec = FieldControlService.cellSpec(FieldSpec.of(String.class, label).setMultilineRows(20));
+  FieldSpec spec = FieldControlService.cellSpec(
+      FieldSpec.of(String.class, label).setMultilineRows(20).setPreformatted(true));
   new CellContent.Raw((CellControlFactory) ctx -> FieldControlRegistry.getInstance().createControl(ctx, spec, model, FieldControlRegistry.TEXT));
   ```
 

@@ -46,7 +46,8 @@ role (a live region). A text keeps the line breaks of its value: a `\n` in the v
 while runs of spaces collapse and the text wraps at the width available (`white-space: pre-line`). A
 text with `overflow="ellipsis"` and a text in a table cell stay on one line. Indentation collapses
 as well, so a multi-line value whose indentation matters (a stack trace, source code) is no
-`<text>`: it is shown as a read-only multi-line field, in a table cell by a one-line preview
+`<text>`: it is shown as a read-only multi-line field, preformatted (monospace, lines not wrapped)
+where it is written for a fixed-width font, in a table cell by a one-line preview
 opening the full value in a dialog, see
 [Long values in a cell](doc:view-layer/tables#long-values-in-a-cell).
 

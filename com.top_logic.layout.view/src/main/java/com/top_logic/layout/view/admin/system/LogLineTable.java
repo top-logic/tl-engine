@@ -71,8 +71,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The details of an entry, usually a stack trace of many lines, are shown in their cell by their
- * first line and a button opening the full details read-only in a dialog, keeping the line breaks
- * and the indentation of the trace. Sorting, filtering and searching the column use the full
+ * first line and a button opening the full details read-only in a dialog, preformatted: in a font of
+ * fixed width, with the line breaks and the indentation of the trace and without wrapping its
+ * lines, with a button copying them. Sorting, filtering and searching the column use the full
  * details text.
  * </p>
  *
@@ -214,8 +215,8 @@ public class LogLineTable implements UIElement {
 	}
 
 	/**
-	 * The cell displaying the details of an entry: a read-only text field of several rows, shown in
-	 * the cell by its first line and a button opening the full text in a dialog.
+	 * The cell displaying the details of an entry: a read-only preformatted text field of several
+	 * rows, shown in the cell by its first line and a button opening the full text in a dialog.
 	 */
 	private static CellContent detailsCell(String details) {
 		if (details == null || details.isEmpty()) {
@@ -229,8 +230,8 @@ public class LogLineTable implements UIElement {
 	 */
 	private static ReactControl detailsControl(ReactContext context, String details) {
 		String label = Resources.getInstance().getString(I18NConstants.LOG_COLUMN_DETAILS);
-		FieldSpec field =
-			FieldControlService.cellSpec(FieldSpec.of(String.class, label).setMultilineRows(DETAILS_ROWS));
+		FieldSpec field = FieldControlService.cellSpec(
+			FieldSpec.of(String.class, label).setMultilineRows(DETAILS_ROWS).setPreformatted(true));
 		AbstractFieldModel model = new AbstractFieldModel(details);
 		model.setEditable(false);
 		return FieldControlRegistry.getInstance().createControl(context, field, model, FieldControlRegistry.TEXT);

@@ -2754,6 +2754,21 @@ body[data-tl-state~="picking"] * {
   overflow-wrap: normal;
 }
 
+/* Mehrzeiliger Lesewert mit Aktion (etwa dem Kopierknopf): die Aktion steht oben am Ende in einer Spalte
+   für sich, neben dem Wert, der ihr Platz lässt — sie verdeckt keine Zeile, auch nicht, wenn der Wert
+   waagrecht rollt, und ist ohne Hover sichtbar, also auch auf Touch-Geräten. */
+.tl-field-value-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--tl-space-xs);
+}
+
+.tl-field-value-group__action,
+.tl-copy-button {
+  display: inline-flex;
+}
+
 /* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */
 a.tl-field-value {
   color: var(--tl-text-link);

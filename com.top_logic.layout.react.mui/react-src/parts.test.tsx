@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { ButtonPartProps, MenuTriggerPartProps } from 'tl-react-bridge';
@@ -111,6 +111,7 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: ProgressBarPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/ProgressBarPart');
     const { default: SpinnerPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/SpinnerPart');
     const { default: ListboxPart } = await import('../../com.top_logic.layout.react/react-src/controls/listbox/ListboxPart');
+    const { default: CopyButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/CopyButtonPart');
     // A chip draws its remove button with the part Button, a disclosure toggle its busy indicator
     // with the part Spinner, a field value of a color role its pill with the part Chip.
     const { registerPart } = await import('tl-react-bridge');
@@ -120,7 +121,7 @@ describe('the TopLogic drawing of the parts', () => {
     registerPart('Chip', ChipPart);
     return {
       ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart, ChipPart, BadgePart,
-      DividerPart, ProgressBarPart, SpinnerPart, ListboxPart,
+      DividerPart, ProgressBarPart, SpinnerPart, ListboxPart, CopyButtonPart,
     };
   }
 
@@ -585,6 +586,20 @@ describe('the TopLogic drawing of the parts', () => {
     expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', '\tb']);
   });
 
+  it('draws a multi-line field value with an action beside it, in a group carrying the class', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text={'a\nb'} multiline preformatted className="x"
+      action={<button type="button">Kopieren</button>} />);
+
+    const value = document.getElementById('v1')!;
+    const group = value.parentElement!;
+    expect(group.className).toBe('tl-field-value-group x');
+    expect(value.className).toBe('tl-field-value tl-field-value--multiline tl-field-value--preformatted tl-type-code');
+    expect(screen.getByRole('button', { name: 'Kopieren' }).parentElement!.className)
+      .toBe('tl-field-value-group__action');
+  });
+
   it('draws a field value with an icon ahead of its text', async () => {
     const { FieldValuePart } = await defaults();
 
@@ -897,5 +912,75 @@ describe('the TopLogic drawing of the parts', () => {
     // A press into the list leaves the focus in the element controlling it.
     expect(document.activeElement).toBe(anchor);
     anchor.remove();
+  });
+
+  describe('the copy button', () => {
+    /** Installs the given clipboard on the navigator, undefined for none. */
+    function installClipboard(clipboard: { writeText: (text: string) => Promise<void> } | undefined) {
+      Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
+    }
+
+    afterEach(() => {
+      installClipboard(undefined);
+      vi.useRealTimers();
+    });
+
+    it('copies its text, shows and announces the copy, and returns after a while', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      const writeText = vi.fn(() => Promise.resolve());
+      installClipboard({ writeText });
+      const { CopyButtonPart } = await defaults();
+
+      render(<CopyButtonPart text={'a\n\tb'} label="In die Zwischenablage kopieren" copiedLabel="Kopiert" />);
+
+      const button = screen.getByRole('button', { name: 'In die Zwischenablage kopieren' });
+      expect(button.querySelector('.fa-copy')).not.toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
+
+      await act(async () => {
+        fireEvent.click(button);
+      });
+
+      expect(writeText).toHaveBeenCalledWith('a\n\tb');
+      expect(button.querySelector('.fa-check')).not.toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('Kopiert');
+
+      act(() => {
+        vi.advanceTimersByTime(1500);
+      });
+
+      expect(button.querySelector('.fa-copy')).not.toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
+    });
+
+    it('stays as it is where the clipboard refuses the text', async () => {
+      const writeText = vi.fn(() => Promise.reject(new Error('denied')));
+      installClipboard({ writeText });
+      const { CopyButtonPart } = await defaults();
+
+      render(<CopyButtonPart text="a" label="Kopieren" copiedLabel="Kopiert" />);
+      const button = screen.getByRole('button', { name: 'Kopieren' });
+      await act(async () => {
+        fireEvent.click(button);
+      });
+
+      expect(writeText).toHaveBeenCalledWith('a');
+      expect(button.querySelector('.fa-copy')).not.toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
+    });
+
+    it('stays as it is where there is no clipboard', async () => {
+      installClipboard(undefined);
+      const { CopyButtonPart } = await defaults();
+
+      render(<CopyButtonPart text="a" label="Kopieren" copiedLabel="Kopiert" />);
+      const button = screen.getByRole('button', { name: 'Kopieren' });
+      await act(async () => {
+        fireEvent.click(button);
+      });
+
+      expect(button.querySelector('.fa-copy')).not.toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
+    });
   });
 });

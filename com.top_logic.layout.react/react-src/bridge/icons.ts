@@ -29,6 +29,12 @@ export const ICON_REMOVE = 'css:fa-solid fa-xmark';
 /** Clears an input (search, select). */
 export const ICON_CLEAR = 'css:fa-solid fa-xmark';
 
+/** Copies a text to the clipboard. */
+export const ICON_COPY = 'css:fa-regular fa-copy';
+
+/** Tells that a text was copied to the clipboard a moment ago. */
+export const ICON_COPIED = 'css:fa-solid fa-check';
+
 /** Cancels a form without applying it. */
 export const ICON_CANCEL = 'css:fa-solid fa-xmark';
 

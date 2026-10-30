@@ -53,18 +53,20 @@ All names and props are typed: `replacePart('Checkbox', C)` accepts only a compo
 | `DisclosureToggle` | `DisclosureTogglePartProps` | the chevron showing or hiding content below it or toward the end of the line | form groups, nodes of a tree, rows of a tree table, the sidebar |
 | `Checkbox` | `CheckboxPartProps` | a box that is ticked, or a switch | `TLCheckbox`, choice groups, the selection column of a table, the column selection |
 | `TextInput` | `TextInputPartProps` | a text box, single-line (text, password, number, search, …) with optional icon and end action, or multi-line; a combobox (`role`) when it offers suggestions | `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, the search field (`SearchField`) of a table and of its column selection, the name of a filter to save, the filters of a dropdown and of the icon and color popups |
-| `FieldValue` | `FieldValuePartProps` | the one read-only value, as text or link, a value of a color role as a pill (part `Chip`) within it | every text, password, number, select, date and slider field that is not editable; the chosen values of a choice field (`OptionValues`); the object in a table cell (`TLResourceCell`) |
+| `FieldValue` | `FieldValuePartProps` | the one read-only value, as text or link, a value of a color role as a pill (part `Chip`) within it; a multi-line value, optionally preformatted, with an optional action beside it | every text, password, number, select, date and slider field that is not editable; the chosen values of a choice field (`OptionValues`); the object in a table cell (`TLResourceCell`) |
 | `Chip` | `ChipPartProps` | a compact value: with a color role, a toggle, removable, reorderable by a handle, or running an action | the toggles of `TLOptionChips`, the chosen values of a dropdown, the named filters of a table, the files of a file chip field, the options of a color role in a list, read-only values of a color role (inside `FieldValue`), texts drawn as a pill |
 | `Badge` | `BadgePartProps` | a small marker carrying a count | the counts of the sidebar and the bottom bar |
 | `Divider` | `DividerPartProps` | a line between content, horizontal or vertical | between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
 | `ProgressBar` | `ProgressBarPartProps` | a determinate or indeterminate bar with an optional label naming it, or named by another element | `TLProgress`, the status of a job, the loading options of a dropdown, the loading children of a tree node |
 | `Spinner` | `SpinnerPartProps` | a turning ring: small in place of an icon, or a busy indicator of its own | the icon popup loading its icons |
 | `Listbox` | `ListboxPartProps` | a list of entries floating at an anchor element, one of them active, from which the user picks one; it never takes the focus, the element controlling it names the active entry by `aria-activedescendant` | the suggestions under a text field offering them (`TLTextInput`, see `useSuggestions` of `tl-react-bridge`) |
+| `CopyButton` | `CopyButtonPartProps` | a small button copying a text to the clipboard, showing a check mark for a moment after the copy and announcing it (`role="status"`); the copy is `useCopyToClipboard` of `tl-react-bridge`, which ignores an unavailable or refusing clipboard | the read-only value of a preformatted multi-line text (`TLTextInput`, as `action` of `FieldValue`) |
 
 A part may draw another part through `usePart`: the `FieldValue` of a color role holds a `Chip`, a
 removable `Chip` draws its remove button with the `Button`, the `TextInput` takes a `Button` as its
-end action. A replacement of the inner part then appears inside the outer one, whichever of them is
-replaced.
+end action, a multi-line `FieldValue` an action at its top end (the `CopyButton`), in a column of
+its own so that it covers no line. A replacement of the inner part then appears inside the outer
+one, whichever of them is replaced.
 
 The shared component `OptionValues` of `tl-react-bridge` shows the chosen values of a choice field
 that is not editable with the part `FieldValue`; a replacement of a choice control uses it to show

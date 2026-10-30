@@ -8,7 +8,7 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
 // - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
-// of a field, a chip, a badge, a divider, a progress bar, a spinner, a list to pick from. A part has a typed props contract and no server state: the control
+// of a field, a chip, a badge, a divider, a progress bar, a spinner, a list to pick from, a button copying a text. A part has a typed props contract and no server state: the control
 // maps its state to the props of the part, sends its commands and handles keyboard bindings and
 // navigation, and the part only draws. The controls bundle registers a default for every part (registerPart); a customer
 // component library replaces a part (replacePart) and so changes how the part looks wherever a
@@ -600,6 +600,13 @@ export interface FieldValuePartProps extends PartAttributes {
   colorRole?: ColorRole;
 
   /**
+   * The action offered for a multi-line value, e.g. the part `CopyButton` copying it. It stands at
+   * the top end of the value, beside the text, which keeps room for it, so that it never covers a
+   * line. Absent: none. Ignored for a single-line value.
+   */
+  action?: React.ReactNode;
+
+  /**
    * Classes added to the drawn element. They mark the part and carry no layout: the element
    * around the part places it.
    */
@@ -909,6 +916,35 @@ export interface ListboxPartProps extends PartAttributes {
 }
 
 /**
+ * The props of the part {@link PartProps.CopyButton}: a button copying a text to the clipboard, e.g.
+ * the action of a read-only value (see {@link FieldValuePartProps.action}).
+ *
+ * <p>Every implementation guarantees:</p>
+ * <ul>
+ * <li>The button is named by {@link label}, which also is its tooltip.</li>
+ * <li>Pressing it copies {@link text} to the clipboard (see `useCopyToClipboard` of
+ *     'tl-react-bridge'). After a successful copy, the button shows for a short while that it did,
+ *     and {@link copiedLabel} is announced politely (`role="status"`). Where the clipboard is
+ *     unavailable or refuses the text, nothing changes and no error surfaces.</li>
+ * </ul>
+ */
+export interface CopyButtonPartProps extends PartAttributes {
+  /** The text copied. */
+  text: string;
+
+  /** The name of the button, e.g. "Copy to clipboard". */
+  label: string;
+
+  /** What is announced after a successful copy, e.g. "Copied". */
+  copiedLabel: string;
+
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout.
+   */
+  className?: string;
+}
+
+/**
  * The parts of the React UI by name, each with its props. The name is what {@link registerPart},
  * {@link replacePart} and {@link usePart} take; the props are the contract every implementation of
  * the part fulfils.
@@ -949,6 +985,9 @@ export interface PartProps {
 
   /** A list of entries floating at an element, one to pick: {@link ListboxPartProps}. */
   Listbox: ListboxPartProps;
+
+  /** A button copying a text to the clipboard: {@link CopyButtonPartProps}. */
+  CopyButton: CopyButtonPartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

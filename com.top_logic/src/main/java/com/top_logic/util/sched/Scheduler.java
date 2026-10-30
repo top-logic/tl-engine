@@ -2587,7 +2587,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			return null;
 		}
 		TaskLogWrapper log = (TaskLogWrapper) task.getLog();
-		if (!log.isClusterLockSet()) {
+		if (log == null || !log.isClusterLockSet()) {
 			return null;
 		}
 		return log.getClusterLockName() + " (" + log.getClusterLockId() + ")";
@@ -2613,7 +2613,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			return I18NConstants.ERROR_CLUSTER_LOCK_TASK_NOT_PERSISTENT__TASK.fill(task.getName());
 		}
 		TaskLogWrapper log = (TaskLogWrapper) task.getLog();
-		if (!log.isClusterLockSet()) {
+		if (log == null || !log.isClusterLockSet()) {
 			return I18NConstants.ERROR_CLUSTER_LOCK_NOT_SET__TASK.fill(task.getName());
 		}
 		if (log.hasClusterLock() && isRunningHere(task)) {
@@ -2712,12 +2712,26 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		return HTMLFormatter.getInstance().formatDate(start);
 	}
 
+	/**
+	 * The {@link TaskLog#getState() state} of the given {@link Task}.
+	 *
+	 * <p>
+	 * A {@link Task} has no {@link Task#getLog() log} until it is {@link Task#attachTo(Scheduler)
+	 * attached}, which the dispatch thread does when it starts. Such a {@link Task} cannot run and
+	 * is {@link TaskState#INACTIVE}.
+	 * </p>
+	 */
+	public static TaskState getState(Task task) {
+		TaskLog log = task.getLog();
+		return log == null ? TaskState.INACTIVE : log.getState();
+	}
+
 	private void notifyUpdate(Task task) {
 		getTaskUpdateQueue().add(buildNotification(task));
 	}
 
 	private TaskListenerNotification buildNotification(Task task) {
-		TaskState state = task.getLog().getState();
+		TaskState state = getState(task);
 		return new TaskListenerNotification(task, state, state, null);
 	}
 

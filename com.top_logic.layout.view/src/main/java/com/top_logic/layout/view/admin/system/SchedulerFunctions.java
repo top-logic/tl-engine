@@ -29,6 +29,7 @@ import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskState;
 import com.top_logic.util.sched.task.composite.CompositeTask;
+import com.top_logic.util.sched.task.log.TaskLog;
 import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResultWrapper;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
@@ -265,7 +266,11 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	}
 
 	private static TaskResult lastResultOf(Task task) {
-		return task == null ? null : task.getLog().getLastResult();
+		if (task == null) {
+			return null;
+		}
+		TaskLog log = task.getLog();
+		return log == null ? null : log.getLastResult();
 	}
 
 	/**
@@ -281,7 +286,7 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	@Label("Whether a scheduler task is running")
 	@SideEffectFree
 	public static boolean running(Task task) {
-		return task != null && task.getLog().getState() == TaskState.RUNNING;
+		return task != null && Scheduler.getState(task) == TaskState.RUNNING;
 	}
 
 	/**
@@ -297,7 +302,7 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	@Label("Execution state of a scheduler task")
 	@SideEffectFree
 	public static String execution(Task task) {
-		return task == null ? null : Resources.getInstance().getString(task.getLog().getState().getMessageI18N());
+		return task == null ? null : Resources.getInstance().getString(Scheduler.getState(task).getMessageI18N());
 	}
 
 	/**
@@ -435,10 +440,14 @@ public class SchedulerFunctions extends TLScriptFunctions {
 	@Label("Results of a scheduler task")
 	@SideEffectFree
 	public static List<TaskResult> results(Task task) {
-		if (task == null || task.getLog() == null) {
+		if (task == null) {
 			return List.of();
 		}
-		return task.getLog().getResults().stream()
+		TaskLog log = task.getLog();
+		if (log == null) {
+			return List.of();
+		}
+		return log.getResults().stream()
 			.filter(SchedulerFunctions::valid)
 			.sorted(Comparator.comparing(TaskResult::getStartDate,
 				Comparator.nullsLast(Comparator.<Date> reverseOrder())))

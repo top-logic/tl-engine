@@ -22,10 +22,9 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.GroupItem;
-import com.top_logic.layout.react.control.sidebar.HeaderItem;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
-import com.top_logic.layout.react.control.sidebar.SeparatorItem;
+import com.top_logic.layout.react.control.sidebar.SectionItem;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ChildGroup;
@@ -42,11 +41,11 @@ import com.top_logic.layout.view.navigation.MountStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
 
 /**
- * Tests the items a {@code <sidebar>} offers: the captions, groups, navigation items and command
+ * Tests the items a {@code <sidebar>} offers: the sections, groups, navigation items and command
  * items it is written with, and what each of them reports to the client.
  *
  * <p>
- * A group gathers items without becoming a place of its own: what a navigation item inside it leads
+ * A section or group gathers items without becoming a place of its own: what a navigation item inside it leads
  * to is displayed where the sidebar displays everything, so the way there names the sidebar and the
  * item, and nothing in between. What an item shows, on the other hand, follows the application
  * while the sidebar stands: a badge follows the channel it displays, and a command item follows the
@@ -105,8 +104,14 @@ public class TestSidebarElement extends BasicTestCase {
 	/** The wire name of the unfolded state of a group. */
 	private static final String EXPANDED = "expanded";
 
-	/** The wire name of the items a group gathers. */
+	/** The wire name of the items a group or section gathers. */
 	private static final String CHILDREN = "children";
+
+	/** The wire name of the heading of a section. */
+	private static final String LABEL = "label";
+
+	/** The wire name of the icon of a section's heading. */
+	private static final String ICON = "icon";
 
 	private ViewChannel _count;
 
@@ -135,8 +140,9 @@ public class TestSidebarElement extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that the way to a view a navigation item inside a group leads to names the sidebar and
-	 * the item alone: a group gathers items, it does not display anything itself.
+	 * Tests that the way to a view a navigation item inside a section and a group leads to names the
+	 * sidebar and the item alone: sections and groups gather items, they do not display anything
+	 * themselves.
 	 */
 	public void testAGroupAddsNoStepOnTheWay() {
 		ViewMounts mounts = ViewMounts.scan(FIXTURE, new FixtureViews(TestSidebarElement.class));
@@ -146,7 +152,7 @@ public class TestSidebarElement extends BasicTestCase {
 
 		List<MountStep> steps = paths.get(0).steps();
 		assertEquals("Only the sidebar chooses what it displays: " + steps, 1, steps.size());
-		assertEquals("The item is addressed at the sidebar, not at the group it stands in.",
+		assertEquals("The item is addressed at the sidebar, not at the section or group it stands in.",
 			SidebarElement.class, steps.get(0).container().getClass());
 		assertEquals("inner", steps.get(0).key());
 	}
@@ -158,11 +164,17 @@ public class TestSidebarElement extends BasicTestCase {
 	public void testTheItemsReachTheClient() {
 		List<Map<String, Object>> items = items(sidebar(FIXTURE));
 
-		assertEquals("Caption, group, navigation item, separator and two command items: " + items,
-			6, items.size());
-		assertItem(items.get(0), HeaderItem.TYPE_HEADER, "section");
+		assertEquals("Section, navigation item, empty section and two command items: " + items,
+			5, items.size());
 
-		Map<String, Object> group = items.get(1);
+		Map<String, Object> section = items.get(0);
+		assertItem(section, SectionItem.TYPE_SECTION, "section");
+		assertEquals("The section is headed by its label.", "Section", section.get(LABEL));
+		assertEquals("css:bi bi-star", section.get(ICON));
+
+		List<Map<String, Object>> sectionItems = children(section);
+		assertEquals("The section holds the group written inside it: " + sectionItems, 1, sectionItems.size());
+		Map<String, Object> group = sectionItems.get(0);
 		assertItem(group, GroupItem.TYPE_GROUP, "g");
 		assertEquals("The group is written folded away.", Boolean.FALSE, group.get(EXPANDED));
 
@@ -170,16 +182,27 @@ public class TestSidebarElement extends BasicTestCase {
 		assertEquals("The group gathers the two items written inside it: " + children, 2, children.size());
 		assertItem(children.get(0), NavigationItem.TYPE_NAV, "inner");
 		assertNull("A channel holding nothing is worth no badge.", children.get(0).get(BADGE));
-		assertItem(children.get(1), HeaderItem.TYPE_HEADER, "innerSection");
 
-		Map<String, Object> top = items.get(2);
+		Map<String, Object> innerSection = children.get(1);
+		assertItem(innerSection, SectionItem.TYPE_SECTION, "innerSection");
+		assertFalse("A section written without label has no heading: " + innerSection,
+			innerSection.containsKey(LABEL));
+		assertFalse("A section written without icon has none: " + innerSection, innerSection.containsKey(ICON));
+		List<Map<String, Object>> innerItems = children(innerSection);
+		assertEquals(1, innerItems.size());
+		assertItem(innerItems.get(0), NavigationItem.TYPE_NAV, "innerItem");
+
+		Map<String, Object> top = items.get(1);
 		assertItem(top, NavigationItem.TYPE_NAV, "top");
 		assertEquals("The item is written as one the sidebar does not display.",
 			Boolean.TRUE, top.get(HIDDEN));
 
-		assertEquals(SeparatorItem.TYPE_SEPARATOR, items.get(3).get(TYPE));
-		assertItem(items.get(4), CommandItem.TYPE_COMMAND, "cmdHidden");
-		assertItem(items.get(5), CommandItem.TYPE_COMMAND, "cmdDisabled");
+		Map<String, Object> empty = items.get(2);
+		assertItem(empty, SectionItem.TYPE_SECTION, "empty");
+		assertEquals("Whether a section is drawn is the client's decision, from the items it holds.",
+			List.of(), children(empty));
+		assertItem(items.get(3), CommandItem.TYPE_COMMAND, "cmdHidden");
+		assertItem(items.get(4), CommandItem.TYPE_COMMAND, "cmdDisabled");
 	}
 
 	/**
@@ -308,7 +331,7 @@ public class TestSidebarElement extends BasicTestCase {
 	}
 
 	/**
-	 * The state of the item with the given id, searched in the groups as well.
+	 * The state of the item with the given id, searched in the sections and groups as well.
 	 */
 	private static Map<String, Object> item(ReactSidebarControl sidebar, String id) {
 		Map<String, Object> found = find(items(sidebar), id);
@@ -323,7 +346,7 @@ public class TestSidebarElement extends BasicTestCase {
 			if (id.equals(item.get(ID))) {
 				return item;
 			}
-			if (GroupItem.TYPE_GROUP.equals(item.get(TYPE))) {
+			if (item.containsKey(CHILDREN)) {
 				Map<String, Object> found = find(children(item), id);
 				if (found != null) {
 					return found;

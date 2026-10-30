@@ -213,6 +213,44 @@ public class TestWindowModelEventsOfEndedSession extends BasicTestCase {
 	}
 
 	/**
+	 * The windows of a session whose ID changes by a login for the whole session are not reloaded,
+	 * keep following the model, and the session is found by its new ID.
+	 */
+	public void testSessionIdChangeByLoginOfSession() throws Exception {
+		Person guest = createPerson();
+		Person user = createPerson();
+		InvocationContext invocation = loginInvocation(guest);
+		HttpServletRequest request = invocation.getRequest();
+		HttpSession session = request.getSession(false);
+		String oldId = session.getId();
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		List<ModelChangeEvent> events = observe(registry);
+		WindowEntry entry = registry.getWindow(WINDOW);
+		int reloadsBefore = entry.getQueue().pendingEventCount();
+
+		ThreadContext.inSystemContext(TestWindowModelEventsOfEndedSession.class,
+			() -> SessionService.getInstance().loginUser(request, invocation.getResponse(), user));
+		String newId = session.getId();
+		assertNotEquals(oldId, newId);
+		assertSame("The session must be kept.", session, request.getSession(false));
+		// The test container does not report the change of the ID to its listeners; the change is
+		// reported as a servlet container does.
+		new SessionIdChangeListener().sessionIdChanged(new HttpSessionEvent(session), oldId);
+
+		assertEquals("The end of the previous login record must not reload the windows.", reloadsBefore,
+			entry.getQueue().pendingEventCount());
+		createPerson();
+		registry.synthesizeModelEvents(WINDOW);
+		assertFalse("The windows must keep following the model.", events.isEmpty());
+
+		ReactWindowRegistry.reloadWindowsOfSession(newId);
+		assertEquals("The windows must be reached by the new ID.", reloadsBefore + 1,
+			entry.getQueue().pendingEventCount());
+
+		SessionService.getInstance().terminateSession(newId);
+	}
+
+	/**
 	 * Asserts that the given window, observed by the given events, receives the events of a commit,
 	 * and forgets them afterwards.
 	 */

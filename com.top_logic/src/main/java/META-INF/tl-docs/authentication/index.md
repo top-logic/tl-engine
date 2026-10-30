@@ -155,7 +155,8 @@ A `LoginMethod` answers:
   external login applies to that window only, like the password login: the servlet finds the
   window's sub-session by `ExternalAuthenticationServlet.WINDOW_PARAM` and calls
   `SessionService.loginUserInWindow`. Without the parameter, or for a window the session does not
-  know, the whole session is logged in (`SessionService.loginUser`).
+  know, the whole session is logged in (`SessionService.loginUser`): an existing HTTP session is
+  kept and only its ID is changed, all its windows get the user and show it on their next reload.
 - `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
   the running session once more, or `null` when the method cannot. pac4j answers it only for a
   session its own client established.

@@ -5,9 +5,6 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
-					<module key="com.top_logic.layout.react.ReactComponentRegistry$Module"
-						value="true"
-					/>
 					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
 						value="true"
 					/>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the model editor (opened from the Instances tab of model-editor.view.xml) creating the
+	objects of an XML file written by "Export instances". The uploaded file is a value of the view
+	(value-input of type tl.core:Binary on the channel file). The type channel holds the class selected
+	in the editor, which is the context of the import (instanceImport). After the import has been
+	committed, the reload channel bound to the editor is bumped, so the instance table reads its rows
+	again, and the dialog closes. An error of the import rolls the transaction back and is reported.
+-->
+<view>
+	<channels>
+		<channel name="type"/>
+		<channel name="file"/>
+		<channel name="reload"/>
+	</channels>
+	<window
+		resizable="false"
+		width="560px"
+	>
+		<title>
+			<en>Import instances</en>
+			<de>Instanzen importieren</de>
+		</title>
+		<fields
+			label-position="top"
+			max-columns="1"
+			with-inset="true"
+		>
+			<text>
+				<label>
+					<en>Creates the objects of an XML file written by "Export instances", together with the objects they contain.</en>
+					<de>Legt die Objekte einer mit "Instanzen exportieren" geschriebenen XML-Datei an, zusammen mit den Objekten, die sie enthalten.</de>
+				</label>
+			</text>
+			<value-input
+				mandatory="true"
+				type="tl.core:Binary"
+				value="file"
+			>
+				<annotations>
+					<accepted-types value="*.xml"/>
+				</annotations>
+				<label>
+					<en>File</en>
+					<de>Datei</de>
+				</label>
+			</value-input>
+		</fields>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-check-lg"
+					inputs="file, type"
+				>
+					<label>
+						<en>Import</en>
+						<de>Importieren</de>
+					</label>
+					<executability>
+						<disabled-if expr="if($file == null, #('Upload a file first.'@en, 'Laden Sie zuerst eine Datei hoch.'@de), null)"/>
+					</executability>
+					<with-transaction>
+						<commitMessage>
+							<en>Imported instances.</en>
+							<de>Instanzen importiert.</de>
+						</commitMessage>
+						<execute-script function="instanceImport($file, false, $type)"/>
+						<with-result>
+							<execute-script function="now()">
+								<with-result>
+									<write-channel name="reload"/>
+								</with-result>
+							</execute-script>
+							<close-dialog/>
+						</with-result>
+					</with-transaction>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

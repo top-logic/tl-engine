@@ -1,11 +1,11 @@
 ---
-description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), the edit-operation of a <form>, and how fields, columns, form saves and option lists follow the Read / Write rights of an attribute (ModelAccessPolicy.onAttribute, BufferSave, isAllowedInitial for drafts).
+description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group> and <section>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), the edit-operation of a <form>, and how fields, columns, form saves and option lists follow the Read / Write rights of an attribute (ModelAccessPolicy.onAttribute, BufferSave, isAllowedInitial for drafts).
 order: 75
 ---
 
 # Access control of UI units
 
-A navigation item, a sidebar group, a tab of a `<tab-bar>`, a section of an `<accordion>` and a tile
+A navigation item, a sidebar group or section, a tab of a `<tab-bar>`, a section of an `<accordion>` and a tile
 of a `<dashboard>` take an `<access-control>`. It states **which operation** the user needs **on which
 object** to see the content of the unit. It has no grants of its own: the decision is made by the model
 access rights, i.e. the grants of the `<security-config>` of the `SecurityConfigurationService` (see
@@ -44,7 +44,7 @@ The unit is displayed as the check decides for the current user (`UnitAccess`, m
   it) on the `type`, its specializations or, for a type with an access parent, the parent types; or the
   user is restricted. Without `object`, a refusal on the security root hides the unit as well. A hidden
   unit is not built at all: the sidebar shows no entry, the tab bar no tab, the dashboard no tile, and
-  a hidden group withholds every item in it.
+  a hidden sidebar group or section withholds every item in it.
 - **Empty** - the expression yields `null` or an empty collection (e.g. nothing is selected): the unit
   is shown without content.
 - **No access** - the operation is refused on a checked object, or a checked value is no object of the
@@ -56,7 +56,7 @@ The unit is displayed as the check decides for the current user (`UnitAccess`, m
 The decision follows the inputs: it is made again when an input channel takes a new value, and when an
 object an input holds is changed. Content that is no longer allowed is retired after the channel
 notification has unwound (`ContentControls.retire`); a content allowed again is built anew. A
-`<group>` with an `<access-control>` applies its check to the content of every `<nav-item>` in it, in
+sidebar `<group>` or `<section>` with an `<access-control>` applies its check to the content of every `<nav-item>` in it, in
 addition to the check of the item itself.
 
 ## Hiding a denied unit
@@ -71,7 +71,7 @@ project. The container neither removes nor rebuilds the unit, it only does not d
   selected (the next one, the previous one at the end of the strip). A tab shown again is not
   selected again: the selection the user made in the meantime stays;
 - an accordion section is left out, header included, keeping its expansion;
-- a sidebar entry (a `<nav-item>` or a `<group>` with all its items) is left out. An open navigation
+- a sidebar entry (a `<nav-item>`, or a `<group>` or `<section>` with all its items) is left out. An open navigation
   item stays open: the user navigated there, so its content shows the "no access" placeholder
   rather than a blank page.
 

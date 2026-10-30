@@ -5,14 +5,13 @@
  */
 package com.top_logic.layout.react.control.sidebar;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * A sidebar item that contains a collapsible group of child items.
  */
-public class GroupItem extends SidebarItem {
+public class GroupItem extends ContainerItem {
 
 	/** Type discriminator for group items. */
 	public static final String TYPE_GROUP = "group";
@@ -20,14 +19,9 @@ public class GroupItem extends SidebarItem {
 	/** JSON key for the expanded state. */
 	static final String EXPANDED = "expanded";
 
-	/** JSON key for the children list. */
-	static final String CHILDREN = "children";
-
 	private final String _label;
 
 	private final String _icon;
-
-	private final List<SidebarItem> _children;
 
 	private final boolean _initiallyExpanded;
 
@@ -46,10 +40,9 @@ public class GroupItem extends SidebarItem {
 	 *        Whether the group is expanded by default.
 	 */
 	public GroupItem(String id, String label, String icon, List<SidebarItem> children, boolean initiallyExpanded) {
-		super(id);
+		super(id, children);
 		_label = label;
 		_icon = icon;
-		_children = new ArrayList<>(children);
 		_initiallyExpanded = initiallyExpanded;
 	}
 
@@ -65,13 +58,6 @@ public class GroupItem extends SidebarItem {
 	 */
 	public String getIcon() {
 		return _icon;
-	}
-
-	/**
-	 * The child items.
-	 */
-	public List<SidebarItem> getChildren() {
-		return _children;
 	}
 
 	/**
@@ -94,11 +80,6 @@ public class GroupItem extends SidebarItem {
 			map.put(ICON, _icon);
 		}
 		map.put(EXPANDED, Boolean.valueOf(_initiallyExpanded));
-		List<Map<String, Object>> childMaps = new ArrayList<>();
-		for (SidebarItem child : _children) {
-			childMaps.add(child.toStateMap());
-		}
-		map.put(CHILDREN, childMaps);
 		return map;
 	}
 

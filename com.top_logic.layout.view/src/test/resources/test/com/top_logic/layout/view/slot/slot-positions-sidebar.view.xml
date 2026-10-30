@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<sidebar active-item="first">
+		<items>
+			<nav-item id="first">
+				<slot name="item-content"/>
+				<slot-content to="item-content">
+					<panel title="First"/>
+				</slot-content>
+				<label>
+					<en>First</en>
+				</label>
+			</nav-item>
+			<nav-item id="second">
+				<slot name="item-content"/>
+				<slot-content to="item-content">
+					<panel title="Second"/>
+				</slot-content>
+				<label>
+					<en>Second</en>
+				</label>
+			</nav-item>
+		</items>
+		<header>
+			<slot name="item-content"/>
+			<slot-content to="item-content">
+				<panel title="Header"/>
+			</slot-content>
+		</header>
+	</sidebar>
+</view>

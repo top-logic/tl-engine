@@ -77,6 +77,12 @@ public class LoginAction implements ViewAction {
 	/** Name of the transient model type holding the change-password form input. */
 	public static final String PASSWORD_CHANGE_TYPE = "tl.login:PasswordChange";
 
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the newly chosen password. */
+	public static final String NEW_PASSWORD_ATTR = "newPassword";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the repetition of the new password. */
+	public static final String NEW_PASSWORD_CONFIRM_ATTR = "newPasswordConfirm";
+
 	/** Dialog view (relative to {@link ViewLoader#VIEW_BASE_PATH}) for the forced password change. */
 	public static final String CHANGE_PASSWORD_VIEW = "change-password.view.xml";
 

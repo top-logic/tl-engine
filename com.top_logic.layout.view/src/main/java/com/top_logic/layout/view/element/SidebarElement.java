@@ -150,6 +150,11 @@ public class SidebarElement implements UIElement {
 		 * contribution entirely — useful when the sidebar is used in a layout without an app bar or
 		 * with a different entry point for the compact drawer.
 		 * </p>
+		 *
+		 * <p>
+		 * A name for which no slot is displayed leaves the compact drawer without an entry point and
+		 * is reported like a {@code <slot-content>} that reaches no slot.
+		 * </p>
 		 */
 		@Name(DRAWER_OPEN_SLOT_NAME)
 		String getDrawerOpenSlotName();
@@ -706,6 +711,12 @@ public class SidebarElement implements UIElement {
 	private final List<UIElement> _footerCollapsed;
 
 	/**
+	 * Where the {@link Config#getDrawerOpenSlotName() drawer toggle} is declared, for the report of
+	 * a toggle that reaches no slot.
+	 */
+	private final String _drawerToggleSource;
+
+	/**
 	 * Creates a new {@link SidebarElement} from configuration.
 	 */
 	@CalledByReflection
@@ -717,6 +728,7 @@ public class SidebarElement implements UIElement {
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();
 		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+		_drawerToggleSource = "'" + Config.DRAWER_OPEN_SLOT_NAME + "' of the sidebar at " + config.location();
 		_cssClass = config.getCssClass();
 		_header = createElements(context, config.getHeader());
 		_headerCollapsed = createElements(context, config.getHeaderCollapsed());
@@ -831,7 +843,8 @@ public class SidebarElement implements UIElement {
 		if (_drawerOpenSlotName != null && !_drawerOpenSlotName.isEmpty()) {
 			DrawerToggleControl toggleButton = new DrawerToggleControl(context, sidebar);
 			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,
-				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
+				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton), false,
+				_drawerToggleSource);
 			sidebar.setDrawerToggleContribution(drawerToggleSlot);
 		}
 

@@ -35,6 +35,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -167,17 +168,23 @@ public abstract class AbstractSlotViewTest extends TestCase {
 
 	/**
 	 * Unloads the page being left and renders the tree the window holds for the given URL, the way
-	 * {@link com.top_logic.layout.view.ViewServlet} re-renders a display for an adopted URL.
+	 * {@link com.top_logic.layout.view.ViewServlet} re-renders a display for an adopted URL - within
+	 * one interaction, whose {@link DeliveryScope} completes when the page is rendered.
 	 */
 	protected void renderPage(String url) throws IOException {
-		_root.detach();
+		DeliveryScope.enter();
+		try {
+			_root.detach();
 
-		_sseQueue.discardPendingEvents();
-		_routeManager.adoptUrl(url);
-		_root.attach();
-		_routeManager.resolvePending();
-		_root.write(new TagWriter());
-		_routeManager.finishAdoption();
+			_sseQueue.discardPendingEvents();
+			_routeManager.adoptUrl(url);
+			_root.attach();
+			_routeManager.resolvePending();
+			_root.write(new TagWriter());
+			_routeManager.finishAdoption();
+		} finally {
+			DeliveryScope.exit();
+		}
 	}
 
 	/**

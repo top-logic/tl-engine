@@ -58,6 +58,12 @@ public class TestReactWebAuthnControl extends TestCase {
 			assertNotNull(context);
 			_calls.add("expired");
 		}
+
+		@Override
+		public void onUnavailable(ReactContext context, String errorName, String message) {
+			assertNotNull(context);
+			_calls.add("unavailable:" + errorName + ":" + message);
+		}
 	}
 
 	private Trace _trace;
@@ -85,6 +91,11 @@ public class TestReactWebAuthnControl extends TestCase {
 			arguments.put(WebAuthnFailureArguments.MESSAGE, message);
 		}
 		return _control.executeClientCommand(ReactWebAuthnControl.CMD_FAILURE, arguments);
+	}
+
+	private HandlerResult sendUnavailable(String errorName) {
+		return _control.executeClientCommand(ReactWebAuthnControl.CMD_UNAVAILABLE,
+			Map.of(WebAuthnFailureArguments.ERROR_NAME, errorName));
 	}
 
 	private HandlerResult sendRefresh() {
@@ -171,17 +182,27 @@ public class TestReactWebAuthnControl extends TestCase {
 		assertEquals(1, _trace._calls.size());
 	}
 
-	/** The owner replaces the options and sets the error message for the next attempt. */
-	public void testOwnerSuppliesFreshOptionsAndError() {
+	/** A page that cannot run a ceremony reaches the listener, also while the control is disabled. */
+	public void testUnavailableReachesTheListener() {
+		_control.setDisabled(true);
+
+		assertTrue(sendUnavailable(ReactWebAuthnControl.INSECURE_CONTEXT_ERROR).isSuccess());
+		assertEquals(List.of("unavailable:" + ReactWebAuthnControl.INSECURE_CONTEXT_ERROR + ":"), _trace._calls);
+	}
+
+	/** The owner replaces the options and explains the button in its tooltip; there is no error state. */
+	public void testOwnerSuppliesFreshOptionsAndTooltip() {
 		assertEquals(OPTIONS, _control.getOptions());
 
 		String fresh = "{\"publicKey\":{\"challenge\":\"Ag\"}}";
 		_control.setOptions(fresh);
-		_control.setError("Try again.");
+		_control.setTooltip("Open via HTTPS.");
 
 		assertEquals(fresh, _control.getOptions());
-		assertEquals("Try again.", _control.getError());
-		assertTrue(_control.stateAsJSON().contains("Try again."));
+		assertEquals("Open via HTTPS.", _control.getTooltip());
+		String state = _control.stateAsJSON();
+		assertTrue(state, state.contains(ReactWebAuthnControl.TOOLTIP));
+		assertTrue(state, state.contains("Open via HTTPS."));
 	}
 
 	/** A ceremony answers a one-time challenge, so the recorder captures none of its commands. */
@@ -189,6 +210,7 @@ public class TestReactWebAuthnControl extends TestCase {
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_CREDENTIAL));
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_FAILURE));
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_REFRESH));
+		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_UNAVAILABLE));
 	}
 
 }

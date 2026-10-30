@@ -60,6 +60,9 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	private final List<Object> _successes = new ArrayList<>();
 
+	/** The texts of the messages the ceremonies reported to the user. */
+	private final List<String> _reports = new ArrayList<>();
+
 	private ReactContext _context;
 
 	private HttpServletRequest _request;
@@ -80,6 +83,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		}
 		_accounts.clear();
 		_successes.clear();
+		_reports.clear();
 		super.tearDown();
 	}
 
@@ -98,7 +102,8 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		ceremony.onCredential(_context, authenticator.get(options));
 
 		assertEquals(List.of(account), _successes);
-		assertNull(control.getError());
+		assertEquals(List.of(), _reports);
+		assertNull(control.getTooltip());
 		assertNotNull("Fresh options for a further login.", control.getOptions());
 		assertFalse(options.equals(control.getOptions()));
 	}
@@ -118,15 +123,15 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		ceremony.onCredential(_context, authenticator.get(options));
 
 		assertEquals(List.of(), _successes);
-		assertEquals(text(com.top_logic.security.passkey.I18NConstants.ERROR_AUTHENTICATION_FAILED),
-			control.getError());
+		assertEquals(List.of(text(com.top_logic.security.passkey.I18NConstants.ERROR_AUTHENTICATION_FAILED)),
+			_reports);
 		assertNotNull("Fresh options after a refusal.", control.getOptions());
 		assertFalse(options.equals(control.getOptions()));
 
 		ceremony.offer(account);
 		ceremony.onCredential(_context, authenticator.get(control.getOptions()));
 		assertEquals(List.of(account), _successes);
-		assertNull(control.getError());
+		assertEquals("No further message.", 1, _reports.size());
 	}
 
 	/** Shortly before the pending ceremony expires, fresh options replace it without a message. */
@@ -144,7 +149,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		String fresh = control.getOptions();
 		assertNotNull(fresh);
 		assertFalse("Fresh options with a new challenge.", options.equals(fresh));
-		assertNull(control.getError());
+		assertEquals(List.of(), _reports);
 
 		ceremony.onCredential(_context, authenticator.get(options));
 		assertEquals("The replaced options are no longer accepted.", List.of(), _successes);
@@ -173,14 +178,20 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		ReactWebAuthnControl control = ceremony.createControl(_context, "Confirm", false);
 		ceremony.offer(account);
 		String options = control.getOptions();
-		ceremony.withdraw(null);
+		ceremony.withdraw(I18NConstants.ERROR_NOT_CURRENT_USER);
 		assertNull(control.getOptions());
+		assertEquals("A withdrawn ceremony explains the disabled button.", text(I18NConstants.ERROR_NOT_CURRENT_USER),
+			control.getTooltip());
 
 		ceremony.onCredential(_context, authenticator.get(options));
 
 		assertEquals(List.of(), _successes);
-		assertEquals(text(com.top_logic.security.passkey.I18NConstants.ERROR_REQUEST_EXPIRED), control.getError());
+		assertEquals(List.of(text(com.top_logic.security.passkey.I18NConstants.ERROR_REQUEST_EXPIRED)), _reports);
 		assertNull(control.getOptions());
+
+		ceremony.offer(account);
+		assertNotNull(control.getOptions());
+		assertNull("Offered again, the button needs no explanation.", control.getTooltip());
 	}
 
 	/** A cancelled browser dialog shows a hint and offers fresh options; a refused automatic start shows nothing. */
@@ -194,15 +205,63 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		String options = control.getOptions();
 
 		ceremony.onFailure(_context, PasskeyCeremony.NOT_ALLOWED_ERROR, "No user activation.");
-		assertNull("A refused automatic start is not reported.", control.getError());
+		assertEquals("A refused automatic start is not reported.", List.of(), _reports);
 		assertFalse(options.equals(control.getOptions()));
 
+		options = control.getOptions();
 		ceremony.onFailure(_context, PasskeyCeremony.NOT_ALLOWED_ERROR, "Cancelled.");
-		assertEquals(text(I18NConstants.ERROR_CANCELLED), control.getError());
+		assertEquals(List.of(text(I18NConstants.ERROR_CANCELLED)), _reports);
 		assertNotNull(control.getOptions());
+		assertFalse("Fresh options after a failure.", options.equals(control.getOptions()));
 
-		ceremony.onFailure(_context, "UnknownError", "");
-		assertEquals(text(I18NConstants.ERROR_BROWSER__NAME.fill("UnknownError")), control.getError());
+		options = control.getOptions();
+		ceremony.onFailure(_context, PasskeyCeremony.NOT_SUPPORTED_ERROR, "Algorithm not supported.");
+		assertEquals(text(I18NConstants.ERROR_REQUEST_NOT_SUPPORTED__MESSAGE.fill("Algorithm not supported.")),
+			_reports.get(1));
+		assertFalse("Fresh options after a failure.", options.equals(control.getOptions()));
+		assertNull("A failure is a message, not a tooltip.", control.getTooltip());
+	}
+
+	/** The message for each error name of the browser and the client. */
+	public void testHints() throws Exception {
+		PasskeyAuthentication ceremony = authentication();
+
+		assertHint(I18NConstants.ERROR_CANCELLED, ceremony, PasskeyCeremony.NOT_ALLOWED_ERROR, "Cancelled.");
+		assertHint(I18NConstants.ERROR_CANCELLED, ceremony, PasskeyCeremony.ABORT_ERROR, "");
+		assertHint(I18NConstants.ERROR_INSECURE_CONTEXT, ceremony, ReactWebAuthnControl.INSECURE_CONTEXT_ERROR, "http://host");
+		assertHint(I18NConstants.ERROR_NOT_SUPPORTED, ceremony, ReactWebAuthnControl.WEB_AUTHN_UNAVAILABLE_ERROR, "");
+		assertHint(I18NConstants.ERROR_REQUEST_NOT_SUPPORTED__MESSAGE.fill("No algorithm."), ceremony,
+			PasskeyCeremony.NOT_SUPPORTED_ERROR, "No algorithm.");
+		assertHint(I18NConstants.ERROR_REQUEST_NOT_SUPPORTED__MESSAGE.fill(PasskeyCeremony.NOT_SUPPORTED_ERROR), ceremony,
+			PasskeyCeremony.NOT_SUPPORTED_ERROR, "");
+		assertHint(I18NConstants.ERROR_ALREADY_ON_AUTHENTICATOR, ceremony, PasskeyCeremony.INVALID_STATE_ERROR, "");
+		assertHint(I18NConstants.ERROR_WRONG_DOMAIN, ceremony, PasskeyCeremony.SECURITY_ERROR, "");
+		assertHint(I18NConstants.ERROR_BROWSER__NAME_MESSAGE.fill("UnknownError", "Boom."), ceremony, "UnknownError", "Boom.");
+		assertHint(I18NConstants.ERROR_BROWSER__NAME.fill("UnknownError"), ceremony, "UnknownError", "");
+	}
+
+	private static void assertHint(ResKey expected, PasskeyCeremony<?, ?> ceremony, String errorName, String message) {
+		assertEquals(errorName, text(expected), text(ceremony.hint(errorName, message)));
+	}
+
+	/** A page that cannot run a ceremony explains the disabled button in its tooltip, without a message. */
+	public void testUnavailable() throws Exception {
+		Person account = account("ceremonyInsecure");
+
+		PasskeyAuthentication ceremony = authentication();
+		ReactWebAuthnControl control = ceremony.createControl(_context, "Confirm", false);
+		ceremony.offer(account);
+
+		ceremony.onUnavailable(_context, ReactWebAuthnControl.INSECURE_CONTEXT_ERROR, "");
+
+		assertEquals(text(I18NConstants.ERROR_INSECURE_CONTEXT), control.getTooltip());
+		assertEquals(List.of(), _reports);
+
+		ceremony.withdraw(I18NConstants.ERROR_NOT_CURRENT_USER);
+		assertEquals("The page stays the more fundamental reason.", text(I18NConstants.ERROR_INSECURE_CONTEXT),
+			control.getTooltip());
+		ceremony.offer(account);
+		assertEquals(text(I18NConstants.ERROR_INSECURE_CONTEXT), control.getTooltip());
 	}
 
 	/** A registration stores a passkey for the offered account and hands it to the success handler. */
@@ -220,6 +279,11 @@ public class TestPasskeyCeremony extends BasicTestCase {
 			protected String newLabel() {
 				return LABEL;
 			}
+
+			@Override
+			protected void report(ReactContext context, ResKey message) {
+				_reports.add(text(message));
+			}
 		};
 		ReactWebAuthnControl control = ceremony.createControl(_context, "Create", false);
 		ceremony.offer(account);
@@ -231,13 +295,13 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		Passkey passkey = (Passkey) _successes.get(0);
 		assertEquals(account, PasskeyCredentialRepository.getOwner(passkey));
 		assertEquals(LABEL, passkey.getLabel());
-		assertNull(control.getError());
+		assertEquals(List.of(), _reports);
 		assertTrue("The next registration excludes the new passkey.",
 			control.getOptions().contains(authenticator.getCredentialId()));
 
 		ceremony.onCredential(_context, authenticator.create(options));
 		assertEquals("A replayed registration is refused.", 1, _successes.size());
-		assertNotNull(control.getError());
+		assertEquals(1, _reports.size());
 	}
 
 	/** The passkey second factor is set up with a passkey and allowed unless MFA is disabled. */
@@ -289,6 +353,12 @@ public class TestPasskeyCeremony extends BasicTestCase {
 			@Override
 			protected HttpServletRequest request() {
 				return _request;
+			}
+
+			@Override
+			protected void report(ReactContext context, ResKey message) {
+				assertSame(_context, context);
+				_reports.add(text(message));
 			}
 		};
 	}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the login with a passkey alone to the credentials form of tl-layout-view
+	(WEB-INF/views/login-form.view.xml): a same-path overlay placing the passkey button right after
+	the single sign-on buttons (<login-methods id="login-methods">), as one more way to log in, as
+	wide as they are. The form is shared by the login dialog and the login page, so both offer it.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<form config:ref="credentials">
+		<passkey-login id="passkey-login"
+			config:position="after"
+			config:reference="login-methods"
+			image="css:bi bi-key"
+		>
+			<label>
+				<en>Sign in with passkey</en>
+				<de>Mit Passkey anmelden</de>
+			</label>
+		</passkey-login>
+	</form>
+</view>

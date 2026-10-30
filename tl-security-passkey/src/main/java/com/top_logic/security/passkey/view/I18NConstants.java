@@ -7,6 +7,7 @@ package com.top_logic.security.passkey.view;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -30,6 +31,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NOT_SUPPORTED;
 
 	/**
+	 * @en Passkeys require a secure connection. Open the application via HTTPS (or on localhost).
+	 */
+	public static ResKey ERROR_INSECURE_CONTEXT;
+
+	/**
+	 * @en The browser or authenticator cannot handle this passkey request: {0}
+	 */
+	public static ResKey1 ERROR_REQUEST_NOT_SUPPORTED__MESSAGE;
+
+	/**
 	 * @en This authenticator already holds a passkey for the account.
 	 */
 	public static ResKey ERROR_ALREADY_ON_AUTHENTICATOR;
@@ -43,6 +54,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The browser refused the passkey request ({0}).
 	 */
 	public static ResKey1 ERROR_BROWSER__NAME;
+
+	/**
+	 * @en The passkey request failed in the browser ({0}): {1}
+	 */
+	public static ResKey2 ERROR_BROWSER__NAME_MESSAGE;
 
 	/**
 	 * @en A passkey can only be created here for the account "{0}" when it sets up its second

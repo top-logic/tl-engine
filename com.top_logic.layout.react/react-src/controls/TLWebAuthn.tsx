@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, usePart, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, ButtonAppearance } from 'tl-react-bridge';
-import { failureOf, startCeremony, KIND_CREATE, KIND_GET } from './webauthn/webauthn-json';
+import { React, useTLState, useTLCommand, usePart, rootClassName, useButtonDefaults } from 'tl-react-bridge';
+import type { TLCellProps, ButtonAppearance, ButtonStateJson } from 'tl-react-bridge';
+import { failureOf, startCeremony, unavailability, KIND_CREATE, KIND_GET } from './webauthn/webauthn-json';
 import type { WebAuthnKind } from './webauthn/webauthn-json';
 import { watchExpiry } from './webauthn/options-expiry';
 
@@ -19,6 +19,12 @@ const ARG_ERROR_NAME = 'errorName';
 /** The argument of {@link CMD_FAILURE}: the technical message of the error. */
 const ARG_MESSAGE = 'message';
 
+/**
+ * The command reporting once, when the component is mounted, that the page cannot run a ceremony
+ * (`ReactWebAuthnControl.CMD_UNAVAILABLE`), with the arguments of {@link CMD_FAILURE}.
+ */
+const CMD_UNAVAILABLE = 'unavailable';
+
 /** The command asking for fresh options shortly before the current ones expire (`ReactWebAuthnControl.CMD_REFRESH`). */
 const CMD_REFRESH = 'refresh';
 
@@ -34,7 +40,7 @@ interface WebAuthnState extends Record<string, unknown> {
   appearance?: ButtonAppearance;
   autoStart?: boolean;
   disabled?: boolean;
-  error?: string | null;
+  tooltip?: string | null;
 }
 
 /**
@@ -44,19 +50,32 @@ interface WebAuthnState extends Record<string, unknown> {
  * <p>The browser is called directly in the click handler, without waiting for the server first, since
  * a browser requiring a user gesture accepts the ceremony only while the gesture lasts. The credential
  * is sent with the command `credential` (the JSON form of `PublicKeyCredential.toJSON()`), a failure
- * or cancellation with the command `failure` (the error name and message of the browser; a browser
- * without WebAuthn reports `NotSupportedError`).</p>
+ * or cancellation with the command `failure` (the error name and message of the browser).</p>
+ *
+ * <p>The component is the part `Button` alone, resolved like `TLButton`: the appearance of the
+ * server, else the one the container suggests (`useButtonDefaults`), else `secondary`; a compact
+ * toolbar shows it by its icon, a menu as an entry. It shows no error: the owner on the server tells
+ * the user about a failure through the messages of the window, and a reason why the button cannot
+ * be used arrives as its `tooltip`.</p>
+ *
+ * <p>A page that cannot run a ceremony at all ({@link unavailability}: no secure context, or no
+ * WebAuthn API) shows the button disabled right away and reports the cause once, when the component
+ * is mounted, with the command `unavailable`, so the server can explain it in the tooltip.</p>
  *
  * <p>While a ceremony runs, while the server has no options, and while the server disables it, the
  * button is disabled; a running ceremony marks it busy. With `autoStart`, the ceremony starts once
  * when the component is mounted. Shortly before options with a `publicKey.timeout` expire, the
- * component asks with the command `refresh` for fresh ones, unless a ceremony runs. The error message of the server is announced in the status line
- * beside the button. Unmounted during a ceremony, the component aborts it.</p>
+ * component asks with the command `refresh` for fresh ones, unless a ceremony runs. Unmounted
+ * during a ceremony, the component aborts it.</p>
  */
 const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<WebAuthnState>();
   const sendCommand = useTLCommand();
   const Button = usePart('Button');
+  const defaults = useButtonDefaults();
+
+  // Known before any click and fixed for the page.
+  const [unavailable] = React.useState(unavailability);
 
   const [running, setRunning] = React.useState(false);
   const runningRef = React.useRef(false);
@@ -64,7 +83,7 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
 
   const kind: WebAuthnKind = state.kind === KIND_CREATE ? KIND_CREATE : KIND_GET;
   const options = state.options ?? null;
-  const disabled = state.disabled === true || options === null;
+  const disabled = state.disabled === true || options === null || unavailable !== null;
 
   const start = React.useCallback(() => {
     if (runningRef.current || options === null) {
@@ -95,6 +114,13 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
       }
     });
   }, [kind, options, sendCommand]);
+
+  // A page that cannot run a ceremony: reported once, when mounted.
+  React.useEffect(() => {
+    if (unavailable !== null) {
+      sendCommand(CMD_UNAVAILABLE, { [ARG_ERROR_NAME]: unavailable.name, [ARG_MESSAGE]: unavailable.message });
+    }
+  }, [unavailable, sendCommand]);
 
   // When the current options arrived, as the start of their timeout.
   const receivedRef = React.useRef<{ options: string | null; at: number }>({ options, at: Date.now() });
@@ -127,21 +153,27 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
     controller?.abort();
   }, []);
 
+  // The appearance of the server, else the container's, as for TLButton; inside a menu every button is an entry.
+  const appearance: ButtonAppearance = defaults.appearance === 'menu-item'
+    ? 'menu-item'
+    : (state.appearance ?? defaults.appearance ?? 'secondary');
+  const display: ButtonStateJson.DisplayMode = !state.image
+    ? 'label-only'
+    : defaults.iconOnly && appearance !== 'menu-item' ? 'icon-only' : 'icon-label';
+
   return (
-    <div id={controlId} className={rootClassName(state, 'tl-upload')}>
-      <Button
-        label={state.label}
-        image={state.image}
-        display={state.image ? 'icon-label' : 'label-only'}
-        appearance={state.appearance ?? 'secondary'}
-        disabled={disabled || running}
-        aria-busy={running ? true : undefined}
-        onClick={start}
-      />
-      {state.error && !running && (
-        <span className="tl-file-upload__status tl-type-label" role="alert">{state.error}</span>
-      )}
-    </div>
+    <Button
+      id={controlId}
+      label={state.label}
+      image={state.image}
+      display={display}
+      appearance={appearance}
+      disabled={disabled || running}
+      tooltip={state.tooltip ?? undefined}
+      aria-busy={running ? true : undefined}
+      className={rootClassName(state)}
+      onClick={start}
+    />
   );
 };
 

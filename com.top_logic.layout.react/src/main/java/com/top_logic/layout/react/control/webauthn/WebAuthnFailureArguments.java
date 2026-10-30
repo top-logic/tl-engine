@@ -12,8 +12,9 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
- * Typed arguments of the {@link ReactWebAuthnControl#CMD_FAILURE} command: the error the browser
- * reported for a ceremony.
+ * Typed arguments of the {@link ReactWebAuthnControl#CMD_FAILURE} command (the error the browser
+ * reported for a ceremony) and of the {@link ReactWebAuthnControl#CMD_UNAVAILABLE} command (why the
+ * page cannot run a ceremony).
  */
 @Label("Fail the WebAuthn ceremony of '{target}' with '{errorName}'")
 public interface WebAuthnFailureArguments extends ReactCommand {
@@ -25,7 +26,9 @@ public interface WebAuthnFailureArguments extends ReactCommand {
 	String MESSAGE = "message";
 
 	/**
-	 * The name of the {@code DOMException} the browser reported, e.g. {@code NotAllowedError}.
+	 * The name of the {@code DOMException} the browser reported, e.g. {@code NotAllowedError}, or one
+	 * of the names of the client, {@link ReactWebAuthnControl#INSECURE_CONTEXT_ERROR} and
+	 * {@link ReactWebAuthnControl#WEB_AUTHN_UNAVAILABLE_ERROR}.
 	 *
 	 * @see WebAuthnListener#onFailure(com.top_logic.layout.react.ReactContext, String, String)
 	 */
@@ -37,7 +40,7 @@ public interface WebAuthnFailureArguments extends ReactCommand {
 	void setErrorName(String value);
 
 	/**
-	 * The technical message of the browser, not localized.
+	 * The technical message of the browser or the client, not localized.
 	 */
 	@Name(MESSAGE)
 	@Nullable

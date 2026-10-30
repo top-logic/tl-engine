@@ -55,11 +55,48 @@ function publicKeyCredentialClass(): PublicKeyCredentialStatics | undefined {
   return (globalThis as { PublicKeyCredential?: PublicKeyCredentialStatics }).PublicKeyCredential;
 }
 
-/** Whether the browser offers WebAuthn at all. */
+/** Whether the browser offers the WebAuthn API on this page. */
 export function isWebAuthnSupported(): boolean {
   return publicKeyCredentialClass() !== undefined
     && typeof navigator !== 'undefined'
     && navigator.credentials !== undefined;
+}
+
+/**
+ * The error name reported for a page that is no secure context (`ReactWebAuthnControl.INSECURE_CONTEXT_ERROR`):
+ * browsers hide WebAuthn on pages not served by `https` or from `localhost`, so neither the browser
+ * nor a passkey plugin can help there.
+ */
+export const INSECURE_CONTEXT_ERROR = 'InsecureContextError';
+
+/**
+ * The error name reported for a secure page whose browser offers no WebAuthn API
+ * (`ReactWebAuthnControl.WEB_AUTHN_UNAVAILABLE_ERROR`).
+ */
+export const WEB_AUTHN_UNAVAILABLE_ERROR = 'WebAuthnUnavailableError';
+
+/** The name and the technical message of a failed ceremony. */
+export interface CeremonyFailure {
+  name: string;
+  message: string;
+}
+
+/**
+ * Why this page cannot run a ceremony at all, `null` if it can: {@link INSECURE_CONTEXT_ERROR} for a
+ * page that is no secure context, {@link WEB_AUTHN_UNAVAILABLE_ERROR} for a secure page without the
+ * WebAuthn API. Known before any click, so a button can be disabled right away.
+ */
+export function unavailability(): CeremonyFailure | null {
+  if ((globalThis as { isSecureContext?: boolean }).isSecureContext === false) {
+    return {
+      name: INSECURE_CONTEXT_ERROR,
+      message: 'WebAuthn requires a secure context (https or localhost): ' + String(globalThis.location?.origin),
+    };
+  }
+  if (!isWebAuthnSupported()) {
+    return { name: WEB_AUTHN_UNAVAILABLE_ERROR, message: 'The browser offers no WebAuthn API.' };
+  }
+  return null;
 }
 
 function toDescriptors(list: PublicKeyCredentialDescriptorJSON[] | undefined): PublicKeyCredentialDescriptor[] | undefined {
@@ -200,17 +237,8 @@ export function credentialToJSON(credential: PublicKeyCredentialLike): Record<st
   return result;
 }
 
-/** The error name reported for a browser without WebAuthn. */
-export const NOT_SUPPORTED_ERROR = 'NotSupportedError';
-
 /** The error name reported for an error that carries no name. */
 export const UNKNOWN_ERROR = 'UnknownError';
-
-/** The name and the technical message of a failed ceremony. */
-export interface CeremonyFailure {
-  name: string;
-  message: string;
-}
 
 /** The name and message of an error thrown by a ceremony, a `DOMException` in the regular case. */
 export function failureOf(error: unknown): CeremonyFailure {
@@ -231,16 +259,18 @@ export function failureOf(error: unknown): CeremonyFailure {
  * requiring a user gesture (Safari) accepts the ceremony only while the gesture is still in
  * progress, so this function must be called directly in the event handler of the gesture.</p>
  *
- * <p>The promise rejects with the error of the browser, with a {@link NOT_SUPPORTED_ERROR} in a
- * browser without WebAuthn, and with a `TypeError` for options that cannot be read.</p>
+ * <p>The promise rejects with the error of the browser (its own name and message), with an error
+ * named after the {@link unavailability} of a page that cannot run a ceremony, and with a
+ * `TypeError` for options that cannot be read.</p>
  *
  * @param kind The ceremony to run.
  * @param optionsJson The options JSON of the server, see {@link toCredentialOptions}.
  * @param signal Aborts the ceremony.
  */
 export function startCeremony(kind: WebAuthnKind, optionsJson: string, signal?: AbortSignal): Promise<Record<string, unknown>> {
-  if (!isWebAuthnSupported()) {
-    return Promise.reject(new DOMException('WebAuthn is not supported by this browser.', NOT_SUPPORTED_ERROR));
+  const unavailable = unavailability();
+  if (unavailable !== null) {
+    return Promise.reject(new DOMException(unavailable.message, unavailable.name));
   }
   let pending: Promise<Credential | null>;
   try {

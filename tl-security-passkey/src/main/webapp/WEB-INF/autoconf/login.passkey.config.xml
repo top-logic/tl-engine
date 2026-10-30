@@ -4,23 +4,6 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<configs>
-		<!--
-			Contribute the login with a passkey alone to the React login dialog. Rendered by the
-			<login-commands> element of the credentials form.
-		-->
-		<config config:interface="com.top_logic.layout.view.login.LoginCommandsConfig">
-			<commands>
-				<passkey-login id="passkey-login"
-					image="css:bi bi-key"
-				>
-					<label>
-						<en>Sign in with passkey</en>
-						<de>Mit Passkey anmelden</de>
-					</label>
-				</passkey-login>
-			</commands>
-		</config>
-
 		<!-- The passkey as second factor of the login, offered after the authenticator app. -->
 		<config config:interface="com.top_logic.layout.view.login.SecondFactorsConfig">
 			<methods>

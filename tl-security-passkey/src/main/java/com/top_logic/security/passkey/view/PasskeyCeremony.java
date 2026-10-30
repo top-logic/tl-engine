@@ -17,6 +17,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.webauthn.ReactWebAuthnControl;
 import com.top_logic.layout.react.control.webauthn.WebAuthnCeremony;
 import com.top_logic.layout.react.control.webauthn.WebAuthnListener;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.security.passkey.PasskeyService;
 import com.top_logic.security.passkey.PendingCeremony;
 import com.top_logic.util.Resources;
@@ -32,8 +33,11 @@ import com.top_logic.util.error.TopLogicException;
  * for no account): a {@link PendingCeremony} is started and its options go to the control. The
  * pending ceremony stays in this object, so the challenge never leaves the server. Every answer of
  * the browser - a credential or a failure - consumes it, and a fresh one is started for the next
- * attempt. A refused credential and a failure of the browser are shown as localized message below
- * the button; a cancelled browser dialog only shows a short hint. Shortly before the pending
+ * attempt. A refused credential and a failure of the browser are {@link #report(ReactContext, ResKey)
+ * reported} to the user through the messages of the window ({@link ViewMessages}); a cancelled
+ * browser dialog only gives a short hint. A reason why the button cannot be used - a page that
+ * cannot run a ceremony, a {@link #withdraw(ResKey) withdrawn} ceremony, or a ceremony that could
+ * not be started - is the tooltip of the disabled button. Shortly before the pending
  * ceremony expires, the control asks for a fresh one, which is started without a message, so that
  * a button left alone for a long time still works on the first click.
  * </p>
@@ -54,7 +58,10 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	/** Error name of the browser for an aborted ceremony. */
 	public static final String ABORT_ERROR = "AbortError";
 
-	/** Error name of the browser for a browser without Web Authentication. */
+	/**
+	 * Error name of the browser for options the browser or the authenticator cannot handle, e.g. a
+	 * passkey provider refusing them.
+	 */
 	public static final String NOT_SUPPORTED_ERROR = "NotSupportedError";
 
 	/** Error name of the browser for an authenticator already holding an excluded credential. */
@@ -74,6 +81,15 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	private P _pending;
 
 	private boolean _autoStart;
+
+	/** Why the page cannot run a ceremony at all, <code>null</code> if it can. */
+	private ResKey _unavailable;
+
+	/** Why no ceremony is {@link #withdraw(ResKey) offered}, <code>null</code> for no reason. */
+	private ResKey _withdrawal;
+
+	/** Why the last ceremony could not be started, <code>null</code> if it was. */
+	private ResKey _startFailure;
 
 	/**
 	 * Creates a {@link PasskeyCeremony}.
@@ -125,22 +141,25 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	public void offer(Person account) {
 		_offered = true;
 		_account = account;
-		_control.setError(null);
-		restart();
+		_withdrawal = null;
+		restart(null);
 	}
 
 	/**
 	 * Offers no ceremony, e.g. because there is no account to run it for.
 	 *
 	 * @param reason
-	 *        Why there is no ceremony, shown below the button; <code>null</code> for no message.
+	 *        Why there is no ceremony, the tooltip of the disabled button; <code>null</code> for no
+	 *        tooltip.
 	 */
 	public void withdraw(ResKey reason) {
 		_offered = false;
 		_account = null;
 		_pending = null;
+		_withdrawal = reason;
+		_startFailure = null;
 		_control.setOptions(null);
-		_control.setError(reason == null ? null : text(reason));
+		updateTooltip();
 	}
 
 	/**
@@ -156,7 +175,7 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 		P pending = _pending;
 		_pending = null;
 		if (pending == null) {
-			fail(com.top_logic.security.passkey.I18NConstants.ERROR_REQUEST_EXPIRED);
+			fail(context, com.top_logic.security.passkey.I18NConstants.ERROR_REQUEST_EXPIRED);
 			return;
 		}
 
@@ -164,18 +183,17 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 		try {
 			result = finish(pending, credentialJson);
 		} catch (TopLogicException ex) {
-			fail(ex.getErrorKey());
+			fail(context, ex.getErrorKey());
 			return;
 		}
 
 		// Ready for a further ceremony before the outcome is handed on, since the success handler may
 		// discard the display this control belongs to (e.g. a completed login rebuilds the window).
-		_control.setError(null);
-		restart();
+		restart(context);
 		try {
 			_onSuccess.accept(context, result);
 		} catch (TopLogicException ex) {
-			_control.setError(text(ex.getErrorKey()));
+			report(context, ex.getErrorKey());
 		}
 	}
 
@@ -183,56 +201,123 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	public void onFailure(ReactContext context, String errorName, String message) {
 		boolean automatic = _autoStart;
 		_autoStart = false;
-		Logger.info("Passkey ceremony failed in the browser: " + errorName + " " + message, PasskeyCeremony.class);
+		String failure = "Passkey ceremony failed in the browser: " + errorName + " " + message;
+		if (isExpected(errorName)) {
+			Logger.info(failure, PasskeyCeremony.class);
+		} else {
+			Logger.warn(failure, PasskeyCeremony.class);
+		}
 
 		boolean refusedAutoStart = automatic && NOT_ALLOWED_ERROR.equals(errorName);
-		_control.setError(refusedAutoStart ? null : text(hint(errorName)));
-		restart();
+		if (!refusedAutoStart) {
+			report(context, hint(errorName, message));
+		}
+		restart(context);
 	}
 
 	/**
-	 * Starts a fresh ceremony, since the pending one is about to expire; the message shown stays.
+	 * Explains in the tooltip of the disabled button why the page cannot run a ceremony.
+	 */
+	@Override
+	public void onUnavailable(ReactContext context, String errorName, String message) {
+		Logger.info("Passkeys are not available on this page: " + errorName + " " + message, PasskeyCeremony.class);
+		_unavailable = hint(errorName, message);
+		updateTooltip();
+	}
+
+	/**
+	 * Starts a fresh ceremony, since the pending one is about to expire, without a message.
 	 */
 	@Override
 	public void onExpired(ReactContext context) {
-		restart();
+		restart(null);
 	}
 
 	/**
-	 * The message for a failure the browser reported with the given error name.
+	 * Whether the given error name is an outcome the user caused or a ceremony meets in regular
+	 * use, rather than a sign of a problem with the page, the browser or the options.
 	 */
-	protected ResKey hint(String errorName) {
+	protected boolean isExpected(String errorName) {
+		switch (errorName) {
+			case NOT_ALLOWED_ERROR:
+			case ABORT_ERROR:
+			case INVALID_STATE_ERROR:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * The message for a failure the browser reported.
+	 *
+	 * @param errorName
+	 *        The error name of the browser or the client, see
+	 *        {@link WebAuthnListener#onFailure(ReactContext, String, String)}.
+	 * @param message
+	 *        The technical message of the browser, may be empty.
+	 */
+	public ResKey hint(String errorName, String message) {
 		switch (errorName) {
 			case NOT_ALLOWED_ERROR:
 			case ABORT_ERROR:
 				return I18NConstants.ERROR_CANCELLED;
-			case NOT_SUPPORTED_ERROR:
+			case ReactWebAuthnControl.INSECURE_CONTEXT_ERROR:
+				return I18NConstants.ERROR_INSECURE_CONTEXT;
+			case ReactWebAuthnControl.WEB_AUTHN_UNAVAILABLE_ERROR:
 				return I18NConstants.ERROR_NOT_SUPPORTED;
+			case NOT_SUPPORTED_ERROR:
+				return I18NConstants.ERROR_REQUEST_NOT_SUPPORTED__MESSAGE.fill(orName(message, errorName));
 			case INVALID_STATE_ERROR:
 				return I18NConstants.ERROR_ALREADY_ON_AUTHENTICATOR;
 			case SECURITY_ERROR:
 				return I18NConstants.ERROR_WRONG_DOMAIN;
 			default:
-				return I18NConstants.ERROR_BROWSER__NAME.fill(errorName);
+				if (message.isEmpty()) {
+					return I18NConstants.ERROR_BROWSER__NAME.fill(errorName);
+				}
+				return I18NConstants.ERROR_BROWSER__NAME_MESSAGE.fill(errorName, message);
 		}
 	}
 
+	private static String orName(String message, String errorName) {
+		return message.isEmpty() ? errorName : message;
+	}
+
 	/**
-	 * Shows the given error and offers a fresh ceremony.
+	 * Tells the user about a failed ceremony, through the messages of the window.
+	 *
+	 * @param context
+	 *        The context of the control.
+	 * @param message
+	 *        The message for the user.
 	 */
-	private void fail(ResKey error) {
-		_control.setError(text(error));
-		restart();
+	protected void report(ReactContext context, ResKey message) {
+		ViewMessages.error(context, message);
+	}
+
+	/**
+	 * Reports the given error and offers a fresh ceremony.
+	 */
+	private void fail(ReactContext context, ResKey error) {
+		report(context, error);
+		restart(context);
 	}
 
 	/**
 	 * Starts a fresh ceremony for the {@link #offer(Person) offered} account and gives its options to
 	 * the control; without an offer, or if the start fails, the control offers none.
+	 *
+	 * @param context
+	 *        The context of the command the ceremony is restarted for, to report a failed start in;
+	 *        <code>null</code> outside a command, where the failed start is only the tooltip.
 	 */
-	private void restart() {
+	private void restart(ReactContext context) {
 		_pending = null;
+		_startFailure = null;
 		if (!_offered) {
 			_control.setOptions(null);
+			updateTooltip();
 			return;
 		}
 		try {
@@ -240,9 +325,21 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 			_control.setOptions(_pending.toOptionsJson());
 		} catch (TopLogicException ex) {
 			_pending = null;
+			_startFailure = ex.getErrorKey();
 			_control.setOptions(null);
-			_control.setError(text(ex.getErrorKey()));
+			if (context != null) {
+				report(context, _startFailure);
+			}
 		}
+		updateTooltip();
+	}
+
+	/**
+	 * Shows the most fundamental reason why the button cannot be used as its tooltip.
+	 */
+	private void updateTooltip() {
+		ResKey reason = _unavailable != null ? _unavailable : _withdrawal != null ? _withdrawal : _startFailure;
+		_control.setTooltip(reason == null ? null : text(reason));
 	}
 
 	/**

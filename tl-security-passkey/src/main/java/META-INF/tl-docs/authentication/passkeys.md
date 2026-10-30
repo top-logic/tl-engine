@@ -94,9 +94,11 @@ and `startAuthentication` / `finishAuthentication`.
 
 ## The login flows
 
-- **Passwordless**: the module contributes `<passkey-login id="passkey-login">` (label "Sign in
-  with passkey") to `LoginCommandsConfig`, so `<login-commands/>` of `login-form.view.xml` shows it
-  below the password form, see [contributing a login command](doc:authentication#contributing-a-login-command).
+- **Passwordless**: the module's same-path overlay of `login-form.view.xml` adds
+  `<passkey-login id="passkey-login">` (label "Sign in with passkey") to the form `credentials`,
+  right after the single sign-on buttons (`<login-methods id="login-methods">`), as wide as they
+  are. The form is shared by the login dialog and the login page, so both offer it; see
+  [overlays](doc:view-layer/overlays).
   The browser offers the discoverable passkeys of any account; the login is completed with
   `LoginAction.completeLogin(...)` for the account the passkey belongs to, which re-checks
   maintenance mode and allowed groups. The password, its expiry and the second-factor step are not
@@ -221,7 +223,13 @@ authenticator app of a `required` account that has no passkey.
 ## Pitfalls
 
 - WebAuthn runs only in a secure context: HTTPS, or `http://localhost`. Use `localhost`, not
-  `127.0.0.1` - an IP address is not a valid relying party ID.
+  `127.0.0.1` - an IP address is not a valid relying party ID. On a page served by plain `http`
+  from another host, browsers hide the WebAuthn API (a passkey browser extension cannot help
+  there either): the passkey buttons are shown disabled, with the request to open the application
+  via HTTPS as their tooltip.
+- A failed ceremony is reported through the messages of the window, with the text of the browser
+  where it is not a cancellation; every failure is logged with the error name and message of the
+  browser (`Logger.warn` for an unexpected one).
 - Changing `rp-id` (or the domain of the application, while `rp-id` is derived from the request)
   makes every registered passkey unusable; the users have to create new ones.
 - `disabled` does not remove existing passkeys: an account that has one keeps being asked for it

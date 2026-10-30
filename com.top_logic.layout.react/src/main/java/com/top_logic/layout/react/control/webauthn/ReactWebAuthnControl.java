@@ -31,6 +31,23 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <p>
+ * The client renders the button alone, as a plain button that takes its appearance from its
+ * container like every other button. The control shows no error of its own: the
+ * {@link WebAuthnListener} tells the user about a failure, through the messages of the window. A
+ * reason why the button cannot be used is shown as its {@link #setTooltip(String) tooltip}.
+ * </p>
+ *
+ * <p>
+ * A page that cannot run a ceremony at all - one that is no secure context (served by {@code http}
+ * from a host other than {@code localhost}), where browsers hide the Web Authentication API, or a
+ * browser without that API - is detected by the client before any click: it shows the button
+ * disabled and reports the cause once, when it is displayed, with the {@link #CMD_UNAVAILABLE}
+ * command and the error name {@link #INSECURE_CONTEXT_ERROR} or {@link #WEB_AUTHN_UNAVAILABLE_ERROR}.
+ * The command reaches {@link WebAuthnListener#onUnavailable(ReactContext, String, String)}, whose
+ * owner explains the cause in the tooltip.
+ * </p>
+ *
+ * <p>
  * Options with a {@code publicKey.timeout} expire: shortly before, while no ceremony runs, the
  * client asks for fresh ones with the {@link #CMD_REFRESH} command, so that a button left alone
  * for a long time still runs a ceremony the server accepts. The command reaches
@@ -49,7 +66,7 @@ import com.top_logic.tool.execution.ExecutableState;
  *
  * <p>
  * State keys: {@link #KIND}, {@link #OPTIONS}, {@link #LABEL}, {@link #IMAGE}, {@link #APPEARANCE},
- * {@link #AUTO_START}, {@link #DISABLED}, {@link #ERROR}.
+ * {@link #AUTO_START}, {@link #DISABLED}, {@link #TOOLTIP}.
  * </p>
  *
  * <p>
@@ -86,14 +103,33 @@ public class ReactWebAuthnControl extends ReactControl {
 	/** State key for whether the button is disabled, e.g. while the owner processes a credential. */
 	public static final String DISABLED = "disabled";
 
-	/** State key for the error message shown below the button. */
-	public static final String ERROR = "error";
+	/** State key for the tooltip of the button, see {@link #setTooltip(String)}. */
+	public static final String TOOLTIP = "tooltip";
 
 	/** Command sent with the credential of a completed ceremony, see {@link WebAuthnCredentialArguments}. */
 	public static final String CMD_CREDENTIAL = "credential";
 
 	/** Command sent for a failed or cancelled ceremony, see {@link WebAuthnFailureArguments}. */
 	public static final String CMD_FAILURE = "failure";
+
+	/**
+	 * Command sent once when the client is displayed on a page that cannot run a ceremony, see
+	 * {@link WebAuthnFailureArguments}.
+	 */
+	public static final String CMD_UNAVAILABLE = "unavailable";
+
+	/**
+	 * Error name of {@link #CMD_UNAVAILABLE} and {@link #CMD_FAILURE} for a page that is no secure
+	 * context: browsers offer Web Authentication only on pages served by {@code https} or from
+	 * {@code localhost}.
+	 */
+	public static final String INSECURE_CONTEXT_ERROR = "InsecureContextError";
+
+	/**
+	 * Error name of {@link #CMD_UNAVAILABLE} and {@link #CMD_FAILURE} for a browser that offers no
+	 * Web Authentication API on a secure page.
+	 */
+	public static final String WEB_AUTHN_UNAVAILABLE_ERROR = "WebAuthnUnavailableError";
 
 	/** Command sent shortly before the {@link #setOptions(String) options} expire, without arguments. */
 	public static final String CMD_REFRESH = "refresh";
@@ -199,20 +235,20 @@ public class ReactWebAuthnControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the error message shown below the button; {@code null} to remove it.
+	 * Sets the tooltip of the button, e.g. why it cannot be used; {@code null} for none.
 	 *
-	 * @param message
-	 *        The localized message for the user.
+	 * @param tooltip
+	 *        The localized text for the user.
 	 */
-	public void setError(String message) {
-		putState(ERROR, message);
+	public void setTooltip(String tooltip) {
+		putState(TOOLTIP, tooltip);
 	}
 
 	/**
-	 * The error message shown below the button, {@code null} if there is none.
+	 * The tooltip of the button, see {@link #setTooltip(String)}.
 	 */
-	public String getError() {
-		return (String) getState(ERROR);
+	public String getTooltip() {
+		return (String) getState(TOOLTIP);
 	}
 
 	/**
@@ -239,6 +275,21 @@ public class ReactWebAuthnControl extends ReactControl {
 		}
 		String message = args.getMessage();
 		_listener.onFailure(context, args.getErrorName(), message == null ? "" : message);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Handles the report of the client that the page cannot run a ceremony.
+	 *
+	 * <p>
+	 * Accepted also while the control is {@link #setDisabled(boolean) disabled}, since it describes
+	 * the page, not an answer to a ceremony.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_UNAVAILABLE, technical = true)
+	HandlerResult handleUnavailable(ReactContext context, WebAuthnFailureArguments args) {
+		String message = args.getMessage();
+		_listener.onUnavailable(context, args.getErrorName(), message == null ? "" : message);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
@@ -276,6 +327,7 @@ public class ReactWebAuthnControl extends ReactControl {
 		result.add(CMD_CREDENTIAL);
 		result.add(CMD_FAILURE);
 		result.add(CMD_REFRESH);
+		result.add(CMD_UNAVAILABLE);
 		return result;
 	}
 

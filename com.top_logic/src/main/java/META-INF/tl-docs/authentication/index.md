@@ -125,11 +125,14 @@ depending on it. The self-service module `com.top_logic.layout.view.selfservice`
 </config>
 ```
 
-The entries are keyed by `id`, so an overlay can address a contributed element. A command need not
-be a `<button>`: `tl-security-passkey` contributes `<passkey-login id="passkey-login">`, the button
-"Sign in with passkey", which logs in with a passkey alone and completes the login with
-`LoginAction.completeLogin(...)` without the password steps (see the passkeys article of this
-chapter).
+The entries are keyed by `id`, so an overlay can address a contributed element.
+
+A further way to log in that belongs beside the single sign-on buttons is added with a same-path
+overlay of `login-form.view.xml` instead: an element in `<form config:ref="credentials">`, placed
+with `config:position="after" config:reference="login-methods"`. `tl-security-passkey` adds its
+button "Sign in with passkey" (`<passkey-login>`) this way; it logs in with a passkey alone and
+completes the login with `LoginAction.completeLogin(...)` without the password steps (see the
+passkeys article of this chapter).
 
 ### External login methods (single sign-on)
 

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   base64urlToBuffer, bufferToBase64url, credentialToJSON, failureOf, startCeremony, toCreationOptions,
-  toCredentialOptions, toRequestOptions, KIND_CREATE, KIND_GET, NOT_SUPPORTED_ERROR,
+  toCredentialOptions, toRequestOptions, KIND_CREATE, KIND_GET, unavailability,
+  INSECURE_CONTEXT_ERROR, WEB_AUTHN_UNAVAILABLE_ERROR,
 } from './webauthn-json';
 import type { PublicKeyCredentialLike } from './webauthn-json';
 
@@ -15,8 +16,9 @@ function values(buffer: ArrayBuffer | BufferSource | undefined): number[] {
   return Array.from(new Uint8Array(buffer as ArrayBuffer));
 }
 
-/** Lets the window offer `PublicKeyCredential` (with the given statics) and `navigator.credentials`. */
+/** Lets a secure window offer `PublicKeyCredential` (with the given statics) and `navigator.credentials`. */
 function offerWebAuthn(statics: Record<string, unknown>, credentials: Partial<CredentialsContainer>): void {
+  vi.stubGlobal('isSecureContext', true);
   vi.stubGlobal('PublicKeyCredential', statics);
   Object.defineProperty(navigator, 'credentials', { configurable: true, value: credentials });
 }
@@ -154,8 +156,26 @@ describe('credentials', () => {
 describe('startCeremony', () => {
   const OPTIONS = JSON.stringify({ publicKey: { challenge: 'AQ', rp: { name: 'x' }, user: { id: 'Ag', name: 'u', displayName: 'U' }, pubKeyCredParams: [] } });
 
-  it('reports a browser without WebAuthn', async () => {
-    await expect(startCeremony(KIND_CREATE, OPTIONS)).rejects.toMatchObject({ name: NOT_SUPPORTED_ERROR });
+  it('reports a secure page without WebAuthn without calling the browser', async () => {
+    vi.stubGlobal('isSecureContext', true);
+    await expect(startCeremony(KIND_CREATE, OPTIONS)).rejects.toMatchObject({ name: WEB_AUTHN_UNAVAILABLE_ERROR });
+  });
+
+  it('reports an insecure page without calling the browser, even where the API exists', async () => {
+    const create = vi.fn();
+    offerWebAuthn({}, { create });
+    vi.stubGlobal('isSecureContext', false);
+
+    await expect(startCeremony(KIND_CREATE, OPTIONS)).rejects.toMatchObject({ name: INSECURE_CONTEXT_ERROR });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('keeps name and message of an error thrown by the browser', async () => {
+    const create = vi.fn(() => Promise.reject(new DOMException('Unsupported algorithm', 'NotSupportedError')));
+    offerWebAuthn({}, { create });
+    vi.stubGlobal('isSecureContext', true);
+
+    await expect(startCeremony(KIND_CREATE, OPTIONS)).rejects.toMatchObject({ name: 'NotSupportedError', message: 'Unsupported algorithm' });
   });
 
   it('calls the browser before it returns, with the converted options and the signal', async () => {
@@ -188,6 +208,24 @@ describe('startCeremony', () => {
 
     await expect(startCeremony(KIND_GET, 'not json')).rejects.toBeInstanceOf(SyntaxError);
     expect(get).not.toHaveBeenCalled();
+  });
+});
+
+describe('unavailability', () => {
+  it('names an insecure page, which hides the API', () => {
+    vi.stubGlobal('isSecureContext', false);
+    expect(unavailability()?.name).toBe(INSECURE_CONTEXT_ERROR);
+  });
+
+  it('names a secure page without the API', () => {
+    vi.stubGlobal('isSecureContext', true);
+    expect(unavailability()?.name).toBe(WEB_AUTHN_UNAVAILABLE_ERROR);
+  });
+
+  it('finds nothing on a secure page with the API', () => {
+    vi.stubGlobal('isSecureContext', true);
+    offerWebAuthn({}, {});
+    expect(unavailability()).toBeNull();
   });
 });
 

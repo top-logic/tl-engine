@@ -17,7 +17,9 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
+import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -27,48 +29,76 @@ import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Builds and opens a dialog asking the user to enter a password, and reports whether the password
- * they entered was accepted.
+ * Builds and opens a dialog asking the user to enter a secret - a password or a one-time code - and
+ * reports whether the entry was accepted.
  *
  * <p>
- * The dialog is a message, a masked password input and the standard OK/Cancel pair, composed of
- * the same React controls a form is built from. What "accepted" means is not decided here: the
- * caller passes the check as a {@link Verifier}, so the same prompt serves whatever needs a password
- * confirmed.
+ * The dialog is a message, one input and the standard OK/Cancel pair, composed of the same React
+ * controls a form is built from. The {@link EntryKind} decides the input: a masked one for a
+ * password, a plain text input for a one-time code that is read off another device and typed in.
+ * What "accepted" means is not decided here: the caller passes the check as a {@link Verifier}, so
+ * the same prompt serves whatever needs a password or a code confirmed.
  * </p>
  *
  * <p>
- * A rejected password leaves the dialog open with the input emptied and the reason the verifier
- * gave for the rejection shown under it, so the user can try again. Only an accepted password reports success; every other way of
- * leaving the dialog - the cancel button, the window's close button, Escape - reports a cancel, and
- * exactly one of the two outcomes is reported.
+ * A rejected entry leaves the dialog open with the input emptied and the reason the verifier gave
+ * for the rejection shown under it, so the user can try again. Only an accepted entry reports
+ * success; every other way of leaving the dialog - the cancel button, the window's close button,
+ * Escape - reports a cancel, and exactly one of the two outcomes is reported.
  * </p>
  */
 public class PasswordPromptDialogControl {
 
 	/**
-	 * The check a password entered in the prompt has to pass.
+	 * The check a password or code entered in the prompt has to pass.
 	 */
 	@FunctionalInterface
 	public interface Verifier {
 
 		/**
-		 * Checks the entered password.
+		 * Checks the entered password or code.
 		 *
 		 * @param password
 		 *        The characters the user entered, which the dialog owns and clears once the check
-		 *        has returned - a verifier keeping the password must copy it.
-		 * @return {@code null} if the password is accepted, otherwise the reason for the rejection,
+		 *        has returned - a verifier keeping them must copy them.
+		 * @return {@code null} if the entry is accepted, otherwise the reason for the rejection,
 		 *         shown under the input.
 		 */
 		ResKey verify(char[] password);
+	}
+
+	/**
+	 * What the user enters in the prompt, deciding the input that asks for it.
+	 */
+	public enum EntryKind {
+
+		/** A password, entered in a masked input. */
+		PASSWORD,
+
+		/**
+		 * A one-time code, entered in a plain text input: it is short-lived, read off another
+		 * device, and the user checks what they typed against it.
+		 */
+		ONE_TIME_CODE;
 	}
 
 	/** Width of the prompt window. */
 	private static final DisplayDimension WIDTH = DisplayDimension.px(420);
 
 	/**
-	 * Opens a dialog asking for a password.
+	 * Opens a dialog asking for a password, in a masked input.
+	 *
+	 * @see #openDialog(ReactContext, DialogManager, String, String, String, EntryKind, Verifier,
+	 *      Runnable, Runnable)
+	 */
+	public static void openDialog(ReactContext context, DialogManager dialogManager, String title, String message,
+			String fieldLabel, Verifier verifier, Runnable onVerified, Runnable onCancel) {
+		openDialog(context, dialogManager, title, message, fieldLabel, EntryKind.PASSWORD, verifier, onVerified,
+			onCancel);
+	}
+
+	/**
+	 * Opens a dialog asking for a secret entry of the given kind.
 	 *
 	 * @param context
 	 *        The React context.
@@ -77,19 +107,21 @@ public class PasswordPromptDialogControl {
 	 * @param title
 	 *        The dialog window title.
 	 * @param message
-	 *        The explanation shown above the input, saying what the password is asked for.
+	 *        The explanation shown above the input, saying what the entry is asked for.
 	 * @param fieldLabel
-	 *        The label of the password input.
+	 *        The label of the input.
+	 * @param kind
+	 *        What is entered, deciding the input that asks for it.
 	 * @param verifier
-	 *        Decides whether the entered password is accepted, and why not.
+	 *        Decides whether the entry is accepted, and why not.
 	 * @param onVerified
-	 *        Runs once the user has entered a password the {@code verifier} accepts.
+	 *        Runs once the user has entered something the {@code verifier} accepts.
 	 * @param onCancel
-	 *        Runs when the user leaves the dialog without an accepted password, through any path
+	 *        Runs when the user leaves the dialog without an accepted entry, through any path
 	 *        (cancel button, the window's close button, Escape). May be {@code null}.
 	 */
 	public static void openDialog(ReactContext context, DialogManager dialogManager, String title, String message,
-			String fieldLabel, Verifier verifier, Runnable onVerified, Runnable onCancel) {
+			String fieldLabel, EntryKind kind, Verifier verifier, Runnable onVerified, Runnable onCancel) {
 		// One-shot guard so exactly one outcome is reported, regardless of how the dialog is left:
 		// every dismissal funnels through the result handler, which must not report a cancel for the
 		// dialog the accepted password has just closed.
@@ -99,8 +131,8 @@ public class PasswordPromptDialogControl {
 		password.setMandatory(true);
 		password.setNullable(false);
 
-		ReactPasswordInputControl input = new ReactPasswordInputControl(context, password);
-		// The chrome follows the field's error, so a rejected password is drawn under the input.
+		ReactFormFieldControl input = createInput(context, password, kind);
+		// The chrome follows the field's error, so a rejected entry is drawn under the input.
 		ReactControl field = new ReactFormFieldChromeControl(context, fieldLabel, input);
 
 		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());
@@ -141,8 +173,22 @@ public class PasswordPromptDialogControl {
 	}
 
 	/**
-	 * Hands the entered password to the verifier and reports its verdict, emptying the input and
-	 * marking it with the reason for the rejection when the password is not accepted.
+	 * The input asking for an entry of the given kind.
+	 */
+	private static ReactFormFieldControl createInput(ReactContext context, AbstractFieldModel model,
+			EntryKind kind) {
+		switch (kind) {
+			case PASSWORD:
+				return new ReactPasswordInputControl(context, model);
+			case ONE_TIME_CODE:
+				return new ReactTextInputControl(context, model);
+		}
+		throw new IllegalArgumentException("Unknown entry kind: " + kind);
+	}
+
+	/**
+	 * Hands the entry to the verifier and reports its verdict, emptying the input and marking it
+	 * with the reason for the rejection when the entry is not accepted.
 	 */
 	private static boolean accepted(AbstractFieldModel model, Verifier verifier) {
 		Object value = model.getValue();

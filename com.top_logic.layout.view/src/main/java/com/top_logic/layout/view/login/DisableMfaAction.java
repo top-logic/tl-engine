@@ -37,6 +37,7 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * @see EnableMfaAction
+ * @see ResetMfaAction
  */
 @InApp
 public class DisableMfaAction implements ViewAction {

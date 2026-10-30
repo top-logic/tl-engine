@@ -8,7 +8,6 @@ package com.top_logic.knowledge.service.compact;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +18,6 @@ import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.i18n.log.I18NLog;
-import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.db2.HistoryCompaction;
 import com.top_logic.layout.DisplayContext;
@@ -53,11 +51,6 @@ public class CompactHistoryDialog extends AbstractFormPageDialog {
 	private static final String BEFORE_DATE_FIELD = "beforeDate";
 
 	/**
-	 * Number of years the {@link #BEFORE_DATE_FIELD} is initialized back in time.
-	 */
-	private static final int DEFAULT_AGE_YEARS = 1;
-
-	/**
 	 * Width of the progress dialogs in pixels.
 	 */
 	private static final int PROGRESS_WIDTH = 600;
@@ -89,18 +82,13 @@ public class CompactHistoryDialog extends AbstractFormPageDialog {
 
 	@Override
 	protected void fillFormContext(FormContext context) {
-		_beforeDateField = FormFactory.newDateField(BEFORE_DATE_FIELD, defaultBeforeDate(), false);
+		_beforeDateField =
+			FormFactory.newDateField(BEFORE_DATE_FIELD, HistoryCompactionOperation.defaultBeforeDate(), false);
 		_beforeDateField.setMandatory(true);
 		_beforeDateField.setLabel(I18NConstants.BEFORE_DATE);
 		context.addMember(_beforeDateField);
 
 		template(context, div(verticalBox(fieldBox(BEFORE_DATE_FIELD))));
-	}
-
-	private static Date defaultBeforeDate() {
-		Calendar calendar = CalendarUtil.createCalendar();
-		calendar.add(Calendar.YEAR, -DEFAULT_AGE_YEARS);
-		return calendar.getTime();
 	}
 
 	@Override

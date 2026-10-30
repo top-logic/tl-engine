@@ -467,8 +467,16 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	/**
 	 * Whether this registry's session is registered with the {@link SessionService} and belongs to
 	 * an account that still exists.
+	 *
+	 * <p>
+	 * While the {@link SessionService} is stopped, e.g. during a restart of the persistency layer,
+	 * no session has a live user.
+	 * </p>
 	 */
 	private boolean hasLiveUser() {
+		if (!SessionService.Module.INSTANCE.isActive()) {
+			return false;
+		}
 		// The user may be deleted: nothing but tValid() may be asked of it.
 		Person user = SessionService.getInstance().getUser(_sessionId);
 		return user != null && user.tValid();

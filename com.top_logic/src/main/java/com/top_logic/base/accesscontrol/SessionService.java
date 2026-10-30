@@ -52,6 +52,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -76,6 +77,8 @@ import com.top_logic.util.TLContext;
 	/* The SessionService caches Persons which depend on the KB and listens for deleted Persons.
 	 * Therefore it must be restarted, when the KB is restarted. */
 	PersistencyLayer.Module.class,
+	/* Ending a session, also on shutdown, stores the personal configuration of its user. */
+	PersonManager.Module.class,
 	SchedulerService.Module.class
 })
 @Label("User sessions")
@@ -883,8 +886,17 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			_kb.removeUpdateListener(_personDeletionListener);
 			_kb = null;
 		}
+		/* The HTTP sessions are invalidated, not only removed: their contexts hold objects of the
+		 * knowledge base that is shut down together with this service, e.g. during a restart of the
+		 * persistency layer, and must not be used by a later request. */
 		for (String sessionId : new ArrayList<>(_sessionMap.keySet())) {
-			invalidateSession(sessionId);
+			try {
+				terminateSession(sessionId);
+			} catch (RuntimeException ex) {
+				// The service must shut down completely, also when the logout of one session cannot
+				// be processed.
+				Logger.error("Failed to end session '" + sessionId + "' on shutdown.", ex, SessionService.class);
+			}
 		}
 		_sessionMap.clear();
 		super.shutDown();

@@ -3,6 +3,13 @@
 <view>
 	<channels>
 		<channel name="selectedAccount"/>
+		<!--
+			The last login of every account, read once when the view is opened, so that the column
+			of the table looks each row up instead of querying per row.
+		-->
+		<derived-channel name="lastLogins"
+			expr="accountLastLogins()"
+		/>
 	</channels>
 	<split-panel id="main"
 		orientation="horizontal"
@@ -149,8 +156,24 @@
 					>
 						<columns>
 							<column attribute="name"/>
+							<computed-column name="lastLogin"
+								inputs="lastLogins"
+								type="tl.core:DateTime"
+							>
+								<label>
+									<en>Last login</en>
+									<de>Letzte Anmeldung</de>
+								</label>
+								<value>$lastLogins[$row]</value>
+							</computed-column>
 						</columns>
 						<rows>all(`tl.accounts:Person`)</rows>
+						<export download-name="#('Accounts'@en, 'Konten'@de)">
+							<sheet-name>
+								<en>Accounts</en>
+								<de>Konten</de>
+							</sheet-name>
+						</export>
 					</table>
 				</panel>
 			</pane>

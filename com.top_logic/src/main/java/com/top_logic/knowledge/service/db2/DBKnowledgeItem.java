@@ -821,6 +821,35 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		}
 	}
 
+	/**
+	 * Lets the current state of this item start at the given revision, if it starts earlier.
+	 *
+	 * <p>
+	 * For a history that was compacted into the given revision, which rewrote the start and the
+	 * create revision of the current row of this item in the database.
+	 * </p>
+	 *
+	 * @see DBKnowledgeBase#historyCompacted(long)
+	 */
+	final void moveCurrentStart(long revision) {
+		Values current = getValues();
+		if (current == null || !current.isAlive() || current.maxValidity() != Revision.CURRENT_REV
+			|| current.minValidity() >= revision) {
+			return;
+		}
+		Object[] data = current.getData().clone();
+		MOAttribute revMin = revMinAttribute();
+		revMin.getStorage().initApplicationValue(revMin, this, this, data, Long.valueOf(revision));
+		MOAttribute revCreate = tTable().getAttributeOrNull(BasicTypes.REV_CREATE_ATTRIBUTE_NAME);
+		if (revCreate != null) {
+			Object created = revCreate.getStorage().getApplicationValue(revCreate, this, this, data);
+			if (created instanceof Long createRevision && createRevision.longValue() < revision) {
+				revCreate.getStorage().initApplicationValue(revCreate, this, this, data, Long.valueOf(revision));
+			}
+		}
+		updateValues(newValues(revision, Revision.CURRENT_REV, data));
+	}
+
 	private Values createValues(Object[] data) {
 		long validFrom = longValue(getApplicationValue(revMinAttribute(), data));
 		long validTo = longValue(getApplicationValue(revMaxAttribute(), data));

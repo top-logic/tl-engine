@@ -5405,6 +5405,45 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	/**
+	 * Adapts the cached objects to a history that was compacted into the given revision.
+	 *
+	 * <p>
+	 * The compaction (see {@link HistoryCompaction}) rewrites the rows in the database directly:
+	 * the current state of an object that was last changed before the compaction revision now
+	 * starts at the compaction revision. A cached object still knows the revision of its last
+	 * change, which the database no longer contains, so the next change of the object would be
+	 * refused as a lost update. This method lets the current state of every cached object start
+	 * at the compaction revision as well, so that the objects can be changed until the caches are
+	 * dropped by a restart of the knowledge base.
+	 * </p>
+	 *
+	 * @param compactionRevision
+	 *        The revision all revisions before were collapsed into.
+	 */
+	public void historyCompacted(long compactionRevision) {
+		List<DBKnowledgeItem> items = new ArrayList<>();
+		synchronized (cache) {
+			for (Object entry : cache.values()) {
+				IDReference reference;
+				if (entry instanceof IDReference) {
+					reference = (IDReference) entry;
+				} else if (entry instanceof CacheValidity validity
+					&& validity.maxValidity() == Revision.CURRENT_REV) {
+					reference = validity.getReference();
+				} else {
+					continue;
+				}
+				if (reference.get() instanceof DBKnowledgeItem item) {
+					items.add(item);
+				}
+			}
+		}
+		for (DBKnowledgeItem item : items) {
+			item.moveCurrentStart(compactionRevision);
+		}
+	}
+
+	/**
 	 * Method called by reflection from tests to reset cache.
 	 * 
 	 * @see "test.com.top_logic.KBTestUtils#clearCache(KnowledgeBase)"

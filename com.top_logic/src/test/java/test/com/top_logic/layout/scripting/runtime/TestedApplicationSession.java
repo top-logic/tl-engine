@@ -490,6 +490,11 @@ public class TestedApplicationSession implements ApplicationSession, HttpSession
 		return response;
 	}
 
+	@Override
+	public boolean isInvalid() {
+		return invalid;
+	}
+
 	private void checkInvalid() {
 		if (invalid) {
 			throw new IllegalStateException("Session already invalidated.");

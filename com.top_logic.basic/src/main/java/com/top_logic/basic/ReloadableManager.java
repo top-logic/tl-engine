@@ -8,11 +8,17 @@ package com.top_logic.basic;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Manager for Reloadable objects.
@@ -90,7 +96,7 @@ public class ReloadableManager {
      * If there is no such Reloadable, false will be returned.
      *
      * @param    aName    The name of the object to be reloaded.
-     * @return   true, if reloading fails.
+     * @return   true, if reloading succeeds.
      */
     public boolean reload (String aName) {
         this.alreadyLoaded = false;
@@ -102,7 +108,9 @@ public class ReloadableManager {
      * Send the reload message to all known Reloadables.
      *
      * @param    anArray    The name of the object to be reloaded.
-     * @return   The list of objects not been reloaded (who returned false).
+     * @return   The list of objects not been reloaded (who returned false, failed or are unknown).
+     *
+     * @see #reloadKnownReporting(Collection)
      */
     public String [] reloadKnown (String [] anArray) {
         this.alreadyLoaded = false;
@@ -220,29 +228,47 @@ public class ReloadableManager {
 	}
 
     /**
+	 * Sends the reload message to the known {@link Reloadable}s with the given names and reports
+	 * why each failing one could not be reloaded.
+	 *
+	 * <p>
+	 * A failing {@link Reloadable} does not keep the others from being reloaded. A failure is
+	 * written to the log.
+	 * </p>
+	 *
+	 * @param names
+	 *        The names of the {@link Reloadable}s to reload, in the order to reload them.
+	 * @return For each name whose {@link Reloadable} could not be reloaded, the
+	 *         {@link ReloadFailure} telling why, in the order of the given names. A name no
+	 *         {@link Reloadable} is registered under counts as failed. Empty, if all were reloaded.
+	 */
+	public Map<String, ReloadFailure> reloadKnownReporting(Collection<String> names) {
+		this.alreadyLoaded = false;
+
+		return _reloadKnownReporting(names);
+	}
+
+	/**
+	 * Implementation of {@link #reloadKnownReporting(Collection)}.
+	 */
+	private Map<String, ReloadFailure> _reloadKnownReporting(Collection<String> names) {
+		Map<String, ReloadFailure> failures = new LinkedHashMap<>();
+		for (String name : names) {
+			ReloadFailure failure = tryReload(name, (Reloadable) this.getMap().get(name));
+			if (failure != null) {
+				failures.put(name, failure);
+			}
+		}
+		return failures;
+	}
+
+    /**
 	 * Send the reload message to all known {@link Reloadable}s.
 	 *
 	 * @return The list of objects not been reloaded (who returned false).
 	 */
     protected String [] _reloadKnown () {
-        String [] theArray;
-        String    theKey;
-        Map       theMap  = this.getMap ();
-        int       len     = theMap.size();
-        List      theList = new ArrayList (len);
-        Iterator  theIt   = theMap.keySet ().iterator ();
-
-        while (theIt.hasNext ()) {
-            theKey = theIt.next ().toString ();
-
-            if (!this._reload (theKey)) {
-                theList.add (theKey);
-            }
-        }
-
-        theArray = new String [theList.size ()];
-
-        return ((String []) theList.toArray (theArray));
+		return _reloadKnown(getKnown());
     }
 
     /**
@@ -252,23 +278,7 @@ public class ReloadableManager {
      * @return   The list of objects not been reloaded (who returned false).
      */
     protected String [] _reloadKnown (String [] anArray) {
-        String [] theArray;
-        String    theKey;
-        int       len     = anArray.length;
-        List      theList = new ArrayList (len);
-        int       thePos  = 0;
-
-        while (thePos < len) {
-            theKey = anArray [thePos++];
-
-            if (!this._reload (theKey)) {
-                theList.add (theKey);
-            }
-        }
-
-        theArray = new String [theList.size ()];
-
-        return ((String []) theList.toArray (theArray));
+		return _reloadKnownReporting(Arrays.asList(anArray)).keySet().toArray(new String[0]);
     }
 
     /**
@@ -292,10 +302,10 @@ public class ReloadableManager {
      * If there is no such Reloadable, false will be returned.
      *
      * @param    aName    The name of the object to be reloaded.
-     * @return   true, if reloading fails.
+     * @return   true, if reloading succeeds.
      */
     protected boolean _reload (String aName) {
-        return (this._reload ((Reloadable) this.getMap ().get (aName)));
+		return _reloadKnownReporting(Collections.singletonList(aName)).isEmpty();
     }
 
     /**
@@ -304,21 +314,64 @@ public class ReloadableManager {
      * If there is no such Reloadable, false will be returned.
      *
      * @param    anObject    The object to be reloaded.
-     * @return   true, if reloading fails.
+     * @return   true, if reloading succeeds.
      */
     protected boolean _reload (Reloadable anObject) {
-        try {
-            if (anObject != null) {
-                this.checkXMLProperties (anObject);
-
-                return (anObject.reload ());
-            }
-        }
-        catch (Exception ex) {
-            Logger.info ("Unable to reload '" + anObject + '\'', ex, this);
-        }
-        return false;
+		return tryReload(anObject, anObject) == null;
     }
+
+	/**
+	 * Sends the reload message to the given {@link Reloadable} and logs a failure.
+	 *
+	 * @param name
+	 *        How the {@link Reloadable} is named in the log.
+	 * @param reloadable
+	 *        The {@link Reloadable} to reload, <code>null</code> if none is registered under the
+	 *        given name.
+	 * @return Why the {@link Reloadable} could not be reloaded, <code>null</code> if it was
+	 *         reloaded.
+	 */
+	private ReloadFailure tryReload(Object name, Reloadable reloadable) {
+		if (reloadable == null) {
+			return new ReloadFailure(I18NConstants.ERROR_RELOADABLE_UNKNOWN__NAME.fill(name), null);
+		}
+		try {
+			this.checkXMLProperties(reloadable);
+
+			if (reloadable.reload()) {
+				return null;
+			}
+			Logger.error("Reload of '" + name + "' returned false.", ReloadableManager.class);
+			return new ReloadFailure(I18NConstants.ERROR_RELOAD_REFUSED, null);
+		} catch (Exception ex) {
+			Logger.error("Unable to reload '" + name + "'.", ex, ReloadableManager.class);
+			return new ReloadFailure(reason(ex), ex);
+		}
+	}
+
+	private static ResKey reason(Exception ex) {
+		if (ex instanceof I18NFailure failure) {
+			return failure.getErrorKey();
+		}
+		String message = ex.getMessage();
+		return I18NConstants.ERROR_RELOAD_FAILED__MESSAGE
+			.fill(StringServices.isEmpty(message) ? ex.getClass().getName() : message);
+	}
+
+	/**
+	 * Why a {@link Reloadable} could not be reloaded.
+	 *
+	 * @param reason
+	 *        What the administrator reads as reason of the failure.
+	 * @param cause
+	 *        The exception the reload failed with, <code>null</code> if the {@link Reloadable}
+	 *        refused the reload or none is registered under the given name.
+	 *
+	 * @see ReloadableManager#reloadKnownReporting(Collection)
+	 */
+	public record ReloadFailure(ResKey reason, Throwable cause) {
+		// Pure value.
+	}
 
     /**
      * Check, whether the given object has used the XMLProperties.

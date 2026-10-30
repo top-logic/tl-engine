@@ -180,6 +180,11 @@ public interface ViewCommand {
 		 * button-bar command answers {@code Enter}, and the dialog's cancel action answers
 		 * {@code Escape}.
 		 * </p>
+		 *
+		 * <p>
+		 * In a multi-line text, Enter inserts a line break and does not trigger a command, while
+		 * {@code "Ctrl+Enter"} does.
+		 * </p>
 		 */
 		@Name(KEY)
 		@Nullable

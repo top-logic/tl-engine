@@ -114,6 +114,8 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const stateText = i18n[`js.jobStatus.${status}`] ?? status;
 
   // The live line says what is worth announcing: the state and the step the job is at, with the message. The
+  // message says what the job is doing, so it is shown only while the job runs: once it has ended, the result
+  // or the error says what came of it, and the last message would describe work that is over. The
   // name of the step stands visible; the state and the word "Step" before it are only read, since the header
   // shows the state and the list the step. The elapsed time, the list and the bar stay outside: the time
   // changes every second and would be announced every second.
@@ -151,7 +153,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
               {stepAfter !== '' && <span className="tl-visually-hidden">{stepAfter}</span>}
             </>
           )}
-        {message !== null && message !== '' && <div className="tl-job-status__message tl-type-body">{message}</div>}
+        {running && message !== null && message !== '' && <div className="tl-job-status__message tl-type-body">{message}</div>}
       </div>
       {phases.length > 0 && (
         <ol className="tl-steps tl-steps--vertical" aria-label={i18n['js.jobStatus.steps']}>

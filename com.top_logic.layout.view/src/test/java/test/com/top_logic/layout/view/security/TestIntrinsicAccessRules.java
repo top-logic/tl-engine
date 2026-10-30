@@ -99,7 +99,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 	public void testDeleteDeniedDisabled() throws Exception {
 		ViewExecutabilityRule rule = delete();
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
 			rule.isExecutable(_project));
 	}
@@ -153,7 +153,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(null));
 	}
@@ -244,7 +244,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 			rule.isExecutable(List.of(_project, anonymous)));
 		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutable(List.of()));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
 			rule.isExecutable(List.of(_project)));
 	}
@@ -260,7 +260,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(null));
 	}
@@ -358,7 +358,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(draft));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(draft));
 		assertSame("Nothing to check.", ExecutableState.EXECUTABLE, rule.isExecutable(null));
@@ -385,7 +385,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		_channel.set(null);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
 			rule.isExecutable(_project));
@@ -404,7 +404,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		assertSame(ExecutableState.EXECUTABLE, transaction.getIntrinsicRule().isExecutable(_project));
 		assertSame(ExecutableState.EXECUTABLE, command.getIntrinsicRule().isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
 			transaction.getIntrinsicRule().isExecutable(_project));
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
@@ -454,7 +454,7 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
 			rule.isExecutable(_project));
 

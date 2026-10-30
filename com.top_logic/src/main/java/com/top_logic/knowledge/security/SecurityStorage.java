@@ -319,6 +319,31 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
 
 
+	/**
+	 * Checks whether one of the given groups has one of the given roles on any business object.
+	 *
+	 * @param groupIDs
+	 *        The IDs of the groups to check for roles.
+	 * @param roleIDs
+	 *        The IDs of the roles to check for.
+	 * @return Whether the storage contains an entry for one of the given groups and one of the
+	 *         given roles. <code>false</code>, when one of the given collections is empty or
+	 *         <code>null</code>.
+	 * @throws StorageException
+	 *         If some error occurs while requesting the database.
+	 */
+	public boolean hasRoleOnAnyObject(Collection<TLID> groupIDs, Collection<TLID> roleIDs)
+			throws StorageException {
+		if (CollectionUtil.isEmptyOrNull(groupIDs) || CollectionUtil.isEmptyOrNull(roleIDs)) {
+			return false;
+		}
+		try {
+			return executor.hasRoleOnAnyObjectFromCollection(groupIDs, roleIDs);
+		} catch (SQLException e) {
+			throw new StorageException("Error while requesting the database.", e);
+		}
+	}
+
     /**
      * Gets all roles the given group has on the given business object for the given reason.
      * All parameters may be <code>null</code> to indicate that a result from all objects
@@ -1526,6 +1551,25 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             dbHelper.limitLast(sb, 1);
             return DBUtil.executeQueryAsBoolean(sb.toString());
         }
+
+		/**
+		 * Whether one of the given groups has one of the given roles on any business object.
+		 *
+		 * @see SecurityStorage#hasRoleOnAnyObject(Collection, Collection)
+		 */
+		public boolean hasRoleOnAnyObjectFromCollection(Collection<TLID> groupIDs, Collection<TLID> roleIDs)
+				throws SQLException {
+			StringBuilder sb = new StringBuilder(1024);
+			dbHelper.limitStart(sb, 1);
+			sb.append(SQL_SELECT_PREFIX);
+			dbHelper.limitColumns(sb, 1);
+			sb.append(SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_1);
+			dbHelper.literalSet(sb, DBType.ID, groupIDs);
+			sb.append(SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_3);
+			dbHelper.literalSet(sb, DBType.ID, roleIDs);
+			dbHelper.limitLast(sb, 1);
+			return DBUtil.executeQueryAsBoolean(sb.toString());
+		}
 
 		public List<BoundedRole> getRolesFromCollection(Collection<TLID> aGroupIDList,
 				Collection<TLID> aBusinessObjectIDList) throws SQLException {

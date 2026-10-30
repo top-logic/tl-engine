@@ -101,7 +101,7 @@ public class TestObjectListAccess extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, remove.isExecutable(_project));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, remove.isExecutable(_project));
 	}
 
@@ -134,7 +134,7 @@ public class TestObjectListAccess extends AbstractModelAccessTest {
 		assertEquals("A new input value is a new check.", 1, revalidations[0]);
 		assertSame(ExecutableState.EXECUTABLE, link.isExecutable(null));
 
-		becomeUser(_roleless);
+		becomeUser(_outsider);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, link.isExecutable(null));
 		stop.run();
 	}

@@ -12,11 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable.Property;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference;
@@ -24,9 +20,9 @@ import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.RangeParam;
+import com.top_logic.knowledge.service.InteractionRevisionMemo;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -62,18 +58,15 @@ final class RoleAssignmentMemo {
 	 */
 	static final int MAX_LOADED_ASSIGNMENTS = 1000;
 
-	private static final Property<RoleAssignmentMemo> PROPERTY =
-		TypedAnnotatable.property(RoleAssignmentMemo.class, "roleAssignments");
+	private static final InteractionRevisionMemo<RoleAssignmentMemo> MEMO =
+		new InteractionRevisionMemo<>("roleAssignments", RoleAssignmentMemo::new);
 
 	private final KnowledgeBase _kb;
 
-	private final long _revision;
-
 	private final Map<ObjectKey, GroupAssignments> _assignmentsByGroup = new HashMap<>();
 
-	private RoleAssignmentMemo(KnowledgeBase kb, long revision) {
+	private RoleAssignmentMemo(KnowledgeBase kb) {
 		_kb = kb;
-		_revision = revision;
 	}
 
 	/**
@@ -82,22 +75,11 @@ final class RoleAssignmentMemo {
 	 * @return <code>null</code> when there is no interaction, or when the current thread has
 	 *         uncommitted changes in the given knowledge base. Role assignments must then be looked
 	 *         up directly.
+	 *
+	 * @see InteractionRevisionMemo#current(KnowledgeBase)
 	 */
 	static RoleAssignmentMemo current(KnowledgeBase kb) {
-		InteractionContext interaction = ThreadContextManager.getInteraction();
-		if (interaction == null) {
-			return null;
-		}
-		if (!(kb instanceof DBKnowledgeBase dbKB) || dbKB.hasUncommittedChanges()) {
-			return null;
-		}
-		long revision = kb.getHistoryManager().getLastRevision();
-		RoleAssignmentMemo memo = interaction.get(PROPERTY);
-		if (memo == null || memo._kb != kb || memo._revision != revision) {
-			memo = new RoleAssignmentMemo(kb, revision);
-			interaction.set(PROPERTY, memo);
-		}
-		return memo;
+		return MEMO.current(kb);
 	}
 
 	/**

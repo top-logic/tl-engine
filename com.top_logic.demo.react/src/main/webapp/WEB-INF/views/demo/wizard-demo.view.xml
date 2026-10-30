@@ -21,7 +21,9 @@
 	Between the profile and the questions sits an interstitial: "Setting up" carries an
 	auto-advance="2s" and no buttons at all, so it shows itself for two seconds and then moves on by
 	itself. No step content raises buttons into the footer slot then, so the slot shows the hint of
-	its <empty> fallback instead, until the next step's buttons take its place.
+	its <empty> fallback instead, until the next step's buttons take its place. A step that was left
+	waits when it is entered again rather than moving on, so the Back button of the first question
+	leads past the interstitial to the profile instead of into a step without buttons.
 	
 	A question step chooses its display by the question it asks: a <switch input="question"> picks
 	the field to fill in, so the three questions are three different inputs on one content template.
@@ -207,17 +209,33 @@
 								gap="default"
 								justify="end"
 							>
-								<button>
-									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
-										<label>
-											<en>Back</en>
-											<de>Zurück</de>
-										</label>
-										<executability>
-											<wizard-has-back/>
-										</executability>
-									</action>
-								</button>
+								<switch input="question">
+									<case test="$question == 'role'">
+										<button>
+											<action class="com.top_logic.layout.view.wizard.WizardGotoCommand"
+												step="profile"
+											>
+												<label>
+													<en>Back</en>
+													<de>Zurück</de>
+												</label>
+											</action>
+										</button>
+									</case>
+									<default>
+										<button>
+											<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
+												<label>
+													<en>Back</en>
+													<de>Zurück</de>
+												</label>
+												<executability>
+													<wizard-has-back/>
+												</executability>
+											</action>
+										</button>
+									</default>
+								</switch>
 								<button appearance="primary">
 									<action class="com.top_logic.layout.view.command.GenericViewCommand">
 										<label>

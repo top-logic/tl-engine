@@ -146,7 +146,9 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	public interface SchedulerConfig extends ConfiguredManagedClass.Config<Scheduler> {
 
 		/**
-		 * How long to wait for the thread to finish during shutdown.
+		 * How long to wait for the dispatch thread to finish during shutdown, in addition to the
+		 * {@link #getTimeToKill() time to kill} that the dispatch thread waits for running
+		 * {@link Task}s to end.
 		 * 
 		 * @implNote The configuration value is given in milliseconds.
 		 */
@@ -1651,20 +1653,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		}
 	}
 
-	/**
-	 * Sleeps for the given amount of milliseconds. Returns early if woken by an
-	 * {@link InterruptedException}.
-	 */
-	private void sleep(long duration) {
-		try {
-			// 'max' is used to ensure sleep is not called with 0 or negative values,
-			// as the behavior for these values is not documented.
-			Thread.sleep(Math.max(duration, 1));
-		} catch (InterruptedException ex) {
-			return;
-		}
-	}
-
 	private void requestMaintenanceMode(final long requestedDelay) {
 		long actualDelay = Math.max(requestedDelay, getMaintenanceModeMinDelay());
 		Logger.info("Scheduler is requesting maintenance mode in " + actualDelay + " ms.", Scheduler.class);
@@ -2185,15 +2173,38 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		int countdown = getConfig().getShutdownCountdown();
         long sleep     = timeToKill / countdown;
 		while (runCount > 0 && countdown-- > 0) {
-			sleep(sleep);
+			awaitRunEnd(sleep);
 			checkRunning();
 			runCount = getActiveEntries().size();
         }
-        if (runCount > 0) {
-			status.append(" The following tasks failed to stop: ").append(runCount);
-        }
         Logger.info(status.toString(), this);
+		if (runCount > 0) {
+			Logger.error("Tasks still running after the time to kill of " + timeToKill + " ms at shutdown: "
+				+ getActiveEntries().stream().map(entry -> entry.getTask().getName()).toList(), this);
+		}
     }
+
+	/**
+	 * Waits until the threads of all active {@link Task}s have ended, at most the given time.
+	 */
+	private void awaitRunEnd(long maxWait) {
+		long deadline = System.currentTimeMillis() + maxWait;
+		for (SchedulerEntry entry : getActiveEntries()) {
+			ScheduledThread thread = entry.getThread();
+			if (thread == null) {
+				continue;
+			}
+			long timeLeft = deadline - System.currentTimeMillis();
+			if (timeLeft <= 0) {
+				return;
+			}
+			try {
+				thread.join(timeLeft);
+			} catch (InterruptedException ex) {
+				return;
+			}
+		}
+	}
 
     /**
      * Acessor for the polling interval, default DEFAULT_POLLING_INTERVAL.
@@ -2448,7 +2459,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		if (thread != null) {
 			signalStop();
 			try {
-				thread.join(getConfig().getShutdownJoinTime());
+				// Tasks must not be detached while the dispatch thread waits for them to end.
+				thread.join(timeToKill + getConfig().getShutdownJoinTime());
 			} catch (InterruptedException e) {
 				e.printStackTrace(); // This is ok here
 			}

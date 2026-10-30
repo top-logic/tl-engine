@@ -32,7 +32,6 @@ import com.top_logic.basic.util.retry.Retry;
 import com.top_logic.basic.util.retry.RetryResult;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.util.Utils;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskCommon;
@@ -618,36 +617,50 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 	 * This fulfills the obligations of a {@link #isPersistent() persistent} task.
 	 * </p>
 	 * 
+	 * <p>
+	 * The protocol is written to the log the task has at the start of the run, also if the task is
+	 * {@link #detachFromScheduler() detached} from its {@link Scheduler} during the run, e.g. when
+	 * the {@link Scheduler} shuts down without waiting for the end of the run.
+	 * </p>
+	 * 
+	 * @throws IllegalStateException
+	 *         If the task is not {@link #attachTo(Scheduler) attached} to a {@link Scheduler}.
+	 * 
 	 * @see StateHandlingTask
 	 */
 	protected final void runWithResultProtocol(Runnable work) {
+		TaskLog log = getLog();
+		if (log == null) {
+			throw new IllegalStateException(
+				"Task '" + getName() + "' is not attached to a scheduler and therefore cannot run.");
+		}
 		ThreadContext.inSystemContext(getClass(), () -> {
-			getLog().taskStarted();
+			log.taskStarted();
 			try {
 				work.run();
-				endOnReturn();
+				endOnReturn(log);
 			} catch (Throwable exception) {
-				endOnThrowable(exception);
+				endOnThrowable(log, exception);
 			}
 		});
 	}
 
-	private void endOnReturn() {
-		TaskResult currentResult = getLog().getCurrentResult();
+	private void endOnReturn(TaskLog log) {
+		TaskResult currentResult = log.getCurrentResult();
 		if (currentResult.getResultType() == ResultType.NOT_FINISHED) {
-			if (getLog().getState() == TaskState.CANCELING || getShouldStop()) {
-				getLog().taskEnded(ResultType.CANCELED, ResultType.CANCELED.getMessageI18N());
+			if (log.getState() == TaskState.CANCELING || getShouldStop()) {
+				log.taskEnded(ResultType.CANCELED, ResultType.CANCELED.getMessageI18N());
 			} else if (currentResult.hasWarnings()) {
-				getLog().taskEnded(ResultType.WARNING, ResultType.WARNING.getMessageI18N());
+				log.taskEnded(ResultType.WARNING, ResultType.WARNING.getMessageI18N());
 			} else {
-				getLog().taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());
+				log.taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());
 			}
 		}
 	}
 
-	private void endOnThrowable(Throwable exception) {
-		if (getLog().getCurrentResult().getResultType() == ResultType.NOT_FINISHED) {
-			getLog().taskEnded(ResultType.ERROR, com.top_logic.util.sched.I18NConstants.UNEXPECTED_ERROR, exception);
+	private void endOnThrowable(TaskLog log, Throwable exception) {
+		if (log.getCurrentResult().getResultType() == ResultType.NOT_FINISHED) {
+			log.taskEnded(ResultType.ERROR, com.top_logic.util.sched.I18NConstants.UNEXPECTED_ERROR, exception);
 		}
 	}
 
@@ -841,10 +854,15 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 
 	private RetryResult<Boolean, Throwable> signalStopUnsafe() {
 		try {
-			if (getLog() instanceof TaskLogWrapper) {
-				return RetryResult.createSuccess(signalStopClusterGlobal());
+			TaskLog log = getLog();
+			if (log == null) {
+				// Not attached to a scheduler and therefore not running.
+				return RetryResult.createSuccess(true);
 			}
-			return RetryResult.createSuccess(signalStopClusterNodeLocal());
+			if (log instanceof TaskLogWrapper) {
+				return RetryResult.createSuccess(signalStopClusterGlobal((TaskLogWrapper) log));
+			}
+			return RetryResult.createSuccess(signalStopClusterNodeLocal(log));
 		} catch (RuntimeException ex) {
 			return RetryResult.<Boolean, Throwable> createFailure(ex);
 		}
@@ -857,9 +875,9 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		}
 	}
 
-	private boolean signalStopClusterNodeLocal() {
-		if (getLog().getState() == TaskState.RUNNING) {
-			getLog().taskCanceling();
+	private boolean signalStopClusterNodeLocal(TaskLog log) {
+		if (log.getState() == TaskState.RUNNING) {
+			log.taskCanceling();
 			boolean superResult = super.signalStop();
 			boolean hookResult = signalStopHook();
 			return superResult & hookResult;
@@ -872,9 +890,9 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		return true;
 	}
 
-	private boolean signalStopClusterGlobal() {
+	private boolean signalStopClusterGlobal(TaskLogWrapper logWrapper) {
 		RetryResult<Boolean, List<Throwable>> result = Retry.retry(COMMIT_RETRIES, createExponentialBackoff(),
-			TaskImpl.this::trySignalStopClusterGlobal);
+			() -> trySignalStopClusterGlobal(logWrapper));
 		if (!result.isSuccess()) {
 			throw ExceptionUtil.createException("Failed " + COMMIT_RETRIES + " times to signal task '" + getName()
 				+ "' to stop. Giving up.", result.getReason());
@@ -882,8 +900,8 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		return result.getValue();
 	}
 
-	private RetryResult<Boolean, Throwable> trySignalStopClusterGlobal() {
-		if (getLog().getState() != TaskState.RUNNING) {
+	private RetryResult<Boolean, Throwable> trySignalStopClusterGlobal(TaskLogWrapper logWrapper) {
+		if (logWrapper.getState() != TaskState.RUNNING) {
 			// Test without 'lock()' first,
 			// to prevent conflicts with the commit of taskStarted.
 			return RetryResult.createSuccess(true);
@@ -891,7 +909,6 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		Transaction transaction = PersistencyLayer.getKnowledgeBase()
 			.beginTransaction(com.top_logic.util.sched.task.I18NConstants.STOPPED_CLUSTER_TASK__TASK.fill(getName()));
 		try {
-			TaskLogWrapper logWrapper = (TaskLogWrapper) getLog();
 			logWrapper.tTouch();
 			if (logWrapper.getState() != TaskState.RUNNING) {
 				// The chance for this is almost(!) 0 as it is checked above,
@@ -917,13 +934,17 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 	}
 
 	/**
-	 * @throws NullPointerException
-	 *         If there is no current result.
+	 * Whether the running task is executed on this cluster node.
+	 * 
+	 * <p>
+	 * The decision is based on the cluster lock that the {@link Scheduler} sets together with the
+	 * {@link TaskState#RUNNING} state when it starts the task. The current result of the run is
+	 * not suitable: The task creates it only when its thread has started, so a stop request in
+	 * between finds no result.
+	 * </p>
 	 */
 	private boolean isTaskExecutingOnLocalNode(TaskLogWrapper logWrapper) {
-		long executingNode = logWrapper.getCurrentResult().getClusterNodeId();
-		long localNode = getCurrentClusterNodeId();
-		return Utils.equals(executingNode, localNode);
+		return logWrapper.hasClusterLock();
 	}
 
 	private boolean signalStopClusterGlobalOnLocalNode(TaskLogWrapper logWrapper) {
@@ -962,10 +983,11 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 
 	@Override
 	public void logGuiWarning(String message) {
-		if (getLog().getState() == TaskState.INACTIVE) {
+		TaskLog log = getLog();
+		if (log == null || log.getState() == TaskState.INACTIVE) {
 			throw new IllegalStateException("Gui warnings can only be logged while the task is running.");
 		}
-		getLog().getCurrentResult().addWarning(message);
+		log.getCurrentResult().addWarning(message);
 	}
 
 }

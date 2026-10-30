@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -21,11 +22,11 @@ import com.top_logic.model.search.expr.SearchExpression;
  * {@link RowSetBinding} anchored at a reference attribute of the form object.
  *
  * <p>
- * The row set is the reference value; adding a row creates a new object of the reference's target
- * type; committing writes the persisted row list back to the reference on the editing buffer of the
- * owner. The remove semantics follow the model: rows removed from a {@link TLReference#isComposite()
- * composition} reference are deleted (they cannot exist outside their container), rows removed
- * from a plain reference are only unlinked and keep existing.
+ * The row set is the reference value; adding a row creates a new object of a concrete type of the
+ * reference's target type; committing writes the persisted row list back to the reference on the
+ * editing buffer of the owner. The remove semantics follow the model: rows removed from a
+ * {@link TLReference#isComposite() composition} reference are deleted (they cannot exist outside
+ * their container), rows removed from a plain reference are only unlinked and keep existing.
  * </p>
  */
 public class AttributeRowSetBinding implements RowSetBinding {
@@ -99,10 +100,19 @@ public class AttributeRowSetBinding implements RowSetBinding {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The {@link ModelAccessPolicy#concreteTypes(TLClass) concrete types} of the reference's target
+	 * type: the target type itself when it is concrete, its concrete specializations when it is
+	 * abstract.
+	 * </p>
+	 */
 	@Override
 	public List<TLClass> getCreateTypes() {
 		TLClass rowType = getRowType();
-		return rowType == null ? List.of() : List.of(rowType);
+		return rowType == null ? List.of() : List.copyOf(ModelAccessPolicy.concreteTypes(rowType));
 	}
 
 	@Override

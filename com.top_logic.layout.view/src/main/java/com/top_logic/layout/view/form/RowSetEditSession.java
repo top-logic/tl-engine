@@ -13,8 +13,11 @@ import java.util.function.Consumer;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -23,6 +26,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -487,23 +491,51 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	private void checkCreateRights() {
-		TLObject parent = _owner.base();
-		TLStructuredTypePart part = parent != null ? _binding.getBoundPart() : null;
-		ModelAccessRights rights = ModelAccessRights.getInstance();
-		Person user = TLContext.currentUser();
 		for (TLObject row : _fieldModel.getCurrentList()) {
 			if (row instanceof TLObjectOverlay || !row.tTransient()) {
 				continue;
 			}
 			TLClass type = (TLClass) row.tType();
-			boolean allowed = part == null
-				? rights.isAllowedCreate(user, type, (TLObject) null)
-				: rights.isAllowedCreate(user, parent, part, type);
-			if (!allowed) {
+			if (!isCreateAllowed(type)) {
 				throw new TopLogicException(
 					com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));
 			}
 		}
+	}
+
+	/**
+	 * Whether the current user may create a row of the given type in the owner of this session.
+	 *
+	 * <p>
+	 * A row of a bound reference is created in the reference of the owner, a row of a binding
+	 * without bound attribute independent of a context.
+	 * </p>
+	 */
+	private boolean isCreateAllowed(TLClass type) {
+		TLObject parent = _owner.base();
+		TLStructuredTypePart part = parent != null ? _binding.getBoundPart() : null;
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		return part == null
+			? rights.isAllowedCreate(user, type, (TLObject) null)
+			: rights.isAllowedCreate(user, parent, part, type);
+	}
+
+	/**
+	 * Whether the current user may choose the given type for a new row.
+	 *
+	 * <p>
+	 * In a persistent owner, the user must be allowed to create the type there, as the save checks
+	 * it. The rows of a transient owner become persistent together with the owner, where that
+	 * creation is checked; until then, a type is offered when its creation is offered to the user
+	 * at all.
+	 * </p>
+	 */
+	private boolean isCreateOffered(TLClass type) {
+		if (_owner.isTransient()) {
+			return ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.CREATE, type);
+		}
+		return isCreateAllowed(type);
 	}
 
 	/**
@@ -625,34 +657,72 @@ public class RowSetEditSession implements FormParticipant {
 	// -- Row Manipulation --
 
 	/**
-	 * Adds a new row to the row set, optionally initialized by the given function.
+	 * The types the user may choose from for a new row, sorted by their labels.
 	 *
 	 * <p>
-	 * Creates a transient object of the binding's create type within the owner and appends it to
-	 * the current list. Publishes the membership change and notifies the listeners.
+	 * These are the {@link RowSetBinding#getCreateTypes() create types} of the binding the current
+	 * user may create in the owner of this session. Empty while the session's rows may not be
+	 * changed, or when the binding offers no row creation.
 	 * </p>
+	 */
+	public List<TLClass> createTypes() {
+		if (!_editable) {
+			return List.of();
+		}
+		List<TLClass> result = new ArrayList<>();
+		for (TLClass type : _binding.getCreateTypes()) {
+			if (isCreateOffered(type)) {
+				result.add(type);
+			}
+		}
+		result.sort(LabelComparator.newCachingInstance(MetaLabelProvider.INSTANCE));
+		return result;
+	}
+
+	/**
+	 * Adds a new row of the only {@link #createTypes() type offered for new rows}, optionally
+	 * initialized by the given function.
 	 *
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
 	 * @return The created transient row object, or {@code null} if the session is not running, its
-	 *         rows may not be changed, or the binding offers no row creation.
+	 *         rows may not be changed, or not exactly one type is offered for new rows.
+	 * @see #addRow(TLClass, Consumer)
 	 */
 	public TLObject addRow(Consumer<TLObject> initializer) {
-		if (_fieldModel == null || !_editable) {
+		List<TLClass> createTypes = createTypes();
+		if (createTypes.size() != 1) {
 			return null;
 		}
+		return addRow(createTypes.get(0), initializer);
+	}
 
-		List<TLClass> createTypes = _binding.getCreateTypes();
-		if (createTypes.isEmpty()) {
+	/**
+	 * Adds a new row of the given type to the row set, optionally initialized by the given function.
+	 *
+	 * <p>
+	 * Creates a transient object of the given type within the owner and appends it to the current
+	 * list. Publishes the membership change and notifies the listeners.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the new row, one of the {@link #createTypes() types offered for new rows}.
+	 * @param initializer
+	 *        Initializes attribute values of the created transient object before it is added to the
+	 *        list, or {@code null} for an empty row.
+	 * @return The created transient row object, or {@code null} if the session is not running, its
+	 *         rows may not be changed, or the given type is not offered for new rows.
+	 */
+	public TLObject addRow(TLClass type, Consumer<TLObject> initializer) {
+		if (_fieldModel == null || !createTypes().contains(type)) {
 			return null;
 		}
-		TLClass targetType = createTypes.get(0);
 
 		// Create the transient object within the owner, so that it navigates to its owner (e.g. in
 		// an options expression) before it is stored.
 		TLObject transientObject =
-			_level.create(targetType, isNested() ? _owner.object() : _owner.base());
+			_level.create(type, isNested() ? _owner.object() : _owner.base());
 		if (initializer != null) {
 			initializer.accept(transientObject);
 		}

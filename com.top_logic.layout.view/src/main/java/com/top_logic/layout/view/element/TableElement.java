@@ -34,6 +34,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -44,7 +45,6 @@ import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DropConfig;
-import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
@@ -54,6 +54,7 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
@@ -183,10 +184,17 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		RowEditPolicy getRowEdit();
 
 		/**
-		 * The concrete type instantiated when a new row is created in edit mode.
+		 * The type of the rows created in edit mode.
 		 *
 		 * <p>
-		 * When unset, the table offers no row creation.
+		 * A concrete type is instantiated directly. An abstract type stands for its concrete
+		 * specializations: when the user may create several of them, adding a row opens a menu to
+		 * choose the type from. Types the current user may not create are not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * When unset, or when no type remains to be offered (an abstract type without concrete
+		 * specialization), the table offers no row creation.
 		 * </p>
 		 */
 		@Name(CREATE_TYPE)
@@ -256,9 +264,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		String column = _config.getGroupBy();
 		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
 	}
-
-	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
-	private static final String COMMAND_ADD_ROW = "tableAddRow";
 
 	private final QueryExecutor _rowsExecutor;
 
@@ -371,7 +376,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		QueryRowSetBinding binding = new QueryRowSetBinding(
 			() -> tlObjectRows(refreshRows(rowsExecutor, ChannelInputs.arguments(inputChannels), diagnosticsTarget[0])),
 			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
-			createType == null ? List.of() : List.of(createType),
+			createType == null ? List.of() : List.copyOf(ModelAccessPolicy.concreteTypes(createType)),
 			_config.getOnRemove());
 
 		ChannelRef selectionRef = _config.getSelection();
@@ -417,9 +422,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	}
 
 	/**
-	 * Contributes the "add row" command to the enclosing command scope (next to the form's save
-	 * and cancel commands), visible only while the form is in edit mode. The table itself renders
-	 * frameless, so it has no own toolbar to host the command.
+	 * Contributes the {@link RowSetTableControl#getAddRowCommand() add-row command} of the table to
+	 * the enclosing command scope (next to the form's save and cancel commands). The table itself
+	 * renders frameless, so it has no own toolbar to host the command.
 	 */
 	private static void contributeAddRowCommand(ViewContext context, FormControl formControl,
 			RowSetBinding binding, RowSetTableControl control) {
@@ -431,13 +436,8 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			return;
 		}
 
-		FormCommandModel addCommand = FormCommandModel.editModeCommand(COMMAND_ADD_ROW,
-			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD,
-			com.top_logic.layout.view.form.Icons.COMPOSITION_TABLE_ADD,
-			formControl, ctx -> control.addRow());
+		CommandModel addCommand = control.getAddRowCommand();
 		scope.addCommand(addCommand);
-		formControl.addAttachListener(addCommand::attach);
-		formControl.addDetachListener(addCommand::detach);
 		formControl.addCleanupAction(() -> scope.removeCommand(addCommand));
 	}
 

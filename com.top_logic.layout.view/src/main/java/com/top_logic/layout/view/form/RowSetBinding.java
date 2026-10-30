@@ -87,7 +87,13 @@ public interface RowSetBinding {
 	List<TLObject> readRows(TLObject object);
 
 	/**
-	 * The concrete types offered when creating a new row; empty if row creation is not offered.
+	 * The concrete types a new row may be created as; empty if row creation is not offered.
+	 *
+	 * <p>
+	 * The user chooses among them when there are several, see
+	 * {@link RowSetEditSession#createTypes()}, which also leaves out the types the user may not
+	 * create.
+	 * </p>
 	 */
 	List<TLClass> getCreateTypes();
 

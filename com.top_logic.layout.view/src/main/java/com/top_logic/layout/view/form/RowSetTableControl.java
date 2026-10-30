@@ -23,10 +23,17 @@ import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.CommandTrigger;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
@@ -124,8 +131,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Display width in pixels of the detail and the row-removal action columns. */
 	public static final int ACTION_COLUMN_WIDTH = 48;
 
-	/** Command name for {@link #handleAddRow()}. */
+	/** Command name for {@link #handleAddRow(ReactContext)}. */
 	private static final String CMD_ADD_ROW = "addRow";
+
+	/** Name of the {@link #getAddRowCommand() add-row command}. */
+	public static final String COMMAND_ADD_ROW = "tableAddRow";
 
 	/** Panel state: the validation error of the bound attribute, or {@code null}. */
 	private static final String ERROR_MESSAGE = "errorMessage";
@@ -230,6 +240,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
+	/** The command adding a row, see {@link #getAddRowCommand()}. */
+	private SimpleCommandModel _addRowCommand;
+
 	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
 	private ReactButtonControl _addButton;
 
@@ -285,6 +298,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private void initState() {
+		_addRowCommand = SimpleCommandModel.create(COMMAND_ADD_ROW,
+			Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_ADD), this::addRowOfChosenType)
+			.setImage(Icons.COMPOSITION_TABLE_ADD)
+			.setPlacement(CommandPlacement.TOOLBAR)
+			.setVisible(this::offersRowCreation)
+			.setExecutable(this::offersRowCreation);
+
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
 
@@ -629,24 +649,101 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Adds a new row to the table.
+	 * Adds a new row to the table, see {@link #getAddRowCommand()}.
 	 */
 	@ReactCommandHandler(CMD_ADD_ROW)
-	void handleAddRow() {
-		addRow();
+	HandlerResult handleAddRow(ReactContext context) {
+		return _addRowCommand.executeCommand(context);
 	}
 
 	/**
-	 * Adds a new transient row of the binding's create type to the table and selects it, so it is
-	 * immediately editable under the {@link RowEditPolicy#SELECTED} policy.
+	 * The command adding a row to the table while it is edited.
+	 *
+	 * <p>
+	 * The command is offered while the {@link #createTypes() types offered for new rows} are not
+	 * empty. With a single type, it adds a row of that type. With several, it opens a menu listing
+	 * the types by their labels, placed at the button the command was triggered from (see
+	 * {@link CommandTrigger}), and adds a row of the type the user chooses.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #setFramed framed} table shows the command as Add button in its own toolbar; the
+	 * creator of a frameless table offers it through the enclosing command scope.
+	 * </p>
+	 */
+	public CommandModel getAddRowCommand() {
+		return _addRowCommand;
+	}
+
+	private boolean offersRowCreation() {
+		return !createTypes().isEmpty();
+	}
+
+	private HandlerResult addRowOfChosenType(ReactContext context) {
+		List<TLClass> types = createTypes();
+		if (types.size() <= 1) {
+			if (!types.isEmpty()) {
+				addRowOfType(types.get(0));
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		ContextMenuOpener opener = context != null ? context.getContextMenuOpener() : null;
+		if (opener == null) {
+			opener = _context.getContextMenuOpener();
+		}
+		if (opener == null) {
+			Logger.warn("No context menu overlay available to choose the type of a new row.",
+				RowSetTableControl.class);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		List<CommandModel> choices = new ArrayList<>(types.size());
+		for (TLClass type : types) {
+			choices.add(SimpleCommandModel.create(null, MetaLabelProvider.INSTANCE.getLabel(type), ctx -> {
+				addRowOfType(type);
+				return HandlerResult.DEFAULT_RESULT;
+			}));
+		}
+		// Without a triggering button, the menu hangs off the table.
+		String trigger = CommandTrigger.currentId();
+		String anchorId = trigger != null ? trigger : getID();
+		opener.open(anchorId, List.of(new Targeted(new ContextMenuContribution(target -> {
+			// The entries carry their type, nothing to publish.
+		}, choices), null)), null);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Adds a new transient row of the only type offered for new rows to the table and selects it,
+	 * so it is immediately editable under the {@link RowEditPolicy#SELECTED} policy.
 	 */
 	@Override
 	public TLObject addRow() {
-		TLObject newRow = super.addRow();
+		return selected(super.addRow());
+	}
+
+	/**
+	 * Adds a new transient row of the given type to the table and selects it, so it is immediately
+	 * editable under the {@link RowEditPolicy#SELECTED} policy.
+	 */
+	@Override
+	public TLObject addRowOfType(TLClass type) {
+		return selected(super.addRowOfType(type));
+	}
+
+	private TLObject selected(TLObject newRow) {
 		if (newRow != null && _tableControl != null) {
 			_tableControl.selectRow(newRow);
 		}
 		return newRow;
+	}
+
+	@Override
+	public void onFormStateChanged(FormModel source) {
+		super.onFormStateChanged(source);
+		// The types offered for new rows follow the edit session.
+		_addRowCommand.fireStateChanged();
 	}
 
 	/**
@@ -794,9 +891,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		}
 
-		// Update toolbar: a framed table offers an own Add button in edit mode, when the binding
-		// offers row creation.
-		updateToolbar(_framed && editMode && !binding().getCreateTypes().isEmpty());
+		// Update toolbar: a framed table offers an own Add button in edit mode, when a type is
+		// offered for new rows.
+		updateToolbar(_framed && editMode && offersRowCreation());
+		_addRowCommand.fireStateChanged();
 	}
 
 	/**
@@ -918,12 +1016,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		if (showAddButton) {
-			String addLabel = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_ADD);
-			_addButton = new ReactButtonControl(_context, addLabel, ctx -> {
-				addRow();
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			_addButton.setImage(Icons.COMPOSITION_TABLE_ADD);
+			_addButton = new ReactButtonControl(_context, _addRowCommand);
 
 			// TLPanel renders a single `toolbar` child control (a TLToolbar), so wrap the Add
 			// button in a toolbar rather than pushing a bare button list.

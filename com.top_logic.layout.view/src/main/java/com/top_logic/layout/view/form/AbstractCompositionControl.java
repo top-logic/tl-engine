@@ -12,6 +12,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
@@ -328,10 +329,10 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	// -- Row Manipulation --
 
 	/**
-	 * Adds a new, empty row to the row set.
+	 * Adds a new, empty row of the only type offered for new rows to the row set.
 	 *
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
-	 *         binding offers no row creation.
+	 * @return The created transient row object, or {@code null} if no edit session is running or not
+	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow() {
@@ -339,17 +340,40 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	}
 
 	/**
-	 * Adds a new row to the row set, optionally initialized by the given function.
+	 * Adds a new row of the only type offered for new rows to the row set, optionally initialized by
+	 * the given function.
 	 *
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
-	 *         binding offers no row creation.
+	 * @return The created transient row object, or {@code null} if no edit session is running or not
+	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow(Consumer<TLObject> initializer) {
 		return _session == null ? null : _session.addRow(initializer);
+	}
+
+	/**
+	 * Adds a new, empty row of the given type to the row set.
+	 *
+	 * @param type
+	 *        The type of the new row, one of the {@link #createTypes() types offered for new rows}.
+	 * @return The created transient row object, or {@code null} if no edit session is running or the
+	 *         given type is not offered for new rows.
+	 * @see RowSetEditSession#addRow(TLClass, Consumer)
+	 */
+	public TLObject addRowOfType(TLClass type) {
+		return _session == null ? null : _session.addRow(type, null);
+	}
+
+	/**
+	 * The types the user may choose from for a new row, empty while no edit session is running.
+	 *
+	 * @see RowSetEditSession#createTypes()
+	 */
+	public List<TLClass> createTypes() {
+		return _session == null ? List.of() : _session.createTypes();
 	}
 
 	/**

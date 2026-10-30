@@ -175,6 +175,22 @@ A cell of a column shows its value as the type of the value derives: a text, a d
 - **The display follows its object**: `ResourceDisplayByExpression` renders a `ReactResourceCellControl`, which observes the displayed object and resolves label, icon, class and tooltip again when it changes, taking back a class or an icon the object no longer has.
 - The display is a record component of `ColumnSetup` (`ColumnSetup#display()`), applied by `ColumnSetup#buildColumn()` as a `DelegatingColumn` rendering a data cell as a `CellContent.Raw` around a `CellControlFactory` - before the tooltip, which `CellContent.withTooltip` puts on that content. An embedded column keeps the display of the column it embeds.
 
+## Adding rows: the create type of a row-editing table
+
+A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit mode when it declares a `create-type`; a `<composition-table attribute="…">` takes the type from its reference. In both, the type stands for its concrete types:
+
+```xml
+<table rows="$project.get(`my:Project#deliverables`)" row-edit="ALL" create-type="my:Deliverable"/>
+<composition-table attribute="deliverables"/>
+```
+
+- **A concrete type is created directly.** The add command creates a row of it.
+- **An abstract type offers its concrete specializations** (`ModelAccessPolicy.concreteTypes(TLClass)`). With several of them, the add command opens a menu at its button, listing the types by their labels in alphabetical order; choosing one adds a row of that type.
+- **Only the types the user may create are offered.** A type the current user may not create in the form object (in a persistent form object the check the save applies; in a transient one, whether the creation of the type is offered to the user at all) is left out. With a single type left, the add command creates it without a menu.
+- **No type, no add command.** An abstract type without concrete specialization, or one whose concrete types the user may create none of, offers no row creation: the add command is hidden.
+- **One command for both tables.** The add command is `RowSetTableControl#getAddRowCommand()`: a frameless row-editing `<table>` contributes it to the enclosing command scope (next to the save and cancel commands of the form), a framed `<composition-table>` shows it as the Add button of its own toolbar. The menu is opened through the `ContextMenuOpener` of the frame, at the button the command was triggered from (`CommandTrigger`, announced by `ReactButtonControl` for the duration of a click); without a triggering button, it hangs off the table.
+- **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one.
+
 ## Filtering: the filter bar and its presets
 
 `<table filter-bar="true">` puts a bar above the table: the named filters it offers as chips, a search field examining the displayed columns, and saving the criteria the table currently shows under a name of the user's own. A table declaring `<presets>` shows the bar in any case — that is where the presets are offered.

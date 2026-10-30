@@ -329,7 +329,9 @@ public class ReactButtonControl extends ReactControl {
 		if (!offered.isExecutable()) {
 			return HandlerResult.notExecutable(offered);
 		}
-		return _action.execute(context);
+		// The rendered button carries the ID of this control, so a follow-up menu of the command
+		// can be placed at it.
+		return CommandTrigger.runTriggeredBy(getID(), () -> _action.execute(context));
 	}
 
 	/**

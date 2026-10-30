@@ -5,9 +5,14 @@
  */
 package test.com.top_logic.util.sched.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.Thread.State;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Calendar;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -23,12 +28,26 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sched.ScheduledThread;
+import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.merge.MergeConflictException;
+import com.top_logic.knowledge.service.merge.MergeConflictException;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.task.Task;
+import com.top_logic.util.sched.task.impl.InstructableTestTask;
 import com.top_logic.util.sched.task.impl.TaskImpl;
+import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.schedule.legacy.LegacyOnceSchedule;
 import com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon;
 
@@ -44,6 +63,12 @@ public class TestScheduler extends BasicTestCase {
 
 	/** Timeout in milliseconds when using the {@link BarrierTestTask}. */
 	private static final long BARRIER_TIMEOUT = 2000;
+
+	/**
+	 * Polling interval in milliseconds of a scheduler, that is far longer than any test waits for
+	 * the scheduler to react.
+	 */
+	private static final long LONG_POLLING_INTERVAL = 60 * 60 * 1000;
 
 	// All times must be in ascending order so tests will execute correctly
 
@@ -391,17 +416,19 @@ public class TestScheduler extends BasicTestCase {
 	}
 
 	/**
-	 * If a {@link Task} is {@link Scheduler#addTask(Task) added to the Scheduler}, it has to be
-	 * enabled, initially.
+	 * A {@link Task} {@link Scheduler#addTask(Task) added to the Scheduler} is configured active and
+	 * runs.
 	 */
-	public void testAutoEnableOnAdd() {
+	public void testActiveOnAdd() {
 		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testAutoEnableOnAdd", schedulerBarrier);
+		createSchedulerWaitingOnBarrier("testActiveOnAdd", schedulerBarrier);
 		try {
-			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testAutoEnableOnAdd");
+			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testActiveOnAdd");
 			scheduler.addTask(task);
 
-			assertTrue(scheduler.isEnabled(task));
+			assertTrue(scheduler.isActive(task));
+			assertTrue(scheduler.isConfiguredActive(task));
+			assertFalse(scheduler.hasActiveOverride(task));
 			// Scheduler entering dispatch:
 			waitOnBarrier(schedulerBarrier);
 			waitForTaskTerminated(task);
@@ -411,112 +438,240 @@ public class TestScheduler extends BasicTestCase {
 	}
 
 	/**
-	 * If a {@link Task} is {@link Scheduler#addDisabledTask(Task) added 'disabled' to the
-	 * Scheduler}, it has to be disabled, initially.
+	 * A {@link Task} {@link Scheduler#addDisabledTask(Task) added 'disabled' to the Scheduler} is
+	 * configured inactive and does not run.
 	 */
-	public void testAutoDisableOnAddDisabled() {
+	public void testInactiveOnAddDisabled() {
 		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testAutoDisableOnAddDisabled", schedulerBarrier);
+		createSchedulerWaitingOnBarrier("testInactiveOnAddDisabled", schedulerBarrier);
 		try {
-			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testAutoDisableOnAddDisabled");
+			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testInactiveOnAddDisabled");
 			scheduler.addDisabledTask(task);
 
-			assertFalse(scheduler.isEnabled(task));
-			// Scheduler entering dispatch:
-			waitOnBarrier(schedulerBarrier);
-			// Scheduler ignores task, as it is disabled.
-			// Scheduler entering dispatch, again:
-			waitOnBarrier(schedulerBarrier);
-			// One dispatch is guaranteed to have completed, check that nothing has been started:
-			assertEquals(0, scheduler.getStartedTasks());
+			assertFalse(scheduler.isActive(task));
+			assertFalse(scheduler.isConfiguredActive(task));
+			assertFalse(scheduler.hasActiveOverride(task));
+			assertSkippedTwoDispatches(schedulerBarrier, 0);
 		} finally {
 			stopBarrierScheduler();
 		}
 	}
 
 	/**
-	 * {@link Scheduler#disable(Task) Disable} a {@link Task} which initially
-	 * {@link Scheduler#isEnabled(Task) is enabled}.
+	 * {@link Scheduler#deactivate(Task) Deactivate} a configured active {@link Task}: It is no
+	 * longer run automatically.
 	 */
-	public void testDisableAutoEnabled() {
+	public void testDeactivateConfiguredActive() {
 		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testDisableAutoEnabled", schedulerBarrier);
+		createSchedulerWaitingOnBarrier("testDeactivateConfiguredActive", schedulerBarrier);
+		AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testDeactivateConfiguredActive");
 		try {
-			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testDisableAutoEnabled");
 			scheduler.addTask(task);
 
-			assertTrue(scheduler.isEnabled(task));
-			scheduler.disable(task);
-			assertFalse(scheduler.isEnabled(task));
-			// Scheduler entering dispatch:
-			waitOnBarrier(schedulerBarrier);
-			// Scheduler ignores task, as it is disabled.
-			// Scheduler entering dispatch, again:
-			waitOnBarrier(schedulerBarrier);
-			// One dispatch is guaranteed to have completed, check that nothing has been started:
-			assertEquals(0, scheduler.getStartedTasks());
+			scheduler.deactivate(task);
+			assertFalse(scheduler.isActive(task));
+			assertTrue(scheduler.isConfiguredActive(task));
+			assertTrue(scheduler.hasActiveOverride(task));
+			assertSkippedTwoDispatches(schedulerBarrier, 0);
 		} finally {
-			stopBarrierScheduler();
+			resetAndStop(task);
 		}
 	}
 
 	/**
-	 * {@link Scheduler#enable(Task) Enable} a {@link Task} which initially
-	 * {@link Scheduler#isEnabled(Task) is disabled}.
+	 * {@link Scheduler#activate(Task) Activate} a configured inactive {@link Task}: It is run
+	 * automatically.
 	 */
-	public void testEnableAutoDisabled() {
+	public void testActivateConfiguredInactive() {
 		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testEnableAutoDisabled", schedulerBarrier);
+		createSchedulerWaitingOnBarrier("testActivateConfiguredInactive", schedulerBarrier);
+		AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testActivateConfiguredInactive");
 		try {
-			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testEnableAutoDisabled");
 			scheduler.addDisabledTask(task);
 
-			assertFalse(scheduler.isEnabled(task));
-			scheduler.enable(task);
-			assertTrue(scheduler.isEnabled(task));
+			scheduler.activate(task);
+			assertTrue(scheduler.isActive(task));
+			assertFalse(scheduler.isConfiguredActive(task));
+			assertTrue(scheduler.hasActiveOverride(task));
 			// Scheduler entering dispatch:
 			waitOnBarrier(schedulerBarrier);
 			waitForTaskTerminated(task);
+		} finally {
+			resetAndStop(task);
+		}
+	}
+
+	/**
+	 * Round-trip: A running {@link Task} is {@link Scheduler#deactivate(Task) deactivated}, not
+	 * run, and {@link Scheduler#activate(Task) activated} again, which restores its configured
+	 * state and runs it.
+	 */
+	public void testDeactivateActivate() {
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier("testDeactivateActivate", schedulerBarrier);
+		AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testDeactivateActivate");
+		try {
+			scheduler.addTask(task);
+
+			// Scheduler entering dispatch:
+			waitOnBarrier(schedulerBarrier);
+			waitForTaskTerminated(task);
+
+			scheduler.deactivate(task);
+			assertFalse(scheduler.isActive(task));
+			assertSkippedTwoDispatches(schedulerBarrier, 1);
+
+			scheduler.activate(task);
+			assertTrue(scheduler.isActive(task));
+			// Activating a configured active task is a reset:
+			assertFalse(scheduler.hasActiveOverride(task));
+			// Scheduler entering dispatch:
+			waitOnBarrier(schedulerBarrier);
+			waitForTaskTerminated(task);
+		} finally {
+			resetAndStop(task);
+		}
+	}
+
+	/**
+	 * {@link Scheduler#resetActive(Task)} removes the override: The configured state applies again.
+	 */
+	public void testResetActive() {
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier("testResetActive", schedulerBarrier);
+		AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testResetActive");
+		try {
+			scheduler.addTask(task);
+
+			scheduler.deactivate(task);
+			assertTrue(scheduler.hasActiveOverride(task));
+			scheduler.resetActive(task);
+			assertFalse(scheduler.hasActiveOverride(task));
+			assertTrue(scheduler.isActive(task));
+			// Scheduler entering dispatch:
+			waitOnBarrier(schedulerBarrier);
+			waitForTaskTerminated(task);
+		} finally {
+			resetAndStop(task);
+		}
+	}
+
+	/**
+	 * An override is dropped, when the configured state of the {@link Task} differs from the one
+	 * the override was made against.
+	 */
+	public void testOverrideDroppedOnConfigurationChange() {
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier("testOverrideDroppedOnConfigurationChange", schedulerBarrier);
+		String name = "testOverrideDroppedOnConfigurationChange";
+		BarrierTestTask task = createNeverBarrierTestTask(name);
+		try {
+			scheduler.addTask(task);
+			scheduler.deactivate(task);
+			assertFalse(scheduler.isActive(task));
+			assertTrue(scheduler.hasActiveOverride(task));
+			scheduler.removeTask(task);
+
+			// The configured state changes to inactive, the override is made against active.
+			task = createNeverBarrierTestTask(name);
+			scheduler.addDisabledTask(task);
+			assertFalse(scheduler.hasActiveOverride(task));
+			assertFalse(scheduler.isActive(task));
+			scheduler.removeTask(task);
+
+			// The override has been removed: It does not apply, when the configured state changes
+			// back.
+			task = createNeverBarrierTestTask(name);
+			scheduler.addTask(task);
+			assertFalse(scheduler.hasActiveOverride(task));
+			assertTrue(scheduler.isActive(task));
+		} finally {
+			resetAndStop(task);
+		}
+	}
+
+	/**
+	 * A stored block is taken over as override on first read and is deleted then.
+	 */
+	public void testTakeOverStoredBlock() {
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier("testTakeOverStoredBlock", schedulerBarrier);
+		BarrierTestTask blocked = createNeverBarrierTestTask("testTakeOverStoredBlock-blocked");
+		BarrierTestTask unblocked = createNeverBarrierTestTask("testTakeOverStoredBlock-unblocked");
+		BarrierTestTask redundant = createNeverBarrierTestTask("testTakeOverStoredBlock-redundant");
+		try {
+			storeBlock(blocked.getName(), true);
+			storeBlock(unblocked.getName(), false);
+			storeBlock(redundant.getName(), false);
+			scheduler.addTask(blocked);
+			scheduler.addDisabledTask(unblocked);
+			scheduler.addTask(redundant);
+
+			assertFalse(scheduler.isActive(blocked));
+			assertTrue(scheduler.hasActiveOverride(blocked));
+			assertNull(fetchBlock(blocked.getName()));
+
+			assertTrue(scheduler.isActive(unblocked));
+			assertTrue(scheduler.hasActiveOverride(unblocked));
+			assertNull(fetchBlock(unblocked.getName()));
+
+			// An unblocked, configured active task needs no override.
+			assertTrue(scheduler.isActive(redundant));
+			assertFalse(scheduler.hasActiveOverride(redundant));
+			assertNull(fetchBlock(redundant.getName()));
+		} finally {
+			scheduler.resetActive(blocked);
+			scheduler.resetActive(unblocked);
+			scheduler.resetActive(redundant);
+			stopBarrierScheduler();
+		}
+	}
+
+	/**
+	 * Waits for two dispatches of the scheduler and checks that the number of started tasks is
+	 * still the expected one.
+	 */
+	private void assertSkippedTwoDispatches(CyclicBarrier schedulerBarrier, int expectedStartedTasks) {
+		// Scheduler entering dispatch:
+		waitOnBarrier(schedulerBarrier);
+		// Scheduler skips the task, as it is inactive.
+		// Scheduler entering dispatch, again:
+		waitOnBarrier(schedulerBarrier);
+		// One dispatch is guaranteed to have completed, check that nothing has been started:
+		assertEquals(expectedStartedTasks, scheduler.getStartedTasks());
+	}
+
+	private void resetAndStop(Task task) {
+		try {
+			if (scheduler.isKnown(task)) {
+				scheduler.resetActive(task);
+			}
 		} finally {
 			stopBarrierScheduler();
 		}
 	}
 
 	/**
-	 * Test that a 'enable-disable' round-trip works: {@link Scheduler#enable(Task) Enable} and
-	 * {@link Scheduler#disable(Task) disable} a {@link Task} and {@link Scheduler#enable(Task)
-	 * Enable} it again.
+	 * Stores a block of the task with the given name in the format the {@link Scheduler} takes
+	 * over.
+	 * 
+	 * @param blocked
+	 *        Whether the task is blocked, <code>null</code> to remove the block.
 	 */
-	public void testDisableEnableDisable() {
-		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testDisableEnableDisable", schedulerBarrier);
-		try {
-			AlwaysBarrierTestTask task = createAlwaysBarrierTestTask("testDisableEnableDisable");
-			scheduler.addTask(task);
+	private static void storeBlock(String taskName, Boolean blocked) {
+		dbProperties().setProperty(blockPropertyName(taskName), blocked == null ? null : blocked.toString());
+	}
 
-			assertTrue(scheduler.isEnabled(task));
-			// Scheduler entering dispatch:
-			waitOnBarrier(schedulerBarrier);
-			waitForTaskTerminated(task);
+	private static String fetchBlock(String taskName) {
+		return dbProperties().getProperty(blockPropertyName(taskName));
+	}
 
-			scheduler.disable(task);
-			assertFalse(scheduler.isEnabled(task));
-			// Scheduler entering dispatch:
-			waitOnBarrier(schedulerBarrier);
-			// Scheduler ignores task, as it is disabled.
-			// Scheduler entering dispatch, again:
-			waitOnBarrier(schedulerBarrier);
-			// One dispatch is guaranteed to have completed, check that the task has been started again:
-			assertEquals(1, scheduler.getStartedTasks());
+	private static String blockPropertyName(String taskName) {
+		return Scheduler.class.getName() + "." + taskName;
+	}
 
-			scheduler.enable(task);
-			assertTrue(scheduler.isEnabled(task));
-			// Scheduler entering dispatch:
-			waitOnBarrier(schedulerBarrier);
-			waitForTaskTerminated(task);
-		} finally {
-			stopBarrierScheduler();
-		}
+	private static DBProperties dbProperties() {
+		return new DBProperties(ConnectionPoolRegistry.getDefaultConnectionPool());
 	}
 
 	private void waitForTaskTerminated(BarrierTestTask task) {
@@ -568,47 +723,212 @@ public class TestScheduler extends BasicTestCase {
 		assertSchedulerStartsNothing();
 	}
 
-	public void testForceRunWithBlockedTask() {
+	public void testForceRunWithDeactivatedTask() {
 		CyclicBarrier startWaitBarrier = new CyclicBarrier(2);
 		CyclicBarrier endWaitBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testForceRunWithBlockedTask", startWaitBarrier, endWaitBarrier);
+		createSchedulerWaitingOnBarrier("testForceRunWithDeactivatedTask", startWaitBarrier, endWaitBarrier);
 		waitOnBarrier(startWaitBarrier);
+		BarrierTestTask task = createNeverBarrierTestTask("testForceRunWithDeactivatedTask");
 		try {
-			BarrierTestTask task = createNeverBarrierTestTask("testForceRunWithBlockedTask");
 			scheduler.addTask(task);
-			assertForceRunWithBlockedTask(task);
+			scheduler.deactivate(task);
+			// Inactive tasks are started manually like active ones:
+			assertForceRun(task);
 		} finally {
-			stopBarrierScheduler();
+			resetAndStop(task);
 		}
 	}
 
-	public void testForceRunWithBlockedAndDisabledTask() {
-		CyclicBarrier startWaitBarrier = new CyclicBarrier(2);
-		CyclicBarrier endWaitBarrier = new CyclicBarrier(2);
-		createSchedulerWaitingOnBarrier("testForceRunWithBlockedAndDisabledTask", startWaitBarrier, endWaitBarrier);
-		waitOnBarrier(startWaitBarrier);
+	/**
+	 * {@link Scheduler#startTask(Task) Starting a task manually} starts it right away, not after
+	 * the polling interval of an idle scheduler.
+	 */
+	public void testStartTaskImmediately() throws InterruptedException {
+		createIdleScheduler("testStartTaskImmediately");
+		BarrierTestTask task = createNeverBarrierTestTask("testStartTaskImmediately");
+		scheduler.addTask(task);
+
+		scheduler.startTask(task);
+		// Fails with a timeout, if the task starts only in the next regular round:
+		waitForTaskTerminated(task);
+	}
+
+	/**
+	 * The cluster lock of a {@link Task} that runs once in the cluster is cleared right after its
+	 * run, not after the polling interval of an idle scheduler.
+	 */
+	public void testClusterLockClearedAfterRun() throws InterruptedException {
+		createIdleScheduler("testClusterLockClearedAfterRun");
+		BarrierTestTask task = createNeverClusterGlobalTask("testClusterLockClearedAfterRun");
+		scheduler.addTask(task);
+		TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+		CountDownLatch runProcessed = new CountDownLatch(1);
+
+		scheduler.startTask(task);
+		// Task starts:
+		waitOnBarrier(task.getBarrier());
+		assertTrue(isClusterLockSet(log));
+		scheduler.runAfterTaskDone(task, runProcessed::countDown);
+		// Task finishes:
+		waitOnBarrier(task.getBarrier());
+
+		assertTrue("The end of the run has not been processed in time.",
+			runProcessed.await(BARRIER_TIMEOUT, TimeUnit.MILLISECONDS));
+		assertFalse(isClusterLockSet(log));
+	}
+
+	/**
+	 * An {@link InstructableTestTask} configured to {@link InstructableTestTask.Config#isWriteLogFile()
+	 * write a log file} records the log file of its run, which contains the progress of the run.
+	 */
+	public void testInstructableTestTaskWritesLogFile() throws InterruptedException, IOException {
+		createIdleScheduler("testInstructableTestTaskWritesLogFile");
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		InstructableTestTask.Config taskConfig = TypedConfiguration.newConfigItem(InstructableTestTask.Config.class);
+		taskConfig.setImplementationClass(InstructableTestTask.class);
+		taskConfig.setName("testInstructableTestTaskWritesLogFile");
+		taskConfig.update(taskConfig.descriptor().getProperty(InstructableTestTask.Config.WRITE_LOG_FILE),
+			Boolean.TRUE);
+		Task task = (Task) getInstantiationContext().getInstance(taskConfig);
+		scheduler.addTask(task);
+		CountDownLatch runProcessed = new CountDownLatch(1);
+
+		scheduler.runAfterTaskDone(task, runProcessed::countDown);
+		scheduler.startTask(task);
+
+		assertTrue("The run has not ended in time.", runProcessed.await(BARRIER_TIMEOUT, TimeUnit.MILLISECONDS));
+		File logFile = task.getLog().getLastResult().getLogFile();
+		assertNotNull("No log file recorded.", logFile);
 		try {
-			BarrierTestTask task = createNeverBarrierTestTask("testForceRunWithBlockedAndDisabledTask");
+			String content = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
+			assertTrue(content, content.contains("Finished."));
+		} finally {
+			logFile.delete();
+		}
+	}
+
+	private static boolean isClusterLockSet(TaskLogWrapper log) {
+		// See the cluster lock changes committed by other threads.
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (MergeConflictException ex) {
+			throw new KnowledgeBaseRuntimeException(ex);
+		}
+		return log.isClusterLockSet();
+	}
+
+	/**
+	 * Creates a started {@link TestingScheduler} that waits for {@link #LONG_POLLING_INTERVAL}
+	 * between its regular rounds, and has attached its tasks.
+	 */
+	private void createIdleScheduler(String name) throws InterruptedException {
+		scheduler = TestingScheduler.newStartedScheduler(name, LONG_POLLING_INTERVAL, 5000, 1000, 1000);
+		scheduler.awaitThreadInitialized(BARRIER_TIMEOUT);
+	}
+
+	/**
+	 * The cluster lock of a {@link Task} can be {@link Scheduler#releaseClusterLock(Task) released}
+	 * only while it is set, and only for a {@link Task} running once in the cluster.
+	 */
+	public void testReleaseClusterLock() throws KnowledgeBaseException {
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier("testReleaseClusterLock", schedulerBarrier);
+		try {
+			// Scheduler has attached its tasks and waits for dispatching:
+			waitUntilThreadsWaiting(schedulerBarrier, 1);
+
+			AlwaysBarrierTestTask localTask = createAlwaysBarrierTestTask("testReleaseClusterLockLocal");
+			scheduler.addDisabledTask(localTask);
+			assertNull(Scheduler.getClusterLockHolder(localTask));
+			assertReleaseClusterLockRefused(localTask);
+
+			AlwaysBarrierTestTask task = createClusterGlobalTask("testReleaseClusterLock", AlwaysBarrierTestTask.class);
 			scheduler.addDisabledTask(task);
-			assertForceRunWithBlockedTask(task);
+			TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+			assertNull(Scheduler.getClusterLockHolder(task));
+			assertReleaseClusterLockRefused(task);
+
+			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+			try {
+				log.setClusterLock();
+				tx.commit();
+			} finally {
+				tx.rollback();
+			}
+			assertTrue(scheduler.canReleaseClusterLock(task));
+			assertNull(scheduler.getClusterLockReleaseProblem(task));
+			assertEquals(log.getClusterLockName() + " (" + log.getClusterLockId() + ")",
+				Scheduler.getClusterLockHolder(task));
+
+			scheduler.releaseClusterLock(task);
+			assertFalse(log.isClusterLockSet());
+			assertNull(Scheduler.getClusterLockHolder(task));
+			assertReleaseClusterLockRefused(task);
 		} finally {
 			stopBarrierScheduler();
 		}
 	}
 
-	private void assertForceRunWithBlockedTask(BarrierTestTask task) {
-		scheduler.blockTask(task);
-		assertSchedulerStartsNothing();
-		scheduler.startTask(task);
-		// Blocked tasks cannot be started, not even manually:
-		assertSchedulerStartsNothing();
-		scheduler.unblockTask(task);
-		// When a task is unblocked, all missed schedules are discarded, the manual ones, too:
-		assertSchedulerStartsNothing();
-		scheduler.startTask(task);
-		// After it has been unblocked, manual schedules have to work normally:
-		assertSchedulerStartsTask(task);
-		assertSchedulerStartsNothing();
+	/**
+	 * The cluster lock of a {@link Task} held by this cluster node for a run in progress here is
+	 * not {@link Scheduler#releaseClusterLock(Task) released}; the run releases it when it ends.
+	 */
+	public void testReleaseClusterLockOfRunningTask() throws MergeConflictException {
+		createScheduler("testReleaseClusterLockOfRunningTask", TASK_SLEEP, TASK_TIMEOUT, 1);
+		try {
+			BarrierTestTask task = createClusterGlobalTask("testReleaseClusterLockOfRunningTask", BarrierTestTask.class);
+			scheduler.addTask(task);
+			// The scheduler thread attaches the task when it has started:
+			long attachTimeout = System.currentTimeMillis() + BARRIER_TIMEOUT;
+			while (task.getLog() == null && System.currentTimeMillis() < attachTimeout) {
+				Thread.sleep(10);
+			}
+			TaskLogWrapper log = (TaskLogWrapper) task.getLog();
+			assertNotNull("Task not attached to the scheduler.", log);
+			scheduler.startTask(task);
+
+			// Task is running and waits for the test:
+			waitOnBarrier(task.getBarrier());
+			// See the lock the scheduler has committed when starting the run:
+			HistoryUtils.updateSessionRevision();
+			assertTrue(log.hasClusterLock());
+			assertNotNull(Scheduler.getClusterLockHolder(task));
+			ResKey problem = assertReleaseClusterLockRefused(task);
+			assertEquals(
+				com.top_logic.util.sched.I18NConstants.ERROR_CLUSTER_LOCK_TASK_RUNNING_HERE__TASK.fill(task.getName()),
+				problem);
+			assertTrue("The refused release must leave the lock in place.", log.hasClusterLock());
+
+			// Task ends its run:
+			waitOnBarrier(task.getBarrier());
+			waitForEnd(task);
+			long timeout = System.currentTimeMillis() + BARRIER_TIMEOUT;
+			while (log.isClusterLockSet() && System.currentTimeMillis() < timeout) {
+				Thread.sleep(10);
+				HistoryUtils.updateSessionRevision();
+			}
+			assertFalse("The run releases the lock when it ends.", log.isClusterLockSet());
+			assertEquals(
+				com.top_logic.util.sched.I18NConstants.ERROR_CLUSTER_LOCK_NOT_SET__TASK.fill(task.getName()),
+				assertReleaseClusterLockRefused(task));
+		} catch (InterruptedException ex) {
+			throw new RuntimeException(ex);
+		} finally {
+			stopScheduler();
+		}
+	}
+
+	private ResKey assertReleaseClusterLockRefused(Task task) {
+		assertFalse(scheduler.canReleaseClusterLock(task));
+		ResKey problem = scheduler.getClusterLockReleaseProblem(task);
+		assertNotNull(problem);
+		try {
+			scheduler.releaseClusterLock(task);
+			fail("Releasing the cluster lock of task '" + task.getName() + "' must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(problem, ex.getErrorKey());
+		}
+		return problem;
 	}
 
 	private void assertSchedulerStartsTask(BarrierTestTask task) {
@@ -687,6 +1007,29 @@ public class TestScheduler extends BasicTestCase {
 		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
 		taskConfig.setPersistent(persistent);
 		return (AlwaysBarrierTestTask) getInstantiationContext().getInstance(taskConfig);
+	}
+
+	private static <T extends BarrierTestTask> T createClusterGlobalTask(String name, Class<T> type) {
+		BarrierTestTask.BarrierTestTaskConfig taskConfig =
+			TypedConfiguration.newConfigItem(BarrierTestTask.BarrierTestTaskConfig.class);
+		taskConfig.setImplementationClass(type);
+		taskConfig.setName(name);
+		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setPersistent(true);
+		taskConfig.setNodeLocal(false);
+		return type.cast(getInstantiationContext().getInstance(taskConfig));
+	}
+
+	private static BarrierTestTask createNeverClusterGlobalTask(String name) {
+		BarrierTestTaskConfig taskConfig = TypedConfiguration.newConfigItem(BarrierTestTaskConfig.class);
+		taskConfig.setImplementationClass(BarrierTestTask.class);
+		taskConfig.setName(name);
+		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setPersistent(true);
+		taskConfig.setNodeLocal(false);
+		return getInstantiationContext().getInstance(taskConfig);
 	}
 
 	private static BarrierTestTask createNeverBarrierTestTask(String name) {

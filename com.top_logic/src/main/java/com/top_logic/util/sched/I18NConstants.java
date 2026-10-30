@@ -99,6 +99,49 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 COMPLETED_TASK__TASK;
 
+	/**
+	 * Prefix of the keys of the labels of the tasks: the prefix followed by the name of the task.
+	 */
+	public static ResPrefix TASK_NAMES = legacyPrefix("tl.task.");
+
+	/**
+	 * @en The task "{0}" has no cluster lock, since it runs on every cluster node on its own.
+	 */
+	public static ResKey1 ERROR_CLUSTER_LOCK_TASK_NODE_LOCAL__TASK;
+
+	/**
+	 * @en The task "{0}" has no cluster lock, since its state is not stored in the database.
+	 */
+	public static ResKey1 ERROR_CLUSTER_LOCK_TASK_NOT_PERSISTENT__TASK;
+
+	/**
+	 * @en The cluster lock of the task "{0}" is not set.
+	 */
+	public static ResKey1 ERROR_CLUSTER_LOCK_NOT_SET__TASK;
+
+	/**
+	 * @en The cluster lock of the task "{0}" is held by this cluster node for a run in progress. It
+	 *     is released when the run ends; stop the task to end the run early.
+	 */
+	public static ResKey1 ERROR_CLUSTER_LOCK_TASK_RUNNING_HERE__TASK;
+
+	// Commit message of Scheduler#releaseClusterLock(Task): stored with each commit, so the key
+	// must not change.
+	/**
+	 * @en Released cluster lock for task: {0}
+	 */
+	@CustomKey("class.com.top_logic.util.sched.layout.I18NConstants.RELEASED_CLUSTER_LOCK__TASK")
+	public static ResKey1 RELEASED_CLUSTER_LOCK__TASK;
+
+	// Result message of a task ended by Scheduler#releaseClusterLock(Task): stored with each task
+	// result, so the key must not change.
+	/**
+	 * @en The task has been marked as ended when its cluster lock was manually released. Task:
+	 *     "{0}"
+	 */
+	@CustomKey("class.com.top_logic.util.sched.layout.I18NConstants.MANUAL_LOCK_RELEASE_TASK_END_BY_MANUAL_LOCK_RELEASE__TASK")
+	public static ResKey1 TASK_ENDED_BY_CLUSTER_LOCK_RELEASE__TASK;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

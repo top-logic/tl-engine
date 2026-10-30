@@ -8,7 +8,6 @@ package com.top_logic.util.sched.layout;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
@@ -23,6 +22,7 @@ import com.top_logic.tool.boundsec.conditional.Failure;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.conditional.Success;
 import com.top_logic.util.Utils;
+import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskState;
 
@@ -56,8 +56,7 @@ public class StopTaskCommand extends PreconditionCommandHandler {
 
 		/** Stop the {@link Task}. */
 		protected void stopTask(Task task) {
-			Logger.info("User requested stop of Task '" + task.getName() + "'.", StopTaskCommand.class);
-			task.signalStop();
+			Scheduler.getSchedulerInstance().stopTask(task);
 		}
 
 		/**

@@ -539,16 +539,6 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 		task.logGuiWarning(message);
 	}
 
-	@Override
-	public boolean isBlockingAllowed() {
-		return task.isBlockingAllowed();
-	}
-
-	@Override
-	public boolean isBlockedByDefault() {
-		return task.isBlockedByDefault();
-	}
-
 	/**
 	 * The {@link Task} a {@link TaskWrapper} delegates to, holding the schedule stored in the
 	 * wrapped {@link KnowledgeObject}.

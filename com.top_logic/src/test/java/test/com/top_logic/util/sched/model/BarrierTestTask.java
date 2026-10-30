@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.impl.StateHandlingTask;
@@ -62,6 +63,16 @@ public class BarrierTestTask extends StateHandlingTask<BarrierTestTask.BarrierTe
 		/** @see #isPersistent() */
 		void setPersistent(boolean b);
 
+		/**
+		 * Configuration value of {@link Task#isNodeLocal()}: whether the task runs on every
+		 * cluster node, or once in the cluster under a cluster lock.
+		 */
+		@BooleanDefault(true)
+		boolean isNodeLocal();
+
+		/** @see #isNodeLocal() */
+		void setNodeLocal(boolean b);
+
 	}
 
 	/* All fields are volatile, as they can be read or set from the main JUnit Thread. */
@@ -73,11 +84,14 @@ public class BarrierTestTask extends StateHandlingTask<BarrierTestTask.BarrierTe
 
 	private final boolean _persistent;
 
+	private final boolean _nodeLocal;
+
 	/** Called by the typed configuration for creating a {@link BarrierTestTask}. */
 	@CalledByReflection
 	public BarrierTestTask(InstantiationContext context, BarrierTestTaskConfig config) {
 		super(context, config);
 		_persistent = config.isPersistent();
+		_nodeLocal = config.isNodeLocal();
 	}
 
 	/** The CyclicBarrier. The initial one is configured for two parties. */
@@ -131,8 +145,7 @@ public class BarrierTestTask extends StateHandlingTask<BarrierTestTask.BarrierTe
 
 	@Override
 	public boolean isNodeLocal() {
-		// Test task; runs on every node.
-		return true;
+		return _nodeLocal;
 	}
 
 }

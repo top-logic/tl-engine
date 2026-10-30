@@ -150,6 +150,7 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 		int rows = field.getMultilineRows();
 		if (rows > 0) {
 			control.setMultiline(rows);
+			control.setPreformatted(field.isPreformatted());
 		}
 		return control;
 	}

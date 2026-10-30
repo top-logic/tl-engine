@@ -620,7 +620,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="0"
+									displayed-row-index="1"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -648,7 +648,28 @@
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Zurückgenommen: Zeile im Grid erstellt."
+								value="Rückgängig gemachte Änderung: Zeile im Grid erstellt."
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+								column-label="Nachricht"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Letzte Änderungen"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="1"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Zeile im Grid erstellt."
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -1540,7 +1561,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="0"
+									displayed-row-index="1"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -1568,7 +1589,28 @@
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Zurückgenommen: Objekt bearbeitet: a1"
+								value="Rückgängig gemachte Änderung: Objekt bearbeitet: a1"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+								column-label="Nachricht"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Letzte Änderungen"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="1"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Objekt bearbeitet: a1"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -2222,12 +2264,12 @@
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
-							comment="Select creation of a1"
+							comment="Select the redo of the creation of a1"
 							user-id="root"
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="7"
+									displayed-row-index="11"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2251,7 +2293,7 @@
 									/>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="7"
+									displayed-row-index="11"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -2866,7 +2908,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="2"
+									displayed-row-index="4"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2892,7 +2934,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="3"
+									displayed-row-index="6"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -3173,12 +3215,12 @@
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
-							comment="Select deletion of b1 and c1"
+							comment="Select the undone creation of b1 and c1"
 							user-id="root"
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="1"
+									displayed-row-index="2"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -3377,7 +3419,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-							displayed-row-index="1"
+							displayed-row-index="2"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

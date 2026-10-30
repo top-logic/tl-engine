@@ -95,7 +95,8 @@ public class TestNewPageDelivery extends TestCase {
 
 		String body = nextStream.body();
 		assertTrue(body, body.contains("\"title\":\"Events\""));
-		assertTrue("numbered, so the client knows it arrived: " + body, body.contains("id: 1\ndata: "));
+		// The page starts with a number of its own (1), above every number of the previous page.
+		assertTrue("numbered, so the client knows it arrived: " + body, body.contains("id: 2\ndata: "));
 	}
 
 	/**
@@ -117,6 +118,70 @@ public class TestNewPageDelivery extends TestCase {
 		assertFalse(stream.body(), stream.body().contains("\"Old\""));
 		assertTrue(stream.body(), stream.body().contains("\"New\""));
 		assertTrue(reconnect.body(), reconnect.body().contains("\"Later\""));
+	}
+
+	/**
+	 * The new page reads the full state once, with its first poll; its next polls read events.
+	 */
+	public void testNewPageReadsTheFullStateOnce() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old").setTitle("Old"));
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old2").setTitle("Old2"));
+
+		_queue.beginPage();
+		FakeAsyncRequest firstPoll = new FakeAsyncRequest();
+		_queue.poll(firstPoll.context(), 0, true);
+		assertTrue(firstPoll.done());
+		long last = _queue.lastSeq();
+		assertEquals("the events of the previous page and the number the new page starts with", 3, last);
+		assertTrue(firstPoll.body(), firstPoll.body().startsWith("{\"last\":" + last + ","));
+
+		assertFalse(_queue.needsFullState(last));
+		FakeAsyncRequest nextPoll = new FakeAsyncRequest();
+		_queue.poll(nextPoll.context(), last, false);
+		assertFalse("nothing to read yet", nextPoll.done(200));
+
+		_queue.enqueue(RouteChangeEvent.create().setUrl("new").setTitle("New"));
+
+		assertTrue(nextPoll.done());
+		String body = nextPoll.body();
+		assertTrue(body, body.contains("\"New\""));
+		assertFalse("no full state: " + body, body.contains("StateEvent"));
+	}
+
+	/**
+	 * A page that polls after a number from before the new page - a poll of the previous page - gets
+	 * the full state, not the events of the new page as a continuation.
+	 */
+	public void testPollFromBeforeTheNewPageGetsFullState() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old").setTitle("Old"));
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old2").setTitle("Old2"));
+
+		_queue.beginPage();
+
+		assertTrue(_queue.needsFullState(1));
+		assertTrue("the last number of the previous page", _queue.needsFullState(2));
+		assertFalse("the number the new page starts with", _queue.needsFullState(3));
+	}
+
+	/**
+	 * The stream of the new page tells its client the number the state it sends stands for: the
+	 * client starts without a number, while the numbering of the window continues across pages.
+	 */
+	public void testStreamOfTheNewPageCarriesTheCurrentNumber() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old").setTitle("Old"));
+		_queue.enqueue(RouteChangeEvent.create().setUrl("old2").setTitle("Old2"));
+		assertEquals(2, _queue.lastSeq());
+
+		_queue.beginPage();
+		FakeAsyncRequest stream = new FakeAsyncRequest();
+		_queue.setConnection(stream.context());
+
+		String body = stream.body();
+		assertTrue("the number the new page starts with: " + body, body.contains("id: 3\ndata: [\"Heartbeat\""));
+		assertFalse("no event of the previous page: " + body, body.contains("\"Old"));
 	}
 
 	/** The poll the previous page left waiting ends without events. */

@@ -724,17 +724,17 @@ public interface ColumnBaseConfig extends WithColumnCssClasses {
 	 * </p>
 	 */
 	@Name(ADDITIONAL_HEADERS)
-	List<PolymorphicConfiguration<HTMLFragmentProvider>> getAdditionalHeaders();
+	List<PolymorphicConfiguration<? extends HTMLFragmentProvider>> getAdditionalHeaders();
 
 	/** Setter for {@link #getAdditionalHeaders()}. */
-	void setAdditionalHeaders(List<PolymorphicConfiguration<ControlProvider>> value);
+	void setAdditionalHeaders(List<PolymorphicConfiguration<? extends ControlProvider>> value);
 
 	/**
 	 * Additional code to be executed when a {@link ColumnConfig} is applied to a
 	 * {@link ColumnConfiguration}.
 	 */
 	@Name(CONFIGURATORS)
-	List<PolymorphicConfiguration<ColumnConfigurator>> getConfigurators();
+	List<PolymorphicConfiguration<? extends ColumnConfigurator>> getConfigurators();
 
 	/**
 	 * The {@link PDFRenderer} producing the output when exporting value of the column to PDF, or

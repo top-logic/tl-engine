@@ -106,10 +106,13 @@ public class Pac4jLoginMethod implements LoginMethod {
 	}
 
 	@Override
-	public String getInitiationUrl(String returnToUrl) {
+	public String getInitiationUrl(String returnToUrl, String windowName) {
 		StringBuilder url = servletUrl(DefaultDisplayContext.getDisplayContext(), _clientName);
 		if (returnToUrl != null && !returnToUrl.isEmpty()) {
 			url.append('&').append(AbstractTopLogicServlet.PARAM_START_PAGE).append('=').append(encode(returnToUrl));
+		}
+		if (windowName != null && !windowName.isEmpty()) {
+			url.append('&').append(ExternalAuthenticationServlet.WINDOW_PARAM).append('=').append(encode(windowName));
 		}
 		return url.toString();
 	}

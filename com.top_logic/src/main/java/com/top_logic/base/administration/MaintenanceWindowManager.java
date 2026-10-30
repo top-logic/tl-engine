@@ -22,6 +22,7 @@ import com.top_logic.base.cluster.ClusterManagerListener;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -196,13 +197,15 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     private NamedConstant token;
 
 	/**
-	 * ID of the session which changed the maintenance window state as last.
+	 * The session which changed the maintenance window state as last.
 	 * 
 	 * <p>
 	 * May be <code>null</code> if changed by another node in cluster or outside of a user session.
+	 * Its ID is looked up when needed, because the ID of a session changes when a user logs in
+	 * within one of its windows.
 	 * </p>
 	 */
-	private String _changingSessionId;
+	private SessionContext _changingSession;
 
 	private final Login _login;
 
@@ -265,7 +268,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
         if (PROPERTY_STATE_CHANGE.equals(propertyName)) {
             if (!thisNode) {
                 token = null;
-				_changingSessionId = null;
+				_changingSession = null;
             }
             if (CM_STATE_MAINTENANCE_MODE.equals(newValue)) {
                 internalEnterMaintenanceWindow();
@@ -642,9 +645,10 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     private void logoutUsers() {
         SessionService sessions = SessionService.getInstance();
 		String currentSessionId = sessions.getSessionId(ThreadContextManager.getSession());
+		String changingSessionId = sessions.getSessionId(_changingSession);
 		Collection<String> sessionIDs = sessions.getSessionIDs();
 		for (String sessionID : sessionIDs) {
-			if (sessionID.equals(currentSessionId) || sessionID.equals(_changingSessionId)) {
+			if (sessionID.equals(currentSessionId) || sessionID.equals(changingSessionId)) {
 				// The session that switches to maintenance mode is kept, so that it can leave the
 				// maintenance mode again.
 				continue;
@@ -678,11 +682,11 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 			setChangingUser(cm, context.getCurrentPersonWrapper());
             token = new NamedConstant("currentToken");
             context.set(TOKEN_KEY, token);
-			_changingSessionId = SessionService.getInstance().getSessionId(ThreadContextManager.getSession());
+			_changingSession = ThreadContextManager.getSession();
         }
         else {
             token = null;
-			_changingSessionId = null;
+			_changingSession = null;
         }
     }
 

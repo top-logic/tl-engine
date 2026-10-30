@@ -21,6 +21,7 @@ import test.com.top_logic.basic.SimpleTestFactory;
 import test.com.top_logic.basic.TestComment;
 import test.com.top_logic.basic.TestDocumentation;
 import test.com.top_logic.basic.TestLayoutsNormalized;
+import test.com.top_logic.basic.TestPolymorphicConfigurationWildcards;
 import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.basic.jsp.TestJSPContent;
 
@@ -98,6 +99,13 @@ public abstract class AbstractBasicTestAll {
 		@Name("test-documentation")
 		@BooleanDefault(true)
 		boolean getTestDocumentation();
+
+		/**
+		 * Whether to activate {@link TestPolymorphicConfigurationWildcards}.
+		 */
+		@Name("test-polymorphic-configuration-wildcards")
+		@BooleanDefault(true)
+		boolean getTestPolymorphicConfigurationWildcards();
 
 		/**
 		 * Whether to activate {@link TestJSPContent}.

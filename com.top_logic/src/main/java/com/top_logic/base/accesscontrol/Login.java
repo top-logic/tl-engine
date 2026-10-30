@@ -77,7 +77,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		@ItemDefault
 		@ImplementationClassDefault(PasswordHashingService.class)
 		@Name("password-hashing")
-		PolymorphicConfiguration<PasswordHashingService> getPasswordHashing();
+		PolymorphicConfiguration<? extends PasswordHashingService> getPasswordHashing();
 
 		/**
 		 * Component name that allows switching off maintenance mode.
@@ -106,7 +106,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		 * Configuration of a {@link LoginHook} which is instantiated to perform additional
 		 *         checks during the login process. May be <code>null</code>.
 		 */
-		PolymorphicConfiguration<LoginHook> getLoginHook();
+		PolymorphicConfiguration<? extends LoginHook> getLoginHook();
 
 	}
 

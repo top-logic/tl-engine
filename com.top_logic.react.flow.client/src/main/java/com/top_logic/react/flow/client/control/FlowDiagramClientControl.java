@@ -85,6 +85,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private static final int DEBOUNCE_DELAY_MS = 150;
 
+	/** State key the server sends the serialized diagram with. */
+	private static final String DIAGRAM_STATE = "diagram";
+
+	/** State key the server sends a patch of its changes to the displayed diagram with. */
+	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
+
 	private class Scope extends DefaultScope {
 
 		private double _changeTimeout;
@@ -126,6 +132,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private Scope _scope;
 
 	Diagram _diagram;
+
+	/** The serialization the displayed {@link #_diagram} was read from. */
+	private String _diagramJson;
 
 	private final String _controlId;
 
@@ -244,10 +253,63 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Enable HTML5 drag events on the container for pan-by-drag.
 		((Element) _control).setAttribute("draggable", "true");
 
+		_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");
+		_zoomDisplay.classList.add("zoomDisplay");
+		_control.appendChild(_zoomDisplay);
+
+		_hideZoomDisplay = new Timer() {
+			@Override
+			public void run() {
+				_zoomDisplay.classList.add("invisible");
+			}
+		};
+
+		_controlW = _control.clientWidth;
+		_controlH = _control.clientHeight;
+		_newCtrlW = _controlW;
+		_newCtrlH = _controlH;
+
+		showDiagram(diagramJson);
+
+		_draggingToPan = false;
+
+		setupEventListeners();
+		setupResizeObserver();
+		subscribeToServerUpdates();
+	}
+
+	/**
+	 * Displays the diagram of the given serialization instead of the one displayed so far.
+	 *
+	 * <p>
+	 * The server replaces the displayed diagram by sending a new serialization in the
+	 * {@link #DIAGRAM_STATE} state. The diagram is exchanged in place, so that the patches the
+	 * server sends for the new diagram after its serialization are applied to it in the order they
+	 * were sent.
+	 * </p>
+	 *
+	 * @param diagramJson
+	 *        The serialized diagram, empty or <code>null</code> to display nothing.
+	 */
+	private void showDiagram(String diagramJson) {
+		_diagramJson = diagramJson;
+
+		if (_dragHandler != null && _dragHandler.isActive()) {
+			_dragHandler.cancel();
+		}
+		if (_selectionRectangle != null) {
+			_selectionRectangle.cancel();
+		}
+		clearSvg();
+		_dirtyNodes.clear();
+		_diagram = null;
+		_scope = null;
+		_viewbox = null;
+
 		if (diagramJson != null && !diagramJson.isEmpty()) {
 			try {
-				_scope = new Scope(2, 1);
-				Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(diagramJson)));
+				Scope scope = new Scope(2, 1);
+				Diagram diagram = Diagram.readDiagram(scope, new JsonReader(new StringR(diagramJson)));
 				diagram.setContext(this);
 
 				diagram.layout(_renderContext);
@@ -287,6 +349,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 					}
 				}
 
+				_scope = scope;
 				diagram.draw(svgBuilder());
 
 				// Drop layout-induced scope changes so they don't trigger an update command.
@@ -295,21 +358,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 				_diagram = diagram;
 
-				_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");
-				_zoomDisplay.classList.add("zoomDisplay");
-				_control.appendChild(_zoomDisplay);
-
-				_hideZoomDisplay = new Timer() {
-					@Override
-					public void run() {
-						_zoomDisplay.classList.add("invisible");
-					}
-				};
-
-				_controlW = _control.clientWidth;
-				_controlH = _control.clientHeight;
-				_newCtrlW = _controlW;
-				_newCtrlH = _controlH;
 				_viewbox = _svg.getViewBox().getBaseVal();
 				calcZoomLevel();
 
@@ -322,11 +370,19 @@ public class FlowDiagramClientControl implements DiagramContext {
 			}
 		}
 
-		_draggingToPan = false;
+		injectDragStyles();
+	}
 
-		setupEventListeners();
-		setupResizeObserver();
-		subscribeToServerUpdates();
+	/**
+	 * Removes everything drawn into the SVG.
+	 */
+	private void clearSvg() {
+		OMNode child = _svg.getFirstChild();
+		while (child != null) {
+			OMNode next = child.getNextSibling();
+			_svg.removeChild(child);
+			child = next;
+		}
 	}
 
 	private void setupEventListeners() {
@@ -561,8 +617,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 		svgElement.addEventListener("pointermove", _pointerMove);
 		svgElement.addEventListener("pointerup", _pointerUp);
 		DomGlobal.window.addEventListener("keydown", _keyDownEsc);
-
-		injectDragStyles();
 	}
 
 	/**
@@ -604,10 +658,26 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	/**
-	 * Handle a server state update received via SSE.
+	 * Applies a server state update received via SSE.
+	 *
+	 * <p>
+	 * A new serialization in the {@link #DIAGRAM_STATE} state replaces the displayed diagram, a
+	 * {@link #DIAGRAM_PATCH_STATE} patch changes it. A full state carries the serialization the
+	 * displayed diagram was read from as long as the server did not replace the diagram: it is not
+	 * read again then, since the patches applied after reading it are part of the displayed diagram.
+	 * </p>
+	 *
+	 * @param state
+	 *        The changed part of the control's state, or its full state.
 	 */
-	private void onServerState(Object state) {
-		String patch = extractDiagramPatch(state);
+	@JsMethod
+	public void onServerState(Object state) {
+		String diagramJson = extractString(state, DIAGRAM_STATE);
+		if (diagramJson != null && !diagramJson.equals(_diagramJson)) {
+			showDiagram(diagramJson);
+		}
+
+		String patch = extractString(state, DIAGRAM_PATCH_STATE);
 		if (patch == null || patch.isEmpty()) {
 			return;
 		}
@@ -637,11 +707,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	/**
-	 * Extract the "diagramPatch" field from the SSE state object.
+	 * The string value of the given key in the given SSE state object, <code>null</code> if it has
+	 * none.
 	 */
-	private static native String extractDiagramPatch(Object state) /*-{
-		if (state && state.diagramPatch) {
-			return state.diagramPatch;
+	private static native String extractString(Object state, String key) /*-{
+		if (state && typeof state[key] === 'string') {
+			return state[key];
 		}
 		return null;
 	}-*/;
@@ -819,12 +890,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_diagram.layout(_renderContext);
 
 		// Clear all SVG children and re-draw.
-		OMNode child = _svg.getFirstChild();
-		while (child != null) {
-			OMNode next = child.getNextSibling();
-			_svg.removeChild(child);
-			child = next;
-		}
+		clearSvg();
 
 		_diagram.draw(svgBuilder());
 

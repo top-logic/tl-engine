@@ -108,7 +108,7 @@ public class TestTagNameAnnotation extends AbstractTypedConfigurationTestCase {
 
 	public interface WithPolymorphicList extends ConfigurationItem {
 
-		List<PolymorphicConfiguration<I1>> getBs();
+		List<PolymorphicConfiguration<? extends I1>> getBs();
 
 		List<PolymorphicConfiguration<? extends I1>> getCs();
 

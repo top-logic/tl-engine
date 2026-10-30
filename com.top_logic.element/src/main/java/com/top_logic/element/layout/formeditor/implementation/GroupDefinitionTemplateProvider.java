@@ -75,7 +75,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	}
 
 	private ModeSelector instantiateModeSelector(InstantiationContext context, GroupDefinition config) {
-		PolymorphicConfiguration<ModeSelector> modeAnnotation = config.getModeSelector();
+		PolymorphicConfiguration<? extends ModeSelector> modeAnnotation = config.getModeSelector();
 
 		return context.getInstance(modeAnnotation);
 	}

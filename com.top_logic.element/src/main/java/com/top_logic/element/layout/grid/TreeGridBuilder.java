@@ -40,7 +40,7 @@ public class TreeGridBuilder<R> extends AbstractTreeGridBuilder<R> {
 		 */
 		@Mandatory
 		@Name(AbstractTreeGridBuilder.Config.BUILDER_ATTRIBUTE)
-		PolymorphicConfiguration<TreeModelBuilder<Object>> getBuilder();
+		PolymorphicConfiguration<? extends TreeModelBuilder<Object>> getBuilder();
 
 	}
 

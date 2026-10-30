@@ -28,7 +28,7 @@ public interface LayoutSecurityConfiguration extends ConfigurationItem {
 	@ItemDefault
 	@ImplementationClassDefault(CompoundSecurityLayoutCommandGroupCollector.class)
 	@Name(COMMAND_GROUP_COLLECTOR_NAME)
-	PolymorphicConfiguration<CompoundSecurityLayoutCommandGroupCollector> getCommandGroupCollector();
+	PolymorphicConfiguration<? extends CompoundSecurityLayoutCommandGroupCollector> getCommandGroupCollector();
 
 }
 

@@ -69,7 +69,7 @@ public class PasswordHashingService extends AbstractConfiguredInstance<PasswordH
 		 * The actual {@link PasswordHashingAlgorithm}.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<PasswordHashingAlgorithm> getImplementation();
+		PolymorphicConfiguration<? extends PasswordHashingAlgorithm> getImplementation();
 
 	}
 

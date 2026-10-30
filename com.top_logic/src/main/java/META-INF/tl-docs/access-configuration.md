@@ -58,6 +58,8 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    roles denies everyone. Without attribute-level grants the class-level decision stands.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
+How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
+are exempt from the check is described in [checking access in Java and TL-Script](doc:access-checks).
 The classic layout UI does not check attribute rights; an application using model based security
 with `Discover`-only roles must use the React view layer for such types.
 
@@ -132,10 +134,17 @@ instead of replacing them.
   implied by every other right on the object or one of its attributes, so it is rarely granted on
   its own; see [the Discover specification](doc:access-discover-spec).
 - `roles` is a comma separated list of role names (`InitialRolesManager` declares roles).
-- `<grant>` adds roles, `<revoke>` takes them away again, in the order the rules appear.
+- `<grant>` adds roles, `<revoke>` takes them away again, in the order the rules appear. A
+  `<revoke>` with `roles` removes these roles and leaves the operation restricted to the remaining
+  ones (possibly none). A `<revoke>` without `roles` drops the operation's entry: on a `<class>` or
+  `<module>` the operation is then granted to nobody (including what the module and the
+  generalizations contributed), on a `<part>` the attribute is no longer restricted and the class
+  decision applies. A later `<grant>` may grant the operation again.
 - `inherit="true"` passes the rule on to the specializations of the type. The rights of a type are
   computed as: what its generalizations pass on, plus the module rules of its module, plus its own
-  rules.
+  rules. A module rule applies to every class of the module, also to specializations defined in
+  the module, whatever its `inherit`; `inherit="true"` additionally passes it on to
+  specializations defined in other modules.
 
 A custom operation can also authorize a configured TL-Script function as a whole, see
 [privileged TL-Script functions](doc:access-privileged-scripts). The UI units of the React view
@@ -355,7 +364,11 @@ Roles on an object come from three sources, all collected by `ElementAccessManag
 
 - `meta-element` is the type the rule applies to, `inherit="true"` extends it to specializations.
 - A rule's `<step attribute="…" inverse="true|false"/>` elements form the navigation path from the
-  object to the role holder (role rule) or to the role parent.
+  object to the role holder (role rule) or to the role parent: `inverse="false"` follows the
+  attribute value, `inverse="true"` the objects referencing the object through the attribute.
+- Several role parent rules for one type (or a path reaching several objects) give an object
+  several role parents; the user holds the roles of all of them, collected transitively with a
+  guard against cycles.
 - A role parent is the right choice where the type has grants of its own on top of the inherited
   roles (a sub-project with its own roles). Where the type has nothing of its own, an access parent
   is simpler and cheaper.
@@ -368,7 +381,22 @@ Roles on an object come from three sources, all collected by `ElementAccessManag
 The security root is never a role parent implicitly: an object whose type has no role parent rule
 has no role parent at all. For the roles held on the root to reach the objects of a type, a role
 parent rule must name it explicitly via `<singleton module="SecurityStructure"/>`, either on a
-common base type with `inherit="true"` or per type.
+common base type with `inherit="true"` or per type. The `<singleton>` step yields a singleton of a
+module, independent of the object: `module` names the module, `singleton-name` the singleton
+(default `ROOT`). A rule may combine it with other rules of the type:
+
+```xml
+<security-parents>
+	<rules>
+		<rule id="Task_milestone" meta-element="myapp:Task">
+			<step attribute="myapp:Task#milestone" inverse="false"/>
+		</rule>
+		<rule id="Task_root" meta-element="myapp:Task">
+			<singleton module="SecurityStructure"/>
+		</rule>
+	</rules>
+</security-parents>
+```
 
 ## Where the files are
 

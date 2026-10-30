@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.form;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -15,6 +17,8 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} for attributes holding a point in time.
@@ -28,6 +32,9 @@ import com.top_logic.model.annotate.AnnotationLookup;
  * that offers no way at all to enter the part of the value that matters.
  * </p>
  */
+@Label("Date picker")
+@InApp
+@TargetType(TLTypeKind.DATE)
 public class DatePickerControlProvider implements ReactFieldControlProvider {
 
 	/** {@link ConfigType} value of a time of day. */

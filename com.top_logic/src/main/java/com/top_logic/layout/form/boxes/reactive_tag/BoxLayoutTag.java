@@ -103,7 +103,7 @@ public class BoxLayoutTag extends AbstractBoxStructureTag {
 				 */
 				@Name(IMPLEMENTATION)
 				@Mandatory
-				PolymorphicConfiguration<BoxLayout> getImplementation();
+				PolymorphicConfiguration<? extends BoxLayout> getImplementation();
 
 			}
 		}

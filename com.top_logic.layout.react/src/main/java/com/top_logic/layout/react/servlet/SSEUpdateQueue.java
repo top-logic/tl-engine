@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -82,8 +83,24 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * it saw. Its first poll asks for the full state of the controls, because the state the connection
  * sent may not have arrived either; the events written since the connection that address no
  * displayed control - a reload, a frame of a listener that is not a control - follow it. A poll
- * waits up to {@link #POLL_HOLD_MILLIS} for an event, so an event is delivered as soon as it
- * exists, and every poll ends before a proxy's idle timeout.
+ * never continues after a gap: it reads every event after the number it sends, or - where the
+ * queue no longer holds one of them, because it exceeded the retained characters or was written
+ * before a later connection or page - the full state. A poll waits up to {@link #POLL_HOLD_MILLIS}
+ * for an event, so an event is delivered as soon as it exists, and every poll ends before a
+ * proxy's idle timeout.
+ * </p>
+ *
+ * <p>
+ * <b>A stream that reconnects.</b> A new stream sends the full state of the displayed controls,
+ * then - if it names the last event its client received, see
+ * {@link #setConnection(AsyncContext, long)} - the events written after it that address no
+ * displayed control, with their numbers, and then a heartbeat numbered with the last event the
+ * queue has written. Only then do further events follow. So an event the full state does not
+ * contain - a navigation, a script - is not lost with the stream it was written to, and a client
+ * that received it does not get it again. Events the queue no longer holds are not replayed; a poll
+ * after them reads the full state, as above. The numbers of a {@link #beginPage() page} start above
+ * those of the page before it, so that the stream of a previous page replays nothing of the page
+ * displayed now.
  * </p>
  *
  * <p>
@@ -108,6 +125,9 @@ public class SSEUpdateQueue {
 	 * liveness.
 	 */
 	private static final String HEARTBEAT_MESSAGE = "data: [\"Heartbeat\",{}]\n\n";
+
+	/** The field of an SSE message that carries the number of the event, see {@link #flush()}. */
+	private static final String ID_FIELD = "id: ";
 
 	/**
 	 * Interval between heartbeat messages in seconds.
@@ -161,8 +181,19 @@ public class SSEUpdateQueue {
 	/** The number of the last event written. Guarded by {@code this}. */
 	private long _lastSeq;
 
-	/** The highest number that was dropped from {@link #_written} before a poll read it. Guarded by {@code this}. */
-	private long _droppedUnread;
+	/**
+	 * The highest number of an event the client can no longer read as an event: it was dropped
+	 * from {@link #_written} before a poll read it, or it was written before the
+	 * {@link #forgetWritten() last forgetting}. A poll after an older number is answered with the
+	 * full state. Guarded by {@code this}.
+	 */
+	private long _unreadableUpTo;
+
+	/**
+	 * The number the current {@link #beginPage() page} starts from: the events of earlier pages have
+	 * lower numbers. Guarded by {@code this}.
+	 */
+	private long _pageStart;
 
 	/**
 	 * Whether the client polls instead of reading a stream. Written while holding {@code this},
@@ -668,10 +699,38 @@ public class SSEUpdateQueue {
 	 *
 	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
 	 *         connection was closed.
+	 *
+	 * @see #setConnection(AsyncContext, long)
 	 */
 	public boolean setConnection(AsyncContext asyncContext) {
+		return setConnection(asyncContext, -1);
+	}
+
+	/**
+	 * Sets the SSE connection for this queue, replacing any existing one, for a client that names
+	 * the last event it received.
+	 *
+	 * <p>
+	 * The connection receives the full state of the displayed controls, then the events written
+	 * after {@code lastEventId} that address no displayed control, with their numbers, then a
+	 * heartbeat numbered with the last event written. Events enqueued meanwhile wait until then.
+	 * Nothing is replayed for a number from before the current {@link #beginPage() page}: it is the
+	 * number of a stream of the page the window displayed before.
+	 * </p>
+	 *
+	 * @param lastEventId
+	 *        The number of the last event the client received, negative if unknown.
+	 *
+	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
+	 *         connection was closed.
+	 *
+	 * @see #setConnection(AsyncContext)
+	 */
+	public boolean setConnection(AsyncContext asyncContext, long lastEventId) {
 		SSEConnection old;
 		SSEConnection newConn = new SSEConnection(asyncContext);
+		long base;
+		List<Written> replay;
 		synchronized (this) {
 			if (_shutdown) {
 				Logger.info("SSE connection REFUSED for window '" + _windowName + "' (queue@"
@@ -686,9 +745,14 @@ public class SSEUpdateQueue {
 			old = _connection;
 			_connection = newConn;
 			_streamLostAt = 0;
-			// The client starts again from the state this connection sends; what was written before
-			// is not to be replayed to it.
+			replay = replayAfter(lastEventId);
+			// The client starts again from the state this connection sends and the events replayed
+			// after it.
 			forgetWritten();
+			for (Written written : replay) {
+				retain(written);
+			}
+			base = _lastSeq;
 			_polling = false;
 			answerWaitingPoll();
 		}
@@ -700,19 +764,19 @@ public class SSEUpdateQueue {
 			Logger.warn("SSE connection REPLACED for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
 				SSEUpdateQueue.class);
-			try {
-				old.getContext().complete();
-			} catch (Exception ex) {
-				// Old connection already closed, ignore.
-			}
+			old.close();
 		} else {
 			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
-		sendFullState(newConn);
 		// A first event at once, also for a window without controls: what tells the client that its
-		// stream arrives.
-		writeOrDisconnect(newConn, HEARTBEAT_MESSAGE);
+		// stream arrives. It carries the number the full state stands for: a page loaded anew starts
+		// without a number, while the numbering of its window continues, and would take the number a
+		// command answer names for events its stream did not bring.
+		if (sendFullState(newConn) && sendReplay(newConn, replay)
+			&& writeOrDisconnect(newConn, ID_FIELD + base + "\n" + HEARTBEAT_MESSAGE)) {
+			newConn.markPrimed();
+		}
 		// Flush any events that were enqueued before the SSE connection was
 		// established (e.g. RouteChangeEvent from initial RoutingParticipant
 		// registration during control tree construction).
@@ -732,6 +796,8 @@ public class SSEUpdateQueue {
 	public void clearConnection(AsyncContext asyncContext) {
 		SSEConnection current = _connection;
 		if (current != null && current.getContext() == asyncContext) {
+			// The stream has ended: a thread still holding the connection does not write to it.
+			current.markClosed();
 			if (dropConnection(current, System.currentTimeMillis())) {
 				Logger.info("SSE connection cleared for window '" + _windowName + "' (queue@"
 					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
@@ -756,6 +822,43 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * The retained events after the given number that address no displayed control, for a stream
+	 * whose client received the event with that number. Called while holding the lock.
+	 */
+	private List<Written> replayAfter(long lastEventId) {
+		if (lastEventId < _pageStart) {
+			// Unknown, or a number of the page before.
+			return List.of();
+		}
+		if (lastEventId < _unreadableUpTo) {
+			Logger.info("Window '" + _windowName + "' reconnects after event " + lastEventId
+				+ ", the events up to " + _unreadableUpTo + " are no longer held; the stream replays "
+				+ "the full state and the events after them.", SSEUpdateQueue.class);
+		}
+		List<Written> result = new ArrayList<>();
+		for (Written written : _written) {
+			if (written.seq() > lastEventId && !addressesDisplayedControl(written.event())) {
+				result.add(written);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Writes the given events to the given connection with their numbers.
+	 *
+	 * @return Whether all were written.
+	 */
+	private boolean sendReplay(SSEConnection connection, List<Written> replay) {
+		for (Written written : replay) {
+			if (!writeOrDisconnect(connection, ID_FIELD + written.seq() + "\n" + toDataMessage(written.json()))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Sends the full state of all registered {@link ReactControl}s to the given connection.
 	 *
 	 * <p>
@@ -768,19 +871,30 @@ public class SSEUpdateQueue {
 	 * Since a control is registered exactly while it is displayed, this sends the state of the
 	 * controls the window displays.
 	 * </p>
+	 *
+	 * <p>
+	 * Stops at the first write that fails: the connection is lost, and the state of the remaining
+	 * controls is neither serialized nor written.
+	 * </p>
+	 *
+	 * @return Whether the state of all controls was written.
 	 */
-	private void sendFullState(SSEConnection connection) {
+	private boolean sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
+			if (connection.isClosed()) {
+				return false;
+			}
 			if (control instanceof ReactControl rc) {
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
 					.setState(rc.stateAsJSON());
 				String message = toDataMessage(toJson(event));
-				if (message != null) {
-					writeOrDisconnect(connection, message);
+				if (message != null && !writeOrDisconnect(connection, message)) {
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -806,6 +920,10 @@ public class SSEUpdateQueue {
 		SSEConnection previous;
 		synchronized (this) {
 			_pendingEvents.clear();
+			// A number of its own that no event carries: the numbers of the new page start above
+			// every number the previous page received.
+			_lastSeq++;
+			_pageStart = _lastSeq;
 			forgetWritten();
 			previous = _connection;
 			_connection = null;
@@ -817,11 +935,7 @@ public class SSEUpdateQueue {
 		if (previous != null) {
 			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
-			try {
-				previous.getContext().complete();
-			} catch (Exception ex) {
-				// Already closed.
-			}
+			previous.close();
 		}
 	}
 
@@ -949,6 +1063,10 @@ public class SSEUpdateQueue {
 		if (conn == null && !_polling) {
 			return;
 		}
+		if (conn != null && !conn.isPrimed()) {
+			// The connection is sending its full state and replay; the events follow them.
+			return;
+		}
 		SSEEvent event;
 		while ((event = _pendingEvents.peek()) != null) {
 			String json = toJson(event);
@@ -958,7 +1076,7 @@ public class SSEUpdateQueue {
 				continue;
 			}
 			long seq = _lastSeq + 1;
-			if (conn != null && !writeOrDisconnect(conn, "id: " + seq + "\n" + toDataMessage(json))) {
+			if (conn != null && !writeOrDisconnect(conn, ID_FIELD + seq + "\n" + toDataMessage(json))) {
 				// Keep the event queued for retry on the next (re)connection.
 				return;
 			}
@@ -972,7 +1090,7 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Answers a poll of the client: the events after {@code after}, or - for the first poll, and
-	 * whenever events after {@code after} were dropped unread - the full state of the displayed
+	 * whenever an event after {@code after} can no longer be read - the full state of the displayed
 	 * controls, followed by the events written since the connection that address none of them.
 	 *
 	 * <p>
@@ -1014,7 +1132,7 @@ public class SSEUpdateQueue {
 			// read by the poll.
 			flush();
 			acknowledge(after);
-			if (full || _droppedUnread > after) {
+			if (full || _unreadableUpTo > after) {
 				answer(context, fullAnswer(after));
 			} else if (_lastSeq > after || _shutdown) {
 				answer(context, answerAfter(after));
@@ -1026,11 +1144,7 @@ public class SSEUpdateQueue {
 		}
 		if (abandoned != null) {
 			Logger.info("Window '" + _windowName + "' polls; its event stream is closed.", SSEUpdateQueue.class);
-			try {
-				abandoned.getContext().complete();
-			} catch (Exception ex) {
-				// Already closed.
-			}
+			abandoned.close();
 		}
 		ensureHeartbeat();
 	}
@@ -1043,11 +1157,11 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Whether a poll after the given number can only be answered with the full state: events after
-	 * it were dropped before the client read them.
+	 * Whether a poll after the given number can only be answered with the full state: the queue no
+	 * longer holds an event after it, see {@link #_unreadableUpTo}.
 	 */
 	public synchronized boolean needsFullState(long after) {
-		return _droppedUnread > after;
+		return _unreadableUpTo > after;
 	}
 
 	/**
@@ -1116,15 +1230,30 @@ public class SSEUpdateQueue {
 		answer(poll.context(), answerAfter(poll.after()));
 	}
 
-	/** Called while holding the lock. */
+	/**
+	 * The events after the given number.
+	 *
+	 * <p>
+	 * Where the queue no longer holds one of them - a waiting poll is answered after a flush wrote
+	 * more than the queue retains -, the answer carries no events and repeats the given number, so
+	 * that the client's next poll asks for the full state instead of continuing after a gap.
+	 * </p>
+	 *
+	 * <p>
+	 * Called while holding the lock.
+	 * </p>
+	 */
 	private String answerAfter(long after) {
+		if (_unreadableUpTo > after) {
+			return pollAnswer(after, List.of());
+		}
 		List<String> events = new ArrayList<>();
 		for (Written written : _written) {
 			if (written.seq() > after) {
 				events.add(written.json());
 			}
 		}
-		return pollAnswer(events);
+		return pollAnswer(_lastSeq, events);
 	}
 
 	/** Called while holding the lock. */
@@ -1144,13 +1273,13 @@ public class SSEUpdateQueue {
 				events.add(written.json());
 			}
 		}
-		return pollAnswer(events);
+		return pollAnswer(_lastSeq, events);
 	}
 
 	/** Called while holding the lock. */
-	private String pollAnswer(List<String> events) {
+	private String pollAnswer(long last, List<String> events) {
 		String token = _pollToken;
-		return "{\"last\":" + _lastSeq + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
+		return "{\"last\":" + last + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
 			+ String.join(",", events) + "]}";
 	}
 
@@ -1172,13 +1301,19 @@ public class SSEUpdateQueue {
 
 	/** Called while holding the lock. */
 	private void remember(Written written) {
-		_written.addLast(written);
-		_writtenChars += written.json().length();
+		retain(written);
 		while (_writtenChars > MAX_RETAINED_CHARS && _written.size() > 1) {
 			Written dropped = _written.removeFirst();
 			_writtenChars -= dropped.json().length();
-			_droppedUnread = dropped.seq();
+			// A replayed event may have a number below the last forgetting.
+			_unreadableUpTo = Math.max(_unreadableUpTo, dropped.seq());
 		}
+	}
+
+	/** Adds the given event to {@link #_written}. Called while holding the lock. */
+	private void retain(Written written) {
+		_written.addLast(written);
+		_writtenChars += written.json().length();
 	}
 
 	/** Called while holding the lock. */
@@ -1189,13 +1324,24 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Forgets what was written: the client starts from a state that contains it. Called while
-	 * holding the lock.
+	 * Forgets what was written: the client starts from a state that contains it - the full state a
+	 * connection sends, a page rendered anew.
+	 *
+	 * <p>
+	 * Whether that state reaches the client is not known: a stream may be held back as the one
+	 * before it. A client that polls after a number from before the forgetting therefore reads the
+	 * full state, never the events written since as their continuation. A client that received the
+	 * state continues with the numbers written after the forgetting.
+	 * </p>
+	 *
+	 * <p>
+	 * Called while holding the lock.
+	 * </p>
 	 */
 	private void forgetWritten() {
 		_written.clear();
 		_writtenChars = 0;
-		_droppedUnread = 0;
+		_unreadableUpTo = _lastSeq;
 	}
 
 	/**
@@ -1250,11 +1396,7 @@ public class SSEUpdateQueue {
 		SSEConnection conn = _connection;
 		_connection = null;
 		if (conn != null) {
-			try {
-				conn.getContext().complete();
-			} catch (Exception ex) {
-				// Connection already closed, ignore.
-			}
+			conn.close();
 		}
 		_pendingEvents.clear();
 		_controls.clear();
@@ -1655,14 +1797,29 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Writes a message to the given connection, clearing it if the write fails.
+	 *
+	 * <p>
+	 * A connection that is {@link SSEConnection#isClosed() closed} - lost by an earlier write,
+	 * ended, replaced or given up - is not written to. A thread may still hold it: the heartbeat, a
+	 * {@link #setConnection(AsyncContext) connection} sending the full state, a flush. The loss of a
+	 * connection is therefore reported once, by the write that notices it.
+	 * </p>
+	 *
+	 * @return Whether the message was written; {@code false} if the connection is closed or was lost
+	 *         with this write.
 	 */
 	private boolean writeOrDisconnect(SSEConnection connection, String message) {
+		if (connection.isClosed()) {
+			return false;
+		}
 		try {
 			writeToConnection(connection.getContext(), message);
 			return true;
 		} catch (IOException ex) {
-			Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			if (connection.markClosed()) {
+				Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
+					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			}
 			dropConnection(connection, System.currentTimeMillis());
 			return false;
 		}
@@ -1712,10 +1869,19 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Wraps an {@link AsyncContext} for an SSE connection.
+	 *
+	 * <p>
+	 * A connection is closed once: when a write to it fails, when its stream ends, or when the queue
+	 * gives it up. A closed connection is not written to again.
+	 * </p>
 	 */
 	static final class SSEConnection {
 
 		private final AsyncContext _context;
+
+		private final AtomicBoolean _closed = new AtomicBoolean();
+
+		private volatile boolean _primed;
 
 		SSEConnection(AsyncContext context) {
 			_context = context;
@@ -1723,6 +1889,49 @@ public class SSEUpdateQueue {
 
 		AsyncContext getContext() {
 			return _context;
+		}
+
+		/**
+		 * Whether this connection is no longer written to.
+		 */
+		boolean isClosed() {
+			return _closed.get();
+		}
+
+		/**
+		 * Marks this connection as no longer written to.
+		 *
+		 * @return Whether this call closed it, {@code false} if it was closed before.
+		 */
+		boolean markClosed() {
+			return _closed.compareAndSet(false, true);
+		}
+
+		/**
+		 * Whether this connection has received its full state, its replay and its numbered
+		 * heartbeat, so that events are written to it.
+		 */
+		boolean isPrimed() {
+			return _primed;
+		}
+
+		/**
+		 * Marks this connection as {@link #isPrimed() primed}.
+		 */
+		void markPrimed() {
+			_primed = true;
+		}
+
+		/**
+		 * Marks this connection as closed and ends its stream.
+		 */
+		void close() {
+			markClosed();
+			try {
+				_context.complete();
+			} catch (RuntimeException ex) {
+				// Already completed.
+			}
 		}
 	}
 

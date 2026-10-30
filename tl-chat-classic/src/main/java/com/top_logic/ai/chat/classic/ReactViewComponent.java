@@ -296,7 +296,8 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 	private static void takeOverPage(ReactWindowRegistry registry, String windowName, TLSubSessionContext subSession,
 			String viewPath, ViewElement view) {
 		registry.issuePageLoad(windowName);
-		RenderedView.store(subSession, new RenderedView(viewPath, view, Resources.getCurrentLocale()));
+		RenderedView.store(subSession,
+			new RenderedView(viewPath, view, Resources.getCurrentLocale(), subSession.getPerson()));
 	}
 
 	private ViewElement loadView(String viewPath) {

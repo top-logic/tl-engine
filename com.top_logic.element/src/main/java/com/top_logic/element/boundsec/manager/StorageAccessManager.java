@@ -109,12 +109,12 @@ public class StorageAccessManager extends ElementAccessManager {
 		@Name(STORAGE)
 		@ImplementationClassDefault(SecurityStorage.class)
 		@ItemDefault
-		PolymorphicConfiguration<SecurityStorage> getStorage();
+		PolymorphicConfiguration<? extends SecurityStorage> getStorage();
 
 		@Name(UPDATE_MANAGER)
 		@ImplementationClassDefault(ElementSecurityUpdateManager.class)
 		@ItemDefault
-		PolymorphicConfiguration<ElementSecurityUpdateManager> getUpdateManager();
+		PolymorphicConfiguration<? extends ElementSecurityUpdateManager> getUpdateManager();
 
 	}
 

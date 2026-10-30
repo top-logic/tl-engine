@@ -953,7 +953,11 @@ class ServletUnitHttpRequest implements HttpServletRequest {
 
 	@Override
 	public String changeSessionId() {
-		throw new UnsupportedOperationException();
+		ServletUnitHttpSession session = (ServletUnitHttpSession) getSession(false);
+		if (session == null) {
+			throw new IllegalStateException("The request has no session.");
+		}
+		return _context.changeSessionId(session);
 	}
 
 	@Override

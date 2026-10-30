@@ -106,7 +106,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		 */
 		@Mandatory
 		@Name("default-provider")
-		PolymorphicConfiguration<LabelProvider> getDefaultProvider();
+		PolymorphicConfiguration<? extends LabelProvider> getDefaultProvider();
 
 		/**
 		 * Configured {@link LabelProvider}s for types.

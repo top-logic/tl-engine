@@ -156,7 +156,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		 */
 		@Name(SELECTION_ON_MODEL_CHANGE)
 		@Options(fun = AllInAppImplementations.class)
-		PolymorphicConfiguration<SelectionUpdater> getSelectionOnModelChange();
+		PolymorphicConfiguration<? extends SelectionUpdater> getSelectionOnModelChange();
 
 	}
 

@@ -38,7 +38,7 @@ public class TLDefaultProviderFactory extends AnnotationsBasedCacheValueFactory 
 		if (tlAnnotation == null) {
 			return null;
 		}
-		PolymorphicConfiguration<DefaultProvider> providerConfig = tlAnnotation.getProvider();
+		PolymorphicConfiguration<? extends DefaultProvider> providerConfig = tlAnnotation.getProvider();
 		DefaultProvider provider =
 			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(providerConfig);
 		return provider;

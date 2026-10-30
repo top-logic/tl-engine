@@ -86,12 +86,12 @@ public class SimpleTableDataExport extends AbstractConfiguredInstance<SimpleTabl
 		 * @return May be <code>null</code> which means "always executable".
 		 */
 		@Hidden
-		PolymorphicConfiguration<Function<TableData, ExecutableState>> getExecutability();
+		PolymorphicConfiguration<? extends Function<TableData, ExecutableState>> getExecutability();
 
 		/**
 		 * Setter for {@link #getExecutability()}.
 		 */
-		void setExecutability(PolymorphicConfiguration<Function<TableData, ExecutableState>> value);
+		void setExecutability(PolymorphicConfiguration<? extends Function<TableData, ExecutableState>> value);
 	}
 
 	private Function<TableData, ExecutableState> _executability;

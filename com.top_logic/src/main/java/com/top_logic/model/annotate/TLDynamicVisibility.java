@@ -22,6 +22,6 @@ public interface TLDynamicVisibility extends TLAttributeAnnotation {
 	 * Algorithm to compute the visibility of the form member.
 	 */
 	@Mandatory
-	PolymorphicConfiguration<ModeSelector> getModeSelector();
+	PolymorphicConfiguration<? extends ModeSelector> getModeSelector();
 
 }

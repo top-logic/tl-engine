@@ -6,8 +6,10 @@
 package com.top_logic.layout.view.form;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -18,6 +20,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
@@ -38,6 +42,9 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
  * checkbox.
  * </p>
  */
+@Label("Yes/no input")
+@InApp
+@TargetType(TLTypeKind.BOOLEAN)
 public class BooleanControlProvider implements ReactFieldControlProvider {
 
 	/**

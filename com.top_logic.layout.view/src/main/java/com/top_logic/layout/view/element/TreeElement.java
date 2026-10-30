@@ -300,7 +300,7 @@ public class TreeElement implements UIElement {
 		 */
 		@Name(NODE_CONTENT)
 		@ItemDefault(NodeDisplay.class)
-		PolymorphicConfiguration<ReactControlProvider> getNodeContent();
+		PolymorphicConfiguration<? extends ReactControlProvider> getNodeContent();
 
 		/**
 		 * Makes the nodes of this tree draggable, so they can be dropped on a display that accepts

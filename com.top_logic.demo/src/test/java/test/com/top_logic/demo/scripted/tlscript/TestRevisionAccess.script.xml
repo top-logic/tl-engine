@@ -410,7 +410,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 						<value><![CDATA[{
  obj = all(`DemoTypes:DemoTypes.A`).filter(a -> "TestRevisionAccess1" == $a.get(`DemoTypes:DemoTypes.A#name`)).singleElement();
- revisionForCommit($obj.createRevision().get(`tl.core:Revision#revision`) + 1) == $obj.modifiedRevision()
+ revisionForCommit($obj.modifiedRevision().get(`tl.core:Revision#revision`)) == $obj.modifiedRevision()
 }]]></value>
 					</value>
 				</action>

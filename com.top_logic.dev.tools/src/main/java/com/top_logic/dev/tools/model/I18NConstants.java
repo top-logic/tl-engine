@@ -36,6 +36,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_MULTIPLE_NOT_SUPPORTED__TYPE;
 
+	/**
+	 * @en The type "{0}" cannot hold references; only classes can refer to classes and enumerations.
+	 */
+	public static ResKey1 ERROR_REFERENCE_NOT_SUPPORTED__OWNER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

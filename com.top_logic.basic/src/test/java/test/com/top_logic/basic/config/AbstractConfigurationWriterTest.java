@@ -146,9 +146,9 @@ public abstract class AbstractConfigurationWriterTest extends AbstractTypedConfi
 	public interface WithImplClassDefault extends ConfigurationItem {
 
 		@ImplementationClassDefault(C.class)
-		PolymorphicConfiguration<B> getB();
+		PolymorphicConfiguration<? extends B> getB();
 
-		void setB(PolymorphicConfiguration<B> value);
+		void setB(PolymorphicConfiguration<? extends B> value);
 
 	}
 

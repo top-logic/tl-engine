@@ -45,7 +45,7 @@ The start page is `/view/` - the React view layer. `WEB-INF/views/app.view.xml` 
 | **Chat** (start item) | The agent chat, built from view elements: a `<data-list>` of this user's chats, a `<chat-conversation>` (transcript, prompt field, agent/model/MCP/trace menu, attachments, human-in-the-loop approvals, context-usage ring), and a `<chat-rail>` whose sections are configured in `WEB-INF/views/tl-ai-demo/chat-grouped.view.xml` - Fortschritt, Quellen, Gedächtnis, and a `<data-list>` of the events whose selection opens an event form in the rail's pane. Fortschritt is a `<data-list>` too: the agent's plan is written to `tl.ai.execution:AgentTask` objects while it runs, so the list fills within about a second of each step and is still there after a reload. A chat row offers Umbenennen and Löschen behind the `⋯` that appears on hover - generic `<row-commands>` of the list, not chat-specific code; Umbenennen opens `tl-ai-demo/rename-session.view.xml`, Löschen confirms first and is hidden while that chat still has a run in it. The agent can open that pane itself: `<chat-conversation present="paneObject">` lets it write that one channel, so "zeig mir alle Events als Tabelle" is one `present` call with a TL-Script query and ends as a table of the events, "Umsatz pro Event als Balkendiagramm" as a bar chart, and "zeig mir KI im Mittelstand" as the event's form (#616). The pane is the rail's own and renders any type - venues and invoices as well as events, with nothing in the view naming a type. Clicking a row (or a bar) opens that object's form; "Zurück" returns to the table as it was left; `»` folds the pane away and the strip's first icon brings it back; the cross empties it. The rail's event rows offer "Dazu fragen" and "In die Nachricht übernehmen" the same way: the first writes a German sentence about that event to the `chatDraft` channel, the second writes the event itself to `chatReference`, and the composer shows the sentence, or the event as one atomic reference token, unsent (#440). Two more, "Beschreibung zitieren" and "Saldo zitieren", write a *passage* of the event to `chatQuote` - the token itself, with the marked text and where in the event it stands - so two passages of the same event insert as two tokens at the caret (#509). |
 | **Veranstaltungen** | The events: a table on the left, the selected event on the right, on tabs - an overview with the figures the model computes (active registrations, free seats, revenue, expenses, balance) and the master data, then its programme, registrations, sponsors and invoices as `<composition-table>`s edited inside the event's form; a session and an invoice open a detail dialog for their speakers and lines. "Neu" creates an event, "Dazu fragen" writes a sentence about the selected event into the chat's composer - the chat being a *different* view on another nav item, which works because `app.view.xml` declares the `chatDraft` channel and hands the same one to both pages with `<bind>` (#440). `WEB-INF/views/tl-ai-demo/events/`. |
 | **Veranstaltungsorte** | The venues with their rooms (a composition) and their address (a composition of one object, so it has a form of its own). A tile stack: a double-click on a venue opens it as a frame over the list, and the breadcrumb leads back. `WEB-INF/views/tl-ai-demo/venues/`. |
-| **Rechnungen** | The invoices of all events: an invoice is part of its event, so the table shows the event as a column, and "Neu" asks which event the invoice belongs to, its direction and the scan - and has the model read the number, the dates, the tax rate, the counterparty and the lines off the image - try it with `doc/sample-invoice-scan.png`. `WEB-INF/views/tl-ai-demo/invoices/`. |
+| **Rechnungen** | The invoices of all events: an invoice is part of its event, so the table shows the event as a column, and "Neu" asks which event the invoice belongs to, its direction and the scan - and has the model read the number, the dates, the tax rate, the counterparty and the lines off the image - try it with `src/test/samples/sample-invoice-scan.png`. `WEB-INF/views/tl-ai-demo/invoices/`. |
 | **Meine Einstellungen** | What this account tells every agent about itself: one free-text field (`tl.accounts:Person#aiPreferences`, added by `tl-ai-core`). The harness renders it into the environment block of every run this user triggers, below what the application itself states; a text above the configured cap is refused here. `WEB-INF/views/tl-ai-demo/profile.view.xml`. |
 | **Gedächtnis** (rail section on the Chat page) | What Albert has kept about this account across conversations (#439): a `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`, newest first, with a count badge and a Forget command per row. Albert writes one only when the user asked it to in that turn, or after it asked with `askUser` and the user agreed - the `remember` tool refuses anything else, which is a Java check and not a line in its prompt. A new memory appears in this list at once and in Albert's system prompt in the *next* conversation, because that prompt has to stay byte-identical across the turns of one. |
 | **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. Its "Agent activity" run detail shows the filled environment block of each run, beside the transcript. |
@@ -70,7 +70,7 @@ The chat states facts about the situation it is asked in (`<chat-conversation><c
 `chat-grouped.view.xml`): the application, which holds for the whole conversation and is therefore
 rendered into the run's system prompt, and the event open in the rail's pane, which follows the
 user's clicks and is therefore not. Neither changes the message text - that is the point of the seam
-(#437; see `tl-ai-core/doc/environment-block.md`).
+(#437; see the developer article `ai/environment`).
 
 The open object is stated by a `<selection channel="paneObject"/>` rather than by a `<fact>`, which is
 the one-line way to say which object the user has selected: the agent gets its label, its type and
@@ -118,14 +118,14 @@ and press "Start task". Then open **Chat**: the sitting is in the session list, 
 A scheduled run has no window, so it cannot ask anything: `askUser` in it answers "no user is present
 in this run" instead of waiting, and what its tools may do is bounded by the tool-access policy's
 `<background-allowlist>` rather than by an approval prompt. How to configure one, and what such a run
-has and lacks, is in `tl-chat/doc/scheduled-agent.md`.
+has and lacks, is in the developer article `ai/script-and-scheduled-runs`.
 
 ## Web research
 
 Ask Albert to research a topic on the web ("Vergleiche die Wärmepumpen-Förderung in Deutschland,
 Österreich und Dänemark"). It loads `TL_deepResearch`, shows a plan, starts research workers that
 search and read the web, and answers with one report whose statements link to the pages the
-workers read (`tl-ai-core/doc/deep-research.md`).
+workers read (developer article `ai/deep-research`).
 
 `WEB-INF/conf/research.config.xml`, on in `metaConf.txt`, supplies what that needs: Brave as search
 engine, with the plain key in the environment variable `tl_brave_api_key`, and a
@@ -156,4 +156,5 @@ starts all the same and the index searches words only.
 | `WEB-INF/data/` | The demo data loaded on the first start (`events.objects.xml`, and one English event in `events-en.objects.xml`) |
 | `WEB-INF/conf/` | Application configuration, including the `ClientResources` declaration that loads the chat bundle |
 | `WEB-INF/autoconf/` | Service overlays: the agent definitions, the LLM providers, the agent runtime (default model) and application knowledge (application name), the MCP server - and the `Scheduler` with the disabled `AgentTask` above |
-| `doc/secdemo/` | A separate security testbed with its own personas; see `doc/secdemo/testbed.md` |
+| `src/test/secdemo/harness/` | The script-console harness of the security test bed (see the developer article `ai/security/test-bed`); the test bed itself is `WEB-INF/conf/secdemo.config.xml` |
+| `src/test/samples/` | Sample input for trying the demo by hand: an invoice scan for "Rechnungen → Neu" |

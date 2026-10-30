@@ -84,14 +84,14 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/** The {@link TreeBuilder} is used to create a tree of {@link FolderNode} objects. */
 		@Name(TREE_BUILDER)
 		@NonNullable
 		@ItemDefault
 		@ImplementationClassDefault(FolderTreeBuilder.class)
-		PolymorphicConfiguration<TreeBuilder<FolderNode>> getTreeBuilder();
+		PolymorphicConfiguration<? extends TreeBuilder<FolderNode>> getTreeBuilder();
 
 		@Override
 		default void addAdditionalCommandGroups(Set<? super BoundCommandGroup> additionalGroups) {

@@ -55,12 +55,12 @@ public class AttributePatternValueConversion extends Rewriter {
 		 */
 		@Name(VALUE_MAPPING_NAME)
 		@Mandatory
-		PolymorphicConfiguration<Mapping<Object, ?>> getValueMapping();
+		PolymorphicConfiguration<? extends Mapping<Object, ?>> getValueMapping();
 
 		/**
 		 * Setter for {@link #getValueMapping()}
 		 */
-		void setValueMapping(PolymorphicConfiguration<Mapping<Object, ?>> value);
+		void setValueMapping(PolymorphicConfiguration<? extends Mapping<Object, ?>> value);
 
 	}
 

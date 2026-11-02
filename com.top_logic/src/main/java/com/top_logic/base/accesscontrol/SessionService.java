@@ -138,6 +138,11 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
 		/**
 		 * Handles the given {@link UserEvent}.
+		 *
+		 * <p>
+		 * An exception thrown here is logged and does not abort the login or logout that is
+		 * announced: the session is already established or ended, when the event is sent.
+		 * </p>
 		 */
 		void notifyUserEvent(UserEvent event);
 
@@ -930,7 +935,14 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		}
 		UserEvent event = new UserEvent(passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
 		for (UserEventListener consumer : _userEventListeners) {
-			consumer.notifyUserEvent(event);
+			try {
+				consumer.notifyUserEvent(event);
+			} catch (RuntimeException ex) {
+				// The session is already established or ended. A failing listener (e.g. one that
+				// records the login and cannot commit) must not leave it half logged in.
+				Logger.error("Failed to announce " + mode + " to user event listener '"
+					+ consumer.getClass().getName() + "'.", ex, SessionService.class);
+			}
 		}
 	}
 

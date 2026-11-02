@@ -130,6 +130,37 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	}
 
 	/**
+	 * {@link ExternalAuthenticationServlet} whose login fails after the session has been
+	 * established for the user, like a login whose tokens cannot be installed.
+	 */
+	public static class FailingLoginServlet extends TestingServlet {
+
+		/**
+		 * The user the external authentication reports.
+		 */
+		static volatile Person _user;
+
+		@Override
+		protected boolean isExtAuthEnabled() {
+			return true;
+		}
+
+		@Override
+		protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request,
+				HttpServletResponse response) {
+			return LoginCredentials.fromUser(_user);
+		}
+
+		@Override
+		public void loginUser(Person person, HttpServletRequest request, HttpServletResponse response)
+				throws InMaintenanceModeException {
+			super.loginUser(person, request, response);
+			throw new IllegalStateException("Installing the tokens failed in this test.");
+		}
+
+	}
+
+	/**
 	 * Stand-in for the page that a login failure is forwarded to.
 	 */
 	public static class LoginRetryServlet extends HttpServlet {
@@ -161,6 +192,8 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 
 	private static final String DENIED_SERVLET = "deniedServlet";
 
+	private static final String FAILING_LOGIN_SERVLET = "failingLoginServlet";
+
 	private ServletUnitClient _client;
 
 	private UserSessionCleanup _userSessions;
@@ -174,6 +207,7 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 		runner.registerServlet(UNKNOWN_ACCOUNT_SERVLET, UnknownAccountServlet.class.getName());
 		runner.registerServlet(DENIED_SERVLET, DeniedServlet.class.getName());
+		runner.registerServlet(FAILING_LOGIN_SERVLET, FailingLoginServlet.class.getName());
 		runner.registerServlet(ApplicationPages.getInstance().getLoginRetrySSOPage(),
 			LoginRetryServlet.class.getName());
 		_client = runner.newClient();
@@ -278,6 +312,33 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		assertNull("A denial without an established identity must not be redirected.",
 			response.getHeaderField("Location"));
 		assertContains(LoginRetryServlet.MARKER, response.getText());
+	}
+
+	/**
+	 * A login that fails after the session has been established for the user ends that session,
+	 * so that no later request reuses a session the login has not completed (Ticket #30110).
+	 */
+	public void testFailedLoginEndsSession() throws Exception {
+		SessionService service = SessionService.getInstance();
+		Person user = createPerson("externalFailedLoginUser");
+		try {
+			FailingLoginServlet._user = user;
+			InvocationContext invocation =
+				_client.newInvocation(new GetMethodWebRequest("http://ignore/" + FAILING_LOGIN_SERVLET));
+			ExternalAuthenticationServlet servlet = (ExternalAuthenticationServlet) invocation.getServlet();
+			ThreadContext.inSystemContext(TestExternalAuthenticationServlet.class, () -> {
+				servlet.doPost(invocation.getRequest(), invocation.getResponse());
+				return null;
+			});
+
+			assertContains(LoginRetryServlet.MARKER, invocation.getServletResponse().getText());
+			for (String sessionId : service.getSessionIDs()) {
+				assertNotEquals("Session of the failed login still registered.", user, service.getUser(sessionId));
+			}
+		} finally {
+			FailingLoginServlet._user = null;
+			deleteIfValid(user);
+		}
 	}
 
 	/**

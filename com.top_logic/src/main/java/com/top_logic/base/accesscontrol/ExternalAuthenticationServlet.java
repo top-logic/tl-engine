@@ -254,8 +254,42 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 				Logger.debug(message, ExternalAuthenticationServlet.class);
 			}
 		}
-		loginUser(credentials.getPerson(), request, response);
+		Person person = credentials.getPerson();
+		try {
+			loginUser(person, request, response);
+		} catch (LoginDeniedException exception) {
+			// Denied before the user was logged in.
+			throw exception;
+		} catch (RuntimeException exception) {
+			abortLogin(person, request);
+			throw exception;
+		}
 		redirectToStartPage(request, response);
+	}
+
+	/**
+	 * Ends the session of the given request, if the failed login of the given user has already
+	 * registered it for that user.
+	 *
+	 * <p>
+	 * Such a session misses what the login would have installed after establishing it (e.g. the
+	 * {@link #userTokens() tokens} of the external authentication). It must not stay logged in,
+	 * since a later request would reuse it (see {@link ExternalAuthentication#getReuseSession()}).
+	 * </p>
+	 */
+	private static void abortLogin(Person person, HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			return;
+		}
+		SessionService sessionService = SessionService.getInstance();
+		String sessionId = session.getId();
+		if (!person.equals(sessionService.getUser(sessionId))) {
+			return;
+		}
+		Logger.warn("Ending the session of user '" + getLoginName(person) + "', whose login failed.",
+			ExternalAuthenticationServlet.class);
+		sessionService.terminateSession(sessionId);
 	}
 
 	/**

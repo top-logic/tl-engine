@@ -1259,17 +1259,42 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	@Override
 	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
-		if (_tableControl == null || _cellDependencies.isEmpty()) {
+		if (_tableControl == null) {
 			return;
 		}
-		Pointer changed = Pointer.create(editedObject(row), part);
 		boolean scheduled = !_staleRows.isEmpty();
+		addDependentRows(row, part);
+		scheduleRebuild(scheduled);
+	}
+
+	/**
+	 * Builds the read-only cells of the changed row again, and those of the rows that were built
+	 * from the changed values, see {@link #rowValueChanged(TLObject, TLStructuredTypePart)}.
+	 */
+	@Override
+	protected void rowChanged(TLObject row, Collection<TLStructuredTypePart> parts) {
+		if (_tableControl == null) {
+			return;
+		}
+		boolean scheduled = !_staleRows.isEmpty();
+		_staleRows.add(row);
+		for (TLStructuredTypePart part : parts) {
+			addDependentRows(row, part);
+		}
+		scheduleRebuild(scheduled);
+	}
+
+	private void addDependentRows(TLObject row, TLStructuredTypePart part) {
+		Pointer changed = Pointer.create(editedObject(row), part);
 		for (Map.Entry<TLObject, Set<Pointer>> entry : _cellDependencies.entrySet()) {
 			TLObject dependent = entry.getKey();
 			if (dependent != row && entry.getValue().contains(changed)) {
 				_staleRows.add(dependent);
 			}
 		}
+	}
+
+	private void scheduleRebuild(boolean scheduled) {
 		if (!scheduled && !_staleRows.isEmpty()) {
 			DeliveryScope.afterInteraction(this::rebuildStaleRows);
 		}

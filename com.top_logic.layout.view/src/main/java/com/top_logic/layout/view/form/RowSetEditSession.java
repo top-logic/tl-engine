@@ -105,9 +105,35 @@ public class RowSetEditSession implements FormParticipant {
 			// No reaction by default.
 		}
 
+		/**
+		 * Called after values of a row were changed without passing its cells: a dialog editing
+		 * the parts of another row wrote its changes into the buffer of a part that is a row of
+		 * this session as well.
+		 *
+		 * <p>
+		 * The field models of the cells of the row already show the new values.
+		 * </p>
+		 *
+		 * @param session
+		 *        The session the row belongs to.
+		 * @param row
+		 *        The row whose values changed.
+		 * @param parts
+		 *        The attributes whose values changed.
+		 */
+		default void onRowChanged(RowSetEditSession session, TLObject row, Collection<TLStructuredTypePart> parts) {
+			// No reaction by default.
+		}
+
 	}
 
 	private final RowSetOwner _owner;
+
+	/**
+	 * Shows the changes a dialog committed into the buffer of a row, see
+	 * {@link #onBufferChanged(TLObject, Collection)}.
+	 */
+	private final EditLevel.Listener _levelListener = this::onBufferChanged;
 
 	private final RowSetBinding _binding;
 
@@ -281,6 +307,7 @@ public class RowSetEditSession implements FormParticipant {
 		end();
 
 		_level = isNested() ? _parentLevel.nested() : new EditLevel();
+		_level.addListener(_levelListener);
 		List<TLObject> rows;
 		if (isNested()) {
 			rows = _binding.readRows(_owner.object());
@@ -416,6 +443,9 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		_rowModels.clear();
 		_originalPersistentObjects = null;
+		if (_level != null) {
+			_level.removeListener(_levelListener);
+		}
 		_level = null;
 
 		// Clear any displayed row-set error (the field model is now gone).
@@ -1054,6 +1084,28 @@ public class RowSetEditSession implements FormParticipant {
 				form.fireValidityChanged();
 			}
 		});
+	}
+
+	/**
+	 * Makes the row whose buffer took the changes of a committed dialog show them: its cells read
+	 * the values again, its constraints are evaluated again, and the {@link Listener}s learn about
+	 * the change.
+	 */
+	private void onBufferChanged(TLObject buffer, Collection<TLStructuredTypePart> parts) {
+		CompositionRowModel rowModel = findRowModel(buffer);
+		if (rowModel == null) {
+			return;
+		}
+		rowModel.refreshColumnModels();
+		FormValidationModel validationModel = _validationModel;
+		if (validationModel != null) {
+			for (TLStructuredTypePart part : parts) {
+				validationModel.onValueChanged(buffer, part);
+			}
+		}
+		for (Listener listener : new ArrayList<>(_listeners)) {
+			listener.onRowChanged(this, buffer, parts);
+		}
 	}
 
 	/**

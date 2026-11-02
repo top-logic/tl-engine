@@ -31,7 +31,11 @@ import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.react.control.form.ReactCompactFieldControl.EditorSession;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.layout.view.form.CompositionCellModel;
+import com.top_logic.layout.view.form.CompositionEditing;
+import com.top_logic.layout.view.form.CompositionRowModel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
@@ -51,6 +55,7 @@ import com.top_logic.table.TableView;
  * Tests that a read-only cell of a row-editing {@link RowSetTableControl} shows another row as it
  * is currently edited: the cell of a step listing its substeps shows the pending name of a substep
  * that is a row of the same table, and is built again when that name is changed through its cell.
+ * An edited step reads its substeps through their row buffers, also in the dialog of its substeps.
  */
 public class TestRowSetTableEditedValues extends AbstractModelAccessTest {
 
@@ -60,6 +65,8 @@ public class TestRowSetTableEditedValues extends AbstractModelAccessTest {
 	private static final String OLD_NAME = "old substep";
 
 	private static final String NEW_NAME = "renamed substep";
+
+	private static final String DIALOG_NAME = "substep renamed in the dialog";
 
 	private ReactContext _reactContext;
 
@@ -123,6 +130,80 @@ public class TestRowSetTableEditedValues extends AbstractModelAccessTest {
 		String stepCell = cellText(view, stepRow, SUBSTEPS);
 		assertTrue(stepCell, stepCell.contains(NEW_NAME));
 		assertFalse(stepCell, stepCell.contains(OLD_NAME));
+	}
+
+	/**
+	 * A container selected after one of its parts was renamed in its own row shows the part as
+	 * edited: its composition cell lists the new name, the dialog of the parts edits the buffer of
+	 * the part row, and OK writes the dialog's change into that buffer, which the row of the part
+	 * shows and the form stores.
+	 */
+	public void testEditedContainerShowsEditedParts() throws ConfigurationException {
+		becomeUser(_root);
+		FormControl form = new FormControl(_reactContext, _project, "no model", NoTokenHandling.INSTANCE);
+		RowSetTableControl table = new RowSetTableControl(new DefaultViewContext(_reactContext), form,
+			new QueryRowSetBinding(() -> List.of(_step, _substep), type(STEP), List.of(), RemoveMode.NONE),
+			List.of(column("<column attribute='" + NAME + "'/>"),
+				column("<column attribute='" + SUBSTEPS + "'/>")),
+			RowEditPolicy.SELECTED);
+		table.init();
+		assertTrue(form.enterEditMode());
+
+		List<TLObject> rows = table.session().currentRows();
+		TLObject stepRow = rows.get(0);
+		TLObject substepRow = rows.get(1);
+		TableView<TLObject> view = table.getTableControl().getView();
+
+		// Rename the substep in its own row.
+		table.getTableControl().selectRow(substepRow);
+		cellText(view, substepRow, NAME);
+		BoundFieldModel nameField =
+			(BoundFieldModel) table.session().findRowModel(substepRow).getColumnModels().values().iterator().next();
+		nameField.setValue(NEW_NAME);
+
+		// Select the step: its composition cell lists the substep as edited.
+		table.getTableControl().selectRow(stepRow);
+		String stepCell = cellText(view, stepRow, SUBSTEPS);
+		assertTrue(stepCell, stepCell.contains(NEW_NAME));
+		assertFalse(stepCell, stepCell.contains(OLD_NAME));
+		CompositionCellModel substeps = compositionCell(table.session().findRowModel(stepRow));
+		assertEquals(List.of(substepRow), substeps.getValue());
+
+		// The dialog of the substeps edits on top of the buffer of the substep row.
+		EditorSession dialog = new CompositionEditing(substeps).open(substeps, true);
+		RowSetTableControl dialogTable = (RowSetTableControl) dialog.createEditor(_reactContext, () -> {
+			// No dialog to close.
+		});
+		TLObject dialogPart = single(dialogTable.session().currentRows());
+		assertEquals(NEW_NAME, dialogPart.tValueByName(NAME));
+		dialogPart.tUpdateByName(NAME, DIALOG_NAME);
+		assertTrue(dialog.apply());
+
+		// OK writes into the buffer of the substep row, which is listed by the step.
+		assertEquals(DIALOG_NAME, substepRow.tValueByName(NAME));
+		assertEquals(List.of(substepRow), stepRow.tValueByName(SUBSTEPS));
+		assertEquals(DIALOG_NAME, nameField.getValue());
+		String substepCell = cellText(view, substepRow, NAME);
+		assertTrue(substepCell, substepCell.contains(DIALOG_NAME));
+		assertEquals("Not saved yet.", OLD_NAME, _substep.tValueByName(NAME));
+
+		form.executeSave();
+		assertEquals(DIALOG_NAME, _substep.tValueByName(NAME));
+		assertEquals(List.of(_substep), _step.tValueByName(SUBSTEPS));
+	}
+
+	private static CompositionCellModel compositionCell(CompositionRowModel row) {
+		for (BoundFieldModel model : row.getColumnModels().values()) {
+			if (model instanceof CompositionCellModel composition) {
+				return composition;
+			}
+		}
+		throw new AssertionError("No composition cell in " + row.getColumnModels());
+	}
+
+	private static <T> T single(List<T> list) {
+		assertEquals(1, list.size());
+		return list.get(0);
 	}
 
 	/**

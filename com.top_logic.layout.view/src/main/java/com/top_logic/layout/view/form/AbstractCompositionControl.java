@@ -80,6 +80,12 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 			rowValueChanged(row, part);
 		}
 
+		@Override
+		public void onRowChanged(RowSetEditSession session, TLObject row,
+				Collection<TLStructuredTypePart> parts) {
+			rowChanged(row, parts);
+		}
+
 	};
 
 	/**
@@ -302,6 +308,21 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 *        The attribute whose value changed.
 	 */
 	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
+		// Hook for subclasses.
+	}
+
+	/**
+	 * Called after values of a row were changed without passing its cells, by a dialog editing the
+	 * parts of another row, so that a presentation can show the row and what depends on it anew.
+	 *
+	 * @param row
+	 *        The row whose values changed.
+	 * @param parts
+	 *        The attributes whose values changed.
+	 *
+	 * @see RowSetEditSession.Listener#onRowChanged(RowSetEditSession, TLObject, Collection)
+	 */
+	protected void rowChanged(TLObject row, Collection<TLStructuredTypePart> parts) {
 		// Hook for subclasses.
 	}
 

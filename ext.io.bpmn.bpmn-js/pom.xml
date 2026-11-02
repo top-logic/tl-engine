@@ -10,7 +10,7 @@
   <artifactId>ext-io-bpmn-bpmn-js</artifactId>
   
 	<name>${project.artifactId}</name>
-	<description>bpmn-js version 3.0.4</description>
+	<description>bpmn-js - BPMN 2.0 rendering toolkit and web modeler</description>
   <url>https://github.com/bpmn-io/bpmn-js/</url>
   
   <licenses>

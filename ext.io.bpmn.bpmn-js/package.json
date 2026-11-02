@@ -1,11 +1,11 @@
 {
   "name": "ext-io-bpmn-bpmn-js",
   "private": true,
-  "description": "Copies the bpmn-js modeler distribution and its BPMN font into the web application.",
+  "description": "Copies the bpmn-js modeler distribution and its BPMN font into the web application and scopes its stylesheets to bpmn-js diagrams.",
   "scripts": {
-    "build": "node -e \"const fs=require('fs');const d='node_modules/bpmn-js/dist/';fs.cpSync(d+'bpmn-modeler.development.js','src/main/webapp/script/bpmn-modeler.js');fs.cpSync(d+'assets/bpmn-font/css/bpmn.css','src/main/webapp/style/bpmn.css');fs.cpSync(d+'assets/bpmn-font/font','src/main/webapp/font',{recursive:true})\""
+    "build": "node -e \"const fs=require('fs');const d='node_modules/bpmn-js/dist/';fs.cpSync(d+'bpmn-modeler.development.js','src/main/webapp/script/bpmn-modeler.js');fs.cpSync(d+'assets/bpmn-font/css/bpmn.css','src/main/webapp/style/bpmn.css');fs.cpSync(d+'assets/bpmn-font/font','src/main/webapp/font',{recursive:true})\" && node ../tools/js/scope-css.mjs --package node_modules/bpmn-js --scope \"(:has(> .bjs-container)) to (:scope > :not(.bjs-container))\" --header resources/diagram-js-header.css --out src/main/webapp/style/bpmn-js/diagram-js.css dist/assets/diagram-js.css dist/assets/bpmn-js.css"
   },
   "dependencies": {
-    "bpmn-js": "3.0.4"
+    "bpmn-js": "^18.31.1"
   }
 }

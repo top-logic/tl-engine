@@ -4,7 +4,7 @@
   "description": "A UML toolkit and web modeler",
   "scripts": {
     "all": "npm run build && npm run open",
-    "build": "rollup -c --bundleConfigAsCjs && node tasks/scope-css.mjs",
+    "build": "rollup -c --bundleConfigAsCjs && node ../../tools/js/scope-css.mjs --package node_modules/diagram-js --scope \"(:has(> .djs-parent):not(.bjs-container)) to (:scope > :not(.djs-parent))\" --header resources/diagram-js-header.css --out ../src/main/webapp/style/umljs/diagram-js.css assets/diagram-js.css",
     "open": "start ./test/test-uml-js.html",
     "pretest": "eslint --ignore-path .gitignore ."
   },

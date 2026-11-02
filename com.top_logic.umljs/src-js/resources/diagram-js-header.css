@@ -1,14 +1,13 @@
 /*
- * assets/diagram-js.css of diagram-js {{ version }}, wrapped in
- * "@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) { ... }".
+ * assets/diagram-js.css of {{ name }} {{ version }}, wrapped in "@scope {{ scope }} { ... }".
  *
- * diagram-js marks the root element of each diagram (canvas container) with .djs-parent, so the
- * rules do not affect other diagram libraries of the application (e.g. bpmn-js 3, which has no
- * .djs-parent). The scope root is the parent of the diagram root, because selectors without
- * :scope match only descendants of the scope root, and the stylesheet has rules for the diagram
- * root itself (.djs-parent, .djs-container). The scope ends at all other children of that parent.
- * The .djs-cursor-* rules are repeated outside the scope, because diagram-js sets these classes
- * on the document body.
+ * diagram-js marks the root element of each diagram (canvas container) with .djs-parent. The scope
+ * root is the parent of the diagram root, because selectors without :scope match only descendants
+ * of the scope root, and the stylesheet has rules for the diagram root itself (.djs-parent,
+ * .djs-container). The scope ends at all other children of that parent. The parent of a bpmn-js
+ * diagram (.bjs-container) is no scope root, because bpmn-js ships the diagram-js stylesheet of its
+ * own diagram-js version (ext.io.bpmn.bpmn-js). The .djs-cursor-* rules are repeated outside the
+ * scope, because diagram-js sets these classes on the document body.
  */
 
 .djs-cursor-grab {

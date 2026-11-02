@@ -81,13 +81,6 @@
         "patch"
       ],
       "enabled": false
-    },
-    {
-      "description": "bpmn-js stays at 3.0.4: the BPE modeler (bpmnControl.js) and the stylesheet style/bpmn-js/diagram-js.css of ext.io.bpmn.bpmn-js, scoped by hand to .bjs-container, are written against exactly this version.",
-      "matchPackageNames": [
-        "bpmn-js"
-      ],
-      "enabled": false
     }
   ]
 }

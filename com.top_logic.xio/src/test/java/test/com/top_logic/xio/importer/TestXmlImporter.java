@@ -404,6 +404,81 @@ public class TestXmlImporter extends TestCase {
 		assertTranslations(Map.of(Locale.ENGLISH, "New step"), n1Children.get(0).tValueByName("text"));
 	}
 
+	public void testUpdateKnown() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter16-UpdateKnown.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter16-UpdateKnown.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test16");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter16-UpdateKnown-de.data.xml").getStream()), container);
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		TLObject i1 = elements.get(0);
+		TLObject i2 = elements.get(1);
+		List<? extends TLObject> i1Children = list(i1.tValueByName("children"));
+		assertEquals(3, i1Children.size());
+		TLObject c1 = i1Children.get(0);
+		TLObject c2 = i1Children.get(1);
+		TLObject c3 = i1Children.get(2);
+		TLObject c11 = single(c1.tValueByName("children"));
+		TLObject s111 = single(c11.tValueByName("children"));
+		TLObject s21 = single(c2.tValueByName("children"));
+		assertEquals("s111", s111.tValueByName("extId"));
+		assertEquals("s21", s21.tValueByName("extId"));
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter16-UpdateKnown-en.data.xml").getStream()), container);
+
+		// Nothing is created.
+		assertEquals(List.of(i1, i2), container.tValueByName("elements"));
+		assertEquals(List.of(c1, c2, c3), i1.tValueByName("children"));
+		assertEquals(List.of(c11), c1.tValueByName("children"));
+		assertEquals(List.of(s111), c11.tValueByName("children"));
+		assertEquals(List.of(s21), c2.tValueByName("children"));
+		assertEquals(List.of(), list(c3.tValueByName("children")));
+		assertEquals(List.of(), list(s111.tValueByName("children")));
+		assertEquals(List.of(), list(s21.tValueByName("children")));
+
+		// The known item and its known descendants at any depth below wrapper elements get the
+		// translation of the language of the import, by handlers shared with their creation.
+		assertTranslations(Map.of(Locale.GERMAN, "Eins", Locale.ENGLISH, "One"), i1.tValueByName("name"));
+		assertTranslations(Map.of(Locale.GERMAN, "Kind eins", Locale.ENGLISH, "Child one"),
+			c1.tValueByName("name"));
+		assertTranslations(Map.of(Locale.GERMAN, "Enkel eins", Locale.ENGLISH, "Grandchild one"),
+			c11.tValueByName("name"));
+
+		// The ID of a descendant is read from the ID attribute of its tag.
+		assertTranslations(Map.of(Locale.GERMAN, "Urenkel eins", Locale.ENGLISH, "Great-grandchild one"),
+			s111.tValueByName("name"));
+
+		// A known descendant of an element with an unknown ID is updated.
+		assertTranslations(Map.of(Locale.GERMAN, "Teil zwei", Locale.ENGLISH, "Part two"), s21.tValueByName("name"));
+
+		// An element whose ID is not given in the ID attribute of its tag, and an element with a
+		// tag without entry, are not updated, even if their ID is known.
+		assertTranslations(Map.of(Locale.GERMAN, "Kind drei"), c3.tValueByName("name"));
+
+		// An object not mentioned in the import is not touched.
+		assertTranslations(Map.of(Locale.GERMAN, "Zwei"), i2.tValueByName("name"));
+		assertTranslations(Map.of(Locale.GERMAN, "Kind zwei"), c2.tValueByName("name"));
+	}
+
+	public void testUpdateKnownMissingIdAttribute() {
+		String errors = assertInvalidImporter("testXmlImporter16-UpdateKnown-missing-id-attribute.importer.xml");
+		assertTrue(errors, errors.contains("id-attribute"));
+	}
+
+	private static TLObject single(Object value) {
+		Collection<?> values = (Collection<?>) value;
+		assertEquals(1, values.size());
+		return (TLObject) values.iterator().next();
+	}
+
 	private TLObject germanItem(TLObject container, TLClass itemType, String extId, String name, String languages) {
 		TLObject result = TransientObjectFactory.INSTANCE.createObject(itemType, null, null, null);
 		result.tUpdateByName("extId", extId);

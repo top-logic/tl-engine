@@ -16,6 +16,7 @@ import java.util.Set;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -182,6 +183,27 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 		Object resultCompiled = executeCompiled(expr, args);
 		assertEquals(resultDirect, resultCompiled);
 		return resultCompiled;
+	}
+
+	/**
+	 * Evaluates the given script like {@link #eval(String, Object...)} and fails if an error was
+	 * logged during the evaluation.
+	 *
+	 * <p>
+	 * Some contract violations of a TL-Script function do not change its result but are only
+	 * logged, e.g. a number returned as {@link Long} instead of {@link Double} (see
+	 * {@link SearchExpression#internalCheckValue(Object)}).
+	 * </p>
+	 */
+	protected Object evalWithoutErrors(String script, Object... args) throws ParseException {
+		AssertNoErrorLogListener log = new AssertNoErrorLogListener(false);
+		try {
+			Object result = eval(script, args);
+			log.assertNoErrorLogged("Evaluating '" + script + "' logged an error.");
+			return result;
+		} finally {
+			log.deactivate();
+		}
 	}
 
 	protected static SearchExpression search(String expr) throws ParseException {

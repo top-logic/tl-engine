@@ -34,6 +34,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -44,7 +45,6 @@ import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DropConfig;
-import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
@@ -54,6 +54,7 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
@@ -70,6 +71,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.SelectionMode;
+import com.top_logic.table.TableId;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
 
@@ -121,6 +124,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 		/** Configuration name for {@link #getCreateType()}. */
 		String CREATE_TYPE = "create-type";
+
+		/** Configuration name for {@link #getCreateTypeExpr()}. */
+		String CREATE_TYPE_EXPR = "create-type-expr";
 
 		/** Configuration name for {@link #getOnRemove()}. */
 		String ON_REMOVE = "on-remove";
@@ -183,14 +189,53 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		RowEditPolicy getRowEdit();
 
 		/**
-		 * The concrete type instantiated when a new row is created in edit mode.
+		 * The type of the rows created in edit mode.
 		 *
 		 * <p>
-		 * When unset, the table offers no row creation.
+		 * A concrete type is instantiated directly. An abstract type stands for its concrete
+		 * specializations: when the user may create several of them, adding a row opens a menu to
+		 * choose the type from. Types the current user may not create are not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * When unset, or when no type remains to be offered (an abstract type without concrete
+		 * specialization), the table offers no row creation.
+		 * </p>
+		 *
+		 * <p>
+		 * Where the type is only known at runtime, {@link #getCreateTypeExpr()} computes it
+		 * instead; a table declares at most one of the two.
 		 * </p>
 		 */
 		@Name(CREATE_TYPE)
 		TLModelPartRef getCreateType();
+
+		/**
+		 * TL-Script expression computing the {@link #getCreateType() create type} from the
+		 * {@link #getInputs() inputs}: a model class, or nothing.
+		 *
+		 * <p>
+		 * The computed type means exactly what the same type configured in
+		 * {@link #getCreateType()} means: a concrete type is instantiated directly, an abstract one
+		 * stands for its concrete specializations the user may create. A result of nothing offers
+		 * no row creation, as an unset {@link #getCreateType()} does.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their {@code as} names, e.g. {@code inputs="selectedType as type"} with
+		 * {@code create-type-expr="$type"}. It is evaluated once, when the table is built, like
+		 * {@link #getTypesExpr()}: to follow a changing type, place the table in a
+		 * {@code <switch rebuild="true">} over the input.
+		 * </p>
+		 *
+		 * <p>
+		 * A table declares at most one of {@link #getCreateType()} and this expression.
+		 * </p>
+		 */
+		@Name(CREATE_TYPE_EXPR)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCreateTypeExpr();
 
 		/**
 		 * What removing a row means when the form is saved.
@@ -257,10 +302,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
 	}
 
-	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
-	private static final String COMMAND_ADD_ROW = "tableAddRow";
-
 	private final QueryExecutor _rowsExecutor;
+
+	/** The compiled {@link Config#getCreateTypeExpr()}, {@code null} without one. */
+	private final QueryExecutor _createTypeExpr;
 
 	/** The compiled {@link Config#getRowClass() row class function}. */
 	private final RowClassFunction _rowClass;
@@ -275,6 +320,11 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_rowsExecutor = InputScript.compile(config, Config.ROWS);
+		_createTypeExpr = InputScript.compile(config, Config.CREATE_TYPE_EXPR);
+		if (_createTypeExpr != null && config.getCreateType() != null) {
+			context.error("A <table> states its create type either as a fixed type ('" + Config.CREATE_TYPE
+				+ "') or by an expression ('" + Config.CREATE_TYPE_EXPR + "'), not both.");
+		}
 		_rowClass = RowClassFunction.compile(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
@@ -296,14 +346,15 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		Object[] inputValues = ChannelInputs.arguments(inputChannels);
 		RowsResult initialRows = executeRows(_rowsExecutor, inputValues);
 		Collection<?> rows = initialRows.rows();
+		RowTypes types = types(inputValues);
 
 		if (_config.getRowEdit() != RowEditPolicy.NONE) {
-			return createEditableControl(context, inputChannels, initialRows);
+			return createEditableControl(context, inputChannels, inputValues, types, initialRows);
 		}
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
 		ReadOnlyTable<ListRowSource<Object>, TableSelectionBinding> table = createTable(context,
-			resolveRowType(rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
+			types, resolveRowType(types, rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
 			initialGrouping(), _drops, rowCssClass, ROW_SELECTION);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
@@ -353,17 +404,22 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	 * Creates the editable variant: rows come from the same query (frozen while an edit session
 	 * runs), cells become editable according to {@link Config#getRowEdit()}, and membership
 	 * changes follow {@link Config#getCreateType()} / {@link Config#getOnRemove()}.
+	 *
+	 * @param inputValues
+	 *        The values of the input channels the table is built with.
+	 * @param types
+	 *        The types of the rows for this build of the table.
 	 */
 	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
-			RowsResult initialRows) {
+			Object[] inputValues, RowTypes types, RowsResult initialRows) {
 		FormModel formModel = context.getFormModel();
 		if (!(formModel instanceof FormControl formControl)) {
 			throw new IllegalStateException(
 				"A <table> with '" + Config.ROW_EDIT + "' requires an enclosing <form>.");
 		}
 
-		TLClass createType = resolveCreateType();
-		TLStructuredType rowType = resolveRowType(initialRows.rows());
+		TLClass createType = createType(inputValues);
+		TLStructuredType rowType = resolveRowType(types, initialRows.rows());
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		// The row function is handed to the binding before the control it reports its diagnostics to
 		// exists, so the target is filled in below.
@@ -371,7 +427,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		QueryRowSetBinding binding = new QueryRowSetBinding(
 			() -> tlObjectRows(refreshRows(rowsExecutor, ChannelInputs.arguments(inputChannels), diagnosticsTarget[0])),
 			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
-			createType == null ? List.of() : List.of(createType),
+			createType == null ? List.of() : List.copyOf(ModelAccessPolicy.concreteTypes(createType)),
 			_config.getOnRemove());
 
 		ChannelRef selectionRef = _config.getSelection();
@@ -379,17 +435,18 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 		ViewCommandModel activation = activationModel(context);
 
-		List<ColumnDeclaration> declarations = columns(rowType);
+		List<ColumnDeclaration> declarations = columns(types, rowType);
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
+		TableId tableId = tableId(types);
 		RowSetTableControl control =
 			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
 		diagnosticsTarget[0] = control;
 		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
-		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
+		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId);
 		control.setNamedFilters(
-			columns -> declaredFilters(columns, declaredNames, ChannelInputs.arguments(inputChannels)),
+			columns -> declaredFilters(tableId, columns, declaredNames, ChannelInputs.arguments(inputChannels)),
 			filterStore(), initialFilter());
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
@@ -409,7 +466,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 
-		contributeAddRowCommand(context, formControl, binding, control);
+		contributeRowCommands(context, formControl, binding, control);
 		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
 			control::getExportRenderers, inputChannels);
 
@@ -417,35 +474,54 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	}
 
 	/**
-	 * Contributes the "add row" command to the enclosing command scope (next to the form's save
-	 * and cancel commands), visible only while the form is in edit mode. The table itself renders
-	 * frameless, so it has no own toolbar to host the command.
+	 * Contributes the commands changing the rows of the table to the enclosing command scope (next
+	 * to the form's save and cancel commands): the {@link RowSetTableControl#getAddRowCommand()
+	 * add-row command}, when the table creates rows, and the
+	 * {@link RowSetTableControl#getRemoveSelectedRowsCommand() removal of the selected rows}, when
+	 * it removes rows and lets the user select several. The table itself renders frameless, so it
+	 * has no own toolbar to host them.
 	 */
-	private static void contributeAddRowCommand(ViewContext context, FormControl formControl,
+	private void contributeRowCommands(ViewContext context, FormControl formControl,
 			RowSetBinding binding, RowSetTableControl control) {
-		if (binding.getCreateTypes().isEmpty()) {
-			return;
-		}
 		CommandScope scope = context.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
+		if (!binding.getCreateTypes().isEmpty()) {
+			contribute(scope, formControl, control.getAddRowCommand());
+		}
+		if (binding.getRemoveMode() != RowSetBinding.RemoveMode.NONE
+			&& _config.getSelectionMode() == SelectionMode.MULTI) {
+			contribute(scope, formControl, control.getRemoveSelectedRowsCommand());
+		}
+	}
 
-		FormCommandModel addCommand = FormCommandModel.editModeCommand(COMMAND_ADD_ROW,
-			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD,
-			com.top_logic.layout.view.form.Icons.COMPOSITION_TABLE_ADD,
-			formControl, ctx -> control.addRow());
-		scope.addCommand(addCommand);
-		formControl.addAttachListener(addCommand::attach);
-		formControl.addDetachListener(addCommand::detach);
-		formControl.addCleanupAction(() -> scope.removeCommand(addCommand));
+	private static void contribute(CommandScope scope, FormControl formControl, CommandModel command) {
+		scope.addCommand(command);
+		formControl.addCleanupAction(() -> scope.removeCommand(command));
 	}
 
 	/**
-	 * The resolved {@link Config#getCreateType() create type}, or {@code null} if none is
-	 * configured.
+	 * The type of the rows created in edit mode for a build of this table: the configured
+	 * {@link Config#getCreateType() create type}, or the result of {@link Config#getCreateTypeExpr()}
+	 * for the given input values.
+	 *
+	 * @param inputValues
+	 *        The values of the {@link Config#getInputs() input channels}, in declaration order;
+	 *        not consulted by a table with a fixed create type.
+	 * @return The create type, {@code null} for a table offering no row creation.
+	 * @throws IllegalStateException
+	 *         If {@link Config#getCreateTypeExpr()} computes something else than a model class.
 	 */
-	private TLClass resolveCreateType() {
+	public TLClass createType(Object[] inputValues) {
+		if (_createTypeExpr != null) {
+			Object result = _createTypeExpr.execute(inputValues);
+			if (result == null || result instanceof TLClass) {
+				return (TLClass) result;
+			}
+			throw new IllegalStateException("The '" + Config.CREATE_TYPE_EXPR
+				+ "' of a <table> must compute a model class, got: " + result);
+		}
 		TLModelPartRef ref = _config.getCreateType();
 		if (ref == null) {
 			return null;

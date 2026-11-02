@@ -7,19 +7,19 @@ package com.top_logic.security.passkey.view;
 
 import java.util.function.BiConsumer;
 
-import jakarta.servlet.http.HttpServletRequest;
-
+import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.webauthn.ReactWebAuthnControl;
 import com.top_logic.layout.react.control.webauthn.WebAuthnCeremony;
 import com.top_logic.layout.react.control.webauthn.WebAuthnListener;
 import com.top_logic.layout.view.ViewMessages;
+import com.top_logic.security.passkey.PasskeyRefusedException;
 import com.top_logic.security.passkey.PasskeyService;
 import com.top_logic.security.passkey.PendingCeremony;
+import com.top_logic.security.passkey.RelyingPartyAddress;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -36,10 +36,20 @@ import com.top_logic.util.error.TopLogicException;
  * attempt. A refused credential and a failure of the browser are {@link #report(ReactContext, ResKey)
  * reported} to the user through the messages of the window ({@link ViewMessages}); a cancelled
  * browser dialog only gives a short hint. A reason why the button cannot be used - a page that
- * cannot run a ceremony, a {@link #withdraw(ResKey) withdrawn} ceremony, or a ceremony that could
- * not be started - is the tooltip of the disabled button. Shortly before the pending
- * ceremony expires, the control asks for a fresh one, which is started without a message, so that
- * a button left alone for a long time still works on the first click.
+ * cannot run a ceremony, a page on an address the relying party does not accept, a
+ * {@link #withdraw(ResKey) withdrawn} ceremony, or a ceremony that could not be started - is the
+ * tooltip of the disabled button. Shortly before the pending ceremony expires, the control asks for
+ * a fresh one, which is started without a message, so that a button left alone for a long time
+ * still works on the first click.
+ * </p>
+ *
+ * <p>
+ * The {@link #onPageOrigin(ReactContext, String) origin of the page} is checked against the
+ * origins of the relying party: on a page the relying party does not accept, a credential would be
+ * refused - for a registration only after the authenticator has stored the key - so no ceremony is
+ * offered there. The browser is told to forget a credential the relying party does not know (see
+ * {@link PasskeyRefusedException#isCredentialUnknown()}), with
+ * {@link ReactWebAuthnControl#signalUnknownCredential(String, String)}.
  * </p>
  *
  * @param <P>
@@ -84,6 +94,12 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 
 	/** Why the page cannot run a ceremony at all, <code>null</code> if it can. */
 	private ResKey _unavailable;
+
+	/**
+	 * Why no ceremony is offered on the address of the page, <code>null</code> if the relying party
+	 * accepts its origin (or it is not reported yet).
+	 */
+	private ResKey _wrongAddress;
 
 	/** Why no ceremony is {@link #withdraw(ResKey) offered}, <code>null</code> for no reason. */
 	private ResKey _withdrawal;
@@ -175,6 +191,10 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 		P pending = _pending;
 		_pending = null;
 		if (pending == null) {
+			if (kind() == WebAuthnCeremony.CREATE) {
+				// The authenticator has stored a key no registration will keep.
+				signalUnknownCredential(PasskeyService.credentialIdOfRegistration(credentialJson));
+			}
 			fail(context, com.top_logic.security.passkey.I18NConstants.ERROR_REQUEST_EXPIRED);
 			return;
 		}
@@ -182,10 +202,18 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 		R result;
 		try {
 			result = finish(pending, credentialJson);
+		} catch (PasskeyRefusedException ex) {
+			if (ex.isCredentialUnknown()) {
+				signalUnknownCredential(ex.getCredentialId());
+			}
+			fail(context, ex.getErrorKey());
+			return;
 		} catch (TopLogicException ex) {
 			fail(context, ex.getErrorKey());
 			return;
 		}
+
+		succeeded(result);
 
 		// Ready for a further ceremony before the outcome is handed on, since the success handler may
 		// discard the display this control belongs to (e.g. a completed login rebuilds the window).
@@ -222,6 +250,34 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	public void onUnavailable(ReactContext context, String errorName, String message) {
 		Logger.info("Passkeys are not available on this page: " + errorName + " " + message, PasskeyCeremony.class);
 		_unavailable = hint(errorName, message);
+		updateTooltip();
+	}
+
+	/**
+	 * Offers no ceremony on a page whose origin the relying party does not accept, and explains
+	 * why in the tooltip of the disabled button.
+	 *
+	 * <p>
+	 * Options given before the report are withdrawn. The reason stays for every later
+	 * {@link #offer(Person) offer}. If passkeys are not set up at all, the failed start explains
+	 * the button instead.
+	 * </p>
+	 */
+	@Override
+	public void onPageOrigin(ReactContext context, String origin) {
+		RelyingPartyAddress address = service().getAddress();
+		if (address == null || address.accepts(origin)) {
+			return;
+		}
+		Logger.warn("Passkeys are not offered on the page with the origin '" + origin
+			+ "': the relying party (ID '" + address.getRpId() + "') accepts only the origins "
+			+ address.getOrigins() + ". Set the public address of the application with the variable '"
+			+ PasskeyService.HOST_VARIABLE + "' (alias " + AliasManager.HOST + ") or the option '"
+			+ PasskeyService.Config.ORIGINS + "' of " + PasskeyService.class.getName() + ".", PasskeyCeremony.class);
+		String accepted = String.join(", ", address.getOrigins());
+		_wrongAddress = I18NConstants.ERROR_ADDRESS_NOT_SET_UP__ORIGIN_ACCEPTED.fill(origin, accepted);
+		_pending = null;
+		_control.setOptions(null);
 		updateTooltip();
 	}
 
@@ -306,7 +362,8 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 
 	/**
 	 * Starts a fresh ceremony for the {@link #offer(Person) offered} account and gives its options to
-	 * the control; without an offer, or if the start fails, the control offers none.
+	 * the control; without an offer, on a page the relying party does not accept, or if the start
+	 * fails, the control offers none.
 	 *
 	 * @param context
 	 *        The context of the command the ceremony is restarted for, to report a failed start in;
@@ -315,7 +372,7 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	private void restart(ReactContext context) {
 		_pending = null;
 		_startFailure = null;
-		if (!_offered) {
+		if (!_offered || _wrongAddress != null) {
 			_control.setOptions(null);
 			updateTooltip();
 			return;
@@ -338,8 +395,40 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	 * Shows the most fundamental reason why the button cannot be used as its tooltip.
 	 */
 	private void updateTooltip() {
-		ResKey reason = _unavailable != null ? _unavailable : _withdrawal != null ? _withdrawal : _startFailure;
+		ResKey reason = _unavailable != null ? _unavailable
+			: _wrongAddress != null ? _wrongAddress
+			: _withdrawal != null ? _withdrawal
+			: _startFailure;
 		_control.setTooltip(reason == null ? null : text(reason));
+	}
+
+	/**
+	 * Tells the browser to forget a credential the relying party does not know.
+	 *
+	 * @param credentialId
+	 *        The base64url-encoded credential ID; <code>null</code> does nothing.
+	 */
+	protected void signalUnknownCredential(String credentialId) {
+		String rpId = service().getRpId();
+		if (credentialId == null || rpId == null) {
+			return;
+		}
+		_control.signalUnknownCredential(rpId, credentialId);
+	}
+
+	/**
+	 * Called after a successful ceremony, before the success handler runs, which may discard the
+	 * display of the control.
+	 *
+	 * <p>
+	 * Does nothing by default.
+	 * </p>
+	 *
+	 * @param result
+	 *        The outcome of the ceremony.
+	 */
+	protected void succeeded(R result) {
+		// No further action.
 	}
 
 	/**
@@ -367,17 +456,6 @@ public abstract class PasskeyCeremony<P extends PendingCeremony, R> implements W
 	 *         If the credential is refused.
 	 */
 	protected abstract R finish(P pending, String credentialJson);
-
-	/**
-	 * The request to derive the relying party from, if it is not configured; <code>null</code> if
-	 * there is none.
-	 */
-	protected HttpServletRequest request() {
-		if (!DefaultDisplayContext.hasDisplayContext()) {
-			return null;
-		}
-		return DefaultDisplayContext.getDisplayContext().asRequest();
-	}
 
 	/**
 	 * The {@link PasskeyService} running the ceremonies.

@@ -31,6 +31,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -1464,7 +1465,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *         If the acting account does not administer the application, or the LLM providers are not
 	 *         running.
 	 */
-	public static int modelHealthReset(String model) {
+	public static Double modelHealthReset(String model) {
 		Person actor = TLContext.currentUser();
 		if (actor == null || !actor.isAdmin()) {
 			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_NOT_ADMIN);
@@ -1474,9 +1475,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		ModelAvailability health = LLMProviderService.getInstance().modelHealth();
 		if (model == null || model.isBlank()) {
-			return health.resetAll();
+			return SearchExpression.toNumber(health.resetAll());
 		}
-		return health.reset(model) ? 1 : 0;
+		return SearchExpression.toNumber(health.reset(model) ? 1 : 0);
 	}
 
 	/**

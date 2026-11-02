@@ -41,9 +41,10 @@ public class TestBinaryFunctions extends AbstractSearchExpressionTest {
 	}
 
 	public void testSize() throws Exception {
-		Object result = eval("binarySize(base64Decode('SGVsbG8=', name: 'greeting.txt', contentType: 'text/plain'))");
+		Object result =
+			evalWithoutErrors("binarySize(base64Decode('SGVsbG8=', name: 'greeting.txt', contentType: 'text/plain'))");
 
-		// TL-Script normalizes all numbers to floating point values.
+		// TL-Script represents all numbers as floating point values.
 		assertEquals(Double.valueOf(5), result);
 	}
 

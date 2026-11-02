@@ -14,20 +14,25 @@ import junit.framework.Test;
 import test.com.top_logic.element.meta.TestWithModelExtension;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.ChangeSetReverter;
 import com.top_logic.element.changelog.I18NConstants;
+import com.top_logic.element.changelog.SubtreeFilter;
+import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests for {@link ChangeSetReverter}.
@@ -277,6 +282,232 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("Sibling subtree must be untouched.", "other-2", other.tValueByName("name"));
 	}
 
+	/**
+	 * {@link ChangeSetReverter#revert(KnowledgeBase, ChangeSet, boolean)} undoes the change of a
+	 * commit.
+	 */
+	public void testRevertCommit() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSet change = changeAt(root, rename);
+		assertSame(change, ChangeSetReverter.revertTarget(change));
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, change, false);
+		assertEquals(List.of(), problems);
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting the {@link ChangeSetReverter#revertTarget(ChangeSet) revert target} of an already
+	 * reverted commit re-applies its change.
+	 */
+	public void testRevertRevertedCommitRedoes() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.revert(_kb, ChangeSetReverter.revertTarget(changeAt(root, rename)), false);
+		assertEquals("child", child.tValueByName("name"));
+
+		ChangeSet reverted = changeAt(root, rename);
+		assertNotNull("Commit must be marked as reverted.", reverted.getRevertedBy());
+		ChangeSet target = ChangeSetReverter.revertTarget(reverted);
+		assertTrue("Target must be the revert.", target.isRevert());
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, target, false);
+		assertEquals(List.of(), problems);
+		assertEquals("child-1", child.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting a commit whose attribute was modified by a later commit reports a conflict: without
+	 * force nothing is committed, with force the revert is applied.
+	 */
+	public void testRevertConflict() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision first = rename(child, "child-1");
+		rename(child, "child-2");
+
+		ChangeSet change = changeAt(root, first);
+		Revision before = currentRevision();
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, change, false);
+		assertFalse("Conflict must be reported.", problems.isEmpty());
+		assertEquals("Nothing must be committed without force.", before.getCommitNumber(),
+			currentRevision().getCommitNumber());
+		assertEquals("child-2", child.tValueByName("name"));
+
+		List<ResKey> forcedProblems = ChangeSetReverter.revert(_kb, change, true);
+		assertFalse("Conflict is reported also when forced.", forcedProblems.isEmpty());
+		assertTrue("Forced revert must be committed.",
+			currentRevision().getCommitNumber() > before.getCommitNumber());
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
+	 * The change log links an undo as {@link ChangeSet#getRevertedBy()} of the undone commit and a
+	 * redo as {@link ChangeSet#getRevertedBy()} of the undo; the undone commit, the undo and the
+	 * redo are all listed.
+	 */
+	public void testChangeLogLinksRedoToUndo() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		ChangeSetReverter.redoLast(root, 0, true);
+		assertEquals("child-1", child.tValueByName("name"));
+
+		Collection<ChangeSet> log = readLog(root);
+		ChangeSet original = changeAt(root, rename);
+		ChangeSet undo = original.getRevertedBy();
+		assertNotNull("Undone commit must be linked to its undo.", undo);
+		assertTrue(undo.isRevert());
+		ChangeSet redo = undo.getRevertedBy();
+		assertNotNull("Undo must be linked to its redo.", redo);
+		assertTrue(redo.isRedo());
+		assertNull(redo.getRevertedBy());
+
+		assertTrue("Undone commit must be listed.", containsRevision(log, original));
+		assertTrue("Undo must be listed.", containsRevision(log, undo));
+		assertTrue("Redo must be listed.", containsRevision(log, redo));
+	}
+
+	/**
+	 * An undone commit stays listed with its own message next to its undo, marked as reverted by
+	 * its link {@link ChangeSet#getRevertedBy()} to the undo.
+	 */
+	public void testChangeLogListsUndoneCommit() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("child", child.tValueByName("name"));
+
+		Collection<ChangeSet> log = readLog(root);
+		ChangeSet original = findRevision(log, rename);
+		assertInEffectMessage(original);
+		ChangeSet undo = original.getRevertedBy();
+		assertNotNull("Undone commit must be marked as reverted.", undo);
+		assertTrue("Undo must be listed.", containsRevision(log, undo));
+		assertTrue("Undo keeps its message.", undo.isRevert());
+		assertEquals(rename.getCommitNumber(), undo.origRevision());
+		assertNull("Undo in effect is not reverted.", undo.getRevertedBy());
+		assertTrue(ChangeSetReverter.isUndone(original));
+		assertFalse("Undo in effect is not undone itself.", ChangeSetReverter.isUndone(undo));
+
+		// Undoing the listed undo re-applies the original change.
+		assertEquals(List.of(), ChangeSetReverter.revert(_kb, ChangeSetReverter.revertTarget(undo), false));
+		assertEquals("child-1", child.tValueByName("name"));
+		ChangeSet redone = changeAt(root, rename);
+		assertFalse(ChangeSetReverter.isUndone(redone));
+		assertTrue("Redone undo is undone itself.", ChangeSetReverter.isUndone(redone.getRevertedBy()));
+	}
+
+	/**
+	 * {@link ChangeSetReverter#revertTarget(ChangeSet)} of a redone commit is its redo: toggling
+	 * the commit undoes it again instead of reverting its undo a second time.
+	 */
+	public void testRevertRedoneCommitUndoesAgain() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		ChangeSetReverter.redoLast(root, 0, true);
+
+		ChangeSet target = ChangeSetReverter.revertTarget(changeAt(root, rename));
+		assertTrue("Target must be the redo.", target.isRedo());
+
+		List<ResKey> problems = ChangeSetReverter.revert(_kb, target, false);
+		assertEquals(List.of(), problems);
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
+	 * {@link ChangeSetReverter#isUndone(ChangeSet)} follows the chain undo, redo, undo, redo of a
+	 * commit read from the change log.
+	 */
+	public void testIsUndoneOverChain() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		Revision rename = rename(child, "child-1");
+
+		assertFalse(ChangeSetReverter.isUndone(changeAt(root, rename)));
+		assertFalse(ChangeSetReverter.isUndone(null));
+		assertInEffectMessage(changeAt(root, rename));
+
+		toggle(root, rename);
+		assertEquals("child", child.tValueByName("name"));
+		ChangeSet undone = changeAt(root, rename);
+		assertTrue("Undone.", ChangeSetReverter.isUndone(undone));
+		assertInEffectMessage(undone);
+
+		toggle(root, rename);
+		assertEquals("child-1", child.tValueByName("name"));
+		ChangeSet redone = changeAt(root, rename);
+		assertFalse("Redone.", ChangeSetReverter.isUndone(redone));
+		assertInEffectMessage(redone);
+		assertTrue("Redo in effect keeps its message.", redone.getRevertedBy().getRevertedBy().isRedo());
+
+		toggle(root, rename);
+		assertEquals("child", child.tValueByName("name"));
+		ChangeSet undoneAgain = changeAt(root, rename);
+		assertTrue("Undone again.", ChangeSetReverter.isUndone(undoneAgain));
+		assertInEffectMessage(undoneAgain);
+		ChangeSet undoneRedo = undoneAgain.getRevertedBy().getRevertedBy();
+		assertTrue("Undone redo is undone.", ChangeSetReverter.isUndone(undoneRedo));
+		assertTrue("Undone redo keeps its message.", undoneRedo.isRedo());
+
+		toggle(root, rename);
+		assertEquals("child-1", child.tValueByName("name"));
+		ChangeSet redoneAgain = changeAt(root, rename);
+		assertFalse("Redone again.", ChangeSetReverter.isUndone(redoneAgain));
+		assertInEffectMessage(redoneAgain);
+		ChangeSet firstRedo = redoneAgain.getRevertedBy().getRevertedBy();
+		assertFalse("Redone redo is in effect.", ChangeSetReverter.isUndone(firstRedo));
+		assertTrue("Redo in effect keeps its message.", firstRedo.isRedo());
+	}
+
+	private static void assertInEffectMessage(ChangeSet cs) {
+		assertEquals("Listed change must keep its message.",
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE.getKey(), cs.getMessage().getKey());
+	}
+
+	private void toggle(TLObject root, Revision revision) {
+		ChangeSet target = ChangeSetReverter.revertTarget(changeAt(root, revision));
+		assertEquals(List.of(), ChangeSetReverter.revert(_kb, target, false));
+	}
+
+	private Collection<ChangeSet> readLog(TLObject root) {
+		ChangeLogBuilder builder = new ChangeLogBuilder(_kb, ModelService.getApplicationModel());
+		builder.setFilter(new SubtreeFilter(root, true));
+		return builder.build();
+	}
+
+	private static boolean containsRevision(Collection<ChangeSet> log, ChangeSet cs) {
+		long rev = cs.getRevision().getCommitNumber();
+		return log.stream().anyMatch(x -> x.getRevision().getCommitNumber() == rev);
+	}
+
+	private ChangeSet changeAt(TLObject root, Revision revision) {
+		return findRevision(readLog(root), revision);
+	}
+
+	private static ChangeSet findRevision(Collection<ChangeSet> log, Revision revision) {
+		for (ChangeSet cs : log) {
+			if (cs.getRevision().getCommitNumber() == revision.getCommitNumber()) {
+				return cs;
+			}
+		}
+		fail("No change set for revision " + revision + ".");
+		return null;
+	}
+
 	private TLObject createNode(TLObject parent, String name) {
 		try (Transaction tx = beginTX()) {
 			TLObject node = _factory.createObject(_nodeType, parent);
@@ -291,10 +522,11 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		}
 	}
 
-	private void rename(TLObject node, String newName) {
+	private Revision rename(TLObject node, String newName) {
 		try (Transaction tx = beginTX()) {
 			node.tUpdateByName("name", newName);
 			tx.commit();
+			return tx.getCommitRevision();
 		}
 	}
 

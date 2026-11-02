@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Overlay</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { display: block; width: 20rem; height: 12rem; background: var(--tl-surface-layer-nested); }
+  .badge { padding: var(--tl-space-2xs) var(--tl-space-xs); background: var(--tl-surface-overlay); border-radius: var(--tl-radius-sm); }
+  /* Der Behälter, den tl-overlay--fill füllt; im Control gibt ihn das Layout (useFill). */
+  .frame { width: 28rem; height: 16rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Overlay</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Basis mit vier Ebenen</p>
+    <div class="tl-overlay">
+      <div class="tl-overlay__base"><span class="stage"></span></div>
+      <div class="tl-overlay__layer tl-overlay__layer--top-right"><span class="badge tl-type-label">oben rechts</span></div>
+      <div class="tl-overlay__layer tl-overlay__layer--bottom-left"><span class="badge tl-type-label">unten links</span></div>
+      <div class="tl-overlay__layer tl-overlay__layer--center"><button type="button" class="tl-button tl-button--secondary">Mitte, klickbar</button></div>
+      <div class="tl-overlay__layer tl-overlay__layer--bottom"><span class="badge tl-type-label">unten</span></div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Dokument mit Knopf (TLHtml): tl-overlay--fill, Knopf in tl-overlay__action</p>
+    <div class="frame">
+      <div class="tl-overlay tl-overlay--fill">
+        <div class="tl-overlay__base">
+          <div class="tl-media tl-media--document">
+            <iframe class="tl-media__frame" title="Beispieldokument" srcdoc="&lt;h1&gt;Bericht&lt;/h1&gt;&lt;p&gt;Das Papier ist in beiden Modi weiß; der Knopf trägt seine eigene Fläche.&lt;/p&gt;"></iframe>
+          </div>
+        </div>
+        <div class="tl-overlay__layer tl-overlay__layer--top-right">
+          <div class="tl-overlay__action">
+            <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Drucken" data-tooltip="text:Drucken"><i class="tl-icon-md bi bi-printer tl-button__icon" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

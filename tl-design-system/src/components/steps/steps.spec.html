@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Steps</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Steps</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Waagrecht (Wizard): erledigt, aktuell, offen — ruhig</p>
+    <ol class="tl-steps" aria-label="Schritte">
+      <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">1</span><button type="button" class="tl-button tl-button--link"><span class="tl-button__label">Willkommen</span></button></li>
+      <li class="tl-steps__item" aria-current="step"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">2</span><span class="tl-steps__name tl-type-body-strong">Profil</span></li>
+      <li class="tl-steps__item"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">3</span><span class="tl-steps__name tl-type-body">Fragen</span></li>
+      <li class="tl-steps__item"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">4</span><span class="tl-steps__name tl-type-body">Zusammenfassung</span></li>
+    </ol>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Senkrecht (JobStatus): erledigt, aktuell (pulsiert), offen</p>
+    <ol class="tl-steps tl-steps--vertical" aria-label="Schritte">
+      <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">1</span><span class="tl-steps__name tl-type-body">Daten lesen</span></li>
+      <li class="tl-steps__item" aria-current="step"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">2</span><span class="tl-steps__name tl-type-body-strong">Prüfen</span></li>
+      <li class="tl-steps__item"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">3</span><span class="tl-steps__name tl-type-body">Bericht schreiben</span></li>
+    </ol>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

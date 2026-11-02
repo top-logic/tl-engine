@@ -1,0 +1,47 @@
+/* Gemeinsames Gerüst der Komponenten-Specimen (src/components/<name>/<name>.spec.html). Kein Teil des Pakets:
+   es ordnet nur die Seiten und liest dafür dieselben Tokens wie die Komponenten. Was nur eine Seite braucht,
+   steht in deren eigenem <style>-Block; was eine gemeinsame Regel abwandelt, steht hier als Modifier. */
+
+.specimen { display: grid; gap: var(--tl-space-lg); padding: var(--tl-space-xl); max-width: 64rem; margin: 0 auto; }
+.specimen__bar { display: flex; gap: var(--tl-space-sm); align-items: center; }
+
+/* Die drei Flächen, auf die das Skript jeder Seite die Zeilen setzt. */
+.specimen__panel { background: var(--tl-surface-layer); border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md); padding: var(--tl-space-md); display: grid; gap: var(--tl-space-sm); }
+.specimen__base { padding: var(--tl-space-md); display: grid; gap: var(--tl-space-sm); }
+.specimen__overlay { background: var(--tl-surface-overlay); box-shadow: var(--tl-shadow-popover);
+  border-radius: var(--tl-radius-md); padding: var(--tl-space-md); display: grid; gap: var(--tl-space-sm); }
+/* Lockerer: mehr Luft zwischen den Blöcken einer Fläche (Formular). */
+.specimen--loose .specimen__panel,
+.specimen--loose .specimen__base,
+.specimen--loose .specimen__overlay { gap: var(--tl-space-md); }
+
+/* Eine Zeile: Beschriftung links, Muster rechts. Die Spaltenbreiten stehen in zwei Variablen, damit die
+   Modifier Beschriftung und Muster unabhängig voneinander ändern. */
+.specimen__row { --specimen-label: 12rem; --specimen-content: minmax(0, 32rem);
+  display: grid; grid-template-columns: var(--specimen-label) var(--specimen-content); gap: var(--tl-space-sm); align-items: center; }
+.specimen__row > .tl-type-label:first-child { color: var(--tl-text-secondary); }
+/* Muster über die ganze Restbreite (Auswahl, Progress). */
+.specimen__row--wide { --specimen-content: minmax(0, 1fr); }
+/* Schmales Muster (Feld, Select). */
+.specimen__row--narrow { --specimen-content: minmax(0, 24rem); }
+/* Schmale Beschriftung (Feld, Progress). */
+.specimen__row--label-sm { --specimen-label: 9rem; }
+/* Oben ausgerichtet, für Muster, die höher sind als ihre Beschriftung (Menü, Reiter, Select …). */
+.specimen__row--top { align-items: start; }
+/* Die Beschriftung steht auf der Schriftlinie eines Controls daneben (Select). */
+.specimen__row--label-control > .tl-type-label:first-child { padding-top: var(--tl-space-control-y); }
+/* Fließend statt Spalten: viele Muster nebeneinander, umbrechend (Button, Pill, Avatar, Icon, Formular). */
+.specimen__row--flow { display: flex; flex-wrap: wrap; }
+.specimen__row--flow > .tl-type-label:first-child { min-width: 9rem; }
+
+/* Muster untereinander. */
+.specimen__stack { display: grid; gap: var(--tl-space-sm); }
+/* Enger (Skeleton). */
+.specimen__stack--snug { gap: var(--tl-space-xs); }
+/* Am engsten, und darf schmaler werden als sein Inhalt (Select). */
+.specimen__stack--tight { gap: var(--tl-space-2xs); min-width: 0; }
+/* Nebeneinander statt untereinander (Avatar im Kommentarkopf). */
+.specimen__stack--inline { display: flex; gap: var(--tl-space-xs); align-items: center; }
+
+.specimen__toolbar { display: flex; align-items: center; gap: var(--tl-space-sm); min-height: var(--tl-size-control); }

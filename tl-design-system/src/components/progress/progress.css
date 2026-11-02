@@ -1,0 +1,83 @@
+/* Progress — docs/skalen.md „Progress: ein Anteil, kein Urteil“.
+   Ein Anteil zwischen 0 und 1 als Balken, daneben optional eine Beschriftung. Die Spur ist die
+   vertiefte Fläche, die Füllung die Marke; eine Tönung gibt es nicht — ob etwas scheiterte, sagt
+   der Text. Die Breite der Füllung ist Daten, kein Gestaltungswert: das Control setzt sie als Anteil
+   in Prozent, das Stylesheet kennt keine Breite. Unbestimmt ist ein Zustand (aria-busy), keine Klasse:
+   die Füllung wandert über die Spur
+   und ruht ohne Bewegung in ihrer Mitte — der globale Reduced-Motion-Schalter beendet die Animation
+   nach einem Durchlauf, und der Fill-Mode lässt sie auf die Ruhelage zurückfallen. */
+
+.tl-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+}
+.tl-progress[hidden] { display: none; }
+
+.tl-progress__track {
+  flex: 1 1 auto;
+  min-width: var(--tl-size-control);
+  height: var(--tl-size-progress);
+  overflow: hidden;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: width var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+.tl-progress__label {
+  flex: 0 0 auto;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+/* --- Unbestimmt -------------------------------------------------------------- */
+
+/* Anteile der Spur, keine Maße: die Füllung ist zwei Fünftel breit und ruht bei drei Vierteln. */
+.tl-progress[aria-busy="true"] .tl-progress__fill {
+  width: calc(0.4 * 100%);
+  transform: translateX(calc(0.75 * 100%));
+  transition: none;
+  animation: tl-progress-sweep var(--tl-duration-loop) var(--tl-easing-standard) infinite;
+}
+
+@keyframes tl-progress-sweep {
+  from { transform: translateX(calc(-1 * 100%)); }
+  to { transform: translateX(calc(2.5 * 100%)); }
+}
+
+/* --- Spinner (Part Spinner, #29787) ----------------------------------------- */
+
+/* Ein Ring auf der Spur des Balkens, darauf ein Bogen in der Marke, der sich dreht: beschäftigt, ohne Anteil.
+   Klein (--sm) steht er statt eines kleinen Icons und dreht seinen Bogen in der Textfarbe. Dauer und Kurve sind
+   die Bewegungstokens der Schleife; der globale Reduced-Motion-Schalter hält ihn an. */
+.tl-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-md) solid var(--tl-surface-interactive-selected);
+  border-top-color: var(--tl-surface-brand);
+  border-radius: var(--tl-radius-full);
+  animation: tl-spinner-turn var(--tl-duration-loop) var(--tl-easing-linear) infinite;
+}
+
+.tl-spinner[hidden] { display: none; }
+
+.tl-spinner--sm {
+  width: var(--tl-size-icon-sm);
+  height: var(--tl-size-icon-sm);
+  border-top-color: currentColor;
+}
+
+@keyframes tl-spinner-turn {
+  to { rotate: 360deg; }
+}

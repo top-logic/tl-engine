@@ -567,7 +567,7 @@ public class TestTableElement extends TestCase {
 		TableElement element = (TableElement) context.getInstance(readTableConfig());
 		context.checkErrors();
 
-		assertEquals("key:test-table", element.tableId().value());
+		assertEquals("key:test-table", element.tableId(element.types(new Object[0])).value());
 	}
 
 	/**
@@ -585,7 +585,7 @@ public class TestTableElement extends TestCase {
 		context.checkErrors();
 
 		assertEquals("demo.test:Row,|name,active,owner,total,owner.contact.name,owner.contact.mail,"
-			+ "accounts.number,", element.tableId().value());
+			+ "accounts.number,", element.tableId(element.types(new Object[0])).value());
 	}
 
 	/**

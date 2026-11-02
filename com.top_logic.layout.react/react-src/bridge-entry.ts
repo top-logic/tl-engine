@@ -75,6 +75,7 @@ export type {
   SpinnerSize,
   ListboxPartProps,
   ListboxEntry,
+  CopyButtonPartProps,
 } from './bridge/parts';
 export {
   useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
@@ -158,6 +159,8 @@ export type {
   FloatingActionStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
+export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';
+export type { CopyToClipboard, CopyOutcome } from './bridge/clipboard';
 export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
@@ -213,13 +216,16 @@ export const flushSync = ReactDOM.flushSync;
 export { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 
 // Expose bridge functions on window so that server-generated inline scripts
-// (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code
+// (e.g. TLReact.mount(...) from ReactControl), FunctionCall events of the server
+// (e.g. TLReact.webAuthnSignal(...) from ReactWebAuthnControl) and GWT-compiled code
 // (e.g. ReactBridge.subscribe()) can call them.
 import { mount, mountField, discoverAndMount } from './bridge/tl-react-bridge';
 import { subscribe as sseSubscribe, unsubscribe as sseUnsubscribe } from './bridge/sse-client';
 import { scrollToAnchor } from './bridge/scroll';
+import { webAuthnSignal } from './bridge/webauthn-signals';
 (window as any).TLReact = {
   mount, mountField, discoverAndMount, subscribe: sseSubscribe, unsubscribe: sseUnsubscribe, scrollToAnchor,
+  webAuthnSignal,
 };
 
 // Initialize window self-close notification for multi-window support.

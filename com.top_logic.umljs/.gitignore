@@ -7,3 +7,6 @@
 /src/main/webapp/style/_*.css
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~
+/src-js/node_modules
+/src/main/webapp/script/umljs/
+/src/main/webapp/style/umljs/diagram-js.css

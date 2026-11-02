@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Button</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Button</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Erscheinung in Ruhe, mit Icon, icon-only, gedrückt, beschäftigt, deaktiviert. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">%NAME%</span>
+      <button type="button" class="tl-button %MOD% tl-type-body"><span class="tl-button__label">Speichern</span></button>
+      <button type="button" class="tl-button %MOD% tl-type-body"><i class="ri-save-line tl-icon-sm tl-button__icon" aria-hidden="true"></i><span class="tl-button__label">Speichern</span></button>
+      <button type="button" class="tl-button %MOD% tl-type-body" aria-label="Speichern"><i class="ri-save-line tl-icon-md tl-button__icon" aria-hidden="true"></i></button>
+      <button type="button" class="tl-button %MOD% tl-type-body" aria-pressed="true"><span class="tl-button__label">Gedrückt</span></button>
+      <button type="button" class="tl-button %MOD% tl-type-body" aria-busy="true"><i class="ri-upload-line tl-icon-sm tl-button__icon" aria-hidden="true"></i><span class="tl-button__label">Beschäftigt</span></button>
+      <button type="button" class="tl-button %MOD% tl-type-body" disabled><span class="tl-button__label">Deaktiviert</span></button>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Icon-Schaltfläche klein (Tabellenzeile)</p>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">ghost sm</span>
+      <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-type-body" aria-label="Bearbeiten"><i class="ri-pencil-line tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+      <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--danger tl-type-body" aria-label="Löschen"><i class="ri-delete-bin-line tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+      <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-type-body" aria-label="Bearbeiten" disabled><i class="ri-pencil-line tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Gedrückt in danger (Recorder nimmt auf): gefüllt rot</p>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">bereit</span>
+      <button type="button" class="tl-button tl-button--secondary tl-button--danger tl-button--icon tl-type-body" aria-label="Aufnehmen" data-tooltip="text:Aufnehmen"><i class="ri-record-circle-line tl-icon-md tl-button__icon" aria-hidden="true"></i></button>
+      <span class="tl-type-label">gedrückt</span>
+      <button type="button" class="tl-button tl-button--secondary tl-button--danger tl-button--icon tl-type-body" aria-pressed="true" aria-label="Aufnehmen" data-tooltip="text:Stoppen"><i class="ri-stop-fill tl-icon-md tl-button__icon" aria-hidden="true"></i></button>
+    </div>
+  </section>
+</main>
+<script>
+  const VARIANTEN = [
+    ['primary', 'tl-button--primary'], ['secondary', 'tl-button--secondary'], ['ghost', 'tl-button--ghost'], ['link', 'tl-button--link'],
+    ['danger primary', 'tl-button--primary tl-button--danger'], ['danger secondary', 'tl-button--secondary tl-button--danger'], ['danger ghost', 'tl-button--ghost tl-button--danger'],
+  ];
+  const tpl = document.getElementById('rows').innerHTML;
+  for (const id of ['on-layer', 'on-base']) {
+    const host = document.getElementById(id);
+    for (const [name, mod] of VARIANTEN) host.insertAdjacentHTML('beforeend', tpl.replaceAll('%NAME%', name).replaceAll('%MOD%', mod));
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

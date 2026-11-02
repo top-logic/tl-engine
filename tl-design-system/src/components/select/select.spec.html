@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Select</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Im Specimen steht das Popup im Fluss unter seiner Wurzel; im Control schwebt es (tl-popover, position: fixed). */
+  .specimen__popup { position: static; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Select</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: ein Zustand oder eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche
+       und macht die Ids je Fläche eindeutig. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">leer</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-label="Leer">
+        <span class="tl-select__values"><span class="tl-select__placeholder">Keine Auswahl</span></span>
+        <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">einzeln, mit Rolle</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-label="Status">
+        <span class="tl-select__values">
+          <span class="tl-select__value"><span class="tl-pill tl-type-label" data-tl-role="warning"><span class="tl-pill__label">In Arbeit</span></span></span>
+        </span>
+        <span class="tl-select__controls">
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Auswahl löschen"><i class="tl-icon-sm bi bi-x-lg" aria-hidden="true"></i></button>
+          <span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span>
+        </span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">einzeln, ohne Rolle</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-label="Verantwortlich">
+        <span class="tl-select__values"><span class="tl-select__value"><span class="tl-field-value__text">Anna Berger</span></span></span>
+        <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">mehrfach, Ziehen</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-label="Projekte">
+        <span class="tl-select__values" data-tl-axis="horizontal">
+          <span class="tl-pill tl-type-label tl-select__chip" data-tl-role="category-6">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-select__drag-handle" aria-label="Nordlicht verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-pill__label">Nordlicht</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Nordlicht entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+          <span class="tl-pill tl-type-label tl-select__chip" data-tl-state="dragging">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-select__drag-handle" aria-label="Südwind verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-pill__label">Südwind</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Südwind entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+          <span class="tl-pill tl-type-label tl-select__chip" data-tl-role="category-2" data-tl-state="drop-before">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-select__drag-handle" aria-label="Ostwerk verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-pill__label">Ostwerk</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Ostwerk entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+        </span>
+        <span class="tl-select__controls">
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Auswahl löschen"><i class="tl-icon-sm bi bi-x-lg" aria-hidden="true"></i></button>
+          <span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span>
+        </span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">mehrfach, Rollen</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-label="Rollen">
+        <span class="tl-select__values">
+          <span class="tl-pill tl-type-label tl-select__chip">
+            <span class="tl-pill__label">Neutral</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Neutral entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+          <span class="tl-pill tl-type-label tl-select__chip" data-tl-role="brand">
+            <span class="tl-pill__label">Marke</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Marke entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+          <span class="tl-pill tl-type-label tl-select__chip" data-tl-role="error">
+            <span class="tl-pill__label">Fehler</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Fehler entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+          <span class="tl-pill tl-type-label tl-select__chip" data-tl-role="category-4">
+            <span class="tl-pill__label">Kategorie</span>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-type-body" aria-label="Kategorie entfernen"><i class="tl-icon-sm bi bi-x" aria-hidden="true"></i></button>
+          </span>
+        </span>
+        <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">aria-invalid</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-invalid="true" aria-label="Fehler">
+        <span class="tl-select__values"><span class="tl-select__placeholder">Pflichtfeld</span></span>
+        <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">data-tl-state warning</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" data-tl-state="warning" aria-label="Warnung">
+        <span class="tl-select__values"><span class="tl-select__value"><span class="tl-field-value__text">Veraltet</span></span></span>
+        <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">aria-disabled</span>
+      <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="-1" aria-expanded="false" aria-haspopup="listbox" aria-disabled="true" aria-label="Deaktiviert">
+        <span class="tl-select__values"><span class="tl-select__value"><span class="tl-field-value__text">Anna Berger</span></span></span>
+        <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">offen, Suche „nor“</span>
+      <div class="specimen__stack specimen__stack--tight">
+        <div class="tl-field tl-select tl-type-body" role="combobox" tabindex="0" aria-expanded="true" aria-haspopup="listbox" aria-controls="list-open" aria-label="Projekt">
+          <span class="tl-select__values"><span class="tl-select__value"><span class="tl-pill tl-type-label" data-tl-role="category-6"><span class="tl-pill__label">Nordlicht</span></span></span></span>
+          <span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-up"></i></span></span>
+        </div>
+        <div class="tl-popover tl-select__popup specimen__popup">
+          <span class="tl-field-group tl-select__search-group"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+            <input class="tl-field tl-select__search tl-type-body" value="nor" aria-label="Optionen filtern" aria-controls="list-open" aria-activedescendant="opt-2">
+          </span>
+          <div class="tl-select__list tl-type-body" role="listbox" id="list-open" aria-label="Projekt">
+            <div class="tl-select__option" role="option" id="opt-1" aria-selected="false">
+              <span class="tl-pill tl-type-label" data-tl-role="category-2"><span class="tl-pill__label"><span class="tl-type-label-strong">Nor</span>dkap</span></span>
+            </div>
+            <div class="tl-select__option" role="option" id="opt-2" aria-selected="false" data-tl-state="highlighted">
+              <span><span class="tl-type-body-strong">Nor</span>dhafen</span>
+            </div>
+            <div class="tl-select__option" role="option" id="opt-3" aria-selected="false">
+              <span>Tor <span class="tl-type-body-strong">Nor</span>d</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">laden, aria-busy</span>
+      <div class="tl-popover tl-select__popup specimen__popup">
+        <div class="tl-status tl-type-body">
+          <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-busy="true" aria-labelledby="select-loading-label">
+            <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+            <span class="tl-progress__label tl-type-label" id="select-loading-label">Lädt…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">Ladefehler, role="alert"</span>
+      <div class="tl-popover tl-select__popup specimen__popup">
+        <div class="tl-status tl-type-body" role="alert">
+          <i class="tl-icon-sm bi bi-exclamation-circle" aria-hidden="true"></i>
+          <span>Laden fehlgeschlagen.</span>
+          <a href="#" class="tl-type-body">Erneut versuchen</a>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">keine Treffer</span>
+      <div class="tl-popover tl-select__popup specimen__popup">
+        <span class="tl-field-group tl-select__search-group"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+          <input class="tl-field tl-select__search tl-type-body" value="xyz" aria-label="Optionen filtern">
+        </span>
+        <div class="tl-status tl-type-body">Keine Treffer</div>
+      </div>
+    </div>
+    <div class="tl-type-body specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">Lesewert mit Pill</span>
+      <span class="tl-field-value"><span class="tl-pill tl-type-label" data-tl-role="warning"><span class="tl-pill__label">In Arbeit</span></span></span>
+    </div>
+    <div class="tl-type-body specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">Lesewert als Link</span>
+      <a href="#" class="tl-field-value"><span class="tl-field-value__text">Anna Berger</span></a>
+    </div>
+    <div class="tl-type-body specimen__row specimen__row--narrow specimen__row--top specimen__row--label-control">
+      <span class="tl-type-label">Lesewerte, mehrfach</span>
+      <span class="tl-select__values"><span class="tl-field-value"><span class="tl-field-value__text">Anna Berger</span></span><span class="tl-select__separator">, </span><span class="tl-field-value"><span class="tl-field-value__text">Jonas Weber</span></span></span>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    // Eindeutige Ids je Fläche, damit aria-controls, aria-activedescendant und aria-labelledby auf ihre eigene Liste zeigen.
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    for (const el of rows.querySelectorAll('[aria-controls], [aria-activedescendant], [aria-labelledby]'))
+      for (const a of ['aria-controls', 'aria-activedescendant', 'aria-labelledby']) if (el.hasAttribute(a)) el.setAttribute(a, el.getAttribute(a) + '-' + id);
+    document.getElementById(id).append(rows);
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

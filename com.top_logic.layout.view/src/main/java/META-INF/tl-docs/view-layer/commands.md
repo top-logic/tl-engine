@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, and long-running jobs with <start-job> / <job-status>.
 order: 50
 ---
 
@@ -228,6 +228,8 @@ Three actions perform the model operations of a create dialog and a delete butto
 - **`<persist-transient [type="…"] [container="ch" reference="attr"]/>`** (`PersistTransientAction`) makes the transient object it processes (its [default argument or `value`](#actions-processing-one-value-value)) persistent the way `$draft.copy(transient: false)` does (values and composition parts; a refusal reports a refused *creation*), in the context of the container if one is given, and with `reference` adds the created object to that reference of the container, the way `$container.add(reference, $created)` does including its Write check. It runs in a transaction of its own and results in the persistent object. Its rule is the same creation check, an empty `container` channel included; the created type is `type` if given, else the reference's type, else the type of the command's main argument — so the dialog's Create button names the draft as its input: `inputs="model"`.
 - **`<delete-object/>`** (`DeleteObjectAction`) deletes the object (or the objects of a collection) it processes the way `delete()` does, compositions included, in a transaction of its own; a following `<write-channel name="…" clear="true"/>` empties the channel that showed it. Its rule is Delete on the command's main argument (refused → disabled with "You may not delete this object.", hidden when no role may ever delete the type), combined with `<delete-veto-disabled/>` (`DeleteVetoDisabled`): an input whose `TLObject#tDeleteVeto()` refuses the deletion disables the command with the veto as reason. A command deleting by script configures `<delete-veto-disabled/>` explicitly.
 
+An intrinsic rule is re-decided when the command's arguments change, including edits of the objects they hold. A rule that reads further objects - the other parts of the input's container, say - wraps itself into a `TypeObservingRule` (`new TypeObservingRule(rule, Set.of(type, ...))`), which re-decides it whenever an object of one of the given types is created, changed or deleted: the counterpart of the `observed-types` of a configured rule. `<delete-passkey/>` of `tl-security-passkey` decides this way whether a passkey is the last second factor of its account.
+
 A transaction nested in a `<with-transaction>` commits with it, so the actions compose with further script steps in one transaction. A command whose effect is a free script declares what it does in its `<access>` instead: `<create [type="…"] [in="…"] [reference="…"]/>` for a script creating an object, `<operation name="…" object="…" type="…"/>` for an operation on an object (see [the access of a command](doc:view-layer/access-control#commands-the-access-they-declare)).
 
 A check of an operation on a concrete object (an `<operation>` in the `<access>` of a command, or the rule `<delete-object>` brings) also asks the global `CommandApprovalService` (without component and command ID) once the access rights allow the operation: the approval checks configured for the object's type — e.g. that the anonymous account is neither edited nor deleted — disable the command with the approval's reason, as in the classic UI.
@@ -271,6 +273,19 @@ While `selectedScope` is empty, the opener is visible but disabled: with `refere
   </executability>
   <delete-object/>
   <write-channel name="project" clear="true"/>
+</generic-command>
+```
+
+## Reverting a commit: `<revert-change-set>`
+
+`<revert-change-set/>` (`RevertChangeSetAction`) reverts the commit (`tl.changelog:ChangeSet`) it processes, in a transaction of its own committed with the revert message of that commit, as the classic `RevertCommandHandler` does: a commit not yet reverted is undone, an already reverted commit is re-applied by reverting its undo, a redone commit is undone again by reverting its redo — the action follows the chain `revertedBy` to its end (`ChangeSetReverter#revertTarget`), so no change set is reverted twice. The change log links that chain: an undo is the `revertedBy` of the commit it undoes, a redo the `revertedBy` of the undo it reverts. All of them are listed with their own messages, so a reverted commit stays visible next to its revert; a list marks it by `revertedBy` being set. Whether a commit is undone is decided by that chain, every revert in it toggles the commit: the TL-Script function `changeSetUndone($commit)` (`ChangeSetReverter#isUndone`) is `true` when the chain following the commit has an odd length. This holds for a listed undo or redo as well, so undoing an undo redoes the commit it undid. A command offering "Undo" tests `!changeSetUndone($commit)`, one offering "Redo" `changeSetUndone($commit)`. When later commits modified the same objects, the revert reports conflicts. With `check-conflicts="true"` (the default) the revert is rolled back and a dialog lists the conflicts — confirming applies the revert anyway and resumes the chain, declining aborts it; a chain without a dialog aborts. With `check-conflicts="false"` the revert is committed and the conflicts are reported as a warning. The action results in the commit it processed; any other value is left alone and results in nothing. Since it may ask the user, it is not placed in a `<with-transaction>`.
+
+```xml
+<generic-command inputs="changeSet">
+  <executability>
+    <null-input-disabled/>
+  </executability>
+  <revert-change-set/>
 </generic-command>
 ```
 

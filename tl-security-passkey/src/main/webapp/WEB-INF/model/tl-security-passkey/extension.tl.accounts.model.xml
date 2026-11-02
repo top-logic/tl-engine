@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.accounts">
+		<class name="Person">
+			<attributes>
+				<reference name="passkeys"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					type="tl.security.passkey:Passkey"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

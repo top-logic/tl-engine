@@ -1,0 +1,77 @@
+/* Steps — Spec 2026-10-19 Welle 5b §7 (V22): eine Schrittliste für Wizard und JobStatus. Die Scheibe nennt die
+   Position in drei Stufen: aktuell die Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Die Ausrichtung
+   ändert nur die Anordnung, nicht die Farben — sonst wären es wieder zwei Formen. Waagrecht (Wizard) ruht die Scheibe;
+   senkrecht (JobStatus) pulsiert die des aktuellen Schritts, solange er läuft. Der globale Reduced-Motion-Schalter aus
+   base.css beendet den Puls; `alternate` endet bei Deckkraft 0,4, darum setzt nichts einen Fill-Mode. */
+
+.tl-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-xs) var(--tl-space-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-steps[hidden] { display: none; }
+
+.tl-steps--vertical {
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+}
+
+.tl-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-steps__disc {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+}
+
+.tl-steps--vertical .tl-steps__disc {
+  width: var(--tl-size-icon-md);
+  height: var(--tl-size-icon-md);
+}
+
+.tl-steps__item[data-tl-state~="done"] > .tl-steps__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand-subtle);
+  color: var(--tl-text-primary);
+}
+
+.tl-steps__item[aria-current="step"] > .tl-steps__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-steps--vertical .tl-steps__item[aria-current="step"] > .tl-steps__disc {
+  animation: tl-steps-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
+}
+
+.tl-steps__name {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+.tl-steps__item[aria-current="step"] > .tl-steps__name {
+  color: var(--tl-text-primary);
+}
+
+@keyframes tl-steps-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}

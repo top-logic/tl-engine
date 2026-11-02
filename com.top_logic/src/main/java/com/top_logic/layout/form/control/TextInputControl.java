@@ -30,6 +30,7 @@ import com.top_logic.layout.form.format.WikiWrite;
 import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.tooltip.ToolTip;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.HTMLUtil;
 
 /**
  * Server-side {@link Control} implementation of text input fields. 
@@ -56,7 +57,19 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	 */
 	public static final int NO_ROWS = 0;
 
+	/**
+	 * CSS class of a {@link #isPreformatted() preformatted} control.
+	 */
+	public static final String PREFORMATTED_CSS_CLASS = "tl-preformatted";
+
+	/**
+	 * Value of the <code>wrap</code> attribute of a text area that does not wrap its lines.
+	 */
+	private static final String NO_WRAP = "off";
+
 	private boolean multiLine;
+
+	private boolean _preformatted;
 
 	/**
 	 * Number of the input columns, <code>0</code> means no attribute set.
@@ -158,6 +171,43 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
     public boolean isMultiLine() {
         return multiLine;
     }
+
+	/**
+	 * Whether the text of a {@link #isMultiLine() multi-line} control is displayed as it is
+	 * written: in a font of fixed width, each line without wrapping it, a line wider than the
+	 * control being scrolled horizontally.
+	 */
+	public boolean isPreformatted() {
+		return _preformatted;
+	}
+
+	/**
+	 * @see #isPreformatted()
+	 */
+	public void setPreformatted(boolean preformatted) {
+		_preformatted = preformatted;
+		requestRepaint();
+	}
+
+	/**
+	 * The <code>wrap</code> attribute of the text area, or <code>null</code> for the default.
+	 */
+	@TemplateVariable("wrap")
+	public String getWrap() {
+		return showsPreformatted() ? NO_WRAP : null;
+	}
+
+	private boolean showsPreformatted() {
+		return multiLine && _preformatted;
+	}
+
+	@Override
+	protected void writeControlClassesContent(Appendable out) throws IOException {
+		super.writeControlClassesContent(out);
+		if (showsPreformatted()) {
+			HTMLUtil.appendCSSClass(out, PREFORMATTED_CSS_CLASS);
+		}
+	}
 
 	/**
 	 * The client-side field type.
@@ -465,7 +515,10 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 		if (this.maxLengthShown > -1 && (value.length() >= this.maxLengthShown)) {
 			value = StringServices.minimizeString(value, maxLengthShown, maxLengthShown - 3);
 		}
-		if (multiLine) {
+		if (showsPreformatted()) {
+			// The stylesheet keeps line breaks and white space of the text as they are.
+			out.writeText(value);
+		} else if (multiLine) {
 			writeMultiLineTextContent(out, value);
 		} else {
 			writeValueText(out, value);

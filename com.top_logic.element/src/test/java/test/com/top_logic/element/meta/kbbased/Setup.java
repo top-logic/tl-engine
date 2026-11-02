@@ -19,7 +19,6 @@ import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.kbbased.PersistentReference;
-import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.element.meta.kbbased.storage.LinkStorage.Config;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -31,6 +30,7 @@ import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
@@ -112,7 +112,7 @@ public class Setup extends ThreadContextSetup {
 	}
 
 	private void createListAttr(String name) throws DuplicateAttributeException, ConfigurationException {
-		createListAttr(name, WrapperMetaAttributeUtil.WRAPPER_ATTRIBUTE_ASSOCIATION);
+		createListAttr(name, ApplicationObjectUtil.WRAPPER_ATTRIBUTE_BAG_ASSOCIATION);
 	}
 
 	private void createListAttr(String name, String associationName) throws DuplicateAttributeException,

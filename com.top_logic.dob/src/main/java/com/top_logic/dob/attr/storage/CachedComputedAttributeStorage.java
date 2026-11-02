@@ -86,9 +86,25 @@ public class CachedComputedAttributeStorage extends ComputedAttributeStorage {
 	public void resetCacheValue(MOAttribute cacheAttribute, Object[] storage, DataObject changedObject,
 			MOAttribute changedAttribute) {
 		if (!getValueFactory().preserveCacheValue(cacheAttribute, changedObject, storage, changedAttribute)) {
-			// null in store means "uninitialised"
-			setSimpleCacheValue(cacheAttribute, storage, null);
+			discardCacheValue(cacheAttribute, storage);
 		}
+	}
+
+	/**
+	 * Discards the value for the given cache attribute in the given storage.
+	 * 
+	 * <p>
+	 * The value is computed anew on the next access.
+	 * </p>
+	 * 
+	 * @param cacheAttribute
+	 *        The attribute to discard the value for.
+	 * @param storage
+	 *        The storage of the object to adapt.
+	 */
+	public void discardCacheValue(MOAttribute cacheAttribute, Object[] storage) {
+		// null in store means "uninitialised"
+		setSimpleCacheValue(cacheAttribute, storage, null);
 	}
 
 }

@@ -1,0 +1,29 @@
+/* Breadcrumb — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W4).
+   nav > ol > li; die Einträge sind tl-button--link, die aktuelle Seite ein Text mit aria-current,
+   der Trenner ein tl-icon-sm (aria-hidden). Keine eigene Schrift, keine eigene Fokusregel. */
+
+.tl-breadcrumb__list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tl-space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-breadcrumb__list[hidden] { display: none; }
+
+.tl-breadcrumb__entry {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+.tl-breadcrumb__entry[hidden] { display: none; }
+
+.tl-breadcrumb__separator {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-breadcrumb__current {
+  color: var(--tl-text-primary);
+}

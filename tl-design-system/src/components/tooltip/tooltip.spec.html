@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Tooltip</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Die Lage setzt floating-ui inline; im Specimen steht der Tooltip im Fluss, der Pfeil unter ihm. */
+  .specimen__tooltip { position: relative; justify-self: start; margin-block-end: var(--tl-space-sm); }
+  .specimen__tooltip > .tl-tooltip__arrow { position: absolute; top: 100%; left: var(--tl-space-md); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Tooltip</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">Nur Text</span>
+      <div class="tl-tooltip specimen__tooltip" role="tooltip">
+        <div class="tl-tooltip__body tl-type-label">Speichert die Änderungen dieses Formulars.</div>
+        <svg class="tl-tooltip__arrow" width="12" height="6" viewBox="0 0 12 6" aria-hidden="true"><path d="M0 0 L6 6 L12 0 Z"/></svg>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">Überschrift und Text</span>
+      <div class="tl-tooltip specimen__tooltip" role="tooltip">
+        <div class="tl-tooltip__caption tl-type-label-strong">Verantwortlich</div>
+        <div class="tl-tooltip__body tl-type-label">Die Person, die den Auftrag bis zur Abnahme führt. Ein langer Text bricht um, sobald er
+          die höchste Breite des Tooltips erreicht, statt über den Bildschirm zu laufen.</div>
+        <svg class="tl-tooltip__arrow" width="12" height="6" viewBox="0 0 12 6" aria-hidden="true"><path d="M0 0 L6 6 L12 0 Z"/></svg>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">HTML vom Server</span>
+      <div class="tl-tooltip specimen__tooltip" role="tooltip">
+        <div class="tl-tooltip__caption tl-type-label-strong">Status</div>
+        <div class="tl-tooltip__body tl-type-label"><p>Der Auftrag ist <strong>freigegeben</strong>.</p><ul><li>Prüfung abgeschlossen</li><li>Budget bestätigt</li></ul><p>Elemente erben Farbe und Schrift.</p></div>
+        <svg class="tl-tooltip__arrow" width="12" height="6" viewBox="0 0 12 6" aria-hidden="true"><path d="M0 0 L6 6 L12 0 Z"/></svg>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">Interaktiv: Zeiger und Textauswahl</span>
+      <div class="tl-tooltip specimen__tooltip" role="tooltip" data-tl-state="interactive">
+        <div class="tl-tooltip__caption tl-type-label-strong">Kennung</div>
+        <div class="tl-tooltip__body tl-type-label">A-2026-1041 lässt sich markieren und kopieren; <a href="#">Link im Hinweis</a>.</div>
+        <svg class="tl-tooltip__arrow" width="12" height="6" viewBox="0 0 12 6" aria-hidden="true"><path d="M0 0 L6 6 L12 0 Z"/></svg>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base']) document.getElementById(id).append(tpl.content.cloneNode(true));
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

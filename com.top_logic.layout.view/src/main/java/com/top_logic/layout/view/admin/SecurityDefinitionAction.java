@@ -29,7 +29,6 @@ import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -448,7 +447,7 @@ public class SecurityDefinitionAction implements ViewAction {
 		if (input instanceof TypeCoverage coverage) {
 			return coverage;
 		}
-		Object selected = channelValue(context, _selectionChannel);
+		Object selected = ViewContext.channelValue(context, _selectionChannel);
 		if (selected instanceof TypeCoverage coverage) {
 			return coverage;
 		}
@@ -483,18 +482,6 @@ public class SecurityDefinitionAction implements ViewAction {
 			return entry;
 		}
 		throw new TopLogicException(I18NConstants.ERROR_NO_ACCESS_RIGHTS_SELECTED);
-	}
-
-	/**
-	 * The value of the channel with the given name, or <code>null</code> when the view has no such
-	 * channel.
-	 */
-	private static Object channelValue(ReactContext context, String channelName) {
-		if (channelName == null || !(context instanceof ViewContext viewContext)
-			|| !viewContext.hasChannel(channelName)) {
-			return null;
-		}
-		return viewContext.resolveChannel(new ChannelRef(channelName)).get();
 	}
 
 	/**

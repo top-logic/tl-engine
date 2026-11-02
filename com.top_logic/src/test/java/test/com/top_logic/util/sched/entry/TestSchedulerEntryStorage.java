@@ -121,7 +121,7 @@ public class TestSchedulerEntryStorage extends TestCase {
 	}
 
 	private void add(Task.Config<?> config) {
-		getStorage().add(instantiate(config));
+		getStorage().add(instantiate(config), true);
 	}
 
 	private void assertAddFails(Task.Config<?> config) {
@@ -130,7 +130,7 @@ public class TestSchedulerEntryStorage extends TestCase {
 
 	private void assertAddFails(Task instantiate) {
 		try {
-			getStorage().add(instantiate);
+			getStorage().add(instantiate, true);
 		} catch (Exception ex) {
 			Pattern pattern = Pattern.compile("Task names .* unique");
 			BasicTestCase.assertErrorMessage("Task names have to be unique.", pattern, ex);

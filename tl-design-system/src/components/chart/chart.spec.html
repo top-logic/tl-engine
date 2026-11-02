@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Chart</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Das Control liegt in einem Behälter mit Höhe (die Wurzel füllt ihn); im Specimen begrenzt ihn die Seite. */
+  .specimen__chart { height: 16rem; }
+  .specimen__chart > canvas { display: block; width: 100%; height: 100%; }
+  /* Die Lage des Tooltips setzt das Control inline am Datenpunkt; hier steht er an einer festen Stelle. */
+  .specimen__chart > .tl-chart__tooltip { left: 38%; top: 30%; }
+  /* Der Ring hell und dunkel nebeneinander; das dunkle Panel trägt data-tl-mode und löst die Tokens dunkel auf. */
+  .specimen__pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--tl-space-md); }
+  .specimen__mode { background: var(--tl-surface-base); color: var(--tl-text-primary); padding: var(--tl-space-md);
+    border: var(--tl-border-width-sm) solid var(--tl-border-separator); border-radius: var(--tl-radius-md);
+    display: grid; gap: var(--tl-space-sm); }
+  .specimen__donut { display: block; width: 100%; height: 14rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Chart</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Zehn Reihen aus den Kategorien</p>
+    <p class="tl-type-label">Das Skript liest --tl-category-1-mark bis 8 am &lt;html&gt; und malt deckend, Gitter und Beschriftung aus
+      --tl-border-separator und --tl-text-secondary, und liest neu, sobald data-tl-mode wechselt — wie das Control. Die neunte
+      Reihe hat die Farbe der ersten, die zehnte die der zweiten.</p>
+    <div class="tl-chart specimen__chart">
+      <canvas id="canvas" role="img" aria-label="Zehn Reihen"></canvas>
+      <div class="tl-popover tl-chart__tooltip tl-type-label" role="tooltip">Reihe 4: 38 Aufträge</div>
+      <div class="tl-chart__zoom-reset">
+        <button type="button" class="tl-button tl-button--secondary tl-button--sm"><span class="tl-button__label tl-type-label">Zoom zurücksetzen</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Ring mit sechs Segmenten, hell und dunkel</p>
+    <p class="tl-type-label">Die Segmente sind deckend, dazwischen steht die Fuge in --tl-surface-layer. Das dunkle Panel trägt
+      data-tl-mode="dark"; das Skript liest dort getComputedStyle des Panels, nicht des &lt;html&gt;.</p>
+    <div class="specimen__pair">
+      <div class="specimen__mode" data-tl-mode="light" data-donut>
+        <p class="tl-type-label">Hell</p>
+        <canvas class="specimen__donut" role="img" aria-label="Ring mit sechs Segmenten, hell"></canvas>
+      </div>
+      <div class="specimen__mode" data-tl-mode="dark" data-donut>
+        <p class="tl-type-label">Dunkel</p>
+        <canvas class="specimen__donut" role="img" aria-label="Ring mit sechs Segmenten, dunkel"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Leer und Fehler</p>
+    <div class="tl-chart specimen__chart">
+      <div class="tl-status tl-type-body" role="status">Keine Daten verfügbar.</div>
+    </div>
+    <div class="tl-chart specimen__chart">
+      <div class="tl-status tl-type-body" role="alert">Ungültige Diagrammkonfiguration: Reihe 3 hat keine Werte.</div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  const canvas = document.getElementById('canvas');
+  const VALUES = [24, 41, 33, 38, 29, 46, 21, 35, 27, 31];
+  const css = (name) => getComputedStyle(html).getPropertyValue(name).trim();
+
+  // Wie TLChart: Farben aus den Kategorien (die neunte Reihe nimmt wieder die erste), neu gelesen beim Moduswechsel.
+  function draw() {
+    const w = canvas.width = canvas.clientWidth, h = canvas.height = canvas.clientHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+    const left = 32, bottom = 24, top = 12, right = 12;
+    ctx.strokeStyle = css('--tl-border-separator');
+    ctx.fillStyle = css('--tl-text-secondary');
+    ctx.font = '12px sans-serif';
+    for (let i = 0; i <= 5; i++) {
+      const y = top + (h - top - bottom) * (1 - i / 5);
+      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(w - right, y); ctx.stroke();
+      ctx.fillText(String(i * 10), 4, y + 4);
+    }
+    const slot = (w - left - right) / VALUES.length;
+    VALUES.forEach((v, i) => {
+      ctx.fillStyle = css(`--tl-category-${(i % 8) + 1}-mark`);
+      const bar = (h - top - bottom) * v / 50;
+      ctx.fillRect(left + slot * i + slot * 0.15, h - bottom - bar, slot * 0.7, bar);
+      ctx.fillStyle = css('--tl-text-secondary');
+      ctx.fillText(String(i + 1), left + slot * i + slot / 2 - 3, h - 8);
+    });
+  }
+
+  // Der Ring: Segmente deckend in category-N-mark, dazwischen die Fuge in surface-layer; die Tokens kommen vom Panel.
+  const SEGMENTS = [30, 22, 18, 14, 10, 6];
+  function drawDonut(panel) {
+    const c = panel.querySelector('canvas');
+    const w = c.width = c.clientWidth, h = c.height = c.clientHeight;
+    const style = getComputedStyle(panel);
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2, outer = Math.min(w, h) / 2 - 4, inner = outer * 0.55;
+    const total = SEGMENTS.reduce((a, b) => a + b, 0);
+    let from = -Math.PI / 2;
+    SEGMENTS.forEach((v, i) => {
+      const to = from + 2 * Math.PI * v / total;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outer, from, to);
+      ctx.arc(cx, cy, inner, to, from, true);
+      ctx.closePath();
+      ctx.fillStyle = style.getPropertyValue(`--tl-category-${i + 1}-mark`).trim();
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = style.getPropertyValue('--tl-surface-layer').trim();
+      ctx.stroke();
+      from = to;
+    });
+  }
+  const drawDonuts = () => document.querySelectorAll('[data-donut]').forEach(drawDonut);
+  window.addEventListener('resize', drawDonuts);
+  drawDonuts();
+
+  new MutationObserver(draw).observe(html, { attributes: true, attributeFilter: ['data-tl-mode', 'data-tl-theme'] });
+  window.addEventListener('resize', draw);
+  draw();
+
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

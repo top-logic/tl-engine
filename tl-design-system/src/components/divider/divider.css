@@ -1,0 +1,15 @@
+/* Divider — docs/skalen.md „Rahmen: vier Stufen“.
+   Eine Trennlinie trennt nur und schuldet keinen Kontrast: border-separator. Horizontal ist die
+   Standardform (auch an <hr>); vertikal steht sie in einer Zeile und streckt sich auf deren Höhe. */
+
+.tl-divider {
+  margin: 0;
+  border: 0;
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-divider--vertical {
+  align-self: stretch;
+  border-top: 0;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}

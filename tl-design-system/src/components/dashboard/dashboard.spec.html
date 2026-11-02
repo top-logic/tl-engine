@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Dashboard</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Daten, die TLDashboard inline setzt: Spalten, Zeilenhöhe und Abstand (space-md über useTokenPx), Lage der
+     Kacheln. */
+  .spec-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 9rem; gap: var(--tl-space-md); }
+  .spec-wide { grid-column: 1 / 3; grid-row: 1 / 2; }
+  .spec-c3 { grid-column: 3 / 4; grid-row: 1 / 3; }
+  .spec-c1 { grid-column: 1 / 2; grid-row: 2 / 3; }
+  .spec-c2 { grid-column: 2 / 3; grid-row: 2 / 3; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Dashboard</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Ansicht: Kacheln sind Karten ohne Schatten; zwei mit Aktion (Zeigen: Rand border-interactive; Tab auf den verborgenen Knopf: Ring an der Kachel), eine mit deaktivierter Aktion, eine, deren Inhalt rollt</p>
+    <div class="tl-dashboard tl-inset">
+      <div class="tl-dashboard__grid spec-grid" data-tl-axis="horizontal">
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-wide">
+          <button type="button" class="tl-dashboard__action tl-visually-hidden">Projekte öffnen</button>
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Projekte</p><p class="tl-type-body">12 laufend, 3 im Verzug</p></div>
+          </div>
+        </div>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c3">
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card">
+              <p class="tl-type-heading-sm">Letzte Änderungen</p>
+              <p class="tl-type-body">Angebot Nordhafen überarbeitet</p>
+              <p class="tl-type-body">Ticket 4711 geschlossen</p>
+              <p class="tl-type-body">Termin Lenkungskreis verschoben</p>
+              <p class="tl-type-body">Neue Rolle Prüfer angelegt</p>
+              <p class="tl-type-body">Export Quartal 3 fertig</p>
+              <p class="tl-type-body">Vertrag Südbahnhof unterschrieben</p>
+              <p class="tl-type-body">Budget 2027 freigegeben</p>
+              <p class="tl-type-body">Ticket 4712 eröffnet</p>
+              <p class="tl-type-body">Rechnung 88 gebucht</p>
+            </div>
+          </div>
+        </div>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c1">
+          <button type="button" class="tl-dashboard__action tl-visually-hidden">Tickets öffnen</button>
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Tickets</p><p class="tl-type-body">5 offen</p></div>
+          </div>
+        </div>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c2">
+          <button type="button" class="tl-dashboard__action tl-visually-hidden" disabled>Berichte öffnen</button>
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Berichte</p><p class="tl-type-body">Aktion deaktiviert</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Bearbeiten (data-tl-state~="edit"): Kacheln fokussierbar, Abdeckung nimmt den Zeiger, Ausblenden-Knopf in tl-overlay__action; eine Kachel wird gezogen, die Einfügemarke steht links einer anderen</p>
+    <div class="tl-dashboard tl-inset" data-tl-state="edit">
+      <div class="tl-dashboard__grid spec-grid" data-tl-axis="horizontal">
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-wide" role="group" tabindex="0" aria-label="Projekte verschieben">
+          <button type="button" class="tl-dashboard__action tl-visually-hidden" tabindex="-1">Projekte öffnen</button>
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Projekte</p><p class="tl-type-body">12 laufend, 3 im Verzug</p></div>
+          </div>
+          <div class="tl-overlay__layer tl-overlay__layer--fill"><div class="tl-dashboard__cover"></div></div>
+          <div class="tl-overlay__layer tl-overlay__layer--top-right">
+            <div class="tl-overlay__action">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Kachel ausblenden"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c3" role="group" tabindex="0" aria-label="Letzte Änderungen verschieben" data-tl-state="drop-before">
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Letzte Änderungen</p><p class="tl-type-body">Die gezogene Kachel landet davor</p></div>
+          </div>
+          <div class="tl-overlay__layer tl-overlay__layer--fill"><div class="tl-dashboard__cover"></div></div>
+          <div class="tl-overlay__layer tl-overlay__layer--top-right">
+            <div class="tl-overlay__action">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Kachel ausblenden"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c1" role="group" tabindex="0" aria-label="Tickets verschieben" data-tl-state="dragging">
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Tickets</p><p class="tl-type-body">wird gezogen</p></div>
+          </div>
+          <div class="tl-overlay__layer tl-overlay__layer--fill"><div class="tl-dashboard__cover"></div></div>
+          <div class="tl-overlay__layer tl-overlay__layer--top-right">
+            <div class="tl-overlay__action">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Kachel ausblenden"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill spec-c2" role="group" tabindex="0" aria-label="Berichte verschieben">
+          <div class="tl-overlay__base">
+            <div class="tl-inset tl-inset--card"><p class="tl-type-heading-sm">Berichte</p></div>
+          </div>
+          <div class="tl-overlay__layer tl-overlay__layer--fill"><div class="tl-dashboard__cover"></div></div>
+          <div class="tl-overlay__layer tl-overlay__layer--top-right">
+            <div class="tl-overlay__action">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Kachel ausblenden"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

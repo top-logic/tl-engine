@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -297,6 +298,12 @@ public class SSEUpdateQueue {
 
 	private RouteManager _routeManager;
 
+	/**
+	 * The {@link #registerControl(ReactCommandTarget) displayed} controls whose content lies outside
+	 * the page, see {@link ReactControl#isContentOutsidePage()}.
+	 */
+	private final Set<ReactControl> _outsidePageRoots = ConcurrentHashMap.newKeySet();
+
 	private final ScriptRecorder _recorder = new ScriptRecorder();
 
 	/**
@@ -370,6 +377,7 @@ public class SSEUpdateQueue {
 		if (routeManager != null) {
 			routeManager.setDisplayedParticipants(this::displayedParticipants);
 			routeManager.setTitlingParticipants(this::titlingParticipants);
+			routeManager.setOutsidePage(this::isOutsidePage);
 		}
 	}
 
@@ -380,7 +388,9 @@ public class SSEUpdateQueue {
 	 * The walk follows the {@link ReactControl#visibleChildren() visible children}, so a control that
 	 * is rendered but hidden - a covered frame of a tile stack - contributes nothing. Neither does
 	 * the content of a participant showing an item without a route (see
-	 * {@link RoutingParticipant#routesContent()}): that part of the display has no URL.
+	 * {@link RoutingParticipant#routesContent()}): that part of the display has no URL. Nor does the
+	 * content of a control showing it outside the page - the dialogs of a dialog manager (see
+	 * {@link ReactControl#isContentOutsidePage()}).
 	 * </p>
 	 *
 	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
@@ -440,12 +450,49 @@ public class SSEUpdateQueue {
 			result.add(participant);
 			descend &= includesContent(participant, titling);
 		}
-		if (!descend) {
+		if (!descend || control.isContentOutsidePage()) {
 			return;
 		}
 		for (ReactControl child : control.visibleChildren()) {
 			collectParticipants(child, titling, result);
 		}
+	}
+
+	/**
+	 * Whether the given participant is displayed in content that lies outside the page - see
+	 * {@link ReactControl#isContentOutsidePage()}.
+	 *
+	 * <p>
+	 * Searched below the displayed controls whose content lies outside the page only, so that
+	 * answering costs nothing while no dialog is open.
+	 * </p>
+	 *
+	 * @see RouteManager#setOutsidePage(java.util.function.Predicate)
+	 */
+	private boolean isOutsidePage(RoutingParticipant participant) {
+		for (ReactControl root : _outsidePageRoots) {
+			for (ReactControl child : root.displayedChildren()) {
+				if (contains(child, participant)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the given control or its content is the given participant or anchors it.
+	 */
+	private static boolean contains(ReactControl control, RoutingParticipant participant) {
+		if (control == participant || control.routeParticipants().contains(participant)) {
+			return true;
+		}
+		for (ReactControl child : control.displayedChildren()) {
+			if (contains(child, participant)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static boolean includesContent(RoutingParticipant participant, boolean titling) {
@@ -464,6 +511,9 @@ public class SSEUpdateQueue {
 	 */
 	public void registerControl(ReactCommandTarget control) {
 		_controls.put(control.getID(), control);
+		if (control instanceof ReactControl reactControl && reactControl.isContentOutsidePage()) {
+			_outsidePageRoots.add(reactControl);
+		}
 	}
 
 	/**
@@ -473,6 +523,7 @@ public class SSEUpdateQueue {
 	 */
 	public void unregisterControl(ReactCommandTarget control) {
 		_controls.remove(control.getID(), control);
+		_outsidePageRoots.remove(control);
 	}
 
 	/**
@@ -1400,6 +1451,7 @@ public class SSEUpdateQueue {
 		}
 		_pendingEvents.clear();
 		_controls.clear();
+		_outsidePageRoots.clear();
 		_rootControl = null;
 		_dialogManager = null;
 		_routeManager = null;

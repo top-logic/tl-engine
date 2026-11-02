@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Badge</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .specimen__host { position: relative; display: inline-flex; width: var(--tl-size-icon-md); }
+  .specimen__corner { position: absolute; top: calc(-1 * var(--tl-space-xs)); left: 100%; margin-left: calc(-1 * var(--tl-space-xs)); }
+  .specimen__tab { display: inline-flex; align-items: center; gap: var(--tl-space-xs); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Badge</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row">
+      <span class="tl-type-label">an einem Icon</span>
+      <span class="specimen__host">
+        <i class="tl-icon-md bi bi-bell" aria-hidden="true"></i>
+        <span class="tl-badge tl-type-label-strong tl-nums specimen__corner" role="img" aria-label="3 neue Meldungen">3</span>
+      </span>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Zahl 1</span>
+      <span><span class="tl-badge tl-type-label-strong tl-nums">1</span></span>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Zahl 12</span>
+      <span><span class="tl-badge tl-type-label-strong tl-nums">12</span></span>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Zahl 999</span>
+      <span><span class="tl-badge tl-type-label-strong tl-nums">999</span></span>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">an einem Reiter-Text</span>
+      <span class="specimen__tab tl-type-body-strong">Aufgaben <span class="tl-badge tl-type-label-strong tl-nums">12</span></span>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">An der Ecke eines Icons (tl-icon-badge)</p>
+    <div class="specimen__row">
+      <span class="tl-icon-badge"><i class="tl-icon-md bi bi-inbox" aria-hidden="true"></i><span class="tl-icon-badge__count"><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="3 neue Meldungen">3</span></span></span>
+      <span class="tl-icon-badge"><i class="tl-icon-sm bi bi-bell" aria-hidden="true"></i><span class="tl-icon-badge__count"><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="12 Hinweise">12</span></span></span>
+    </div>
+  </section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    document.getElementById(id).append(rows);
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

@@ -2,3 +2,16 @@ div.cBPMN {
 	width: 100%;
 	height: 100%;
 }
+
+/*
+ * Outside edit mode, a selected connection has no bendpoints that mark it. It is highlighted along
+ * its path instead: its hit area (an invisible stroke of 15px along the connection) gets the
+ * translucent selection color. diagram-js writes the stroke of the hit area as inline style, which
+ * only an important declaration overrides.
+ */
+div.cBPMN.cannot-edit .djs-connection.selected > .djs-hit-stroke {
+	stroke: var(--element-selected-outline-stroke-color, #0077cc) !important;
+	stroke-opacity: 0.3 !important;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The choice among several second-factor methods of the login (SecondFactorStep): one button per
+	method the account has set up, or - for an account required to use a second factor that has none
+	yet - per method it may set up.
+-->
+<view>
+	<channels>
+		<!-- The account being authenticated (set by SecondFactorStep). -->
+		<channel name="account"/>
+	</channels>
+	<window
+		resizable="false"
+		width="380px"
+	>
+		<title>
+			<en>Two-factor authentication</en>
+			<de>Zwei-Faktor-Authentifizierung</de>
+		</title>
+		<inset>
+			<stack>
+				<text>
+					<label>
+						<en>Choose the method for the second factor of your login.</en>
+						<de>Wählen Sie das Verfahren für den zweiten Faktor Ihrer Anmeldung.</de>
+					</label>
+				</text>
+				<second-factor-choice input="account"/>
+			</stack>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

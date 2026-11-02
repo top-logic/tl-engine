@@ -9,11 +9,10 @@ package com.top_logic.layout.component.configuration;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
+import com.top_logic.base.accesscontrol.RetryDeniedException;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -75,8 +74,7 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 
 	private final Password _secret;
 
-	private final LoginFailuresModule<?> _loginFailures =
-		LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
+	private final LoginFailuresModule<?> _loginFailures = LoginFailuresModule.getInstance();
 
 
 	/**
@@ -146,30 +144,19 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 	}
 
 	private HandlerResult checkOTP(DisplayContext context) {
-		String failureKey = failureKey();
-		LoginFailure failure = _loginFailures.getFailureFor(failureKey);
-		if (failure != null && !failure.allowRetry()) {
-			long retryTimeout = TimeUnit.MILLISECONDS.toSeconds(failure.retryTimeout());
-			InfoService.showError(I18NConstants.CHECK_OTP_TOO_MANY_ATTEMPTS__TIMEOUT.fill(retryTimeout));
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
 		StringField field = (StringField) getFormContext().getField(OTP_FIELD);
 		String code = field.getAsString();
 
-		MFAConfig mfaConfig = ApplicationConfig.getInstance().getConfig(MFAConfig.class);
-		TimeProvider timeProvider = new SystemTimeProvider();
-		DefaultCodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, mfaConfig.getDigits());
-		DefaultCodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
-		verifier.setTimePeriod(mfaConfig.getPeriod());
-		verifier.setAllowedTimePeriodDiscrepancy(mfaConfig.getAllowedTimePeriodDiscrepancy());
-		
-		boolean successful = verifier.isValidCode(_secret.decrypt(), code);
+		boolean successful;
+		try {
+			successful = _loginFailures.attempt(LoginFailuresModule.secretKey(_secret),
+				I18NConstants.CHECK_OTP_TOO_MANY_ATTEMPTS__TIMEOUT, () -> isValidCode(code));
+		} catch (RetryDeniedException ex) {
+			InfoService.showError(ex.getErrorKey());
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		if (successful) {
-			_loginFailures.notifyLoginSuccessed(failureKey);
 			return getDiscardClosure().andThen(_continuation).executeCommand(context);
-		} else {
-			_loginFailures.notifyLoginFailed(failureKey);
 		}
 		InfoService.showError(I18NConstants.INVALID_OTP);
 		return HandlerResult.DEFAULT_RESULT;
@@ -180,8 +167,15 @@ public class CheckOTPDialog extends AbstractTemplateDialog {
 		buttons.add(MessageBox.button(ButtonType.OK, getApplyClosure()));
 	}
 
-	private String failureKey() {
-		return _secret.getCryptedValue() + "@" + "OTP";
+	private boolean isValidCode(String code) {
+		MFAConfig mfaConfig = ApplicationConfig.getInstance().getConfig(MFAConfig.class);
+		TimeProvider timeProvider = new SystemTimeProvider();
+		DefaultCodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, mfaConfig.getDigits());
+		DefaultCodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+		verifier.setTimePeriod(mfaConfig.getPeriod());
+		verifier.setAllowedTimePeriodDiscrepancy(mfaConfig.getAllowedTimePeriodDiscrepancy());
+
+		return verifier.isValidCode(_secret.decrypt(), code);
 	}
 
 }

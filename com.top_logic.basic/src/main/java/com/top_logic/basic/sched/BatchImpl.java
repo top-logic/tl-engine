@@ -70,9 +70,10 @@ public abstract class BatchImpl implements Batch {
      */
     @Override
 	public void signalShutdown() {
-        if (!signalStop()) {
-            Logger.error("Tread is not willing to stop on shutdown", this);
-        }
+		if (!signalStop()) {
+			// Not an error by itself: The shutdown waits for the end of the run.
+			Logger.info("Batch '" + getName() + "' does not react to the stop request on shutdown.", this);
+		}
     }
 
     /** Accessor to the name.

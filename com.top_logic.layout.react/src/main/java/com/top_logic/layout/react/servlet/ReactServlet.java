@@ -642,28 +642,8 @@ public class ReactServlet extends TopLogicServlet {
 				"Unknown window: " + windowName);
 			return;
 		}
-		ReactCommandTarget control = queue.getControl(controlId);
-		if (control == null) {
-			if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
-				// A debounced field value flushed after its control left the display: the edit was
-				// abandoned (e.g. the dialog was canceled), so dropping the value is the intended
-				// outcome, not an error.
-				Logger.debug("Dropped '" + commandName + "' for undisplayed control '" + controlId + "'.",
-					ReactServlet.class);
-				sendSuccess(response);
-				return;
-			}
-			if (!queue.hasControls()) {
-				// The window's queue holds no controls at all: it was created empty by an SSE
-				// reconnect after the session was replaced underneath the open page. The page's
-				// control tree lives in the discarded session - let the client re-bootstrap.
-				Logger.warn("Command '" + commandName + "' for control '" + controlId + "' targets window '"
-					+ windowName + "' without any registered controls (session replaced).", ReactServlet.class);
-				sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_STALE_UI,
-					"Control not found: " + controlId);
-				return;
-			}
-			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+		if (queue.getControl(controlId) == null) {
+			answerMissingControl(response, queue, windowName, controlId, commandName);
 			return;
 		}
 
@@ -673,37 +653,93 @@ public class ReactServlet extends TopLogicServlet {
 		// account), which then can no longer be read.
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
+		ReactCommandTarget control;
 		try (Interaction interaction = registry.beginInteraction()) {
-			// Capture the step for the script recorder before the command runs: the address is computed
-			// against the current (pre-command) tree — exactly the state a replay resolves it against.
-			recordCommand(queue, control, commandName, arguments);
-
-			HandlerResult result;
-			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			try {
-				result = control.executeClientCommand(commandName, arguments);
-			} finally {
-				if (rootHandler != null) {
-					rootHandler.enableUpdate(updateBefore);
-				}
-			}
-
-			// Forward side effects: InfoService messages and legacy control repaints.
-			forwardPendingUpdates(displayContext, rootHandler, queue, control);
-
-			// Synthesize model events so that observable models receive changes
-			// from this command before the interaction delivers its updates.
+			// The command sees the current state of the knowledge base, including the commits other
+			// threads made since the window's last request: the session revision of the window only
+			// advances when its model events are synthesized.
 			registry.synthesizeModelEvents(windowName);
 
-			if (!result.isSuccess()) {
-				// Show error in snackbar instead of returning HTTP 500.
-				CommandErrors.show(errorSink(control), result);
+			// The model events may have removed the addressed control from the display.
+			control = queue.getControl(controlId);
+			if (control == null) {
+				Logger.info("Command '" + commandName + "' for control '" + controlId
+					+ "' dropped: the control left the display while the window caught up with the model.",
+					ReactServlet.class);
+			} else {
+				executeCommand(queue, control, commandName, arguments, displayContext, rootHandler, registry,
+					windowName);
 			}
+		}
+		if (control == null) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+			return;
 		}
 		// Answered once the interaction has delivered its events, so that the answer can name the
 		// last of them: the client checks that its stream brings them (see LAST_EVENT_HEADER).
 		response.setHeader(LAST_EVENT_HEADER, Long.toString(queue.lastSeq()));
 		sendSuccess(response);
+	}
+
+	/**
+	 * Answers a command whose target control is not displayed in the window.
+	 */
+	private void answerMissingControl(HttpServletResponse response, SSEUpdateQueue queue,
+			String windowName, String controlId, String commandName) throws IOException {
+		if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
+			// A debounced field value flushed after its control left the display: the edit was
+			// abandoned (e.g. the dialog was canceled), so dropping the value is the intended
+			// outcome, not an error.
+			Logger.debug("Dropped '" + commandName + "' for undisplayed control '" + controlId + "'.",
+				ReactServlet.class);
+			sendSuccess(response);
+			return;
+		}
+		if (!queue.hasControls()) {
+			// The window's queue holds no controls at all: it was created empty by an SSE
+			// reconnect after the session was replaced underneath the open page. The page's
+			// control tree lives in the discarded session - let the client re-bootstrap.
+			Logger.warn("Command '" + commandName + "' for control '" + controlId + "' targets window '"
+				+ windowName + "' without any registered controls (session replaced).", ReactServlet.class);
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_STALE_UI,
+				"Control not found: " + controlId);
+			return;
+		}
+		sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+	}
+
+	/**
+	 * Executes a command on its target control within the interaction of the request, and lets the
+	 * window's models receive its changes.
+	 */
+	private void executeCommand(SSEUpdateQueue queue, ReactCommandTarget control, String commandName,
+			Map<String, Object> arguments, DisplayContext displayContext, SubsessionHandler rootHandler,
+			ReactWindowRegistry registry, String windowName) {
+		// Capture the step for the script recorder before the command runs: the address is computed
+		// against the current (pre-command) tree — exactly the state a replay resolves it against.
+		recordCommand(queue, control, commandName, arguments);
+
+		HandlerResult result;
+		boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+		try {
+			result = control.executeClientCommand(commandName, arguments);
+		} finally {
+			if (rootHandler != null) {
+				rootHandler.enableUpdate(updateBefore);
+			}
+		}
+
+		// Forward side effects: InfoService messages and legacy control repaints.
+		forwardPendingUpdates(displayContext, rootHandler, queue, control);
+
+		// Synthesize model events so that observable models receive changes
+		// from this command before the interaction delivers its updates.
+		registry.synthesizeModelEvents(windowName);
+
+		if (!result.isSuccess()) {
+			// Show error in snackbar instead of returning HTTP 500.
+			CommandErrors.show(errorSink(control), result);
+		}
 	}
 
 	/**
@@ -791,7 +827,12 @@ public class ReactServlet extends TopLogicServlet {
 		// second request out of the tree meanwhile and delivers what the navigation changed.
 		SubsessionHandler rootHandler = window.rootHandler();
 
-		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		try (Interaction interaction = registry.beginInteraction()) {
+			// The URL is resolved against the current state of the knowledge base, see
+			// handleCommand(HttpServletRequest, HttpServletResponse, HttpSession).
+			registry.synthesizeModelEvents(windowName);
+
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
 				try {
@@ -993,8 +1034,20 @@ public class ReactServlet extends TopLogicServlet {
 
 		DisplayContext displayContext = window.displayContext();
 		SubsessionHandler rootHandler = window.rootHandler();
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
-		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+		try (Interaction interaction = registry.beginInteraction()) {
+			// The upload is handled against the current state of the knowledge base, see
+			// handleCommand(HttpServletRequest, HttpServletResponse, HttpSession).
+			registry.synthesizeModelEvents(windowName);
+			if (queue.getControl(controlId) != control) {
+				Logger.info("Upload for control '" + controlId
+					+ "' dropped: the control left the display while the window caught up with the model.",
+					ReactServlet.class);
+				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+				return;
+			}
+
 			HandlerResult result;
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
@@ -1041,7 +1094,7 @@ public class ReactServlet extends TopLogicServlet {
 			// Synthesize model events so that observable models (e.g. tables observing the uploaded
 			// objects' type) receive the changes made during upload handling before the interaction
 			// delivers its updates - otherwise the upload's effect only shows after a later rebuild.
-			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+			registry.synthesizeModelEvents(windowName);
 
 			if (!result.isSuccess()) {
 				// Show error in snackbar instead of returning HTTP 500.

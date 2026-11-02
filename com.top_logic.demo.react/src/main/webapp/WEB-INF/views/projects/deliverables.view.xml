@@ -10,6 +10,11 @@
 	at least one kind may be created in the project. The kind chooser offers only the kinds the user
 	may create there (canCreate): a project administrator creates every kind, a project member
 	specifications only.
+	
+	Below, the deliverables are edited in place in a composition table of the project. Its Add button
+	stands for the concrete kinds of the abstract Deliverable the user may create in the project: with
+	several of them it opens a menu to choose the kind from, with a single one it adds a row of that
+	kind directly.
 -->
 <view>
 	<channels>
@@ -17,78 +22,111 @@
 		<channel name="kind"/>
 	</channels>
 
-	<panel>
-		<title>
-			<en>Deliverables</en>
-			<de>Liefergegenstände</de>
-		</title>
-		<commands>
-			<generic-command
-				image="css:bi bi-plus-lg"
-				inputs="project, kind"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>New deliverable</en>
-					<de>Neuer Liefergegenstand</de>
-				</label>
-				<access>
-					<create
-						in="$project"
-						reference="tl.demo.projectManagement:ProjectScope#deliverables"
-					/>
-				</access>
-				<executability>
-					<disabled-if expr="if($kind == null, #('Choose the kind of the deliverable first.'@en, 'Wählen Sie zuerst die Art des Liefergegenstands.'@de))"/>
-				</executability>
-				<execute-script function="new($kind, context: $project, transient: true)">
-					<with-result>
-						<open-dialog
-							bind-input-to="model"
-							dialog-view="demo/create-deliverable.view.xml"
+	<split-panel orientation="vertical">
+		<panes>
+			<pane>
+				<panel>
+					<title>
+						<en>Deliverables</en>
+						<de>Liefergegenstände</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							inputs="project, kind"
+							placement="TOOLBAR"
 						>
-							<bind
-								channel="container"
-								to="project"
-							/>
-						</open-dialog>
-					</with-result>
-				</execute-script>
-			</generic-command>
-		</commands>
-		<fields>
-			<value-input
-				inputs="project"
-				options="[`tl.demo.projectManagement:Specification`, `tl.demo.projectManagement:Prototype`, `tl.demo.projectManagement:Report`].filter(t -> $project != null &amp;&amp; $project.canCreate(`tl.demo.projectManagement:ProjectScope#deliverables`, $t))"
-				type="tl.model:TLClass"
-				value="kind"
-			>
-				<label>
-					<en>Kind</en>
-					<de>Art</de>
-				</label>
-			</value-input>
-		</fields>
-		<table
-			observed-types="tl.demo.projectManagement:Deliverable"
-			types="tl.demo.projectManagement:Deliverable"
-		>
-			<columns>
-				<column attribute="name"/>
-				<computed-column name="kind"
-					type="tl.core:String"
-				>
-					<label>
-						<en>Kind</en>
-						<de>Art</de>
-					</label>
-					<value>$row.type().label()</value>
-				</computed-column>
-			</columns>
-			<inputs>
-				<input channel="project"/>
-			</inputs>
-			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#deliverables`))</rows>
-		</table>
-	</panel>
+							<label>
+								<en>New deliverable</en>
+								<de>Neuer Liefergegenstand</de>
+							</label>
+							<access>
+								<create
+									in="$project"
+									reference="tl.demo.projectManagement:ProjectScope#deliverables"
+								/>
+							</access>
+							<executability>
+								<disabled-if expr="if($kind == null, #('Choose the kind of the deliverable first.'@en, 'Wählen Sie zuerst die Art des Liefergegenstands.'@de))"/>
+							</executability>
+							<execute-script function="new($kind, context: $project, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-deliverable.view.xml"
+									>
+										<bind
+											channel="container"
+											to="project"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
+						</generic-command>
+					</commands>
+					<fields>
+						<value-input
+							inputs="project"
+							options="[`tl.demo.projectManagement:Specification`, `tl.demo.projectManagement:Prototype`, `tl.demo.projectManagement:Report`].filter(t -> $project != null &amp;&amp; $project.canCreate(`tl.demo.projectManagement:ProjectScope#deliverables`, $t))"
+							type="tl.model:TLClass"
+							value="kind"
+						>
+							<label>
+								<en>Kind</en>
+								<de>Art</de>
+							</label>
+						</value-input>
+					</fields>
+					<table
+						observed-types="tl.demo.projectManagement:Deliverable"
+						types="tl.demo.projectManagement:Deliverable"
+					>
+						<columns>
+							<column attribute="name"/>
+							<computed-column name="kind"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Kind</en>
+									<de>Art</de>
+								</label>
+								<value>$row.type().label()</value>
+							</computed-column>
+						</columns>
+						<inputs>
+							<input channel="project"/>
+						</inputs>
+						<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#deliverables`))</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane>
+				<panel>
+					<title>
+						<en>Edit deliverables</en>
+						<de>Liefergegenstände bearbeiten</de>
+					</title>
+					<form
+						input="project"
+						with-inset="true"
+					>
+						<composition-table attribute="deliverables">
+							<columns>
+								<column attribute="name"/>
+								<computed-column name="kind"
+									type="tl.core:String"
+								>
+									<label>
+										<en>Kind</en>
+										<de>Art</de>
+									</label>
+									<value>$row.type().label()</value>
+								</computed-column>
+							</columns>
+						</composition-table>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
 </view>

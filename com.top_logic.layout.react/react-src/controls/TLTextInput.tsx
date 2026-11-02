@@ -14,7 +14,9 @@ import {
   ARG_SUGGEST_CARET,
   ICON_CLEAR,
 } from 'tl-react-bridge';
-import type { TLCellProps, TextInputStateJson, SuggestionsAnswer, ListboxEntry, ListboxPartProps } from 'tl-react-bridge';
+import type {
+  TLCellProps, TextInputStateJson, SuggestionsAnswer, ListboxEntry, ListboxPartProps, CopyButtonPartProps,
+} from 'tl-react-bridge';
 import { showsValueOnly, validationOf } from './form/fieldState';
 
 const { useCallback, useLayoutEffect, useMemo, useRef } = React;
@@ -25,6 +27,9 @@ const SUGGEST_OPTIONS = { flushFields: false } as const;
 const I18N_KEYS = {
   'js.textInput.open': 'Open in a new tab',
   'js.textInput.clear': 'Clear the input',
+  'js.textInput.copy': 'Copy to clipboard',
+  'js.textInput.copied': 'Copied',
+  'js.textInput.copyFailed': 'Could not copy – select the text and press Ctrl+C',
 };
 
 /** The icon of the link that opens what the field holds. */
@@ -62,6 +67,15 @@ const normalizeUrl = (value: string): string => {
   return 'https://' + trimmed;
 };
 
+/**
+ * The button copying a preformatted value, drawn by the part `CopyButton`. The part is looked up only
+ * for a value offering the copy.
+ */
+const ValueCopyButton: React.FC<CopyButtonPartProps> = props => {
+  const CopyButton = usePart('CopyButton');
+  return <CopyButton {...props} />;
+};
+
 /** The list of suggestions, drawn by the part `Listbox` while it is open. */
 const SuggestionList: React.FC<ListboxPartProps> = props => {
   const Listbox = usePart('Listbox');
@@ -71,7 +85,8 @@ const SuggestionList: React.FC<ListboxPartProps> = props => {
 /**
  * A text input field rendered via React, drawn by the part `TextInput`: a single-line box by
  * default, or a multi-line text area when the field state requests it (state.multiline with
- * state.rows).
+ * state.rows, state.preformatted for a text shown as it is written). A preformatted value that is not
+ * editable offers to copy it (part `CopyButton`).
  *
  * Typing updates the local value immediately but the server `valueChanged` is debounced (and
  * always flushed on blur), so a field is not round-tripped on every keystroke. When
@@ -137,6 +152,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   const multiline = state.multiline === true;
+  const preformatted = multiline && state.preformatted === true;
   const disabled = state.disabled === true;
   const offersSuggestions = state.offersSuggestions === true && !disabled && !showsValueOnly(state);
 
@@ -213,7 +229,11 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   if (showsValueOnly(state)) {
     return (
       <FieldValue id={controlId} className={rootClassName(state) || undefined} text={text} href={href ?? undefined}
-        multiline={multiline} />
+        multiline={multiline} preformatted={preformatted}
+        action={preformatted && text !== ''
+          ? <ValueCopyButton text={text} label={t['js.textInput.copy']} copiedLabel={t['js.textInput.copied']}
+            failedLabel={t['js.textInput.copyFailed']} />
+          : undefined} />
     );
   }
 
@@ -261,6 +281,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
         type={multiline ? undefined : inputType}
         multiline={multiline}
         rows={multiline ? state.rows : undefined}
+        preformatted={preformatted}
         placeholder={state.placeholder}
         icon={hasIcon ? icon : undefined}
         action={action}

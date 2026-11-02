@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.kbbased;
 
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -33,6 +34,23 @@ public class PersistentEnd extends ConfiguredAttributeImpl implements TLAssociat
 		"referenceOfAssociationEnd", TLReference.class, OBJECT_NAME, PersistentReference.END_ATTR);
 
 	/**
+	 * The properties of an end that determine the default storage of its reference.
+	 *
+	 * <p>
+	 * A change of {@link PersistentReference#COMPOSITE_ATTR} is not adapted: It changes whether
+	 * the values are parts of their owner, which is not a mere change of the storage.
+	 * </p>
+	 *
+	 * @see ReferenceStorageChange
+	 */
+	private static final Set<String> STORAGE_PROPERTIES = Set.of(
+		PersistentReference.MULTIPLE_ATTR,
+		PersistentReference.ORDERED_ATTR,
+		PersistentReference.BAG_ATTR,
+		PersistentReference.HISTORY_TYPE_ATTR,
+		PersistentReference.DELETION_POLICY_ATTR);
+
+	/**
 	 * Creates a {@link PersistentEnd}.
 	 * 
 	 * @see PersistentReference
@@ -40,6 +58,23 @@ public class PersistentEnd extends ConfiguredAttributeImpl implements TLAssociat
 	@CalledByReflection
 	public PersistentEnd(KnowledgeObject ko) {
 		super(ko);
+	}
+
+	/**
+	 * Adapts the storage of the {@link #getReference() reference} of this end, when a property
+	 * determining its storage changes.
+	 *
+	 * @see ReferenceStorageChange
+	 */
+	@Override
+	public Object tSetData(String property, Object newValue) {
+		if (!STORAGE_PROPERTIES.contains(property) || Objects.equals(tGetData(property), newValue)) {
+			return super.tSetData(property, newValue);
+		}
+		ReferenceStorageChange change = ReferenceStorageChange.before(this);
+		Object oldValue = super.tSetData(property, newValue);
+		change.apply();
+		return oldValue;
 	}
 
 	@Override

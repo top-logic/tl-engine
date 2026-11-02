@@ -1,0 +1,69 @@
+/* Baum — docs/skalen.md „Gleiches wird zusammengelegt“ (W3, W4, W10), 3b §7.
+   ul.tl-tree[role=tree] > li.tl-tree__node[role=treeitem], flach, die Ebene in aria-level. Cursor und
+   Auswahl wie in der Tabelle: data-tl-state~="cursor" (den Ring zeichnet base.css über ::after, darum
+   ist der Knoten positioniert), aria-selected die Fläche — kein Balken links. Der Einzug je Ebene ist die
+   Breite des Toggles, inline aus dem TSX; ein Blatt hält ihren Platz mit tl-tree__spacer frei. Ein
+   Knoten, dessen Kinder kommen, trägt aria-busy; unter ihm steht eine tl-status-Zeile mit unbestimmtem
+   tl-progress — selbst ein treeitem eine Ebene tiefer, benannt „Lädt“ (js.tree.loading). Ein Knoten
+   bricht nicht um und endet nicht mit Ellipse: ist er breiter als der Baum, rollt der Baum waagerecht.
+   Der Baum ist ein Raster aus einer Spalte, so breit wie der breiteste Knoten, mindestens aber so breit
+   wie sichtbar; jeder Knoten und die Ladezeile füllen sie, so reichen Fläche beim Zeigen und Auswählen
+   und die Ablagemarken über die ganze gerollte Breite. Die Spalte ist minmax(max-content, 100%), nicht
+   umgekehrt: eine Spur wächst über ihr Minimum nur in freien Platz, und ein Rollkasten hat keinen —
+   minmax(100%, max-content) bliebe bei 100 %. So ist max-content das Minimum; liegt 100 % darunter, zählt
+   als Maximum das Minimum, und ein schmalerer Inhalt wächst bis 100 % in die sichtbare Breite.
+   align-content: start hält die Zeilen oben, wenn der Baum kürzer ist als sein Kasten. Ziehen und
+   Ablegen zeichnet drag.css. */
+
+.tl-tree {
+  display: grid;
+  grid-template-columns: minmax(max-content, 100%);
+  align-content: start;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  isolation: isolate;
+  list-style: none;
+  color: var(--tl-text-primary);
+}
+.tl-tree[hidden] { display: none; }
+
+.tl-tree__node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-height: var(--tl-size-row);
+  padding-inline-end: var(--tl-space-control-x);
+  cursor: pointer;
+}
+.tl-tree__node[hidden] { display: none; }
+
+/* Gezeigt und ausgewählt stehen in :where: Ablegen darauf (drag.css, eine Attribut-Spezifität) übermalt
+   sie, wie in der Tabelle. */
+:where(.tl-tree__node:hover) {
+  background: var(--tl-surface-interactive-hover);
+}
+
+:where(.tl-tree__node[aria-selected="true"]) {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-tree__spacer {
+  flex-shrink: 0;
+  width: var(--tl-size-control-sm);
+}
+
+/* Eine Zeile, ungekürzt; die automatische Mindestbreite des Flex-Elements (mit nowrap die Breite des
+   Texts) hält es so breit wie seinen Inhalt. */
+.tl-tree__content {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+
+/* Ein tl-text als Inhalt bleibt auf seiner Zeile. (0,2,0): text.css setzt pre-line mit (0,1,0) und steht
+   im Bundle danach — wie in der Tabellenzelle. */
+.tl-tree__content > .tl-text {
+  white-space: nowrap;
+}

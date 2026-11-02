@@ -52,6 +52,24 @@ describe('the part FieldValue as MUI Typography', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
+  it('draws a preformatted multi-line value without wrapping its lines', () => {
+    const value = draw({ text: 'a\n\tb', multiline: true, preformatted: true });
+
+    expect(getComputedStyle(value).whiteSpace).toBe('pre');
+    expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', '\tb']);
+  });
+
+  it('draws the action of a multi-line value beside it, in a grid carrying the class', () => {
+    const value = draw({ text: 'a\nb', multiline: true, preformatted: true, className: 'x',
+      action: <button type="button">Kopieren</button> });
+
+    const grid = value.parentElement!;
+    expect(grid.classList).toContain('x');
+    expect(value.classList).not.toContain('x');
+    expect(getComputedStyle(grid).display).toBe('grid');
+    expect(screen.getByRole('button', { name: 'Kopieren' }).parentElement).toBe(grid);
+  });
+
   it('draws an empty value as an empty element', () => {
     const value = draw({ text: '' });
 

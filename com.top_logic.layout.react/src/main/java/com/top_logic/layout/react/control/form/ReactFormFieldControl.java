@@ -332,6 +332,16 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Shows the text of a {@link #setMultiline(int) multi-line} field as it is written: in a font of
+	 * fixed width, without wrapping its lines.
+	 *
+	 * @see TextInputState#PREFORMATTED__PROP
+	 */
+	public void setPreformatted(boolean preformatted) {
+		putState(TextInputState.PREFORMATTED__PROP, Boolean.valueOf(preformatted));
+	}
+
+	/**
 	 * Whether the field is rendered as a multi-line text area.
 	 *
 	 * @see #setMultiline(int)

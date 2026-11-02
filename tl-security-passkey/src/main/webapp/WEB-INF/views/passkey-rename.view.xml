@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Renaming a passkey of the logged-in account, opened from the passkeys of the security tab of the
+	settings dialog (settings-tabs.view.xml of this module). The ordinary form over the name of the
+	passkey; storing it is editing the account the passkey belongs to.
+-->
+<view>
+	<channels>
+		<!-- The passkey to rename. -->
+		<channel name="model"/>
+	</channels>
+	<window
+		resizable="false"
+		width="380px"
+	>
+		<title>
+			<en>Rename passkey</en>
+			<de>Passkey umbenennen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="label"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Apply</en>
+						<de>Übernehmen</de>
+					</label>
+					<store-form-state/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

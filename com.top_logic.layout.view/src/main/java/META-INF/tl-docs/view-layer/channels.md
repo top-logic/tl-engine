@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
 order: 15
 ---
 
@@ -163,6 +163,16 @@ The source is a Java class implementing `ChannelSource`, configured in the `<sou
 - **The channel holds state, not events.** `update-interval` is the shortest time in milliseconds between two deliveries (default 250, zero delivers every value): a value published while an earlier one is still held back replaces it, and the last value of a burst is always delivered. A source whose consumers must see every message accumulates them into the value itself.
 - **The subscription follows the display.** The channel subscribes when the view declaring it is displayed and disposes the registration when the view is hidden - a tab nobody looks at, a closed dialog - or destroyed, exactly like the observation of a derived channel. The source therefore sees one subscription per displayed view instance per window, and one again each time a view is displayed anew. After the registration is disposed, publishing into its sink is harmless and ignored. A source that shares one external connection among its subscribers manages that sharing itself.
 - A source whose `subscribe` fails is logged, and the channel stays an ordinary writable value.
+
+### A source that keeps working while its view is hidden
+
+The subscription is the time the view is displayed, not the lifetime of what runs behind it. A monitor that records the telegrams of a bus or the queries of the database must go on recording while its tab is hidden, so that the whole log is there when the tab is displayed again. Such a source binds the recording to the **sub-session of the window**, not to the subscription:
+
+- `subscribe` runs on a request thread of the window, so `TLContextManager.getSubSession()` is the window's sub-session; each window has one of its own.
+- The source keeps the recording per sub-session. The first subscription (or a command of the view) starts it; each later subscription in the same window - the tab displayed again, the view rebuilt in the window - finds it and publishes the log at once. Disposing a subscription only stops publishing into that sink.
+- A `SubSessionListener` registered with `TLSubSessionContext.addUnboundListener(…)` ends the recording at the latest: it is notified when the window is torn down - closed, or abandoned by its client - and when the session ends. The view is being torn down at that time, so the listener only releases resources and publishes nothing. A recording stopped earlier removes its listener again.
+
+Polling the `ReactWindowRegistry` for the window is not needed.
 
 Java code that has a `ViewContext` and a channel at hand - an action starting background work, an element of its own - does not need a declared source: a `ChannelPublisher` created on a request thread delivers values into the channel from any thread with the same threading, throttling and conflation; `close()` ends it.
 

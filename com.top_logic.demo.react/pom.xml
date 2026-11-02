@@ -29,6 +29,12 @@
       <artifactId>tl-layout-view-agent</artifactId>
     </dependency>
 
+    <!-- Login with passkeys (WebAuthn): passwordless and as second factor. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-security-passkey</artifactId>
+    </dependency>
+
     <!-- External login through an OpenID Connect provider; configured in conf/pac4j-keycloak-demo.xml. -->
     <dependency>
       <groupId>com.top-logic</groupId>

@@ -28,6 +28,70 @@
 				</bundles>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance class="com.top_logic.util.sched.Scheduler">
+				<!--
+					Demo tasks for the scheduler administration (Administration > System > Scheduler),
+					each showing one situation: a run long enough to be stopped, a run failing with an
+					exception, a run reporting warnings, a task that is inactive by configuration, and a
+					task running once in the cluster under a cluster lock. They run daily at night or
+					by "Run now".
+				-->
+				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+					name="DemoLongRunningTask"
+					persistent="true"
+					working-time-max="90000"
+					working-time-min="60000"
+				>
+					<schedules>
+						<daily time-of-day="03:00"/>
+					</schedules>
+				</task>
+				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+					name="DemoFailingTask"
+					persistent="true"
+					rate-throw-runtime-exception="1"
+					working-time-max="2000"
+					working-time-min="1000"
+				>
+					<schedules>
+						<daily time-of-day="03:10"/>
+					</schedules>
+				</task>
+				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+					name="DemoWarningTask"
+					persistent="true"
+					rate-gui-warnings="0.8"
+					working-time-max="2000"
+					working-time-min="1000"
+					write-log-file="true"
+				>
+					<schedules>
+						<daily time-of-day="03:20"/>
+					</schedules>
+				</task>
+				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+					enabled="false"
+					name="DemoInactiveTask"
+					persistent="true"
+				>
+					<schedules>
+						<periodically interval="3600000"/>
+					</schedules>
+				</task>
+				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+					name="DemoClusterTask"
+					node-local="false"
+					persistent="true"
+					working-time-max="30000"
+					working-time-min="30000"
+				>
+					<schedules>
+						<daily time-of-day="03:30"/>
+					</schedules>
+				</task>
+			</instance>
+		</config>
 		<!--
 			The roles of this application: the administrator role that may open the administration
 			area, granted the operation "Administration" on the security root below; the account reader and user roles that the role rules below

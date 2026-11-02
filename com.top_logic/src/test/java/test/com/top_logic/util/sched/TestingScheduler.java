@@ -8,7 +8,9 @@ package test.com.top_logic.util.sched;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -59,6 +61,8 @@ public class TestingScheduler extends Scheduler {
 	private volatile CyclicBarrier _startWaitBarrier;
 
 	private volatile CyclicBarrier _endWaitBarrier;
+
+	private final CountDownLatch _threadInitialized = new CountDownLatch(1);
 
 	public TestingScheduler(InstantiationContext context, TestingScheduler.TestingSchedulerConfig config) {
     	super(context, config);
@@ -145,6 +149,28 @@ public class TestingScheduler extends Scheduler {
 	}
 
 	@Override
+	protected void initThreadWithThreadContext() {
+		super.initThreadWithThreadContext();
+		_threadInitialized.countDown();
+	}
+
+	/**
+	 * Waits until the dispatch thread has initialized itself, i.e. has attached the tasks known so
+	 * far. Tasks added afterwards are attached immediately.
+	 * 
+	 * @param timeout
+	 *        Milliseconds to wait at most.
+	 * @throws AssertionFailedError
+	 *         If the dispatch thread has not initialized itself within the timeout.
+	 */
+	public void awaitThreadInitialized(long timeout) throws InterruptedException {
+		if (!_threadInitialized.await(timeout, TimeUnit.MILLISECONDS)) {
+			throw new AssertionFailedError("Scheduler '" + getName() + "' has not initialized its thread within "
+				+ timeout + "ms.");
+		}
+	}
+
+	@Override
 	protected void waitForWork() {
 		super.waitForWork();
 		CyclicBarrier startWaitBarrier = _startWaitBarrier;
@@ -174,6 +200,13 @@ public class TestingScheduler extends Scheduler {
     public final void accessibleStartUp() {
     	super.startUp();
     }
+
+	/**
+	 * Make {@link #shutDown()} visible for testing.
+	 */
+	public final void accessibleShutDown() {
+		super.shutDown();
+	}
 
 	@Override
 	public SchedulerEntryStorage getEntries() {

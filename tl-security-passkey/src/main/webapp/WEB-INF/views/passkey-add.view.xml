@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Adding a passkey to the logged-in account, opened from the passkeys of the security tab of the
+	settings dialog (settings-tabs.view.xml of this module) after the password was confirmed.
+	
+	A dialog of its own because the browser asks the authenticator for a new passkey only in
+	answer to a click of the user, and the click that opened this dialog was spent on the password.
+	The passkey is created for the account that is logged in, whatever the dialog is opened with.
+	Once it is stored, the dialog closes; the table it was opened from shows the new passkey.
+-->
+<view>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Add passkey</en>
+			<de>Passkey hinzufügen</de>
+		</title>
+		<inset>
+			<stack>
+				<text>
+					<label>
+						<en>Create a passkey: your device or security key stores it and confirms your logins with your fingerprint, face or PIN. You can rename it afterwards.</en>
+						<de>Erstellen Sie einen Passkey: Ihr Gerät oder Sicherheitsschlüssel speichert ihn und bestätigt Ihre Anmeldungen mit Fingerabdruck, Gesicht oder PIN. Sie können ihn anschließend umbenennen.</de>
+					</label>
+				</text>
+				<passkey-registration
+					appearance="PRIMARY"
+					image="css:bi bi-key"
+				>
+					<label>
+						<en>Create passkey</en>
+						<de>Passkey erstellen</de>
+					</label>
+					<on-success>
+						<close-dialog/>
+					</on-success>
+				</passkey-registration>
+			</stack>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

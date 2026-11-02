@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The set-up of a passkey as second factor during the login (PasskeySecondFactor): the account
+	whose password the login checked is required to use a second factor and creates a passkey, which
+	completes the login.
+-->
+<view>
+	<channels>
+		<!-- The account setting up its second factor (set by PasskeySecondFactor). -->
+		<channel name="account"/>
+	</channels>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Set up a passkey</en>
+			<de>Passkey einrichten</de>
+		</title>
+		<inset>
+			<stack>
+				<text>
+					<label>
+						<en>Your account requires a second factor for the login. Create a passkey: your device or security key stores it and confirms your future logins with your fingerprint, face or PIN.</en>
+						<de>Ihr Konto erfordert einen zweiten Faktor für die Anmeldung. Erstellen Sie einen Passkey: Ihr Gerät oder Sicherheitsschlüssel speichert ihn und bestätigt Ihre künftigen Anmeldungen mit Fingerabdruck, Gesicht oder PIN.</de>
+					</label>
+				</text>
+				<passkey-registration
+					account="account"
+					appearance="PRIMARY"
+					complete-login="true"
+					image="css:bi bi-key"
+				>
+					<label>
+						<en>Create passkey</en>
+						<de>Passkey erstellen</de>
+					</label>
+				</passkey-registration>
+			</stack>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

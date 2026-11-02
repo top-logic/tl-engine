@@ -45,8 +45,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CHANGE_PASSWORD;
 
 	/**
-	 * @en Too much unsuccessful login attempts. The account has been temporarily deactivated.
-	 *     Please wait {0} seconds before retry.
+	 * @en Too many unsuccessful login attempts. The account has been temporarily deactivated.
+	 *     Please wait {0} seconds before trying again.
 	 */
 	public static ResKey1 ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT;
 
@@ -103,8 +103,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CHECK_OTP_FIELD_MESSAGE;
 
 	/**
-	 * @en Too much unsuccessful attempts to confirm one-time password. Please wait {0} seconds for
-	 *     the next attempt.
+	 * @en Too many unsuccessful attempts to confirm the one-time password. Please wait {0} seconds
+	 *     before the next attempt.
 	 */
 	public static ResKey1 CHECK_OTP_TOO_MANY_ATTEMPTS__TIMEOUT;
 

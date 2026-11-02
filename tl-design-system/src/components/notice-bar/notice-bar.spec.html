@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — NoticeBar</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">NoticeBar</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">warning</p>
+    <div role="status">
+      <div class="tl-alert tl-notice-bar tl-type-body" data-tl-role="warning" role="button" tabindex="0" aria-label="Wartung in 4:59 Jetzt abmelden">
+        <div class="tl-alert__body"><div class="tl-alert__message">Wartung in <span class="tl-notice-bar__countdown tl-nums tl-type-body-strong" aria-live="off">4:59</span></div></div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">info</p>
+    <div role="status">
+      <div class="tl-alert tl-notice-bar tl-type-body" data-tl-role="info">
+        <div class="tl-alert__body"><div class="tl-alert__message">Neue Version verfügbar.</div></div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">error</p>
+    <div role="alert">
+      <div class="tl-alert tl-notice-bar tl-type-body" data-tl-role="error">
+        <div class="tl-alert__body"><div class="tl-alert__message">Die Verbindung zum Server ist unterbrochen.</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

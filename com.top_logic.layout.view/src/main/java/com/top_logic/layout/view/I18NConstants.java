@@ -61,6 +61,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPOSITION_TABLE_ADD;
 
 	/**
+	 * @en Delete selected
+	 */
+	public static ResKey TABLE_REMOVE_SELECTED_ROWS;
+
+	/**
 	 * @en Export to Excel
 	 * @tooltip Saves the displayed rows and columns of the table as Excel file.
 	 */

@@ -206,6 +206,20 @@ A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit
   ```
 - **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type` or `create-type-expr`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one.
 
+## Removing rows: per row and the selected rows at once
+
+A row-editing `<table row-edit="…">` with `on-remove="DELETE"` (or a `<composition-table>`, whose rows are removed from its reference) offers the removal of rows in edit mode:
+
+```xml
+<table rows="all(`my:Deliverable`)" row-edit="SELECTED" on-remove="DELETE"
+    selection="selected" selection-mode="multi"/>
+```
+
+- **Per row.** Every row carries a delete button in an action column at its end (`RowSetTableControl#COLUMN_DELETE`).
+- **The selected rows at once.** A table with `selection-mode="multi"` also offers the command *Delete selected* (`RowSetTableControl#getRemoveSelectedRowsCommand()`), executable while a row is selected. The checkbox in the header selects all rows the filter shows, so selecting all and deleting them is two clicks. A frameless row-editing `<table>` contributes the command to the enclosing command scope next to the add command, a framed table shows it in its own toolbar.
+- **Removed is not deleted yet.** A removed row leaves the table at once, but the remove semantics of the binding are applied when the form is saved; cancelling the edit brings the rows back. All selected rows are removed in one change of the row set (`RowSetEditSession#removeRows(Collection)`).
+- **A part of a deleted row leaves with it.** Deleting an object deletes the parts of its compositions. When such a part is itself a row of the table - the instances of a type composed of objects of the same type, say - removing the container in a table that deletes removed rows removes the rows of its parts, at any depth, as well: changes made to them are dropped instead of being stored into objects the same save deletes, and an object deleted with its container is not deleted a second time (`RowSetEditSession#removeRows(Collection)`, decided by the containers of the stored objects).
+
 ## Long values in a cell
 
 A value whose control needs more room than a row offers - a multi-line text, a code editor, an HTML or rich text, a field holding several values each in a control of its own - is displayed in a cell by a one-line preview (for a text its first line) and a button opening the full control in a dialog; a read-only value is just shown there, a multi-line text with its line breaks and indentation. A tooltip is not the way to show a long value.

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -386,6 +387,17 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	public void removeRow(TLObject rowObject) {
 		if (_session != null) {
 			_session.removeRow(rowObject);
+		}
+	}
+
+	/**
+	 * Removes the given rows from the row set at once.
+	 *
+	 * @see RowSetEditSession#removeRows(Collection)
+	 */
+	public void removeRows(Collection<? extends TLObject> rowObjects) {
+		if (_session != null) {
+			_session.removeRows(rowObjects);
 		}
 	}
 

@@ -137,6 +137,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Name of the {@link #getAddRowCommand() add-row command}. */
 	public static final String COMMAND_ADD_ROW = "tableAddRow";
 
+	/** Name of the {@link #getRemoveSelectedRowsCommand() command removing the selected rows}. */
+	public static final String COMMAND_REMOVE_SELECTED_ROWS = "tableRemoveSelectedRows";
+
 	/** Panel state: the validation error of the bound attribute, or {@code null}. */
 	private static final String ERROR_MESSAGE = "errorMessage";
 
@@ -243,10 +246,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** The command adding a row, see {@link #getAddRowCommand()}. */
 	private SimpleCommandModel _addRowCommand;
 
-	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
-	private ReactButtonControl _addButton;
+	/** The command removing the selected rows, see {@link #getRemoveSelectedRowsCommand()}. */
+	private SimpleCommandModel _removeSelectedRowsCommand;
 
-	/** The panel toolbar holding the Add button, or {@code null} if not in edit mode. */
+	/** The panel toolbar holding the row commands, or {@code null} if it shows none. */
 	private ReactToolbarControl _toolbar;
 
 	/**
@@ -304,6 +307,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			.setPlacement(CommandPlacement.TOOLBAR)
 			.setVisible(this::offersRowCreation)
 			.setExecutable(this::offersRowCreation);
+		_removeSelectedRowsCommand = SimpleCommandModel.create(COMMAND_REMOVE_SELECTED_ROWS,
+			Resources.getInstance().getString(I18NConstants.TABLE_REMOVE_SELECTED_ROWS),
+			context -> removeSelectedRows())
+			.setImage(Icons.COMPOSITION_TABLE_DELETE)
+			.setPlacement(CommandPlacement.TOOLBAR)
+			.setVisible(this::offersSelectedRowsRemoval)
+			.setExecutable(() -> offersSelectedRowsRemoval() && !_selectedKeys.isEmpty());
 
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
@@ -679,6 +689,45 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		return !createTypes().isEmpty();
 	}
 
+	/**
+	 * The command removing all selected rows from the table while it is edited, with the
+	 * {@link RowSetBinding#getRemoveMode() remove semantics} the per-row delete buttons apply.
+	 *
+	 * <p>
+	 * The command is offered in edit mode of a table that removes rows and lets the user
+	 * {@link SelectionMode#MULTI select several rows} (the header checkbox selects all of them);
+	 * it is executable while a row is selected. Like the {@link #getAddRowCommand() add-row
+	 * command}, a {@link #setFramed framed} table shows it in its own toolbar, the creator of a
+	 * frameless table offers it through the enclosing command scope.
+	 * </p>
+	 */
+	public CommandModel getRemoveSelectedRowsCommand() {
+		return _removeSelectedRowsCommand;
+	}
+
+	/**
+	 * Whether the table offers the {@link #getRemoveSelectedRowsCommand() removal of the selected
+	 * rows}.
+	 */
+	public boolean offersSelectedRowsRemoval() {
+		return isEditing() && _selectionMode == SelectionMode.MULTI
+			&& binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE;
+	}
+
+	private HandlerResult removeSelectedRows() {
+		if (!offersSelectedRowsRemoval()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		List<TLObject> rows = new ArrayList<>();
+		for (Object selected : _selectedKeys) {
+			if (selected instanceof TLObject row) {
+				rows.add(row);
+			}
+		}
+		removeRows(rows);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
 	private HandlerResult addRowOfChosenType(ReactContext context) {
 		List<TLClass> types = createTypes();
 		if (types.size() <= 1) {
@@ -742,8 +791,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	@Override
 	public void onFormStateChanged(FormModel source) {
 		super.onFormStateChanged(source);
-		// The types offered for new rows follow the edit session.
+		// The types offered for new rows and the removal of rows follow the edit session.
 		_addRowCommand.fireStateChanged();
+		_removeSelectedRowsCommand.fireStateChanged();
 	}
 
 	/**
@@ -891,10 +941,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		}
 
-		// Update toolbar: a framed table offers an own Add button in edit mode, when a type is
-		// offered for new rows.
-		updateToolbar(_framed && editMode && offersRowCreation());
+		// Update toolbar: a framed table offers its row commands in edit mode in its own toolbar.
+		updateToolbar(_framed && editMode);
 		_addRowCommand.fireStateChanged();
+		_removeSelectedRowsCommand.fireStateChanged();
 	}
 
 	/**
@@ -968,6 +1018,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		_selectedKeys.clear();
 		_selectedKeys.addAll(selectedKeys);
+		_removeSelectedRowsCommand.fireStateChanged();
 
 		if (_policy == RowEditPolicy.SELECTED && isEditing() && _tableControl != null
 			&& !flipped.isEmpty()) {
@@ -1008,23 +1059,35 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 	}
 
-	private void updateToolbar(boolean showAddButton) {
+	/**
+	 * Shows the commands changing the rows of a framed table in its toolbar: the
+	 * {@link #getAddRowCommand() add-row command} and the
+	 * {@link #getRemoveSelectedRowsCommand() removal of the selected rows}, as far as the table
+	 * offers them.
+	 */
+	private void updateToolbar(boolean showRowCommands) {
 		if (_toolbar != null) {
 			_toolbar.cleanupTree();
 			_toolbar = null;
-			_addButton = null;
 		}
 
-		if (showAddButton) {
-			_addButton = new ReactButtonControl(_context, _addRowCommand);
-
-			// TLPanel renders a single `toolbar` child control (a TLToolbar), so wrap the Add
-			// button in a toolbar rather than pushing a bare button list.
-			_toolbar = new ReactToolbarControl(_context);
-			_toolbar.addGroup("add", ToolbarGroupDisplay.INLINE, null, null, List.of(_addButton));
-			putState("toolbar", _toolbar);
-		} else {
+		List<ReactControl> buttons = new ArrayList<>();
+		if (showRowCommands) {
+			if (offersRowCreation()) {
+				buttons.add(new ReactButtonControl(_context, _addRowCommand));
+			}
+			if (offersSelectedRowsRemoval()) {
+				buttons.add(new ReactButtonControl(_context, _removeSelectedRowsCommand));
+			}
+		}
+		if (buttons.isEmpty()) {
 			putState("toolbar", null);
+		} else {
+			// TLPanel renders a single `toolbar` child control (a TLToolbar), so wrap the buttons in
+			// a toolbar rather than pushing a bare button list.
+			_toolbar = new ReactToolbarControl(_context);
+			_toolbar.addGroup("rows", ToolbarGroupDisplay.INLINE, null, null, buttons);
+			putState("toolbar", _toolbar);
 		}
 	}
 
@@ -1134,7 +1197,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;
-		_addButton = null;
 		_tableControl = null;
 		super.onCleanup();
 	}

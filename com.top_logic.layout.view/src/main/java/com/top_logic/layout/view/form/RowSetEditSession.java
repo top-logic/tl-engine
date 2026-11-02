@@ -6,7 +6,10 @@
 package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -752,53 +755,135 @@ public class RowSetEditSession implements FormParticipant {
 	 *        The row object (overlay or transient) to remove.
 	 */
 	public void removeRow(TLObject rowObject) {
-		if (_fieldModel == null) {
-			return;
-		}
-		int index = _fieldModel.getCurrentList().indexOf(rowObject);
-		if (index >= 0) {
-			deleteRow(rowObject, index);
-		}
+		removeRows(List.of(rowObject));
 	}
 
 	/**
-	 * Removes a row from the row set.
+	 * Removes the given rows from the row set, with a single change of its membership. The
+	 * binding's remove semantics are applied on commit, not here.
 	 *
-	 * @param rowObject
-	 *        The row to remove from the current list.
-	 * @param rowIndex
-	 *        The row's index in the row models, which are in the order of the rows.
+	 * <p>
+	 * When the binding {@link RowSetBinding.RemoveMode#DELETE deletes} removed rows, the rows that
+	 * are parts of a removed row (through its compositions, at any depth) are removed with it:
+	 * they are deleted together with their container, so changes made to them are dropped rather
+	 * than stored into objects the same save deletes.
+	 * </p>
+	 *
+	 * @param rowObjects
+	 *        The row objects (overlays or transient) to remove; objects that are no rows are
+	 *        skipped.
 	 */
-	private void deleteRow(TLObject rowObject, int rowIndex) {
+	public void removeRows(Collection<? extends TLObject> rowObjects) {
 		if (_fieldModel == null || !_editable) {
 			return;
+		}
+		if (_binding.getRemoveMode() == RowSetBinding.RemoveMode.DELETE) {
+			rowObjects = withContainedRows(rowObjects);
 		}
 
 		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
 		// the initial snapshot) and value-change events observe the membership change.
 		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
-		currentList.remove(rowObject);
-		_fieldModel.setValue(currentList);
-
-		// Remove row model and unregister from validation model.
-		if (rowIndex >= 0 && rowIndex < _rowModels.size()) {
-			CompositionRowModel removedRow = _rowModels.remove(rowIndex);
-			// A removed row takes no part in the save, nor do edits within its cells.
-			disposeCells(removedRow);
-			TLObjectOverlay removedOverlay = removedRow.getRowOverlay();
-			if (removedOverlay != null) {
-				_fieldModel.removeRowOverlay(removedOverlay);
+		List<TLObject> removedRows = new ArrayList<>();
+		List<CompositionRowModel> removedModels = new ArrayList<>();
+		for (TLObject rowObject : rowObjects) {
+			int rowIndex = currentList.indexOf(rowObject);
+			if (rowIndex < 0) {
+				continue;
 			}
-			if (_validationModel != null) {
-				if (removedOverlay != null) {
-					_validationModel.removeOverlay(removedOverlay);
-				} else if (rowObject.tTransient()) {
-					_validationModel.removeOverlay(rowObject);
-				}
+			currentList.remove(rowIndex);
+			removedRows.add(rowObject);
+			// The row models are in the order of the rows.
+			removedModels.add(rowIndex < _rowModels.size() ? _rowModels.remove(rowIndex) : null);
+		}
+		if (removedRows.isEmpty()) {
+			return;
+		}
+		_fieldModel.setValue(currentList);
+		for (int n = 0; n < removedRows.size(); n++) {
+			dropRowModel(removedRows.get(n), removedModels.get(n));
+		}
+		membershipChanged(currentList);
+	}
+
+	/**
+	 * The given rows and the current rows that are parts of one of them, in the order of the rows.
+	 *
+	 * <p>
+	 * Containment is decided by the stored objects the rows edit: a row is part of a removed row
+	 * when the object the removed row edits is one of the containers of the object it edits.
+	 * </p>
+	 */
+	private List<TLObject> withContainedRows(Collection<? extends TLObject> rowObjects) {
+		Set<TLObject> removedObjects = new HashSet<>();
+		for (TLObject row : rowObjects) {
+			TLObject stored = storedObject(row);
+			if (stored != null) {
+				removedObjects.add(stored);
 			}
 		}
+		List<TLObject> result = new ArrayList<>(rowObjects);
+		if (removedObjects.isEmpty()) {
+			return result;
+		}
+		for (TLObject row : _fieldModel.getCurrentList()) {
+			if (result.contains(row)) {
+				continue;
+			}
+			TLObject stored = storedObject(row);
+			if (stored != null && isPartOf(stored, removedObjects)) {
+				result.add(row);
+			}
+		}
+		return result;
+	}
 
-		membershipChanged(currentList);
+	/**
+	 * The stored object the given row edits, {@code null} for a new row.
+	 */
+	private static TLObject storedObject(TLObject row) {
+		TLObject base = row instanceof TLObjectOverlay overlay ? overlay.getBase() : row;
+		return base == null || base.tTransient() ? null : base;
+	}
+
+	/**
+	 * Whether one of the containers of the given stored object, at any depth, is one of the given
+	 * objects.
+	 */
+	private static boolean isPartOf(TLObject object, Set<TLObject> containers) {
+		for (TLObject container = object.tContainer(); container != null; container = container.tContainer()) {
+			if (containers.contains(container)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Releases the model of a removed row and unregisters the row from the validation.
+	 *
+	 * @param rowObject
+	 *        The removed row.
+	 * @param removedRow
+	 *        The model of the row, {@code null} for none.
+	 */
+	private void dropRowModel(TLObject rowObject, CompositionRowModel removedRow) {
+		if (removedRow == null) {
+			return;
+		}
+		// A removed row takes no part in the save, nor do edits within its cells.
+		disposeCells(removedRow);
+		TLObjectOverlay removedOverlay = removedRow.getRowOverlay();
+		if (removedOverlay != null) {
+			_fieldModel.removeRowOverlay(removedOverlay);
+		}
+		if (_validationModel != null) {
+			if (removedOverlay != null) {
+				_validationModel.removeOverlay(removedOverlay);
+			} else if (rowObject.tTransient()) {
+				_validationModel.removeOverlay(rowObject);
+			}
+		}
 	}
 
 	/**

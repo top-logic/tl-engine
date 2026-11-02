@@ -144,7 +144,8 @@ public class AttributeRowSetBinding implements RowSetBinding {
 			// Delete objects taken out of a composition (present originally, absent now).
 			Set<TLObject> current = new HashSet<>(persistedRows);
 			for (TLObject original : originalRows) {
-				if (!current.contains(original)) {
+				// An original may already be deleted as part of another deleted original.
+				if (!current.contains(original) && original.tValid()) {
 					original.tDelete();
 				}
 			}

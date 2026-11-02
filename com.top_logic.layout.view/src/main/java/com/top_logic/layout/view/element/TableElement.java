@@ -71,6 +71,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.table.TableId;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
@@ -465,7 +466,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 
-		contributeAddRowCommand(context, formControl, binding, control);
+		contributeRowCommands(context, formControl, binding, control);
 		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
 			control::getExportRenderers, inputChannels);
 
@@ -473,23 +474,31 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	}
 
 	/**
-	 * Contributes the {@link RowSetTableControl#getAddRowCommand() add-row command} of the table to
-	 * the enclosing command scope (next to the form's save and cancel commands). The table itself
-	 * renders frameless, so it has no own toolbar to host the command.
+	 * Contributes the commands changing the rows of the table to the enclosing command scope (next
+	 * to the form's save and cancel commands): the {@link RowSetTableControl#getAddRowCommand()
+	 * add-row command}, when the table creates rows, and the
+	 * {@link RowSetTableControl#getRemoveSelectedRowsCommand() removal of the selected rows}, when
+	 * it removes rows and lets the user select several. The table itself renders frameless, so it
+	 * has no own toolbar to host them.
 	 */
-	private static void contributeAddRowCommand(ViewContext context, FormControl formControl,
+	private void contributeRowCommands(ViewContext context, FormControl formControl,
 			RowSetBinding binding, RowSetTableControl control) {
-		if (binding.getCreateTypes().isEmpty()) {
-			return;
-		}
 		CommandScope scope = context.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
+		if (!binding.getCreateTypes().isEmpty()) {
+			contribute(scope, formControl, control.getAddRowCommand());
+		}
+		if (binding.getRemoveMode() != RowSetBinding.RemoveMode.NONE
+			&& _config.getSelectionMode() == SelectionMode.MULTI) {
+			contribute(scope, formControl, control.getRemoveSelectedRowsCommand());
+		}
+	}
 
-		CommandModel addCommand = control.getAddRowCommand();
-		scope.addCommand(addCommand);
-		formControl.addCleanupAction(() -> scope.removeCommand(addCommand));
+	private static void contribute(CommandScope scope, FormControl formControl, CommandModel command) {
+		scope.addCommand(command);
+		formControl.addCleanupAction(() -> scope.removeCommand(command));
 	}
 
 	/**

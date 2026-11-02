@@ -21,7 +21,9 @@ import com.top_logic.security.passkey.PendingAuthentication;
  * passkey as second factor after the password); offered for no account, the user picks a passkey of
  * any account and the passkey is the only proof (a login with a passkey alone). The success handler
  * receives the account the passkey belongs to, as {@link PasskeyService#finishAuthentication(
- * PendingAuthentication, String)} established it.
+ * PendingAuthentication, String)} established it. Before, the browser is told which passkeys the
+ * relying party accepts for that account, see
+ * {@link com.top_logic.layout.react.control.webauthn.ReactWebAuthnControl#signalAllAcceptedCredentials(String, String, java.util.Collection)}.
  * </p>
  */
 public class PasskeyAuthentication extends PasskeyCeremony<PendingAuthentication, Person> {
@@ -43,12 +45,26 @@ public class PasskeyAuthentication extends PasskeyCeremony<PendingAuthentication
 
 	@Override
 	protected PendingAuthentication start(Person account) {
-		return service().startAuthentication(account, request());
+		return service().startAuthentication(account);
 	}
 
 	@Override
 	protected Person finish(PendingAuthentication pending, String credentialJson) {
 		return service().finishAuthentication(pending, credentialJson);
+	}
+
+	/**
+	 * Tells the browser which passkeys the relying party accepts for the account that logged in,
+	 * so that the authenticator removes or hides the ones the application no longer has.
+	 */
+	@Override
+	protected void succeeded(Person account) {
+		PasskeyService service = service();
+		String rpId = service.getRpId();
+		if (rpId == null) {
+			return;
+		}
+		getControl().signalAllAcceptedCredentials(rpId, service.getUserId(account), service.getCredentialIds(account));
 	}
 
 }

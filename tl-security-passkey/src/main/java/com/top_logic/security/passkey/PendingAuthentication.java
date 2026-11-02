@@ -20,8 +20,9 @@ public final class PendingAuthentication extends PendingCeremony {
 
 	private final AssertionRequest _request;
 
-	PendingAuthentication(RelyingParty relyingParty, Person account, long timeout, AssertionRequest request) {
-		super(relyingParty, account, timeout);
+	PendingAuthentication(RelyingParty relyingParty, RelyingPartyAddress address, Person account, long timeout,
+			AssertionRequest request) {
+		super(relyingParty, address, account, timeout);
 		_request = request;
 	}
 

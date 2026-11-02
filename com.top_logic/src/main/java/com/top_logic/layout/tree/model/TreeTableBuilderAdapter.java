@@ -33,7 +33,7 @@ public class TreeTableBuilderAdapter<N> extends DefaultTreeTableBuilder {
 		 * The {@link TreeView} for resolving child objects.
 		 */
 		@Name("treeView")
-		PolymorphicConfiguration<TreeView<?>> getTreeView();
+		PolymorphicConfiguration<? extends TreeView<?>> getTreeView();
 
 	}
 

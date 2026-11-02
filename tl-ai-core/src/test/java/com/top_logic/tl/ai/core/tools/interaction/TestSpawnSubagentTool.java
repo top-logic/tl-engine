@@ -7,7 +7,12 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.Map;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -15,6 +20,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
@@ -81,5 +87,15 @@ public class TestSpawnSubagentTool extends TestCase {
 
 		assertTrue(result.text(), result.text().startsWith("ERROR: spawn_subagent needs a run recorded under a"
 			+ " conversation"));
+	}
+
+	/**
+	 * The suite, with the {@link SubagentWorkers} the spawned subagent runs under, which ends it
+	 * before the thread context it runs in stops.
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestSpawnSubagentTool.class),
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

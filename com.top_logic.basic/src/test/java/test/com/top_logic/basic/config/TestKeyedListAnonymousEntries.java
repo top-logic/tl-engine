@@ -18,6 +18,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -159,6 +160,28 @@ public class TestKeyedListAnonymousEntries extends AbstractTypedConfigurationTes
 			"<keyed>"
 				+ "<entry value='x' " + POSITION + "='before' " + REFERENCE + "='unknown'/>"
 				+ "</keyed>"));
+	}
+
+	public void testRemoveOfUnknownKeyIsIgnored() throws ConfigurationException {
+		BufferingProtocol log = new BufferingProtocol();
+		protocol = log;
+		initResolverAndContext();
+
+		Owner owner = readOwner(BASE_KEYED, owner(
+			"<keyed>"
+				+ "<entry name='unknown' " + OPERATION + "='remove'/>"
+				+ "</keyed>"));
+		assertValues(owner.getKeyed(), "a1", "a2", "k1", "a3");
+		assertEquals("", log.getError());
+		BasicTestCase.assertContains("Ignored removal of entry 'unknown' from property '", log.getOutput());
+	}
+
+	public void testRemoveOfKnownKey() throws ConfigurationException {
+		Owner owner = readOwner(BASE_KEYED, owner(
+			"<keyed>"
+				+ "<entry name='k' " + OPERATION + "='remove'/>"
+				+ "</keyed>"));
+		assertValues(owner.getKeyed(), "a1", "a2", "a3");
 	}
 
 	public void testIndexUpdatesUnkeyedList() throws ConfigurationException {

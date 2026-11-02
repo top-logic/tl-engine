@@ -5,9 +5,14 @@
  */
 package test.com.top_logic.knowledge.service.db2;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import junit.framework.Test;
 
 import test.com.top_logic.LocalTestSetup;
+import test.com.top_logic.basic.AssertNoErrorLogListener;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.UnreachableAssertion;
@@ -20,17 +25,23 @@ import com.top_logic.dob.attr.ComputedMOAttribute;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.attr.storage.CacheValueFactory;
 import com.top_logic.dob.attr.storage.CachedComputedAttributeStorage;
+import com.top_logic.dob.attr.storage.ComputedAttributeStorage;
 import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.ex.DuplicateTypeException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.knowledge.event.ItemDeletion;
+import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.UpdateEvent;
+import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 
 /**
@@ -44,6 +55,12 @@ public class TestCacheAttributes extends AbstractDBKnowledgeBaseClusterTest {
 	protected static final String TEST_TYPE = "type";
 
 	protected static final String TEST_ATTRIBUTE = "attribute";
+
+	/**
+	 * Computed attribute whose value can not be computed for the {@link #A1_NAME} value
+	 * {@link FailingValueFactory#_failingA1}.
+	 */
+	protected static final String FAILING_ATTRIBUTE = "failingAttribute";
 
 	static class TestingValueFactory implements CacheValueFactory {
 
@@ -86,6 +103,35 @@ public class TestCacheAttributes extends AbstractDBKnowledgeBaseClusterTest {
 
 	}
 
+	/**
+	 * {@link CacheValueFactory} that fails for a configurable value of {@link #A1_NAME}, like a
+	 * derived value whose computation rule no longer accepts the stored source value.
+	 */
+	static class FailingValueFactory implements CacheValueFactory {
+
+		/**
+		 * Value of {@link #A1_NAME} for which the computation fails, <code>null</code> for never.
+		 */
+		static volatile String _failingA1;
+
+		@Override
+		public Object getCacheValue(MOAttribute attribute, DataObject item, Object[] storage) {
+			MOAttribute a1Attr = ((MOStructure) item.tTable()).getAttributeOrNull(A1_NAME);
+			Object a1 = a1Attr.getStorage().getCacheValue(a1Attr, item, storage);
+			if (a1 != null && a1.equals(_failingA1)) {
+				throw new IllegalStateException("Value can not be computed for " + A1_NAME + " value: " + a1);
+			}
+			return "computed: " + a1;
+		}
+
+		@Override
+		public boolean preserveCacheValue(MOAttribute cacheAttribute, DataObject changedObject,
+				Object[] storage, MOAttribute changedAttribute) {
+			return !A1_NAME.equals(changedAttribute.getName());
+		}
+
+	}
+
 	@Override
 	protected LocalTestSetup createSetup(Test self) {
 		DBKnowledgeBaseClusterTestSetup setup = (DBKnowledgeBaseClusterTestSetup) super.createSetup(self);
@@ -101,6 +147,13 @@ public class TestCacheAttributes extends AbstractDBKnowledgeBaseClusterTest {
 					testType.addAttribute(computedMOAttribute);
 				} catch (DuplicateAttributeException ex) {
 					log.error("Duplicate attribute " + TEST_ATTRIBUTE, ex);
+				}
+				ComputedMOAttribute failingAttribute = new ComputedMOAttribute(FAILING_ATTRIBUTE, MOPrimitive.STRING);
+				failingAttribute.setStorage(new ComputedAttributeStorage(new FailingValueFactory()));
+				try {
+					testType.addAttribute(failingAttribute);
+				} catch (DuplicateAttributeException ex) {
+					log.error("Duplicate attribute " + FAILING_ATTRIBUTE, ex);
 				}
 				try {
 					typeRepository.addMetaObject(testType);
@@ -155,6 +208,146 @@ public class TestCacheAttributes extends AbstractDBKnowledgeBaseClusterTest {
 		Transaction delTX = beginNode2();
 		node2Ko.delete();
 		delTX.commit();
+	}
+
+	/**
+	 * Computed attributes are not part of the update event of a commit, neither on the committing
+	 * node nor on a node that receives the change through refetch.
+	 */
+	public void testComputedAttributeNotInChangeEvent() throws DataObjectException, RefetchTimeout {
+		Transaction tx = begin();
+		KnowledgeObject ko = kb().createKnowledgeObject(TEST_TYPE);
+		setA1(ko, "a1");
+		tx.commit();
+		kbNode2().refetch();
+
+		List<ItemUpdate> localUpdates = new ArrayList<>();
+		UpdateListener localListener = updateCollector(localUpdates);
+		List<ItemUpdate> remoteUpdates = new ArrayList<>();
+		UpdateListener remoteListener = updateCollector(remoteUpdates);
+		kb().addUpdateListener(localListener);
+		kbNode2().addUpdateListener(remoteListener);
+		try {
+			Transaction chTx = begin();
+			setA1(ko, "a1_new");
+			chTx.commit();
+
+			kbNode2().refetch();
+		} finally {
+			kb().removeUpdateListener(localListener);
+			kbNode2().removeUpdateListener(remoteListener);
+		}
+
+		assertChangeOfA1Only("Local", localUpdates);
+		assertChangeOfA1Only("Remote", remoteUpdates);
+	}
+
+	private void assertChangeOfA1Only(String message, List<ItemUpdate> updates) {
+		assertEquals(message + " updates: " + updates, 1, updates.size());
+		ItemUpdate update = updates.get(0);
+		Map<String, Object> newValues = update.getValues();
+		assertEquals(message, "a1_new", newValues.get(A1_NAME));
+		assertFalse(message + " update contains computed attribute: " + update, newValues.containsKey(TEST_ATTRIBUTE));
+		assertFalse(message + " update contains computed attribute: " + update,
+			newValues.containsKey(FAILING_ATTRIBUTE));
+	}
+
+	private static UpdateListener updateCollector(List<ItemUpdate> updates) {
+		return new UpdateListener() {
+			@Override
+			public void notifyUpdate(KnowledgeBase sender, UpdateEvent event) {
+				updates.addAll(event.getChanges().getUpdates());
+			}
+		};
+	}
+
+	/**
+	 * A commit does not compute the value of a computed attribute for the state before the
+	 * commit, which may no longer be computable.
+	 */
+	public void testNoErrorForUncomputableOldValue() throws DataObjectException {
+		Transaction tx = begin();
+		KnowledgeObject ko = kb().createKnowledgeObject(TEST_TYPE);
+		setA1(ko, "outdated");
+		tx.commit();
+
+		FailingValueFactory._failingA1 = "outdated";
+		AssertNoErrorLogListener logListener = new AssertNoErrorLogListener(false);
+		logListener.activate();
+		try {
+			Transaction chTx = begin();
+			setA1(ko, "current");
+			chTx.commit();
+			logListener.assertNoErrorLogged("Commit of a change away from an uncomputable value: ");
+		} finally {
+			logListener.deactivate();
+			FailingValueFactory._failingA1 = null;
+		}
+		assertEquals("computed: current", ko.getAttributeValue(FAILING_ATTRIBUTE));
+	}
+
+	/**
+	 * The deletion event of a commit reports the computed values of the deleted object.
+	 */
+	public void testComputedAttributeInDeletionEvent() throws DataObjectException {
+		Transaction tx = begin();
+		KnowledgeObject ko = kb().createKnowledgeObject(TEST_TYPE);
+		setA1(ko, "a1");
+		tx.commit();
+
+		List<ItemDeletion> deletions = new ArrayList<>();
+		UpdateListener listener = deletionCollector(deletions);
+		kb().addUpdateListener(listener);
+		try {
+			Transaction delTx = begin();
+			ko.delete();
+			delTx.commit();
+		} finally {
+			kb().removeUpdateListener(listener);
+		}
+
+		assertEquals("Deletions: " + deletions, 1, deletions.size());
+		ItemDeletion deletion = deletions.get(0);
+		assertEquals(TestingValueFactory.value("a1"), deletion.getOldValue(TEST_ATTRIBUTE));
+		assertEquals("computed: a1", deletion.getOldValue(FAILING_ATTRIBUTE));
+	}
+
+	/**
+	 * Deleting an object whose computed value can no longer be computed does not log an error.
+	 */
+	public void testNoErrorForUncomputableValueOfDeletedObject() throws DataObjectException {
+		Transaction tx = begin();
+		KnowledgeObject ko = kb().createKnowledgeObject(TEST_TYPE);
+		setA1(ko, "outdated");
+		tx.commit();
+
+		FailingValueFactory._failingA1 = "outdated";
+		List<ItemDeletion> deletions = new ArrayList<>();
+		UpdateListener listener = deletionCollector(deletions);
+		kb().addUpdateListener(listener);
+		AssertNoErrorLogListener logListener = new AssertNoErrorLogListener(false);
+		logListener.activate();
+		try {
+			Transaction delTx = begin();
+			ko.delete();
+			delTx.commit();
+			logListener.assertNoErrorLogged("Deletion of an object with an uncomputable value: ");
+		} finally {
+			logListener.deactivate();
+			kb().removeUpdateListener(listener);
+			FailingValueFactory._failingA1 = null;
+		}
+		assertEquals("Deletions: " + deletions, 1, deletions.size());
+		assertEquals(TestingValueFactory.value("outdated"), deletions.get(0).getOldValue(TEST_ATTRIBUTE));
+	}
+
+	private static UpdateListener deletionCollector(List<ItemDeletion> deletions) {
+		return new UpdateListener() {
+			@Override
+			public void notifyUpdate(KnowledgeBase sender, UpdateEvent event) {
+				deletions.addAll(event.getChanges().getDeletions());
+			}
+		};
 	}
 
 	/**

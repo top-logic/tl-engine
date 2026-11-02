@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<split-panel orientation="horizontal">
+		<panes>
+			<pane id="routed">
+				<slot-content to="pane-content">
+					<panel title="Routed"/>
+				</slot-content>
+				<slot name="pane-content"/>
+			</pane>
+			<pane id="unrouted">
+				<slot-content to="nowhere">
+					<panel title="Lost"/>
+				</slot-content>
+				<slot-content to="nowhere"
+					optional="true"
+				>
+					<panel title="Optional"/>
+				</slot-content>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

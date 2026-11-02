@@ -22,7 +22,7 @@ public interface PageValidators extends ConfigurationItem {
 	 * Configuration of the required {@link PageValidator}s.
 	 */
 	@DefaultContainer
-	List<PolymorphicConfiguration<PageValidator>> getValidators();
+	List<PolymorphicConfiguration<? extends PageValidator>> getValidators();
 
 }
 

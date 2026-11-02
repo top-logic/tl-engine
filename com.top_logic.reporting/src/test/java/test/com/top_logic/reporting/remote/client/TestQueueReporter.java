@@ -22,7 +22,17 @@ import com.top_logic.reporting.remote.Reporter;
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class TestQueueReporter extends AbstractReporterTest{
-	
+
+	/**
+	 * Maximum time in milliseconds to wait for the report creator to finish a report.
+	 */
+	private static final long REPORT_TIMEOUT_MS = 60000;
+
+	/**
+	 * Time in milliseconds between two status checks while waiting for a report.
+	 */
+	private static final long POLL_INTERVAL_MS = 100;
+
     public TestQueueReporter(String aName) {
         super(aName);
     }
@@ -65,33 +75,51 @@ public class TestQueueReporter extends AbstractReporterTest{
 
         ReportTicket ticket = createNewReport();
         String id = ticket.getReportID();
-        
-        ReportStatus status = null;
-        ReportResult result = null;
-        
-        // wait for the creator-runner to create the report...
-        // (we can't be 100 % sure this will always work fine, but this is the only way to test)
-        Thread.sleep(3000);
-        
+
+		ReportStatus status = waitForReport(id);
+
 		// report is now created: status in state isDone, we don't expect any errors
-		status = reporter.getStatus(id);
-		assertFalse(status.isError());
-		assertTrue(status.isDone());
-		assertEquals(0, status.getExpectedDuration());
+		assertFalse("Report '" + id + "' failed: " + describe(status), status.isError());
+		assertTrue("Report '" + id + "' not done within " + REPORT_TIMEOUT_MS + "ms: " + describe(status),
+			status.isDone());
+		assertEquals("Expected duration of finished report '" + id + "'.", 0, status.getExpectedDuration());
 
 		// report is done -> getting the report. we expect to get a stream of the finished report
-		result = reporter.getReport(id);
-		assertNotNull(result);
-		assertNotNull(result.getReport());
-		assertTrue(result.getReportStatus().isDone());
-        
+		ReportResult result = reporter.getReport(id);
+		assertNotNull("No result for report '" + id + "'.", result);
+		assertNotNull("No report data for report '" + id + "': " + describe(result.getReportStatus()),
+			result.getReport());
+		assertTrue("Status of result for report '" + id + "' is not done: " + describe(result.getReportStatus()),
+			result.getReportStatus().isDone());
+
         // trying to get a report for a not existing ID
         result = reporter.getReport("doesNotExist");
-        assertNotNull(result);
-        assertFalse(result.getReportStatus().isDone());
-        assertTrue(result.getReportStatus().isError());
+		assertNotNull("No result for non-existing report.", result);
+		assertFalse("Non-existing report is done.", result.getReportStatus().isDone());
+		assertTrue("Non-existing report is not in error state.", result.getReportStatus().isError());
     }
-    
+
+	private static String describe(ReportStatus status) {
+		return "expected duration " + status.getExpectedDuration() + ", exception " + status.getException();
+	}
+
+	/**
+	 * Waits until the report with the given ID is done or failed, at most
+	 * {@link #REPORT_TIMEOUT_MS}.
+	 * 
+	 * @return The last status of the report.
+	 */
+	private ReportStatus waitForReport(String id) throws InterruptedException {
+		long timeout = System.currentTimeMillis() + REPORT_TIMEOUT_MS;
+		while (true) {
+			ReportStatus status = reporter.getStatus(id);
+			if (status.isDone() || status.isError() || System.currentTimeMillis() > timeout) {
+				return status;
+			}
+			Thread.sleep(POLL_INTERVAL_MS);
+		}
+	}
+
 	@Override
 	protected Reporter createReporter() {
 	    return new QueueReporter();

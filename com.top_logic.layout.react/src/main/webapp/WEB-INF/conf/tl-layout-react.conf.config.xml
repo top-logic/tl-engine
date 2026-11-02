@@ -5,10 +5,10 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
-					<module key="com.top_logic.layout.react.ReactComponentRegistry$Module"
+					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
 						value="true"
 					/>
-					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
+					<module key="com.top_logic.layout.react.window.WindowModelEventService$Module"
 						value="true"
 					/>
 				</modules>
@@ -28,6 +28,11 @@
 					</listener>
 				</listeners>
 			</instance>
+		</config>
+
+		<!-- Lets the browser windows follow the commits of other threads. -->
+		<config service-class="com.top_logic.layout.react.window.WindowModelEventService">
+			<instance class="com.top_logic.layout.react.window.WindowModelEventService"/>
 		</config>
 
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">

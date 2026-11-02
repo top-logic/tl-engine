@@ -15,6 +15,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -91,5 +93,57 @@ public class EnterEditModeAction implements ViewAction {
 	@Override
 	public boolean changesViewState() {
 		return true;
+	}
+
+	/**
+	 * The {@link FormControl#editPermission() edit permission} of the form the command runs in,
+	 * so that a command entering the edit mode is hidden or disabled like the form's own Edit
+	 * button.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return new EditPermissionRule();
+	}
+
+	/**
+	 * {@link ViewExecutabilityRule} following the {@link FormControl#editPermission() edit
+	 * permission} of the form of the context the command is bound to.
+	 */
+	private static final class EditPermissionRule
+			implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
+
+		private FormControl _form;
+
+		@Override
+		public void bind(ViewContext context) {
+			_form = context.getFormModel() instanceof FormControl form ? form : null;
+		}
+
+		/**
+		 * Follows the state of the form: the displayed object and the edit mode decide the
+		 * permission.
+		 */
+		@Override
+		public Runnable observe(Runnable revalidate) {
+			if (_form == null) {
+				return () -> {
+					// Nothing observed.
+				};
+			}
+			FormModelListener listener = source -> revalidate.run();
+			_form.addFormModelListener(listener);
+			return () -> _form.removeFormModelListener(listener);
+		}
+
+		/**
+		 * Outside a form, and while the form is edited already, the action does nothing to refuse.
+		 */
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			if (_form == null || _form.isEditMode()) {
+				return ExecutableState.EXECUTABLE;
+			}
+			return _form.editPermission();
+		}
 	}
 }

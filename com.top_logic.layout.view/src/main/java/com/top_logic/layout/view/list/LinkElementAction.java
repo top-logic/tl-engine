@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.util.error.TopLogicException;
@@ -78,6 +79,15 @@ public class LinkElementAction implements ViewAction {
 
 		scope.resetNewElement();
 		return result;
+	}
+
+	/**
+	 * The access checks the enclosing list declares for linking the processed element, see
+	 * {@link ObjectListElement.Config#getLinkAccess()}, applied to the main argument of the command.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return new ListAccessRule(ObjectListScope::linkAccess);
 	}
 
 	/**

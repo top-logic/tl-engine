@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.wysiwyg;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,11 +19,14 @@ import org.jsoup.select.NodeTraversor;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.RegExpUtil;
 import com.top_logic.layout.form.model.FieldModel;
@@ -35,6 +39,8 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.wysiwyg:Html} attributes.
@@ -46,10 +52,21 @@ import com.top_logic.mig.html.HTMLConstants;
  * insertion channel: what it writes there is inserted at the cursor.
  * </p>
  *
+ * <p>
+ * With {@link Config#getMentions() mentions}, typing a trigger character such as <code>@</code>
+ * offers a list of objects matching the text typed after it, and picking one inserts a link to it.
+ * </p>
+ *
  * @implNote The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the
  *           {@link #htmlPreview(StructuredText) first line} of the formatted text stands for it.
  */
+@Label("Formatted text editor")
+@InApp
+@TargetType(value = TLTypeKind.STRING, name = WysiwygControlProvider.HTML_TYPE)
 public class WysiwygControlProvider implements ReactFieldControlProvider {
+
+	/** Qualified name of the model type of the formatted texts edited here. */
+	public static final String HTML_TYPE = "tl.model.wysiwyg:Html";
 
 	/**
 	 * Configuration options for {@link WysiwygControlProvider}.
@@ -61,6 +78,9 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 
 		/** @see #getInsertChannel() */
 		String INSERT_CHANNEL = "insert-channel";
+
+		/** @see #getMentions() */
+		String MENTIONS = "mentions";
 
 		@Override
 		@ClassDefault(WysiwygControlProvider.class)
@@ -79,6 +99,7 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<ViewCommand.Config> getCommands();
 
 		/**
@@ -98,6 +119,19 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 		@Nullable
 		String getInsertChannel();
 
+		/**
+		 * The ways of referring to objects by typing a trigger character.
+		 *
+		 * <p>
+		 * Typing the trigger character of a mention offers the objects its function computes for
+		 * the text typed after it; picking one inserts a link to the object. Each mention has a
+		 * trigger character of its own.
+		 * </p>
+		 */
+		@Name(MENTIONS)
+		@EntryTag("mention")
+		List<Mention.Config> getMentions();
+
 	}
 
 	/**
@@ -112,6 +146,8 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 
 	private final String _insertChannel;
 
+	private final List<Mention> _mentions = new ArrayList<>();
+
 	/**
 	 * Creates a {@link WysiwygControlProvider} from configuration.
 	 */
@@ -125,11 +161,28 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 			}
 		}
 		_insertChannel = config.getInsertChannel();
+
+		Set<String> triggers = new HashSet<>();
+		for (Mention.Config mentionConfig : config.getMentions()) {
+			String trigger = mentionConfig.getTrigger();
+			if (trigger == null || trigger.codePointCount(0, trigger.length()) != 1) {
+				context.error("The trigger of a mention must be a single character, not '" + trigger + "'.");
+				continue;
+			}
+			if (!triggers.add(trigger)) {
+				context.error("The trigger '" + trigger + "' is used by more than one mention of the editor.");
+				continue;
+			}
+			_mentions.add(new Mention(mentionConfig));
+		}
 	}
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
-		return new ReactWysiwygControl(context, model, _commands, _commandConfigs, _insertChannel);
+		ReactWysiwygControl control =
+			new ReactWysiwygControl(context, model, _commands, _commandConfigs, _insertChannel);
+		control.setMentions(_mentions);
+		return control;
 	}
 
 	@Override

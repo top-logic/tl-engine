@@ -487,10 +487,25 @@ public class EditorFactory implements AnnotationCustomizations {
 	 * Creates {@link DeclarativeFormOptions} for the given {@link PropertyDescriptor}.
 	 */
 	public DeclarativeFormOptions formOptions(PropertyDescriptor contextProperty) {
+		return formOptions(contextProperty, null);
+	}
+
+	/**
+	 * Creates {@link DeclarativeFormOptions} for the given {@link PropertyDescriptor} whose UI is
+	 * created in the given {@link FormContainer}.
+	 * 
+	 * @see DeclarativeFormOptions#getContainer()
+	 */
+	public DeclarativeFormOptions formOptions(PropertyDescriptor contextProperty, FormContainer container) {
 		return new DeclarativeFormOptions() {
 			@Override
 			public PropertyDescriptor getProperty() {
 				return contextProperty;
+			}
+
+			@Override
+			public FormContainer getContainer() {
+				return container;
 			}
 
 			@Override

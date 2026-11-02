@@ -44,6 +44,11 @@ public final class NoFileSystemCache extends FileSystemCache {
 	}
 
 	@Override
+	public void refresh(Path path) {
+		// Nothing is cached.
+	}
+
+	@Override
 	public Iterator<PathUpdate> getUpdates() {
 		return Collections.emptyIterator();
 	}

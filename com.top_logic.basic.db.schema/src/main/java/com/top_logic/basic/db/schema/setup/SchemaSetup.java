@@ -422,13 +422,65 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 
 	/**
 	 * Creates a {@link MORepository} for types in the represented {@link SchemaConfiguration}.
+	 * 
+	 * @param sqlDialect
+	 *        The SQL dialect of the database the types are used with.
+	 * @param typeFactory
+	 *        The factory creating the types.
 	 */
-	public MORepository createMORepository(MOFactory typeFactory) {
+	public MORepository createMORepository(DBHelper sqlDialect, MOFactory typeFactory) {
 		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
-		MORepository repository = new DefaultMORepository(getConfig().hasMultipleBranches());
+		MORepository repository =
+			new DefaultMORepository(getConfig().hasMultipleBranches(), effectiveBranchLast(getConfig(), sqlDialect));
 		createTypes(context, repository, typeFactory);
 		repository.resolveReferences();
 		return repository;
+	}
+
+	/**
+	 * The effective value of {@link SchemaConfiguration#getBranchLast()} for a database with the
+	 * given SQL dialect.
+	 * 
+	 * @param schema
+	 *        The schema configuration.
+	 * @param sqlDialect
+	 *        The SQL dialect of the database the schema is used with.
+	 * @return The value set in the given schema, or
+	 *         {@link DBHelper#seeksInListOnFirstIndexColumnOnly()} of the given dialect, if the
+	 *         schema has no value.
+	 */
+	public static boolean effectiveBranchLast(SchemaConfiguration schema, DBHelper sqlDialect) {
+		Boolean branchLast = schema.getBranchLast();
+		if (branchLast != null) {
+			return branchLast.booleanValue();
+		}
+		return sqlDialect.seeksInListOnFirstIndexColumnOnly();
+	}
+
+	/**
+	 * The given schema with explicit layout options for a database with the given SQL dialect.
+	 * 
+	 * <p>
+	 * A schema stored in the database must state the layout its tables are built with
+	 * independently of the database it is read from.
+	 * </p>
+	 * 
+	 * @param schema
+	 *        The schema configuration.
+	 * @param sqlDialect
+	 *        The SQL dialect of the database the schema is used with.
+	 * @return The given schema, if it sets all layout options, or a copy of it with the effective
+	 *         values set.
+	 * 
+	 * @see #effectiveBranchLast(SchemaConfiguration, DBHelper)
+	 */
+	public static SchemaConfiguration withExplicitLayout(SchemaConfiguration schema, DBHelper sqlDialect) {
+		if (schema.getBranchLast() != null) {
+			return schema;
+		}
+		SchemaConfiguration result = TypedConfiguration.copy(schema);
+		result.setBranchLast(Boolean.valueOf(effectiveBranchLast(schema, sqlDialect)));
+		return result;
 	}
 
 	/**

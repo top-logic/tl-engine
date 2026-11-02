@@ -27,6 +27,8 @@ import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
@@ -58,8 +60,8 @@ public class ChatSessionManager {
 		Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime());
 
 	/**
-	 * Fallback context window budget for chat session memory, used only when no default model
-	 * is configured. The budget is a placeholder until the first agent run: the agent runner
+	 * Fallback context window budget for chat session memory, used only while no default model
+	 * is available. The budget is a placeholder until the first agent run: the agent runner
 	 * re-aligns the memory with the effective per-agent context window (assignment override >
 	 * model catalog) before each run.
 	 */
@@ -855,11 +857,13 @@ public class ChatSessionManager {
 		if (registry == null || runtime == null) {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
-		String defaultModel = runtime.getDefaultModel();
-		if (defaultModel == null || defaultModel.isBlank()) {
+		ModelTarget target;
+		try {
+			target = runtime.defaultTarget();
+		} catch (TopLogicException ex) {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
-		ModelInfo info = registry.getModel(defaultModel);
+		ModelInfo info = registry.getModel(target.model());
 		if (info == null) {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}

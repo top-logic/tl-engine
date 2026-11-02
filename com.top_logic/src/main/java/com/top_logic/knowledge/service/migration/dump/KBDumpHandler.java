@@ -5,12 +5,8 @@
  */
 package com.top_logic.knowledge.service.migration.dump;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.GZIPOutputStream;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CalledFromJSP;
@@ -20,12 +16,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.basic.version.Version;
 import com.top_logic.knowledge.security.SecurityStorage;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.migration.KnowledgeBaseDumper;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -38,16 +30,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class KBDumpHandler extends AbstractCommandHandler {
-
-	/**
-	 * Gzip file extension.
-	 */
-	public static final String GZ_EXT = ".gz";
-
-	/**
-	 * Dump file extension.
-	 */
-	public static final String DUMP_EXT = "-dump.xml";
 
 	/**
 	 * Configuration for {@link KBDumpHandler}
@@ -106,7 +88,7 @@ public class KBDumpHandler extends AbstractCommandHandler {
 	 */
 	@CalledFromJSP
 	public static HandlerResult handleCommand(DisplayContext aContext) {
-		return handleCommand(aContext, Collections.singleton(SecurityStorage.TABLE_NAME));
+		return handleCommand(aContext, KBDump.DEFAULT_EXCLUDE_TYPES);
 	}
 
 	/**
@@ -118,40 +100,7 @@ public class KBDumpHandler extends AbstractCommandHandler {
 	 */
 	@CalledFromJSP
 	public static HandlerResult handleCommand(DisplayContext aContext, Set<String> excludeTypes) {
-		Version version = Version.getApplicationVersion();
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		long revision = kb.getHistoryManager().getLastRevision();
-		String name =
-			version.getName() + "-" + version.getVersionString() + "-r" + revision + DUMP_EXT + GZ_EXT;
-
-		BinaryDataSource data = new BinaryDataSource() {
-			@Override
-			public String getName() {
-				return name;
-			}
-
-			@Override
-			public long getSize() {
-				return -1;
-			}
-
-			@Override
-			public String getContentType() {
-				return BinaryData.CONTENT_TYPE_OCTET_STREAM;
-			}
-
-			@Override
-			public void deliverTo(OutputStream out) throws IOException {
-				KnowledgeBaseDumper dumper = new KnowledgeBaseDumper(kb);
-				if (excludeTypes != null) {
-					dumper.setIgnoreTypes(excludeTypes);
-				}
-				try (GZIPOutputStream zipOut = new GZIPOutputStream(out)) {
-					dumper.dump(zipOut);
-				}
-			}
-		};
-
+		BinaryData data = KBDump.newDump(PersistencyLayer.getKnowledgeBase(), excludeTypes);
 		aContext.getWindowScope().deliverContent(data);
 		return HandlerResult.DEFAULT_RESULT;
 	}

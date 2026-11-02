@@ -364,9 +364,32 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * configuration - refuses as well.
 	 * </p>
 	 *
+	 * <p>
+	 * Confirms every entry not yet confirmed first, as Apply does, see
+	 * {@link #checkForHandOver()}.
+	 * </p>
+	 *
 	 * @return Why the configuration must not be saved, <code>null</code> if it may.
 	 */
 	public ConfigValidation.Refusal checkForSave() {
+		return checkForHandOver();
+	}
+
+	/**
+	 * Confirms every entry not yet confirmed, then checks the configuration as it is to be handed
+	 * over.
+	 *
+	 * <p>
+	 * The user who saves has finished editing, so an entry filled in but not confirmed is part of
+	 * what is saved. An entry that cannot be confirmed stays pending with the reason at its key
+	 * field and refuses the hand-over, see {@link ConfigValidation#confirmPending(ConfigFieldIndex)}.
+	 * </p>
+	 */
+	private ConfigValidation.Refusal checkForHandOver() {
+		ConfigValidation.Refusal notConfirmed = ConfigValidation.confirmPending(_index);
+		if (notConfirmed != null) {
+			return notConfirmed;
+		}
 		ConfigurationItem edited = _model.edited();
 		return ConfigValidation.refusalFor(edited, _index, mandatory(edited));
 	}
@@ -742,6 +765,11 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * untouched and this control unrebuilt.
 	 *
 	 * <p>
+	 * Confirms every entry not yet confirmed first, as if the user had confirmed each, see
+	 * {@link #checkForHandOver()}. An entry that cannot be confirmed refuses the Apply.
+	 * </p>
+	 *
+	 * <p>
 	 * Takes back every finding the previous refusal placed before checking anything, via
 	 * {@link ConfigFieldIndex#clearFindings()}: a finding still holding is placed again a few
 	 * lines below, one the user has meanwhile fixed is gone. Without that, a violation could
@@ -774,11 +802,11 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		if (!_model.isEditMode()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
-		ConfigurationItem edited = _model.edited();
-		ConfigValidation.Refusal refusal = ConfigValidation.refusalFor(edited, _index, mandatory(edited));
+		ConfigValidation.Refusal refusal = checkForHandOver();
 		if (refusal != null) {
 			return refusal(refusal.message(), refusal.details());
 		}
+		ConfigurationItem edited = _model.edited();
 		if (_onSave == null) {
 			_model.apply();
 		} else {

@@ -66,7 +66,7 @@ public class AdapterRevisionCompareComponent extends LayoutComponent implements 
 
 		@Override
 		@ItemDefault(EmptyLayoutControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/**
 		 * string representation of object types, that shall be displayed in compare table.

@@ -36,6 +36,10 @@
 *.prefs text
 *.project text
 *.properties text
+
+# Resource bundles: merged key by key, see tools/git/merge-properties.sh.
+**/META-INF/messages_*.properties merge=tl-properties
+**/WEB-INF/conf/resources/*.properties merge=tl-properties
 *.proto text
 *.py text
 *.rb text

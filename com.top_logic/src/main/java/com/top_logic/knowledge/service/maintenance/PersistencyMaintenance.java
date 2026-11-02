@@ -134,17 +134,41 @@ public class PersistencyMaintenance {
 	 *        active.
 	 */
 	public static void scheduleRestart(Log log, boolean leaveMaintenanceWindow) {
+		scheduleRestart(log, leaveMaintenanceWindow, null);
+	}
+
+	/**
+	 * Restarts the persistency layer a few seconds from now and runs the given operation while it
+	 * is stopped.
+	 *
+	 * <p>
+	 * The operation runs after every service depending on the {@link KnowledgeBaseFactory} has been
+	 * shut down and before they are started again, so it may rewrite the database freely, e.g.
+	 * replace its whole content. Otherwise the restart is the one of
+	 * {@link #scheduleRestart(Log, boolean)}.
+	 * </p>
+	 *
+	 * @param log
+	 *        Receives the outcome of the restart.
+	 * @param leaveMaintenanceWindow
+	 *        See {@link #scheduleRestart(Log, boolean)}.
+	 * @param whileStopped
+	 *        The operation to run while the persistency layer is stopped, <code>null</code> for
+	 *        none. It reports its own problems to the given log; the persistency layer is started
+	 *        again in any case.
+	 */
+	public static void scheduleRestart(Log log, boolean leaveMaintenanceWindow, Runnable whileStopped) {
 		log.info("Restarting the persistency layer in " + RESTART_DELAY_SECONDS + " seconds.");
 
 		SchedulerService.getInstance().schedule(
 			() -> ThreadContext.inSystemContext(PersistencyMaintenance.class,
-				() -> restart(log, leaveMaintenanceWindow)),
+				() -> restart(log, leaveMaintenanceWindow, whileStopped)),
 			RESTART_DELAY_SECONDS, TimeUnit.SECONDS);
 	}
 
-	private static void restart(Log log, boolean leaveMaintenanceWindow) {
+	private static void restart(Log log, boolean leaveMaintenanceWindow, Runnable whileStopped) {
 		try {
-			ModuleUtil.INSTANCE.restart(KnowledgeBaseFactory.Module.INSTANCE, null);
+			ModuleUtil.INSTANCE.restart(KnowledgeBaseFactory.Module.INSTANCE, whileStopped);
 		} catch (RestartException ex) {
 			if (leaveMaintenanceWindow) {
 				log.error("Restarting the persistency layer failed, the maintenance window stays active.", ex);

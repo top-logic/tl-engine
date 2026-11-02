@@ -17,6 +17,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.ProviderException;
@@ -40,7 +41,7 @@ public class TestBedrockConverseStreamContract extends TestCase {
 	private static final class TestableProvider extends BedrockConverseProvider {
 
 		TestableProvider() {
-			super("test-key", "https://bedrock.example.com", HttpClient.newHttpClient());
+			super(FixedCredentials.NONE, "https://bedrock.example.com", HttpClient.newHttpClient());
 		}
 
 		/**

@@ -43,7 +43,7 @@ public class PropertyImport<C extends PropertyImport.Config<?>> extends StoreHan
 		 * property value.
 		 */
 		@ItemDefault(StringValueProvider.class)
-		PolymorphicConfiguration<ConfigurationValueProvider<?>> getFormat();
+		PolymorphicConfiguration<? extends ConfigurationValueProvider<?>> getFormat();
 
 	}
 

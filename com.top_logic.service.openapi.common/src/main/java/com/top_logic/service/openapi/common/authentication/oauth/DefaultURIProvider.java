@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.credential.oauth.OAuthServerConfig;
 
 /**
  * {@link TokenURIProvider} delivering configured {@link URL}.
@@ -88,6 +89,11 @@ public class DefaultURIProvider extends AbstractConfiguredInstance<DefaultURIPro
 	@Override
 	public URI getTokenEndpointURI() {
 		return OAuthUtils.toURI(getConfig().getTokenURL());
+	}
+
+	@Override
+	public void initTokenEndpoint(OAuthServerConfig server) {
+		server.setTokenUrl(getConfig().getTokenURL().toExternalForm());
 	}
 
 	@Override

@@ -41,6 +41,12 @@ public class QueueReporter implements Reporter, ReportQueueConstants {
    /** Expected average duration of a report in seconds for {@link #doGetExpectedDuration(String)}*/
    public static final int AVERAGE_REPORT_DURATION = 30;
 
+	/**
+	 * Maximum time in milliseconds {@link #shutDown()} waits for the {@link CreatorRunner} to
+	 * terminate.
+	 */
+	public static final long SHUTDOWN_TIMEOUT_MS = 30000;
+
 	private CreatorRunner creator;
     
 	public QueueReporter(){
@@ -67,11 +73,8 @@ public class QueueReporter implements Reporter, ReportQueueConstants {
     }
     
     public static void initDirectories() {
-	    if (!IO_TMPDIR.exists() || !IO_TMPDIR.exists()) {
-	        throw new RuntimeException("No system tmpDir in " + IO_TMPDIR);
-	    }
         if (!REPORT_DIR.exists()) {
-            if (!REPORT_DIR.mkdir()) {
+            if (!REPORT_DIR.mkdirs()) {
                 throw new RuntimeException("Failed to create " + REPORT_DIR);
             }
         } else {
@@ -355,12 +358,28 @@ public class QueueReporter implements Reporter, ReportQueueConstants {
 	/**
 	 * The Creator-Thread will be stopped when shut down.
 	 * 
+	 * <p>
+	 * Waits at most {@link #SHUTDOWN_TIMEOUT_MS} for the thread to terminate, so that it no longer
+	 * accesses the queue directories when this method returns.
+	 * </p>
+	 * 
 	 * @see com.top_logic.reporting.remote.Reporter#shutDown()
 	 */
     @Override
 	public void shutDown() {
     	Logger.info(QueueReporter.class.getSimpleName() + " shut down", QueueReporter.class);
+		if (creator == null) {
+			return;
+		}
     	creator.stopRunner();
+		try {
+			creator.join(SHUTDOWN_TIMEOUT_MS);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+		if (creator.isAlive()) {
+			Logger.warn("Report creator did not terminate within " + SHUTDOWN_TIMEOUT_MS + "ms.", QueueReporter.class);
+		}
    	}
 
 }

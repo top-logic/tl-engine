@@ -92,12 +92,12 @@ public class UpdateTLDataTypeProcessor extends TLModelBaseLineMigrationProcessor
 		@Name(DatatypeConfig.STORAGE_MAPPING)
 		@DefaultContainer
 		@Nullable
-		PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
+		PolymorphicConfiguration<? extends StorageMapping<?>> getStorageMapping();
 
 		/**
 		 * @see #getStorageMapping()
 		 */
-		void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
+		void setStorageMapping(PolymorphicConfiguration<? extends StorageMapping<?>> value);
 
 	}
 
@@ -154,7 +154,7 @@ public class UpdateTLDataTypeProcessor extends TLModelBaseLineMigrationProcessor
 		}
 
 		DBColumnType columnType = getConfig().getDBMapping();
-		PolymorphicConfiguration<StorageMapping<?>> storageMapping = getConfig().getStorageMapping();
+		PolymorphicConfiguration<? extends StorageMapping<?>> storageMapping = getConfig().getStorageMapping();
 		AnnotatedConfig<TLTypeAnnotation> annotations = getConfig();
 		_util.updateTLDataType(connection, type, newModule, dataTypeName, getConfig().getKind(), columnType,
 			storageMapping, annotations);

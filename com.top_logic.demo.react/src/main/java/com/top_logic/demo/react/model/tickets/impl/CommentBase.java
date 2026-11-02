@@ -63,6 +63,11 @@ public interface CommentBase extends com.top_logic.model.TLObject {
 	String DATE_ATTR = "date";
 
 	/**
+	 * Name of the table storing {@link #COMMENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #ATTACHMENTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")

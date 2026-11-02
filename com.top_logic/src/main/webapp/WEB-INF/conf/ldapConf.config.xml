@@ -21,8 +21,8 @@
 							provider-url="%LDAP_URL%"
 							base-dn="%LDAP_BASE_DN%"
 							master-principal="%LDAP_PRINCIPAL%"
-							master-credential="%LDAP_CREDENTIAL%"
 						>
+							<master-credential name="ldap_credential"/>
 							<access-groups>
 								<access-group name="%LDAP_GROUP_1%" />
 								<access-group name="%LDAP_GROUP_2%" />

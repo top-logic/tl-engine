@@ -43,7 +43,7 @@ public class StructureGridBuilder<R> extends AbstractTreeGridBuilder<R> {
 		 */
 		@Mandatory
 		@Name(AbstractTreeGridBuilder.Config.BUILDER_ATTRIBUTE)
-		PolymorphicConfiguration<StructureModelBuilder<Object>> getBuilder();
+		PolymorphicConfiguration<? extends StructureModelBuilder<Object>> getBuilder();
 
 	}
 

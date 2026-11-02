@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.provider;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,6 +19,8 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 import de.haumacher.msgbuf.io.StringR;
@@ -32,8 +35,8 @@ import de.haumacher.msgbuf.json.JsonReader;
  */
 public abstract class AbstractStreamingProvider implements LLMProvider {
 
-	/** The API key for authentication. May be {@code null} for unauthenticated providers. */
-	protected final String _apiKey;
+	/** Authentication of the requests to the provider API. */
+	private final CredentialProvider _credentials;
 
 	/** The base URL of the provider API (without trailing slash). */
 	protected final String _baseUrl;
@@ -51,22 +54,22 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	 * Creates a new {@link AbstractStreamingProvider} with default timeout (10 minutes) and no
 	 * custom headers.
 	 *
-	 * @param apiKey
-	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param credentials
+	 *        Authentication of the requests to the provider API.
 	 * @param baseUrl
 	 *        The base URL. A trailing slash is stripped.
 	 * @param httpClient
 	 *        The HTTP client to use.
 	 */
-	protected AbstractStreamingProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		this(apiKey, baseUrl, httpClient, Duration.ofMinutes(10), Map.of());
+	protected AbstractStreamingProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient) {
+		this(credentials, baseUrl, httpClient, Duration.ofMinutes(10), Map.of());
 	}
 
 	/**
 	 * Creates a new {@link AbstractStreamingProvider}.
 	 *
-	 * @param apiKey
-	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param credentials
+	 *        Authentication of the requests to the provider API.
 	 * @param baseUrl
 	 *        The base URL. A trailing slash is stripped.
 	 * @param httpClient
@@ -76,9 +79,9 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	 * @param customHeaders
 	 *        Additional headers applied after provider-specific headers, allowing overrides.
 	 */
-	protected AbstractStreamingProvider(String apiKey, String baseUrl, HttpClient httpClient,
+	protected AbstractStreamingProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient,
 			Duration requestTimeout, Map<String, String> customHeaders) {
-		_apiKey = apiKey;
+		_credentials = Objects.requireNonNull(credentials, "Credentials must not be null.");
 		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
 		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
 		_requestTimeout = Objects.requireNonNull(requestTimeout, "Request timeout must not be null.");
@@ -95,37 +98,23 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 
 		String path = endpointPath(request);
 		URI uri = URI.create(_baseUrl + path);
-		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-			.uri(uri)
-			.header("Content-Type", "application/json")
-			.header("Accept", acceptHeader())
-			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(request.timeout() != null ? request.timeout() : _requestTimeout);
-
-		addAuthHeaders(requestBuilder);
-		addExtraHeaders(requestBuilder);
-		addCustomHeaders(requestBuilder);
-
-		HttpRequest httpRequest = requestBuilder.build();
+		Duration timeout = request.timeout() != null ? request.timeout() : _requestTimeout;
 
 		String dumpLabel = getClass().getSimpleName() + " " + request.model() + " @" + uri.getHost();
 		boolean dumpStream = StreamDump.enabled(dumpLabel);
 		long startNanos = System.nanoTime();
 
-		HttpResponse<InputStream> response;
-		try {
-			// Stopping the run ends the wait for the response headers, which a model can keep open
-			// for a long time; the stream itself is ended by closing it, below.
-			response = handler.cancellation()
-				.whileBlocked(() -> _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream()));
-		} catch (CancellationException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.", e);
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Connection failed: " + e.getMessage(), e);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
+		HttpResponse<InputStream> response = send(newHttpRequest(uri, body, timeout), handler);
+		if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+			// Cached credentials (an access token) may have expired or been revoked before their
+			// announced end. Nothing has been streamed yet, so the request is repeated once with
+			// fresh credentials. A second rejection is reported as authentication failure.
+			drainResponseBody(response);
+			_credentials.invalidate();
+			response = send(newHttpRequest(uri, body, timeout), handler);
+			if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				_credentials.invalidate();
+			}
 		}
 
 		if (dumpStream) {
@@ -168,6 +157,44 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		}
 	}
 
+	/**
+	 * Creates the HTTP request of a stream, authenticated with the current credentials.
+	 */
+	private HttpRequest newHttpRequest(URI uri, String body, Duration timeout) throws ProviderException {
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+			.uri(uri)
+			.header("Content-Type", "application/json")
+			.header("Accept", acceptHeader())
+			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+			.timeout(timeout);
+
+		addAuthHeaders(requestBuilder);
+		addExtraHeaders(requestBuilder);
+		addCustomHeaders(requestBuilder);
+
+		return requestBuilder.build();
+	}
+
+	/**
+	 * Sends the given request and waits for the response headers.
+	 */
+	private HttpResponse<InputStream> send(HttpRequest httpRequest, StreamHandler handler) throws ProviderException {
+		try {
+			// Stopping the run ends the wait for the response headers, which a model can keep open
+			// for a long time; the stream itself is ended by closing it, in stream().
+			return handler.cancellation()
+				.whileBlocked(() -> _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream()));
+		} catch (CancellationException e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.", e);
+		} catch (IOException e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
+				"Connection failed: " + e.getMessage(), e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
+		}
+	}
+
 	/** Closes a stream, swallowing any {@link IOException} (used from the cancellation listener). */
 	private static void closeQuietly(InputStream stream) {
 		try {
@@ -176,6 +203,16 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 			// Best effort: the point of the close is to unblock the reader, which will now
 			// observe the closed stream regardless of this exception.
 		}
+	}
+
+	/**
+	 * Whether the credentials of this provider are available now.
+	 *
+	 * @see CredentialProvider#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _credentials.isAvailable();
 	}
 
 	// --- Abstract methods (subclass must implement) ---
@@ -224,12 +261,18 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	}
 
 	/**
-	 * Adds authentication headers. Default adds {@code Authorization: Bearer} if the API key
-	 * is set. Override for providers that use a different auth scheme.
+	 * Adds the credentials of the configured {@link CredentialProvider} to the request.
+	 *
+	 * @throws ProviderException
+	 *         of kind {@link ProviderException.Kind#AUTHENTICATION}, if no credentials are
+	 *         available.
 	 */
-	protected void addAuthHeaders(HttpRequest.Builder builder) {
-		if (_apiKey != null && !_apiKey.isBlank()) {
-			builder.header("Authorization", "Bearer " + _apiKey);
+	private void addAuthHeaders(HttpRequest.Builder builder) throws ProviderException {
+		try {
+			_credentials.authenticate(RequestAuthentication.of(builder));
+		} catch (RuntimeException ex) {
+			throw new ProviderException(ProviderException.Kind.AUTHENTICATION, 0,
+				"No credentials available: " + ex.getMessage(), ex);
 		}
 	}
 

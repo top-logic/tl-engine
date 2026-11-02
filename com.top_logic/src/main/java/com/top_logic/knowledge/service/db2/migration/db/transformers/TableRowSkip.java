@@ -32,12 +32,12 @@ public class TableRowSkip extends AbstractRowTransformer<TableRowSkip.Config> {
 		 * Configuration of the filter that a row must match to be skipped.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<Filter<? super RowValue>> getMatcher();
+		PolymorphicConfiguration<? extends Filter<? super RowValue>> getMatcher();
 
 		/**
 		 * Setter for {@link #getMatcher()}.
 		 */
-		void setMatcher(PolymorphicConfiguration<Filter<? super RowValue>> matcher);
+		void setMatcher(PolymorphicConfiguration<? extends Filter<? super RowValue>> matcher);
 
 	}
 

@@ -102,6 +102,14 @@
       <groupId>io.modelcontextprotocol.sdk</groupId>
       <artifactId>mcp-core</artifactId>
     </dependency>
+    <!-- The JSON mapper the MCP client transport looks up, for the test of HttpMcpTransport
+         against a local server. An application connecting to a remote MCP server needs it on its
+         class path as well, e.g. through tl-ai-mcp-server. -->
+    <dependency>
+      <groupId>io.modelcontextprotocol.sdk</groupId>
+      <artifactId>mcp-json-jackson3</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <!-- Headless-browser web tool: drives a real Chromium so the agent can read
          JavaScript-rendered pages that the static webFetch cannot. The Chromium binary is

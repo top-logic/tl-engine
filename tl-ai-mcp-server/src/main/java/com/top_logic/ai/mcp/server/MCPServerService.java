@@ -44,6 +44,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -106,6 +107,7 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 	ServletContextService.Module.class,
 	ToolRegistryService.Module.class,
 	AiToolAccessService.Module.class,
+	SecretStoreService.Module.class,
 })
 @ServiceCategory.Of(AICategory.class)
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {

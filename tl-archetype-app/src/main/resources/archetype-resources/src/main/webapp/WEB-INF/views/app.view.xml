@@ -3,8 +3,9 @@
 <!--
 	The application shell of tl-layout-view, extended by a same-path overlay naming the application in
 	the app bar and the header of the sidebar; the footer of the sidebar keeps the TopLogic credit.
-	The sidebar items leading to the pages of the application go before the system section:
-	<nav-item id="..." config:position="before" config:reference="system-separator">.
+	The sidebar items leading to the pages of the application go into the application section of the
+	shell: <section id="application"> <nav-item id="..."> ... </nav-item> </section> among the items
+	of the sidebar.
 -->
 #set($initials = "")
 #foreach($x in $DisplayName.split(" "))#if($x.length() > 0)#set($initials = "$initials$x.substring(0,1).toUpperCase()")#end#end

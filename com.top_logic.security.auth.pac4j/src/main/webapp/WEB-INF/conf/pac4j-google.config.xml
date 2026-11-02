@@ -8,7 +8,7 @@
 					<google name="pac4j-google">
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<scope>%PAC_SCOPE%</scope>
-						<secret>%PAC_SECRET%</secret>
+						<secret name="tl_pac_secret"/>
 						<client-authentication-method>%PAC_CLIENT_AUTHENTICATION_METHOD%</client-authentication-method>
 						<custom-params>
 							<custom-param key="acr_values" value="%PAC_ACR_VALUES%" />

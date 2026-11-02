@@ -34,6 +34,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
@@ -60,6 +61,13 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * for the background-thread machinery so the lifecycle is implemented exactly once.</p>
  */
 public class SubagentSpawner {
+
+	/**
+	 * The tool error of a spawn while {@link SubagentWorkers} is not running: the application is
+	 * starting or stopping, or does not run that service.
+	 */
+	public static final String NO_WORKERS_REFUSAL = "ERROR: No subagent was started: the application runs no"
+		+ " background subagents right now - it is starting or shutting down. Do the work yourself.";
 
 	/** Utility class — no instances. */
 	private SubagentSpawner() {
@@ -104,7 +112,9 @@ public class SubagentSpawner {
 	 * @param registry
 	 *        The active {@link SubagentJobRegistry} for this session.
 	 * @return A handle {@link ToolResult} containing the subagent id, or the tool error refusing a
-	 *         spawn that could not have done anything - see {@link #detachedSpawnRefusal}.
+	 *         spawn that could not have done anything - see {@link #detachedSpawnRefusal} - or that
+	 *         could not run: without a running {@link SubagentWorkers} service, no subagent is
+	 *         started.
 	 */
 	public static ToolResult spawnAsync(String targetAgentName, String task, String contextStr,
 			ToolContext toolContext, DelegationTool.AgentLoopFactory loopFactory,
@@ -115,6 +125,12 @@ public class SubagentSpawner {
 		String refusal = detachedSpawnRefusal(targetAgentName, childCapabilities(toolContext));
 		if (refusal != null) {
 			return ToolResult.of(refusal);
+		}
+
+		// A subagent works on a thread of its own, which has to end before the services it uses stop;
+		// SubagentWorkers ends it then, so without that service no subagent is started.
+		if (SubagentWorkers.getInstance() == null) {
+			return ToolResult.of(NO_WORKERS_REFUSAL);
 		}
 
 		String userPrompt = buildUserPrompt(task, contextStr);

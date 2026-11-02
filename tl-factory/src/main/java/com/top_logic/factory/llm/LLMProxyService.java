@@ -451,14 +451,14 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 			return null;
 		}
 		String name = getConfig().getProvider();
-		LLMProviderConfig.Config provider = providers.getConfig().getProviders().get(name);
-		if (!(provider instanceof AnthropicProviderConfig.Config)) {
+		LLMProviderConfig provider = providers.getProvider(name);
+		if (!(provider instanceof AnthropicProviderConfig)) {
 			Logger.warn("LLM proxy: no Anthropic provider '" + name + "' is configured.", LLMProxyService.class);
 			return null;
 		}
-		LLMUpstream result = LLMUpstream.fromProvider((AnthropicProviderConfig.Config) provider);
+		LLMUpstream result = LLMUpstream.fromProvider((AnthropicProviderConfig) provider);
 		if (result == null) {
-			Logger.warn("LLM proxy: the provider '" + name + "' has no API key.", LLMProxyService.class);
+			Logger.warn("LLM proxy: the provider '" + name + "' has neither API key nor credentials.", LLMProxyService.class);
 		}
 		return result;
 	}

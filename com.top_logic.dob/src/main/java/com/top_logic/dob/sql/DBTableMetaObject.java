@@ -60,4 +60,12 @@ public interface DBTableMetaObject extends MOStructure {
 	 * @see TypeContext#multipleBranches()
 	 */
 	boolean multipleBranches();
+
+	/**
+	 * Whether the branch column of the indexes of this table follows the columns identifying the
+	 * indexed value.
+	 * 
+	 * @see TypeContext#branchLast()
+	 */
+	boolean branchLast();
 }

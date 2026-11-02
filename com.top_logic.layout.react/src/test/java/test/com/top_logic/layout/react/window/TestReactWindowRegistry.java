@@ -161,6 +161,27 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	/**
+	 * Rebuilding one window marks that window and tells it to reload, while the other windows of the
+	 * session keep their trees.
+	 */
+	public void testRebuildWindow() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		WindowEntry tab = registry.getOrCreateWindow("vTab");
+		WindowEntry other = registry.getOrCreateWindow("vOther");
+		int tabBefore = tab.getQueue().pendingEventCount();
+		int otherBefore = other.getQueue().pendingEventCount();
+
+		registry.rebuildWindow("vTab");
+		// An unknown window is ignored.
+		registry.rebuildWindow("vUnknown");
+
+		assertTrue("The window must be rebuilt.", tab.isRebuildRequested());
+		assertEquals("One reload for the window.", tabBefore + 1, tab.getQueue().pendingEventCount());
+		assertFalse("The other window must keep its tree.", other.isRebuildRequested());
+		assertEquals("No reload for the other window.", otherBefore, other.getQueue().pendingEventCount());
+	}
+
+	/**
 	 * A window that displays nothing yet is marked like any other, and a session without windows has
 	 * nothing to rebuild.
 	 */

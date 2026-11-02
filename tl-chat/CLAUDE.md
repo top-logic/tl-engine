@@ -153,7 +153,7 @@ no window sets it - today, the task, and it sets it for `AUTO_APPROVE` only. A t
 account can, and is therefore an ordinary attended run started by a clock.
 
 Approval prompts never blocked in `AUTO_APPROVE` - the callback answers on the calling thread - so
-`askUser` was the one thing that could park an unattended run. See `doc/scheduled-agent.md`.
+`askUser` was the one thing that could park an unattended run. See the developer article `ai/script-and-scheduled-runs` (agents on a schedule).
 
 ### The switch reaches the running turn, and no answer is lost (#943, #944)
 
@@ -174,7 +174,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
 - **`ConversationBackend`** (`…chat.backend`) – What answers a conversation instead of the framework's agent (an external process); chosen per run by the `ConversationBackendResolver`s of `ConversationBackendService` (none configured here). `ChatProcessor.executeOrchestrator` is the run frame both share, `runInternal` the framework agent's part, `BackendRun` the backend's (recording through `RunRecording`, events only on the worker thread). Its `BackendFeatures` reach the browser as `features` of `GET /chat/sessions/{id}` and `POST /chat/send`, where `ui/src/features.ts` gates the controls; `ChatServlet` refuses an unsupported regenerate, edit or attachment and skips the agent policy for such a chat. See the developer article `ai/chat-ui`
-- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
+- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See the developer article `ai/limits-and-caching` (run limits)
 - **`TaskProgressTracker`** – One window's chat: its processing states, and accessors that read and write the `ChatState` of the chat the window shows
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
@@ -195,7 +195,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one. Published API: `tl-chat-classic` reads a classic window's id here, and `Consulting`'s own control registers here from outside this module.
 - **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeRenderState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
-- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **within the window's `Interaction`** (a `ReactControl`'s state map is a plain `HashMap`; the engine's SSE heartbeat synthesizes within it too, skipping a busy window). The interaction is entered on the calling thread with a time limit (`ReactWindowRegistry.tryBeginInteraction`), and the work is skipped when the limit passes first - an agent thread must not wait for a browser command that may itself be waiting for the agent. A caller that already holds the window's interaction (an agent run synchronously from a button, on the request thread) acts within it at once. **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its interaction, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same interaction serve the write direction: `inWindow` runs a caller's action in the window's sub-session within its interaction (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the interaction than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
+- **`ChatWindowService`** – Connects agent runs to the browser windows the chat is displayed in. It installs the `RunWindow` of tl-ai-core over the engine's `ReactWindowReplay.inWindow(subSession, action)`; it offers `inWindow` / `hasWindow`, through which a tool writes into the window of its run and tells "this run is headless" from "this page allows nothing" (a write waits at most `write-timeout-millis`, 5 s, for a browser command in progress and answers `BUSY` otherwise); and on `AgentExecutionStore.ChangeListener.onSessionDeleted` it drops the deleted chat out of every live window of its owner (`ReactWindowRegistry.windowSubSessions()`, filtered by the sub-session's person). Following commits is not its job: the engine's `WindowModelEventService` delivers commits of other threads, such as an agent run's, to every browser window whose model listeners they affect.
 - **`ChatPresentTool`** – The `present` tool of a chat page (`com.top_logic.ai.chat.tools`), over the base `PresentTool` in tl-ai-core: the agent shows objects - found by a TL-Script query or named by id - as a table, a chart or a form on a channel of the page it is on. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default), and a run whose page displays no such channel is not offered the tool at all (#649). See "the agent writes a channel" below.
 - **`PresentationPane`** – The pane of a `<chat-rail input="…">`: renders what stands on that channel for any type, and keeps the history "Zurück" walks. See "the rail's pane" below.
 - **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
@@ -222,7 +222,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 
 The engine modules this one uses must be plain `compile` dependencies - never `optional`, never
 `provided`. `tl-chat.conf.config.xml` registers services of this module unconditionally, and every
-dependent that loads that configuration has to resolve their classes: `AgentViewRefreshService`
+dependent that loads that configuration has to resolve their classes: `ChatWindowService`
 alone pulls in `ReactWindowRegistry` from `tl-layout-react`. An `optional` dependency does not reach
 dependents, so the missing jar surfaces only when a downstream module boots the configuration, as a
 `NoClassDefFoundError` out of the config reader (#415).
@@ -784,7 +784,7 @@ host kind (returning nothing leaves the web default, which opens the page).
 own kinds once through the `CitationKinds` service (name, `types` its objects belong to, label,
 whether a passage applies). The model never names a kind - the reading tool decides it - and the
 validator drops a citation of an undeclared kind at DEBUG. A host that cites another way than with
-links registers a `CitationMarkerSyntax`. See `doc/citation-contract.md`.
+links registers a `CitationMarkerSyntax`. See the developer article `ai/memory-and-citations` (citations).
 
 Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's sources. The rail's
 `Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers
@@ -999,7 +999,7 @@ itself to offer:
 | The rights | A query is evaluated without being able to modify anything, and its objects are reduced to the ones the **acting user** may read (`ReadFilter`), the way `filterSecurity` would. Every id resolves through `TidResolver` with the same rights, all or nothing: an object they may not read is refused exactly like one that does not exist. A chart's functions are tried on every object before anything is shown, so a failing function is the model's error to correct, not an empty chart. |
 | The allow list | **Deny by default.** `ChatConversationControl` resolves each `present="…"` entry and registers it on the `ChatViewBinding` of its (window, chat-id); the tool looks the name up across the bindings of that *window* - which is what a run knows about itself, the chat id being something the tool layer is never told. **So a window's allow list is the union of its chats' lists.** A window that offers exactly one channel is written without the model naming it; one that offers several makes the model choose and names them. **A channel counts while its element is displayed** (#649): the registration follows the control's attach and detach, so a page of the shell the user left, a classic tab that is not selected and the React page a browser tab showed before the classic UI offer nothing - before, a run presented into such a page and told the user they saw a table they could not see. |
 | Offered or not | The run is offered `present` only while its window displays such a channel (`ChatPresentTool.noPlaceToShow`, through the generic `Tool.unavailableReason` that `AgentLoop` asks before every request). A run without one - a page that names none, no window at all - is not sent the tool, so it answers "show me" in text instead of with a call that is refused. Albert's prompt states the rule conditionally ("you have `present` only where the page has a place ... without it, `query` and a Markdown table"), so the page's `present` attribute stays the one switch: a second, page-dependent prompt section would be a second source of truth, and a second reason for the prompt to change between turns. A call that names the tool anyway is answered with the same sentence. |
-| The window | The value is written in the window's sub-session, **within its interaction**, through `AgentViewRefreshService.inWindow` - a `ReactControl`'s state map is a plain `HashMap`. A run with no window (headless, TL-Script, the scheduler) says "no page is attached" and does nothing; that is a fact about the run, and is deliberately a different sentence from "this page allows nothing". |
+| The window | The value is written in the window's sub-session, **within its interaction**, through `ChatWindowService.inWindow` - a `ReactControl`'s state map is a plain `HashMap`. A run with no window (headless, TL-Script, the scheduler) says "no page is attached" and does nothing; that is a fact about the run, and is deliberately a different sentence from "this page allows nothing". |
 
 **What a page needs, all three or none:** the channel, `present="…"` on the `<chat-conversation>`, and
 an element that renders the channel - usually `<chat-rail input="…">`, whose pane shows any type.
@@ -1008,7 +1008,7 @@ a channel nothing displays and says the user sees it. The classic Albert tab's d
 (`tl-chat-classic/chat.view.xml`) carries all three, plus `<selection channel="…">` so the agent knows
 which object the pane shows; an application's own copy of that view has to keep them.
 
-`TestPresentTool` drives the real path - a registered window, a registered channel, a listener
+`TestPresentTool` drives the real path - a live browser window, a registered channel, a listener
 standing in for the page - and builds a real `ChatConversationControl` to pin that its channel counts
 only while it is attached. The eval has the same tool without a page (`EvalPresentTool`), and grades
 what a run showed (`<presented>`, tl-ai-eval).
@@ -1210,7 +1210,7 @@ The block is composed per run (`TurnContext`, from the same facts), attached by 
 request is built - so a compaction cannot lose the newest one - and stored on the turn
 (`Turn#turnContext`), apart from the user's text: the bubble shows what the user wrote, the
 transcript and the run detail show both. A page that states no per-turn fact gets no block at all.
-See `tl-ai-core/doc/environment-block.md`.
+See the developer article `ai/environment`.
 
 A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
 middle of a sentence.
@@ -1317,7 +1317,7 @@ the answer on the session state and binds it for every run of that conversation
 (`UserMemoryBinding`). A memory the agent writes in turn 3 therefore shows up in the user's memory
 list at once, and in the agent's block in the *next* conversation. The rail section that lists them
 is an ordinary `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`,
-with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environment-block.md`.
+with a Forget command that calls `aiMemoryDelete`. See the developer article `ai/environment`.
 
 #### The first questions a page offers: `<prompts>` (#529)
 
@@ -1607,7 +1607,7 @@ decided nothing - see "what survives a reload, and who decides it".
 
 Exported types and `App` / `extensions` are the contract. File splits inside `ui/src` are not.
 
-Citations: see `doc/citation-contract.md`. Albert points at its sources with links; the server keeps a
+Citations: see the developer article `ai/memory-and-citations`. Albert points at its sources with links; the server keeps a
 link as a footnote only when a tool of the run read that source, and drops the link of any other id
 or address.
 

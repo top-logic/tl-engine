@@ -45,6 +45,7 @@ import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
  * Leaving a sidebar item asks about the input left unsaved in the tabs it displays.
@@ -296,7 +297,8 @@ public class TestNestedDirtyScopes extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestNestedDirtyScopes.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 
 }

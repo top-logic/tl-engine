@@ -114,7 +114,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		@Name(ZIP_DOWNLOAD_FILE_NAME_PROVIDER)
 		@ItemDefault
 		@ImplementationClassDefault(ZipDownloadLabelProvider.class)
-		PolymorphicConfiguration<LabelProvider> getZipDownloadFileNameProvider();
+		PolymorphicConfiguration<? extends LabelProvider> getZipDownloadFileNameProvider();
 
 		/** @see WebFolderUIFactory#getZipDownloadSizeLimit() */
 		@LongDefault(1000)
@@ -125,13 +125,13 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		@Name(ZIP_FOLDER_NAME_PROVIDER)
 		@ItemDefault
 		@ImplementationClassDefault(ZipFolderNameProvider.class)
-		PolymorphicConfiguration<LabelProvider> getZipFolderNameProvider();
+		PolymorphicConfiguration<? extends LabelProvider> getZipFolderNameProvider();
 
 		/** The {@link BreadcrumbRenderer} that will render the breadcrumb of web-folders. */
 		@Name(BREADCRUMB_RENDERER)
 		@ItemDefault
 		@ImplementationClassDefault(DefaultBreadcrumbRenderer.class)
-		PolymorphicConfiguration<BreadcrumbRenderer> getBreadcrumbRenderer();
+		PolymorphicConfiguration<? extends BreadcrumbRenderer> getBreadcrumbRenderer();
 
 		/** @see WebFolderUIFactory#getManualLocking() */
 		@Name(MANUAL_LOCKING)

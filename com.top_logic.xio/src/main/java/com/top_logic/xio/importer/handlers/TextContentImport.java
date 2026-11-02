@@ -37,7 +37,7 @@ public class TextContentImport<C extends TextContentImport.Config<?>> extends St
 		 * property value.
 		 */
 		@ItemDefault(StringValueProvider.class)
-		PolymorphicConfiguration<ConfigurationValueProvider<?>> getFormat();
+		PolymorphicConfiguration<? extends ConfigurationValueProvider<?>> getFormat();
 
 		/**
 		 * Whether to use the text value as identifier for the imported object.

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.apache.maven.archiver.MavenArchiveConfiguration;
@@ -51,6 +52,19 @@ public class TLAppWar extends AbstractMojo {
 	 * The name of the goal implemented by {@link TLAppWar}.
 	 */
 	public static final String GOAL = "app";
+
+	/**
+	 * Name of the property with the configuration references to add to the
+	 * <code>metaConf.txt</code> of the application.
+	 */
+	public static final String META_CONF_ADDONS = "tl.app.metaConfAddons";
+
+	/**
+	 * Name prefix of further properties with configuration references to add to the
+	 * <code>metaConf.txt</code> of the application, e.g.
+	 * <code>tl.app.metaConfAddons.ldap</code>.
+	 */
+	public static final String META_CONF_ADDONS_PREFIX = META_CONF_ADDONS + ".";
 
 	@Parameter(defaultValue = "${project}", readonly = true)
 	private MavenProject project;
@@ -151,12 +165,16 @@ public class TLAppWar extends AbstractMojo {
 	 * during deployment.
 	 * 
 	 * <p>
-	 * To to prepare the deployed application to use the H2 database, you can e.g. set the value to
-	 * <code>db-h2.xml</code> to include the corresponding configuration reference to its
-	 * configuration.
+	 * The value holds the references of the application itself, e.g. <code>enable-debug.xml</code>.
+	 * Further references are given in project properties whose names start with
+	 * {@link #META_CONF_ADDONS_PREFIX}, see {@link #metaConfAddons(String, Properties)}. Several
+	 * Maven profiles can so contribute references at the same time: the database profiles of
+	 * <code>tl-parent-app</code> set <code>tl.app.metaConfAddons.db</code> (e.g. to
+	 * <code>db-h2.xml</code>), the profile <code>with-ldap</code> sets
+	 * <code>tl.app.metaConfAddons.ldap</code>.
 	 * </p>
 	 */
-	@Parameter(defaultValue = "", property = "tl.app.metaConfAddons")
+	@Parameter(defaultValue = "", property = META_CONF_ADDONS)
 	private String metaConfAddons;
 
     /**
@@ -379,7 +397,8 @@ public class TLAppWar extends AbstractMojo {
 			List<WarTask> warTasks = new ArrayList<>();
 			for (String id : modules.getBuildOrder()) {
 				if (id.equals(appId)) {
-					warTasks.add(new AppOverlay(project, appFragment, split(metaConfExcludes), split(metaConfAddons)));
+					warTasks.add(new AppOverlay(project, appFragment, split(metaConfExcludes),
+						metaConfAddons(metaConfAddons, project.getProperties())));
 				} else {
 					Artifact fragment = modules.getFragment(id);
 					if (fragment != null) {
@@ -446,13 +465,33 @@ public class TLAppWar extends AbstractMojo {
 		}
 	}
 
-	private String[] split(String commaSeparatedStrings) {
+	/**
+	 * All configuration references to add to the <code>metaConf.txt</code> of the application.
+	 * 
+	 * @param addons
+	 *        Comma-separated references of the property {@link #META_CONF_ADDONS}.
+	 * @param properties
+	 *        The project properties. Each property whose name starts with
+	 *        {@link #META_CONF_ADDONS_PREFIX} contributes its comma-separated references after the
+	 *        given ones, in the order of the property names.
+	 */
+	public static String[] metaConfAddons(String addons, Properties properties) {
+		List<String> result = new ArrayList<>(Arrays.asList(split(addons)));
+		properties.stringPropertyNames().stream()
+			.filter(name -> name.startsWith(META_CONF_ADDONS_PREFIX))
+			.sorted()
+			.forEach(name -> result.addAll(Arrays.asList(split(properties.getProperty(name)))));
+		return result.toArray(new String[0]);
+	}
+
+	private static String[] split(String commaSeparatedStrings) {
 		if (commaSeparatedStrings == null || commaSeparatedStrings.isEmpty()) {
 			return new String[0];
 		}
 		return Arrays.asList(commaSeparatedStrings.split(","))
 			.stream()
 			.map(s -> s.trim())
+			.filter(s -> !s.isEmpty())
 			.collect(Collectors.toList())
 			.toArray(new String[0]);
 	}

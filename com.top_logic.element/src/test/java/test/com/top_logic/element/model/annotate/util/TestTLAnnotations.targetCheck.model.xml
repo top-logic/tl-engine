@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="testTargetCheck">
+			<class name="X">
+				<attributes>
+					<reference name="accepted"
+						type="X"
+					>
+						<annotations>
+							<annotation config:interface="test.com.top_logic.element.model.annotate.util.TestTLAnnotations$TargetCheckedAnnotation"/>
+						</annotations>
+					</reference>
+					<reference name="rejected"
+						type="X"
+					>
+						<annotations>
+							<annotation config:interface="test.com.top_logic.element.model.annotate.util.TestTLAnnotations$TargetCheckedAnnotation"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<sidebar active-item="first">
+		<items>
+			<nav-item id="first">
+				<panel title="First"/>
+				<label>
+					<en>First</en>
+				</label>
+			</nav-item>
+			<nav-item id="second">
+				<slot-content to="actions">
+					<panel title="Contribution"/>
+				</slot-content>
+				<label>
+					<en>Second</en>
+				</label>
+			</nav-item>
+		</items>
+		<header>
+			<slot name="actions">
+				<empty>
+					<panel title="Fallback"/>
+				</empty>
+			</slot>
+		</header>
+	</sidebar>
+</view>

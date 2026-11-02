@@ -56,7 +56,7 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 		SchemaConfiguration persistentSchema =
 			KBSchemaUtil.loadSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
 		SchemaSetup setup = TypedConfigUtil.createInstance(persistentSchema);
-		MORepository types = setup.createMORepository(DefaultMOFactory.INSTANCE);
+		MORepository types = setup.createMORepository(connection.getSQLDialect(), DefaultMOFactory.INSTANCE);
 
 		SQLProcessor processor = new SQLProcessor(connection);
 

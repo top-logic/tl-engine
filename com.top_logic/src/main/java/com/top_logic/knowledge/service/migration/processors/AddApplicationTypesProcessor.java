@@ -88,7 +88,7 @@ public class AddApplicationTypesProcessor extends AbstractConfiguredInstance<Add
 		if (!newTypeNames.isEmpty()) {
 			SchemaSetup setup =
 				new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, currentSchema);
-			MORepository allTypes = setup.createMORepository(DefaultMOFactory.INSTANCE);
+			MORepository allTypes = setup.createMORepository(context.getSQLDialect(), DefaultMOFactory.INSTANCE);
 
 			CreateTablesProcessor.Config createProcessor =
 				TypedConfiguration.newConfigItem(CreateTablesProcessor.Config.class);

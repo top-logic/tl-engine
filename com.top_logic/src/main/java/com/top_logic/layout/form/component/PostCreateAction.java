@@ -574,7 +574,7 @@ public interface PostCreateAction {
 			@NonNullable
 			@ImplementationClassDefault(CommandResult.class)
 			@ItemDefault
-			PolymorphicConfiguration<ValueTransformation> getInput();
+			PolymorphicConfiguration<? extends ValueTransformation> getInput();
 		}
 
 		private ValueTransformation _tx;

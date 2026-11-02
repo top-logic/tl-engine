@@ -15,6 +15,7 @@ import test.com.top_logic.basic.TestComment;
 import test.com.top_logic.basic.TestDocumentation;
 import test.com.top_logic.basic.TestLayoutsNormalized;
 import test.com.top_logic.basic.TestNameClashClassVsPackage;
+import test.com.top_logic.basic.TestPolymorphicConfigurationWildcards;
 import test.com.top_logic.basic.jsp.TestCompileJSPs;
 import test.com.top_logic.basic.jsp.TestJSPContent;
 import test.com.top_logic.basic.junit.DirectoryLocalTestCollector;
@@ -104,6 +105,9 @@ public class BasicTestCollector implements TestCollector {
 		}
 		if (config.getTestDocumentation()) {
 			suite.addTest(TestDocumentation.suite());
+		}
+		if (config.getTestPolymorphicConfigurationWildcards()) {
+			suite.addTest(TestPolymorphicConfigurationWildcards.suite());
 		}
 		if (config.getTestJSPContent()) {
 			suite.addTest(TestJSPContent.suite());

@@ -30,6 +30,7 @@ import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
@@ -171,6 +172,7 @@ public class TestSubagentOutsideChat extends BasicTestCase {
 				LLMProviderService.Module.INSTANCE,
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
-				AgentPolicyService.Module.INSTANCE));
+				AgentPolicyService.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

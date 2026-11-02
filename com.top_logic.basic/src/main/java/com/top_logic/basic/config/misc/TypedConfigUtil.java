@@ -20,6 +20,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 
 /**
  * Utilities for working with the {@link TypedConfiguration} and {@link ConfigurationItem}s.
@@ -266,6 +267,22 @@ public class TypedConfigUtil {
 	public static ConfigurationItem replace(ConfigurationItem config,
 			Function<? super ConfigurationItem, ? extends ConfigurationItem> replacement) {
 		return new ReplaceConfigurationVisitor(replacement).replace(config);
+	}
+
+
+	/**
+	 * The {@link ImplementationClassDefault} annotated at the {@link PropertyDescriptor#getInstanceType() instance
+	 * type} of the given property.
+	 *
+	 * @return The annotation, or <code>null</code>, if the property holds no polymorphic
+	 *         configurations or their instance type has no such annotation.
+	 */
+	public static ImplementationClassDefault instanceTypeImplementationClassDefault(PropertyDescriptor property) {
+		Class<?> instanceType = property.getInstanceType();
+		if (instanceType == null) {
+			return null;
+		}
+		return instanceType.getAnnotation(ImplementationClassDefault.class);
 	}
 
 }

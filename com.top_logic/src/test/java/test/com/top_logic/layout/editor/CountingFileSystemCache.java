@@ -62,6 +62,11 @@ public class CountingFileSystemCache extends FileSystemCache {
 	}
 
 	@Override
+	public void refresh(Path path) {
+		// Nothing is cached.
+	}
+
+	@Override
 	public Iterator<PathUpdate> getUpdates() {
 		return _updates.iterator();
 	}

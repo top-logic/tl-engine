@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
@@ -59,6 +60,7 @@ public class AppBarElement implements UIElement {
 	 * Configuration for {@link AppBarElement}.
 	 */
 	@TagName("app-bar")
+	@TypeIcon("css:bi bi-window-dock")
 	public interface Config extends UIElement.Config {
 
 		@Override

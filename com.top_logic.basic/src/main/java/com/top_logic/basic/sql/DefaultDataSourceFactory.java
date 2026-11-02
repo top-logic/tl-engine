@@ -7,6 +7,7 @@ package com.top_logic.basic.sql;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -15,7 +16,11 @@ import javax.sql.DataSource;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig;
+import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig.AbstractDriverOption;
+import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig.DriverOption;
+import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig.EncryptedDriverOption;
 
 /**
  * {@link DataSourceFactory} that locates the driver class by reflection.
@@ -40,41 +45,76 @@ public class DefaultDataSourceFactory extends DataSourceFactory {
 	@Override
 	public DataSource createDataSource(InstantiationContext context) throws ConfigurationException {
 		DataSourceConfig config = getConfig();
-		try {
-			String jndiName = config.getJndiName();
-			String className = config.getDriverClassName();
-			Properties options = toProperties(config.getDriverOptions());
-			DataSource result = SQLH.createDataSource(jndiName, className, options);
+		return createDataSource(context, config, options -> {
+			DataSource result = SQLH.createDataSource(config.getJndiName(), config.getDriverClassName(), options);
 			if (result == null) {
 				throw new ConfigurationException("No database configured: " + config);
 			}
 			return result;
+		});
+	}
+
+	/**
+	 * Creates a {@link DataSource} with the {@link DataSourceConfig#getDriverOptions() driver
+	 * options} of the given configuration.
+	 *
+	 * <p>
+	 * If the options contain {@link EncryptedDriverOption secrets}, the result is a
+	 * {@link SecretOptionsDataSource} that reads them each time a connection is opened and creates
+	 * a new {@link DataSource} with the given factory, when one of them has changed. Otherwise the
+	 * {@link DataSource} of the factory is returned directly.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context for instantiating the {@link SecretSource}s.
+	 * @param config
+	 *        The configuration of the data source.
+	 * @param factory
+	 *        Creates the {@link DataSource} from the driver options.
+	 * @return The {@link DataSource} to open connections from.
+	 */
+	public static DataSource createDataSource(InstantiationContext context, DataSourceConfig config,
+			SecretOptionsDataSource.Factory factory) throws ConfigurationException {
+		Properties options = new Properties();
+		Map<String, SecretSource> secrets = new LinkedHashMap<>();
+		Map<String, String> names = new HashMap<>();
+		for (AbstractDriverOption option : config.getDriverOptions().values()) {
+			String name = option.getName();
+			String clash = names.put(name.toLowerCase(), name);
+			if (clash != null) {
+				throw new IllegalArgumentException("Inconsistent DB options: " + name + " vs. " + clash);
+			}
+			if (option instanceof EncryptedDriverOption) {
+				SecretSource secret = context.getInstance(((EncryptedDriverOption) option).getValue());
+				if (secret == null) {
+					options.setProperty(name, "");
+				} else {
+					secrets.put(name, secret);
+				}
+			} else {
+				options.setProperty(name, ((DriverOption) option).getValue());
+			}
+		}
+		try {
+			if (secrets.isEmpty()) {
+				return factory.createDataSource(options);
+			}
+			return new SecretOptionsDataSource(options, secrets, factory);
 		} catch (SQLException ex) {
 			throw new ConfigurationException("Database access failed for configuration: " + config, ex);
 		}
 	}
 
 	/**
-	 * {@link DataSourceConfig#getDriverOptions()} as {@link Properties}.
+	 * The given driver options completed by the {@link DataSourceConfig#getDriverClassName()
+	 * driver class} and the {@link DataSourceConfig#getJndiName() JNDI name} as options for a
+	 * {@link DefaultDataSourceProxy}.
 	 */
-	public static Properties genericDriverOptions(DataSourceConfig config) {
-		Properties result = toProperties(config.getDriverOptions());
+	public static Properties genericDriverOptions(DataSourceConfig config, Properties options) {
+		Properties result = new Properties();
+		result.putAll(options);
 		result.setProperty(DefaultDataSourceProxy.IMPL_CLASS_PROPERTY, config.getDriverClassName());
 		result.setProperty(DefaultDataSourceProxy.IMPL_JNDI_NAME_PROPERTY, config.getJndiName());
-		return result;
-	}
-
-	private static Properties toProperties(Map<String, DataSourceConfig.DriverOption> driverOptions) {
-		Map<String, String> names = new HashMap<>();
-		Properties result = new Properties();
-		for (DataSourceConfig.DriverOption option : driverOptions.values()) {
-			String clash = names.put(option.getName().toLowerCase(), option.getName());
-			if (clash != null) {
-				throw new IllegalArgumentException("Inconsistent DB options: " + option.getName() + "->" + option.getValue() + " vs. " + clash
-					+ "->" + result.getProperty(clash));
-			}
-			result.setProperty(option.getName(), option.getValue());
-		}
 		return result;
 	}
 

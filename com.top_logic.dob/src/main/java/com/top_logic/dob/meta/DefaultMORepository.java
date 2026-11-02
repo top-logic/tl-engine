@@ -33,22 +33,56 @@ public class DefaultMORepository implements MORepository {
 
 	private final boolean _multipleBranches;
 
-    /**
+	private final boolean _branchLast;
+
+	/**
 	 * Create a new {@link DefaultMORepository} with a Map of {@link MetaObject}s.
 	 * 
 	 * @param aMetaMap
 	 *        a Map of {@link MetaObject}s indexed by {@link MetaObject#getName()}.
+	 * @param multipleBranches
+	 *        See {@link #multipleBranches()}.
 	 */
 	public DefaultMORepository(Map<String, MetaObject> aMetaMap, boolean multipleBranches) {
-        metaObjectMap = aMetaMap;
+		this(aMetaMap, multipleBranches, false);
+	}
+
+	/**
+	 * Create a new {@link DefaultMORepository} with a Map of {@link MetaObject}s.
+	 * 
+	 * @param aMetaMap
+	 *        a Map of {@link MetaObject}s indexed by {@link MetaObject#getName()}.
+	 * @param multipleBranches
+	 *        See {@link #multipleBranches()}.
+	 * @param branchLast
+	 *        See {@link #branchLast()}.
+	 */
+	public DefaultMORepository(Map<String, MetaObject> aMetaMap, boolean multipleBranches, boolean branchLast) {
+		metaObjectMap = aMetaMap;
 		_multipleBranches = multipleBranches;
-    }
-    
+		_branchLast = branchLast;
+	}
+
 	/**
 	 * Create a new empty {@link DefaultMORepository} .
+	 * 
+	 * @param multipleBranches
+	 *        See {@link #multipleBranches()}.
 	 */
 	public DefaultMORepository(boolean multipleBranches) {
-		this(new HashMap<>(64), multipleBranches);
+		this(multipleBranches, false);
+	}
+
+	/**
+	 * Create a new empty {@link DefaultMORepository} .
+	 * 
+	 * @param multipleBranches
+	 *        See {@link #multipleBranches()}.
+	 * @param branchLast
+	 *        See {@link #branchLast()}.
+	 */
+	public DefaultMORepository(boolean multipleBranches, boolean branchLast) {
+		this(new HashMap<>(64), multipleBranches, branchLast);
 	}
 
 	@Override
@@ -108,6 +142,11 @@ public class DefaultMORepository implements MORepository {
 	@Override
 	public boolean multipleBranches() {
 		return _multipleBranches;
+	}
+
+	@Override
+	public boolean branchLast() {
+		return _branchLast;
 	}
 	
 }

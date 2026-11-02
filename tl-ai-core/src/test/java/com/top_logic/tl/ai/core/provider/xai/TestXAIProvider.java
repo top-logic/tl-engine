@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -67,7 +68,7 @@ public class TestXAIProvider extends TestCase {
 	/** */
 	public void testResponsesProtocolToolArgumentsFromOutputItemDone() throws Exception {
 		// Use an OpenAIResponsesProvider directly since that's what RESPONSES protocol produces.
-		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key", "https://api.x.ai");
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(FixedCredentials.NONE, "https://api.x.ai");
 
 		String sse = ""
 			+ "event: message\n"
@@ -143,7 +144,7 @@ public class TestXAIProvider extends TestCase {
 
 	private static LLMProvider createProvider(String apiKey, XAIProviderConfig.Protocol protocol) {
 		XAIProviderConfig.Config config = TypedConfiguration.newConfigItem(XAIProviderConfig.Config.class);
-		config.setApiKey(apiKey);
+		config.setApiKey(FixedCredentials.secret(apiKey));
 		config.setProtocol(protocol);
 		return new XAIProviderConfig(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config)
 			.createProvider();

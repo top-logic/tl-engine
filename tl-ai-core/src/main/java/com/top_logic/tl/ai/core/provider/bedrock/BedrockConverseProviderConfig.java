@@ -11,12 +11,16 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 
@@ -26,8 +30,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
  * <p>
  * Configures a {@link BedrockConverseProvider} against any Bedrock-compatible endpoint, including
  * Nexus-Claude gateways and direct regional AWS Bedrock endpoints
- * ({@code https://bedrock-runtime.{region}.amazonaws.com}). Authentication uses Bearer-token scheme
- * inherited from {@link BedrockConverseProvider}.
+ * ({@code https://bedrock-runtime.{region}.amazonaws.com}). An API key is sent as bearer token.
  * </p>
  *
  * <p>
@@ -47,6 +50,7 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
 		LLMProviderConfig.Config.BASE_URL,
 		Config.API_KEY,
+		LLMProviderConfig.Config.CREDENTIALS,
 		LLMProviderConfig.Config.MODELS,
 		LLMProviderConfig.Config.CONNECT_TIMEOUT,
 		LLMProviderConfig.Config.REQUEST_TIMEOUT,
@@ -60,18 +64,18 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 		/**
 		 * The API key forwarded as {@code Authorization: Bearer}.
 		 *
-		 * <p>May be {@code null} for endpoints that use a different authentication mechanism
-		 * (e.g. IAM instance roles or custom gateway injection).</p>
+		 * <p>May be {@code null} for endpoints that use a different authentication mechanism,
+		 * see {@link #getCredentials()}.</p>
 		 *
 		 * @see #API_KEY
 		 */
 		@Name(API_KEY)
 		@Nullable
-		@Encrypted
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
 
 		/** @see #getApiKey() */
-		void setApiKey(String value);
+		void setApiKey(PolymorphicConfiguration<? extends SecretSource> value);
 
 		@Override
 		@Mandatory
@@ -86,15 +90,22 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 
 	private final Config _config;
 
+	private final CredentialProvider _credentials;
+
 	/** */
 	@CalledByReflection
 	public BedrockConverseProviderConfig(InstantiationContext context, Config config) {
 		_config = config;
+		_credentials = LLMProviderConfig.createCredentials(context, config, config.getApiKey(), CredentialProvider.AUTHORIZATION, CredentialProvider.BEARER);
+	}
+
+	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
 	}
 
 	@Override
 	public LLMProvider createProvider() {
-		String apiKey = _config.getApiKey();
 		// Do NOT run through normalizeBaseUrl — that strips /v1 which may be valid for some
 		// Bedrock gateway paths. AbstractStreamingProvider trims trailing slashes internally.
 		String baseUrl = _config.getBaseUrl();
@@ -102,7 +113,7 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 		int requestTimeout = _config.getRequestTimeout();
 		Map<String, String> customHeaders = _config.getCustomHeaders();
 
-		return new BedrockConverseProvider(apiKey, baseUrl, connectTimeout, requestTimeout, customHeaders);
+		return new BedrockConverseProvider(_credentials, baseUrl, connectTimeout, requestTimeout, customHeaders);
 	}
 
 	@Override

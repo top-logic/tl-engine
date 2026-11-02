@@ -75,7 +75,7 @@ public class LabelByExpression extends ProxyResourceProvider
 		 * @see ResourceProvider#getTooltip(Object)
 		 */
 		@ItemDefault(WrapperResourceProvider.class)
-		PolymorphicConfiguration<ResourceProvider> getInner();
+		PolymorphicConfiguration<? extends ResourceProvider> getInner();
 
 	}
 

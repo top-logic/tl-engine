@@ -17,17 +17,18 @@
             </tab>
           </tab-bar>
         </nav-item>
-        <separator />
-        <nav-item id="admin">
-          <adaptive-detail selection="selection">
-            <selector>
-              <view-ref view="mounts-shared.view.xml" />
-            </selector>
-            <detail>
-              <panel title="Detail" />
-            </detail>
-          </adaptive-detail>
-        </nav-item>
+        <section id="system">
+          <nav-item id="admin">
+            <adaptive-detail selection="selection">
+              <selector>
+                <view-ref view="mounts-shared.view.xml" />
+              </selector>
+              <detail>
+                <panel title="Detail" />
+              </detail>
+            </adaptive-detail>
+          </nav-item>
+        </section>
       </sidebar>
     </content>
   </app-shell>

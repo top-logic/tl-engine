@@ -2,8 +2,8 @@
 
 <!--
 	The control application in the application shell of tl-layout-view: a same-path overlay naming
-	the application and placing the project management of tl-factory before the system section of
-	the sidebar.
+	the application and placing the project management of tl-factory into the application section
+	of the sidebar.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<sidebar
@@ -27,17 +27,17 @@
 			</text>
 		</footer>
 		<items>
-			<nav-item id="projects"
-				config:position="before"
-				config:reference="system-separator"
-				icon="css:bi bi-boxes"
-			>
-				<view-ref view="factory/projects.view.xml"/>
-				<label>
-					<en>Projects</en>
-					<de>Projekte</de>
-				</label>
-			</nav-item>
+			<section id="application">
+				<nav-item id="projects"
+					icon="css:bi bi-boxes"
+				>
+					<view-ref view="factory/projects.view.xml"/>
+					<label>
+						<en>Projects</en>
+						<de>Projekte</de>
+					</label>
+				</nav-item>
+			</section>
 		</items>
 	</sidebar>
 	<app-bar config:ref="app-bar">

@@ -5,12 +5,16 @@
  */
 package com.top_logic.layout.view.form;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} that renders a masked password input for string attributes.
@@ -25,6 +29,9 @@ import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
  * that is set is stood for by {@link #MASK}, whatever it is.
  * </p>
  */
+@Label("Password input")
+@InApp
+@TargetType(TLTypeKind.STRING)
 public class PasswordInputControlProvider implements ReactFieldControlProvider {
 
 	/**

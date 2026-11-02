@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Edit dialog for a test.flowchart:Product of the flow diagram demo, opened on the product in
+	"model". The Save button stores the form and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>Edit product</en>
+			<de>Produkt bearbeiten</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<store-form-state/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

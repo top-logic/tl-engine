@@ -57,6 +57,8 @@ public class VectorIndexingService extends DefaultIndexingService {
 
 	@Override
 	public boolean serviceAvailable() {
+		// Also when the vector index is disabled: a service that is not available aborts the start,
+		// whereas a disabled index ignores the content.
 		return true;
 	}
 

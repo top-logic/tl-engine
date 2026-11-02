@@ -82,4 +82,9 @@ public class FileManagerDelegate extends FileManager {
 	public File getIDEFile(String aName) {
 		return _delegate.getIDEFile(aName);
 	}
+
+	@Override
+	public void refresh(String resourceName) {
+		_delegate.refresh(resourceName);
+	}
 }

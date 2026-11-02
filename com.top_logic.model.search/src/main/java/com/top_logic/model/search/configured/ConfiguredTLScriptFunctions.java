@@ -41,6 +41,7 @@ import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.security.CheckedObjects.Decision;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -240,16 +241,16 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 *
 	 * <p>
 	 * A secured call of a {@link PrivilegedScript} is checked once: if the current user is
-	 * {@link PrivilegedScript#isAllowed(Object[]) allowed}, the function is executed without
+	 * {@link PrivilegedScript#check(Object[]) allowed}, the function is executed without
 	 * security and its result is filtered for the Discover right, since the calling script
-	 * continues secured; otherwise the {@link PrivilegedScript#denied(Object[]) denied result} is
+	 * continues secured; otherwise the {@link PrivilegedScript#denied(Object[], Decision) denied result} is
 	 * returned. Every other call executes the function with the given security setting.
 	 * </p>
 	 *
 	 * <p>
 	 * A traced evaluation (e.g. a computation in a form) calls the function through the same
 	 * {@link QueryExecutorMethod} and is checked alike. The check is made on the persistent object
-	 * (see {@link PrivilegedScript#isAllowed(Object[])}). An overlay passed as argument, however, is
+	 * (see {@link PrivilegedScript#check(Object[])}). An overlay passed as argument, however, is
 	 * the argument itself: a security object expression navigating from it reads its not yet stored
 	 * values.
 	 * </p>
@@ -268,8 +269,9 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 			Function<Boolean, Object> execution) {
 		checkModel();
 		if (usesSecurity && _builders.get(scriptName) instanceof PrivilegedScript privileged) {
-			if (!privileged.isAllowed(arguments)) {
-				return privileged.denied(arguments);
+			Decision decision = privileged.check(arguments);
+			if (!decision.isAllowed()) {
+				return privileged.denied(arguments, decision);
 			}
 			return SearchExpression.filterSecurity(execution.apply(Boolean.FALSE));
 		}

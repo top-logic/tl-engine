@@ -284,13 +284,8 @@
 				<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
 				<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
-					view="projects/milestones.view.xml"
-				>
-					<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-						expr="$project.get(`tl.demo.projectManagement:ProjectScope#name`)"
-						inputs="project"
-					/>
-				</on-activate>
+					frame="project"
+				/>
 			</table>
 		</stack>
 	</panel>

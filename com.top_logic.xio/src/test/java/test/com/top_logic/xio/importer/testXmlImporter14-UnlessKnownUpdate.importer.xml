@@ -1,0 +1,62 @@
+<handler>
+	<tag name="data">
+		<with-var var="lang" xml-attribute="lang">
+			<resolve-existing
+				key="x -> $x.get(`test.com.top_logic.xio.importer.test14:Item#extId`)"
+				objects="c -> $c.get(`test.com.top_logic.xio.importer.test14:Container#elements`)"
+			>
+				<resolve-existing
+					key="x -> $x.get(`test.com.top_logic.xio.importer.test14:Item#extId`)"
+					objects="c -> $c.get(`test.com.top_logic.xio.importer.test14:Container#elements`).map(e -> $e.get(`test.com.top_logic.xio.importer.test14:Item#children`)).flatten()"
+				>
+					<dispatch>
+						<tag name="item">
+							<unless-known id-attribute="id">
+								<object model-type="test.com.top_logic.xio.importer.test14:Item" id-attribute="id">
+									<property name="extId" xml-attribute="id"/>
+									<set-translation name="name" xml-attribute="name" language-var="lang"/>
+									<linking>
+										<list-linking name="test.com.top_logic.xio.importer.test14:Container#elements"/>
+									</linking>
+									<dispatch>
+										<tag name="child">
+											<object model-type="test.com.top_logic.xio.importer.test14:Item" id-attribute="id">
+												<property name="extId" xml-attribute="id"/>
+												<set-translation name="text" xml-attribute="text" language-var="lang"/>
+												<linking>
+													<list-linking name="test.com.top_logic.xio.importer.test14:Item#children"/>
+												</linking>
+												<dispatch/>
+											</object>
+										</tag>
+									</dispatch>
+								</object>
+								<update var="item"
+									arguments="lang"
+									condition="item -> lang -> !$item.get(`test.com.top_logic.xio.importer.test14:Item#languages`).stringContains($lang)"
+								>
+									<set-translation name="name" target-var="item" xml-attribute="name" language-var="lang"/>
+									<dispatch>
+										<tag name="child">
+											<object-ref id-attribute="id" ignore-unresolved="true">
+												<set-translation name="text" xml-attribute="text" language-var="lang"/>
+												<dispatch/>
+											</object-ref>
+										</tag>
+									</dispatch>
+								</update>
+							</unless-known>
+						</tag>
+						<tag name="label">
+							<unless-known id-attribute="id">
+								<update>
+									<set-translation name="name" xml-attribute="name" language-var="lang"/>
+								</update>
+							</unless-known>
+						</tag>
+					</dispatch>
+				</resolve-existing>
+			</resolve-existing>
+		</with-var>
+	</tag>
+</handler>

@@ -17,6 +17,8 @@ public class AccordionState_Impl extends com.top_logic.layout.react.state.impl.C
 
 		private boolean _expanded = false;
 
+		private boolean _hidden = false;
+
 		private com.top_logic.layout.react.state.ChildControl _actions = null;
 
 		private com.top_logic.layout.react.state.ChildControl _content = null;
@@ -95,6 +97,22 @@ public class AccordionState_Impl extends com.top_logic.layout.react.state.impl.C
 		}
 
 		@Override
+		public final boolean isHidden() {
+			return _hidden;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.AccordionState.Section setHidden(boolean value) {
+			internalSetHidden(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #isHidden()} without chain call utility. */
+		protected final void internalSetHidden(boolean value) {
+			_hidden = value;
+		}
+
+		@Override
 		public final com.top_logic.layout.react.state.ChildControl getActions() {
 			return _actions;
 		}
@@ -152,6 +170,8 @@ public class AccordionState_Impl extends com.top_logic.layout.react.state.impl.C
 			out.value(getIcon());
 			out.name(EXPANDED__PROP);
 			out.value(isExpanded());
+			out.name(HIDDEN__PROP);
+			out.value(isHidden());
 			if (hasActions()) {
 				out.name(ACTIONS__PROP);
 				getActions().writeTo(out);
@@ -169,6 +189,7 @@ public class AccordionState_Impl extends com.top_logic.layout.react.state.impl.C
 				case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case EXPANDED__PROP: setExpanded(in.nextBoolean()); break;
+				case HIDDEN__PROP: setHidden(in.nextBoolean()); break;
 				case ACTIONS__PROP: setActions(com.top_logic.layout.react.state.ChildControl.readChildControl(in)); break;
 				case CONTENT__PROP: setContent(com.top_logic.layout.react.state.ChildControl.readChildControl(in)); break;
 				default: super.readField(in, field);

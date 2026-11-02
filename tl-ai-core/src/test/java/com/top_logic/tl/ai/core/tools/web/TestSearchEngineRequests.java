@@ -17,7 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.tl.ai.core.tools.web.RecordingServer.Reply;
 
 import junit.framework.TestCase;
@@ -251,16 +253,22 @@ public class TestSearchEngineRequests extends TestCase {
 
 	private BraveSearchEngine brave(RecordingServer api) {
 		BraveSearchEngine.Config config = TypedConfiguration.newConfigItem(BraveSearchEngine.Config.class);
-		set(config, BraveSearchEngine.Config.API_KEY, "test-key");
+		set(config, BraveSearchEngine.Config.API_KEY, apiKey());
 		set(config, BraveSearchEngine.Config.BASE_URL, api.origin() + "/res/v1/web/search");
-		return new BraveSearchEngine(config, _waits::add);
+		return new BraveSearchEngine(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config, _waits::add);
 	}
 
 	private TavilySearchEngine tavily(RecordingServer api) {
 		TavilySearchEngine.Config config = TypedConfiguration.newConfigItem(TavilySearchEngine.Config.class);
-		set(config, TavilySearchEngine.Config.API_KEY, "test-key");
+		set(config, TavilySearchEngine.Config.API_KEY, apiKey());
 		set(config, TavilySearchEngine.Config.BASE_URL, api.origin());
-		return new TavilySearchEngine(config, _waits::add);
+		return new TavilySearchEngine(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config, _waits::add);
+	}
+
+	private static LiteralSecretSource.Config apiKey() {
+		LiteralSecretSource.Config result = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		result.setValue("test-key");
+		return result;
 	}
 
 	private static void set(ConfigurationItem config, String property, Object value) {

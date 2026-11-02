@@ -7,7 +7,6 @@ package com.top_logic.util.sched.layout.table;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
-import com.top_logic.layout.ResPrefix;
 
 /**
  * Internationalization constants for this package.
@@ -16,8 +15,6 @@ import com.top_logic.layout.ResPrefix;
  */
 @SuppressWarnings("javadoc")
 public final class I18NConstants extends I18NConstantsBase {
-
-	public static ResPrefix TASK_NAMES = legacyPrefix("tl.task.");
 
 	public static ResKey CLUSTER_LOCK_FREE_BUT_STATE_NOT_INACTIVE;
 

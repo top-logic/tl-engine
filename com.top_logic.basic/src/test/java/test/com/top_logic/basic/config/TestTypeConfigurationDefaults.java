@@ -11,10 +11,14 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
 import test.com.top_logic.basic.CustomPropertiesSetup;
 
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultValueProvider;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 
@@ -87,6 +91,51 @@ public class TestTypeConfigurationDefaults extends BasicTestCase {
 
 		}
 
+	}
+
+	/**
+	 * Configuration of an abstract function whose implementation class is only known through a
+	 * configured default, like {@code ScriptFunction1}.
+	 */
+	public interface FunctionConfig extends PolymorphicConfiguration<Object> {
+		// Implementation class is configured in the defaults section.
+	}
+
+	public static class FunctionImpl {
+
+		public interface Config extends FunctionConfig {
+
+			@Override
+			@ClassDefault(FunctionImpl.class)
+			Class<?> getImplementationClass();
+
+			String getExpression();
+
+		}
+
+		public FunctionImpl(InstantiationContext context, Config config) {
+			// Pure test class.
+		}
+
+	}
+
+	/**
+	 * Holder of a {@link FunctionConfig} read from the application configuration.
+	 */
+	public interface FunctionHolder extends ConfigurationItem {
+
+		FunctionConfig getFunction();
+
+	}
+
+	/**
+	 * Ticket #29742: A configured default applies within the application configuration itself.
+	 */
+	public void testConfiguredDefaultInApplicationConfig() {
+		FunctionHolder holder = ApplicationConfig.getInstance().getConfig(FunctionHolder.class);
+		FunctionConfig function = holder.getFunction();
+		assertInstanceof(function, FunctionImpl.Config.class);
+		assertEquals("x -> $x", ((FunctionImpl.Config) function).getExpression());
 	}
 
 	public void testDirectConfiguredDefault() {

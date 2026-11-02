@@ -23,7 +23,7 @@
 			initial="tl-ai-demo/venues/venues.view.xml"
 			path="navPath"
 		>
-			<frame
+			<frame id="venue"
 				route="venue/:venue"
 				view="tl-ai-demo/venues/venue-detail.view.xml"
 			>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<!--
+			Initial groups of every application: each new account becomes a member of the group
+			"user", the group "superuser" is for accounts with extended rights.
+		-->
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance default-group="user">
+				<groups>
+					<group name="user"/>
+					<group name="superuser"/>
+				</groups>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="SecurityStructure.user"/>
+					<role name="SecurityStructure.superuser"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!-- The members of the initial groups hold the matching role on the security root. -->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<singleton-rule
+						id="user"
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.user"
+					>
+						<group-with-name name="user"/>
+					</singleton-rule>
+
+					<singleton-rule
+						id="superuser"
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.superuser"
+					>
+						<group-with-name name="superuser"/>
+					</singleton-rule>
+				</role-rules>
+			</instance>
+		</config>
+	</services>
+</application>

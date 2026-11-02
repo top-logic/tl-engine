@@ -47,8 +47,8 @@
   </tr>
   <tr>
    <td>smtp_pass</td>
-   <td>%SMTP_PASS%</td>
-   <td>Das Passwort, dass die Anwendung für die Anmeldung beim SMTP-Server verwendet. Der Wert muss verschlüsselt angegeben werden. Zu Test-Zwecken kann der unverschlüsselte Wert mit dem Prefix <code class="hljs inlineCode">unencrypted:</code> angegeben werden.</td>
+   <td>-</td>
+   <td>Das Passwort, das die Anwendung für die Anmeldung beim SMTP-Server verwendet, im Klartext. Die Konfiguration verweist auf das Passwort über den Namen des Geheimnisses (<code class="hljs inlineCode">&lt;password name="smtp_pass"/&gt;</code>), die Geheimnisablage der Installation liefert es; ohne Wert wird ein leeres Passwort verwendet.</td>
   </tr>
   <tr>
    <td>smtp_timeout</td>
@@ -115,8 +115,8 @@
   </tr>
   <tr>
    <td>imap_pass</td>
-   <td>%IMAP_PASS%</td>
-   <td>Das Passwort, dass die Anwendung für die Anmeldung beim IMAP-Server verwendet. Der Wert muss verschlüsselt angegeben werden. Zu Test-Zwecken kann der unverschlüsselte Wert mit dem Prefix <code class="hljs inlineCode">unencrypted:</code> angegeben werden.</td>
+   <td>-</td>
+   <td>Das Passwort, das die Anwendung für die Anmeldung beim IMAP-Server verwendet, im Klartext. Die Konfiguration verweist auf das Passwort über den Namen des Geheimnisses (<code class="hljs inlineCode">&lt;password name="imap_pass"/&gt;</code>), die Geheimnisablage der Installation liefert es; ohne Wert wird ein leeres Passwort verwendet.</td>
   </tr>
  </tbody>
 </table>

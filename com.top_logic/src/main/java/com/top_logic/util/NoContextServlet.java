@@ -42,6 +42,12 @@ public class NoContextServlet extends AbstractTopLogicServlet {
 
 	private void executeInInteraction(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
 			IOException {
+		if (DefaultDisplayContext.hasDisplayContext(req)) {
+			// Forwarded from a servlet that already set up the context, e.g. to show a page of the
+			// application from within a request of a session.
+			doService(req, resp);
+			return;
+		}
 		ServletContext servletContext = getServletContext();
 		DefaultDisplayContext displayContext = DefaultDisplayContext.setupDisplayContext(servletContext, req, resp);
 		try {
@@ -88,6 +94,10 @@ public class NoContextServlet extends AbstractTopLogicServlet {
 	private SessionContext lookupSessionContext(HttpServletRequest req) {
 		HttpSession session = req.getSession(false);
 		if (session == null) {
+			return null;
+		}
+		if (!SessionService.Module.INSTANCE.isActive()) {
+			// The services are being restarted, no session of the application exists meanwhile.
 			return null;
 		}
 		return SessionService.getInstance().getSession(session);

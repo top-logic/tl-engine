@@ -13,6 +13,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -45,6 +47,7 @@ public class FieldElement implements UIElement {
 	 * Configuration for {@link FieldElement}.
 	 */
 	@TagName("field")
+	@TypeIcon("css:bi bi-input-cursor")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -145,6 +148,7 @@ public class FieldElement implements UIElement {
 		@Name(INPUT_CONTROL)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ReactFieldControlProvider> getInputControl();
 	}
 

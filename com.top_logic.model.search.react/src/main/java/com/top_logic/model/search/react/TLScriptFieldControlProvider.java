@@ -5,10 +5,12 @@
  */
 package com.top_logic.model.search.react;
 
+import com.top_logic.basic.annotation.InApp;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -18,6 +20,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -49,7 +53,13 @@ import com.top_logic.model.search.persistency.attribute.expr.ExprStorageMapping;
  * script's source that holds more than white space stands for it.
  * </p>
  */
+@Label("TL-Script editor")
+@InApp
+@TargetType(value = TLTypeKind.CUSTOM, name = TLScriptFieldControlProvider.EXPR_TYPE)
 public class TLScriptFieldControlProvider implements ReactFieldControlProvider {
+
+	/** Qualified name of the model type of the TL-Script expressions edited here. */
+	public static final String EXPR_TYPE = "tl.model.search:Expr";
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {

@@ -41,6 +41,12 @@
  * </p>
  *
  * <p>
+ * A step that moves on by itself is a
+ * {@link com.top_logic.layout.view.wizard.WizardStep#passThrough() pass-through step}: the flow
+ * leads through it, a move back skips it, and it is no address of its own.
+ * </p>
+ *
+ * <p>
  * The wizard renders no navigation buttons of its own: which buttons a flow offers, and where they
  * sit, is composed in the view out of those commands.
  * </p>

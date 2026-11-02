@@ -5,8 +5,12 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +43,7 @@ import com.top_logic.layout.view.navigation.RevealPath;
  *
  * <p>
  * A mutator that would drop a frame holding unsaved changes - {@link #pop()}, {@link #popTo(int)},
- * {@link #replaceFrom(int, List)} or a {@link #restore(int, String, Map, long) restore} replacing
+ * {@link #replaceFrom(int, List)} or a {@link #restore(int, FrameRoute, Map, long) restore} replacing
  * frames - is vetoed by the {@link ReactTileStackControl} displaying the stack: it throws a
  * {@link com.top_logic.layout.view.channel.ChannelVetoException} naming the forms of the dropped
  * frames and leaves the path unchanged. The exception's continuation performs the write once the
@@ -47,8 +51,9 @@ import com.top_logic.layout.view.navigation.RevealPath;
  * </p>
  *
  * <p>
- * The scope also carries the {@link #frameRoutes() routes} the stack declares for its frame views:
- * they name a frame that is pushed without a label of its own, and they are what
+ * The scope also carries the {@link #root() graph of frame declarations} of the stack: a frame is
+ * pushed by the {@link FrameRoute#id() id} of its declaration, the declaration names a frame that is
+ * pushed without a label of its own, and the declarations along the path are what
  * {@link TileFrameRouteParticipant} reflects the path in the URL with and restores it from.
  * </p>
  *
@@ -86,7 +91,9 @@ public class TileStackScope {
 
 	private final ViewChannel _pathChannel;
 
-	private final List<FrameRoute> _frameRoutes;
+	private final FrameRoute _root;
+
+	private final Map<String, FrameRoute> _byId;
 
 	/** The place of the stack in the display, {@code null} for a scope created without it. */
 	private final RevealPath _place;
@@ -99,27 +106,16 @@ public class TileStackScope {
 	private List<TileFrame> _restoredPath = List.of();
 
 	/**
-	 * Creates a {@link TileStackScope} whose stack declares no frame routes and whose place in the
-	 * display is unknown, so that {@link #framePlace(int)} answers {@code null}.
-	 *
-	 * @param pathChannel
-	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
-	 */
-	public TileStackScope(ViewChannel pathChannel) {
-		this(pathChannel, List.of());
-	}
-
-	/**
 	 * Creates a {@link TileStackScope} backed by the given path channel, whose place in the display
 	 * is unknown, so that {@link #framePlace(int)} answers {@code null}.
 	 *
 	 * @param pathChannel
 	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
 	 * @param frameRoutes
-	 *        The routes the stack declares for its frame views, in declaration order.
+	 *        The declarations of the frames that may follow the initial view, in declaration order.
 	 */
 	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes) {
-		this(pathChannel, frameRoutes, null, null);
+		this(pathChannel, FrameRoute.initial(null, frameRoutes), null, null);
 	}
 
 	/**
@@ -127,20 +123,36 @@ public class TileStackScope {
 	 *
 	 * @param pathChannel
 	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
-	 * @param frameRoutes
-	 *        The routes the stack declares for its frame views, in declaration order.
+	 * @param root
+	 *        The {@link FrameRoute#initial(String, List) declaration of the initial view}, from which
+	 *        the declarations of all frames of the stack are reached.
 	 * @param place
 	 *        The place of the stack in the display, or {@code null} to leave
 	 *        {@link #framePlace(int)} unanswered.
 	 * @param element
 	 *        The element a frame of the stack is addressed through, the stack itself.
 	 */
-	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes, RevealPath place,
-			TileStackElement element) {
+	public TileStackScope(ViewChannel pathChannel, FrameRoute root, RevealPath place, TileStackElement element) {
 		_pathChannel = pathChannel;
-		_frameRoutes = List.copyOf(frameRoutes);
+		_root = root;
+		_byId = Collections.unmodifiableMap(index(root));
 		_place = place;
 		_element = element;
+	}
+
+	/**
+	 * The declarations reachable from the given one, by id.
+	 */
+	private static Map<String, FrameRoute> index(FrameRoute root) {
+		Map<String, FrameRoute> result = new LinkedHashMap<>();
+		Deque<FrameRoute> pending = new ArrayDeque<>(root.successors());
+		while (!pending.isEmpty()) {
+			FrameRoute route = pending.removeFirst();
+			if (result.putIfAbsent(route.id(), route) == null) {
+				pending.addAll(route.successors());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -179,35 +191,101 @@ public class TileStackScope {
 	}
 
 	/**
-	 * The routes the stack declares for its frame views, in declaration order.
+	 * The declaration of the initial view of the stack, the start of the graph of its frame
+	 * declarations: its {@link FrameRoute#successors() successors} are the frames that may follow
+	 * the initial view.
 	 */
-	public List<FrameRoute> frameRoutes() {
-		return _frameRoutes;
+	public FrameRoute root() {
+		return _root;
 	}
 
 	/**
-	 * The route the stack declares for the given frame view, or {@code null} if it declares none.
-	 *
-	 * @param viewRef
-	 *        Path of a frame view, as {@link TileFrame#getViewRef()} holds it.
+	 * All frame declarations of the stack.
 	 */
-	public FrameRoute frameRoute(String viewRef) {
-		return FrameRoute.byView(_frameRoutes, viewRef);
+	public Collection<FrameRoute> declarations() {
+		return _byId.values();
+	}
+
+	/**
+	 * Whether a frame of the stack can have an address: some declaration has a route.
+	 */
+	public boolean hasAddresses() {
+		return _byId.values().stream().anyMatch(route -> route.pattern() != null);
+	}
+
+	/**
+	 * The frame declaration of the stack with the given id, or {@code null} if it declares none.
+	 *
+	 * @param frameId
+	 *        The {@link FrameRoute#id() id} of a declaration, as {@link TileFrame#getFrameId()} holds
+	 *        it.
+	 */
+	public FrameRoute declaration(String frameId) {
+		return _byId.get(frameId);
+	}
+
+	/**
+	 * The declarations of the given frames, as far as the frames follow the graph of declarations.
+	 *
+	 * <p>
+	 * The n-th entry is the declaration of the n-th frame, and the list ends before the first frame
+	 * whose declaration is no {@link FrameRoute#successors() successor} of the declaration of the
+	 * frame below it - of the initial view for the first frame.
+	 * </p>
+	 *
+	 * @param frames
+	 *        Frames of a path, lowest first.
+	 */
+	public List<FrameRoute> declarations(List<TileFrame> frames) {
+		List<FrameRoute> result = new ArrayList<>(frames.size());
+		FrameRoute below = _root;
+		for (TileFrame frame : frames) {
+			FrameRoute declaration = _byId.get(frame.getFrameId());
+			if (declaration == null || !below.successors().contains(declaration)) {
+				break;
+			}
+			result.add(declaration);
+			below = declaration;
+		}
+		return result;
+	}
+
+	/**
+	 * The declaration the frame put on top of the given frames follows, or {@code null} if the given
+	 * frames do not follow the graph of declarations.
+	 *
+	 * @param frames
+	 *        Frames of a path, lowest first.
+	 * @return The declaration of the last of the given frames, the {@link #root()} for none.
+	 */
+	public FrameRoute top(List<TileFrame> frames) {
+		List<FrameRoute> declarations = declarations(frames);
+		if (declarations.size() < frames.size()) {
+			return null;
+		}
+		return declarations.isEmpty() ? _root : declarations.get(declarations.size() - 1);
 	}
 
 	/**
 	 * Appends a frame to the path.
 	 *
-	 * @param viewRef
-	 *        Path of the view file to mount.
+	 * @param frameId
+	 *        The {@link FrameRoute#id() id} of the declaration of the frame to push.
 	 * @param label
-	 *        Breadcrumb label, or {@code null} to use the one the stack declares for the view.
+	 *        Breadcrumb label, or {@code null} to use the one the declaration names the frame with.
 	 * @param params
 	 *        Bound parameter values captured at push time.
+	 * @throws IllegalArgumentException
+	 *         If the stack declares no frame of the given id.
 	 */
-	public void push(String viewRef, ResKey label, Map<String, Object> params) {
+	public void push(String frameId, ResKey label, Map<String, Object> params) {
+		FrameRoute declaration = _byId.get(frameId);
+		if (declaration == null) {
+			throw new IllegalArgumentException(
+				"The tile stack declares no frame '" + frameId + "', declared are: " + _byId.keySet());
+		}
 		List<TileFrame> next = new ArrayList<>(readPath());
-		next.add(frame(viewRef, label, params));
+		next.add(frame(declaration, label, params));
 		_pathChannel.set(Collections.unmodifiableList(next));
 	}
 
@@ -251,8 +329,8 @@ public class TileStackScope {
 	 *
 	 * <p>
 	 * A given frame {@link TileFrame#equals(Object) equal} to the one the path holds at its position
-	 * stays displayed as the user left it. A given frame without a label is named by the label the
-	 * stack declares for its view, as {@link #push(String, ResKey, Map)} names it.
+	 * stays displayed as the user left it. A given frame without a label is named by the label of its
+	 * declaration, as {@link #push(String, ResKey, Map)} names it.
 	 * </p>
 	 *
 	 * @param position
@@ -277,8 +355,8 @@ public class TileStackScope {
 	 * @param base
 	 *        Number of frames the URL has already established, and therefore the position of the
 	 *        frame it names now.
-	 * @param viewRef
-	 *        Path of the view file to mount.
+	 * @param declaration
+	 *        The declaration of the frame the URL names.
 	 * @param params
 	 *        The parameter values the URL carries for the frame.
 	 * @param adoptionId
@@ -286,8 +364,9 @@ public class TileStackScope {
 	 *        {@link #restoreBase(long)} can tell the frames it establishes from those of the
 	 *        adoption before.
 	 */
-	public void restore(int base, String viewRef, Map<String, Object> params, long adoptionId) {
-		List<TileFrame> path = pathFrom(base, List.of(new TileFrame(viewRef, null, params)));
+	public void restore(int base, FrameRoute declaration, Map<String, Object> params, long adoptionId) {
+		List<TileFrame> path =
+			pathFrom(base, List.of(new TileFrame(declaration.id(), declaration.viewRef(), null, params)));
 
 		// Recorded before the write: writing the path mounts the frame, and the participant of that
 		// frame asks for its base while the write is still in progress.
@@ -320,28 +399,27 @@ public class TileStackScope {
 
 	/**
 	 * The frames of the current path up to the given position, followed by the given ones - each
-	 * named by the label the stack declares for its view where it carries none of its own.
+	 * named by the label of its declaration where it carries none of its own.
 	 */
 	private List<TileFrame> pathFrom(int position, List<TileFrame> frames) {
 		List<TileFrame> current = readPath();
 		List<TileFrame> next =
 			new ArrayList<>(current.subList(0, Math.max(0, Math.min(position, current.size()))));
 		for (TileFrame frame : frames) {
-			next.add(frame.getLabel() != null ? frame : frame(frame.getViewRef(), null, frame.getParams()));
+			FrameRoute declaration = _byId.get(frame.getFrameId());
+			next.add(frame.getLabel() != null || declaration == null ? frame
+				: frame(declaration, null, frame.getParams()));
 		}
 		return Collections.unmodifiableList(next);
 	}
 
 	/**
-	 * The frame for the given view, named by the given label or, without one, by the label the stack
-	 * declares for the view.
+	 * The frame of the given declaration, named by the given label or, without one, by the label of
+	 * the declaration.
 	 */
-	private TileFrame frame(String viewRef, ResKey label, Map<String, Object> params) {
-		if (label != null) {
-			return new TileFrame(viewRef, label, params);
-		}
-		FrameRoute route = frameRoute(viewRef);
-		return new TileFrame(viewRef, route == null ? null : route.computeLabel(params), params);
+	private static TileFrame frame(FrameRoute declaration, ResKey label, Map<String, Object> params) {
+		ResKey frameLabel = label != null ? label : declaration.computeLabel(params);
+		return new TileFrame(declaration.id(), declaration.viewRef(), frameLabel, params);
 	}
 
 	@SuppressWarnings("unchecked")

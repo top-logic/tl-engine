@@ -27,7 +27,7 @@ import com.top_logic.util.model.ModelService;
  * The window holds the open chat in memory - its messages, its conversation memory, its task store
  * - and keeps its id as the active one. Deleting that chat elsewhere (a row command, another tab,
  * the REST endpoint) leaves the window pointing at a session that no longer exists, and the next
- * message would be written into it. {@code AgentViewRefreshService} calls this for every window of
+ * message would be written into it. {@code ChatWindowService} calls this for every window of
  * the account when the store reports a deletion.
  * </p>
  */

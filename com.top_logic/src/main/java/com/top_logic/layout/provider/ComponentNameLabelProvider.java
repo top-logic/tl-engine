@@ -56,7 +56,13 @@ public class ComponentNameLabelProvider implements LabelProvider {
 	}
 
 	private String label(ComponentName name) {
-		LayoutComponent component = lookupComponent(name);
+		MainLayout mainLayout = MainLayout.getDefaultMainLayout();
+		if (mainLayout == null) {
+			// There is no layout to resolve the name in, e.g. in a React application. The name
+			// itself is used as label.
+			return null;
+		}
+		LayoutComponent component = mainLayout.getComponentByName(name);
 
 		if (component == null) {
 			return "UNRESOLVED: " + name;
@@ -67,10 +73,6 @@ public class ComponentNameLabelProvider implements LabelProvider {
 
 	private String label(LayoutComponent component) {
 		return LayoutUtils.getLabel(component);
-	}
-
-	private LayoutComponent lookupComponent(ComponentName name) {
-		return MainLayout.getDefaultMainLayout().getComponentByName(name);
 	}
 
 }

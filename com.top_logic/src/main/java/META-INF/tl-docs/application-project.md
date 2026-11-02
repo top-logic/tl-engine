@@ -1,5 +1,5 @@
 ---
-description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
+description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
 order: 10
 ---
 
@@ -242,6 +242,24 @@ The fragment's configuration, model and views are picked up from its jar through
 multi-module build with an aggregator POM listing them as modules; Maven builds each fragment
 before the application depending on it.
 
+## Starting the application in development mode
+
+`mvn` without goal in the directory of an application builds it and starts it in an embedded Jetty
+(the default goals of `tl-parent-app`, ending with `exec:java` running
+`com.top_logic.ide.jetty.Bootstrap`); `/` of the server redirects to the application. Two
+properties, set in the POM or on the command line, choose where it answers:
+
+| Property | Default | Meaning |
+|---|---|---|
+| `tl.port` | `8080` | The HTTP port of the server. |
+| `tl.contextPath` | `<artifactId>` | The context path of the application, with or without leading slash. It may have several segments, e.g. `-Dtl.contextPath=/preview/ws-1/my-app`; no segment may be `view` or `servlet`, and `/admin` is taken by the server. |
+
+The server takes the external URL of the application (`%HOST%` of the configuration) from the
+variable `tl_host`; without it, `http://localhost:<tl.port>`. On start, it requests
+`<tl_host>/admin/stop` to stop an instance started before on the same port: any answer but `200`
+with the body `OK` counts as "nothing running", `200` with another body ends the start with "Port
+is occupied".
+
 ## Debian package
 
 An application builds a Debian package from `src/main/deb` (control scripts in
@@ -326,3 +344,42 @@ Such a project uses the packaging `jar`, needs neither the BOM import nor the pl
 and may override the version properties of `tl-bom` (e.g. `jetty.version`), since it inherits
 them. A fragment correspondingly inherits `tl-parent-core`. The project then cannot have a company
 parent; without the version of its own it also inherits the TopLogic version as its own version.
+
+## Enabling LDAP and OpenID Connect in the WAR
+
+The login with an LDAP directory and with OpenID Connect providers is switched on when the
+application WAR is built: the build adds the configuration of the feature to the `metaConf.txt` of
+the WAR. `tl-parent-app` has a profile for each of them:
+
+| Profile | Enables | Settings from the environment |
+|---|---|---|
+| `with-ldap` | `ldapConf.xml`: login with and user synchronization from an LDAP directory | `ldap_url`, `ldap_principal`, `ldap_credential`, `ldap_base_dn`, `ldap_filter`, `ldap_group_1` ... `ldap_group_3`, `ldap_mapping_*` |
+| `with-openid-keycloak` | `pac4j-keycloak.xml` | `tl_pac_keycloak_base_uri`, `tl_pac_keycloak_realm` |
+| `with-openid-azure` | `pac4j-azure.xml` | `tl_pac_azure_tenant` |
+| `with-openid-google` | `pac4j-google.xml` | - |
+| `with-openid-generic` | `pac4j-generic.xml` | `tl_pac_discovery_uri` |
+
+The OpenID Connect profiles also add the module `tl-security-auth-pac4j`, whose client reads
+`tl_pac_client_id`, `tl_pac_secret` and further `tl_pac_*` settings. The profiles combine with
+each other and with a database profile:
+
+```bash
+mvn package -P with-postgresql,with-ldap,with-openid-keycloak,with-openid-azure
+```
+
+Each profile sets a property of its own whose name starts with `tl.app.metaConfAddons.`: the
+database profiles `tl.app.metaConfAddons.db` (default `db-jndi.xml`, one database at a time), the
+profiles above e.g. `tl.app.metaConfAddons.ldap`. The packaging `tl-app` adds the comma-separated
+references of `tl.app.metaConfAddons` - free for references of the application itself - and then
+those of all prefixed properties in the order of their names. A project with the packaging `tl-app`
+and without `tl-parent-app` defines such profiles itself, as can an application for configuration
+of its own:
+
+```xml
+<profile>
+	<id>with-ldap</id>
+	<properties>
+		<tl.app.metaConfAddons.ldap>ldapConf.xml</tl.app.metaConfAddons.ldap>
+	</properties>
+</profile>
+```

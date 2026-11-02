@@ -40,6 +40,10 @@
       <artifactId>tl-security-auth-pac4j</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-credential-oauth</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>

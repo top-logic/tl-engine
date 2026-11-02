@@ -107,6 +107,8 @@ Without `inputs`, `init` is evaluated once when the view is built and gives the 
 
 A derived channel follows more than new input values. While the view declaring it is displayed, it also observes the objects its inputs hold (`ObservingChannel`), so an expression reading an attribute of the input object is recomputed when that attribute is stored, although the input channel keeps pointing to the same object. While the view is not displayed - a tab nobody looks at, a closed dialog - nothing is observed, and the value is recomputed when the view is displayed again.
 
+The commit need not be made by the window itself: a commit of another thread - a background job, a scheduled task, another session - reaches every window whose observed objects or types it touches, within the `sync-interval` of `WindowModelEventService` (500 ms by default). Tables and forms follow such commits in the same way.
+
 An expression that reads beyond the input objects - all instances of a type, an attribute of the input's container - names the types whose create, update and delete events recompute it in `observed-types` (comma-separated type names). A derived channel without inputs is otherwise computed once, when the view is built:
 
 ```xml
@@ -161,14 +163,6 @@ The source is a Java class implementing `ChannelSource`, configured in the `<sou
 - **The channel holds state, not events.** `update-interval` is the shortest time in milliseconds between two deliveries (default 250, zero delivers every value): a value published while an earlier one is still held back replaces it, and the last value of a burst is always delivered. A source whose consumers must see every message accumulates them into the value itself.
 - **The subscription follows the display.** The channel subscribes when the view declaring it is displayed and disposes the registration when the view is hidden - a tab nobody looks at, a closed dialog - or destroyed, exactly like the observation of a derived channel. The source therefore sees one subscription per displayed view instance per window, and one again each time a view is displayed anew. After the registration is disposed, publishing into its sink is harmless and ignored. A source that shares one external connection among its subscribers manages that sharing itself.
 - A source whose `subscribe` fails is logged, and the channel stays an ordinary writable value.
-
-**Following commits of other threads: `CommitSource`.** A window learns of a commit it did not make itself - a background job, a scheduled task, another session - only when its model events are synthesized: on its next request, or on the heartbeat of its event stream every 15 seconds. Every delivery of a source channel synthesizes them as well, so a view that displays objects changed in the background declares a channel fed by `com.top_logic.layout.view.channel.CommitSource`, which publishes the number of every commit touching an object of its `types` (all commits without `types`). Its tables, forms and derived channels observing those objects or types then follow the commits within the channel's `update-interval`; the channel value itself is rarely read:
-
-```xml
-<source-channel name="commits" update-interval="1000">
-	<source class="com.top_logic.layout.view.channel.CommitSource" types="my.module:Job"/>
-</source-channel>
-```
 
 Java code that has a `ViewContext` and a channel at hand - an action starting background work, an element of its own - does not need a declared source: a `ChannelPublisher` created on a request thread delivers values into the channel from any thread with the same threading, throttling and conflation; `close()` ends it.
 

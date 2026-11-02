@@ -45,7 +45,7 @@ tl-react-bridge bundle       React, the part registry (registerPart / replacePar
 - **The TopLogic components that are not replaced follow the theme.** Tables, trees, panels, the
   sidebar and toolbars read CSS custom properties that `installMui` derives from the MUI theme and
   writes into the page ([Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme)).
-- **What is MUI is a free choice**: all 11 parts and 18 controls the module has adapters for, or a
+- **What is MUI is a free choice**: all 12 parts and 19 controls the module has adapters for, or a
   selection.
 - **There is exactly one Material UI on the page**, the one in `tl-react-mui`. The theme and every
   customer component import Material UI from there, so they share the theme context, the emotion
@@ -426,6 +426,7 @@ anything.
 | `Spinner` | the part: busy indicators | `CircularProgress` |
 | `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |
 | `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLAvatar`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
+| `TLFloatingAction` | the control as a whole: one action, several actions | `Fab` (`extended` when the action shows its label), `SpeedDial` with a `SpeedDialAction` per action (its label as tooltip) |
 
 The parts are described in [Parts: the atoms of the React UI](doc:view-layer/parts), the controls
 in [The replaceable components](doc:view-layer/customer-component-library#the-replaceable-components).

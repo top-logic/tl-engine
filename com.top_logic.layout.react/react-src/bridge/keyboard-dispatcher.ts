@@ -194,7 +194,8 @@ function handleKeydown(e: KeyboardEvent): void {
   const active = document.activeElement;
 
   // Enter inside a multi-line editor inserts a newline; never treat it as a submit gesture.
-  if (e.key === 'Enter' && isMultilineEntry(active)) {
+  // Ctrl/Meta+Enter inserts nothing there and stays a gesture, e.g. to run what was typed.
+  if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && isMultilineEntry(active)) {
     return;
   }
   // Enter on a focused button activates that button natively; don't also fire a scope default.

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.List;
 import java.util.Locale;
 
 import junit.framework.Test;
@@ -20,18 +21,28 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.EnterEditModeAction;
+import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
+import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
  * Tests that editing a {@link FormControl} follows the right to write its object, see
- * {@link ModelAccessPolicy#onEdit(TLObject)}, combined with the configured edit rule.
+ * {@link ModelAccessPolicy#onEdit(BoundCommandGroup, TLObject)}, combined with the configured edit rule.
  */
 @SuppressWarnings("javadoc")
 public class TestFormEditRights extends AbstractModelAccessTest {
@@ -234,6 +245,71 @@ public class TestFormEditRights extends AbstractModelAccessTest {
 
 		assertSame(ExecutableState.EXECUTABLE, form.editPermission());
 		assertTrue(form.enterEditMode());
+	}
+
+	/**
+	 * A form requires {@link SimpleBoundCommandGroup#WRITE} for editing unless configured otherwise.
+	 */
+	public void testDefaultEditOperation() {
+		FormElement.Config config = TypedConfiguration.newConfigItem(FormElement.Config.class);
+		assertEquals(SimpleBoundCommandGroup.WRITE_NAME, config.getEditOperation().id());
+	}
+
+	/**
+	 * A configured edit operation is checked on the displayed object instead of the write right.
+	 */
+	public void testCustomEditOperation() {
+		BoundCommandGroup finish = CommandGroupRegistry.getInstance().getGroup(FINISH);
+
+		becomeUser(_responsible);
+		FormControl form = newForm(_project);
+		form.setEditOperation(finish);
+		assertSame(ExecutableState.EXECUTABLE, form.editPermission());
+
+		becomeUser(_roleless);
+		ExecutableState denied = form.editPermission();
+		assertTrue("Expected a disabled command, got: " + denied, denied.isDisabled());
+		assertEquals("You are not allowed to perform the operation \"Finish\" on this object.",
+			Resources.getInstance(Locale.ENGLISH).getString(denied.getI18NReasonKey()));
+		assertFalse(form.enterEditMode());
+
+		becomeUser(_root);
+		FormControl categoryForm = newForm(_category);
+		categoryForm.setEditOperation(finish);
+		assertSame("The operation does not apply to a category.", ExecutableState.NOT_EXEC_HIDDEN,
+			categoryForm.editPermission());
+
+		categoryForm.setEditOperation(null);
+		assertSame("An unknown operation refuses editing.", ExecutableState.NOT_EXEC_HIDDEN,
+			categoryForm.editPermission());
+	}
+
+	/**
+	 * A command entering the edit mode with {@code <enter-edit-mode/>} follows the edit permission
+	 * of its form, like the form's own Edit button.
+	 */
+	public void testEnterEditModeActionFollowsPermission() {
+		becomeUser(_responsible);
+		FormControl form = newForm(_project);
+		ViewExecutabilityRule rule = enterEditModeRule(form);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
+
+		FormControl category = newForm(_category);
+		assertSame("Writing a category is granted to no role.", ExecutableState.NOT_EXEC_HIDDEN,
+			enterEditModeRule(category).isExecutable(_category));
+
+		becomeUser(_roleless);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_WRITE_DENIED,
+			enterEditModeRule(newForm(_project)).isExecutable(_project));
+	}
+
+	private static ViewExecutabilityRule enterEditModeRule(FormControl form) {
+		ViewContext context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test")));
+		context.setFormModel(form);
+		return ViewExecutabilityRules.withIntrinsicRule(context,
+			new GenericViewCommand(List.of(new EnterEditModeAction(null, null))),
+			ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 	}
 
 	private static FormControl newForm(TLObject object) {

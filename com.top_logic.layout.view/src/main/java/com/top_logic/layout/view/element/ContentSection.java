@@ -15,8 +15,9 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.AccessChecks;
-import com.top_logic.layout.view.security.AccessControl;
-import com.top_logic.layout.view.security.SecurityScope;
+import com.top_logic.layout.view.security.SecuredObject;
+import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.util.Resources;
 
 /**
@@ -39,16 +40,16 @@ public final class ContentSection {
 
 	private final String _icon;
 
-	private final AccessControl _accessControl;
+	private final UnitAccess _access;
 
 	private final List<UIElement> _children;
 
-	private ContentSection(String id, ResKey label, String icon, AccessControl accessControl,
+	private ContentSection(String id, ResKey label, String icon, UnitAccess access,
 			List<UIElement> children) {
 		_id = id;
 		_label = label;
 		_icon = icon;
-		_accessControl = accessControl;
+		_access = access;
 		_children = children;
 	}
 
@@ -63,7 +64,7 @@ public final class ContentSection {
 	public static ContentSection of(InstantiationContext context, ContentSectionConfig config) {
 		String icon = config.getIcon();
 		return new ContentSection(config.getId(), config.getLabel(), StringServices.isEmpty(icon) ? null : icon,
-			config.getAccessControl(),
+			UnitAccess.create(context, config.getAccessControl()),
 			config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList()));
@@ -91,10 +92,24 @@ public final class ContentSection {
 	}
 
 	/**
-	 * Whether the current user may see this part.
+	 * Whether this part is displayed to the current user at all.
+	 *
+	 * @see AccessChecks#isOffered(UnitAccess)
 	 */
 	public boolean isAccessible() {
-		return AccessChecks.isAccessible(_accessControl);
+		return AccessChecks.isOffered(_access);
+	}
+
+	/**
+	 * Whether this part is currently left out of its container, see
+	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 *
+	 * @param context
+	 *        The context the container is displayed in.
+	 * @return {@code null} when this part is never left out this way.
+	 */
+	public UnitHiding hiding(ViewContext context) {
+		return AccessChecks.hiding(_access, context);
 	}
 
 	/**
@@ -119,8 +134,8 @@ public final class ContentSection {
 	 * independent positions. Channels are not forked: only a {@code <view>} declares channels, so
 	 * the content shares the enclosing view's channels. A part needing its own channel namespace
 	 * embeds a {@code <view-ref>} to a separate {@code <view>} and binds across that boundary. The
-	 * security scope of the part's access control becomes the scope command rules in the content
-	 * default to.
+	 * object the part's access control checks is published to the content as its
+	 * {@link SecuredObject}.
 	 * </p>
 	 *
 	 * @param context
@@ -130,18 +145,22 @@ public final class ContentSection {
 	 */
 	public ViewContext contentContext(ViewContext context, String segment) {
 		ViewContext baseContext = context.childContext(segment).withChildSlotPath(_id);
-		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
-		return scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
+		return AccessChecks.contentContext(_access, baseContext);
 	}
 
 	/**
 	 * Creates the control displaying the content of this part.
 	 *
+	 * <p>
+	 * With an access control over an object, the content is displayed as the access check decides
+	 * for the current object, see {@link AccessChecks#guard(UnitAccess, ViewContext, java.util.function.Function)}.
+	 * </p>
+	 *
 	 * @param contentContext
 	 *        The context derived by {@link #contentContext(ViewContext, String)}.
 	 */
 	public ReactControl createContent(ViewContext contentContext) {
-		return ContentControls.toControl(_children, contentContext);
+		return AccessChecks.guard(_access, contentContext, ctx -> ContentControls.toControl(_children, ctx));
 	}
 
 }

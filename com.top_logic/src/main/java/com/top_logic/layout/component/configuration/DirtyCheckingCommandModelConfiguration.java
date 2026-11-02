@@ -57,7 +57,7 @@ public class DirtyCheckingCommandModelConfiguration<C extends DirtyCheckingComma
 		 */
 		@Name(CHECK_SCOPE_PROVIDER_NAME)
 		@Mandatory
-		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> getCheckScopeProvider();
 
 	}
 

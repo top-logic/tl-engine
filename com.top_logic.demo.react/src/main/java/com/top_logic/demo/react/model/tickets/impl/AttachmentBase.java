@@ -54,6 +54,11 @@ public interface AttachmentBase extends com.top_logic.model.TLNamed {
 	String NAME_ATTR = "name";
 
 	/**
+	 * Name of the table storing {@link #ATTACHMENT_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
 	 * Getter for part {@link #CUSTOM_NAME_ATTR}.
 	 */
 	default String getCustomName() {

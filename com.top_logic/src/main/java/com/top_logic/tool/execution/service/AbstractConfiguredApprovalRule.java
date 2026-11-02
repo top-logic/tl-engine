@@ -51,7 +51,7 @@ public abstract class AbstractConfiguredApprovalRule<C extends AbstractConfigure
 		 * </p>
 		 */
 		@Name(CONTEXTS)
-		List<PolymorphicConfiguration<ExecutionContextFilter>> getContexts();
+		List<PolymorphicConfiguration<? extends ExecutionContextFilter>> getContexts();
 
 		/**
 		 * Exception to the condition defined in {@link #getContexts()}.
@@ -62,7 +62,7 @@ public abstract class AbstractConfiguredApprovalRule<C extends AbstractConfigure
 		 * </p>
 		 */
 		@Name(EXCLUDED_CONTEXTS)
-		List<PolymorphicConfiguration<ExecutionContextFilter>> getExcludedContexts();
+		List<PolymorphicConfiguration<? extends ExecutionContextFilter>> getExcludedContexts();
 	}
 
 	private ExecutionContextFilter _matcher;
@@ -88,9 +88,9 @@ public abstract class AbstractConfiguredApprovalRule<C extends AbstractConfigure
 	}
 
 	private static ExecutionContextFilter matcher(InstantiationContext context,
-			List<PolymorphicConfiguration<ExecutionContextFilter>> contexts) {
+			List<PolymorphicConfiguration<? extends ExecutionContextFilter>> contexts) {
 		ExecutionContextFilter result = ExecutionContextFilter.NONE;
-		for (PolymorphicConfiguration<ExecutionContextFilter> filter : contexts) {
+		for (PolymorphicConfiguration<? extends ExecutionContextFilter> filter : contexts) {
 			result = result.or(context.getInstance(filter));
 		}
 		return result;

@@ -104,7 +104,8 @@ public class TLStructuredTypeFormBuilder
 		EditModel.ANNOTATIONS,
 	})
 	@DisplayInherited(DisplayStrategy.IGNORE)
-	public interface EditModel extends ClassConfig, Internationalized, FullQualifiedName, TypeRef {
+	public interface EditModel
+			extends ClassConfig, Internationalized, FullQualifiedName, TypeRef, ValueTypeModel {
 
 		/**
 		 * @see #hasSpecializations()
@@ -202,6 +203,16 @@ public class TLStructuredTypeFormBuilder
 		@Override
 		@Hidden
 		String getTypeSpec();
+
+		/**
+		 * The edited type itself, resolved from its {@link #getFullQualifiedName() qualified name}.
+		 */
+		@Override
+		@Name(RESOLVED_TYPE)
+		@InstanceFormat
+		@Hidden
+		@Derived(fun = ResolveQualifiedType.class, args = @Ref(FULL_QUALIFIED_NAME))
+		TLType getResolvedType();
 
 		/**
 		 * The owning module.

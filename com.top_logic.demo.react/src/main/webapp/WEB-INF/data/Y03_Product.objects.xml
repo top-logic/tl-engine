@@ -803,7 +803,7 @@
 				type="test.flowchart:FlowNode"
 			>
 				<attribute name="name"
-					value="Bodenplate"
+					value="Bodenplatte"
 				/>
 				<attribute name="inputs">
 					<ref id="3"/>

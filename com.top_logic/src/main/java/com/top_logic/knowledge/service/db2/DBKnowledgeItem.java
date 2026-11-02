@@ -821,6 +821,35 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		}
 	}
 
+	/**
+	 * Lets the current state of this item start at the given revision, if it starts earlier.
+	 *
+	 * <p>
+	 * For a history that was compacted into the given revision, which rewrote the start and the
+	 * create revision of the current row of this item in the database.
+	 * </p>
+	 *
+	 * @see DBKnowledgeBase#historyCompacted(long)
+	 */
+	final void moveCurrentStart(long revision) {
+		Values current = getValues();
+		if (current == null || !current.isAlive() || current.maxValidity() != Revision.CURRENT_REV
+			|| current.minValidity() >= revision) {
+			return;
+		}
+		Object[] data = current.getData().clone();
+		MOAttribute revMin = revMinAttribute();
+		revMin.getStorage().initApplicationValue(revMin, this, this, data, Long.valueOf(revision));
+		MOAttribute revCreate = tTable().getAttributeOrNull(BasicTypes.REV_CREATE_ATTRIBUTE_NAME);
+		if (revCreate != null) {
+			Object created = revCreate.getStorage().getApplicationValue(revCreate, this, this, data);
+			if (created instanceof Long createRevision && createRevision.longValue() < revision) {
+				revCreate.getStorage().initApplicationValue(revCreate, this, this, data, Long.valueOf(revision));
+			}
+		}
+		updateValues(newValues(revision, Revision.CURRENT_REV, data));
+	}
+
 	private Values createValues(Object[] data) {
 		long validFrom = longValue(getApplicationValue(revMinAttribute(), data));
 		long validTo = longValue(getApplicationValue(revMaxAttribute(), data));
@@ -1156,7 +1185,7 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		DBKnowledgeBase kb = getKnowledgeBase();
 		Set<String> keyAttributes = kb.getKeyAttributes(tTable());
 		for (MOAttribute attribute : tTable().getAttributes()) {
-			if (attribute.isSystem()) {
+			if (!contributesToChange(attribute, keyAttributes, event instanceof ItemDeletion)) {
 				continue;
 			}
 
@@ -1178,12 +1207,57 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		return event;
 	}
 
+	/**
+	 * Whether the value of the given attribute is reported in the {@link ItemChange} of a commit.
+	 * 
+	 * <p>
+	 * An attribute without database mapping (e.g. a computed attribute) only derives its value from
+	 * other attributes. In a creation or update, its change is visible through the attributes it is
+	 * derived from, and events read from the database never contain it. Therefore, its value is
+	 * neither computed for the old nor for the new state, unless it is a key attribute. A deletion
+	 * reports the derived values of the deleted object, because they can no longer be computed
+	 * from the object after the commit.
+	 * </p>
+	 *
+	 * @param attribute
+	 *        The attribute of {@link #tTable()} to check.
+	 * @param keyAttributes
+	 *        The names of the key attributes of {@link #tTable()}, see
+	 *        {@link DBKnowledgeBase#getKeyAttributes(com.top_logic.dob.MetaObject)}.
+	 * @param deletion
+	 *        Whether the change is an {@link ItemDeletion}.
+	 */
+	private static boolean contributesToChange(MOAttribute attribute, Set<String> keyAttributes, boolean deletion) {
+		if (attribute.isSystem()) {
+			return false;
+		}
+		if (isDerived(attribute)) {
+			return deletion || keyAttributes.contains(attribute.getName());
+		}
+		return true;
+	}
+
+	/**
+	 * Whether the given attribute has no database mapping and derives its value from other
+	 * attributes.
+	 */
+	private static boolean isDerived(MOAttribute attribute) {
+		return attribute.getDbMapping().length == 0;
+	}
+
 	private Object getOldValue(DBKnowledgeBase kb, MOAttribute attribute, Object[] oldValues) {
 		DBContext before = kb.installContext(ImmutableDBContext.INSTANCE);
 		try {
 			return attribute.getStorage().getCacheValue(attribute, this, oldValues);
 		} catch (Exception ex) {
-			Logger.error("Failed to access old value of column '" + attribute + "'.", ex, DBKnowledgeItem.class);
+			if (isDerived(attribute)) {
+				/* The rule deriving the value may no longer accept the stored source values, e.g.
+				 * after an update of the application. The stored values are still accessible. */
+				Logger.info("Derived value of column '" + attribute + "' not available for " + tId() + ": "
+					+ ex.getMessage(), DBKnowledgeItem.class);
+			} else {
+				Logger.error("Failed to access old value of column '" + attribute + "'.", ex, DBKnowledgeItem.class);
+			}
 			return null;
 		} finally {
 			kb.installContext(before);

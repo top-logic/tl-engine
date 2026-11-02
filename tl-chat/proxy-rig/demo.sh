@@ -69,14 +69,20 @@ start_app() {
   [ -n "$dir" ] || { echo "  $variant: no directory given, skipped"; return; }
   if [ -n "$(listening_pid "$port")" ]; then echo "  $variant: already running on $port"; return; fi
   local conf; conf=$(autoconf_of "$variant")
-  local key=""
+  local key="" mistral=dummy-local
   if [ "$MODE" = real ]; then
     key="${tl_anthropic_api_key:-}"
-    [ -z "$key" ] && [ -n "${DEMO_ANTHROPIC_KEY_FILE:-}" ] && key="unencrypted:$(tr -d '\n\r ' < "$DEMO_ANTHROPIC_KEY_FILE")"
+    [ -z "$key" ] && [ -n "${DEMO_ANTHROPIC_KEY_FILE:-}" ] && key="$(tr -d '\n\r ' < "$DEMO_ANTHROPIC_KEY_FILE")"
     [ -n "$key" ] || { echo "Mode real needs tl_anthropic_api_key or DEMO_ANTHROPIC_KEY_FILE." >&2; exit 1; }
   fi
+  # The rig's autoconf names the variables (plain keys); the classic line reads them through
+  # aliases into encrypted values, which take a plain key with the prefix "unencrypted:".
+  if [[ $variant == classic* ]]; then
+    [ -n "$key" ] && key="unencrypted:$key"
+    mistral="unencrypted:$mistral"
+  fi
   echo "  $variant: starting on $port (log $STATE/$variant/app.log) ..."
-  (cd "$dir/tl-ai-demo" && exec env -u ANTHROPIC_API_KEY tl_anthropic_api_key="$key" tl_mistral_api_key=unencrypted:dummy-local \
+  (cd "$dir/tl-ai-demo" && exec env -u ANTHROPIC_API_KEY tl_anthropic_api_key="$key" tl_mistral_api_key="$mistral" \
     setsid mvn -o -q tl:resolve compile exec:java -Dtl.port="$port" -Dtl_autoconf_dir="$conf" \
     -Dtl_initial_password=root1234) > "$STATE/$variant/app.log" 2>&1 < /dev/null &
 }

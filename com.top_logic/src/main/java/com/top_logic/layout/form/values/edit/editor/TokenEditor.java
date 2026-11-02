@@ -9,6 +9,7 @@ package com.top_logic.layout.form.values.edit.editor;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -16,6 +17,14 @@ import java.util.function.Supplier;
 
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.customization.AnnotationCustomizations;
+import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
@@ -44,6 +53,7 @@ import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
@@ -67,6 +77,21 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <li>A button to open a dialog for generating and setting a new token</li>
  * <li>A button to clear the current token value (only visible when field is not mandatory)</li>
  * </ul>
+ *
+ * <p>
+ * The editor also accepts a property holding a {@link SecretSource} (declared with the
+ * {@link SecretSourceFormat}). It then displays the choice of the source and edits the
+ * {@link LiteralSecretSource.Config#getValue() value} of a {@link LiteralSecretSource} configured
+ * in place as token. Other sources show their reference fields, e.g. the name of an environment
+ * variable. An {@link ImplementationClassDefault} preselects the literal source for a new value:
+ * </p>
+ *
+ * <pre>
+ * &#64;Format(SecretSourceFormat.class)
+ * &#64;ImplementationClassDefault(LiteralSecretSource.class)
+ * &#64;PropertyEditor(TokenEditor.class)
+ * PolymorphicConfiguration&lt;? extends SecretSource&gt; getApiKey();
+ * </pre>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -100,6 +125,12 @@ public class TokenEditor extends AbstractEditor {
 
 	@Override
 	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
+		PropertyDescriptor property = model.getProperty();
+		if (SecretSourceFormat.isSecretSource(property)) {
+			EditorFactory sourceFactory = editorFactory.copy();
+			sourceFactory.setCustomizations(new LiteralTokenCustomizations(editorFactory));
+			return sourceFactory.itemEditor().createUI(sourceFactory, container, model);
+		}
 		FormGroup group = Fields.group(container, Fields.normalizeFieldName(model.getProperty().getPropertyName()));
 
 		HiddenField field = (HiddenField) super.createUI(editorFactory, group, model);
@@ -417,6 +448,60 @@ public class TokenEditor extends AbstractEditor {
 				_out.accept(token);
 				return HandlerResult.DEFAULT_RESULT;
 			}));
+		}
+
+	}
+
+	/**
+	 * {@link AnnotationCustomizations} for the configuration of a {@link SecretSource} edited by a
+	 * {@link TokenEditor}.
+	 *
+	 * <p>
+	 * Edits the {@link LiteralSecretSource.Config#getValue() value} of a {@link LiteralSecretSource}
+	 * with a {@link TokenEditor}.
+	 * </p>
+	 */
+	private static final class LiteralTokenCustomizations implements AnnotationCustomizations {
+
+		/**
+		 * Name of the property {@link PropertyEditor#value()} of the created annotation.
+		 */
+		private static final String VALUE_ATTRIBUTE = "value";
+
+		private final AnnotationCustomizations _base;
+
+		LiteralTokenCustomizations(AnnotationCustomizations base) {
+			_base = base;
+		}
+
+		@Override
+		public <T extends Annotation> T getAnnotation(ConfigurationDescriptor configType, Class<T> annotationType) {
+			return _base.getAnnotation(configType, annotationType);
+		}
+
+		@Override
+		public <T extends Annotation> T getAnnotation(Class<?> type, Class<T> annotationType) {
+			return _base.getAnnotation(type, annotationType);
+		}
+
+		@Override
+		public <T extends Annotation> T getAnnotation(PropertyDescriptor property, Class<T> annotationType) {
+			T result = _base.getAnnotation(property, annotationType);
+			if (result != null) {
+				return result;
+			}
+			if (annotationType == PropertyEditor.class && isLiteralValue(property)) {
+				PropertyEditor editor = TypedConfiguration.newAnnotationItem(PropertyEditor.class);
+				TypedConfiguration.updateValue(editor, VALUE_ATTRIBUTE, TokenEditor.class);
+				return annotationType.cast(editor);
+			}
+			return null;
+		}
+
+		private static boolean isLiteralValue(PropertyDescriptor property) {
+			return LiteralSecretSource.Config.VALUE.equals(property.getPropertyName())
+				&& LiteralSecretSource.Config.class
+					.isAssignableFrom(property.getDescriptor().getConfigurationInterface());
 		}
 
 	}

@@ -240,7 +240,7 @@ public class TestDisplayTargetService extends TestCase {
 		assertEquals(2, target.getShows().size());
 
 		DisplayTargetService.ShowConfig outer = target.getShows().get(0);
-		assertEquals(SHARED, outer.getView());
+		assertEquals(SHARED, outer.getView().getPath());
 		assertFalse(outer.isDialog());
 		assertNull(outer.getLabel());
 		assertNotNull("The view is named after the object it displays.", outer.getLabelExpr());
@@ -250,7 +250,7 @@ public class TestDisplayTargetService extends TestCase {
 			outer.getBindings().get(0).getExpr());
 
 		DisplayTargetService.ShowConfig inner = target.getShows().get(1);
-		assertEquals(ORPHAN, inner.getView());
+		assertEquals(ORPHAN, inner.getView().getPath());
 		assertTrue(inner.isDialog());
 		assertNotNull(inner.getLabel());
 		assertNull("A fixed label needs no expression.", inner.getLabelExpr());

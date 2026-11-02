@@ -58,6 +58,18 @@ public class LinkStorageUtil {
 		return attributeQuery;
 	}
 
+	/**
+	 * Creates a live {@link IndexedLinkQuery} that indexes the links of the given
+	 * {@link TLStructuredTypePart} value by their destination.
+	 * 
+	 * @param metaAttribute
+	 *        The meta attribute to create a query for.
+	 * @param storage
+	 *        The {@link AssociationStorage} to create query for.
+	 * @return The query whose result maps each referenced item to its link.
+	 * 
+	 * @see #linkTo(Map, Object)
+	 */
 	static IndexedLinkQuery<KnowledgeItem, KnowledgeAssociation> createLiveQuery(TLStructuredTypePart metaAttribute,
 			AssociationStorage storage) {
 		Map<String, ?> attributeQuery = query(metaAttribute, storage);
@@ -66,6 +78,26 @@ public class LinkStorageUtil {
 			storage.getTable(),
 			DBKnowledgeAssociation.REFERENCE_SOURCE_NAME, DBKnowledgeAssociation.REFERENCE_DEST_NAME,
 			KnowledgeItem.class, attributeQuery, true);
+	}
+
+	/**
+	 * The link in the given live link map that points to the given storage value, or
+	 * <code>null</code> if there is none.
+	 * 
+	 * <p>
+	 * The value is looked up by its {@link TLObject#tHandle() handle}, at constant cost.
+	 * </p>
+	 * 
+	 * @param links
+	 *        The result of a query created by {@link #createLiveQuery(TLStructuredTypePart, AssociationStorage)}.
+	 * @param storageValue
+	 *        The value to look up.
+	 */
+	static KnowledgeAssociation linkTo(Map<KnowledgeItem, KnowledgeAssociation> links, Object storageValue) {
+		if (!(storageValue instanceof TLObject)) {
+			return null;
+		}
+		return links.get(((TLObject) storageValue).tHandle());
 	}
 
 	/**

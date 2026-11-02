@@ -5,13 +5,18 @@
  */
 package test.com.top_logic.element.model.annotate.util;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+
 import test.com.top_logic.basic.ExpectedFailure;
 import test.com.top_logic.element.model.util.TLModelTest;
 
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationInheritance;
 import com.top_logic.model.annotate.AnnotationInheritance.Policy;
+import com.top_logic.model.annotate.TLAnnotationTargetCheck;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
@@ -30,6 +35,26 @@ public abstract class TestTLAnnotations extends TLModelTest {
 	@TargetType(value = TLTypeKind.REF, name = "testCanNotOverride:X")
 	public interface PreventOverrideAnnotation extends TLAttributeAnnotation {
 		// Marker annotation
+	}
+
+	/**
+	 * Annotation objecting to every attribute named {@link #REJECTED}.
+	 */
+	public interface TargetCheckedAnnotation extends TLAttributeAnnotation, TLAnnotationTargetCheck {
+
+		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+		Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Name of the attribute the annotation objects to. */
+		String REJECTED = "rejected";
+
+		/** What the annotation reports for an attribute it objects to. */
+		String PROBLEM = "The test rejects this attribute.";
+
+		@Override
+		default String checkTarget(TLTypePart target) {
+			return REJECTED.equals(target.getName()) ? PROBLEM : null;
+		}
 	}
 
 	public void testTable() {
@@ -84,6 +109,26 @@ public abstract class TestTLAnnotations extends TLModelTest {
 				if (e.getMessage()
 					.contains(
 						"test1:X#invalidSubType is not allowed for target type test1:X. Only subtypes of [tl.folder:WebFolder] allowed")) {
+					break;
+				}
+				e = e.getCause();
+				if (e == null) {
+					throw ex;
+				}
+			}
+		}
+	}
+
+	public void testTargetCheck() {
+		try {
+			extendModelExpectFailure(
+				ClassRelativeBinaryContent.withSuffix(TestTLAnnotations.class, "targetCheck.model.xml"));
+			fail("The annotation objects to an attribute.");
+		} catch (ExpectedFailure ex) {
+			Throwable e = ex;
+			while (true) {
+				if (e.getMessage().contains("testTargetCheck:X#" + TargetCheckedAnnotation.REJECTED
+					+ " is not allowed: " + TargetCheckedAnnotation.PROBLEM)) {
 					break;
 				}
 				e = e.getCause();

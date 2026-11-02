@@ -12,7 +12,7 @@
 					and saying so is worth one line in every prompt.
 
 					The block's wording itself is NOT configured here: it is the shipped, translated
-					resource tl.ai.environment.template. See tl-ai-core/doc/environment-block.md.
+					resource tl.ai.environment.template. See the developer article ai/environment.
 				-->
 				<environment>
 					<application>

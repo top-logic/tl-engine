@@ -48,10 +48,10 @@ public interface GroupDefinition
 	 * Algorithm to compute the visibility of the group.
 	 */
 	@Name(DYNAMIC_VISIBILITY)
-	PolymorphicConfiguration<ModeSelector> getModeSelector();
+	PolymorphicConfiguration<? extends ModeSelector> getModeSelector();
 
 	/**
 	 * @see #getModeSelector()
 	 */
-	void setModeSelector(PolymorphicConfiguration<ModeSelector> modeSelector);
+	void setModeSelector(PolymorphicConfiguration<? extends ModeSelector> modeSelector);
 }

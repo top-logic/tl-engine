@@ -11,7 +11,6 @@
 					activated="%IMAP_ACTIVE%"
 					folder-name-for-unknown-mails="unbekannt"
 					name="MailServerDaemon"
-					process-all-mails="false"
 					processor="com.top_logic.demo.model.types.util.DemoTypesMailProcessor"
 					strategy-for-unknown-mails="MOVE"
 				>
@@ -27,7 +26,7 @@
 					retention-period="10min"
 				/>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="MonthlyScheduleTask"
 				>
 					<schedules>
@@ -38,7 +37,7 @@
 					</schedules>
 				</task>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="WeeklyScheduleTask"
 				>
 					<schedules>
@@ -49,7 +48,7 @@
 					</schedules>
 				</task>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="DailyScheduleTask"
 				>
 					<schedules>
@@ -57,7 +56,7 @@
 					</schedules>
 				</task>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="DailyPeriodicallyScheduleTask"
 				>
 					<schedules>
@@ -69,11 +68,11 @@
 					</schedules>
 				</task>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="NeverScheduleTask"
 				/>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="AlwaysScheduleTask"
 				>
 					<schedules>
@@ -81,7 +80,7 @@
 					</schedules>
 				</task>
 				<task class="com.top_logic.util.sched.task.impl.InstructableTestTask"
-					blocked-by-default="true"
+					enabled="false"
 					name="CombinedScheduleTask"
 				>
 					<schedules>
@@ -103,7 +102,7 @@
 					</schedules>
 				</task>
 				<composite-task name="Transient Node Local Composite Test Task"
-					blocked-by-default="true"
+					enabled="false"
 					non-critical-children="Transient Node Local Child Test Task Beta"
 				>
 					<schedules>
@@ -131,7 +130,7 @@
 					/>
 				</composite-task>
 				<composite-task name="Transient Node Local Deep Composite Test Task"
-					blocked-by-default="true"
+					enabled="false"
 				>
 					<schedules>
 						<periodically
@@ -302,7 +301,7 @@
 					</composite-task>
 				</composite-task>
 				<composite-task name="Persistent Node Local Deep Composite Test Task"
-					blocked-by-default="true"
+					enabled="false"
 				>
 					<schedules>
 						<periodically

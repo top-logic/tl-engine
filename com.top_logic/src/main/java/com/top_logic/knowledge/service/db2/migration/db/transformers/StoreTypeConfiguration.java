@@ -21,12 +21,15 @@ import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.properties.DBPropertiesSchema;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
+import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
+import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.db2.migration.db.RowTransformer;
@@ -63,6 +66,8 @@ public class StoreTypeConfiguration extends AbstractConfiguredInstance<StoreType
 
 	private String _schemaSetupProperty;
 
+	private DBHelper _sqlDialect;
+
 	/**
 	 * Create a {@link StoreTypeConfiguration}.
 	 * 
@@ -86,6 +91,11 @@ public class StoreTypeConfiguration extends AbstractConfiguredInstance<StoreType
 		_kbName = kbConfig.getName();
 		_schemaSetupProperty = KBSchemaUtil.dbPropertiesSchemaSetup(_kbName);
 		_schemaSetup = KBUtils.getSchemaConfigResolved(kbConfig);
+		try {
+			_sqlDialect = ConnectionPoolRegistry.getConnectionPool(kbConfig.getConnectionPool()).getSQLDialect();
+		} catch (SQLException ex) {
+			throw new KnowledgeBaseRuntimeException("Unable to access the SQL dialect of the target database.", ex);
+		}
 	}
 
 	/**
@@ -125,6 +135,9 @@ public class StoreTypeConfiguration extends AbstractConfiguredInstance<StoreType
 		SchemaConfiguration schema = loadKBSchema();
 		if (schema == null) {
 			return;
+		}
+		if (_sqlDialect != null) {
+			schema = SchemaSetup.withExplicitLayout(schema, _sqlDialect);
 		}
 		row.getValues().put(DBPropertiesSchema.PROP_VALUE_COLUMN_NAME, KBSchemaUtil.serializeSchema(schema));
 	}

@@ -30,27 +30,17 @@ public class TestLdapConfAliases extends TestCase {
 	/** System property defining the alias {@value #ALIAS_URL}. */
 	static final String PROPERTY_URL = "ldap_url";
 
-	/** System property defining the alias {@value #ALIAS_CREDENTIAL}. */
-	static final String PROPERTY_CREDENTIAL = "ldap_credential";
-
 	/** Value given for {@link #PROPERTY_URL}. */
 	static final String URL_VALUE = "ldaps://ldap.test.example:636";
 
-	/** Value given for {@link #PROPERTY_CREDENTIAL}. */
-	static final String CREDENTIAL_VALUE = "test-secret";
-
 	private static final String ALIAS_URL = "%LDAP_URL%";
-
-	private static final String ALIAS_CREDENTIAL = "%LDAP_CREDENTIAL%";
 
 	/**
 	 * Aliases given by system properties resolve to the property values.
 	 */
 	public void testValuesFromSystemProperties() {
 		assertAlias(URL_VALUE, ALIAS_URL);
-		assertAlias(CREDENTIAL_VALUE, ALIAS_CREDENTIAL);
-		assertEquals("Bind with " + CREDENTIAL_VALUE + " at " + URL_VALUE,
-			AliasManager.getInstance().replace("Bind with " + ALIAS_CREDENTIAL + " at " + ALIAS_URL));
+		assertEquals("Bind at " + URL_VALUE, AliasManager.getInstance().replace("Bind at " + ALIAS_URL));
 	}
 
 	/**
@@ -76,15 +66,14 @@ public class TestLdapConfAliases extends TestCase {
 	}
 
 	/**
-	 * {@link CustomConfigurationDecorator} that sets the system properties {@link #PROPERTY_URL}
-	 * and {@link #PROPERTY_CREDENTIAL} and adds {@value #LDAP_CONF} to the current configuration.
+	 * {@link CustomConfigurationDecorator} that sets the system property {@link #PROPERTY_URL} and
+	 * adds {@value #LDAP_CONF} to the current configuration.
 	 */
 	static class LdapConfDecorator extends CustomConfigurationDecorator {
 
 		@Override
 		public void setup(SetupAction innerSetup) throws Exception {
 			setProperty(PROPERTY_URL, URL_VALUE);
-			setProperty(PROPERTY_CREDENTIAL, CREDENTIAL_VALUE);
 			super.setup(innerSetup);
 		}
 
@@ -104,7 +93,6 @@ public class TestLdapConfAliases extends TestCase {
 				super.tearDown(innerSetup);
 			} finally {
 				System.clearProperty(PROPERTY_URL);
-				System.clearProperty(PROPERTY_CREDENTIAL);
 			}
 		}
 

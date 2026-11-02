@@ -15,6 +15,13 @@
 
 	The default model the agents run on is in com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml
 	next to this file.
+
+	"test-gated-model" is served by a provider whose key is the secret test_chat_gated_api_key, which
+	no test environment sets: a provider without its credentials, whose model the model picker must
+	not offer until a test provides the key. The agent TestGatedAgent is assigned it.
+
+	The list replaces the providers tl-ai-core ships: their default models would be further choices
+	of "which models may this account choose".
 -->
 <application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -22,7 +29,7 @@
 	<services>
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
-				<providers>
+				<providers config:override="true">
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
 						api-key="unencrypted:test-key-never-used"
 						models="test-assigned-model, test-other-model"
@@ -32,6 +39,12 @@
 						models="test-scripted-model"
 						name="scripted"
 					/>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						models="test-gated-model"
+						name="gated"
+					>
+						<api-key name="test_chat_gated_api_key"/>
+					</provider>
 				</providers>
 				<model-catalog fetch-remote-catalog="false">
 					<model-overrides>

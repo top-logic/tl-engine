@@ -50,4 +50,17 @@ public interface TypeContext {
 	 */
 	boolean multipleBranches();
 
+	/**
+	 * Whether the branch column of an index follows the columns identifying the indexed value.
+	 * 
+	 * <p>
+	 * By default, the branch column leads the primary key and the reference indexes of the types in
+	 * this {@link TypeContext}. If set, the branch column is placed directly before the trailing
+	 * revision column instead (or at the end of an index without revision column).
+	 * </p>
+	 * 
+	 * @see IndexColumnOrder
+	 */
+	boolean branchLast();
+
 }

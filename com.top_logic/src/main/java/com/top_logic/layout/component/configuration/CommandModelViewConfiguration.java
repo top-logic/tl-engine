@@ -60,7 +60,7 @@ public class CommandModelViewConfiguration<C extends CommandModelViewConfigurati
 		 * Configuration of the command to execute.
 		 */
 		@Name(COMMAND_CONFIGURATION)
-		PolymorphicConfiguration<CommandModelConfiguration> getCommandConfiguration();
+		PolymorphicConfiguration<? extends CommandModelConfiguration> getCommandConfiguration();
 	}
 	
 	/**

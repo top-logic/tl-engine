@@ -50,7 +50,7 @@ public class FailedTaskResultTreeComponent extends AbstractTaskTreeTableComponen
 
 		@NullDefault
 		@Override
-		PolymorphicConfiguration<TreeBuilder<DefaultTreeTableNode>> getTreeBuilder();
+		PolymorphicConfiguration<? extends TreeBuilder<DefaultTreeTableNode>> getTreeBuilder();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {

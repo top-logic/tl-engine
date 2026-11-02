@@ -54,7 +54,7 @@ public class SharedLockHandler extends AbstractConfiguredInstance<SharedLockHand
 		 */
 		@Name("defaultHandler")
 		@ImplementationClassDefault(DefaultLockHandler.class)
-		PolymorphicConfiguration<LockHandler> getDefaultHandler();
+		PolymorphicConfiguration<? extends LockHandler> getDefaultHandler();
 	}
 
 	private EditComponent _lockComponent;

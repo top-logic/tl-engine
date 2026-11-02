@@ -96,6 +96,17 @@ import com.top_logic.util.filter.CompressionServletResponseWrapper;
  */
 public class TopLogicServlet extends AbstractTopLogicServlet {
 
+	/** Name of the header telling a client when to repeat a request that was refused. */
+	private static final String RETRY_AFTER_HEADER = "Retry-After";
+
+	/**
+	 * Seconds after which a client repeats a request that arrived while the services were being
+	 * restarted; the busy page reloads itself after this time.
+	 *
+	 * @see ApplicationPages.Config#getBuzzyPage()
+	 */
+	public static final String RETRY_AFTER_SECONDS = "3";
+
 	/**
 	 * Status code answering a request whose upload was refused.
 	 * 
@@ -232,6 +243,13 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 
 		setCachePolicy(response);
 
+		if (!SessionService.Module.INSTANCE.isActive()) {
+			// The services are being restarted, e.g. the persistency layer after a history
+			// compaction, and every session has ended.
+			sendUnavailable(request, response);
+			return;
+		}
+
 		boolean cookieCheck = isCookieCheckRequired();
 		if (cookieCheck && !processSessionCheck(request)) {
 			this.forwardToPage(ApplicationPages.getInstance().getNoCookiePage(), request, response);
@@ -296,6 +314,19 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return true;
 		}
+	}
+
+	/**
+	 * Answers a request that arrives while the services handling it are not running, e.g. while
+	 * the persistency layer is restarted, with the busy page, which reloads itself a moment later.
+	 *
+	 * @see ApplicationPages.Config#getBuzzyPage()
+	 */
+	private void sendUnavailable(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+		response.setHeader(RETRY_AFTER_HEADER, RETRY_AFTER_SECONDS);
+		request.getRequestDispatcher(ApplicationPages.getInstance().getBuzzyPage()).forward(request, response);
 	}
 
 	/**

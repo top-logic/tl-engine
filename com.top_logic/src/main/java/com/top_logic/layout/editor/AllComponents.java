@@ -17,6 +17,7 @@ import com.top_logic.layout.basic.component.BreadcrumbComponent;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.editor.components.ComponentPlaceholder;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.tree.model.BusinessObjectTreeModel;
 import com.top_logic.layout.xml.LayoutControlComponent;
@@ -47,6 +48,10 @@ public class AllComponents extends Function0<OptionModel<LayoutComponent>> {
 
 	@Override
 	public OptionModel<LayoutComponent> apply() {
+		if (_root == null) {
+			// There is no layout to choose a component from, e.g. in a React application.
+			return new LazyListOptionModel<>(Collections::emptyList);
+		}
 		DefaultTreeOptionModel<LayoutComponent> result = new DefaultTreeOptionModel<>(createTreeModel());
 		result.setShowRoot(false);
 		return result;

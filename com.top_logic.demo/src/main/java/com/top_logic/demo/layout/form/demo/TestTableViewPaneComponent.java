@@ -75,7 +75,7 @@ public class TestTableViewPaneComponent extends FormComponent {
 
 		@Override
 		@ItemDefault(CP.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 	}
 
 	public static final String DEMO_TABLE_NAME = "demoTable";

@@ -23,10 +23,16 @@ import org.json.simple.JSONObject;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -45,6 +51,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.util.error.TopLogicException;
 
 import dev.langchain4j.community.store.embedding.jvector.JVectorEmbeddingStore;
 import dev.langchain4j.data.document.Metadata;
@@ -76,6 +83,7 @@ import io.qdrant.client.QdrantGrpcClient;
 	MimeTypes.Module.class,
 	PersonManager.Module.class,
 	PersistencyLayer.Module.class,
+	SecretStoreService.Module.class,
 })
 @ServiceCategory.Of(ScriptingCategory.class)
 public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.VectorIndexingConfig> {
@@ -117,11 +125,36 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		String getLocalStorePath();
 
 		/**
-		 * Mistral API key - needed to consume Mistral service for vector embedding.
+		 * Configuration name of {@link #getMistralApiKey()}.
 		 */
-		@Encrypted
-		@StringDefault("EMPTY")
-		String getMistralApiKey();
+		String MISTRAL_API_KEY = "mistral-api-key";
+
+		/**
+		 * The Mistral API key for the embedding service.
+		 *
+		 * <p>
+		 * Recommended is a reference to the key by its secret name, so that the key is not part of
+		 * the configuration:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;mistral-api-key name="tl_mistral_api_key"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * An attribute value is an encrypted key, or a plain key with the prefix
+		 * <code>unencrypted:</code>. The key is read when the service starts. Without a key - none
+		 * configured, or the referenced secret not available - the vector index is disabled: the
+		 * application starts, a warning is logged, nothing is indexed and a search reports that
+		 * the vector index is not available. Not needed for the {@link #getEmbeddingModelType()
+		 * embedding model type} <code>local</code>.
+		 * </p>
+		 *
+		 * @see #MISTRAL_API_KEY
+		 */
+		@Name(MISTRAL_API_KEY)
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getMistralApiKey();
 
 		/**
 		 * Mistral Embedding model ID
@@ -174,6 +207,9 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private static final String META_TL_TYPE_KEY = "TopLogic-type";
 
+	/** The {@link VectorIndexingConfig#getEmbeddingModelType() embedding model type} without remote service. */
+	static final String EMBEDDING_MODEL_LOCAL = "local";
+
 	/** The name of the KO field in a Lucene document */
 	public static final String FIELD_KO_ID = "id";
 
@@ -213,12 +249,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private final String qdrantDbCollectionName;
 
-	private final String mistralApiKey;
-
 	private final String mistralEmbedModel;
 
 	private final List<String> vectorIndexModels;
 
+	/** The model computing the embeddings, <code>null</code> if the index is disabled. */
 	private final EmbeddingModel embeddingModel;
 
 	private EmbeddingStore<TextSegment> vectorStore;
@@ -248,7 +283,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.vectorStorePort = config.getVectorStorePort();
 		// Only accessed in buildQdrantStore
 		this.qdrantDbCollectionName = config.getQdrantDbCollectionName();
-		this.mistralApiKey = config.getMistralApiKey();
 		this.mistralEmbedModel = config.getMistralEmbedModel();
 		this.vectorIndexModels = Stream.of(config.getVectorIndexModels().split(",")).map(String::trim)
 			.collect(Collectors.toList());
@@ -259,20 +293,63 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		Logger.info("Instances of models to track: " + this.vectorIndexModels.toString(), VectorIndex.class);
         Logger.info("Embedding model " + this.mistralEmbedModel,VectorIndex.class);
 
-		if ("local".equalsIgnoreCase(config.getEmbeddingModelType())) {
-			this.embeddingModel = new DummyEmbeddingModel(1024); // Default, will be used later
-			Logger.info("Using Dummy/Local embedding model", VectorIndex.class);
-		} else {
-			MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder mistralEmbedBuilder =
-				new MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder();
-			mistralEmbedBuilder.apiKey(this.mistralApiKey).modelName(this.mistralEmbedModel);
-			this.embeddingModel = new MistralAiEmbeddingModel(mistralEmbedBuilder);
-			Logger.info("Using Mistral embedding model", VectorIndex.class);
+		this.embeddingModel = createEmbeddingModel(context, config);
+		if (this.embeddingModel == null) {
+			// Disabled: neither a store nor an indexing thread.
+			return;
 		}
 
 		this.vectorStore = buildVectorStore(this.vectorStoreType, config);
 
 		createAndStartThread();
+	}
+
+	/**
+	 * Creates the embedding model of the given configuration.
+	 *
+	 * @return The model, or <code>null</code> if no Mistral API key is available. In that case, a
+	 *         warning naming the reason (never the key) has been logged.
+	 */
+	static EmbeddingModel createEmbeddingModel(InstantiationContext context, VectorIndexingConfig config) {
+		if (EMBEDDING_MODEL_LOCAL.equalsIgnoreCase(config.getEmbeddingModelType())) {
+			Logger.info("Using Dummy/Local embedding model", VectorIndex.class);
+			return new DummyEmbeddingModel(1024);
+		}
+
+		String apiKey;
+		PolymorphicConfiguration<? extends SecretSource> keyConfig = config.getMistralApiKey();
+		if (keyConfig == null) {
+			Logger.warn("The vector index is disabled: no Mistral API key is configured. Configure '"
+				+ VectorIndexingConfig.MISTRAL_API_KEY + "', e.g. as <" + VectorIndexingConfig.MISTRAL_API_KEY
+				+ " name=\"tl_mistral_api_key\"/>.",
+				VectorIndex.class);
+			return null;
+		}
+		try {
+			apiKey = context.getInstance(keyConfig).getSecret();
+		} catch (I18NRuntimeException ex) {
+			Logger.warn("The vector index is disabled: the Mistral API key '" + VectorIndexingConfig.MISTRAL_API_KEY
+				+ "' is not available: " + ex.getMessage(), VectorIndex.class);
+			return null;
+		}
+
+		MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder mistralEmbedBuilder =
+			new MistralAiEmbeddingModel.MistralAiEmbeddingModelBuilder();
+		mistralEmbedBuilder.apiKey(apiKey).modelName(config.getMistralEmbedModel());
+		Logger.info("Using Mistral embedding model", VectorIndex.class);
+		return new MistralAiEmbeddingModel(mistralEmbedBuilder);
+	}
+
+	/**
+	 * Whether the index is enabled, i.e. has an embedding model.
+	 *
+	 * <p>
+	 * A disabled index ignores content to index or remove, and a search fails with
+	 * {@link I18NConstants#ERROR_VECTOR_INDEX_NOT_AVAILABLE}.
+	 * </p>
+	 */
+	public boolean isAvailable() {
+		return this.embeddingModel != null;
 	}
 
 	/**
@@ -414,15 +491,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	/**
-	 * Mistral embedding service API key
-	 * 
-	 * @return Mistral Embed service API Key
-	 */
-	public String getMistralApiKey() {
-		return this.mistralApiKey;
-	}
-
-	/**
 	 * Mistral embedding model
 	 * 
 	 * @return Mistral Embed model
@@ -495,6 +563,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * Mark the given {@link ContentObject} to add to the index.
 	 */
 	public void addContent(ContentObject content) {
+		if (!isAvailable()) {
+			// Disabled, see the warning at startup.
+			return;
+		}
 		if (myThread == null) {
 			Logger.error("VectorDB is not running. Cannot index content.", VectorIndex.class);
 			return;
@@ -506,6 +578,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * Mark the given {@link ContentObject} to remove from the index.
 	 */
 	public void deleteContent(ObjectKey key) {
+		if (!isAvailable()) {
+			// Disabled, see the warning at startup.
+			return;
+		}
 		if (myThread == null) {
 			Logger.error("VectorDB is not running. Cannot delete content.", VectorIndex.class);
 			return;
@@ -815,9 +891,14 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * @param readFilter
 	 *        The rights of the principal being served.
 	 * @return The hits the principal may read; never <code>null</code>.
+	 * @throws TopLogicException
+	 *         If the index is not {@link #isAvailable() available}.
 	 */
 	public VectorReadFilter.Hits searchVectorIndex(String query, String objectType, Integer limit,
 			Double scoreThreshold, ReadFilter readFilter) {
+		if (!isAvailable()) {
+			throw new TopLogicException(I18NConstants.ERROR_VECTOR_INDEX_NOT_AVAILABLE);
+		}
 		int effectiveLimit = limit == null || limit <= 0 ? DEFAULT_MAX_RESULTS : limit.intValue();
 		double effectiveThreshold = scoreThreshold == null ? DEFAULT_SCORE_THRESHOLD : scoreThreshold.doubleValue();
 

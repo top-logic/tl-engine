@@ -99,7 +99,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 
 		/** Modifying instance for the {@link FormMember}s during creation of an input row. */
 		@Name(EditAttributedComponent.XML_CONFIG_MODIFIER_CLASS)
-		PolymorphicConfiguration<FormContextModificator> getModifier();
+		PolymorphicConfiguration<? extends FormContextModificator> getModifier();
 
 		/**
 		 * Whether this component should only support direct instances of
@@ -169,7 +169,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 	}
 
 	private FormContextModificator createModifier(InstantiationContext context,
-			PolymorphicConfiguration<FormContextModificator> modifierConfig) {
+			PolymorphicConfiguration<? extends FormContextModificator> modifierConfig) {
 		FormContextModificator result = context.getInstance(modifierConfig);
 		return result != null ? result : this;
 	}

@@ -37,6 +37,6 @@ public interface TLObjectInitializers extends TLTypeAnnotation {
 	@Options(fun = AllInAppImplementations.class)
 	@EntryTag("initializer")
 	@DefaultContainer
-	List<PolymorphicConfiguration<TLObjectInitializer>> getInitializers();
+	List<PolymorphicConfiguration<? extends TLObjectInitializer>> getInitializers();
 
 }

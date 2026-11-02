@@ -51,9 +51,11 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.layout.DisplayContext;
@@ -93,6 +95,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("OpenAPI server")
 @ServiceCategory.Of(InterfacesCategory.class)
 public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?>> {

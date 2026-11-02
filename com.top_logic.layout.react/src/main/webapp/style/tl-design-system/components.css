@@ -2634,6 +2634,14 @@ body[data-tl-state~="picking"] * {
   resize: vertical;
 }
 
+/* Vorformatiert (Schrift tl-type-code aus dem TSX): jede Zeile bleibt eine Zeile, eine breite Zeile
+   rollt waagrecht statt umzubrechen. */
+.tl-field--preformatted {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
 /* --- Feld mit Icon oder Endknopf ------------------------------------------------- */
 
 /* Das echte Eingabefeld trägt den Rahmen und den Fokusring; Icon und Endknopf liegen darüber, das
@@ -2719,18 +2727,54 @@ body[data-tl-state~="picking"] * {
 
 /* Mehrzeiliger Lesewert: eine Zeile je __text, untereinander, und jede Zeile bricht um — ein langer
    Absatz endet nicht in einer Ellipse. In der Tabellenzelle stellt die Engine ihn wieder in eine Reihe
-   ohne Umbruch. */
+   ohne Umbruch. Wert und Zeilen schrumpfen nicht: in einem Flex-Container (der Rumpf eines Dialogs)
+   hätten sie wegen overflow: hidden die Mindesthöhe 0 und würden auf dessen Höhe zusammengedrückt,
+   statt ihn scrollen zu lassen. */
 .tl-field-value--multiline {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   align-items: stretch;
   white-space: pre-wrap;
 }
 
 .tl-field-value--multiline > .tl-field-value__text {
+  flex-shrink: 0;
   white-space: inherit;
   overflow-wrap: anywhere;
 }
+
+/* Vorformatierter Lesewert (Schrift tl-type-code aus dem TSX): die Zeilen brechen nicht um und sind
+   so breit wie ihr Text und stehen ohne Abstand untereinander; ist eine breiter als der Wert, rollt
+   der Wert waagrecht. */
+.tl-field-value--preformatted {
+  align-items: flex-start;
+  row-gap: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.tl-field-value--preformatted > .tl-field-value__text {
+  overflow: visible;
+  overflow-wrap: normal;
+}
+
+/* Mehrzeiliger Lesewert mit Aktion (etwa dem Kopierknopf): die Aktion steht oben am Ende in einer Spalte
+   für sich, neben dem Wert, der ihr Platz lässt — sie verdeckt keine Zeile, auch nicht, wenn der Wert
+   waagrecht rollt, und ist ohne Hover sichtbar, also auch auf Touch-Geräten. */
+.tl-field-value-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--tl-space-xs);
+}
+.tl-field-value-group[hidden] { display: none; }
+
+.tl-field-value-group__action,
+.tl-copy-button {
+  display: inline-flex;
+}
+.tl-copy-button[hidden] { display: none; }
 
 /* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */
 a.tl-field-value {
@@ -2764,6 +2808,116 @@ a.tl-field-value:hover {
 
 .tl-file[data-tl-state~="empty"] {
   color: var(--tl-text-secondary);
+}
+
+/* --- floating-action/floating-action.css --- */
+/* Floating Action — Ticket #29658. Ein runder Knopf über einer Ecke des Körpers eines Panels oder Fensters; mehrere
+   Aktionen als Speed Dial: ein runder Auslöser, der die Aktionen als kleine runde Knöpfe daneben zeigt. Die Knöpfe
+   zeichnet der Part Button; hier stehen Lage, Ebene, Form und Schatten.
+
+   Der Rahmen bietet zwei Schienen (tl-floating-rail) ohne Höhe direkt vor und nach seinem Körper, positioniert und so
+   breit wie der Rahmen. Die Aktionen liegen in der Schiene ihrer Kante: sie rollen nicht mit dem Körper, und weder
+   Panel noch Körper werden dafür positioniert — ein maximiertes Panel im Körper löst weiter gegen den Körper auf.
+   Ohne Rahmen liegen sie fest über der Ecke des Fensters (data-tl-anchor="viewport"). Eine Snackbar, die sie
+   verdecken würden, schiebt sie per transform beiseite; das TSX misst, hier steht nur der Übergang. */
+
+.tl-floating-rail {
+  position: relative;
+  flex: none;
+  height: 0;
+}
+
+.tl-fab {
+  position: absolute;
+  z-index: var(--tl-layer-overlay);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--tl-space-sm);
+  transition: transform var(--tl-duration-base) var(--tl-easing-standard);
+}
+.tl-fab[hidden] { display: none; }
+
+.tl-fab[data-tl-anchor="viewport"] {
+  position: fixed;
+}
+
+/* Die Lage an der Ecke: unten über der unteren Schiene, oben unter der oberen; Anfang und Ende folgen der
+   Schreibrichtung. Oben öffnet der Dial nach unten. */
+.tl-fab[data-tl-position|="bottom"] {
+  bottom: var(--tl-space-md);
+}
+
+.tl-fab[data-tl-position|="top"] {
+  top: var(--tl-space-md);
+  flex-direction: column;
+}
+
+.tl-fab[data-tl-position$="-end"] {
+  inset-inline-end: var(--tl-space-md);
+}
+
+.tl-fab[data-tl-position$="-start"] {
+  inset-inline-start: var(--tl-space-md);
+}
+
+/* Der Hauptknopf — die eine Aktion oder der Auslöser des Dials: rund, auf size-fab; mit Beschriftung eine Pille
+   (extended FAB). */
+.tl-fab__main {
+  display: grid;
+  border-radius: var(--tl-radius-full);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-fab__main[hidden] { display: none; }
+
+.tl-fab__main > .tl-button {
+  min-width: var(--tl-size-fab);
+  min-height: var(--tl-size-fab);
+  padding-inline: var(--tl-space-md);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-fab__main > .tl-button--icon {
+  width: var(--tl-size-fab);
+  height: var(--tl-size-fab);
+  padding: 0;
+}
+
+/* Die Aktionen des Dials: kleine runde Knöpfe auf der Fläche der Überlagerung, ihre Beschriftung im Tooltip. */
+.tl-fab__actions {
+  display: flex;
+  flex-direction: inherit;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+.tl-fab__actions[hidden] { display: none; }
+
+.tl-fab__action {
+  display: grid;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-overlay);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-fab__action[hidden] { display: none; }
+
+.tl-fab__action > .tl-button {
+  min-width: var(--tl-size-fab-action);
+  min-height: var(--tl-size-fab-action);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-fab__action > .tl-button--icon {
+  width: var(--tl-size-fab-action);
+  height: var(--tl-size-fab-action);
+}
+
+.tl-fab[data-tl-state~="open"] > .tl-fab__actions {
+  animation: tl-fab-open var(--tl-duration-base) var(--tl-easing-entrance);
+}
+
+@keyframes tl-fab-open {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* --- form/form.css --- */
@@ -5712,6 +5866,12 @@ button.tl-swatch:not(:disabled):hover {
   flex-shrink: 0;
 }
 
+/* In der Reihe schrumpfen Wert und Zeilen wieder, damit eine lange Zeile mit Ellipse endet. */
+.tl-table__cell .tl-field-value--multiline,
+.tl-table__cell .tl-field-value--multiline > .tl-field-value__text {
+  flex-shrink: 1;
+}
+
 .tl-table__cell .tl-field-value--multiline {
   flex-direction: row;
   white-space: nowrap;
@@ -6582,4 +6742,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:86e020a59b74573ad9ca408be07fdb7c412fcdb180ce3e9103169898f5c4b12b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:39b7dbc0b180c5c6e185a980bf5c9e4e7e1735ed8e97e81c92639b0e4556ab73 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

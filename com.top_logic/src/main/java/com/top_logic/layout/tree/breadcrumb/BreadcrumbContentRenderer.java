@@ -103,7 +103,7 @@ public class BreadcrumbContentRenderer extends AbstractConfiguredInstance<Breadc
 		@Name(RESOURCE_PROVIDER)
 		@ItemDefault
 		@ImplementationClassDefault(MetaResourceProvider.class)
-		PolymorphicConfiguration<ResourceProvider> getResourceProvider();
+		PolymorphicConfiguration<? extends ResourceProvider> getResourceProvider();
 
 		/** @see BreadcrumbContentRenderer#shouldWriteMenu() */
 		@Name(WRITE_MENU)

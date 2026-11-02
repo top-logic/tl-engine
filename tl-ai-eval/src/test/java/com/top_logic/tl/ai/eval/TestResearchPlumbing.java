@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -255,6 +256,7 @@ public class TestResearchPlumbing extends BasicTestCase {
 				LLMProviderService.Module.INSTANCE,
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
-				AgentPolicyService.Module.INSTANCE));
+				AgentPolicyService.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

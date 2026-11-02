@@ -42,7 +42,7 @@ public class CheckUnusedAccountsTask<C extends CheckUnusedAccountsTask.Config<?>
 		 * Configuration of the actual checker.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<UnusedAccountCheck> getChecker();
+		PolymorphicConfiguration<? extends UnusedAccountCheck> getChecker();
 
 	}
 

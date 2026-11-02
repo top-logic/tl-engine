@@ -85,7 +85,7 @@ public abstract class GanttChartFilterComponent extends AbstractGanttFilterCompo
 
 		@Override
 		@ItemDefault(com.top_logic.reporting.chart.gantt.component.GanttChartFilterComponentControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 	}
 
 	/** Configuration parameter for months to go back from now to set default filter start date */

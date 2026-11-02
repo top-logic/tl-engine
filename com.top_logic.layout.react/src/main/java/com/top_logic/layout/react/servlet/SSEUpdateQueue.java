@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -25,7 +26,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
@@ -81,8 +84,24 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * it saw. Its first poll asks for the full state of the controls, because the state the connection
  * sent may not have arrived either; the events written since the connection that address no
  * displayed control - a reload, a frame of a listener that is not a control - follow it. A poll
- * waits up to {@link #POLL_HOLD_MILLIS} for an event, so an event is delivered as soon as it
- * exists, and every poll ends before a proxy's idle timeout.
+ * never continues after a gap: it reads every event after the number it sends, or - where the
+ * queue no longer holds one of them, because it exceeded the retained characters or was written
+ * before a later connection or page - the full state. A poll waits up to {@link #POLL_HOLD_MILLIS}
+ * for an event, so an event is delivered as soon as it exists, and every poll ends before a
+ * proxy's idle timeout.
+ * </p>
+ *
+ * <p>
+ * <b>A stream that reconnects.</b> A new stream sends the full state of the displayed controls,
+ * then - if it names the last event its client received, see
+ * {@link #setConnection(AsyncContext, long)} - the events written after it that address no
+ * displayed control, with their numbers, and then a heartbeat numbered with the last event the
+ * queue has written. Only then do further events follow. So an event the full state does not
+ * contain - a navigation, a script - is not lost with the stream it was written to, and a client
+ * that received it does not get it again. Events the queue no longer holds are not replayed; a poll
+ * after them reads the full state, as above. The numbers of a {@link #beginPage() page} start above
+ * those of the page before it, so that the stream of a previous page replays nothing of the page
+ * displayed now.
  * </p>
  *
  * <p>
@@ -91,6 +110,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * lost network leave such a queue behind. The heartbeat reports it to its
  * {@link ReactWindowRegistry}, which tears the window down once the client has been gone for
  * {@link ReactWindowRegistry#DISCONNECT_GRACE_MILLIS}, see {@link #checkAbandoned(long)}.
+ * </p>
+ *
+ * <p>
+ * <b>Commits of other threads.</b> A commit that reaches the model listeners of the window is
+ * delivered to its client without a request of the window, see {@link #requestModelSync(long)}.
  * </p>
  */
 public class SSEUpdateQueue {
@@ -102,6 +126,9 @@ public class SSEUpdateQueue {
 	 * liveness.
 	 */
 	private static final String HEARTBEAT_MESSAGE = "data: [\"Heartbeat\",{}]\n\n";
+
+	/** The field of an SSE message that carries the number of the event, see {@link #flush()}. */
+	private static final String ID_FIELD = "id: ";
 
 	/**
 	 * Interval between heartbeat messages in seconds.
@@ -155,14 +182,31 @@ public class SSEUpdateQueue {
 	/** The number of the last event written. Guarded by {@code this}. */
 	private long _lastSeq;
 
-	/** The highest number that was dropped from {@link #_written} before a poll read it. Guarded by {@code this}. */
-	private long _droppedUnread;
+	/**
+	 * The highest number of an event the client can no longer read as an event: it was dropped
+	 * from {@link #_written} before a poll read it, or it was written before the
+	 * {@link #forgetWritten() last forgetting}. A poll after an older number is answered with the
+	 * full state. Guarded by {@code this}.
+	 */
+	private long _unreadableUpTo;
 
-	/** Whether the client polls instead of reading a stream. Guarded by {@code this}. */
-	private boolean _polling;
+	/**
+	 * The number the current {@link #beginPage() page} starts from: the events of earlier pages have
+	 * lower numbers. Guarded by {@code this}.
+	 */
+	private long _pageStart;
 
-	/** When the client last polled. Guarded by {@code this}. */
-	private long _lastPoll;
+	/**
+	 * Whether the client polls instead of reading a stream. Written while holding {@code this},
+	 * volatile for {@link #hasClient(long)}.
+	 */
+	private volatile boolean _polling;
+
+	/**
+	 * When the client last polled. Written while holding {@code this}, volatile for
+	 * {@link #hasClient(long)}.
+	 */
+	private volatile long _lastPoll;
 
 	/**
 	 * When the event stream of a client that does not poll was lost, {@code 0} while it is
@@ -172,8 +216,11 @@ public class SSEUpdateQueue {
 	 */
 	private long _streamLostAt;
 
-	/** The poll waiting for the next event, {@code null} if none. Guarded by {@code this}. */
-	private WaitingPoll _waitingPoll;
+	/**
+	 * The poll waiting for the next event, {@code null} if none. Written while holding
+	 * {@code this}, volatile for {@link #hasClient(long)}.
+	 */
+	private volatile WaitingPoll _waitingPoll;
 
 	/** The token polls carry instead of the session cookie, created with the first poll. */
 	private volatile String _pollToken;
@@ -214,6 +261,31 @@ public class SSEUpdateQueue {
 
 	private volatile ScheduledFuture<?> _heartbeatTask;
 
+	/**
+	 * Guards the state of the model synchronization, see {@link #requestModelSync(long)}.
+	 *
+	 * <p>
+	 * A lock of its own, so that a committing thread requesting a synchronization never waits for a
+	 * {@link #flush()} writing to a slow client.
+	 * </p>
+	 */
+	private final Object _syncLock = new Object();
+
+	/** The scheduled model synchronization that has not started yet, or {@code null}. */
+	private ScheduledFuture<?> _syncTask;
+
+	/** Whether a model synchronization is running. */
+	private boolean _syncRunning;
+
+	/** Whether the running model synchronization is to be followed by another one. */
+	private boolean _syncAgain;
+
+	/** When the last model synchronization started, in milliseconds. */
+	private long _lastSyncStart;
+
+	/** The interval of the last {@link #requestModelSync(long) request}, in milliseconds. */
+	private long _syncInterval;
+
 	private volatile String _windowName;
 
 	private volatile ReactControl _rootControl;
@@ -225,6 +297,12 @@ public class SSEUpdateQueue {
 	private DialogManager _dialogManager;
 
 	private RouteManager _routeManager;
+
+	/**
+	 * The {@link #registerControl(ReactCommandTarget) displayed} controls whose content lies outside
+	 * the page, see {@link ReactControl#isContentOutsidePage()}.
+	 */
+	private final Set<ReactControl> _outsidePageRoots = ConcurrentHashMap.newKeySet();
 
 	private final ScriptRecorder _recorder = new ScriptRecorder();
 
@@ -299,6 +377,7 @@ public class SSEUpdateQueue {
 		if (routeManager != null) {
 			routeManager.setDisplayedParticipants(this::displayedParticipants);
 			routeManager.setTitlingParticipants(this::titlingParticipants);
+			routeManager.setOutsidePage(this::isOutsidePage);
 		}
 	}
 
@@ -309,7 +388,9 @@ public class SSEUpdateQueue {
 	 * The walk follows the {@link ReactControl#visibleChildren() visible children}, so a control that
 	 * is rendered but hidden - a covered frame of a tile stack - contributes nothing. Neither does
 	 * the content of a participant showing an item without a route (see
-	 * {@link RoutingParticipant#routesContent()}): that part of the display has no URL.
+	 * {@link RoutingParticipant#routesContent()}): that part of the display has no URL. Nor does the
+	 * content of a control showing it outside the page - the dialogs of a dialog manager (see
+	 * {@link ReactControl#isContentOutsidePage()}).
 	 * </p>
 	 *
 	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
@@ -369,12 +450,49 @@ public class SSEUpdateQueue {
 			result.add(participant);
 			descend &= includesContent(participant, titling);
 		}
-		if (!descend) {
+		if (!descend || control.isContentOutsidePage()) {
 			return;
 		}
 		for (ReactControl child : control.visibleChildren()) {
 			collectParticipants(child, titling, result);
 		}
+	}
+
+	/**
+	 * Whether the given participant is displayed in content that lies outside the page - see
+	 * {@link ReactControl#isContentOutsidePage()}.
+	 *
+	 * <p>
+	 * Searched below the displayed controls whose content lies outside the page only, so that
+	 * answering costs nothing while no dialog is open.
+	 * </p>
+	 *
+	 * @see RouteManager#setOutsidePage(java.util.function.Predicate)
+	 */
+	private boolean isOutsidePage(RoutingParticipant participant) {
+		for (ReactControl root : _outsidePageRoots) {
+			for (ReactControl child : root.displayedChildren()) {
+				if (contains(child, participant)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the given control or its content is the given participant or anchors it.
+	 */
+	private static boolean contains(ReactControl control, RoutingParticipant participant) {
+		if (control == participant || control.routeParticipants().contains(participant)) {
+			return true;
+		}
+		for (ReactControl child : control.displayedChildren()) {
+			if (contains(child, participant)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static boolean includesContent(RoutingParticipant participant, boolean titling) {
@@ -393,6 +511,9 @@ public class SSEUpdateQueue {
 	 */
 	public void registerControl(ReactCommandTarget control) {
 		_controls.put(control.getID(), control);
+		if (control instanceof ReactControl reactControl && reactControl.isContentOutsidePage()) {
+			_outsidePageRoots.add(reactControl);
+		}
 	}
 
 	/**
@@ -402,6 +523,7 @@ public class SSEUpdateQueue {
 	 */
 	public void unregisterControl(ReactCommandTarget control) {
 		_controls.remove(control.getID(), control);
+		_outsidePageRoots.remove(control);
 	}
 
 	/**
@@ -628,10 +750,38 @@ public class SSEUpdateQueue {
 	 *
 	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
 	 *         connection was closed.
+	 *
+	 * @see #setConnection(AsyncContext, long)
 	 */
 	public boolean setConnection(AsyncContext asyncContext) {
+		return setConnection(asyncContext, -1);
+	}
+
+	/**
+	 * Sets the SSE connection for this queue, replacing any existing one, for a client that names
+	 * the last event it received.
+	 *
+	 * <p>
+	 * The connection receives the full state of the displayed controls, then the events written
+	 * after {@code lastEventId} that address no displayed control, with their numbers, then a
+	 * heartbeat numbered with the last event written. Events enqueued meanwhile wait until then.
+	 * Nothing is replayed for a number from before the current {@link #beginPage() page}: it is the
+	 * number of a stream of the page the window displayed before.
+	 * </p>
+	 *
+	 * @param lastEventId
+	 *        The number of the last event the client received, negative if unknown.
+	 *
+	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
+	 *         connection was closed.
+	 *
+	 * @see #setConnection(AsyncContext)
+	 */
+	public boolean setConnection(AsyncContext asyncContext, long lastEventId) {
 		SSEConnection old;
 		SSEConnection newConn = new SSEConnection(asyncContext);
+		long base;
+		List<Written> replay;
 		synchronized (this) {
 			if (_shutdown) {
 				Logger.info("SSE connection REFUSED for window '" + _windowName + "' (queue@"
@@ -646,9 +796,14 @@ public class SSEUpdateQueue {
 			old = _connection;
 			_connection = newConn;
 			_streamLostAt = 0;
-			// The client starts again from the state this connection sends; what was written before
-			// is not to be replayed to it.
+			replay = replayAfter(lastEventId);
+			// The client starts again from the state this connection sends and the events replayed
+			// after it.
 			forgetWritten();
+			for (Written written : replay) {
+				retain(written);
+			}
+			base = _lastSeq;
 			_polling = false;
 			answerWaitingPoll();
 		}
@@ -660,19 +815,19 @@ public class SSEUpdateQueue {
 			Logger.warn("SSE connection REPLACED for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
 				SSEUpdateQueue.class);
-			try {
-				old.getContext().complete();
-			} catch (Exception ex) {
-				// Old connection already closed, ignore.
-			}
+			old.close();
 		} else {
 			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
-		sendFullState(newConn);
 		// A first event at once, also for a window without controls: what tells the client that its
-		// stream arrives.
-		writeOrDisconnect(newConn, HEARTBEAT_MESSAGE);
+		// stream arrives. It carries the number the full state stands for: a page loaded anew starts
+		// without a number, while the numbering of its window continues, and would take the number a
+		// command answer names for events its stream did not bring.
+		if (sendFullState(newConn) && sendReplay(newConn, replay)
+			&& writeOrDisconnect(newConn, ID_FIELD + base + "\n" + HEARTBEAT_MESSAGE)) {
+			newConn.markPrimed();
+		}
 		// Flush any events that were enqueued before the SSE connection was
 		// established (e.g. RouteChangeEvent from initial RoutingParticipant
 		// registration during control tree construction).
@@ -692,6 +847,8 @@ public class SSEUpdateQueue {
 	public void clearConnection(AsyncContext asyncContext) {
 		SSEConnection current = _connection;
 		if (current != null && current.getContext() == asyncContext) {
+			// The stream has ended: a thread still holding the connection does not write to it.
+			current.markClosed();
 			if (dropConnection(current, System.currentTimeMillis())) {
 				Logger.info("SSE connection cleared for window '" + _windowName + "' (queue@"
 					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
@@ -716,6 +873,43 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * The retained events after the given number that address no displayed control, for a stream
+	 * whose client received the event with that number. Called while holding the lock.
+	 */
+	private List<Written> replayAfter(long lastEventId) {
+		if (lastEventId < _pageStart) {
+			// Unknown, or a number of the page before.
+			return List.of();
+		}
+		if (lastEventId < _unreadableUpTo) {
+			Logger.info("Window '" + _windowName + "' reconnects after event " + lastEventId
+				+ ", the events up to " + _unreadableUpTo + " are no longer held; the stream replays "
+				+ "the full state and the events after them.", SSEUpdateQueue.class);
+		}
+		List<Written> result = new ArrayList<>();
+		for (Written written : _written) {
+			if (written.seq() > lastEventId && !addressesDisplayedControl(written.event())) {
+				result.add(written);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Writes the given events to the given connection with their numbers.
+	 *
+	 * @return Whether all were written.
+	 */
+	private boolean sendReplay(SSEConnection connection, List<Written> replay) {
+		for (Written written : replay) {
+			if (!writeOrDisconnect(connection, ID_FIELD + written.seq() + "\n" + toDataMessage(written.json()))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Sends the full state of all registered {@link ReactControl}s to the given connection.
 	 *
 	 * <p>
@@ -728,19 +922,30 @@ public class SSEUpdateQueue {
 	 * Since a control is registered exactly while it is displayed, this sends the state of the
 	 * controls the window displays.
 	 * </p>
+	 *
+	 * <p>
+	 * Stops at the first write that fails: the connection is lost, and the state of the remaining
+	 * controls is neither serialized nor written.
+	 * </p>
+	 *
+	 * @return Whether the state of all controls was written.
 	 */
-	private void sendFullState(SSEConnection connection) {
+	private boolean sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
+			if (connection.isClosed()) {
+				return false;
+			}
 			if (control instanceof ReactControl rc) {
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
 					.setState(rc.stateAsJSON());
 				String message = toDataMessage(toJson(event));
-				if (message != null) {
-					writeOrDisconnect(connection, message);
+				if (message != null && !writeOrDisconnect(connection, message)) {
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -766,6 +971,10 @@ public class SSEUpdateQueue {
 		SSEConnection previous;
 		synchronized (this) {
 			_pendingEvents.clear();
+			// A number of its own that no event carries: the numbers of the new page start above
+			// every number the previous page received.
+			_lastSeq++;
+			_pageStart = _lastSeq;
 			forgetWritten();
 			previous = _connection;
 			_connection = null;
@@ -777,11 +986,7 @@ public class SSEUpdateQueue {
 		if (previous != null) {
 			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
 				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
-			try {
-				previous.getContext().complete();
-			} catch (Exception ex) {
-				// Already closed.
-			}
+			previous.close();
 		}
 	}
 
@@ -909,6 +1114,10 @@ public class SSEUpdateQueue {
 		if (conn == null && !_polling) {
 			return;
 		}
+		if (conn != null && !conn.isPrimed()) {
+			// The connection is sending its full state and replay; the events follow them.
+			return;
+		}
 		SSEEvent event;
 		while ((event = _pendingEvents.peek()) != null) {
 			String json = toJson(event);
@@ -918,7 +1127,7 @@ public class SSEUpdateQueue {
 				continue;
 			}
 			long seq = _lastSeq + 1;
-			if (conn != null && !writeOrDisconnect(conn, "id: " + seq + "\n" + toDataMessage(json))) {
+			if (conn != null && !writeOrDisconnect(conn, ID_FIELD + seq + "\n" + toDataMessage(json))) {
 				// Keep the event queued for retry on the next (re)connection.
 				return;
 			}
@@ -932,7 +1141,7 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Answers a poll of the client: the events after {@code after}, or - for the first poll, and
-	 * whenever events after {@code after} were dropped unread - the full state of the displayed
+	 * whenever an event after {@code after} can no longer be read - the full state of the displayed
 	 * controls, followed by the events written since the connection that address none of them.
 	 *
 	 * <p>
@@ -974,7 +1183,7 @@ public class SSEUpdateQueue {
 			// read by the poll.
 			flush();
 			acknowledge(after);
-			if (full || _droppedUnread > after) {
+			if (full || _unreadableUpTo > after) {
 				answer(context, fullAnswer(after));
 			} else if (_lastSeq > after || _shutdown) {
 				answer(context, answerAfter(after));
@@ -986,11 +1195,7 @@ public class SSEUpdateQueue {
 		}
 		if (abandoned != null) {
 			Logger.info("Window '" + _windowName + "' polls; its event stream is closed.", SSEUpdateQueue.class);
-			try {
-				abandoned.getContext().complete();
-			} catch (Exception ex) {
-				// Already closed.
-			}
+			abandoned.close();
 		}
 		ensureHeartbeat();
 	}
@@ -1003,11 +1208,11 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Whether a poll after the given number can only be answered with the full state: events after
-	 * it were dropped before the client read them.
+	 * Whether a poll after the given number can only be answered with the full state: the queue no
+	 * longer holds an event after it, see {@link #_unreadableUpTo}.
 	 */
 	public synchronized boolean needsFullState(long after) {
-		return _droppedUnread > after;
+		return _unreadableUpTo > after;
 	}
 
 	/**
@@ -1076,15 +1281,30 @@ public class SSEUpdateQueue {
 		answer(poll.context(), answerAfter(poll.after()));
 	}
 
-	/** Called while holding the lock. */
+	/**
+	 * The events after the given number.
+	 *
+	 * <p>
+	 * Where the queue no longer holds one of them - a waiting poll is answered after a flush wrote
+	 * more than the queue retains -, the answer carries no events and repeats the given number, so
+	 * that the client's next poll asks for the full state instead of continuing after a gap.
+	 * </p>
+	 *
+	 * <p>
+	 * Called while holding the lock.
+	 * </p>
+	 */
 	private String answerAfter(long after) {
+		if (_unreadableUpTo > after) {
+			return pollAnswer(after, List.of());
+		}
 		List<String> events = new ArrayList<>();
 		for (Written written : _written) {
 			if (written.seq() > after) {
 				events.add(written.json());
 			}
 		}
-		return pollAnswer(events);
+		return pollAnswer(_lastSeq, events);
 	}
 
 	/** Called while holding the lock. */
@@ -1104,13 +1324,13 @@ public class SSEUpdateQueue {
 				events.add(written.json());
 			}
 		}
-		return pollAnswer(events);
+		return pollAnswer(_lastSeq, events);
 	}
 
 	/** Called while holding the lock. */
-	private String pollAnswer(List<String> events) {
+	private String pollAnswer(long last, List<String> events) {
 		String token = _pollToken;
-		return "{\"last\":" + _lastSeq + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
+		return "{\"last\":" + last + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
 			+ String.join(",", events) + "]}";
 	}
 
@@ -1132,13 +1352,19 @@ public class SSEUpdateQueue {
 
 	/** Called while holding the lock. */
 	private void remember(Written written) {
-		_written.addLast(written);
-		_writtenChars += written.json().length();
+		retain(written);
 		while (_writtenChars > MAX_RETAINED_CHARS && _written.size() > 1) {
 			Written dropped = _written.removeFirst();
 			_writtenChars -= dropped.json().length();
-			_droppedUnread = dropped.seq();
+			// A replayed event may have a number below the last forgetting.
+			_unreadableUpTo = Math.max(_unreadableUpTo, dropped.seq());
 		}
+	}
+
+	/** Adds the given event to {@link #_written}. Called while holding the lock. */
+	private void retain(Written written) {
+		_written.addLast(written);
+		_writtenChars += written.json().length();
 	}
 
 	/** Called while holding the lock. */
@@ -1149,13 +1375,24 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Forgets what was written: the client starts from a state that contains it. Called while
-	 * holding the lock.
+	 * Forgets what was written: the client starts from a state that contains it - the full state a
+	 * connection sends, a page rendered anew.
+	 *
+	 * <p>
+	 * Whether that state reaches the client is not known: a stream may be held back as the one
+	 * before it. A client that polls after a number from before the forgetting therefore reads the
+	 * full state, never the events written since as their continuation. A client that received the
+	 * state continues with the numbers written after the forgetting.
+	 * </p>
+	 *
+	 * <p>
+	 * Called while holding the lock.
+	 * </p>
 	 */
 	private void forgetWritten() {
 		_written.clear();
 		_writtenChars = 0;
-		_droppedUnread = 0;
+		_unreadableUpTo = _lastSeq;
 	}
 
 	/**
@@ -1172,8 +1409,9 @@ public class SSEUpdateQueue {
 		return false;
 	}
 	/**
-	 * Shuts down this queue, cancelling the heartbeat, closing the connection, and clearing all
-	 * state.
+	 * Shuts down this queue, cancelling the heartbeat and a pending
+	 * {@link #requestModelSync(long) model synchronization}, closing the connection, and clearing
+	 * all state.
 	 *
 	 * <p>
 	 * The queue lets go of everything of its window: the controls, the
@@ -1186,6 +1424,12 @@ public class SSEUpdateQueue {
 	 */
 	public void shutdown() {
 		_shutdown = true;
+		synchronized (_syncLock) {
+			if (_syncTask != null) {
+				_syncTask.cancel(false);
+				_syncTask = null;
+			}
+		}
 		synchronized (this) {
 			if (_heartbeatTask != null) {
 				_heartbeatTask.cancel(false);
@@ -1203,14 +1447,11 @@ public class SSEUpdateQueue {
 		SSEConnection conn = _connection;
 		_connection = null;
 		if (conn != null) {
-			try {
-				conn.getContext().complete();
-			} catch (Exception ex) {
-				// Connection already closed, ignore.
-			}
+			conn.close();
 		}
 		_pendingEvents.clear();
 		_controls.clear();
+		_outsidePageRoots.clear();
 		_rootControl = null;
 		_dialogManager = null;
 		_routeManager = null;
@@ -1239,6 +1480,25 @@ public class SSEUpdateQueue {
 		_windowName = windowName;
 		_sessionContext = sessionContext;
 		_windowRegistry = registry;
+	}
+
+	/**
+	 * The sub-session of the browser window this queue serves, or {@code null} if it has none.
+	 *
+	 * <p>
+	 * That is the sub-session the window's session context holds under the window's name. A queue
+	 * without {@link #setWindowContext(String, TLSessionContext, ReactWindowRegistry) window context}
+	 * - not served to a window yet - or one that is {@link #shutdown() shut down} has none, and so
+	 * has a window whose sub-session was removed from its session.
+	 * </p>
+	 */
+	public TLSubSessionContext getWindowSubSession() {
+		TLSessionContext sessionCtx = _sessionContext;
+		String windowName = _windowName;
+		if (sessionCtx == null || windowName == null) {
+			return null;
+		}
+		return sessionCtx.getSubSession(windowName);
 	}
 
 	private synchronized void ensureHeartbeat() {
@@ -1330,7 +1590,32 @@ public class SSEUpdateQueue {
 		ensureHeartbeat();
 	}
 
-	/** Whether a client polls and was heard of recently. Called while holding the lock. */
+	/**
+	 * Whether a client is present at the given time: its event stream is connected, or it polls and
+	 * was heard of recently.
+	 *
+	 * <p>
+	 * This is when the {@link #sendHeartbeat() heartbeat} synthesizes the model events of the
+	 * window.
+	 * </p>
+	 *
+	 * <p>
+	 * Reads the client state without taking the lock of this queue, which a {@link #flush()} holds
+	 * while it writes to the client, so that a committing thread never waits for the network. The
+	 * answer may therefore be slightly stale.
+	 * </p>
+	 *
+	 * @param now
+	 *        The current time in milliseconds.
+	 */
+	public boolean hasClient(long now) {
+		return _connection != null || isPollingClientAlive(now);
+	}
+
+	/**
+	 * Whether a client polls and was heard of recently. Exact while holding the lock, see
+	 * {@link #hasClient(long)} otherwise.
+	 */
 	private boolean isPollingClientAlive(long now) {
 		return _polling && (_waitingPoll != null || now - _lastPoll < POLL_ORPHAN_MILLIS);
 	}
@@ -1340,9 +1625,10 @@ public class SSEUpdateQueue {
 	 *
 	 * <p>
 	 * Expires the downloads that were not fetched in time. While a client is present, synthesizes
-	 * the model events of the window, see {@link #synthesizeModelEventsIfPossible()}, writes the
-	 * heartbeat message to its stream and flushes the queue. While the client is gone, reports its
-	 * absence, see {@link #checkAbandoned(long)}.
+	 * the model events of the window and delivers the pending events, unless another thread's
+	 * interaction holds the window, see {@link #deliverModelEventsIfPossible()}, and writes the
+	 * heartbeat message to its stream. While the client is gone, reports its absence, see
+	 * {@link #checkAbandoned(long)}.
 	 * </p>
 	 */
 	public void sendHeartbeat() {
@@ -1354,14 +1640,12 @@ public class SSEUpdateQueue {
 			polled = isPollingClientAlive(now);
 		}
 		if (conn != null) {
-			synthesizeModelEventsIfPossible();
+			deliverModelEventsIfPossible();
 			writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
-			flush();
 		} else if (polled) {
 			// No heartbeat for a polling client - a poll ends by itself - but the model events of
 			// the window are synthesized as for a stream.
-			synthesizeModelEventsIfPossible();
-			flush();
+			deliverModelEventsIfPossible();
 		}
 		if (clientGoneSince(now) != 0) {
 			checkAbandoned(now);
@@ -1417,53 +1701,177 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Synthesizes the model events of this queue's window in its sub-session.
+	 * Requests that the model events of this queue's window are synthesized and delivered to its
+	 * client soon, because a commit reaches the listeners of the window's model scope.
 	 *
 	 * <p>
-	 * The events are synthesized within an {@link Interaction}, like every other change of the
-	 * window's controls, so that a commit is never delivered to a control tree that a request is
-	 * building or changing. The heartbeat does not wait for that request: while another thread holds
-	 * the session's interaction, nothing is synthesized. The commit is delivered at the end of that
-	 * interaction, or by the next heartbeat.
+	 * The request is served on the {@link SchedulerService}, never on the calling thread, which is
+	 * typically the thread that made the commit. A synchronization synthesizes the model events of
+	 * the window and delivers the pending events of this queue, see
+	 * {@link #deliverModelEventsIfPossible()}. Synchronizations of a window start at most once per
+	 * interval:
 	 * </p>
+	 * <ul>
+	 * <li>A request when the last synchronization started at least the given interval ago is served
+	 * at once.</li>
+	 * <li>A request within the interval is served the interval after the last synchronization
+	 * started.</li>
+	 * <li>Requests while a synchronization is scheduled are served by that synchronization.</li>
+	 * <li>A request while a synchronization runs is served by another synchronization the interval
+	 * after it started, since the running one may have missed its commit.</li>
+	 * <li>A synchronization that finds the window busy - another thread holds the session's
+	 * {@link Interaction} - is repeated the interval after it started.</li>
+	 * </ul>
 	 *
 	 * <p>
-	 * A queue without window context, or whose window has no sub-session, synthesizes nothing.
+	 * May be called by any thread concurrently. A queue that is {@link #shutdown() shut down}, or a
+	 * queue outside a running application without a {@link SchedulerService}, ignores the request.
 	 * </p>
+	 *
+	 * @param intervalMillis
+	 *        The minimum time between the starts of two synchronizations of this window, in
+	 *        milliseconds.
 	 */
-	private void synthesizeModelEventsIfPossible() {
+	public void requestModelSync(long intervalMillis) {
+		if (_shutdown) {
+			return;
+		}
+		if (!SchedulerService.Module.INSTANCE.isActive()) {
+			// No scheduler outside a running application, e.g. in a test of the queue alone.
+			return;
+		}
+		synchronized (_syncLock) {
+			_syncInterval = intervalMillis;
+			if (_syncRunning) {
+				_syncAgain = true;
+				return;
+			}
+			if (_syncTask != null) {
+				// Served by the scheduled synchronization.
+				return;
+			}
+			scheduleModelSync();
+		}
+	}
+
+	/**
+	 * Schedules the next model synchronization, the {@link #_syncInterval} after the last one
+	 * started. Called while holding {@link #_syncLock}.
+	 */
+	private void scheduleModelSync() {
+		if (_shutdown) {
+			return;
+		}
+		long delay = Math.max(0, _lastSyncStart + _syncInterval - System.currentTimeMillis());
+		_syncTask = SchedulerService.getInstance().schedule(this::runModelSync, delay, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * Runs a model synchronization scheduled by {@link #requestModelSync(long)}.
+	 */
+	private void runModelSync() {
+		synchronized (_syncLock) {
+			_syncTask = null;
+			if (_shutdown) {
+				return;
+			}
+			_syncRunning = true;
+			_syncAgain = false;
+			_lastSyncStart = System.currentTimeMillis();
+		}
+		boolean synchronizedModel = true;
+		try {
+			synchronizedModel = deliverModelEventsIfPossible();
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to deliver the model events of window '" + _windowName + "'.", ex,
+				SSEUpdateQueue.class);
+		} finally {
+			synchronized (_syncLock) {
+				_syncRunning = false;
+				if (_syncAgain || !synchronizedModel) {
+					_syncAgain = false;
+					scheduleModelSync();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Synthesizes the model events of this queue's window in its sub-session and delivers the
+	 * pending events of this queue.
+	 *
+	 * <p>
+	 * Both happen within an {@link Interaction}, like every other change of the window's controls:
+	 * a commit is never delivered to a control tree that a request is building or changing, and the
+	 * events are delivered when the interaction closes, see {@link DeliveryScope}. This does not
+	 * wait for that request: while another thread holds the session's interaction, nothing is
+	 * synthesized and nothing is written, since the events that interaction holds back are only
+	 * delivered once it knows which controls stay displayed. The commit is delivered by the next
+	 * request of the window, by the next heartbeat, or by repeating a
+	 * {@link #requestModelSync(long) synchronization}.
+	 * </p>
+	 *
+	 * <p>
+	 * A window without sub-session - its page was never rendered - synthesizes nothing. A queue
+	 * without window context has no interaction to wait for and is flushed directly.
+	 * </p>
+	 *
+	 * @return {@code false} if the window was busy, so that nothing was synthesized or delivered
+	 *         although there may be something to; {@code true} otherwise.
+	 */
+	private boolean deliverModelEventsIfPossible() {
 		ReactWindowRegistry registry = _windowRegistry;
-		TLSessionContext sessionCtx = _sessionContext;
 		String windowName = _windowName;
-		if (registry == null || sessionCtx == null || windowName == null) {
-			return;
+		if (registry == null) {
+			flush();
+			return true;
 		}
-		TLSubSessionContext subSession = sessionCtx.getSubSession(windowName);
-		if (subSession == null) {
-			return;
-		}
-		ThreadContextManager.inContext(subSession, () -> {
+		TLSubSessionContext subSession = getWindowSubSession();
+		Supplier<Boolean> deliver = () -> {
 			try (Interaction interaction = registry.tryBeginInteraction(0)) {
 				if (interaction == null) {
-					// The window is busy: the interaction holding it synthesizes at its end, or the
-					// next heartbeat does.
-					return;
+					// The window is busy.
+					return false;
 				}
-				registry.synthesizeModelEvents(windowName);
+				if (subSession != null) {
+					registry.synthesizeModelEvents(windowName);
+				}
+				// Delivered when the interaction closes, together with what was synthesized.
+				DeliveryScope.current().collect(this);
+				return true;
 			}
-		});
+		};
+		if (subSession == null) {
+			return deliver.get();
+		}
+		return ThreadContextManager.inContext(subSession, deliver::get);
 	}
 
 	/**
 	 * Writes a message to the given connection, clearing it if the write fails.
+	 *
+	 * <p>
+	 * A connection that is {@link SSEConnection#isClosed() closed} - lost by an earlier write,
+	 * ended, replaced or given up - is not written to. A thread may still hold it: the heartbeat, a
+	 * {@link #setConnection(AsyncContext) connection} sending the full state, a flush. The loss of a
+	 * connection is therefore reported once, by the write that notices it.
+	 * </p>
+	 *
+	 * @return Whether the message was written; {@code false} if the connection is closed or was lost
+	 *         with this write.
 	 */
 	private boolean writeOrDisconnect(SSEConnection connection, String message) {
+		if (connection.isClosed()) {
+			return false;
+		}
 		try {
 			writeToConnection(connection.getContext(), message);
 			return true;
 		} catch (IOException ex) {
-			Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			if (connection.markClosed()) {
+				Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
+					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			}
 			dropConnection(connection, System.currentTimeMillis());
 			return false;
 		}
@@ -1513,10 +1921,19 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Wraps an {@link AsyncContext} for an SSE connection.
+	 *
+	 * <p>
+	 * A connection is closed once: when a write to it fails, when its stream ends, or when the queue
+	 * gives it up. A closed connection is not written to again.
+	 * </p>
 	 */
 	static final class SSEConnection {
 
 		private final AsyncContext _context;
+
+		private final AtomicBoolean _closed = new AtomicBoolean();
+
+		private volatile boolean _primed;
 
 		SSEConnection(AsyncContext context) {
 			_context = context;
@@ -1524,6 +1941,49 @@ public class SSEUpdateQueue {
 
 		AsyncContext getContext() {
 			return _context;
+		}
+
+		/**
+		 * Whether this connection is no longer written to.
+		 */
+		boolean isClosed() {
+			return _closed.get();
+		}
+
+		/**
+		 * Marks this connection as no longer written to.
+		 *
+		 * @return Whether this call closed it, {@code false} if it was closed before.
+		 */
+		boolean markClosed() {
+			return _closed.compareAndSet(false, true);
+		}
+
+		/**
+		 * Whether this connection has received its full state, its replay and its numbered
+		 * heartbeat, so that events are written to it.
+		 */
+		boolean isPrimed() {
+			return _primed;
+		}
+
+		/**
+		 * Marks this connection as {@link #isPrimed() primed}.
+		 */
+		void markPrimed() {
+			_primed = true;
+		}
+
+		/**
+		 * Marks this connection as closed and ends its stream.
+		 */
+		void close() {
+			markClosed();
+			try {
+				_context.complete();
+			} catch (RuntimeException ex) {
+				// Already completed.
+			}
 		}
 	}
 

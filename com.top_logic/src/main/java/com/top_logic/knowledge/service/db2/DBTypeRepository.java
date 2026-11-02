@@ -68,9 +68,34 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
 
 	private final boolean _multipleBranches;
 
+	private final boolean _branchLast;
+
+	/**
+	 * Creates a {@link DBTypeRepository} with the branch column leading the indexes.
+	 * 
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param multipleBranches
+	 *        See {@link #multipleBranches()}.
+	 */
 	public DBTypeRepository(DBHelper sqlDialect, boolean multipleBranches) {
+		this(sqlDialect, multipleBranches, false);
+	}
+
+	/**
+	 * Creates a {@link DBTypeRepository}.
+	 * 
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param multipleBranches
+	 *        See {@link #multipleBranches()}.
+	 * @param branchLast
+	 *        See {@link #branchLast()}.
+	 */
+	public DBTypeRepository(DBHelper sqlDialect, boolean multipleBranches, boolean branchLast) {
 		this.sqlDialect = sqlDialect;
 		_multipleBranches = multipleBranches;
+		_branchLast = branchLast;
 		this.metaMap = new HashMap<>();
 		this.compatibleTypes = new HashMap<>();
 		
@@ -401,6 +426,11 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
 		return _multipleBranches;
 	}
 
+	@Override
+	public boolean branchLast() {
+		return _branchLast;
+	}
+
 	/**
 	 * Creates a new {@link DBTypeRepository}.
 	 * 
@@ -427,7 +457,8 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
 	 */
 	public static DBTypeRepository newRepository(InstantiationContext context, DBHelper sqlDialect,
 			SchemaSetup schemaSetup, boolean versioning) throws ConfigurationException {
-		DBTypeRepository result = new DBTypeRepository(sqlDialect, schemaSetup.getConfig().hasMultipleBranches());
+		DBTypeRepository result = new DBTypeRepository(sqlDialect, schemaSetup.getConfig().hasMultipleBranches(),
+			SchemaSetup.effectiveBranchLast(schemaSetup.getConfig(), sqlDialect));
 		MOFactory typeFactory = new DBKnowledgeTypeFactory(versioning);
 		schemaSetup.createTypes(context, result, typeFactory);
 		context.checkErrors();

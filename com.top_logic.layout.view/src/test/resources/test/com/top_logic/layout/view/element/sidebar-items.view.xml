@@ -6,30 +6,38 @@
 	</channels>
 
 	<sidebar>
-		<header-item id="section"
-			label="Section"
-		/>
-		<group id="g"
-			expanded="false"
-			label="Group"
+		<section id="section"
+			icon="css:bi bi-star"
 		>
-			<nav-item id="inner"
-				badge="count"
-				label="Inner"
+			<label>
+				<en>Section</en>
+			</label>
+			<group id="g"
+				expanded="false"
+				label="Group"
 			>
-				<view-ref view="sidebar-item-content.view.xml"/>
-			</nav-item>
-			<header-item id="innerSection"
-				label="Inner section"
-			/>
-		</group>
+				<nav-item id="inner"
+					badge="count"
+					label="Inner"
+				>
+					<view-ref view="sidebar-item-content.view.xml"/>
+				</nav-item>
+				<section id="innerSection">
+					<nav-item id="innerItem"
+						label="Inner item"
+					>
+						<panel/>
+					</nav-item>
+				</section>
+			</group>
+		</section>
 		<nav-item id="top"
 			hidden="true"
 			label="Top"
 		>
 			<panel/>
 		</nav-item>
-		<separator id="sep"/>
+		<section id="empty"/>
 		<command-item id="cmdHidden">
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
 				inputs="count"

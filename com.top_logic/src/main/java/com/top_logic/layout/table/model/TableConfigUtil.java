@@ -513,7 +513,7 @@ public class TableConfigUtil {
 			LabelProvider instance = context.getInstance(config.getFullTextProvider());
 			settings.add(column -> column.setFullTextProvider(instance));
 		}
-		for (PolymorphicConfiguration<ColumnConfigurator> configuratorConfig : config.getConfigurators()) {
+		for (PolymorphicConfiguration<? extends ColumnConfigurator> configuratorConfig : config.getConfigurators()) {
 			settings.add(context.getInstance(configuratorConfig));
 		}
 	}

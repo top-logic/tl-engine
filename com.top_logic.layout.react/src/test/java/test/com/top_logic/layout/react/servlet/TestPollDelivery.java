@@ -13,6 +13,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
@@ -107,6 +108,83 @@ public class TestPollDelivery extends TestCase {
 		assertTrue(body, body.contains("[\"StateEvent\",{\"controlId\":\"" + _control.getID() + "\""));
 		assertFalse("superseded by the state: " + body, body.contains("{\\\"hidden\\\":true}"));
 		assertTrue("not a control's update: " + body, body.contains("tl-chat-stream:abc"));
+	}
+
+	/**
+	 * A poll after events that a reconnection of the stream forgot - written to a stream the client
+	 * did not read, replaced by a stream that never reached the client - gets the full state, not
+	 * the events after the gap.
+	 */
+	public void testPollAfterForgottenEventsGetsFullState() throws Exception {
+		FakeAsyncRequest stream = new FakeAsyncRequest();
+		_queue.setConnection(stream.context());
+		_queue.enqueue(script("read"));
+		// The client read event 1; 2 and 3 are held back on the way.
+		_queue.enqueue(script("held back"));
+		_queue.enqueue(script("held back too"));
+
+		// The stream reconnects; what the reconnection sends never reaches the client either.
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(script("after reconnect"));
+
+		FakeAsyncRequest poll = new FakeAsyncRequest();
+		_queue.poll(poll.context(), 1, false);
+
+		assertTrue(poll.done());
+		String body = poll.body();
+		assertTrue("the full state: " + body,
+			body.contains("[\"StateEvent\",{\"controlId\":\"" + _control.getID() + "\""));
+		assertTrue("followed by the event addressing no control: " + body, body.contains("after reconnect"));
+		assertTrue("a token poll is sent to ask for the full state", _queue.needsFullState(1));
+	}
+
+	/**
+	 * A client whose reconnected stream arrives continues with the events of that stream: its polls
+	 * read them as events, without a full state.
+	 */
+	public void testReconnectedStreamNeedsNoFullState() throws Exception {
+		_queue.setConnection(new FakeAsyncRequest().context());
+		_queue.enqueue(script("one"));
+		FakeAsyncRequest reconnected = new FakeAsyncRequest();
+		_queue.setConnection(reconnected.context());
+		_queue.enqueue(script("two"));
+		assertTrue(reconnected.body(), reconnected.body().contains("id: 2\ndata: "));
+
+		// The client read the full state and event 2 from the reconnected stream, and polls then.
+		assertFalse(_queue.needsFullState(2));
+		FakeAsyncRequest poll = new FakeAsyncRequest();
+		_queue.poll(poll.context(), 2, false);
+		assertFalse("nothing to read yet", poll.done(200));
+
+		_queue.enqueue(script("three"));
+
+		assertTrue(poll.done());
+		assertEquals(answer(3, "three"), poll.body());
+	}
+
+	/**
+	 * A waiting poll whose events exceed what the queue retains is not answered with the events
+	 * that are left: it is answered without events and without advancing, so that the next poll
+	 * asks for the full state.
+	 */
+	public void testWaitingPollIsNotAnsweredWithAGap() throws Exception {
+		FakeAsyncRequest waiting = new FakeAsyncRequest();
+		_queue.poll(waiting.context(), 0, false);
+		assertFalse(waiting.done(100));
+
+		String large = "x".repeat(600_000);
+		// Delivered together, as the events of one interaction.
+		DeliveryScope.enter();
+		try {
+			_queue.enqueue(script(large + "1"));
+			_queue.enqueue(script(large + "2"));
+		} finally {
+			DeliveryScope.exit();
+		}
+
+		assertTrue(waiting.done());
+		assertEquals(answer(0), waiting.body());
+		assertTrue(_queue.needsFullState(0));
 	}
 
 	/** Polls without the session cookie find the window by its token until the window ends. */

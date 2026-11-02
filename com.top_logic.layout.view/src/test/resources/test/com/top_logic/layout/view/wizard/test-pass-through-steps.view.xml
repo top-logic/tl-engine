@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="currentStep"/>
+		<channel name="introStep"/>
+	</channels>
+	<panel title="Pass-through Steps Test">
+		<wizard
+			current-step="currentStep"
+			progress="false"
+		>
+			<step id="profile"/>
+			<step id="ready"
+				auto-advance="2s"
+			/>
+			<step id="role"/>
+			<step id="checking"
+				auto-advance="1s"
+			/>
+			<step id="checked"
+				auto-advance="1s"
+			/>
+			<step id="done"/>
+		</wizard>
+		<wizard
+			current-step="introStep"
+			progress="false"
+		>
+			<step id="intro"
+				auto-advance="2s"
+			/>
+			<step id="form"/>
+		</wizard>
+	</panel>
+</view>

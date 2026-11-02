@@ -77,6 +77,7 @@ public class DeleteStylesheetHandler extends AbstractCommandHandler {
 			if (stylesheet.isPresent()) {
 				styles.remove(stylesheet.get());
 				writeThemeConfig(themeConfigFile, themeConfig);
+				FileManager.getInstance().refresh(ThemeUtil.getThemeConfigPath(themeId));
 			}
 		}
 	}
@@ -96,7 +97,9 @@ public class DeleteStylesheetHandler extends AbstractCommandHandler {
 	}
 
 	private void deleteStylesheetFile(ThemeConfig.StyleSheetRef stylesheetRef) {
-		FileManager.getInstance().getIDEFile(stylesheetRef.getName()).delete();
+		FileManager fileManager = FileManager.getInstance();
+		fileManager.getIDEFile(stylesheetRef.getName()).delete();
+		fileManager.refresh(stylesheetRef.getName());
 	}
 
 	private ThemeConfig.StyleSheetRef getStylesheetReference(LayoutComponent component) {

@@ -61,7 +61,7 @@ public class CompareTreeTableComponent extends TreeTableComponent {
 
 		@ItemDefault(DefaultTreeTableBuilder.class)
 		@Override
-		PolymorphicConfiguration<TreeBuilder<DefaultTreeTableNode>> getTreeBuilder();
+		PolymorphicConfiguration<? extends TreeBuilder<DefaultTreeTableNode>> getTreeBuilder();
 
 		/**
 		 * {@link TreeCompareConfigurationProvider}, that is basically used to create the tree table

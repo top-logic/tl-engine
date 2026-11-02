@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.container.ConfigPart;
 
 /**
@@ -53,6 +54,7 @@ public interface WithResultActions extends ConfigPart {
 	 * The actions to run over the result of this action once it has completed.
 	 */
 	@Name(WITH_RESULT)
+	@TreeProperty
 	WithResult getWithResult();
 
 	/**

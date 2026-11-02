@@ -1829,6 +1829,22 @@ input.is-checkbox[disabled] {
 	word-break: break-word;
 }
 
+/* Preformatted multi-line text: fixed-width font with the typography of code, lines not wrapped,
+   wide lines scroll horizontally. The class marks the text area of an editable control and the
+   value of an immutable one; the value would otherwise inherit the row height of the form as its
+   line height. */
+.tl-preformatted,
+.tl-preformatted textarea {
+	font-family: monospace, monospace;
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	white-space: pre;
+	word-wrap: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+
 .tl-text-popup {
     display: inline-flex;
     align-items: center;

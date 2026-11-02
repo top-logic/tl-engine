@@ -8,6 +8,7 @@ package com.top_logic.layout.view.navigation;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -37,8 +38,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_DIALOG_IS_NOT_LAST__VIEW;
 
 	/**
-	 * @en The view ''{0}'' is displayed as a drilled-down frame, but nothing here holds a stack of
-	 *     them.
+	 * @en The {0} is a drilled-down frame, but nothing here holds a stack of them.
 	 */
 	public static ResKey1 ERROR_NO_TILE_STACK__VIEW;
 
@@ -56,6 +56,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The view ''{1}'' has no channel ''{0}'' to receive the object.
 	 */
 	public static ResKey2 ERROR_UNKNOWN_CHANNEL__CHANNEL_VIEW;
+
+	/**
+	 * @en The tile stack drilled down in declares no frame ''{0}''.
+	 */
+	public static ResKey1 ERROR_UNKNOWN_FRAME__FRAME;
+
+	/**
+	 * @en The frame ''{0}'' cannot be drilled down to from {1}: only its successors can.
+	 */
+	public static ResKey2 ERROR_FRAME_NOT_SUCCESSOR__FRAME_BELOW;
+
+	/**
+	 * @en The frame ''{0}'' receives the values {1}, but holds the parameters {2}.
+	 */
+	public static ResKey3 ERROR_FRAME_PARAMETERS__FRAME_GIVEN_EXPECTED;
 
 	/**
 	 * @en The object cannot be displayed.

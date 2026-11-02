@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractProviderStreamTest;
@@ -25,7 +26,7 @@ public class TestOpenAIStreamContract extends AbstractProviderStreamTest {
 
 	static class TestableProvider extends OpenAIResponsesProvider {
 		TestableProvider() {
-			super("test-key");
+			super(FixedCredentials.NONE);
 		}
 
 		List<StreamEvent> parse(InputStream sse) throws IOException, ProviderException {

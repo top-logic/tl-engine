@@ -56,9 +56,9 @@ public interface DatatypeConfig extends TypeConfig, DBColumnType {
 	@Name(STORAGE_MAPPING)
 	@Mandatory
 	@DefaultContainer
-	PolymorphicConfiguration<StorageMapping<?>> getStorageMapping();
+	PolymorphicConfiguration<? extends StorageMapping<?>> getStorageMapping();
 
 	/** @see #getStorageMapping() */
-	void setStorageMapping(PolymorphicConfiguration<StorageMapping<?>> value);
+	void setStorageMapping(PolymorphicConfiguration<? extends StorageMapping<?>> value);
 
 }

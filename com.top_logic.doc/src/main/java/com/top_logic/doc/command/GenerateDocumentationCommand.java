@@ -69,7 +69,7 @@ public class GenerateDocumentationCommand extends PreconditionCommandHandler {
 		@ImplementationClassDefault(DocumentationGenerator.class)
 		@NonNullable
 		@Name(GENERATOR)
-		PolymorphicConfiguration<DocumentationGenerator> getGenerator();
+		PolymorphicConfiguration<? extends DocumentationGenerator> getGenerator();
 
 	}
 

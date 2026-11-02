@@ -40,16 +40,22 @@ import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.knowledge.KnowledgeReferenceStorageImpl;
+import com.top_logic.knowledge.event.ChangeSet;
+import com.top_logic.knowledge.event.ChangeSetReader;
+import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.ReaderConfigBuilder;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.BranchSupport;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.HistoryCompaction;
 import com.top_logic.knowledge.service.db2.HistoryCompaction.TableReport;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
@@ -518,6 +524,34 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		}
 	}
 
+	public void testResolveCompactionRevisionByNumber() throws Exception {
+		Transaction tx = begin();
+		newB("b1");
+		commit(tx);
+
+		tx = begin();
+		newB("b2");
+		commit(tx);
+		long middle = tx.getCommitRevision().getCommitNumber();
+
+		tx = begin();
+		newB("b3");
+		commit(tx);
+		long last = tx.getCommitRevision().getCommitNumber();
+
+		HistoryCompaction compaction = newCompaction();
+		assertEquals(middle, compaction.resolveCompactionRevisionByNumber(middle));
+		assertEquals("A number behind the last revision resolves to the last one.", last,
+			compaction.resolveCompactionRevisionByNumber(last + 1000));
+		assertEquals(middle - 1, compaction.countDiscardedRevisions(middle));
+		assertEquals("Nothing is discarded below the first revision.", 0, compaction.countDiscardedRevisions(1));
+
+		// After a compaction, the discarded numbers resolve to the newest revision kept below them.
+		newCompaction().compactRevisions(1, last, _log);
+		assertEquals(1, compaction.resolveCompactionRevisionByNumber(middle));
+		assertEquals(1, compaction.countDiscardedRevisions(last));
+	}
+
 	public void testCompactHistoryByDate() throws Exception {
 		Scenario scenario = setupScenario();
 		long cut = scenario._compactionRevision;
@@ -528,6 +562,108 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		Report result = compaction.compactHistory(cutDate, _log);
 		assertEquals(resolved, result.getCompactionRevision());
 		assertEquals("Revisions below the compaction revision are deleted.", 0, countRevisionsBelow(resolved));
+	}
+
+	/**
+	 * An object the running knowledge base holds in its cache and that was last changed before the
+	 * compaction revision can still be changed after the compaction, once the knowledge base was
+	 * told about it, without dropping its cache.
+	 */
+	public void testChangeCachedObjectAfterCompaction() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject live = newD("live-created");
+		commit(tx);
+
+		tx = begin();
+		newD("other");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+		assertTrue("The object was last changed before the cut.", live.getLastUpdate() < cut);
+
+		Report result = newCompaction().compactRevisions(0, cut, _log);
+		assertFalse("Something must have been compacted.", result.isEmpty());
+		kb().historyCompacted(cut);
+		assertEquals("The cached current state starts at the compaction revision.", cut, live.getLastUpdate());
+
+		tx = begin();
+		setA1(live, "live-changed");
+		commit(tx);
+
+		KBTestUtils.clearCache(kb());
+		KnowledgeItem reloaded = kb().resolveObjectKey(live.tId());
+		assertEquals("live-changed", reloaded.getAttributeValue(A1_NAME));
+		assertEquals("The change outdated the compacted row.", cut,
+			kb().getCreateRevision(reloaded));
+	}
+
+	/**
+	 * The change sets read from the first revision of a compacted history create every object that
+	 * lives at the compaction revision, so that a dump written from them is complete.
+	 */
+	public void testChangeSetsAfterCompaction() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject early = newD("cs-early");
+		commit(tx);
+
+		tx = begin();
+		setA1(early, "cs-early-changed");
+		newD("cs-at-cut");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+
+		tx = begin();
+		setA1(early, "cs-after-cut");
+		commit(tx);
+
+		newCompaction().compactRevisions(0, cut, _log);
+		KBTestUtils.clearCache(kb());
+
+		boolean created = false;
+		ReaderConfigBuilder config =
+			ReaderConfigBuilder.createConfig(HistoryUtils.getInitialRevision(kb().getHistoryManager()),
+				Revision.CURRENT);
+		try (ChangeSetReader reader = kb().getChangeSetReader(config)) {
+			for (ChangeSet cs = reader.read(); cs != null; cs = reader.read()) {
+				for (ObjectCreation creation : cs.getCreations()) {
+					if (creation.getObjectId().getObjectName().equals(early.getObjectName())) {
+						assertEquals("Created in the compaction revision.", cut, cs.getRevision());
+						created = true;
+					}
+				}
+			}
+		}
+		assertTrue("The change sets of a compacted history must create the objects living at the cut.",
+			created);
+	}
+
+	/**
+	 * Without adapting the cache, a change of a cached object last changed before the compaction
+	 * revision is refused as a lost update: the reason for
+	 * {@link DBKnowledgeBase#historyCompacted(long)}.
+	 */
+	public void testChangeOutdatedCacheFails() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject live = newD("stale-created");
+		commit(tx);
+
+		tx = begin();
+		newD("stale-other");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+
+		newCompaction().compactRevisions(0, cut, _log);
+
+		tx = kb().beginTransaction();
+		try {
+			setA1(live, "stale-changed");
+			tx.commit();
+			fail("A change based on an outdated last update must be refused.");
+		} catch (KnowledgeBaseException ex) {
+			// Expected: lost update.
+		} finally {
+			tx.rollback();
+		}
+		KBTestUtils.clearCache(kb());
 	}
 
 	/**

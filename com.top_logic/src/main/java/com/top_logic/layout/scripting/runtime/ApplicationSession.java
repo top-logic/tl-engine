@@ -50,6 +50,17 @@ public interface ApplicationSession {
 	public void invalidate();
 
 	/**
+	 * Whether the application has ended this session, e.g. by a logout or by a restart of its
+	 * services, which ends all sessions.
+	 *
+	 * <p>
+	 * No {@link ApplicationAction} can be sent to {@link #process(ApplicationAction)} of an ended
+	 * session.
+	 * </p>
+	 */
+	boolean isInvalid();
+
+	/**
 	 * Trigger rendering of the UI.
 	 * 
 	 * <p>

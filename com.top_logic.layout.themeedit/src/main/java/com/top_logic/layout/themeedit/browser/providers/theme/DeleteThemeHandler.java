@@ -55,6 +55,7 @@ public class DeleteThemeHandler extends AbstractCommandHandler {
 		FileUtilities.deleteR(fileManager.getIDEFile(ThemeUtil.getThemeStylePath(theme)));
 		FileUtilities.deleteR(fileManager.getIDEFile(ThemeUtil.getThemePath(theme)));
 		FileUtilities.deleteR(fileManager.getIDEFile(ThemeUtil.getThemeResourcesPath(theme)));
+		ThemeUtil.refreshThemeFiles(theme);
 	}
 
 	private void updateTransientThemeConfigs(String themeName) {

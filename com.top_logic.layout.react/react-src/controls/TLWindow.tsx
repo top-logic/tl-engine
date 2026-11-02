@@ -1,7 +1,7 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
   firstFocusable, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
-  ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE, SurfaceProvider,
+  ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE, SurfaceProvider, useFloatingFrame, FloatingFrame, FloatingRail,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson, Surface } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
@@ -119,6 +119,9 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  *
  * A double click on a resize handle gives the window its configured size back and makes the server
  * forget the remembered one - the way back from a size the user no longer wants.
+ *
+ * The window is a frame for floating elements (useFloatingFrame): an element floating in its content - a
+ * floating action button - is placed against the edges of its body, above the footer.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<WindowStateJson>>();
@@ -155,6 +158,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const localHeightRef = useRef<number | null>(null);
 
   const windowRef = useRef<HTMLDivElement>(null);
+  const floating = useFloatingFrame();
 
   // The surface's margin to the viewport (--tl-space-lg): the scrim has no padding, the surface caps at the
   // viewport minus 2 x this margin; read for resizing and for checking a remembered size.
@@ -453,13 +457,17 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             <ThemeIcon encoded={ICON_CLOSE} className="tl-button__icon tl-icon-sm" />
           </button>
         </div>
+        <FloatingRail host={floating} edge="top" />
         <div className="tl-dialog__body tl-region">
           <SurfaceProvider value={OVERLAY_SURFACE}>
-            <FillBarrier>
-              <TLChild control={child} />
-            </FillBarrier>
+            <FloatingFrame host={floating}>
+              <FillBarrier>
+                <TLChild control={child} />
+              </FillBarrier>
+            </FloatingFrame>
           </SurfaceProvider>
         </div>
+        <FloatingRail host={floating} edge="bottom" />
         {!!footer && (
           <ButtonDefaults appearance="secondary">
             <div className="tl-button-bar">

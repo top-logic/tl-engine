@@ -13,7 +13,11 @@ import test.com.top_logic.basic.BasicTestCase;
 import com.top_logic.base.security.password.hashing.Argon2Hashing;
 import com.top_logic.base.security.password.hashing.Argon2Hashing.Argon2Type;
 import com.top_logic.base.security.password.hashing.Argon2Hashing.Config;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 
 /**
@@ -23,6 +27,9 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
  */
 @SuppressWarnings("javadoc")
 public class TestArgon2Hashing extends BasicTestCase {
+
+	/** The system property holding the pepper in the tests referencing a variable. */
+	private static final String PEPPER_VARIABLE = "test_argon2_hashing_pepper";
 
 	public void testHashVerify() {
 		Argon2Hashing hashing = newInstance();
@@ -58,6 +65,57 @@ public class TestArgon2Hashing extends BasicTestCase {
 		assertFalse(hashing2.verify(pwd, hash));
 	}
 
+	/**
+	 * A pepper from an environment variable gives the same hashes as the same pepper configured
+	 * directly, and is read when the algorithm is created.
+	 */
+	public void testPepperFromEnvironment() {
+		System.setProperty(PEPPER_VARIABLE, "pepper1");
+		try {
+			Argon2Hashing literal = newInstance(Argon2Type.ARGON2D, 5, 6000, "pepper1");
+			Argon2Hashing fromEnvironment = newInstance(Argon2Type.ARGON2D, 5, 6000, environmentPepper());
+			char[] pwd = "My funny pwd".toCharArray();
+
+			String hash = literal.createHash(pwd);
+			assertTrue(fromEnvironment.verify(pwd, hash));
+			assertTrue(literal.verify(pwd, fromEnvironment.createHash(pwd)));
+
+			System.setProperty(PEPPER_VARIABLE, "pepper2");
+			assertTrue("Pepper is kept for the lifetime of the algorithm.", fromEnvironment.verify(pwd, hash));
+			assertFalse(newInstance(Argon2Type.ARGON2D, 5, 6000, environmentPepper()).verify(pwd, hash));
+		} finally {
+			System.clearProperty(PEPPER_VARIABLE);
+		}
+	}
+
+	/**
+	 * Without pepper, the hash is computed without secret, so that hashes of an algorithm with an
+	 * empty pepper are verified.
+	 */
+	public void testNoPepper() {
+		Argon2Hashing noPepper = newInstance(Argon2Type.ARGON2D, 5, 6000);
+		Argon2Hashing pepper = newInstance(Argon2Type.ARGON2D, 5, 6000, "pepper1");
+		char[] pwd = "My funny pwd".toCharArray();
+		String hash = noPepper.createHash(pwd);
+		assertTrue(newInstance(Argon2Type.ARGON2D, 5, 6000).verify(pwd, hash));
+		assertFalse(pepper.verify(pwd, hash));
+	}
+
+	private static PolymorphicConfiguration<? extends SecretSource> environmentPepper() {
+		EnvironmentSecretSource.Config result = TypedConfiguration.newConfigItem(EnvironmentSecretSource.Config.class);
+		result.setName(PEPPER_VARIABLE);
+		return result;
+	}
+
+	private static PolymorphicConfiguration<? extends SecretSource> literalPepper(String pepper) {
+		if (pepper == null) {
+			return null;
+		}
+		LiteralSecretSource.Config result = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		result.setValue(pepper);
+		return result;
+	}
+
 	private Argon2Hashing newInstance() {
 		Config config = newConfig();
 		return TypedConfigUtil.createInstance(config);
@@ -70,10 +128,15 @@ public class TestArgon2Hashing extends BasicTestCase {
 	}
 
 	private Argon2Hashing newInstance(Argon2Type type, int iterations, int memory) {
-		return newInstance(type, iterations, memory, null);
+		return newInstance(type, iterations, memory, (String) null);
 	}
 
 	private Argon2Hashing newInstance(Argon2Type type, int iterations, int memory, String pepper) {
+		return newInstance(type, iterations, memory, literalPepper(pepper));
+	}
+
+	private Argon2Hashing newInstance(Argon2Type type, int iterations, int memory,
+			PolymorphicConfiguration<? extends SecretSource> pepper) {
 		Config config = newConfig();
 		config.setType(type);
 		config.setIterations(iterations);

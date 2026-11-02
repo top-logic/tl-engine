@@ -4,7 +4,6 @@
         <entry name="%POSTGRESQL_HOST%" value="${env:postgresql_host:localhost}" />
         <entry name="%POSTGRESQL_DATABASE%" value="${env:postgresql_database:test}" />
         <entry name="%POSTGRESQL_USER%" value="${env:postgresql_user:user}"/>
-        <entry name="%POSTGRESQL_PASSWD%" value="${env:postgresql_passwd:unencrypted:passwd}"/>
         <entry name="%POSTGRESQL_SCHEMA%" value="${env:postgresql_schema:public}"/>
         
         <entry name="%POSTGRESQL_AUTOSAVE%" value="${env:postgresql_autosave:org.postgresql.jdbc.AutoSave:ALWAYS}" />

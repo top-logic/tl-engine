@@ -145,6 +145,12 @@ public interface PropertyDescriptor {
 	 * an error message.
 	 * </p>
 	 * 
+	 * <p>
+	 * A property is encrypted, if it is annotated
+	 * {@link com.top_logic.basic.config.annotation.Encrypted} or if its
+	 * {@link #getValueProvider() format} is an {@link EncodingConfigurationValueProvider}.
+	 * </p>
+	 * 
 	 * @see com.top_logic.basic.config.annotation.Encrypted
 	 */
 	boolean isEncrypted();

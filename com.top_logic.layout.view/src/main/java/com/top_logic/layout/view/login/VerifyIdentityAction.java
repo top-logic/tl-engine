@@ -9,9 +9,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+import jakarta.servlet.ServletRequest;
+
 import com.top_logic.base.accesscontrol.IdentityVerifications;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
+import com.top_logic.base.accesscontrol.RetryDeniedException;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -25,6 +29,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
@@ -34,6 +39,7 @@ import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.login.PasswordPromptDialogControl.Verifier;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -86,8 +92,17 @@ import com.top_logic.util.TLContext;
  *           that window is reported; the request that brought the confirmation sees none of it and
  *           answers for the identity alone. The password is checked by
  *           {@link AuthenticationDevice#authentify(LoginCredentials)}, the same check a login makes,
- *           handed to {@link PasswordPromptDialogControl#openDialog} as a predicate, which keeps the
- *           dialog open on a rejected password and reports only the accepted one.
+ *           guarded by {@link LoginFailuresModule#attempt(String, com.top_logic.basic.util.ResKey1, LoginFailuresModule.Attempt)}
+ *           and handed to {@link PasswordPromptDialogControl#openDialog} as a
+ *           {@link PasswordPromptDialogControl.Verifier}, which keeps the dialog open on a rejected
+ *           password and reports only the accepted one. The passwords entered in the prompt are
+ *           counted by the {@link LoginFailuresModule} under the same key as the logins of the
+ *           account from the same client address
+ *           ({@link LoginFailuresModule#accountKey(String, jakarta.servlet.ServletRequest)}), so
+ *           that guesses in the prompt and at the login count together. After repeated wrong
+ *           passwords, the prompt refuses further passwords for a growing time without asking the
+ *           device, and says so under the input. A prompt answered without a request at hand counts
+ *           under the account name alone.
  */
 @InApp
 public class VerifyIdentityAction extends InterruptibleViewAction {
@@ -167,7 +182,7 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 			return;
 		}
 
-		Predicate<char[]> verifier = createVerifier();
+		Verifier verifier = createVerifier();
 		if (verifier == null) {
 			// Nothing to check the password against - asking for one would promise a confirmation
 			// that cannot happen.
@@ -287,13 +302,81 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	}
 
 	/**
+	 * The verifier of the prompt: the {@link #createPasswordCheck() password check} under the
+	 * back-off of the {@link #attemptKey() account}, or {@code null} when there is no password that
+	 * can be checked.
+	 */
+	private Verifier createVerifier() {
+		Predicate<char[]> check = createPasswordCheck();
+		if (check == null) {
+			return null;
+		}
+		return password -> verify(check, password);
+	}
+
+	/**
+	 * Checks a password entered in the prompt.
+	 *
+	 * <p>
+	 * An empty password is rejected without troubling the device and without counting as an
+	 * attempt. Every other password is checked under the back-off of the {@link #attemptKey()}: while
+	 * it is backing off, the password is refused with the time to wait and the check is not run.
+	 * </p>
+	 *
+	 * @return {@code null} for an accepted password, otherwise the reason of the rejection.
+	 */
+	private ResKey verify(Predicate<char[]> check, char[] password) {
+		if (password == null || password.length == 0) {
+			return I18NConstants.ERROR_WRONG_PASSWORD;
+		}
+		String key = attemptKey();
+		if (key == null) {
+			// No account to count the attempt for: nothing is confirmed.
+			return I18NConstants.ERROR_WRONG_PASSWORD;
+		}
+		try {
+			boolean accepted = LoginFailuresModule.getInstance().attempt(key,
+				com.top_logic.layout.component.configuration.I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT,
+				() -> check.test(password));
+			return accepted ? null : I18NConstants.ERROR_WRONG_PASSWORD;
+		} catch (RetryDeniedException ex) {
+			return ex.getErrorKey();
+		}
+	}
+
+	/**
+	 * The key under which the passwords entered in the prompt are counted, or {@code null} when the
+	 * session belongs to no account.
+	 *
+	 * <p>
+	 * Determined for each entered password: the session's account and the client address of the
+	 * request answering the prompt, the key a login of that account from that address is counted
+	 * under, see {@link LoginFailuresModule#accountKey(String, jakarta.servlet.ServletRequest)}.
+	 * </p>
+	 */
+	protected String attemptKey() {
+		Person account = sessionAccount();
+		if (account == null) {
+			return null;
+		}
+		ServletRequest request =
+			DefaultDisplayContext.hasDisplayContext() ? DefaultDisplayContext.getDisplayContext().asRequest() : null;
+		return LoginFailuresModule.accountKey(account.getName(), request);
+	}
+
+	/**
 	 * The check a password entered in the prompt has to pass, or {@code null} when the session's
 	 * account has no password that can be checked.
 	 *
-	 * @return The check, called with the characters the user entered; {@code null} to abort the
-	 *         chain as unverifiable.
+	 * <p>
+	 * The check is the account's own; counting the attempts and refusing them while backing off is
+	 * done around it, see {@link #attemptKey()}.
+	 * </p>
+	 *
+	 * @return The check, called with the (non-empty) characters the user entered; {@code null} to
+	 *         abort the chain as unverifiable.
 	 */
-	protected Predicate<char[]> createVerifier() {
+	protected Predicate<char[]> createPasswordCheck() {
 		Person account = sessionAccount();
 		if (account == null) {
 			return null;
@@ -317,14 +400,15 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 * @param message
 	 *        The explanation shown above the input, the configured one or this action's own.
 	 * @param verifier
-	 *        The check produced by {@link #createVerifier()}.
+	 *        The check of the entered password, the {@link #createPasswordCheck() password check}
+	 *        under the back-off of the {@link #attemptKey() account}.
 	 * @param onVerified
 	 *        Continues the chain.
 	 * @param onCancel
 	 *        Aborts the chain.
 	 */
 	protected void openPrompt(ReactContext context, DialogManager dialogManager, ResKey title, ResKey message,
-			Predicate<char[]> verifier, Runnable onVerified, Runnable onCancel) {
+			Verifier verifier, Runnable onVerified, Runnable onCancel) {
 		Resources resources = Resources.getInstance();
 		PasswordPromptDialogControl.openDialog(context, dialogManager,
 			resources.getString(title), resources.getString(message),
@@ -441,15 +525,11 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 * Whether the given password authenticates the given account against its device.
 	 *
 	 * <p>
-	 * An empty password is rejected without troubling the device, and a device that refuses to look
-	 * at the account at all counts as a rejection: every path but an accepted password ends in
-	 * {@code false}.
+	 * A device that refuses to look at the account at all counts as a rejection: every path but an
+	 * accepted password ends in {@code false}.
 	 * </p>
 	 */
 	private static boolean authenticates(AuthenticationDevice device, Person account, char[] password) {
-		if (password == null || password.length == 0) {
-			return false;
-		}
 		try {
 			return device.authentify(LoginCredentials.fromUserAndPassword(account, password));
 		} catch (LoginDeniedException ex) {

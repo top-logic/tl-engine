@@ -9,6 +9,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The compaction strategy a run gets when nobody chose one.
@@ -42,17 +44,20 @@ public final class CompactionStrategies {
 		if (registry == null || runtime == null) {
 			return new TruncatingStrategy();
 		}
-		String defaultModel = runtime.getDefaultModel();
-		if (defaultModel == null || defaultModel.isBlank()) {
-			Logger.warn("No default model configured, falling back to truncation.", CompactionStrategies.class);
+		ModelTarget target;
+		try {
+			target = runtime.defaultTarget();
+		} catch (TopLogicException ex) {
+			Logger.warn("No default model available, falling back to truncation.", CompactionStrategies.class);
 			return new TruncatingStrategy();
 		}
+		String defaultModel = target.model();
 		LLMProvider provider;
 		try {
-			provider = registry.buildProvider(defaultModel, runtime.getDefaultProvider());
-		} catch (IllegalStateException ex) {
-			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
-				CompactionStrategies.class);
+			provider = registry.buildProvider(defaultModel, target.provider());
+		} catch (IllegalStateException | TopLogicException ex) {
+			Logger.warn("Default model '" + target.label() + "' cannot be used, falling back to truncation: "
+				+ ex.getMessage(), CompactionStrategies.class);
 			return new TruncatingStrategy();
 		}
 		return new SummarizingStrategy(provider, defaultModel, SUMMARIZATION_MAX_OUTPUT_TOKENS);

@@ -43,6 +43,8 @@ interface TileDescriptor {
   control: unknown;
   /** What the tile runs when activated, absent for a tile that only displays its content. */
   action?: TileAction | null;
+  /** Whether the tile is withheld from the dashboard; it then carries no control. */
+  hidden?: boolean;
 }
 
 interface Placement {
@@ -182,7 +184,8 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
 
   const minColWidth = (state.minColWidth as string) ?? '16rem';
   const rowHeight = (state.rowHeight as string) ?? '16rem';
-  const tiles = ((state.children as TileDescriptor[]) ?? []).filter(t => t && t.id);
+  // A withheld tile is left out of the grid, which closes the gap.
+  const tiles = ((state.children as TileDescriptor[]) ?? []).filter(t => t && t.id && !t.hidden);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [cols, setCols] = useState<number>(1);

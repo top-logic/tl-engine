@@ -513,6 +513,24 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.textInput.clear")
 	public static ResKey JS_TEXT_INPUT_CLEAR;
 
+	/**
+	 * @en Copy to clipboard
+	 */
+	@CustomKey("js.textInput.copy")
+	public static ResKey JS_TEXT_INPUT_COPY;
+
+	/**
+	 * @en Copied
+	 */
+	@CustomKey("js.textInput.copied")
+	public static ResKey JS_TEXT_INPUT_COPIED;
+
+	/**
+	 * @en Could not copy – select the text and press Ctrl+C
+	 */
+	@CustomKey("js.textInput.copyFailed")
+	public static ResKey JS_TEXT_INPUT_COPY_FAILED;
+
 	// -- Value list client-side i18n keys --
 
 	/**
@@ -1034,6 +1052,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.dropdownSelect.error")
 	public static ResKey JS_DROPDOWN_SELECT_ERROR;
 
+	/**
+	 * @en Use "{0}"
+	 */
+	@CustomKey("js.dropdownSelect.useText")
+	public static ResKey JS_DROPDOWN_SELECT_USE_TEXT;
+
 	// -- Color input client-side i18n keys --
 
 	/**
@@ -1289,6 +1313,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     {0}
 	 */
 	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
+
+	/**
+	 * @en The field accepts only a value chosen from its options, no text of your own.
+	 */
+	public static ResKey ERROR_NO_FREE_ENTRY;
 
 	/**
 	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}

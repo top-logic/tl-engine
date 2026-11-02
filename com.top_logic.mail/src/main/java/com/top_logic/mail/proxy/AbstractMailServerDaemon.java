@@ -8,16 +8,20 @@ package com.top_logic.mail.proxy;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import jakarta.mail.Address;
-import jakarta.mail.Flags;
 import jakarta.mail.Flags.Flag;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessageRemovedException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Store;
+import jakarta.mail.UIDFolder;
 import jakarta.mail.event.ConnectionEvent;
 import jakarta.mail.event.ConnectionListener;
 import jakarta.mail.event.MessageCountAdapter;
@@ -35,9 +39,13 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -72,17 +80,30 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	public interface Config<I extends AbstractMailServerDaemon<?>> extends TokenBasedTask.Config<I> {
 
 		/**
+		 * Configuration name of {@link #getInitialMails()}.
+		 */
+		String INITIAL_MAILS = "initial-mails";
+
+		/**
 		 * <code>true</code> for activating mail server daemon.
 		 */
 		Boolean isActivated();
 
 		/**
-		 * Strategy to handle unknown mails.
+		 * Strategy to handle mails that cannot be assigned to an object.
+		 * 
+		 * <p>
+		 * By default, such a mail is left untouched in the INBOX ({@link UnknownMailStrategy#KEEP}).
+		 * Deleting it ({@link UnknownMailStrategy#DELETE}) must be configured explicitly.
+		 * </p>
 		 */
+		@FormattedDefault("KEEP")
 		UnknownMailStrategy getStrategyForUnknownMails();
 		
 		/**
 		 * Name of folder to move unknown mails to.
+		 * 
+		 * @see UnknownMailStrategy#MOVE
 		 */
 		@StringDefault("unbekannt")
 		String getFolderNameForUnknownMails();
@@ -94,10 +115,19 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		List<String> getPreprocessor();
 
 		/**
-		 * <code>true</code> for processing all mails (also the one already marked as seen).
+		 * How to handle the mails already present in the INBOX when the daemon reads it for the
+		 * first time.
+		 * 
+		 * <p>
+		 * The daemon remembers the UID of the last mail it has handled and reads only mails with
+		 * a greater UID in each run. This option decides what happens with the mails present when
+		 * no such mark exists yet, or when the server has renumbered the mails of the INBOX. By
+		 * default, these mails are left untouched ({@link InitialMails#SKIP}).
+		 * </p>
 		 */
-		@BooleanDefault(true)
-		boolean isProcessAllMails();
+		@Name(INITIAL_MAILS)
+		@FormattedDefault("SKIP")
+		InitialMails getInitialMails();
 
 		/**
 		 * Default value for begin/commit is <code>false</code> in mail daemon.
@@ -123,7 +153,9 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		/** Delete the mail. */
 		DELETE,
 		/** Move the mail to a special folder. */
-		MOVE;
+		MOVE,
+		/** Leave the mail unchanged in the INBOX. */
+		KEEP;
 
 		@Override
 		public String getExternalName() {
@@ -135,8 +167,6 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
     Folder                  folder;
     /** When false Task will not anything */
     private boolean                 activated;
-    /** process all mails found in mail folder, otherwise only mail flagged !SEEN are processed */
-    private boolean                 processAllMails;
     private MailReceiver         server;
     private MailDaemonCountListener folderListener;
     private long                    errorTime;
@@ -159,6 +189,18 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	protected final C _config;
 
 	/**
+	 * Storage of the {@link UIDMark} of the INBOX, created on first use.
+	 */
+	private UIDMarkStore _uidMarkStore;
+
+	/**
+	 * The {@link UIDMark} the current run has fetched the messages from.
+	 * 
+	 * @see #getMessages()
+	 */
+	private UIDMark _fetchMark;
+
+	/**
 	 * Creates a {@link AbstractMailServerDaemon}.
 	 */
 	public AbstractMailServerDaemon(InstantiationContext context, C config) {
@@ -179,7 +221,6 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	 * Initializing sequence to configure this instance.
 	 */
     protected void internalReload() {
-    	this.processAllMails     = _config.isProcessAllMails();
         this.unknownMailStrategy = _config.getStrategyForUnknownMails();
         
         if (UnknownMailStrategy.MOVE == this.unknownMailStrategy) {
@@ -278,6 +319,8 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	 */
     protected boolean processUnknownMail(MailMessage aMail) {
         switch (this.unknownMailStrategy) {
+			case KEEP:
+				return true;
 			case DELETE:
 				return deleteMail(aMail);
 			case MOVE:
@@ -473,33 +516,102 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		return I18NConstants.FETCH_MAILS_COMPLETED_SUCCESSFULLY__COUNT_DURATION.fill(processedMails, duration);
 	}
 
-    /**
-     * This method returns all new messages from the INBOX.
-     *
-     * @return    The requested list of messages.
-	 * @throws    MessagingException    When getting messages from {@link #getFolder()} fails.
-     */
-    protected List<Message> getMessages() throws MessagingException {
-        List<Message> theList  = new ArrayList<>();
-        int           theCount = 0;
+	/**
+	 * This method returns all new messages from the INBOX.
+	 * 
+	 * <p>
+	 * New messages are the ones with an UID greater than the stored {@link UIDMark} of this
+	 * daemon, in ascending UID order. If no mark applies to the INBOX, it is initialized according
+	 * to {@link Config#getInitialMails()}.
+	 * </p>
+	 *
+	 * @return The requested list of messages.
+	 * @throws MessagingException
+	 *         When getting messages from {@link #getFolder()} fails.
+	 */
+	protected List<Message> getMessages() throws MessagingException {
+		_fetchMark = null;
 
-    	for (Message theMessage : this.getFolder().getMessages()) {
-            try {
-                if (this.processAllMails || !theMessage.getFlags().contains(Flags.Flag.SEEN)) {
-                    theList.add(theMessage);
-                }
-            }
-            catch (MessageRemovedException mrex) {
-                Logger.warn("Found a removed message in INBOX. Ignoring this message!", AbstractMailServerDaemon.class);
-            }
+		UIDFolder uidFolder = getUIDFolder(this.getFolder());
+		long uidValidity = uidFolder.getUIDValidity();
+		UIDMarkStore store = getUIDMarkStore();
+		UIDMark stored = store.load();
+		UIDMark mark = UIDMark.start(stored, uidValidity, _config.getInitialMails(), () -> highestUID(uidFolder));
+		if (mark != stored) {
+			Logger.info("Initialized UID mark '" + store.getKey() + "' of INBOX to " + mark + " (stored mark: "
+				+ stored + ", initial mails: " + _config.getInitialMails() + ").", AbstractMailServerDaemon.class);
+			store.store(mark);
+		}
 
-            theCount++;
-        }
+		List<Message> theList = new ArrayList<>();
+		long lastUID = mark.getLastUID();
+		for (Message theMessage : uidFolder.getMessagesByUID(lastUID + 1, UIDFolder.LASTUID)) {
+			try {
+				// The server may report the last message, even if its UID is not in the range.
+				if (uidFolder.getUID(theMessage) > lastUID) {
+					theList.add(theMessage);
+				}
+			} catch (MessageRemovedException mrex) {
+				Logger.warn("Found a removed message in INBOX. Ignoring this message!", AbstractMailServerDaemon.class);
+			}
+		}
+		_fetchMark = mark;
 
-    	Logger.info("Found " + theCount + " mails on server. New " + theList.size(), AbstractMailServerDaemon.class);
+		Logger.info("Found " + theList.size() + " new mails on server after UID mark " + mark + ".",
+			AbstractMailServerDaemon.class);
 
-        return theList;
-    }
+		return theList;
+	}
+
+	private static UIDFolder getUIDFolder(Folder folder) throws MessagingException {
+		if (folder instanceof UIDFolder) {
+			return (UIDFolder) folder;
+		}
+		throw new MessagingException("Folder '" + folder + "' does not support message UIDs.");
+	}
+
+	private static Long highestUID(UIDFolder uidFolder) throws MessagingException {
+		long lastMessageUID = 0;
+		long uidNext = uidFolder.getUIDNext();
+		if (uidNext <= 0) {
+			Folder folder = (Folder) uidFolder;
+			int count = folder.getMessageCount();
+			if (count > 0) {
+				lastMessageUID = uidFolder.getUID(folder.getMessage(count));
+			}
+		}
+		return Long.valueOf(UIDMark.highestUID(uidNext, lastMessageUID));
+	}
+
+	/**
+	 * The storage of the {@link UIDMark} of the INBOX read by this daemon.
+	 */
+	protected UIDMarkStore getUIDMarkStore() {
+		if (_uidMarkStore == null) {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			_uidMarkStore = UIDMarkStore.forName(new DBProperties(KBUtils.getConnectionPool(kb)), getName());
+		}
+		return _uidMarkStore;
+	}
+
+	/**
+	 * Stores the {@link UIDMark} after the messages fetched by {@link #getMessages()} have been
+	 * handled.
+	 *
+	 * @param results
+	 *        Whether handling succeeded for the message with the given UID.
+	 */
+	protected void advanceUIDMark(SortedMap<Long, Boolean> results) {
+		UIDMark fetchMark = _fetchMark;
+		if (fetchMark == null) {
+			return;
+		}
+		UIDMark newMark = fetchMark.advance(results);
+		if (newMark != fetchMark) {
+			getUIDMarkStore().store(newMark);
+			_fetchMark = newMark;
+		}
+	}
 
 	/**
 	 * Return the listener for the mail folder.
@@ -770,6 +882,23 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 			int theMailFail = 0;
 			int theMeetFail = 0;
 
+			// Handling result by UID. A message without a successful result has failed.
+			Map<Message, Long> theUIDs = new HashMap<>();
+			boolean theUIDsComplete = true;
+			SortedMap<Long, Boolean> theResults = new TreeMap<>();
+			for (Message theMessage : anEvent.getMessages()) {
+				try {
+					Long theUID = Long.valueOf(getUIDFolder(theMessage.getFolder()).getUID(theMessage));
+					theUIDs.put(theMessage, theUID);
+					theResults.put(theUID, Boolean.FALSE);
+				} catch (MessagingException ex) {
+					// Without the UID, the message cannot be accounted for: The mark must not advance.
+					theUIDsComplete = false;
+					Logger.warn("Unable to get UID of message " + theMessage.getMessageNumber(), ex,
+						MailDaemonCountListener.class);
+				}
+			}
+
             KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 			try (Transaction theTX = theKB.beginTransaction(com.top_logic.mail.base.I18NConstants.RECEIVED_MESSAGES)) {
 				for (MailServerMessage theMessage : MailReceiverService.getMailReceiverInstance()
@@ -795,7 +924,9 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 
 							theExchange.reply(success, theText);
 							theExchange.delete(false);
+							setResult(theResults, theUIDs, theMessage, success);
 						} catch (Exception ex) {
+							theMeetFail++;
 							Logger.error("Unable to reply on meeting " + theExchange.getName(), ex,
 								MailDaemonCountListener.class);
 						}
@@ -805,10 +936,12 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 						try {
 							if (AbstractMailServerDaemon.this.processMail(theExchange)) {
 								theMailCount++;
+								setResult(theResults, theUIDs, theMessage, true);
 							} else {
 								theMailFail++;
 							}
 						} catch (Exception ex) {
+							theMailFail++;
 							Logger.error("Unable to process mail " + theMessage.getName(), ex,
 								MailDaemonCountListener.class);
 						}
@@ -829,9 +962,22 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 					theTX.commit();
 				} catch (KnowledgeBaseException ex) {
 					Logger.warn("Unable to commit KB!", ex, MailDaemonCountListener.class);
+					return;
 				}
 			}
+
+			if (theUIDsComplete) {
+				AbstractMailServerDaemon.this.advanceUIDMark(theResults);
+			}
         }
+
+		private void setResult(SortedMap<Long, Boolean> results, Map<Message, Long> uids, MailServerMessage message,
+				boolean success) {
+			Long uid = uids.get(message.getMessage());
+			if (uid != null) {
+				results.put(uid, Boolean.valueOf(success));
+			}
+		}
 
         /**
          * Expunge a folder to delete flagged messages.

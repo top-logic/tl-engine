@@ -40,7 +40,7 @@ public class JSONFormatProvider extends AbstractConfiguredInstance<PolymorphicCo
 		 */
 		@NonNullable
 		@ItemDefault(DefaultValueAnalyzer.class)
-		PolymorphicConfiguration<ValueAnalyzer> getAnalyzer();
+		PolymorphicConfiguration<? extends ValueAnalyzer> getAnalyzer();
 
 		/**
 		 * The {@link ValueFactory} that creates the actual string representation of the stored JSON
@@ -48,7 +48,7 @@ public class JSONFormatProvider extends AbstractConfiguredInstance<PolymorphicCo
 		 */
 		@NonNullable
 		@ItemDefault(DefaultValueFactory.class)
-		PolymorphicConfiguration<ValueFactory> getFactory();
+		PolymorphicConfiguration<? extends ValueFactory> getFactory();
 
 	}
 

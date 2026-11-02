@@ -51,7 +51,7 @@ public class ApplicationMonitor extends ManagedClass {
 		 * Registered {@link MonitorComponent}s.
 		 */
 		@Key(NamedPolymorphicConfiguration.NAME_ATTRIBUTE)
-		Map<String, NamedPolymorphicConfiguration<MonitorComponent>> getComponents();
+		Map<String, NamedPolymorphicConfiguration<? extends MonitorComponent>> getComponents();
 
 	}
 

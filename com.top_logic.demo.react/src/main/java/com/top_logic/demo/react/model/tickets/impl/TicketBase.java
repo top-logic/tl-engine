@@ -18,6 +18,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String TICKET_TYPE = "Ticket";
 
 	/**
+	 * Part <code>category</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String CATEGORY_ATTR = "category";
+
+	/**
 	 * Part <code>comments</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -27,6 +36,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String COMMENTS_ATTR = "comments";
 
 	/**
+	 * Part <code>estimate</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Long</code> in configuration.
+	 * </p>
+	 */
+	String ESTIMATE_ATTR = "estimate";
+
+	/**
 	 * Part <code>headline</code> of <code>Ticket</code>
 	 * 
 	 * <p>
@@ -34,6 +52,15 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 * </p>
 	 */
 	String HEADLINE_ATTR = "headline";
+
+	/**
+	 * Part <code>keywords</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>demo.tickets:Keyword</code> in configuration.
+	 * </p>
+	 */
+	String KEYWORDS_ATTR = "keywords";
 
 	/**
 	 * Part <code>name</code> of <code>Ticket</code>
@@ -81,6 +108,34 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	String STATUS_LABEL_ATTR = "statusLabel";
 
 	/**
+	 * Part <code>tags</code> of <code>Ticket</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String TAGS_ATTR = "tags";
+
+	/**
+	 * Name of the table storing {@link #TICKET_TYPE} objects.
+	 */
+	String TABLE_NAME = "GenericObject";
+
+	/**
+	 * Getter for part {@link #CATEGORY_ATTR}.
+	 */
+	default String getCategory() {
+		return (String) tValueByName(CATEGORY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CATEGORY_ATTR}.
+	 */
+	default void setCategory(String newValue) {
+		tUpdateByName(CATEGORY_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #COMMENTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")
@@ -124,10 +179,67 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	}
 
 	/**
+	 * Getter for part {@link #ESTIMATE_ATTR}.
+	 */
+	default Long getEstimate() {
+		return (Long) tValueByName(ESTIMATE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ESTIMATE_ATTR}.
+	 */
+	default void setEstimate(Long newValue) {
+		tUpdateByName(ESTIMATE_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #HEADLINE_ATTR}.
 	 */
 	default String getHeadline() {
 		return (String) tValueByName(HEADLINE_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #KEYWORDS_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<? extends com.top_logic.demo.react.model.tickets.Keyword> getKeywords() {
+		return (java.util.Set<? extends com.top_logic.demo.react.model.tickets.Keyword>) tValueByName(KEYWORDS_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #KEYWORDS_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.Set<com.top_logic.demo.react.model.tickets.Keyword> getKeywordsModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(KEYWORDS_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.Set<com.top_logic.demo.react.model.tickets.Keyword> result = (java.util.Set<com.top_logic.demo.react.model.tickets.Keyword>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #KEYWORDS_ATTR}.
+	 */
+	default void setKeywords(java.util.Set<com.top_logic.demo.react.model.tickets.Keyword> newValue) {
+		tUpdateByName(KEYWORDS_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #KEYWORDS_ATTR} reference.
+	 */
+	default void addKeyword(com.top_logic.demo.react.model.tickets.Keyword newValue) {
+		tAddByName(KEYWORDS_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #KEYWORDS_ATTR} reference.
+	 */
+	default void removeKeyword(com.top_logic.demo.react.model.tickets.Keyword oldValue) {
+		tRemoveByName(KEYWORDS_ATTR, oldValue);
 	}
 
 	/**
@@ -177,6 +289,35 @@ public interface TicketBase extends com.top_logic.model.TLNamed {
 	 */
 	default String getStatusLabel() {
 		return (String) tValueByName(STATUS_LABEL_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #TAGS_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<String> getTags() {
+		return (java.util.Set<String>) tValueByName(TAGS_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TAGS_ATTR}.
+	 */
+	default void setTags(java.util.Set<String> newValue) {
+		tUpdateByName(TAGS_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #TAGS_ATTR} reference.
+	 */
+	default void addTag(String newValue) {
+		tAddByName(TAGS_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #TAGS_ATTR} reference.
+	 */
+	default void removeTag(String oldValue) {
+		tRemoveByName(TAGS_ATTR, oldValue);
 	}
 
 }

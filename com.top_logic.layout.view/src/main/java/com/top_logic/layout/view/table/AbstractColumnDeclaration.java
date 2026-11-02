@@ -326,7 +326,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * </pre>
 		 */
 		@Name(DISPLAY)
-		PolymorphicConfiguration<ReactControlProvider> getDisplay();
+		PolymorphicConfiguration<? extends ReactControlProvider> getDisplay();
 
 		/**
 		 * Whether the table can be sorted by this column.

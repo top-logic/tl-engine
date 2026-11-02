@@ -16,12 +16,14 @@ import com.top_logic.basic.util.ResKey;
  * A single entry on a {@link TileStackScope tile stack}.
  *
  * <p>
- * Captures everything needed to (re-)mount the referenced view: the view file to load, the
- * breadcrumb label, and the bound parameter values. Parameter values are snapshotted at push time
+ * Captures everything needed to (re-)mount the referenced view: the {@link FrameRoute declaration}
+ * of the frame, the view file to load, the breadcrumb label, and the bound parameter values. Parameter values are snapshotted at push time
  * - the frame does not hold live channels.
  * </p>
  */
 public final class TileFrame {
+
+	private final String _frameId;
 
 	private final String _viewRef;
 
@@ -32,6 +34,8 @@ public final class TileFrame {
 	/**
 	 * Creates a new {@link TileFrame}.
 	 *
+	 * @param frameId
+	 *        The {@link FrameRoute#id() id} of the declaration the frame is pushed by.
 	 * @param viewRef
 	 *        Path of the view file to load (relative to {@code /WEB-INF/views/}).
 	 * @param label
@@ -42,10 +46,19 @@ public final class TileFrame {
 	 *        the frame's child {@link com.top_logic.layout.view.ViewContext} when the frame is
 	 *        mounted. May be empty but not {@code null}.
 	 */
-	public TileFrame(String viewRef, ResKey label, Map<String, Object> params) {
+	public TileFrame(String frameId, String viewRef, ResKey label, Map<String, Object> params) {
+		_frameId = Objects.requireNonNull(frameId, "frameId");
 		_viewRef = Objects.requireNonNull(viewRef, "viewRef");
 		_label = label;
 		_params = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNull(params, "params")));
+	}
+
+	/**
+	 * The {@link FrameRoute#id() id} of the declaration the frame is pushed by, within the stack it
+	 * is on.
+	 */
+	public String getFrameId() {
+		return _frameId;
 	}
 
 	/**
@@ -70,8 +83,8 @@ public final class TileFrame {
 	}
 
 	/**
-	 * Whether the given frame displays the same as this one: the same view with the same parameter
-	 * values.
+	 * Whether the given frame displays the same as this one: the same declaration and view with the
+	 * same parameter values.
 	 *
 	 * <p>
 	 * Unlike {@link #equals(Object)}, the {@link #getLabel() label} is not compared: it names the
@@ -83,7 +96,7 @@ public final class TileFrame {
 	 *        The frame to compare with.
 	 */
 	public boolean showsSame(TileFrame other) {
-		return _viewRef.equals(other._viewRef) && _params.equals(other._params);
+		return _frameId.equals(other._frameId) && _viewRef.equals(other._viewRef) && _params.equals(other._params);
 	}
 
 	@Override
@@ -94,18 +107,19 @@ public final class TileFrame {
 		if (!(obj instanceof TileFrame other)) {
 			return false;
 		}
-		return _viewRef.equals(other._viewRef)
+		return _frameId.equals(other._frameId)
+			&& _viewRef.equals(other._viewRef)
 			&& Objects.equals(_label, other._label)
 			&& _params.equals(other._params);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(_viewRef, _label, _params);
+		return Objects.hash(_frameId, _viewRef, _label, _params);
 	}
 
 	@Override
 	public String toString() {
-		return "TileFrame[" + _viewRef + ", label=" + _label + ", params=" + _params.keySet() + "]";
+		return "TileFrame[" + _frameId + ": " + _viewRef + ", label=" + _label + ", params=" + _params.keySet() + "]";
 	}
 }

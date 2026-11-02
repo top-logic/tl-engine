@@ -48,12 +48,12 @@ public class DispatchingSecurityObjectProvider implements SecurityObjectProvider
 		@Mandatory
 		@Format(SecurityObjectProviderFormat.class)
 		@Name(DEFAULT_NAME)
-		PolymorphicConfiguration<SecurityObjectProvider> getDefault();
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getDefault();
 		
 		/**
 		 * Setter for {@link #getDefault()}.
 		 */
-		void setDefault(PolymorphicConfiguration<SecurityObjectProvider> config);
+		void setDefault(PolymorphicConfiguration<? extends SecurityObjectProvider> config);
 
 		/**
 		 * The mapping of the command group name to the {@link SecurityObjectProvider} handling it.
@@ -95,10 +95,10 @@ public class DispatchingSecurityObjectProvider implements SecurityObjectProvider
 		@Mandatory
 		@Format(SecurityObjectProviderFormat.class)
 		@Name(IMPL)
-		PolymorphicConfiguration<SecurityObjectProvider> getImpl();
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getImpl();
 
 		/** Setter for {@link #getImpl()}. */
-		void setImpl(PolymorphicConfiguration<SecurityObjectProvider> config);
+		void setImpl(PolymorphicConfiguration<? extends SecurityObjectProvider> config);
 
 	}
 

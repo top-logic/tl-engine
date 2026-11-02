@@ -33,6 +33,10 @@ public class TestWizardScope extends TestCase {
 	private static final List<WizardStep> STEPS =
 		List.of(step("contact"), step("payment"), step("summary"));
 
+	/** A sequence leading through pass-through steps, one between two steps and two in a row. */
+	private static final List<WizardStep> PASSING = List.of(step("profile"), passThrough("ready"), step("role"),
+		passThrough("checking"), passThrough("checked"), step("done"));
+
 	/**
 	 * Tests that a wizard whose channel has not been written yet displays its first step.
 	 */
@@ -241,6 +245,85 @@ public class TestWizardScope extends TestCase {
 		}
 	}
 
+	/**
+	 * Tests that a move back skips a pass-through step for the step before it.
+	 */
+	public void testBackSkipsPassThroughStep() {
+		ViewChannel channel = channel("role");
+		WizardScope scope = new WizardScope(channel, PASSING);
+
+		assertTrue(scope.hasBack());
+		scope.back();
+
+		assertEquals("profile", channel.get());
+	}
+
+	/**
+	 * Tests that a move back skips consecutive pass-through steps at once.
+	 */
+	public void testBackSkipsConsecutivePassThroughSteps() {
+		ViewChannel channel = channel("done");
+		WizardScope scope = new WizardScope(channel, PASSING);
+
+		assertEquals(2, scope.backIndex(5));
+		scope.back();
+
+		assertEquals("role", channel.get());
+	}
+
+	/**
+	 * Tests that a move back from a pass-through step leads to the step before it as well.
+	 */
+	public void testBackFromPassThroughStep() {
+		ViewChannel channel = channel("checked");
+		WizardScope scope = new WizardScope(channel, PASSING);
+
+		scope.back();
+
+		assertEquals("role", channel.get());
+	}
+
+	/**
+	 * Tests that a step only pass-through steps precede offers no move back.
+	 */
+	public void testNoBackBehindPassThroughStepsOnly() {
+		ViewChannel channel = channel("form");
+		WizardScope scope = new WizardScope(channel,
+			List.of(passThrough("intro"), passThrough("loading"), step("form")));
+
+		assertFalse("Only pass-through steps precede.", scope.hasBack());
+		assertEquals(-1, scope.backIndex(2));
+		scope.back();
+
+		assertEquals("form", channel.get());
+	}
+
+	/**
+	 * Tests that a first step that is a pass-through step offers no move back and is left forward.
+	 */
+	public void testFirstStepPassThrough() {
+		ViewChannel channel = channel(null);
+		WizardScope scope = new WizardScope(channel, List.of(passThrough("intro"), step("form")));
+
+		assertEquals("intro", scope.current().key());
+		assertFalse(scope.hasBack());
+		scope.next();
+
+		assertEquals("form", channel.get());
+	}
+
+	/**
+	 * Tests that a jump onto a pass-through step is a move like any other.
+	 */
+	public void testGoToPassThroughStep() {
+		ViewChannel channel = channel("done");
+		WizardScope scope = new WizardScope(channel, PASSING);
+
+		scope.goTo("ready");
+
+		assertEquals("ready", channel.get());
+	}
+
 	private static WizardScope scope(Object value) {
 		return new WizardScope(channel(value), STEPS);
 	}
@@ -257,5 +340,9 @@ public class TestWizardScope extends TestCase {
 
 	private static WizardStep step(String id) {
 		return new WizardStep(id, null, null, context -> null, null);
+	}
+
+	private static WizardStep passThrough(String id) {
+		return new WizardStep(id, null, null, context -> null, Long.valueOf(1000L));
 	}
 }

@@ -21,10 +21,13 @@ import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewMessages;
+import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
@@ -141,9 +144,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 *        The channel holding the {@code List<TileFrame>} path.
 	 * @param scope
 	 *        The {@link TileStackScope} installed into each frame so that nested commands can push.
-	 * @param initialViewRef
-	 *        View path (relative to {@code /WEB-INF/views/}) of the frame shown when the path is
-	 *        empty.
+	 * @param initialView
+	 *        The view of the frame shown when the path is empty.
 	 * @param sharedChannels
 	 *        Channels of the enclosing view that every frame sees, by the name it sees them under -
 	 *        e.g. {@code pathChannel} under the name given by
@@ -151,14 +153,14 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 *        a copy.
 	 */
 	public ReactTileStackControl(ViewContext parent, TileStackElement element, ViewChannel pathChannel,
-			TileStackScope scope, String initialViewRef, Map<String, ViewChannel> sharedChannels) {
+			TileStackScope scope, ViewRef initialView, Map<String, ViewChannel> sharedChannels) {
 		super(parent, null, REACT_MODULE);
 		_parentContext = parent;
 		_element = element;
 		_here = RevealPath.of(parent);
 		_pathChannel = pathChannel;
 		_scope = scope;
-		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
+		_initialViewPath = initialView.fullPath();
 		_sharedChannels = sharedChannels;
 
 		Registration pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> exchangeFrames());
@@ -188,7 +190,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		installRouteParticipant();
 
 		DirtyChannel initialDirty = frameDirtyChannel();
-		_frameControls.add(buildFrame(_initialViewPath, Map.of(), TileStackElement.Config.INITIAL, initialDirty));
+		_frameControls.add(buildFrame(_scope.root(), _initialViewPath, Map.of(), TileStackElement.Config.INITIAL,
+			initialDirty));
 		_frameDirty.add(initialDirty);
 		publishFrames();
 		updateFrames();
@@ -275,10 +278,12 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 			DirtyChannel dirty = frameDirtyChannel();
 			ReactControl control;
 			try {
-				control = buildFrame(ViewLoader.VIEW_BASE_PATH + frame.getViewRef(), frame.getParams(), frameKey(i),
-					dirty);
+				control = buildFrame(_scope.declaration(frame.getFrameId()),
+					ViewLoader.VIEW_BASE_PATH + frame.getViewRef(), frame.getParams(), frameKey(i), dirty);
 			} catch (RuntimeException ex) {
 				Logger.error("Failed to build tile frame.", ex, ReactTileStackControl.class);
+				ViewMessages.error(getReactContext(),
+					I18NConstants.ERROR_DISPLAYING_VIEW__PATH.fill(frame.getViewRef()));
 				break;
 			}
 			_frames.add(frame);
@@ -296,6 +301,12 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		publishFrames();
 
 		dropped.forEach(ContentControls::retire);
+
+		if (_frames.size() < path.size()) {
+			// A frame could not be built. The path is shortened to the frames displayed, otherwise
+			// every later navigation would try to build the failing frame again before its own.
+			_scope.popTo(_frames.size());
+		}
 	}
 
 	/**
@@ -369,8 +380,15 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	/**
 	 * Creates the control of one frame: the view at the given path, in a child context carrying the
 	 * given params as channels and reporting unsaved changes to the given dirty channel.
+	 *
+	 * <p>
+	 * The context carries the declaration the frame is built for as its {@link FrameRoute} scope, so
+	 * that a {@link NavigatePushCommand push} displayed in the frame is checked against the
+	 * declarations that may follow it while the frame is built.
+	 * </p>
 	 */
-	private ReactControl buildFrame(String viewPath, Map<String, Object> params, String key, DirtyChannel dirty) {
+	private ReactControl buildFrame(FrameRoute declaration, String viewPath, Map<String, Object> params, String key,
+			DirtyChannel dirty) {
 		ViewElement frameView;
 		try {
 			frameView = ViewLoader.getOrLoadView(viewPath);
@@ -385,6 +403,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		}
 		frameContext.setDirtyChannel(dirty);
 		frameContext = frameContext.withScope(TileStackScope.class, _scope)
+			.withScope(FrameRoute.class, declaration)
 			.withScope(RevealPath.class, _here.append(_element, key));
 
 		for (Map.Entry<String, ViewChannel> shared : _sharedChannels.entrySet()) {
@@ -419,7 +438,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 * </p>
 	 */
 	private void installRouteParticipant() {
-		if (_scope.frameRoutes().isEmpty()) {
+		if (!_scope.hasAddresses()) {
 			// The stack declares no addressable frame: its path is display state only.
 			return;
 		}

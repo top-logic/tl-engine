@@ -972,7 +972,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		// Load the dialog view from the configured layout path.
-		String viewPath = ViewLoader.VIEW_BASE_PATH + _detailDialogConfig.getLayout();
+		String viewPath = _detailDialogConfig.getLayout().fullPath();
 		ViewElement dialogView;
 		try {
 			dialogView = ViewLoader.getOrLoadView(viewPath);

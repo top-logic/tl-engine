@@ -9,22 +9,32 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.sql.ConnectionPool;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
+import com.top_logic.dob.attr.MOAttributeImpl;
+import com.top_logic.dob.meta.MOClassImpl;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.RevisionQuery;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.db.DBUtil;
 
 /**
  * Information about the session of a user.
@@ -384,6 +394,40 @@ public class UserSession extends AbstractWrapper {
         cleanupUserSessions(getDefaultKnowledgeBase(), maxcount);
     }
     
+	/**
+	 * The last login of every user that has logged in, computed by a single database query over
+	 * all recorded sessions.
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} recording the sessions.
+	 * @return The time of the latest {@link #LOGIN} indexed by the {@link #USER_NAME} of the
+	 *         session. A user without a recorded session has no entry.
+	 * @throws SQLException
+	 *         If the database query fails.
+	 */
+	public static Map<String, Date> getLastLogins(KnowledgeBase kb) throws SQLException {
+		ConnectionPool pool = KBUtils.getConnectionPool(kb);
+		DBHelper dialect = pool.getSQLDialect();
+		MOClassImpl moClass = (MOClassImpl) kb.getMORepository().getMetaObject(OBJECT_NAME);
+		String nameColumn = dialect.columnRef(((MOAttributeImpl) moClass.getAttribute(USER_NAME)).getDBName());
+		String loginColumn = dialect.columnRef(((MOAttributeImpl) moClass.getAttribute(LOGIN)).getDBName());
+		String sql = "SELECT " + nameColumn + ", MAX(" + loginColumn + ") FROM " + dialect.tableRef(moClass.getDBName())
+			+ " GROUP BY " + nameColumn;
+		// IGNORE FindBugs(SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING): Dynamic
+		// SQL construction is necessary for DBMS abstraction. No user-input is passed to the
+		// statement source.
+		return DBUtil.executeQuery(pool, sql, null, result -> {
+			Map<String, Date> lastLogins = new HashMap<>();
+			while (result.next()) {
+				Timestamp login = dialect.getTimestamp(result, 2);
+				if (login != null) {
+					lastLogins.put(result.getString(1), new Date(login.getTime()));
+				}
+			}
+			return lastLogins;
+		});
+	}
+
     /** 
      * Resolve a List of UserSessions from a Set of KOs
      */

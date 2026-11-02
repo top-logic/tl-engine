@@ -75,6 +75,7 @@ export type {
   SpinnerSize,
   ListboxPartProps,
   ListboxEntry,
+  CopyButtonPartProps,
 } from './bridge/parts';
 export {
   useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
@@ -155,15 +156,18 @@ export type {
   ImageSourceStateJson,
   AvatarStateJson,
   SliderStateJson,
+  FloatingActionStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
+export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';
+export type { CopyToClipboard, CopyOutcome } from './bridge/clipboard';
 export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
 export { isEditorTarget } from './bridge/editor-target';
-export { filterOptions } from './bridge/filter-options';
+export { filterOptions, labelMatches } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';
 export type { FocusAfterRemove } from './bridge/focus-after-remove';
 export * from './bridge/icons';
@@ -174,7 +178,11 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { useChildStates } from './bridge/child-states';
+export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
+export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
+export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';
+export type { ClearanceBox } from './bridge/transient-overlay';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

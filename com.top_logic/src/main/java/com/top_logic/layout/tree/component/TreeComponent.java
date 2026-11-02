@@ -311,7 +311,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		 * @see #getResourceProvider()
 		 */
 		@Name(TREE_RENDERER_ATTRIBUTE_NAME)
-		PolymorphicConfiguration<TreeRenderer> getTreeRenderer();
+		PolymorphicConfiguration<? extends TreeRenderer> getTreeRenderer();
 
 		/**
 		 * The configuration of the {@link ResourceProvider} used to display the business objects.
@@ -324,7 +324,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		 */
 		@ItemDefault(MetaResourceProvider.class)
 		@Name(RESOURCE_PROVIDER_ATTRIBUTE)
-		PolymorphicConfiguration<ResourceProvider> getResourceProvider();
+		PolymorphicConfiguration<? extends ResourceProvider> getResourceProvider();
 
 		/**
 		 * Whether the selected node should be in focus, when component is displayed or selection
@@ -339,14 +339,14 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		 */
 		@Name(DRAG_SOURCE)
 		@ItemDefault(DefaultTreeDrag.class)
-		PolymorphicConfiguration<TreeDragSource> getDragSource();
+		PolymorphicConfiguration<? extends TreeDragSource> getDragSource();
 
 		/**
 		 * Operations that control element drops in a tree.
 		 */
 		@Name(DROP_TARGETS_ATTRIBUTE_NAME)
 		@EntryTag(DROP_TARGETS_ENTRY_TAG_NAME)
-		List<PolymorphicConfiguration<TreeDropTarget>> getDropTargets();
+		List<PolymorphicConfiguration<? extends TreeDropTarget>> getDropTargets();
 
 		@Override
 		@ItemDefault(TreeContextMenuFactory.class)

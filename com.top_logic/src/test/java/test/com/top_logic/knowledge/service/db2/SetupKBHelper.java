@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import test.com.top_logic.basic.AssertProtocol;
+import test.com.top_logic.basic.db.schema.BranchLastSetup;
 import test.com.top_logic.basic.db.schema.MultipleBranchSetup;
 import test.com.top_logic.basic.db.schema.SchemaTestSetup;
 import test.com.top_logic.basic.db.schema.setup.SchemaSetupForTest;
@@ -85,6 +86,7 @@ public class SetupKBHelper {
 		SchemaConfiguration schemaConfig = KBUtils.getSchemaConfig(kbConfig).getConfig();
 		Decision multipleBranches = MultipleBranchSetup.multipleBranches();
 		SchemaConfiguration updatedSchemaConf = SchemaTestSetup.updateMultipleBranches(schemaConfig, multipleBranches);
+		updatedSchemaConf = SchemaTestSetup.updateBranchLast(updatedSchemaConf, BranchLastSetup.branchLast());
 		if (updatedSchemaConf == schemaConfig) {
 			// Need to create a copy to be able to set implementation class.
 			updatedSchemaConf = TypedConfiguration.copy(schemaConfig);

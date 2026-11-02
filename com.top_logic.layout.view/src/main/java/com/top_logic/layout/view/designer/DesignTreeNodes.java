@@ -15,7 +15,7 @@ public class DesignTreeNodes {
 
 	/**
 	 * The configuration a node represents, or {@code null} for a node that carries none (a virtual
-	 * property group or a failed {@code <view-ref>}).
+	 * property group, a {@link ViewLinkDesignTreeNode} or an {@link ErrorDesignTreeNode}).
 	 */
 	public static ConfigurationItem configOf(DesignTreeNode node) {
 		return node instanceof ConfigDesignTreeNode configNode ? configNode.getConfig() : null;
@@ -29,8 +29,9 @@ public class DesignTreeNodes {
 	 * The container is derived from the parent rather than stored on the node, and the node's
 	 * configuration must actually be an element of it. Thus a node that merely appears below a
 	 * container without being stored in it has no owning container: the root, a view resolved through
-	 * {@code <view-ref>} (whose configuration belongs to another file), and an
-	 * {@link ErrorDesignTreeNode} (which carries no configuration at all).
+	 * a {@link com.top_logic.layout.view.ViewRef} property (whose configuration belongs to another
+	 * file), and a {@link ViewLinkDesignTreeNode} or {@link ErrorDesignTreeNode} (which carry no
+	 * configuration at all).
 	 * </p>
 	 */
 	public static ConfigChildren owningContainer(DesignTreeNode node) {

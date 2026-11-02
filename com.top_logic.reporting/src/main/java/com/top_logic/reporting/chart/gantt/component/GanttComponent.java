@@ -81,11 +81,11 @@ public class GanttComponent extends AbstractImageComponent {
 		String ROWS_PER_PAGE = "rowsPerPage";
 
 		@Name(XML_CONFIG_CHART_CREATOR)
-		PolymorphicConfiguration<AbstractGanttChartCreator> getChartCreator();
+		PolymorphicConfiguration<? extends AbstractGanttChartCreator> getChartCreator();
 
 		@Name(XML_CONFIG_CHART_EXPORTER)
 		@ImplementationClassDefault(GanttChartExporter.class)
-		PolymorphicConfiguration<GanttChartExporter> getChartExporter();
+		PolymorphicConfiguration<? extends GanttChartExporter> getChartExporter();
 
 		/**
 		 * Number of rows displayed on one page.

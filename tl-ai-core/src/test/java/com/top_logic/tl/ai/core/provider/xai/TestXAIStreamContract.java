@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.provider.AbstractProviderStreamTest;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
@@ -28,7 +29,7 @@ public class TestXAIStreamContract extends AbstractProviderStreamTest {
 	static class TestableProvider extends OpenAIResponsesProvider {
 		/** */
 		TestableProvider() {
-			super("test-key", "https://api.x.ai");
+			super(FixedCredentials.NONE, "https://api.x.ai");
 		}
 
 		/** */

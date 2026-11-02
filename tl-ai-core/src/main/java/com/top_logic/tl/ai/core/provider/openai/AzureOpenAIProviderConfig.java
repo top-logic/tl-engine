@@ -12,7 +12,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.EnumDefaultValue;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -21,6 +22,9 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.tl.ai.core.provider.AuthScheme;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
@@ -62,6 +66,7 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
 		LLMProviderConfig.Config.BASE_URL,
 		Config.API_KEY,
+		LLMProviderConfig.Config.CREDENTIALS,
 		Config.API_VERSION,
 		Config.AUTH_SCHEME,
 		LLMProviderConfig.Config.MODELS,
@@ -88,11 +93,11 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		 */
 		@Name(API_KEY)
 		@Nullable
-		@Encrypted
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
 
 		/** @see #getApiKey() */
-		void setApiKey(String value);
+		void setApiKey(PolymorphicConfiguration<? extends SecretSource> value);
 
 		@Override
 		@Mandatory
@@ -115,12 +120,15 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		void setApiVersion(String value);
 
 		/**
-		 * The HTTP authentication scheme used to send the API key.
+		 * The HTTP authentication scheme used to send the {@link #getApiKey() API key}.
 		 *
 		 * <p>{@link AuthScheme#BEARER} (the default) places the key in the {@code Authorization}
 		 * header, which is what Nexus and Carina gateways expect. {@link AuthScheme#API_KEY}
 		 * places it in the {@code api-key} header, which is required by real Azure
 		 * <code>OpenAI</code> resource endpoints.</p>
+		 *
+		 * <p>Not used for {@link #getCredentials() credentials}, which define their header
+		 * themselves.</p>
 		 */
 		@Name(AUTH_SCHEME)
 		@ComplexDefault(BearerDefault.class)
@@ -132,27 +140,32 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 
 	private final Config _config;
 
+	private final CredentialProvider _credentials;
+
 	/** */
 	@CalledByReflection
 	public AzureOpenAIProviderConfig(InstantiationContext context, Config config) {
 		_config = config;
+		_credentials = LLMProviderConfig.createCredentials(context, config, config.getApiKey(), config.getAuthScheme().getHeader(), config.getAuthScheme().getScheme());
+	}
+
+	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
 	}
 
 	@Override
 	public LLMProvider createProvider() {
-		String apiKey = _config.getApiKey();
 		String baseUrl = ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl());
 		int connectTimeout = _config.getConnectTimeout();
 		int requestTimeout = _config.getRequestTimeout();
 		Map<String, String> customHeaders = _config.getCustomHeaders();
 		String apiVersion = _config.getApiVersion();
-		AuthScheme authScheme = _config.getAuthScheme();
 
 		return new ChatCompletionsProvider(
-			apiKey, baseUrl, connectTimeout, requestTimeout, customHeaders,
+			_credentials, baseUrl, connectTimeout, requestTimeout, customHeaders,
 			"/openai/deployments/{model}/chat/completions",
 			Map.of("api-version", apiVersion),
-			authScheme,
 			TokenLimitParam.MAX_COMPLETION_TOKENS);
 	}
 

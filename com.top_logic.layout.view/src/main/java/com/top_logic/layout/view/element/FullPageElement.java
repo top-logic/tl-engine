@@ -9,6 +9,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
@@ -41,6 +42,7 @@ public class FullPageElement extends CommandScopeElement {
 	 * Configuration for {@link FullPageElement}.
 	 */
 	@TagName("full-page")
+	@TypeIcon("css:bi bi-window-fullscreen")
 	public interface Config extends CommandScopeElement.Config {
 
 		@Override

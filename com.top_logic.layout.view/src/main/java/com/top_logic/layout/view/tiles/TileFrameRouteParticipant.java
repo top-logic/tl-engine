@@ -32,11 +32,17 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </p>
  *
  * <p>
- * A URL is taken up frame by frame: the participant is offered the route of the frame that follows
- * the ones the URL has already established, puts that frame on the path, and is offered the rest of
- * the URL again for the frame above it. A route naming something the display cannot show - a deleted
- * object, a mistyped identifier - ends the path at the frames the URL established, and the address
- * bar is then corrected to that path.
+ * A URL is taken up frame by frame along the {@link TileStackScope#root() graph of frame
+ * declarations}: the participant is offered the route of the frame that follows the ones the URL has
+ * already established, looks for it among the {@link FrameRoute#successors() successors} of the
+ * declaration of the frame below - for the first route, among the declarations directly inside the
+ * stack - puts that frame on the path, and is offered the rest of the URL again for the frame above
+ * it. A frame whose content follows from the frame below it takes its
+ * {@link FrameRoute#pathParams() path parameters} from the frames established so far. A route that
+ * no successor declares - a frame named out of the order the user can drill down in - or that names
+ * something the display cannot show - a deleted object, a mistyped identifier, a path parameter no
+ * frame below holds - ends the path at the frames the URL established, the rest of the URL is not
+ * taken up, and the address bar is then corrected to that path.
  * </p>
  *
  * <p>
@@ -57,6 +63,12 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	private final Registration _pathRegistration;
 
 	private final List<RouteChangeListener> _listeners = new ArrayList<>();
+
+	/**
+	 * The URL adoption in which the path ended at a route that could not be taken up, so that the
+	 * rest of that URL is not offered again.
+	 */
+	private long _endedAdoption = -1;
 
 	/**
 	 * Creates a {@link TileFrameRouteParticipant}.
@@ -83,13 +95,48 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 		_pathRegistration.dispose();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The routes of the successors of the frame the URL established last come first, the routes of
+	 * all other declarations after them: a URL naming one of those is a frame out of order, which
+	 * ends the path. Once the path ended, nothing more of that URL is taken up.
+	 * </p>
+	 */
 	@Override
 	public List<RoutePattern> declaredRoutes() {
+		long adoptionId = _routeManager.adoptionId();
+		if (adoptionId == _endedAdoption) {
+			return List.of();
+		}
+		List<FrameRoute> successors = successors(_scope.restoreBase(adoptionId));
 		List<RoutePattern> result = new ArrayList<>();
-		for (FrameRoute route : _scope.frameRoutes()) {
-			result.add(route.pattern());
+		for (FrameRoute route : successors) {
+			addPattern(result, route);
+		}
+		for (FrameRoute route : _scope.declarations()) {
+			if (!successors.contains(route)) {
+				addPattern(result, route);
+			}
 		}
 		return result;
+	}
+
+	private static void addPattern(List<RoutePattern> result, FrameRoute route) {
+		RoutePattern pattern = route.pattern();
+		if (pattern != null && !result.contains(pattern)) {
+			result.add(pattern);
+		}
+	}
+
+	/**
+	 * The declarations of the frames that may follow the first given number of frames of the path.
+	 */
+	private List<FrameRoute> successors(int base) {
+		List<TileFrame> path = _scope.getPath();
+		FrameRoute top = _scope.top(path.subList(0, Math.min(base, path.size())));
+		return top == null ? List.of() : top.successors();
 	}
 
 	/**
@@ -114,32 +161,51 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	 * </p>
 	 *
 	 * <p>
-	 * A route naming something the display cannot show ends the path there: the frames the URL
-	 * established stay, everything the display held above them goes. The URL is the authority for
-	 * the path from its first frame on, so a frame it names but cannot fill is not a reason to keep
-	 * showing a different one.
+	 * A route that is no successor of the frame below, or that names something the display cannot
+	 * show, ends the path there: the frames the URL established stay, everything the display held
+	 * above them goes. The URL is the authority for the path from its first frame on, so a frame it
+	 * names but cannot fill is not a reason to keep showing a different one.
 	 * </p>
 	 */
 	@Override
 	public void activateRoute(RouteMatch match) {
-		FrameRoute route = FrameRoute.byPattern(_scope.frameRoutes(), match.pattern());
-		if (route == null) {
+		long adoptionId = _routeManager.adoptionId();
+		if (adoptionId == _endedAdoption) {
 			return;
 		}
-
-		long adoptionId = _routeManager.adoptionId();
 		int base = _scope.restoreBase(adoptionId);
 
-		Map<String, Object> params = route.resolveParams(match);
-		if (params == null) {
-			Logger.info("Route '" + match.pattern() + "' names nothing the frame '" + route.viewRef()
-				+ "' can display, ending the path at " + base + " frames.",
+		FrameRoute route = FrameRoute.byPattern(successors(base), match.pattern());
+		if (route == null) {
+			FrameRoute misplaced = FrameRoute.byPattern(_scope.declarations(), match.pattern());
+			if (misplaced == null) {
+				return;
+			}
+			Logger.info("Route '" + match.pattern() + "' names " + misplaced.describe()
+				+ ", which does not follow the frame below it, ending the path at " + base + " frames.",
 				TileFrameRouteParticipant.class);
-			_scope.popTo(base);
+			endPath(adoptionId, base);
 			return;
 		}
 
-		_scope.restore(base, route.viewRef(), params, adoptionId);
+		Map<String, Object> params = route.resolveParams(match, _scope.getPath().subList(0, base));
+		if (params == null) {
+			Logger.info("Route '" + match.pattern() + "' names nothing " + route.describe()
+				+ " can display, ending the path at " + base + " frames.",
+				TileFrameRouteParticipant.class);
+			endPath(adoptionId, base);
+			return;
+		}
+
+		_scope.restore(base, route, params, adoptionId);
+	}
+
+	/**
+	 * Ends the path the given adoption restores at the given number of frames.
+	 */
+	private void endPath(long adoptionId, int base) {
+		_endedAdoption = adoptionId;
+		_scope.popTo(base);
 	}
 
 	/**
@@ -148,9 +214,10 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	 * <p>
 	 * The routes of all frames on the path, in the order the user drilled down, so that the address
 	 * describes the whole path and not only the frame that is displayed. The address describes the
-	 * deepest prefix of the path it can: a frame the stack declares no route for, or one whose
-	 * parameters no conversion turns into a URL text, has no address - and neither has anything
-	 * drilled into from it, which only the frame below identifies.
+	 * deepest prefix of the path it can: a frame whose declaration is no successor of the one of the
+	 * frame below, one whose declaration has no route, or one whose parameters no conversion turns
+	 * into a URL text, has no address - and neither has anything drilled into from it, which only
+	 * the frame below identifies.
 	 * </p>
 	 */
 	@Override
@@ -191,24 +258,31 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	 */
 	@Override
 	public boolean titlesContent() {
-		TileFrame frame = titleFrame();
-		if (frame == null) {
+		int position = titlePosition();
+		if (position < 0) {
 			return true;
 		}
-		FrameRoute route = _scope.frameRoute(frame.getViewRef());
-		return route == null || !route.isFinalTitle();
+		return !_scope.declarations(_scope.getPath()).get(position).isFinalTitle();
 	}
 
 	/**
 	 * The innermost frame the address describes that has a label, or {@code null} if there is none.
 	 */
 	private TileFrame titleFrame() {
+		int position = titlePosition();
+		return position < 0 ? null : _scope.getPath().get(position);
+	}
+
+	/**
+	 * The position of the innermost frame the address describes that has a label, {@code -1} if
+	 * there is none.
+	 */
+	private int titlePosition() {
 		List<TileFrame> path = _scope.getPath();
-		TileFrame result = null;
+		int result = -1;
 		for (int n = 0, cnt = addressedSegments().size(); n < cnt; n++) {
-			TileFrame frame = path.get(n);
-			if (frame.getLabel() != null) {
-				result = frame;
+			if (path.get(n).getLabel() != null) {
+				result = n;
 			}
 		}
 		return result;
@@ -225,11 +299,13 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	 */
 	private List<String> addressedSegments() {
 		List<String> result = new ArrayList<>();
-		for (TileFrame frame : _scope.getPath()) {
-			FrameRoute route = _scope.frameRoute(frame.getViewRef());
-			String segment = route == null ? null : route.segment(frame.getParams());
+		List<TileFrame> path = _scope.getPath();
+		List<FrameRoute> declarations = _scope.declarations(path);
+		for (int n = 0; n < path.size(); n++) {
+			TileFrame frame = path.get(n);
+			String segment = n < declarations.size() ? declarations.get(n).segment(frame.getParams()) : null;
 			if (segment == null) {
-				Logger.debug(() -> "Frame '" + frame.getViewRef() + "' has no address, "
+				Logger.debug(() -> "Frame '" + frame.getFrameId() + "' has no address, "
 					+ "the URL describes the path up to it.", TileFrameRouteParticipant.class);
 				break;
 			}

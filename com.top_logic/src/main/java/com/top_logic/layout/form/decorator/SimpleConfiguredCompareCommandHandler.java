@@ -41,7 +41,7 @@ public class SimpleConfiguredCompareCommandHandler<C extends FormComponent & Com
 		 * The algorithm that creates the compare object.
 		 */
 		@Mandatory
-		PolymorphicConfiguration<CompareObjectCreator> getAlgorithm();
+		PolymorphicConfiguration<? extends CompareObjectCreator> getAlgorithm();
 
 	}
 

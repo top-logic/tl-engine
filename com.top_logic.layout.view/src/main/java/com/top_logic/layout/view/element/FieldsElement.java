@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -64,6 +65,7 @@ public class FieldsElement extends ContainerElement {
 	 * Configuration for {@link FieldsElement}.
 	 */
 	@TagName("fields")
+	@TypeIcon("css:bi bi-ui-checks-grid")
 	public interface Config extends ContainerElement.Config, FormLayoutOptions {
 
 		@Override

@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -36,7 +37,7 @@ public class TestAnthropicProvider extends TestCase {
 			return;
 		}
 
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.anthropic(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -99,7 +100,7 @@ public class TestAnthropicProvider extends TestCase {
 			return;
 		}
 
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.anthropic(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),

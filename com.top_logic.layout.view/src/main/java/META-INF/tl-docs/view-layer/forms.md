@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -39,12 +39,104 @@ order it computes (unless the `<value-input>` states an `option-order` of its ow
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
 
+The options of a `<field>` of a reference follow the model while the field is displayed: an instance
+of the class the reference points to that is created, changed or deleted - by this user in another
+view, or by another user - computes the options again (`AttributeSelectFieldModel#observeWhileDisplayed`,
+the `RowSourceObserver` begun when the input control is attached and stopped when it is detached).
+An object created after the form was built is offered without a new login, also where an
+`options-by-expression` annotation selects among the instances of that class, and a deleted one is
+no longer offered. The options are computed for the object the form shows - its overlay while the
+form is edited - and the selected value stays as it is. A field of an enumeration does not observe
+the model.
+
 ```xml
 <field attribute="priority">
 	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 		display="segmented"
 	/>
 </field>
+```
+
+**A selection taking a text of its own** — the model annotation `<free-entry>` (`TLFreeEntry`) of an
+attribute, overridden per field by the nested `<free-entry>` of `SelectControlProvider`: the
+dropdown also takes a text the user types into its search field, for a value that is mostly one of
+a known set but now and then a new one (keywords, tags, a place). A text naming an option, ignoring
+case and surrounding blanks, chooses that option; any other text becomes a value of its own - the
+value of a single-valued field, one more value of a multi-valued one (a text entered twice yields
+one value). The list offers the entry `Use "…"` at its end while the text names no option; Enter
+takes the highlighted option or, with none highlighted, the text, and leaving the field (Tab, a
+click outside) takes the text as well, while Escape drops it. With free entry the dropdown always
+has its search field, whatever `filter` says; the shapes showing every option ignore free entry. A
+text the field refuses - a text that is no number in a number attribute, a text with a comma in an
+attribute stored as one comma separated text - is reported like a failed command.
+
+Annotated at the attribute, free entry holds wherever the attribute is edited: the attribute is
+edited by a dropdown select without an `<input-control>` at the field, offering the options of the
+attribute (options annotation, referenced type, enumeration), or, where it has none, the values the
+object holds. A control the field names or an `<input-control>` annotation of the attribute still
+wins - `TextInputControlProvider` at the field edits an annotated text as plain text. Without
+more, the text is read as a value of the attribute's type: a string as it is, a number in the
+number format of the attribute, a point in time in its date format (or the formats a date is
+usually typed in). A number or a point in time equal to an option chooses that option.
+
+```xml
+<property name="place" type="tl.core:String">
+	<annotations>
+		<free-entry/>
+	</annotations>
+</property>
+```
+
+Any other type - a reference, a classification, a boolean - needs `create`, a TL-Script function
+taking the entered text (without surrounding blanks) and the edited object, whose result is the
+value. A new object is created transient, so storing the form creates it and cancelling the form
+drops it; a text naming an option, a value of the field or a value created before chooses that
+value without calling `create`, and a result of nothing leaves the field unchanged. The annotation
+without `create` on an attribute whose values cannot be read from a text is rejected with an error
+when the model is loaded.
+
+```xml
+<reference name="keywords" type="my:Keyword" multiple="true">
+	<annotations>
+		<free-entry create="text -> self -> new(`my:Keyword`, transient: true)..set(`my:Keyword#name`, $text)"/>
+	</annotations>
+</reference>
+```
+
+A field deviates with the nested `<free-entry>` of its `SelectControlProvider`, which overrides
+only what it states: `enabled="false"` offers the options only, although the attribute is
+annotated; `<free-entry/>` switches free entry on - also for a field editing no attribute, such as
+a `<value-input>`, or an attribute without the annotation; its `create` replaces the function of the
+annotation. That `create` follows the view convention: an expression (no parameter declaration)
+seeing `$text`, `$self` (the edited object, nothing where the field edits no attribute) and the
+channels named in `inputs` of the `<free-entry>` element. The value is made by the field's
+`create`, else by the annotation's `create`, else by reading the text as a value of the field's
+type; a field of any other type then accepts no free entry and logs an error.
+
+```xml
+<field attribute="place">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<free-entry enabled="false"/>
+	</input-control>
+</field>
+
+<field attribute="keywords">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<free-entry
+			create="new(`my:Keyword`, transient: true)..set(`my:Keyword#name`, $text)..set(`my:Keyword#owner`, $project)"
+			inputs="selectedProject as project"
+		/>
+	</input-control>
+</field>
+
+<value-input
+	options="['Berlin', 'Hamburg', 'Munich']"
+	value="place"
+>
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<free-entry/>
+	</input-control>
+</value-input>
 ```
 
 **A number** — `NumberInputControlProvider`, option `display` (`NumberDisplay`): `input` (the
@@ -172,6 +264,45 @@ library draws it in its own style.
 </field>
 ```
 
+**Mentions in a formatted text** — `WysiwygControlProvider`, option `<mentions>`: each `<mention>`
+refers to objects by a `trigger` character of its own, such as `@` or `#`. Typing the trigger at the
+start of a word starts the mention, the text typed after it is the query; the TL-Script function
+`options` with the signature `self -> query -> objects` computes the objects offered for it. `self`
+is the edited object (empty in a field editing no attribute of an object), the result a single
+object or a list of objects, shown by their labels in the order given - the function alone filters
+by the query and limits the number. The editor detects trigger and query itself and asks the server,
+after a short pause in typing, with these two alone; ordinary typing asks nothing. ArrowUp and
+ArrowDown move through the list, Enter or a click inserts the active object, Escape closes the list.
+The object is stored as an object link `<a class="tlObject" href="…">label</a>`; `presentation`
+decides how the editor shows it: `chip` (the default) is a unit removed as a whole, its text not
+editable, stored with the trigger in the attribute `data-mention`; `link` is an ordinary link whose
+text is edited like the text around it. A click on an object link of the displayed text leads to the
+object, Ctrl+click (Cmd+click) does so while editing. The list is the part `Listbox`, as for the
+suggestions of a text. The project demo offers the members of a ticket's project under `@`:
+
+```xml
+<property name="description" type="tl.model.wysiwyg:Html">
+	<annotations>
+		<input-control>
+			<impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
+				<mentions>
+					<mention presentation="chip" trigger="@">
+						<options><![CDATA[self -> query -> {
+	project = if($self == null, null, $self.container());
+	if($project == null, [],
+		$project.get(`tl.demo.projectManagement:ProjectScope#members`)
+			.filter(person -> $person.label().stringContains($query))
+			.sort(comparator(person -> $person.label().toLowerCase()))
+			.subList(0, 10))
+}]]></options>
+					</mention>
+				</mentions>
+			</impl>
+		</input-control>
+	</annotations>
+</property>
+```
+
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:
 
 1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)
@@ -295,6 +426,8 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
+**A new object shows its create visibility.** While the form displays a new object that is not stored yet - the transient draft of a create dialog (`<create-transient>`) or an edit overlay of it - a field follows the `<create-visibility>` of its attribute instead of its `<visibility>` (hidden, read-only, editable, mandatory; without a create visibility the visibility applies), as in the classic user interface: an attribute that is `read-only` but `<create-visibility value="editable"/>` is entered in the create dialog and read-only once stored. A `<dynamic-visibility>` of the attribute takes precedence over both (`AttributeFieldControl`).
+
 ## Normalizing an entered value
 
 An attribute annotated with `<value-normalizer>` (`TLValueNormalizer`) brings an entered value into its canonical form before it reaches the form's overlay: a code is trimmed, a rule is printed in its canonical notation. The annotation lists normalizers, applied in the given order, each one to the result of the one before. The field shows the canonical form once the input is left. A value a normalizer cannot canonicalize - a rule text that does not parse - stays as it was typed, and the constraints of the attribute report it.
@@ -348,7 +481,7 @@ Four actions work on the edit session of the form they run in:
 - `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and results in the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts of its `<with-result>` and after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
 - `<leave-edit-mode/>` (`LeaveEditModeAction`) ends the edit session without storing or dropping anything. A form that still holds unsaved changes refuses: the chain aborts and the form stays in edit mode with its input.
 - `<discard-form-state/>` (`DiscardFormStateAction`) drops the input and ends the edit session.
-- `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission, the right to write the object and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. A form already in edit mode keeps its session.
+- `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission: the `edit-operation` of the form on the object (`Write` by default, see [the operation check of a command](doc:view-layer/access-control#operations-on-objects-operation)) and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. The action brings the edit permission as its own rule, so a command running it is hidden or disabled like the form's own Edit button. A form already in edit mode keeps its session.
 
 A save that post-processes the stored values stores them and runs its script over the stored object in one transaction, and leaves the edit mode after it:
 

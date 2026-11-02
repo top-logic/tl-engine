@@ -13,6 +13,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -57,6 +58,9 @@ final class ValueUpdateOnOptionsChange implements Listener {
 		PropertyDescriptor property = _valueModel.getProperty();
 		ImplementationClassDefault annotation =
 			_customizations.getAnnotation(property, ImplementationClassDefault.class);
+		if (annotation == null) {
+			annotation = TypedConfigUtil.instanceTypeImplementationClassDefault(property);
+		}
 		if (annotation != null) {
 			Class<?> defaultImplClass = annotation.value();
 

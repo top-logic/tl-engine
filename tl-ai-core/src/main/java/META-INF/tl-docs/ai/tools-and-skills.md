@@ -37,20 +37,73 @@ A tool has three names: the bare `Tool.name()` the model calls, the configured `
 
 ## Skills and tool overlays
 
-An agent advertises its own tools plus a catalog of skill names (packages `tools/`, `agent/skills/`); `loadSkill("id")` hands over the skill's instructions as a tool result and appends its tools to the `DynamicToolCatalog`. The catalog has three layers and always advertises them in this order, whatever order they were added in: the frozen base (the agent's `<tools>` and those of its MCP servers), the framework overlays every agent carries (`loadSkill`, `listTools`), and the skill overlays in load order. The first two are the **stable prefix** - `ToolRegistry.stableToolCount` - and a skill restored from a previous run of the session lands exactly where loading it would have put it, which is why the loaded-skill set is ordered from `LoadedSkillsBinding` through to the persisted `SessionMetadata`. [Prompt caching](doc:ai/limits-and-caching#prompt-caching) says why the order matters.
+An agent advertises its own tools plus a catalog of skill names (packages `tools/`, `agent/skills/`); `loadSkill("id")` hands over the skill's instructions and, if it declares any, its tools. A load changes exactly one thing in the request, the tool array: the `### Available Skills` catalog of the system prompt is generated once, when the agent is built, the instructions arrive as a tool result at the end of the conversation, and the tools are appended behind everything already there. `TestSkillOverlayRequestShape` pins the three against a provider that records its requests.
 
-Overlays are bounded: at most `DynamicToolCatalog.DEFAULT_MAX_SKILL_OVERLAYS` (8) skills keep their tools loaded, and loading one more drops the overlay whose tools were called longest ago. The eviction is named in the `loadSkill` answer, and a call for an evicted tool is answered with "load the skill that has it". There is deliberately no `unloadSkill` tool. A compaction changes nothing in the tool array; it only makes a skill's instructions loadable again (`ToolRegistry.historyCompacted`), because a summarizing compaction can replace the turn that carried them. `AgentEvent.ContextComposition#loadedSkills` names the skills each request paid for. `tl-ai-core/doc/skill-overlays.md` has the details.
+The tool array is in front of the system prompt and of every message in the rendering every provider caches by, so a changed array costs the whole cache: appending leaves every byte before the append point identical, reordering leaves nothing to match. The catalog therefore has three layers and always advertises them in this order, whatever order they were added in:
+
+| Layer | Contents | Stable |
+|---|---|---|
+| base | the agent's `<tools>` and the tools of its MCP servers | yes |
+| framework overlays | `loadSkill`, `listTools` - what every agent carries | yes |
+| skill overlays | one per loaded skill, in load order | no |
+
+The first two are the **stable prefix** - `ToolRegistry.stableToolCount`, its size after the run's permission filter. The order is the catalog's, not the call order: `AgentFactory` builds the `SkillTool` first - which restores the session's loaded skills while it is constructed - and adds the framework overlays afterwards, because `listTools` reports the `SkillTool`'s state; in call order a restored skill would sit in front of `loadSkill`, where a freshly loaded one never sits. For the same reason the loaded-skill set is ordered end to end, from `LoadedSkillsBinding` through `ChatProcessor` and `TaskProgressTracker` to the persisted `SessionMetadata`. [Prompt caching](doc:ai/limits-and-caching#prompt-caching) says where the cache breakpoint goes.
+
+Overlays are bounded: at most `DynamicToolCatalog.DEFAULT_MAX_SKILL_OVERLAYS` (8) skills keep their tools loaded, and loading one more drops the overlay whose tools were called longest ago - no timer, no per-turn bookkeeping. The `loadSkill` answer names the skills that left, because the model read their instructions earlier in the conversation, and a call for an evicted tool is answered with "load the skill that has it" rather than "no such tool" (`setReachableBySkill` is about what the agent could reach). There is deliberately no `unloadSkill` tool: it would be advertised in every request of every agent for a saving the ceiling already guarantees.
+
+A compaction changes the messages, never the tool array: the tools of a loaded skill stay. The instructions may be gone, because a summarizing compaction can replace the turn that carried them, so `AgentLoop` tells the registry (`ToolRegistry.historyCompacted()`) and `SkillTool` forgets which skills' text it delivered; the next `loadSkill` delivers the text again without registering the tools twice. `TestSkillTool` and `TestSkillOverlayRequestShape` pin both. `AgentEvent.ContextComposition`, emitted before every provider call, carries `loadedSkills` in load order; it rides the SSE stream (`context_composition`) and is persisted on the turn, so the transcript says which skills each request paid for.
 
 Which skills and tools an agent is offered depends on the acting user's rights: a skill whose every tool is denied is not offered, and `loadSkill` hands over only the permitted tools - see [capability notices](doc:ai/security/capability-notices).
 
 ### `TL_init`: the application context
 
-`TL_init` is the counterpart of `/init` in Claude Code: the assistant writes the **application context** - purpose, users and their tasks, the users' terms, what the calculated values mean, rules. It is development material, so it lives in the application's source: a `TextPromptContributor` with `name="application-context"` among the prompt contributors of `AgentApplicationService`, in a file of the application's `WEB-INF/autoconf`. `saveApplicationContext` (STRUCTURAL, approval-gated, administrators only) writes it there - replacing the entry where it is, adding it to the application's last `AgentApplicationService` file, or creating `ai-application-context.config.xml` without `config:override` - editing the XML in place and never touching `tl_autoconf_dir`. The tool is offered only in the development environment (`DevelopmentWorkspace`: `tl_operation_mode=development` and a source `src/main/webapp`); elsewhere the assistant hands over the document instead. The text takes effect when `AgentApplicationService` is restarted; the developer commits the file.
+`TL_init` is the counterpart of `/init` in Claude Code: Albert writes the **application context**, one Markdown document saying what the application is for, who works with it and on what, what the users' terms mean, what the calculated values mean and which rules hold - what the model does not tell an agent. The skill is defined in `tl-ai-core.conf.config.xml`.
 
-The skill reads the model in depth - the calculation rule of every derived attribute, and every mismatch between a description and the implementation, which it reports and does not fix - and interviews the user; it does not look at the application's objects. The assistant's own write tools stay offered while it runs; the approval guards them. `TestInitSkill` (`tl-ai-eval`) runs it end to end on a scripted model, including the service restart. `tl-ai-core/doc/init-skill.md` has the details.
+**Where it lives.** The context is development material, so it lives in the application's source and is deployed with it: a `TextPromptContributor` with `name="application-context"` (`TextPromptContributor.Config.APPLICATION_CONTEXT`) among the prompt contributors of `AgentApplicationService` ([prompt contributors](doc:ai/environment#prompt-contributors)):
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+	<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+		<prompt-contributors>
+			<contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
+				name="application-context"
+			>
+				<text>
+					<de><![CDATA[# Anwendungskontext: ...]]></de>
+					<en><![CDATA[# Anwendungskontext: ...]]></en>
+				</text>
+			</contributor>
+		</prompt-contributors>
+	</instance>
+</config>
+```
+
+- `text` holds at most 8000 characters (about 2000 tokens) with the placeholders of an agent prompt. The save writes **the same text into every language the application supports**, so a context written in German still reaches a user whose language falls back to English; an agent reads it and answers in its user's language. A developer who wants translations edits the file.
+- `agents` is written empty, so every agent gets the context, the infrastructure agents included. Agents a developer names are kept: a later save replaces only the text.
+- A changed text takes effect when `AgentApplicationService` is restarted (*Agent application knowledge* in the service editor); that restart touches no other service.
+
+**How the save writes the file.** `saveApplicationContext` writes into the `WEB-INF/autoconf` folder of the top-level project (`Workspace.topLevelWebapp()`), never into `tl_autoconf_dir` or the snapshot the service editor saves. `ApplicationContextSource` picks the file:
+
+1. every file that already holds the entry - normally one; a second one exists when the service editor saved `AgentApplicationService` after the entry was written, and both are updated;
+2. otherwise the file that configures `AgentApplicationService` and is read last (files are read in name order, and one with `config:override="true"` drops what earlier ones said), where the entry is added to `<prompt-contributors>`;
+3. otherwise a new file `ai-application-context.config.xml` that adds the entry **without** `config:override` - the contributors are an unkeyed list, to which a later layer appends. Its name differs from the service editor's `com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml` and sorts before it, so a later service-editor snapshot (which then contains the entry) replaces the entry instead of adding it twice.
+
+The file is edited in place: only the entry is written, every other character stays (`XmlSpans`). The answer names the file and tells the developer to restart the service and commit the file.
+
+**Only in the development environment**: the save is offered when `tl_operation_mode=development` and the project's `src/main/webapp` exists (`DevelopmentWorkspace`); elsewhere it is not offered (`Tool.unavailableReason`) and Albert hands over the document with that reason. `readApplicationContext` works everywhere; in development it also reads the source file and returns a saved text that is not active yet, saying so.
+
+**What the skill does**, in one run of 15-20 turns (the default turn limit is 60):
+
+1. `readApplicationContext` - an existing context is revised, not started over.
+2. The model, read in more depth than the outline (`outlineModel`, `TL_modelExploration`): the calculation rule of every derived attribute (`getCurrentAnnotations`, the `expr` of its `storage-algorithm`), parts and enum values the outline leaves out, and what each type and attribute says (label, description) against what it does. Every discrepancy is reported to the user and neither fixed nor written into the document. The application's objects are not analyzed.
+3. An interview of at most five `askUser` calls in the user's language: purpose, users and their tasks, their terms, rules and procedures, what the agents should take care of or avoid.
+4. A draft in fixed sections (Purpose, Users, Terms, Core objects, Calculated values, Rules), short, stating only what the model does not say and nothing that neither the model nor the user said; a calculated value gets its meaning, not its expression. It is shown in one code block followed by a choice "save" or "change".
+5. `saveApplicationContext` with the whole document: a `STRUCTURAL` call, so the user approves it and sees the text while doing so - that approval is the review. It is refused before any prompt when the account is no administrator, the text is empty or too long, or it names an unknown placeholder. The file is written when the call runs; the turn's transaction does not cover it.
+
+The skill changes nothing but the context - a rule of the skill, not of the run: Albert's write tools stay offered while it is loaded, guarded by their approval.
+
+`TestInitSkill` (`tl-ai-eval`) runs the shipped Albert on a scripted model with a temporary folder as the application's source: the workflow with exactly one approval for the save, the restart after which the next prompt carries the text, a re-run that replaces the entry, the additive file keeping the rest of the service's configuration, the save not offered outside development, and a declined approval writing nothing. `TestApplicationContextSource` (`tl-ai-core`) pins the file edits against the engine's configuration reader and its layering. Whether a real model follows the workflow takes a run against a real model.
 
 ### `TL_deepResearch`: research on the public web
 
-`TL_deepResearch` has the assistant research a topic on the public web: it plans sub-questions, spawns one `TL_ResearchWorker` per sub-question in one turn, waits with `wait_for_subagent` (the one route that works with and without a chat) and writes one report that links the pages the workers read. It keeps the run with `research.saveReport`, opens it with `present` where the page has a place for it, and answers with the same report, so a headless `aiResearch()` run keeps one too. The worker carries `webSearch` and `webFetch` only - no application data, no writes - and the lead reads no page itself.
-
-A spawned worker is unattended, so an application needs a `<background-allowlist>` that admits `egress`, and a search engine on `WebToolsService`; `tl-ai-demo` has both in `WEB-INF/conf/research.config.xml`. Workers only open addresses they were given ([URL provenance](doc:ai/security/browsing-governance#url-provenance)), and their findings are checked against the text they read ([citations](doc:ai/memory-and-citations#research-findings-and-reports)). `TestDeepResearchSkill` (`tl-ai-eval`) runs it on a scripted model and a fixture web; `tl-ai-core/doc/deep-research.md` has the details.
+`TL_deepResearch` has the assistant research a topic on the public web: it plans sub-questions, spawns one `TL_ResearchWorker` per sub-question in one turn, waits with `wait_for_subagent` and writes one report that links the pages the workers read; it keeps the run with `research.saveReport` and answers with the same report, so a headless `aiResearch()` run keeps one too. The worker carries `webSearch` and `webFetch` only - no application data, no writes - and the lead reads no page itself. An application needs a search engine on `WebToolsService` and a `<background-allowlist>` that admits `egress`. [Web research](doc:ai/deep-research) describes the run, the effort levels, worker models, the configuration and `aiResearch`.

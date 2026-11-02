@@ -8,7 +8,9 @@ package com.top_logic.tl.ai.core.provider;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -16,6 +18,10 @@ import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.NoCredentials;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 
 /**
@@ -58,6 +64,9 @@ public interface LLMProviderConfig {
 
 		/** Configuration property name for {@link #getBaseUrl()}. */
 		String BASE_URL = "base-url";
+
+		/** Configuration property name for {@link #getCredentials()}. */
+		String CREDENTIALS = "credentials";
 
 		/**
 		 * Model names enabled for this provider.
@@ -129,12 +138,111 @@ public interface LLMProviderConfig {
 		 */
 		@Name(BASE_URL)
 		String getBaseUrl();
+
+		/**
+		 * How the requests to the provider are authenticated.
+		 *
+		 * <p>
+		 * E.g. an access token from an OAuth2 authorization server, the managed identity of the
+		 * cloud environment, or no credentials at all, when a gateway in between adds them. If not
+		 * set, the requests are authenticated with the API key of the provider, if one is
+		 * configured. Configuring both is an error.
+		 * </p>
+		 */
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
+
+		/** @see #getCredentials() */
+		void setCredentials(PolymorphicConfiguration<? extends CredentialProvider> value);
+	}
+
+	/**
+	 * Creates the {@link CredentialProvider} authenticating the requests of a provider without
+	 * API key.
+	 *
+	 * @param context
+	 *        The context for instantiating the credentials.
+	 * @param config
+	 *        The provider configuration.
+	 * @return The configured {@link Config#getCredentials() credentials}, or
+	 *         {@link NoCredentials}.
+	 */
+	static CredentialProvider createCredentials(InstantiationContext context, Config config) {
+		return createCredentials(context, config, null, null, null);
+	}
+
+	/**
+	 * Creates the {@link CredentialProvider} authenticating the requests of a provider.
+	 *
+	 * @param context
+	 *        The context for instantiating the credentials.
+	 * @param config
+	 *        The provider configuration.
+	 * @param apiKey
+	 *        The API key of the provider, <code>null</code> if none is configured.
+	 * @param header
+	 *        The request header in which the provider expects the API key.
+	 * @param scheme
+	 *        The authentication scheme written before the API key, <code>null</code> for sending
+	 *        the bare key.
+	 * @return The configured {@link Config#getCredentials() credentials}; if there are none, the
+	 *         API key in the given header; without API key, {@link NoCredentials}.
+	 * @throws ConfigurationError
+	 *         If both credentials and an API key are configured.
+	 *
+	 * @see CredentialProvider#create(InstantiationContext, String, PolymorphicConfiguration,
+	 *      PolymorphicConfiguration, String, String)
+	 */
+	static CredentialProvider createCredentials(InstantiationContext context, Config config,
+			PolymorphicConfiguration<? extends SecretSource> apiKey, String header, String scheme) {
+		return CredentialProvider.create(context, config.getName(), config.getCredentials(), apiKey, header, scheme);
 	}
 
 	/**
 	 * Creates a ready-to-use {@link LLMProvider} from this configuration.
 	 */
 	LLMProvider createProvider();
+
+	/**
+	 * The credentials authenticating the requests to the API of this provider.
+	 *
+	 * @return The credentials, <code>null</code> for a provider that sends no requests that need
+	 *         them.
+	 */
+	default CredentialProvider getCredentials() {
+		return null;
+	}
+
+	/**
+	 * Whether this provider can serve requests now.
+	 *
+	 * <p>
+	 * A provider whose {@link #getCredentials() credentials} are not available is inactive: it is
+	 * never called, and a run on one of its models uses another one or fails with a message naming
+	 * the {@link #credentialsReference() missing secret}. Asked each time a run chooses a provider,
+	 * so that a secret provided later activates the provider without a restart.
+	 * </p>
+	 *
+	 * @see CredentialProvider#isAvailable()
+	 */
+	default boolean isAvailable() {
+		CredentialProvider credentials = getCredentials();
+		return credentials == null || credentials.isAvailable();
+	}
+
+	/**
+	 * Where the {@link #getCredentials() credentials} of this provider are taken from, e.g. the
+	 * name of the secret holding its API key, without revealing them.
+	 *
+	 * @return The description, <code>null</code> if the credentials cannot tell.
+	 *
+	 * @see CredentialProvider#reference()
+	 */
+	default ResKey credentialsReference() {
+		CredentialProvider credentials = getCredentials();
+		return credentials == null ? null : credentials.reference();
+	}
 
 	/**
 	 * Discovers available models from the provider's API.

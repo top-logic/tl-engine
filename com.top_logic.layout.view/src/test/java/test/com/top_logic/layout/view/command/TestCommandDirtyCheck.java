@@ -57,6 +57,7 @@ import com.top_logic.layout.view.login.LogoutCommand;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.Resources;
 
 /**
@@ -471,7 +472,8 @@ public class TestCommandDirtyCheck extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestCommandDirtyCheck.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 
 }

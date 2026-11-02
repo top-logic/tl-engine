@@ -38,12 +38,12 @@ public class ConfiguredDelegatingCommandModel extends DelegatingCommandModel
 		 */
 		@Mandatory
 		@Name(COMMAND_NAME)
-		PolymorphicConfiguration<Command> getCommand();
+		PolymorphicConfiguration<? extends Command> getCommand();
 
 		/**
 		 * Setter for the value of {@link #getCommand()}.
 		 */
-		void setCommand(PolymorphicConfiguration<Command> command);
+		void setCommand(PolymorphicConfiguration<? extends Command> command);
 	}
 
 	private final Config _config;

@@ -69,7 +69,7 @@ public class TestConfiguredInstance extends AbstractTypedConfigurationTestCase {
 		A getA();
 		
 		@ImplementationClassDefault(B1.class)
-		PolymorphicConfiguration<B> getBConfig();
+		PolymorphicConfiguration<? extends B> getBConfig();
 
 		@InstanceFormat
 		@InstanceDefault(B1.class)
@@ -90,7 +90,7 @@ public class TestConfiguredInstance extends AbstractTypedConfigurationTestCase {
 
 		@ImplementationClassDefault(B1.class)
 		@Key(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME)
-		List<PolymorphicConfiguration<B>> getBConfigList();
+		List<PolymorphicConfiguration<? extends B>> getBConfigList();
 
 		@InstanceFormat
 		@ImplementationClassDefault(B1.class)
@@ -107,7 +107,7 @@ public class TestConfiguredInstance extends AbstractTypedConfigurationTestCase {
 
 		@ImplementationClassDefault(B1.class)
 		@Key(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME)
-		Map<Class<?>, PolymorphicConfiguration<B>> getBConfigMap();
+		Map<Class<?>, PolymorphicConfiguration<? extends B>> getBConfigMap();
 
 		@InstanceFormat
 		@ImplementationClassDefault(B1.class)
@@ -463,7 +463,7 @@ public class TestConfiguredInstance extends AbstractTypedConfigurationTestCase {
 
 	public void testConfigurationItemInline() throws Throwable {
 		Config config = (Config) readConfiguration("testConfigItemInline.xml");
-		PolymorphicConfiguration<B> bConfig = config.getBConfig();
+		PolymorphicConfiguration<? extends B> bConfig = config.getBConfig();
 		assertEquals(B1.class, bConfig.getImplementationClass());
 	}
 

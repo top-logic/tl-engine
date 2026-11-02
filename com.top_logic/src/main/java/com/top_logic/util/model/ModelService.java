@@ -182,7 +182,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 			 * The query resolver that implements the {@link #getQueryInterface()}.
 			 */
 			@Name(IMPL)
-			PolymorphicConfiguration<PersistentQuery> getQueryImplementation();
+			PolymorphicConfiguration<? extends PersistentQuery> getQueryImplementation();
 		}
 	}
 

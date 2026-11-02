@@ -16,8 +16,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -38,6 +40,7 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  * @see BrowsingPolicyConfig
  * @see BrowsingPolicies
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @ServiceCategory.Of(AICategory.class)
 public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Config<?>> {
 

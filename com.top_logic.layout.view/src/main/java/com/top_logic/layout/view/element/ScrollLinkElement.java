@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -53,6 +54,7 @@ public class ScrollLinkElement implements UIElement {
 	 * Configuration for {@link ScrollLinkElement}.
 	 */
 	@TagName("scroll-link")
+	@TypeIcon("css:bi bi-arrow-down-circle")
 	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getLabel()}. */

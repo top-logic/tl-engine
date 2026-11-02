@@ -41,8 +41,14 @@ public class StringSetStorage<C extends StringSetStorage.Config<?>> extends Coll
 		// Pure marker interface.
 	}
 
-	/** Separate attribute values in the stored combined value. */
-	protected static final char VALUE_SEPARATOR = ',';
+	/**
+	 * Separate attribute values in the stored combined value.
+	 *
+	 * <p>
+	 * A single value containing it cannot be stored: it would be read back as several values.
+	 * </p>
+	 */
+	public static final char VALUE_SEPARATOR = ',';
 
 	/**
 	 * Creates a {@link StringSetStorage} from configuration.

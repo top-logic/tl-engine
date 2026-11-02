@@ -24,7 +24,7 @@ public interface PDFRendererAnnotation extends TLTypeAnnotation, TLAttributeAnno
 	 * {@link PDFRenderer} to use.
 	 */
 	@Mandatory
-	PolymorphicConfiguration<PDFRenderer> getImpl();
+	PolymorphicConfiguration<? extends PDFRenderer> getImpl();
 
 }
 

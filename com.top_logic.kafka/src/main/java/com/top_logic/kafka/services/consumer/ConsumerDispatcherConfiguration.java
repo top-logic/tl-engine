@@ -236,7 +236,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 */
 	@Name(PROCESSORS)
 	@Options(fun = AllInAppImplementations.class)
-	List<PolymorphicConfiguration<ConsumerProcessor<K,V>>> getProcessors();
+	List<PolymorphicConfiguration<? extends ConsumerProcessor<K,V>>> getProcessors();
 
 	/**
 	 * The Kafka consumer property: "allow.auto.create.topics"

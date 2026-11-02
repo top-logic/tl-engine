@@ -9,11 +9,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.top_logic.layout.configedit.ConfigFieldIndex;
+import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Keeps a configuration editor in step with the field it edits.
@@ -40,12 +44,23 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
  * no event for the rebinding itself, but it resets the field's validation state, so that is what is
  * listened to.</li>
  * </ul>
+ *
+ * <p>
+ * The holder is a {@link PendingInput}: an entry the user has started in the editor but not yet
+ * confirmed is not part of the field's value, and is confirmed when the surrounding form is saved.
+ * </p>
  */
 final class ConfigFieldBinding {
 
 	private final FieldModel _field;
 
-	private final ReactStackControl _holder;
+	private final Holder _holder;
+
+	/**
+	 * The index of the editor currently displayed, knowing its unconfirmed entries, or
+	 * {@code null} if the editor has none to report.
+	 */
+	private ConfigFieldIndex _index;
 
 	private Supplier<ReactControl> _build;
 
@@ -66,7 +81,7 @@ final class ConfigFieldBinding {
 	ConfigFieldBinding(ReactContext context, FieldModel field, Supplier<Object> identity) {
 		_field = field;
 		_identity = identity;
-		_holder = new ReactStackControl(context, Collections.emptyList());
+		_holder = new Holder(context);
 
 		field.addListener(new FieldModelListener() {
 			@Override
@@ -116,6 +131,35 @@ final class ConfigFieldBinding {
 	}
 
 	/**
+	 * Announces the index of the editor being built, whose unconfirmed entries are confirmed when
+	 * the surrounding form commits its pending input.
+	 *
+	 * <p>
+	 * Called by the step building the editor, see {@link #start(Supplier)}.
+	 * </p>
+	 */
+	void indexedBy(ConfigFieldIndex index) {
+		_index = index;
+	}
+
+	/**
+	 * Confirms every entry of the displayed editor not yet confirmed.
+	 *
+	 * @throws TopLogicException
+	 *         If an entry could not be confirmed. It then stays pending, with the reason shown at
+	 *         the entry.
+	 */
+	private void confirmPending() {
+		if (_index == null) {
+			return;
+		}
+		ConfigValidation.Refusal refusal = ConfigValidation.confirmPending(_index);
+		if (refusal != null) {
+			throw new TopLogicException(refusal.message());
+		}
+	}
+
+	/**
 	 * Hands the given value to the field without taking it for a change from outside.
 	 */
 	void push(Object value) {
@@ -136,7 +180,23 @@ final class ConfigFieldBinding {
 			child.cleanupTree();
 		}
 		_builtFor = _identity == null ? null : _identity.get();
+		_index = null;
 		_holder.setChildren(List.of(_build.get()));
+	}
+
+	/**
+	 * The control displaying the editor, committing its unconfirmed entries on request.
+	 */
+	private final class Holder extends ReactStackControl implements PendingInput {
+
+		Holder(ReactContext context) {
+			super(context, Collections.emptyList());
+		}
+
+		@Override
+		public void commitPendingInput() {
+			confirmPending();
+		}
 	}
 
 }

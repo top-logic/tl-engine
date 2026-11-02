@@ -8,7 +8,9 @@ package com.top_logic.layout.view.designer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.CalledByReflection;
@@ -20,6 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.configedit.ConfigTypeChoice;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -28,6 +31,7 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
+import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
@@ -56,8 +60,21 @@ import com.top_logic.util.Resources;
  * <p>
  * Unlike {@link com.top_logic.layout.view.element.TreeElement}, which uses TL-Script expressions to
  * compute children, this element reads the tree structure directly from the {@link DesignTreeNode}
- * model. The input channel provides the root {@link DesignTreeNode}, and the selection channel
- * receives the currently selected node.
+ * model. It shows the tree of the file the {@link DesignSession} of the session channel shows, and
+ * the selection channel receives the currently selected node.
+ * </p>
+ *
+ * <p>
+ * Selecting a {@link ViewLinkDesignTreeNode} opens the linked file in the session instead of
+ * selecting the link. Whenever the session shows another file, the tree displays that file's tree
+ * with the nodes expanded the user had expanded when it was displayed last, and selects its root.
+ * </p>
+ *
+ * <p>
+ * The rows follow the {@link DesignTreeDisplay}: a property group with a single entry shares the row
+ * of that entry. The row stands for the entry - selecting it selects the entry, and selecting the
+ * entry reveals the row - and its context menu offers the commands of the group below those of the
+ * entry. Label, icon, style and tooltip of a row come from the {@link DesignTreeNodeResourceProvider}.
  * </p>
  */
 public class DesignerTreeElement implements UIElement {
@@ -68,8 +85,8 @@ public class DesignerTreeElement implements UIElement {
 	@TagName("design-tree")
 	public interface Config extends UIElement.Config {
 
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
+		/** Configuration name for {@link #getSession()}. */
+		String SESSION = "session";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -79,17 +96,18 @@ public class DesignerTreeElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * Reference to the channel providing the root {@link DesignTreeNode}.
+		 * Reference to the channel providing the {@link DesignSession}.
 		 */
-		@Name(INPUT)
+		@Name(SESSION)
 		@Mandatory
 		@Format(ChannelRefFormat.class)
-		ChannelRef getInput();
+		ChannelRef getSession();
 
 		/**
-		 * Optional reference to a channel that receives the selected {@link DesignTreeNode}.
+		 * Reference to the channel that receives the selected {@link DesignTreeNode}.
 		 */
 		@Name(SELECTION)
+		@Mandatory
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
 	}
@@ -106,9 +124,9 @@ public class DesignerTreeElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		// 1. Resolve the input channel providing the root DesignTreeNode.
-		ViewChannel inputChannel = context.resolveChannel(_config.getInput());
-		DesignTreeNode rootNode = (DesignTreeNode) inputChannel.get();
+		// 1. Resolve the session providing the tree to show.
+		DesignSession session = (DesignSession) context.resolveChannel(_config.getSession()).get();
+		DesignTreeNode rootNode = session.getCurrentTree();
 
 		// 2. Build the tree model.
 		TreeBuilder<DefaultTreeUINode> builder = createTreeBuilder();
@@ -121,15 +139,15 @@ public class DesignerTreeElement implements UIElement {
 
 		// Holder for the tree model currently displayed by treeControl. The control itself does not
 		// expose a getter for its current model, and the model is replaced (not mutated) whenever the
-		// tree is rebuilt (e.g. after Revert, see the input-channel listener below, or after a
-		// context-menu structural edit). Listeners that need to search the *currently displayed* tree
-		// must consult this holder instead of a captured local, which would go stale after a rebuild.
+		// tree is rebuilt (e.g. after another file was opened, or after a context-menu structural
+		// edit). Listeners that need to search the *currently displayed* tree must consult this holder
+		// instead of a captured local, which would go stale after a rebuild.
 		DefaultTreeUINodeModel[] currentModel = { treeModel };
 
-		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
-		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
-		//    renders into to refresh a node whose label changed, so it is handed a holder that is
-		//    filled in right after construction.
+		// 4. Create the ReactTreeControl with a control provider that renders each DesignTreeNode
+		//    with the label, icon, style and JavaDoc tooltip of its row. The provider needs the
+		//    control it renders into to refresh a node whose label changed, so it is handed a holder
+		//    that is filled in right after construction.
 		ReactTreeControl[] treeRef = new ReactTreeControl[1];
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel,
 			designNodeControlProvider(treeRef, currentModel));
@@ -137,43 +155,97 @@ public class DesignerTreeElement implements UIElement {
 		treeControl.setCssClass(_config.getCssClass());
 
 		// 5. Wire the selection channel, which the tree reads as well as writes: the selected
-		//    DesignTreeNode is written to it, and a node another writer puts on it - the "select
-		//    view" picker, for instance - is revealed and selected in the tree displayed now.
-		ChannelRef selectionRef = _config.getSelection();
-		TreeSelectionBinding selectionBinding;
-		if (selectionRef != null) {
-			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionBinding = new TreeSelectionBinding(TreeSelectionDisplay.of(treeControl, selectionModel),
-				() -> currentModel[0], NodeLocator.SEARCHING, selectionChannel);
-			treeControl.addCleanupAction(selectionBinding::dispose);
-		} else {
-			selectionBinding = null;
-		}
+		//    DesignTreeNode is written to it, and a node another writer puts on it is revealed and
+		//    selected in the tree displayed now. A selected link is no node to work on: it opens the
+		//    linked file, whose root then becomes the selection.
+		ViewChannel selectionChannel = context.resolveChannel(_config.getSelection());
+		TreeSelectionDisplay display = TreeSelectionDisplay.intercepting(
+			TreeSelectionDisplay.of(treeControl, selectionModel),
+			uiNode -> openLink(session, uiNode));
+		TreeSelectionBinding selectionBinding =
+			new TreeSelectionBinding(display, () -> currentModel[0], DISPLAYED_NODE_LOCATOR, selectionChannel);
+		treeControl.addCleanupAction(selectionBinding::dispose);
 
 		// 6. Wire context menu for structural editing commands.
-		ChannelRef selRefForMenu = _config.getSelection();
-		ViewChannel selChannelForMenu = selRefForMenu != null ? context.resolveChannel(selRefForMenu) : null;
-		installContextMenu(context, treeControl, builder, selectionModel, selChannelForMenu, inputChannel,
-			currentModel);
+		installContextMenu(context, treeControl, builder, selectionModel, selectionChannel, currentModel);
 
-		// 7. Listen on the input channel for root changes (e.g. after Revert) and rebuild tree.
-		ViewChannel.ChannelListener rootListener = (sender, oldValue, newValue) -> {
-			if (newValue instanceof DesignTreeNode newRoot) {
-				DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
-				newTreeModel.setRootVisible(true);
-				treeControl.setTreeModel(newTreeModel);
-				currentModel[0] = newTreeModel;
-				if (selectionBinding != null) {
-					// The nodes of the tree built anew are other ones, so the selection is expressed
-					// on them.
-					selectionBinding.structureChanged();
-				}
+		// 7. Follow the session to the file it shows, keeping the expansion of every file's tree.
+		Map<DesignTreeNode, Set<Object>> expansion = new WeakHashMap<>();
+		Runnable sessionListener = () -> {
+			DesignTreeNode newRoot = session.getCurrentTree();
+			DefaultTreeUINode oldRoot = currentModel[0].getRoot();
+			if (oldRoot.getBusinessObject() == newRoot) {
+				return;
 			}
+			expansion.put((DesignTreeNode) oldRoot.getBusinessObject(), TreeNodes.collectExpanded(oldRoot));
+
+			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
+			newTreeModel.setRootVisible(true);
+			treeControl.setTreeModel(newTreeModel);
+			currentModel[0] = newTreeModel;
+			Set<Object> expanded = expansion.get(newRoot);
+			if (expanded != null) {
+				TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
+			} else {
+				newTreeModel.getRoot().setExpanded(true);
+			}
+
+			// The file is entered at its root. The nodes of the tree displayed before are gone, so the
+			// selection is expressed on the nodes displayed now.
+			selectionModel.setSelection(Set.of(newTreeModel.getRoot()));
+			selectionBinding.structureChanged();
+			treeControl.updateVisibleState();
 		};
-		Registration rootRegistration = inputChannel.addListener(rootListener);
-		treeControl.addCleanupAction(rootRegistration::dispose);
+		Registration sessionRegistration = session.addListener(sessionListener);
+		treeControl.addCleanupAction(sessionRegistration::dispose);
 
 		return treeControl;
+	}
+
+	/**
+	 * Opens the file the given node links to, if it is a {@link ViewLinkDesignTreeNode}.
+	 *
+	 * @return Whether the node is a link, which is not selected itself.
+	 */
+	private static boolean openLink(DesignSession session, DefaultTreeUINode uiNode) {
+		if (designNodeOf(uiNode) instanceof ViewLinkDesignTreeNode link) {
+			session.open(link.getTargetFile());
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Builds the tree model anew from the root of the tree displayed now and displays it, keeping
+	 * the parts of the tree the user had opened expanded.
+	 *
+	 * @return The tree model displayed now.
+	 */
+	private static DefaultTreeUINodeModel rebuildKeepingExpansion(ReactTreeControl treeControl,
+			TreeBuilder<DefaultTreeUINode> builder, DefaultTreeUINodeModel[] currentModel) {
+		DefaultTreeUINode oldRoot = currentModel[0].getRoot();
+		Set<Object> expanded = TreeNodes.collectExpanded(oldRoot);
+
+		DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, oldRoot.getBusinessObject());
+		newTreeModel.setRootVisible(true);
+		treeControl.setTreeModel(newTreeModel);
+		currentModel[0] = newTreeModel;
+		TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
+		return newTreeModel;
+	}
+
+	/**
+	 * Locator finding the row displaying a {@link DesignTreeNode}, which is the row of its single
+	 * entry for a group sharing that row, see {@link DesignTreeDisplay#displayedNode(DesignTreeNode)}.
+	 */
+	private static final NodeLocator DISPLAYED_NODE_LOCATOR =
+		(root, businessObject) -> NodeLocator.SEARCHING.locate(root, displayedObject(businessObject));
+
+	/**
+	 * The business object of the row displaying the given object.
+	 */
+	private static Object displayedObject(Object businessObject) {
+		return businessObject instanceof DesignTreeNode node ? DesignTreeDisplay.displayedNode(node) : businessObject;
 	}
 
 	/** Clique of the element-creating commands. */
@@ -193,7 +265,7 @@ public class DesignerTreeElement implements UIElement {
 	 */
 	private void installContextMenu(ViewContext context, ReactTreeControl treeControl,
 			TreeBuilder<DefaultTreeUINode> builder, DefaultSingleSelectionModel<Object> selectionModel,
-			ViewChannel selectionChannel, ViewChannel inputChannel, DefaultTreeUINodeModel[] currentModel) {
+			ViewChannel selectionChannel, DefaultTreeUINodeModel[] currentModel) {
 
 		ContextMenuOpener opener = context.getContextMenuOpener();
 		if (opener == null) {
@@ -213,16 +285,11 @@ public class DesignerTreeElement implements UIElement {
 		// Rebuilds the tree after a structural edit and selects the given node, keeping the parts of
 		// the tree the user had opened expanded.
 		Consumer<DesignTreeNode> rebuild = toSelect -> {
-			Set<Object> expanded = TreeNodes.collectExpanded(currentModel[0].getRoot());
+			DefaultTreeUINodeModel newTreeModel =
+				rebuildKeepingExpansion(treeControl, builder, currentModel);
 
-			DesignTreeNode root = (DesignTreeNode) inputChannel.get();
-			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
-			newTreeModel.setRootVisible(true);
-			treeControl.setTreeModel(newTreeModel);
-			currentModel[0] = newTreeModel;
-			TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
-
-			DefaultTreeUINode uiNode = toSelect == null ? null : TreeNodes.findNode(newTreeModel.getRoot(), toSelect);
+			DefaultTreeUINode uiNode =
+				toSelect == null ? null : DISPLAYED_NODE_LOCATOR.locate(newTreeModel.getRoot(), toSelect);
 			if (uiNode != null) {
 				TreeNodes.revealNode(uiNode);
 				selectionModel.setSelected(uiNode, true);
@@ -236,11 +303,7 @@ public class DesignerTreeElement implements UIElement {
 		};
 
 		List<CommandModel> commands = List.of(
-			SimpleCommandModel.create("designerAddChild", Resources.getInstance().getString(
-				I18NConstants.DESIGNER_ADD_CHILD),
-				ctx -> addChild(target[0], opener, menuPosition, rebuild))
-				.setClique(CLIQUE_ADD)
-				.setExecutable(() -> AddChildCommand.canExecute(target[0])),
+			addChildCommand(target, opener, menuPosition, rebuild),
 
 			SimpleCommandModel.create("designerRemove", Resources.getInstance().getString(
 				I18NConstants.DESIGNER_REMOVE),
@@ -263,6 +326,11 @@ public class DesignerTreeElement implements UIElement {
 		ContextMenuContribution contribution =
 			new ContextMenuContribution(value -> target[0] = (DesignTreeNode) value, commands);
 
+		// The group sharing the row of its single entry, for which the menu offers the commands of
+		// the group's container.
+		DesignTreeNode[] groupTarget = new DesignTreeNode[1];
+		List<CommandModel> groupCommands = List.of(addChildCommand(groupTarget, opener, menuPosition, rebuild));
+
 		treeControl.setContextMenuProvider((tree, node, x, y) -> {
 			DesignTreeNode designNode = designNodeOf(node);
 			if (designNode == null) {
@@ -279,8 +347,31 @@ public class DesignerTreeElement implements UIElement {
 			// Remember where the menu was opened, so that a follow-up type menu appears there too.
 			menuPosition[0] = x;
 			menuPosition[1] = y;
-			opener.open(x, y, List.of(new Targeted(contribution, designNode)));
+			List<DesignTreeNode> targets = DesignTreeDisplay.commandTargets(designNode);
+			List<Targeted> contributions = new ArrayList<>(targets.size());
+			contributions.add(new Targeted(contribution, designNode));
+			for (DesignTreeNode groupNode : targets.subList(1, targets.size())) {
+				contributions.add(new Targeted(new ContextMenuContribution(
+					value -> groupTarget[0] = (DesignTreeNode) value, groupCommands, groupNode.getDisplayLabel()),
+					groupNode));
+			}
+			opener.open(x, y, contributions);
 		});
+	}
+
+	/**
+	 * The command adding an element to the container of the node the menu is opened for.
+	 *
+	 * @param target
+	 *        Holder of the node the menu is opened for.
+	 */
+	private CommandModel addChildCommand(DesignTreeNode[] target, ContextMenuOpener opener, int[] menuPosition,
+			Consumer<DesignTreeNode> rebuild) {
+		return SimpleCommandModel.create("designerAddChild", Resources.getInstance().getString(
+			I18NConstants.DESIGNER_ADD_CHILD),
+			ctx -> addChild(target[0], opener, menuPosition, rebuild))
+			.setClique(CLIQUE_ADD)
+			.setExecutable(() -> AddChildCommand.canExecute(target[0]));
 	}
 
 	/**
@@ -300,13 +391,21 @@ public class DesignerTreeElement implements UIElement {
 		List<CommandModel> typeCommands = new ArrayList<>(choices.size());
 		for (ConfigTypeChoice.Choice choice : choices) {
 			typeCommands.add(SimpleCommandModel.create(null, choice.label(),
-				ctx -> createChild(parent, choice.option(), rebuild)));
+				ctx -> createChild(parent, choice.option(), rebuild))
+				.setImage(typeIcon(parent, choice)));
 		}
 		opener.open(menuPosition[0], menuPosition[1],
 			List.of(new Targeted(new ContextMenuContribution(value -> {
 				// The commands carry their target, nothing to publish.
 			}, typeCommands), parent)));
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The icon of an element of the given type choice, as the design tree shows it once added.
+	 */
+	private static ThemeImage typeIcon(DesignTreeNode parent, ConfigTypeChoice.Choice choice) {
+		return DesignTreeNodeResourceProvider.icon(parent.getChildContainer().newElement(choice.option()));
 	}
 
 	private HandlerResult createChild(DesignTreeNode parent, Object typeOption,
@@ -351,20 +450,20 @@ public class DesignerTreeElement implements UIElement {
 	}
 
 	/**
-	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactTextControl}, using the
-	 * node's {@link DesignTreeNode#getDisplayLabel() display label} and
-	 * {@link DesignTreeNode#getTooltipHtml() tooltip HTML}.
+	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactResourceCellControl} displaying
+	 * the label, icon, style and tooltip the {@link DesignTreeNodeResourceProvider} gives its row.
+	 *
+	 * <p>
+	 * The display is no link: a click on a row selects its node.
+	 * </p>
 	 */
 	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef,
 			DefaultTreeUINodeModel[] currentModel) {
 		return (context, model) -> {
 			if (model instanceof DesignTreeNode designNode) {
-				String label = designNode.getDisplayLabel();
-				ReactTextControl control = new ReactTextControl(context, label);
-				String tooltip = designNode.getTooltipHtml();
-				if (tooltip != null && !tooltip.isEmpty()) {
-					control.setTooltip(tooltip, label, false);
-				}
+				ReactResourceCellControl control =
+					new ReactResourceCellControl(context, designNode, DesignTreeNodeResourceProvider.INSTANCE, true,
+						true, false);
 
 				// Re-render the node when an identifying property is edited in the configuration
 				// form, so that the tree does not keep showing the previous label. The tree caches
@@ -402,7 +501,7 @@ public class DesignerTreeElement implements UIElement {
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
 				Object businessObj = node.getBusinessObject();
 				if (businessObj instanceof DesignTreeNode designNode) {
-					List<DesignTreeNode> designChildren = designNode.getChildren();
+					List<DesignTreeNode> designChildren = DesignTreeDisplay.displayedChildren(designNode);
 					List<DefaultTreeUINode> children = new ArrayList<>(designChildren.size());
 					for (DesignTreeNode child : designChildren) {
 						DefaultTreeUINode childNode = createNode(node.getModel(), node, child);

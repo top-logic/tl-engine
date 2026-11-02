@@ -10,9 +10,10 @@ import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
- * Icon constants for dialog buttons.
+ * Icon constants for dialog buttons and floating actions.
  *
  * @see MessageButtons
+ * @see ReactFloatingActionControl
  */
 public class Icons extends IconsBase {
 
@@ -27,5 +28,11 @@ public class Icons extends IconsBase {
 	 */
 	@DefaultValue("css:fa-solid fa-trash")
 	public static ThemeImage BUTTON_DISCARD;
+
+	/**
+	 * Image of the button opening the speed dial of several floating actions (plus).
+	 */
+	@DefaultValue("css:fa-solid fa-plus")
+	public static ThemeImage FLOATING_ACTION_DIAL;
 
 }

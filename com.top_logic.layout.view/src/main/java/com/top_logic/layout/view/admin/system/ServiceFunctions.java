@@ -255,6 +255,60 @@ public class ServiceFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Whether the given service runs an implementation of the given type.
+	 *
+	 * <p>
+	 * Decides whether a command acting on a certain kind of service is offered for a service, e.g.
+	 * a command of the detail page of a service:
+	 * </p>
+	 *
+	 * <pre>
+	 * &lt;visible-if expr="serviceInstanceOf($module, 'com.top_logic.knowledge.indexing.IndexingService')"/&gt;
+	 * </pre>
+	 *
+	 * <p>
+	 * The type is tested against the running instance, not against the implementation class the
+	 * module declares, so that a service whose configuration selects one of several implementations
+	 * is recognized by the implementation it actually runs.
+	 * </p>
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @param type
+	 *        The qualified name of a class or interface.
+	 * @return Whether the service is running and its instance is an instance of the named type -
+	 *         the type itself, a super class or an implemented interface of its class;
+	 *         <code>false</code> for a stopped service, a type no running instance has, and without
+	 *         a module.
+	 */
+	@Label("Whether a service runs an implementation of a type")
+	public static boolean instanceOf(BasicRuntimeModule<?> module, String type) {
+		if (module == null || type == null || !module.isActive()) {
+			return false;
+		}
+		return isA(module.getImplementationInstance().getClass(), type);
+	}
+
+	/**
+	 * Whether the given class, one of its super classes or one of the interfaces they implement
+	 * has the given name.
+	 */
+	private static boolean isA(Class<?> clazz, String type) {
+		if (clazz == null) {
+			return false;
+		}
+		if (clazz.getName().equals(type)) {
+			return true;
+		}
+		for (Class<?> implemented : clazz.getInterfaces()) {
+			if (isA(implemented, type)) {
+				return true;
+			}
+		}
+		return isA(clazz.getSuperclass(), type);
+	}
+
+	/**
 	 * The services stopped and started together with the given service, because they depend on it
 	 * directly or indirectly.
 	 *

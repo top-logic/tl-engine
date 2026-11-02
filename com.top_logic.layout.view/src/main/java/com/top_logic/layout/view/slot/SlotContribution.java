@@ -38,4 +38,33 @@ public interface SlotContribution {
 	 */
 	List<ReactControl> getControls();
 
+	/**
+	 * Whether this contribution is meant to be shown only where the enclosing display offers its
+	 * slot, so that reaching no slot is no mistake that the {@link SlotRegistry} reports.
+	 */
+	boolean isOptional();
+
+	/**
+	 * Where this contribution is declared, for the report of a contribution that reaches no slot.
+	 */
+	String getSource();
+
+	/**
+	 * Whether this contribution is marked as reaching no slot.
+	 *
+	 * @see #setUnrouted(boolean)
+	 */
+	boolean isUnrouted();
+
+	/**
+	 * Marks this contribution as reaching no slot, or removes that mark.
+	 *
+	 * <p>
+	 * Called by the {@link SlotRegistry}: with {@code true} when the interaction that displayed the
+	 * contribution has completed without routing it to a slot, with {@code false} when it is routed
+	 * to one.
+	 * </p>
+	 */
+	void setUnrouted(boolean unrouted);
+
 }

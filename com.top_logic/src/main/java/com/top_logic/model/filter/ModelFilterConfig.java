@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.filter;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.model.TLModelPart;
@@ -15,7 +16,7 @@ import com.top_logic.model.TLModelPart;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public interface ModelFilterConfig {
+public interface ModelFilterConfig extends ConfigurationItem {
 
 	/**
 	 * Property name of {@link #getModelFilter()}.

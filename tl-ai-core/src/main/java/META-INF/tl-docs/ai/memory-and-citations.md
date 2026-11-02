@@ -1,5 +1,5 @@
 ---
-description: Read before changing conversation memory or citations in tl-ai-core - ConversationMemory and compaction (CompactionStrategy, SummarizingStrategy, TruncatingStrategy, when the budget is checked), the reading list and citation validation (ReadingList, CitationValidator, CitationKinds, PageArchive, CitationMarkerSyntax), research findings (research.recordFinding, listFindings, readSource) and kept research runs (research.saveReport, ResearchRuns, tl.ai.execution:ResearchRun).
+description: Read before changing conversation memory or citations in tl-ai-core - ConversationMemory and compaction (CompactionStrategy, SummarizingStrategy, TruncatingStrategy, when the budget is checked), citations - the link markers tl:<id> and http(s), the reading list and its validation (ReadingList, ReadingListBinding, CitationValidator, CitationExcerpt, CitationKinds with <kinds> and <marker-syntaxes>, CitationMarkerSyntax, PageArchive with max-chars and retention-days, CitationDto), research findings (research.recordFinding, listFindings, readSource) and kept research runs (research.saveReport, ResearchRuns, tl.ai.execution:ResearchRun).
 order: 66
 ---
 
@@ -19,9 +19,76 @@ order: 66
 
 ## Citations
 
-An answer cites with links in its text, `[Summer party](tl:GenericObject:11047)` or `[Source](https://...)`, and calls no tool for it (package `citation/`). The **system writes the reading list**: every read tool puts what it read on the run's `ReadingList` - objects where `ReadFilter` discloses an identity, pages in `webFetch` and the browser, an application's records through `ToolExecutionContext.readSource` - and `CitationValidator` keeps a link as a footnote only when it points at an entry of that list, of a kind declared in `CitationKinds`. A subagent's sources join the lead's list when its result is delivered.
+An answer points at its sources **in its text, with a link**, and calls no tool for it (package `citation/`):
 
-Every page that enters a reading list is archived by `PageArchive` (`tl.ai.execution:ArchivedPage`, bounded and with retention), and its footnote offers the copy, served by `/archived-page/{handle}` ([served content](doc:ai/chat-ui#served-content)). An application adds its own marker syntax with a `CitationMarkerSyntax` in `<marker-syntaxes>`. `tl-chat/doc/citation-contract.md` is the contract between the server and the chat.
+```markdown
+[Sommerfest](tl:GenericObject:11047) und [Herbstmarkt](tl:GenericObject:11048) sind geplant;
+das Fest ist [laut Programm](https://www.example.org/sommerfest "Das Sommerfest findet am 4. Juli statt.").
+```
+
+`tl:<id>` points at an object by the id a tool printed for it, an `http(s)` address at a web page; the link text is the part of the sentence the source supports, and an optional link title is the source's sentence the statement rests on, copied verbatim. Albert's `<cite>` prompt section says so; a host agent with its own prompt that should cite needs the same section.
+
+### The reading list
+
+**The system writes the reading list; the model only points.** `ReadingList` holds the `ReadSource`s (`tl-ai-tool-api`) of one run; it lives on the run's `ToolContext` and is shared by every copy of it, so the tools of a parallel batch register into the same list. Code below a tool registers through `ReadingListBinding`, which `ToolExecutions.execute` binds around every call.
+
+| Source | Registered by | Kind |
+|---|---|---|
+| an object a read tool showed - `query`, `present`, a script tool, `getInstance`, `listInstances` | `ReadFilter` where it discloses an identity (`_tid`/`_display`, `label [id:TID]`); `getInstance`, `listInstances`, `readText`, `viewDocument` explicitly | the first declared kind whose `types` cover the object's type, else `object` |
+| a web page | `webFetch` and the browser's full renders (`browserNavigate`, `browserSnapshot`), through `WebSources` | `web` |
+| an application's own record | the application's tool, `ToolExecutionContext.readSource(...)` | the application's kind |
+
+A `webSearch` hit is not registered: a result nobody opened was not read. A run keeps at most 5000 sources; the transcript records the first 500 of each turn (`Turn#sources`, `TurnDto.sources`) without the read text. A subagent's list joins the lead's when its result is **delivered** - when a delegation returns, when `wait_for_subagent` hands the result over, or when `AgentLoop.injectSubagentResults` injects it; a `SubagentJob` carries the child's list for that. Merging on delivery rather than writing through to the parent's list is what lets a detached subagent outlive the run that spawned it.
+
+### The validator
+
+`CitationValidator.apply(log, answer, readingList)` runs at the end of an `AgentRunner` run, before the transcript is completed. For every marker of the turn's texts, outside code spans and fenced blocks:
+
+1. A reference that names a source on the reading list, of a **declared kind**, becomes a footnote `[n]` behind the marker's text, numbered per answer in reading order; a source cited twice keeps its number.
+2. A `tl:` reference that names nothing read loses its link and keeps its text.
+3. An `http(s)` address that names nothing read but occurs in the turn's tool results or in the user's message - a search hit, a page `publishPage` returned - stays an ordinary link; any other address is invented and loses its link.
+4. In an answer that cites, a `[n]` the model wrote itself is written `&#91;n&#93;`, so it cannot pass for a footnote. An answer that cites nothing is not touched.
+
+Images, relative links and links of other schemes are no markers. `CitationExcerpt` produces what the popover shows from what the tool read (`ReadSource.text`), never from the raw transport format: a window around the passage, highlighted, when the link title is a passage of at least 12 characters the read text contains and the kind has `passage="true"`; else the opening sentences of a page, an object's own prose field or its `label: value` fields, or the title.
+
+### Kinds
+
+`kind` is a vocabulary the application owns, in the `CitationKinds` service; the tool that read a source decides its kind, not the model. The framework declares `web` (a page `webFetch` or the browser read) and `object` (an object of a type no other kind claims):
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+	<instance>
+		<kinds>
+			<kind name="invoice" description="an invoice of this application" types="billing:Invoice" passage="false">
+				<label>
+					<de>Rechnung</de>
+					<en>Invoice</en>
+				</label>
+			</kind>
+		</kinds>
+	</instance>
+</config>
+```
+
+- **`types`** - the qualified model types whose objects are sources of this kind (a subtype counts); an object is registered with the first kind that claims it.
+- A source whose kind nobody declared is not cited (DEBUG log); outside an application (a unit test) nothing is refused for that.
+- **`passage="false"`** - a structured object: its popover shows the fields the tool read, not a window of text.
+- **`label`** - what the sources rail and the popover show, in the reader's language (`CitationDto.kindLabel`); a `web` source shows its host instead.
+
+An application whose agents cite another way registers a `CitationMarkerSyntax` in `<marker-syntaxes>` of `CitationKinds` (`<syntax class="com.example.RecordCodeMarkers"/>`). A syntax only finds markers - positions, the text to keep, the references named; whether a reference holds is the reading list's answer, so the application's tools register what they read with `context.readSource(new ReadSource(kind, code, title, ...))` under the reference the markers name. The link syntax (`LinkMarkers`) is asked first, and a marker overlapping an earlier one is ignored. `RecordCodeMarkers` in the tests reads codes in parentheses, `(FACT-001, DEC-002)`.
+
+### The page archive
+
+Every page that enters a reading list is archived by `PageArchive` as a `tl.ai.execution:ArchivedPage` - extracted text (a `tl.core:Binary`), title, address, fetch time:
+
+- in its own transaction on its own thread, so a copy is never rolled back with a turn;
+- **what the run read, not more**: a long document read in windows (`webFetch` with `offset`) is kept as every window read, in document order, with `[...]` for a part left out - the same text the reading list checks a quoted passage against; each further window extends the same copy under the same handle;
+- bounded by `max-chars` per copy (default 1 000 000, also the bound of the reading list's text), `retention-days` (default 90, 0 keeps all, purged daily) and `enabled`; the same page with the same text read again by the same account is stored once per process;
+- served at `/archived-page/{handle}` ([served content](doc:ai/chat-ui#served-content)).
+
+### Wire and rendering
+
+`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `kindLabel`, `id`, `label`, `url`, `passage`, `excerpt`, `archiveUrl`, `archivedAt`) travels on `message_complete` and on the persisted `TextPartDto`, so a reload restores the same footnotes; `toolName` and `toolCallId` are empty for a citation found through the reading list. The chat renders `[n]` as a small number after the marker's text (a keyboard-reachable `<button>` with `data-citation-id`); hover or focus opens a popover with the kind's icon, the label, the origin, the excerpt or fields, and the archived copy beside the live page. A click opens the source - `messageAnnotations.render` decides for a host kind, else the web default opens the page. The sources rail lists every source of the conversation once, with its marker numbers; its badge counts the sources of the newest answer (`latestAnswerSources`).
 
 The same `ReadingList` holds the `SeenUrls` ledger that [URL provenance](doc:ai/security/browsing-governance#url-provenance) checks.
 

@@ -274,6 +274,9 @@ public class ReactAccordionControl extends ReactControl implements ChildRevealer
 				sectionInfo.put(AccordionState.Section.ICON__PROP, section.getIcon());
 			}
 			sectionInfo.put(AccordionState.Section.EXPANDED__PROP, _expanded.contains(id));
+			if (section.isHidden()) {
+				sectionInfo.put(AccordionState.Section.HIDDEN__PROP, Boolean.TRUE);
+			}
 			if (section.getActions() != null) {
 				sectionInfo.put(AccordionState.Section.ACTIONS__PROP, section.getActions());
 			}
@@ -286,6 +289,35 @@ public class ReactAccordionControl extends ReactControl implements ChildRevealer
 		putState(AccordionState.SECTIONS__PROP, sectionList);
 	}
 
+	/**
+	 * Leaves the section with the given ID out of the accordion, header included, or shows it
+	 * again.
+	 *
+	 * <p>
+	 * The section keeps its content and its expansion.
+	 * </p>
+	 *
+	 * @param sectionId
+	 *        The ID of the section.
+	 * @param hidden
+	 *        Whether the section is left out.
+	 */
+	public void setSectionHidden(String sectionId, boolean hidden) {
+		AccordionSection section = findSection(sectionId);
+		if (section.isHidden() == hidden) {
+			return;
+		}
+		section.withHidden(hidden);
+		writeSections();
+	}
+
+	/**
+	 * Whether the section with the given ID is left out of the accordion.
+	 */
+	public boolean isSectionHidden(String sectionId) {
+		return findSection(sectionId).isHidden();
+	}
+
 	private AccordionSection findSection(String sectionId) {
 		AccordionSection section = _sections.get(sectionId);
 		if (section == null) {
@@ -296,12 +328,16 @@ public class ReactAccordionControl extends ReactControl implements ChildRevealer
 
 	/**
 	 * The header actions of all sections and the content of the expanded ones: the content of a
-	 * collapsed section is rendered but hidden.
+	 * collapsed section is rendered but hidden. A {@link #setSectionHidden(String, boolean) hidden}
+	 * section shows neither.
 	 */
 	@Override
 	public List<ReactControl> visibleChildren() {
 		List<ReactControl> result = new ArrayList<>();
 		for (AccordionSection section : _sections.values()) {
+			if (section.isHidden()) {
+				continue;
+			}
 			String id = section.getId();
 			if (section.getActions() != null) {
 				result.add(section.getActions());

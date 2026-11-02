@@ -77,7 +77,7 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
 
 		@Override
 		@ItemDefault(IFrameLayoutControlProvider.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {

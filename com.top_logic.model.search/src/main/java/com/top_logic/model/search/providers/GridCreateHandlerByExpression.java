@@ -57,7 +57,7 @@ public class GridCreateHandlerByExpression extends AbstractGridCreateHandler {
 		@NonNullable
 		@ItemDefault
 		@ImplementationClassDefault(ConstantCreateTypeOptions.class)
-		PolymorphicConfiguration<CreateTypeOptions> getTypeOptions();
+		PolymorphicConfiguration<? extends CreateTypeOptions> getTypeOptions();
 
 		/**
 		 * Optional function linking the new object to its context.

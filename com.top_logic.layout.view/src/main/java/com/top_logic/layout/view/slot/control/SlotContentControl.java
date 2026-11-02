@@ -24,8 +24,19 @@ import com.top_logic.layout.view.slot.SlotRegistry;
  * {@code createControl(...)} call in the declaring view's {@link com.top_logic.layout.view.ViewContext},
  * so their channel references resolve in that local scope rather than in the slot host's scope.
  * </p>
+ *
+ * <p>
+ * A contribution the registry marks as {@link #setUnrouted(boolean) reaching no slot} carries the
+ * {@link #putDiagnostic(String, Object) diagnostic} {@link #UNROUTED}, which the UI inspector shows.
+ * </p>
  */
 public class SlotContentControl extends ReactControl implements SlotContribution {
+
+	/**
+	 * Name of the {@link #putDiagnostic(String, Object) diagnostic} marking a contribution that the
+	 * interaction displaying it has routed to no slot.
+	 */
+	public static final String UNROUTED = "unrouted";
 
 	private static final String REACT_MODULE = "TLSlotContent";
 
@@ -36,6 +47,10 @@ public class SlotContentControl extends ReactControl implements SlotContribution
 	private final SlotRegistry _slotRegistry;
 
 	private final List<ReactControl> _controls;
+
+	private final boolean _optional;
+
+	private final String _source;
 
 	private SlotHandle _handle;
 
@@ -52,14 +67,20 @@ public class SlotContentControl extends ReactControl implements SlotContribution
 	 *        The registry to register with on attach.
 	 * @param controls
 	 *        The contributed child controls, already created in the declaring view's context.
+	 * @param optional
+	 *        See {@link #isOptional()}.
+	 * @param source
+	 *        See {@link #getSource()}.
 	 */
 	public SlotContentControl(ReactContext context, String slotName, SlotPath slotPath,
-			SlotRegistry slotRegistry, List<? extends ReactControl> controls) {
+			SlotRegistry slotRegistry, List<? extends ReactControl> controls, boolean optional, String source) {
 		super(context, null, REACT_MODULE);
 		_slotName = slotName;
 		_slotPath = slotPath;
 		_slotRegistry = slotRegistry;
 		_controls = List.copyOf(controls);
+		_optional = optional;
+		_source = source;
 	}
 
 	@Override
@@ -75,6 +96,26 @@ public class SlotContentControl extends ReactControl implements SlotContribution
 	@Override
 	public List<ReactControl> getControls() {
 		return _controls;
+	}
+
+	@Override
+	public boolean isOptional() {
+		return _optional;
+	}
+
+	@Override
+	public String getSource() {
+		return _source;
+	}
+
+	@Override
+	public boolean isUnrouted() {
+		return diagnostics().containsKey(UNROUTED);
+	}
+
+	@Override
+	public void setUnrouted(boolean unrouted) {
+		putDiagnostic(UNROUTED, unrouted ? Boolean.TRUE : null);
 	}
 
 	@Override

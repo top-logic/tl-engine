@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<accordion>
+		<section id="guarded">
+			<access-control
+				inputs="object"
+				object="$object"
+				operation="Read"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</section>
+		<section id="placeholder">
+			<access-control
+				denied="placeholder"
+				inputs="object"
+				object="$object"
+				operation="Read"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</section>
+		<section id="open">
+			<panel/>
+		</section>
+	</accordion>
+</view>

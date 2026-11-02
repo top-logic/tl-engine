@@ -159,7 +159,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Override
 		@ClassDefault(TableComponent.class)

@@ -46,7 +46,7 @@ public class ConfigurationAttributeChange extends ConfiguredItemChangeRewriter<C
 		 * which is the new value for the attribute.</li>
 		 * </ul>
 		 */
-		PolymorphicConfiguration<Mapping<? super ConfigurationItem, Object>> getMapping();
+		PolymorphicConfiguration<? extends Mapping<? super ConfigurationItem, Object>> getMapping();
 
 	}
 

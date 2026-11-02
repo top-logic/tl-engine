@@ -752,9 +752,9 @@ public class TestRequestLock extends AbstractLayoutTest {
 	 * This method tests the failure described in Ticket #641 Comment:9
 	 * <p>
 	 * Assuming a reader enters the lock and before leaving the lock
-	 * {@link com.top_logic.base.services.simpleajax.RequestLock.Options#MAX_WRITERS} many writer
+	 * {@link com.top_logic.base.services.simpleajax.RequestLock.Options#getMaxWriters()} many writer
 	 * enter the lock. Then they all wait for the reader and the writer counter is set to
-	 * {@link com.top_logic.base.services.simpleajax.RequestLock.Options#MAX_WRITERS} if they all
+	 * {@link com.top_logic.base.services.simpleajax.RequestLock.Options#getMaxWriters()} if they all
 	 * timed out the counter is not reset and when the reader has left the lock no other writer can
 	 * enter the lock; it dies with a {@link MaxRequestNumberException}.
 	 * 

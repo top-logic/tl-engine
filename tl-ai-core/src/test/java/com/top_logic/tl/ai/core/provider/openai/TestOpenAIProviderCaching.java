@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -23,7 +24,7 @@ public class TestOpenAIProviderCaching extends TestCase {
 
 	/** */
 	public void testRequestIncludesStoreTrue() throws Exception {
-		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key");
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(FixedCredentials.NONE);
 
 		UserMessage msg = new UserMessage(
 			UUID.randomUUID().toString(),

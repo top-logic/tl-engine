@@ -6,12 +6,17 @@
 package com.top_logic.element.config;
 
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
+import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.element.model.DynamicModelService.Config.ModuleSetting;
+import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
+import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -69,13 +74,44 @@ public interface SingletonConfig extends TypeRef {
 		 * Creates a {@link SingletonConfig.LocalTypeMapping}.
 		 */
 		public LocalTypeMapping(DeclarativeFormOptions options) {
-			ModuleConfig module = (ModuleConfig) options.get(DeclarativeFormBuilder.FORM_MODEL);
-			_moduleName = module.getName();
+			_moduleName = moduleName(options);
+		}
+
+		/**
+		 * The name of the module the edited singleton is defined in.
+		 * 
+		 * <p>
+		 * In the model editor, the singleton is defined in the {@link ModuleConfig} being the form
+		 * model. In the configuration of the {@link DynamicModelService} (e.g. in the service
+		 * editor), the singleton is defined in a {@link ModuleSetting} somewhere in the edited
+		 * configuration, so the module is searched in the enclosing configurations.
+		 * </p>
+		 */
+		private static String moduleName(DeclarativeFormOptions options) {
+			for (FormContainer container = options.getContainer(); container != null; container =
+				container.getParent()) {
+				Object model = EditorFactory.getModel(container);
+				if (model instanceof ModuleConfig module) {
+					return module.getName();
+				}
+				if (model instanceof ModuleSetting setting) {
+					return setting.getName();
+				}
+			}
+			ConfigurationItem formModel = options.get(DeclarativeFormBuilder.FORM_MODEL);
+			if (formModel instanceof ModuleConfig module) {
+				return module.getName();
+			}
+			return null;
 		}
 
 		@Override
 		protected TLModelPart resolveName(String name) throws ConfigurationException {
 			if (name.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR) < 0) {
+				if (_moduleName == null) {
+					throw new ConfigurationException(I18NConstants.ERROR_UNKNOWN_SINGLETON_MODULE__TYPE.fill(name),
+						TYPE_SPEC, name);
+				}
 				TLModule module = TLModelUtil.findModule(_moduleName);
 				if (name.indexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR) < 0) {
 					return TLModelUtil.findType(module, name);

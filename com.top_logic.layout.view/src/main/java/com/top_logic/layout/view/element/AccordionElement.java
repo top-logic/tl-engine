@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -45,6 +47,7 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
+import com.top_logic.layout.view.security.UnitHiding;
 
 /**
  * UIElement that wraps {@link ReactAccordionControl}.
@@ -88,6 +91,7 @@ public class AccordionElement implements UIElement {
 	 * Configuration for {@link AccordionElement}.
 	 */
 	@TagName("accordion")
+	@TypeIcon("css:bi bi-chevron-bar-expand")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -251,6 +255,7 @@ public class AccordionElement implements UIElement {
 
 		RevealPath here = RevealPath.of(context);
 		List<AccordionSection> sections = new ArrayList<>();
+		Map<String, UnitHiding> hidings = new LinkedHashMap<>();
 		List<ViewCommandModel> commandModels = new ArrayList<>();
 		for (SectionEntry entry : _sections) {
 			ContentSection section = entry._section();
@@ -285,11 +290,17 @@ public class AccordionElement implements UIElement {
 					.withExpanded(storedExpansion != null ? storedExpansion.booleanValue() : entry._expanded())
 					.withIcon(section.getIcon())
 					.withActions(actions);
+			UnitHiding hiding = section.hiding(context);
+			if (hiding != null) {
+				accordionSection.withHidden(hiding.isHidden());
+				hidings.put(id, hiding);
+			}
 			sections.add(accordionSection);
 		}
 
 		ReactAccordionControl accordion = new ReactAccordionControl(context, null, sections, _exclusive);
 		accordion.setCssClass(_cssClass);
+		hidings.forEach((id, hiding) -> hiding.bind(accordion, hidden -> accordion.setSectionHidden(id, hidden)));
 
 		if (key != null) {
 			accordion.addExpansionListener((control, sectionId, expanded) -> saveExpansion(key, sectionId, expanded));

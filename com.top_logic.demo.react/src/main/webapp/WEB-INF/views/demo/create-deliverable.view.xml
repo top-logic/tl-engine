@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a deliverable (a specification, prototype or report) inside a project.
+	
+	"model" carries the transient deliverable of the kind the user chose (bound by the opening
+	command); "container" is the project the deliverable belongs to. The Create button persists it
+	with <persist-transient> and adds it to ProjectScope#deliverables of the container. Its intrinsic
+	rule offers it only while the user may create a deliverable in the project.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="container"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New deliverable</en>
+			<de>Neuer Liefergegenstand</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<persist-transient
+						container="container"
+						reference="deliverables"
+					/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

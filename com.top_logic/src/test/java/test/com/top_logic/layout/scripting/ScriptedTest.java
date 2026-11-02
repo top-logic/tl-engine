@@ -233,6 +233,14 @@ public final class ScriptedTest extends LogListeningTestCase implements Scripted
 				account = processId;
 			}
 			_logins.put(processId, account);
+
+			ApplicationSession ended = _sessionByProcessId.get(processId);
+			if (ended != null && ended.isInvalid()) {
+				// The application has ended the session of this process, e.g. by a restart of its
+				// services. The login starts a new one.
+				_sessionByProcessId.remove(processId);
+				invalidateSession(ended);
+			}
 		} else if (action instanceof DynamicAction) {
 			String processId = processId(parentProcessId, action);
 			Person testingPerson = getPersonById(processId);

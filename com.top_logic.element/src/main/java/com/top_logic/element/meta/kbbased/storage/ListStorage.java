@@ -10,12 +10,16 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.MutableList;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
@@ -36,6 +40,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
+import com.top_logic.knowledge.service.db2.IndexedLinkQuery;
 import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
@@ -48,6 +53,13 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link LinkStorage} that keeps the order of objects.
+ * 
+ * <p>
+ * A reference that is no {@link TLStructuredTypePart#isBag() bag} holds each value at most once:
+ * Adding a value that the reference already contains does nothing, the value keeps its position.
+ * Setting values that contain a value more than once keeps its first occurrence. A
+ * {@link TLStructuredTypePart#isBag() bag} holds each value as often as it is added or set.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -66,6 +78,14 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	private OrderedLinkQuery<KnowledgeAssociation> _outgoingQuery;
 
 	/**
+	 * Index of the links by their destination, or <code>null</code> for a
+	 * {@link TLStructuredTypePart#isBag() bag}.
+	 * 
+	 * @see #containsAttributeValue(TLObject, TLStructuredTypePart, Object)
+	 */
+	private IndexedLinkQuery<KnowledgeItem, KnowledgeAssociation> _liveQuery;
+
+	/**
 	 * Creates a {@link ListStorage} from configuration.
 	 * 
 	 * @param context
@@ -81,6 +101,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	@Override
 	protected void initReference(TLStructuredTypePart attribute) {
 		_outgoingQuery = createLiveListQuery(attribute);
+		_liveQuery = attribute.isBag() ? null : LinkStorageUtil.createLiveQuery(attribute, this);
 		super.initReference(attribute);
 	}
 
@@ -89,10 +110,22 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		return _outgoingQuery;
 	}
 
+	/**
+	 * Appends the given value to the end of the list.
+	 * 
+	 * <p>
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, a value that the list
+	 * already contains is not added again, it keeps its position.
+	 * </p>
+	 */
 	@Override
 	public final void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object newValue)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		this.checkAddValue(object, attribute, newValue);
+
+		if (!attribute.isBag() && containsAttributeValue(object, attribute, newValue)) {
+			return;
+		}
 
 		newValue = toStorageObject(newValue);
 		KnowledgeAssociation link =
@@ -141,6 +174,29 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		} catch (DataObjectException ex) {
 			throw new AttributeException("Failed to remove value from '" + attribute + "': " + aValue, ex);
 		}
+	}
+
+	/**
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, the value is looked up
+	 * by its {@link TLObject#tHandle() handle} in the indexed live link map of the object, at
+	 * constant cost per element (see
+	 * {@link AbstractWrapper#resolveLinks(TLObject, com.top_logic.knowledge.service.db2.AbstractAssociationQuery)}).
+	 * For a bag, the whole value is read.
+	 * 
+	 * <p>
+	 * The index holds one link per destination. It is exact, since this storage keeps each value
+	 * of a reference that is no bag at most once.
+	 * </p>
+	 */
+	@Override
+	public boolean containsAttributeValue(TLObject object, TLStructuredTypePart attribute, Object entry) {
+		if (_liveQuery == null) {
+			return super.containsAttributeValue(object, attribute, entry);
+		}
+		if (entry == null) {
+			return false;
+		}
+		return LinkStorageUtil.linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(entry)) != null;
 	}
 
 	@Override
@@ -192,6 +248,22 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		}
 	}
 
+	/**
+	 * Updates the links to the given new values.
+	 * 
+	 * <p>
+	 * The longest prefix of the current links whose targets occur in the given values in the same
+	 * order is kept. All other current links are deleted first. Then the links to the remaining new
+	 * values are created and inserted into the sort-order gaps between the kept links. Therefore,
+	 * at no point in time two links point to the same target, unless the attribute is a
+	 * {@link TLStructuredTypePart#isBag() bag} and the new values contain a target more than once.
+	 * </p>
+	 * 
+	 * <p>
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, only the first
+	 * occurrence of a value in the given values is stored, later occurrences are dropped.
+	 * </p>
+	 */
 	private void trySetAttributeValue(TLObject base, TLStructuredTypePart attribute, Object newValue)
 			throws DataObjectException {
 		if (newValue != null && !(newValue instanceof Collection)) {
@@ -201,46 +273,50 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 
 		List<KnowledgeAssociation> links = links(base);
 
-		Iterator<?> srcIt = newValues.iterator();
-		int destPos = 0;
+		// The values already taken, or null for a bag that takes every value.
+		Set<TLObject> taken = attribute.isBag() ? null : new HashSet<>();
 
-		// New entries in front of the link at destPos, inserted together to space them evenly in
-		// the sort-order gap before that link.
-		List<KnowledgeAssociation> newLinks = list();
-
-		TLObject src = null;
-		while (srcIt.hasNext()) {
-			src = (TLObject) toStorageObject(srcIt.next());
-
-			if (destPos < links.size()) {
-				KnowledgeAssociation link = links.get(destPos);
-				if (link.getDestinationIdentity().equals(src.tHandle().tId())) {
-					// Entry exists, insert the new entries before it and advance pointers.
-					destPos = insertAll(links, destPos, newLinks);
-					newLinks = list();
-					destPos++;
-				} else {
-					// New entry.
-					newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, src, this));
-				}
-				src = null;
+		// Match the new values against the current links: For each kept link, the new values in
+		// front of it.
+		List<List<TLObject>> valuesBeforeKept = list();
+		List<TLObject> pending = list();
+		int keptCount = 0;
+		for (Object value : newValues) {
+			TLObject src = (TLObject) toStorageObject(value);
+			if (taken != null && !taken.add(src)) {
+				continue;
+			}
+			if (keptCount < links.size()
+				&& links.get(keptCount).getDestinationIdentity().equals(src.tHandle().tId())) {
+				valuesBeforeKept.add(pending);
+				pending = list();
+				keptCount++;
 			} else {
-				// Reached the end of the current link list, add all at the end.
-				break;
+				pending.add(src);
 			}
 		}
-		destPos = insertAll(links, destPos, newLinks);
 
-		if (destPos < links.size()) {
-			assert src == null && !srcIt.hasNext();
-
-			// Remove tail.
-			for (int n = links.size() - 1; n >= destPos; n--) {
-				DBKnowledgeAssociation.clearReferencesAndRemoveLink(links.get(n));
-			}
-		} else {
-			appendAll(attribute, links, src, srcIt);
+		// Delete the links that are not kept, before creating new links.
+		for (int n = links.size() - 1; n >= keptCount; n--) {
+			DBKnowledgeAssociation.clearReferencesAndRemoveLink(links.get(n));
 		}
+
+		// Insert the new values in front of the kept links, inserted together to space them evenly
+		// in the sort-order gap before that link.
+		int destPos = 0;
+		for (List<TLObject> values : valuesBeforeKept) {
+			destPos = insertAll(links, destPos, createLinks(attribute, values));
+			destPos++;
+		}
+		links.addAll(createLinks(attribute, pending));
+	}
+
+	private List<KnowledgeAssociation> createLinks(TLStructuredTypePart attribute, List<TLObject> values) {
+		List<KnowledgeAssociation> newLinks = list();
+		for (TLObject value : values) {
+			newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, value, this));
+		}
+		return newLinks;
 	}
 
 	/**
@@ -255,23 +331,6 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		}
 		links.addAll(destPos, newLinks);
 		return destPos + newLinks.size();
-	}
-
-	/**
-	 * Appends links to the given first element (if not <code>null</code>) and to all remaining
-	 * elements of the given iterator.
-	 */
-	private void appendAll(TLStructuredTypePart attribute, List<KnowledgeAssociation> links,
-			TLObject first, Iterator<?> srcIt) {
-		List<KnowledgeAssociation> newLinks = list();
-		if (first != null) {
-			newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, first, this));
-		}
-		while (srcIt.hasNext()) {
-			TLObject src = (TLObject) toStorageObject(srcIt.next());
-			newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, src, this));
-		}
-		links.addAll(newLinks);
 	}
 
 	@Override
@@ -297,9 +356,111 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		return true;
 	}
 
+	/**
+	 * The live list of the values.
+	 * 
+	 * <p>
+	 * For an attribute that is no {@link TLStructuredTypePart#isBag() bag}, the list holds each
+	 * value at most once: Adding or setting a value that the list contains at another position
+	 * does nothing.
+	 * </p>
+	 */
 	@Override
 	public List<?> getLiveCollection(TLObject object, TLStructuredTypePart attribute) {
-		return AbstractWrapper.resolveOrderedValue(object, getOutgoingQuery(), TLObject.class);
+		List<TLObject> values = AbstractWrapper.resolveOrderedValue(object, getOutgoingQuery(), TLObject.class);
+		if (attribute.isBag()) {
+			return values;
+		}
+		return new NoDuplicatesList(object, attribute, values);
+	}
+
+	/**
+	 * Live list of a reference that is no {@link TLStructuredTypePart#isBag() bag}.
+	 * 
+	 * <p>
+	 * Adding or setting a value that the list contains at another position does nothing. Whether
+	 * the list contains a value is answered by
+	 * {@link ListStorage#containsAttributeValue(TLObject, TLStructuredTypePart, Object)}.
+	 * </p>
+	 */
+	private final class NoDuplicatesList extends MutableList<TLObject> {
+
+		private final TLObject _object;
+
+		private final TLStructuredTypePart _attribute;
+
+		private final List<TLObject> _values;
+
+		/**
+		 * Creates a {@link NoDuplicatesList}.
+		 * 
+		 * @param object
+		 *        The object whose values are accessed.
+		 * @param attribute
+		 *        The accessed attribute.
+		 * @param values
+		 *        The live list of the values.
+		 */
+		NoDuplicatesList(TLObject object, TLStructuredTypePart attribute, List<TLObject> values) {
+			_object = object;
+			_attribute = attribute;
+			_values = values;
+		}
+
+		@Override
+		public TLObject get(int index) {
+			return _values.get(index);
+		}
+
+		@Override
+		public int size() {
+			return _values.size();
+		}
+
+		@Override
+		public boolean contains(Object o) {
+			return containsAttributeValue(_object, _attribute, o);
+		}
+
+		@Override
+		public TLObject remove(int index) {
+			return _values.remove(index);
+		}
+
+		@Override
+		public TLObject set(int index, TLObject element) {
+			TLObject current = _values.get(index);
+			if (current != element && contains(element)) {
+				return current;
+			}
+			return _values.set(index, element);
+		}
+
+		@Override
+		public boolean add(TLObject element) {
+			if (contains(element)) {
+				return false;
+			}
+			_values.add(element);
+			return true;
+		}
+
+		@Override
+		public void add(int index, TLObject element) {
+			if (index < 0 || index > size()) {
+				throw new IndexOutOfBoundsException("Index: " + index + ", size: " + size());
+			}
+			if (contains(element)) {
+				return;
+			}
+			_values.add(index, element);
+		}
+
+		@Override
+		public void sort(Comparator<? super TLObject> c) {
+			_values.sort(c);
+		}
+
 	}
 
 	private OrderedLinkQuery<KnowledgeAssociation> createLiveListQuery(TLStructuredTypePart attribute) {

@@ -147,13 +147,13 @@ public class TestNamedInstanceConfig extends AbstractTypedConfigurationTestCase 
 		Map<String, NamedInstanceConfig<Foo>> getMapInstances();
 
 		@Key(NamedPolymorphicConfiguration.NAME_ATTRIBUTE)
-		List<NamedPolymorphicConfiguration<Foo>> getListGenerics();
+		List<NamedPolymorphicConfiguration<? extends Foo>> getListGenerics();
 
 		@Key(NamedPolymorphicConfiguration.NAME_ATTRIBUTE)
-		Collection<NamedPolymorphicConfiguration<Foo>> getCollectionGenerics();
+		Collection<NamedPolymorphicConfiguration<? extends Foo>> getCollectionGenerics();
 
 		@Key(NamedPolymorphicConfiguration.NAME_ATTRIBUTE)
-		Map<String, NamedPolymorphicConfiguration<Foo>> getMapGenerics();
+		Map<String, NamedPolymorphicConfiguration<? extends Foo>> getMapGenerics();
 	}
 
 	public void testListSingletonInstances() throws ConfigurationException {

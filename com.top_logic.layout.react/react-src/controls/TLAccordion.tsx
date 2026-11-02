@@ -45,7 +45,8 @@ function idFragment(sectionId: string): string {
 const TLAccordion: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<AccordionStateJson>>();
   const sendCommand = useTLCommand();
-  const sections = (state.sections ?? []) as SectionInfo[];
+  // A hidden section is left out, header included.
+  const sections = ((state.sections ?? []) as SectionInfo[]).filter(section => !section.hidden);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
   const surface = useSurface();
   // The accordion is a surface; its sections keep the insets of where it stands, and on a floating surface its level.

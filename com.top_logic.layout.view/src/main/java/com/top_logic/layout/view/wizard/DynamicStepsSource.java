@@ -179,6 +179,11 @@ public class DynamicStepsSource implements WizardStepSource {
 		 * </pre>
 		 *
 		 * <p>
+		 * An internationalized text the expression answers, e.g.
+		 * <code>#('Role'@en, 'Rolle'@de)</code>, is shown in the language of the user.
+		 * </p>
+		 *
+		 * <p>
 		 * Without one, the element is named as it is named everywhere else in the application.
 		 * </p>
 		 */
@@ -312,12 +317,16 @@ public class DynamicStepsSource implements WizardStepSource {
 	}
 
 	/**
-	 * The name of the given element's step: what the label function answers, or how the element is
-	 * named everywhere else in the application.
+	 * The name of the given element's step: the internationalized text the label function answers,
+	 * e.g. <code>#('Role'@en, 'Rolle'@de)</code>, or how its answer, or without one the element
+	 * itself, is named everywhere else in the application.
 	 */
 	private ResKey label(List<ViewChannel> inputs, Object element) {
-		String text = _label != null ? asText(_label.execute(ChannelInputs.arguments(inputs, element)))
-			: MetaLabelProvider.INSTANCE.getLabel(element);
+		Object value = _label != null ? _label.execute(ChannelInputs.arguments(inputs, element)) : element;
+		if (value instanceof ResKey key) {
+			return key;
+		}
+		String text = MetaLabelProvider.INSTANCE.getLabel(value);
 		return StringServices.isEmpty(text) ? null : ResKey.text(text);
 	}
 

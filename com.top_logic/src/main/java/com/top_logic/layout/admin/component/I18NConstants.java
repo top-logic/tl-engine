@@ -121,7 +121,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Message that storing is not possible for constraint violation reason. */
 	public static ResKey1 SERVICE_CONFIGURATION_INVALID__ERRORS;
 
-	/** Message that fetching configuration for a service was not possible. */
+	/**
+	 * @en The configuration of the service "{0}" could not be loaded.
+	 */
 	public static ResKey1 ERROR_GETTING_SERVICE_CONFIGURATION__SERVICE;
 
 	/** @en Reloading service {0} was not successful. */

@@ -2,9 +2,31 @@
 
 <!--
 	Drill-down through the project management data: projects, their milestones, the tickets of a
-	milestone, and finally one ticket. Every frame pushes the next one with the object it is
-	opened for, so a display target reaching one of these frames pushes exactly the same frame
-	and lands in the drill-down the user already has.
+	milestone, and finally one ticket. Every frame pushes the next one by the id of its <frame>
+	declaration, with the object it is opened for, so a display target reaching one of these frames
+	pushes exactly the same frame and lands in the drill-down the user already has.
+	
+	The <frame> declarations are nested the way the user drills down: the cockpit of a project
+	(project) is pushed from the overview, the milestone list (milestones), the notes (notes) and the
+	deliverables (deliverables) from the cockpit, the tickets of a milestone (milestone) from the milestone list, and one ticket
+	(ticket) from the tickets of its milestone. A push naming a frame that does not follow the one
+	it is displayed in is an error when that frame is built.
+	
+	The declarations put the drill-down path into the address bar, one route per frame:
+	project/<id> for the cockpit, milestones, notes and deliverables for the lists the cockpit tiles
+	open,
+	milestone/<id> for the tickets of a milestone and ticket/<id> for one ticket, each id the
+	objectId of the object. The lists take their project from the cockpit frame below them (a
+	<param> naming no placeholder of the route), so the address names the project once. A ticket
+	reached through the milestone list is
+	/view/projects/project/<id>/milestones/milestone/<id>/ticket/<id>. Opening such an address
+	restores the frames, and the back button walks out of them again; an address naming the frames
+	in another order than the nesting allows restores the frames up to the first one out of order.
+	
+	The declarations also name the frames: the crumb of an object's frame is the object's name or
+	title, the crumb of a list frame the name of the list. Neither the pushing frames nor the
+	display targets name the frames they push, so every frame of a view carries the same label,
+	however it is reached. The label of the ticket is the final title of the page.
 -->
 <view>
 	<channels>
@@ -24,6 +46,83 @@
 		<tile-stack
 			initial="projects/overview.view.xml"
 			path="navPath"
-		/>
+		>
+			<frame id="project"
+				route="project/:project"
+				view="projects/milestones.view.xml"
+			>
+				<param name="project"
+					expr="objectId($project)"
+					reverse="$value.objectResolve(`tl.demo.projectManagement:ProjectScope`)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="$project.get(`tl.demo.projectManagement:ProjectScope#name`)"
+					inputs="project"
+				/>
+				<frame id="milestones"
+					route="milestones"
+					view="projects/milestone-list.view.xml"
+				>
+					<param name="project"/>
+					<label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Milestones</en>
+							<de>Meilensteine</de>
+						</value>
+					</label>
+					<frame id="milestone"
+						route="milestone/:milestone"
+						view="projects/tickets.view.xml"
+					>
+						<param name="milestone"
+							expr="objectId($milestone)"
+							reverse="$value.objectResolve(`tl.demo.projectManagement:Milestone`)"
+						/>
+						<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+							expr="$milestone.get(`tl.demo.projectManagement:Milestone#name`)"
+							inputs="milestone"
+						/>
+						<frame id="ticket"
+							final-title="true"
+							route="ticket/:ticket"
+							view="projects/ticket-detail.view.xml"
+						>
+							<param name="ticket"
+								expr="objectId($ticket)"
+								reverse="$value.objectResolve(`tl.demo.projectManagement:Ticket`)"
+							/>
+							<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+								expr="$ticket.get(`tl.demo.projectManagement:Ticket#title`)"
+								inputs="ticket"
+							/>
+						</frame>
+					</frame>
+				</frame>
+				<frame id="notes"
+					route="notes"
+					view="projects/notes.view.xml"
+				>
+					<param name="project"/>
+					<label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Notes</en>
+							<de>Notizen</de>
+						</value>
+					</label>
+				</frame>
+				<frame id="deliverables"
+					route="deliverables"
+					view="projects/deliverables.view.xml"
+				>
+					<param name="project"/>
+					<label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Deliverables</en>
+							<de>Liefergegenstände</de>
+						</value>
+					</label>
+				</frame>
+			</frame>
+		</tile-stack>
 	</stack>
 </view>

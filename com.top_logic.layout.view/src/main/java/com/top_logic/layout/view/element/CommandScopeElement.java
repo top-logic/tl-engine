@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -54,6 +55,7 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	 * scope.
 	 * </p>
 	 */
+	@TypeIcon("css:bi bi-window")
 	public interface Config extends CommandCarrierElement.Config {
 
 		/** Configuration name for {@link #getCommandDisplay()}. */

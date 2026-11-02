@@ -1,0 +1,19 @@
+<model>
+	<module name="test.com.top_logic.xio.importer.test14">
+		<class name="Container">
+			<attributes>
+				<reference name="elements" type="Item" multiple="true" ordered="true" composite="true"/>
+			</attributes>
+		</class>
+
+		<class name="Item">
+			<attributes>
+				<property name="extId" type="tl.core:String"/>
+				<property name="name" type="tl.model.i18n:I18NString"/>
+				<property name="text" type="tl.model.i18n:I18NString"/>
+				<property name="languages" type="tl.core:String"/>
+				<reference name="children" type="Item" multiple="true" ordered="true" composite="true"/>
+			</attributes>
+		</class>
+	</module>
+</model>

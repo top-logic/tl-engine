@@ -39,6 +39,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentProgress;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
@@ -450,6 +451,7 @@ public class TestDeepResearchSkill extends BasicTestCase {
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
 				AgentPolicyService.Module.INSTANCE,
-				ResearchRuns.Module.INSTANCE));
+				ResearchRuns.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

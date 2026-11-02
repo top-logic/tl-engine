@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.tools.web;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -21,6 +22,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 
 /**
@@ -53,6 +56,12 @@ import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
  * search that is not sent - refused for its slot, or interrupted while it waits - takes no slot from
  * the searches after it.
  * </p>
+ *
+ * <p>
+ * Each attempt is authenticated by the engine's {@link CredentialProvider} at the moment it is sent.
+ * An answer {@code 401 Unauthorized} invalidates the credentials - a cached access token may have
+ * expired or been revoked - and the request is sent once more with fresh ones.
+ * </p>
  */
 final class SearchHttp {
 
@@ -82,6 +91,8 @@ final class SearchHttp {
 
 	private final HttpClient _client;
 
+	private final CredentialProvider _credentials;
+
 	private final Sleeper _sleeper;
 
 	private final Clock _clock;
@@ -99,29 +110,38 @@ final class SearchHttp {
 	 *        The name of the engine, for the messages.
 	 * @param client
 	 *        The client that sends the requests.
+	 * @param credentials
+	 *        Authenticates each request.
 	 * @param sleeper
 	 *        Waits between two attempts.
 	 * @param clock
 	 *        The clock a {@code Retry-After} date is compared with.
 	 */
-	SearchHttp(String engine, HttpClient client, Sleeper sleeper, Clock clock) {
+	SearchHttp(String engine, HttpClient client, CredentialProvider credentials, Sleeper sleeper, Clock clock) {
 		_engine = engine;
 		_client = client;
+		_credentials = credentials;
 		_sleeper = sleeper;
 		_clock = clock;
 	}
 
 	/**
-	 * Sends {@code request}, again after a rate limit or a temporary server failure.
+	 * Sends {@code request}, again after a rate limit, a temporary server failure, or a rejection of
+	 * its credentials.
 	 *
-	 * @return The first answer that is neither; it may still be an error, which the caller reports.
+	 * @param request
+	 *        The request without credentials; each attempt adds the current ones to a copy of it.
+	 * @return The first answer that is none of these; it may still be an error, which the caller
+	 *         reports.
 	 * @throws IOException
 	 *         When the request cannot be sent, or is still refused after {@link #MAX_RETRIES} retries,
 	 *         or the answer asks for a wait longer than {@link #MAX_WAIT}.
 	 */
-	HttpResponse<String> send(HttpRequest request) throws IOException, InterruptedException {
+	HttpResponse<String> send(HttpRequest.Builder request) throws IOException, InterruptedException {
 		Duration wait = Duration.ZERO;
-		for (int attempt = 0;; attempt++) {
+		boolean renewed = false;
+		int attempt = 0;
+		while (true) {
 			Instant now = _clock.instant();
 			Instant slot = reserveSlot(now, wait);
 			Duration untilSlot = Duration.between(now, slot);
@@ -142,10 +162,20 @@ final class SearchHttp {
 					throw ex;
 				}
 			}
+			HttpRequest authenticated = authenticate(request);
 			HttpResponse<String> response =
-				RunCancellationBinding.whileBlocked(() -> _client.send(request, BodyHandlers.ofString()));
+				RunCancellationBinding.whileBlocked(() -> _client.send(authenticated, BodyHandlers.ofString()));
 			learnPace(response);
 			int status = response.statusCode();
+			if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				_credentials.invalidate();
+				if (renewed) {
+					return response;
+				}
+				renewed = true;
+				wait = Duration.ZERO;
+				continue;
+			}
 			if (!retryable(status)) {
 				return response;
 			}
@@ -161,7 +191,15 @@ final class SearchHttp {
 			}
 			Logger.info(_engine + " search answered HTTP " + status + "; retrying in at least " + wait.toMillis()
 				+ " ms (retry " + (attempt + 1) + " of " + MAX_RETRIES + ").", SearchHttp.class);
+			attempt++;
 		}
+	}
+
+	/** A copy of {@code request} with the current credentials. */
+	private HttpRequest authenticate(HttpRequest.Builder request) {
+		HttpRequest.Builder result = request.copy();
+		_credentials.authenticate(RequestAuthentication.of(result));
+		return result.build();
 	}
 
 	/**

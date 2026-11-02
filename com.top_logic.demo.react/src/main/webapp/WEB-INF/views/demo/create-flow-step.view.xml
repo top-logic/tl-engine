@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a build step (test.flowchart:FlowNode) of a product of the flow diagram demo.
+	"model" carries the transient step, created in the context of the product bound to "container".
+	The Create button persists the step and adds it to Product#buildInstructions of the container,
+	so the diagram draws it; the steps it is built from are chosen as its inputs, which connects it
+	to them. The created step becomes the only element of "selection" (bound to the demo's
+	multi-selection selectedNode), so it is marked in the diagram and shown in Details.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="container"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New build step</en>
+			<de>Neuer Bauschritt</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="marker"/>
+			<field attribute="inputs"/>
+			<field attribute="image"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<persist-transient
+						container="container"
+						reference="buildInstructions"
+					>
+						<with-result>
+							<!-- The selection of the demo is a multi-selection: the new step becomes its only element. -->
+							<execute-script function="[$result]">
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</execute-script>
+							<close-dialog/>
+						</with-result>
+					</persist-transient>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

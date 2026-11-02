@@ -46,7 +46,7 @@ public class TestTypedConfigurationEquality extends AbstractTypedConfigurationTe
 		@Container
 		Example getContainer();
 
-		PolymorphicConfiguration<CI> getAConfig();
+		PolymorphicConfiguration<? extends CI> getAConfig();
 
 		@InstanceFormat
 		CI getA();

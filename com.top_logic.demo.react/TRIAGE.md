@@ -53,7 +53,7 @@ implemented in the current deliverable.
 
 | Area | Verdict | Needs |
 |------|---------|-------|
-| Security permission matrix (`SecurityMatrixElement`) | **Defer** | Reusable from `com.top_logic.layout.view/views/admin/permissions.view.xml`. |
+| Grant editor per type (operations of the `<security-config>`) | **Defer** | An editor for the grants of the `SecurityConfigurationService`, see #29856. |
 | BPE (business process) | **Defer** | `tl-bpe-app`. |
 | Reporting / office (Word/PowerPoint export, report templates) | **Defer** | `tl-reporting`, `tl-reporting-office`. The Excel export of tables is migrated (see above). |
 | Search | **Defer** | `tl-search-*`. |

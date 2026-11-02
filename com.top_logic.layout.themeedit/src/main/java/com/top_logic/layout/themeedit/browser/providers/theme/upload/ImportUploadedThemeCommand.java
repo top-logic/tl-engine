@@ -10,8 +10,10 @@ import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -57,9 +59,15 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 
 			private List<ThemeConfig> _themeConfigs = new ArrayList<>();
 
+			/**
+			 * Resource names of the directories into which zip entries were extracted.
+			 */
+			private Set<String> _extractedDirectories = new LinkedHashSet<>();
+
 			@Override
 			public void doImport() {
 				super.doImport();
+				refreshExtractedFiles();
 
 				try {
 					updateTransient();
@@ -72,6 +80,7 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 			protected void importZipEntry(ZipInputStream zipInputStream, ZipEntry zipEntry) {
 				try {
 					File extractedFile = createZipEntryFile(zipInputStream, zipEntry);
+					_extractedDirectories.add(getDirectoryResourceName(zipEntry));
 
 					if (isThemeConfigurationFile(zipEntry)) {
 						ThemeConfig themeConfig = ThemeUtil.readThemeConfigFile(extractedFile);
@@ -92,6 +101,12 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 				}
 
 				return file;
+			}
+
+			private String getDirectoryResourceName(ZipEntry zipEntry) {
+				String resourceName = FileUtilities.PATH_SEPARATOR
+					+ zipEntry.getName().replace("\\", FileUtilities.PATH_SEPARATOR);
+				return resourceName.substring(0, resourceName.lastIndexOf(FileUtilities.PATH_SEPARATOR) + 1);
 			}
 
 			private boolean isThemeConfigurationFile(ZipEntry zipEntry) {
@@ -118,6 +133,13 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 				File file = FileManager.getInstance().getIDEFile(MultiThemeFactory.THEMES_FOLDER_PATH);
 
 				return file.getParentFile().getParentFile();
+			}
+
+			private void refreshExtractedFiles() {
+				FileManager fileManager = FileManager.getInstance();
+				for (String directory : _extractedDirectories) {
+					fileManager.refresh(directory);
+				}
 			}
 
 			private void updateTransient() throws ThemeInitializationFailure {

@@ -157,7 +157,7 @@ public class LogParser extends AbstractConfiguredInstance<LogParser.Config> {
 		 * <code>null</code> means, everything is included.
 		 * </p>
 		 */
-		PolymorphicConfiguration<LogLineFilter> getFilter();
+		PolymorphicConfiguration<? extends LogLineFilter> getFilter();
 
 	}
 

@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -44,6 +45,7 @@ public class SlotContentElement implements UIElement {
 	 * Configuration for {@link SlotContentElement}.
 	 */
 	@TagName("slot-content")
+	@TypeIcon("css:bi bi-puzzle-fill")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -55,6 +57,9 @@ public class SlotContentElement implements UIElement {
 
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
+
+		/** Configuration name for {@link #isOptional()}. */
+		String OPTIONAL = "optional";
 
 		/**
 		 * Name of the target {@code <slot>}. Contribution is routed to the nearest such slot in
@@ -68,6 +73,19 @@ public class SlotContentElement implements UIElement {
 		@Name(TO)
 		@Mandatory
 		String getTo();
+
+		/**
+		 * Whether the content is meant to be shown only where an enclosing shell offers the slot.
+		 *
+		 * <p>
+		 * Content that reaches no slot of its name is reported as a mistake: a warning in the log and
+		 * a diagnostic in the UI inspector. Content that belongs to a slot only some shells offer -
+		 * shown in an app bar where there is one, left out elsewhere - is marked optional, which
+		 * suppresses the report.
+		 * </p>
+		 */
+		@Name(OPTIONAL)
+		boolean isOptional();
 
 		/**
 		 * The contributed child elements.
@@ -89,6 +107,10 @@ public class SlotContentElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final boolean _optional;
+
+	private final String _source;
+
 	/**
 	 * Creates a new {@link SlotContentElement} from configuration.
 	 */
@@ -100,6 +122,8 @@ public class SlotContentElement implements UIElement {
 			_children.add(context.getInstance(childConfig));
 		}
 		_cssClass = config.getCssClass();
+		_optional = config.isOptional();
+		_source = String.valueOf(config.location());
 	}
 
 	@Override
@@ -115,7 +139,7 @@ public class SlotContentElement implements UIElement {
 			childControls.add((ReactControl) _children.get(i).createControl(childContext));
 		}
 		SlotContentControl result = new SlotContentControl(context, _slotName, context.getSlotPath(),
-			context.getSlotRegistry(), childControls);
+			context.getSlotRegistry(), childControls, _optional, _source);
 		result.setCssClass(_cssClass);
 		return result;
 	}

@@ -19,6 +19,8 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.view.model.CommittedModelChanges;
+import test.com.top_logic.layout.view.model.CommittedModelChanges.ScopedReactContext;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -33,6 +35,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.format.DateStyle;
 import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContext;
@@ -68,6 +71,7 @@ import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -248,8 +252,26 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final int COMPUTED_OPTIONS_BY_LABEL = 20;
 
+	/** Position of the input of the test view choosing a module from the instances of its type. */
+	private static final int MODULE_INSTANCES = 21;
+
+	/**
+	 * Position of the input of the test view choosing a text from the modules its expression
+	 * computes, observing the module type.
+	 */
+	private static final int OBSERVED_MODULE_OPTIONS = 22;
+
+	/**
+	 * Position of the input of the test view choosing a text from the modules its expression
+	 * computes, observing no type.
+	 */
+	private static final int UNOBSERVED_MODULE_OPTIONS = 23;
+
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 21;
+	private static final int INPUT_COUNT = 24;
+
+	/** Name of the module a test creates to see it offered by an input displaying the modules. */
+	private static final String CREATED_MODULE = "test.input.created";
 
 	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
 	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
@@ -953,7 +975,15 @@ public class TestValueInputElement extends TestCase {
 	 * order handed over.
 	 */
 	private List<String> offeredLabels(int position) throws Exception {
-		Map<String, Object> state = select(input(position)).scriptingScalarState();
+		return offeredLabels(input(position));
+	}
+
+	/**
+	 * The labels of the options the given select input hands to its client, in the order handed
+	 * over.
+	 */
+	private static List<String> offeredLabels(ReactControl input) {
+		Map<?, ?> state = clientState(select(input));
 
 		assertEquals("The chips are handed their options.", Boolean.TRUE,
 			state.get(DropdownSelectState.OPTIONS_LOADED__PROP));
@@ -1158,6 +1188,87 @@ public class TestValueInputElement extends TestCase {
 		context.checkErrors();
 
 		return element.createControl(_viewContext);
+	}
+
+	/**
+	 * An input choosing an instance of a class offers an instance created while the input is
+	 * displayed, and no longer offers it once it is deleted.
+	 */
+	public void testTheInstancesOfAClassFollowTheModel() throws Exception {
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ReactFormFieldControl input = observedInput(scope, MODULE_INSTANCES);
+		input.attach();
+		assertFalse("The module does not exist yet.", offeredLabels(input).contains(CREATED_MODULE));
+
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
+		assertTrue("A created instance is offered at once: " + offeredLabels(input),
+			offeredLabels(input).contains(CREATED_MODULE));
+
+		CommittedModelChanges.deleteModule(scope, module);
+		assertFalse("A deleted instance is no longer offered.", offeredLabels(input).contains(CREATED_MODULE));
+	}
+
+	/**
+	 * An input that is not displayed does not follow the model, and catches up with what happened
+	 * meanwhile as soon as it is displayed again.
+	 */
+	public void testAHiddenInputCatchesUpWhenDisplayedAgain() throws Exception {
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ReactFormFieldControl input = observedInput(scope, MODULE_INSTANCES);
+		input.attach();
+		input.detach();
+
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
+		try {
+			assertFalse("A hidden input offers what it offered when it was left.",
+				offeredLabels(input).contains(CREATED_MODULE));
+
+			input.attach();
+			assertTrue("The input displayed again offers the instance created while it was hidden.",
+				offeredLabels(input).contains(CREATED_MODULE));
+		} finally {
+			CommittedModelChanges.deleteModule(scope, module);
+		}
+	}
+
+	/**
+	 * An options expression computing its options from objects of a type it observes computes them
+	 * again when such an object is created; without the type observed, it does not.
+	 */
+	public void testAnOptionsExpressionFollowsTheObservedTypes() throws Exception {
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ReactFormFieldControl observed = observedInput(scope, OBSERVED_MODULE_OPTIONS);
+		ReactFormFieldControl unobserved = observedInput(scope, UNOBSERVED_MODULE_OPTIONS);
+		observed.attach();
+		unobserved.attach();
+
+		TLModule module = CommittedModelChanges.createModule(scope, CREATED_MODULE);
+		try {
+			assertTrue("An object of an observed type computes the options again: " + offeredLabels(observed),
+				offeredLabels(observed).contains(CREATED_MODULE));
+			assertFalse("An object of a type nobody observes changes no options.",
+				offeredLabels(unobserved).contains(CREATED_MODULE));
+		} finally {
+			CommittedModelChanges.deleteModule(scope, module);
+		}
+	}
+
+	/**
+	 * The input control built by the {@code <value-input>} at the given position of the test view
+	 * in a window observing the model in the given scope.
+	 */
+	private ReactFormFieldControl observedInput(ModelScope scope, int index) throws Exception {
+		ViewContext context = new DefaultViewContext(new ScopedReactContext(scope));
+		context.registerChannel(TERM, new DefaultViewChannel(TERM));
+		ValueInputElement.Config config = config(parseInputs(), index);
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestValueInputElement.class);
+		UIElement element = instantiation.getInstance(config);
+		instantiation.checkErrors();
+
+		IReactControl control = element.createControl(context);
+		assertTrue("An input without a label is the field control itself, but is " + control,
+			control instanceof ReactFormFieldControl);
+		return (ReactFormFieldControl) control;
 	}
 
 	/**
@@ -1403,6 +1514,18 @@ public class TestValueInputElement extends TestCase {
 	private static SimpleSelectFieldModel choice(TLEnumeration enumeration, boolean multiple) {
 		return new SimpleSelectFieldModel(multiple ? List.of() : null, AttributeOptions.optionsFor(enumeration),
 			multiple);
+	}
+
+	/**
+	 * The state of the given control as the client parses it.
+	 */
+	private static Map<?, ?> clientState(ReactControl control) {
+		String json = control.stateAsJSON();
+		try {
+			return (Map<?, ?>) JSON.fromString(json);
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("Not the JSON state of a control: " + json, ex);
+		}
 	}
 
 	/** The given control as the select control a choice is made on. */

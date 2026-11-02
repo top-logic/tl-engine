@@ -27,6 +27,7 @@ import com.top_logic.dob.MOFactory;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.ex.DuplicateTypeException;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.DeferredIndex;
 import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MOAnnotation;
@@ -206,7 +207,8 @@ public class MORepositoryBuilder {
 				String name = attributeConfig.getAttributeName();
 
 				boolean override = attributeConfig.isOverride();
-				MOAttribute attribute = _context.getInstance(attributeConfig);
+				MOAttribute attribute =
+					typeFactory().adaptAttribute(_context.getInstance(attributeConfig), repository().multipleBranches());
 
 				try {
 					if (override) {
@@ -243,11 +245,33 @@ public class MORepositoryBuilder {
 				return;
 			}
 			List<Pair<String, ReferencePart>> attributeParts =
-				new ArrayList<>(partConfigs.size());
+				new ArrayList<>(partConfigs.size() + 1);
 			for (IndexPartConfig partConfig : partConfigs) {
 				attributeParts.add(new Pair<>(partConfig.getName(), partConfig.getPart()));
 			}
+			if (hasBranchColumn() && !containsAttribute(attributeParts, BasicTypes.BRANCH_ATTRIBUTE_NAME)) {
+				// The branch column of a type is part of its primary key.
+				attributeParts.add(0, new Pair<>(BasicTypes.BRANCH_ATTRIBUTE_NAME, null));
+			}
 			((MOStructureImpl) _type).setPrimaryKey(DeferredIndex.newPrimaryKey(attributeParts));
+		}
+
+		/**
+		 * Whether this type declares a {@link BasicTypes#BRANCH_ATTRIBUTE_NAME branch attribute}
+		 * stored in a database column.
+		 */
+		private boolean hasBranchColumn() {
+			MOAttribute branch = ((MOStructureImpl) _type).getDeclaredAttributeOrNull(BasicTypes.BRANCH_ATTRIBUTE_NAME);
+			return branch != null && branch.getDbMapping().length > 0;
+		}
+
+		private boolean containsAttribute(List<Pair<String, ReferencePart>> attributeParts, String attributeName) {
+			for (Pair<String, ReferencePart> part : attributeParts) {
+				if (attributeName.equals(part.getFirst())) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private void addIndex(Log log, IndexConfig indexConfig) {

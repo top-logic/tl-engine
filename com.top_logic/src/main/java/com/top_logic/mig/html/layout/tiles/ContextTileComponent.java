@@ -88,7 +88,7 @@ public class ContextTileComponent extends LayoutContainer implements LayoutConta
 
 		@Override
 		@ItemDefault(ContextTileControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Override
 		@Derived(fun = ToList.class, args = { @Ref(SELECTOR_NAME), @Ref(CONTENT_NAME) })

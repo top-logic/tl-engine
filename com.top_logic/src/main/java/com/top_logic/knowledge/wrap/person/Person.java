@@ -330,7 +330,7 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		if (secret == null) {
 			tSetData(MFA_SECRET_ATTR, null);
 		} else {
-			tSetData(MFA_REQUIREMENT_ATTR, secret.getCryptedValue());
+			tSetData(MFA_SECRET_ATTR, secret.getCryptedValue());
 		}
 	}
 

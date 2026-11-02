@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the full-text indexing service (opened from service-detail.view.xml) feeding the
+	objects of selected types to the index. The form edits a transient Reindexing model (bound to the
+	model channel by the opening command): the object types to index, offered from the types the
+	running indexing service indexes (none selected indexes all of them), and whether only objects
+	not yet in the index are indexed. The primary command stores the form state and runs
+	indexingReindex as a background job on the job channel, which is bound to the job channel of the
+	detail page, so the job-status there shows the last run after the dialog is closed. While the job
+	runs, the dialog stays open and shows its progress; once it has completed, the number of indexed
+	objects is notified and the dialog closes.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="job"/>
+	</channels>
+	<window
+		resizable="false"
+		width="480px"
+	>
+		<title>
+			<en>Reindex types</en>
+			<de>Typen neu indizieren</de>
+		</title>
+		<form id="form"
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<text>
+				<label>
+					<en>All objects of the selected types are fed to the full-text index; without a selection, the objects of all indexed types. This may take hours.</en>
+					<de>Alle Objekte der ausgewählten Typen werden an den Volltextindex übergeben; ohne Auswahl die Objekte aller indizierten Typen. Dies kann Stunden dauern.</de>
+				</label>
+			</text>
+			<field attribute="types">
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="radio"
+					orientation="vertical"
+				/>
+			</field>
+			<field attribute="onlyNew"/>
+			<job-status input="job"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-card-checklist"
+					inputs="model, job as jobState"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Start indexing</en>
+						<de>Indizierung starten</de>
+					</label>
+					<executability>
+						<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					</executability>
+					<store-form-state/>
+					<start-job job="job">
+						<function><![CDATA[{
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Indexing the objects.'@en, 'Die Objekte werden indiziert.'@de));
+	count = indexingReindex(
+		$model.get(`tl.admin:Reindexing#types`),
+		$model.get(`tl.admin:Reindexing#onlyNew`) == true);
+	#('{0} objects indexed.'@en, '{0} Objekte indiziert.'@de).fill($count);
+}]]></function>
+						<with-result>
+							<notify expr="$result"/>
+							<close-dialog/>
+						</with-result>
+					</start-job>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

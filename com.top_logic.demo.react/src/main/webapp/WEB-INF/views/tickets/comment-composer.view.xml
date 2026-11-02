@@ -68,13 +68,6 @@
 							<en>Add comment</en>
 							<de>Kommentar hinzufügen</de>
 						</label>
-						<executability>
-							<model-access
-								container="ticket"
-								operation="Create"
-								reference="comments"
-							/>
-						</executability>
 						<store-form-state>
 							<with-result>
 								<link-element>

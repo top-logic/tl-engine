@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
  * Proxy of the Anthropic Messages API for the workspace containers, independent of the server it
@@ -42,9 +44,9 @@ import com.top_logic.basic.Logger;
  * <p>
  * The forwarded request carries the headers of the client except the credentials
  * ({@link #AUTHORIZATION}, {@link #X_API_KEY}), cookies, {@code Host}, the hop-by-hop headers and
- * {@code Accept-Encoding}, so that the answer comes uncompressed and can be streamed. The proxy sets
- * {@link #X_API_KEY} to the key of the {@link LLMUpstream}, and {@link #ANTHROPIC_VERSION} to its
- * version if the client sent none; a client's {@link #ANTHROPIC_VERSION} and {@code anthropic-beta}
+ * {@code Accept-Encoding}, so that the answer comes uncompressed and can be streamed. The proxy adds
+ * the credentials of the {@link LLMUpstream} - the provider's API key in {@link #X_API_KEY} -, and
+ * sets {@link #ANTHROPIC_VERSION} to its version if the client sent none; a client's {@link #ANTHROPIC_VERSION} and {@code anthropic-beta}
  * are kept. Status, headers and body of the answer are passed back, the body flushed piece by piece
  * as it arrives, so that a server-sent event stream reaches the client while it is produced.
  * </p>
@@ -274,7 +276,13 @@ public class LLMProxyHandler {
 		if (!hasVersion) {
 			request.setHeader(ANTHROPIC_VERSION, upstream.version());
 		}
-		request.setHeader(X_API_KEY, upstream.apiKey());
+		try {
+			upstream.credentials().authenticate(RequestAuthentication.of(request));
+		} catch (I18NRuntimeException ex) {
+			Logger.warn("LLM proxy: no credentials for " + target + ": " + ex.getMessage(), LLMProxyHandler.class);
+			error(exchange, SC_SERVICE_UNAVAILABLE, API_ERROR, "The LLM API credentials are not available.");
+			return;
+		}
 
 		HttpResponse<InputStream> response;
 		try {
@@ -304,6 +312,9 @@ public class LLMProxyHandler {
 				for (String value : header.getValue()) {
 					exchange.addHeader(name, value);
 				}
+			}
+			if (response.statusCode() == SC_UNAUTHORIZED) {
+				upstream.credentials().invalidate();
 			}
 			exchange.sendHeaders(response.statusCode(), -1);
 			OutputStream out = exchange.responseBody();

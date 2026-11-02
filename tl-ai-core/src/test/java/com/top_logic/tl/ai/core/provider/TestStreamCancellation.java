@@ -44,7 +44,7 @@ public class TestStreamCancellation extends TestCase {
 	private static final class BlockingReadProvider extends AbstractStreamingProvider {
 
 		BlockingReadProvider(String baseUrl, java.net.http.HttpClient httpClient) {
-			super(null, baseUrl, httpClient);
+			super(FixedCredentials.NONE, baseUrl, httpClient);
 		}
 
 		@Override

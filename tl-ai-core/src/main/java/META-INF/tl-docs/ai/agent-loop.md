@@ -1,5 +1,5 @@
 ---
-description: Read before changing how an agent run executes in tl-ai-core - AgentFactory.runAgent, AgentLoop (turns, tool calls, StopReason, the final turn at max-turns, the knowledge-base view of a turn), the <environment> block and the <turn-context> block (AgentApplicationService, TurnContext), user memory (remember/recall, MemoryConsent, UserMemoryBinding) and the event system (AgentEvent, AgentEventListener, RunObserver, ObserverQueue).
+description: Read before changing how an agent run executes in tl-ai-core - AgentFactory.runAgent, AgentLoop (turns, tool calls, StopReason, the final turn at max-turns, the knowledge-base view of a turn), where the <environment> block is composed, and the event system (AgentEvent, AgentEventListener, RunObserver, ObserverQueue).
 order: 60
 ---
 
@@ -29,24 +29,12 @@ READ tools run in parallel and need no approval; `USER_SCOPED`, `DATA_WRITE` and
 
 ## The environment block
 
-Every run is told in its system prompt whom it works for: the user, the UI language, the date in the user's time zone, the agent, the model, the application, the host's stable facts and the account's own preference text. `AgentFactory.buildConfig` composes one `<environment>` block and fills the `{{...}}` placeholders of the prompt; a prompt that names none gets the block appended, so every shipped agent has it without an edit. An unknown placeholder is refused where it is written, not at run time.
-
-Nothing in the block may change within a conversation - it sits in front of every request, and the providers' prompt caches key on it: the date has day granularity, and only facts marked `stable` go into it. The wording is a shipped, translated resource (`tl.ai.environment.template`) that the `<environment>` section of `AgentApplicationService` may override; the facts come from the agent definition and from `<chat-conversation><context>`, the preference text is `tl.accounts:Person#aiPreferences`, and the filled block is recorded on `tl.ai.execution:AgentExecution#environment`. `tl-ai-core/doc/environment-block.md` has the details.
-
-### Turn context
-
-A fact that is not stable goes into the per-turn `<turn-context>` block instead (`TurnContext`): its own content block of the turn's user message, ahead of the user's text, which stays exactly what the user wrote. The framework adds the turn number and the time of day; `AgentLoop` attaches the block where the request is built, so it survives a compaction, and it is recorded on the turn (`Turn#turnContext`, the persisted transcript). The fact a page most often has to state is which object the user selected, so `<chat-conversation><selection channel="…"/>` states it in one line - label, qualified type and the `label [id:TID]` every tool reads back - and the `{{turn_context}}` section of the environment block tells the model what a `<turn-context>` block is, for the runs that get one.
-
-## User memory
-
-The agent keeps things about the user across conversations (`tools/memory/`, `agent/environment/UserMemories`): `tl.ai.execution:UserMemory` rows (owner, kind, text, origin, created), rendered into the `{{memories}}` section of the environment block. `remember(kind, text)` writes one, `recall(query)` searches the rest.
-
-`remember` refuses a memory the user did not agree to in that turn - a Java check on the call path, not a line in a prompt. `MemoryConsent` is built from the user's own message at the start of the run and from what `AskUserTool` recorded, and a nested run inherits it rather than building its own. Only a `UserMessage` whose `origin` is `USER` counts: a delivered subagent report, a framework notice and a lead's task are marked `FRAMEWORK` or `AGENT`, so a lead turn the chat wakes for a subagent's news has no consent. The words it matches are configurable, because they are matched against what the user typed.
-
-The section is read once per conversation (`UserMemoryBinding`, bound by `ChatProcessor` from the chat session state), because the block has to stay byte-identical across the turns of one conversation. `<user-memory enabled="false"/>` on `AgentPolicyService` retires the tools and the section together. The user sees every memory in a `<data-list>` and deletes one with `aiMemoryDelete`.
+Every run is told in its system prompt whom it works for - user, UI language, date, agent, model, application, the host's stable facts, the account's preference text and its memories. `AgentFactory.buildConfig` composes one `<environment>` block and fills the `{{...}}` placeholders of the prompt; a prompt that names none gets the block appended. Nothing in it may change within a conversation, because the providers' prompt caches key on it; what changes per turn travels in the `<turn-context>` block of the user message (`TurnContext`). The memories are `tl.ai.execution:UserMemory` rows, written by `remember` only with the user's agreement in that turn (`MemoryConsent`). [The environment of a run](doc:ai/environment) describes the block, its placeholders and template, application facts, prompt contributors, the per-turn block, preferences and memories.
 
 ## Events and observers
 
 `AgentEvent` (package `agent/event`) is a sealed interface whose record subtypes cover the lifecycle of runs, turns, tool calls, approvals, transactions and memory. An `AgentEventListener` receives them; the chat streams them to the browser (`ChatSSEHandler`), and the conversation log records them.
 
 A `RunObserver` (package `observe`, configured in `<run-observers>` on `AgentRuntimeService`, none by default) receives the events of every run `AgentLoop` starts - chat, script, MCP, A2A, delegation, subagent - together with whom the run is for (`ObservedRun`: agent, account, entry point, conversation, parent run). `ObserverQueue` delivers them on a thread of its own behind a bounded queue, so an observer can neither slow a run down nor break it. An observer sees what the run sees; one that passes it on outside the application must authenticate that itself.
+
+Every run's listener is wrapped in a `DiagnosticLoggingListener`, which writes the run's diagnostic trace to the log - sizes, timings, retries, transactions, never payloads; see [logging](doc:ai/logging).

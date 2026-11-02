@@ -16,7 +16,9 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -124,6 +126,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private ViewExecutabilityRule _editRule = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 
+	private BoundCommandGroup _editOperation = SimpleBoundCommandGroup.WRITE;
+
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
@@ -221,6 +225,20 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Sets the operation the current user needs on the displayed object to edit it.
+	 *
+	 * @param operation
+	 *        The operation, {@link SimpleBoundCommandGroup#WRITE} by default; {@code null} for an
+	 *        operation that is not registered, which refuses editing.
+	 *
+	 * @see #editPermission()
+	 */
+	public void setEditOperation(BoundCommandGroup operation) {
+		_editOperation = operation;
+		fireFormStateChanged();
+	}
+
+	/**
 	 * Whether the current user may edit the displayed object here.
 	 *
 	 * <p>
@@ -233,8 +251,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * <p>
 	 * The permission combines the {@link #setEditRule(ViewExecutabilityRule) configured rule} with
-	 * the model right to write the displayed object, see
-	 * {@link ModelAccessPolicy#onEdit(TLObject)}: editing is offered only where both allow it. Of two
+	 * the {@link #setEditOperation(BoundCommandGroup) edit operation} on the displayed object, see
+	 * {@link ModelAccessPolicy#onEdit(BoundCommandGroup, TLObject)}: editing is offered only where
+	 * both allow it. Of two
 	 * refusals, the stronger one wins (a hidden command beats a disabled one, see
 	 * {@link ExecutableState#combine(ExecutableState)}); of two equally strong refusals, the one of
 	 * the model right gives the reason. A transient draft (e.g. of a create dialog) is not refused
@@ -246,7 +265,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			// Nothing to edit, and a deleted object has no rights to ask for.
 			return _editRule.isExecutable(getCurrentObject());
 		}
-		ExecutableState right = ModelAccessPolicy.onEdit(_currentObject);
+		ExecutableState right = _editOperation == null
+			? ExecutableState.NOT_EXEC_HIDDEN
+			: ModelAccessPolicy.onEdit(_editOperation, _currentObject);
 		return right.combine(_editRule.isExecutable(getCurrentObject()));
 	}
 
@@ -663,7 +684,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	public void executeApply() {
-		if (!_editMode || _overlay == null || (!_overlay.isDirty() && !hasParticipantChanges())) {
+		if (!_editMode || _overlay == null) {
+			return;
+		}
+		commitPendingInput();
+		if (!_overlay.isDirty() && !hasParticipantChanges()) {
 			return;
 		}
 
@@ -681,13 +706,18 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * method. It runs in this order:
 	 * </p>
 	 * <ol>
+	 * <li>Lets all participants {@link FormParticipant#commitPendingInput() commit} input not yet
+	 * part of their values.</li>
 	 * <li>{@link #validateOrThrow() Validates} all participants.</li>
 	 * <li>{@link #checkWriteRights() Checks the write rights} of all changes.</li>
 	 * <li>For a persistent base object, opens a KB transaction and lets every participant
 	 * {@link FormParticipant#persist(Transaction) persist} its KB-specific changes (e.g. a composition
 	 * table creates its new rows and writes the persisted row list into the overlay).</li>
 	 * <li>Lets every participant {@link FormParticipant#applyState() apply} its state.</li>
-	 * <li>Applies the overlay to the base object, and commits the transaction.</li>
+	 * <li>Stores the overlay through {@link BufferSave}: writes the attributes it changed into the
+	 * base object, with each new (transient) object it holds in a reference that is no composition -
+	 * a keyword the user created by typing its name into a select, say - created as persistent
+	 * object and written in its place. Then commits the transaction.</li>
 	 * </ol>
 	 *
 	 * <p>
@@ -699,17 +729,18 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * <p>
 	 * For a transient base object (e.g. in a create dialog), no transaction is opened: all changes
-	 * are applied to the transient object and its transient rows, which become persistent together
-	 * when the object is made persistent.
+	 * are applied to the transient object and its transient rows, and the new objects it refers to
+	 * stay new objects; they all become persistent together when the object is made persistent.
 	 * </p>
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
 	 * @throws TopLogicException
-	 *         If any participant reports a validation error, or if the current user is not allowed
-	 *         to write one of the changes, see {@link #checkWriteRights()}. In that case nothing is
-	 *         stored.
+	 *         If a participant could not commit its pending input, if any participant reports a
+	 *         validation error, or if the current user is not allowed to write one of the changes,
+	 *         see {@link #checkWriteRights()}. In that case nothing is stored.
 	 */
 	public TLObject executeStoreState() {
+		commitPendingInput();
 		validateOrThrow();
 
 		if (_overlay == null) {
@@ -720,7 +751,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		TLObject base = _overlay.getBase();
 		if (base.tTransient()) {
-			applyState();
+			applyParticipantStates();
+			// The transient base buffers the changes as well; it is made persistent as a whole.
+			_overlay.apply();
 			return base;
 		}
 
@@ -730,7 +763,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			for (FormParticipant participant : _participants) {
 				participant.persist(tx);
 			}
-			applyState();
+			applyParticipantStates();
+			BufferSave.save(_overlay);
+			// The base now holds all values, so the overlay has no unsaved changes anymore.
+			_overlay.reset();
 			tx.commit();
 		} finally {
 			tx.rollback();
@@ -739,13 +775,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Transfers the state of all participants and of the overlay to the base objects.
+	 * Transfers the state of all participants to the base objects.
 	 */
-	private void applyState() {
+	private void applyParticipantStates() {
 		for (FormParticipant participant : _participants) {
 			participant.applyState();
 		}
-		_overlay.apply();
 	}
 
 	/**
@@ -757,11 +792,43 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return;
 		}
 
+		commitPendingInput();
 		if (_overlay.isDirty() || hasParticipantChanges()) {
 			executeStoreState();
 		}
 
 		exitEditMode();
+	}
+
+	/**
+	 * Lets all participants {@link FormParticipant#commitPendingInput() commit} the input they hold
+	 * that is not yet part of their values.
+	 *
+	 * <p>
+	 * Runs before the form decides whether anything changed: input that exists only as pending
+	 * input changes nothing yet, and the form would otherwise leave edit mode and drop it. Every
+	 * participant is asked, also after one refused, so that every problem is shown at once.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If a participant could not commit all of its input. The input then stays in place
+	 *         and the form in edit mode.
+	 */
+	private void commitPendingInput() {
+		TopLogicException refusal = null;
+		for (FormParticipant participant : new ArrayList<>(_participants)) {
+			try {
+				participant.commitPendingInput();
+			} catch (TopLogicException ex) {
+				if (refusal == null) {
+					refusal = ex;
+				}
+			}
+		}
+		if (refusal != null) {
+			fireValidityChanged();
+			throw refusal;
+		}
 	}
 
 	private boolean hasParticipantChanges() {

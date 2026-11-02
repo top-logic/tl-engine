@@ -98,18 +98,18 @@ public interface TestDeFactoMonomorphicProperties extends ConfigurationItem {
 	/**
 	 * Optional configuration of implementation of {@link F}.
 	 */
-	PolymorphicConfiguration<F> getIOptional();
+	PolymorphicConfiguration<? extends F> getIOptional();
 
 	/**
 	 * Mandatory configuration of implementation of {@link F}.
 	 */
 	@Mandatory
-	PolymorphicConfiguration<F> getIMandatory();
+	PolymorphicConfiguration<? extends F> getIMandatory();
 
 	/**
 	 * List of implementations of {@link F}.
 	 */
-	List<PolymorphicConfiguration<F>> getIs();
+	List<PolymorphicConfiguration<? extends F>> getIs();
 
 	/**
 	 * Optional direct instance of {@link F}.

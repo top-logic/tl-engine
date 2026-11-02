@@ -76,6 +76,15 @@ public abstract class AbstractNavigationTest extends BasicTestCase {
 	/** A view displayed on a tab of the {@link #FRAME_VIEW} and nowhere else. */
 	protected static final String DETAIL_VIEW = "nav-detail.view.xml";
 
+	/** The id of the declaration of the frame of the {@link #FRAME_VIEW} in the stack. */
+	protected static final String FRAME = "frame";
+
+	/**
+	 * The id of the declaration of a frame of the {@link #ORPHAN_VIEW} that may follow the
+	 * {@link #FRAME}, holding the parameter {@link #ITEM_CHANNEL}.
+	 */
+	protected static final String ORPHAN_FRAME = "orphan";
+
 	/** A view file that exists but that no reference reaches. */
 	protected static final String ORPHAN_VIEW = "nav-orphan.view.xml";
 

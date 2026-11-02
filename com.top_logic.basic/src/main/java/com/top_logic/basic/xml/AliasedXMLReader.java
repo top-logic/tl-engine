@@ -12,8 +12,9 @@ import javax.xml.stream.XMLStreamReader;
 import com.top_logic.basic.vars.IVariableExpander;
 
 /**
- * {@link XMLStreamReader} based on an other {@link XMLStreamReader} which
- * resolved aliases in the attribute values.
+ * {@link XMLStreamReader} based on an other {@link XMLStreamReader} which resolves aliases in
+ * attribute values and in element text read through {@link #getElementText()} or
+ * {@link #getText()}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -89,6 +90,11 @@ public class AliasedXMLReader extends XMLStreamReaderAdapter {
 	@Override
 	public String getElementText() throws XMLStreamException {
 		return resolveAlias(super.getElementText());
+	}
+
+	@Override
+	public String getText() {
+		return resolveAlias(super.getText());
 	}
 
 }

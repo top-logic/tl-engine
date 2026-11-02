@@ -85,7 +85,7 @@ public class TileListComponent extends SelectableBuilderComponent {
 
 		@Override
 		@ItemDefault(TileListControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 		
 		/**
 		 * The {@link TilePreview} that is used to {@link HTMLFragment} as preview for the displayed
@@ -93,7 +93,7 @@ public class TileListComponent extends SelectableBuilderComponent {
 		 */
 		@Name(TILE_PREVIEW)
 		@ItemDefault(TLObjectTilePreview.Config.class)
-		PolymorphicConfiguration<TilePreview> getTilePreview();
+		PolymorphicConfiguration<? extends TilePreview> getTilePreview();
 
 		/**
 		 * The {@link ResKey} of the message, when there are no elements to be displayed as tiles.

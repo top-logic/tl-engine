@@ -447,7 +447,7 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * </p>
 		 */
 		@Name(DISPLAY)
-		PolymorphicConfiguration<ReactControlProvider> getDisplay();
+		PolymorphicConfiguration<? extends ReactControlProvider> getDisplay();
 
 		/**
 		 * Whether the table can be sorted by the columns.

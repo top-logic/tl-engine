@@ -18,6 +18,8 @@ import com.top_logic.ai.a2a.A2AService.RemoteAgentConfig;
 import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.ArtifactRef;
 import com.top_logic.ai.a2a.protocol.Json;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.credential.CredentialProvider;
 
 /**
  * The remote A2A agents this application may call, with their agent cards cached.
@@ -39,7 +41,7 @@ public final class RemoteAgents {
 
 		private final String _cardUrl;
 
-		private final String _tokenEnv;
+		private final CredentialProvider _credentials;
 
 		private Map<String, Object> _card;
 
@@ -48,14 +50,13 @@ public final class RemoteAgents {
 		/**
 		 * Creates a {@link RemoteAgent}.
 		 *
-		 * @param tokenEnv
-		 *        The environment variable or system property holding the bearer token, or
-		 *        <code>null</code>.
+		 * @param credentials
+		 *        Authenticates the calls to the agent.
 		 */
-		public RemoteAgent(String name, String cardUrl, String tokenEnv) {
+		public RemoteAgent(String name, String cardUrl, CredentialProvider credentials) {
 			_name = name;
 			_cardUrl = cardUrl;
-			_tokenEnv = tokenEnv;
+			_credentials = credentials;
 		}
 
 		/** The configured name. */
@@ -64,14 +65,10 @@ public final class RemoteAgents {
 		}
 
 		/**
-		 * The bearer token calls to this agent carry, or <code>null</code>.
+		 * Authenticates the calls to this agent.
 		 */
-		public String token() {
-			if (_tokenEnv == null || _tokenEnv.isBlank()) {
-				return null;
-			}
-			String value = System.getenv(_tokenEnv.trim());
-			return value != null && !value.isBlank() ? value.trim() : System.getProperty(_tokenEnv.trim());
+		public CredentialProvider credentials() {
+			return _credentials;
 		}
 
 		/**
@@ -84,7 +81,7 @@ public final class RemoteAgents {
 
 		synchronized Map<String, Object> card(A2AClient client) throws IOException, InterruptedException {
 			if (_card == null || System.currentTimeMillis() - _cardTime > CARD_TTL_MILLIS) {
-				Map<String, Object> card = Json.asObject(client.getJson(_cardUrl, null, false));
+				Map<String, Object> card = Json.asObject(client.getJson(_cardUrl, A2AClient.NO_CREDENTIALS, false));
 				if (card == null) {
 					throw new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The agent card of '" + _name + "' is no object.");
 				}
@@ -97,10 +94,15 @@ public final class RemoteAgents {
 
 	/**
 	 * Creates the registry from configuration.
+	 *
+	 * @param context
+	 *        The context for instantiating the credentials of the agents.
 	 */
-	public RemoteAgents(List<? extends RemoteAgentConfig> configs) {
+	public RemoteAgents(InstantiationContext context, List<? extends RemoteAgentConfig> configs) {
 		for (RemoteAgentConfig config : configs) {
-			add(new RemoteAgent(config.getName(), config.getCardUrl(), config.getTokenEnv()));
+			CredentialProvider credentials = config.getCredentials() == null ? A2AClient.NO_CREDENTIALS
+				: context.getInstance(config.getCredentials());
+			add(new RemoteAgent(config.getName(), config.getCardUrl(), credentials));
 		}
 	}
 
@@ -181,7 +183,7 @@ public final class RemoteAgents {
 				String query = url + "?ref=" + URLEncoder.encode(ref.toString(), StandardCharsets.UTF_8)
 					+ (section == null || section.isBlank() ? ""
 						: "&section=" + URLEncoder.encode(section.trim(), StandardCharsets.UTF_8));
-				Map<String, Object> answer = Json.asObject(_client.getJson(query, agent.token(), true));
+				Map<String, Object> answer = Json.asObject(_client.getJson(query, agent.credentials(), true));
 				if (answer == null) {
 					throw new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The artifact endpoint of '" + agent.name()
 						+ "' answered no JSON object.");

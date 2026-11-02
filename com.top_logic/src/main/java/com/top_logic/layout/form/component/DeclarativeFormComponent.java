@@ -80,7 +80,7 @@ public class DeclarativeFormComponent extends FormComponent implements ControlRe
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/**
 		 * {@link ControlProvider} to use to render primitive fields.

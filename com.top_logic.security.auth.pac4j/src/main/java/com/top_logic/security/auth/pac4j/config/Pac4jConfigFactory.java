@@ -6,9 +6,9 @@
 package com.top_logic.security.auth.pac4j.config;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import jakarta.servlet.ServletContext;
 
@@ -16,6 +16,7 @@ import org.pac4j.core.adapter.FrameworkAdapter;
 import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.client.IndirectClient;
 import org.pac4j.core.config.ConfigFactory;
 import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
@@ -32,6 +33,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -47,7 +49,8 @@ import com.top_logic.basic.module.services.ServletContextService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies({
-	ServletContextService.Module.class
+	ServletContextService.Module.class,
+	SecretStoreService.Module.class
 })
 @ServiceCategory.Of(AuthenticationCategory.class)
 public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends ConfiguredManagedClass<C> {
@@ -97,7 +100,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 	}
 
-	private final Collection<? extends ClientConfigurator> _clientConfigurators;
+	private final Map<String, ? extends ClientConfigurator> _clientConfigurators;
 
 	private org.pac4j.core.config.Config _pac4jConfig;
 
@@ -113,7 +116,16 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	public Pac4jConfigFactory(InstantiationContext context, C config) {
 		super(context, config);
 
-		_clientConfigurators = TypedConfiguration.getInstanceMap(context, config.getClients()).values();
+		_clientConfigurators = TypedConfiguration.getInstanceMap(context, config.getClients());
+	}
+
+	/**
+	 * The {@link ClientConfigurator} of the client configured under the given
+	 * {@link ClientConfigurator.Config#getName() name}, or <code>null</code> if no such client is
+	 * configured.
+	 */
+	public ClientConfigurator getClientConfigurator(String configuredName) {
+		return _clientConfigurators.get(configuredName);
 	}
 
 	/**
@@ -176,7 +188,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	 */
 	protected org.pac4j.core.config.Config buildPac4jConfig(ServletContext context) {
 		List<Client> clientList = new ArrayList<>();
-		for (ClientConfigurator configurator : _clientConfigurators) {
+		for (ClientConfigurator configurator : _clientConfigurators.values()) {
 			Client client = configurator.createClient(context);
 			if (client != null) {
 				clientList.add(client);
@@ -184,10 +196,18 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		}
 		// After the login clients, so that a request that names no client keeps being answered by a
 		// login client.
-		for (ClientConfigurator configurator : _clientConfigurators) {
+		for (ClientConfigurator configurator : _clientConfigurators.values()) {
 			Client client = configurator.createReauthenticationClient(context);
 			if (client != null) {
 				clientList.add(client);
+			}
+		}
+
+		for (Client client : clientList) {
+			if (client instanceof IndirectClient indirect) {
+				// A failed login leads to the login page, from which the visitor retries on purpose.
+				// pac4j's guard against redirect loops would refuse that retry with 401.
+				indirect.setCheckAuthenticationAttempt(false);
 			}
 		}
 
@@ -203,6 +223,10 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		final org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients);
 
 		config.addAuthorizer("admin", new RequireAnyRoleAuthorizer("ROLE_ADMIN"));
+		String contextPath = context.getContextPath();
+		Supplier<String> errorUrl = () -> LoginFailureLogic.loginRetryUrl(contextPath);
+		config.setSecurityLogic(new LoginFailureLogic.Security(errorUrl));
+		config.setCallbackLogic(new LoginFailureLogic.Callback(errorUrl));
 		FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 		return config;
 	}

@@ -8,6 +8,5 @@
         <entry name="%ORACLE19_USER%" value="${env:oracle19_user:TEST}"/>
         <entry name="%ORACLE19_USER_TEST_UNIT%" value="${env:oracle19_user_testUnit:TESTUNIT}"/>
         <entry name="%ORACLE19_USER_TEST_MIGRATION%" value="${env:oracle19_user_testMigration:TESTMIGRATION}"/>
-        <entry name="%ORACLE19_PASSWD%" value="${env:oracle19_passwd:unencrypted:passwd}"/>
 	</alias>
 </root>

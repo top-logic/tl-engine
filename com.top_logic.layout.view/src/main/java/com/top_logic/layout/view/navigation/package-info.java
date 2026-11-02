@@ -40,8 +40,8 @@
  * the way to reveal the child leading further down - and write the object into the channels of the
  * instance it finds there. Each view of a target is looked for within the view displayed before it
  * first, so that a view sitting inside a frame drilled down to on a stack is found there, and only
- * then within the window as a whole. A view neither of the two reaches is displayed anew: as a frame
- * drilled down to on a stack, or as a dialog. The
+ * then within the window as a whole. A view neither of the two reaches is displayed as a dialog;
+ * a frame drilled down to on a stack is named by the id of its declaration in that stack. The
  * {@link com.top_logic.layout.view.navigation.ShowObjectAction &lt;show-object&gt;} action offers
  * all of this to a configured command.
  * </p>

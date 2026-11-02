@@ -70,6 +70,11 @@ public class DeleteResourceFolderHandler extends AbstractCommandHandler {
 				}
 			}
 		}
+
+		FileManager fileManager = FileManager.getInstance();
+		for (String resourcePath : resourcePaths) {
+			fileManager.refresh(resourcePath);
+		}
 	}
 
 	Set<String> getResourcePaths(ThemeResource themeResource) {

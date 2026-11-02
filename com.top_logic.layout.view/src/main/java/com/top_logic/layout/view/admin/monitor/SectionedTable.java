@@ -12,11 +12,19 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -27,6 +35,11 @@ import com.top_logic.table.impl.ListRowSource;
 /**
  * Base for read-only monitoring tables that present data as (section, name, value) rows in a
  * sortable, text-filterable green-field table.
+ *
+ * <p>
+ * The rows are read when the table is created and again on every change of the
+ * {@link Config#getRefresh() refresh channel}.
+ * </p>
  *
  * @implNote Subclasses provide the rows via {@link #rows()}. This base builds the three columns,
  *           assigns a stable per-row key (so value-equal rows stay individually selectable rather
@@ -52,8 +65,25 @@ public abstract class SectionedTable implements UIElement {
 	 * </p>
 	 */
 	public interface Config extends UIElement.Config {
-		// No shared configuration properties.
+
+		/** Configuration name for {@link #getRefresh()}. */
+		String REFRESH = "refresh";
+
+		/**
+		 * Channel on whose every change the rows are read again.
+		 *
+		 * <p>
+		 * The value of the channel is not displayed; a refresh command writes any new value, e.g.
+		 * the current time. Without a channel, the table shows the rows read when it is created.
+		 * </p>
+		 */
+		@Name(REFRESH)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getRefresh();
 	}
+
+	private final ChannelRef _refreshRef;
 
 	private final String _cssClass;
 
@@ -61,6 +91,7 @@ public abstract class SectionedTable implements UIElement {
 	 * Creates a new {@link SectionedTable} from configuration.
 	 */
 	protected SectionedTable(InstantiationContext context, Config config) {
+		_refreshRef = config.getRefresh();
 		_cssClass = config.getCssClass();
 	}
 
@@ -77,15 +108,36 @@ public abstract class SectionedTable implements UIElement {
 		// (Function.identity()) would treat value-equal rows as one selection key and select them
 		// together; the source position keeps every row individually selectable.
 		IdentityHashMap<Row, Integer> keyByRow = new IdentityHashMap<>();
-		for (int i = 0; i < rows.size(); i++) {
-			keyByRow.put(rows.get(i), Integer.valueOf(i));
-		}
+		indexRows(keyByRow, rows);
 
 		ListRowSource<Row> source = new ListRowSource<>(rows, columns, keyByRow::get);
 		DefaultTableView<Row> view = DefaultTableView.create(columns, source);
 		TableViewControl<Row> control = new TableViewControl<>(context, view, false);
+
+		if (_refreshRef != null) {
+			ViewChannel refresh = context.resolveChannel(_refreshRef);
+			ChannelListener listener = (sender, oldValue, newValue) -> {
+				List<Row> newRows = rows();
+				indexRows(keyByRow, newRows);
+				source.setElements(newRows);
+				control.refreshData();
+			};
+			Registration registration = refresh.addListener(listener);
+			control.addCleanupAction(registration::dispose);
+		}
+
 		control.setCssClass(_cssClass);
 		return control;
+	}
+
+	/**
+	 * Replaces the keys of the rows with their positions in the given list.
+	 */
+	private static void indexRows(IdentityHashMap<Row, Integer> keyByRow, List<Row> rows) {
+		keyByRow.clear();
+		for (int i = 0; i < rows.size(); i++) {
+			keyByRow.put(rows.get(i), Integer.valueOf(i));
+		}
 	}
 
 	/**

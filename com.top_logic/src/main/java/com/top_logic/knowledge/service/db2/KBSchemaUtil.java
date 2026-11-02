@@ -14,6 +14,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -96,18 +97,35 @@ public class KBSchemaUtil {
 	/**
 	 * Parses a XML serialized {@link SchemaConfiguration} (as stored in the {@link DBProperties}
 	 * table).
+	 * 
+	 * <p>
+	 * A stored schema without an explicit {@link SchemaConfiguration#getBranchLast()} value
+	 * describes tables with the branch column in front of the indexes, see
+	 * {@link SchemaConfiguration#DEFAULT_BRANCH_LAST_ATTRIBUTE}. The returned schema has the value
+	 * set explicitly, so that it does not depend on the database it is used with.
+	 * </p>
 	 */
 	public static SchemaConfiguration parseSchema(String xml) throws ConfigurationException {
-		return (SchemaConfiguration) TypedConfiguration.fromString(xml);
+		SchemaConfiguration result = (SchemaConfiguration) TypedConfiguration.fromString(xml);
+		if (result.getBranchLast() == null) {
+			result.setBranchLast(Boolean.valueOf(SchemaConfiguration.DEFAULT_BRANCH_LAST_ATTRIBUTE));
+		}
+		return result;
 	}
 
 	/**
 	 * Stores the given {@link SchemaConfiguration} for the {@link KnowledgeBase} with the given
 	 * name to the {@link DBProperties} table.
+	 * 
+	 * <p>
+	 * The stored schema contains the effective layout options for the database of the given
+	 * connection, see {@link SchemaSetup#withExplicitLayout(SchemaConfiguration, DBHelper)}.
+	 * </p>
 	 */
 	public static void storeSchema(PooledConnection connection, String kbName, SchemaConfiguration schema)
 			throws SQLException {
-		storeSchemaRaw(connection, kbName, serializeSchema(schema));
+		storeSchemaRaw(connection, kbName,
+			serializeSchema(SchemaSetup.withExplicitLayout(schema, connection.getSQLDialect())));
 	}
 
 	/**

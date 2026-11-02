@@ -10,7 +10,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link AccessParentFunction} leading to the object a to-one reference of the delegating object
@@ -34,7 +33,8 @@ public record TargetRelation(TLReference reference) implements AccessParentFunct
 
 	@Override
 	public ResKey getLabel() {
-		return ResKey.text(TLModelUtil.qualifiedName(reference));
+		return I18NConstants.ACCESS_PARENT_TARGET__OWNER_REFERENCE.fill(AccessParentFunction.ownerLabel(reference),
+			AccessParentFunction.referenceLabel(reference));
 	}
 
 }

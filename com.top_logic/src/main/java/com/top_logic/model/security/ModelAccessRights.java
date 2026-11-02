@@ -6,6 +6,7 @@
 
 package com.top_logic.model.security;
 
+import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.thread.ThreadContext;
@@ -39,6 +40,23 @@ public interface ModelAccessRights {
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+	/**
+	 * The roles granted the given command group on the given type before the rules of the access
+	 * rights entry of the type itself are applied: those the generalizations of the type pass on,
+	 * and those the entry of its module grants.
+	 *
+	 * <p>
+	 * Applying the rules of the type's own entry to this set in order yields the roles granted the
+	 * command group on the type, without the roles holding it through an implying operation. An
+	 * editor of that entry computes from it what a changed rule sequence grants.
+	 * </p>
+	 *
+	 * @return An empty set for an implementation without rule sequences.
+	 */
+	default Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Whether objects of the given type are not access controlled at all.
@@ -136,6 +154,31 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The types the access parent of an object of the given type may have.
+	 *
+	 * <p>
+	 * A check that depends on no concrete object follows the {@link #getAccessParent(TLClass)
+	 * access parent} of a type to these types. A type whose access parent types are not known
+	 * statically counts as accessible in such a check: only the check of a concrete object, which
+	 * resolves its access parent, decides.
+	 * </p>
+	 *
+	 * @param type
+	 *        The delegating type.
+	 * @return The possible types of the access parent, empty for a type without access parent,
+	 *         <code>null</code> when they are not known statically.
+	 * @implSpec The default asks the {@link AccessParentFunction#getParentTypes(TLClass) relation}
+	 *           to the access parent.
+	 */
+	default Set<TLClass> getAccessParentTypes(TLClass type) {
+		AccessParentFunction parent = getAccessParent(type);
+		if (parent == null) {
+			return Collections.emptySet();
+		}
+		return parent.getParentTypes(type);
+	}
+
+	/**
 	 * Whether a singleton of the given type or of one of its specializations has rights of its own.
 	 *
 	 * <p>
@@ -151,6 +194,54 @@ public interface ModelAccessRights {
 	 */
 	default boolean hasSingletonRights(TLClass type) {
 		return false;
+	}
+
+	/**
+	 * The operations that apply to the objects of the given type.
+	 *
+	 * <p>
+	 * Only an operation applying to a type can be granted on it. The
+	 * {@link ApplicableOperations#BUILT_IN built-in operations} apply to every type; any other
+	 * operation applies to a type when the type, one of its generalizations or its module declares
+	 * it. The result also tells which operations imply which others.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects.
+	 *
+	 * @implSpec An implementation without operation declarations answers
+	 *           {@link ApplicableOperations#BUILT_IN_ONLY} for every type.
+	 *
+	 * @see #getObjectOperations(TLObject)
+	 */
+	default ApplicableOperations getOperations(TLClass type) {
+		return ApplicableOperations.BUILT_IN_ONLY;
+	}
+
+	/**
+	 * Whether the given operation applies to the objects of the given type.
+	 *
+	 * @see #getOperations(TLClass)
+	 */
+	default boolean appliesTo(TLClass type, BoundCommandGroup operation) {
+		return getOperations(type).appliesTo(operation);
+	}
+
+	/**
+	 * The operations that apply to the given object.
+	 *
+	 * <p>
+	 * For a module singleton, these are the {@link #getOperations(TLClass) operations of its type}
+	 * plus those declared for the singleton itself. For any other object, these are the operations
+	 * of its type.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object. An object whose type is no {@link TLClass} has the
+	 *        {@link ApplicableOperations#BUILT_IN built-in operations} only.
+	 */
+	default ApplicableOperations getObjectOperations(TLObject object) {
+		return object.tType() instanceof TLClass type ? getOperations(type) : ApplicableOperations.BUILT_IN_ONLY;
 	}
 
 	/**
@@ -309,6 +400,16 @@ public interface ModelAccessRights {
 	 * one of its attributes, or the right to create objects in one of its compositions.
 	 * </p>
 	 *
+	 * <p>
+	 * Every person may discover a {@link TLModelPart model element} (a type, an attribute, a module,
+	 * a classifier of an enumeration) that is not deleted. A model element is meta-data that a
+	 * computation works with, not a business object - a script may e.g. deliver the type of an
+	 * object, a table column may be described by its attribute, and the value of an enumeration
+	 * attribute is chosen from the classifiers of its enumeration. Hiding such an element would break
+	 * the computation instead of protecting data. Reading the <em>attribute values</em> of a model
+	 * element is a separate question that is decided by the access check of the attribute itself.
+	 * </p>
+	 *
 	 * @implSpec Just calls {@link #isAllowed(Person, TLObject, BoundCommandGroup)} with
 	 *           {@link SimpleBoundCommandGroup#DISCOVER}.
 	 */
@@ -352,9 +453,9 @@ public interface ModelAccessRights {
 	 * attribute of the given parent instance.
 	 *
 	 * <p>
-	 * Both conditions of object creation must hold (see the model-based access rights spec, section
-	 * 2.3.6): the person needs the {@link SimpleBoundCommandGroup#CREATE CREATE} right on the created
-	 * type (the composition attribute's target type) in the parent context, <em>and</em> the
+	 * Both conditions of object creation must hold: the person needs the
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} right on the created type (the composition
+	 * attribute's target type) in the parent context, <em>and</em> the
 	 * {@link SimpleBoundCommandGroup#WRITE WRITE} right on the composition attribute of the parent.
 	 * </p>
 	 *
@@ -396,10 +497,11 @@ public interface ModelAccessRights {
 	 * Checks whether the given person can create an instance of the given type in the given context.
 	 *
 	 * <p>
-	 * This is condition 1 of object creation (see the model-based access rights spec, section
-	 * 2.3.6): the person must hold one of the roles granted the {@link SimpleBoundCommandGroup#CREATE
-	 * CREATE} command group on the type, checked on the given context object. When no context is
-	 * given (<code>null</code>), the check uses the global security root.
+	 * This is the first of the two conditions of object creation (see
+	 * {@link #isAllowedCreate(Person, TLObject, TLStructuredTypePart, TLClass)}): the person must
+	 * hold one of the roles granted the {@link SimpleBoundCommandGroup#CREATE CREATE} command group
+	 * on the type, checked on the given context object. When no context is given
+	 * (<code>null</code>), the check uses the global security root.
 	 * </p>
 	 * <p>
 	 * A type with an {@link #getAccessParent(TLClass) access parent} has no create grants of its

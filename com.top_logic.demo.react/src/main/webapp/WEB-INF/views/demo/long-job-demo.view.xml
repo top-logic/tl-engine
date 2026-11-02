@@ -38,7 +38,9 @@
 	number is skipped, reported and counted. The completion counts the tickets of the run, and that
 	count is the result of the job. The removal job has neither preparation nor completion: its work
 	items are the tickets of every run, its single pass deletes them, and its result is the text
-	saying how many items it processed and how many it skipped.
+	saying how many items it processed and how many it skipped. The removal declares no access
+	check: the model rights reject the deletion of a ticket the user may not delete when the pass
+	runs, and the ticket is skipped.
 	
 	The third button runs the same job inside a dialog. A command that is suspended waiting for a
 	job keeps the dialog it belongs to open: while the job runs, the close button of the dialog, the
@@ -197,12 +199,11 @@
 					<en>Import 500 tickets in chunks</en>
 					<de>500 Tickets blockweise importieren</de>
 				</label>
+				<access>
+					<create type="demo.tickets:Ticket"/>
+				</access>
 				<executability>
 					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
-					<model-access
-						operation="Create"
-						type="demo.tickets:Ticket"
-					/>
 				</executability>
 				<start-job
 					cancelable="true"
@@ -284,10 +285,6 @@
 				</label>
 				<executability>
 					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
-					<model-access
-						operation="Delete"
-						type="demo.tickets:Ticket"
-					/>
 				</executability>
 				<start-job
 					cancelable="true"

@@ -82,7 +82,7 @@ public class ModelBasedTilePreview extends LabelBasedPreview<ModelBasedTilePrevi
 		 * </p>
 		 */
 		@Name(LABEL)
-		PolymorphicConfiguration<TilePreviewPartProvider.Text> getLabel();
+		PolymorphicConfiguration<? extends TilePreviewPartProvider.Text> getLabel();
 
 		/**
 		 * Configuration of the description of the preview.
@@ -94,7 +94,7 @@ public class ModelBasedTilePreview extends LabelBasedPreview<ModelBasedTilePrevi
 		 * @return May be <code>null</code>. In this case no description is rendered.
 		 */
 		@Name(DESCRIPTION)
-		PolymorphicConfiguration<TilePreviewPartProvider.Text> getDescription();
+		PolymorphicConfiguration<? extends TilePreviewPartProvider.Text> getDescription();
 
 		/**
 		 * Configuration of the content preview.
@@ -106,7 +106,7 @@ public class ModelBasedTilePreview extends LabelBasedPreview<ModelBasedTilePrevi
 		 * @return May be <code>null</code>. In this case no preview part is rendered.
 		 */
 		@Name(CONTENT_PREVIEW)
-		PolymorphicConfiguration<TilePreviewPartProvider.Content> getContentPreview();
+		PolymorphicConfiguration<? extends TilePreviewPartProvider.Content> getContentPreview();
 
 	}
 

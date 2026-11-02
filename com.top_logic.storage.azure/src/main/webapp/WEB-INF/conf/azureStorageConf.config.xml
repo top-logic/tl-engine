@@ -17,11 +17,12 @@
                         <config class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
                             <repository class="com.top_logic.storage.azure.blob.CloudBasedRepository"
                                 attic="%BLOB_ATTIC%"
-                                connect-string="%BLOB_CONNECT%"
                                 container-name="%BLOB_CONTAINER%"
                                 directory-name="%BLOB_ROOT%"
                                 path="%BLOB_REPOSITORY%"
-                            />
+                            >
+                                <connect-string name="blob_connect"/>
+                            </repository>
                         </config>
                     </adaptor>
                 </adaptors>

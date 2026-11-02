@@ -12,6 +12,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ExecutabilityRule} which ensures that only services with a configuration are executable.
@@ -25,7 +26,14 @@ public class ModuleHasConfigurationRule implements ExecutabilityRule {
 		if (model instanceof BasicRuntimeModule<?>) {
 			BasicRuntimeModule<?> module = (BasicRuntimeModule<?>) model;
 
-			if (TLServiceUtils.hasServiceConfiguration(module)) {
+			boolean hasConfiguration;
+			try {
+				hasConfiguration = TLServiceUtils.hasServiceConfiguration(module);
+			} catch (TopLogicException ex) {
+				// The error is reported when displaying the configuration.
+				hasConfiguration = false;
+			}
+			if (hasConfiguration) {
 				return ExecutableState.EXECUTABLE;
 			} else {
 				return ExecutableState.NOT_EXEC_HIDDEN;

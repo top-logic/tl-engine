@@ -18,7 +18,7 @@
 	needs an attribute whose grant differs from its class's.
 
 	The model is only declared when the "secdemo.config.xml" aspect is enabled; see
-	"WEB-INF/conf/metaConf.txt" and tl-ai-demo/doc/secdemo/testbed.md.
+	"WEB-INF/conf/metaConf.txt" and the developer article ai/security/test-bed.
 -->
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="pm">

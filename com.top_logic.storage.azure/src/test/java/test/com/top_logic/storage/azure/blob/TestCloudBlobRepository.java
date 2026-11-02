@@ -28,6 +28,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.storage.azure.blob.CloudBasedRepository;
 import com.top_logic.storage.azure.blob.CloudBasedRepository.Config;
 import com.top_logic.storage.azure.blob.I18NConstants;
@@ -75,7 +76,9 @@ public class TestCloudBlobRepository extends AbstractTestRepositoryDataSourceAda
 	protected PolymorphicConfiguration<?> getImplementationConfiguration() {
 		CloudBasedRepository.Config<?> config = TypedConfiguration.newConfigItem(CloudBasedRepository.Config.class);
 
-		config.setConnectString(System.getProperty("test.azure.connection"));
+		LiteralSecretSource.Config connectString = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		connectString.setValue(System.getProperty("test.azure.connection"));
+		config.setConnectString(connectString);
 		config.setImplementationClass((Class) CloudBasedRepository.class);
 		config.setContainerName("testcases");
 		config.setBaseDirectoryName("test-" + StringServices.randomUUID().replace("-", ""));
@@ -112,7 +115,7 @@ public class TestCloudBlobRepository extends AbstractTestRepositoryDataSourceAda
 
 	private CloudBlobContainer connect(Config<?> aConfig) throws ConfigurationException {
 		String theContainer = aConfig.getContainerName();
-		String theConnect = aConfig.getConnectString();
+		String theConnect = ((LiteralSecretSource.Config) aConfig.getConnectString()).getValue();
 
 		try {
 			// Retrieve storage account from connection-string.

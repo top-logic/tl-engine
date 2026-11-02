@@ -367,9 +367,12 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		assertTrue(descendants(_dialogs._open.peek(), RowSetTableControl.class).isEmpty());
 		assertEquals(1, descendants(_dialogs._open.peek(), TableViewControl.class).size());
 
-		// The cell of the substeps of the substep, as the dialog's table displays it.
-		ReactCompactFieldControl nested = displayCell(_substep);
-		assertEquals(NEW_SUBSTEP, nested.getPreviewText());
+		// The cell of the substeps of the substep in the dialog's table.
+		ReactCompactFieldControl nested = descendants(_dialogs._open.peek(), ReactCompactFieldControl.class)
+			.stream()
+			.filter(c -> NEW_SUBSTEP.equals(c.getPreviewText()))
+			.findFirst()
+			.orElseThrow(() -> new AssertionError("The dialog's table shows the substeps of the substep."));
 		open(nested);
 		assertEquals(2, _dialogs._open.size());
 		assertEquals(1, dialogActions().size());
@@ -452,7 +455,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	private static void collectActions(ReactControl control, List<ReactButtonControl> result) {
-		if (control instanceof RowSetTableControl) {
+		if (control instanceof RowSetTableControl || control instanceof TableViewControl) {
 			return;
 		}
 		if (control instanceof ReactButtonControl button) {

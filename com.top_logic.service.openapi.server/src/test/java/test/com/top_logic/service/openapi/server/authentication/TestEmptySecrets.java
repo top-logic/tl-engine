@@ -7,7 +7,6 @@ package test.com.top_logic.service.openapi.server.authentication;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -21,6 +20,7 @@ import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
@@ -31,6 +31,7 @@ import com.top_logic.service.openapi.server.authentication.AuthenticationFailure
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator;
+import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator.AllowedKey;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
 import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
@@ -114,7 +115,8 @@ public class TestEmptySecrets extends TestCase {
 	}
 
 	public void testAPIKeyEmptyKeyRejectedAtRequest() {
-		Authenticator authenticator = new APIKeyAuthenticator(APIKeyPosition.HEADER, HEADER, Map.of("", ""));
+		Authenticator authenticator = new APIKeyAuthenticator(APIKeyPosition.HEADER, HEADER,
+			List.of(new AllowedKey(TypedConfigUtil.createInstance(literal("")), "")));
 
 		assertFails(authenticator, apiKeyRequest(""), invalidAPIKey());
 	}
@@ -167,14 +169,20 @@ public class TestEmptySecrets extends TestCase {
 	private static LoginCredentials credentials(String user, String password) {
 		LoginCredentials login = TypedConfiguration.newConfigItem(LoginCredentials.class);
 		login.setUser(user);
-		login.setPassword(password);
+		login.setPassword(password.isEmpty() ? null : literal(password));
 		return login;
+	}
+
+	private static LiteralSecretSource.Config literal(String secret) {
+		LiteralSecretSource.Config result = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		result.setValue(secret);
+		return result;
 	}
 
 	private static ServerSecret apiKeySecret(String apiKey) {
 		ServerAPIKeySecret secret = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
 		set(secret, APIKeySecret.DOMAIN, DOMAIN);
-		set(secret, APIKeySecret.API_KEY, apiKey);
+		set(secret, APIKeySecret.API_KEY, apiKey.isEmpty() ? null : literal(apiKey));
 		return secret;
 	}
 

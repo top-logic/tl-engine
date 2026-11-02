@@ -30,7 +30,7 @@ public interface TLFormType extends TLAttributeAnnotation {
 	 * Algorithm computing the type of objects to be displayed in a form.
 	 */
 	@DefaultContainer
-	PolymorphicConfiguration<FormTypeResolver> getFunction();
+	PolymorphicConfiguration<? extends FormTypeResolver> getFunction();
 
 	/**
 	 * Resolves the form type of some context.

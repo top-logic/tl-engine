@@ -14,6 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
@@ -38,6 +39,7 @@ public class LocalProviderConfig implements LLMProviderConfig {
 	@DisplayOrder({
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
 		LLMProviderConfig.Config.BASE_URL,
+		LLMProviderConfig.Config.CREDENTIALS,
 		LLMProviderConfig.Config.MODELS,
 		LLMProviderConfig.Config.CONNECT_TIMEOUT,
 		LLMProviderConfig.Config.REQUEST_TIMEOUT,
@@ -55,23 +57,31 @@ public class LocalProviderConfig implements LLMProviderConfig {
 
 	private final Config _config;
 
+	private final CredentialProvider _credentials;
+
 	/** */
 	@CalledByReflection
 	public LocalProviderConfig(InstantiationContext context, Config config) {
 		_config = config;
+		_credentials = LLMProviderConfig.createCredentials(context, config);
+	}
+
+	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
 	}
 
 	@Override
 	public LLMProvider createProvider() {
 		Map<String, String> customHeaders = _config.getCustomHeaders();
 		return new ChatCompletionsProvider(
-			null, resolveBaseUrl(),
+			_credentials, resolveBaseUrl(),
 			_config.getConnectTimeout(), _config.getRequestTimeout(), customHeaders);
 	}
 
 	@Override
 	public List<String> discoverModels() {
-		return ModelDiscoveryHelper.fetchModels(null, resolveBaseUrl());
+		return ModelDiscoveryHelper.fetchModels(_credentials, resolveBaseUrl());
 	}
 
 	@Override

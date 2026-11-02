@@ -123,9 +123,9 @@ public class TestPolymorphicConfigurationDefaults extends AbstractTypedConfigura
 
 	public static class E {
 		public interface EUsage extends ConfigurationItem {
-			PolymorphicConfiguration<E> getGenericE();
+			PolymorphicConfiguration<? extends E> getGenericE();
 
-			PolymorphicConfiguration<E1> getGenericE1();
+			PolymorphicConfiguration<? extends E1> getGenericE1();
 
 			EConfig getE();
 
@@ -136,10 +136,10 @@ public class TestPolymorphicConfigurationDefaults extends AbstractTypedConfigura
 			E1Config getE1();
 
 			@Name("generic-e-list")
-			List<PolymorphicConfiguration<E>> getGenericEList();
+			List<PolymorphicConfiguration<? extends E>> getGenericEList();
 
 			@Name("generic-e1-list")
-			List<PolymorphicConfiguration<E1>> getGenericE1List();
+			List<PolymorphicConfiguration<? extends E1>> getGenericE1List();
 
 			@Name("e-list")
 			List<EConfig> getEList();
@@ -149,11 +149,11 @@ public class TestPolymorphicConfigurationDefaults extends AbstractTypedConfigura
 
 			@Name("generic-e-map")
 			@Key(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME)
-			Map<Class<?>, PolymorphicConfiguration<E>> getGenericEMap();
+			Map<Class<?>, PolymorphicConfiguration<? extends E>> getGenericEMap();
 
 			@Name("generic-e1-map")
 			@Key(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME)
-			Map<Class<?>, PolymorphicConfiguration<E1>> getGenericE1Map();
+			Map<Class<?>, PolymorphicConfiguration<? extends E1>> getGenericE1Map();
 
 			@Name("e-map")
 			@Key(EConfig.X)

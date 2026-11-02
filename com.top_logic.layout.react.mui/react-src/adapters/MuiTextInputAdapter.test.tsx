@@ -130,6 +130,18 @@ describe('the part TextInput as MUI TextField', () => {
     expect(area.getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('draws a preformatted text area without wrapping its lines', () => {
+    draw({ multiline: true, preformatted: true, value: 'a\nb' });
+
+    expect(input().getAttribute('wrap')).toBe('off');
+  });
+
+  it('wraps the lines of a text area that is not preformatted', () => {
+    draw({ multiline: true, value: 'a\nb' });
+
+    expect(input().hasAttribute('wrap')).toBe(false);
+  });
+
   it('draws a multi-line box of three rows where it names none', () => {
     draw({ multiline: true });
 

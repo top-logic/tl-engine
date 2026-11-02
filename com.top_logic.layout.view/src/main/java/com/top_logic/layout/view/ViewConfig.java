@@ -10,12 +10,13 @@ import java.util.List;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -73,8 +74,9 @@ public interface ViewConfig extends ConfigurationItem {
 	 * </p>
 	 */
 	@Name(DEFAULT_VIEW)
-	@StringDefault("app.view.xml")
-	String getDefaultView();
+	@FormattedDefault("app.view.xml")
+	@Format(ViewRefFormat.class)
+	ViewRef getDefaultView();
 
 	/**
 	 * The views that a URL may name as the contents of a browser tab, besides the
@@ -127,7 +129,8 @@ public interface ViewConfig extends ConfigurationItem {
 	 */
 	@Name(LOGIN_VIEW)
 	@Nullable
-	String getLoginView();
+	@Format(ViewRefFormat.class)
+	ViewRef getLoginView();
 
 	/**
 	 * A view that a URL may name as the contents of a browser tab.
@@ -146,7 +149,8 @@ public interface ViewConfig extends ConfigurationItem {
 		 */
 		@Name(VIEW)
 		@Mandatory
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 
 		/**
 		 * Whether the view is shown to a session that belongs to no account as well.

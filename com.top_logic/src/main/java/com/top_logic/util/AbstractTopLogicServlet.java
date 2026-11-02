@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
+import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.URLPathBuilder;
@@ -37,7 +38,8 @@ public class AbstractTopLogicServlet extends HttpServlet {
 	private static final Set<String> AUTHENTICATION_PARAMS = new HashSet<>(Arrays.asList(
 		Login.USER_NAME,
 		Login.PASSWORD,
-		TopLogicServlet.SESSION_CHECK));
+		TopLogicServlet.SESSION_CHECK,
+		ExternalAuthenticationServlet.WINDOW_PARAM));
 
 	/**
 	 * The parameter that declares which start page to use.

@@ -82,7 +82,7 @@ public class TestJSPContent extends GenericTest {
 		 */
 		@Name("content-checkers")
 		@EntryTag("checker")
-		List<PolymorphicConfiguration<JSPContentChecker>> getContentCheckers();
+		List<PolymorphicConfiguration<? extends JSPContentChecker>> getContentCheckers();
 	}
     
 	private static final String JSP_BASE = "com.top_logic.util.TopLogicJspBase";

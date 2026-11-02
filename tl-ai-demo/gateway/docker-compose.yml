@@ -1,0 +1,74 @@
+# Credential-injecting gateway for the LLM providers of TopLogic applications.
+#
+# An application sends its provider requests to this gateway with an access token of its own
+# (OAuth client credentials or a developer's device login at Keycloak). oauth2-proxy validates
+# the token, nginx replaces it by the provider key and forwards the request to the provider.
+# Neither the application containers nor the developers' machines hold a provider key.
+#
+# Described in the developer article credentials/gateway (module com.top_logic.basic).
+#
+# Setup:
+#   cp gateway.env.example .env           # issuer, client and upstream settings
+#   mkdir -p secrets && chmod 700 secrets
+#   printf %s "$KEY" > secrets/anthropic_api_key     # a file for each entry under "secrets" below
+#   docker compose up -d
+#
+# A provider not used is removed from "secrets" here and its route from
+# nginx/templates/default.conf.template.
+#
+# The gateway listens on plain HTTP; in production it runs behind a TLS-terminating ingress or
+# load balancer, since the requests carry access tokens.
+
+services:
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+    command:
+      - --provider=keycloak-oidc
+      - --oidc-issuer-url=${OIDC_ISSUER_URL}
+      - --client-id=${GATEWAY_CLIENT_ID}
+      # Accept requests carrying a bearer token (no browser login, no cookie session).
+      - --skip-jwt-bearer-tokens=true
+      # The client role a token must carry, "<client>:<role>" for a client role of Keycloak.
+      - --allowed-role=${GATEWAY_CLIENT_ID}:${GATEWAY_ROLE}
+      # Access is granted by the role. Service account tokens carry no e-mail address, which
+      # oauth2-proxy otherwise requires as verified.
+      - --email-domain=*
+      - --insecure-oidc-allow-unverified-email=true
+      - --http-address=0.0.0.0:4180
+      - --upstream=static://202
+    environment:
+      # Required by oauth2-proxy, not used for validating bearer tokens.
+      OAUTH2_PROXY_CLIENT_SECRET: ${GATEWAY_CLIENT_SECRET}
+      OAUTH2_PROXY_COOKIE_SECRET: ${GATEWAY_COOKIE_SECRET}
+    restart: unless-stopped
+
+  gateway:
+    image: nginx:1.27-alpine
+    depends_on:
+      - oauth2-proxy
+    ports:
+      - "${GATEWAY_PORT}:8080"
+    environment:
+      OAUTH2_PROXY_URL: ${OAUTH2_PROXY_URL}
+      ANTHROPIC_UPSTREAM: ${ANTHROPIC_UPSTREAM}
+      OPENAI_UPSTREAM: ${OPENAI_UPSTREAM}
+      MISTRAL_UPSTREAM: ${MISTRAL_UPSTREAM}
+      # Only these variables are substituted in the templates; nginx variables stay untouched.
+      NGINX_ENVSUBST_FILTER: "^(OAUTH2_PROXY_URL|.*_UPSTREAM|.*_API_KEY)$"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/entrypoint/10-provider-keys.envsh:/docker-entrypoint.d/10-provider-keys.envsh:ro
+    secrets:
+      - anthropic_api_key
+      - openai_api_key
+      - mistral_api_key
+    restart: unless-stopped
+
+secrets:
+  anthropic_api_key:
+    file: ./secrets/anthropic_api_key
+  openai_api_key:
+    file: ./secrets/openai_api_key
+  mistral_api_key:
+    file: ./secrets/mistral_api_key

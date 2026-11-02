@@ -5,28 +5,36 @@
  */
 package test.com.top_logic.knowledge.service.db2;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.ReflectionUtils;
 import test.com.top_logic.knowledge.wrap.SimpleWrapperFactoryTestScenario.EObj;
 
 import com.top_logic.basic.col.KeyValueBuffer;
+import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.Branch;
+import com.top_logic.knowledge.service.CommittableAdapter;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.DeletedObjectAccess;
 import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
@@ -840,6 +848,184 @@ public class TestAssociationCache extends AbstractDBKnowledgeBaseClusterTest {
 		result1.check();
 		result2.check();
 		result3.check();
+	}
+
+	/**
+	 * Tests that a query result for the former last revision, which arrives while a commit has
+	 * already published its association caches but not yet advanced the last revision, is merged
+	 * into the cache chain without extending its validity.
+	 */
+	public void testLateLookupDuringCommitPublication() throws Throwable {
+		Transaction createTx = begin();
+		KnowledgeObject base = kb().createKnowledgeObject(REFERENCE_TYPE_NAME);
+		setA1(base, "a1");
+		KnowledgeObject e1 = newE("e1");
+		e1.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, base);
+		KnowledgeObject e2 = newE("e2");
+		commit(createTx);
+		updateSessionRevision();
+		UpdateChainLink createSession = getLastSessionRevision(kb());
+
+		AssociationSetQuery<TLObject> query =
+			AssociationQuery.createQuery("query", TLObject.class, E_NAME, REFERENCE_MONO_CUR_LOCAL_NAME);
+		long createRevision = kb().getSessionRevision();
+		assertEquals(createRevision, kb().getLastRevision());
+
+		AtomicReference<Throwable> problem = new AtomicReference<>();
+		Transaction tx = begin();
+		e2.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, base);
+		// Installs the global cache for the current revision and a local cache of this transaction
+		// that is published with the commit.
+		assertEquals(set(e1.getWrapper(), e2.getWrapper()), kb().resolveLinks(base, query));
+		kb().addCommittable(new CommittableAdapter() {
+			@Override
+			public void complete(CommitContext context) {
+				// Runs after the association caches are published, before the commit revision
+				// becomes the last revision.
+				try {
+					inThread(() -> {
+						assertEquals(createRevision, kb().getSessionRevision());
+						assertEquals(createRevision, kb().getLastRevision());
+
+						// Simulates a reader without transaction whose query for the session
+						// revision completes only now.
+						Object cache = ReflectionUtils.executeMethod(base, "getAssociationCache",
+							new Class<?>[] { AbstractAssociationQuery.class }, new Object[] { query });
+						ReflectionUtils.executeMethod(cache, "update", new Class<?>[] { long.class, List.class },
+							new Object[] { createRevision, list(e1.getWrapper()) });
+
+						assertEquals(set(e1.getWrapper()), kb().resolveLinks(base, query));
+					});
+				} catch (Throwable ex) {
+					problem.set(ex);
+				}
+			}
+		});
+		commit(tx);
+		if (problem.get() != null) {
+			throw problem.get();
+		}
+
+		updateSessionRevision();
+		assertEquals(set(e1.getWrapper(), e2.getWrapper()), kb().resolveLinks(base, query));
+		updateSessionRevision(createSession);
+		assertEquals(set(e1.getWrapper()), kb().resolveLinks(base, query));
+		updateSessionRevision();
+		assertEquals(set(e1.getWrapper(), e2.getWrapper()), kb().resolveLinks(base, query));
+	}
+
+	/**
+	 * Tests that a cache entry filled for a revision older than all entries of the cache chain is
+	 * not used for later revisions in which the result has changed.
+	 */
+	public void testFillOlderThanChain() throws DataObjectException {
+		Transaction createTx = begin();
+		KnowledgeObject base = kb().createKnowledgeObject(REFERENCE_TYPE_NAME);
+		setA1(base, "a1");
+		KnowledgeObject e1 = newE("e1");
+		e1.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, base);
+		KnowledgeObject e2 = newE("e2");
+		KnowledgeObject e3 = newE("e3");
+		commit(createTx);
+		UpdateChainLink createSession = getLastSessionRevision(kb());
+
+		Transaction addE2Tx = begin();
+		e2.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, base);
+		commit(addE2Tx);
+		UpdateChainLink addE2Session = getLastSessionRevision(kb());
+
+		Transaction unrelatedTx = begin();
+		setA1(base, "a2");
+		commit(unrelatedTx);
+		UpdateChainLink unrelatedSession = getLastSessionRevision(kb());
+
+		Transaction addE3Tx = begin();
+		e3.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, base);
+		commit(addE3Tx);
+
+		AssociationSetQuery<TLObject> query =
+			AssociationQuery.createQuery("query", TLObject.class, E_NAME, REFERENCE_MONO_CUR_LOCAL_NAME);
+
+		// Installs the head of the cache chain.
+		updateSessionRevision();
+		assertEquals(set(e1.getWrapper(), e2.getWrapper(), e3.getWrapper()), kb().resolveLinks(base, query));
+
+		// Fills an entry older than the head.
+		updateSessionRevision(createSession);
+		assertEquals(set(e1.getWrapper()), kb().resolveLinks(base, query));
+
+		// Revisions between the older entry and the head.
+		updateSessionRevision(unrelatedSession);
+		assertEquals(set(e1.getWrapper(), e2.getWrapper()), kb().resolveLinks(base, query));
+		updateSessionRevision(addE2Session);
+		assertEquals(set(e1.getWrapper(), e2.getWrapper()), kb().resolveLinks(base, query));
+		updateSessionRevision(createSession);
+		assertEquals(set(e1.getWrapper()), kb().resolveLinks(base, query));
+
+		updateSessionRevision();
+		assertEquals(set(e1.getWrapper(), e2.getWrapper(), e3.getWrapper()), kb().resolveLinks(base, query));
+	}
+
+	/**
+	 * Tests reads without transaction that run concurrently to commits changing the result of the
+	 * read association query.
+	 *
+	 * <p>
+	 * Each value read must be the value committed at the session revision of the reader.
+	 * </p>
+	 */
+	public void testConcurrentReadsDuringCommits() throws Throwable {
+		Transaction createTx = begin();
+		KnowledgeObject base = kb().createKnowledgeObject(REFERENCE_TYPE_NAME);
+		setA1(base, "a1");
+		KnowledgeObject e1 = newE("e1");
+		commit(createTx);
+		updateSessionRevision();
+
+		AssociationSetQuery<TLObject> query =
+			AssociationQuery.createQuery("query", TLObject.class, E_NAME, REFERENCE_MONO_CUR_LOCAL_NAME);
+
+		// Commit revision to the expected query result from that revision on.
+		ConcurrentSkipListMap<Long, Set<TLObject>> expected = new ConcurrentSkipListMap<>();
+		expected.put(kb().getSessionRevision(), set());
+
+		// Pairs of session revision and the value read in it.
+		List<Entry<Long, Object>> observed = Collections.synchronizedList(new ArrayList<>());
+		AtomicBoolean done = new AtomicBoolean();
+
+		TestFuture reader = inParallel(() -> {
+			while (!done.get()) {
+				updateSessionRevision();
+				long revision = kb().getSessionRevision();
+				Object value = kb().resolveLinks(base, query);
+				observed.add(new SimpleImmutableEntry<>(revision, value));
+			}
+		});
+
+		try {
+			long stop = System.currentTimeMillis() + 3000;
+			boolean linked = false;
+			while (System.currentTimeMillis() < stop) {
+				Transaction tx = begin();
+				linked = !linked;
+				e1.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, linked ? base : null);
+				// Creates a local cache that is published with the commit.
+				kb().resolveLinks(base, query);
+				commit(tx);
+				expected.put(tx.getCommitRevision().getCommitNumber(), linked ? set(e1.getWrapper()) : set());
+			}
+		} finally {
+			done.set(true);
+		}
+		reader.check();
+
+		assertTrue("No concurrent reads.", observed.size() > 0);
+		synchronized (observed) {
+			for (Entry<Long, Object> read : observed) {
+				assertEquals("Value read in revision " + read.getKey(),
+					expected.floorEntry(read.getKey()).getValue(), read.getValue());
+			}
+		}
 	}
 
 	/**

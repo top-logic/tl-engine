@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -14,6 +16,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
@@ -23,6 +27,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -51,6 +56,7 @@ public class ButtonElement implements UIElement {
 	 * Configuration for {@link ButtonElement}.
 	 */
 	@TagName("button")
+	@TypeIcon("css:bi bi-cursor")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -76,6 +82,7 @@ public class ButtonElement implements UIElement {
 		@Name(ACTION)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getAction();
 
 		/**
@@ -128,8 +135,7 @@ public class ButtonElement implements UIElement {
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
 		control.setCssClass(_config.getCssClass());
-		control.addAttachListener(() -> model.attach(context.getModelScope()));
-		control.addDetachListener(model::detach);
+		ViewCommands.registerLifecycle(context, List.of(model), control);
 		return control;
 	}
 }

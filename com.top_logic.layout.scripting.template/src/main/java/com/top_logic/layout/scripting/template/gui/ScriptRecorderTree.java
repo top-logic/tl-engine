@@ -111,21 +111,21 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 
 		@Override
 		@ItemDefault(ControlRepresentableCP.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		/**
 		 * The {@link TreeDragSource} to use.
 		 */
 		@Name(TREE_DRAG_SOURCE)
 		@ItemDefault(DefaultTreeDrag.class)
-		PolymorphicConfiguration<TreeDragSource> getTreeDragSource();
+		PolymorphicConfiguration<? extends TreeDragSource> getTreeDragSource();
 
 		/**
 		 * The {@link TreeDropTarget} handler to use.
 		 */
 		@Name(TREE_DROP_TARGET)
 		@ItemDefault(ScriptingRecorderDropTarget.class)
-		PolymorphicConfiguration<TreeDropTarget> getTreeDropTarget();
+		PolymorphicConfiguration<? extends TreeDropTarget> getTreeDropTarget();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {

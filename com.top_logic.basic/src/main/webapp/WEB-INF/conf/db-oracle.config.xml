@@ -14,7 +14,9 @@
 								<!-- The URL must be in a schema like "jdbc:oracle:thin:@hostname:1521:xe". -->
 								<option name="URL" value="jdbc:oracle:thin:@%ORACLE_HOST%:%ORACLE_PORT%:%ORACLE_NAME%" />
 								<option name="user" value="%ORACLE_USER%" />
-								<encrypted-option name="password" value="%ORACLE_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle_passwd"/>
+								</encrypted-option>
 								
 								<option name="implicitCachingEnabled" value="true" />
 								<option name="oracle.net.ssl_cipher_suites" value="(SSL_DH_anon_WITH_3DES_EDE_CBC_SHA, SSL_DH_anon_WITH_RC4_128_MD5, SSL_DH_anon_WITH_DES_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA256)" />

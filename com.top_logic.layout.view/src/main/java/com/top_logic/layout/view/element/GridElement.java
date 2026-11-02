@@ -12,6 +12,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
@@ -35,6 +36,7 @@ public class GridElement extends ContainerElement {
 	 * Configuration for {@link GridElement}.
 	 */
 	@TagName("grid")
+	@TypeIcon("css:bi bi-grid-3x3-gap")
 	public interface Config extends ContainerElement.Config, GridOptions {
 
 		@Override

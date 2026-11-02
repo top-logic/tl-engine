@@ -1,0 +1,15 @@
+<data lang="en">
+	<item id="e1" name="One">
+		<child id="c1" text="Step one"/>
+		<child id="c9" text="Unknown step"/>
+	</item>
+	<item id="e2" name="Two (changed)">
+		<child id="c2" text="Step two (changed)"/>
+	</item>
+	<label id="e3" name="Three">
+		<child id="c3" text="Skipped step"/>
+	</label>
+	<item id="n1" name="New">
+		<child id="n1c1" text="New step"/>
+	</item>
+</data>

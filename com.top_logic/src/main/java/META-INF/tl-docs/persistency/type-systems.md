@@ -47,6 +47,7 @@ The tables of the knowledge base form a *type system*: a named set of table decl
 | `schemas` | `SchemaConfiguration` | `<schema name="…" resource="schema://…"/>` entries: low-level tables that are not object types (locks, cluster state, journal, `TL_PROPERTIES`). |
 | `providers` | `SchemaConfiguration` | `TypeProvider`s that create types programmatically. |
 | `multiple-branches` | `SchemaConfiguration` | Whether the tables support branches other than trunk; default `true`. See the article on branches of this chapter. |
+| `branch-last` | `SchemaConfiguration` | Whether the branch column follows the identifying columns in primary keys and indexes instead of leading them; without a value, the SQL dialect decides (`true` on H2, `false` on all other databases); a set value overrides the dialect. See [table layout](doc:persistency/table-layout). |
 | `data` | `TypeSystemConfiguration` | `<definition resource="…"/>` entries: initial objects imported once, when the database is created. |
 
 The configuration is a typed-configuration list keyed by `name`, so every module adds to the same type system from its own configuration file instead of redefining it. `com.top_logic.element` adds its declarations in `ElementConf.config.xml`, `com.top_logic.basic.db.schema` adds the `TL_PROPERTIES` table in `basicDbSchemaConf.config.xml`:
@@ -102,7 +103,7 @@ An application that keeps all its objects in the tables the engine provides (`Ge
 
 ### The database connection
 
-Which database the knowledge base connects to is configured separately, in the connection pool `default` of the `ConnectionPoolRegistry`. `com.top_logic.basic` ships `db-default.config.xml` (pool sizes) and one file per database: `db-h2`, `db-mysql`, `db-postgresql`, `db-oracle`, `db-mssql`, `db-db2`, `db-jndi` (each a `.xml` with aliases and a `.config.xml` with the data source). The application's `metaConf.txt` lists `db-default.xml`, the deployment's `metaConf.txt` adds the database - in the archetype `deploy/local/webapp/WEB-INF/conf/metaConf.txt` lists `db-h2.xml`. The connection parameters come from environment variables or system properties named in the aliases, for example `postgresql_host`, `postgresql_database`, `postgresql_user` in `db-postgresql.xml`. The pool's `sql-dialect` (set in the database file, or guessed from the JDBC metadata when not given) translates the platform-independent declarations into the SQL of that database, so the same table declarations run on every supported database.
+Which database the knowledge base connects to is configured separately, in the connection pool `default` of the `ConnectionPoolRegistry`. `com.top_logic.basic` ships `db-default.config.xml` (pool sizes) and one file per database: `db-h2`, `db-mysql`, `db-postgresql`, `db-oracle`, `db-mssql`, `db-db2`, `db-jndi` (each a `.xml` with aliases and a `.config.xml` with the data source). The application's `metaConf.txt` lists `db-default.xml`, the deployment's `metaConf.txt` adds the database - in the archetype `deploy/local/webapp/WEB-INF/conf/metaConf.txt` lists `db-h2.xml`. The connection parameters come from environment variables or system properties named in the aliases, for example `postgresql_host`, `postgresql_database`, `postgresql_user` in `db-postgresql.xml`. The password is a [named secret](doc:credentials/secret-stores) (`h2_passwd`, `postgresql_passwd`, ...) without default; a local development deployment gets the password of its H2 database from `devel-secrets.xml` (see [development secrets](doc:credentials/secret-stores#development-secrets)). The pool's `sql-dialect` (set in the database file, or guessed from the JDBC metadata when not given) translates the platform-independent declarations into the SQL of that database, so the same table declarations run on every supported database.
 
 ## Table declarations (`*Meta.xml`)
 
@@ -203,13 +204,14 @@ The consequence: a change in `*.model.xml` alone - a new class, a new attribute,
 
 At the first start, when the sequence table does not exist yet, `InitialTableSetup` runs the configured setup actions: it creates all tables of the type system, imports the initial `data`, stores the resolved schema in the database and records the current migration versions. The automatic setup can be suppressed with the system property or environment variable `tl_noAutomaticalDatabaseSetup`.
 
-The resolved schema is stored as XML in the table `TL_PROPERTIES` (`DBProperties`) under the key `KnowledgeBase.Default.schemaSetup` (`KBSchemaUtil`). On every later start `DBKnowledgeBase` reads its tables from this stored schema, not from the `*Meta.xml` files. The `KnowledgeBaseConfiguration` property `override-persistent-type-definitions` makes it use the configuration files instead; it changes no table.
+The resolved schema is stored as XML in the table `TL_PROPERTIES` (`DBProperties`) under the key `KnowledgeBase.Default.schemaSetup` (`KBSchemaUtil`). The stored schema states the layout option `branch-last` explicitly, resolved against the database when it is stored; a stored schema without it describes the branch-first layout. On every later start `DBKnowledgeBase` reads its tables from this stored schema, not from the `*Meta.xml` files. The `KnowledgeBaseConfiguration` property `override-persistent-type-definitions` makes it use the configuration files instead; it changes no table.
 
 Before the knowledge base starts, `MigrationService` compares the configured schema with the stored one, type by type:
 
 - A table that is configured but not stored is created automatically (`AddApplicationTypesProcessor`).
 - A table that is stored but no longer configured is kept. Its declaration is written to `WEB-INF/autoconf/inapp-schema-<n>.meta.xml` together with an `inapp-schema-<n>.config.xml` that adds it to the type system `Default` again, so the declaration is not lost.
 - A table that exists in both is not compared. A new or changed column, index, primary key or flag in its declaration is not applied to the database.
+- If the type system options `multiple-branches` or `branch-last` (configured value, or the default of the database's SQL dialect) differ, the existing tables are converted to the configured layout before new tables are created (`AlignTableLayoutProcessor`, see [table layout](doc:persistency/table-layout#conversion-of-an-existing-database)).
 
 After an explicit migration has run, the configured schema replaces the stored one (`StoreTypeConfiguration`). An edited declaration without the matching migration processor therefore leaves the knowledge base believing in a column that the table does not have. Until then, a column added only to the declaration is unknown to the knowledge base, and the attribute's values go to `FLEX_DATA`.
 
@@ -259,6 +261,6 @@ Processors are written with their tag name, or as `<processor class="…"/>` for
 | Move a model attribute from a column into `FLEX_DATA` | `make-flex-attribute` (`table`, `column`, `types`), then `drop-column`, and remove the column from the declaration. |
 | Move objects of a model class to another table (changed `<table>`) | Migration: `move-objects` (`source-table`, `dest-table`, `types`). |
 | New, changed or removed model class or attribute (`*.model.xml`) | Automatic model upgrade, unless `auto-upgrade` is `prevent`; model migration processors (`create-property`, `update-property`, `change-part-type`, …) describe it explicitly. |
-| Branch support (`multiple-branches`) | No conversion exists; it needs a fresh database. See the article on branches of this chapter. |
+| Branch support (`multiple-branches`), branch position (`branch-last`) | Automatic: the tables are converted at startup. Dropping the branch columns requires a database containing only the trunk. See [table layout](doc:persistency/table-layout#conversion-of-an-existing-database). |
 
 The framework's own migrations, and what an application must add for an upgrade, are listed in [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations).

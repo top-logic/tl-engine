@@ -49,7 +49,7 @@ public class SearchFactory extends ManagedClass implements SearchService {
 		/**
 		 * All {@link SearchEngine} that can be used.
 		 */
-		List<PolymorphicConfiguration<SearchEngine>> getSearchEngines();
+		List<PolymorphicConfiguration<? extends SearchEngine>> getSearchEngines();
 
 	}
 

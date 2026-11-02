@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -19,10 +18,10 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
-import com.top_logic.tl.ai.core.provider.AuthScheme;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
 import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ProviderException;
@@ -66,12 +65,6 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	private final Map<String, String> _queryParams;
 
 	/**
-	 * Authentication scheme controlling how {@link #_apiKey} is sent.
-	 * Defaults to {@link AuthScheme#BEARER}.
-	 */
-	private final AuthScheme _authScheme;
-
-	/**
 	 * JSON field name carrying the output-token limit.
 	 * Defaults to {@link TokenLimitParam#MAX_TOKENS}.
 	 */
@@ -80,38 +73,37 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	/**
 	 * Creates a {@link ChatCompletionsProvider}.
 	 *
-	 * @param apiKey
-	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param credentials
+	 *        Authentication of the requests to the provider API.
 	 * @param baseUrl
 	 *        The base URL of the provider API (without trailing slash).
 	 */
-	public ChatCompletionsProvider(String apiKey, String baseUrl) {
-		this(apiKey, baseUrl, defaultHttpClient());
+	public ChatCompletionsProvider(CredentialProvider credentials, String baseUrl) {
+		this(credentials, baseUrl, defaultHttpClient());
 	}
 
 	/**
 	 * Creates a {@link ChatCompletionsProvider}.
 	 *
-	 * @param apiKey
-	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param credentials
+	 *        Authentication of the requests to the provider API.
 	 * @param baseUrl
 	 *        The base URL of the provider API (without trailing slash).
 	 * @param httpClient
 	 *        The HTTP client to use.
 	 */
-	public ChatCompletionsProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		super(apiKey, baseUrl, httpClient);
+	public ChatCompletionsProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient) {
+		super(credentials, baseUrl, httpClient);
 		_pathTemplate = DEFAULT_PATH;
 		_queryParams = Map.of();
-		_authScheme = AuthScheme.BEARER;
 		_tokenLimitParam = TokenLimitParam.MAX_TOKENS;
 	}
 
 	/**
 	 * Creates a {@link ChatCompletionsProvider} with configurable timeouts and headers.
 	 *
-	 * @param apiKey
-	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param credentials
+	 *        Authentication of the requests to the provider API.
 	 * @param baseUrl
 	 *        The base URL of the provider API (without trailing slash).
 	 * @param connectTimeoutSeconds
@@ -121,21 +113,21 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * @param customHeaders
 	 *        Additional headers applied after provider-specific headers, allowing overrides.
 	 */
-	public ChatCompletionsProvider(String apiKey, String baseUrl,
+	public ChatCompletionsProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
-		this(apiKey, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
-			DEFAULT_PATH, Map.of(), AuthScheme.BEARER);
+		this(credentials, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
+			DEFAULT_PATH, Map.of());
 	}
 
 	/**
-	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path, query
-	 * parameters, and authentication scheme.
+	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path and query
+	 * parameters.
 	 *
 	 * <p>Use this constructor to configure Azure-<code>OpenAI</code> deployment paths or any other provider
-	 * that embeds the model name in the URL or uses a non-standard auth header.</p>
+	 * that embeds the model name in the URL.</p>
 	 *
-	 * @param apiKey
-	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param credentials
+	 *        Authentication of the requests to the provider API.
 	 * @param baseUrl
 	 *        The base URL of the provider API (without trailing slash).
 	 * @param connectTimeoutSeconds
@@ -151,20 +143,17 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * @param queryParams
 	 *        Additional query parameters appended to the path, e.g.
 	 *        {@code Map.of("api-version", "2024-10-21")}. May be empty.
-	 * @param authScheme
-	 *        The authentication scheme to use for the {@code api-key} or {@code Authorization}
-	 *        header.
 	 */
-	public ChatCompletionsProvider(String apiKey, String baseUrl,
+	public ChatCompletionsProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders,
-			String pathTemplate, Map<String, String> queryParams, AuthScheme authScheme) {
-		this(apiKey, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
-			pathTemplate, queryParams, authScheme, TokenLimitParam.MAX_TOKENS);
+			String pathTemplate, Map<String, String> queryParams) {
+		this(credentials, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
+			pathTemplate, queryParams, TokenLimitParam.MAX_TOKENS);
 	}
 
 	/**
 	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path, query
-	 * parameters, authentication scheme, and output-token limit field name.
+	 * parameters, and output-token limit field name.
 	 *
 	 * <p>Use this constructor for Azure <code>OpenAI</code> / <code>OpenAI</code> deployments serving GPT-5 or o-series
 	 * reasoning models, which require {@link TokenLimitParam#MAX_COMPLETION_TOKENS} instead of the
@@ -172,17 +161,15 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 *
 	 * @param tokenLimitParam
 	 *        Which JSON field the output-token limit is written under. See {@link TokenLimitParam}.
-	 *        Other parameters are as documented on the eight-argument constructor.
+	 *        Other parameters are as documented on the seven-argument constructor.
 	 */
-	public ChatCompletionsProvider(String apiKey, String baseUrl,
+	public ChatCompletionsProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders,
-			String pathTemplate, Map<String, String> queryParams, AuthScheme authScheme,
-			TokenLimitParam tokenLimitParam) {
-		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+			String pathTemplate, Map<String, String> queryParams, TokenLimitParam tokenLimitParam) {
+		super(credentials, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 		_pathTemplate = Objects.requireNonNullElse(pathTemplate, DEFAULT_PATH);
 		_queryParams = Map.copyOf(Objects.requireNonNullElse(queryParams, Map.of()));
-		_authScheme = Objects.requireNonNullElse(authScheme, AuthScheme.BEARER);
 		_tokenLimitParam = Objects.requireNonNullElse(tokenLimitParam, TokenLimitParam.MAX_TOKENS);
 	}
 
@@ -208,17 +195,6 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 			first = false;
 		}
 		return sb.toString();
-	}
-
-	@Override
-	protected void addAuthHeaders(HttpRequest.Builder builder) {
-		if (_authScheme == AuthScheme.API_KEY) {
-			if (_apiKey != null && !_apiKey.isBlank()) {
-				builder.header("api-key", _apiKey);
-			}
-		} else {
-			super.addAuthHeaders(builder);
-		}
 	}
 
 	@Override

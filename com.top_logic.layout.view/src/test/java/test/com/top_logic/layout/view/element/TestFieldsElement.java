@@ -47,6 +47,7 @@ import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
  * Tests for {@link FieldsElement} - the {@code <fields>} element laying its content out as the
@@ -325,6 +326,7 @@ public class TestFieldsElement extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestFieldsElement.class,
-				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 }

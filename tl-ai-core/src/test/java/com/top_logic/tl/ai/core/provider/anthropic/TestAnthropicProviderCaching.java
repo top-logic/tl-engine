@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -30,7 +31,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testSystemPromptHasCacheControl() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -98,7 +99,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testEmptySystemPromptOmitted() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -128,7 +129,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testNullSystemPromptOmitted() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -158,7 +159,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testLastUserMessageHasCacheControl() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 		Instant now = Instant.now();
 
 		UserMessage user1 = new UserMessage(
@@ -191,7 +192,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testToolResultGroupHasCacheControl() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 		Instant now = Instant.now();
 
 		UserMessage user1 = new UserMessage(
@@ -226,7 +227,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testSingleUserMessageGetsCacheControl() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 
 		UserMessage user = new UserMessage(
 			UUID.randomUUID().toString(), Instant.now(),
@@ -248,7 +249,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testThreeUserMessagesOnlyLastTwoCached() throws Exception {
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.NONE);
 		Instant now = Instant.now();
 
 		UserMessage user1 = new UserMessage(

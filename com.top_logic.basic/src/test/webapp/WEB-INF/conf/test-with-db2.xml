@@ -7,6 +7,5 @@
         <entry name="%DB2_SCHEMA_TEST_UNIT%" value="${env:db2_schema_testUnit:testUnit}" />
         <entry name="%DB2_SCHEMA_TEST_MIGRATION%" value="${env:db2_schema_testMigration:testMig}" />
         <entry name="%DB2_USER%" value="${env:db2_user:user}" />
-        <entry name="%DB2_PASSWD%" value="${env:db2_passwd:unencrypted:passwd}" />
 	</alias>
 </root>

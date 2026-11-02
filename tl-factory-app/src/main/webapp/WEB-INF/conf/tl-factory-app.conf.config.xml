@@ -21,15 +21,17 @@
 			The provider whose API key the LLM proxy of the workspaces adds to their requests
 			(LLMProxyService, provider "anthropic"); the key is read from the environment variable
 			tl_anthropic_api_key. It exposes no models: the control application runs no agent itself; the
-			chats of the Agent tab are answered by the coding agents in the workspaces.
+			chats of the Agent tab are answered by the coding agents in the workspaces. The list replaces
+			the providers tl-ai-core ships, which would expose their default models.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
-				<providers>
+				<providers config:override="true">
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="%ANTHROPIC_API_KEY%"
 						name="anthropic"
-					/>
+					>
+						<api-key name="tl_anthropic_api_key"/>
+					</provider>
 				</providers>
 				<model-catalog fetch-remote-catalog="false"/>
 			</instance>

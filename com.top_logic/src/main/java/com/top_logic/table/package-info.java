@@ -37,7 +37,5 @@
  * {@code DisplayContext}, {@code FilterDialogBuilder}/{@code ConfiguredFilter},
  * {@code PersonalConfiguration}.
  * </p>
- *
- * @see <a href="file:../../../../../../../../docs/plans/2026-06-17-greenfield-table-model-spec.md">Specification</a>
  */
 package com.top_logic.table;

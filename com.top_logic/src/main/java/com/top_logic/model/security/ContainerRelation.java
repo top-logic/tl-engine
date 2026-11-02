@@ -10,7 +10,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link AccessParentFunction} leading to the container of an object.
@@ -60,8 +59,8 @@ public record ContainerRelation(TLReference composition, boolean configured) imp
 	@Override
 	public ResKey getLabel() {
 		if (composition != null) {
-			return I18NConstants.ACCESS_PARENT_CONTAINER_VIA__COMPOSITION
-				.fill(TLModelUtil.qualifiedName(composition));
+			return I18NConstants.ACCESS_PARENT_CONTAINER_VIA__OWNER_COMPOSITION.fill(
+				AccessParentFunction.ownerLabel(composition), AccessParentFunction.referenceLabel(composition));
 		}
 		return configured ? I18NConstants.ACCESS_PARENT_CONTAINER : I18NConstants.ACCESS_PARENT_CONTAINER_DEFAULT;
 	}

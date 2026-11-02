@@ -232,6 +232,23 @@ public final class SubagentRegistries {
 			|| (key.startsWith(conversationKey) && key.charAt(conversationKey.length()) == WINDOW_SEPARATOR);
 	}
 
+	/**
+	 * Forgets every registry and every subagent id counter, without stopping any registry.
+	 *
+	 * <p>
+	 * For the stop of {@link SubagentWorkers}, which has shut down every registry that was given a
+	 * job: a registry made after it starts again has threads of its own. A conversation that goes on
+	 * then counts its subagent ids on from the lead's log, see
+	 * {@link SubagentJobRegistry#countOnFrom(int)}.
+	 * </p>
+	 */
+	static void clear() {
+		synchronized (REGISTRIES) {
+			REGISTRIES.clear();
+			IDS.clear();
+		}
+	}
+
 	/** How many registries are kept. For tests. */
 	static int size() {
 		synchronized (REGISTRIES) {

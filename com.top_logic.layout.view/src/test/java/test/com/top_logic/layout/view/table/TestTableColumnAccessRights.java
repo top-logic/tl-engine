@@ -306,7 +306,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		assertTrue(ModelAccessPolicy.onAttribute(write, _category, categoryName).isExecutable());
 		ExecutableState refused = ModelAccessPolicy.onAttribute(write, _hiddenCategory, categoryName);
 		assertTrue("Refused on the object: disabled, not hidden.", refused.isDisabled());
-		assertTrue(ModelAccessPolicy.onObject(write, _hiddenCategory, categoryName, null).isDisabled());
+		assertTrue(ModelAccessPolicy.onObject(write, _hiddenCategory, categoryName).isDisabled());
 
 		// Without a grant of its own, the type decides, which grants writing to no role.
 		assertTrue(ModelAccessPolicy.onAttributeOfType(write, type(CATEGORY), categoryReader).isHidden());

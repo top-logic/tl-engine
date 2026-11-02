@@ -50,7 +50,7 @@ public class GenericStructureCreateHandler extends AbstractCommandHandler {
 		String getNodeType();
 
 		@Name(CONTEXT_SELECTOR_PROPERTY)
-		PolymorphicConfiguration<CreateContextSelector> getContextSelector();
+		PolymorphicConfiguration<? extends CreateContextSelector> getContextSelector();
 
 	}
 

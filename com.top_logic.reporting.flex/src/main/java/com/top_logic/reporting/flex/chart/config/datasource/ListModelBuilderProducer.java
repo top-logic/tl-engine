@@ -49,7 +49,7 @@ public class ListModelBuilderProducer implements ChartDataSource<ComponentDataCo
 		/**
 		 * Configuration of {@link ListModelBuilder} that provides the objects
 		 */
-		public PolymorphicConfiguration<ListModelBuilder> getListModelBuilder();
+		public PolymorphicConfiguration<? extends ListModelBuilder> getListModelBuilder();
 	}
 
 	private final Config _config;

@@ -19,13 +19,14 @@
 				>
 					<buttons>
 						<reference command-id="releaseTaskClusterLock"/>
-						<reference command-id="blockTask"/>
-						<reference command-id="unblockTask"/>
+						<reference command-id="deactivateTask"/>
+						<reference command-id="activateTask"/>
+						<reference command-id="resetTaskActive"/>
 						<reference command-id="scheduleTask"/>
 					</buttons>
 
 					<table
-						defaultColumns="name, lastSched, nextSched, isBlocked, isBlockingAllowed, combinedState, exception, warnings, message, startDate, endDate, duration, logFile, isEnabled, perNode, persistent, clusterLock, needsMaintenanceMode"
+						defaultColumns="name, lastSched, nextSched, active, combinedState, exception, warnings, message, startDate, endDate, duration, logFile, perNode, persistent, clusterLock, needsMaintenanceMode"
 						defaultSortOrder="name:ascending"
 						fixedColumns="1"
 					>
@@ -61,15 +62,9 @@
 									show-option-entries="false"
 								/>
 							</column>
-							<column name="isBlocked"
-								cellStyle="text-align: center;"
-								columnWidth="60px"
-								renderer="com.top_logic.util.sched.layout.block.BlockStateRenderer"
-							/>
-							<column name="isBlockingAllowed"
-								cellStyle="text-align: center;"
-								columnWidth="60px"
-								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							<column name="active"
+								columnWidth="170px"
+								renderer="com.top_logic.util.sched.layout.active.ActiveStateRenderer"
 							/>
 							<column name="combinedState"
 								cellStyle="text-align: center;"
@@ -98,11 +93,6 @@
 								columnWidth="500px"
 								filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 								resourceProvider="com.top_logic.mig.html.I18NResourceProvider"
-							/>
-							<column name="isEnabled"
-								cellStyle="text-align: center;"
-								columnWidth="100px"
-								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
 							/>
 							<column name="startDate"
 								columnWidth="125px"

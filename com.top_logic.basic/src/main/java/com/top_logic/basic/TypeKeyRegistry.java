@@ -45,7 +45,7 @@ public final class TypeKeyRegistry extends ManagedClass {
 		 */
 		@Name(PROVIDER_CLASS_CONFIGNAME)
 		@Mandatory
-		PolymorphicConfiguration<TypeKeyProvider> getProvider();
+		PolymorphicConfiguration<? extends TypeKeyProvider> getProvider();
 	}
 
 	private final TypeKeyProvider _provider;

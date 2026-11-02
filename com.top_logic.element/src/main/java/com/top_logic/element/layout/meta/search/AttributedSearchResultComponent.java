@@ -54,7 +54,7 @@ public class AttributedSearchResultComponent extends TableComponent
 		String getMetaElement();
 
 		@Name(XML_CONFIG_META_ELEMENT_BUILDER)
-		PolymorphicConfiguration<SearchModelBuilder> getMetaElementBuilder();
+		PolymorphicConfiguration<? extends SearchModelBuilder> getMetaElementBuilder();
 
 		@Override
 		@ItemDefault
@@ -73,7 +73,7 @@ public class AttributedSearchResultComponent extends TableComponent
 
         String configuredMEs = someAttrs.getMetaElement();
 		if (!configuredMEs.isEmpty()) {
-			PolymorphicConfiguration<SearchModelBuilder> metaElementBuilder = someAttrs.getMetaElementBuilder();
+			PolymorphicConfiguration<? extends SearchModelBuilder> metaElementBuilder = someAttrs.getMetaElementBuilder();
 			if (metaElementBuilder == null) {
 				throw new ConfigurationException("Attribute " + XML_CONFIG_META_ELEMENT_BUILDER + " in component "
 					+ getName() + " is mandatory, when " + XML_CONFIG_META_ELEMENT + " is not empty.");

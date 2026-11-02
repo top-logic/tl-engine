@@ -42,7 +42,7 @@ public interface Handler {
 			 */
 			@DefaultContainer
 			@Mandatory
-			PolymorphicConfiguration<Handler> getHandler();
+			PolymorphicConfiguration<? extends Handler> getHandler();
 		}
 
 	}

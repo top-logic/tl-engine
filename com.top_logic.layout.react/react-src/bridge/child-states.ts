@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { acquireChildContext } from './TLChild';
 import type { ChildDescriptor } from './TLChild';
-import { unmount } from './tl-react-bridge';
+import { getApiBase, TLControlContext, unmount } from './tl-react-bridge';
+import { enqueueCommand } from './command-channel';
+import type { CommandOptions } from './command-channel';
 
 /** The states of no children: one array, so that it is the same in every render. */
 const NO_STATES: readonly Record<string, unknown>[] = [];
@@ -57,4 +59,39 @@ export function useChildStates(controls: readonly unknown[]): readonly Record<st
   }, [contexts]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+/**
+ * Sends commands to child controls on their behalf: to a child a container draws itself instead of
+ * rendering it with {@link TLChild}, e.g. an action a component library draws as a button of its
+ * own, pressed by sending {@code click} to the button control.
+ *
+ * <p>A child rendered with {@link TLChild} sends its commands itself (useTLCommand); this hook is for
+ * the container that reads the child's state with {@link useChildStates} and draws it. The commands
+ * go through the same channel as the child's own.</p>
+ *
+ * @return Sends the given command with its arguments to the child of the given ID.
+ */
+export function useChildCommand(): (
+  childControlId: string,
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<void> {
+  const ctx = useContext(TLControlContext);
+  if (!ctx) {
+    throw new Error('useChildCommand must be used inside a TLReact-mounted component.');
+  }
+  const windowName = ctx.windowName;
+  return useCallback(
+    async (childControlId: string, command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
+      await enqueueCommand(getApiBase() + 'react-api/command', {
+        controlId: childControlId,
+        command,
+        windowName,
+        arguments: args ?? {},
+      }, options);
+    },
+    [windowName]
+  );
 }

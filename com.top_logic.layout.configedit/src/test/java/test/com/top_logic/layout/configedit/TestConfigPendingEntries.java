@@ -27,6 +27,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
+import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigPendingEntries;
 import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
@@ -90,6 +91,80 @@ public class TestConfigPendingEntries extends TestCase {
 		@Name(ITEMS)
 		@Key(OptionalItem.NAME)
 		List<OptionalItem> getItems();
+	}
+
+	/** An entry of {@link GroupsConfig} holding a keyed collection of its own. */
+	public interface Group extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getMembers()}. */
+		String MEMBERS = "members";
+
+		@Name(NAME)
+		@Mandatory
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(MEMBERS)
+		@Key(Item.NAME)
+		List<Item> getMembers();
+	}
+
+	/** A keyed collection whose entries hold keyed collections. */
+	public interface GroupsConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getGroups()}. */
+		String GROUPS = "groups";
+
+		@Name(GROUPS)
+		@Key(Group.NAME)
+		List<Group> getGroups();
+	}
+
+	/** An item holding a keyed collection, and no {@link com.top_logic.basic.config.container.ConfigPart}. */
+	public interface Section extends ConfigurationItem {
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		@Name(ITEMS)
+		@Key(Item.NAME)
+		List<Item> getItems();
+	}
+
+	/** An entry of {@link SectionedGroupsConfig} holding its sections. */
+	public interface SectionedGroup extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getSections()}. */
+		String SECTIONS = "sections";
+
+		@Name(NAME)
+		@Mandatory
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(SECTIONS)
+		List<Section> getSections();
+	}
+
+	/** A keyed collection whose entries hold entries holding keyed collections. */
+	public interface SectionedGroupsConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getGroups()}. */
+		String GROUPS = "groups";
+
+		@Name(GROUPS)
+		@Key(SectionedGroup.NAME)
+		List<SectionedGroup> getGroups();
 	}
 
 	private KeyedConfig _config;
@@ -392,6 +467,131 @@ public class TestConfigPendingEntries extends TestCase {
 
 		assertNotNull("The field of the current render cycle carries the error.", current.getError());
 		assertNull("The field of an earlier render cycle is no longer displayed.", stale.getError());
+	}
+
+	/** Confirming all pending entries at once confirms each of them. */
+	public void testConfirmPendingConfirmsEveryEntry() {
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		PendingEntry first = start();
+		name(first, "first");
+		index.registerPending(first);
+		PendingEntry second = start();
+		name(second, "second");
+		index.registerPending(second);
+
+		assertNull(index.confirmPending());
+
+		assertEquals(Arrays.asList("first", "second"), committedNames());
+		assertEquals(0, _pending.entries().size());
+	}
+
+	/**
+	 * An entry whose confirmation is refused stays pending with its reason, the others are
+	 * confirmed anyway.
+	 */
+	public void testConfirmPendingReportsARefusedEntry() {
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		PendingEntry unnamed = start();
+		index.registerPending(unnamed);
+		PendingEntry named = start();
+		name(named, "named");
+		index.registerPending(named);
+
+		ResKey refusal = index.confirmPending();
+
+		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, refusal.plain());
+		assertEquals(Arrays.asList("named"), committedNames());
+		assertEquals(Arrays.asList(unnamed), _pending.entries());
+		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, errorOf(unnamed).plain());
+	}
+
+	/**
+	 * An entry is confirmed only after the pending entries inside it, and stays pending as long as
+	 * one of them is refused: confirming it would rebuild the editor around it and drop what is
+	 * still pending within.
+	 */
+	public void testConfirmPendingConfirmsInnerEntriesFirst() {
+		GroupsConfig config = TypedConfiguration.newConfigItem(GroupsConfig.class);
+		ConfigCollectionValue groups =
+			new ConfigCollectionValue(config, config.descriptor().getProperty(GroupsConfig.GROUPS));
+		ConfigPendingEntries pendingGroups = new ConfigPendingEntries(groups, any -> {
+			// Nothing is displayed.
+		});
+		Group group = TypedConfiguration.newConfigItem(Group.class);
+		group.setName("group");
+		PendingEntry pendingGroup = pendingGroups.start(group);
+
+		ConfigCollectionValue members =
+			new ConfigCollectionValue(group, group.descriptor().getProperty(Group.MEMBERS));
+		ConfigPendingEntries pendingMembers = new ConfigPendingEntries(members, any -> {
+			// Nothing is displayed.
+		});
+		PendingEntry member = pendingMembers.start(TypedConfiguration.newConfigItem(Item.class));
+
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		// The outer entry first, as it is rendered before anything inside it.
+		index.registerPending(pendingGroup);
+		index.registerPending(member);
+
+		assertNotNull("The unnamed member must be refused.", index.confirmPending());
+		assertTrue("The group must stay pending while a member inside it is.", config.getGroups().isEmpty());
+		assertEquals(Arrays.asList(pendingGroup), pendingGroups.entries());
+		assertEquals(Arrays.asList(member), pendingMembers.entries());
+
+		name(member, "member");
+		assertNull(index.confirmPending());
+
+		assertEquals(1, config.getGroups().size());
+		Group confirmed = config.getGroups().get(0);
+		assertSame(group, confirmed);
+		assertEquals(1, confirmed.getMembers().size());
+		assertEquals("member", confirmed.getMembers().get(0).getName());
+	}
+
+	/**
+	 * Inner first also where the inner entry is pending below an item already in the outer entry,
+	 * which is no {@link com.top_logic.basic.config.container.ConfigPart} and so knows nothing of
+	 * what holds it.
+	 */
+	public void testConfirmPendingConfirmsEntriesBelowAnIntermediateItemFirst() {
+		assertFalse("The fixture must not be a ConfigPart.",
+			com.top_logic.basic.config.container.ConfigPart.class.isAssignableFrom(Section.class));
+		SectionedGroupsConfig config = TypedConfiguration.newConfigItem(SectionedGroupsConfig.class);
+		ConfigCollectionValue groups =
+			new ConfigCollectionValue(config, config.descriptor().getProperty(SectionedGroupsConfig.GROUPS));
+		ConfigPendingEntries pendingGroups = new ConfigPendingEntries(groups, any -> {
+			// Nothing is displayed.
+		});
+		SectionedGroup group = TypedConfiguration.newConfigItem(SectionedGroup.class);
+		group.setName("group");
+		Section section = TypedConfiguration.newConfigItem(Section.class);
+		group.getSections().add(section);
+		PendingEntry pendingGroup = pendingGroups.start(group);
+
+		ConfigCollectionValue items =
+			new ConfigCollectionValue(section, section.descriptor().getProperty(Section.ITEMS));
+		ConfigPendingEntries pendingItems = new ConfigPendingEntries(items, any -> {
+			// Nothing is displayed.
+		});
+		PendingEntry item = pendingItems.start(TypedConfiguration.newConfigItem(Item.class));
+
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		// The outer entry first, as it is rendered before anything inside it.
+		index.registerPending(pendingGroup);
+		index.registerPending(item);
+
+		assertNotNull("The unnamed item must be refused.", index.confirmPending());
+		assertTrue("The group must stay pending while an item below it is.", config.getGroups().isEmpty());
+		assertEquals(Arrays.asList(pendingGroup), pendingGroups.entries());
+		assertEquals(Arrays.asList(item), pendingItems.entries());
+
+		name(item, "item");
+		assertNull(index.confirmPending());
+
+		assertEquals(1, config.getGroups().size());
+		Section confirmed = config.getGroups().get(0).getSections().get(0);
+		assertEquals(1, confirmed.getItems().size());
+		assertEquals("item", confirmed.getItems().get(0).getName());
 	}
 
 	private PropertyDescriptor keyProperty(PendingEntry pending) {

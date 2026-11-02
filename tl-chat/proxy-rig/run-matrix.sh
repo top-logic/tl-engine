@@ -30,7 +30,7 @@ fi
 
 if ! app_up; then
   echo "Starting tl-ai-demo on port $RIG_APP_PORT (log: $OUT/app.log) ..."
-  (cd "$REPO/tl-ai-demo" && env -u tl_anthropic_api_key tl_mistral_api_key=unencrypted:dummy-local \
+  (cd "$REPO/tl-ai-demo" && env -u tl_anthropic_api_key tl_mistral_api_key=dummy-local \
     mvn -o -q tl:resolve compile exec:java -Dtl.port="$RIG_APP_PORT" \
     -Dtl_autoconf_dir="$RIG/autoconf" -Dtl_initial_password=root1234 > "$OUT/app.log" 2>&1) &
   STARTED+=($!)

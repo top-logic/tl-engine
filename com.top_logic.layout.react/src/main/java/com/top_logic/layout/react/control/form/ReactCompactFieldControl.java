@@ -35,6 +35,7 @@ import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A field displayed in little room: a one-line preview of its value and a button opening the full
@@ -128,6 +129,10 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		 * </p>
 		 *
 		 * @return Whether the edit was valid and is applied, so the dialog closes.
+		 * @throws TopLogicException
+		 *         If the editor holds input it could not commit, see
+		 *         {@link PendingInput#commitPendingInput()}. Nothing is applied, and the dialog stays
+		 *         open.
 		 */
 		boolean apply();
 
@@ -470,6 +475,9 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 		private final Predicate<Object> _isEmpty;
 
+		/** The editor displayed in the dialog, {@code null} before it is created. */
+		private ReactControl _editor;
+
 		BufferedEditorSession(FieldModel model, boolean editable, EditorFactory editorFactory,
 				Predicate<Object> isEmpty) {
 			_model = model;
@@ -502,11 +510,17 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 		@Override
 		public ReactControl createEditor(ReactContext context, Runnable closeDialog) {
-			return _editorFactory.createEditor(context, _buffer);
+			_editor = _editorFactory.createEditor(context, _buffer);
+			return _editor;
 		}
 
 		/**
 		 * Writes the edited copy to the field, when it is valid.
+		 *
+		 * <p>
+		 * An editor holding input not yet in the copy - an entry filled in but not confirmed -
+		 * commits it first, see {@link PendingInput}.
+		 * </p>
 		 *
 		 * <p>
 		 * Nothing is written to a field that may not be edited (any more), however the request to
@@ -515,6 +529,9 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		 */
 		@Override
 		public boolean apply() {
+			if (_editor instanceof PendingInput input) {
+				input.commitPendingInput();
+			}
 			if (!isValid(_buffer, _isEmpty)) {
 				return false;
 			}

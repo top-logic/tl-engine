@@ -1347,11 +1347,14 @@
 					<handler id="stopTask" class="com.top_logic.util.sched.layout.StopTaskCommand" 
 						group="Write" target="selection(self())" image="theme:STOP_SERVICE"
 					/>
-					<handler id="blockTask" class="com.top_logic.util.sched.layout.block.BlockTaskCommand"
+					<handler id="deactivateTask" class="com.top_logic.util.sched.layout.active.DeactivateTaskCommand"
 						group="Write" target="selection(self())" image="theme:PAUSE"
 					/>
-					<handler id="unblockTask" class="com.top_logic.util.sched.layout.block.UnblockTaskCommand"
+					<handler id="activateTask" class="com.top_logic.util.sched.layout.active.ActivateTaskCommand"
 						group="Write" target="selection(self())" image="theme:RESTART_SERVICE"
+					/>
+					<handler id="resetTaskActive" class="com.top_logic.util.sched.layout.active.ResetTaskActiveCommand"
+						group="Write" target="selection(self())" image="theme:ICON_UNDO"
 					/>
 					<handler id="releaseTaskClusterLock" class="com.top_logic.util.sched.layout.ReleaseTaskClusterLockCommand"
 						group="Write" 
@@ -1970,6 +1973,7 @@
 			            <declaration resource="webinf://kbase/UnitMeta.xml" />
 			            <declaration resource="webinf://kbase/LayoutMeta.xml" /> 
 			            <declaration resource="webinf://kbase/TemplateLayoutMeta.xml" /> 
+			            <declaration resource="webinf://kbase/SecretMeta.xml" />
 					</declarations>
 					<schemas>
 						<schema name="lock" resource="schema://lock.schema.xml"/>
@@ -2312,8 +2316,6 @@
 		
 		<config config:interface="com.top_logic.util.monitor.SystemEnvironmentBuilder$GlobalConfig">
 			<protected-alias pattern="(?i)(_PASS|_CRED|_PWD|_API_KEY|_SECRET)[^_]*$" />
-			<!-- Attention: Do not use %TRANSLATION_API_KEY%, because this will be replaced by the value! -->
-			<protected-alias pattern="TRANSLATION_API_KEY" />
 		</config>
 
 		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">

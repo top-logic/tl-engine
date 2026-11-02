@@ -14,10 +14,14 @@
 							<options>
 								<option name="URL" value="jdbc:sqlserver://%MSSQL_HOST%:%MSSQL_PORT%;databaseName=%MSSQL_SCHEMA%;integratedSecurity=%MSSQL_INTEGRATED_SECURITY%;encrypt=%MSSQL_ENCRYPTION%;trustServerCertificate=%MSSQL_TRUST_SERVER_CERTIFICATE%;hostNameInCertificate=%MSSQL_HOST_NAME_IN_CERTIFICATE%" />
 								<option name="user" value="%MSSQL_USER%" />
-								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mssql_passwd"/>
+								</encrypted-option>
 								
 								<option name="trustStore" value="%MSSQL_TRUST_STORE_NAME%" />
-								<encrypted-option name="trustStorePassword" value="%MSSQL_TRUST_STORE_PASSWD%" />
+								<encrypted-option name="trustStorePassword">
+									<value name="mssql_trust_store_passwd"/>
+								</encrypted-option>
 							</options>
 						</data-source>
 					</pool>

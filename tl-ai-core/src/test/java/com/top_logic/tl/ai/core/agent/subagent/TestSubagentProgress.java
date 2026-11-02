@@ -219,6 +219,7 @@ public class TestSubagentProgress extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestSubagentProgress.class),
 				ModelService.Module.INSTANCE,
-				AgentExecutionStore.Module.INSTANCE));
+				AgentExecutionStore.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

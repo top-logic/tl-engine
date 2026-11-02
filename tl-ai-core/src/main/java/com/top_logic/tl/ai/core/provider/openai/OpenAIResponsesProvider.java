@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -57,24 +58,24 @@ public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 	private static final String DEFAULT_BASE_URL = "https://api.openai.com";
 
 	/** Creates an {@link OpenAIResponsesProvider}. */
-	public OpenAIResponsesProvider(String apiKey) {
-		this(apiKey, DEFAULT_BASE_URL);
+	public OpenAIResponsesProvider(CredentialProvider credentials) {
+		this(credentials, DEFAULT_BASE_URL);
 	}
 
 	/** Creates an {@link OpenAIResponsesProvider}. */
-	public OpenAIResponsesProvider(String apiKey, String baseUrl) {
-		this(apiKey, baseUrl, defaultHttpClient());
+	public OpenAIResponsesProvider(CredentialProvider credentials, String baseUrl) {
+		this(credentials, baseUrl, defaultHttpClient());
 	}
 
 	/** Creates an {@link OpenAIResponsesProvider}. */
-	public OpenAIResponsesProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		super(apiKey, baseUrl, httpClient);
+	public OpenAIResponsesProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient) {
+		super(credentials, baseUrl, httpClient);
 	}
 
 	/** Creates an {@link OpenAIResponsesProvider} with configurable timeouts and headers. */
-	public OpenAIResponsesProvider(String apiKey, String baseUrl,
+	public OpenAIResponsesProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
-		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+		super(credentials, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 	}
 

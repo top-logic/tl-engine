@@ -17,35 +17,62 @@ package com.top_logic.demo.react.model.tickets;
 public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.AbstractElementFactory {
 
 	/**
+	 * Name of the module <code>demo.tickets</code> defined by {@link DemoTicketsFactory}.
+	 */
+	public static final String DEMO_TICKETS_MODULE = "demo.tickets";
+
+	/**
 	 * Name of the structure <code>demo.tickets</code> defined by {@link DemoTicketsFactory}.
+	 * 
+	 * @deprecated Use {@link #DEMO_TICKETS_MODULE}.
 	 */
-	public static final String DEMO_TICKETS_STRUCTURE = "demo.tickets";
+	@Deprecated
+	public static final String DEMO_TICKETS_STRUCTURE = DEMO_TICKETS_MODULE;
 
 	/**
-	 * Name of the enumeration <code>TicketStatus</code> in module {@value #DEMO_TICKETS_STRUCTURE}.
+	 * Name of the enumeration <code>TicketStatus</code> in module {@value #DEMO_TICKETS_MODULE}.
+	 * 
+	 * @deprecated Use {@link TicketStatus#TYPE_NAME}.
 	 */
-	public static final String TICKET_STATUS_ENUM = "TicketStatus";
+	@Deprecated
+	public static final String TICKET_STATUS_ENUM = TicketStatus.TYPE_NAME;
 
 	/**
-	 * Name of the classifier <code>closed</code> in enumeration {@value #TICKET_STATUS_ENUM}.
+	 * Name of the classifier <code>closed</code> in enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#CLOSED_CLASSIFIER}.
 	 */
-	public static final String CLOSED_TICKET_STATUS_CLASSIFIER = "closed";
+	@Deprecated
+	public static final String CLOSED_TICKET_STATUS_CLASSIFIER = TicketStatus.CLOSED_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>inProgress</code> in enumeration {@value #TICKET_STATUS_ENUM}.
+	 * Name of the classifier <code>inProgress</code> in enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#IN_PROGRESS_CLASSIFIER}.
 	 */
-	public static final String IN_PROGRESS_TICKET_STATUS_CLASSIFIER = "inProgress";
+	@Deprecated
+	public static final String IN_PROGRESS_TICKET_STATUS_CLASSIFIER = TicketStatus.IN_PROGRESS_CLASSIFIER;
 
 	/**
-	 * Name of the classifier <code>open</code> in enumeration {@value #TICKET_STATUS_ENUM}.
+	 * Name of the classifier <code>open</code> in enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#OPEN_CLASSIFIER}.
 	 */
-	public static final String OPEN_TICKET_STATUS_CLASSIFIER = "open";
+	@Deprecated
+	public static final String OPEN_TICKET_STATUS_CLASSIFIER = TicketStatus.OPEN_CLASSIFIER;
 
 	/**
 	 * Lookup {@link Ticket} type.
 	 */
 	public static com.top_logic.model.TLClass getTicketType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_STRUCTURE).getType(Ticket.TICKET_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_MODULE).getType(Ticket.TICKET_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Ticket#CATEGORY_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getCategoryTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.CATEGORY_ATTR);
 	}
 
 	/**
@@ -56,10 +83,24 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Ticket#ESTIMATE_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getEstimateTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.ESTIMATE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Ticket#HEADLINE_ATTR} of {@link Ticket}.
 	 */
 	public static com.top_logic.model.TLProperty getHeadlineTicketAttr() {
 		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.HEADLINE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Ticket#KEYWORDS_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLReference getKeywordsTicketAttr() {
+		return (com.top_logic.model.TLReference) getTicketType().getPart(Ticket.KEYWORDS_ATTR);
 	}
 
 	/**
@@ -98,10 +139,52 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Ticket#TAGS_ATTR} of {@link Ticket}.
+	 */
+	public static com.top_logic.model.TLProperty getTagsTicketAttr() {
+		return (com.top_logic.model.TLProperty) getTicketType().getPart(Ticket.TAGS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Keyword} type.
+	 */
+	public static com.top_logic.model.TLClass getKeywordType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_MODULE).getType(Keyword.KEYWORD_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Keyword#CATALOG_ATTR} of {@link Keyword}.
+	 */
+	public static com.top_logic.model.TLReference getCatalogKeywordAttr() {
+		return (com.top_logic.model.TLReference) getKeywordType().getPart(Keyword.CATALOG_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Keyword#NAME_ATTR} of {@link Keyword}.
+	 */
+	public static com.top_logic.model.TLProperty getNameKeywordAttr() {
+		return (com.top_logic.model.TLProperty) getKeywordType().getPart(Keyword.NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link KeywordCatalog} type.
+	 */
+	public static com.top_logic.model.TLClass getKeywordCatalogType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_MODULE).getType(KeywordCatalog.KEYWORD_CATALOG_TYPE);
+	}
+
+	/**
+	 * Lookup {@link KeywordCatalog#NAME_ATTR} of {@link KeywordCatalog}.
+	 */
+	public static com.top_logic.model.TLProperty getNameKeywordCatalogAttr() {
+		return (com.top_logic.model.TLProperty) getKeywordCatalogType().getPart(KeywordCatalog.NAME_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Comment} type.
 	 */
 	public static com.top_logic.model.TLClass getCommentType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_STRUCTURE).getType(Comment.COMMENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_MODULE).getType(Comment.COMMENT_TYPE);
 	}
 
 	/**
@@ -143,7 +226,7 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * Lookup {@link Attachment} type.
 	 */
 	public static com.top_logic.model.TLClass getAttachmentType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_STRUCTURE).getType(Attachment.ATTACHMENT_TYPE);
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_MODULE).getType(Attachment.ATTACHMENT_TYPE);
 	}
 
 	/**
@@ -175,35 +258,47 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
-	 * Lookup {@value #TICKET_STATUS_ENUM} enumeration.
+	 * Lookup the enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#type()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLEnumeration getTicketStatusEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(DEMO_TICKETS_STRUCTURE).getType(TICKET_STATUS_ENUM);
+		return TicketStatus.type();
 	}
 
 	/**
-	 * Lookup classifier {@value #CLOSED_TICKET_STATUS_CLASSIFIER} of enumeration {@value #TICKET_STATUS_ENUM}.
+	 * Lookup classifier <code>closed</code> of enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#closedClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getClosedTicketStatusClassifier() {
-		return getTicketStatusEnum().getClassifier(CLOSED_TICKET_STATUS_CLASSIFIER);
+		return TicketStatus.closedClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #IN_PROGRESS_TICKET_STATUS_CLASSIFIER} of enumeration {@value #TICKET_STATUS_ENUM}.
+	 * Lookup classifier <code>inProgress</code> of enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#inProgressClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getInProgressTicketStatusClassifier() {
-		return getTicketStatusEnum().getClassifier(IN_PROGRESS_TICKET_STATUS_CLASSIFIER);
+		return TicketStatus.inProgressClassifier();
 	}
 
 	/**
-	 * Lookup classifier {@value #OPEN_TICKET_STATUS_CLASSIFIER} of enumeration {@value #TICKET_STATUS_ENUM}.
+	 * Lookup classifier <code>open</code> of enumeration <code>TicketStatus</code>.
+	 * 
+	 * @deprecated Use {@link TicketStatus#openClassifier()}.
 	 */
+	@Deprecated
 	public static com.top_logic.model.TLClassifier getOpenTicketStatusClassifier() {
-		return getTicketStatusEnum().getClassifier(OPEN_TICKET_STATUS_CLASSIFIER);
+		return TicketStatus.openClassifier();
 	}
 
 	/**
-	 * Name of type <code>Ticket</code> in structure {@link #DEMO_TICKETS_STRUCTURE}.
+	 * Name of type <code>Ticket</code> in module {@link #DEMO_TICKETS_MODULE}.
 	 * 
 	 * @deprecated Use {@link Ticket#TICKET_TYPE}.
 	 */
@@ -212,11 +307,46 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #TICKET_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.react.model.tickets.impl.TicketBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_TICKET = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_TICKET = com.top_logic.demo.react.model.tickets.impl.TicketBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Comment</code> in structure {@link #DEMO_TICKETS_STRUCTURE}.
+	 * Name of type <code>Keyword</code> in module {@link #DEMO_TICKETS_MODULE}.
+	 * 
+	 * @deprecated Use {@link Keyword#KEYWORD_TYPE}.
+	 */
+	@Deprecated
+	public static final String KEYWORD_NODE = Keyword.KEYWORD_TYPE;
+
+	/**
+	 * Storage table name of {@link #KEYWORD_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.react.model.tickets.impl.KeywordBase#TABLE_NAME}.
+	 */
+	@Deprecated
+	public static final String KO_NAME_KEYWORD = com.top_logic.demo.react.model.tickets.impl.KeywordBase.TABLE_NAME;
+
+	/**
+	 * Name of type <code>KeywordCatalog</code> in module {@link #DEMO_TICKETS_MODULE}.
+	 * 
+	 * @deprecated Use {@link KeywordCatalog#KEYWORD_CATALOG_TYPE}.
+	 */
+	@Deprecated
+	public static final String KEYWORD_CATALOG_NODE = KeywordCatalog.KEYWORD_CATALOG_TYPE;
+
+	/**
+	 * Storage table name of {@link #KEYWORD_CATALOG_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.react.model.tickets.impl.KeywordCatalogBase#TABLE_NAME}.
+	 */
+	@Deprecated
+	public static final String KO_NAME_KEYWORD_CATALOG = com.top_logic.demo.react.model.tickets.impl.KeywordCatalogBase.TABLE_NAME;
+
+	/**
+	 * Name of type <code>Comment</code> in module {@link #DEMO_TICKETS_MODULE}.
 	 * 
 	 * @deprecated Use {@link Comment#COMMENT_TYPE}.
 	 */
@@ -225,11 +355,14 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #COMMENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.react.model.tickets.impl.CommentBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_COMMENT = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_COMMENT = com.top_logic.demo.react.model.tickets.impl.CommentBase.TABLE_NAME;
 
 	/**
-	 * Name of type <code>Attachment</code> in structure {@link #DEMO_TICKETS_STRUCTURE}.
+	 * Name of type <code>Attachment</code> in module {@link #DEMO_TICKETS_MODULE}.
 	 * 
 	 * @deprecated Use {@link Attachment#ATTACHMENT_TYPE}.
 	 */
@@ -238,8 +371,11 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 
 	/**
 	 * Storage table name of {@link #ATTACHMENT_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.demo.react.model.tickets.impl.AttachmentBase#TABLE_NAME}.
 	 */
-	public static final String KO_NAME_ATTACHMENT = "GenericObject";
+	@Deprecated
+	public static final String KO_NAME_ATTACHMENT = com.top_logic.demo.react.model.tickets.impl.AttachmentBase.TABLE_NAME;
 
 
 	/**
@@ -254,6 +390,34 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 */
 	public final Ticket createTicket() {
 		return createTicket(null);
+	}
+
+	/**
+	 * Create an instance of {@link Keyword} type.
+	 */
+	public final Keyword createKeyword(com.top_logic.model.TLObject context) {
+		return (Keyword) createObject(getKeywordType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link Keyword} type.
+	 */
+	public final Keyword createKeyword() {
+		return createKeyword(null);
+	}
+
+	/**
+	 * Create an instance of {@link KeywordCatalog} type.
+	 */
+	public final KeywordCatalog createKeywordCatalog(com.top_logic.model.TLObject context) {
+		return (KeywordCatalog) createObject(getKeywordCatalogType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link KeywordCatalog} type.
+	 */
+	public final KeywordCatalog createKeywordCatalog() {
+		return createKeywordCatalog(null);
 	}
 
 	/**
@@ -288,6 +452,6 @@ public class DemoTicketsFactory extends com.top_logic.element.meta.kbbased.Abstr
 	 * The singleton instance of {@link DemoTicketsFactory}.
 	 */
 	public static DemoTicketsFactory getInstance() {
-		return (DemoTicketsFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(DEMO_TICKETS_STRUCTURE);
+		return (DemoTicketsFactory) com.top_logic.element.model.DynamicModelService.getFactoryFor(DEMO_TICKETS_MODULE);
 	}
 }

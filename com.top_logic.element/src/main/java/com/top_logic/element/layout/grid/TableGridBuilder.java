@@ -64,7 +64,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 		 */
 		@Mandatory
 		@Name(AbstractTreeGridBuilder.Config.BUILDER_ATTRIBUTE)
-		PolymorphicConfiguration<ListModelBuilder> getBuilder();
+		PolymorphicConfiguration<? extends ListModelBuilder> getBuilder();
 
 	}
 

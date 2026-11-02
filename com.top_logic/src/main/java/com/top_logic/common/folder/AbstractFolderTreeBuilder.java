@@ -45,7 +45,7 @@ public abstract class AbstractFolderTreeBuilder<C extends AbstractFolderTreeBuil
 		 * </p>
 		 */
 		@Name(FILE_FILTER)
-		PolymorphicConfiguration<Filter<Named>> getFileFilter();
+		PolymorphicConfiguration<? extends Filter<Named>> getFileFilter();
 
 	}
 

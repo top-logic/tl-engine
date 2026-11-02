@@ -119,7 +119,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 		// IFRAME rendering.
 		@Override
 		@ItemDefault(IFrameLayoutControlProvider.Config.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@FormattedDefault(FINISH_COMMAND_HANDLERS)
 		@Format(CommaSeparatedStrings.class)

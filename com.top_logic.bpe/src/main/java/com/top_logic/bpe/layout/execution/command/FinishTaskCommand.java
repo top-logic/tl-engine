@@ -96,7 +96,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		@Override
 		@ImplementationClassDefault(SelfCheckProvider.class)
 		@ItemDefault
-		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> getCheckScopeProvider();
 	}
 
 	private final List<PostCreateAction> _actions;

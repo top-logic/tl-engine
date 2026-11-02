@@ -19,6 +19,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
@@ -163,7 +164,7 @@ public class VisualAgentLoopTest extends TestCase {
 		System.out.println(ANSI_CYAN + "  Agent Loop — Live (Anthropic API)" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
 
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.anthropic(apiKey));
 
 		ToolSchema toolSpec = new ToolSchema("get_current_time",
 			"Returns the current server time in ISO-8601 format.",

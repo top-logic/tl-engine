@@ -62,7 +62,7 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
 		@Name(EditAttributedComponent.XML_CONFIG_MODIFIER_CLASS)
 		@ItemDefault
 		@ImplementationClassDefault(DefaultFormContextModificator.class)
-		PolymorphicConfiguration<FormContextModificator> getModifier();
+		PolymorphicConfiguration<? extends FormContextModificator> getModifier();
 
 	}
 

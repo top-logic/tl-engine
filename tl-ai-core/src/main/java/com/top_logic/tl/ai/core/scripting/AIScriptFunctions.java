@@ -68,6 +68,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.catalog.CatalogStatus;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
@@ -111,7 +112,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * What {@code aiChat} can ask a model for, what each provider makes of it, and how a run that never
- * answered is reported: {@code tl-ai-core/doc/script-chat.md}.
+ * answered is reported: the developer article {@code ai/script-and-scheduled-runs}.
  * </p>
  */
 @ScriptPrefix("ai")
@@ -371,8 +372,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        <li>Binary data: Treated as user image/document message</li>
 	 *        </ul>
 	 * @param model
-	 *        The model name to use, or {@code null} to use the default model configured in
-	 *        {@link AgentRuntimeService}.
+	 *        The model name to use, or {@code null} to use the
+	 *        {@link AgentRuntimeService#defaultTarget() default model}.
 	 * @param responseFormat
 	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
@@ -402,7 +403,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			Collection<String> tools) {
 		LLMProviderService registry = LLMProviderService.getInstance();
 		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
-		String modelName = model != null ? model : runtime == null ? null : runtime.getDefaultModel();
+		String modelName = model;
+		String providerName = null;
+		if (modelName == null && runtime != null) {
+			ModelTarget target = runtime.defaultTarget();
+			modelName = target.model();
+			providerName = target.provider();
+		}
 
 		// Build system prompt and user messages from the input
 		String systemPrompt = null;
@@ -446,7 +453,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		toolRegistry.freeze();
 
-		LLMProvider provider = registry.buildProvider(modelName);
+		LLMProvider provider = registry.buildProvider(modelName, providerName);
 
 		AgentParams config = new AgentParams(
 			modelName, systemPrompt != null ? systemPrompt : "",
@@ -847,7 +854,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * The research is Albert's {@code TL_deepResearch} skill: Albert plans sub-questions, research
 	 * workers read the web in parallel, and Albert writes one report that links the pages the workers
 	 * read. This function starts it without a chat window - from a script, or from a scheduled
-	 * {@code ScriptTask}. See {@code tl-ai-core/doc/deep-research.md}.
+	 * {@code ScriptTask}. The developer article {@code ai/deep-research} describes the run.
 	 * </p>
 	 *
 	 * <p>

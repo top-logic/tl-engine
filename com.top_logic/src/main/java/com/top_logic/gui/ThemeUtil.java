@@ -374,6 +374,25 @@ public class ThemeUtil {
 	}
 
 	/**
+	 * Makes all files of the given theme that were written or deleted directly in the file system
+	 * visible to subsequent lookups through the {@link FileManager}.
+	 *
+	 * <p>
+	 * Covers the {@link #getThemePath(String) theme directory}, the
+	 * {@link #getThemeStylePath(String) style directory}, and the
+	 * {@link #getThemeResourcesPath(String) resources directory} of the theme.
+	 * </p>
+	 *
+	 * @see FileManager#refresh(String)
+	 */
+	public static void refreshThemeFiles(String theme) {
+		FileManager fileManager = FileManager.getInstance();
+		fileManager.refresh(getThemePath(theme));
+		fileManager.refresh(getThemeStylePath(theme));
+		fileManager.refresh(getThemeResourcesPath(theme));
+	}
+
+	/**
 	 * Returns all parent themes for the given root in topological order i.e. the root theme is the
 	 * last element of the returning list.
 	 */

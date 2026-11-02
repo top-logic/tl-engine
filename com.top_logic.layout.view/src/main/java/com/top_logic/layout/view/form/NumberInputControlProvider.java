@@ -9,8 +9,10 @@ import java.text.Format;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -34,6 +36,8 @@ import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -63,6 +67,9 @@ import com.top_logic.util.Resources;
  * the slider is disabled.
  * </p>
  */
+@Label("Number input")
+@InApp
+@TargetType({ TLTypeKind.INT, TLTypeKind.FLOAT })
 public class NumberInputControlProvider implements ReactFieldControlProvider {
 
 	/**

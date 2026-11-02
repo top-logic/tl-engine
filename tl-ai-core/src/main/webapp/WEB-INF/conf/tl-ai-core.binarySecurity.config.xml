@@ -48,7 +48,7 @@
 	never has to narrow anything here, because nothing here grants more than ownership.
 
 	See the developer article ai/security/administration (the shipped read policy for perceivable
-	binaries) and tl-ai-core/doc/screenshots.md.
+	binaries) and ai/chat-ui (screenshots).
 -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>

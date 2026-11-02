@@ -1,0 +1,9 @@
+<root>
+	<a name="a1" label="Eins" fixed="  " other="">
+		<text>Texte</text>
+		<text lang="en">Text</text>
+		<text lang="de"/>
+	</a>
+	<a name="a2" DefaultLanguage="en-US" label="Two"/>
+	<a name="a3" label="" other=""/>
+</root>

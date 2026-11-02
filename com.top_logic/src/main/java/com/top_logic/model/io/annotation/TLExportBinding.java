@@ -40,6 +40,6 @@ public interface TLExportBinding extends TLAttributeAnnotation, TLTypeAnnotation
 	 */
 	@Name(IMPL)
 	@DefaultContainer
-	PolymorphicConfiguration<AttributeValueBinding<?>> getImpl();
+	PolymorphicConfiguration<? extends AttributeValueBinding<?>> getImpl();
 
 }

@@ -6,6 +6,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TOOLTIP_ATTR } from 'tl-react-bridge';
+import { describeCopyButton } from './adapters/copy-button-test-support';
 import type { ButtonPartProps, MenuTriggerPartProps } from 'tl-react-bridge';
 
 /** The address of a link. */
@@ -491,6 +492,26 @@ describe('the TopLogic drawing of the parts', () => {
     expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
   });
 
+  it('draws a preformatted multi-line box in the code type, without wrapping its lines', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<TextInputPart value={'a\nb'} multiline preformatted aria-label="Text" />);
+
+    const area = screen.getByRole('textbox', { name: 'Text' });
+    expect(area.className).toBe('tl-field tl-field--multiline tl-field--preformatted tl-type-code');
+    expect(area.getAttribute('wrap')).toBe('off');
+  });
+
+  it('ignores preformatted for a single-line box', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<TextInputPart value="a" preformatted aria-label="Text" />);
+
+    const box = screen.getByRole('textbox', { name: 'Text' });
+    expect(box.className).toBe('tl-field tl-type-body');
+    expect(box.hasAttribute('wrap')).toBe(false);
+  });
+
   it('puts the combobox role of a box offering suggestions on the input', async () => {
     const { TextInputPart } = await defaults();
 
@@ -555,6 +576,30 @@ describe('the TopLogic drawing of the parts', () => {
     expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', ' ', 'c']);
     expect(screen.queryByRole('link')).toBeNull();
   });
+  it('draws a preformatted multi-line field value in the code type', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text={'a\n\tb'} multiline preformatted />);
+
+    const value = document.getElementById('v1')!;
+    expect(value.className).toBe('tl-field-value tl-field-value--multiline tl-field-value--preformatted tl-type-code');
+    expect(Array.from(value.children).map(line => line.textContent)).toEqual(['a', '\tb']);
+  });
+
+  it('draws a multi-line field value with an action beside it, in a group carrying the class', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text={'a\nb'} multiline preformatted className="x"
+      action={<button type="button">Kopieren</button>} />);
+
+    const value = document.getElementById('v1')!;
+    const group = value.parentElement!;
+    expect(group.className).toBe('tl-field-value-group x');
+    expect(value.className).toBe('tl-field-value tl-field-value--multiline tl-field-value--preformatted tl-type-code');
+    expect(screen.getByRole('button', { name: 'Kopieren' }).parentElement!.className)
+      .toBe('tl-field-value-group__action');
+  });
+
   it('draws a field value with an icon ahead of its text', async () => {
     const { FieldValuePart } = await defaults();
 
@@ -868,4 +913,13 @@ describe('the TopLogic drawing of the parts', () => {
     expect(document.activeElement).toBe(anchor);
     anchor.remove();
   });
+});
+
+describeCopyButton('TopLogic drawing', async props => {
+  const { registerPart } = await import('tl-react-bridge');
+  const { default: ButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/ButtonPart');
+  const { default: CopyButtonPart } = await import('../../com.top_logic.layout.react/react-src/controls/button/CopyButtonPart');
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  registerPart('Button', ButtonPart);
+  render(<CopyButtonPart {...props} />);
 });

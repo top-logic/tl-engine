@@ -42,9 +42,9 @@ public interface TLConstraint extends TLAttributeAnnotation {
 	@Name(FILTER_PROPERTY)
 	@Mandatory
 	@DefaultContainer
-	PolymorphicConfiguration<AttributedValueFilter> getFilter();
+	PolymorphicConfiguration<? extends AttributedValueFilter> getFilter();
 
 	/** @see #getFilter() */
-	void setFilter(PolymorphicConfiguration<AttributedValueFilter> value);
+	void setFilter(PolymorphicConfiguration<? extends AttributedValueFilter> value);
 
 }

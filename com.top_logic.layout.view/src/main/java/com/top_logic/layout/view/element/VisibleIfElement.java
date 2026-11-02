@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
@@ -78,6 +79,7 @@ public class VisibleIfElement implements UIElement {
 	 * Configuration for {@link VisibleIfElement}.
 	 */
 	@TagName("visible-if")
+	@TypeIcon("css:bi bi-eye")
 	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getExpr()}. */
@@ -184,7 +186,7 @@ public class VisibleIfElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_input.getChannel());
 		ReactSwitchControl result = new ReactSwitchControl(context, input, List.of(_case), List.of(),
-			ObservedTypes.resolve(_observedTypeRefs));
+			ObservedTypes.resolve(_observedTypeRefs), false);
 		result.setCssClass(_cssClass);
 		return result;
 	}

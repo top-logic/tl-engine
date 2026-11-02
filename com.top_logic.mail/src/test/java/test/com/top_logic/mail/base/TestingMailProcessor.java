@@ -15,6 +15,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mail.base.MailFolderAware;
 import com.top_logic.mail.proxy.AbstractMailProcessor;
 import com.top_logic.mail.proxy.ConfiguredMailServerDaemon;
+import com.top_logic.mail.proxy.MailMessage;
 import com.top_logic.mail.proxy.MailProcessor;
 import com.top_logic.mail.proxy.MailServerMessage;
 import com.top_logic.mail.proxy.exchange.ExchangeMeeting;
@@ -22,6 +23,12 @@ import com.top_logic.mail.proxy.exchange.ExchangeMeeting;
 /**
  * Simple {@link MailProcessor} expecting the identifier and the type of an {@link MailFolderAware}
  * in the subject of the mail.
+ * 
+ * <p>
+ * All test runs share the same mailbox. This processor only handles mails of the current test run
+ * (see {@link TestMailHelper#isOwnMail(String)}). Mails of other test runs are left untouched, so
+ * that the other test run can process or delete them itself.
+ * </p>
  * 
  * @since 5.8.0
  * 
@@ -40,7 +47,8 @@ public class TestingMailProcessor extends AbstractMailProcessor {
 
 	/**
 	 * Appends a string to the subject of the mail representing the given {@link MailFolderAware
-	 * target} to be found by parsing mail.
+	 * target} to be found by parsing mail, and the {@link TestMailHelper#getRunMarker()} that
+	 * identifies the mail as mail of this test run.
 	 * 
 	 * @param messageSubject
 	 *        The subject of the message to append target to.
@@ -56,7 +64,24 @@ public class TestingMailProcessor extends AbstractMailProcessor {
 		messageSubject.append(TARGET_TYPE);
 		messageSubject.append(wrappedObject.tTable().getName());
 		messageSubject.append(REST);
+		messageSubject.append(' ');
+		messageSubject.append(TestMailHelper.getRunMarker());
 		return messageSubject;
+	}
+
+	/**
+	 * Processes only mails of this test run.
+	 * 
+	 * <p>
+	 * A mail of another test run is neither processed nor deleted, and no flag of it is changed.
+	 * </p>
+	 */
+	@Override
+	protected boolean internalProcessMail(MailMessage mail, ConfiguredMailServerDaemon mailServerDaemon, Object token) {
+		if (!TestMailHelper.isOwnMail(mail.getName())) {
+			return false;
+		}
+		return super.internalProcessMail(mail, mailServerDaemon, token);
 	}
 
 	@Override
@@ -67,7 +92,11 @@ public class TestingMailProcessor extends AbstractMailProcessor {
 	@Override
 	public MailFolderAware getMailFolderAware(MailServerMessage message, ConfiguredMailServerDaemon mailServerDaemon,
 			Object token) {
-		Matcher matcher = IDENTIFIER_PATTERN.matcher(message.getName());
+		String subject = message.getName();
+		if (!TestMailHelper.isOwnMail(subject)) {
+			return null;
+		}
+		Matcher matcher = IDENTIFIER_PATTERN.matcher(subject);
 		if (matcher.find()) {
 			long id = Long.parseLong(matcher.group(1));
 			String type = matcher.group(2);

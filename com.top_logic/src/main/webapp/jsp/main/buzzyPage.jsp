@@ -1,9 +1,10 @@
-<%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
+<%@page language="java" session="false" extends="com.top_logic.util.NoContextJspBase"
 %><%@page import="com.top_logic.basic.util.ResKey"
 %><%@page import="com.top_logic.layout.ContentHandlersRegistry"
 %><%@page import="com.top_logic.basic.version.Version"
 %><%@page import="com.top_logic.util.Resources"
 %><%@page import="com.top_logic.mig.html.UserAgent"
+%><%@page import="com.top_logic.util.TopLogicServlet"
 %><%@taglib uri="basic" prefix="basic"
 %><%
 String theContext = request.getContextPath();
@@ -13,6 +14,10 @@ String theContext = request.getContextPath();
 		<title>
 			<basic:text key="<%= com.top_logic.layout.I18NConstants.APPLICATION_TITLE %>"/>
 		</title>
+		<meta
+			content="<%=TopLogicServlet.RETRY_AFTER_SECONDS%>"
+			http-equiv="refresh"
+		/>
 		<basic:js/>
 		<basic:favicon/>
 		<style type="text/css">

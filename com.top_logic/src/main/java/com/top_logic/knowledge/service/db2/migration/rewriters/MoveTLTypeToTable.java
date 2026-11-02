@@ -73,7 +73,7 @@ public class MoveTLTypeToTable extends ConfiguredRewritingEventVisitor<MoveTLTyp
 		 * Delegate visitor that receives all events of moved objects.
 		 */
 		@Name(VALUE_REWRITER)
-		PolymorphicConfiguration<ItemEventVisitor<?, Void>> getValueRewriter();
+		PolymorphicConfiguration<? extends ItemEventVisitor<?, Void>> getValueRewriter();
 	}
 
 	private static final ItemEventVisitor<?, Void> NOOP = new AbstractItemEventVisitor<>() {

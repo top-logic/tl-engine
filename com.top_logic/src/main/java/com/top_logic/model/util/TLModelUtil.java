@@ -91,6 +91,7 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.v5.transform.ModelLayout;
 import com.top_logic.model.visit.DefaultTLModelVisitor;
 import com.top_logic.util.error.TopLogicException;
@@ -793,6 +794,69 @@ public class TLModelUtil {
 	}
 
 	/**
+	 * Adds a new unidirectional, navigable reference to the given class, implemented by a private
+	 * association (the form a {@code <reference>} without {@code kind="backwards"} gets in a model
+	 * definition).
+	 *
+	 * <p>
+	 * The reference is neither composite nor aggregate and holds a single optional value; adjust
+	 * cardinality and further properties on the returned reference.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The class to add the reference to.
+	 * @param name
+	 *        The name of the new reference.
+	 * @param targetType
+	 *        The type of the referenced objects (a class or an enumeration).
+	 * @return The newly created reference.
+	 *
+	 * @see #addForwardReferenceEnd(TLClass, String, TLType, boolean)
+	 */
+	public static TLReference addForwardReference(TLClass owner, String name, TLType targetType) {
+		return addReference(owner, name, addForwardReferenceEnd(owner, name, targetType, false));
+	}
+
+	/**
+	 * Adds the private association implementing a forward reference of the given class, without
+	 * creating the {@link TLReference} itself.
+	 *
+	 * <p>
+	 * The association is named {@link TLStructuredTypeColumns#syntheticAssociationName(String, String)}
+	 * and has two ends: the source end {@link TLStructuredTypeColumns#SELF_ASSOCIATION_END_NAME}
+	 * pointing to the owner (multiple unless composite, aggregate if composite) and the navigable
+	 * destination end named like the reference pointing to the target type. The caller creates the
+	 * reference with {@link #addReference(TLClass, String, TLAssociationEnd)} on the returned end,
+	 * after adjusting the end's further properties.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The class to add the reference to.
+	 * @param name
+	 *        The name of the reference.
+	 * @param targetType
+	 *        The type of the referenced objects (a class or an enumeration).
+	 * @param composite
+	 *        Whether the reference is a composition (the owner contains the referenced objects).
+	 * @return The destination end the reference is implemented by.
+	 */
+	public static TLAssociationEnd addForwardReferenceEnd(TLClass owner, String name, TLType targetType,
+			boolean composite) {
+		TLAssociation association = addAssociation(owner.getModule(), owner.getScope(),
+			TLStructuredTypeColumns.syntheticAssociationName(owner.getName(), name));
+
+		TLAssociationEnd sourceEnd = addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, owner);
+		sourceEnd.setMultiple(!composite);
+		sourceEnd.setAggregate(composite);
+
+		TLAssociationEnd destEnd = addEnd(association, name, targetType);
+		destEnd.setComposite(composite);
+		destEnd.setAggregate(false);
+		destEnd.setNavigate(true);
+		return destEnd;
+	}
+
+	/**
 	 * Adds a new {@link TLClassProperty property} to the given class.
 	 * 
 	 * @param type
@@ -968,6 +1032,32 @@ public class TLModelUtil {
 			return result;
 		}
 		return normalizeSingleValue(part, mapping, value);
+	}
+
+	/**
+	 * Whether the given part value contains the given value.
+	 *
+	 * <p>
+	 * A {@link Collection} value (the value of a {@link TLStructuredTypePart#isMultiple() multiple}
+	 * part) contains the value, if it is one of its elements. Any other value contains the given
+	 * value, if both are equal. Nothing contains <code>null</code>.
+	 * </p>
+	 *
+	 * @param partValue
+	 *        The value of a part, as returned by {@link TLObject#tValue(TLStructuredTypePart)}.
+	 * @param value
+	 *        The value to look up.
+	 *
+	 * @see TLObject#tContains(TLStructuredTypePart, Object)
+	 */
+	public static boolean containsValue(Object partValue, Object value) {
+		if (value == null) {
+			return false;
+		}
+		if (partValue instanceof Collection<?> collection) {
+			return collection.contains(value);
+		}
+		return value.equals(partValue);
 	}
 
 	private static Object normalizeSingleValue(TLStructuredTypePart part, StorageMapping<?> mapping, Object value) {

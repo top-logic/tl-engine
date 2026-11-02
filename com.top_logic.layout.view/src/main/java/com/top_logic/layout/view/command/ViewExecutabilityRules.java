@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Supplies;
+import com.top_logic.layout.view.security.CommandAccess;
 
 /**
  * Factory for the combined {@link ViewExecutabilityRule} of a {@link ViewCommand} from its
@@ -114,6 +115,12 @@ public class ViewExecutabilityRules {
 	/**
 	 * Builds the combined rule of a command, deciding over its {@link CommandArguments arguments}.
 	 *
+	 * <p>
+	 * The {@link CommandAccess checks} of the {@link ViewCommand.Config#getAccess() access} the
+	 * command declares come first, followed by the configured
+	 * {@link ViewCommand.Config#getExecutability() rules}.
+	 * </p>
+	 *
 	 * @param config
 	 *        The configuration of the command.
 	 * @param trigger
@@ -123,7 +130,16 @@ public class ViewExecutabilityRules {
 	 *        The build-time context of the command.
 	 */
 	public static ViewExecutabilityRule build(ViewCommand.Config config, String trigger, ViewContext context) {
-		return build(config.getExecutability(), context, CommandArguments.of(config, trigger).scope());
+		ActionScope scope = CommandArguments.of(config, trigger).scope();
+		ViewExecutabilityRule access = CommandAccess.create(config, scope, context);
+		ViewExecutabilityRule configured = build(config.getExecutability(), context, scope);
+		if (access == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			return configured;
+		}
+		if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			return access;
+		}
+		return CombinedViewExecutabilityRule.combine(List.of(access, configured));
 	}
 
 	/**

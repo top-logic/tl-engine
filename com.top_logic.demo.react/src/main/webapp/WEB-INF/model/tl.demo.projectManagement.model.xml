@@ -5,6 +5,22 @@
 		<annotations>
 			<display-group value="demo"/>
 		</annotations>
+		<class name="Deliverable"
+			abstract="true"
+		>
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<id-column value="name"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
 		<class name="Milestone">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -140,7 +156,29 @@
 						<change-subtree include="false"/>
 					</annotations>
 				</reference>
+				<reference name="deliverables"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Deliverable"
+				/>
 			</attributes>
+		</class>
+		<class name="Prototype">
+			<generalizations>
+				<generalization type="Deliverable"/>
+			</generalizations>
+		</class>
+		<class name="Report">
+			<generalizations>
+				<generalization type="Deliverable"/>
+			</generalizations>
+		</class>
+		<class name="Specification">
+			<generalizations>
+				<generalization type="Deliverable"/>
+			</generalizations>
 		</class>
 		<class name="Ticket">
 			<generalizations>
@@ -206,7 +244,48 @@
 				/>
 				<property name="description"
 					type="tl.model.wysiwyg:Html"
-				/>
+				>
+					<annotations>
+						<!--
+							@ refers to a member of the ticket's project, # to another ticket of the
+							project. The project is the container of the ticket; a ticket without
+							one offers nothing.
+						-->
+						<input-control>
+							<impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
+								<mentions>
+									<mention
+										presentation="chip"
+										trigger="@"
+									>
+										<options><![CDATA[self -> query -> {
+	project = if($self == null, null, $self.container());
+	if($project == null, [],
+		$project.get(`tl.demo.projectManagement:ProjectScope#members`)
+			.filter(person -> $person.label().stringContains($query))
+			.sort(comparator(person -> $person.label().toLowerCase()))
+			.subList(0, 10))
+}]]></options>
+									</mention>
+									<mention
+										presentation="link"
+										trigger="#"
+									>
+										<options><![CDATA[self -> query -> {
+	project = if($self == null, null, $self.container());
+	if($project == null, [],
+		$project.get(`tl.demo.projectManagement:ProjectScope#tickets`)
+			.filter(ticket -> $ticket != $self
+				&& (toString($ticket.get(`tl.demo.projectManagement:Ticket#number`)).stringContains($query)
+					|| $ticket.get(`tl.demo.projectManagement:Ticket#title`).stringContains($query)))
+			.subList(0, 10))
+}]]></options>
+									</mention>
+								</mentions>
+							</impl>
+						</input-control>
+					</annotations>
+				</property>
 				<reference name="milestone"
 					inverse-reference="tickets"
 					kind="forwards"

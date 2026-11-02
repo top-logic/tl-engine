@@ -193,6 +193,7 @@ public class TestSubagentQuestionStore extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestSubagentQuestionStore.class),
 				ModelService.Module.INSTANCE,
-				AgentExecutionStore.Module.INSTANCE));
+				AgentExecutionStore.Module.INSTANCE,
+				SubagentWorkers.Module.INSTANCE));
 	}
 }

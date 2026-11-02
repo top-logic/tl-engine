@@ -37,7 +37,7 @@ public class CloudBlobEntryInfo extends BaseEntryInfo {
 	}
 
 	@Override
-	public void writeInfo() throws RepositoryException {
+	public synchronized void writeInfo() throws RepositoryException {
 		CloudBlob theBlob = ((CloudLeafObject) verFile).getBlob();
 
 	    try {

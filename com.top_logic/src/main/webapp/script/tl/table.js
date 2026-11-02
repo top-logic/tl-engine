@@ -1784,17 +1784,30 @@ TABLE = {
 	 * before the method is executed, a timer is set which executes the method after a certain time. 
 	 * If the method is executed again during this time, the timer is reset.
 	 *
+	 * The timer is kept per table container and method, so that debouncing the same method for
+	 * several tables at once does not cancel the pending calls of the other tables. The method is
+	 * not executed, if the table container has been removed from the document in the meantime.
+	 *
 	 * @param{method} Method to execute.
 	 * @param{delay} Time after the method is executed if the method is not called again.
  	 * @param {tableContainer} Container holding the table.
 	 * @param{args} Arguments of the method to execute.
 	 */
 	debounce: function(method, delay, tableContainer, args) {
-		clearTimeout(method._tId);
-		
-	    method._tId = setTimeout(function() {
-			method(tableContainer, args);
-	    }, delay);
+		var timers = tableContainer._debounceTimers;
+		if (timers == null) {
+			timers = tableContainer._debounceTimers = new Map();
+		}
+
+		clearTimeout(timers.get(method));
+
+		timers.set(method, setTimeout(function() {
+			timers.delete(method);
+
+			if (document.body.contains(tableContainer)) {
+				method(tableContainer, args);
+			}
+		}, delay));
 	},
 	
 	/**

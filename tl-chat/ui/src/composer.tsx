@@ -296,7 +296,7 @@ export const Composer = React.memo(
   referenceCandidates,
   attachmentsEnabled = true,
   agentPicker = true,
-  modelPicker = true,
+  modelPicker: modelPickerEnabled = true,
   thinking = true,
   mcp = true,
   tracePicker = true,
@@ -414,6 +414,8 @@ export const Composer = React.memo(
   const surface = useRef<HTMLDivElement>(null)
   const improveId = useRef<string | null>(null)
   const abort = useRef<AbortController | null>(null)
+  // No model to choose while no provider has its credentials; the run's error names the missing secret.
+  const modelPicker = modelPickerEnabled && models.length > 0
   const showPlus = plusMenuVisible({
     attachmentsEnabled,
     agentPicker,
@@ -423,7 +425,8 @@ export const Composer = React.memo(
     tracePicker,
     extraMenuItems,
   })
-  const showModelMenu = modelPicker || thinking
+  // The menu holds the model and the effort rows; with neither to offer it stays away.
+  const showModelMenu = modelPicker || (thinking && effortLevels.length > 0)
 
   useEffect(() => {
     if (!promptImprovementEnabled || improving || draftIsEmpty(text)) return

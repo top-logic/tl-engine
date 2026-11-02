@@ -2,7 +2,4 @@
 
 <!-- Main configuration file -->
 <root>
-	<alias>
-		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}"/>
-	</alias>
 </root>

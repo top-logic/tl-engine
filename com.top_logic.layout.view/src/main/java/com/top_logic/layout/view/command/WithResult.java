@@ -14,6 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -66,6 +67,7 @@ public interface WithResult extends ConfigPart, ActionScopeDefinition {
 	@Name(ACTIONS)
 	@DefaultContainer
 	@Options(fun = AllInAppImplementations.class)
+	@TreeProperty
 	List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 
 	/**

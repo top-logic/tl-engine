@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -142,6 +143,7 @@ public class CreateThemeVariableHandler extends AbstractCommandHandler {
 		ThemeSettings.Config themeSettingsFile = ThemeUtil.readThemeSettingsConfigFile(themeSettingsRootFile);
 		themeSettingsFile.getSettings().put(settingConfig.getName(), settingConfig);
 		writeThemeSettings(themeSettingsRootFile, themeSettingsFile);
+		FileManager.getInstance().refresh(ThemeUtil.getThemeSettingsPath(themeId));
 
 		ThemeSetting setting = TypedConfigUtil.createInstance(settingConfig).initThemeId(themeId);
 		ThemeFactory.getInstance().getTheme(themeId).getSettings().update(setting);

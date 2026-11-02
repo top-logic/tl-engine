@@ -251,6 +251,12 @@ public class ViewElement implements UIElement {
 				// content element keeps the class it declares itself.
 				rc.setCssClass(_cssClass);
 			}
+			if (_viewRef != null && rc.getViewSource() == null) {
+				// Wherever the view is displayed - as page, in a <view-ref>, as frame of a tile stack,
+				// in a dialog or window - a click into it is mapped to its file. A content control that
+				// is the root of a nested view already names that view, which is what is displayed.
+				rc.setViewSource(ViewLoader.fullPath(_viewRef));
+			}
 			RouteManager rm = context.getRouteManager();
 			if (!participants.isEmpty() && rm != null) {
 				for (RoutingParticipant participant : participants) {

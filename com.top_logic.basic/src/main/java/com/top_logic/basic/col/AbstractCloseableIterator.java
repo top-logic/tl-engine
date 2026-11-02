@@ -5,14 +5,11 @@
  */
 package com.top_logic.basic.col;
 
-import com.top_logic.basic.Logger;
-
 /**
  * Base class for {@link CloseableIterator} implementations.
  * 
  * <p>
- * This implementation ensures the idempotent behavior of the {@link #close()} method and makes sure
- * that this instance is {@link #close() closed} at least on finalization.
+ * This implementation ensures the idempotent behavior of the {@link #close()} method.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -34,25 +31,10 @@ public abstract class AbstractCloseableIterator<T> implements CloseableIterator<
 			return;
 		}
 		
-		doClose();
-	}
-
-	private void doClose() {
 		closed = true;
 		internalClose();
 	}
 
 	protected abstract void internalClose();
-	
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		
-		if (!closed) {
-			doClose();
-			
-			Logger.warn("Resource leak detected: Closeable iterator was not closed.", AbstractCloseableIterator.class);
-		}
-	}
-	
+
 }

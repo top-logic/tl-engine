@@ -12,13 +12,17 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -54,6 +58,7 @@ public class OpenDialogCommand implements ViewCommand {
 	 * Configuration for {@link OpenDialogCommand}.
 	 */
 	@TagName("open-dialog")
+	@TypeIcon("css:bi bi-window-plus")
 	public interface Config extends ViewCommand.Config {
 
 		@Override
@@ -81,7 +86,8 @@ public class OpenDialogCommand implements ViewCommand {
 		 */
 		@Name(DIALOG_VIEW)
 		@Mandatory
-		String getDialogView();
+		@Format(ViewRefFormat.class)
+		ViewRef getDialogView();
 
 		/**
 		 * Whether clicking the backdrop (outside the dialog) closes it.

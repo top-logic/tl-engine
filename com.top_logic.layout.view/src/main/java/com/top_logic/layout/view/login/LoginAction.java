@@ -14,7 +14,8 @@ import java.util.Map;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
-import com.top_logic.base.security.util.Password;
+import com.top_logic.base.accesscontrol.LoginFailuresModule;
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -28,7 +29,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
-import com.top_logic.layout.react.protocol.PageNavigationEvent;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.OpenDialogAction;
 import com.top_logic.layout.view.command.ViewAction;
@@ -39,43 +40,53 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that authenticates the credentials held by its input object and switches the
- * session to the resulting user.
+ * {@link ViewAction} that authenticates the credentials held by its input object and logs the
+ * resulting user in within the current browser window.
  *
  * <p>
  * Expects its input to be a (transient) object carrying {@code name} and {@code password}
  * attributes, e.g. the model of the login {@code <form>} as the result of an enclosing {@code <store-form-state>}. On
- * success the actual session swap is deferred to the reload via {@link PendingSessionAction}; on
- * failure a {@link TopLogicException} is raised so the form shows the error.
+ * success the user is logged in; on failure a {@link TopLogicException} is raised so the form shows
+ * the error.
  * </p>
  *
  * <p>
- * Before the session swap, follow-up steps may be interposed (each composed as its own dialog view,
+ * Before the login, follow-up steps may be interposed (each composed as its own dialog view,
  * with the account carried on the {@link #ACCOUNT_CHANNEL} channel):
  * </p>
  * <ul>
  * <li>An expired password forces a {@link #CHANGE_PASSWORD_VIEW change-password dialog}
  * ({@link ChangePasswordApplyAction}).</li>
- * <li>An account with a TOTP secret must pass an {@link #OTP_VIEW OTP-verification dialog}
- * ({@link VerifyOtpAction}).</li>
- * <li>An account for which MFA is {@link MfaRequirement#REQUIRED required} but has no secret yet is
- * sent through an {@link #MFA_ENROLL_VIEW enrollment dialog} that generates a secret, shows its QR
- * code and confirms it via {@link VerifyOtpAction}.</li>
+ * <li>An account with a {@link SecondFactor} set up confirms itself with it, e.g. in the
+ * {@link #OTP_VIEW OTP-verification dialog} of the {@link TotpSecondFactor}.</li>
+ * <li>An account for which MFA is {@link MfaRequirement#REQUIRED required} but that has no second
+ * factor set up yet sets one up, e.g. in the {@link #MFA_ENROLL_VIEW enrollment dialog} of the
+ * {@link TotpSecondFactor}.</li>
  * </ul>
  *
  * <p>
- * The actual session swap (via {@link PendingSessionAction}) happens only once the final step
- * completes the login.
+ * The user is logged in only once the final step completes the login.
  * </p>
  *
- * @implNote The deferred session swap is triggered by {@link #completeLogin}; the per-step MFA
- *           branching is in {@link #proceedAfterPassword}.
+ * @implNote The login is performed by {@link #completeLogin}; the second-factor step is decided by
+ *           {@link SecondFactorStep}, see {@link #proceedAfterPassword}. The password checks are
+ *           counted by the {@link LoginFailuresModule} per account and client address
+ *           ({@link LoginFailuresModule#accountKey(String, jakarta.servlet.ServletRequest)}),
+ *           together with the logins of the classic UI and the identity confirmations of
+ *           {@link VerifyIdentityAction}: after repeated wrong passwords, further logins are refused
+ *           for a growing time without the password being checked.
  */
 @InApp
 public class LoginAction implements ViewAction {
 
 	/** Name of the transient model type holding the change-password form input. */
 	public static final String PASSWORD_CHANGE_TYPE = "tl.login:PasswordChange";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the newly chosen password. */
+	public static final String NEW_PASSWORD_ATTR = "newPassword";
+
+	/** Attribute of {@link #PASSWORD_CHANGE_TYPE} holding the repetition of the new password. */
+	public static final String NEW_PASSWORD_CONFIRM_ATTR = "newPasswordConfirm";
 
 	/** Dialog view (relative to {@link ViewLoader#VIEW_BASE_PATH}) for the forced password change. */
 	public static final String CHANGE_PASSWORD_VIEW = "change-password.view.xml";
@@ -136,7 +147,13 @@ public class LoginAction implements ViewAction {
 		char[] decryptedPassword = password.toCharArray();
 		Person account;
 		boolean passwordChangeRequired;
+		LoginFailuresModule<?> loginFailures = LoginFailuresModule.getInstance();
+		String accountKey = LoginFailuresModule.accountKey(userName, displayContext.asRequest());
 		try {
+			// Refuses with the too-many-attempts message while the account is backing off.
+			loginFailures.checkRetry(accountKey,
+				com.top_logic.layout.component.configuration.I18NConstants.ERROR_TOO_MANY_LOGIN_ATTEMPS__TIMEOUT);
+
 			boolean success;
 			try {
 				success = Login.getInstance()
@@ -151,7 +168,7 @@ public class LoginAction implements ViewAction {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED, ex);
 			}
 
-			if (!success) {
+			if (!loginFailures.recordAttempt(accountKey, success)) {
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED);
 			}
 
@@ -162,7 +179,7 @@ public class LoginAction implements ViewAction {
 		}
 
 		if (passwordChangeRequired) {
-			// Hold back the session swap and force a password change first.
+			// Hold back the login and force a password change first.
 			openChangePasswordDialog(context, account);
 			return input;
 		}
@@ -173,20 +190,16 @@ public class LoginAction implements ViewAction {
 
 	/**
 	 * Continues the login flow after the password has been verified (and, when it was expired, a new
-	 * one applied): opens the {@link #OTP_VIEW OTP-verification dialog} if the account has a TOTP
-	 * secret, opens the {@link #MFA_ENROLL_VIEW enrollment dialog} if MFA is
-	 * {@link MfaRequirement#REQUIRED required} but no secret is set yet, and otherwise completes the
-	 * login.
+	 * one applied): confirms the account with a second factor, sets one up, or completes the login,
+	 * as {@link SecondFactorStep#decide(Person)} decides for the configured {@link SecondFactor}s.
+	 *
+	 * @param context
+	 *        The context of the dialog the login is in.
+	 * @param account
+	 *        The account whose password has been checked.
 	 */
-	static void proceedAfterPassword(ReactContext context, Person account) {
-		Password secret = account.getMFASecret();
-		if (secret != null) {
-			openOtpDialog(context, account, secret);
-		} else if (account.getMFARequirement() == MfaRequirement.REQUIRED) {
-			openMfaEnrollDialog(context, account);
-		} else {
-			completeLogin(context, account.getName());
-		}
+	public static void proceedAfterPassword(ReactContext context, Person account) {
+		SecondFactorStep.decide(account).perform(context, account);
 	}
 
 	/**
@@ -202,37 +215,23 @@ public class LoginAction implements ViewAction {
 	}
 
 	/**
-	 * Replaces the current (login) dialog with the OTP-verification dialog, transferring the account
-	 * and its existing TOTP secret on the {@link #ACCOUNT_CHANNEL} / {@link #SECRET_CHANNEL} channels.
-	 */
-	private static void openOtpDialog(ReactContext context, Person account, Password secret) {
-		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put(MODEL_CHANNEL, newOtpEntry());
-		channels.put(ACCOUNT_CHANNEL, account);
-		channels.put(SECRET_CHANNEL, secret);
-		replaceDialog(context, OTP_VIEW, channels);
-	}
-
-	/**
-	 * Replaces the current (login) dialog with the MFA-enrollment dialog, generating a fresh secret
-	 * and its QR code and transferring them on the {@link #SECRET_CHANNEL} / {@link #QR_CHANNEL}
-	 * channels (the secret is persisted only once {@link VerifyOtpAction} confirms a valid code).
-	 */
-	private static void openMfaEnrollDialog(ReactContext context, Person account) {
-		Password secret = MfaSupport.generateSecret();
-		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put(MODEL_CHANNEL, newOtpEntry());
-		channels.put(ACCOUNT_CHANNEL, account);
-		channels.put(SECRET_CHANNEL, secret);
-		channels.put(QR_CHANNEL, MfaSupport.createQrCode(account, secret));
-		replaceDialog(context, MFA_ENROLL_VIEW, channels);
-	}
-
-	/**
 	 * Closes the current top dialog and opens the given view as a modal dialog seeded with the given
-	 * channel values.
+	 * channel values: the way a step of the login takes over from the previous one.
+	 *
+	 * <p>
+	 * The dialog does not close on a click on the backdrop, so that an accidental click does not
+	 * abort the login.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the dialog the login is in.
+	 * @param view
+	 *        The dialog view, relative to {@link ViewLoader#VIEW_BASE_PATH}.
+	 * @param channels
+	 *        The values of the dialog's channels, by channel name, e.g. the account on the
+	 *        {@link #ACCOUNT_CHANNEL} channel.
 	 */
-	private static void replaceDialog(ReactContext context, String view, Map<String, ?> channels) {
+	public static void replaceDialog(ReactContext context, String view, Map<String, ?> channels) {
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager != null) {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
@@ -257,19 +256,38 @@ public class LoginAction implements ViewAction {
 	}
 
 	/**
-	 * Completes a successful authentication: records the deferred login on the HTTP session, closes
-	 * the top dialog, and sends the client a reload as {@link PageNavigationEvent} that lets
-	 * {@link PendingSessionAction} perform the actual session swap.
+	 * Completes a successful authentication: logs the user in within the current browser window,
+	 * closes the top dialog, and rebuilds the window for the user.
 	 *
 	 * <p>
-	 * Re-checks the maintenance mode before recording the login: the follow-up steps (OTP
+	 * The login applies to the window it happens in, see
+	 * {@link SessionService#loginUserInWindow(jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse, Person)}:
+	 * the session is kept, other windows of the session keep their user, and a window opened later
+	 * starts with the user logged in here. The changed session ID reaches the browser with the
+	 * answer to the current command. The window's tree, built for the previous user, is discarded
+	 * and the window is reloaded ({@link ReactWindowRegistry#rebuildWindow(String)}), which renders
+	 * it anew for the user.
+	 * </p>
+	 *
+	 * <p>
+	 * Re-checks the maintenance mode before the login: the follow-up steps (second-factor
 	 * verification, forced password change) can complete long after the password check, so
 	 * maintenance mode may have been activated in between.
 	 * </p>
+	 *
+	 * <p>
+	 * A {@link SecondFactor} calls this once the account has proven itself.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the dialog the login is in.
+	 * @param userName
+	 *        The name of the account to log in.
 	 */
-	static void completeLogin(ReactContext context, String userName) {
+	public static void completeLogin(ReactContext context, String userName) {
+		Person account = Person.byName(userName);
 		try {
-			Login.getInstance().checkAllowedGroups(Person.byName(userName));
+			Login.getInstance().checkAllowedGroups(account);
 		} catch (InMaintenanceModeException ex) {
 			Logger.info("Login completion for '" + userName + "' rejected: maintenance mode active.",
 				LoginAction.class);
@@ -277,13 +295,14 @@ public class LoginAction implements ViewAction {
 		}
 
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-		PendingSessionAction.requestLogin(displayContext.asRequest().getSession(), userName);
+		SessionService.getInstance().loginUserInWindow(displayContext.asRequest(), displayContext.asResponse(),
+			account);
 
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager != null) {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 		}
-		context.getSSEQueue().enqueue(PageNavigationEvent.create());
+		context.getWindowRegistry().rebuildWindow(context.getWindowName());
 	}
 
 	private static String asString(Object value) {
@@ -295,7 +314,7 @@ public class LoginAction implements ViewAction {
 	}
 
 	/**
-	 * Switches the session to the authenticated user or opens a dialog.
+	 * Logs the authenticated user in or opens a dialog.
 	 */
 	@Override
 	public boolean changesViewState() {

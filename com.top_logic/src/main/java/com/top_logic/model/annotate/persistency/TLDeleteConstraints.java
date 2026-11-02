@@ -52,6 +52,6 @@ public interface TLDeleteConstraints extends TLTypeAnnotation {
 	 */
 	@DefaultContainer
 	@EntryTag("custom-constraint")
-	List<PolymorphicConfiguration<DeleteConstraint>> getValue();
+	List<PolymorphicConfiguration<? extends DeleteConstraint>> getValue();
 
 }

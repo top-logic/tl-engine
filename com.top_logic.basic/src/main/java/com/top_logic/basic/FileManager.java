@@ -264,6 +264,28 @@ public abstract class FileManager {
 	 */
 	public void createData(String aName, BinaryContent content) throws IOException {
 		FileUtilities.copyToFile(content, getIDEFile(aName));
+		refresh(aName);
+	}
+
+	/**
+	 * Makes a resource that was written or deleted directly in the file system visible to
+	 * subsequent lookups through this {@link FileManager} immediately.
+	 * 
+	 * <p>
+	 * A {@link FileManager} may answer lookups from a cache that learns about file system changes
+	 * only asynchronously. Code that creates, changes or deletes a resource through the file
+	 * returned by {@link #getIDEFile(String)} calls this method afterwards, before it looks up the
+	 * resource again. {@link #createData(String, BinaryContent)} and {@link #delete(String)} do this
+	 * on their own.
+	 * </p>
+	 * 
+	 * @param resourceName
+	 *        The name of the resource (including its path relative to the web application root)
+	 *        starting with a '/' character. It may denote a single file or a directory, e.g. a
+	 *        directory tree that was deleted or extracted as a whole.
+	 */
+	public void refresh(String resourceName) {
+		// No cache by default.
 	}
 
 	/**

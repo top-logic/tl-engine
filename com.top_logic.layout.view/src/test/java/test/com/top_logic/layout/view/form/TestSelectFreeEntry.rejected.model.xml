@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="testFreeEntryRejected">
+			<class name="X">
+				<attributes>
+					<reference name="withoutCreate"
+						type="X"
+					>
+						<annotations>
+							<free-entry/>
+						</annotations>
+					</reference>
+					<reference name="withCreate"
+						type="X"
+					>
+						<annotations>
+							<free-entry create="text -> self -> null"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

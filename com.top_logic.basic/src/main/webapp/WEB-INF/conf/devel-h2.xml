@@ -3,6 +3,5 @@
 	<alias>
         <entry name="%H2_SCHEMA%" value="${env:h2_name:./tmp/h2;DB_CLOSE_ON_EXIT=FALSE}" />
         <entry name="%H2_USER%" value="${env:h2_user:user}" />
-        <entry name="%H2_PASSWD%" value="${env:h2_passwd:unencrypted:password}" />
 	</alias>
 </root>

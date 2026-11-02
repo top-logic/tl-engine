@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.layout.react.control.IReactControl;
 
 /**
@@ -28,6 +29,7 @@ public abstract class ContainerElement implements UIElement {
 	/**
 	 * Configuration for {@link ContainerElement}.
 	 */
+	@TypeIcon("css:bi bi-bounding-box")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getChildren()}. */

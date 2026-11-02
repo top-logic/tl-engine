@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react.wysiwyg;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -13,6 +15,8 @@ import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.i18n:I18NHtml} attributes.
@@ -32,7 +36,13 @@ import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
  * language, as long as there is none in the user's.
  * </p>
  */
+@Label("Multilingual formatted text editor")
+@InApp
+@TargetType(value = TLTypeKind.STRING, name = I18NHtmlControlProvider.I18N_HTML_TYPE)
 public class I18NHtmlControlProvider implements ReactFieldControlProvider {
+
+	/** Qualified name of the model type of the multilingual formatted texts edited here. */
+	public static final String I18N_HTML_TYPE = "tl.model.i18n:I18NHtml";
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {

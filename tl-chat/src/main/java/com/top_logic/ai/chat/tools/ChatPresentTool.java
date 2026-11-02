@@ -7,11 +7,11 @@ package com.top_logic.ai.chat.tools;
 
 import java.util.Set;
 
-import com.top_logic.ai.chat.view.AgentViewRefreshService;
-import com.top_logic.ai.chat.view.AgentViewRefreshService.WindowAccess;
 import com.top_logic.ai.chat.view.ChatViewBinding;
+import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.react.scripting.WindowAccess;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
@@ -40,9 +40,9 @@ import com.top_logic.util.TLContextManager;
  * offer is refused with the list of the ones it does. See
  * {@link ChatViewBinding#presentable(com.top_logic.basic.col.TypedAnnotatable, String)}.</li>
  * <li><b>The window.</b> The value is written in the sub-session of the browser window the run
- * belongs to and within that window's interaction, the way {@link AgentViewRefreshService} reaches a
- * window from the agent thread. A run without a window - headless, TL-Script, the scheduler - has no
- * channel at all, says so and does nothing.</li>
+ * belongs to and within that window's interaction, through
+ * {@link ChatWindowService#inWindow(TLSubSessionContext, Runnable)}. A run without a window -
+ * headless, TL-Script, the scheduler - has no channel at all, says so and does nothing.</li>
  * </ul>
  *
  * <p>
@@ -82,7 +82,7 @@ public class ChatPresentTool extends PresentTool {
 	@Override
 	protected String noPlaceToShow(ToolExecutionContext context) {
 		TLSubSessionContext window = TLContextManager.getSubSession();
-		if (!AgentViewRefreshService.hasWindow(window)) {
+		if (!ChatWindowService.hasWindow(window)) {
 			return NO_PAGE;
 		}
 		if (ChatViewBinding.presentableNames(window).isEmpty()) {
@@ -94,7 +94,7 @@ public class ChatPresentTool extends PresentTool {
 	@Override
 	protected String deliver(Presentation presentation, String channel, ToolContext context) {
 		TLSubSessionContext window = TLContextManager.getSubSession();
-		if (!AgentViewRefreshService.hasWindow(window)) {
+		if (!ChatWindowService.hasWindow(window)) {
 			return NO_PAGE;
 		}
 		// Read once, and asked again rather than taken from the offer: the elements of a page come and
@@ -120,7 +120,7 @@ public class ChatPresentTool extends PresentTool {
 		// A form's object stands on the channel as itself: that is what "the open object" has always
 		// been for the elements reading this channel, a <form>, a subject, a context fact.
 		Object value = presentation.as() == PresentAs.FORM ? presentation.objects().get(0) : presentation;
-		WindowAccess access = AgentViewRefreshService.inWindow(window, () -> target.set(value));
+		WindowAccess access = ChatWindowService.inWindow(window, () -> target.set(value));
 		switch (access) {
 			case DONE:
 				Logger.debug("Presented " + presentation + " on channel '" + name + "'.", ChatPresentTool.class);

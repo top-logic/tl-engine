@@ -35,7 +35,7 @@ public class DirectStorage<C extends DirectStorage.Config<?>> extends AbstractSt
 		/**
 		 * The {@link StorageImplementation} that is used to lookup default values.
 		 */
-		PolymorphicConfiguration<StorageImplementation> getDefaultStorage();
+		PolymorphicConfiguration<? extends StorageImplementation> getDefaultStorage();
 
 	}
 

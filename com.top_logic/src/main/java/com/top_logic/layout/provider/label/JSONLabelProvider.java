@@ -49,12 +49,12 @@ public class JSONLabelProvider extends AbstractConfiguredInstance<JSONLabelProvi
 		 */
 		@ItemDefault(DefaultValueAnalyzer.class)
 		@NonNullable
-		PolymorphicConfiguration<ValueAnalyzer> getAnalyzer();
+		PolymorphicConfiguration<? extends ValueAnalyzer> getAnalyzer();
 
 		/**
 		 * Setter for {@link #getAnalyzer()}.
 		 */
-		void setAnalyzer(PolymorphicConfiguration<ValueAnalyzer> value);
+		void setAnalyzer(PolymorphicConfiguration<? extends ValueAnalyzer> value);
 
 	}
 

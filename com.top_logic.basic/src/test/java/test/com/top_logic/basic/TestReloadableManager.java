@@ -5,11 +5,15 @@
  */
 package test.com.top_logic.basic;
 
+import java.util.List;
+import java.util.Map;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
+import com.top_logic.basic.ReloadableManager.ReloadFailure;
 import com.top_logic.basic.StringServices;
 
 
@@ -108,6 +112,56 @@ public class TestReloadableManager extends TestCase implements Reloadable {
         rm.removeReloadable(this);
         assertNull(rm.get("testMain"));
     }
+
+	/** Test of {@link ReloadableManager#reloadKnownReporting(java.util.Collection)}. */
+	public void testReloadKnownReporting() {
+		ReloadableManager rm = ReloadableManager.getInstance();
+		RuntimeException problem = new IllegalStateException("Expected reload failure.");
+		Reloadable failing = new Reloadable() {
+			@Override
+			public boolean reload() {
+				throw problem;
+			}
+
+			@Override
+			public String getName() {
+				return "testReloadKnownReporting.failing";
+			}
+
+			@Override
+			public String getDescription() {
+				return null;
+			}
+
+			@Override
+			public boolean usesXMLProperties() {
+				return false;
+			}
+		};
+		rm.addReloadable(this);
+		rm.addReloadable(failing);
+		try {
+			reloadCalled = false;
+			reloadOK = false;
+			xmlOK = false;
+			Map<String, ReloadFailure> failures = rm.reloadKnownReporting(
+				List.of("unknown", failing.getName(), getName()));
+			assertTrue(reloadCalled);
+			assertEquals(List.of("unknown", failing.getName(), getName()), List.copyOf(failures.keySet()));
+			assertNull(failures.get("unknown").cause());
+			assertNotNull(failures.get("unknown").reason());
+			assertSame(problem, failures.get(failing.getName()).cause());
+			assertNull(failures.get(getName()).cause());
+			assertNotNull(failures.get(getName()).reason());
+
+			reloadOK = true;
+			assertEquals(Map.of(), rm.reloadKnownReporting(List.of(getName())));
+			assertEquals(1, rm.reloadKnown(new String[] { getName(), failing.getName() }).length);
+		} finally {
+			rm.removeReloadable(failing);
+			rm.removeReloadable(this);
+		}
+	}
 
     /**
      * @see com.top_logic.basic.Reloadable#getDescription()

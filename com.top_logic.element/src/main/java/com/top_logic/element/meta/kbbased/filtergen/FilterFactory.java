@@ -65,7 +65,7 @@ public class FilterFactory extends ManagedClass implements Reloadable {
 		interface FilterConfig extends NamedConfigMandatory {
 			@Mandatory
 			@DefaultContainer
-			PolymorphicConfiguration<AttributedValueFilter> getImpl();
+			PolymorphicConfiguration<? extends AttributedValueFilter> getImpl();
 		}
 	}
 

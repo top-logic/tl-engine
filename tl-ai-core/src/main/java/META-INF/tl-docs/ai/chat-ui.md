@@ -53,7 +53,34 @@ The answer text is model output and is rendered through an allow-list on both si
 `tl-ai-core` serves content on three routes, and they are deliberately not alike:
 
 - **`/html/{id}`** (`GeneratedHtmlPageServlet`) answers **anonymously**. A page `publishPage` stored is meant to be handed around, so its unguessable 128-bit id is the capability, and the answer carries a sandbox CSP so that HTML a model wrote cannot act in the application's origin.
-- **`/screenshot/{id}`** (`ScreenshotServlet`) requires a **login** and then asks `ScreenshotService.mayRead` - the owner, or an administrator. A screenshot is a picture of a page somebody drove a browser to on their own account; the id is defence in depth, not the rule. A foreign id and an unknown id both answer 404, so the route says nothing about which ids exist. `browserScreenshot` returns `ScreenshotService.viewUrl(...)` and tells the model to write it as a Markdown image, which both rendering paths keep. `tl-ai-core/doc/screenshots.md` has the details.
+- **`/screenshot/{id}`** (`ScreenshotServlet`) requires a **login** and then asks `ScreenshotService.mayRead` - the owner, or an administrator. A screenshot is a picture of a page somebody drove a browser to on their own account; the id is defence in depth, not the rule. A foreign id and an unknown id both answer 404, so the route says nothing about which ids exist. `browserScreenshot` returns `ScreenshotService.viewUrl(...)` and tells the model to write it as a Markdown image, which both rendering paths keep; see [screenshots](#screenshots).
 - **`/archived-page/{handle}`** (`ArchivedPageServlet`) follows the screenshot rule: it shows the copy of a web page an agent run read - login, then the reading account or an administrator, 404 for unknown and foreign handles alike - rendered through `Converters.markdownToHtmlString` under a CSP that loads nothing.
 
 The model-level read policy for screenshots and cookie pools is described under [perceivable binaries](doc:ai/security/administration#the-shipped-read-policy-for-perceivable-binaries).
+
+### Screenshots
+
+`browserScreenshot` drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`. `ScreenshotServlet`, mapped to `/screenshot/*` by the `web-fragment.xml` of `tl-ai-core`, answers `GET /screenshot/{id}` with the image:
+
+- **`{id}` is the screenshot's own handle**, not its TID: 16 bytes from `SecureRandom`, base64url, assigned by `ScreenshotService.createScreenshot`. `ScreenshotService.viewUrl(screenshot)` builds the URL, absolute when the deployment declares `%HOST%`, root-relative otherwise (`ApplicationUrl`).
+- The **content type** comes from `Screenshot#contentType`, but only within `image/*`; anything else is served as `application/octet-stream`, with `X-Content-Type-Options: nosniff`, so a stored non-image is never rendered as a document in the application's origin.
+- **Caching** is `private, max-age=31536000, immutable`: the bytes never change for the life of an id, and `private` keeps the answer out of shared caches.
+
+| Request | Answer |
+|---|---|
+| an anonymous session | 401 - a session an application gives a visitor is no login |
+| no cookie at all | 302 to the start page (the cookie probe of `TopLogicServlet`, as on every route of that base); a request that comes back still without a session gets 401 |
+| signed in, own screenshot (or an administrator) | 200 with the image |
+| signed in, somebody else's screenshot, or an unknown id | 404 |
+
+Neither refusal delivers the image or a login page in its place. A screenshot captured by an unattended run has no owner and is readable by administrators only. `TestScreenshotServlet` pins the answers, `TestScreenshotService` the rule. An installation that widens the model-level policy (another role on the `AiBinaryOwner` grants) widens `viewDocument`, not `/screenshot/{id}`, which keeps asking `ScreenshotService.mayRead`.
+
+The tool result tells the model to write the image into its answer:
+
+```
+Saved screenshot "example.com-20260919-104500.png" (48213 bytes) from https://example.com/.
+View it at: /screenshot/a7f3b2... - show it to the user by writing exactly this markdown image
+into your answer: ![example.com-20260919-104500.png](/screenshot/a7f3b2...).
+```
+
+Both rendering paths keep it: the React chat parses with `marked` and filters with `DOMPurify` (`tl-chat/ui/src/markdown.tsx`; `.md img` in `styles.css` holds the picture to the column width), and the Java path renders with flexmark and filters with `HtmlSanitizer`, whose allow-list keeps `img` with an `http`, `https` or relative `src` and drops `javascript:` and `data:`.

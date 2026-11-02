@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -63,6 +64,7 @@ public class ColumnsElement implements UIElement {
 	 * Configuration for {@link ColumnsElement}.
 	 */
 	@TagName("columns")
+	@TypeIcon("css:bi bi-layout-split")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getBreakpoint()}. */

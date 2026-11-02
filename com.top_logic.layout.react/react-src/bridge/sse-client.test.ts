@@ -102,7 +102,8 @@ describe('an event stream the browser aborts for a navigation', () => {
     vi.advanceTimersByTime(NAVIGATION_START_GRACE_MS);
 
     expect(sources).toHaveLength(2);
-    expect(sources[1].url).toBe('/ctx/react-api/events?windowName=v1a2b');
+    // Names the last event received, so that the server replays what the first stream lost.
+    expect(sources[1].url).toBe('/ctx/react-api/events?windowName=v1a2b&after=1');
     expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
   });
 
@@ -183,6 +184,57 @@ describe('an event stream refused without a navigation', () => {
 
     expect(window.sessionStorage.getItem(POLLING_KEY)).toBe('1');
     expect(fetch).toHaveBeenCalled();
+  });
+});
+
+/** A heartbeat of the stream carrying the given number, as the server's first heartbeat does. */
+function numbered(source: FakeEventSource, id: string): void {
+  source.readyState = FakeEventSource.OPEN;
+  source.onmessage?.(new MessageEvent('message', { data: JSON.stringify(['Heartbeat', {}]), lastEventId: id }));
+}
+
+describe('a page loaded again while the numbering of its window continues', () => {
+  it('takes the number its stream starts from, so that a command naming it makes it not poll', async () => {
+    const { connect, expectEvents } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    numbered(sources[0], '120');
+
+    expectEvents(120);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not step back when the number of the stream start arrives after a later event', async () => {
+    const { connect, expectEvents } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    // An event flushed to the new stream before its first heartbeat.
+    numbered(sources[0], '121');
+    numbered(sources[0], '120');
+
+    expectEvents(121);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+  });
+
+  it('opens its first stream without naming an event', async () => {
+    const { connect } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+
+    expect(sources[0].url).toBe('/ctx/react-api/events?windowName=v1a2b');
+  });
+
+  it('polls when the events a command names do not arrive', async () => {
+    const { connect, expectEvents } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    numbered(sources[0], '');
+
+    expectEvents(120);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBe('1');
   });
 });
 

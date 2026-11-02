@@ -37,12 +37,12 @@ public class ConfiguredCommandModelConfiguration<C extends ConfiguredCommandMode
 		 */
 		@Name(COMMAND_MODEL_NAME)
 		@Mandatory
-		PolymorphicConfiguration<CommandModel> getCommandModel();
+		PolymorphicConfiguration<? extends CommandModel> getCommandModel();
 
 		/**
 		 * Setter for {@link #getCommandModel()}.
 		 */
-		void setCommandModel(PolymorphicConfiguration<CommandModel> model);
+		void setCommandModel(PolymorphicConfiguration<? extends CommandModel> model);
 	}
 
 	private CommandModel _commandModel;

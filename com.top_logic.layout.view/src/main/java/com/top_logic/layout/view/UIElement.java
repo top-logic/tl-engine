@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.layout.react.control.IReactControl;
 
 /**
@@ -31,6 +32,7 @@ public interface UIElement {
 	 * {@link PolymorphicConfiguration}, new element types can be registered in any module.
 	 * </p>
 	 */
+	@TypeIcon("css:bi bi-box")
 	interface Config extends PolymorphicConfiguration<UIElement> {
 
 		/** Configuration name for {@link #getId()}. */

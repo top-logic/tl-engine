@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -225,6 +226,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<TableDropConfig> getDrops();
 
 		/**
@@ -280,6 +282,11 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			// declaration there would apply to nothing.
 			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
 				+ "> nor <" + DropConfig.TAG_NAME + ">.");
+		}
+		if (config.getRowEdit() != RowEditPolicy.NONE && config.getEditInPlace()) {
+			// A row-edit table buffers its edits in the form, an edit in place writes at once.
+			context.error("A <table> with '" + Config.ROW_EDIT + "' is not edited in place ('"
+				+ Config.EDIT_IN_PLACE + "').");
 		}
 	}
 

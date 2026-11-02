@@ -17,6 +17,7 @@ import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.util.ResKeyTemplate;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -31,6 +32,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
+import com.top_logic.model.search.configured.I18NConstants;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -68,6 +70,9 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 
 	Person _auditor;
 
+	/** The employee of {@link #_approver}. */
+	TLObject _member;
+
 	TLObject _p1, _p2;
 
 	@Override
@@ -79,15 +84,15 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 			_approver = TestPerson.createPerson("privilegedApprover");
 			_auditor = TestPerson.createPerson("privilegedAuditor");
 
-			TLObject member = newObject("Employee");
-			member.tUpdateByName("account", _approver);
+			_member = newObject("Employee");
+			_member.tUpdateByName("account", _approver);
 
 			TLObject reader = newObject("Employee");
 			reader.tUpdateByName("account", _auditor);
 
 			_p1 = newObject("Proposal");
 			_p1.tUpdateByName("name", "p1");
-			_p1.tUpdateByName("approvers", Collections.singletonList(member));
+			_p1.tUpdateByName("approvers", Collections.singletonList(_member));
 			_p1.tUpdateByName("readers", Collections.singletonList(reader));
 
 			_p2 = newObject("Proposal");
@@ -206,14 +211,94 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		}
 	}
 
-	public void testCollectionSecurityObjectDenies() throws Exception {
+	/**
+	 * Creates proposals for the collection tests: the approver holds Approve on the first, and
+	 * only reads the second.
+	 */
+	private TLObject[] approvableAndReadable() {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject approvable = newObject("Proposal");
+			approvable.tUpdateByName("name", "p3");
+			approvable.tUpdateByName("approvers", Collections.singletonList(_member));
+
+			TLObject readable = newObject("Proposal");
+			readable.tUpdateByName("name", "p4");
+			readable.tUpdateByName("readers", Collections.singletonList(_member));
+			tx.commit();
+			return new TLObject[] { approvable, readable };
+		}
+	}
+
+	private static final String CALL_COLLECTION = "a -> b -> testPrivilegedCollection(list($a, $b))";
+
+	private static final String CAN_CALL_COLLECTION = "a -> b -> canCall(testPrivilegedCollection(list($a, $b)))";
+
+	public void testCollectionAllAllowed() throws Exception {
+		TLObject approvable = approvableAndReadable()[0];
+		becomeUser(_approver);
+		assertEquals("allowed", execute(search(CALL_COLLECTION), _p1, approvable));
+		assertEquals(Boolean.TRUE, execute(search(CAN_CALL_COLLECTION), _p1, approvable));
+	}
+
+	public void testCollectionOneElementDenied() throws Exception {
+		TLObject readable = approvableAndReadable()[1];
 		becomeUser(_approver);
 		try {
-			execute(search("p -> testPrivilegedCollection($p)"), _p1);
-			fail("A collection is no security object.");
+			execute(search(CALL_COLLECTION), _p1, readable);
+			fail("The approver holds no Approve on the second proposal.");
 		} catch (TopLogicException ex) {
-			// expected
+			assertDenial(I18NConstants.ERROR_CALL_NOT_ALLOWED__NAME_OPERATION_OBJECT, ex);
 		}
+		assertEquals(Boolean.FALSE, execute(search(CAN_CALL_COLLECTION), _p1, readable));
+	}
+
+	public void testCollectionEmptyDenies() throws Exception {
+		becomeUser(_approver);
+		try {
+			execute(search("testPrivilegedCollection(list())"));
+			fail("An empty collection denies the call.");
+		} catch (TopLogicException ex) {
+			assertDenial(I18NConstants.ERROR_CALL_NO_SECURITY_OBJECT__NAME, ex);
+		}
+		assertEquals(Boolean.FALSE, execute(search("canCall(testPrivilegedCollection(list()))")));
+	}
+
+	public void testCollectionNullDenies() throws Exception {
+		becomeUser(_approver);
+		try {
+			execute(search("testPrivilegedCollection(null)"));
+			fail("A null security object denies the call.");
+		} catch (TopLogicException ex) {
+			assertDenial(I18NConstants.ERROR_CALL_NO_SECURITY_OBJECT__NAME, ex);
+		}
+		assertEquals(Boolean.FALSE, execute(search("canCall(testPrivilegedCollection(null))")));
+	}
+
+	public void testCollectionWithTransientElementDenies() throws Exception {
+		String transientElement = "p -> testPrivilegedCollection(list($p, new(`TestTLScriptSecurity:Proposal`, transient: true)))";
+		becomeUser(_approver);
+		try {
+			execute(search(transientElement), _p1);
+			fail("A transient element denies the whole call.");
+		} catch (TopLogicException ex) {
+			assertDenial(I18NConstants.ERROR_CALL_INVALID_SECURITY_OBJECT__NAME_OBJECT, ex);
+		}
+		assertEquals(Boolean.FALSE, execute(search(
+			"p -> canCall(testPrivilegedCollection(list($p, new(`TestTLScriptSecurity:Proposal`, transient: true))))"),
+			_p1));
+	}
+
+	public void testCollectionWithEditOverlay() throws Exception {
+		TLObject approvable = approvableAndReadable()[0];
+		TLObject overlay = formObject(_p1, false);
+		becomeUser(_approver);
+		assertEquals("allowed", execute(search(CALL_COLLECTION), overlay, approvable));
+		assertEquals(Boolean.FALSE, execute(search(CAN_CALL_COLLECTION), formObject(_p1, true), approvable));
+	}
+
+	private static void assertDenial(ResKeyTemplate expected, TopLogicException ex) {
+		assertEquals(ex.getMessage(), expected.getKey(), ex.getErrorKey().getKey());
+		assertTrue(ex.getMessage(), ex.getMessage().contains("testPrivilegedCollection"));
 	}
 
 	public void testDefaultParameterReachesSecurityObject() throws Exception {

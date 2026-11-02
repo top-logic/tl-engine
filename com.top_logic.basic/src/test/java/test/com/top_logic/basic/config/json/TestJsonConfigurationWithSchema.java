@@ -88,7 +88,7 @@ public class TestJsonConfigurationWithSchema extends AbstractJsonConfigurationWr
 	}
 
 	public interface ConfiguredImplementation extends ConfigurationItem {
-		PolymorphicConfiguration<A> getB();
+		PolymorphicConfiguration<? extends A> getB();
 
 		void setB(PolymorphicConfiguration<? extends A> value);
 

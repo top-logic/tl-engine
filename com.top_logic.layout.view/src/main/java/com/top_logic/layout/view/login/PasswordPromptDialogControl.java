@@ -8,8 +8,8 @@ package com.top_logic.layout.view.login;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -33,18 +33,36 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * The dialog is a message, a masked password input and the standard OK/Cancel pair, composed of
  * the same React controls a form is built from. What "accepted" means is not decided here: the
- * caller passes the check as a predicate, so the same prompt serves whatever needs a password
+ * caller passes the check as a {@link Verifier}, so the same prompt serves whatever needs a password
  * confirmed.
  * </p>
  *
  * <p>
- * A rejected password leaves the dialog open with the input emptied and the rejection shown under
- * it, so the user can try again. Only an accepted password reports success; every other way of
+ * A rejected password leaves the dialog open with the input emptied and the reason the verifier
+ * gave for the rejection shown under it, so the user can try again. Only an accepted password reports success; every other way of
  * leaving the dialog - the cancel button, the window's close button, Escape - reports a cancel, and
  * exactly one of the two outcomes is reported.
  * </p>
  */
 public class PasswordPromptDialogControl {
+
+	/**
+	 * The check a password entered in the prompt has to pass.
+	 */
+	@FunctionalInterface
+	public interface Verifier {
+
+		/**
+		 * Checks the entered password.
+		 *
+		 * @param password
+		 *        The characters the user entered, which the dialog owns and clears once the check
+		 *        has returned - a verifier keeping the password must copy it.
+		 * @return {@code null} if the password is accepted, otherwise the reason for the rejection,
+		 *         shown under the input.
+		 */
+		ResKey verify(char[] password);
+	}
 
 	/** Width of the prompt window. */
 	private static final DisplayDimension WIDTH = DisplayDimension.px(420);
@@ -63,9 +81,7 @@ public class PasswordPromptDialogControl {
 	 * @param fieldLabel
 	 *        The label of the password input.
 	 * @param verifier
-	 *        Decides whether the entered password is accepted. Called with the characters the user
-	 *        entered, which this dialog owns and clears once the check has returned - a verifier
-	 *        keeping the password must copy it.
+	 *        Decides whether the entered password is accepted, and why not.
 	 * @param onVerified
 	 *        Runs once the user has entered a password the {@code verifier} accepts.
 	 * @param onCancel
@@ -73,7 +89,7 @@ public class PasswordPromptDialogControl {
 	 *        (cancel button, the window's close button, Escape). May be {@code null}.
 	 */
 	public static void openDialog(ReactContext context, DialogManager dialogManager, String title, String message,
-			String fieldLabel, Predicate<char[]> verifier, Runnable onVerified, Runnable onCancel) {
+			String fieldLabel, Verifier verifier, Runnable onVerified, Runnable onCancel) {
 		// One-shot guard so exactly one outcome is reported, regardless of how the dialog is left:
 		// every dismissal funnels through the result handler, which must not report a cancel for the
 		// dialog the accepted password has just closed.
@@ -126,22 +142,23 @@ public class PasswordPromptDialogControl {
 
 	/**
 	 * Hands the entered password to the verifier and reports its verdict, emptying the input and
-	 * marking it with the rejection when the password is not accepted.
+	 * marking it with the reason for the rejection when the password is not accepted.
 	 */
-	private static boolean accepted(AbstractFieldModel model, Predicate<char[]> verifier) {
+	private static boolean accepted(AbstractFieldModel model, Verifier verifier) {
 		Object value = model.getValue();
 		char[] entered = value == null ? new char[0] : value.toString().toCharArray();
-		boolean accepted;
+		ResKey rejection;
 		try {
-			accepted = verifier.test(entered);
+			rejection = verifier.verify(entered);
 		} finally {
 			Arrays.fill(entered, (char) 0);
 		}
-		if (!accepted) {
+		if (rejection != null) {
 			model.setValue(null);
-			model.setError(I18NConstants.ERROR_WRONG_PASSWORD);
+			model.setError(rejection);
+			return false;
 		}
-		return accepted;
+		return true;
 	}
 
 }

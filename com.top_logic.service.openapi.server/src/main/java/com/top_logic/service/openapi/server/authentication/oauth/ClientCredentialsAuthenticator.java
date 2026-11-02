@@ -21,6 +21,7 @@ import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.service.openapi.common.authentication.oauth.ClientSecret;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -32,7 +33,13 @@ import com.top_logic.service.openapi.server.authentication.AuthenticationFailure
  */
 public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
-	private ServerCredentialSecret _secret;
+	private final String _clientId;
+
+	/**
+	 * The client secret for the introspection endpoint, <code>null</code> when the client does not
+	 * authenticate.
+	 */
+	private final SecretSource _clientSecret;
 
 	private TokenURIProvider _uriProvider;
 
@@ -52,7 +59,14 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 	public ClientCredentialsAuthenticator(ServerCredentials.Config<?> config, ServerCredentialSecret secret,
 			String defaultUser, Map<String, String> userNameByClientId) {
 		_config = config;
-		_secret = secret;
+		ClientSecret clientSecret = secret.getClientSecret();
+		if (clientSecret != null) {
+			_clientId = clientSecret.getClientId();
+			_clientSecret = TypedConfigUtil.createInstance(clientSecret.getPassword());
+		} else {
+			_clientId = null;
+			_clientSecret = null;
+		}
 		_defaultUser = defaultUser;
 		_userNameByClientId = userNameByClientId;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
@@ -117,10 +131,8 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 	}
 	@Override
 	protected ClientSecretPost getClientAuth() {
-		ClientSecret clientSecret = _secret.getClientSecret();
-		if (clientSecret != null) {
-			return new ClientSecretPost(new ClientID(clientSecret.getClientId()),
-				new Secret(clientSecret.getPassword()));
+		if (_clientSecret != null) {
+			return new ClientSecretPost(new ClientID(_clientId), new Secret(_clientSecret.getSecret()));
 		} else {
 			return null;
 		}

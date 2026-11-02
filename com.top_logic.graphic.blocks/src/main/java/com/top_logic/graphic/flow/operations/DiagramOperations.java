@@ -5,7 +5,9 @@
  */
 package com.top_logic.graphic.flow.operations;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
@@ -128,5 +130,41 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 			self().setSelection(Collections.emptyList());
 		}
 		event.stopPropagation();
+	}
+
+	/**
+	 * Adds the given boxes to the selection, as a selection rectangle drawn over them does.
+	 *
+	 * <p>
+	 * The change is {@link Diagram#isIncrementalSelection() incremental}: the boxes selected so far
+	 * stay selected, and so do the selected objects the diagram does not display. Only the boxes not
+	 * selected yet are added to the {@link Diagram#getSelection() selection}, none is removed. A
+	 * diagram without {@link Diagram#isMultiSelect() multiple selection} is left unchanged.
+	 * </p>
+	 *
+	 * @param boxes
+	 *        The boxes to select.
+	 */
+	default void addToSelection(Iterable<? extends SelectableBox> boxes) {
+		Diagram diagram = self();
+		if (!diagram.isMultiSelect()) {
+			return;
+		}
+		List<SelectableBox> added = new ArrayList<>();
+		for (SelectableBox box : boxes) {
+			if (!box.isSelected() && !added.contains(box)) {
+				added.add(box);
+			}
+		}
+		if (added.isEmpty()) {
+			return;
+		}
+
+		// Must be set before the selection changes, see Diagram#isIncrementalSelection().
+		diagram.setIncrementalSelection(true);
+		for (SelectableBox box : added) {
+			diagram.getSelection().add(box);
+			box.setSelected(true);
+		}
 	}
 }

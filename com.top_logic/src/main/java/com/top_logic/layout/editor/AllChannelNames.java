@@ -59,7 +59,7 @@ public class AllChannelNames
 			ComponentRelation.Kind relationKind) {
 		// Note: The dependency to the component name and relation kind is only declared to enforce
 		// updating the options, if they change.
-		if (ref != null) {
+		if (ref != null && _component != null) {
 			LayoutComponent referencedComponent = DefaultRefVisitor.resolveReference(ref, targetComponent(self));
 			if (referencedComponent != null) {
 				return referencedComponent.getChannelNames();

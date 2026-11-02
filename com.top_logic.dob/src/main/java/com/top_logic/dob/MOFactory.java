@@ -6,9 +6,11 @@
 package com.top_logic.dob;
 
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.IdentifiedObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
+import com.top_logic.dob.meta.TypeContext;
 
 /**
  * Factory interface for {@link MetaObject}s that can be non-atomically constructed.
@@ -59,5 +61,25 @@ public interface MOFactory {
 	 * @return the builder for the new alternative
 	 */
 	public MOAlternativeBuilder createAlternativeBuilder(String name) ;
+
+	/**
+	 * The attribute to add to a type for an attribute created from its declaration.
+	 * 
+	 * <p>
+	 * Allows adapting a declared attribute to the branch support of the type system, e.g. the
+	 * {@link BasicTypes#BRANCH_ATTRIBUTE_NAME branch attribute}, which has a database column only in a
+	 * type system with multiple branches. By default, the declared attribute is used unchanged.
+	 * </p>
+	 * 
+	 * @param declared
+	 *        The attribute created from its declaration.
+	 * @param multipleBranches
+	 *        See {@link TypeContext#multipleBranches()} of the type system the attribute is created
+	 *        for.
+	 * @return The attribute to use.
+	 */
+	default MOAttribute adaptAttribute(MOAttribute declared, boolean multipleBranches) {
+		return declared;
+	}
 
 }

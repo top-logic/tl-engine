@@ -6,15 +6,19 @@
 package com.top_logic.layout.react.codeedit;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} that renders a source-code editor for a string or text
@@ -28,6 +32,9 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * @implNote The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the first line
  *           of the source that holds more than white space stands for it.
  */
+@Label("Source code editor")
+@InApp
+@TargetType(TLTypeKind.STRING)
 public class CodeEditorControlProvider
 		extends AbstractConfiguredInstance<CodeEditorControlProvider.Config<?>>
 		implements ReactFieldControlProvider {

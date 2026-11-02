@@ -230,6 +230,62 @@ public class TestSetStorage extends BasicTestCase {
 	}
 
 	/**
+	 * Checks {@link TLObject#tContains(com.top_logic.model.TLStructuredTypePart, Object)} within
+	 * the transaction after adds and after a remove, and after the commit.
+	 */
+	public void testContains() {
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+		TLObject absent = _children.get(2);
+
+		assertFalse(containsChild(a));
+		assertFalse(containsChild(null));
+
+		inTransaction(() -> {
+			addChild(a);
+			assertTrue(containsChild(a));
+			assertFalse(containsChild(b));
+
+			addChild(b);
+			assertTrue(containsChild(a));
+			assertTrue(containsChild(b));
+			assertFalse(containsChild(absent));
+		});
+		assertTrue(containsChild(a));
+		assertTrue(containsChild(b));
+		assertFalse(containsChild(absent));
+		assertFalse("A value that is no element type instance is not contained.", containsChild("a"));
+		assertFalse(containsChild(null));
+
+		inTransaction(() -> {
+			removeChild(a);
+			assertFalse(containsChild(a));
+			assertTrue(containsChild(b));
+		});
+		assertFalse(containsChild(a));
+		assertTrue(containsChild(b));
+
+		inTransaction(() -> setChildren(emptyList()));
+		assertFalse(containsChild(b));
+	}
+
+	/**
+	 * Checks that adding {@link #CHILDREN_COUNT} elements one by one to an empty set, each after
+	 * checking that it is not yet contained, stays within {@link #MAX_ALLOWED_SECONDS} of CPU time.
+	 */
+	public void testContainsThenAddOneByOnePerformance() {
+		assertFastEnough("check and add " + CHILDREN_COUNT + " elements one by one", () -> {
+			for (TLObject child : _children) {
+				if (!containsChild(child)) {
+					addChild(child);
+				}
+			}
+		});
+		assertEquals(new HashSet<>(_children), getChildren());
+		inTransaction(() -> setChildren(emptyList()));
+	}
+
+	/**
 	 * Checks that adding {@link #CHILDREN_COUNT} elements one by one to an empty set stays within
 	 * {@link #MAX_ALLOWED_SECONDS} of CPU time.
 	 */
@@ -293,7 +349,7 @@ public class TestSetStorage extends BasicTestCase {
 	private String createErrorMessage(String operation, StopWatch cpuWatch, StopWatch wallWatch) {
 		String limit = cpuWatch.isThreadCpuTime() ? "CPU time" : "wall-clock time (CPU time not available)";
 		String cpuTime = cpuWatch.isThreadCpuTime() ? cpuWatch.toString() : "not available";
-		return "TLObject.tAdd/tRemove(" + operation + ") should take less than " + MAX_ALLOWED_SECONDS
+		return "TLObject.tAdd/tRemove/tContains(" + operation + ") should take less than " + MAX_ALLOWED_SECONDS
 			+ " seconds of " + limit + ", but took: CPU time " + cpuTime + ", wall-clock time " + wallWatch;
 	}
 
@@ -311,6 +367,10 @@ public class TestSetStorage extends BasicTestCase {
 
 	private void addChild(TLObject child) {
 		_parent.tAddByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
+	}
+
+	private boolean containsChild(Object child) {
+		return _parent.tContainsByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
 	}
 
 	private void removeChild(TLObject child) {

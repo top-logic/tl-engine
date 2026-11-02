@@ -7,7 +7,7 @@
 
 <p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer den angegebenen Aufruf einer konfigurierten TL-Script-Funktion ausf&uuml;hren darf, ohne ihn auszuf&uuml;hren. Ausgewertet werden nur die Argumente des Aufrufs.</p>
 
-<p>Bei einem privilegierten Skript wird das Sicherheitsobjekt berechnet und die Kommandogruppe darauf gepr&uuml;ft. Eine einfache konfigurierte Funktion darf immer aufgerufen werden. Typische Verwendung: die Ausf&uuml;hrbarkeit eines Kommandos, das eine privilegierte Funktion aufruft.</p>
+<p>Bei einem privilegierten Skript wird das Sicherheitsobjekt berechnet und die Kommandogruppe darauf gepr&uuml;ft; bei einer Sammlung von Sicherheitsobjekten auf jedem Element. <code class="hljs inlineCode">null</code> und eine leere Sammlung verbieten den Aufruf. Eine einfache konfigurierte Funktion darf immer aufgerufen werden. Typische Verwendung: die Ausf&uuml;hrbarkeit eines Kommandos, das eine privilegierte Funktion aufruft.</p>
 
 <h2>Parameter</h2>
 

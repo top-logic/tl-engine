@@ -24,14 +24,19 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
+import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.model.ModelService;
 
@@ -44,8 +49,8 @@ import com.top_logic.util.model.ModelService;
 public class TestListStorage extends BasicTestCase {
 
 	/**
-	 * Upper limit for the CPU time of the test thread for setting the list in each performance
-	 * test.
+	 * Upper limit for the CPU time of the test thread for the operation measured in each
+	 * performance test.
 	 * 
 	 * <p>
 	 * The limit applies to CPU time, not wall-clock time: on a loaded build node, the time the test
@@ -67,6 +72,10 @@ public class TestListStorage extends BasicTestCase {
 	private static final String CHILD_TYPE_NAME = "Child";
 
 	private static final String PARENT_TO_CHILDREN_ATTRIBUTE_NAME = "children";
+
+	private static final String PARENT_TO_BAG_CHILDREN_ATTRIBUTE_NAME = "bagChildren";
+
+	private static final String PARENT_TO_PARTS_ATTRIBUTE_NAME = "parts";
 
 	/**
 	 * Number of elements in the lists set by the performance tests.
@@ -205,10 +214,254 @@ public class TestListStorage extends BasicTestCase {
 		assertEquals(emptyList(), getChildren());
 	}
 
-	private void assertFastEnough(String operation, Runnable setList) {
+	/**
+	 * Checks {@link TLObject#tContains(TLStructuredTypePart, Object)} for an ordered reference that
+	 * is no {@link TLStructuredTypePart#isBag() bag}: after adding, reordering, replacing, and
+	 * removing elements, within the transaction, after the commit, and after a rollback.
+	 */
+	public void testContains() {
+		assertFalse(getTestedAttribute().isBag());
+		assertEquals(ListStorage.class, getTestedStorage().getClass());
+
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+		TLObject c = _children.get(2);
+		TLObject absent = _children.get(3);
+
+		assertFalse(containsChild(a));
+		assertFalse(containsChild(null));
+
+		inTransaction(() -> {
+			addChild(a);
+			assertTrue(containsChild(a));
+			assertFalse(containsChild(b));
+
+			addChild(b);
+			assertTrue(containsChild(a));
+			assertTrue(containsChild(b));
+			assertFalse(containsChild(absent));
+		});
+		assertEquals(List.of(a, b), getChildren());
+		assertContainsExactly(List.of(a, b));
+		assertFalse("A value that is no element type instance is not contained.", containsChild("a"));
+		assertFalse(containsChild(null));
+
+		// Reorder.
+		inTransaction(() -> {
+			setChildren(List.of(b, a));
+			assertContainsExactly(List.of(a, b));
+		});
+		assertEquals(List.of(b, a), getChildren());
+		assertContainsExactly(List.of(a, b));
+
+		// Replace.
+		inTransaction(() -> {
+			setChildren(List.of(c, b));
+			assertContainsExactly(List.of(b, c));
+		});
+		assertEquals(List.of(c, b), getChildren());
+		assertContainsExactly(List.of(b, c));
+
+		// Remove.
+		inTransaction(() -> {
+			removeChild(c);
+			assertContainsExactly(List.of(b));
+		});
+		assertContainsExactly(List.of(b));
+
+		// Rolled back add, reorder, and remove.
+		inRolledBackTransaction(() -> {
+			addChild(a);
+			assertContainsExactly(List.of(a, b));
+			setChildren(List.of(a, c));
+			assertContainsExactly(List.of(a, c));
+			removeChild(a);
+			assertContainsExactly(List.of(c));
+		});
+		assertEquals(List.of(b), getChildren());
+		assertContainsExactly(List.of(b));
+
+		inTransaction(() -> setChildren(emptyList()));
+		assertContainsExactly(emptyList());
+	}
+
+	/**
+	 * Checks that an ordered reference that is no {@link TLStructuredTypePart#isBag() bag} holds
+	 * each value at most once, and that {@link TLObject#tContains(TLStructuredTypePart, Object)}
+	 * follows each step.
+	 */
+	public void testNoDuplicatesInNonBag() {
+		assertFalse(getTestedAttribute().isBag());
+
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+		TLObject c = _children.get(2);
+
+		inTransaction(() -> {
+			addChild(a);
+			assertContainsExactly(List.of(a));
+			addChild(b);
+			assertContainsExactly(List.of(a, b));
+			addChild(a);
+			assertEquals("Adding a contained value keeps its position.", List.of(a, b), getChildren());
+			assertContainsExactly(List.of(a, b));
+		});
+		assertEquals(List.of(a, b), getChildren());
+		assertContainsExactly(List.of(a, b));
+
+		inTransaction(() -> {
+			removeChild(a);
+			assertEquals(List.of(b), getChildren());
+			assertContainsExactly(List.of(b));
+		});
+		assertEquals(List.of(b), getChildren());
+		assertContainsExactly(List.of(b));
+
+		inTransaction(() -> {
+			setChildren(List.of(a, b, a));
+			assertEquals("Setting duplicates keeps the first occurrence.", List.of(a, b), getChildren());
+			assertContainsExactly(List.of(a, b));
+		});
+		assertEquals(List.of(a, b), getChildren());
+		assertContainsExactly(List.of(a, b));
+
+		inTransaction(() -> {
+			@SuppressWarnings("unchecked")
+			List<TLObject> live =
+				(List<TLObject>) WrapperMetaAttributeUtil.getLiveCollection(_parent, getTestedAttribute());
+			assertTrue(live.contains(a));
+			assertFalse(live.contains(c));
+
+			assertFalse(live.add(a));
+			live.add(0, b);
+			assertEquals("Inserting a contained value keeps its position.", List.of(a, b), getChildren());
+
+			assertSame("Setting a value contained at another position does nothing.", a, live.set(0, b));
+			assertEquals(List.of(a, b), getChildren());
+
+			assertTrue(live.add(c));
+			live.add(0, live.remove(2));
+			assertEquals(List.of(c, a, b), getChildren());
+			assertContainsExactly(List.of(a, b, c));
+		});
+		assertEquals(List.of(c, a, b), getChildren());
+		assertContainsExactly(List.of(a, b, c));
+
+		inTransaction(() -> setChildren(emptyList()));
+		assertContainsExactly(emptyList());
+	}
+
+	/**
+	 * Checks {@link TLObject#tContains(TLStructuredTypePart, Object)} for an ordered
+	 * {@link TLStructuredTypePart#isBag() bag} holding an element more than once.
+	 */
+	public void testBagContains() {
+		TLStructuredTypePart bag = _parent.tType().getPart(PARENT_TO_BAG_CHILDREN_ATTRIBUTE_NAME);
+		assertTrue(bag.isBag());
+		assertEquals(ListStorage.class, bag.getStorageImplementation().getClass());
+
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+
+		inTransaction(() -> {
+			_parent.tAdd(bag, a);
+			_parent.tAdd(bag, b);
+			_parent.tAdd(bag, a);
+			assertTrue(_parent.tContains(bag, a));
+			assertTrue(_parent.tContains(bag, b));
+		});
+		assertEquals(List.of(a, b, a), _parent.tValue(bag));
+
+		inTransaction(() -> {
+			_parent.tRemove(bag, a);
+			assertTrue(_parent.tContains(bag, a));
+			_parent.tRemove(bag, a);
+			assertFalse(_parent.tContains(bag, a));
+			assertTrue(_parent.tContains(bag, b));
+		});
+		assertFalse(_parent.tContains(bag, a));
+		assertTrue(_parent.tContains(bag, b));
+
+		inTransaction(() -> _parent.tUpdate(bag, emptyList()));
+		assertFalse(_parent.tContains(bag, b));
+	}
+
+	/**
+	 * Checks that reordering a composite ordered reference keeps the moved parts alive and in the
+	 * list at their new positions.
+	 */
+	public void testReorderComposite() {
+		TLStructuredTypePart parts = _parent.tType().getPart(PARENT_TO_PARTS_ATTRIBUTE_NAME);
+		assertTrue(((TLReference) parts).isComposite());
+		assertEquals(ListStorage.class, parts.getStorageImplementation().getClass());
+
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+		TLObject c = _children.get(2);
+
+		inTransaction(() -> _parent.tUpdate(parts, List.of(a, b, c)));
+		assertEquals(List.of(a, b, c), _parent.tValue(parts));
+
+		inTransaction(() -> {
+			_parent.tUpdate(parts, List.of(c, a, b));
+			assertTrue(c.tValid());
+			assertEquals(List.of(c, a, b), _parent.tValue(parts));
+		});
+		assertTrue(a.tValid());
+		assertTrue(b.tValid());
+		assertTrue(c.tValid());
+		assertEquals(List.of(c, a, b), _parent.tValue(parts));
+
+		inTransaction(() -> {
+			_parent.tUpdate(parts, List.of(b, c));
+			assertEquals(List.of(b, c), _parent.tValue(parts));
+		});
+		assertTrue(a.tValid());
+		assertTrue(b.tValid());
+		assertTrue(c.tValid());
+		assertEquals(List.of(b, c), _parent.tValue(parts));
+
+		inTransaction(() -> _parent.tUpdate(parts, emptyList()));
+		assertTrue(b.tValid());
+		assertTrue(c.tValid());
+	}
+
+	/**
+	 * Checks that appending {@link #CHILDREN_COUNT} elements one by one to an empty list, each
+	 * after checking that it is not yet contained, stays within {@link #MAX_ALLOWED_SECONDS} of CPU
+	 * time.
+	 */
+	public void testContainsThenAddOneByOnePerformance() {
+		assertFastEnough("check and add " + CHILDREN_COUNT + " elements one by one", () -> {
+			for (TLObject child : _children) {
+				if (!containsChild(child)) {
+					addChild(child);
+				}
+			}
+		});
+		assertEquals(_children, getChildren());
+		inTransaction(() -> setChildren(emptyList()));
+	}
+
+	private void assertContainsExactly(List<TLObject> expected) {
+		for (TLObject child : _children.subList(0, 4)) {
+			assertEquals("Contains " + _children.indexOf(child) + ":", expected.contains(child), containsChild(child));
+		}
+	}
+
+	private static void inRolledBackTransaction(Runnable change) {
+		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("rolled back"));
+		try {
+			change.run();
+		} finally {
+			tx.rollback();
+		}
+	}
+
+	private void assertFastEnough(String operation, Runnable change) {
 		StopWatch cpuWatch = StopWatch.createStartedThreadCpuWatch();
 		StopWatch wallWatch = StopWatch.createStartedWatch();
-		inTransaction(setList);
+		inTransaction(change);
 		wallWatch.stop();
 		cpuWatch.stop();
 
@@ -219,12 +472,24 @@ public class TestListStorage extends BasicTestCase {
 	private String createErrorMessage(String operation, StopWatch cpuWatch, StopWatch wallWatch) {
 		String limit = cpuWatch.isThreadCpuTime() ? "CPU time" : "wall-clock time (CPU time not available)";
 		String cpuTime = cpuWatch.isThreadCpuTime() ? cpuWatch.toString() : "not available";
-		return "TLObject.setList(" + operation + ") should take less than " + MAX_ALLOWED_SECONDS
+		return "TLObject.setList/tContains/tAdd(" + operation + ") should take less than " + MAX_ALLOWED_SECONDS
 			+ " seconds of " + limit + ", but took: CPU time " + cpuTime + ", wall-clock time " + wallWatch;
 	}
 
 	private List<?> getChildren() {
 		return (List<?>) _parent.tValueByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME);
+	}
+
+	private boolean containsChild(Object child) {
+		return _parent.tContainsByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
+	}
+
+	private void addChild(TLObject child) {
+		_parent.tAddByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
+	}
+
+	private void removeChild(TLObject child) {
+		_parent.tRemoveByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME, child);
 	}
 
 	private void setChildren(List<TLObject> children) {

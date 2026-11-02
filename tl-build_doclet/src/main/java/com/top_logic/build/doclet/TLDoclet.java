@@ -1671,12 +1671,16 @@ public class TLDoclet implements Doclet {
 				String propertyName = propertyName(original);
 
 				String key = qualifiedName(type) + "." + propertyName;
-				if (method == original) {
+				if (method == original || isPlainInterface(containingClass(original))) {
 					// Only produce name property for the original method. No not repeat the
 					// property
 					// name for an overridden property. Only update a potentially updated
 					// documentation
 					// (tool-tip).
+					// An original method of an interface that is no configuration has no label,
+					// since such interface is not documented. The label is produced for the
+					// configuration redeclaring the property instead. A method of a class (e.g.
+					// Object#hashCode()) is no property.
 					_configDoc.setProperty(key, label(method, propertyName, true));
 				}
 
@@ -1685,6 +1689,14 @@ public class TLDoclet implements Doclet {
 					_configDoc.setProperty(tooltipKey(key), doc);
 				}
 			}
+		}
+
+		/**
+		 * Whether the given type is an interface that is no configuration interface.
+		 */
+		private boolean isPlainInterface(TypeElement type) {
+			return type != null && type.getKind().isInterface()
+				&& !(_wellKnown._configType != null && isSubType(type.asType(), _wellKnown._configType));
 		}
 
 		boolean isPolymorphicConfiguration(TypeMirror typeElement) {

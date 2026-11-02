@@ -28,7 +28,6 @@ import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.ModelKind;
-import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
@@ -832,29 +831,18 @@ public class ModelEditorTool {
 		try (Transaction tx =
 			PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Create Reference"))) {
 
-			// Create association with backward end first (Index 0), forward end second (Index 1)
-			String associationName = sourceClass.getName() + "$" + referenceName;
-			TLAssociation association = TLModelUtil.addAssociation(sourceClass.getModule(), associationName);
-
-			// Backward end (Index 0) - non-navigable by default
-			TLAssociationEnd backwardEnd = TLModelUtil.addEnd(association, "source", sourceClass);
-			backwardEnd.setNavigate(false);
-			backwardEnd.setMultiple(true);
-
-			// Forward end (Index 1)
-			TLAssociationEnd forwardEnd = TLModelUtil.addEnd(association, "dest", targetType);
+			TLAssociationEnd forwardEnd =
+				TLModelUtil.addForwardReferenceEnd(sourceClass, referenceName, targetType, compositeFlag);
 			forwardEnd.setNavigate(navigateFlag);
 			forwardEnd.setMandatory(mandatoryFlag);
 			forwardEnd.setMultiple(multipleFlag);
 			forwardEnd.setOrdered(orderedFlag);
 			forwardEnd.setBag(bagFlag);
 			forwardEnd.setAbstract(abstractFlag);
-			forwardEnd.setComposite(compositeFlag);
 			forwardEnd.setAggregate(aggregateFlag);
 			forwardEnd.setHistoryType(resolvedHistoryType);
 			forwardEnd.setDeletionPolicy(resolvedDeletionPolicy);
 
-			// Create TLReference on source class pointing to forward end
 			reference = TLModelUtil.addReference(sourceClass, referenceName, forwardEnd);
 
 			tx.commit();

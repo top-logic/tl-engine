@@ -5,6 +5,7 @@
  */
 package com.top_logic.bpe.execution.engine;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -30,9 +31,15 @@ public class BPETimeoutTask extends TaskImpl {
 	}
 
 	private void processTimeouts() {
+		if (!ExecutionEngine.Module.INSTANCE.isActive()) {
+			Logger.info("Process execution engine not active, skipping timeout processing.", BPETimeoutTask.class);
+			return;
+		}
+		ExecutionEngine engine = ExecutionEngine.getInstance();
+
 		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		try (Transaction t = theKB.beginTransaction(I18NConstants.PROCESSED_TIMER_WORKFLOW_TASKS)) {
-			ExecutionEngine.getInstance().updateAll();
+			engine.updateAll();
 			t.commit();
 		}
 	}

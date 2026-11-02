@@ -15,9 +15,9 @@
 								<option name="user"
 									value="%ORACLE12_USER%"
 								/>
-								<encrypted-option name="password"
-									value="%ORACLE12_PASSWD%"
-								/>
+								<encrypted-option name="password">
+									<value name="oracle12_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled"
 									value="true"
 								/>

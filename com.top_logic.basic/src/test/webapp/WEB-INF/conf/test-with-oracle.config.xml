@@ -24,7 +24,9 @@
 							<options>
 								<option name="URL" value="%ORACLE_URL%" />
 								<option name="user" value="%ORACLE_USER%" />
-								<encrypted-option name="password" value="%ORACLE_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled" value="true" />
 							</options>
 						</data-source>
@@ -49,7 +51,9 @@
 							<options>
 								<option name="URL" value="%ORACLE_URL%" />
 								<option name="user" value="%ORACLE_USER_TEST_UNIT%" />
-								<encrypted-option name="password" value="%ORACLE_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled" value="true" />
 							</options>
 						</data-source>
@@ -74,7 +78,9 @@
 							<options>
 								<option name="URL" value="%ORACLE_URL%" />
 								<option name="user" value="%ORACLE_USER_TEST_MIGRATION%" />
-								<encrypted-option name="password" value="%ORACLE_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled" value="true" />
 							</options>
 						</data-source>

@@ -92,7 +92,7 @@ public class GeneratorFactory extends ConfiguredManagedClass<GeneratorFactory.Co
 			@Mandatory
 			@Name(IMPL)
 			@DefaultContainer
-			PolymorphicConfiguration<GeneratorSpi> getImpl();
+			PolymorphicConfiguration<? extends GeneratorSpi> getImpl();
 
 		}
 
@@ -115,7 +115,7 @@ public class GeneratorFactory extends ConfiguredManagedClass<GeneratorFactory.Co
 			@Mandatory
 			@Name(IMPL)
 			@DefaultContainer
-			PolymorphicConfiguration<Generator> getImpl();
+			PolymorphicConfiguration<? extends Generator> getImpl();
 
 		}
 

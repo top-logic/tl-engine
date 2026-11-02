@@ -3,10 +3,10 @@
 <!--
 	Initial frame of the tile drill-down demo. Lists all Person accounts and opens one on
 	activation - a double-click, Enter on the row carrying the keyboard cursor, or the chevron
-	button of the pinned trailing column - pushing a detail frame onto the enclosing tile-stack
-	with the activated Person as parameter. The pushed frame carries no label of its own - the
-	stack names every frame of the detail view in its <frame> declaration, which is also what
-	puts the frame into the address bar. The navPath channel is the stack's path (bound by the
+	button of the pinned trailing column - pushing the person frame onto the enclosing tile-stack
+	with the activated Person as parameter. The push names the frame by the id of its <frame>
+	declaration in the stack, which supplies the view, names the frame and puts it into the
+	address bar. The navPath channel is the stack's path (bound by the
 	stack's bind-path-to), so the derived depth channel tells this frame how deep it sits: at
 	depth 0 the "Back" command is hidden, which is why the initial frame shows no way out. The
 	selected row is published on the selectedPerson channel, which is where a display target
@@ -50,7 +50,7 @@
 			<rows>all(`tl.accounts:Person`)</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="person"
-				view="demo/tiles-demo/person-detail.view.xml"
+				frame="person"
 			/>
 		</table>
 	</panel>

@@ -182,7 +182,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	}
 
 	private CheckScopeProvider checkScopeProvider(InstantiationContext context, CommandHandler.Config config) {
-		PolymorphicConfiguration<CheckScopeProvider> providerConfig = config.getCheckScopeProvider();
+		PolymorphicConfiguration<? extends CheckScopeProvider> providerConfig = config.getCheckScopeProvider();
 		if (providerConfig == null) {
 			return getCheckScopeProvider();
 		} else {

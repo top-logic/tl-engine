@@ -20,7 +20,7 @@ public class CreatorRunner extends Thread implements ReportQueueConstants {
 	private File workDir;
 	private File openDir;
 	
-	private boolean stopped;
+	private volatile boolean stopped;
 
     public CreatorRunner(String someName) {
         super(someName);
@@ -73,7 +73,16 @@ public class CreatorRunner extends Thread implements ReportQueueConstants {
     	return files != null && files.length > 0;
 	}
     
+    /**
+     * Requests the runner to stop and interrupts a pending wait.
+     * 
+     * <p>
+     * A report being created at this point is completed (or moved to the error directory) before
+     * the thread terminates. Use {@link #join(long)} to wait for termination.
+     * </p>
+     */
     public void stopRunner(){
     	stopped=true;
+    	interrupt();
     }
 }

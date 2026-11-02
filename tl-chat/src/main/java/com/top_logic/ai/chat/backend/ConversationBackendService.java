@@ -72,7 +72,7 @@ public class ConversationBackendService extends ConfiguredManagedClass<Conversat
 		@Name(RESOLVERS)
 		@EntryTag(RESOLVER)
 		@Label("Conversation backend resolvers")
-		List<PolymorphicConfiguration<ConversationBackendResolver>> getResolvers();
+		List<PolymorphicConfiguration<? extends ConversationBackendResolver>> getResolvers();
 	}
 
 	private static volatile ConversationBackendService _instance;

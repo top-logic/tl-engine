@@ -9,6 +9,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -100,6 +102,70 @@ public class ValueCellEditing implements CellEditing {
 	@Override
 	public BoundFieldModel createModel(Object row, FormControl form, EditLevel level) {
 		return new FunctionFieldModel(row, _value, _update);
+	}
+
+	/**
+	 * Creates the field model of a cell edited in place, outside a form: an entered value is
+	 * written at once, in a transaction of its own.
+	 *
+	 * <p>
+	 * There is no buffer to apply on save, so the update function writes where the value lives
+	 * when the user enters it. A failing write is rolled back and leaves the field as it was.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row whose cell is edited, for which {@link #canEdit(Object)} holds.
+	 * @param written
+	 *        Called after a value was written, when the field shows it, e.g. to build the other
+	 *        cells of the row again.
+	 */
+	public BoundFieldModel createInPlaceModel(Object row, Runnable written) {
+		BiConsumer<Object, Object> update = _update;
+		return new FunctionFieldModel(row, _value, (object, value) -> inTransaction(() -> update.accept(object, value))) {
+			@Override
+			public void setValue(Object value) {
+				super.setValue(value);
+				written.run();
+			}
+		};
+	}
+
+	/**
+	 * Creates the field model of a cell edited in place that its row does not offer the edit on:
+	 * the cell shows its value with the control of the column, but disabled.
+	 *
+	 * <p>
+	 * A matrix edited in place thereby looks the same in every cell - a check box -, while a cell
+	 * whose value is fixed (derived from another one, say) is visibly and semantically not
+	 * editable.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row whose cell is displayed, for which {@link #canEdit(Object)} does not hold.
+	 */
+	public BoundFieldModel createReadOnlyModel(Object row) {
+		BoundFieldModel result = new FunctionFieldModel(row, _value, (object, value) -> {
+			throw new IllegalStateException("The cell is not editable: " + object);
+		});
+		// Disabled rather than only read-only, so that the control looks and announces itself as
+		// not editable.
+		result.setEditable(false);
+		result.setDisabled(true);
+		return result;
+	}
+
+	/**
+	 * The value the cell of the given row shows.
+	 */
+	public Object value(Object row) {
+		return _value.apply(row);
+	}
+
+	private static void inTransaction(Runnable write) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			write.run();
+			tx.commit();
+		}
 	}
 
 	@Override

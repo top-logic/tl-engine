@@ -77,13 +77,21 @@ import com.top_logic.util.error.TopLogicException;
  * (multiple, unordered) of a project. The account in {@value #READER} holds the role
  * {@value #ROLE_READER}, which grants read on the category and, by a grant of the attribute, writing
  * its {@value #NAME}.</li>
+ * <li>{@value #MILESTONE}: the type of the composition {@value #MILESTONES} of a project,
+ * {@value #NOTE}: the type of the composition {@value #NOTES} of a category. Neither is configured,
+ * so both are decided by their container, the access parent a composition part gets by
+ * default.</li>
+ * <li>{@value #REMARK}: a type whose access parent is computed by a script, so that the types of its
+ * access parents are not known statically.</li>
  * </ul>
  *
  * <p>
  * The fixture created for each test: the {@link #_responsible} user is responsible for
  * {@link #_project} (holding {@link #_task}) and reader of {@link #_category}, but not of
- * {@link #_hiddenCategory}. The {@link #_roleless} user holds no role at all, and {@link #_root}
- * bypasses the model access rights.
+ * {@link #_hiddenCategory}. The {@link #_outsider} holds every role, but on other objects only:
+ * the user is responsible for and viewer of {@link #_otherProject} and reader of {@link #_otherCategory}.
+ * The {@link #_roleless} user holds no role on any object, and {@link #_root} bypasses the model
+ * access rights.
  * </p>
  */
 public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTest {
@@ -159,6 +167,30 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Name of the {@link #STEP} composition of {@link #ITEM}s nobody may write. */
 	protected static final String LOCKED_ITEMS = "lockedItems";
 
+	/**
+	 * Name of the type of the composition {@link #MILESTONES} of a {@link #PROJECT}, deciding by
+	 * its container as composition part without configuration.
+	 */
+	protected static final String MILESTONE = "Milestone";
+
+	/** Name of the {@link #PROJECT} composition of {@link #MILESTONE}s. */
+	protected static final String MILESTONES = "milestones";
+
+	/**
+	 * Name of the type of the composition {@link #NOTES} of a {@link #CATEGORY}, deciding by its
+	 * container as composition part without configuration.
+	 */
+	protected static final String NOTE = "Note";
+
+	/** Name of the {@link #CATEGORY} composition of {@link #NOTE}s. */
+	protected static final String NOTES = "notes";
+
+	/**
+	 * Name of the type whose access parent is computed by a script, with access parent types not
+	 * known statically.
+	 */
+	protected static final String REMARK = "Remark";
+
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_RESPONSIBLE}. */
 	protected static final String RESPONSIBLE = "responsible";
 
@@ -203,6 +235,13 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Holds {@link #ROLE_RESPONSIBLE} on {@link #_project} and {@link #ROLE_READER} on {@link #_category}. */
 	protected Person _responsible;
 
+	/**
+	 * Holds {@link #ROLE_RESPONSIBLE} and {@link #ROLE_VIEWER} on {@link #_otherProject} and
+	 * {@link #ROLE_READER} on {@link #_otherCategory}, but no role on {@link #_project},
+	 * {@link #_task} and {@link #_category}.
+	 */
+	protected Person _outsider;
+
 	/** Holds no role on any object. */
 	protected Person _roleless;
 
@@ -218,20 +257,32 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** The only task of {@link #_project}. */
 	protected TLObject _task;
 
+	/** The project {@link #_outsider} is responsible for and viewer of. */
+	protected TLObject _otherProject;
+
+	/** The category {@link #_outsider} may read. */
+	protected TLObject _otherCategory;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_root = PersonManager.getManager().getRoot();
 		_responsible = newPerson("viewModelAccessResponsible");
+		_outsider = newPerson("viewModelAccessOutsider");
 		_roleless = newPerson("viewModelAccessRoleless");
 
 		_category = newObject(qualified(CATEGORY), "category");
 		_hiddenCategory = newObject(qualified(CATEGORY), "hiddenCategory");
 		_project = newObject(qualified(PROJECT), "project");
+		_otherCategory = newObject(qualified(CATEGORY), "otherCategory");
+		_otherProject = newObject(qualified(PROJECT), "otherProject");
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			_category.tUpdateByName(READER, _responsible);
 			_project.tUpdateByName(RESPONSIBLE, _responsible);
 			_project.tUpdateByName(CATEGORY_REF, _category);
+			_otherCategory.tUpdateByName(READER, _outsider);
+			_otherProject.tUpdateByName(RESPONSIBLE, _outsider);
+			_otherProject.tUpdateByName(VIEWER, _outsider);
 
 			_task = DynamicModelService.getFactoryFor(MODULE).createObject(type(TASK));
 			_task.tUpdateByName(NAME, "task");
@@ -280,6 +331,24 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	 */
 	protected static TLStructuredTypePart part(String typeName, String partName) {
 		return type(typeName).getPartOrFail(partName);
+	}
+
+	/**
+	 * Creates an object of the test type with the given local name in the given composition of
+	 * the given container, replacing its former contents.
+	 *
+	 * <p>
+	 * The object is deleted with its container.
+	 * </p>
+	 */
+	protected TLObject newPart(TLObject container, String composition, String typeName) {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject result = DynamicModelService.getFactoryFor(MODULE).createObject(type(typeName));
+			result.tUpdateByName(NAME, typeName);
+			container.tUpdateByName(composition, List.of(result));
+			tx.commit();
+			return result;
+		}
 	}
 
 	/**

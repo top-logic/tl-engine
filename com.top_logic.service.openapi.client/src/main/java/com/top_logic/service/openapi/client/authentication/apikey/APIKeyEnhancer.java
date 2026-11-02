@@ -11,12 +11,17 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.Header;
 
+import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.UriBuilder;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 
 /**
  * {@link SecurityEnhancer} to access an <i>OpenAPI</i> server using API key.
+ *
+ * <p>
+ * The key is read from its {@link SecretSource} for each request.
+ * </p>
  * 
  * @see APIKeyAuthentication
  * 
@@ -30,7 +35,7 @@ public class APIKeyEnhancer implements SecurityEnhancer {
 
 	private String _parameterName;
 
-	private String _apiKey;
+	private SecretSource _apiKey;
 
 	/**
 	 * Creates a new {@link APIKeyEnhancer}.
@@ -40,9 +45,9 @@ public class APIKeyEnhancer implements SecurityEnhancer {
 	 * @param parameterName
 	 *        Name of the parameter to hold the key.
 	 * @param apiKey
-	 *        The API key to deliver to <i>OpenAPI</i> server.
+	 *        The source of the API key to deliver to <i>OpenAPI</i> server.
 	 */
-	public APIKeyEnhancer(APIKeyPosition location, String parameterName, String apiKey) {
+	public APIKeyEnhancer(APIKeyPosition location, String parameterName, SecretSource apiKey) {
 		_location = location;
 		_apiKey = apiKey;
 		_parameterName = Objects.requireNonNull(parameterName);
@@ -51,20 +56,22 @@ public class APIKeyEnhancer implements SecurityEnhancer {
 	@Override
 	public void enhanceRequest(HttpClient client, ClassicHttpRequest request) {
 		switch (_location) {
-			case COOKIE:
+			case COOKIE: {
+				String apiKey = _apiKey.getSecret();
 				Header cookieHeader = request.getFirstHeader(COOKIE_HEADER_NAME);
 				String newCookie;
 				if (cookieHeader == null) {
-					newCookie = _parameterName + "=" + _apiKey;
+					newCookie = _parameterName + "=" + apiKey;
 				} else {
 					String oldCookie = cookieHeader.getValue();
-					newCookie = oldCookie + "; " + _parameterName + "=" + _apiKey;
+					newCookie = oldCookie + "; " + _parameterName + "=" + apiKey;
 					request.removeHeader(cookieHeader);
 				}
 				request.addHeader(COOKIE_HEADER_NAME, newCookie);
 				break;
+			}
 			case HEADER:
-				request.addHeader(_parameterName, _apiKey);
+				request.addHeader(_parameterName, _apiKey.getSecret());
 				break;
 			case QUERY:
 			default:
@@ -76,7 +83,7 @@ public class APIKeyEnhancer implements SecurityEnhancer {
 	public void enhanceUrl(UriBuilder urlBuilder) {
 		switch (_location) {
 			case QUERY:
-				urlBuilder.addParameter(_parameterName, _apiKey);
+				urlBuilder.addParameter(_parameterName, _apiKey.getSecret());
 				break;
 			case COOKIE:
 			case HEADER:

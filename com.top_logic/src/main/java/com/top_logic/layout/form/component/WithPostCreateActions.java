@@ -92,7 +92,7 @@ public interface WithPostCreateActions {
 		@Name(POST_CREATE_ACTIONS)
 		@Label("User interface actions")
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<PostCreateAction>> getPostCreateActions();
+		List<PolymorphicConfiguration<? extends PostCreateAction>> getPostCreateActions();
 
 	}
 

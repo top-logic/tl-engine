@@ -147,9 +147,9 @@
   </tr>
   <tr>
    <td><code class="hljs inlineCode">ldap_credential</code></td>
-   <td><code class="hljs inlineCode">%LDAP_CREDENTIAL%</code></td>
-   <td>Passwort des Master-Principals, im Klartext oder mit dem Schlüssel der Anwendung verschlüsselt.</td>
-   <td><code class="hljs inlineCode">your-password</code></td>
+   <td>-</td>
+   <td>Passwort des Master-Principals im Klartext. <code class="hljs inlineCode">ldapConf.config.xml</code> verweist auf das Passwort über den Namen des Geheimnisses (<code class="hljs inlineCode">&lt;master-credential name="ldap_credential"/&gt;</code>), die Geheimnisablage der Installation liefert es.</td>
+   <td>-</td>
   </tr>
   <tr>
    <td><code class="hljs inlineCode">ldap_base_dn</code></td>
@@ -221,6 +221,6 @@
  <tbody>
  </tbody>
 </table>
-<p>Das Passwort in <code class="hljs inlineCode">ldap_credential</code> darf im Klartext oder verschlüsselt angegeben werden. Alternativ zu Systemeigenschaften und Umgebungsvariablen kann eine Anwendung die Aliase auch in einer eigenen Konfigurationsdatei überschreiben, die in der <code class="hljs inlineCode">metaConf.txt</code> nach <code class="hljs inlineCode">ldapConf.xml</code> geladen wird.</p>
+<p>Das Passwort <code class="hljs inlineCode">ldap_credential</code> ist ein benanntes Geheimnis: Die Standard-Geheimnisablage liest es aus der gleichnamigen Systemeigenschaft oder Umgebungsvariable, die das Passwort im Klartext enthält; eine Installation mit einer anderen Geheimnisablage (Verzeichnis, Azure Key Vault) legt es dort ab. Alternativ zu Systemeigenschaften und Umgebungsvariablen kann eine Anwendung die Aliase auch in einer eigenen Konfigurationsdatei überschreiben, die in der <code class="hljs inlineCode">metaConf.txt</code> nach <code class="hljs inlineCode">ldapConf.xml</code> geladen wird.</p>
 <h2>Konfiguration</h2>
 <p>In <code class="hljs inlineCode">ldapConf.config.xml</code> wird die LDAP Anbindung konfiguriert, wobei auf die Aliase aus <code class="hljs inlineCode">ldapConf.xml</code> zurückgegriffen wird. Werden weitere Einstellungen benötigt, kann eine Anwendung diese Konfiguration in einer eigenen <code class="hljs inlineCode">*.config.xml</code> ergänzen. Wie das funktioniert ist in <a class="tlObject" data-custom="false" href="?page=TLSecurityDeviceManagerConfig&amp;uuid=89a0a924-6e12-4bb7-a40c-e7c917fc2493">TLSecurityDeviceManager</a> beschrieben.</p>

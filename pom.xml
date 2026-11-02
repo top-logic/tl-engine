@@ -22,8 +22,8 @@
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
 
 		<!-- 
 			JavaDoc check of javac. Engine modules set it to "-Xdoclint:reference/private" to fail on 
@@ -505,7 +505,7 @@
 								</ignoreVersions>
 							</rule>
 							<rule>
-								<groupId>org.eclipse.jetty.ee10</groupId>
+								<groupId>org.eclipse.jetty.ee11</groupId>
 								
 								<!-- Limit to Jetty 10 to avoid updating jakarta.servlet -->
 								<ignoreVersions>

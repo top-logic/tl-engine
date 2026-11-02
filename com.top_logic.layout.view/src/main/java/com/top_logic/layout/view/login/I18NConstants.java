@@ -136,6 +136,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 MFA_DISABLED__USER;
 
 	/**
+	 * @en Removed the authenticator app from "{0}". The account confirms its logins with its other
+	 *     second factor.
+	 */
+	public static ResKey1 MFA_TOTP_REMOVED__USER;
+
+	/**
 	 * @en Multi-factor authentication is required for "{0}" and cannot be switched off.
 	 */
 	public static ResKey1 ERROR_MFA_REQUIRED__USER;
@@ -144,6 +150,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Two-factor authentication is not allowed for "{0}".
 	 */
 	public static ResKey1 ERROR_MFA_NOT_ALLOWED__USER;
+
+	/**
+	 * @en A second factor is required for "{0}", but none can be set up.
+	 */
+	public static ResKey1 ERROR_NO_SECOND_FACTOR__USER;
 
 	static {
 		initConstants(I18NConstants.class);

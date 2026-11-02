@@ -1,5 +1,5 @@
 ---
-description: Read when a knowledge-base query, a deletion or a commit is slow on a specific DBMS, or before choosing the database of an application - H2 IN lists and the BRANCH index column, the referrer queries of object deletion, DBHelper.getMaxSetSize chunking, OR queries on MySQL, the commit order for MySQL, the FLEX_DATA primary key on PostgreSQL, MS SQL Server tuple rewriting, commit-warn-time / refetch-log-time and the LoggingDataSourceFactory.
+description: Read when a knowledge-base query, a deletion or a commit is slow on a specific DBMS, or before choosing the database of an application - H2 IN lists and the BRANCH index column (branch-last), the referrer queries of object deletion, DBHelper.getMaxSetSize chunking, OR queries on MySQL, the commit order for MySQL, the FLEX_DATA primary key on PostgreSQL, MS SQL Server tuple rewriting, commit-warn-time / refetch-log-time and the LoggingDataSourceFactory.
 order: 30
 ---
 
@@ -14,7 +14,7 @@ slow query can be recognized as a property of the generated SQL on that DBMS.
 
 | DBMS | Dialect | Configuration file |
 |---|---|---|
-| H2 | `H2Helper` | `db-h2.config.xml` |
+| H2 | `H2Helper` | `db-h2.config.xml`; places the branch column last by default (see below) |
 | MySQL / MariaDB | `MySQLHelper`, `MySQL55Helper` | `db-mysql.config.xml`, `db-mysql55.config.xml` |
 | PostgreSQL | `PostgreSQLHelper` | `db-postgresql.config.xml` |
 | Oracle | `Oracle10Helper`, `Oracle12Helper`, `Oracle12toLowerHelper` | `db-oracle.config.xml`, `db-oracle-10.config.xml` |
@@ -71,14 +71,26 @@ by level, and each level runs these queries again for every referrer type.
 
 By the same rule, the bulk load of flex attributes cannot seek on its IN list: `AbstractFlexDataManager`
 selects `IDENTIFIER IN (...)` after equality conditions on `BRANCH` and `TYPE`, and `IDENTIFIER` is
-not the first column of the `FLEX_DATA` primary key. This case has not been measured.
+not the first column of the `FLEX_DATA` primary key `(BRANCH, IDENTIFIER, ATTR, REV_MAX)`. The bulk
+load of objects by their identifiers and the navigation of associations for a list of objects meet
+the same limit on the primary key `(BRANCH, IDENTIFIER, REV_MAX)` and the reference indexes.
 
-**What an application can do.** Take `BRANCH` out of the front of the indexes: an application that
-does not use branches runs single-branch (`top-logic.singleBranch.config.xml`), and
-`DefaultIndexColumnsStrategy` then leaves `BRANCH` out of all indexes; an application with branches
-can configure `branch-after-custom-columns`. Both fix the index layout when the database is
-created, see [branches](doc:persistency/branches). With the single-branch configuration, the
-deletions measured above took 2.3 s / 0.9 s / 0.8 s instead of 21.1 s / 7.5 s / 8.8 s (Trac #29877).
+**What an application can do.** Take `BRANCH` out of the front of the keys:
+
+- The type system option `branch-last` moves `BRANCH` behind the identifying columns of all primary
+  keys, reference indexes, declared indexes and `FLEX_DATA`, e.g. `HAS_STRUCTURE_CHILD_SOURCE
+  (SOURCE_ID, META_ATTRIBUTE_ID, BRANCH, REV_MAX)`, see [table layout](doc:persistency/table-layout).
+  H2 then seeks on the IN list: in `TestBranchLastH2IndexUsage`, the referrer search for 20 of 300
+  objects reads 21 instead of 301 rows of the association table, and the bulk loads by identifier
+  read only the requested rows. On H2 the option is on by default: without a configured value,
+  `H2Helper.seeksInListOnFirstIndexColumnOnly()` decides, and an existing H2 database is converted
+  at its next start.
+- An application that does not use branches runs single-branch
+  (`top-logic.singleBranch.config.xml`); its tables have no `BRANCH` column at all. With the
+  single-branch configuration, the deletions measured above took 2.3 s / 0.9 s / 0.8 s instead of
+  21.1 s / 7.5 s / 8.8 s (Trac #29877), see [branches](doc:persistency/branches).
+
+Both options can be changed for an existing database; the tables are converted at the next start.
 
 ## MySQL: OR over several reference columns
 
@@ -113,10 +125,10 @@ statement.
 ## PostgreSQL: the FLEX_DATA primary key
 
 Attributes without a column of their own live in `FLEX_DATA` (see
-[type systems](doc:persistency/type-systems)). Its primary key is `(BRANCH, TYPE, IDENTIFIER,
-REV_MAX, ATTR)`, without `BRANCH` in a single-branch database. `AbstractFlexDataManager`
-explains why `REV_MAX` is not moved forward, although that would cluster the rows of the current
-revision:
+[type systems](doc:persistency/type-systems)). Its primary key is `(BRANCH, IDENTIFIER, ATTR,
+REV_MAX)`, `(IDENTIFIER, ATTR, BRANCH, REV_MAX)` with `branch-last`, and without `BRANCH` in a
+single-branch database. `AbstractFlexDataManager` explains why `REV_MAX` is not moved forward,
+although that would cluster the rows of the current revision:
 
 > Even if it sounds appealing to move the REV_MAX column more to the start of the index to bring rows
 > for the current revision more close together, this is not advisable, since optimizers of some DBs

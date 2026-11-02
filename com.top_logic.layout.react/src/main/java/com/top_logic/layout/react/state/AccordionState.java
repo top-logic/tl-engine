@@ -37,6 +37,9 @@ public interface AccordionState extends com.top_logic.layout.react.state.Control
 		/** @see #isExpanded() */
 		String EXPANDED__PROP = "expanded";
 
+		/** @see #isHidden() */
+		String HIDDEN__PROP = "hidden";
+
 		/** @see #getActions() */
 		String ACTIONS__PROP = "actions";
 
@@ -83,6 +86,17 @@ public interface AccordionState extends com.top_logic.layout.react.state.Control
 		 * @see #isExpanded()
 		 */
 		com.top_logic.layout.react.state.AccordionState.Section setExpanded(boolean value);
+
+		/**
+		 * Whether the section is left out of the accordion, header included, e.g. because the
+		 * current user may not see it for the object displayed.
+		 */
+		boolean isHidden();
+
+		/**
+		 * @see #isHidden()
+		 */
+		com.top_logic.layout.react.state.AccordionState.Section setHidden(boolean value);
 
 		/**
 		 * The actions displayed at the end of the header of the section, a toolbar for instance.

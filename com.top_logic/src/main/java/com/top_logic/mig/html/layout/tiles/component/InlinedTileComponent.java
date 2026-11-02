@@ -74,7 +74,7 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 
 		@Override
 		@ItemDefault(SingleLayoutContainer.ChildControlProvider.class)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 	}
 

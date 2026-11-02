@@ -30,7 +30,8 @@ import com.top_logic.model.TLObject;
  * (via {@code <visible-if>}) and that the {@link MaintenanceStatusView} re-renders from. For
  * {@link Mode#ENTER} the delay, the login decision and the message are read from the configured
  * {@link Config#getModel() model channel} (the transient {@code tl.admin:MaintenanceMode} bound to the
- * enter dialog's form); an empty or zero delay enters maintenance mode immediately.
+ * enter dialog's form); an empty or zero delay enters maintenance mode immediately, in a cluster
+ * with further running nodes after its minimum waiting time.
  * </p>
  *
  * @implNote Delegates to {@link MaintenanceWindowManager#enterMaintenanceWindow(long, boolean)},

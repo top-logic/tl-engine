@@ -19,6 +19,12 @@
 			<instance>
 				<security-config>
 					<class name="TestTLScriptSecurity:Project">
+						<!-- Appended to the declarations of the layer below: Inspect is implied by Show. -->
+						<operations>
+							<operation name="Inspect"
+								implied-by="Show"
+							/>
+						</operations>
 						<!--
 							Appended to the rules of the layer below: the auditor may read a project
 							(specializations included), the viewer only the exact type.

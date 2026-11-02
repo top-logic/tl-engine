@@ -13,9 +13,6 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.basic.config.annotation.defaults.LongDefault;
 
 /**
  * Lock for synchronizing concurrent requests from a single browser instance.
@@ -40,59 +37,11 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 public final class RequestLock {
 
 	/**
-	 * Global configuration options of {@link RequestLock}.
+	 * Options of a {@link RequestLock}.
+	 * 
+	 * @see DefaultRequestLockFactory.Config
 	 */
 	public interface Options {
-
-		/**
-		 * @see #getMaxWriters()
-		 */
-		String MAX_WRITERS = "max-writers";
-
-		/**
-		 * @see #getMaxWaitingReaders()
-		 */
-		String MAX_WAITING_READERS = "max-waiting-readers";
-
-		/**
-		 * @see #getReorderTimeout()
-		 */
-		String REORDER_TIMEOUT = "reorder-timeout";
-
-		/**
-		 * @see #getWriterWaitingTime()
-		 */
-		String WRITER_WAITING_TIME = "writer-waiting-time";
-
-		/**
-		 * @see #getReaderWaitingTime()
-		 */
-		String READER_WAITING_TIME = "reader-waiting-time";
-
-		/**
-		 * Default value for {@link #getReorderTimeout()}, if nothing is configured.
-		 */
-		long DEFAULT_REORDER_TIMEOUT = 2500;
-
-		/**
-		 * Default value for {@link #getWriterWaitingTime()}, if nothing is configured.
-		 */
-		long DEFAULT_WRITER_WAITING_TIME = 30000;
-
-		/**
-		 * Default value for {@link #getReaderWaitingTime()}, if nothing is configured.
-		 */
-		long DEFAULT_READER_WAITING_TIME = 15000;
-
-		/**
-		 * Default value for {@link #getMaxWriters()}, if nothing is configured.
-		 */
-		int DEFAULT_MAX_WRITERS = 5;
-
-		/**
-		 * Default value for {@link #getMaxWaitingReaders()}, if nothing is configured.
-		 */
-		int DEFAULT_MAX_WAITING_READERS = 3;
 
 		/**
 		 * The number of writers which can try to enter this lock.
@@ -102,8 +51,6 @@ public final class RequestLock {
 		 * {@link MaxRequestNumberException}.
 		 * </p>
 		 */
-		@Name(MAX_WRITERS)
-		@IntDefault(DEFAULT_MAX_WRITERS)
 		int getMaxWriters();
 
 		/**
@@ -115,31 +62,23 @@ public final class RequestLock {
 		 * reader for the same resource will produce a {@link MaxRequestNumberException}.
 		 * </p>
 		 */
-		@Name(MAX_WAITING_READERS)
-		@IntDefault(DEFAULT_MAX_WAITING_READERS)
 		int getMaxWaitingReaders();
 
 		/**
 		 * Timeout in milliseconds that is waited, if an AJAX request is received with a not yet
 		 * valid sequence number.
 		 */
-		@Name(REORDER_TIMEOUT)
-		@LongDefault(DEFAULT_REORDER_TIMEOUT)
 		long getReorderTimeout();
 
 		/**
 		 * Timeout in millisecond that a writer is waiting to get the right to pass the lock.
 		 */
-		@Name(WRITER_WAITING_TIME)
-		@LongDefault(DEFAULT_WRITER_WAITING_TIME)
 		long getWriterWaitingTime();
 
 		/**
 		 * Timeout in millisecond that a reader is waiting to get the right for reading some
 		 * resource.
 		 */
-		@Name(READER_WAITING_TIME)
-		@LongDefault(DEFAULT_READER_WAITING_TIME)
 		long getReaderWaitingTime();
 
 	}

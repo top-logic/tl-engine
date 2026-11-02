@@ -53,7 +53,7 @@ public class TestReferenceElement extends TestCase {
 			config.getContent() instanceof ReferenceElement.Config);
 
 		ReferenceElement.Config refConfig = (ReferenceElement.Config) config.getContent();
-		assertEquals("View path", "child-view.view.xml", refConfig.getView());
+		assertEquals("View path", "child-view.view.xml", refConfig.getView().getPath());
 
 		// Verify bindings.
 		assertEquals("Should have one binding", 1, refConfig.getBindings().size());
@@ -85,7 +85,7 @@ public class TestReferenceElement extends TestCase {
 		context.checkErrors();
 
 		ReferenceElement.Config refConfig = (ReferenceElement.Config) config.getContent();
-		assertEquals("View path", "child-view.view.xml", refConfig.getView());
+		assertEquals("View path", "child-view.view.xml", refConfig.getView().getPath());
 		assertTrue("Should have no bindings", refConfig.getBindings().isEmpty());
 	}
 

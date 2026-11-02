@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,10 +31,12 @@ import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -49,6 +52,7 @@ import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.tool.api.AICategory;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The LLM providers of this installation: which models exist and how to reach them, what is known
@@ -85,6 +89,7 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  * @see AgentFactory
  * @see #catalog()
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("LLM providers")
 @ServiceCategory.Of(AICategory.class)
 public class LLMProviderService extends ConfiguredManagedClass<LLMProviderService.Config<?>> {
@@ -305,7 +310,7 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	private Map<String, List<String>> _modelProviders;
 
 	/**
-	 * Named provider configs, keyed by the provider config name.
+	 * Named provider configs, keyed by the provider config name, in configuration order.
 	 */
 	private Map<String, LLMProviderConfig> _providerConfigs;
 
@@ -440,7 +445,8 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			}
 		}
 
-		_providerConfigs = Map.copyOf(providerConfigs);
+		// Not Map.copyOf(): the order of the providers decides which one serves the default model.
+		_providerConfigs = Collections.unmodifiableMap(providerConfigs);
 		Map<String, List<String>> index = new LinkedHashMap<>();
 		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
 			index.put(entry.getKey(), List.copyOf(entry.getValue()));
@@ -798,6 +804,36 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	}
 
 	/**
+	 * Whether a run on the given model can be served now: whether one of the providers
+	 * {@link #getProvidersOf(String) exposing} it is {@link LLMProviderConfig#isAvailable()
+	 * available}.
+	 *
+	 * <p>
+	 * Asked anew on each call, so a provider whose secret is provided later serves the model from
+	 * then on without a restart. For what is offered to a user to choose from; what is checked
+	 * against the configuration - a model named in an agent override or in an access policy - is
+	 * checked against the {@link #getConfiguredModelNames() configured} models instead.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model to look up.
+	 * @return Whether a provider exposing the model has its credentials; <code>false</code> for a
+	 *         model no provider exposes.
+	 */
+	public boolean isServable(String modelName) {
+		if (_providerConfigs == null) {
+			return false;
+		}
+		for (String providerName : getProvidersOf(modelName)) {
+			LLMProviderConfig providerConfig = _providerConfigs.get(providerName);
+			if (providerConfig != null && providerConfig.isAvailable()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * The models the given provider exposes, in configuration order.
 	 *
 	 * <p>
@@ -837,13 +873,158 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * @return A ready-to-use provider.
 	 * @throws IllegalStateException
 	 *         if the model cannot be routed to exactly one configured provider.
+	 * @throws TopLogicException
+	 *         if the provider serving the model is not {@link LLMProviderConfig#isAvailable()
+	 *         available}.
 	 */
 	public LLMProvider buildProvider(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = routedProvider(modelName, providerName);
+		if (!providerConfig.isAvailable()) {
+			throw new TopLogicException(unavailable(modelName, providerName, providerConfig));
+		}
+		return providerConfig.createProvider();
+	}
+
+	/**
+	 * Builds an {@link LLMProvider} for the given model, served by the named provider, whether or
+	 * not the provider is {@link LLMProviderConfig#isAvailable() available} now.
+	 *
+	 * <p>
+	 * For a caller that asks {@link LLMProvider#isAvailable()} before each request, e.g. an agent
+	 * run that can pass an inactive provider over for another model of its failover chain.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to find a provider for.
+	 * @param providerName
+	 *        The configured provider that must serve the model, or {@code null} to let the
+	 *        model's only provider serve it.
+	 * @return A provider that may not be able to authenticate its requests.
+	 * @throws IllegalStateException
+	 *         if the model cannot be routed to exactly one configured provider.
+	 *
+	 * @see #buildProvider(String, String)
+	 */
+	public LLMProvider routeProvider(String modelName, String providerName) {
+		return routedProvider(modelName, providerName).createProvider();
+	}
+
+	/**
+	 * The provider configuration serving the given model reference.
+	 *
+	 * @throws IllegalStateException
+	 *         if the model cannot be routed to exactly one configured provider.
+	 */
+	private LLMProviderConfig routedProvider(String modelName, String providerName) {
 		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
 		if (providerConfig == null) {
 			throw new IllegalStateException(unroutable(modelName, providerName));
 		}
-		return providerConfig.createProvider();
+		return providerConfig;
+	}
+
+	/**
+	 * Why the given model reference cannot be served now because its provider is not
+	 * {@link LLMProviderConfig#isAvailable() available}.
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The message for the user, naming the provider and the secret it needs;
+	 *         <code>null</code> if the provider is available, or if the reference does not route
+	 *         to exactly one provider, which {@link #buildProvider(String, String)} reports.
+	 */
+	public ResKey unavailableReason(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		if (providerConfig == null || providerConfig.isAvailable()) {
+			return null;
+		}
+		return unavailable(modelName, providerName, providerConfig);
+	}
+
+	/**
+	 * The message for a run on a model whose provider is not available.
+	 */
+	private ResKey unavailable(String modelName, String providerName, LLMProviderConfig providerConfig) {
+		String provider = providerName != null && !providerName.isBlank() ? providerName : nameOf(providerConfig);
+		ResKey secret = providerConfig.credentialsReference();
+		if (secret == null) {
+			return I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER.fill(modelName, provider);
+		}
+		return I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET.fill(modelName, provider, secret);
+	}
+
+	/**
+	 * The configured name of the given provider.
+	 */
+	private String nameOf(LLMProviderConfig providerConfig) {
+		for (Map.Entry<String, LLMProviderConfig> entry : _providerConfigs.entrySet()) {
+			if (entry.getValue() == providerConfig) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The model a run uses that is assigned none: the first configured model of the first
+	 * {@link LLMProviderConfig#isAvailable() available} provider, in configuration order.
+	 *
+	 * <p>
+	 * Resolved each time it is asked for, so that a provider whose secret is provided later serves
+	 * the next run without a restart, and a provider before it in the configuration takes over as
+	 * soon as it becomes available.
+	 * </p>
+	 *
+	 * @return The model qualified by the provider serving it; <code>null</code> if no provider
+	 *         with models is available.
+	 *
+	 * @see #noProviderAvailable()
+	 */
+	public ModelTarget defaultTarget() {
+		if (_providerConfigs == null) {
+			return null;
+		}
+		for (Map.Entry<String, LLMProviderConfig> entry : _providerConfigs.entrySet()) {
+			LLMProviderConfig providerConfig = entry.getValue();
+			List<String> models = providerConfig.getConfiguredModels();
+			if (models == null || models.isEmpty() || !providerConfig.isAvailable()) {
+				continue;
+			}
+			return new ModelTarget(models.get(0), entry.getKey());
+		}
+		return null;
+	}
+
+	/**
+	 * The message for a run that needs a model while no {@link #defaultTarget()} exists.
+	 *
+	 * @return The message for the user, naming the secrets that would make a provider available.
+	 */
+	public ResKey noProviderAvailable() {
+		Set<ResKey> secrets = new LinkedHashSet<>();
+		if (_providerConfigs != null) {
+			for (LLMProviderConfig providerConfig : _providerConfigs.values()) {
+				List<String> models = providerConfig.getConfiguredModels();
+				if (models == null || models.isEmpty()) {
+					// Its secret would activate nothing.
+					continue;
+				}
+				ResKey secret = providerConfig.credentialsReference();
+				if (secret != null) {
+					secrets.add(secret);
+				}
+			}
+		}
+		ResKey list = null;
+		for (ResKey secret : secrets) {
+			list = list == null ? secret : I18NConstants.SECRET_LIST__LIST_SECRET.fill(list, secret);
+		}
+		if (list == null) {
+			return I18NConstants.ERROR_NO_PROVIDER_CONFIGURED;
+		}
+		return I18NConstants.ERROR_NO_PROVIDER_AVAILABLE__SECRETS.fill(list);
 	}
 
 	/**
@@ -869,6 +1050,17 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			return null;
 		}
 		return _providerConfigs.get(exposedBy.get(0));
+	}
+
+	/**
+	 * The started provider with the given name.
+	 *
+	 * @param providerName
+	 *        The name of the provider in {@link Config#getProviders()}.
+	 * @return The provider, {@code null} if none of that name is configured.
+	 */
+	public LLMProviderConfig getProvider(String providerName) {
+		return _providerConfigs == null ? null : _providerConfigs.get(providerName);
 	}
 
 	/**

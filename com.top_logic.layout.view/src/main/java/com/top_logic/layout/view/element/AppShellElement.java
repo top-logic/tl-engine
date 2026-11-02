@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
@@ -57,6 +58,7 @@ public class AppShellElement implements UIElement {
 	 * Configuration for {@link AppShellElement}.
 	 */
 	@TagName("app-shell")
+	@TypeIcon("css:bi bi-window-desktop")
 	public interface Config extends UIElement.Config {
 
 		@Override

@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.junit.VisualHarness;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -48,7 +49,7 @@ public class VisualStreamTest extends TestCase {
 		Assume.assumeTrue("no ANTHROPIC_API_KEY in the environment (source env.sh)",
 			apiKey != null && !apiKey.isEmpty());
 
-		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(FixedCredentials.anthropic(apiKey));
 
 		UserMessage msg = new UserMessage(
 			UUID.randomUUID().toString(),

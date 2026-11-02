@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.form;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -13,6 +15,8 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.field.UploadValueFactory;
+import com.top_logic.model.annotate.TLTypeKind;
+import com.top_logic.model.annotate.TargetType;
 
 /**
  * {@link ReactFieldControlProvider} for binary ({@code tl.core:Binary}) attributes editing one file
@@ -28,6 +32,9 @@ import com.top_logic.layout.react.field.UploadValueFactory;
  *
  * @see FieldControlRegistry#BINARY
  */
+@Label("File upload")
+@InApp
+@TargetType(TLTypeKind.BINARY)
 public class BinaryControlProvider implements ReactFieldControlProvider {
 
 	@Override

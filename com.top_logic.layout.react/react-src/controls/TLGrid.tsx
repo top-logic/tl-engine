@@ -25,6 +25,8 @@ const GAP_TOKEN: Record<string, string> = {
  * - itemClass: string  (CSS class of a wrapper around each child, default: null - no wrapper)
  * - children: ChildDescriptor[]
  * - selectable, itemKeys, selected, multiSelect: the selection among the items (see items.tsx)
+ * - hidden: boolean (default: false) - the grid is not displayed and takes no place in its
+ *   container, not even a gap
  */
 const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -56,6 +58,9 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   if (maxWidth) {
     // Only the bound itself is a length; that it is centered is the rule the class carries.
     style.maxWidth = maxWidth;
+  }
+  if (state.hidden === true) {
+    style.display = 'none';
   }
 
   const className = rootClassName(state, 'tl-grid', `tl-grid--gap-${gap}`, maxWidth && 'tl-bounded');

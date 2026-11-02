@@ -147,7 +147,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		 * Resolvers for dynamically defined methods.
 		 */
 		@Name("method-resolvers")
-		List<PolymorphicConfiguration<MethodResolver>> getMethodResolvers();
+		List<PolymorphicConfiguration<? extends MethodResolver>> getMethodResolvers();
 
 	}
 

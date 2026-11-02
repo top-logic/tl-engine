@@ -265,8 +265,27 @@
 							multiple="true"
 							type="Employee"
 						/>
+						<reference name="priority"
+							type="PathPriority"
+						/>
+						<reference name="tags"
+							multiple="true"
+							ordered="true"
+							type="PathPriority"
+						/>
 					</attributes>
 				</class>
+
+				<!--
+					Values of an enumeration attribute: model elements every user may discover
+					(ticket #30016).
+				-->
+				<enum name="PathPriority">
+					<classifiers>
+						<classifier name="LOW"/>
+						<classifier name="HIGH"/>
+					</classifiers>
+				</enum>
 
 				<class name="PathC">
 					<generalizations>

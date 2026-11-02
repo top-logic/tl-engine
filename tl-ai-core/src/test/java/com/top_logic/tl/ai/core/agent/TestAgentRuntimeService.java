@@ -14,10 +14,14 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
+import com.top_logic.tl.ai.core.provider.I18NConstants;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.LLMProviderServiceFixture;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that {@link AgentRuntimeService} holds which agent runs how - read from the XML an application
@@ -55,12 +59,50 @@ public class TestAgentRuntimeService extends TestCase {
 						<capacity chat-workers="4" chat-queue="-1" concurrent-runs-per-account="3"/>
 					</instance>""");
 
+	/** The variable holding the key of the provider {@code first}, set by a test. */
+	private static final String FIRST_KEY = "test_agent_runtime_first_key";
+
+	/** The variable holding the key of the provider {@code second}, set by a test. */
+	private static final String SECOND_KEY = "test_agent_runtime_second_key";
+
+	/** Two providers whose keys are taken from variables, none of which is set initially. */
+	private static final String ENV_PROVIDERS = ServiceConfigFixture.file(LLMProviderService.class.getName(), """
+					<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+						<providers>
+							<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+								catalog-provider-id=""
+								models="first-model, first-other"
+								name="first"
+							>
+								<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+									name="test_agent_runtime_first_key"/>
+							</provider>
+							<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+								catalog-provider-id=""
+								models="second-model"
+								name="second"
+							>
+								<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+									name="test_agent_runtime_second_key"/>
+							</provider>
+						</providers>
+					</instance>""");
+
 	private LLMProviderService _providers;
 
 	private AgentRuntimeService _runtime;
 
 	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		System.clearProperty(FIRST_KEY);
+		System.clearProperty(SECOND_KEY);
+	}
+
+	@Override
 	protected void tearDown() throws Exception {
+		System.clearProperty(FIRST_KEY);
+		System.clearProperty(SECOND_KEY);
 		if (_runtime != null) {
 			AgentRuntimeFixture.stop(_runtime);
 			_runtime = null;
@@ -89,7 +131,7 @@ public class TestAgentRuntimeService extends TestCase {
 		assertSame(DefaultSecurityContextFactory.class, _runtime.getSecurityContextFactory().getClass());
 	}
 
-	/** Nothing configured: the shipped defaults, and an agent without a model says so when it runs. */
+	/** Nothing configured: the shipped defaults, and an agent without a model runs on the first provider's. */
 	public void testDefaults() throws Exception {
 		start(ServiceConfigFixture.file(AgentRuntimeService.class.getName(),
 			"<instance class=\"com.top_logic.tl.ai.core.agent.AgentRuntimeService\"/>"));
@@ -98,11 +140,64 @@ public class TestAgentRuntimeService extends TestCase {
 		assertEquals(AgentParams.DEFAULT_MAX_TURNS, _runtime.getMaxTurns());
 		assertNull(_runtime.getDefaultModel());
 		assertNull(_runtime.getCapacity());
+		AgentModelAssignment assignment = _runtime.resolveModelAssignment("App_Agent");
+		assertEquals("Without a default model, a run uses the first model of the first available provider.",
+			"app-model", assignment.model());
+		assertEquals("anthropic", assignment.provider());
+	}
+
+	/**
+	 * An empty default model - what the shipped alias of an unset {@code tl_ai_default_model}
+	 * gives - is no default model: the service starts, and a run uses the first available provider.
+	 */
+	public void testAnEmptyDefaultModelIsUnset() throws Exception {
+		start(ServiceConfigFixture.file(AgentRuntimeService.class.getName(),
+			"<instance class=\"com.top_logic.tl.ai.core.agent.AgentRuntimeService\" default-model=\"\""
+				+ " default-provider=\"\"/>"));
+
+		assertNull(_runtime.getDefaultModel());
+		assertNull(_runtime.getDefaultProvider());
+		ModelTarget target = _runtime.defaultTarget();
+		assertEquals("app-model", target.model());
+		assertEquals("anthropic", target.provider());
+		assertEquals("app-model", _runtime.resolveModel("App_Agent"));
+	}
+
+	/**
+	 * Without a default model, each run takes the first model of the first provider whose key is
+	 * provided, in configuration order - decided anew for every run, so a key provided later serves
+	 * the next run without a restart.
+	 */
+	public void testTheDefaultModelFollowsTheProvidedKeys() throws Exception {
+		startOn(ENV_PROVIDERS, ServiceConfigFixture.file(AgentRuntimeService.class.getName(),
+			"<instance class=\"com.top_logic.tl.ai.core.agent.AgentRuntimeService\"/>"));
+
+		System.setProperty(SECOND_KEY, "sk-second");
+		AgentModelAssignment second = _runtime.resolveModelAssignment("App_Agent");
+		assertEquals("The first provider has no key, so the second one's first model is used.",
+			"second-model", second.model());
+		assertEquals("second", second.provider());
+
+		System.setProperty(FIRST_KEY, "sk-first");
+		AgentModelAssignment first = _runtime.resolveModelAssignment("App_Agent");
+		assertEquals("first-model", first.model());
+		assertEquals("first", first.provider());
+	}
+
+	/** No provider has its key: the run is refused with a message naming the secrets looked for. */
+	public void testWithoutAnyKeyTheRunNamesTheSecrets() throws Exception {
+		startOn(ENV_PROVIDERS, ServiceConfigFixture.file(AgentRuntimeService.class.getName(),
+			"<instance class=\"com.top_logic.tl.ai.core.agent.AgentRuntimeService\"/>"));
+
 		try {
 			_runtime.resolveModelAssignment("App_Agent");
-			fail("An agent without a model must not run.");
-		} catch (IllegalStateException ex) {
-			assertTrue(ex.getMessage(), ex.getMessage().contains("App_Agent"));
+			fail("A run without any available provider must be refused.");
+		} catch (TopLogicException ex) {
+			ResKey error = ex.getErrorKey();
+			assertEquals(I18NConstants.ERROR_NO_PROVIDER_AVAILABLE__SECRETS, error.plain());
+			String secrets = String.valueOf(error.arguments()[0]);
+			assertTrue(secrets, secrets.contains(FIRST_KEY));
+			assertTrue(secrets, secrets.contains(SECOND_KEY));
 		}
 	}
 
@@ -126,8 +221,12 @@ public class TestAgentRuntimeService extends TestCase {
 	}
 
 	private void start(String runtime) throws ConfigurationException {
+		startOn(PROVIDERS, runtime);
+	}
+
+	private void startOn(String providers, String runtime) throws ConfigurationException {
 		_providers = LLMProviderServiceFixture.start(context(),
-			ServiceConfigFixture.read(LLMProviderService.class, PROVIDERS));
+			ServiceConfigFixture.read(LLMProviderService.class, providers));
 		_runtime = AgentRuntimeFixture.start(context(),
 			ServiceConfigFixture.read(AgentRuntimeService.class, runtime));
 	}

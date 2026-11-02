@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Test;
@@ -24,7 +25,8 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests editing nested compositions in {@link EditLevel}s, a nested level per dialog, and storing
- * the buffers of the root level with {@link BufferSave}.
+ * the buffers of the root level with {@link BufferSave}, including the new objects held in
+ * references that are no compositions.
  *
  * <p>
  * The fixture: the project holds the steps {@link #_s1} and {@link #_s2}; {@link #_s1} holds the
@@ -47,6 +49,9 @@ public class TestEditLevel extends AbstractModelAccessTest {
 
 	private TLObject _s111;
 
+	/** The stored objects without container a test created, deleted after the test. */
+	private final List<TLObject> _unattached = new ArrayList<>();
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -59,6 +64,17 @@ public class TestEditLevel extends AbstractModelAccessTest {
 			_project.tUpdateByName(STEPS, List.of(_s1, _s2));
 			tx.commit();
 		}
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+		for (TLObject object : _unattached) {
+			if (object.tValid()) {
+				delete(object);
+			}
+		}
+		_unattached.clear();
 	}
 
 	@Override
@@ -243,6 +259,103 @@ public class TestEditLevel extends AbstractModelAccessTest {
 		TLObject storedCreated = (TLObject) stored.get(2);
 		assertFalse(storedCreated.tTransient());
 		assertSame(storedCreated, _s2.tValueByName(PREDECESSOR));
+	}
+
+	/**
+	 * A new object held only in a reference that is no composition is created without a context,
+	 * and the new objects it refers to itself are created as well.
+	 */
+	public void testNewObjectInReference() {
+		EditLevel root = new EditLevel();
+		TLObject project = root.buffer(_project);
+
+		EditLevel steps = root.nested();
+		TLObject created = steps.create(type(STEP), null);
+		created.tUpdateByName(NAME, CREATED);
+		TLObject further = steps.create(type(STEP), null);
+		further.tUpdateByName(NAME, "further");
+		created.tUpdateByName(PREDECESSOR, further);
+		TLObject s2 = steps.buffer(_s2);
+		s2.tUpdateByName(PREDECESSOR, created);
+		steps.commit(project, stepsPart(), List.of(_s1, s2));
+
+		save(project);
+		TLObject storedCreated = (TLObject) _s2.tValueByName(PREDECESSOR);
+		assertNotNull(storedCreated);
+		_unattached.add(storedCreated);
+		assertFalse(storedCreated.tTransient());
+		assertEquals(CREATED, storedCreated.tValueByName(NAME));
+		assertNull("A referenced object is not part of the referencing object.", storedCreated.tContainer());
+		TLObject storedFurther = (TLObject) storedCreated.tValueByName(PREDECESSOR);
+		assertNotNull(storedFurther);
+		_unattached.add(storedFurther);
+		assertFalse(storedFurther.tTransient());
+		assertEquals("further", storedFurther.tValueByName(NAME));
+		assertEquals(List.of(_s1, _s2), _project.tValueByName(STEPS));
+	}
+
+	/**
+	 * A new object referenced from several buffers is created once.
+	 */
+	public void testNewObjectReferencedTwice() {
+		EditLevel root = new EditLevel();
+		TLObject project = root.buffer(_project);
+
+		EditLevel steps = root.nested();
+		TLObject created = steps.create(type(STEP), null);
+		created.tUpdateByName(NAME, CREATED);
+		created.tUpdateByName(PREDECESSOR, _s111);
+		TLObject s1 = steps.buffer(_s1);
+		s1.tUpdateByName(PREDECESSOR, created);
+		TLObject s2 = steps.buffer(_s2);
+		s2.tUpdateByName(PREDECESSOR, created);
+		steps.commit(project, stepsPart(), List.of(s1, s2));
+
+		long s111Update = lastUpdate(_s111);
+		save(project);
+		TLObject storedCreated = (TLObject) _s1.tValueByName(PREDECESSOR);
+		assertNotNull(storedCreated);
+		_unattached.add(storedCreated);
+		assertFalse(storedCreated.tTransient());
+		assertSame(storedCreated, _s2.tValueByName(PREDECESSOR));
+		assertSame(_s111, storedCreated.tValueByName(PREDECESSOR));
+		assertEquals("A referenced original is not written.", s111Update, lastUpdate(_s111));
+	}
+
+	/**
+	 * A reference to an existing object is written as it is, without storing the referenced object.
+	 */
+	public void testReferenceToExistingObject() {
+		EditLevel root = new EditLevel();
+		TLObject project = root.buffer(_project);
+
+		EditLevel steps = root.nested();
+		TLObject s2 = steps.buffer(_s2);
+		s2.tUpdateByName(PREDECESSOR, _s11);
+		steps.commit(project, stepsPart(), List.of(_s1, s2));
+
+		long s11Update = lastUpdate(_s11);
+		save(project);
+		assertSame(_s11, _s2.tValueByName(PREDECESSOR));
+		assertEquals("A referenced original is not written.", s11Update, lastUpdate(_s11));
+	}
+
+	/**
+	 * A new object in a reference that is no composition needs the right to create it without a
+	 * context; a refusal stores nothing.
+	 */
+	public void testNewObjectInReferenceRefused() {
+		EditLevel root = new EditLevel();
+		TLObject project = root.buffer(_project);
+		TLObject category = root.create(type(CATEGORY), null);
+		category.tUpdateByName(NAME, CREATED);
+		project.tUpdateByName(CATEGORY_REF, category);
+		project.tUpdateByName(NAME, RENAMED);
+
+		assertRefused(com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE,
+			() -> save(project));
+		assertSame(_category, _project.tValueByName(CATEGORY_REF));
+		assertEquals("project", _project.tValueByName(NAME));
 	}
 
 	/**

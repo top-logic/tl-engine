@@ -7,7 +7,6 @@
         <entry name="%POSTGRESQL_DATABASE_TEST_UNIT%" value="${env:postgresql_database_unit:testUnit}" />
         <entry name="%POSTGRESQL_DATABASE_TEST_MIGRATION%" value="${env:postgresql_database_migration:testMigration}" />
         <entry name="%POSTGRESQL_USER%" value="${env:postgresql_user:user}"/>
-        <entry name="%POSTGRESQL_PASSWD%" value="${env:postgresql_passwd:unencrypted:passwd}"/>
         
         <entry name="%POSTGRESQL_SCHEMA%" value="${env:postgresql_schema:public}" />
         

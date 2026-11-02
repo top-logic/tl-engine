@@ -54,6 +54,11 @@ public class VectorMonitor extends AbstractMonitorComponent {
 	public void checkState(MonitorResult result) {
 
 		VectorIndex lci = VectorIndex.getInstance();
+		if (!lci.isAvailable()) {
+			result.addMessage(new MonitorMessage(MonitorMessage.Status.INFO,
+				"Disabled: no embedding model is configured (no Mistral API key available).", this));
+			return;
+		}
         if (!lci.isAlive()) {
 			result.addMessage(new MonitorMessage(MonitorMessage.Status.FATAL, "Thread not running", this));
 			return;

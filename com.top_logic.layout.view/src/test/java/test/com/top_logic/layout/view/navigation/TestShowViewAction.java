@@ -91,7 +91,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		run(action("""
 			<show-views>
 				<show view="nav-home.view.xml"/>
-				<show view="nav-frame.view.xml"/>
+				<show frame="frame"/>
 				<show view="nav-detail.view.xml">
 					<bind channel="item"/>
 				</show>
@@ -134,10 +134,23 @@ public class TestShowViewAction extends AbstractNavigationTest {
 	}
 
 	/**
-	 * Displaying a view needs the view to display.
+	 * Displaying a view needs the view or the frame to display, and not both.
 	 */
-	public void testShowViewNeedsItsView() {
-		assertRejected("<show-view/>", ShowViewAction.Config.VIEW);
+	public void testShowViewNeedsViewOrFrame() {
+		assertRejected("<show-view/>");
+		assertRejected("<show-view view='nav-item.view.xml' frame='frame'/>");
+	}
+
+	/**
+	 * Asserts that the given action configuration is rejected.
+	 */
+	private void assertRejected(String xml) {
+		try {
+			action(xml);
+			fail("The configuration '" + xml + "' must be rejected.");
+		} catch (ConfigurationException | RuntimeException expected) {
+			// Expected.
+		}
 	}
 
 	/**

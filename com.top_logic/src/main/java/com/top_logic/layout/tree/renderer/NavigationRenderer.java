@@ -44,7 +44,7 @@ public class NavigationRenderer extends BreadcrumbContentRenderer {
 
 		@ImplementationClassDefault(NoImageResourceProvider.class)
 		@Override
-		PolymorphicConfiguration<ResourceProvider> getResourceProvider();
+		PolymorphicConfiguration<? extends ResourceProvider> getResourceProvider();
 
 	}
 

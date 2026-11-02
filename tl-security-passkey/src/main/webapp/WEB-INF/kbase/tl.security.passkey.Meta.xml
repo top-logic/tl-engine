@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+
+		<!--
+			The passkeys of the accounts (tl.security.passkey:Passkey). Every login with a passkey
+			looks its credential up by the credential ID, so the ID gets a column of its own with a
+			unique index. The ID and the public key are base64url strings and therefore binary
+			(case-sensitive) columns. The dates use the generic flex storage.
+		-->
+		<metaobject
+			object_type="MOKnowledgeObject"
+			object_name="Passkey"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute att_name="label" att_type="String" db_size="255" mandatory="true" />
+				<mo_attribute att_name="credentialId" att_type="String" db_size="512" mandatory="true" binary="true" />
+				<mo_attribute att_name="publicKey" att_type="String" db_size="1024" mandatory="true" binary="true" />
+				<mo_attribute att_name="signatureCount" att_type="Long" mandatory="true" />
+				<mo_attribute att_name="transports" att_type="String" db_size="255" mandatory="false" binary="true" />
+				<mo_attribute att_name="backupEligible" att_type="Boolean" mandatory="true" />
+				<mo_attribute att_name="backedUp" att_type="Boolean" mandatory="true" />
+			</attributes>
+			<index>
+				<mo_index name="credentialId" unique="true">
+					<index-parts>
+						<index_part name="credentialId"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+
+	</metaobjects>
+
+</objectlist>

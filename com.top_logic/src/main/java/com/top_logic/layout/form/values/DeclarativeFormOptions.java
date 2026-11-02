@@ -8,6 +8,9 @@ package com.top_logic.layout.form.values;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
+import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
@@ -44,5 +47,21 @@ public interface DeclarativeFormOptions extends TypedAnnotatable {
 	 * @see EditorFactory#setCustomizations(AnnotationCustomizations)
 	 */
 	AnnotationCustomizations getCustomizations();
+
+	/**
+	 * The {@link FormContainer} in which the UI for the {@link #getProperty() property} is
+	 * created, or <code>null</code>, if it is not known.
+	 * 
+	 * <p>
+	 * The {@link EditorFactory#getModel(FormMember) models} of this container and its parents are
+	 * the configurations enclosing the edited property, from the inside out. This allows an
+	 * algorithm to find its surroundings also when the property is not edited directly in the
+	 * {@link DeclarativeFormBuilder#FORM_MODEL form model}, but in a configuration nested deeply in
+	 * it.
+	 * </p>
+	 */
+	default FormContainer getContainer() {
+		return null;
+	}
 
 }

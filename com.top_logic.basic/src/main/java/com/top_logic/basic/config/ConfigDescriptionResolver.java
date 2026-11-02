@@ -8,6 +8,7 @@ package com.top_logic.basic.config;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.ApplicationConfig.Config.Defaults;
 import com.top_logic.basic.config.ApplicationConfig.Config.StringDefaultSpec;
+import com.top_logic.basic.config.PropertyDescriptorImpl.DefaultState;
 import com.top_logic.basic.config.annotation.Factory;
 
 /**
@@ -38,6 +40,14 @@ final class ConfigDescriptionResolver {
 	private static final Map<Class<?>, TagNameMap> tagMaps = new HashMap<>();
 
 	private static Class<?> topInterface = null;
+
+	/**
+	 * The state of all properties before {@link #adaptConfiguredDefaults(Map)} installed a
+	 * configured default.
+	 * 
+	 * @see #resetConfiguredDefaults()
+	 */
+	private static final Map<PropertyDescriptorImpl, DefaultState> originalDefaults = new IdentityHashMap<>();
 
 	static synchronized ConfigurationDescriptor getDescriptor(Class<?> configurationInterface)
 			throws ConfigurationException {
@@ -264,10 +274,17 @@ final class ConfigDescriptionResolver {
 	 * Reads the values that are explicit set in the given {@link ConfigurationItem items} and
 	 * installs these values as default for the corresponding property.
 	 * 
+	 * <p>
+	 * Defaults installed by a previous call are removed before, so that only the given defaults
+	 * apply.
+	 * </p>
+	 * 
 	 * @param defaults
 	 *        Items use to determine new defaults indexed by their configuration interface.
 	 */
 	static synchronized void adaptConfiguredDefaults(Map<Class<?>, Defaults> defaults) {
+		resetConfiguredDefaults();
+
 		Collection<Defaults> sortedDefaults = topSort(defaults);
 
 		// Load all descriptors whose defaults are configured.
@@ -313,7 +330,56 @@ final class ConfigDescriptionResolver {
 	}
 
 	private static void updateDefaultValue(PropertyDescriptor property, Object defaultValue) {
-		((PropertyDescriptorImpl) property).setConfiguredDefault(defaultValue, false);
+		PropertyDescriptorImpl propertyImpl = (PropertyDescriptorImpl) property;
+		saveOriginalDefault(propertyImpl);
+		propertyImpl.setConfiguredDefault(defaultValue, false);
+	}
+
+	private static void saveOriginalDefault(PropertyDescriptorImpl property) {
+		originalDefaults.computeIfAbsent(property, PropertyDescriptorImpl::getDefaultState);
+	}
+
+	/**
+	 * Removes all defaults installed by {@link #adaptConfiguredDefaults(Map)}, so that all
+	 * properties have their declared defaults again.
+	 * 
+	 * <p>
+	 * Configuration items that were created with a configured default keep their values.
+	 * </p>
+	 */
+	static synchronized void resetConfiguredDefaults() {
+		if (originalDefaults.isEmpty()) {
+			return;
+		}
+		originalDefaults.forEach(PropertyDescriptorImpl::setDefaultState);
+
+		/* A descriptor loaded after the defaults were installed has copied the configured default
+		 * of its super property. It is not contained in the original defaults, so hand down the
+		 * restored default. This is done after all properties are restored, because a sub property
+		 * may itself have been restored. */
+		Map<ConfigurationDescriptor, List<ConfigurationDescriptor>> descriptorsBySuperDescriptor =
+			getDescriptorsBySuperDescriptor();
+		for (PropertyDescriptorImpl property : originalDefaults.keySet()) {
+			handDownOriginalDefault(property, descriptorsBySuperDescriptor);
+		}
+		originalDefaults.clear();
+	}
+
+	private static void handDownOriginalDefault(PropertyDescriptorImpl property,
+			Map<ConfigurationDescriptor, List<ConfigurationDescriptor>> descriptorsBySuperDescriptor) {
+		List<ConfigurationDescriptor> subDescriptors = descriptorsBySuperDescriptor.get(property.getDescriptor());
+		if (subDescriptors == null) {
+			return;
+		}
+		for (ConfigurationDescriptor desc : subDescriptors) {
+			PropertyDescriptorImpl subProperty =
+				((ConfigurationDescriptorImpl) desc).getProperty(property.getPropertyName());
+
+			if (!subProperty.hasLocalExplicitDefault() && !subProperty.hasLocalMandatoryAnnotation()) {
+				subProperty.inheritDefaultState(property);
+				handDownOriginalDefault(subProperty, descriptorsBySuperDescriptor);
+			}
+		}
 	}
 
 	private static Map<ConfigurationDescriptor, List<ConfigurationDescriptor>> getDescriptorsBySuperDescriptor() {
@@ -362,6 +428,7 @@ final class ConfigDescriptionResolver {
 
 			if (!subProperty.hasLocalExplicitDefault() && !subProperty.hasLocalMandatoryAnnotation()) {
 				// do no override annotated default of specialized configuration interface.
+				saveOriginalDefault(subProperty);
 				subProperty.setConfiguredDefault(newDefaultValue, true);
 				handDownConfiguredDefault(subProperty, newDefaultValue, descriptorsBySuperDescriptor);
 			}

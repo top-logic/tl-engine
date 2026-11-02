@@ -258,6 +258,11 @@ public class DB2Helper extends DBHelper
 	}
 
 	@Override
+	public String renameTable(String tableName, String newName) {
+		return "RENAME TABLE " + tableRef(tableName) + " TO " + tableRef(newName);
+	}
+
+	@Override
 	public String tablePattern(String tableName) {
 		return tableName.toUpperCase();
 	}

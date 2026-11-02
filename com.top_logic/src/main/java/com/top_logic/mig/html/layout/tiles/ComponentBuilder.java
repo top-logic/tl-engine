@@ -90,7 +90,7 @@ public interface ComponentBuilder extends LabeledConfiguration {
 	 */
 	@ItemDefault(SimpleFormBuilder.class)
 	@Name(FORM_BUILDER_NAME)
-	PolymorphicConfiguration<DialogFormBuilder<? super ComponentParameters>> getFormBuilder();
+	PolymorphicConfiguration<? extends DialogFormBuilder<? super ComponentParameters>> getFormBuilder();
 
 	/**
 	 * The width of the configuration dialog for this {@link ComponentBuilder}.

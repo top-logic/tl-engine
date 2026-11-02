@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.base.config.i18n.Internationalized;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Label;
@@ -81,7 +82,7 @@ public class TLEnumerationFormBuilder
 		EditModel.I18N_CLASSIFIERS_CONFIG,
 		EditModel.ANNOTATIONS
 	})
-	public interface EditModel extends EnumConfig, Internationalized, FullQualifiedName {
+	public interface EditModel extends EnumConfig, Internationalized, FullQualifiedName, ValueTypeModel {
 
 		/**
 		 * Name for {@link #getI18NClassifiersConfig()}.
@@ -140,6 +141,16 @@ public class TLEnumerationFormBuilder
 		@Override
 		@DynamicMode(fun = HideImmutableIf.class, args = @Ref(CREATE))
 		String getFullQualifiedName();
+
+		/**
+		 * The edited type itself, resolved from its {@link #getFullQualifiedName() qualified name}.
+		 */
+		@Override
+		@Name(RESOLVED_TYPE)
+		@InstanceFormat
+		@Hidden
+		@Derived(fun = ResolveQualifiedType.class, args = @Ref(FULL_QUALIFIED_NAME))
+		TLType getResolvedType();
 
 		@DynamicMode(fun = ActiveIf.class, args = @Ref({ CREATE }))
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypeNameKey.class, asWarning = true)

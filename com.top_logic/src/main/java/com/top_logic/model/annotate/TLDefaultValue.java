@@ -34,12 +34,12 @@ public interface TLDefaultValue extends TLAttributeAnnotation, TLTypeAnnotation 
 	@Mandatory
 	@Name(PROVIDER_NAME)
 	@DefaultContainer
-	PolymorphicConfiguration<DefaultProvider> getProvider();
+	PolymorphicConfiguration<? extends DefaultProvider> getProvider();
 
 	/**
 	 * @see #getProvider()
 	 */
-	void setProvider(PolymorphicConfiguration<DefaultProvider> value);
+	void setProvider(PolymorphicConfiguration<? extends DefaultProvider> value);
 
 }
 

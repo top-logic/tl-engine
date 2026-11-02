@@ -35,7 +35,7 @@ public class TLConstraintFactory extends AnnotationsBasedCacheValueFactory {
 		if (tlAnnotation == null) {
 			return null;
 		}
-		PolymorphicConfiguration<AttributedValueFilter> filterConfig = tlAnnotation.getFilter();
+		PolymorphicConfiguration<? extends AttributedValueFilter> filterConfig = tlAnnotation.getFilter();
 		AttributedValueFilter filter =
 			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(filterConfig);
 		return filter;

@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,13 +29,10 @@ import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.UpdateEvent;
-import com.top_logic.model.ModelKind;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Utils;
 
 /**
@@ -157,6 +153,15 @@ public class EventBuilder {
 	private final Map<ObjectKey, TLObject> _updates = new HashMap<>();
 
 	private final Map<ObjectKey, TLObject> _deletes = new HashMap<>();
+
+	/**
+	 * Creates an {@link EventBuilder} without listeners that only builds a {@link #summary()}.
+	 * 
+	 * @see #summarize(ModelEventSettings, UpdateEvent)
+	 */
+	public EventBuilder(ModelEventSettings settings) {
+		this(settings, Collections.emptyMap(), Collections.emptyMap(), new ModelListeners());
+	}
 
 	/**
 	 * Creates an {@link EventBuilder}.
@@ -287,7 +292,7 @@ public class EventBuilder {
 			Map<String, Object> values = change.getValues();
 			Map<String, Object> oldValues;
 			if (change instanceof ItemUpdate) {
-				oldValues = change.getValues();
+				oldValues = ((ItemUpdate) change).getOldValues();
 				if (oldValues == null) {
 					// ItemUpdates may not keep old values: ItemUpdate#ItemUpdate(long,
 					// ObjectBranchId, boolean)
@@ -356,6 +361,35 @@ public class EventBuilder {
 	}
 
 	/**
+	 * The {@link ModelChangeSummary} of the given {@link UpdateEvent}.
+	 * 
+	 * @param settings
+	 *        The settings the {@link ModelChangeEvent}s are built with, whose registrations the
+	 *        summary is checked against.
+	 * @param event
+	 *        The committed change.
+	 */
+	public static ModelChangeSummary summarize(ModelEventSettings settings, UpdateEvent event) {
+		EventBuilder builder = new EventBuilder(settings);
+		builder.add(event);
+		return builder.summary();
+	}
+
+	/**
+	 * The {@link ModelChangeSummary} of the changes {@link #add(UpdateEvent) added} so far.
+	 * 
+	 * <p>
+	 * The summary names exactly the objects and types whose listeners {@link #notifyListeners()}
+	 * would notify.
+	 * </p>
+	 */
+	public ModelChangeSummary summary() {
+		Set<ObjectKey> changedObjects = new HashSet<>(_updates.keySet());
+		changedObjects.addAll(_deletes.keySet());
+		return new ModelChangeSummary(changedObjects, collectTouchedTypes());
+	}
+
+	/**
 	 * Forwards the built {@link ModelChangeEvent} to relevant listeners.
 	 * 
 	 * @return Whether a listener was triggered.
@@ -365,8 +399,6 @@ public class EventBuilder {
 		indexItems(_createdByType, _creates.values());
 
 		Set<TLStructuredType> touchedTypes = collectTouchedTypes();
-		Collection<TLStructuredType> deletedTypes = findDeletedObjects(touchedTypes);
-		touchedTypes.removeAll(deletedTypes);
 		List<ListenerRegistration<ModelListener>> listeners = new ArrayList<>(_globalListeners.getRegistrations());
 
 		/* All touched sub-types (reflexive, transitive) of the key type. */
@@ -384,12 +416,28 @@ public class EventBuilder {
 		return true;
 	}
 
+	/**
+	 * The types of the updated, created and deleted objects, without deleted types.
+	 */
 	private Set<TLStructuredType> collectTouchedTypes() {
 		Set<TLStructuredType> touchedTypes = new HashSet<>();
-		touchedTypes.addAll(_updatedByType.keySet());
-		touchedTypes.addAll(_createdByType.keySet());
+		addTypes(touchedTypes, _updates.values());
+		addTypes(touchedTypes, _creates.values());
+		// The type of a deleted object is only accessible in the revision before its deletion.
 		touchedTypes.addAll(_deletedByType.keySet());
+		removeDeleted(touchedTypes);
 		return touchedTypes;
+	}
+
+	private static void addTypes(Set<TLStructuredType> types, Collection<TLObject> objects) {
+		for (TLObject object : objects) {
+			TLStructuredType type = object.tType();
+
+			// Filter out legacy object without type.
+			if (type != null) {
+				types.add(type);
+			}
+		}
 	}
 
 	private void addObjectListeners(List<ListenerRegistration<ModelListener>> listeners) {
@@ -421,32 +469,18 @@ public class EventBuilder {
 		}
 	}
 
-	private <E extends TLObject> Collection<E> findDeletedObjects(Collection<? extends E> objects) {
-		Iterator<? extends E> typesIterator = objects.iterator();
-		/* In most applications, it will almost never happen that a type is deleted while the
-		 * application is running. The collection creation happens therefore lazily. */
-		Collection<E> deletedTypes = null;
-		while (typesIterator.hasNext()) {
-			E type = typesIterator.next();
-			if (!type.tValid()) {
-				typesIterator.remove();
-				if (deletedTypes == null) {
-					deletedTypes = new ArrayList<>();
-				}
-				deletedTypes.add(type);
-			}
-		}
-		return (deletedTypes == null) ? List.of() : deletedTypes;
+	/**
+	 * Removes the deleted types from the given collection. In most applications, a type is almost
+	 * never deleted while the application is running.
+	 */
+	private static void removeDeleted(Collection<? extends TLObject> types) {
+		types.removeIf(type -> !type.tValid());
 	}
 
 	private void computeListenersAndIndex(Map<TLStructuredType, List<TLStructuredType>> typeIndex,
 			List<ListenerRegistration<ModelListener>> listeners, TLStructuredType touchedType) {
-		if (touchedType.getModelKind() == ModelKind.CLASS) {
-			TLClass touchedClass = (TLClass) touchedType;
-			Set<TLClass> superClasses = TLModelUtil.getReflexiveTransitiveGeneralizations(touchedClass);
-			superClasses.forEach(superClass -> addDirect(typeIndex, listeners, superClass, touchedType));
-		} else {
-			addDirect(typeIndex, listeners, touchedType, touchedType);
+		for (TLStructuredType generalization : ModelChangeSummary.typesObserving(touchedType)) {
+			addDirect(typeIndex, listeners, generalization, touchedType);
 		}
 	}
 

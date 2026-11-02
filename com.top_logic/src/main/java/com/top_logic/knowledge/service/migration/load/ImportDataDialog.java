@@ -8,61 +8,16 @@ package com.top_logic.knowledge.service.migration.load;
 import static com.top_logic.layout.DisplayDimension.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-
-import javax.xml.stream.XMLStreamException;
+import java.util.function.Function;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.AbortExecutionException;
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
-import com.top_logic.basic.Settings;
-import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
-import com.top_logic.basic.module.ModuleUtil;
-import com.top_logic.basic.module.RestartException;
-import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.sql.ConnectionPool;
-import com.top_logic.basic.sql.ConnectionPoolRegistry;
-import com.top_logic.basic.sql.DBHelper;
-import com.top_logic.basic.sql.Oracle12Helper;
-import com.top_logic.basic.sql.OracleHelper;
-import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.thread.InContext;
-import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
-import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.migration.DumpReader;
-import com.top_logic.knowledge.service.db2.migration.sql.InsertWriter;
-import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
-import com.top_logic.knowledge.service.db2.migration.sql.SQLLoaderInsertWriter;
-import com.top_logic.knowledge.service.migration.DataMigration;
-import com.top_logic.knowledge.service.migration.MigrationInfo;
-import com.top_logic.knowledge.service.migration.MigrationUtil;
-import com.top_logic.knowledge.service.migration.Version;
-import com.top_logic.knowledge.service.migration.VersionDescriptor;
-import com.top_logic.knowledge.service.migration.dump.KBDumpHandler;
+import com.top_logic.knowledge.service.maintenance.PersistencyMaintenance;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ResPrefix;
@@ -82,7 +37,6 @@ import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.layout.messagebox.ProgressDialog;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.Zipper;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -98,7 +52,7 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 
 	private StringField _migrationField;
 
-	private DataMigration _migration;
+	private KBLoad _load;
 
 	private CommandModel _startButton;
 
@@ -147,61 +101,30 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 		if (data == null) {
 			_versionField.setValue(null);
 			_migrationField.setValue(null);
-			_migration = null;
+			_load = null;
 			disableButtons();
 			return true;
 		}
 
-		try (InputStream in = input(data)) {
-			try (DumpReader reader = new DumpReader(null, in)) {
-				VersionDescriptor dataVersion = reader.getVersion();
-				MigrationInfo migrationInfo = dataVersion == null ? MigrationInfo.NO_MIGRATION
-					: MigrationUtil.buildMigration(log(), dataVersion);
+		KBLoad load;
+		try {
+			load = KBLoad.open(log(), data);
+		} catch (TopLogicException ex) {
+			throw new CheckException(Resources.getInstance().getString(ex.getErrorKey()));
+		}
+		_load = load;
 
-				if (dataVersion == null) {
-					_versionField.setValue(Resources.getInstance().getString(I18NConstants.NO_DATA_VERSION));
-				} else {
-					StringBuilder versionBuffer = new StringBuilder();
-					for (Version moduleVersion : dataVersion.getModuleVersions().values()) {
-						versionBuffer.append(moduleVersion.getModule() + ": " + moduleVersion.getName() + "\n");
-					}
-					_versionField.setValue(versionBuffer.toString());
-				}
+		if (load.hasDataVersion()) {
+			_versionField.setValue(KBLoad.toText(load.getDataVersions()));
+		} else {
+			_versionField.setValue(Resources.getInstance().getString(I18NConstants.NO_DATA_VERSION));
+		}
 
-				if (migrationInfo.isDownGrade()) {
-					throw new CheckException(
-						Resources.getInstance().getString(I18NConstants.ERROR_NO_DOWNGRADE_POSSIBLE));
-				} else {
-					_migration = new DataMigration(migrationInfo);
-					_migration.build(log());
-
-					if (!_migration.getProcessors().isEmpty()) {
-						throw new CheckException(
-							Resources.getInstance().getString(I18NConstants.ERROR_SQL_PREPROCESSING_REQUIRED));
-					}
-
-					if (dataVersion != null) {
-						StringBuilder migrationBuffer = new StringBuilder();
-						Map<String, Version> newVersion = new HashMap<>(_migration.getNewVersion());
-						for (Version moduleVersion : newVersion.values()) {
-							migrationBuffer.append(moduleVersion.getModule() + ": " + moduleVersion.getName() + "\n");
-						}
-						if (migrationBuffer.length() == 0) {
-							_migrationField.setValue(Resources.getInstance().getString(I18NConstants.NO_MIGRATIONS));
-						} else {
-							_migrationField.setValue(migrationBuffer.toString());
-						}
-					} else {
-						_migrationField.setValue(Resources.getInstance().getString(I18NConstants.NO_MIGRATIONS));
-					}
-				}
-			}
-		} catch (AbortExecutionException ex) {
-			throw ex;
-		} catch (ConfigurationException | XMLStreamException | IOException ex) {
-			throw new CheckException(
-					Resources.getInstance()
-						.getString(I18NConstants.ERROR_EXTRACTING_DATA_VERSION__MESSAGE.fill(ex.getMessage())));
+		String migrated = KBLoad.toText(load.getMigratedVersions());
+		if (migrated.isEmpty()) {
+			_migrationField.setValue(Resources.getInstance().getString(I18NConstants.NO_MIGRATIONS));
+		} else {
+			_migrationField.setValue(migrated);
 		}
 
 		_startButton.setExecutable();
@@ -238,83 +161,44 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 	}
 
 	private HandlerResult startImport(DisplayContext context) {
+		PersistencyMaintenance.requirePreconditions();
 		return createImportProgress().open(context);
 	}
 
 	private HandlerResult doDownloadSql(DisplayContext context) {
-		return createDownloadSqlProgress(getDumpData()).open(context);
-	}
-
-	private ProgressDialog createDownloadSqlProgress(BinaryData dumpData) {
-		DataMigration migration = _migration;
-
-		return new ProgressDialog(I18NConstants.DOWNLOAD_SQL, px(400), px(300)) {
-			private File _sqlFile;
-
-			@Override
-			public void run(I18NLog log) {
-				KnowledgeBaseConfiguration kbConfig = loadKbConfig();
-				ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
-
-				_sqlFile = createSqlFile(log.asLog(), kbConfig, pool, dumpData, migration);
-			}
-
-			@Override
-			public void handleCompleted(DisplayContext context) {
-				context.getWindowScope().deliverContent(
-					BinaryDataFactory.createBinaryData(_sqlFile, "application/binary", baseName(dumpData) + ".sql.gz"));
-			}
-		};
+		return createDownloadProgress(_load::createSqlScript).open(context);
 	}
 
 	private HandlerResult doDownloadLoaderZip(DisplayContext context) {
-		return createDownloadLoaderProgress().open(context);
+		return createDownloadProgress(_load::createLoaderScript).open(context);
 	}
 
-	private ProgressDialog createDownloadLoaderProgress() {
-		String baseName = baseName(getDumpData()) + "-loader";
-		DataMigration migration = _migration;
-
+	private ProgressDialog createDownloadProgress(Function<Log, BinaryData> conversion) {
 		return new ProgressDialog(I18NConstants.DOWNLOAD_SQL, px(400), px(300)) {
-			private File _loaderZip;
+			private BinaryData _result;
 
 			@Override
 			public void run(I18NLog log) {
-				KnowledgeBaseConfiguration kbConfig = loadKbConfig();
-				ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
-
-				_loaderZip = createLoaderZip(log.asLog(), kbConfig, pool, getDumpData(), migration, baseName);
+				_result = conversion.apply(log.asLog());
 			}
 
 			@Override
 			public void handleCompleted(DisplayContext context) {
-				context.getWindowScope().deliverContent(
-					BinaryDataFactory.createBinaryData(_loaderZip, "application/binary", baseName + ".zip"));
+				context.getWindowScope().deliverContent(_result);
 			}
 		};
-	}
-
-	static String baseName(BinaryData data) {
-		return removeExt(removeExt(data.getName(), KBDumpHandler.GZ_EXT), KBDumpHandler.DUMP_EXT);
-	}
-
-	private static String removeExt(String name, String ext) {
-		return name.endsWith(ext) ? name.substring(0, name.length() - ext.length()) : name;
 	}
 
 	private ProgressDialog createImportProgress() {
 		LogProtocol importLog = log();
-		KnowledgeBaseConfiguration kbConfig = loadKbConfig();
-		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
-		BinaryData dumpData = getDumpData();
-		DataMigration migration = _migration;
+		KBLoad load = _load;
 
 		return new ProgressDialog(I18NConstants.DOWNLOAD_SQL, px(400), px(300)) {
-			private File _sqlFile;
+			private BinaryData _sqlScript;
 
 			@Override
 			protected void run(I18NLog log) throws AbortExecutionException {
-				_sqlFile = createSqlFile(log.asLog(), kbConfig, pool, dumpData, migration);
+				_sqlScript = load.createSqlScript(log.asLog());
 			}
 
 			@Override
@@ -330,9 +214,7 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 			// spotbugs.
 			private HandlerResult doImport(DisplayContext context) {
 				// Load in the background.
-				SchedulerService.getInstance().schedule(
-					withSystemContext(() -> loadSql(importLog, kbConfig, pool, migration, _sqlFile)),
-					2, TimeUnit.SECONDS);
+				KBLoad.replaceDatabase(importLog, _sqlScript);
 
 				// Direct logout to prevent errors from being transported back to the UI.
 				context.asRequest().getSession(false).invalidate();
@@ -342,150 +224,12 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 		};
 	}
 
-	/**
-	 * Wraps the given callback into a {@link Runnable} that sets up a system context for the
-	 * execution.
-	 */
-	protected static Runnable withSystemContext(InContext runnable) {
-		return () -> {
-			ThreadContext.inSystemContext(ImportDataDialog.class, runnable);
-		};
-	}
-
 	final BinaryData getDumpData() {
 		return _dumpField.getDataItem();
 	}
 
-	static File createSqlFile(Log log, KnowledgeBaseConfiguration kbConfig, ConnectionPool pool,
-			BinaryData data, DataMigration migration) {
-		log.info("Creating import SQL.");
-		try {
-			DBHelper sqlDialect = pool.getSQLDialect();
-			File sqlFile = File.createTempFile("data", ".sql.gz", Settings.getInstance().getTempDir());
-			try (InsertWriter insertWriter = createSqlWriter(sqlDialect, sqlFile)) {
-				processDumpData(log, kbConfig, pool, data, migration, insertWriter);
-			}
-			log.info("SQL generated.");
-			return sqlFile;
-		} catch (AbortExecutionException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED, ex);
-		}
-	}
-
-	static File createLoaderZip(Log log, KnowledgeBaseConfiguration kbConfig, ConnectionPool pool,
-			BinaryData data, DataMigration migration, String baseName) {
-		log.info("Creating SQL loader scripts.");
-		try {
-			DBHelper sqlDialect = pool.getSQLDialect();
-			if (!(sqlDialect instanceof OracleHelper)) {
-				// For "cross-compiling" application data.
-				sqlDialect = TypedConfigUtil.createInstance(Oracle12Helper.Config.class);
-			}
-			File loaderDir = File.createTempFile(baseName, "", Settings.getInstance().getTempDir());
-
-			// Allow creating directory with tmp file name.
-			loaderDir.delete();
-			loaderDir.mkdir();
-
-			InsertWriter insertWriter = new SQLLoaderInsertWriter(sqlDialect, loaderDir);
-			processDumpData(log, kbConfig, pool, data, migration, insertWriter);
-
-			log.info("Zipping loader scripts.");
-			File loaderFile = File.createTempFile(baseName, ".zip", Settings.getInstance().getTempDir());
-			try (Zipper zip = new Zipper(loaderFile)) {
-				zip.addFolder(loaderDir, baseName);
-			}
-			return loaderFile;
-		} catch (AbortExecutionException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED, ex);
-		}
-	}
-
-	private static void processDumpData(Log log, KnowledgeBaseConfiguration kbConfig, ConnectionPool pool,
-			BinaryData data, DataMigration migration, InsertWriter insertWriter) throws IOException, Exception {
-		try (InputStream in = input(data)) {
-			insertWriter.beginDump();
-			migration.createInsertSQL(log, kbConfig, pool, 1L, in, insertWriter);
-			insertWriter.endDump();
-		}
-	}
-
-	private static InsertWriter createSqlWriter(DBHelper sqlDialect, File sqlFile) throws IOException {
-		return SQLDumper.createInsertWriter(sqlDialect, SQLDumper.DEFAULT_INSERT_CHUNK_SIZE, writer(sqlFile));
-	}
-
-	static void loadSql(LogProtocol log, KnowledgeBaseConfiguration kbConfig, ConnectionPool pool,
-			DataMigration migration, File sqlFile) {
-		log.info("Shutting down system for import.");
-
-		try {
-			ModuleUtil.INSTANCE.restart(KnowledgeBaseFactory.Module.INSTANCE, () -> {
-				log.info("Starting import.");
-
-				try (Reader in = reader(sqlFile)) {
-					PooledConnection connection = pool.borrowWriteConnection();
-					try {
-						migration.dropAndRecreateDatabase(connection, kbConfig, in);
-					} finally {
-						pool.releaseWriteConnection(connection);
-					}
-					log.info("Import finished successfully.");
-				} catch (Exception ex) {
-					log.error("Data import reported errors, trying to restart anyway.", ex);
-				}
-
-				log.info("Restarting services.");
-			});
-			log.info("System up and running with loaded data.");
-		} catch (RestartException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_RESTART_FAILED, ex);
-		}
-	}
-
 	private LogProtocol log() {
 		return new LogProtocol(ImportDataDialog.class);
-	}
-
-	static final KnowledgeBaseConfiguration loadKbConfig() {
-		try {
-			KnowledgeBaseFactoryConfig serviceConfiguration =
-				(KnowledgeBaseFactoryConfig) ApplicationConfig.getInstance()
-					.getServiceConfiguration(KnowledgeBaseFactory.class);
-			KnowledgeBaseConfiguration kbConfig =
-				serviceConfiguration.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
-			return kbConfig;
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
-	}
-
-	private static Reader reader(File sqlFile) throws IOException {
-		return new InputStreamReader(new GZIPInputStream(new FileInputStream(sqlFile)), "utf-8");
-	}
-
-	private static Writer writer(File sqlFile) throws IOException {
-		return new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(sqlFile)), "utf-8");
-	}
-
-	private static InputStream input(BinaryData data) throws IOException {
-		InputStream in = data.getStream();
-		if (data.getName().endsWith(".gz")) {
-			return gunzip(in);
-		}
-		return in;
-	}
-
-	private static InputStream gunzip(InputStream in) throws IOException {
-		try {
-			return new GZIPInputStream(in);
-		} catch (Throwable ex) {
-			in.close();
-			throw ex;
-		}
 	}
 
 }

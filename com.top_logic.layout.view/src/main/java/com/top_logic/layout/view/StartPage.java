@@ -12,16 +12,16 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
  * The page a user is taken to when they enter the application without naming one.
  *
  * <p>
- * A page of the React UI is identified by its route - the part of the URL after the window, which
- * the routing participants of a view interpret - so remembering a start page means remembering a
- * route. Entering the application at a URL that does carry a route asks for that page instead, and
- * the start page then does not apply: a link a user follows or a bookmark they open takes them
- * where it points.
+ * A page of the React UI is identified by the part of its URL after the window: the route the
+ * routing participants of a view interpret, preceded by the view file of an entry point other than
+ * the default view - so remembering a start page means remembering that URL. Entering the
+ * application at a URL that does name a page asks for that page instead, and the start page then
+ * does not apply: a link a user follows or a bookmark they open takes them where it points.
  * </p>
  *
  * <p>
- * Which {@code .view.xml} an application serves is a different question, answered by its
- * configuration for everyone alike. A start page is one user's choice of where to begin inside it.
+ * Which {@code .view.xml} files an application offers is a different question, answered by its
+ * configuration for everyone alike. A start page is one user's choice of where to begin among them.
  * </p>
  *
  * @see com.top_logic.layout.view.command.RememberStartPageAction
@@ -29,12 +29,12 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 public class StartPage {
 
 	/**
-	 * {@link PersonalConfiguration} key storing the route the user starts on.
+	 * {@link PersonalConfiguration} key storing the URL of the page the user starts on.
 	 */
 	public static final String PERSONAL_START_PAGE_KEY = "react.startPage";
 
 	/**
-	 * The route the current user starts on, or {@code null} while they have chosen none.
+	 * The URL of the page the current user starts on, or {@code null} while they have chosen none.
 	 */
 	public static String get() {
 		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();

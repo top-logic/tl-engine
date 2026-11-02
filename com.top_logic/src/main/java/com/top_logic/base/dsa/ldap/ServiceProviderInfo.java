@@ -10,10 +10,14 @@ import java.util.Hashtable;
 import javax.naming.Context;
 
 import com.top_logic.base.security.util.CryptSupport;
-import com.top_logic.basic.Logger;
+import com.top_logic.base.security.util.CryptSupportSecretSourceFormat;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.SecretSource;
 
 /**
  * Configuration object for instantiating {@link LDAPAccessService}
@@ -35,9 +39,35 @@ public class ServiceProviderInfo extends Hashtable {
 		@StringDefault(DEFAULT_CONTEXT_FACTORY)
 		String getContextFactory();
 
-		String getMasterCredential();
+		/**
+		 * @see #getMasterCredential()
+		 */
+		String MASTER_CREDENTIAL = "master-credential";
 
-		/* Note: This value is expected to be encoded using CryptSupport. */
+		/**
+		 * The password of the master account used to access the directory.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the password by its secret name, so that the password is
+		 * not part of the configuration, e.g. <code>&lt;master-credential
+		 * name="ldap_credential"/&gt;</code>, which the default secret store reads from the
+		 * environment variable of that name holding the plain password. An attribute value is the
+		 * password encoded by {@link CryptSupport}, or the password in plain text.
+		 * </p>
+		 * 
+		 * <p>
+		 * The password is read each time a connection with the master account is opened.
+		 * </p>
+		 */
+		@Name(MASTER_CREDENTIAL)
+		@Format(CryptSupportSecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getMasterCredential();
+
+		/**
+		 * @see #getMasterCredential()
+		 */
+		void setMasterCredential(PolymorphicConfiguration<? extends SecretSource> value);
+
 		String getMasterPrincipal();
 
 		String getReferral();
@@ -104,10 +134,18 @@ public class ServiceProviderInfo extends Hashtable {
 		super(aTemplate);
 	}
 	
-	public static ServiceProviderInfo createFromConfig(String deviceId, Config providerConfig) {
+	/**
+	 * Creates the {@link ServiceProviderInfo} described by the given configuration.
+	 * 
+	 * <p>
+	 * The result contains no {@link #KEY_CREDENTIALS credentials}, since the
+	 * {@link Config#getMasterCredential() master credential} is read each time a connection is
+	 * opened, see {@link #withCredentials(String)}.
+	 * </p>
+	 */
+	public static ServiceProviderInfo createFromConfig(Config providerConfig) {
 		String searchBaseDN = providerConfig.getBaseDn();
 		String masterPrincipal = providerConfig.getMasterPrincipal();
-		String masterCredential = decodeCredentials(providerConfig.getMasterCredential(), deviceId);
 		String url = providerConfig.getProviderUrl();
 		String authType = providerConfig.getAuthenticationType();
 		String contextFactory = providerConfig.getContextFactory();
@@ -115,7 +153,9 @@ public class ServiceProviderInfo extends Hashtable {
 		String sslType = providerConfig.getSecurityProtocolType();
 
 		ServiceProviderInfo ldapAccessCfg =
-			new ServiceProviderInfo(url, contextFactory, authType, masterPrincipal, masterCredential, searchBaseDN);
+			new ServiceProviderInfo(url, contextFactory, authType, masterPrincipal, StringServices.EMPTY_STRING,
+				searchBaseDN);
+		ldapAccessCfg.remove(KEY_CREDENTIALS);
 		if (!StringServices.isEmpty(referral)) {
 			ldapAccessCfg.put(Context.REFERRAL, referral);
 		}
@@ -128,27 +168,13 @@ public class ServiceProviderInfo extends Hashtable {
 	}
 
 	/**
-	 * HelperMethod Decodes the given String if encoded, returns it unchanged if not
-	 * 
-	 * @param encryptedPassword
-	 *        String to be decoded
-	 * @return the decoded string
+	 * A copy of this {@link ServiceProviderInfo} with the given {@link #KEY_CREDENTIALS
+	 * credentials}.
 	 */
-	private static String decodeCredentials(String encryptedPassword, String aDeviceID) {
-		if (encryptedPassword == null) {
-			Logger.warn("Given Credentials for LDAP Access were empty for Device " + aDeviceID, LDAPAccessService.class);
-			return "";
-		} else {
-			try {
-				return CryptSupport.getInstance().decodeString(encryptedPassword);
-			} catch (NumberFormatException nfe) {
-				Logger.debug("Given credentials were given plain / unencrypted", nfe, LDAPAccessService.class);
-				return encryptedPassword;
-			} catch (Exception e) {
-				Logger.error("Unable to decode credentials from what was given", e, LDAPAccessService.class);
-				return encryptedPassword;
-			}
-		}
+	public ServiceProviderInfo withCredentials(String credentials) {
+		ServiceProviderInfo result = new ServiceProviderInfo(this);
+		result.put(KEY_CREDENTIALS, credentials);
+		return result;
 	}
 
 }

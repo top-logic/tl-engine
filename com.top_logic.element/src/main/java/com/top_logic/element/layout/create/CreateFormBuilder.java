@@ -122,7 +122,7 @@ public class CreateFormBuilder extends ConfiguredDynamicFormBuilder {
 		 */
 		@Mandatory
 		@Name(TYPE_OPTIONS)
-		PolymorphicConfiguration<CreateTypeOptions> getTypeOptions();
+		PolymorphicConfiguration<? extends CreateTypeOptions> getTypeOptions();
 	}
 
 	private final CreateTypeOptions _typeOptions;

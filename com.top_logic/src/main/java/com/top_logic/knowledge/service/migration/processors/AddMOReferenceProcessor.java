@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
@@ -96,10 +97,11 @@ public class AddMOReferenceProcessor extends AddMOAttributeProcessor {
 				KnowledgeReferenceStorageImpl.NULL_REPLACEMENT);
 		}
 
-		createIndex(log, processor, table, tableName, reference);
+		createIndex(log, context.getSQLDialect(), processor, table, tableName, reference);
 	}
 
-	private void createIndex(Log log, SQLProcessor processor, MOClass table, String tableName, MOReference reference) {
+	private void createIndex(Log log, DBHelper sqlDialect, SQLProcessor processor, MOClass table,
+			String tableName, MOReference reference) {
 		MOIndex moIndex = reference.getIndex();
 		if (moIndex == null) {
 			return;
@@ -109,7 +111,7 @@ public class AddMOReferenceProcessor extends AddMOAttributeProcessor {
 			.stream()
 			.map(DBAttribute::getDBName)
 			.toArray(String[]::new);
-		String indexName = index.getDBName();
+		String indexName = sqlDialect.qualifiedName(tableName, index.getDBName());
 		try {
 			processor.execute(
 				addIndex(table(tableName), indexName, index.isUnique(), indexColumns));

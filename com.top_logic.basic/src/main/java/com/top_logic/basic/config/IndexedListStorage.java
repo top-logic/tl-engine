@@ -116,8 +116,13 @@ class IndexedListStorage<K, V extends ConfigurationItem> extends AbstractListSto
 
 	@Override
 	void remove(K reference) {
-		Node<V> node = referencedNode(reference);
+		if (!checkNamedKey(reference)) {
+			return;
+		}
+		Node<V> node = _nodeByKey.get(reference);
 		if (node == null) {
+			_protocol.info("Ignored removal of entry '" + reference + "' from property '" + _keyProperty
+				+ "', the list contains no such entry, " + possibleValues(), Log.WARN);
 			return;
 		}
 		unlink(node);
@@ -264,19 +269,35 @@ class IndexedListStorage<K, V extends ConfigurationItem> extends AbstractListSto
 	 * error.
 	 */
 	private Node<V> referencedNode(Object reference) {
-		if (ConfigUtil.isAnonymousKey(reference)) {
-			_protocol.error("A reference to an entry of property '" + _keyProperty
-				+ "' must name a key, anonymous entries cannot be referenced.");
+		if (!checkNamedKey(reference)) {
 			return null;
 		}
 		Node<V> node = _nodeByKey.get(reference);
 		if (node == null) {
 			_protocol.error(
-				"No corresponding ConfigurationItem found for reference '" + reference + "', possible values are: "
-					+ _nodeByKey.keySet().stream().map(Objects::toString).sorted()
-						.collect(Collectors.joining(", ")));
+				"No corresponding ConfigurationItem found for reference '" + reference + "', " + possibleValues());
 		}
 		return node;
+	}
+
+	/**
+	 * Whether the given reference names a key, reports an error for an anonymous key.
+	 */
+	private boolean checkNamedKey(Object reference) {
+		if (ConfigUtil.isAnonymousKey(reference)) {
+			_protocol.error("A reference to an entry of property '" + _keyProperty
+				+ "' must name a key, anonymous entries cannot be referenced.");
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Message part listing the key values of the entries in this list.
+	 */
+	private String possibleValues() {
+		return "possible values are: "
+			+ _nodeByKey.keySet().stream().map(Objects::toString).sorted().collect(Collectors.joining(", "));
 	}
 
 	/**

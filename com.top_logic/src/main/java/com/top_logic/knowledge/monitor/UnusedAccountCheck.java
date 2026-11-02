@@ -5,11 +5,8 @@
  */
 package com.top_logic.knowledge.monitor;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,16 +22,10 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.basic.sql.DBHelper;
-import com.top_logic.dob.attr.MOAttributeImpl;
-import com.top_logic.dob.meta.MOClassImpl;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.util.db.DBUtil;
-import com.top_logic.util.db.ResultExtractor;
 
 /**
  * Helper class checking for (and deleting) unused accounts.
@@ -169,40 +160,11 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 	 */
 	private Map<String, Date> getLatestLogins() {
 		try {
-			return latestLoginFromDatabase();
+			return UserSession.getLastLogins(_kb);
 		} catch (Exception e) {
 			Logger.error("Unable to query last logins for users.", e, UnusedAccountCheck.class);
 			return Collections.emptyMap();
 		}
-	}
-
-	private Map<String, Date> latestLoginFromDatabase() throws SQLException {
-		DBHelper dialect = KBUtils.getConnectionPool(_kb).getSQLDialect();
-		MOClassImpl moClass = (MOClassImpl) _kb.getMORepository().getMetaObject(UserSession.OBJECT_NAME);
-		MOAttributeImpl nameAttr = (MOAttributeImpl) moClass.getAttribute(UserSession.NAME_ATTRIBUTE);
-		MOAttributeImpl loginAttr = (MOAttributeImpl) moClass.getAttribute(UserSession.LOGIN);
-		StringBuilder sb = new StringBuilder();
-		sb.append("SELECT ");
-		sb.append(dialect.columnRef(nameAttr.getDBName()));
-		sb.append(", MAX(");
-		sb.append(dialect.columnRef(loginAttr.getDBName()));
-		sb.append(") FROM ");
-		sb.append(dialect.tableRef(moClass.getDBName()));
-		sb.append(" GROUP BY ");
-		sb.append(dialect.columnRef(nameAttr.getDBName()));
-		// IGNORE FindBugs(SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING): Dynamic
-		// SQL construction is necessary for DBMS abstraction. No user-input is passed to the
-		// statement source.
-		return DBUtil.executeQuery(sb.toString(), new ResultExtractor<Map<String, Date>>() {
-			@Override
-			public Map<String, Date> extractResult(ResultSet result) throws SQLException {
-				Map<String, Date> resultMap = new HashMap<>();
-				while (result.next()) {
-					resultMap.put(result.getString(1), dialect.getDate(result, 2));
-				}
-				return resultMap;
-			}
-		});
 	}
 
 	/**

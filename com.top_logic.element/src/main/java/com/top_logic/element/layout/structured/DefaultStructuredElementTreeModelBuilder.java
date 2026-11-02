@@ -64,7 +64,7 @@ public class DefaultStructuredElementTreeModelBuilder extends AbstractTreeModelB
 		 */
 		@Name(TREE_FILTERS_ATTRIBUTE)
 		@DefaultContainer
-		List<PolymorphicConfiguration<Filter<? super StructuredElement>>> getTreeFilters();
+		List<PolymorphicConfiguration<? extends Filter<? super StructuredElement>>> getTreeFilters();
 
 	}
 	
@@ -82,9 +82,9 @@ public class DefaultStructuredElementTreeModelBuilder extends AbstractTreeModelB
 	
 	private static Filter<? super StructuredElement> concat(InstantiationContext context,
 			Filter<? super StructuredElement> start,
-			List<PolymorphicConfiguration<Filter<? super StructuredElement>>> treeFilters) {
+			List<PolymorphicConfiguration<? extends Filter<? super StructuredElement>>> treeFilters) {
 		Filter<? super StructuredElement> result = start;
-		for (PolymorphicConfiguration<Filter<? super StructuredElement>> filter : treeFilters) {
+		for (PolymorphicConfiguration<? extends Filter<? super StructuredElement>> filter : treeFilters) {
 			result = FilterFactory.and(start, context.getInstance(filter));
 		}
 		return result;

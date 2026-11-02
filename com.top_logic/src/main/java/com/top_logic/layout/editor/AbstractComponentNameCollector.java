@@ -36,6 +36,11 @@ public abstract class AbstractComponentNameCollector extends Function0<OptionMod
 
 	/**
 	 * The component whose configuration is currently edited.
+	 * 
+	 * <p>
+	 * <code>null</code>, if the edited configuration does not belong to a component, e.g. the
+	 * configuration of a command in the configuration of a service.
+	 * </p>
 	 */
 	protected LayoutComponent getContextComponent() {
 		return _contextComponent;
@@ -52,7 +57,10 @@ public abstract class AbstractComponentNameCollector extends Function0<OptionMod
 	public OptionModel<ComponentName> apply() {
 		List<LayoutComponent> components = new ArrayList<>();
 
-		collect(components);
+		if (getContextComponent() != null) {
+			// Without a component, there is no component tree to choose from.
+			collect(components);
+		}
 
 		List<ComponentName> componentNames = components.stream()
 			.map(LayoutComponent::getName)

@@ -12,7 +12,6 @@ import java.util.Map;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -40,8 +39,9 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.util.Resources;
 
 /**
- * {@link AbstractCommandHandler} that stores the {@link HistoryManager#getLastRevision() last
- * revision} into a global variable and creates an action for it.
+ * {@link AbstractCommandHandler} that records an action storing the
+ * {@link LastRevisionNamingScheme last revision committed by the user executing the script} into
+ * a global variable.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

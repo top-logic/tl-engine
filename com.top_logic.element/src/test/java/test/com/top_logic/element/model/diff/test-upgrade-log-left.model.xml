@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m0">
+		<datatype name="D" db_type="string" kind="String">
+			<storage-mapping class="com.top_logic.element.model.i18n.I18NAttributeStorageMapping"/>
+		</datatype>
+
+		<interface name="I"/>
+
+		<class name="A">
+			<attributes>
+				<reference name="r" type="B"/>
+				<reference name="s" type="B"/>
+			</attributes>
+		</class>
+
+		<class name="B">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+		</class>
+
+		<class name="C"/>
+	</module>
+</model>

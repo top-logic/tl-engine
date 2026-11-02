@@ -2,7 +2,7 @@
 
 ## Code Style
 
-- Use Java 17 features including pattern matching for instanceof
+- Use Java 21 features including pattern matching for instanceof
 - Avoid unnecessary casts when the type system can infer types
 - Use TLObject instead of Wrapper when sufficient
 - Package-private methods (no modifier) for utilities that need testing

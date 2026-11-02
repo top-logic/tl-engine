@@ -41,6 +41,8 @@ public abstract class SidebarItem {
 
 	private final String _id;
 
+	private boolean _withheld;
+
 	/**
 	 * Creates a new {@link SidebarItem}.
 	 *
@@ -70,7 +72,34 @@ public abstract class SidebarItem {
 		Map<String, Object> map = new HashMap<>();
 		map.put(ID, _id);
 		map.put(TYPE, getType());
+		if (_withheld) {
+			map.put(HIDDEN, Boolean.TRUE);
+		}
 		return map;
+	}
+
+	/**
+	 * Whether this item is currently not drawn, e.g. because the current user may not see it for
+	 * the object displayed.
+	 *
+	 * <p>
+	 * A withheld group withholds everything in it. A withheld navigation item that is open stays
+	 * open: only its entry is not drawn.
+	 * </p>
+	 *
+	 * @see ReactSidebarControl#setItemWithheld(String, boolean)
+	 */
+	public boolean isWithheld() {
+		return _withheld;
+	}
+
+	/**
+	 * Sets whether this item is currently not drawn.
+	 *
+	 * @see #isWithheld()
+	 */
+	public void setWithheld(boolean withheld) {
+		_withheld = withheld;
 	}
 
 }

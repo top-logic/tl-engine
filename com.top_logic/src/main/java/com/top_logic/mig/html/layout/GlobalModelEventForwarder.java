@@ -19,7 +19,6 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.meta.MORepository;
-import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -104,8 +103,7 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	 */
 	@CalledByReflection
 	public GlobalModelEventForwarder(InstantiationContext context, PolymorphicConfiguration<?> config) {
-		this(PersistencyLayer.getKnowledgeBase(), PersistencyLayer.getKnowledgeBase().getSessionUpdateChain(),
-			configuredAssociationRelevance());
+		this(configuredSettings(), PersistencyLayer.getKnowledgeBase().getSessionUpdateChain());
 	}
 	
 	/**
@@ -120,11 +118,26 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	 *        means {@link Boolean#TRUE}.
 	 */
 	public GlobalModelEventForwarder(KnowledgeBase kb, UpdateChain updateChain, AssociationEndRelevance relevance) {
-		super(new ModelEventSettings(kb,
-			BasicTypes.getObjectType(kb.getMORepository()),
-			BasicTypes.getKnowledgeAssociationType(kb.getMORepository()),
-			relevance));
+		this(ModelEventSettings.forKnowledgeBase(kb, relevance), updateChain);
+	}
+
+	private GlobalModelEventForwarder(ModelEventSettings settings, UpdateChain updateChain) {
+		super(settings);
 		_updateChain = updateChain;
+	}
+
+	/**
+	 * The {@link ModelEventSettings} of the {@link PersistencyLayer#getKnowledgeBase() application
+	 * knowledge base} with the configured {@link Config#getLinkRelevance() link relevance}.
+	 * 
+	 * <p>
+	 * These are the settings of every {@link GlobalModelEventForwarder} created from configuration
+	 * or by {@link #createForWindow()}.
+	 * </p>
+	 */
+	public static ModelEventSettings configuredSettings() {
+		return ModelEventSettings.forKnowledgeBase(PersistencyLayer.getKnowledgeBase(),
+			configuredAssociationRelevance());
 	}
 
 	private static AssociationEndRelevance configuredAssociationRelevance() {
@@ -147,9 +160,8 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 	 * </p>
 	 */
 	public static GlobalModelEventForwarder createForWindow() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		return new GlobalModelEventForwarder(
-			kb, kb.getSessionUpdateChain(), configuredAssociationRelevance());
+		ModelEventSettings settings = configuredSettings();
+		return new GlobalModelEventForwarder(settings, settings.kb().getSessionUpdateChain());
 	}
 
 	/**

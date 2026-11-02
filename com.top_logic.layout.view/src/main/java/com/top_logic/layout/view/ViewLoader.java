@@ -29,7 +29,9 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.module.ServiceDependency;
 import com.top_logic.basic.xml.XMLStreamUtil;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Shared utility for loading and caching parsed {@link ViewElement} instances and their
@@ -78,7 +80,39 @@ public class ViewLoader {
 
 	private static final ConcurrentHashMap<String, CachedConfig> CONFIG_CACHE = new ConcurrentHashMap<>();
 
+	/**
+	 * The instantiated views by full file path.
+	 *
+	 * <p>
+	 * An instantiated view holds the parts of the application model its scripts refer to, e.g. the
+	 * type of a type literal, which are persistent objects of the {@link ModelService} running when
+	 * the view was instantiated. When that service stops, e.g. because the persistency layer is
+	 * restarted, the cache is cleared, so that no view keeps reading and writing the objects of a
+	 * knowledge base that is no longer in use.
+	 * </p>
+	 */
 	private static final ConcurrentHashMap<String, CachedView> CACHE = new ConcurrentHashMap<>();
+
+	static {
+		ModelService.Module.INSTANCE.addServiceDependency(new ServiceDependency<ModelService>() {
+			@Override
+			public void onConnect(ModelService impl) {
+				// Views are instantiated on demand.
+			}
+
+			@Override
+			public void onDisconnect(ModelService oldInstance) {
+				CACHE.clear();
+			}
+		});
+	}
+
+	/**
+	 * How often the cached configuration of a view file was discarded, by full file path.
+	 *
+	 * @see #discardCachedConfig(String)
+	 */
+	private static final ConcurrentHashMap<String, Long> DISCARDS = new ConcurrentHashMap<>();
 
 	/**
 	 * Retrieves a cached {@link ViewElement.Config} or loads and caches it from the view XML file.
@@ -106,6 +140,27 @@ public class ViewLoader {
 		ViewElement.Config config = loadConfig(viewPath);
 		CONFIG_CACHE.put(viewPath, new CachedConfig(config, currentModified));
 		return config;
+	}
+
+	/**
+	 * Drops the cached configuration of the given view file: the next
+	 * {@link #getOrLoadConfig(String)} reads the file anew.
+	 *
+	 * <p>
+	 * The configuration {@link #getOrLoadConfig(String)} answers is shared, and a tool editing it in
+	 * place (e.g. the View Designer) leaves its unsaved modifications in the cache. Discarding them
+	 * drops the {@link ViewElement} instantiated from the configuration as well, and changes the
+	 * {@link #modificationSignature(String) modification signature} of the file, so that every
+	 * other cache deriving from the file is invalidated like after a write of it.
+	 * </p>
+	 *
+	 * @param viewPath
+	 *        Full path to the view file (e.g. {@code /WEB-INF/views/app.view.xml}).
+	 */
+	public static void discardCachedConfig(String viewPath) {
+		DISCARDS.merge(viewPath, 1L, Long::sum);
+		CONFIG_CACHE.remove(viewPath);
+		CACHE.remove(viewPath);
 	}
 
 	/**
@@ -310,11 +365,12 @@ public class ViewLoader {
 	 *
 	 * @param viewPath
 	 *        Full path to the view file, as {@link #fullPath(String)} produces it.
-	 * @return The signature, changing whenever any copy of the file is written.
+	 * @return The signature, changing whenever any copy of the file is written, and whenever its
+	 *         cached configuration is {@link #discardCachedConfig(String) discarded}.
 	 */
 	public static long modificationSignature(String viewPath) {
 		String name = viewPath.startsWith("/") ? viewPath.substring(1) : viewPath;
-		long signature = 1L;
+		long signature = 1L + DISCARDS.getOrDefault(viewPath, 0L);
 		for (File root : FileManager.getInstance().getIDEPaths()) {
 			File file = new File(root, name);
 			if (file.exists()) {

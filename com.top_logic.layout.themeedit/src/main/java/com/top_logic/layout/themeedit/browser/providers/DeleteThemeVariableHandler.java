@@ -55,6 +55,7 @@ public class DeleteThemeVariableHandler extends AbstractCommandHandler {
 
 		updateThemeSettingsConfigFile(setting,
 			getTopLevelSettingsFile(setting.getThemeId()));
+		FileManager.getInstance().refresh(ThemeUtil.getThemeSettingsPath(setting.getThemeId()));
 
 		table.invalidate();
 

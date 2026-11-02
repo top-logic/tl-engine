@@ -81,7 +81,7 @@ public interface DropTargetByExpressionConfig extends DropSecurityConfig {
 	@Name(POST_CREATE_ACTIONS)
 	@Options(fun = AllInAppImplementations.class)
 	@Label("Post-drop actions")
-	List<PolymorphicConfiguration<PostCreateAction>> getPostCreateActions();
+	List<PolymorphicConfiguration<? extends PostCreateAction>> getPostCreateActions();
 
 	/**
 	 * Function checking whether a drop in the context of a referenced element can be performed.

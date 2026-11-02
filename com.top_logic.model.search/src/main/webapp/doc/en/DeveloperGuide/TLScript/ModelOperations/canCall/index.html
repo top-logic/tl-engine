@@ -7,7 +7,7 @@
 
 <p>Reports whether the currently logged-in user may make the given call of a configured TL-Script function, without making it. Only the arguments of the call are evaluated.</p>
 
-<p>For a privileged script, the security object is computed and the command group is checked on it. A plain configured function may always be called. Typical use: the executability of a command that calls a privileged function.</p>
+<p>For a privileged script, the security object is computed and the command group is checked on it; for a collection of security objects, on every element. <code class="hljs inlineCode">null</code> and an empty collection deny the call. A plain configured function may always be called. Typical use: the executability of a command that calls a privileged function.</p>
 
 <h2>Parameters</h2>
 

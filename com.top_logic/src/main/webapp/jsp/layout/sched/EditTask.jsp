@@ -33,12 +33,10 @@
 
 					<form:cell wholeLine="true">
 						<form:columns count="2">
-							<form:inputCell name="<%=TaskAccessor.IS_ENABLED%>"/>
+							<form:inputCell name="<%=TaskAccessor.ACTIVE%>"/>
 							<form:inputCell name="<%=TaskAccessor.PER_NODE%>"/>
 							<form:inputCell name="<%=TaskAccessor.PERSISTENT%>"/>
 							<form:inputCell name="<%=TaskAccessor.NEEDS_MAINTENANCE_MODE%>"/>
-							<form:inputCell name="<%=TaskAccessor.IS_BLOCKED%>"/>
-							<form:inputCell name="<%=TaskAccessor.IS_BLOCKING_ALLOWED%>"/>
 						</form:columns>
 					</form:cell>
 				</form:groupCell>

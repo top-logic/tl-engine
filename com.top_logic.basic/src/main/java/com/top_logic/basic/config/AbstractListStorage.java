@@ -72,6 +72,12 @@ abstract class AbstractListStorage<K, V> {
 	 * Removes the item which has the given reference as value for the key
 	 * property.
 	 *
+	 * <p>
+	 * If the list contains no item with the given key value, the list stays unchanged and a
+	 * warning is reported: a configuration layer may remove an entry that the underlying layers do
+	 * not define.
+	 * </p>
+	 *
 	 * Must only be called if key property is not <code>null</code>.
 	 *
 	 * @param reference

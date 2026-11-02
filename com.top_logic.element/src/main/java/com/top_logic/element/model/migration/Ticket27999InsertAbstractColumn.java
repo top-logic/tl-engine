@@ -35,7 +35,7 @@ public class Ticket27999InsertAbstractColumn extends AbstractConfiguredInstance<
 		 */
 		@Mandatory
 		@DefaultContainer
-		PolymorphicConfiguration<MigrationProcessor> getCreateColumnProcessor();
+		PolymorphicConfiguration<? extends MigrationProcessor> getCreateColumnProcessor();
 
 	}
 

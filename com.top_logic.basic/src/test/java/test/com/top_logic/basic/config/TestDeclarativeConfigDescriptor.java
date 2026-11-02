@@ -287,7 +287,7 @@ public class TestDeclarativeConfigDescriptor extends AbstractTypedConfigurationT
 		@FormattedDefault("2019-11-08T08:51:00.003Z")
 		Date getDateProperty();
 
-		PolymorphicConfiguration<Mapping<?, ?>> getConfigProperty();
+		PolymorphicConfiguration<? extends Mapping<?, ?>> getConfigProperty();
 
 		@Key(TestValue.NAME_ATTRIBUTE)
 		@Mandatory
@@ -301,7 +301,7 @@ public class TestDeclarativeConfigDescriptor extends AbstractTypedConfigurationT
 		@InstanceDefault(FirstCharacterMapping.class)
 		Mapping<?, ?> getInstanceTypeProperty();
 
-		List<PolymorphicConfiguration<Mapping<?, ?>>> getPolymorphicListProperty();
+		List<PolymorphicConfiguration<? extends Mapping<?, ?>>> getPolymorphicListProperty();
 
 	}
 

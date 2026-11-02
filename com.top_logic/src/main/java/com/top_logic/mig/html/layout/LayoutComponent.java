@@ -350,7 +350,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		boolean getDontRecord();
 
 		@Name(XML_TAG_COMPONENT_CONTROLPROVIDER_NAME)
-		PolymorphicConfiguration<LayoutControlProvider> getComponentControlProvider();
+		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
 		@Derived(fun = ComponentControlProviderSelection.class, args = {
 			@Ref(XML_TAG_COMPONENT_CONTROLPROVIDER_NAME), @Ref(ATT_RENDER_INLINE) })
@@ -503,7 +503,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * Plugins that executes additional resolve operations on this {@link LayoutComponent}
 		 */
 		@Name(COMPONENT_RESOLVER_NAME)
-		List<PolymorphicConfiguration<ComponentResolver>> getComponentResolvers();
+		List<PolymorphicConfiguration<? extends ComponentResolver>> getComponentResolvers();
 
 		@Override
 		@BooleanDefault(false)
@@ -2712,9 +2712,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
         
 		loadExpansionState();
 
-		List<PolymorphicConfiguration<ComponentResolver>> resolvers = _config.getComponentResolvers();
+		List<PolymorphicConfiguration<? extends ComponentResolver>> resolvers = _config.getComponentResolvers();
 		for (int index = 0, size = resolvers.size(); index < size; index++) {
-			PolymorphicConfiguration<ComponentResolver> config = resolvers.get(index);
+			PolymorphicConfiguration<? extends ComponentResolver> config = resolvers.get(index);
 			ComponentResolver resolver = context.getInstance(config);
 			if (resolver != null) {
 				resolver.resolveComponent(context, this);

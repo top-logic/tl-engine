@@ -120,7 +120,18 @@ public class FlowDiagramControl extends ReactControl {
 
 	private Diagram _diagram;
 
-	private DefaultScope _graphScope;
+	private GraphScope _graphScope;
+
+	/**
+	 * The next ID a {@link GraphScope} of this control assigns, an ID of the server (odd) never
+	 * assigned before.
+	 */
+	private int _nextGraphId = 1;
+
+	/**
+	 * Whether the diagram changed since it was last serialized to the {@link #DIAGRAM_STATE}.
+	 */
+	private boolean _serializationStale;
 
 	private ContextMenuProvider _contextMenuProvider = NoContextMenuProvider.INSTANCE;
 
@@ -186,6 +197,7 @@ public class FlowDiagramControl extends ReactControl {
 		// The scope belongs to the diagram it serialized, which nothing displays any more: the
 		// markings below are part of the new diagram's serialization, not of a patch to the old
 		// one.
+		releaseScope(_graphScope);
 		_graphScope = null;
 
 		markSelection(selectedUserObjects);
@@ -373,6 +385,7 @@ public class FlowDiagramControl extends ReactControl {
 
 	@Override
 	protected void onCleanup() {
+		releaseScope(_graphScope);
 		_graphScope = null;
 
 		super.onCleanup();
@@ -382,18 +395,27 @@ public class FlowDiagramControl extends ReactControl {
 	 * Serializes the current diagram model and stores it as initial React state.
 	 */
 	private void initDiagramState() {
+		_serializationStale = false;
 		if (_diagram == null) {
 			putState(DIAGRAM_STATE, "");
 			return;
 		}
 
-		_graphScope = new ExternalScope(2, 0);
+		// Serializing the displayed diagram again keeps the IDs its elements have: the client holds
+		// them already, and an update it sent before receiving this serialization names the same
+		// elements. The scope of a replaced diagram is gone by now, so its elements get new IDs.
+		GraphScope before = _graphScope;
+		GraphScope scope = new GraphScope(before);
 		StringW out = new StringW();
 		try {
-			_diagram.writeTo(_graphScope, new JsonWriter(out));
+			_diagram.writeTo(scope, new JsonWriter(out));
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);
+		} finally {
+			scope.serialized();
 		}
+		releaseScope(before);
+		_graphScope = scope;
 		putState(DIAGRAM_STATE, out.toString());
 	}
 
@@ -405,6 +427,14 @@ public class FlowDiagramControl extends ReactControl {
 	 * serialized and sent as the {@link #DIAGRAM_PATCH_STATE} state update. Nothing is sent while
 	 * the diagram has not been serialized yet, or after the control was disposed.
 	 * </p>
+	 *
+	 * <p>
+	 * The patch is {@link #sendTransientState(String, Object) no part of the state}: it changes the
+	 * diagram the client holds at the moment it receives it. Kept in the state, the full state the
+	 * client receives when it connects again would apply it once more to the diagram already
+	 * containing it. The changed diagram is serialized again instead, see
+	 * {@link #refreshDiagramState()}.
+	 * </p>
 	 */
 	public void pushDiagramChanges() {
 		if (_graphScope != null && _graphScope.hasChanges()) {
@@ -414,8 +444,32 @@ public class FlowDiagramControl extends ReactControl {
 			} catch (IOException ex) {
 				throw new UncheckedIOException(ex);
 			}
-			putState(DIAGRAM_PATCH_STATE, out.toString());
+			sendTransientState(DIAGRAM_PATCH_STATE, out.toString());
+
+			_serializationStale = true;
+			refreshDiagramState();
 		}
+	}
+
+	/**
+	 * Serializes the diagram again after it changed, recording the serialization in the
+	 * {@link #DIAGRAM_STATE} without sending it.
+	 *
+	 * <p>
+	 * The client receives the changes as patches. The serialization is for the full state the
+	 * client receives whenever it needs one: when it connects again, or when it polls after missing
+	 * events, the full state replaces the patches it missed. Such a full state is read outside of
+	 * the control's processing, so the serialization has to be current at all times. It keeps the
+	 * IDs of the elements, so that it describes the diagram the client holds, and updates the
+	 * client sends before receiving it remain valid.
+	 * </p>
+	 */
+	private void refreshDiagramState() {
+		if (!_serializationStale || _graphScope == null) {
+			// Unchanged, or not serialized yet: the rendering serializes the diagram anyway.
+			return;
+		}
+		updateStateSilently(this::initDiagramState);
 	}
 
 	/**
@@ -478,7 +532,10 @@ public class FlowDiagramControl extends ReactControl {
 	 * @return the context menu, or {@code null} if no menu is available.
 	 */
 	public Menu createContextMenu(String contextInfo) {
-		Widget node = (Widget) _graphScope.resolveOrFail(Integer.parseInt(contextInfo));
+		if (!(resolve(Integer.parseInt(contextInfo)) instanceof Widget node)) {
+			// The menu was requested in a diagram the control no longer displays.
+			return null;
+		}
 
 		if (node instanceof ContextMenu contextMenu) {
 			Object userObject = node.getUserObject();
@@ -536,18 +593,32 @@ public class FlowDiagramControl extends ReactControl {
 		diagram.registerListener(clickKind);
 		try {
 			_graphScope.applyChanges(json);
+		} catch (IllegalArgumentException ex) {
+			// The patch names elements this scope does not know: it was made for a diagram the
+			// control replaced while the patch was on its way.
+			Logger.info("Dropped a client update for a replaced diagram: " + ex.getMessage(),
+				FlowDiagramControl.class);
+			return;
 		} finally {
 			diagram.unregisterListener(clickKind);
 		}
+		_serializationStale = true;
 
-		notifySelectionChanged(replacing[0]);
+		try {
+			notifySelectionChanged(replacing[0]);
+		} finally {
+			refreshDiagramState();
+		}
 	}
 
 	/**
 	 * Processing click events sent from the client-side.
 	 */
 	public void processClick(int nodeId, Set<MouseButton> buttons) {
-		ClickTarget node = (ClickTarget) _graphScope.resolveOrFail(nodeId);
+		if (!(resolve(nodeId) instanceof ClickTarget node)) {
+			// A click into a diagram the control no longer displays.
+			return;
+		}
 		ClickHandler clickHandler = node.getClickHandler();
 		if (clickHandler != null) {
 			clickHandler.onClick(node, buttons);
@@ -558,7 +629,10 @@ public class FlowDiagramControl extends ReactControl {
 	 * Processing drop events sent from the client-side.
 	 */
 	public void processDrop(int nodeId, Object data) {
-		DropRegion node = (DropRegion) _graphScope.resolveOrFail(nodeId);
+		if (!(resolve(nodeId) instanceof DropRegion node)) {
+			// A drop into a diagram the control no longer displays.
+			return;
+		}
 		com.top_logic.react.flow.callback.DropHandler dropHandler = node.getDropHandler();
 		if (dropHandler instanceof ServerDropHandler serverDrop) {
 			// ServerDropHandler.onDrop requires DndData; full integration deferred.
@@ -567,33 +641,115 @@ public class FlowDiagramControl extends ReactControl {
 		}
 	}
 
-}
-
-class ExternalScope extends DefaultScope {
-
-	Map<SharedGraphNode, Integer> _objectIds = new HashMap<>();
+	/**
+	 * Stops the given scope from observing the diagram it serialized.
+	 */
+	private static void releaseScope(GraphScope scope) {
+		if (scope != null) {
+			scope.release();
+		}
+	}
 
 	/**
-	 * Creates a {@link ExternalScope}.
+	 * The element of the displayed diagram with the given ID, <code>null</code> if there is none -
+	 * the client refers to a diagram the control no longer displays.
 	 */
-	public ExternalScope(int totalParticipants, int participantId) {
-		super(totalParticipants, participantId);
+	private SharedGraphNode resolve(int id) {
+		return _graphScope == null ? null : _graphScope.resolve(id);
 	}
 
-	public void clear() {
-		_objectIds.clear();
-		index().clear();
-	}
+	/**
+	 * The {@link DefaultScope} a serialization of the displayed {@link Diagram} is shared with the
+	 * client through.
+	 *
+	 * <p>
+	 * Each serialization of a diagram starts a new scope. The scopes of a control draw their IDs from
+	 * one sequence, so that no ID a scope assigns names an element of another diagram: a patch or
+	 * command the client made for a diagram the control no longer displays names nothing in the
+	 * displayed one, instead of the element that happens to have the same position in it. A scope
+	 * serializing the same diagram again takes over the IDs the previous scope assigned, so that
+	 * the same diagram is serialized the same way as long as it does not change.
+	 * </p>
+	 */
+	private final class GraphScope extends DefaultScope {
 
-	@Override
-	public int id(SharedGraphNode node) {
-		Integer id = _objectIds.get(node);
-		return id == null ? 0 : id.intValue();
-	}
+		private final Map<SharedGraphNode, Integer> _objectIds = new HashMap<>();
 
-	@Override
-	public void initId(SharedGraphNode node, int id) {
-		_objectIds.put(node, Integer.valueOf(id));
+		/**
+		 * The scope whose IDs this one takes over while serializing, <code>null</code> afterwards.
+		 */
+		private GraphScope _previous;
+
+		/**
+		 * Creates a {@link GraphScope} for the server, the participant 0 of the two sharing the
+		 * diagram.
+		 *
+		 * @param previous
+		 *        The scope of an earlier serialization of the same diagram, whose IDs are taken
+		 *        over, or <code>null</code> to assign new IDs.
+		 */
+		GraphScope(GraphScope previous) {
+			super(2, 0);
+			_previous = previous;
+		}
+
+		@Override
+		public void writeRefOrData(JsonWriter out, SharedGraphNode node) throws IOException {
+			if (_previous != null && id(node) == 0) {
+				int id = _previous.id(node);
+				if (id != 0) {
+					enter(node, id);
+					node.writeData(this, out, id);
+					return;
+				}
+			}
+			super.writeRefOrData(out, node);
+		}
+
+		/**
+		 * Called when the serialization is complete: the IDs of the previous scope are not needed
+		 * any more.
+		 */
+		void serialized() {
+			_previous = null;
+		}
+
+		/**
+		 * Stops observing the elements this scope serialized.
+		 */
+		void release() {
+			for (SharedGraphNode node : index().values()) {
+				node.unregisterListener(this);
+			}
+		}
+
+		@Override
+		public int id(SharedGraphNode node) {
+			Integer id = _objectIds.get(node);
+			return id == null ? 0 : id.intValue();
+		}
+
+		@Override
+		public void initId(SharedGraphNode node, int id) {
+			_objectIds.put(node, Integer.valueOf(id));
+		}
+
+		@Override
+		public int newId() {
+			int result = _nextGraphId;
+			// Skip the IDs of the client, the other participant.
+			_nextGraphId += 2;
+			return result;
+		}
+
+		/**
+		 * The element with the given ID, <code>null</code> if this scope has none, e.g. because the
+		 * ID belongs to a diagram the control no longer displays.
+		 */
+		SharedGraphNode resolve(int id) {
+			return index().get(Integer.valueOf(id));
+		}
+
 	}
 
 }

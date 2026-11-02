@@ -27,7 +27,7 @@ public class EncodingConfigurationValueProvider<T> extends ConfigurationValuePro
 	 * Prefix for values of {@link Encrypted} properties that are unencrypted. This is useful for
 	 * temporary configuration of unencrypted values until encrypted value is determined.
 	 */
-	private static final String UNENCRYPTED_PREFIX = "unencrypted:";
+	public static final String UNENCRYPTED_PREFIX = "unencrypted:";
 
 	/**
 	 * Returns an {@link EncodingConfigurationValueProvider} with given

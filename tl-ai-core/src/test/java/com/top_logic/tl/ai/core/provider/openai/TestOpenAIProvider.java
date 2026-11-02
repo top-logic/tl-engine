@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -42,7 +43,7 @@ public class TestOpenAIProvider extends TestCase {
 			return;
 		}
 
-		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(apiKey);
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(FixedCredentials.bearer(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -106,7 +107,7 @@ public class TestOpenAIProvider extends TestCase {
 			return;
 		}
 
-		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(apiKey);
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(FixedCredentials.bearer(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -157,7 +158,7 @@ public class TestOpenAIProvider extends TestCase {
 
 	/** */
 	public void testToolArgumentsFromOutputItemDone() throws Exception {
-		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key");
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(FixedCredentials.NONE);
 
 		String sse = ""
 			+ "event: message\n"
@@ -202,7 +203,7 @@ public class TestOpenAIProvider extends TestCase {
 			return;
 		}
 
-		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(apiKey);
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(FixedCredentials.bearer(apiKey));
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),

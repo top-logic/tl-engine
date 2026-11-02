@@ -70,7 +70,7 @@ public class AttributeValueConversion extends AbstractMappingRewriter {
 		@Name("value-mapping")
 		@DefaultContainer
 		@Mandatory
-		PolymorphicConfiguration<Mapping<Object, ?>> getValueMapping();
+		PolymorphicConfiguration<? extends Mapping<Object, ?>> getValueMapping();
 
 	}
 

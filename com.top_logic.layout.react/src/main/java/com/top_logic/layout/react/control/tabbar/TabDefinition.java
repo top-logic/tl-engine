@@ -34,6 +34,8 @@ public class TabDefinition {
 
 	private boolean _finalTitle;
 
+	private boolean _hidden;
+
 	/**
 	 * Creates a new {@link TabDefinition}.
 	 *
@@ -145,6 +147,27 @@ public class TabDefinition {
 	 */
 	public TabDefinition withFinalTitle(boolean finalTitle) {
 		_finalTitle = finalTitle;
+		return this;
+	}
+
+	/**
+	 * Whether this tab is left out of the strip when the tab bar is built.
+	 *
+	 * @see ReactTabBarControl#setTabHidden(String, boolean)
+	 */
+	public boolean isHidden() {
+		return _hidden;
+	}
+
+	/**
+	 * Sets whether this tab is left out of the strip when the tab bar is built.
+	 *
+	 * @param hidden
+	 *        {@code true} to leave the tab out.
+	 * @return This instance for fluent chaining.
+	 */
+	public TabDefinition withHidden(boolean hidden) {
+		_hidden = hidden;
 		return this;
 	}
 

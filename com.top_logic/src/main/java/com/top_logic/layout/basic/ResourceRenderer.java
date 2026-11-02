@@ -142,12 +142,12 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 		@Name(CONTEXT_MENU)
 		@ItemDefault(NoContextMenuProvider.class)
 		@ImplementationClassDefault(TypeBasedContextMenuProvider.class)
-		PolymorphicConfiguration<ContextMenuProvider> getContextMenu();
+		PolymorphicConfiguration<? extends ContextMenuProvider> getContextMenu();
 
 		/**
 		 * @see #getContextMenu()
 		 */
-		void setContextMenu(PolymorphicConfiguration<ContextMenuProvider> value);
+		void setContextMenu(PolymorphicConfiguration<? extends ContextMenuProvider> value);
 
 		/**
 		 * Maximum length of label displayed, may be negative (when deactivated).
@@ -358,8 +358,8 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 	protected void buildConfig(C result) {
 		result.setResourceProvider(getResourceProvider());
 		@SuppressWarnings("unchecked")
-		PolymorphicConfiguration<ContextMenuProvider> contextMenuConfig =
-			(PolymorphicConfiguration<ContextMenuProvider>) InstanceAccess.INSTANCE.getConfig(getContextMenu());
+		PolymorphicConfiguration<? extends ContextMenuProvider> contextMenuConfig =
+			(PolymorphicConfiguration<? extends ContextMenuProvider>) InstanceAccess.INSTANCE.getConfig(getContextMenu());
 		result.setContextMenu(contextMenuConfig);
 		result.setMaxLength(getMaxLength());
 		result.setStartPos(getStartPos());

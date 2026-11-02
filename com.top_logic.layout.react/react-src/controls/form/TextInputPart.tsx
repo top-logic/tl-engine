@@ -10,6 +10,12 @@ const FIELD_CLASS = 'tl-field tl-type-body';
 /** The classes of the text area of the design system. */
 const MULTILINE_CLASS = 'tl-field tl-field--multiline tl-type-body';
 
+/** The classes of a text area showing its text as it is written: fixed width, lines not wrapped. */
+const PREFORMATTED_CLASS = 'tl-field tl-field--multiline tl-field--preformatted tl-type-code';
+
+/** The `wrap` of a text area that does not wrap its lines. */
+const NO_WRAP = 'off';
+
 /** The class of the element around the input, which places icon and action inside its frame. */
 const GROUP_CLASS = 'tl-field-group';
 
@@ -29,7 +35,8 @@ function classes(...names: (string | false | undefined)[]): string {
 
 /**
  * The TopLogic drawing of the part `TextInput` ({@link TextInputPartProps}): the input of the design
- * system (tl-field), a text area (tl-field--multiline) for a multi-line box.
+ * system (tl-field), a text area (tl-field--multiline) for a multi-line box, which a preformatted box
+ * draws in the code type (tl-type-code) without wrapping its lines (tl-field--preformatted).
  *
  * <p>The input stands in the group of the design system (tl-field-group), which carries the
  * classes of the box: the icon (tl-field-group__icon) ahead of the input and the action after it
@@ -41,8 +48,8 @@ function classes(...names: (string | false | undefined)[]): string {
  * `aria-required` and `data-tl-state` (see fieldStateAttrs).</p>
  */
 const TextInputPart: React.FC<TextInputPartProps> = ({
-  id, ref, role, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
-  validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
+  id, ref, role, value, type, inputMode, placeholder, multiline, rows, preformatted, icon, action, disabled, readOnly,
+  required, validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
   ...attributes
 }) => {
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,7 +87,8 @@ const TextInputPart: React.FC<TextInputPartProps> = ({
         <textarea
           ref={ref as React.Ref<HTMLTextAreaElement>}
           rows={rows ?? DEFAULT_ROWS}
-          className={MULTILINE_CLASS}
+          wrap={preformatted ? NO_WRAP : undefined}
+          className={preformatted ? PREFORMATTED_CLASS : MULTILINE_CLASS}
           {...common}
         />
       </span>

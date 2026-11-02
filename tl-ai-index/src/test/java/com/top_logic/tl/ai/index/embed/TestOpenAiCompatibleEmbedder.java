@@ -25,6 +25,7 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.tl.ai.index.lucene.Vectors;
 
@@ -181,7 +182,9 @@ public class TestOpenAiCompatibleEmbedder extends TestCase {
 		set(config, OpenAiCompatibleEmbedder.Config.BASE_URL,
 			"http://127.0.0.1:" + _server.getAddress().getPort() + "/v1/");
 		set(config, OpenAiCompatibleEmbedder.Config.MODEL, "test-model");
-		set(config, OpenAiCompatibleEmbedder.Config.API_KEY, "secret");
+		LiteralSecretSource.Config key = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		key.setValue("secret");
+		set(config, OpenAiCompatibleEmbedder.Config.API_KEY, key);
 		set(config, AbstractEmbedder.Config.DIMENSIONS, dimensions);
 		set(config, AbstractEmbedder.Config.BATCH_SIZE, batch);
 		set(config, AbstractEmbedder.Config.QUERY_PREFIX, "query: ");

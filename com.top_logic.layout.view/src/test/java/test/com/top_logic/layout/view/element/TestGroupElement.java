@@ -43,6 +43,7 @@ import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.GroupElement;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
  * Tests for {@link GroupElement} - the {@code <group>} element sectioning the fields of a form.
@@ -236,6 +237,7 @@ public class TestGroupElement extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestGroupElement.class,
-				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, ThreadContextManager.Module.INSTANCE,
+				CommandGroupRegistry.Module.INSTANCE));
 	}
 }

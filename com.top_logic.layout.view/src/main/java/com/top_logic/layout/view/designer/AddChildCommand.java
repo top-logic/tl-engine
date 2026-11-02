@@ -54,8 +54,7 @@ public class AddChildCommand {
 				AddChildCommand.class);
 			child = new ConfigDesignTreeNode(childConfig, parent.getSourceFile());
 		}
-		child.setParent(parent);
-		parent.getChildren().add(child);
+		DesignTreeBuilder.attach(parent, child);
 		parent.markDirty();
 
 		return child;

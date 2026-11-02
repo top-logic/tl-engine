@@ -21,8 +21,10 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.dsa.evt.DataChangeListener;
@@ -33,6 +35,7 @@ import com.top_logic.dsa.ex.UnknownDBException;
  *
  * @author  Karsten Buch
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("Data access service")
 @ServiceCategory.Of(PersistenceCategory.class)
 public class DataAccessService extends ConfiguredManagedClass<DataAccessService.Config> {

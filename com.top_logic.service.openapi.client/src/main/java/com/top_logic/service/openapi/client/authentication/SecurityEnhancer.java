@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.client.authentication;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
 
 import com.top_logic.service.openapi.client.registry.impl.call.uri.UriBuilder;
 
@@ -42,6 +43,22 @@ public interface SecurityEnhancer {
 	 *        The request to enhance.
 	 */
 	void enhanceRequest(HttpClient client, ClassicHttpRequest request);
+
+	/**
+	 * Informs this {@link SecurityEnhancer} about the response of the <i>OpenAPI</i> server to a
+	 * request enhanced before.
+	 *
+	 * <p>
+	 * An enhancer caching credentials drops them when the server rejected them (HTTP status 401),
+	 * so that the next request uses fresh credentials.
+	 * </p>
+	 *
+	 * @param response
+	 *        The response received for the request.
+	 */
+	default void handleResponse(HttpResponse response) {
+		// No cached credentials.
+	}
 
 	/**
 	 * Returns a {@link SecurityEnhancer} that first calls methods in this {@link SecurityEnhancer}

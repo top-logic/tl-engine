@@ -69,9 +69,9 @@ public interface TLOptions extends TLAttributeAnnotation, TLTypeAnnotation {
 	@Mandatory
 	@DefaultContainer
 	@Options(fun = AllInAppImplementations.class)
-	PolymorphicConfiguration<Generator> getGenerator();
+	PolymorphicConfiguration<? extends Generator> getGenerator();
 
 	/** @see #getGenerator() */
-	void setGenerator(PolymorphicConfiguration<Generator> value);
+	void setGenerator(PolymorphicConfiguration<? extends Generator> value);
 
 }

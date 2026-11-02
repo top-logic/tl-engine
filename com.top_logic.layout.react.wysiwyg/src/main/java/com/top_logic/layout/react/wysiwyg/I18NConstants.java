@@ -35,6 +35,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_LINKED_OBJECT_NOT_DISPLAYED;
 
+	/**
+	 * @en The objects to refer to could not be determined.
+	 */
+	public static ResKey ERROR_MENTION_FAILED;
+
 	/** @en Editor toolbar */
 	@CustomKey("js.wysiwyg.toolbar")
 	public static ResKey JS_WYSIWYG_TOOLBAR;

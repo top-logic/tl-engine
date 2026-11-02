@@ -58,12 +58,12 @@
 							</label>
 							<view-ref view="admin/access-control/roles.view.xml"/>
 						</tab>
-						<tab id="permissions">
+						<tab id="grants">
 							<label>
-								<en>Permissions</en>
-								<de>Berechtigungen</de>
+								<en>Grants</en>
+								<de>Rechte</de>
 							</label>
-							<view-ref view="admin/access-control/permissions.view.xml"/>
+							<view-ref view="admin/access-control/grants.view.xml"/>
 						</tab>
 						<tab id="coverage">
 							<label>
@@ -133,6 +133,13 @@
 							</label>
 							<view-ref view="admin/monitoring/revision-monitor.view.xml"/>
 						</tab>
+						<tab id="logs">
+							<label>
+								<en>Logs</en>
+								<de>Protokolle</de>
+							</label>
+							<view-ref view="admin/monitoring/logs.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>
@@ -152,6 +159,20 @@
 							</label>
 							<view-ref view="admin/system/services.view.xml"/>
 						</tab>
+						<tab id="scheduler">
+							<label>
+								<en>Scheduler</en>
+								<de>Steuerprogramm</de>
+							</label>
+							<view-ref view="admin/system/scheduler.view.xml"/>
+						</tab>
+						<tab id="secrets">
+							<label>
+								<en>Secrets</en>
+								<de>Geheimnisse</de>
+							</label>
+							<view-ref view="admin/system/secrets.view.xml"/>
+						</tab>
 						<tab id="locks">
 							<label>
 								<en>Locks</en>
@@ -166,12 +187,19 @@
 							</label>
 							<view-ref view="admin/system/maintenance.view.xml"/>
 						</tab>
-						<tab id="logs">
+						<tab id="database">
 							<label>
-								<en>Logs</en>
-								<de>Protokolle</de>
+								<en>Database</en>
+								<de>Datenbank</de>
 							</label>
-							<view-ref view="admin/system/logs.view.xml"/>
+							<view-ref view="admin/system/database.view.xml"/>
+						</tab>
+						<tab id="sql-console">
+							<label>
+								<en>SQL console</en>
+								<de>SQL-Konsole</de>
+							</label>
+							<view-ref view="admin/system/sql-console.view.xml"/>
 						</tab>
 						<tab id="logger-levels">
 							<label>

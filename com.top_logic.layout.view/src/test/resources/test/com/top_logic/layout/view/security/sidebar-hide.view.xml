@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<sidebar active-item="guarded">
+		<nav-item id="guarded">
+			<access-control
+				inputs="object"
+				object="$object"
+				operation="Read"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</nav-item>
+		<nav-item id="open">
+			<panel/>
+		</nav-item>
+	</sidebar>
+</view>

@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.react.control.IReactControl;
@@ -49,7 +50,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * which can be edited without the channel value changing) - see
  * {@link Config#getObservedTypes()} for tests reaching beyond the input object. It only swaps the
  * visible view when the matching case actually changes - within a single case the content (bound to
- * its own channels) updates itself.
+ * its own channels) updates itself, unless the switch is configured to {@link Config#getRebuild()
+ * rebuild} it for every new value.
  * </p>
  *
  * <p>
@@ -66,6 +68,7 @@ public class SwitchElement implements UIElement {
 	 * Configuration for {@link SwitchElement}.
 	 */
 	@TagName("switch")
+	@TypeIcon("css:bi bi-signpost")
 	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getCases()}. */
@@ -76,6 +79,9 @@ public class SwitchElement implements UIElement {
 
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
+
+		/** Configuration name for {@link #getRebuild()}. */
+		String REBUILD = "rebuild";
 
 		@Override
 		@ClassDefault(SwitchElement.class)
@@ -133,6 +139,22 @@ public class SwitchElement implements UIElement {
 		@Name(OBSERVED_TYPES)
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getObservedTypes();
+
+		/**
+		 * Whether the shown content is built anew whenever the {@link #getInput() input} channel
+		 * delivers another value, also when the matching case stays the same.
+		 *
+		 * <p>
+		 * By default, the content of a case updates itself from the channels it is bound to. Some
+		 * content is shaped by a value when it is built and keeps that shape: the columns a table
+		 * computes from its inputs, for instance. A switch over that value with this option
+		 * rebuilds such content for every new value; a switch without any case shows its
+		 * {@link #getDefault() default} content that way. A change of the input object itself
+		 * does not rebuild the content.
+		 * </p>
+		 */
+		@Name(REBUILD)
+		boolean getRebuild();
 	}
 
 	/**
@@ -201,6 +223,8 @@ public class SwitchElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final boolean _rebuild;
+
 	/**
 	 * Creates a new {@link SwitchElement} from configuration.
 	 */
@@ -220,6 +244,7 @@ public class SwitchElement implements UIElement {
 			.map(context::getInstance)
 			.collect(Collectors.toList());
 		_cssClass = config.getCssClass();
+		_rebuild = config.getRebuild();
 	}
 
 	@Override
@@ -236,7 +261,8 @@ public class SwitchElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_input.getChannel());
 		ReactSwitchControl result =
-			new ReactSwitchControl(context, input, _cases, _default, ObservedTypes.resolve(_observedTypeRefs));
+			new ReactSwitchControl(context, input, _cases, _default, ObservedTypes.resolve(_observedTypeRefs),
+				_rebuild);
 		result.setCssClass(_cssClass);
 		return result;
 	}

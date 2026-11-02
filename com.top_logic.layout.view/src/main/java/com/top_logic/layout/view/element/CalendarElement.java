@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -61,6 +62,7 @@ public class CalendarElement implements UIElement {
 	 * Configuration for {@link CalendarElement}.
 	 */
 	@TagName("calendar")
+	@TypeIcon("css:bi bi-calendar3")
 	public interface Config extends UIElement.Config, Inputs {
 
 		@Override

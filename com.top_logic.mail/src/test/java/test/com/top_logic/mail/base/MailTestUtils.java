@@ -14,6 +14,7 @@ import jakarta.mail.Folder;
 import jakarta.mail.MessagingException;
 
 import test.com.top_logic.basic.ReflectionUtils;
+import test.com.top_logic.util.sched.model.TaskTestUtil;
 
 import com.top_logic.base.mail.Mail;
 import com.top_logic.base.mail.MailHelper;
@@ -24,6 +25,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.mail.base.MailFolder;
 import com.top_logic.mail.base.MailFolderAware;
+import com.top_logic.mail.proxy.InitialMails;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 
@@ -74,6 +76,29 @@ public abstract class MailTestUtils {
 			throw new ConfigurationError("No task with name " + TEST_MAIL_SERVER_DAEMON + " available.");
 		}
 		return task;
+	}
+
+	/**
+	 * Prepares the {@link #getMailServerDaemon() mail server daemon} and runs it once.
+	 * 
+	 * <p>
+	 * The daemon reads only mails newer than its UID mark. Its first run initializes this mark
+	 * and, with the default {@link InitialMails#SKIP}, ignores all mails present at that time. A
+	 * test that sends a mail and expects the daemon to handle it must therefore call this method
+	 * before sending the mail.
+	 * </p>
+	 * 
+	 * @return The mail server daemon.
+	 */
+	public static Task initMailServerDaemon() {
+		Task mailDaemon = getMailServerDaemon();
+		if (mailDaemon.getLog() == null) {
+			/* The test runs the task itself: The Scheduler does not dispatch tasks in a test that
+			 * does not boot the application, and therefore does not create the log of the task. */
+			TaskTestUtil.initTaskLog(mailDaemon);
+		}
+		mailDaemon.run();
+		return mailDaemon;
 	}
 
 	/**

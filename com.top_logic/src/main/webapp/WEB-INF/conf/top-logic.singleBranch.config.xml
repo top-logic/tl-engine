@@ -8,11 +8,7 @@
 			<type-systems>
 				<type-system name="Default"
 					multiple-branches="false"
-				>
-					<declarations>
-						<declaration resource="webinf://kbase/singleBranchMeta.xml"/>
-					</declarations>
-				</type-system>
+				/>
 			</type-systems>
 		</config>
 	</configs>

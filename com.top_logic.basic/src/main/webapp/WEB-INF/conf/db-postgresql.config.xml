@@ -13,7 +13,9 @@
 								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
 								
 								<option name="user" value="%POSTGRESQL_USER%" />
-								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="postgresql_passwd"/>
+								</encrypted-option>
 								
 								<option name="ssl" value="%POSTGRESQL_SSL%" />
 								<option name="sslmode" value="%POSTGRESQL_SSL_MODE%" />

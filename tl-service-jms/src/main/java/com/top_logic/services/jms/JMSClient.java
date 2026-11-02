@@ -22,6 +22,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.services.jms.JMSService.MQSystemClient;
 
@@ -34,8 +35,6 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 		implements MQSystemClient, Closeable {
 
 	private JMSService _service;
-
-	private ConnectionFactory _cFactory;
 
 	private JMSContext _context;
 
@@ -124,12 +123,16 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 	 */
 	@Override
 	public void setupMQConnection() throws JMSException, NamingException {
-		_cFactory = setupConnectionFactory();
 		connect();
 	}
 
 	/**
 	 * (Re-)Connects the application to the MQ System by (re-)creating the context.
+	 * 
+	 * <p>
+	 * The {@link ConnectionFactory} is set up for each connection, so that a password from a
+	 * {@link SecretSource} is read at the moment of connecting.
+	 * </p>
 	 * 
 	 * @throws JMSException
 	 *         Exception if something is not JMS conform
@@ -140,7 +143,7 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 		if (_context != null) {
 			close();
 		}
-		_context = _cFactory.createContext();
+		_context = setupConnectionFactory().createContext();
 		_context.setExceptionListener(new ExceptionListener() {
 
 			@Override
@@ -159,6 +162,11 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 	 * This method creates and returns the {@link ConnectionFactory} that builds and holds the
 	 * connection to a MQ System.
 	 * 
+	 * <p>
+	 * The method is called for each {@link #connect() connection}. Secrets, e.g. a password, are
+	 * read here with {@link #secret(SecretSource)}.
+	 * </p>
+	 * 
 	 * @throws JMSException
 	 *         Exception if something is not JMS conform
 	 * @throws NamingException
@@ -166,6 +174,17 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 	 * @return the <code>ConnectionFactory</code>
 	 */
 	abstract protected ConnectionFactory setupConnectionFactory() throws JMSException, NamingException;
+
+	/**
+	 * The current value of the given secret.
+	 * 
+	 * @param source
+	 *        The source of the secret, <code>null</code> if no secret is configured.
+	 * @return The secret, <code>null</code> if no source is given.
+	 */
+	protected static String secret(SecretSource source) {
+		return source == null ? null : source.getSecret();
+	}
 
 	@Override
 	public Map<String, Producer.Config<?>> getProducerConfigs() {

@@ -83,6 +83,19 @@ class ServletUnitContext {
     }
 
     /**
+     * Assigns a fresh identifier to the given session and indexes it under that identifier.
+     *
+     * @return The new identifier.
+     **/
+    String changeSessionId( ServletUnitHttpSession session ) {
+        String oldId = session.getId();
+        String newId = session.changeId();
+        _sessions.remove( oldId );
+        _sessions.put( newId, session );
+        return newId;
+    }
+
+    /**
      * Returns the contextPath
      */
     String getContextPath() {

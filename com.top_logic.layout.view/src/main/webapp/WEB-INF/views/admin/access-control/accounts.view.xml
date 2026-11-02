@@ -3,6 +3,13 @@
 <view>
 	<channels>
 		<channel name="selectedAccount"/>
+		<!--
+			The last login of every account, read once when the view is opened, so that the column
+			of the table looks each row up instead of querying per row.
+		-->
+		<derived-channel name="lastLogins"
+			expr="accountLastLogins()"
+		/>
 	</channels>
 	<split-panel id="main"
 		orientation="horizontal"
@@ -73,9 +80,14 @@
 								<en>Reset password</en>
 								<de>Passwort zurücksetzen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $selectedAccount)">
 								<with-result>
@@ -100,9 +112,14 @@
 								<en>Expire password</en>
 								<de>Passwort ablaufen lassen</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access operation="Write"/>
 							</executability>
 							<expire-password/>
 						</generic-command>
@@ -120,9 +137,14 @@
 								<en>Require MFA (enroll)</en>
 								<de>MFA verlangen (Einrichtung)</de>
 							</label>
+							<access>
+								<operation name="Write"
+									object="$selectedAccount"
+									type="tl.accounts:Person"
+								/>
+							</access>
 							<executability>
 								<null-input-disabled/>
-								<model-access operation="Write"/>
 							</executability>
 							<enable-mfa/>
 						</generic-command>
@@ -134,8 +156,24 @@
 					>
 						<columns>
 							<column attribute="name"/>
+							<computed-column name="lastLogin"
+								inputs="lastLogins"
+								type="tl.core:DateTime"
+							>
+								<label>
+									<en>Last login</en>
+									<de>Letzte Anmeldung</de>
+								</label>
+								<value>$lastLogins[$row]</value>
+							</computed-column>
 						</columns>
 						<rows>all(`tl.accounts:Person`)</rows>
+						<export download-name="#('Accounts'@en, 'Konten'@de)">
+							<sheet-name>
+								<en>Accounts</en>
+								<de>Konten</de>
+							</sheet-name>
+						</export>
 					</table>
 				</panel>
 			</pane>
@@ -152,9 +190,6 @@
 						input="selectedAccount"
 						with-inset="true"
 					>
-						<edit-executability>
-							<model-access operation="Write"/>
-						</edit-executability>
 						<field attribute="name"/>
 						<field attribute="firstName"/>
 						<field attribute="lastName"/>

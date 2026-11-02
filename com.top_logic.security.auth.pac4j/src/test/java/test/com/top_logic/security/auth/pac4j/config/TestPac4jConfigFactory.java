@@ -18,6 +18,7 @@ import jakarta.servlet.ServletContext;
 
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.client.IndirectClient;
 import org.pac4j.core.client.direct.AnonymousClient;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
@@ -135,6 +136,18 @@ public class TestPac4jConfigFactory extends TestCase {
 			List.copyOf(_clients.keySet()));
 		assertTrue("The login clients come first, so that a request naming no client reaches one.",
 			_clients.get(ANONYMOUS_CLIENT) instanceof AnonymousClient);
+	}
+
+	/**
+	 * Tests that a login can be retried after a failed one: pac4j's guard refusing a client whose
+	 * authentication was already attempted in the session is off for every redirecting client.
+	 */
+	public void testRetryAfterFailedLogin() {
+		for (Client client : _clients.values()) {
+			if (client instanceof IndirectClient indirect) {
+				assertFalse(client.getName(), indirect.isCheckAuthenticationAttempt());
+			}
+		}
 	}
 
 	/**

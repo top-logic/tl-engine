@@ -33,6 +33,7 @@ import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.AbstractControl;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -128,6 +129,14 @@ public class BPMNDisplay extends AbstractControl {
 	@Override
 	protected String getTypeCssClass() {
 		return "cBPMN";
+	}
+
+	@Override
+	protected void writeControlClassesContent(Appendable out) throws IOException {
+		super.writeControlClassesContent(out);
+		if (!_editMode) {
+			HTMLUtil.appendCSSClass(out, FormConstants.IMMUTABLE_CSS_CLASS);
+		}
 	}
 
 	@Override

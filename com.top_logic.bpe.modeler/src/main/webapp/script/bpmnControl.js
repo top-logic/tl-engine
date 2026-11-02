@@ -4,11 +4,22 @@ services.bpe = {
 			var controlElement = document.getElementById(controlId);
 			var bpmnXML = BAL.DOM.getNonStandardAttribute(controlElement, "data-bpml");
 			
-			var Modeler = editMode ? BpmnJS : BpmnJS.NavigatedViewer;
-			
-			var modeler = new Modeler({
-				container : '#' + controlId
-			});
+			var modeler;
+			if (editMode) {
+				modeler = new BpmnJS({
+					container : '#' + controlId
+				});
+			} else {
+				// The viewer of bpmn-js tracks the selection but draws no outline for it. The outline
+				// module is taken from the modules of the modeler, the bundle exports no other access.
+				var outlineModules = BpmnJS.prototype._modules.filter(function(module) {
+					return module.outlineProvider != null;
+				});
+				modeler = new BpmnJS.NavigatedViewer({
+					container : '#' + controlId,
+					additionalModules : outlineModules
+				});
+			}
 			
 			controlElement.modeler = modeler;
 

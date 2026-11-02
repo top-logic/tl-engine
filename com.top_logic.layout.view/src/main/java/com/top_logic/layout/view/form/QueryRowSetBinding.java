@@ -104,7 +104,8 @@ public class QueryRowSetBinding implements RowSetBinding {
 		if (_removeMode == RemoveMode.DELETE) {
 			Set<TLObject> current = new HashSet<>(persistedRows);
 			for (TLObject original : originalRows) {
-				if (!current.contains(original)) {
+				// An original may already be deleted as part of another deleted original.
+				if (!current.contains(original) && original.tValid()) {
 					original.tDelete();
 				}
 			}

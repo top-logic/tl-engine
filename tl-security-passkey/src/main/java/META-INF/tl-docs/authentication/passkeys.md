@@ -1,5 +1,5 @@
 ---
-description: Read before letting users of a React application log in with passkeys (WebAuthn) - the module tl-security-passkey, the PasskeyService options rp-id / origins / rp-name / user-verification / timeout, the model type tl.security.passkey:Passkey and the reference tl.accounts:Person#passkeys, the passwordless login button and the passkey as second factor (PasskeySecondFactor, passkey-verify.view.xml, passkey-enroll.view.xml), the view elements <passkey-login> and <passkey-registration> (account, auto-start, complete-login, <on-success>), the passkeys in the settings and the account administration, <delete-passkey/> and its last-factor rule, the TL-Script function passkeyMayUse, the interplay with MfaRequirement, and testing with a virtual authenticator.
+description: Read before letting users of a React application log in with passkeys (WebAuthn) - the module tl-security-passkey, the relying party taken from the public address %HOST% (variable tl_host) and the PasskeyService options rp-id / origins / rp-name / user-verification / timeout, passkeys not set up and the origin check of the page, the Signal API calls removing orphaned passkeys from the authenticator, the refusal categories (PasskeyRefusedException) and what is logged, the model type tl.security.passkey:Passkey and the reference tl.accounts:Person#passkeys, the passwordless login button and the passkey as second factor (PasskeySecondFactor, passkey-verify.view.xml, passkey-enroll.view.xml), the view elements <passkey-login> and <passkey-registration> (account, auto-start, complete-login, <on-success>), the passkeys in the settings and the account administration, <delete-passkey/> and its last-factor rule, the TL-Script function passkeyMayUse, the interplay with MfaRequirement, and testing with a virtual authenticator.
 order: 15
 ---
 
@@ -47,25 +47,72 @@ in `tl-security-passkey.conf.config.xml`:
 
 | Option | Default | Meaning |
 |---|---|---|
-| `rp-id` | empty | The relying party ID: the domain the passkeys are bound to, e.g. `example.com`. A passkey works on this domain and its subdomains only. Empty: the host name of the request that starts a ceremony. |
-| `origins` | empty | Comma-separated origins a ceremony may run on, e.g. `https://app.example.com`. Empty: scheme, host and port (default ports left out) of the request that starts a ceremony. |
-| `rp-name` | application title | The name an authenticator shows when it creates a passkey (`ResKey`). |
+| `rp-id` | empty | Override of the relying party ID: the domain the passkeys are bound to, e.g. `example.com`. A passkey works on this domain and its subdomains only. It must be the host of every accepted origin or a parent domain of it. Empty: the host of `%HOST%`. |
+| `origins` | empty | Override of the accepted origins: comma-separated origins a ceremony may run on, e.g. `https://app.example.com`. Set, they **replace** the origin of `%HOST%` (list it too if passkeys are to work there). Empty: the origin of `%HOST%`. |
+| `rp-name` | application title | The name an authenticator shows when it creates a passkey (`ResKey`, in the system language). |
 | `user-verification` | `REQUIRED` | Whether the authenticator must verify its user when a passkey is created or used as second factor: `REQUIRED`, `PREFERRED`, `DISCOURAGED`. The passwordless login always requires it. |
 | `timeout` | `5min` | How long the browser waits for the user, and how long a started ceremony is accepted. |
 
-Without `rp-id` and `origins` a local installation works without configuration. **A production
-installation behind a reverse proxy must configure both**: the request the application sees then
-names the internal host, not the address in the browser, and every ceremony fails. In the
-configuration of the application:
+### The relying party: the public address of the application
+
+The relying party ID and the accepted origin come from the **public address of the application**,
+the alias `%HOST%` (`AliasManager.HOST`), which `top-logic.xml` sets from the variable `tl_host`
+(environment variable or system property), e.g. `https://apps.example.com`. The development start
+sets it to `http://localhost:<port>`; a production installation sets `tl_host` to the address the
+users open in the browser. `PasskeyService` resolves the address once, when it starts
+(`RelyingPartyAddress.resolve`):
+
+- the **origin** is `%HOST%` normalized to what a browser reports: `scheme://host[:port]` with the
+  scheme and host in lower case, without path or trailing slash, and without the default port of
+  the scheme (`https://app.example.com:443/tl/` becomes `https://app.example.com`);
+- the **relying party ID** is the host of that origin;
+- `rp-id` and `origins` override them, e.g. to bind the passkeys to a parent domain
+  (`rp-id="example.com"`) or to accept further addresses. Without `%HOST%`, `origins` alone
+  suffice; the relying party ID is then the host of the first origin.
+
+Nothing is taken from the HTTP request: behind a reverse proxy the request names the internal
+address, and the relying party ID binds every passkey for good. The service logs the resolved
+relying party ID and origins at startup (`INFO`).
 
 ```xml
 <config service-class="com.top_logic.security.passkey.PasskeyService">
 	<instance class="com.top_logic.security.passkey.PasskeyService"
 		rp-id="example.com"
-		origins="https://app.example.com"
+		origins="https://app.example.com,https://login.example.com"
 	/>
 </config>
 ```
+
+**Passkeys not set up.** If neither `%HOST%` nor `origins` gives an origin, a value is malformed
+(only `http` and `https` addresses), or `rp-id` does not fit every origin, the service logs an
+`ERROR` at startup naming `tl_host` / `%HOST%` and the option `origins`, and stays up without
+passkeys: every ceremony start is refused with "Passkeys are not set up for this installation", the
+tooltip of the disabled passkey buttons. The rest of the login is not affected.
+
+### The address of the page
+
+When a passkey button is displayed, the client reports the origin of its page
+(`window.location.origin`, `ReactWebAuthnControl.CMD_ORIGIN`). `PasskeyCeremony` compares it with
+the accepted origins: on a page the relying party does not accept (e.g. the application opened by
+its IP address or an internal host name), a ceremony would be refused - a registration only after
+the authenticator has stored the key. So no ceremony is offered there: the button is disabled, its
+tooltip names the address of the page and the addresses where passkeys work, and a `WARN` log names
+the page origin, the accepted origins and the settings to fix. Options given before the report
+arrives are withdrawn; the reason stays for every later offer.
+
+### Cleaning up the authenticator
+
+The application tells the browser (and through it the password manager or platform authenticator)
+which passkeys it does not know, with the Web Authentication Signal API of
+`ReactWebAuthnControl`; a browser without that API ignores the signals:
+
+| Event | Signal |
+|---|---|
+| A registration is refused after the browser created the credential (wrong address, expired, not allowed, user not verified, refused by the library), or a credential answers a withdrawn registration | `signalUnknownCredential(rpId, credentialId)` - the authenticator drops the key it just stored |
+| A login with a passkey the application does not know (no account has it, its account is deleted, or the user handle does not match) | `signalUnknownCredential(rpId, credentialId)` |
+| A successful passkey login | `signalAllAcceptedCredentials(rpId, userHandle, ids)` with the IDs of all passkeys of the account, before the login completes - removes or hides passkeys deleted in the application |
+
+A registration refused because the passkey is already registered sends no signal.
 
 ## The model
 
@@ -89,8 +136,11 @@ reading its account, renaming and deleting it is editing its account. The accoun
 `PersonalProfile`) and an administrator manage the passkeys; nobody else sees them.
 
 Java: `PasskeyService.getInstance()` with `getPasskeys(account)`, `isEnrolled(account)`,
-`mayUsePasskeys(account)`, and the two-step ceremonies `startRegistration` / `finishRegistration`
-and `startAuthentication` / `finishAuthentication`.
+`mayUsePasskeys(account)`, `isAvailable()` / `getAddress()` / `getRpId()` (the resolved relying
+party, `null` while passkeys are not set up), and the two-step ceremonies `startRegistration` /
+`finishRegistration` and `startAuthentication` / `finishAuthentication`. A `finish` method refuses
+with a `PasskeyRefusedException` carrying the category of the refusal, the base64url credential ID
+and whether the relying party does not know the credential (`isCredentialUnknown()`).
 
 ## The login flows
 
@@ -219,7 +269,14 @@ authenticator app of a `required` account that has no passkey.
   needs an attestation trust source in `PasskeyService`.
 - Signature algorithms: ES256, EdDSA, ES384, ES512, RS256 - those the JVM verifies without an extra
   security provider.
-- Failed passkey logins are logged (`Logger.info`) with the reason; the user sees a generic message.
+- Every refused registration and login is logged (`Logger.warn`) with its category, the reason
+  (the message of the library with its causes, where the library refused), the base64url credential
+  ID, the accounts involved (registration: the account; login: the account of the user handle, the
+  owner of the passkey and, for a second factor, the expected account) and the origin of the page
+  from the client data. The user sees the message of the category: wrong address, unknown passkey,
+  passkey of another account, user not verified, signature counter, request expired or answered,
+  or the generic message with the reason of the library. The categories are decided by checks
+  before the library runs, not by its messages.
 
 ## Pitfalls
 
@@ -231,8 +288,11 @@ authenticator app of a `required` account that has no passkey.
 - A failed ceremony is reported through the messages of the window, with the text of the browser
   where it is not a cancellation; every failure is logged with the error name and message of the
   browser (`Logger.warn` for an unexpected one).
-- Changing `rp-id` (or the domain of the application, while `rp-id` is derived from the request)
-  makes every registered passkey unusable; the users have to create new ones.
+- Changing `rp-id` (or the host of `tl_host`, while `rp-id` is not set) makes every registered
+  passkey unusable; the users have to create new ones.
+- `tl_host` must be the address in the browser of the users, including `https` behind a
+  TLS-terminating reverse proxy; a mismatch disables the passkey buttons with a tooltip naming the
+  page address, see "The address of the page".
 - `disabled` does not remove existing passkeys: an account that has one keeps being asked for it
   after the password and can still log in with it alone. Delete the passkeys when forbidding the
   second factor for such an account.

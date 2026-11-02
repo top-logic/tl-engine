@@ -12,6 +12,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.json.JSON;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.webauthn.ReactWebAuthnControl;
@@ -19,14 +20,17 @@ import com.top_logic.layout.react.control.webauthn.WebAuthnCeremony;
 import com.top_logic.layout.react.control.webauthn.WebAuthnCredentialArguments;
 import com.top_logic.layout.react.control.webauthn.WebAuthnFailureArguments;
 import com.top_logic.layout.react.control.webauthn.WebAuthnListener;
+import com.top_logic.layout.react.control.webauthn.WebAuthnOriginArguments;
+import com.top_logic.layout.react.protocol.FunctionCall;
+import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests for {@link ReactWebAuthnControl}: that the commands of the client reach the
- * {@link WebAuthnListener} with their arguments, and that a control that is not offered refuses
- * them.
+ * {@link WebAuthnListener} with their arguments, that a control that is not offered refuses them,
+ * and that the signals of the owner reach the client as calls of its signal function.
  */
 public class TestReactWebAuthnControl extends TestCase {
 
@@ -64,7 +68,40 @@ public class TestReactWebAuthnControl extends TestCase {
 			assertNotNull(context);
 			_calls.add("unavailable:" + errorName + ":" + message);
 		}
+
+		@Override
+		public void onPageOrigin(ReactContext context, String origin) {
+			assertNotNull(context);
+			_calls.add("origin:" + origin);
+		}
 	}
+
+	/**
+	 * Keeps the events handed to the queue, as the client would receive them.
+	 */
+	private static final class RecordingQueue extends SSEUpdateQueue {
+
+		final List<SSEEvent> _events = new ArrayList<>();
+
+		@Override
+		public void enqueue(SSEEvent event) {
+			_events.add(event);
+			super.enqueue(event);
+		}
+
+		/** The function calls among the events. */
+		List<FunctionCall> functionCalls() {
+			List<FunctionCall> result = new ArrayList<>();
+			for (SSEEvent event : _events) {
+				if (event instanceof FunctionCall call) {
+					result.add(call);
+				}
+			}
+			return result;
+		}
+	}
+
+	private RecordingQueue _queue;
 
 	private Trace _trace;
 
@@ -73,8 +110,9 @@ public class TestReactWebAuthnControl extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		_queue = new RecordingQueue();
 		ReactContext context =
-			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+			new DefaultReactContext("", "test", _queue, new ReactWindowRegistry("test"));
 		_trace = new Trace();
 		_control = new ReactWebAuthnControl(context, WebAuthnCeremony.GET, OPTIONS, "Sign in", _trace);
 	}
@@ -96,6 +134,24 @@ public class TestReactWebAuthnControl extends TestCase {
 	private HandlerResult sendUnavailable(String errorName) {
 		return _control.executeClientCommand(ReactWebAuthnControl.CMD_UNAVAILABLE,
 			Map.of(WebAuthnFailureArguments.ERROR_NAME, errorName));
+	}
+
+	private HandlerResult sendOrigin(String origin) {
+		return _control.executeClientCommand(ReactWebAuthnControl.CMD_ORIGIN,
+			Map.of(WebAuthnOriginArguments.ORIGIN, origin));
+	}
+
+	/**
+	 * The single function call the owner's signal produced, as the arguments the client function
+	 * {@link ReactWebAuthnControl#CLIENT_FUNCTION} receives.
+	 */
+	private List<?> signalArguments() throws JSON.ParseException {
+		List<FunctionCall> calls = _queue.functionCalls();
+		assertEquals(1, calls.size());
+		FunctionCall call = calls.get(0);
+		assertEquals(ReactWebAuthnControl.CLIENT_NAMESPACE, call.getFunctionRef());
+		assertEquals(ReactWebAuthnControl.CLIENT_FUNCTION, call.getFunctionName());
+		return (List<?>) JSON.fromString(call.getArguments());
 	}
 
 	private HandlerResult sendRefresh() {
@@ -205,12 +261,82 @@ public class TestReactWebAuthnControl extends TestCase {
 		assertTrue(state, state.contains("Open via HTTPS."));
 	}
 
+	/** The origin of the page reaches the listener and stays available, also on a disabled control. */
+	public void testOriginReachesTheListener() {
+		assertNull(_control.getPageOrigin());
+		_control.setDisabled(true);
+
+		assertTrue(sendOrigin("https://app.example.com").isSuccess());
+
+		assertEquals(List.of("origin:https://app.example.com"), _trace._calls);
+		assertEquals("https://app.example.com", _control.getPageOrigin());
+	}
+
+	/** A listener that does not check the origin ignores it; the control keeps it anyway. */
+	public void testOriginIgnoredByDefault() {
+		WebAuthnListener listener = new WebAuthnListener() {
+			@Override
+			public void onCredential(ReactContext context, String credentialJson) {
+				fail("No credential sent.");
+			}
+
+			@Override
+			public void onFailure(ReactContext context, String errorName, String message) {
+				fail("No failure sent.");
+			}
+		};
+		ReactWebAuthnControl control = new ReactWebAuthnControl(
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")),
+			WebAuthnCeremony.GET, OPTIONS, "Sign in", listener);
+		control.setHidden(true);
+
+		assertTrue(control.executeClientCommand(ReactWebAuthnControl.CMD_ORIGIN,
+			Map.of(WebAuthnOriginArguments.ORIGIN, "http://localhost:8080")).isSuccess());
+		assertEquals("http://localhost:8080", control.getPageOrigin());
+	}
+
+	/** An unknown credential is signalled as a call of the client function, not as state. */
+	public void testSignalUnknownCredential() throws JSON.ParseException {
+		String stateBefore = _control.stateAsJSON();
+
+		_control.signalUnknownCredential("app.example.com", "AQID");
+
+		assertEquals(List.of(ReactWebAuthnControl.SIGNAL_UNKNOWN_CREDENTIAL,
+			Map.of(ReactWebAuthnControl.RP_ID, "app.example.com", ReactWebAuthnControl.CREDENTIAL_ID, "AQID")),
+			signalArguments());
+		assertEquals(stateBefore, _control.stateAsJSON());
+	}
+
+	/** The accepted credentials of a user are signalled with all their IDs, also on a disabled button. */
+	public void testSignalAllAcceptedCredentials() throws JSON.ParseException {
+		_control.setDisabled(true);
+
+		_control.signalAllAcceptedCredentials("app.example.com", "dXNlcg", List.of("AQ", "Ag"));
+
+		assertEquals(List.of(ReactWebAuthnControl.SIGNAL_ALL_ACCEPTED_CREDENTIALS,
+			Map.of(ReactWebAuthnControl.RP_ID, "app.example.com", ReactWebAuthnControl.USER_ID, "dXNlcg",
+				ReactWebAuthnControl.ALL_ACCEPTED_CREDENTIAL_IDS, List.of("AQ", "Ag"))),
+			signalArguments());
+	}
+
+	/** Each signal is sent once: a second signal is a second call, the first is not repeated. */
+	public void testSignalsAreOneShot() {
+		_control.signalUnknownCredential("app.example.com", "AQ");
+		_control.signalUnknownCredential("app.example.com", "Ag");
+
+		List<FunctionCall> calls = _queue.functionCalls();
+		assertEquals(2, calls.size());
+		assertTrue(calls.get(0).getArguments(), calls.get(0).getArguments().contains("\"AQ\""));
+		assertTrue(calls.get(1).getArguments(), calls.get(1).getArguments().contains("\"Ag\""));
+	}
+
 	/** A ceremony answers a one-time challenge, so the recorder captures none of its commands. */
 	public void testCommandsAreNotRecorded() {
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_CREDENTIAL));
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_FAILURE));
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_REFRESH));
 		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_UNAVAILABLE));
+		assertFalse(_control.isRecordable(ReactWebAuthnControl.CMD_ORIGIN));
 	}
 
 }

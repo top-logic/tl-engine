@@ -5,13 +5,12 @@
  */
 package test.com.top_logic.security.passkey;
 
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -24,6 +23,9 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 
+import com.top_logic.basic.Logger.LogEntry;
+import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -32,42 +34,45 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.security.passkey.I18NConstants;
 import com.top_logic.security.passkey.PasskeyCredentialRepository;
+import com.top_logic.security.passkey.PasskeyRefusedException;
+import com.top_logic.security.passkey.PasskeyRefusedException.Category;
 import com.top_logic.security.passkey.PasskeyService;
 import com.top_logic.security.passkey.PendingAuthentication;
 import com.top_logic.security.passkey.PendingRegistration;
 import com.top_logic.security.passkey.model.Passkey;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Registration and login ceremonies of {@link PasskeyService} against a
- * {@link SoftwareAuthenticator}, with the relying party derived from the request.
+ * {@link SoftwareAuthenticator}, with the relying party taken from the public address of the
+ * application, see {@link PasskeyTestHost}.
  */
 public class TestPasskeyService extends BasicTestCase {
 
-	/** The host of the {@link #request(String, String, int) requests} of the tests. */
-	public static final String HOST = "localhost";
+	private static final String HOST = PasskeyTestHost.HOST;
 
-	/** The port of the {@link #request(String, String, int) requests} of the tests. */
-	public static final int PORT = 8080;
+	private static final int PORT = PasskeyTestHost.PORT;
 
-	/** The origin of a page served for a request to {@link #HOST} and {@link #PORT}. */
-	public static final String ORIGIN = "http://" + HOST + ":" + PORT;
+	private static final String ORIGIN = PasskeyTestHost.ORIGIN;
 
 	private static final String LABEL = "Test device";
 
 	private final List<Person> _accounts = new ArrayList<>();
 
-	private HttpServletRequest _request;
+	private CollectingLogListener _log;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_request = request("http", HOST, PORT);
+		PasskeyTestHost.useDefault();
+		_log = new CollectingLogListener(EnumSet.of(Level.WARN), true);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
+		_log.deactivate();
 		for (Person account : _accounts) {
 			if (account.isAlive()) {
 				TestPerson.deletePersonAndUser(account);
@@ -77,10 +82,14 @@ public class TestPasskeyService extends BasicTestCase {
 		super.tearDown();
 	}
 
-	/** The relying party and origin come from the request when they are not configured. */
-	public void testRelyingPartyFromRequest() throws Exception {
+	/** The relying party ID and the origin come from the public address of the application. */
+	public void testRelyingPartyFromPublicAddress() throws Exception {
+		assertTrue(service().isAvailable());
+		assertEquals(HOST, service().getRpId());
+		assertEquals(Set.of(ORIGIN), service().getAddress().getOrigins());
+
 		Person account = account("passkeyRp");
-		PendingRegistration pending = service().startRegistration(account, _request);
+		PendingRegistration pending = service().startRegistration(account);
 
 		assertEquals(HOST, pending.getRequest().getRp().getId());
 		assertTrue(pending.toOptionsJson(), pending.toOptionsJson().startsWith("{\"publicKey\":"));
@@ -105,7 +114,7 @@ public class TestPasskeyService extends BasicTestCase {
 		assertTrue(service().isEnrolled(account));
 		assertEquals(List.of(passkey), service().getPasskeys(account));
 
-		PendingAuthentication login = service().startAuthentication(null, _request);
+		PendingAuthentication login = service().startAuthentication(null);
 		assertTrue(login.isPasswordless());
 		assertTrue(login.requiresUserVerification());
 		Person loggedIn = service().finishAuthentication(login, authenticator.get(login.toOptionsJson()));
@@ -121,7 +130,7 @@ public class TestPasskeyService extends BasicTestCase {
 		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
 		register(account, authenticator);
 
-		PendingAuthentication login = service().startAuthentication(account, _request);
+		PendingAuthentication login = service().startAuthentication(account);
 		assertFalse(login.isPasswordless());
 		Set<String> allowed = login.getRequest().getPublicKeyCredentialRequestOptions().getAllowCredentials()
 			.orElseThrow().stream().map(descriptor -> descriptor.getId().getBase64Url()).collect(Collectors.toSet());
@@ -135,18 +144,103 @@ public class TestPasskeyService extends BasicTestCase {
 		Person account = account("passkeyOrigin");
 		SoftwareAuthenticator authenticator = new SoftwareAuthenticator("http://evil.example:" + PORT, 0);
 
-		PendingRegistration registration = service().startRegistration(account, _request);
+		PendingRegistration registration = service().startRegistration(account);
 		String credential = authenticator.create(registration.toOptionsJson());
-		assertFails(I18NConstants.ERROR_REGISTRATION_FAILED, "Incorrect origin",
+		PasskeyRefusedException refused = assertRefused(Category.WRONG_ORIGIN,
+			I18NConstants.ERROR_WRONG_ORIGIN__ORIGIN.fill("http://evil.example:" + PORT),
 			() -> service().finishRegistration(registration, credential, LABEL));
+		assertEquals(authenticator.getCredentialId(), refused.getCredentialId());
+		assertTrue("The authenticator stored a key the application does not keep.", refused.isCredentialUnknown());
 		assertFalse(service().isEnrolled(account));
+		assertWarned("Registration of a passkey refused (WRONG_ORIGIN)", authenticator.getCredentialId(),
+			"account '" + account.getName() + "'", "origin of the page: http://evil.example:" + PORT, ORIGIN);
 
 		authenticator.setOrigin(ORIGIN);
 		register(account, authenticator);
 		authenticator.setOrigin("https://" + HOST + ":" + PORT);
-		PendingAuthentication login = service().startAuthentication(null, _request);
+		PendingAuthentication login = service().startAuthentication(null);
 		String assertion = authenticator.get(login.toOptionsJson());
-		assertFails(I18NConstants.ERROR_AUTHENTICATION_FAILED, "Incorrect origin", () -> service().finishAuthentication(login, assertion));
+		PasskeyRefusedException refusedLogin = assertRefused(Category.WRONG_ORIGIN,
+			I18NConstants.ERROR_WRONG_ORIGIN__ORIGIN.fill("https://" + HOST + ":" + PORT),
+			() -> service().finishAuthentication(login, assertion));
+		assertFalse("A registered passkey is not forgotten.", refusedLogin.isCredentialUnknown());
+	}
+
+	/** A login with a passkey no account has is refused, and the passkey reported as unknown. */
+	public void testUnknownPasskeyRejected() throws Exception {
+		Person account = account("passkeyUnknown");
+		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
+		Passkey passkey = register(account, authenticator);
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Delete passkey"))) {
+			passkey.tDelete();
+			tx.commit();
+		}
+
+		PendingAuthentication login = service().startAuthentication(null);
+		String assertion = authenticator.get(login.toOptionsJson());
+		PasskeyRefusedException refused = assertRefused(Category.UNKNOWN_PASSKEY, I18NConstants.ERROR_UNKNOWN_PASSKEY,
+			() -> service().finishAuthentication(login, assertion));
+		assertEquals(authenticator.getCredentialId(), refused.getCredentialId());
+		assertTrue(refused.isCredentialUnknown());
+		assertWarned("Login with a passkey refused (UNKNOWN_PASSKEY)", authenticator.getCredentialId(),
+			"account of the user handle '" + account.getName() + "'", "origin of the page: " + ORIGIN);
+	}
+
+	/** A registration answered twice is refused the second time, and its key reported as unknown. */
+	public void testExpiredRegistrationReportsCredential() throws Exception {
+		Person account = account("passkeyExpiredReg");
+		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
+		PendingRegistration registration = service().startRegistration(account);
+		String credential = authenticator.create(registration.toOptionsJson());
+		service().finishRegistration(registration, credential, LABEL);
+
+		SoftwareAuthenticator second = new SoftwareAuthenticator(ORIGIN, 0);
+		String other = second.create(registration.toOptionsJson());
+		PasskeyRefusedException refused = assertRefused(Category.EXPIRED, I18NConstants.ERROR_REQUEST_EXPIRED,
+			() -> service().finishRegistration(registration, other, LABEL));
+		assertEquals(second.getCredentialId(), refused.getCredentialId());
+		assertTrue(refused.isCredentialUnknown());
+	}
+
+	/** An unparsable answer is refused without a credential ID. */
+	public void testInvalidDataRejected() throws Exception {
+		Person account = account("passkeyInvalid");
+		PendingRegistration registration = service().startRegistration(account);
+		PasskeyRefusedException refused = assertRefused(Category.INVALID_DATA,
+			I18NConstants.ERROR_INVALID_CEREMONY_DATA,
+			() -> service().finishRegistration(registration, "{\"id\": 42}", LABEL));
+		assertNull(refused.getCredentialId());
+		assertFalse(refused.isCredentialUnknown());
+	}
+
+	/** Without a public address, passkeys are not available and no ceremony starts. */
+	public void testNoPublicAddress() throws Exception {
+		Person account = account("passkeyNoHost");
+		try {
+			PasskeyTestHost.use("");
+			assertFalse(service().isAvailable());
+			assertNull(service().getRpId());
+			assertFails(I18NConstants.ERROR_NOT_SET_UP, () -> service().startRegistration(account));
+			assertFails(I18NConstants.ERROR_NOT_SET_UP, () -> service().startAuthentication(null));
+			assertFails(I18NConstants.ERROR_NOT_SET_UP, () -> service().startAuthentication(account));
+
+			PasskeyTestHost.use("not an address");
+			assertFalse("A malformed public address sets up no passkeys.", service().isAvailable());
+			assertFails(I18NConstants.ERROR_NOT_SET_UP, () -> service().startRegistration(account));
+		} finally {
+			PasskeyTestHost.useDefault();
+		}
+	}
+
+	/** The public address is normalized to the origin a browser reports. */
+	public void testPublicAddressNormalized() throws Exception {
+		try {
+			PasskeyTestHost.use("HTTPS://App.Example.COM:443/tl-demo/");
+			assertEquals("app.example.com", service().getRpId());
+			assertEquals(Set.of("https://app.example.com"), service().getAddress().getOrigins());
+		} finally {
+			PasskeyTestHost.useDefault();
+		}
 	}
 
 	/** An answer to an earlier challenge is refused, and a ceremony is answered only once. */
@@ -155,15 +249,21 @@ public class TestPasskeyService extends BasicTestCase {
 		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
 		register(account, authenticator);
 
-		PendingAuthentication first = service().startAuthentication(null, _request);
+		PendingAuthentication first = service().startAuthentication(null);
 		String firstAnswer = authenticator.get(first.toOptionsJson());
 		assertEquals(account, service().finishAuthentication(first, firstAnswer));
 
-		assertFails(I18NConstants.ERROR_REQUEST_EXPIRED, () -> service().finishAuthentication(first, firstAnswer));
+		PasskeyRefusedException expired = assertRefused(Category.EXPIRED, I18NConstants.ERROR_REQUEST_EXPIRED,
+			() -> service().finishAuthentication(first, firstAnswer));
+		assertFalse(expired.isCredentialUnknown());
 
-		PendingAuthentication second = service().startAuthentication(null, _request);
-		assertFails(I18NConstants.ERROR_AUTHENTICATION_FAILED, "Incorrect challenge",
-			() -> service().finishAuthentication(second, firstAnswer));
+		PendingAuthentication second = service().startAuthentication(null);
+		PasskeyRefusedException failed = assertFails(I18NConstants.ERROR_AUTHENTICATION_FAILED__REASON.fill(""),
+			"Incorrect challenge", () -> service().finishAuthentication(second, firstAnswer));
+		assertEquals(Category.FAILED, failed.getCategory());
+		assertTrue("The reason of the library is shown.",
+			Resources.getInstance().getString(failed.getErrorKey()).contains("Incorrect challenge"));
+		assertWarned("Login with a passkey refused (FAILED)", "Incorrect challenge");
 	}
 
 	/** The passkey of another account is refused when the account is given at the start. */
@@ -174,9 +274,15 @@ public class TestPasskeyService extends BasicTestCase {
 		SoftwareAuthenticator otherAuthenticator = new SoftwareAuthenticator(ORIGIN, 0);
 		register(other, otherAuthenticator);
 
-		PendingAuthentication login = service().startAuthentication(account, _request);
+		PendingAuthentication login = service().startAuthentication(account);
 		String assertion = otherAuthenticator.get(login.toOptionsJson());
-		assertFails(I18NConstants.ERROR_AUTHENTICATION_FAILED, "Unrequested credential ID", () -> service().finishAuthentication(login, assertion));
+		PasskeyRefusedException refused = assertRefused(Category.OTHER_ACCOUNT,
+			I18NConstants.ERROR_OTHER_ACCOUNT__ACCOUNT.fill(account.getName()),
+			() -> service().finishAuthentication(login, assertion));
+		assertEquals(otherAuthenticator.getCredentialId(), refused.getCredentialId());
+		assertFalse("A passkey of another account is not forgotten.", refused.isCredentialUnknown());
+		assertWarned("(OTHER_ACCOUNT)", "expected account '" + account.getName() + "'",
+			"owner of the passkey '" + other.getName() + "'");
 	}
 
 	/** A login with a passkey alone is refused if the authenticator did not verify the user. */
@@ -186,9 +292,10 @@ public class TestPasskeyService extends BasicTestCase {
 		register(account, authenticator);
 
 		authenticator.setUserVerification(false);
-		PendingAuthentication login = service().startAuthentication(null, _request);
+		PendingAuthentication login = service().startAuthentication(null);
 		String assertion = authenticator.get(login.toOptionsJson());
-		assertFails(I18NConstants.ERROR_AUTHENTICATION_FAILED, "User Verification is required", () -> service().finishAuthentication(login, assertion));
+		assertRefused(Category.USER_NOT_VERIFIED, I18NConstants.ERROR_USER_NOT_VERIFIED,
+			() -> service().finishAuthentication(login, assertion));
 	}
 
 	/** A signature counter that does not increase (a cloned authenticator) is refused. */
@@ -198,14 +305,15 @@ public class TestPasskeyService extends BasicTestCase {
 		Passkey passkey = register(account, authenticator);
 		assertEquals(5, passkey.getSignatureCount());
 
-		PendingAuthentication login = service().startAuthentication(null, _request);
+		PendingAuthentication login = service().startAuthentication(null);
 		service().finishAuthentication(login, authenticator.get(login.toOptionsJson()));
 		assertEquals(6, passkey.getSignatureCount());
 
 		authenticator.setSignatureCount(2);
-		PendingAuthentication clone = service().startAuthentication(null, _request);
+		PendingAuthentication clone = service().startAuthentication(null);
 		String assertion = authenticator.get(clone.toOptionsJson());
-		assertFails(I18NConstants.ERROR_AUTHENTICATION_FAILED, "InvalidSignatureCount", () -> service().finishAuthentication(clone, assertion));
+		assertRefused(Category.SIGNATURE_COUNTER, I18NConstants.ERROR_SIGNATURE_COUNTER,
+			() -> service().finishAuthentication(clone, assertion));
 		assertEquals(6, passkey.getSignatureCount());
 	}
 
@@ -218,11 +326,11 @@ public class TestPasskeyService extends BasicTestCase {
 		}
 		assertFalse(service().mayUsePasskeys(account));
 		assertFails(I18NConstants.ERROR_PASSKEYS_NOT_ALLOWED__ACCOUNT.fill(account.getName()),
-			() -> service().startRegistration(account, _request));
+			() -> service().startRegistration(account));
 
 		Person anonymous = PersonManager.getManager().getAnonymous();
 		assertFails(I18NConstants.ERROR_PASSKEYS_NOT_ALLOWED__ACCOUNT.fill(anonymous.getName()),
-			() -> service().startRegistration(anonymous, _request));
+			() -> service().startRegistration(anonymous));
 	}
 
 	/** A further registration excludes the passkeys the account already has. */
@@ -231,7 +339,7 @@ public class TestPasskeyService extends BasicTestCase {
 		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
 		register(account, authenticator);
 
-		PendingRegistration again = service().startRegistration(account, _request);
+		PendingRegistration again = service().startRegistration(account);
 		Set<PublicKeyCredentialDescriptor> excluded = again.getRequest().getExcludeCredentials().orElseThrow();
 		assertEquals(Set.of(authenticator.getCredentialId()),
 			excluded.stream().map(descriptor -> descriptor.getId().getBase64Url()).collect(Collectors.toSet()));
@@ -253,7 +361,7 @@ public class TestPasskeyService extends BasicTestCase {
 	}
 
 	private Passkey register(Person account, SoftwareAuthenticator authenticator) throws Exception {
-		PendingRegistration registration = service().startRegistration(account, _request);
+		PendingRegistration registration = service().startRegistration(account);
 		return service().finishRegistration(registration, authenticator.create(registration.toOptionsJson()), LABEL);
 	}
 
@@ -267,50 +375,66 @@ public class TestPasskeyService extends BasicTestCase {
 		return PasskeyService.getInstance();
 	}
 
-	private static void assertFails(ResKey expected, Runnable action) {
-		assertFails(expected, null, action);
+	/**
+	 * Asserts that a warning containing all given fragments was logged.
+	 */
+	private void assertWarned(String... fragments) {
+		List<String> messages = new ArrayList<>();
+		for (LogEntry entry : _log.getLogEntries()) {
+			messages.add(entry.getMessage());
+			if (Arrays.stream(fragments).allMatch(entry.getMessage()::contains)) {
+				return;
+			}
+		}
+		fail("No warning with " + Arrays.toString(fragments) + " in " + messages);
 	}
 
-	/**
-	 * Asserts that the action fails with the given error, caused by a refusal of the library whose
-	 * description contains the given fragment, which tells which check refused.
-	 */
-	private static void assertFails(ResKey expected, String causeFragment, Runnable action) {
+	private static void assertFails(ResKey expected, Runnable action) {
 		try {
 			action.run();
 			fail("Expected failure: " + expected);
 		} catch (TopLogicException ex) {
 			assertEquals(expected.plain().getKey(), ex.getErrorKey().plain().getKey());
-			if (causeFragment != null) {
-				assertNotNull("No cause.", ex.getCause());
-				assertTrue(String.valueOf(ex.getCause()), String.valueOf(ex.getCause()).contains(causeFragment));
-			}
 		}
 	}
 
 	/**
-	 * A request answering only the questions of the relying party: scheme, host and port.
+	 * Asserts that the action refuses a credential with the given category and message.
 	 */
-	public static HttpServletRequest request(String scheme, String host, int port) {
-		return (HttpServletRequest) Proxy.newProxyInstance(TestPasskeyService.class.getClassLoader(),
-			new Class<?>[] { HttpServletRequest.class }, (proxy, method, args) -> {
-				switch (method.getName()) {
-					case "getScheme":
-						return scheme;
-					case "getServerName":
-						return host;
-					case "getServerPort":
-						return port;
-					default:
-						throw new UnsupportedOperationException(method.getName());
-				}
-			});
+	private static PasskeyRefusedException assertRefused(Category category, ResKey expected, Runnable action) {
+		try {
+			action.run();
+			fail("Expected refusal: " + category);
+			throw new AssertionError();
+		} catch (PasskeyRefusedException ex) {
+			assertEquals(category, ex.getCategory());
+			assertEquals(Resources.getInstance().getString(expected), Resources.getInstance().getString(ex.getErrorKey()));
+			return ex;
+		}
+	}
+
+	/**
+	 * Asserts that the action refuses a credential with the given message, caused by a refusal of
+	 * the library whose description contains the given fragment, which tells which check refused.
+	 */
+	private static PasskeyRefusedException assertFails(ResKey expected, String causeFragment, Runnable action) {
+		try {
+			action.run();
+			fail("Expected failure: " + expected);
+			throw new AssertionError();
+		} catch (PasskeyRefusedException ex) {
+			assertEquals(expected.plain().getKey(), ex.getErrorKey().plain().getKey());
+			assertNotNull("No cause.", ex.getCause());
+			assertTrue(String.valueOf(ex.getCause()), String.valueOf(ex.getCause()).contains(causeFragment));
+			return ex;
+		}
 	}
 
 	/**
 	 * The suite, with a knowledge base holding the passkey model.
 	 */
 	public static Test suite() {
+		PasskeyTestHost.init();
 		return KBSetup.getSingleKBTest(
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestPasskeyService.class),

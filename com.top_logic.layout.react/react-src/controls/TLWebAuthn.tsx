@@ -25,6 +25,15 @@ const ARG_MESSAGE = 'message';
  */
 const CMD_UNAVAILABLE = 'unavailable';
 
+/**
+ * The command reporting once, when the component is mounted, the origin of the page
+ * (`ReactWebAuthnControl.CMD_ORIGIN`).
+ */
+const CMD_ORIGIN = 'origin';
+
+/** The argument of {@link CMD_ORIGIN}: `window.location.origin` (`WebAuthnOriginArguments.ORIGIN`). */
+const ARG_ORIGIN = 'origin';
+
 /** The command asking for fresh options shortly before the current ones expire (`ReactWebAuthnControl.CMD_REFRESH`). */
 const CMD_REFRESH = 'refresh';
 
@@ -57,6 +66,15 @@ interface WebAuthnState extends Record<string, unknown> {
  * toolbar shows it by its icon, a menu as an entry. It shows no error: the owner on the server tells
  * the user about a failure through the messages of the window, and a reason why the button cannot
  * be used arrives as its `tooltip`.</p>
+ *
+ * <p>When the component is mounted, it reports the origin of the page once with the command
+ * `origin`, so the server can check it against the origins its relying party accepts before it
+ * offers a ceremony.</p>
+ *
+ * <p>The signals of the server to the WebAuthn Signal API (unknown credential, all accepted
+ * credentials) do not pass this component: they are calls of the bridge function
+ * `TLReact.webAuthnSignal` (`webauthn-signals.ts`), so they reach the browser whatever the state of
+ * the button.</p>
  *
  * <p>A page that cannot run a ceremony at all ({@link unavailability}: no secure context, or no
  * WebAuthn API) shows the button disabled right away and reports the cause once, when the component
@@ -115,8 +133,9 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [kind, options, sendCommand]);
 
-  // A page that cannot run a ceremony: reported once, when mounted.
+  // The origin of the page, and a page that cannot run a ceremony: reported once, when mounted.
   React.useEffect(() => {
+    sendCommand(CMD_ORIGIN, { [ARG_ORIGIN]: window.location.origin });
     if (unavailable !== null) {
       sendCommand(CMD_UNAVAILABLE, { [ARG_ERROR_NAME]: unavailable.name, [ARG_MESSAGE]: unavailable.message });
     }

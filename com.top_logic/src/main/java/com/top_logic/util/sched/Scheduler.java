@@ -770,20 +770,33 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			}
 
 			SchedulerEntry entry = waiting.remove(0);
-			long nextShed = entry.getTask().getNextShed();
+			long nextShed;
+			synchronized (this) {
+				/* Decide under the lock of reschedule(SchedulerEntry, long): A task that is added,
+				 * started manually or activated during this round gets its next schedule from
+				 * another thread. Without the lock, the entry could be marked done based on the
+				 * schedule read before, overwriting the waiting state set by that thread, so that
+				 * the task would never be started. */
+				if (entry.getState() != SchedulerEntry.State.WAITING) {
+					continue;
+				}
+				nextShed = entry.getTask().getNextShed();
+				if (nextShed == SchedulingAlgorithm.NO_SCHEDULE) {
+					// Implicitly remove the task from 'tasks' by not re-adding it.
+					entry.setState(SchedulerEntry.State.DONE);
+				} else if (now() < nextShed) {
+					// If it is too early for this task, it is also too early for all other tasks
+					// in the list, as the list is sorted by the task start times. Therefore, don't
+					// try to schedule any further tasks this time.
+					break;
+				} else {
+					entry.setState(SchedulerEntry.State.STARTING);
+				}
+			}
 			if (nextShed == SchedulingAlgorithm.NO_SCHEDULE) {
 				logNoNextSchedule(entry.getTask());
-				entry.setState(SchedulerEntry.State.DONE);
-				// Implicitly remove the task from 'tasks' by not re-adding it.
 				continue;
 			}
-			if (now() < nextShed) {
-				// If it is too early for this task, it is also too early for all other tasks in
-				// the list, as the list is sorted by the task start times. Therefore, don't try to
-				// schedule any further tasks this time.
-				break;
-			}
-			entry.setState(SchedulerEntry.State.STARTING);
 			TaskStartResponse requestedResponse = tryStartTask(entry);
 			switch (requestedResponse) {
 				case NEXT:

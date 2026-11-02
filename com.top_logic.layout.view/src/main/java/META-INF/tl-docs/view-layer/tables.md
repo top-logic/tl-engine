@@ -50,8 +50,17 @@ Further rules that hold across the kinds:
 - **Cell displays.** `<column>`, `<computed-column>` and `<dynamic-columns>` take a `<display>`: the control a cell shows its value with, in place of the display the type derives — see [displaying a cell or a node](#displaying-a-cell-or-a-node-display-and-nodecontent).
 - **Editing cells in place.** A `<table edit-in-place="true">` (also a `<tree-table>`) edits the cells of every column declaring an `<update>` right in the displayed table, without a form: a cell of a row its `<can-update>` offers the edit on shows the control of its type, a cell of another row shows its value with the same control, read-only (an empty one as the column displays it), and an entered value is written at once by the `<update>` script, in a transaction of its own, after which the cells of the table are built again (`AbstractTableElement.Config#getEditInPlace()`, `ColumnSetup#buildInPlaceColumn`, `ValueCellEditing#createInPlaceModel`). It suits a matrix of settings - a check box per row and column, every click a change of its own - such as the grants of the administration (see [administration of grants](doc:view-layer/access-control#administration-of-grants)). An attribute column is not edited in place, and a table with `row-edit` is not either: objects are edited in a form, which saves its edits together.
 - **Default columns.** A table without `<columns>` shows the main properties of its row type (`<main-properties properties="name, dueDate"/>` on the type), and all non-hidden attributes of that type when it names none.
-- **Offered columns.** Whatever the declared columns do not cover, the table offers in its column selection, hidden until the user picks it — the remaining attributes of the configured `types`, and the remaining attributes of an embedded type under their prefixed labels. Only an explicitly configured `types` produces this offering; a type guessed from the first row would vary with the data.
+- **Offered columns.** Whatever the declared columns do not cover, the table offers in its column selection, hidden until the user picks it — the remaining attributes of the configured `types`, and the remaining attributes of an embedded type under their prefixed labels. Only explicitly stated `types` (or `types-expr`, below) produce this offering; a type guessed from the first row would vary with the data.
 - **Columns hidden at the start.** `visible="false"` on a `<column>` or `<computed-column>` (also inside `<embedded-columns>`) offers the column in the column selection only: the table starts out without it, and the user shows it from there. A `<dynamic-columns>` decides this per column object with `<column-visible>$column…</column-visible>`, a boolean expression (unset, or a `null` result, shows the column). A user's own arrangement of the table, once stored, takes precedence.
+- **Types known only at runtime.** `types-expr` computes the `types` from the inputs of the table - a model type, a list of them, or nothing - and they mean exactly what the same configured `types` mean: the first is the row type the default columns are derived from, the attributes of all of them are offered, and the table's identity, under which its personalization is stored, is built from their names (with a `personalization-key`, too), so the column choices of the user are kept per type. A table declares `types` or `types-expr`, not both (`AbstractTableElement#types(Object[])` is the one place the types of a build are resolved, `AbstractTableElement.RowTypes`). The expression is evaluated once per build of the table: an input change refreshes the rows, not the types; a table that is to follow a changing type sits in a `<switch rebuild="true">` over the input, which builds it again for every value. A result that is no type is an error naming `types-expr`.
+
+  ```xml
+  <switch input="selectedType" rebuild="true">
+    <case test="$selectedType != null">
+      <table inputs="selectedType as type" rows="all($type)" types-expr="$type"/>
+    </case>
+  </switch>
+  ```
 - **A row need not be a model object.** A table whose rows are dictionaries declares no `types` at all and computes every column (`$row["name"]`); transient objects are displayed by the same attribute columns persistent ones are, and are skipped when the table observes its row types for changes.
 - `com.top_logic.demo.react` shows all of this under the *Table columns* nav item (`WEB-INF/views/demo/table-columns.view.xml`), one tab per kind.
 
@@ -170,10 +179,48 @@ A cell of a column shows its value as the type of the value derives: a text, a d
 - **Only a value is displayed this way.** An empty cell, a cell the user may not read and a cell being edited keep the display of the type. The header row of a group formed by the column and the column's `<aggregate>` show their value through the display as well.
 - **Several values are displayed one by one.** A cell holding a collection - a multi-valued column, an embedded column collecting the values of several objects - shows each value through the display, arranged as the read-only `ReactValueListControl` arranges the values of any multi-valued field; the search text joins the labels of the values with the separator of every multi-valued cell (`ColumnProviderService.VALUE_SEPARATOR`).
 - **Row-editing tables render read-only cells as every table does.** A cell of a row-editing `<table>` or a `<composition-table>` that is not being edited is the content the column built from its `ColumnSetup` renders (`RowSetTableControl.EditAwareColumn` delegates to it, the edit falling back to it through `CellContentReactAdapter`), so its display, its tooltip and its cell class are the same as in a plain table.
+- **A read-only cell shows the other rows as edited.** While the table is edited, a read-only cell of a row-editing table is built in a `TracingScope` over the overlays of the form (`RowSetTableControl#renderAsEdited`): an object it shows that is edited in the same form - a part listed in the cell of its container, both being rows of the table - is read from its buffer, so the cell shows the pending changes before the form is saved. The attribute values the cell read are recorded, and a change of one of them through the cell of another row (`RowSetEditSession.Listener#onRowValueChanged`) builds the cells of the rows depending on it again, once the interaction has completed (`DeliveryScope#afterInteraction`), so the input the value was entered in already holds it when the rows are pushed; the cells of rows being edited keep their inputs.
+- **An edited container shows its parts as edited.** A part that is a row of the same table keeps one buffer: the composition cell of its container, when that row is edited, lists the part through the buffer of the part's row (`EditLevel#current(TLObject)`, read by `CompositionCellModel`), the dialog of the parts edits on top of that buffer, and OK writes its changes into it. The row of the part then reads its cells again and is built anew, together with the rows built from the changed values (`EditLevel.Listener#onBufferChanged`, `RowSetEditSession.Listener#onRowChanged`).
 - **The tooltip and the cell class of the column stay**: a column's `<tooltip>` wraps what the display shows, its `cell-class` marks the cell around it, beside the class the display puts on its own control.
 - **Search**: a display that is a `LabelProvider` - `ResourceDisplayByExpression` is one - gives the free-text search of the table the text it finds the cell by, so the search finds what the cell shows (`Column#searchText`). Other displays leave the search on the text of the type.
 - **The display follows its object**: `ResourceDisplayByExpression` renders a `ReactResourceCellControl`, which observes the displayed object and resolves label, icon, class and tooltip again when it changes, taking back a class or an icon the object no longer has.
 - The display is a record component of `ColumnSetup` (`ColumnSetup#display()`), applied by `ColumnSetup#buildColumn()` as a `DelegatingColumn` rendering a data cell as a `CellContent.Raw` around a `CellControlFactory` - before the tooltip, which `CellContent.withTooltip` puts on that content. An embedded column keeps the display of the column it embeds.
+
+## Adding rows: the create type of a row-editing table
+
+A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit mode when it declares a `create-type`; a `<composition-table attribute="…">` takes the type from its reference. In both, the type stands for its concrete types:
+
+```xml
+<table rows="$project.get(`my:Project#deliverables`)" row-edit="ALL" create-type="my:Deliverable"/>
+<composition-table attribute="deliverables"/>
+```
+
+- **A concrete type is created directly.** The add command creates a row of it.
+- **An abstract type offers its concrete specializations** (`ModelAccessPolicy.concreteTypes(TLClass)`). With several of them, the add command opens a menu at its button, listing the types by their labels in alphabetical order; choosing one adds a row of that type.
+- **Only the types the user may create are offered.** A type the current user may not create in the form object (in a persistent form object the check the save applies; in a transient one, whether the creation of the type is offered to the user at all) is left out. With a single type left, the add command creates it without a menu.
+- **No type, no add command.** An abstract type without concrete specialization, or one whose concrete types the user may create none of, offers no row creation: the add command is hidden.
+- **One command for both tables.** The add command is `RowSetTableControl#getAddRowCommand()`: a frameless row-editing `<table>` contributes it to the enclosing command scope (next to the save and cancel commands of the form), a framed `<composition-table>` shows it as the Add button of its own toolbar. The menu is opened through the `ContextMenuOpener` of the frame, at the button the command was triggered from (`CommandTrigger`, announced by `ReactButtonControl` for the duration of a click); without a triggering button, it hangs off the table.
+- **A create type known only at runtime.** `create-type-expr` computes the `create-type` from the inputs of the table - a model class, or nothing - and it means exactly what the same configured `create-type` means: a concrete class is created directly, an abstract one offers its concrete specializations; nothing offers no row creation. A table declares `create-type` or `create-type-expr`, not both (`TableElement#createType(Object[])`). Like `types-expr`, it is evaluated once per build of the table; a result that is no class is an error naming `create-type-expr`.
+
+  ```xml
+  <table inputs="selectedType as type" rows="all($type)" row-edit="ALL"
+      types-expr="$type" create-type-expr="$type"/>
+  ```
+- **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type` or `create-type-expr`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one.
+
+## Removing rows: per row and the selected rows at once
+
+A row-editing `<table row-edit="…">` with `on-remove="DELETE"` (or a `<composition-table>`, whose rows are removed from its reference) offers the removal of rows in edit mode:
+
+```xml
+<table rows="all(`my:Deliverable`)" row-edit="SELECTED" on-remove="DELETE"
+    selection="selected" selection-mode="multi"/>
+```
+
+- **Per row.** Every row carries a delete button in an action column at its end (`RowSetTableControl#COLUMN_DELETE`).
+- **The selected rows at once.** A table with `selection-mode="multi"` also offers the command *Delete selected* (`RowSetTableControl#getRemoveSelectedRowsCommand()`), executable while a row is selected. The checkbox in the header selects all rows the filter shows, so selecting all and deleting them is two clicks. A frameless row-editing `<table>` contributes the command to the enclosing command scope next to the add command, a framed table shows it in its own toolbar.
+- **Removed is not deleted yet.** A removed row leaves the table at once, but the remove semantics of the binding are applied when the form is saved; cancelling the edit brings the rows back. All selected rows are removed in one change of the row set (`RowSetEditSession#removeRows(Collection)`).
+- **A part of a deleted row leaves with it.** Deleting an object deletes the parts of its compositions. When such a part is itself a row of the table - the instances of a type composed of objects of the same type, say - removing the container in a table that deletes removed rows removes the rows of its parts, at any depth, as well: changes made to them are dropped instead of being stored into objects the same save deletes, and an object deleted with its container is not deleted a second time (`RowSetEditSession#removeRows(Collection)`, decided by the containers of the stored objects).
 
 ## Long values in a cell
 

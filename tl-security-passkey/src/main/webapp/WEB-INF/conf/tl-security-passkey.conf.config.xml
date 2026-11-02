@@ -13,12 +13,13 @@
 		</config>
 
 		<!--
-			The relying party of the passkeys. Without rp-id and origins, both are derived from the
-			request that starts a ceremony; set them when the application runs behind a reverse proxy
-			that does not forward the original host, e.g.
+			The relying party of the passkeys. Its ID and the accepted origin come from the public
+			address of the application, the alias %HOST% (variable tl_host), e.g.
+			https://app.example.com. Override them only for passkeys bound to a parent domain or used
+			on further addresses, e.g.
 
 				rp-id="example.com"
-				origins="https://app.example.com"
+				origins="https://app.example.com,https://other.example.com"
 		-->
 		<config service-class="com.top_logic.security.passkey.PasskeyService">
 			<instance class="com.top_logic.security.passkey.PasskeyService"

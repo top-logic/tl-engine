@@ -271,6 +271,13 @@
 									to use a second factor keeps that requirement whatever this view
 									offers, and drops the app only while another second factor of the
 									login is set up for it, which the action itself enforces.
+
+									Changing or removing an authenticator app that is set up asks for a
+									current code of it first: whoever does so must hold the device it lives
+									on, not only a session someone left logged in. The code prompt says what
+									it is asked for and is the consent at the same time, so no confirmation
+									follows it. Changing the authenticator app enrolls a fresh secret; the
+									stored one stays valid until a code of the fresh one confirms it.
 								-->
 								<stack id="authenticator-app"
 									align="stretch"
@@ -322,6 +329,27 @@
 									</button>
 									<button>
 										<action class="com.top_logic.layout.view.command.GenericViewCommand"
+											image="css:bi bi-arrow-repeat"
+											inputs="account"
+										>
+											<label>
+												<en>Change authenticator app</en>
+												<de>Authenticator-App wechseln</de>
+											</label>
+											<executability>
+												<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+											</executability>
+											<verify-second-factor>
+												<message>
+													<en>Enter the code your current authenticator app shows before setting up another one.</en>
+													<de>Geben Sie den Code ein, den Ihre bisherige Authenticator-App gerade anzeigt, bevor Sie eine andere einrichten.</de>
+												</message>
+											</verify-second-factor>
+											<enroll-mfa/>
+										</action>
+									</button>
+									<button>
+										<action class="com.top_logic.layout.view.command.GenericViewCommand"
 											image="css:bi bi-shield-minus"
 											inputs="account"
 										>
@@ -336,7 +364,12 @@
 											<executability>
 												<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
 											</executability>
-											<confirm expr="#('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
+											<verify-second-factor>
+												<message>
+													<en>Enter the code your authenticator app currently shows to log in with your password alone from now on.</en>
+													<de>Geben Sie den Code ein, den Ihre Authenticator-App gerade anzeigt, um sich künftig nur noch mit dem Passwort anzumelden.</de>
+												</message>
+											</verify-second-factor>
 											<disable-mfa/>
 										</action>
 									</button>

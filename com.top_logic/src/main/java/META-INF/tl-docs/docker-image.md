@@ -56,9 +56,6 @@ being the secret `postgresql_passwd`.
 
 The root account of a new database gets the password of the secret `tl_initial_password`.
 
-A release drains the instance through the [ops endpoint](doc:web-security-and-ops#the-ops-endpoint)
-before the container is stopped; give the container a stop period longer than the drain.
-
 ## The files of an application
 
 The archetype generates for an application:

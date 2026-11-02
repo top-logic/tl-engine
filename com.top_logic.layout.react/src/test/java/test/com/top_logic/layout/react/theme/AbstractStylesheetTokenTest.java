@@ -71,7 +71,7 @@ public abstract class AbstractStylesheetTokenTest extends TestCase {
 	 * in addition to the tokens of the {@link #DEFAULT_THEME} theme.
 	 *
 	 * <p>
-	 * The design system module ({@code com.top_logic.design.system}) declares its tokens in the
+	 * The design system module ({@code tl-design-system}) declares its tokens in the
 	 * {@code --tl} namespace in a sheet of its own, generated during its build. A sheet audited here
 	 * reads them but never declares them, the namespace belongs to the module.
 	 * </p>

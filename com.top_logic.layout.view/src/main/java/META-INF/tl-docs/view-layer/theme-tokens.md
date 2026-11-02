@@ -237,7 +237,7 @@ Besides the theme tokens, the audit accepts the tokens the design system's token
 `tokenStylesheets()`. A sheet audited here reads those tokens; it never declares them.
 
 The four sheets under `/style/tl-design-system/` are generated during the build of the module
-`com.top_logic.design.system` (artifact `tl-design-system`) from its sources (`src/`, `tools/generate.mjs`) and
+`tl-design-system` from its sources (`src/`, `tools/generate.mjs`) and
 delivered in its web fragment; they are not checked in, and never edited. A change goes into the module's sources.
 
 The audit is written against a theme configuration and a stylesheet handed to it, both loaded from

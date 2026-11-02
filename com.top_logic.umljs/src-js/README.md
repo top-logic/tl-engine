@@ -14,15 +14,13 @@ Now you should see a new directory **node_modules** which contains all necessary
 
 you can start a script which is defined in the _scripts_ section of the JSON object in _package.json_.
 
-In umljs exists the following four scripts:
+The Maven build of the module runs `npm install` and `npm run build` (see the `frontend-maven-plugin` in _pom.xml_), so a regular `mvn install` produces the bundles. They are build products and not under version control.
 
-* _all_ : Executes the _build_ and _open_ script.
-* _build_ : Builds compact javascript files containing the whole library. It creates _four_ files, a development and minified production file 	for each _Modeler_ and _Viewer_. _Modeler_ extends _Viewer_ with modeling functionality, i.e. adds a palette, resizing, label support, 	context-pad for shapes, etc. Whereas the _Viewer_ can only display a graph structure.
+In umljs exists the following scripts:
+
+* _build_ : Builds compact javascript files containing the whole library into _../src/main/webapp/script/umljs_. It creates _four_ files, a development and minified production file for each _Modeler_ and _Viewer_. _Modeler_ extends _Viewer_ with modeling functionality, i.e. adds a palette, resizing, label support, context-pad for shapes, etc. Whereas the _Viewer_ can only display a graph structure.
 * _open_ : Opens the _test/test-uml-js.html_ file in your preferred webbrowser.
+* _all_ : Executes the _build_ and _open_ script.
 * _pretest_ : Executes a static javascript code analyzer on the code.
 
-Thus, to build and show a minimal example it is sufficient to enter the following in your shell:
-
-`npm run all`
-
-After you created a _new version_ of umljs you should copy the resulting compact javascript files to _webapp/script/umljs_ and _dist/assets/diagram-js.css_ to _webapp/style/umljs_ to update the corresponding top-logic umljs module. When copying _diagram-js.css_, keep the header of the existing copy (including the global _.djs-cursor-*_ rules) and wrap the new content in `@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) { ... }` as before, so that the stylesheet only applies inside diagram-js 15 diagrams. The scope root is the parent of the diagram root (.djs-parent), because selectors inside `@scope` match only descendants of the scope root, and the stylesheet styles the diagram root itself.
+The _build_ script also writes the stylesheet _webapp/style/umljs/diagram-js.css_: the header _resources/diagram-js-header.css_ followed by _assets/diagram-js.css_ of the installed _diagram-js_, wrapped in `@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) { ... }`, so that the stylesheet only applies inside diagram-js diagrams. The scope root is the parent of the diagram root (.djs-parent), because selectors inside `@scope` match only descendants of the scope root, and the stylesheet styles the diagram root itself. The header repeats the global _.djs-cursor-*_ rules outside the scope, because diagram-js sets these classes on the document body.

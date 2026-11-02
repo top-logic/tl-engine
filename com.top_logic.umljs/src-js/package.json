@@ -4,7 +4,7 @@
   "description": "A UML toolkit and web modeler",
   "scripts": {
     "all": "npm run build && npm run open",
-    "build": "node tasks/build-distro.mjs",
+    "build": "rollup -c --bundleConfigAsCjs && node tasks/scope-css.mjs",
     "open": "start ./test/test-uml-js.html",
     "pretest": "eslint --ignore-path .gitignore ."
   },
@@ -17,10 +17,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "cpy": "^13.2.1",
-    "del": "^8.0.1",
     "eslint": "^10.0.2",
-    "execa": "^9.6.1",
     "rollup": "^4.59.0",
     "rollup-plugin-license": "^3.7.0"
   },

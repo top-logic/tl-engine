@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.CompanyContact;
@@ -25,6 +24,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.Group;
 
@@ -59,13 +59,13 @@ public class COSPersonContact extends PersonContact implements COSContactConstan
     }
 
     /**
-     * Use Mandator as security parent
+     * Use the Mandator as security parent in addition to the configured ones.
      *
      * @see com.top_logic.contact.business.PersonContact#getSecurityParents()
      */
     @Override
 	public Collection<? extends BoundObject> getSecurityParents() {
-		return CollectionUtil.singletonOrEmptyList(this.getMandator());
+		return BoundHelper.withSecurityParent(super.getSecurityParents(), getMandator());
     }
 
     /**

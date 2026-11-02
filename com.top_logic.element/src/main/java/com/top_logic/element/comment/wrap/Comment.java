@@ -6,7 +6,6 @@
 package com.top_logic.element.comment.wrap;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
 import com.top_logic.basic.CollectionUtil;
@@ -18,6 +17,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
@@ -82,11 +82,15 @@ public class Comment extends AttributedWrapper {
 		return CollectionUtil.getFirst(potentialContexts);
     }
 
+    /**
+	 * The {@link #getContext() context} of this comment is a security parent in addition to the
+	 * configured ones.
+	 */
     @Override
 	public Collection<? extends BoundObject> getSecurityParents() {
         Wrapper context = getContext();
-		return context instanceof BoundObject ? Collections.singletonList((BoundObject) context)
-			: super.getSecurityParents();
+		return BoundHelper.withSecurityParent(super.getSecurityParents(),
+			context instanceof BoundObject ? (BoundObject) context : null);
     }
 
 

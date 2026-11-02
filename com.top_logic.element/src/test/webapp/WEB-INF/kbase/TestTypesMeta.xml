@@ -8,7 +8,7 @@
 		<metaobject object_name="ProductType" super_class="StructuredElement" />
 		<metaobject object_name="ProductVersion" super_class="StructuredElement" />
 		
-		<association super_class="hasWrapperAttValueBaseAssociation" object_name="otherHasWrapperAttValue" />
+		<association super_class="hasWrapperAttValueBagBaseAssociation" object_name="otherHasWrapperAttValue" />
 		
 		<metaobject object_name="BElement" super_class="StructuredElement">
 		<attributes>

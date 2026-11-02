@@ -245,7 +245,17 @@ public class AlignTableLayoutProcessor extends AbstractConfiguredInstance<AlignT
 		}
 	}
 
-	private static MORepository createRepository(PooledConnection connection, SchemaConfiguration schema,
+	/**
+	 * Creates the types of the given schema as a knowledge base creates them for its tables.
+	 *
+	 * @param connection
+	 *        The connection to the database the types are used with.
+	 * @param schema
+	 *        The resolved schema.
+	 * @param versioning
+	 *        Whether the knowledge base uses versioning.
+	 */
+	static MORepository createRepository(PooledConnection connection, SchemaConfiguration schema,
 			boolean versioning) throws SQLException, ConfigurationException, DataObjectException {
 		SchemaSetup setup = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(schema);
 		return DBTypeRepository.newRepository(connection.getSQLDialect(), setup, versioning);

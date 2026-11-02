@@ -1108,10 +1108,15 @@
 
 /*
  * The wrapper of a <data-list> header command adds no box of its own: the command's button inside
- * it is the rail's "new" button.
+ * it is the rail's "new" button. That button is the engine's command button, which centres its
+ * content; the rail's button reads from the start, as every row below it does.
  */
 .rail-command {
   display: contents;
+}
+
+.rail-command > .rail-new {
+  justify-content: flex-start;
 }
 
 .rail-search {

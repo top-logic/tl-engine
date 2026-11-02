@@ -14,13 +14,13 @@
 
 # The base image is pinned by the digest of its tag, so that the same files always build on the same
 # base; Renovate moves the digest (see the customManagers in renovate.json).
-FROM eclipse-temurin:21-jdk@sha256:23cc5734ff46e776f51ce66eb9ee08444fd47caabec0a95b7eb6e94be2d3696d
+FROM eclipse-temurin:21-jdk@sha256:ebfbb18d11ff163ee83b21258acf12248af48d22a0fdfdc68fa1a1516c05976a
 
 # The tool versions are pinned and updated by Renovate through the "# renovate:" comments (see the
 # customManagers in renovate.json). The output of Claude Code is parsed, so a new version is
 # tested before it is used, see the article factory/index.
 # renovate: datasource=maven depName=org.apache.maven:apache-maven
-ARG MAVEN_VERSION=3.9.11
+ARG MAVEN_VERSION=3.10.0
 # renovate: datasource=node-version depName=node
 ARG NODE_VERSION=22.23.4
 # renovate: datasource=npm depName=@anthropic-ai/claude-code
@@ -29,7 +29,7 @@ ARG CLAUDE_CODE_VERSION=2.1.309
 ARG PLAYWRIGHT_MCP_VERSION=0.0.83
 ARG TL_CLAUDE_TOOLS_REPOSITORY=https://github.com/top-logic/tl-claude-tools.git
 # renovate: datasource=git-refs depName=tl-claude-tools packageName=https://github.com/top-logic/tl-claude-tools.git currentValue=main
-ARG TL_CLAUDE_TOOLS_COMMIT=87e56d479951252a40251e0927273927faf723f5
+ARG TL_CLAUDE_TOOLS_COMMIT=4823df0e75899fbf68d2a8af175a97032f7d0301
 ARG WORKSPACE_UID=1000
 
 RUN apt-get update \

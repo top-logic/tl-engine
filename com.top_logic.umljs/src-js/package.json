@@ -5,8 +5,7 @@
   "scripts": {
     "all": "npm run build && npm run open",
     "build": "rollup -c --bundleConfigAsCjs && node ../../tools/js/scope-css.mjs --package node_modules/diagram-js --scope \"(:has(> .djs-parent):not(.bjs-container)) to (:scope > :not(.djs-parent))\" --header resources/diagram-js-header.css --out ../src/main/webapp/style/umljs/diagram-js.css assets/diagram-js.css",
-    "open": "start ./test/test-uml-js.html",
-    "pretest": "eslint --ignore-path .gitignore ."
+    "open": "start ./test/test-uml-js.html"
   },
   "author": {
     "name": "Sven Förster"
@@ -17,12 +16,10 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "eslint": "^10.0.2",
     "rollup": "^4.59.0",
     "rollup-plugin-license": "^3.7.0"
   },
   "overrides": {
-    "minimatch": "^10.2.4",
     "serialize-javascript": "^7.1.3"
   },
   "dependencies": {

@@ -21,6 +21,5 @@ In umljs exists the following scripts:
 * _build_ : Builds compact javascript files containing the whole library into _../src/main/webapp/script/umljs_. It creates _four_ files, a development and minified production file for each _Modeler_ and _Viewer_. _Modeler_ extends _Viewer_ with modeling functionality, i.e. adds a palette, resizing, label support, context-pad for shapes, etc. Whereas the _Viewer_ can only display a graph structure.
 * _open_ : Opens the _test/test-uml-js.html_ file in your preferred webbrowser.
 * _all_ : Executes the _build_ and _open_ script.
-* _pretest_ : Executes a static javascript code analyzer on the code.
 
 The _build_ script also writes the stylesheet _webapp/style/umljs/diagram-js.css_ with the script _tools/js/scope-css.mjs_ of the engine repository: the header _resources/diagram-js-header.css_ followed by _assets/diagram-js.css_ of the installed _diagram-js_, wrapped in an `@scope` rule (see the header for the reasons), so that the stylesheet only applies inside the UML diagrams.

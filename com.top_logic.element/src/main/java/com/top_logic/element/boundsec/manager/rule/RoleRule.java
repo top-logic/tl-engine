@@ -21,6 +21,7 @@ import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -164,7 +165,12 @@ public abstract class RoleRule implements RoleProvider {
 		Set theCollector = getContents(base);
 		theResult = new HashSet<>();
         if (this.getType().equals(Type.reference)) {
-            CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult, theAM.getGroupMapper());
+			for (Object target : theCollector) {
+				Group group = toGroup(target);
+				if (group != null) {
+					theResult.add(group);
+				}
+			}
         } else {
             BoundRole theRole = this.getSourceRole();
             if (theRole == null) {
@@ -248,6 +254,30 @@ public abstract class RoleRule implements RoleProvider {
         }
 		return true;
     }
+
+	/**
+	 * The {@link Group} that receives the role, when the path of a rule with
+	 * {@link Type#reference} ends at the given object.
+	 *
+	 * <p>
+	 * A {@link Group} receives the role itself, a {@link Person} through its
+	 * {@link Person#getRepresentativeGroup() representative group}. Any other object holds no
+	 * role. A path that ends at another object holding persons (e.g. a contact) must navigate to
+	 * the person in an explicit step, so that the security update can track changes of that
+	 * reference incrementally.
+	 * </p>
+	 *
+	 * @return The group, or {@code null} if the given object does not denote a group.
+	 */
+	private static Group toGroup(Object target) {
+		if (target instanceof Group group) {
+			return group;
+		}
+		if (target instanceof Person person) {
+			return person.getRepresentativeGroup();
+		}
+		return null;
+	}
 
 	@Override
     public String toString() {

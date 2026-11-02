@@ -7,12 +7,15 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -38,6 +41,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
@@ -59,6 +63,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracingScope;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -242,6 +249,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private RowSourceObserver<TLObject> _observer;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
+
+	/**
+	 * For each row, the attribute values its read-only cells were built from while the table is
+	 * edited, see {@link #renderAsEdited(TLObject, Supplier)}.
+	 *
+	 * <p>
+	 * The objects of the values are the objects that are edited, never their buffers, so that a
+	 * change of a row is found whichever of the two was read.
+	 * </p>
+	 */
+	private final Map<TLObject, Set<Pointer>> _cellDependencies = new IdentityHashMap<>();
+
+	/**
+	 * The rows whose read-only cells are built again when the current interaction has completed,
+	 * see {@link #rowValueChanged(TLObject, TLStructuredTypePart)}.
+	 */
+	private final Set<TLObject> _staleRows = Collections.newSetFromMap(new IdentityHashMap<>());
 
 	/** The command adding a row, see {@link #getAddRowCommand()}. */
 	private SimpleCommandModel _addRowCommand;
@@ -859,6 +883,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
+		_cellDependencies.clear();
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
@@ -920,6 +945,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					// The criteria a table declares can depend on the inputs it is refreshed for, so
 					// they are resolved again for their new values.
 					refreshDeclaredFilters(view, columns);
+					_cellDependencies.clear();
 					table.refreshData();
 					if (_selectionBinding != null) {
 						_selectionBinding.rowsRefreshed();
@@ -991,6 +1017,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_rowSource.setElements(new ArrayList<>(fieldModel().getCurrentList()));
 		if (_tableControl != null) {
+			_cellDependencies.clear();
 			_tableControl.refreshData();
 		}
 	}
@@ -1176,6 +1203,93 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 	}
 
+	/**
+	 * Renders a read-only cell of the given row of the edited table as the objects it shows are
+	 * currently edited.
+	 *
+	 * <p>
+	 * A cell shows stored objects, also when they are edited in the same form as rows of this
+	 * table: the cell of a container showing its parts, say. The cell is built in a
+	 * {@link TracingScope} over the overlays of the form, which answers the read of an edited
+	 * object from its buffer, so the cell shows the pending changes. The scope records the
+	 * attribute values read, so a later change of one of them through the cell of another row
+	 * builds the cell again, see {@link #rowValueChanged(TLObject, TLStructuredTypePart)}. A cell
+	 * control built later on, when the cell is displayed, is built in such a scope as well.
+	 * </p>
+	 */
+	private CellContent renderAsEdited(TLObject row, Supplier<CellContent> render) {
+		OverlayLookup overlays = formControl().getValidationModel();
+		if (overlays == null) {
+			return render.get();
+		}
+		CellContent content = traced(row, overlays, render);
+		if (content instanceof CellContent.Raw raw && raw.payload() instanceof CellControlFactory factory) {
+			return new CellContent.Raw((CellControlFactory) context -> traced(row, overlays, () -> factory.create(context)),
+				raw.tooltip());
+		}
+		return content;
+	}
+
+	private <T> T traced(TLObject row, OverlayLookup overlays, Supplier<T> render) {
+		Set<Pointer> dependencies = _cellDependencies.computeIfAbsent(row, x -> new HashSet<>());
+		try (TracingScope scope = TracingScope.open(
+			pointer -> dependencies.add(Pointer.create(editedObject(pointer.object()), pointer.attribute())),
+			overlays)) {
+			return render.get();
+		}
+	}
+
+	/**
+	 * The object the given object edits: the base of a buffer, the object itself otherwise.
+	 */
+	private static TLObject editedObject(TLObject object) {
+		return object instanceof TLObjectOverlay overlay ? overlay.getBase() : object;
+	}
+
+	/**
+	 * Builds the read-only cells of the rows again that were built from the changed value, so they
+	 * show it; the cells of rows being edited are kept, so their inputs stay as they are.
+	 *
+	 * <p>
+	 * The cells are built again when the interaction has completed
+	 * ({@link DeliveryScope#afterInteraction(Runnable)}): the change is reported while the value
+	 * entered is still being applied, and the input it was entered in takes it into its state only
+	 * afterwards. Pushing the rows earlier would send that input with the value it had before.
+	 * </p>
+	 */
+	@Override
+	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
+		if (_tableControl == null || _cellDependencies.isEmpty()) {
+			return;
+		}
+		Pointer changed = Pointer.create(editedObject(row), part);
+		boolean scheduled = !_staleRows.isEmpty();
+		for (Map.Entry<TLObject, Set<Pointer>> entry : _cellDependencies.entrySet()) {
+			TLObject dependent = entry.getKey();
+			if (dependent != row && entry.getValue().contains(changed)) {
+				_staleRows.add(dependent);
+			}
+		}
+		if (!scheduled && !_staleRows.isEmpty()) {
+			DeliveryScope.afterInteraction(this::rebuildStaleRows);
+		}
+	}
+
+	private void rebuildStaleRows() {
+		List<Object> stale = new ArrayList<>();
+		for (TLObject row : _staleRows) {
+			if (!isRowEditable(row)) {
+				// Recorded anew when the cells are built again.
+				_cellDependencies.remove(row);
+				stale.add(row);
+			}
+		}
+		_staleRows.clear();
+		if (_tableControl != null && !stale.isEmpty()) {
+			_tableControl.invalidateRowCells(stale);
+		}
+	}
+
 	private ReactButtonControl createDeleteButton(ReactContext ctx, Object rowObject) {
 		String label = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_DELETE);
 		ReactButtonControl button = new ReactButtonControl(ctx, label, context -> {
@@ -1198,6 +1312,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;
 		_tableControl = null;
+		_cellDependencies.clear();
+		_staleRows.clear();
 		super.onCleanup();
 	}
 
@@ -1253,6 +1369,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 						? editControl
 						: CellContentReactAdapter.toControl(context, _inner.renderCell(row));
 				});
+			}
+			if (_editable && row != null) {
+				return renderAsEdited(row, () -> _inner.renderCell(row));
 			}
 			return _inner.renderCell(row);
 		}

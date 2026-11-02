@@ -75,6 +75,11 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		public void onRowSetValidationChanged(RowSetEditSession session) {
 			updateCompositionErrorDisplay();
 		}
+		@Override
+		public void onRowValueChanged(RowSetEditSession session, TLObject row, TLStructuredTypePart part) {
+			rowValueChanged(row, part);
+		}
+
 	};
 
 	/**
@@ -285,6 +290,19 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 
 		// Rebuild the presentation in edit mode.
 		buildContent(_session.currentRows(), true);
+	}
+
+	/**
+	 * Called after the value of an attribute of a row was changed through its cell, so that a
+	 * presentation can show what depends on the value anew.
+	 *
+	 * @param row
+	 *        The row whose value changed.
+	 * @param part
+	 *        The attribute whose value changed.
+	 */
+	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
+		// Hook for subclasses.
 	}
 
 	/**

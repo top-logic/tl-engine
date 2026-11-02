@@ -91,6 +91,20 @@ public class RowSetEditSession implements FormParticipant {
 		 */
 		void onRowSetValidationChanged(RowSetEditSession session);
 
+		/**
+		 * Called after the value of an attribute of a row was changed through its cell.
+		 *
+		 * @param session
+		 *        The session the row belongs to.
+		 * @param row
+		 *        The row whose value changed.
+		 * @param part
+		 *        The attribute whose value changed.
+		 */
+		default void onRowValueChanged(RowSetEditSession session, TLObject row, TLStructuredTypePart part) {
+			// No reaction by default.
+		}
+
 	}
 
 	private final RowSetOwner _owner;
@@ -1019,6 +1033,12 @@ public class RowSetEditSession implements FormParticipant {
 				FormValidationModel validationModel = _validationModel;
 				if (validationModel != null && part != null) {
 					validationModel.onValueChanged(rowObject, part);
+				}
+
+				if (part != null) {
+					for (Listener listener : _listeners) {
+						listener.onRowValueChanged(RowSetEditSession.this, rowObject, part);
+					}
 				}
 			}
 

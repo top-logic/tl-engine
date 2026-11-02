@@ -1,0 +1,11 @@
+{
+  "name": "ext-io-bpmn-bpmn-js",
+  "private": true,
+  "description": "Copies the bpmn-js modeler distribution and its BPMN font into the web application.",
+  "scripts": {
+    "build": "node -e \"const fs=require('fs');const d='node_modules/bpmn-js/dist/';fs.cpSync(d+'bpmn-modeler.development.js','src/main/webapp/script/bpmn-modeler.js');fs.cpSync(d+'assets/bpmn-font/css/bpmn.css','src/main/webapp/style/bpmn.css');fs.cpSync(d+'assets/bpmn-font/font','src/main/webapp/font',{recursive:true})\""
+  },
+  "dependencies": {
+    "bpmn-js": "3.0.4"
+  }
+}

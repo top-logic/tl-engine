@@ -236,10 +236,9 @@ Besides the theme tokens, the audit accepts the tokens the design system's token
 (`/style/tl-design-system/tokens.css`, the `--tl-*` namespace), which a module's test names in
 `tokenStylesheets()`. A sheet audited here reads those tokens; it never declares them.
 
-The four sheets under `/style/tl-design-system/` are generated in the repository `TopLogic/tl-design-system` and copied
-here; never edit them in this repository. Each ends with a seal (the SHA-256 of everything before it), and
-`TestDesignSystemCopy` in `tl-layout-react` fails the build when a copy was changed by hand. A change goes into the
-package sources (`design-system/src`), followed by `node tools/generate.mjs` and `node tools/publish-to-worktree.mjs`.
+The four sheets under `/style/tl-design-system/` are generated during the build of the module
+`com.top_logic.design.system` (artifact `tl-design-system`) from its sources (`src/`, `tools/generate.mjs`) and
+delivered in its web fragment; they are not checked in, and never edited. A change goes into the module's sources.
 
 The audit is written against a theme configuration and a stylesheet handed to it, both loaded from
 web application resources (`ThemeTokenAudit.themeTokens`, `ThemeTokenAudit.stylesheet`), so an

@@ -1,0 +1,72 @@
+<handler>
+	<tag name="data">
+		<with-var var="lang" xml-attribute="lang">
+			<resolve-existing
+				key="x -> $x.get(`test.com.top_logic.xio.importer.test16:Item#extId`)"
+				objects="c -> $c.get(`test.com.top_logic.xio.importer.test16:Container#elements`).recursion(x -> $x.get(`test.com.top_logic.xio.importer.test16:Item#children`))"
+			>
+				<dispatch>
+					<tag name="item">
+						<unless-known id-attribute="id">
+							<object model-type="test.com.top_logic.xio.importer.test16:Item" id-attribute="id">
+								<property name="extId" xml-attribute="id"/>
+								<group id="item-texts">
+									<set-translation name="name" xml-attribute="name" language-var="lang"/>
+								</group>
+								<linking>
+									<list-linking name="test.com.top_logic.xio.importer.test16:Container#elements"/>
+								</linking>
+								<dispatch id="item-content">
+									<tag name="static">
+										<ref handler-id="item-content"/>
+									</tag>
+									<tag name="children">
+										<ref handler-id="item-content"/>
+									</tag>
+									<tag name="details">
+										<ref handler-id="item-content"/>
+									</tag>
+									<tag name="child">
+										<object model-type="test.com.top_logic.xio.importer.test16:Item" id-attribute="id">
+											<property name="extId" xml-attribute="id"/>
+											<group id="child-texts">
+												<set-translation name="name" xml-attribute="name" language-var="lang"/>
+											</group>
+											<linking>
+												<list-linking name="test.com.top_logic.xio.importer.test16:Item#children"/>
+											</linking>
+											<ref handler-id="item-content"/>
+										</object>
+									</tag>
+									<tag name="sub">
+										<object model-type="test.com.top_logic.xio.importer.test16:Item" id-attribute="key">
+											<property name="extId" xml-attribute="key"/>
+											<group id="sub-texts">
+												<set-translation name="name" xml-attribute="label" language-var="lang"/>
+											</group>
+											<linking>
+												<list-linking name="test.com.top_logic.xio.importer.test16:Item#children"/>
+											</linking>
+											<dispatch/>
+										</object>
+									</tag>
+								</dispatch>
+							</object>
+							<update>
+								<ref handler-id="item-texts"/>
+								<update-known>
+									<tag name="child" id-attribute="id">
+										<ref handler-id="child-texts"/>
+									</tag>
+									<tag name="sub" id-attribute="key">
+										<ref handler-id="sub-texts"/>
+									</tag>
+								</update-known>
+							</update>
+						</unless-known>
+					</tag>
+				</dispatch>
+			</resolve-existing>
+		</with-var>
+	</tag>
+</handler>

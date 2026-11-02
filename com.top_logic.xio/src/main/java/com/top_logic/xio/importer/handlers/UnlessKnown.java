@@ -159,6 +159,13 @@ public class UnlessKnown<C extends UnlessKnown.Config<?>> extends NestedImportHa
 
 		/**
 		 * The handlers to apply to the element in the context of the known object.
+		 * 
+		 * <p>
+		 * The handlers of the known object can be shared with its creation by a
+		 * {@link GroupHandler} referenced with a {@link HandlerRef}. Descendant elements can be
+		 * updated by their IDs with an {@link UpdateKnown}, without restating the nesting of the
+		 * elements.
+		 * </p>
 		 */
 		@Name(CONTENT)
 		@DefaultContainer

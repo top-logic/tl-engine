@@ -1,0 +1,25 @@
+<data lang="en">
+	<item id="i1" name="One">
+		<static>
+			<children>
+				<child id="c1" name="Child one">
+					<child id="c11" name="Grandchild one">
+						<details>
+							<sub key="s111" label="Great-grandchild one"/>
+						</details>
+					</child>
+				</child>
+				<child id="c9" name="Unknown child">
+					<details>
+						<sub key="s21" label="Part two"/>
+						<sub key="s99" label="Unknown part"/>
+					</details>
+				</child>
+				<other id="c3" name="Not updated: unlisted tag"/>
+				<child key="c3" name="Not updated: no ID attribute of the tag"/>
+				<sub id="c3" label="Not updated: no ID attribute of the tag"/>
+				<child id="" name="Not updated: empty ID"/>
+			</children>
+		</static>
+	</item>
+</data>

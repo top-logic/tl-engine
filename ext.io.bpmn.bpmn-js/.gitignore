@@ -7,3 +7,8 @@
 /src/main/webapp/style/_*.css
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~
+/node_modules
+/src/main/webapp/script/bpmn-modeler.js
+/src/main/webapp/style/bpmn.css
+/src/main/webapp/font/
+/src/main/webapp/style/bpmn-js/

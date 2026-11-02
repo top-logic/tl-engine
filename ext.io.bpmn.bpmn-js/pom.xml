@@ -10,7 +10,7 @@
   <artifactId>ext-io-bpmn-bpmn-js</artifactId>
   
 	<name>${project.artifactId}</name>
-	<description>bpmn-js version 3.0.4</description>
+	<description>bpmn-js - BPMN 2.0 rendering toolkit and web modeler</description>
   <url>https://github.com/bpmn-io/bpmn-js/</url>
   
   <licenses>
@@ -26,4 +26,43 @@
       <artifactId>tl-core</artifactId>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>npm-install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

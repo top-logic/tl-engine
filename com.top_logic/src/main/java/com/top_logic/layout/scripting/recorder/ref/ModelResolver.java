@@ -189,10 +189,10 @@ public class ModelResolver extends ManagedClass {
 				+ scheme.getClass().getName() + "'.", ModelResolver.class);
 		} else {
 			if (concreteNameClasses.size() > 1) {
-				Logger.info("Registering naming scheme '" + scheme.getClass().getName() + "' for name types: "
+				Logger.debug(() -> "Registering naming scheme '" + scheme.getClass().getName() + "' for name types: "
 					+ concreteNameClasses, ModelResolver.class);
 			} else {
-				Logger.info("Registering naming scheme '" + scheme.getClass().getName() + "' for name type '"
+				Logger.debug(() -> "Registering naming scheme '" + scheme.getClass().getName() + "' for name type '"
 					+ concreteNameClasses.iterator().next() + "'.", ModelResolver.class);
 			}
 		}

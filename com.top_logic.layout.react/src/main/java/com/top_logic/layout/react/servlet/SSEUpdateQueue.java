@@ -816,9 +816,6 @@ public class SSEUpdateQueue {
 				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
 				SSEUpdateQueue.class);
 			old.close();
-		} else {
-			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
 		// A first event at once, also for a window without controls: what tells the client that its
 		// stream arrives. It carries the number the full state stands for: a page loaded anew starts
@@ -849,27 +846,21 @@ public class SSEUpdateQueue {
 		if (current != null && current.getContext() == asyncContext) {
 			// The stream has ended: a thread still holding the connection does not write to it.
 			current.markClosed();
-			if (dropConnection(current, System.currentTimeMillis())) {
-				Logger.info("SSE connection cleared for window '" + _windowName + "' (queue@"
-					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
-			}
+			dropConnection(current, System.currentTimeMillis());
 		}
 	}
 
 	/**
 	 * Drops the given connection if it is still the current one, recording when the client was lost.
-	 *
-	 * @return Whether the given connection was the current one.
 	 */
-	private synchronized boolean dropConnection(SSEConnection connection, long now) {
+	private synchronized void dropConnection(SSEConnection connection, long now) {
 		if (_connection != connection) {
-			return false;
+			return;
 		}
 		_connection = null;
 		if (!_polling) {
 			_streamLostAt = now;
 		}
-		return true;
 	}
 
 	/**
@@ -882,7 +873,7 @@ public class SSEUpdateQueue {
 			return List.of();
 		}
 		if (lastEventId < _unreadableUpTo) {
-			Logger.info("Window '" + _windowName + "' reconnects after event " + lastEventId
+			Logger.debug(() -> "Window '" + _windowName + "' reconnects after event " + lastEventId
 				+ ", the events up to " + _unreadableUpTo + " are no longer held; the stream replays "
 				+ "the full state and the events after them.", SSEUpdateQueue.class);
 		}
@@ -984,8 +975,6 @@ public class SSEUpdateQueue {
 			answerWaitingPoll(true);
 		}
 		if (previous != null) {
-			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
 			previous.close();
 		}
 	}
@@ -1036,7 +1025,7 @@ public class SSEUpdateQueue {
 	 */
 	public void enqueue(SSEEvent event) {
 		if (_shutdown) {
-			Logger.info("enqueue REJECTED (shutdown) on queue@" + System.identityHashCode(this),
+			Logger.debug(() -> "Event rejected, the queue of window '" + _windowName + "' is shut down.",
 				SSEUpdateQueue.class);
 			return;
 		}
@@ -1194,7 +1183,6 @@ public class SSEUpdateQueue {
 			}
 		}
 		if (abandoned != null) {
-			Logger.info("Window '" + _windowName + "' polls; its event stream is closed.", SSEUpdateQueue.class);
 			abandoned.close();
 		}
 		ensureHeartbeat();
@@ -1868,10 +1856,7 @@ public class SSEUpdateQueue {
 			writeToConnection(connection.getContext(), message);
 			return true;
 		} catch (IOException ex) {
-			if (connection.markClosed()) {
-				Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
-					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
-			}
+			connection.markClosed();
 			dropConnection(connection, System.currentTimeMillis());
 			return false;
 		}
@@ -1952,11 +1937,9 @@ public class SSEUpdateQueue {
 
 		/**
 		 * Marks this connection as no longer written to.
-		 *
-		 * @return Whether this call closed it, {@code false} if it was closed before.
 		 */
-		boolean markClosed() {
-			return _closed.compareAndSet(false, true);
+		void markClosed() {
+			_closed.set(true);
 		}
 
 		/**

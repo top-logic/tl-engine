@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Status</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Status</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row">
+      <span class="tl-type-label">lädt</span>
+      <div class="tl-status tl-type-body">
+        <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-busy="true" aria-labelledby="status-loading-label">
+          <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+          <span class="tl-progress__label tl-type-label" id="status-loading-label">Lädt…</span>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">leer</span>
+      <div class="tl-status tl-type-body">Keine Einträge</div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Fehler, role="alert"</span>
+      <div class="tl-status tl-type-body" role="alert">
+        <i class="tl-icon-sm bi bi-exclamation-circle" aria-hidden="true"></i>
+        <span>Laden fehlgeschlagen.</span>
+        <a href="#" class="tl-button tl-button--link tl-type-body">Erneut versuchen</a>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    for (const el of rows.querySelectorAll('[aria-labelledby]')) el.setAttribute('aria-labelledby', el.getAttribute('aria-labelledby') + '-' + id);
+    document.getElementById(id).append(rows);
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

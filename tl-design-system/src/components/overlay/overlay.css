@@ -1,0 +1,74 @@
+/* Overlay — Spec 2026-10-13 Welle 4a §8. Ein Stapel aus Basis und Ebenen, kein Overlay im Sinn eines Dialogs:
+   die Basis gibt die Höhe, das umgebende Layout die Breite; jede Ebene deckt genau diese Fläche und legt ihren
+   Inhalt an einen Rand, eine Ecke oder die Mitte. Wo eine Ebene nichts zeigt, geht der Zeiger zur Basis durch.
+   Keine Fläche, keine Ebene (z-index): das Aussehen gibt die Anwendung über die Klasse der Ebene. Einzige Fläche
+   ist tl-overlay__action (Welle 5b §4): der Knopf über einer Fläche, die in beiden Modi weiß sein kann. */
+
+.tl-overlay {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.tl-overlay[hidden] { display: none; }
+
+/* Füllt den Behälter (Welle 5b §4): das HTML-Dokument nimmt seinen Platz, nicht die Höhe der Basis. Die Basis
+   füllt das Overlay. */
+.tl-overlay--fill {
+  display: flex;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.tl-overlay__base {
+  display: block;
+}
+
+.tl-overlay--fill > .tl-overlay__base {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Die Basis gibt ihrem Kind die volle Höhe: ein tl-media mit iframe bliebe sonst 150 px hoch. */
+.tl-overlay--fill > .tl-overlay__base > * {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+.tl-overlay__layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+/* Was die Ebene zeigt, nimmt den Zeiger zurück. */
+.tl-overlay__layer > * {
+  pointer-events: auto;
+}
+
+.tl-overlay__layer--fill { align-items: stretch; justify-content: stretch; }
+.tl-overlay__layer--top-left { align-items: start; justify-content: start; }
+.tl-overlay__layer--top { align-items: start; justify-content: center; }
+.tl-overlay__layer--top-right { align-items: start; justify-content: end; }
+.tl-overlay__layer--left { align-items: center; justify-content: start; }
+.tl-overlay__layer--center { align-items: center; justify-content: center; }
+.tl-overlay__layer--right { align-items: center; justify-content: end; }
+.tl-overlay__layer--bottom-left { align-items: end; justify-content: start; }
+.tl-overlay__layer--bottom { align-items: end; justify-content: center; }
+.tl-overlay__layer--bottom-right { align-items: end; justify-content: end; }
+
+/* Der Knopf über einer Fläche (Welle 5b §4): eine kleine schwebende Fläche wie ein Popover, ohne Portal. Darin ein
+   Part Button ghost, icon-only. Ohne sie stünde im Dunkelmodus helle Schrift auf dem weißen Dokument. */
+.tl-overlay__action {
+  display: flex;
+  margin: var(--tl-space-xs); /* schwebt mit Abstand zur Ecke, der Schatten bleibt sichtbar (Sichtprüfung 19.10.) */
+  padding: var(--tl-space-2xs);
+  background: var(--tl-surface-overlay);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-overlay__action[hidden] { display: none; }

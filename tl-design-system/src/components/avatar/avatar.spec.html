@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Avatar</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Avatar</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Kategorie, in allen vier Größen mit Initialen. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">%NAME%</span>
+      <span class="tl-avatar tl-avatar--sm tl-type-label-strong" data-tl-role="%ROLE%" role="img" aria-label="%LABEL%" title="%LABEL%">%INI%</span>
+      <span class="tl-avatar tl-type-body-strong" data-tl-role="%ROLE%" role="img" aria-label="%LABEL%" title="%LABEL%">%INI%</span>
+      <span class="tl-avatar tl-avatar--lg tl-type-heading-md" data-tl-role="%ROLE%" role="img" aria-label="%LABEL%" title="%LABEL%">%INI%</span>
+      <span class="tl-avatar tl-avatar--xl tl-type-heading-lg" data-tl-role="%ROLE%" role="img" aria-label="%LABEL%" title="%LABEL%">%INI%</span>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Ohne Namen, mit Bild, in der Zeile</p>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">ohne Namen</span>
+      <span class="tl-avatar tl-avatar--sm" aria-hidden="true"></span>
+      <span class="tl-avatar" aria-hidden="true"></span>
+      <span class="tl-avatar tl-avatar--lg" aria-hidden="true"></span>
+      <span class="tl-avatar tl-avatar--xl" aria-hidden="true"></span>
+    </div>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">mit Bild</span>
+      <span class="tl-avatar tl-avatar--sm"><img class="tl-avatar__image" alt="Beispielbild" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%2364748b'/%3E%3Ccircle cx='2' cy='1.2' r='.7' fill='%23e2e8f0'/%3E%3C/svg%3E"></span>
+      <span class="tl-avatar"><img class="tl-avatar__image" alt="Beispielbild" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%2364748b'/%3E%3Ccircle cx='2' cy='1.2' r='.7' fill='%23e2e8f0'/%3E%3C/svg%3E"></span>
+      <span class="tl-avatar tl-avatar--lg"><img class="tl-avatar__image" alt="Beispielbild" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%2364748b'/%3E%3Ccircle cx='2' cy='1.2' r='.7' fill='%23e2e8f0'/%3E%3C/svg%3E"></span>
+      <span class="tl-avatar tl-avatar--xl"><img class="tl-avatar__image" alt="Beispielbild" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%2364748b'/%3E%3Ccircle cx='2' cy='1.2' r='.7' fill='%23e2e8f0'/%3E%3C/svg%3E"></span>
+    </div>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">im Kommentarkopf</span>
+      <span class="specimen__stack specimen__stack--inline">
+        <span class="tl-avatar tl-type-body-strong" data-tl-role="category-3" role="img" aria-label="Anna Berg" title="Anna Berg">AB</span>
+        <span class="tl-type-body-strong">Anna Berg</span>
+        <span class="tl-type-label">vor 3 Minuten</span>
+      </span>
+    </div>
+  </section>
+</main>
+<script>
+  // Dieselbe Rechnung wie TLAvatar.tsx: 1 + hash(name) mod 8. Das Specimen zeigt eine Person je Kategorie.
+  function categoryOf(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0; return 1 + (Math.abs(h) % 8); }
+  function initials(name) { const w = name.trim().split(/\s+/); return w.length === 1 ? w[0].slice(0, 2) : (w[0][0] + w[w.length - 1][0]); }
+  const NAMEN = ['Anna Berg', 'Bernd Cordes', 'Carla Dietz', 'Dirk Ehlers', 'Eva Frank', 'Falk Grote', 'Gesa Haas', 'Hans Ihde', 'Ida Jung', 'Jan Klee', 'Kim Lund', 'Lars Mohr', 'Mia Nolte', 'Nils Ott', 'Ole Pahl', 'Pia Quast'];
+  const proKategorie = new Map();
+  for (const n of NAMEN) { const k = categoryOf(n); if (!proKategorie.has(k)) proKategorie.set(k, n); }
+  const KATEGORIEN = ['category-1', 'category-2', 'category-3', 'category-4',
+    'category-5', 'category-6', 'category-7', 'category-8'];
+  const tpl = document.getElementById('rows').innerHTML;
+  for (const id of ['on-layer', 'on-base']) {
+    const host = document.getElementById(id);
+    KATEGORIEN.forEach((mod, i) => {
+      const k = i + 1;
+      const n = proKategorie.get(k) ?? `Kategorie ${k}`;
+      host.insertAdjacentHTML('beforeend', tpl.replaceAll('%NAME%', mod).replaceAll('%ROLE%', mod).replaceAll('%LABEL%', n).replaceAll('%INI%', initials(n)));
+    });
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

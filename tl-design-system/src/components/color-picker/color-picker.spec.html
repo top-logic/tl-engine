@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Farb-Picker</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Das ganze Popup ohne Höhenkappe: das Messfenster des focus-clip ist niedriger als ein Mischer. */
+  .tl-popover { max-block-size: none; }
+  /* Das zweite Popup mit Höhenkappe: das Reiterfeld scrollt, focus-clip misst auch diesen Zustand. 26rem ist die kleinste
+     Kappe, bei der focus-clip mit festem Feld (16rem) grün ist; darunter scrollt das Reiterfeld, und der Ring des Feldes
+     kann am Rand des Felds abgeschnitten werden (bekannte Grenze für Fenster unter etwa 595 px). */
+  .tl-popover.specimen__capped { max-block-size: 26rem; }
+  .specimen__row > .tl-color-picker__palette { grid-template-columns: repeat(4, var(--tl-size-control)); }
+  #hue { background: linear-gradient(to bottom, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+  #field { background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, #1e88e5); }
+  #h-field { left: 70%; top: 25%; }
+  #h-hue { left: 50%; top: 60%; }
+  #prev-old { background: #1e88e5; }
+  #prev-new { background: #e53935; }
+  #cp-field { background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, #1e88e5); }
+  #cp-hue { background: linear-gradient(to bottom, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+  #cp-hf { left: 70%; top: 25%; }
+  #cp-hh { left: 50%; top: 60%; }
+  #cp-old { background: #1e88e5; }
+  #cp-new { background: #e53935; }
+  #field-btn { background: #1e88e5; }
+  #c0 { background: #e53935; }
+  #c1 { background: #fb8c00; }
+  #c2 { background: #fdd835; }
+  #c3 { background: #43a047; }
+  #c4 { background: #1e88e5; }
+  #c5 { background: #8e24aa; }
+  #c6 { background: #6d4c41; }
+  #c7 { background: #546e7a; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Farb-Picker</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Feldknopf: gefüllt, leer, Fehler</p>
+    <button type="button" id="field-btn" class="tl-swatch tl-swatch--color" aria-label="Farbe wählen"></button>
+    <button type="button" class="tl-swatch tl-swatch--color" data-tl-state="empty" aria-label="Keine Farbe"></button>
+    <button type="button" class="tl-swatch tl-swatch--color" data-tl-state="empty" aria-invalid="true" aria-required="true" aria-label="Keine Farbe, Pflicht"></button>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Palette: gefüllte und leere Zellen, eine gewählt, ein Tab-Halt</p>
+    <div class="tl-color-picker__palette" role="listbox" aria-label="Palette">
+      <div id="c0" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="0" aria-label="Farbe 1"></div>
+      <div id="c1" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="-1" aria-label="Farbe 2"></div>
+      <div id="c2" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="-1" aria-label="Farbe 3"></div>
+      <div id="c3" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="-1" aria-label="Farbe 4"></div>
+      <div id="c4" class="tl-swatch tl-swatch--color" role="option" aria-selected="true" tabindex="-1" aria-label="Farbe 5"></div>
+      <div id="c5" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="-1" aria-label="Farbe 6"></div>
+      <div id="c6" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="-1" aria-label="Farbe 7"></div>
+      <div id="c7" class="tl-swatch tl-swatch--color" role="option" aria-selected="false" tabindex="-1" aria-label="Farbe 8"></div>
+      <div class="tl-swatch tl-swatch--color" data-tl-state="empty"></div>
+      <div class="tl-swatch tl-swatch--color" data-tl-state="empty"></div>
+      <div class="tl-swatch tl-swatch--color" data-tl-state="empty"></div>
+      <div class="tl-swatch tl-swatch--color" data-tl-state="empty"></div>
+    </div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Mischer, Vorschau und Eingaben</p>
+    <div class="tl-color-picker__mixer">
+      <div id="field" class="tl-color-picker__field" role="slider" aria-label="Sättigung und Helligkeit" aria-valuetext="Sättigung 70 %, Helligkeit 75 %" tabindex="0"><div id="h-field" class="tl-color-picker__handle"></div></div>
+      <div id="hue" class="tl-color-picker__hue" role="slider" aria-label="Farbton" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="360" aria-valuenow="216" tabindex="0"><div id="h-hue" class="tl-color-picker__handle"></div></div>
+      <div class="tl-color-picker__preview">
+        <span class="tl-type-label">Aktuell</span>
+        <div id="prev-old" class="tl-swatch tl-swatch--color tl-swatch--wide" role="img" aria-label="Aktuell"></div>
+        <span class="tl-type-label">Neu</span>
+        <div id="prev-new" class="tl-swatch tl-swatch--color tl-swatch--wide" role="img" aria-label="Neu"></div>
+      </div>
+    </div>
+    <div class="tl-divider"></div>
+    <div class="tl-color-picker__inputs">
+      <label class="tl-type-label">Rot <input class="tl-field" value="229"></label>
+      <label class="tl-type-label">Hex <input class="tl-field" value="#e53935"></label>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Das ganze Popup: Reiter, Mischer, Eingaben, Aktionen — focus-clip misst es mit</p>
+    <div class="tl-popover tl-picker" role="dialog" aria-label="Farbe wählen">
+      <div class="tl-tabs tl-picker__tabs">
+        <div class="tl-tabs__list" role="tablist">
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="cp-t1" aria-selected="false" aria-controls="cp-p1" tabindex="-1">Palette</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="cp-t2" aria-selected="true" aria-controls="cp-p2" tabindex="0">Mischer</button>
+        </div>
+        <div class="tl-tabs__panel" role="tabpanel" id="cp-p1" aria-labelledby="cp-t1" hidden><p class="tl-type-body">Palette.</p></div>
+        <div class="tl-tabs__panel" role="tabpanel" id="cp-p2" aria-labelledby="cp-t2">
+          <div class="tl-stack tl-stack--row tl-stack--gap-default">
+            <div class="tl-color-picker__mixer">
+              <div id="cp-field" class="tl-color-picker__field" role="slider" aria-label="Sättigung und Helligkeit" aria-valuetext="Sättigung 70 %, Helligkeit 75 %" tabindex="0"><div id="cp-hf" class="tl-color-picker__handle"></div></div>
+              <div id="cp-hue" class="tl-color-picker__hue" role="slider" aria-label="Farbton" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="360" aria-valuenow="216" tabindex="0"><div id="cp-hh" class="tl-color-picker__handle"></div></div>
+            </div>
+            <div class="tl-stack tl-stack--column tl-stack--gap-compact">
+              <div class="tl-color-picker__preview">
+                <span class="tl-type-label">Aktuell</span>
+                <div id="cp-old" class="tl-swatch tl-swatch--color tl-swatch--wide" role="img" aria-label="Aktuell"></div>
+                <span class="tl-type-label">Neu</span>
+                <div id="cp-new" class="tl-swatch tl-swatch--color tl-swatch--wide" role="img" aria-label="Neu"></div>
+              </div>
+              <div class="tl-divider"></div>
+              <div class="tl-color-picker__inputs">
+                <label class="tl-type-label">Rot <input class="tl-field" value="229"></label>
+                <label class="tl-type-label">Grün <input class="tl-field" value="57"></label>
+                <label class="tl-type-label">Blau <input class="tl-field" value="53"></label>
+                <label class="tl-type-label">Hex <input class="tl-field" value="#e53935"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-button-bar tl-picker__actions">
+        <button type="button" class="tl-button tl-button--ghost tl-button--danger">Leeren</button>
+        <button type="button" class="tl-button tl-button--secondary">Abbrechen</button>
+        <button type="button" class="tl-button tl-button--primary">OK</button>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Dasselbe Popup mit Höhenkappe: der Inhalt scrollt, focus-clip misst es mit</p>
+    <div class="tl-popover tl-picker specimen__capped" role="dialog" aria-label="Farbe wählen">
+      <div class="tl-tabs tl-picker__tabs">
+        <div class="tl-tabs__list" role="tablist">
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="cq-t1" aria-selected="false" aria-controls="cq-p1" tabindex="-1">Palette</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="cq-t2" aria-selected="true" aria-controls="cq-p2" tabindex="0">Mischer</button>
+        </div>
+        <div class="tl-tabs__panel" role="tabpanel" id="cq-p1" aria-labelledby="cq-t1" hidden><p class="tl-type-body">Palette.</p></div>
+        <div class="tl-tabs__panel" role="tabpanel" id="cq-p2" aria-labelledby="cq-t2">
+          <div class="tl-stack tl-stack--row tl-stack--gap-default">
+            <div class="tl-color-picker__mixer">
+              <div class="tl-color-picker__field" role="slider" aria-label="Sättigung und Helligkeit" aria-valuetext="Sättigung 70 %, Helligkeit 75 %" tabindex="0"><div class="tl-color-picker__handle"></div></div>
+              <div class="tl-color-picker__hue" role="slider" aria-label="Farbton" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="360" aria-valuenow="216" tabindex="0"><div class="tl-color-picker__handle"></div></div>
+            </div>
+            <div class="tl-stack tl-stack--column tl-stack--gap-compact">
+              <div class="tl-color-picker__preview">
+                <span class="tl-type-label">Aktuell</span>
+                <div class="tl-swatch tl-swatch--color tl-swatch--wide" role="img" aria-label="Aktuell"></div>
+                <span class="tl-type-label">Neu</span>
+                <div class="tl-swatch tl-swatch--color tl-swatch--wide" role="img" aria-label="Neu"></div>
+              </div>
+              <div class="tl-divider"></div>
+              <div class="tl-color-picker__inputs">
+                <label class="tl-type-label">Rot <input class="tl-field" value="229"></label>
+                <label class="tl-type-label">Grün <input class="tl-field" value="57"></label>
+                <label class="tl-type-label">Blau <input class="tl-field" value="53"></label>
+                <label class="tl-type-label">Hex <input class="tl-field" value="#e53935"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-button-bar tl-picker__actions">
+        <button type="button" class="tl-button tl-button--ghost tl-button--danger">Leeren</button>
+        <button type="button" class="tl-button tl-button--secondary">Abbrechen</button>
+        <button type="button" class="tl-button tl-button--primary">OK</button>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Picker</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Picker</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Picker-Hülle: Reiter, Inhalt, Knopfleiste auf einem Popover</p>
+    <div class="tl-popover tl-picker" role="dialog" aria-label="Farbe wählen">
+      <div class="tl-tabs tl-picker__tabs">
+        <div class="tl-tabs__list" role="tablist" aria-label="Farbwahl">
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="pk-t1" aria-selected="true" aria-controls="pk-p1" tabindex="0">Palette</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="pk-t2" aria-selected="false" aria-controls="pk-p2" tabindex="-1">Mischer</button>
+        </div>
+        <div class="tl-tabs__panel" role="tabpanel" id="pk-p1" aria-labelledby="pk-t1"><p class="tl-type-body">Inhalt der Palette.</p></div>
+        <div class="tl-tabs__panel" role="tabpanel" id="pk-p2" aria-labelledby="pk-t2" hidden><p class="tl-type-body">Inhalt des Mischers.</p></div>
+      </div>
+      <div class="tl-button-bar tl-picker__actions"><div class="tl-toolbar" role="toolbar" aria-label="Aktionen"><div class="tl-toolbar__group">
+        <button type="button" class="tl-button tl-button--ghost tl-button--danger">Leeren</button>
+        <button type="button" class="tl-button tl-button--secondary">Abbrechen</button>
+        <button type="button" class="tl-button tl-button--primary">OK</button>
+      </div></div></div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

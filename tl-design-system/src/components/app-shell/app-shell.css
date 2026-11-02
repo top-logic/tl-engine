@@ -1,0 +1,39 @@
+/* AppShell — Spec 2026-10-16 Welle 4b §3. Der Rahmen der Anwendung: Kopf, Hinweise, Inhalt (main), Fuß. Den Breakpoint
+   misst nur TLAppShell (matchMedia) und setzt data-tl-display="compact" | "regular" an dieser Wurzel; keine
+   Komponentendatei enthält eine Breiten-Media-Query (navigation.test.mjs). Eine Regel für schmale Bildschirme liest
+   [data-tl-display~="compact"]. */
+
+.tl-app-shell {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+}
+.tl-app-shell[hidden] { display: none; }
+
+.tl-app-shell__header,
+.tl-app-shell__footer {
+  flex: none;
+}
+
+/* Hinweise zwischen Kopf und Inhalt: ohne eigenen Rand und Abstand, damit der Bereich verschwindet, wenn kein Hinweis
+   sichtbar ist. */
+.tl-app-shell__notices {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+/* Mehrere Hinweise stehen bündig: Balken über die volle Breite; die Lücke eines Stapels zeigte die Seite als Streifen
+   zwischen zwei Ansagen. Zwei Klassen, damit die Regel die Lücke des Stapels schlägt, wo immer er steht. */
+.tl-app-shell .tl-app-shell__notices > * {
+  gap: 0;
+}
+
+/* Begrenzte Region (tl-region): die aktive Ansicht löst ihre Höhe gegen diesen Bereich auf, füllt ihn und rollt in
+   sich, die AppBar bleibt stehen. Bündig: die Ansicht trägt ihren Abstand selbst (Abstandsmodell). */
+.tl-app-shell__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}

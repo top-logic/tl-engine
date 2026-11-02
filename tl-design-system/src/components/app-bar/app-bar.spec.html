@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — AppBar</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { background: var(--tl-surface-base); }
+  #shrink { max-width: 100%; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">AppBar</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Flach, mit Breadcrumb, Toolbar und Benutzermenü</p>
+    <div class="stage">
+      <header class="tl-app-bar">
+        <div class="tl-app-bar__leading"><button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Navigation öffnen" aria-expanded="false" data-tooltip="text:Navigation öffnen"><i class="tl-icon-md bi bi-list tl-button__icon" aria-hidden="true"></i></button></div>
+        <h1 class="tl-app-bar__title tl-type-heading-sm">TopLogic Demo</h1>
+        <div class="tl-app-bar__children"><nav class="tl-breadcrumb" aria-label="Pfad"><ol class="tl-breadcrumb__list"><li class="tl-breadcrumb__entry"><button type="button" class="tl-button tl-button--link tl-type-body"><span class="tl-button__label">Start</span></button><i class="tl-breadcrumb__separator tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></li><li class="tl-breadcrumb__entry"><span class="tl-breadcrumb__current tl-type-body" aria-current="page">Aufträge</span></li></ol></nav></div>
+        <div class="tl-app-bar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle" data-tl-overflow="trailing"><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Neu</span></button><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Export</span></button></div></div>
+        <div class="tl-app-bar__trailing"><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Hendrik</span></button></div>
+      </header>
+    </div>
+  </section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Erhöht (--elevated: Linie unten)</p>
+    <div class="stage">
+      <header class="tl-app-bar tl-app-bar--elevated">
+        <h1 class="tl-app-bar__title tl-type-heading-sm">Einstellungen</h1>
+        <div class="tl-app-bar__actions"></div>
+        <div class="tl-app-bar__trailing"><button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Hilfe" data-tooltip="text:Hilfe"><i class="tl-icon-md bi bi-question-circle tl-button__icon" aria-hidden="true"></i></button></div>
+      </header>
+    </div>
+  </section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Nachgeben (app-bar-shrink.test.mjs setzt die Breite)</p>
+    <div class="stage" id="shrink">
+      <header class="tl-app-bar">
+        <h1 class="tl-app-bar__title tl-type-heading-sm">Ein langer Titel der Anwendung, der zuletzt kürzt</h1>
+        <div class="tl-app-bar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle" data-tl-overflow="trailing"><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Neu anlegen</span></button><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Exportieren</span></button><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Drucken</span></button></div></div>
+      </header>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+/* AppBar — Spec 2026-10-16 Welle 4b §5. Die Leiste am oberen Rand: Anfang (Hamburger), Titel, Kinder (Breadcrumb),
+   Aktionen (tl-toolbar), Ende (Benutzermenü). Höhe size-shell-bar, Fläche surface-layer. Die Variante --elevated
+   trennt mit einer Linie, nicht mit einem Schatten: die Leiste schwebt nicht (docs/skalen.md „Welle 4b“). */
+
+.tl-app-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  box-sizing: border-box;
+  height: var(--tl-size-shell-bar);
+  padding: 0 var(--tl-space-sm);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+.tl-app-bar[hidden] { display: none; }
+
+.tl-app-bar--elevated {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-app-bar__leading {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.tl-app-bar__title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Kinder (Breadcrumb) wachsen nicht: den Rest der Leiste nehmen die Aktionen. */
+.tl-app-bar__children {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+}
+
+.tl-app-bar__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: end;
+  margin-inline-start: auto;
+}
+
+/* Ohne Befehl rendert die Toolbar nichts; dann trägt die Hülle keine Lücke zur Leiste bei. */
+.tl-app-bar__actions:empty {
+  display: none;
+}
+
+/* Wer nachgibt, wenn die Leiste zu schmal wird: eine Toolbar, die überlaufen kann, nimmt nur den Platz, der übrig ist
+   (Basis 0, sie wächst in den Rest) und misst daran, was sie zeigt — erst fallen die Labels, dann wandern Befehle ins
+   Überlaufmenü. Bei ihrem Überlaufknopf (min-width) hält sie; erst dann schrumpfen Titel und Kinder
+   (app-bar-shrink.test.mjs). Ohne die Zahl 100000 des Altbestands. */
+.tl-app-bar__actions:has(> .tl-toolbar[data-tl-overflow]) {
+  flex: 1 1 0;
+  min-width: var(--tl-size-control);
+}
+
+.tl-app-bar__trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  margin-inline-start: auto;
+}
+
+/* Aktionen vor dem Ende haben den freien Platz schon genommen; ein zweiter automatischer Rand teilte ihn und ließe die
+   Aktionen in der Mitte stehen. Eine leere Hülle nimmt nichts, dann behält das Ende seinen Rand. */
+.tl-app-bar__actions:not(:empty) + .tl-app-bar__trailing {
+  margin-inline-start: 0;
+}

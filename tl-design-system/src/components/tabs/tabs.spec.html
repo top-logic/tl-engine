@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Tabs</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Tabs</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">drei Reiter, einer gewählt</span>
+      <div class="tl-tabs">
+        <div class="tl-tabs__strip">
+        <button type="button" class="tl-button tl-button--icon tl-button--sm tl-button--ghost tl-tabs__scroll" data-tl-edge="start" tabindex="-1" aria-label="Reiter davor zeigen" hidden><i class="tl-icon-sm bi bi-chevron-left" aria-hidden="true"></i></button>
+        <div class="tl-tabs__list" role="tablist" aria-label="Bereiche">
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-1" aria-selected="true" aria-controls="panel-1" tabindex="0">Übersicht</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-2" aria-selected="false" aria-controls="panel-2" tabindex="-1">Details</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-3" aria-selected="false" aria-controls="panel-3" tabindex="-1">Verlauf</button>
+        </div>
+        <button type="button" class="tl-button tl-button--icon tl-button--sm tl-button--ghost tl-tabs__scroll" data-tl-edge="end" tabindex="-1" aria-label="Reiter dahinter zeigen" hidden><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+        </div>
+        <div class="tl-tabs__panel tl-type-body" role="tabpanel" id="panel-1" aria-labelledby="tab-1"><p>Inhalt des gewählten Reiters.</p></div>
+        <div class="tl-tabs__panel tl-type-body" role="tabpanel" id="panel-2" aria-labelledby="tab-2" hidden><p>Details (nicht gewählt, hidden).</p></div>
+        <div class="tl-tabs__panel tl-type-body" role="tabpanel" id="panel-3" aria-labelledby="tab-3" hidden><p>Verlauf (nicht gewählt, hidden).</p></div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--top specimen__row--narrow">
+      <span class="tl-type-label">Überlauf: zwölf Reiter, die Reiterreihe scrollt, Knöpfe nur in verdeckter Richtung</span>
+      <div class="tl-tabs">
+        <div class="tl-tabs__strip">
+        <button type="button" class="tl-button tl-button--icon tl-button--sm tl-button--ghost tl-tabs__scroll" data-tl-edge="start" tabindex="-1" aria-label="Reiter davor zeigen" disabled><i class="tl-icon-sm bi bi-chevron-left" aria-hidden="true"></i></button>
+        <div class="tl-tabs__list" role="tablist" aria-label="Viele Bereiche">
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-1" aria-selected="true" aria-controls="panel-ov" tabindex="0">Übersicht</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-2" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Stammdaten</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-3" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Ansprechpartner</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-4" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Verträge</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-5" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Rechnungen</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-6" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Dokumente</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-7" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Termine</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-8" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Aufgaben</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-9" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Notizen</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-10" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Verlauf</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-11" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Berechtigungen</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="tab-ov-12" aria-selected="false" aria-controls="panel-ov" tabindex="-1">Einstellungen</button>
+        </div>
+        <button type="button" class="tl-button tl-button--icon tl-button--sm tl-button--ghost tl-tabs__scroll" data-tl-edge="end" tabindex="-1" aria-label="Reiter dahinter zeigen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+        </div>
+        <div class="tl-tabs__panel tl-type-body" role="tabpanel" id="panel-ov" aria-labelledby="tab-ov-1"><p>Ein Panel für alle Reiter.</p></div>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    for (const el of rows.querySelectorAll('[aria-controls],[aria-labelledby]'))
+      for (const a of ['aria-controls', 'aria-labelledby']) if (el.hasAttribute(a)) el.setAttribute(a, el.getAttribute(a) + '-' + id);
+    document.getElementById(id).append(rows);
+  }
+  // Die Knöpfe der Leiste wie in der Engine (useScrollStrip): da, solange die Reiter überlaufen; disabled (unsichtbar,
+  // Platz bleibt), solange in ihrer Richtung nichts verdeckt ist.
+  for (const list of document.querySelectorAll('.tl-tabs__list')) {
+    const strip = list.parentElement;
+    const start = strip.querySelector('[data-tl-edge="start"]'), end = strip.querySelector('[data-tl-edge="end"]');
+    const update = () => {
+      const spare = start.getBoundingClientRect().width + end.getBoundingClientRect().width;
+      start.hidden = end.hidden = list.scrollWidth <= list.clientWidth + spare + 0.5;
+      start.disabled = list.scrollLeft <= 0.5;
+      end.disabled = list.scrollLeft + list.clientWidth >= list.scrollWidth - 0.5;
+    };
+    list.addEventListener('scroll', update);
+    new ResizeObserver(update).observe(list);
+    start.addEventListener('click', () => list.scrollBy({ left: -list.clientWidth * 0.8, behavior: 'smooth' }));
+    end.addEventListener('click', () => list.scrollBy({ left: list.clientWidth * 0.8, behavior: 'smooth' }));
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

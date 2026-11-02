@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Accordion</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Accordion</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Drei Abschnitte: der erste offen mit Aktion, zwei zu</p>
+    <div class="tl-card tl-accordion">
+      <div class="tl-accordion__section">
+        <div class="tl-accordion__header">
+          <div class="tl-accordion__heading" role="heading" aria-level="3">
+            <button type="button" id="ac1-header-a" class="tl-accordion__trigger tl-type-body-strong" aria-expanded="true" aria-controls="ac1-panel-a"><i class="tl-icon-sm bi bi-chevron-right tl-accordion__chevron" aria-hidden="true"></i><i class="tl-icon-sm bi bi-info-circle tl-accordion__icon" aria-hidden="true"></i><span class="tl-accordion__label">Allgemein</span></button>
+          </div>
+          <div class="tl-accordion__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle"><div class="tl-toolbar__group"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Hinzufügen" data-tooltip="text:Hinzufügen"><i class="tl-icon-sm bi bi-plus-lg tl-button__icon" aria-hidden="true"></i></button></div></div></div>
+        </div>
+        <div id="ac1-panel-a" class="tl-accordion__panel" role="region" aria-labelledby="ac1-header-a"><p class="tl-type-body">Inhalt des ersten Abschnitts.</p></div>
+      </div>
+      <div class="tl-accordion__section">
+        <div class="tl-accordion__header">
+          <div class="tl-accordion__heading" role="heading" aria-level="3">
+            <button type="button" id="ac1-header-b" class="tl-accordion__trigger tl-type-body-strong" aria-expanded="false" aria-controls="ac1-panel-b"><i class="tl-icon-sm bi bi-chevron-right tl-accordion__chevron" aria-hidden="true"></i><i class="tl-icon-sm bi bi-geo-alt tl-accordion__icon" aria-hidden="true"></i><span class="tl-accordion__label">Adresse</span></button>
+          </div>
+          
+        </div>
+        <div id="ac1-panel-b" class="tl-accordion__panel" role="region" aria-labelledby="ac1-header-b" hidden><p class="tl-type-body">Inhalt des zweiten Abschnitts.</p></div>
+      </div>
+      <div class="tl-accordion__section">
+        <div class="tl-accordion__header">
+          <div class="tl-accordion__heading" role="heading" aria-level="3">
+            <button type="button" id="ac1-header-c" class="tl-accordion__trigger tl-type-body-strong" aria-expanded="false" aria-controls="ac1-panel-c"><i class="tl-icon-sm bi bi-chevron-right tl-accordion__chevron" aria-hidden="true"></i><i class="tl-icon-sm bi bi-person tl-accordion__icon" aria-hidden="true"></i><span class="tl-accordion__label">Konten</span></button>
+          </div>
+          
+        </div>
+        <div id="ac1-panel-c" class="tl-accordion__panel" role="region" aria-labelledby="ac1-header-c" hidden><p class="tl-type-body">Inhalt des dritten Abschnitts.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

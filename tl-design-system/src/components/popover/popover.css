@@ -1,0 +1,28 @@
+/* Popover — docs/skalen.md „Scrim und Ebenen“, „Gleiches wird zusammengelegt“ (W1).
+   Die eine Fläche für alles, was über der Oberfläche schwebt und einen Anker hat: Menü, Select-Popup,
+   Toolbar-Überlauf. Die Lage setzt bridge/popover.ts (floating-ui, fixed) inline; hier stehen Fläche,
+   Ebene und Grenzen. Mindestbreite und Höhe sind Maße, keine Literale. */
+
+.tl-popover {
+  position: fixed;
+  z-index: var(--tl-layer-popover);
+  box-sizing: border-box;
+  min-width: var(--tl-size-popover-min);
+  max-height: var(--tl-size-popover-max);
+  overflow: auto;
+  padding: var(--tl-space-xs);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-overlay);
+  box-shadow: var(--tl-shadow-popover);
+  color: var(--tl-text-primary);
+}
+.tl-popover[hidden] { display: none; }
+
+/* Inhalts-Popover (#29659, View-Element <popover>): beliebiger Inhalt ist ein bündiger Behälter wie Panel oder
+   Dialogfenster — der Inhalt bringt seinen Abstand mit (<inset>), die Fläche keinen. Die Breite ist begrenzt, damit
+   Fließtext umbricht, statt über den Viewport zu laufen. */
+.tl-popover--content {
+  max-width: min(var(--tl-size-popover-content-max), calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
+  padding: 0;
+}

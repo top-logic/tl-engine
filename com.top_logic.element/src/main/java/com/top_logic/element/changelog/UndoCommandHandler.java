@@ -19,11 +19,9 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.ChangeSet;
-import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -128,20 +126,13 @@ public class UndoCommandHandler extends AbstractCommandHandler implements WithPo
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		TransientChangeSet undo = target.revert();
 		KnowledgeBase kb = root != null ? root.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
-			List<ResKey> problems = undo.apply();
-
-			if (!problems.isEmpty()) {
-				if (cfg.isCheckConflicts()) {
-					tx.rollback(I18NConstants.UNDO_CANCELED_BY_USER);
-					return openConfirmDialog(context, component, kb, target, undo, problems);
-				}
-				InfoService.showWarningList(problems);
+		List<ResKey> problems = ChangeSetReverter.revert(kb, target, !cfg.isCheckConflicts());
+		if (!problems.isEmpty()) {
+			if (cfg.isCheckConflicts()) {
+				return openConfirmDialog(context, component, kb, target, problems);
 			}
-
-			tx.commit();
+			InfoService.showWarningList(problems);
 		}
 
 		WithPostCreateActions.processCreateActions(_postCreateActions, component, target);
@@ -149,12 +140,9 @@ public class UndoCommandHandler extends AbstractCommandHandler implements WithPo
 	}
 
 	private HandlerResult openConfirmDialog(DisplayContext openContext, LayoutComponent component, KnowledgeBase kb,
-			ChangeSet target, TransientChangeSet undo, List<ResKey> problems) {
+			ChangeSet target, List<ResKey> problems) {
 		CommandModel okButton = MessageBox.button(ButtonType.OK, confirmCtx -> {
-			try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
-				undo.apply();
-				tx.commit();
-			}
+			ChangeSetReverter.revert(kb, target, true);
 			component.invalidate();
 			WithPostCreateActions.processCreateActions(_postCreateActions, component, target);
 			return HandlerResult.DEFAULT_RESULT;

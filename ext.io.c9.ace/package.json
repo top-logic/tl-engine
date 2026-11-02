@@ -1,0 +1,11 @@
+{
+  "name": "ext-io-c9-ace",
+  "private": true,
+  "description": "Copies the ace editor distribution into the web application.",
+  "scripts": {
+    "build": "node -e \"const fs=require('fs');fs.rmSync('src/main/webapp/script/ace',{recursive:true,force:true});fs.cpSync('node_modules/ace-builds/src','src/main/webapp/script/ace',{recursive:true})\""
+  },
+  "dependencies": {
+    "ace-builds": "^1.42.0"
+  }
+}

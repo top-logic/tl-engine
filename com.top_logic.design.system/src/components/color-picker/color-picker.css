@@ -1,0 +1,88 @@
+/* Farb-Picker — Spec 2026-10-17 Welle 5a §4. Der Inhalt des Farb-Popups (Hülle: tl-picker, Feldknopf und Zelle:
+   tl-swatch). Das CSS zeichnet nur Geometrie, Rahmen und Griffe aus Tokens; Datenfarben (Wert, reiner Farbton,
+   Verläufe, Farbtonspektrum) setzt das TSX inline. Palette und Mischer tragen einen Rand von space-2xs, sonst
+   schneidet ihr overflow den Fokusring der Randzellen. */
+
+.tl-color-picker__palette {
+  display: grid;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs);
+}
+.tl-color-picker__palette[hidden] { display: none; }
+
+/* Die gewählte Option trägt einen Ring in der Auswahlfarbe, ein Rand statt outline: der Fokusring aus base.css
+   bleibt davon unterscheidbar. */
+.tl-color-picker__palette [aria-selected="true"] {
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+}
+
+.tl-color-picker__mixer {
+  display: flex;
+  gap: var(--tl-space-sm);
+  padding: var(--tl-space-2xs);
+}
+.tl-color-picker__mixer[hidden] { display: none; }
+
+/* Maß des Mischers: ein festes Quadrat. Das Feld ist size-12 breit und hoch, der Farbtonstreifen size-control-sm breit
+   und size-12 hoch; der Mischer schrumpft nicht (flex: none), damit die Stapelzeile seine Breite einrechnet und er die
+   Spalte daneben (Vorschau, Eingaben) nicht überlagert. Ist das Popup niedriger, scrollt das Reiterfeld. */
+.tl-color-picker__mixer {
+  flex: none;
+  box-sizing: content-box;
+  block-size: var(--tl-size-12);
+}
+
+.tl-color-picker__field {
+  inline-size: var(--tl-size-12);
+  block-size: var(--tl-size-12);
+}
+
+.tl-color-picker__hue {
+  inline-size: var(--tl-size-control-sm);
+  block-size: var(--tl-size-12);
+}
+
+/* Gemeinsam: der Rahmen der beiden Flächen. */
+.tl-color-picker__field,
+.tl-color-picker__hue {
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Der Griff liegt auf einer Datenfarbe: ein Doppelring aus den beiden Griff-Rollen, innen hell (inset-Linie), außen dunkel (Rand), von
+   denen auf jeder Farbe einer 3:1 erreicht. Kein outline: den verbietet das Gate den Komponenten. */
+.tl-color-picker__handle {
+  position: absolute;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: var(--tl-border-width-md) solid var(--tl-border-handle-dark);
+  border-radius: var(--tl-radius-full);
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-handle-light);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Der Griff des Farbtonreglers steht mittig im Streifen; nur seine Höhe (top) ist Datum und kommt inline. */
+.tl-color-picker__hue > .tl-color-picker__handle {
+  left: 50%;
+}
+
+.tl-color-picker__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-color-picker__preview[hidden] { display: none; }
+
+.tl-color-picker__inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-color-picker__inputs[hidden] { display: none; }

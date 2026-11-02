@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Alert</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .tl-alert__body p { margin: 0; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Alert</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row">
+      <span class="tl-type-label">Fehler</span>
+      <div class="tl-alert tl-type-body" data-tl-role="error" role="alert">
+        <i class="tl-icon-md bi bi-x-octagon-fill tl-alert__icon" aria-hidden="true"></i>
+        <div class="tl-alert__body">
+          <p class="tl-type-body-strong tl-alert__title">Speichern fehlgeschlagen</p>
+          <p>Das Projekt wurde von einer anderen Person geändert. Laden Sie die Seite neu.</p>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Warnung</span>
+      <div class="tl-alert tl-type-body" data-tl-role="warning" role="status">
+        <i class="tl-icon-md bi bi-exclamation-triangle-fill tl-alert__icon" aria-hidden="true"></i>
+        <div class="tl-alert__body">
+          <p class="tl-type-body-strong tl-alert__title">Frist läuft ab</p>
+          <p>Die Abgabe ist in zwei Tagen fällig.</p>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Erfolg</span>
+      <div class="tl-alert tl-type-body" data-tl-role="success" role="status">
+        <i class="tl-icon-md bi bi-check-circle-fill tl-alert__icon" aria-hidden="true"></i>
+        <div class="tl-alert__body">
+          <p class="tl-type-body-strong tl-alert__title">Gespeichert</p>
+          <p>Alle Änderungen sind übernommen.</p>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Info</span>
+      <div class="tl-alert tl-type-body" data-tl-role="info" role="status">
+        <i class="tl-icon-md bi bi-info-circle-fill tl-alert__icon" aria-hidden="true"></i>
+        <div class="tl-alert__body">
+          <p class="tl-type-body-strong tl-alert__title">Hinweis</p>
+          <p>Die Auswertung wird nachts neu berechnet.</p>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">ohne Titel</span>
+      <div class="tl-alert tl-type-body" data-tl-role="info" role="status">
+        <i class="tl-icon-md bi bi-info-circle-fill tl-alert__icon" aria-hidden="true"></i>
+        <div class="tl-alert__body"><p>Nur ein Satz, ohne Titel.</p></div>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">mit Aktionen und Schließen</span>
+      <div class="tl-alert tl-type-body" data-tl-role="warning" role="status">
+        <i class="tl-icon-md bi bi-exclamation-triangle-fill tl-alert__icon" aria-hidden="true"></i>
+        <div class="tl-alert__body">
+          <div class="tl-type-body-strong tl-alert__title">Ungespeicherte Änderungen</div>
+          <div class="tl-type-body tl-alert__message">Drei Felder sind geändert, aber noch nicht gespeichert.
+Wer die Seite verlässt, verliert sie.</div>
+          <div class="tl-alert__actions">
+            <button type="button" class="tl-button tl-button--primary tl-button--sm">Speichern</button>
+            <button type="button" class="tl-button tl-button--secondary tl-button--sm">Verwerfen</button>
+          </div>
+        </div>
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-alert__close" aria-label="Dismiss" title="Dismiss"><i class="tl-icon-sm bi bi-x-lg" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">ohne Icon, mit Schließen</span>
+      <div class="tl-alert tl-type-body" data-tl-role="info" role="status">
+        <div class="tl-alert__body"><p>Das Theme ersetzt das Icon durch das unsichtbare Bild; der Text rückt nach vorn.</p></div>
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-alert__close" aria-label="Dismiss" title="Dismiss"><i class="tl-icon-sm bi bi-x-lg" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    document.getElementById(id).append(rows);
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

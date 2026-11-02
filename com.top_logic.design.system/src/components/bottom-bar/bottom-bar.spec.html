@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — BottomBar</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { max-width: 24rem; }
+</style>
+</head>
+<body>
+<div class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">BottomBar</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Drei Einträge, aktuelle Seite mit Fläche, Zähler an der Ecke</p>
+    <div class="stage">
+      <nav class="tl-bottom-bar" aria-label="Navigation unten">
+        <button type="button" class="tl-bottom-bar__item" aria-current="page"><span class="tl-bottom-bar__icon"><i class="tl-icon-md bi bi-house" aria-hidden="true"></i></span><span class="tl-bottom-bar__label tl-type-label-strong">Start</span></button>
+        <button type="button" class="tl-bottom-bar__item"><span class="tl-bottom-bar__icon"><span class="tl-icon-badge"><i class="tl-icon-md bi bi-inbox" aria-hidden="true"></i><span class="tl-icon-badge__count"><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="3 neue">3</span></span></span></span><span class="tl-bottom-bar__label tl-type-label">Eingang</span></button>
+        <button type="button" class="tl-bottom-bar__item"><span class="tl-bottom-bar__icon"><i class="tl-icon-md bi bi-person" aria-hidden="true"></i></span><span class="tl-bottom-bar__label tl-type-label">Profil</span></button>
+      </nav>
+    </div>
+  </section>
+
+</div>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

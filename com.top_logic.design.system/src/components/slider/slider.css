@@ -1,0 +1,172 @@
+/* Slider — Spec 2026-10-17 Welle 5a §6. Ein natives range, mit dem Wert als Text daneben. Die Spur des range ist
+   durchsichtig; darunter liegen die Ruhespur und die Füllung (ein Element wie bei tl-progress, ihre Breite setzt
+   das Control als Anteil inline). Die Pseudo-Regeln zeichnen nur den Daumen. Den Fokusring um das ganze range
+   liefert base.css. Zustände sind Attribute (aria-invalid, data-tl-state), keine Klassen. */
+
+.tl-slider {
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--tl-space-sm);
+  inline-size: 100%;
+}
+.tl-slider[hidden] { display: none; }
+
+/* Spur und range teilen sich die erste Zelle; die Spur ist um den halben Daumen eingerückt, denn die Mitte des
+   Daumens wandert von einem halben Daumen nach dem Anfang bis einen halben Daumen vor das Ende. */
+.tl-slider__track {
+  grid-area: 1 / 1;
+  display: block;
+  margin-inline: calc(var(--tl-size-choice) / 2);
+  block-size: var(--tl-size-progress);
+  overflow: hidden;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-border-control);
+}
+.tl-slider__track[hidden] { display: none; }
+
+.tl-slider__fill {
+  display: block;
+  block-size: 100%;
+  background: var(--tl-surface-brand);
+}
+
+.tl-slider__input {
+  grid-area: 1 / 1;
+  appearance: none;
+  -webkit-appearance: none;
+  min-inline-size: 0;
+  block-size: var(--tl-size-choice);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tl-slider__input:disabled {
+  cursor: default;
+}
+
+.tl-slider__input::-webkit-slider-runnable-track {
+  block-size: var(--tl-size-choice);
+  border: none;
+  background: transparent;
+}
+
+.tl-slider__input::-moz-range-track {
+  block-size: var(--tl-size-choice);
+  border: none;
+  background: transparent;
+}
+
+.tl-slider__input::-moz-range-progress {
+  background: transparent;
+}
+
+/* Der Daumen ist eine Marke: ein Kreis in der Markenfarbe. */
+.tl-slider__input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: none;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-slider__input::-moz-range-thumb {
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: none;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Der Hof: beim Zeigen ein Ring um den Daumen, beim Drücken ein stärkerer, wie bei den Auswahlmarken. Ein Schatten
+   ohne Versatz und Unschärfe zeichnet nur außerhalb des Daumens; seine Ausbreitung füllt ihn bis zur Trefferfläche
+   eines Controls. Deaktiviert zeigt keinen. */
+.tl-slider__input:not(:disabled):hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-slider__input:not(:disabled):hover::-moz-range-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-slider__input:not(:disabled):active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-slider__input:not(:disabled):active::-moz-range-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-slider__input:disabled::-webkit-slider-thumb {
+  background: var(--tl-border-disabled);
+}
+
+.tl-slider__input:disabled::-moz-range-thumb {
+  background: var(--tl-border-disabled);
+}
+
+.tl-slider:has(.tl-slider__input:disabled) .tl-slider__track {
+  background: var(--tl-surface-disabled);
+}
+
+.tl-slider:has(.tl-slider__input:disabled) .tl-slider__fill {
+  background: var(--tl-border-disabled);
+}
+
+/* Der Wert als Text. Wert und beide Grenzen stehen in einer Gitterzelle, so ist der Kasten so breit wie die
+   breiteste und die Spur behält ihre Länge, während der Wert wechselt. */
+.tl-slider__value {
+  grid-area: 1 / 2;
+  display: inline-grid;
+  color: var(--tl-text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tl-slider__value[hidden] { display: none; }
+
+.tl-slider__text,
+.tl-slider__sizer {
+  grid-area: 1 / 1;
+  justify-self: end;
+}
+
+.tl-slider__sizer {
+  visibility: hidden;
+}
+
+/* Vorrang über die Spezifität, nicht über die Reihenfolge: deaktiviert verdrängt jeden Zustand (:not(:disabled)),
+   und der Fehler verdrängt die Warnung (:not([aria-invalid="true"]) an den Warnregeln). Daumen und Text tragen
+   den Zustand. */
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"])::-webkit-slider-thumb {
+  background: var(--tl-status-warning-border);
+}
+
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"])::-moz-range-thumb {
+  background: var(--tl-status-warning-border);
+}
+
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"]) ~ .tl-slider__value .tl-slider__text {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-slider__input[aria-invalid="true"]:not(:disabled)::-webkit-slider-thumb {
+  background: var(--tl-status-error-border);
+}
+
+.tl-slider__input[aria-invalid="true"]:not(:disabled)::-moz-range-thumb {
+  background: var(--tl-status-error-border);
+}
+
+.tl-slider__input[aria-invalid="true"]:not(:disabled) ~ .tl-slider__value .tl-slider__text {
+  color: var(--tl-status-error-text);
+}
+
+.tl-slider__input:disabled ~ .tl-slider__value {
+  color: var(--tl-text-disabled);
+}

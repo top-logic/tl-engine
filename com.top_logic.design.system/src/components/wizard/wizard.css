@@ -1,0 +1,81 @@
+/* Wizard — Spec 2026-10-16 Welle 4c §8 (Q19: eigenes Muster, auf Tokens). Oben, was zeigt, wo man ist — Zähler,
+   Fortschritt, Schrittliste —, darunter der Schritt. Die Schrittliste ist der Block tl-steps (steps.css, Spec 5b §7);
+   der Wizard zeigt ihn waagrecht. Der Schritt gleitet beim Wechsel (slide.css). */
+
+.tl-wizard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+.tl-wizard[hidden] { display: none; }
+
+.tl-wizard__header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--tl-space-sm);
+  padding: var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-wizard__counter {
+  color: var(--tl-text-secondary);
+}
+
+/* Der Balken steht für eine gegangene Strecke: er bekommt eine Länge, statt die Breite der Seite zu nehmen. */
+.tl-wizard__progress {
+  display: flex;
+  max-width: var(--tl-size-wizard-progress);
+}
+
+.tl-wizard__progress > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Der Bereich des Schritts: begrenzt, damit ein füllender Schritt hier seine Höhe auflöst; er positioniert die Kopie
+   des gehenden Schritts, die über dem ankommenden ausblendet. */
+.tl-wizard__body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-wizard__step {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-wizard__step[data-tl-state~="entering"] {
+  animation: tl-slide-in-forward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="entering"],
+.tl-wizard__step[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-backward;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-forward;
+}
+
+.tl-wizard__step[data-tl-state~="exiting"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: tl-slide-out-forward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"],
+.tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-backward;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-forward;
+}

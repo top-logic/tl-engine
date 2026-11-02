@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Pill</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .specimen__cell { width: 8rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Pill</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Rolle mit Text, mit Icon, und in einer schmalen Zelle abgeschnitten. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">%NAME%</span>
+      <span class="tl-pill tl-type-label" data-tl-role="%ROLE%"><span class="tl-pill__label">%LABEL%</span></span>
+      <span class="tl-pill tl-type-label" data-tl-role="%ROLE%"><i class="ri-price-tag-3-line tl-icon-sm tl-pill__icon" aria-hidden="true"></i><span class="tl-pill__label">%LABEL%</span></span>
+      <span class="specimen__cell"><span class="tl-pill tl-type-label" data-tl-role="%ROLE%"><span class="tl-pill__label">Ein sehr langer Wert, der nicht passt</span></span></span>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Im Fließtext</p>
+    <p class="tl-type-body">Das Ticket steht auf <span class="tl-pill" data-tl-role="warning"><span class="tl-pill__label">In Arbeit</span></span> und gehört zum Projekt <span class="tl-pill" data-tl-role="category-6"><span class="tl-pill__label">Nordlicht</span></span>.</p>
+  </section>
+</main>
+<script>
+  const VARIANTEN = [
+    ['neutral', '', 'Entwurf'], ['brand', 'brand', 'Eigenes'],
+    ['error', 'error', 'Abgelehnt'], ['warning', 'warning', 'In Arbeit'], ['success', 'success', 'Erledigt'], ['info', 'info', 'Hinweis'],
+    ['category-1', 'category-1', 'Kategorie 1'],
+    ['category-2', 'category-2', 'Kategorie 2'],
+    ['category-3', 'category-3', 'Kategorie 3'],
+    ['category-4', 'category-4', 'Kategorie 4'],
+    ['category-5', 'category-5', 'Kategorie 5'],
+    ['category-6', 'category-6', 'Kategorie 6'],
+    ['category-7', 'category-7', 'Kategorie 7'],
+    ['category-8', 'category-8', 'Kategorie 8'],
+  ];
+  const tpl = document.getElementById('rows').innerHTML;
+  for (const id of ['on-layer', 'on-base']) {
+    const host = document.getElementById(id);
+    for (const [name, mod, label] of VARIANTEN) host.insertAdjacentHTML('beforeend', tpl.replaceAll('%NAME%', name).replaceAll('%ROLE%', mod).replaceAll('%LABEL%', label));
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

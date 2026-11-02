@@ -1,0 +1,68 @@
+/* Panel — Spec 2026-10-16 Welle 4c §3 (Q3, Q8, Q13, Q14). Eine Fläche mit Kopf (tl-titlebar), Körper und
+   Knopfleiste (tl-button-bar). Minimiert und maximiert sind Zustände in data-tl-state; als Karte trägt die Wurzel
+   zusätzlich tl-card. Bedienung wie ein Fenster (U1, U3): Doppelklick auf den Kopf maximiert, Escape stellt wieder
+   her, ein minimiertes Panel öffnet ein Klick auf den ganzen Kopf — das TSX; hier steht nur der Zeiger. */
+
+.tl-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tl-panel[hidden] { display: none; }
+
+/* Maximiert deckt das Panel den Behälter, der es maximiert, über dessen Inhalt. */
+.tl-panel[data-tl-state~="maximized"] {
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-raised);
+  background: var(--tl-surface-base);
+}
+
+/* Ein Doppelklick auf den Kopf maximiert; er soll den Titel nicht markieren. */
+.tl-panel > .tl-titlebar {
+  user-select: none;
+}
+
+.tl-panel[data-tl-state~="minimized"] > .tl-titlebar {
+  cursor: pointer;
+}
+
+/* Der Körper ist die Box, gegen die ein füllendes Kind seine Höhe auflöst: er nimmt, was das Panel übrig lässt, und
+   scrollt, was nicht hineinpasst. Ein Kind, das nicht füllt, behält die Höhe seines Inhalts, statt gestaucht zu
+   werden; ein füllendes (flex 1 1 0) braucht kein Schrumpfen. */
+.tl-panel__body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tl-panel__body > * {
+  flex-shrink: 0;
+}
+
+/* Über die ganze Zeile eines Formular-Rasters: eine Variante, kein Zustand. */
+.tl-panel--full-line {
+  grid-column: 1 / -1;
+}
+
+/* Knöpfe beim Zeigen: die Regel der Ebenen-Liste (reorder-list.css) — unsichtbar, sichtbar beim Zeigen auf das Panel
+   und bei Tastaturfokus darin (:focus-visible, nicht :focus-within: nach einem Mausklick bliebe der Fokus sonst
+   stehen), auf Touch-Geräten immer. */
+.tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+  opacity: 0;
+  transition: opacity var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+.tl-panel--hover-actions:hover > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons),
+.tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons):has(:focus-visible) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+    opacity: 1;
+  }
+}

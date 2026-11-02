@@ -1,0 +1,84 @@
+/* Prose — Spec 2026-10-19 Welle 5b §5. Fließtext vom Server (TLHtml eingebettet): Überschriften, Absätze, Listen,
+   Links, Code, Tabellen, Zitate in fremdem HTML. Keine eigenen Größen: die Schrift kommt aus den Typo-Klassen, an
+   die der Generator die Selektoren `.tl-prose <element>` hängt (tokens.json „prose“, base.css). Hier stehen nur
+   Abstände und Farben. */
+
+.tl-prose h1,
+.tl-prose h2,
+.tl-prose h3,
+.tl-prose h4,
+.tl-prose h5,
+.tl-prose h6 {
+  margin-block: var(--tl-space-md) 0;
+}
+
+.tl-prose p,
+.tl-prose ul,
+.tl-prose ol,
+.tl-prose pre,
+.tl-prose table,
+.tl-prose blockquote {
+  margin-block: var(--tl-space-sm) 0;
+}
+
+/* Lange Wörter und Adressen brechen um, statt die Seite seitwärts zu schieben. Ein Abschnitt, zu dem gesprungen wird,
+   hält Abstand zur Oberkante (#29765) — ebenso der Inhalt selbst, wenn er an seinen Anfang gescrollt wird. */
+.tl-prose {
+  overflow-wrap: break-word;
+  scroll-margin-block-start: var(--tl-space-lg);
+}
+
+.tl-prose [id] {
+  scroll-margin-block-start: var(--tl-space-lg);
+}
+
+/* Das erste Kind schließt bündig an den Behälter an. */
+.tl-prose > :first-child {
+  margin-block-start: 0;
+}
+
+.tl-prose a {
+  color: var(--tl-text-link);
+}
+
+.tl-prose a:hover {
+  color: var(--tl-text-link-hover);
+}
+
+/* Code ist leicht abgesetzt: die verschachtelte Fläche, die kleine Ecke. */
+.tl-prose code,
+.tl-prose pre {
+  background: var(--tl-surface-layer-nested);
+  border-radius: var(--tl-radius-sm);
+}
+
+.tl-prose code {
+  padding-inline: var(--tl-space-2xs);
+}
+
+.tl-prose pre {
+  padding: var(--tl-space-xs) var(--tl-space-sm);
+  overflow: auto;
+}
+
+/* Code im Block trägt die Fläche des Blocks, keine zweite. */
+.tl-prose pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.tl-prose table {
+  border-collapse: collapse;
+}
+
+.tl-prose th,
+.tl-prose td {
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+}
+
+.tl-prose blockquote {
+  margin-inline: 0;
+  border-inline-start: var(--tl-border-width-md) solid var(--tl-border-separator);
+  padding-inline-start: var(--tl-space-sm);
+}

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.image.util.ImageUtils;
+import com.top_logic.model.search.expr.SearchExpression;
 
 /**
  * TL-Script functions describing a binary value.
@@ -73,8 +74,8 @@ public class BinaryFunctions extends TLScriptFunctions {
 	 */
 	@Label("Size of a binary value")
 	@SideEffectFree
-	public static Long size(@Mandatory BinaryDataSource data) {
-		return data == null ? null : Long.valueOf(data.getSize());
+	public static Double size(@Mandatory BinaryDataSource data) {
+		return data == null ? null : SearchExpression.toNumber(data.getSize());
 	}
 
 	/**

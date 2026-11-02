@@ -371,7 +371,7 @@
 					<task
 						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
 						name="Persistent Node Local Test Task"
-						blocked-by-default="true"
+						enabled="false"
 						node-local="true"
 						persistent="true"
 						working-time-min="0"
@@ -381,7 +381,7 @@
 					<task
 						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
 						name="Persistent Cluster Global Test Task"
-						blocked-by-default="true"
+						enabled="false"
 						node-local="true"
 						persistent="true"
 						working-time-min="0"
@@ -391,7 +391,7 @@
 					<task
 						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
 						name="Persistent Node Local Composite Test Task"
-						blocked-by-default="true"
+						enabled="false"
 						node-local="true"
 						persistent="true"
 						working-time-min="0"
@@ -401,7 +401,7 @@
 					<task
 						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
 						name="Persistent Cluster Global Composite Test Task"
-						blocked-by-default="true"
+						enabled="false"
 						node-local="true"
 						persistent="true"
 						working-time-min="0"
@@ -411,7 +411,6 @@
 					<task
 						class="com.top_logic.util.sched.task.composite.CompositeTaskImpl"
 						name="Persistent Node Local Deep Composite Test Task"
-						blocked-by-default="true"
 						enabled="false"
 						>
 						<task

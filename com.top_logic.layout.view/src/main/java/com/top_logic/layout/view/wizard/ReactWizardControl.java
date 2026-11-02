@@ -22,7 +22,10 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.react.reveal.ChildRevealer;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RouteManager.Navigation;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.element.ContentControls;
@@ -62,8 +65,19 @@ import com.top_logic.util.Resources;
  * way the display moved ({@link #DIRECTION}), so the step entering and the step leaving can be
  * animated in that direction, and how long a step stays before the wizard moves on by itself
  * ({@link #AUTO_ADVANCE}), which the component turns into a timer reporting back through
- * {@link #ADVANCE_STEP_COMMAND} - for a step entered going forward, since a step the user came back
- * to is one they want to look at.
+ * {@link #ADVANCE_STEP_COMMAND}.
+ * </p>
+ *
+ * <p>
+ * A step with a time of its own is a {@link WizardStep#passThrough() pass-through step}: the flow
+ * leads through it, and the user never returns to it. Its time runs on every entry, whichever way
+ * the display moved. The indicator offers no jump to it ({@link #STEP_TRANSIT}), and it is no
+ * address: while it is displayed, the control holds a {@link RouteManager#beginNavigation()
+ * navigation} open, so that the address bar keeps naming the step the flow came from, and the step
+ * the flow arrives at afterwards becomes the next history entry. An address that names a
+ * pass-through step nevertheless - a bookmark, a typed URL - displays the step a
+ * {@link WizardScope#back() move back} from it reaches, and the address bar is corrected to that
+ * step; a pass-through step that no step to return to precedes simply runs.
  * </p>
  */
 public class ReactWizardControl extends ReactControl implements ChildRevealer {
@@ -81,6 +95,12 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 
 	/** Step entry key for the encoded icon of the step. */
 	private static final String STEP_ICON = "icon";
+
+	/**
+	 * Step entry key for whether the step is a {@link WizardStep#passThrough() pass-through step},
+	 * which the indicator offers no jump to.
+	 */
+	public static final String STEP_TRANSIT = "transit";
 
 	/** State key for the position of the step displayed. */
 	public static final String ACTIVE_INDEX = "activeIndex";
@@ -110,7 +130,7 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 
 	/**
 	 * State key for how long the step displayed stays before the wizard moves on by itself,
-	 * {@code null} for a step the user leaves - which a step entered going back always is.
+	 * {@code null} for a step the user leaves.
 	 */
 	public static final String AUTO_ADVANCE = "autoAdvance";
 
@@ -127,6 +147,15 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	private static final String STEP_SLOT = "step";
 
 	private final ViewContext _context;
+
+	/** The routing of the display this wizard is part of, {@code null} for none. */
+	private final RouteManager _routes;
+
+	/**
+	 * The navigation held open while a {@link WizardStep#passThrough() pass-through step} is
+	 * displayed, {@code null} while none is.
+	 */
+	private Navigation _passage;
 
 	/** The element this control displays, the container a step is addressed through. */
 	private final WizardElement _element;
@@ -171,13 +200,14 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	public ReactWizardControl(ViewContext context, WizardElement element, ViewChannel stepChannel) {
 		super(context, null, REACT_MODULE);
 		_context = context;
+		_routes = context.getRouteManager();
 		_element = element;
 		_here = RevealPath.of(context);
 		_stepChannel = stepChannel;
 
 		_steps = new ArrayList<>();
 		expandSteps();
-		_scope = new WizardScope(stepChannel, this::steps);
+		_scope = new WizardScope(stepChannel, this::steps, _routes);
 
 		Registration stepRegistration = _stepChannel.addListener((sender, oldValue, newValue) -> displayCurrentStep());
 		addCleanupAction(stepRegistration::dispose);
@@ -273,7 +303,19 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 		if (_disposed) {
 			return;
 		}
+		showCurrentStep();
+		updatePassage();
+	}
+
+	/**
+	 * Brings the content, the position and the time published in line with the step the step
+	 * channel names.
+	 */
+	private void showCurrentStep() {
 		int index = _scope.currentIndex();
+		if (redirectAddress(index)) {
+			return;
+		}
 		Object key = index < 0 ? null : _steps.get(index).key();
 		// The content belongs to a step, not to a position: a step that keeps its key keeps its
 		// content, however far the steps before it have moved it along.
@@ -301,9 +343,8 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 			// keeps counting rather than starting over.
 			boolean forward = previousIndex <= index;
 			putState(DIRECTION, forward ? FORWARD : BACKWARD);
-			// The time of a step runs while the flow leads through it. Coming back to it is the user
-			// going somewhere, so the step waits for them instead of sending them where they left.
-			putState(AUTO_ADVANCE, forward && index >= 0 ? _steps.get(index).autoAdvanceMillis() : null);
+			// The flow only leads through a step with a time of its own, whichever way it entered it.
+			putState(AUTO_ADVANCE, index >= 0 ? _steps.get(index).autoAdvanceMillis() : null);
 		}
 		if (_progressControl != null) {
 			_progressControl.setFraction(fraction(index));
@@ -316,6 +357,94 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 		if (previous != null && previous != content) {
 			ContentControls.retire(previous);
 		}
+	}
+
+	/**
+	 * Displays the step a move back reaches in place of a pass-through step an address names.
+	 *
+	 * <p>
+	 * A pass-through step is no address, so a URL naming it - a bookmark, a typed URL - leads to the
+	 * step the user would return to from it. Where no such step precedes it, the step runs, because
+	 * there is nothing else the address could mean.
+	 * </p>
+	 *
+	 * <p>
+	 * The step channel is written once the notification in progress has unwound: this runs inside a
+	 * listener of the very channel, and a value written from there would reach the listeners after
+	 * this one before the value they are being told about. Until then, the display stays as it is.
+	 * The address bar follows when the adoption finishes, which reports the address of the display it
+	 * arrived at.
+	 * </p>
+	 *
+	 * @param index
+	 *        The position of the step the step channel names.
+	 * @return Whether the step is displayed in place of the one at the given position.
+	 */
+	private boolean redirectAddress(int index) {
+		if (index < 0 || _routes == null || !_routes.isAdopting()) {
+			return false;
+		}
+		WizardStep addressed = _steps.get(index);
+		if (!addressed.passThrough()) {
+			return false;
+		}
+		int target = _scope.backIndex(index);
+		if (target < 0) {
+			return false;
+		}
+		Object addressedKey = addressed.key();
+		Object targetKey = _steps.get(target).key();
+		ChannelNotificationScope.current().afterNotification(() -> {
+			// Another write in the meantime decided where the wizard is.
+			if (!_disposed && Objects.equals(_stepChannel.get(), addressedKey)) {
+				_stepChannel.set(targetKey);
+			}
+		});
+		return true;
+	}
+
+	/**
+	 * Holds a navigation open while a pass-through step is displayed, and ends it otherwise.
+	 *
+	 * <p>
+	 * While the navigation is open, the address bar is not told about the display, and keeps naming
+	 * the step the flow came from. Ending it reports the address of the step the flow arrived at as
+	 * the next history entry - or nothing, where the flow returned to the step the address bar names.
+	 * A wizard that leaves the display, or is disposed, while it shows a pass-through step ends the
+	 * navigation as well: an open navigation keeps every later change of the display from the
+	 * address bar.
+	 * </p>
+	 *
+	 * <p>
+	 * The navigation is opened from inside the notification of the step channel, after a binding of
+	 * that channel to the address may have heard of the move already. That the binding reports
+	 * nothing of it is owed to the {@link WizardScope}, whose every move is a navigation of its own.
+	 * </p>
+	 */
+	private void updatePassage() {
+		boolean passing = !_disposed && isAttached() && _activeIndex >= 0 && _activeIndex < _steps.size()
+			&& _steps.get(_activeIndex).passThrough();
+		if (passing) {
+			if (_passage == null && _routes != null) {
+				_passage = _routes.beginNavigation();
+			}
+		} else if (_passage != null) {
+			Navigation passage = _passage;
+			_passage = null;
+			passage.end();
+		}
+	}
+
+	/**
+	 * Whether the step with the given key is a pass-through step of this wizard.
+	 */
+	private boolean isPassThrough(Object key) {
+		for (WizardStep step : _steps) {
+			if (Objects.equals(step.key(), key)) {
+				return step.passThrough();
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -344,7 +473,8 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	}
 
 	/**
-	 * The steps as the client sees them: identifier, name in the language of the session, icon.
+	 * The steps as the client sees them: identifier, name in the language of the session, icon, and
+	 * whether the step is a pass-through step.
 	 */
 	private List<Map<String, Object>> publishedSteps() {
 		List<Map<String, Object>> result = new ArrayList<>(_steps.size());
@@ -356,6 +486,7 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 			if (step.icon() != null) {
 				entry.put(STEP_ICON, step.icon());
 			}
+			entry.put(STEP_TRANSIT, Boolean.valueOf(step.passThrough()));
 			result.add(entry);
 		}
 		return result;
@@ -412,10 +543,19 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 
 	/**
 	 * Handles a jump to a step the user picked from the indicator.
+	 *
+	 * <p>
+	 * A pass-through step is no step to jump to, and the indicator offers none; a request naming
+	 * one leaves the wizard where it is.
+	 * </p>
 	 */
 	@ReactCommandHandler(GOTO_STEP_COMMAND)
 	void handleGotoStep(GotoStepArguments args) {
-		revealChild(args.getStepId());
+		String stepId = args.getStepId();
+		if (isPassThrough(_keyById.get(stepId))) {
+			return;
+		}
+		revealChild(stepId);
 	}
 
 	/**
@@ -448,8 +588,21 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	}
 
 	@Override
+	protected void onAttach() {
+		super.onAttach();
+		updatePassage();
+	}
+
+	@Override
+	protected void onDetach() {
+		super.onDetach();
+		updatePassage();
+	}
+
+	@Override
 	protected void onCleanup() {
 		_disposed = true;
+		updatePassage();
 		super.onCleanup();
 	}
 

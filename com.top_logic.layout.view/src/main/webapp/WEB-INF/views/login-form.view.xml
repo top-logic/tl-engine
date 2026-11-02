@@ -8,12 +8,17 @@
 	both offer the same login, and a feature module contributing a command contributes it to both.
 	The enclosing display supplies the credentials object the form edits and renders the commands
 	the form places in the button bar.
+	
+	A module adds a further way to log in beside the single sign-on buttons with a same-path overlay
+	of this view: an element in <form config:ref="credentials">, placed with
+	config:position="after" config:reference="login-methods" (tl-security-passkey adds its passkey
+	button this way).
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 	</channels>
-	<form
+	<form id="credentials"
 		initial-edit-mode="true"
 		input="model"
 		mode-switch="false"
@@ -31,7 +36,7 @@
 			One redirect button per configured external login method (SSO providers, e.g. pac4j
 			clients), from LoginMethods. Renders nothing when none are configured.
 		-->
-		<login-methods/>
+		<login-methods id="login-methods"/>
 		<commands>
 			<generic-command
 				image="css:bi bi-box-arrow-in-right"

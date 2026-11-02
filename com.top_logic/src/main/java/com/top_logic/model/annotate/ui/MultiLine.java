@@ -33,10 +33,16 @@ import com.top_logic.model.config.TLTypeAnnotation;
 @InApp(classifiers = { InAppClassifierConstants.FORM_RELEVANT })
 public interface MultiLine extends BooleanAnnotation, TLAttributeAnnotation, TLTypeAnnotation {
 
+	/** Configuration name of {@link #getRows()}. */
+	String ROWS = "rows";
+
+	/** Configuration name of {@link #isPreformatted()}. */
+	String PREFORMATTED = "preformatted";
+
 	/**
 	 * The number of rows for the displayed text area input element.
 	 */
-	@Name("rows")
+	@Name(ROWS)
 	@IntDefault(MultiLineText.DEFAULT_ROWS)
 	@DynamicMode(fun = RowsMode.class, args = @Ref(VALUE))
 	int getRows();
@@ -47,7 +53,25 @@ public interface MultiLine extends BooleanAnnotation, TLAttributeAnnotation, TLT
 	void setRows(int value);
 
 	/**
-	 * Function activating {@link MultiLine#getRows()} depending on {@link MultiLine#getValue()}.
+	 * Whether the text is displayed as it is written: in a font of fixed width, each line as one
+	 * line without wrapping it, a line wider than the field being scrolled horizontally.
+	 *
+	 * <p>
+	 * Suitable for text whose layout carries meaning, such as a stack trace, a log or source code.
+	 * </p>
+	 */
+	@Name(PREFORMATTED)
+	@DynamicMode(fun = RowsMode.class, args = @Ref(VALUE))
+	boolean isPreformatted();
+
+	/**
+	 * @see #isPreformatted()
+	 */
+	void setPreformatted(boolean value);
+
+	/**
+	 * Function activating the display properties {@link MultiLine#getRows()} and
+	 * {@link MultiLine#isPreformatted()} depending on {@link MultiLine#getValue()}.
 	 */
 	public class RowsMode extends Function1<FieldMode, Boolean> {
 		@Override

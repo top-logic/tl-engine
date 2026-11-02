@@ -62,6 +62,8 @@ public final class FieldSpec {
 
 	private int _multilineRows;
 
+	private boolean _preformatted;
+
 	private boolean _compact;
 
 	private BooleanPresentation _booleanPresentation = BooleanPresentation.CHECKBOX;
@@ -382,6 +384,24 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * Whether a {@link #getMultilineRows() multi-line} text is shown as it is written: in a font of
+	 * fixed width, without wrapping its lines.
+	 */
+	public boolean isPreformatted() {
+		return _preformatted;
+	}
+
+	/**
+	 * Sets whether the text is {@link #isPreformatted() preformatted}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setPreformatted(boolean preformatted) {
+		_preformatted = preformatted;
+		return this;
+	}
+
+	/**
 	 * Whether the field is displayed in little room, a table cell for instance.
 	 *
 	 * <p>
@@ -688,6 +708,7 @@ public final class FieldSpec {
 		result._multiple = _multiple;
 		result._ordered = _ordered;
 		result._multilineRows = _multilineRows;
+		result._preformatted = _preformatted;
 		result._compact = _compact;
 		result._booleanPresentation = _booleanPresentation;
 		result._triState = _triState;

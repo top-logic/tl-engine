@@ -19,6 +19,8 @@ import { useItems } from './items';
  * - children: ChildDescriptor[]
  * - selectable, itemKeys, selected, multiSelect: the selection among the items (see items.tsx); a
  *   selectable stack is a list box
+ * - hidden: boolean (default: false) - the stack is not displayed and takes no place in its
+ *   container, not even a gap
  *
  * Takes part in the fill contract as a container: a stack hosting a filling child fills its own
  * container, so that the child's height resolves against a definite one.
@@ -58,7 +60,9 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   );
 
   // Only the bound itself is a length; that it is centered is the rule the class carries.
-  const style: React.CSSProperties | undefined = maxWidth ? { maxWidth } : undefined;
+  const style: React.CSSProperties | undefined = state.hidden === true
+    ? { display: 'none' }
+    : maxWidth ? { maxWidth } : undefined;
 
   return (
     <FillProvider host={fillHost}>

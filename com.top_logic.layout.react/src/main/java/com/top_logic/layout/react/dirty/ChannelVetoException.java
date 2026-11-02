@@ -64,6 +64,30 @@ public class ChannelVetoException extends RuntimeException {
 	}
 
 	/**
+	 * The same veto, retried by the given continuation.
+	 *
+	 * <p>
+	 * For a caller that forwards a veto raised inside an action of its own and has to retry that
+	 * action as a whole rather than only the write that was vetoed - a write applied as a navigation
+	 * of the display, for instance, whose retry has to be one again. The result carries the dirty
+	 * handlers and the rollback of this veto, and this veto as its cause.
+	 * </p>
+	 *
+	 * @param continuation
+	 *        Retries the blocked action, typically by wrapping this veto's
+	 *        {@link #getContinuation() continuation}.
+	 * @return A veto with the given continuation and everything else of this one.
+	 */
+	public ChannelVetoException withContinuation(Runnable continuation) {
+		ChannelVetoException result = new ChannelVetoException(_dirtyHandlers, continuation);
+		result.initCause(this);
+		if (_rollback != null) {
+			result.addRollback(_rollback);
+		}
+		return result;
+	}
+
+	/**
 	 * Optional rollback action that reverts optimistic UI changes made before the veto was thrown.
 	 *
 	 * <p>

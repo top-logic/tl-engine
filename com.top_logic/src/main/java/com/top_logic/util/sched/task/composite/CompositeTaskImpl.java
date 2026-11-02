@@ -197,8 +197,8 @@ public class CompositeTaskImpl<C extends Config<?>> extends StateHandlingTask<C>
 			if (getShouldStop()) {
 				return combinedResultType;
 			}
-			if (Scheduler.getSchedulerInstance().isTaskBlocked(child)) {
-				Logger.info("Skipping execution of subtask '" + child.getName() + "' as it is blocked.",
+			if (!Scheduler.getSchedulerInstance().isActive(child)) {
+				Logger.info("Skipping execution of subtask '" + child.getName() + "' as it is inactive.",
 					CompositeTaskImpl.class);
 				continue;
 			}

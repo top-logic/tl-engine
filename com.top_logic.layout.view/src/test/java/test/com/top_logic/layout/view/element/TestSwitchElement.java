@@ -9,9 +9,10 @@ import java.util.Collections;
 import java.util.Map;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 
+import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -21,15 +22,25 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.SwitchElement;
+import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests parsing and instantiation of {@link SwitchElement} and its {@code <case>} children.
  */
-public class TestSwitchElement extends TestCase {
+public class TestSwitchElement extends BasicTestCase {
 
 	private ViewElement.Config parseTestView() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestSwitchElement.class);
@@ -86,9 +97,48 @@ public class TestSwitchElement extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module.
+	 * Tests that a switch showing nothing - no case matches and there is no {@code <default>} - is
+	 * hidden, so that it takes no place (and no gap) in its container, and is shown again as soon as
+	 * a case matches.
+	 */
+	public void testHiddenWithoutContent() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestSwitchElement.class);
+		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(
+			"switch", TypedConfiguration.getConfigurationDescriptor(SwitchElement.Config.class)));
+		reader.setSource(new ClassRelativeBinaryContent(TestSwitchElement.class, "test-switch-without-default.xml"));
+		SwitchElement.Config config = (SwitchElement.Config) reader.read();
+		context.checkErrors();
+		UIElement element = context.getInstance(config);
+		context.checkErrors();
+
+		// No object is observed, so the window reports no model scope - which spares the test the
+		// knowledge base one is built from.
+		ViewContext viewContext = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test")) {
+			@Override
+			public ModelScope getModelScope() {
+				return null;
+			}
+		});
+		DefaultViewChannel value = new DefaultViewChannel("value");
+		viewContext.registerChannel("value", value);
+
+		ReactControl control = (ReactControl) element.createControl(viewContext);
+		assertTrue("Without a matching case and without default, the switch is hidden.", control.isHidden());
+
+		value.set("something");
+		assertFalse("A matching case is shown.", control.isHidden());
+
+		value.set(null);
+		assertTrue("Without a matching case, the switch is hidden again.", control.isHidden());
+	}
+
+	/**
+	 * Test suite with a knowledge base, in which the case tests are evaluated.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestSwitchElement.class, TypeIndex.Module.INSTANCE);
+		return KBSetup.getSingleKBTest(TestSwitchElement.class,
+			ServiceTestSetup.createStarterFactoryForModules(
+				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE));
 	}
 }

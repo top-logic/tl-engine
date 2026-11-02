@@ -426,6 +426,24 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * Whether the content of this control lies outside the page the URL of the window addresses.
+	 *
+	 * <p>
+	 * The URL names what the page displays. Content shown on top of the page without being part of
+	 * it - the modal dialogs of a dialog manager - has no address: no
+	 * {@link com.top_logic.layout.react.routing.RoutingParticipant participant} inside it registers
+	 * with the {@link RouteManager}, contributes to the URL or the title of the page, or takes up a
+	 * route of a URL that is adopted. Such a participant still works for its own display - a tab bar
+	 * in a dialog switches its tabs - but what it shows is no address of the page.
+	 * </p>
+	 *
+	 * @return By default {@code false}: a control displays its content as part of the page.
+	 */
+	public boolean isContentOutsidePage() {
+		return false;
+	}
+
+	/**
 	 * The controls this control renders, i.e. the ones embedded in its state.
 	 *
 	 * <p>

@@ -6,10 +6,7 @@
 package com.top_logic.layout.view.login;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
-import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,8 +35,8 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * The counterpart in the login flow is {@link LoginAction}, which opens the same dialog for an
- * account that is required to use a second factor and has none yet. The difference is only who
+ * The counterpart in the login flow is the {@link TotpSecondFactor}, which opens the same dialog
+ * for an account that is required to use a second factor and has none yet. The difference is only who
  * asked: there the application insists before letting the user in, here the user asked for it while
  * already logged in.
  * </p>
@@ -78,17 +75,10 @@ public class EnrollMfaAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.ERROR_MFA_NOT_ALLOWED__USER.fill(account.getName()));
 		}
 
-		Password secret = MfaSupport.generateSecret();
-		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put(LoginAction.MODEL_CHANNEL, LoginAction.newOtpEntry());
-		channels.put(LoginAction.ACCOUNT_CHANNEL, account);
-		channels.put(LoginAction.SECRET_CHANNEL, secret);
-		channels.put(LoginAction.QR_CHANNEL, MfaSupport.createQrCode(account, secret));
-
 		// Not closing on a backdrop click: an accidental click outside must not abort a setup
 		// halfway, where a secret is on screen but not yet stored.
 		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + LoginAction.MFA_ENROLL_VIEW,
-			false, channels, Collections.emptyList());
+			false, TotpSecondFactor.enrollmentChannels(account), Collections.emptyList());
 		return input;
 	}
 

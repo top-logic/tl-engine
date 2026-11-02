@@ -1,0 +1,14 @@
+{
+  "name": "ext-org-requirejs",
+  "private": true,
+  "description": "Copies require.js into the web application, together with a minified version.",
+  "scripts": {
+    "build": "node -e \"const fs=require('fs');fs.cpSync('node_modules/requirejs/require.js','src/main/webapp/script/require-src.js',{recursive:true})\" && terser node_modules/requirejs/require.js --compress --mangle --comments /@license/ --output src/main/webapp/script/require.js"
+  },
+  "dependencies": {
+    "requirejs": "^2.3.5"
+  },
+  "devDependencies": {
+    "terser": "^5.51.2"
+  }
+}

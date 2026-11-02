@@ -5,7 +5,9 @@
  */
 package test.com.top_logic.util.sched.model;
 
+import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
@@ -16,6 +18,7 @@ import test.com.top_logic.basic.module.RunningModuleSystemSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.util.sched.TestingScheduler;
+import test.com.top_logic.util.sched.TestingScheduler.TestingSchedulerConfig;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -40,6 +43,7 @@ import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 import com.top_logic.util.sched.task.schedule.OnStartup;
+import com.top_logic.util.sched.task.schedule.OnceSchedule;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 
 /**
@@ -53,6 +57,46 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 
 	/** Maximum time in milliseconds to wait for the {@link Scheduler}. */
 	private static final long TIMEOUT = 30_000;
+
+	/**
+	 * Polling interval of a {@link Scheduler} whose regular rounds do not happen during a test.
+	 */
+	private static final long LONG_POLLING_INTERVAL = TimeUnit.HOURS.toMillis(1);
+
+	/**
+	 * An {@link OnStartup} task registered before the dispatch starts runs right after the start of
+	 * the dispatch, not after the polling interval. A task that is not due yet is not started.
+	 */
+	public void testOnStartupTaskRunsRightAfterDispatchStart() throws Exception {
+		String name = TASK_NAME + "Immediate";
+		TestingSchedulerConfig config = TestingScheduler.createSchedulerConfiguration(
+			"Scheduler[" + name + "]", LONG_POLLING_INTERVAL, TIMEOUT, 1000, 4);
+		ClusterTask.Config<?> onStartupConfig = createTaskConfig(name);
+		ClusterTask.Config<?> notDueConfig = createTaskConfig(name + "NotDue");
+		notDueConfig.getSchedules().clear();
+		OnceSchedule.Config<?> tomorrow = TypedConfiguration.newConfigItem(OnceSchedule.Config.class);
+		tomorrow.update(tomorrow.descriptor().getProperty(OnceSchedule.Config.TIME),
+			new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)));
+		notDueConfig.getSchedules().add(tomorrow);
+		config.getTasks().put(onStartupConfig.getName(), onStartupConfig);
+		config.getTasks().put(notDueConfig.getName(), notDueConfig);
+
+		TestingScheduler[] scheduler = new TestingScheduler[1];
+		inSystemContext(() -> scheduler[0] = TestingScheduler.createAndStartScheduler(config));
+		try {
+			ClusterTask onStartup = (ClusterTask) scheduler[0].getTaskByName(onStartupConfig.getName());
+			ClusterTask notDue = (ClusterTask) scheduler[0].getTaskByName(notDueConfig.getName());
+
+			// Fails with a timeout, if the task runs only after the polling interval:
+			waitFor("Run of the on-startup task right after the dispatch start.", () -> onStartup.getRuns() == 1);
+			waitFor("End of the run processed.", () -> scheduler[0].getNumRunningTasks() == 0);
+
+			assertEquals("Task not due must not be started.", 0, notDue.getRuns());
+			assertEquals("Only the on-startup task is started.", 1, scheduler[0].getStartedTasks());
+		} finally {
+			scheduler[0].stopAndJoin(TIMEOUT);
+		}
+	}
 
 	/**
 	 * A cluster-wide {@link OnStartup} task, whose task log contains a run from before the start of
@@ -210,10 +254,14 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 	}
 
 	private static ClusterTask createTask(String name) throws ConfigurationException {
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(createTaskConfig(name));
+	}
+
+	private static ClusterTask.Config<?> createTaskConfig(String name) throws ConfigurationException {
 		ClusterTask.Config<?> config = TypedConfiguration.newConfigItem(ClusterTask.Config.class);
 		config.setName(name);
 		config.getSchedules().add(TypedConfiguration.createConfigItemForImplementationClass(OnStartup.class));
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+		return config;
 	}
 
 	private static void waitFor(String message, BooleanSupplier condition) {

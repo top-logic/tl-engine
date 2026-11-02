@@ -285,10 +285,10 @@ public class TestDynamicSteps extends TestCase {
 	}
 
 	/**
-	 * Tests that a step's own time runs while the flow leads through it: it is published for a step
-	 * entered going forward, and not for one the user came back to.
+	 * Tests that a step's own time runs on every entry of the step, going forward and coming back
+	 * alike, and that a move back skips such a step.
 	 */
-	public void testAutoAdvanceOnlyForwards() throws Exception {
+	public void testAutoAdvanceOnEveryEntry() throws Exception {
 		_questions.set(new ArrayList<>(List.of("a", "b")));
 		ReactWizardControl wizard = control(_wizards.get(0));
 
@@ -303,11 +303,13 @@ public class TestDynamicSteps extends TestCase {
 
 		wizard.getScope().back();
 		assertEquals(ReactWizardControl.BACKWARD, direction(wizard));
+		assertEquals("b", _currentStep.get());
 		assertNull(autoAdvance(wizard));
 
 		wizard.getScope().goTo("welcome");
 		assertEquals("Coming back is a move backwards.", ReactWizardControl.BACKWARD, direction(wizard));
-		assertNull("A timed step the user came back to waits for them.", autoAdvance(wizard));
+		assertEquals("A timed step counts down however it is entered.", Long.valueOf(2000L),
+			autoAdvance(wizard));
 	}
 
 	/**

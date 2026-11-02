@@ -35,10 +35,25 @@ import com.top_logic.layout.view.ViewContext;
  *        step is displayed, and again whenever it is displayed after having been left.
  * @param autoAdvanceMillis
  *        How long the step is displayed before the wizard moves on by itself, {@code null} for a
- *        step the user leaves. The time runs while the flow leads through the step: a step the user
- *        came back to waits for them, however it is configured.
+ *        step the user leaves. A step with a time of its own is a {@link #passThrough() pass-through
+ *        step}, and its time runs on every entry.
  */
 public record WizardStep(Object key, ResKey label, String icon, Function<ViewContext, ReactControl> content,
 		Long autoAdvanceMillis) {
-	// Pure data.
+
+	/**
+	 * Whether the flow only leads through this step: it moves on by itself after its
+	 * {@link #autoAdvanceMillis() time}.
+	 *
+	 * <p>
+	 * Such a step typically shows something going on - a computation, a confirmation that something
+	 * was done - and is no place to come back to. A move back skips it for the nearest step before
+	 * it that the user leaves themselves, the step indicator offers no jump to it, and it is no
+	 * address of its own: while it is displayed, the address bar still names the step the flow came
+	 * from, and a URL naming it displays the step a move back from it would reach.
+	 * </p>
+	 */
+	public boolean passThrough() {
+		return autoAdvanceMillis != null;
+	}
 }

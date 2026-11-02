@@ -17,6 +17,7 @@ import test.com.top_logic.basic.DefaultTestFactory;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
@@ -32,6 +33,7 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Country;
@@ -173,6 +175,33 @@ public class TestPerson extends BasicTestCase {
 				// Expected.
 			}
 			assertNotNull(Person.byName("USER@EXAMPLE.COM"));
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * The secret of the second factor is stored in its own attribute and leaves the requirement
+	 * alone.
+	 */
+	public void testSetMFASecret() throws Throwable {
+		Person person = createPerson("mfaSecretPerson");
+		try {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction()) {
+				person.setMFARequirement(MfaRequirement.REQUIRED);
+				person.setMFASecret(new Password("cryptedSecret"));
+				tx.commit();
+			}
+			assertEquals("cryptedSecret", person.getMFASecret().getCryptedValue());
+			assertEquals(MfaRequirement.REQUIRED, person.getMFARequirement());
+
+			try (Transaction tx = kb.beginTransaction()) {
+				person.setMFASecret(null);
+				tx.commit();
+			}
+			assertNull(person.getMFASecret());
+			assertEquals(MfaRequirement.REQUIRED, person.getMFARequirement());
 		} finally {
 			deletePersonAndUser(person);
 		}

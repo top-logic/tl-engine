@@ -725,6 +725,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setMandatory(model.isMandatory())
 			.setEditable(model.isEditable())
 			.setMultilineRows(multilineRows(annotations))
+			.setPreformatted(isPreformatted(annotations))
 			.setBooleanPresentation(booleanPresentation(annotations, type))
 			.setTriState(isTriState(type))
 			.setSelectDisplay(radio == null ? SelectDisplay.DROPDOWN : SelectDisplay.RADIO)
@@ -1035,6 +1036,14 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	private static int multilineRows(AnnotationLookup annotations) {
 		MultiLine annotation = annotations == null ? null : annotations.getAnnotation(MultiLine.class);
 		return annotation != null && annotation.getValue() ? annotation.getRows() : 0;
+	}
+
+	/**
+	 * Whether a multi-line text is shown as it is written, see {@link MultiLine#isPreformatted()}.
+	 */
+	private static boolean isPreformatted(AnnotationLookup annotations) {
+		MultiLine annotation = annotations == null ? null : annotations.getAnnotation(MultiLine.class);
+		return annotation != null && annotation.getValue() && annotation.isPreformatted();
 	}
 
 	/**

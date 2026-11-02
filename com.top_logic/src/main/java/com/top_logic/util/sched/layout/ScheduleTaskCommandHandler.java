@@ -63,9 +63,6 @@ public class ScheduleTaskCommandHandler extends PreconditionCommandHandler {
 			return new Failure(I18NConstants.SCHEDULER_SUSPENDED);
 		}
 		String taskName = task.getName();
-		if (Scheduler.getSchedulerInstance().isTaskBlocked(task)) {
-			return new Failure(I18NConstants.TASK_BLOCKED__TASK.fill(taskName));
-		}
 		if (!Utils.equals(task.getLog().getState(), TaskState.INACTIVE)) {
 			return new Failure(I18NConstants.TASK_RUNNING__TASK.fill(taskName));
 		}

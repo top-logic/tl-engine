@@ -19,7 +19,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithResultActions;
 
@@ -151,14 +150,7 @@ public class ServiceLifecycleAction implements ViewAction {
 	 *        The name of the channel holding the module, {@code null} for none.
 	 */
 	static BasicRuntimeModule<?> selectedModule(ReactContext context, String channelName) {
-		if (channelName == null || !(context instanceof ViewContext viewContext)) {
-			return null;
-		}
-		if (!viewContext.hasChannel(channelName)) {
-			return null;
-		}
-		Object value = viewContext.resolveChannel(new ChannelRef(channelName)).get();
-		return value instanceof BasicRuntimeModule<?> module ? module : null;
+		return ViewContext.channelValue(context, channelName) instanceof BasicRuntimeModule<?> module ? module : null;
 	}
 
 	/**

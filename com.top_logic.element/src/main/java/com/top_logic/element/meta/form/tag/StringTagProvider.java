@@ -78,6 +78,7 @@ public class StringTagProvider extends AbstractConfiguredInstance<StringTagProvi
 			int rows;
 			if (annotation != null) {
 				rows = annotation.getRows();
+				result.setPreformatted(annotation.isPreformatted());
 			} else {
 				rows = MultiLineText.DEFAULT_ROWS;
 			}

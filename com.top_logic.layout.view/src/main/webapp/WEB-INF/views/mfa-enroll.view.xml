@@ -31,6 +31,21 @@
 					<de>Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie zur Bestätigung den erzeugten Code ein.</de>
 				</label>
 			</text>
+			<!--
+				Only when the account has a second factor already, which happens when a user
+				changes the authenticator app from their settings: the fresh secret takes the
+				place of the stored one only on confirmation.
+			-->
+			<switch input="account">
+				<case test="$account.get(`tl.accounts:Person#mfaSecret`) != null">
+					<text>
+						<label>
+							<en>Confirming replaces the authenticator app set up so far. Until then it stays valid, and cancelling keeps it.</en>
+							<de>Die Bestätigung ersetzt die bisher eingerichtete Authenticator-App. Bis dahin bleibt sie gültig, und Abbrechen behält sie bei.</de>
+						</label>
+					</text>
+				</case>
+			</switch>
 			<image input="qr">
 				<alt>
 					<en>QR code enrolling this account in your authenticator app</en>

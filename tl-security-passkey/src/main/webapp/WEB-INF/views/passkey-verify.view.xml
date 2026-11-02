@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The second factor of the login with a passkey (PasskeySecondFactor): the account whose password
+	the login checked confirms itself with one of its passkeys.
+-->
+<view>
+	<channels>
+		<!-- The account being authenticated (set by PasskeySecondFactor). -->
+		<channel name="account"/>
+	</channels>
+	<window
+		resizable="false"
+		width="380px"
+	>
+		<title>
+			<en>Two-factor authentication</en>
+			<de>Zwei-Faktor-Authentifizierung</de>
+		</title>
+		<inset>
+			<stack>
+				<text>
+					<label>
+						<en>Confirm your login with your passkey.</en>
+						<de>Bestätigen Sie Ihre Anmeldung mit Ihrem Passkey.</de>
+					</label>
+				</text>
+				<passkey-login
+					account="account"
+					appearance="PRIMARY"
+					auto-start="true"
+					image="css:bi bi-key"
+				>
+					<label>
+						<en>Use passkey</en>
+						<de>Passkey verwenden</de>
+					</label>
+				</passkey-login>
+			</stack>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

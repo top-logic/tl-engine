@@ -80,6 +80,7 @@ public class FieldControlRegistry {
 			ReactTextInputControl control = new ReactTextInputControl(context, model);
 			if (field.getMultilineRows() > 0) {
 				control.setMultiline(field.getMultilineRows());
+				control.setPreformatted(field.isPreformatted());
 			}
 			return control;
 		}

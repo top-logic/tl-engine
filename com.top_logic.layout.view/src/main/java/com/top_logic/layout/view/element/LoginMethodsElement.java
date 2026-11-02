@@ -164,6 +164,9 @@ public class LoginMethodsElement implements UIElement {
 
 			String returnTo = returnPath(_context);
 			List<? extends LoginMethod> methods = _methods.get();
+			// Without a method and without a failure to report, the column is hidden, so that it
+			// takes no gap in the form.
+			setHidden(methods.isEmpty() && _failure.isHidden());
 			List<String> builtFor = new ArrayList<>(methods.size() + 1);
 			builtFor.add(returnTo);
 			for (LoginMethod method : methods) {

@@ -58,19 +58,8 @@ public interface Task extends Batch {
 		/** Default value for {@link #isMaintenanceModeSafe()}. */
 		final boolean DEFAULT_MAINTENANCE_MODE_SAFE = false;
 
-		/** Default value for {@link #isBlockingAllowed()}. */
-		final boolean DEFAULT_BLOCKING_ALLOWED = true;
-
-		/** Default value for {@link #isBlockingAllowed()}. */
-		final boolean DEFAULT_BLOCKED_BY_DEFAULT_VALUE = false;
-		
 		/** The name of the property {@link #getSchedules()}. */
 		String SCHEDULES = "schedules";
-
-		/**
-		 * Property name of {@link #isBlockedByDefault()}.
-		 */
-		String BLOCKED_BY_DEFAULT_PROPERTY = "blocked-by-default";
 
 		/**
 		 * The name of the task.
@@ -83,11 +72,15 @@ public interface Task extends Batch {
 		String getName();
 
 		/**
-		 * Whether the task should be considered in the schedule.
+		 * Whether the task is active by configuration.
 		 * 
 		 * <p>
-		 * A task that is not enabled is never scheduled independently of its
-		 * {@link #getSchedules()}.
+		 * An active task is run automatically according to its {@link #getSchedules()}, an
+		 * inactive task is never run automatically. This is the default an administrator can
+		 * override by {@link Scheduler#activate(Task) activating} or
+		 * {@link Scheduler#deactivate(Task) deactivating} the task, see
+		 * {@link Scheduler#isActive(Task) active state}. Every task can be
+		 * {@link Scheduler#startTask(Task) started manually}, regardless of this setting.
 		 * </p>
 		 */
 		@BooleanDefault(true)
@@ -169,20 +162,6 @@ public interface Task extends Batch {
 		@BooleanDefault(DEFAULT_MAINTENANCE_MODE_SAFE)
 		boolean isMaintenanceModeSafe();
 
-		/**
-		 * Whether this {@link Task} can be {@link Scheduler#blockTask(Task) blocked}.
-		 */
-		@BooleanDefault(DEFAULT_BLOCKING_ALLOWED)
-		boolean isBlockingAllowed();
-
-		/**
-		 * Whether this {@link Task} is {@link Scheduler#isTaskBlocked(Task) blocked} by default
-		 * (but can be enabled by the administrator).
-		 */
-		@Name(BLOCKED_BY_DEFAULT_PROPERTY)
-		@BooleanDefault(DEFAULT_BLOCKED_BY_DEFAULT_VALUE)
-		boolean isBlockedByDefault();
-		
 	}
 
 	/**
@@ -354,7 +333,10 @@ public interface Task extends Batch {
 	/**
 	 * Getter for the {@link TaskLog} of this {@link Task}.
 	 * 
-	 * @return Never <code>null</code>
+	 * @return <code>null</code>, as long as this {@link Task} is not {@link #attachTo(Scheduler)
+	 *         attached} to the {@link Scheduler}.
+	 *
+	 * @see Scheduler#getState(Task)
 	 */
 	public TaskLog getLog();
 
@@ -411,15 +393,5 @@ public interface Task extends Batch {
 	 */
 	@Override
 	public void signalShutdown();
-
-	/**
-	 * @see Config#isBlockingAllowed()
-	 */
-	boolean isBlockingAllowed();
-
-	/**
-	 * @see Config#isBlockedByDefault()
-	 */
-	boolean isBlockedByDefault();
 
 }

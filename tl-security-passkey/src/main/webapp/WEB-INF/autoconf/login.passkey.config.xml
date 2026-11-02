@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<configs>
+		<!-- The passkey as second factor of the login, offered after the authenticator app. -->
+		<config config:interface="com.top_logic.layout.view.login.SecondFactorsConfig">
+			<methods>
+				<method name="passkey"
+					class="com.top_logic.security.passkey.view.PasskeySecondFactor"
+					image="css:bi bi-key"
+				>
+					<label>
+						<en>Passkey</en>
+						<de>Passkey</de>
+					</label>
+				</method>
+			</methods>
+		</config>
+	</configs>
+</application>

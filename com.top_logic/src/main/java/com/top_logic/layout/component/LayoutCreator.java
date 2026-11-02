@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,6 +65,19 @@ import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 public class LayoutCreator {
 
 	/**
+	 * Name of the class in the React view module that merges the same-path view overlays, see
+	 * {@link #MERGE_OVERLAID_VIEWS_METHOD}.
+	 */
+	private static final String VIEW_OVERLAY_MERGER_CLASS = "com.top_logic.layout.view.ViewOverlayMerger";
+
+	/**
+	 * Name of the static method of {@link #VIEW_OVERLAY_MERGER_CLASS} that merges the view
+	 * overlays, taking the {@link Protocol} to report failures to and the target web application
+	 * directory.
+	 */
+	private static final String MERGE_OVERLAID_VIEWS_METHOD = "mergeOverlaidViews";
+
+	/**
 	 * Creates the application layouts, CSS and JavaScript.
 	 * 
 	 * @param resourcePaths
@@ -96,43 +110,59 @@ public class LayoutCreator {
 		FileManager fileManager = MultiFileManager.createMultiFileManager(allResourcePaths);
 		FileManager oldFileManager = FileManager.getInstance();
 		FileManager.setInstance(fileManager);
-		CompileTimeApplication application = CompileTimeApplication.createApplicationModule(targetWebappDirectory);
+		try {
+			CompileTimeApplication application =
+				CompileTimeApplication.createApplicationModule(targetWebappDirectory);
 
-		startXMLProperties();
+			startXMLProperties();
 
-		try (ModuleContext ctx = ModuleUtil.beginContext()) {
-			startLayoutDependantModules();
+			try (ModuleContext ctx = ModuleUtil.beginContext()) {
+				startLayoutDependantModules();
 
-			File targetThemeDirectory = new File(targetWebappDirectory, MultiThemeFactory.THEMES_FOLDER_PATH);
-			MergeThemeConfigs.writeMergedThemesTo(targetThemeDirectory);
+				File targetThemeDirectory = new File(targetWebappDirectory, MultiThemeFactory.THEMES_FOLDER_PATH);
+				MergeThemeConfigs.writeMergedThemesTo(targetThemeDirectory);
 
-			Map<String, List<BinaryData>> overlaysByLayoutKey = LayoutStorage.readLayouts();
+				Map<String, List<BinaryData>> overlaysByLayoutKey = LayoutStorage.readLayouts();
 
-			createLayoutsForThemes(targetWebappDirectory, application, overlaysByLayoutKey);
+				createLayoutsForThemes(targetWebappDirectory, application, overlaysByLayoutKey);
+			}
+
+			// Pre-merge same-path view overlays while the dependency-ordered FileManager still
+			// exposes every module copy (a deployed WAR flattens them into one). Reflective, so the
+			// core layer need not depend on the React view module.
+			mergeViewOverlays(targetWebappDirectory);
+
+			// Copy generated scripts and styles.
+			copy(targetWebappDirectory, appOverlay, "script");
+			copy(targetWebappDirectory, appOverlay, "style");
+		} finally {
+			FileManager.setInstance(oldFileManager);
 		}
-
-		// Pre-merge same-path view overlays while the dependency-ordered FileManager still exposes
-		// every module copy (a deployed WAR flattens them into one). Reflective, so the core layer
-		// need not depend on the React view module.
-		mergeViewOverlays(targetWebappDirectory);
-
-		// Copy generated scripts and styles.
-		copy(targetWebappDirectory, appOverlay, "script");
-		copy(targetWebappDirectory, appOverlay, "style");
-
-		FileManager.setInstance(oldFileManager);
 	}
 
+	/**
+	 * Merges the same-path view overlays into the target web application.
+	 *
+	 * @throws RuntimeException
+	 *         If a view cannot be merged. The message names each such view and its cause, so that
+	 *         the application build fails instead of deploying the application without the
+	 *         overlay.
+	 */
 	private static void mergeViewOverlays(File targetWebappDirectory) {
+		Protocol log = new BufferingProtocol();
 		try {
-			Class<?> merger = Class.forName("com.top_logic.layout.view.ViewOverlayMerger", true,
+			Class<?> merger = Class.forName(VIEW_OVERLAY_MERGER_CLASS, true,
 				Thread.currentThread().getContextClassLoader());
-			merger.getMethod("mergeOverlaidViews", File.class).invoke(null, targetWebappDirectory);
+			merger.getMethod(MERGE_OVERLAID_VIEWS_METHOD, Protocol.class, File.class)
+				.invoke(null, log, targetWebappDirectory);
 		} catch (ClassNotFoundException ex) {
 			// Application does not include the React view layer; no view overlays to merge.
+		} catch (InvocationTargetException ex) {
+			log.error("Failed to merge view overlays.", ex.getCause());
 		} catch (ReflectiveOperationException ex) {
-			Logger.error("Failed to merge view overlays.", ex, LayoutCreator.class);
+			log.error("Failed to merge view overlays.", ex);
 		}
+		log.checkErrors();
 	}
 
 	private static void copy(File targetWebappDirectory, Path appOverlay, String name) {

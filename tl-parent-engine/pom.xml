@@ -89,6 +89,7 @@
 		<module>../com.top_logic.layout.configedit</module>
 		<module>../com.top_logic.layout.formeditor</module>
 		<module>../com.top_logic.layout.icons</module>
+		<module>../com.top_logic.design.system</module>
 		<module>../com.top_logic.layout.react</module>
 		<module>../com.top_logic.layout.view</module>
 		<module>../com.top_logic.layout.view.agent</module>

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Board</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Das Board füllt seinen Behälter; im Specimen begrenzt ihn die Seite. */
+  .spec-board { height: 26rem; }
+  /* Der Ablehnungshinweis steht in TLKanbanBoard am Zeiger (bridge/popover.ts, position fixed); hier im Fluss. */
+  .spec-hint { position: static; display: inline-block; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Board</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Drei Spalten: Zähler als Badge, zwei Karten gewählt (Ring und Haken), Karten mit Knopf; die Karten-Liste je Spalte ist ein Tab-Halt</p>
+    <div class="tl-board spec-board">
+      <section class="tl-board__column" aria-labelledby="b1-open">
+        <header class="tl-board__header tl-type-body-strong">
+          <span id="b1-open" class="tl-board__label">Offen</span>
+          <span class="tl-badge tl-type-label-strong tl-nums">3</span>
+        </header>
+        <div class="tl-board__cards" role="listbox" aria-labelledby="b1-open" aria-multiselectable="true">
+          <div class="tl-item tl-board__card" role="option" aria-selected="true" tabindex="0" draggable="true">
+            <div class="tl-stack tl-stack--column tl-stack--gap-compact">
+              <div class="tl-stack tl-stack--row tl-stack--align-center tl-stack--justify-space-between">
+                <span class="tl-text tl-type-label">Anmeldung schlägt fehl</span>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Details"><i class="bi bi-box-arrow-up-right tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+              </div>
+              <div class="tl-stack tl-stack--row"><span class="tl-pill tl-type-label" data-tl-role="category-1"><span class="tl-pill__label">Offen</span></span></div>
+            </div>
+            <span class="tl-item__check" aria-hidden="true"></span>
+          </div>
+          <div class="tl-item tl-board__card" role="option" aria-selected="true" tabindex="-1" draggable="true">
+            <div class="tl-stack tl-stack--column tl-stack--gap-compact">
+              <span class="tl-text tl-type-label">Export als PDF</span>
+              <div class="tl-stack tl-stack--row"><span class="tl-pill tl-type-label" data-tl-role="category-1"><span class="tl-pill__label">Offen</span></span></div>
+            </div>
+            <span class="tl-item__check" aria-hidden="true"></span>
+          </div>
+          <div class="tl-item tl-board__card" role="option" aria-selected="false" tabindex="-1" draggable="true">
+            <div class="tl-stack tl-stack--column tl-stack--gap-compact">
+              <span class="tl-text tl-type-label">Ein Titel, der länger ist als die Karte breit und darum umbricht</span>
+              <div class="tl-stack tl-stack--row"><span class="tl-pill tl-type-label" data-tl-role="category-1"><span class="tl-pill__label">Offen</span></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="tl-board__column" aria-labelledby="b1-progress">
+        <header class="tl-board__header tl-type-body-strong">
+          <span id="b1-progress" class="tl-board__label">In Bearbeitung</span>
+          <span class="tl-badge tl-type-label-strong tl-nums">2</span>
+        </header>
+        <div class="tl-board__cards" role="listbox" aria-labelledby="b1-progress" aria-multiselectable="true">
+          <div class="tl-item tl-board__card" role="option" aria-selected="false" tabindex="0" draggable="true">
+            <span class="tl-text tl-type-label">Suche in Tabellen</span>
+          </div>
+          <div class="tl-item tl-board__card" role="option" aria-selected="false" tabindex="-1" draggable="true">
+            <span class="tl-text tl-type-label">Dunkelmodus der Karten</span>
+          </div>
+        </div>
+      </section>
+      <section class="tl-board__column" aria-labelledby="b1-closed">
+        <header class="tl-board__header tl-type-body-strong">
+          <span id="b1-closed" class="tl-board__label">Geschlossen, mit einer Beschriftung, die in der Spalte endet</span>
+          <span class="tl-badge tl-type-label-strong tl-nums">0</span>
+        </header>
+        <div class="tl-board__cards" role="listbox" aria-labelledby="b1-closed" aria-multiselectable="true">
+        </div>
+      </section>
+    </div>
+    <div class="tl-board__live tl-visually-hidden" role="status"></div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Ziehen (drag.css): gezogene Karte blass; die Spalte unter dem Ziehen ist hervorgehoben, dazu die Einfügelinie vor einer Karte; Ablegen ans Ende einer Spalte; Ablehnung (verbotene Aktion, rot) mit Hinweis</p>
+    <div class="tl-board spec-board">
+      <section class="tl-board__column" aria-labelledby="b2-open" data-tl-state="drop-onto">
+        <header class="tl-board__header tl-type-body-strong">
+          <span id="b2-open" class="tl-board__label">Offen</span>
+          <span class="tl-badge tl-type-label-strong tl-nums">2</span>
+        </header>
+        <div class="tl-board__cards" role="listbox" aria-labelledby="b2-open">
+          <div class="tl-item tl-board__card" role="option" aria-selected="false" tabindex="0" draggable="true" data-tl-state="dragging">
+            <span class="tl-text tl-type-label">Wird gezogen</span>
+          </div>
+          <div class="tl-item tl-board__card" role="option" aria-selected="false" tabindex="-1" draggable="true" data-tl-state="drop-before">
+            <span class="tl-text tl-type-label">Die gezogene Karte landet vor dieser</span>
+          </div>
+        </div>
+      </section>
+      <section class="tl-board__column" aria-labelledby="b2-review" data-tl-state="drop-onto">
+        <header class="tl-board__header tl-type-body-strong">
+          <span id="b2-review" class="tl-board__label">Prüfung</span>
+          <span class="tl-badge tl-type-label-strong tl-nums">1</span>
+        </header>
+        <div class="tl-board__cards" role="listbox" aria-labelledby="b2-review">
+          <div class="tl-item tl-board__card" role="option" aria-selected="false" tabindex="0" draggable="true">
+            <span class="tl-text tl-type-label">Die Karte landet am Ende</span>
+          </div>
+        </div>
+      </section>
+      <section class="tl-board__column" aria-labelledby="b2-closed" data-tl-state="drop-refused">
+        <header class="tl-board__header tl-type-body-strong">
+          <span id="b2-closed" class="tl-board__label">Geschlossen</span>
+          <span class="tl-badge tl-type-label-strong tl-nums">0</span>
+        </header>
+        <div class="tl-board__cards" role="listbox" aria-labelledby="b2-closed">
+        </div>
+      </section>
+    </div>
+    <div class="tl-popover tl-drop-hint tl-type-body spec-hint" role="status">Geschlossene Tickets werden über „In Bearbeitung“ wieder geöffnet.</div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

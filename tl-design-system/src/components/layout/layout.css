@@ -1,0 +1,215 @@
+/* Reihen und Abstände — Spec 2026-10-16 Welle 4c §5 (Q16, Q22). Stack und Grid ordnen Kinder mit der einen
+   Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
+   eines Inhalts zum Rand; wie weit, sagt die nächste Fläche über React-Kontext (useSurface) als Modifier — ohne
+   Modifier die Seite. Bounded begrenzt die Breite und mittelt, Item umhüllt wiederholte Kinder, Deck zeigt eines zur
+   Zeit und nimmt seine Größe. Wer füllt, trägt tl-fill (unten). Ein Element, das erst beim Zeigen erscheint, trägt
+   tl-reveal-on-hover (unten). */
+
+.tl-stack {
+  display: flex;
+}
+.tl-stack[hidden] { display: none; }
+
+.tl-stack--column { flex-direction: column; }
+.tl-stack--row { flex-direction: row; }
+
+.tl-stack--gap-compact, .tl-grid--gap-compact { gap: var(--tl-space-sm); }
+.tl-stack--gap-default, .tl-grid--gap-default { gap: var(--tl-space-md); }
+.tl-stack--gap-loose, .tl-grid--gap-loose { gap: var(--tl-space-lg); }
+
+.tl-stack--align-start { align-items: start; }
+.tl-stack--align-center { align-items: center; }
+.tl-stack--align-end { align-items: end; }
+.tl-stack--align-stretch { align-items: stretch; }
+
+/* Wie der freie Platz entlang der Richtung verteilt wird. */
+.tl-stack--justify-start { justify-content: start; }
+.tl-stack--justify-center { justify-content: center; }
+.tl-stack--justify-end { justify-content: end; }
+.tl-stack--justify-space-between { justify-content: space-between; }
+.tl-stack--justify-space-around { justify-content: space-around; }
+.tl-stack--justify-space-evenly { justify-content: space-evenly; }
+
+.tl-stack--wrap { flex-wrap: wrap; }
+
+/* Das erste Kind füllt die Hauptachse (Eingabe mit Knopf daneben). */
+.tl-stack--grow-first.tl-stack--row > :first-child { flex: 1 1 auto; min-width: 0; }
+.tl-stack--grow-first.tl-stack--column > :first-child { flex: 1 1 auto; min-height: 0; }
+
+/* Die Spaltenvorlage rechnet das TSX inline (sie hängt an Mindestbreite und Höchstzahl); den Abstand liest es aus
+   derselben Stufe wie die Regeln oben. */
+.tl-grid {
+  display: grid;
+}
+.tl-grid[hidden] { display: none; }
+
+/* Gibt den Platz, den es bekommt, an seinen Inhalt weiter: eine begrenzte Spalte, gegen die ein füllender Inhalt
+   seine Höhe auflöst. */
+.tl-inset {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: var(--tl-space-lg);
+}
+.tl-inset[hidden] { display: none; }
+
+.tl-inset--panel {
+  padding: var(--tl-space-md);
+}
+
+.tl-inset--card {
+  padding: var(--tl-space-xs) var(--tl-space-md);
+}
+
+/* Die Breite eines Stacks oder Grids, begrenzt durch ein Inline-max-width, in seinem Behälter mittig. Ohne die
+   Breite schrumpften die automatischen Ränder ihn auf seinen Inhalt. */
+.tl-bounded {
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Die Hülle eines wiederholten Kindes (useItems); sie gibt den Platz an das Kind weiter. Ihre Position trägt sie
+   als --item-index, ein Datum der Engine für Anwendungs-CSS. */
+.tl-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tl-item[hidden] { display: none; }
+
+/* Auswählbar (Q24, #29755): ist der Behälter eine Listbox, ist jeder Eintrag eine Option, und die ganze Fläche nimmt
+   den Klick. Ein Eintrag schwebt nicht: beim Zeigen ein Hof, kein Schatten. Ausgewählt liegt ein Ring über dem Rand
+   des Eintrags, der Zustand ist aria-selected; der
+   Fokus ist der Ring aus base.css. Die Spalte von tl-columns ist dieselbe Hülle (useItems) und trägt dieselbe Regel. */
+.tl-item[role="option"],
+.tl-columns__column[role="option"] {
+  position: relative;
+  border-radius: var(--tl-radius-md);
+  cursor: pointer;
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-item[role="option"]:hover,
+.tl-columns__column[role="option"]:hover {
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover-strong);
+}
+
+.tl-item[aria-selected="true"]::after,
+.tl-columns__column[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--tl-border-width-md) solid var(--tl-border-selected);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Ausgewählt heißt auch hier Markenton: die Hülle trägt surface-selected (eine Karte, die selbst die Hülle ist, wie
+   tl-board__card, übermalt ihre Fläche; die Regel ist spezifischer). Eine Karte in der Hülle (tl-card) deckt sie
+   ganz, darum erbt die Karte die Fläche der gewählten Hülle, statt hinter ihr zu liegen. */
+.tl-item[aria-selected="true"],
+.tl-columns__column[aria-selected="true"] {
+  background: var(--tl-surface-selected);
+}
+
+.tl-item[aria-selected="true"] > .tl-card,
+.tl-columns__column[aria-selected="true"] > .tl-card {
+  background: inherit;
+}
+
+/* Ausgewählt heißt Ring und Haken (Nachtrag 4c, S2): die Marke ist ein dekoratives Element der Hülle, nur bei
+   aria-selected="true" — ein Pseudo ginge nicht, ::after trägt den Ring und ein ::before läge unter der Karte.
+   Der Unterschied zum Fokus liegt in der Form, nicht nur in der
+   Farbe (WCAG 1.4.1). */
+.tl-item__check {
+  position: absolute;
+  top: var(--tl-space-xs);
+  inset-inline-end: var(--tl-space-xs);
+  width: var(--tl-size-icon-md);
+  height: var(--tl-size-icon-md);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-surface-brand);
+  pointer-events: none;
+}
+/* Derselbe Haken wie der des Kästchens (choice.css, .tl-checkbox:checked::after): rechter und unterer Rand eines
+   gedrehten Rechtecks, Anteile des Kreises; inset und margin zentrieren das Rechteck. Kein z-index: die Marke folgt
+   dem Kind im DOM und liegt so über der Karte, ohne ein Panel (Ebene raised) zu überdecken. */
+.tl-item__check::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: calc(var(--tl-size-icon-md) * 0.3);
+  height: calc(var(--tl-size-icon-md) * 0.55);
+  border: solid var(--tl-text-on-brand);
+  border-width: 0 var(--tl-border-width-md) var(--tl-border-width-md) 0;
+  transform: translateY(calc(var(--tl-size-icon-md) * -0.06)) rotate(45deg);
+}
+
+/* Zeigt ein Kind zur Zeit und erzeugt keine eigene Box: das Kind steht, als stünde es im Behälter des Decks selbst —
+   neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt, in einer begrenzten Region (tl-region) auf deren Höhe
+   gestreckt. Eine Klasse am Deck gestaltet darum keine Box. */
+.tl-deck {
+  display: contents;
+}
+.tl-deck[hidden] { display: none; }
+
+/* Begrenzte Region: eine Fläche, die ohnehin begrenzt ist und die Füllkette beendet (Split-Fläche, Reiterinhalt,
+   Inhalt von AppShell und Sidebar, Körper von Fenster und Drawer), gibt ihrem einen Inhalt ihre Höhe. Eine Zelle
+   aus minmax(0, 1fr): ein füllender Inhalt (tl-fill) ist genau so hoch wie die Region und scrollt in sich, ein Inhalt
+   eigener Größe wird auf ihre Höhe gestreckt. Ist er höher, scrollt ein Panel seinen Körper und behält Kopf und
+   Knopfleiste im Blick; anderer Inhalt läuft über seine Box hinaus, und die Region scrollt (overflow der Region). */
+.tl-region {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.tl-region[hidden] { display: none; }
+
+/* Füllen (Spec 5d §3): ein Kind mit tl-fill nimmt die Höhe, die sein Behälter in der Hauptachse übrig lässt, und darf
+   unter seinen Inhalt schrumpfen, damit es selbst scrollt. Ob ein Kind füllt, entscheidet der Control-Baum (useFill /
+   useFillHost der Bridge): ein Behälter mit füllendem Kind füllt seinerseits, bis zur ersten Box, die ohnehin begrenzt
+   ist. Die Hülle eines wiederholten Kindes (tl-item) füllt mit, solange ihr Kind füllt. */
+.tl-fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.tl-item:has(> .tl-fill) {
+  flex: 1;
+}
+
+/* Aktion beim Zeigen (Spec 5d §6, Plan-Review K6): eine Regel für jedes Element, das erst beim Zeigen erscheint — der
+   Griff und die Knöpfe der umsortierbaren Liste, der Öffner des Compact field. opacity, nicht visibility: ein
+   unsichtbarer Knopf bleibt mit Tab erreichbar und erscheint, sobald er den Fokus hat. Die Übergangsliste ersetzt die
+   von .tl-button (button.css steht im Bundle davor): opacity kommt dazu, die weichen Hover-Übergänge bleiben. */
+.tl-reveal-on-hover {
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Sichtbar beim Zeigen auf das eigene Feld (den direkten Elternteil) oder die Zeile, und bei Tastaturfokus. Fokus heißt
+   hier :focus-visible, nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf, und die Zeile hielte ihre
+   Knöpfe sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). Die Zeile der umsortierbaren Liste zeigt
+   Griff und Knöpfe wie bisher als Ganzes: die Knöpfe stehen in tl-reorder-list__actions, und der Zeiger auf der
+   Beschriftung soll sie zeigen. */
+:hover > .tl-reveal-on-hover,
+:has(:focus-visible) > .tl-reveal-on-hover,
+.tl-reveal-on-hover:focus-visible,
+.tl-table__row:hover .tl-reveal-on-hover,
+.tl-reorder-list__item:hover .tl-reveal-on-hover,
+.tl-reorder-list__item:has(:focus-visible) .tl-reveal-on-hover {
+  opacity: 1;
+}
+
+/* Ohne Zeigen (Touch) gäbe es nie :hover — dort steht die Aktion immer. */
+@media (hover: none) {
+  .tl-reveal-on-hover {
+    opacity: 1;
+  }
+}

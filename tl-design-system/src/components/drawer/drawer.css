@@ -1,0 +1,87 @@
+/* Drawer — Spec 2026-10-13 Welle 4a §4. Eine Schublade vom Rand des Viewports oder des Behälters, in dem sie steht
+   (tl-drawer--container). Ohne Scrim ist sie nicht modal: Fokus hinein und zurück, keine Falle. Mit Scrim (die
+   Schublade steht dann in einem .tl-dialog) ist sie modal: Falle, role="dialog", aria-modal — die mobile Sidebar in
+   Welle 4b. Die Seiten heißen nach der Schreibrichtung (start, end), die Breiten sind Maße. */
+
+.tl-drawer {
+  position: fixed;
+  z-index: var(--tl-layer-overlay);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--tl-surface-overlay);
+  color: var(--tl-text-primary);
+  transition: transform var(--tl-duration-base) var(--tl-easing-exit);
+}
+.tl-drawer[hidden] { display: none; }
+
+.tl-drawer--start,
+.tl-drawer--end {
+  top: 0;
+  bottom: 0;
+  max-width: 100%;
+}
+
+.tl-drawer--start { inset-inline-start: 0; transform: translateX(-100%); }
+.tl-drawer--end { inset-inline-end: 0; transform: translateX(100%); }
+
+/* Rechts-nach-links: start liegt rechts, end links; geschlossen schiebt jede Seite zu ihrem eigenen Rand hinaus.
+   Muss vor der Offen-Regel stehen (gleiche Spezifität), damit offen gewinnt. */
+.tl-drawer--start:dir(rtl) { transform: translateX(100%); }
+.tl-drawer--end:dir(rtl) { transform: translateX(-100%); }
+
+.tl-drawer--bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 100%;
+  transform: translateY(100%);
+}
+
+/* Offen: an seinem Platz, kommend mit der Eingangskurve. Den Schatten trägt nur die offene Schublade: geschlossen
+   steht sie genau außerhalb des Randes, und ihr Schatten risse sonst in die Seite. */
+.tl-drawer[data-tl-state~="open"] {
+  transform: none;
+  box-shadow: var(--tl-shadow-dialog);
+  transition-timing-function: var(--tl-easing-entrance);
+}
+
+/* Offen eingefügt (die mobile Sidebar rendert die Schublade erst beim Öffnen): der Übergang beginnt außerhalb des
+   Randes, sonst stünde sie ohne Bewegung da. Das Schließen nimmt sie mit dem Scrim aus dem DOM, ohne Bewegung — die
+   Bewegung im Ganzen kommt mit dem UI-Durchgang nach Welle 5. Ohne @starting-style erscheint sie wie bisher. */
+@starting-style {
+  .tl-drawer--start[data-tl-state~="open"] { transform: translateX(-100%); }
+  .tl-drawer--start[data-tl-state~="open"]:dir(rtl) { transform: translateX(100%); }
+  .tl-drawer--end[data-tl-state~="open"] { transform: translateX(100%); }
+  .tl-drawer--end[data-tl-state~="open"]:dir(rtl) { transform: translateX(-100%); }
+  .tl-drawer--bottom[data-tl-state~="open"] { transform: translateY(100%); }
+}
+
+.tl-drawer--narrow { width: var(--tl-size-drawer-narrow); }
+.tl-drawer--medium { width: var(--tl-size-drawer-medium); }
+.tl-drawer--wide { width: var(--tl-size-drawer-wide); }
+.tl-drawer--bottom.tl-drawer--narrow { width: auto; height: var(--tl-size-drawer-narrow); }
+.tl-drawer--bottom.tl-drawer--medium { width: auto; height: var(--tl-size-drawer-medium); }
+.tl-drawer--bottom.tl-drawer--wide { width: auto; height: var(--tl-size-drawer-wide); }
+
+/* Im Behälter verankert: deckt nur ihn, liegt über seinem Inhalt und unter Dialog und Snackbar. Die Grenzen
+   (max-width/-height 100 %) gelten dann gegen den Behälter. */
+.tl-drawer--container {
+  position: absolute;
+  z-index: var(--tl-layer-raised);
+}
+
+/* Der Behälter beschneidet (Master-Detail: overflow: clip); der Ring der Schublade liegt darum innen. */
+.tl-drawer--container:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  /* Wischen im Drawer läuft nicht in die Seite weiter. Der Innenabstand bleibt wie bisher; ob der Drawer bündig wird
+     wie der Dialog-Körper, prüft 4b mit Panel und Card. */
+  overscroll-behavior: contain;
+  padding: var(--tl-space-md);
+}

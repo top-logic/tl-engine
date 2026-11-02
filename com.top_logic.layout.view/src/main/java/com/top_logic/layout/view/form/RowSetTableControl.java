@@ -7,12 +7,15 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -23,14 +26,22 @@ import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.CommandTrigger;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
@@ -52,6 +63,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracingScope;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -125,8 +139,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Display width in pixels of the detail and the row-removal action columns. */
 	public static final int ACTION_COLUMN_WIDTH = 48;
 
-	/** Command name for {@link #handleAddRow()}. */
+	/** Command name for {@link #handleAddRow(ReactContext)}. */
 	private static final String CMD_ADD_ROW = "addRow";
+
+	/** Name of the {@link #getAddRowCommand() add-row command}. */
+	public static final String COMMAND_ADD_ROW = "tableAddRow";
+
+	/** Name of the {@link #getRemoveSelectedRowsCommand() command removing the selected rows}. */
+	public static final String COMMAND_REMOVE_SELECTED_ROWS = "tableRemoveSelectedRows";
 
 	/** Panel state: the validation error of the bound attribute, or {@code null}. */
 	private static final String ERROR_MESSAGE = "errorMessage";
@@ -231,10 +251,30 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
-	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
-	private ReactButtonControl _addButton;
+	/**
+	 * For each row, the attribute values its read-only cells were built from while the table is
+	 * edited, see {@link #renderAsEdited(TLObject, Supplier)}.
+	 *
+	 * <p>
+	 * The objects of the values are the objects that are edited, never their buffers, so that a
+	 * change of a row is found whichever of the two was read.
+	 * </p>
+	 */
+	private final Map<TLObject, Set<Pointer>> _cellDependencies = new IdentityHashMap<>();
 
-	/** The panel toolbar holding the Add button, or {@code null} if not in edit mode. */
+	/**
+	 * The rows whose read-only cells are built again when the current interaction has completed,
+	 * see {@link #rowValueChanged(TLObject, TLStructuredTypePart)}.
+	 */
+	private final Set<TLObject> _staleRows = Collections.newSetFromMap(new IdentityHashMap<>());
+
+	/** The command adding a row, see {@link #getAddRowCommand()}. */
+	private SimpleCommandModel _addRowCommand;
+
+	/** The command removing the selected rows, see {@link #getRemoveSelectedRowsCommand()}. */
+	private SimpleCommandModel _removeSelectedRowsCommand;
+
+	/** The panel toolbar holding the row commands, or {@code null} if it shows none. */
 	private ReactToolbarControl _toolbar;
 
 	/**
@@ -286,6 +326,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private void initState() {
+		_addRowCommand = SimpleCommandModel.create(COMMAND_ADD_ROW,
+			Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_ADD), this::addRowOfChosenType)
+			.setImage(Icons.COMPOSITION_TABLE_ADD)
+			.setPlacement(CommandPlacement.TOOLBAR)
+			.setVisible(this::offersRowCreation)
+			.setExecutable(this::offersRowCreation);
+		_removeSelectedRowsCommand = SimpleCommandModel.create(COMMAND_REMOVE_SELECTED_ROWS,
+			Resources.getInstance().getString(I18NConstants.TABLE_REMOVE_SELECTED_ROWS),
+			context -> removeSelectedRows())
+			.setImage(Icons.COMPOSITION_TABLE_DELETE)
+			.setPlacement(CommandPlacement.TOOLBAR)
+			.setVisible(this::offersSelectedRowsRemoval)
+			.setExecutable(() -> offersSelectedRowsRemoval() && !_selectedKeys.isEmpty());
+
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
 
@@ -630,24 +684,141 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Adds a new row to the table.
+	 * Adds a new row to the table, see {@link #getAddRowCommand()}.
 	 */
 	@ReactCommandHandler(CMD_ADD_ROW)
-	void handleAddRow() {
-		addRow();
+	HandlerResult handleAddRow(ReactContext context) {
+		return _addRowCommand.executeCommand(context);
 	}
 
 	/**
-	 * Adds a new transient row of the binding's create type to the table and selects it, so it is
-	 * immediately editable under the {@link RowEditPolicy#SELECTED} policy.
+	 * The command adding a row to the table while it is edited.
+	 *
+	 * <p>
+	 * The command is offered while the {@link #createTypes() types offered for new rows} are not
+	 * empty. With a single type, it adds a row of that type. With several, it opens a menu listing
+	 * the types by their labels, placed at the button the command was triggered from (see
+	 * {@link CommandTrigger}), and adds a row of the type the user chooses.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #setFramed framed} table shows the command as Add button in its own toolbar; the
+	 * creator of a frameless table offers it through the enclosing command scope.
+	 * </p>
+	 */
+	public CommandModel getAddRowCommand() {
+		return _addRowCommand;
+	}
+
+	private boolean offersRowCreation() {
+		return !createTypes().isEmpty();
+	}
+
+	/**
+	 * The command removing all selected rows from the table while it is edited, with the
+	 * {@link RowSetBinding#getRemoveMode() remove semantics} the per-row delete buttons apply.
+	 *
+	 * <p>
+	 * The command is offered in edit mode of a table that removes rows and lets the user
+	 * {@link SelectionMode#MULTI select several rows} (the header checkbox selects all of them);
+	 * it is executable while a row is selected. Like the {@link #getAddRowCommand() add-row
+	 * command}, a {@link #setFramed framed} table shows it in its own toolbar, the creator of a
+	 * frameless table offers it through the enclosing command scope.
+	 * </p>
+	 */
+	public CommandModel getRemoveSelectedRowsCommand() {
+		return _removeSelectedRowsCommand;
+	}
+
+	/**
+	 * Whether the table offers the {@link #getRemoveSelectedRowsCommand() removal of the selected
+	 * rows}.
+	 */
+	public boolean offersSelectedRowsRemoval() {
+		return isEditing() && _selectionMode == SelectionMode.MULTI
+			&& binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE;
+	}
+
+	private HandlerResult removeSelectedRows() {
+		if (!offersSelectedRowsRemoval()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		List<TLObject> rows = new ArrayList<>();
+		for (Object selected : _selectedKeys) {
+			if (selected instanceof TLObject row) {
+				rows.add(row);
+			}
+		}
+		removeRows(rows);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private HandlerResult addRowOfChosenType(ReactContext context) {
+		List<TLClass> types = createTypes();
+		if (types.size() <= 1) {
+			if (!types.isEmpty()) {
+				addRowOfType(types.get(0));
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		ContextMenuOpener opener = context != null ? context.getContextMenuOpener() : null;
+		if (opener == null) {
+			opener = _context.getContextMenuOpener();
+		}
+		if (opener == null) {
+			Logger.warn("No context menu overlay available to choose the type of a new row.",
+				RowSetTableControl.class);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		List<CommandModel> choices = new ArrayList<>(types.size());
+		for (TLClass type : types) {
+			choices.add(SimpleCommandModel.create(null, MetaLabelProvider.INSTANCE.getLabel(type), ctx -> {
+				addRowOfType(type);
+				return HandlerResult.DEFAULT_RESULT;
+			}));
+		}
+		// Without a triggering button, the menu hangs off the table.
+		String trigger = CommandTrigger.currentId();
+		String anchorId = trigger != null ? trigger : getID();
+		opener.open(anchorId, List.of(new Targeted(new ContextMenuContribution(target -> {
+			// The entries carry their type, nothing to publish.
+		}, choices), null)), null);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Adds a new transient row of the only type offered for new rows to the table and selects it,
+	 * so it is immediately editable under the {@link RowEditPolicy#SELECTED} policy.
 	 */
 	@Override
 	public TLObject addRow() {
-		TLObject newRow = super.addRow();
+		return selected(super.addRow());
+	}
+
+	/**
+	 * Adds a new transient row of the given type to the table and selects it, so it is immediately
+	 * editable under the {@link RowEditPolicy#SELECTED} policy.
+	 */
+	@Override
+	public TLObject addRowOfType(TLClass type) {
+		return selected(super.addRowOfType(type));
+	}
+
+	private TLObject selected(TLObject newRow) {
 		if (newRow != null && _tableControl != null) {
 			_tableControl.selectRow(newRow);
 		}
 		return newRow;
+	}
+
+	@Override
+	public void onFormStateChanged(FormModel source) {
+		super.onFormStateChanged(source);
+		// The types offered for new rows and the removal of rows follow the edit session.
+		_addRowCommand.fireStateChanged();
+		_removeSelectedRowsCommand.fireStateChanged();
 	}
 
 	/**
@@ -713,6 +884,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
+		_cellDependencies.clear();
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
@@ -774,6 +946,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					// The criteria a table declares can depend on the inputs it is refreshed for, so
 					// they are resolved again for their new values.
 					refreshDeclaredFilters(view, columns);
+					_cellDependencies.clear();
 					table.refreshData();
 					if (_selectionBinding != null) {
 						_selectionBinding.rowsRefreshed();
@@ -795,9 +968,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		}
 
-		// Update toolbar: a framed table offers an own Add button in edit mode, when the binding
-		// offers row creation.
-		updateToolbar(_framed && editMode && !binding().getCreateTypes().isEmpty());
+		// Update toolbar: a framed table offers its row commands in edit mode in its own toolbar.
+		updateToolbar(_framed && editMode);
+		_addRowCommand.fireStateChanged();
+		_removeSelectedRowsCommand.fireStateChanged();
 	}
 
 	/**
@@ -844,6 +1018,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_rowSource.setElements(new ArrayList<>(fieldModel().getCurrentList()));
 		if (_tableControl != null) {
+			_cellDependencies.clear();
 			_tableControl.refreshData();
 		}
 	}
@@ -871,6 +1046,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		_selectedKeys.clear();
 		_selectedKeys.addAll(selectedKeys);
+		_removeSelectedRowsCommand.fireStateChanged();
 
 		if (_policy == RowEditPolicy.SELECTED && isEditing() && _tableControl != null
 			&& !flipped.isEmpty()) {
@@ -911,28 +1087,35 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 	}
 
-	private void updateToolbar(boolean showAddButton) {
+	/**
+	 * Shows the commands changing the rows of a framed table in its toolbar: the
+	 * {@link #getAddRowCommand() add-row command} and the
+	 * {@link #getRemoveSelectedRowsCommand() removal of the selected rows}, as far as the table
+	 * offers them.
+	 */
+	private void updateToolbar(boolean showRowCommands) {
 		if (_toolbar != null) {
 			_toolbar.cleanupTree();
 			_toolbar = null;
-			_addButton = null;
 		}
 
-		if (showAddButton) {
-			String addLabel = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_ADD);
-			_addButton = new ReactButtonControl(_context, addLabel, ctx -> {
-				addRow();
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			_addButton.setImage(Icons.COMPOSITION_TABLE_ADD);
-
-			// TLPanel renders a single `toolbar` child control (a TLToolbar), so wrap the Add
-			// button in a toolbar rather than pushing a bare button list.
-			_toolbar = new ReactToolbarControl(_context);
-			_toolbar.addGroup("add", ToolbarGroupDisplay.INLINE, null, null, List.of(_addButton));
-			putState("toolbar", _toolbar);
-		} else {
+		List<ReactControl> buttons = new ArrayList<>();
+		if (showRowCommands) {
+			if (offersRowCreation()) {
+				buttons.add(new ReactButtonControl(_context, _addRowCommand));
+			}
+			if (offersSelectedRowsRemoval()) {
+				buttons.add(new ReactButtonControl(_context, _removeSelectedRowsCommand));
+			}
+		}
+		if (buttons.isEmpty()) {
 			putState("toolbar", null);
+		} else {
+			// TLPanel renders a single `toolbar` child control (a TLToolbar), so wrap the buttons in
+			// a toolbar rather than pushing a bare button list.
+			_toolbar = new ReactToolbarControl(_context);
+			_toolbar.addGroup("rows", ToolbarGroupDisplay.INLINE, null, null, buttons);
+			putState("toolbar", _toolbar);
 		}
 	}
 
@@ -1021,6 +1204,118 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 	}
 
+	/**
+	 * Renders a read-only cell of the given row of the edited table as the objects it shows are
+	 * currently edited.
+	 *
+	 * <p>
+	 * A cell shows stored objects, also when they are edited in the same form as rows of this
+	 * table: the cell of a container showing its parts, say. The cell is built in a
+	 * {@link TracingScope} over the overlays of the form, which answers the read of an edited
+	 * object from its buffer, so the cell shows the pending changes. The scope records the
+	 * attribute values read, so a later change of one of them through the cell of another row
+	 * builds the cell again, see {@link #rowValueChanged(TLObject, TLStructuredTypePart)}. A cell
+	 * control built later on, when the cell is displayed, is built in such a scope as well.
+	 * </p>
+	 */
+	private CellContent renderAsEdited(TLObject row, Supplier<CellContent> render) {
+		OverlayLookup overlays = formControl().getValidationModel();
+		if (overlays == null) {
+			return render.get();
+		}
+		CellContent content = traced(row, overlays, render);
+		if (content instanceof CellContent.Raw raw && raw.payload() instanceof CellControlFactory factory) {
+			return new CellContent.Raw((CellControlFactory) context -> traced(row, overlays, () -> factory.create(context)),
+				raw.tooltip());
+		}
+		return content;
+	}
+
+	private <T> T traced(TLObject row, OverlayLookup overlays, Supplier<T> render) {
+		Set<Pointer> dependencies = _cellDependencies.computeIfAbsent(row, x -> new HashSet<>());
+		try (TracingScope scope = TracingScope.open(
+			pointer -> dependencies.add(Pointer.create(editedObject(pointer.object()), pointer.attribute())),
+			overlays)) {
+			return render.get();
+		}
+	}
+
+	/**
+	 * The object the given object edits: the base of a buffer, the object itself otherwise.
+	 */
+	private static TLObject editedObject(TLObject object) {
+		return object instanceof TLObjectOverlay overlay ? overlay.getBase() : object;
+	}
+
+	/**
+	 * Builds the read-only cells of the rows again that were built from the changed value, so they
+	 * show it; the cells of rows being edited are kept, so their inputs stay as they are.
+	 *
+	 * <p>
+	 * The cells are built again when the interaction has completed
+	 * ({@link DeliveryScope#afterInteraction(Runnable)}): the change is reported while the value
+	 * entered is still being applied, and the input it was entered in takes it into its state only
+	 * afterwards. Pushing the rows earlier would send that input with the value it had before.
+	 * </p>
+	 */
+	@Override
+	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
+		if (_tableControl == null) {
+			return;
+		}
+		boolean scheduled = !_staleRows.isEmpty();
+		addDependentRows(row, part);
+		scheduleRebuild(scheduled);
+	}
+
+	/**
+	 * Builds the read-only cells of the changed row again, and those of the rows that were built
+	 * from the changed values, see {@link #rowValueChanged(TLObject, TLStructuredTypePart)}.
+	 */
+	@Override
+	protected void rowChanged(TLObject row, Collection<TLStructuredTypePart> parts) {
+		if (_tableControl == null) {
+			return;
+		}
+		boolean scheduled = !_staleRows.isEmpty();
+		_staleRows.add(row);
+		for (TLStructuredTypePart part : parts) {
+			addDependentRows(row, part);
+		}
+		scheduleRebuild(scheduled);
+	}
+
+	private void addDependentRows(TLObject row, TLStructuredTypePart part) {
+		Pointer changed = Pointer.create(editedObject(row), part);
+		for (Map.Entry<TLObject, Set<Pointer>> entry : _cellDependencies.entrySet()) {
+			TLObject dependent = entry.getKey();
+			if (dependent != row && entry.getValue().contains(changed)) {
+				_staleRows.add(dependent);
+			}
+		}
+	}
+
+	private void scheduleRebuild(boolean scheduled) {
+		if (!scheduled && !_staleRows.isEmpty()) {
+			DeliveryScope.afterInteraction(this::rebuildStaleRows);
+		}
+	}
+
+	private void rebuildStaleRows() {
+		List<Object> stale = new ArrayList<>();
+		for (TLObject row : _staleRows) {
+			if (!isRowEditable(row)) {
+				// Recorded anew when the cells are built again.
+				_cellDependencies.remove(row);
+				stale.add(row);
+			}
+		}
+		_staleRows.clear();
+		if (_tableControl != null && !stale.isEmpty()) {
+			_tableControl.invalidateRowCells(stale);
+		}
+	}
+
 	private ReactButtonControl createDeleteButton(ReactContext ctx, Object rowObject) {
 		String label = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_DELETE);
 		ReactButtonControl button = new ReactButtonControl(ctx, label, context -> {
@@ -1042,8 +1337,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;
-		_addButton = null;
 		_tableControl = null;
+		_cellDependencies.clear();
+		_staleRows.clear();
 		super.onCleanup();
 	}
 
@@ -1114,6 +1410,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 						? editControl
 						: CellContentReactAdapter.toControl(context, _inner.renderCell(row));
 				});
+			}
+			if (_editable && row != null) {
+				return renderAsEdited(row, () -> _inner.renderCell(row));
 			}
 			return _inner.renderCell(row);
 		}

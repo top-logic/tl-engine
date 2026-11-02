@@ -1,0 +1,769 @@
+/* Tabelle — docs/skalen.md „Gleiches wird zusammengelegt“ (W3, W5, W6, W8, W10, W11), 3b §3–§6.
+   Ein Raster (tl-table__grid, role=grid, im Baum- und Gruppenmodus treegrid): ein Kopf und ein virtuell
+   gerenderter Körper. Zustände sind Attribute — aria-selected (ausgewählt), aria-sort, aria-expanded,
+   data-tl-state~="cursor" (Tastaturposition; den Ring zeichnet base.css), "frozen" / "frozen-last" /
+   "pinned" / "pinned-first" (Lage), "filtered" (Spalte mit aktivem Filter); die Ziehen-Zustände zeichnet
+   drag.css. Breiten, Versätze und die Lage der Zeilen sind Daten und stehen inline; alles andere hier.
+   Eine Zeile schwebt nicht (skalen.md „Elevation“): kein Schatten, Kanten sind Linien. Die Tabelle als Ganzes steht
+   abgesetzt (UI-Durchgang 1, „Tiefe“): Fläche, Rundung, Rand und ein leichter Schatten — außer sie füllt eine ganze
+   Fläche (tl-fill). Zebra, Spaltenlinien und Dichte sind Attribute an tl-table (data-tl-striped, data-tl-column-lines,
+   data-tl-density), Zahlenspalten data-tl-align="end" an Kopf- und Datenzelle; beide Zeilenformen, Gruppe und gerade
+   Zeile, sind Wörter in data-tl-state der Zeile ("group", "even"). */
+
+/* isolation hält die Marke an der Wurzel (drop-onto, drop-refused: Fläche ::before auf layer-sticky,
+   drag.css) im Stapel der Tabelle: sie liegt über Filterleiste, Kopf und Zeilen, nie über einem Nachbarn
+   der Seite. */
+.tl-table {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--tl-text-primary);
+}
+.tl-table[hidden] { display: none; }
+
+/* Die abgesetzte Fläche (UI-Durchgang 1, Hendrik 26.10.): surface-layer mit Rundung, Rand und dem leichtesten Schatten
+   der Skala. Eine Tabelle, die eine ganze Fläche füllt (tl-fill), bekommt ihn nicht — dort kommt die Tiefe vom
+   abgesetzten Kopf, nicht von einer schwebenden Karte. overflow: hidden (oben) schneidet Kopf und Zeilen an der Rundung. */
+.tl-table:not(.tl-fill) {
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-layer);
+  box-shadow: var(--tl-shadow-1);
+}
+
+/* Eine füllende Tabelle behält Kopf, drei Zeilen und Fuß (#29922): kürzer zeigt sie nichts Brauchbares. Ist die
+   begrenzte Region, in der sie steht (Dialogkörper, scrollender Panelkörper), dafür zu klein, scrollt die Region,
+   statt dass die Tabelle auf 0 px zusammenfällt. */
+.tl-table.tl-fill {
+  min-height: calc(var(--tl-size-bar) + 3 * var(--tl-size-row) + var(--tl-size-control));
+}
+
+/* --- Filterleiste ---------------------------------------------------------------- */
+
+/* Benannte Filter als entfernbare Kapseln (tl-chip-group), die Suche über die angezeigten Spalten und
+   das Speichern der aktuellen Kriterien. Außerhalb beider Rollbehälter: sie scrollt nicht mit. */
+.tl-table__filter-bar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-xs) var(--tl-space-sm);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+}
+.tl-table__filter-bar[hidden] { display: none; }
+
+/* „+ n weitere“: ein tl-chip, der ein Menü der übrigen benannten Filter öffnet. Die Form liefert der Chip; hier nur, dass
+   er nicht schrumpft, wenn die Leiste knapp wird (die Breite rechnet das TSX, wie viele Chips davor passen). */
+.tl-table__more {
+  flex: none;
+}
+
+/* Der Chevron steht im Label, hinter dem Text (der Chip bekommt ihn als Teil seiner Beschriftung): das Label ordnet
+   ihn mit der Lücke des Chips an, sonst klebte er am Text (U39a). */
+.tl-table__more .tl-chip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+
+/* Suche und Speichern stehen am rechten Ende, gleich wie viele Filter davor stehen. */
+.tl-table__search {
+  flex: 0 1 auto;
+  margin-inline-start: auto;
+}
+
+.tl-table__save {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+.tl-table__save[hidden] { display: none; }
+
+/* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
+
+/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): Titel, Abschnitt „Dichte“
+   mit Segmenten, zwei Schalter, Trennlinie, Einträge. Alles steht auf der Einrückung der Menüeinträge
+   (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
+   zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
+.tl-popover.tl-table-view-options {
+  gap: var(--tl-space-2xs);
+}
+
+/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
+   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. */
+.tl-table-view-options__title {
+  padding: var(--tl-space-2xs) var(--tl-space-control-x);
+  color: var(--tl-text-primary);
+}
+
+/* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
+.tl-table-view-options__segments {
+  margin-inline: var(--tl-space-control-x);
+}
+
+/* Ein Schalter ist eine Zeile des Popovers: Einrückung wie der Eintrag, der Zeiger-Hof gehört zur Marke. */
+.tl-table-view-options__switch {
+  padding-inline: var(--tl-space-control-x);
+}
+
+/* --- Rahmen und Raster ------------------------------------------------------------ */
+
+/* Der Rahmen trägt das Raster und, was über ihm liegt, aber keine Zelle ist: die Spaltenwahl, den Griff
+   der Fixiergrenze und ihre Vorschau. Das Raster (role=grid) besteht nur aus Kopf und Körper.
+   isolation hält die Ebenen darin (haftende Kopfzellen layer-raised, Griff und Vorschau layer-sticky)
+   in seinem Stapel: nichts aus der Tabelle liegt über einem Popover oder einem Nachbarn der Seite. Was
+   die Tabelle öffnet (Menü, Ablehnungshinweis), steht als Portal im body, nicht im Rahmen. */
+.tl-table__frame {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  isolation: isolate;
+}
+.tl-table__frame[hidden] { display: none; }
+
+.tl-table__grid {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-table__grid[hidden] { display: none; }
+
+/* --- Kopf ------------------------------------------------------------------------ */
+
+/* Der Kopf scrollt waagerecht wie der Körper — Mausrad und Trackpad über dem Kopf, ohne eigenen Balken —,
+   und beide folgen einander (TLTableView koppelt in beide Richtungen; Hendrik 12.10.). */
+.tl-table__header {
+  flex-shrink: 0;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
+}
+
+/* So hoch wie Reiterleiste und Toolbar darüber (skalen.md „Leisten und Hilfe“); haftende Kopfzellen
+   erben ihre Fläche. Der Kopf ist abgesetzt: surface-layer-muted (dieselbe Fläche wie Zebra und Gruppenzeile), die
+   Titel leiser (.tl-table__label). */
+.tl-table__header-row {
+  display: flex;
+  min-height: var(--tl-size-bar);
+  background: var(--tl-surface-layer-muted);
+}
+.tl-table__header-row[hidden] { display: none; }
+
+/* Jede Kopfzelle isoliert ihren Stapel: die Einfügemarke eines Spaltenzugs (drag.css, ::before auf
+   layer-sticky) bleibt in ihrer Zelle. Eine Überschrift, die unter die fixierten rollt, zeichnet ihre
+   Marke so nicht über deren Zellen, und der Griff der Breite (layer-raised) wirkt nur in seiner Zelle. */
+.tl-table__header-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-control-x);
+  overflow: hidden;
+  isolation: isolate;
+  user-select: none;
+}
+.tl-table__header-cell[hidden] { display: none; }
+
+.tl-table__header-cell[draggable="true"] {
+  cursor: grab;
+}
+
+.tl-table__header-cell[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Sortierbar ist die Beschriftung ein Knopf: Klick oder Enter sortiert, mit Umschalt kommt eine Stufe
+   dazu. Die Kopfzelle trägt aria-sort. */
+:where(.tl-table__sort) {
+  font: inherit;
+}
+
+.tl-table__sort {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.tl-table__sort[hidden] { display: none; }
+
+.tl-table__header-cell:has(> .tl-table__sort:hover) {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Nur die Beschriftung gibt nach, wenn die Spalte schmaler ist als ihr Inhalt: Trichter, Sortiermarke
+   und Griff bleiben erreichbar. Der Titel ist leise gesetzt: text-secondary, Großbuchstaben; die Sperrung trägt die
+   Typo-Klasse tl-type-overline, die das TSX an die Beschriftung setzt. */
+.tl-table__label {
+  min-width: 0;
+  color: var(--tl-text-secondary);
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sortierpfeil und Gruppierungsmarke: tl-icon-sm, aria-hidden. Die Stufe einer mehrstufigen Sortierung
+   ist ein tl-badge. */
+.tl-table__mark {
+  color: var(--tl-icon-secondary);
+}
+
+/* Der Trichter ist ein tl-button--icon --sm --ghost mit einer Glyphe. Ein aktiver Filter ist ein Zustand
+   der Spalte: dieselbe Glyphe in text-link (Markenblau) statt icon-secondary, der Name des Knopfs sagt es
+   mit (js.table.filterActive) — die Farbe allein trägt keine Bedeutung. icon-primary neben icon-secondary
+   war nicht zu unterscheiden (#29999). */
+.tl-table__filter {
+  flex-shrink: 0;
+  color: var(--tl-icon-secondary);
+}
+
+/* Werkzeuge nur bei Bedarf (UI-Durchgang 1): der Trichter trägt tl-reveal-on-hover (layout.css) und steht damit beim Zeigen
+   auf die Kopfzelle (sein direkter Elternteil), bei Tastaturfokus und ohne Zeigen (Touch). Eine Spalte mit aktivem
+   Filter zeigt ihn immer: was in Kraft ist, steht im Bild. Zwei Klassen und ein Attribut schlagen .tl-reveal-on-hover.
+   Sortierpfeil und Gruppenmarke (.tl-table__mark) bleiben immer, sie stehen nur dort, wo sie gelten; der Titel bekommt
+   die Breite zurück (U29). */
+.tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter {
+  color: var(--tl-text-link);
+  opacity: 1;
+}
+
+/* Die Spaltenwahl (Zahnrad) ist ein tl-button--icon --ghost über der rechten Kante des Kopfes, so hoch
+   wie die Kopfzeile, die Linie darunter bleibt frei. Sie nimmt dem Kopf keine Breite — sonst bliebe die
+   letzte Überschrift abgeschnitten — und ist deckend, weil eine Beschriftung unter ihr durchlaufen kann.
+   In der Kopfzelle einer angehefteten letzten Spalte steht sie als --sm in der Zelle. */
+.tl-table__columns {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--tl-size-bar);
+  border-radius: 0;
+  background: var(--tl-surface-layer-muted);
+}
+
+.tl-table__columns:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-table__header-cell > .tl-table__columns {
+  position: static;
+  margin-inline: auto;
+  background: transparent;
+}
+
+/* Laufen Spalten unter der Spaltenwahl weiter (Kopf data-tl-state~="covered": breiter als sein Fenster und
+   nicht ganz nach rechts gescrollt), blenden die Überschriften vor ihr aus: die dort abgeschnittene
+   Überschrift — ihr Trichter zumal — liest sich als hinausgescrollt, nicht als Bruchstück, das der Knopf
+   versehentlich verdeckt (#29757). Ein Verlauf in der Fläche des Kopfes, nicht eine Maske: der Kopf ist
+   immer surface-layer-muted, und eine Maske nähme die Linie darunter mit. */
+.tl-table__frame:has(.tl-table__header[data-tl-state~="covered"]) > .tl-table__columns::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  width: calc(var(--tl-space-xs) + var(--tl-space-sm));
+  background: linear-gradient(to left, var(--tl-surface-layer-muted) var(--tl-space-xs), transparent);
+  pointer-events: none;
+}
+
+/* Breite ziehen und Fixiergrenze: Griffe mit role=separator, Zeigerbedienung. Der Griff ist space-xs
+   breit; unter dem Zeiger und beim Ziehen eine Linie border-width-md in border-interactive. */
+.tl-table__resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--tl-layer-raised);
+  width: var(--tl-space-xs);
+  cursor: col-resize;
+}
+
+.tl-table__freeze {
+  position: absolute;
+  top: 0;
+  height: var(--tl-size-bar);
+  z-index: var(--tl-layer-sticky);
+  width: var(--tl-space-xs);
+  cursor: col-resize;
+}
+
+.tl-table__resize::after,
+.tl-table__freeze::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--tl-border-width-md);
+}
+
+.tl-table__resize::after {
+  right: 0;
+}
+
+.tl-table__freeze::after {
+  left: 0;
+}
+
+/* Der Ring liegt innen: der Griff ist space-xs breit und die Kopfzelle schneidet, was über sie hinausragt. */
+.tl-table__resize:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-table__resize:hover::after,
+.tl-table__resize:active::after,
+.tl-table__resize:focus-visible::after,
+.tl-table__freeze:hover::after,
+.tl-table__freeze:active::after {
+  background: var(--tl-border-interactive);
+}
+
+/* Wo die Fixiergrenze landet, wenn der Griff jetzt losgelassen wird: über Kopf und Zeilen. */
+.tl-table__freeze-preview {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: var(--tl-layer-sticky);
+  width: var(--tl-border-width-md);
+  margin-inline-start: calc(-0.5 * var(--tl-border-width-md));
+  background: var(--tl-border-interactive);
+  pointer-events: none;
+}
+
+/* --- Körper ---------------------------------------------------------------------- */
+
+/* Der Körper scrollt; den Fokus hält das Raster (aria-activedescendant auf die Cursorzeile).
+   isolation hält die Fläche des Cursor-Rings (base.css) und die haftenden Zellen in seinem Stapel. */
+.tl-table__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  isolation: isolate;
+}
+
+/* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
+   ein Ring außen wäre ganz oder halb weg (focus-clip.test.mjs): das Raster ohne Cursor (leer, kein
+   aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. In der Engine ist
+   tl-table__columns der Streifen und der Knopf darin das Ziel des Fokus (Part Button seit #29787): der Ring gehört an
+   den Knopf, sonst stand er außen und war rechts abgeschnitten (Hendrik 27.10.). */
+.tl-table__grid:focus-visible,
+.tl-table__body:focus-visible,
+.tl-table__columns:focus-visible,
+.tl-table__columns > .tl-button:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-table__canvas {
+  position: relative;
+}
+
+/* Die Fläche der Zeile steht in :where, auch gezeigt und ausgewählt: Ablegen darauf (drag.css, eine
+   Klasse stark) übermalt sie ohne Spezifitätskampf, und haftende Zellen erben sie und bleiben deckend. Eine Zeile schneidet nicht ab: ein abschneidender
+   Vorfahr zwischen haftender Zelle und Rollbehälter machte die Zeile zum Bezug, und die Zelle scrollte
+   mit. Die Zeile ist positioniert — Bezug der Flächen von Cursor-Ring (base.css, ::after) und
+   Ziehen-Marke (drag.css, ::before); das TSX setzt sie im Körper absolute, im Specimen bleibt relative. */
+:where(.tl-table__row) {
+  background: var(--tl-surface-layer);
+}
+
+.tl-table__row {
+  position: relative;
+  display: flex;
+  min-height: var(--tl-size-row);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  cursor: pointer;
+}
+.tl-table__row[hidden] { display: none; }
+
+/* Zwei Zeilenformen tragen die gedämpfte Fläche: die gerade Zeile einer Tabelle mit Zebra (data-tl-striped an tl-table;
+   das Zustandswort "even" setzt das TSX aus row.index — die Zeilen sind virtuell gerendert und absolut gelegt, nth-child
+   zählte die Fenster-Position, nicht die der Zeile) und die Gruppenzeile ("group"). Beide stehen in :where, nach der
+   Grundfläche und VOR Zeigen und Auswahl: bei gleicher Spezifität entscheidet die Reihenfolge, und gewählt vor gezeigt
+   vor Zebra und Gruppe ist der Vertrag. Eine getönte Zeile (data-tl-role, unten) und Ablegen (drag.css) übermalen beide. */
+:where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"]) {
+  background: var(--tl-surface-layer-muted);
+}
+
+:where(.tl-table__row[data-tl-state~="group"]) {
+  background: var(--tl-surface-layer-muted);
+}
+
+:where(.tl-table__row:hover) {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Gewählt heißt überall Markenton und Kante (UI-Durchgang 1): die Fläche surface-selected, die Kante als innerer Schatten
+   auf der ersten Zelle der Zeile. Die Kante liegt auf der Zelle, nicht auf der Zeile: haftende Zellen (frozen, pinned)
+   tragen ihre Fläche über der der Zeile — sie erben sie per inherit —, ein Schatten der Zeile läge darunter. Ohne
+   fixierte Spalte rollt die Kante mit der ersten Zelle seitlich weg (hingenommen: die Fläche der Zeile bleibt). Zeigen auf
+   einer gewählten Zeile steht nach beiden Regeln, gleiche Spezifität: die Reihenfolge entscheidet. */
+:where(.tl-table__row[aria-selected="true"]) {
+  background: var(--tl-surface-selected);
+}
+
+:where(.tl-table__row[aria-selected="true"]:hover) {
+  background: var(--tl-surface-selected-hover);
+}
+
+.tl-table__row[aria-selected="true"] > .tl-table__cell:first-child {
+  box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-selected);
+}
+
+.tl-table__row[draggable="true"] {
+  cursor: grab;
+}
+
+.tl-table__row[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.tl-table__cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 var(--tl-space-control-x);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tl-table__cell[hidden] { display: none; }
+
+/* Spaltenlinien sind ab Werk aus und kommen mit data-tl-column-lines an tl-table. Die Wurzel steht in :where: die Linie
+   (0,1,0) schlägt weder die Kante fixierter und angehefteter Spalten (border-emphasis, unten, (0,2,0)) noch die letzte
+   Zelle ohne Linie (0,2,0). */
+:where(.tl-table[data-tl-column-lines]) .tl-table__cell,
+:where(.tl-table[data-tl-column-lines]) .tl-table__header-cell {
+  border-right: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-table__cell:last-child,
+.tl-table__header-cell:last-child {
+  border-right: 0;
+}
+
+/* Zahlen und Beträge stehen rechtsbündig, die Ziffern gleich breit (U28, U36); der Kopf der Spalte steht mit am Ende.
+   Die Aussage kommt vom Typ der Spalte (Server: ColumnKind.NUMBER), das TSX setzt data-tl-align="end" an Kopf- und
+   Datenzelle; Datum und Text bleiben am Anfang. Der Lesewert in der Zelle erbt text-align. */
+.tl-table__cell[data-tl-align="end"],
+.tl-table__header-cell[data-tl-align="end"] {
+  justify-content: flex-end;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Die Auswahlspalte: input.tl-checkbox, mittig. */
+.tl-table__select {
+  flex-shrink: 0;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Eine Spalte mit einem Befehl je Zeile (RowCommandColumn): der Knopf ist ghost und klein und trägt seinen Rahmen
+   selbst, die Zelle keinen Innenabstand, mittig. Die Java-Klasse landet an Kopf- und Datenzelle. */
+.tl-table__cell--command,
+.tl-table__header-cell.tl-table__cell--command {
+  padding: 0;
+  justify-content: center;
+}
+
+/* Lage, kein Zustand der Bedienung: fixierte und angeheftete Zellen haften (Versatz inline), liegen mit
+   layer-raised über den scrollenden und erben die Fläche ihrer Zeile. Die Kante zur scrollenden Fläche
+   ist eine Linie border-emphasis, kein Schatten. */
+.tl-table__cell[data-tl-state~="frozen"],
+.tl-table__cell[data-tl-state~="pinned"],
+.tl-table__header-cell[data-tl-state~="frozen"],
+.tl-table__header-cell[data-tl-state~="pinned"] {
+  position: sticky;
+  z-index: var(--tl-layer-raised);
+  background: inherit;
+}
+
+.tl-table__cell[data-tl-state~="frozen-last"],
+.tl-table__header-cell[data-tl-state~="frozen-last"] {
+  border-right: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
+}
+
+.tl-table__cell[data-tl-state~="pinned-first"],
+.tl-table__header-cell[data-tl-state~="pinned-first"] {
+  border-left: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
+}
+
+/* --- Hervorgehobene Zeilen und Zellen (#29815) ------------------------------------------------ */
+
+/* Eine Zeile oder Zelle, der die Anwendung eine der Klassen tl-status-error, -warning, -success oder
+   -info gibt (TableView#rowCssClass, #cellCssClass), trägt die Rolle als data-tl-role — TLTableView
+   übersetzt die Klasse, die Rolle bleibt ein Attribut. Die Auswahl gewinnt: an einer ausgewählten Zeile
+   und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
+   Zeile steht in :where); fixierte und angeheftete Zellen erben die Tönung ihrer Zeile, eine getönte Zelle
+   setzt ihre eigene. Nach den Regeln der Lage, die an haftenden Zellen inherit setzen. */
+/* @tl-roles: status :where(.tl-table__row) */
+/* @tl-roles: status .tl-table__cell */
+
+/* --- Zellinhalt ------------------------------------------------------------------ */
+
+/* Der Wurzelknoten eines Lesewerts ohne eigene Form (span ohne Klasse, tl-text) füllt die Zelle: ein
+   Wert, breiter als seine Spalte, endet mit Ellipse. (0,2,0): text.css steht im Bundle danach, und seine
+   Regeln mit (0,1,0) kippen das Füllen nicht; die mit mehr — leerer Text, hidden — sollen es. Ein Link
+   bleibt so breit wie sein Text — sonst folgte ein Klick irgendwo in der Zelle der Adresse, wo der Nutzer
+   die Zeile meint. Eine eigene Flex-Reihe (Wert mit Icon, Werteliste, Radios) bleibt eine Reihe und
+   bricht nicht um; eine Liste von Werten wird an der Spaltenkante abgeschnitten. */
+.tl-table__cell > :where(span):not([class]),
+.tl-table__cell > .tl-text {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Eine Kapsel (Pill — die Wurzel eines Texts als Pill —, Badge, Chip) behält ihre Form und ihr display; sie
+   wird nur an die Zelle gebunden (kein min-width: der Badge behält sein Mindestmaß). Die Pill kürzt dann ihre Beschriftung mit Ellipse: die Beschriftung
+   darf unter ihre Textbreite schrumpfen (min-width 0), Abschneiden und Ellipse trägt tl-pill__label. */
+.tl-table__cell > .tl-pill,
+.tl-table__cell > .tl-badge,
+.tl-table__cell > .tl-chip {
+  max-width: 100%;
+}
+
+.tl-table__cell > .tl-pill > .tl-pill__label {
+  min-width: 0;
+}
+
+.tl-table__cell > a {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-table__cell > .tl-field-value,
+.tl-table__cell > .tl-select__values,
+.tl-table__cell > .tl-choice-group {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.tl-table__cell > .tl-select__values {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tl-table__cell > .tl-select__values > * {
+  flex-shrink: 0;
+}
+
+/* In der Reihe schrumpfen Wert und Zeilen wieder, damit eine lange Zeile mit Ellipse endet. */
+.tl-table__cell .tl-field-value--multiline,
+.tl-table__cell .tl-field-value--multiline > .tl-field-value__text {
+  flex-shrink: 1;
+}
+
+.tl-table__cell .tl-field-value--multiline {
+  flex-direction: row;
+  white-space: nowrap;
+}
+
+/* Eine Liste von Werten (tl-value-list, lesend ein span) ist ein Lesewert wie ein Text: sie füllt die Zelle und endet
+   mit Ellipse, wo die Spalte endet. :where hält die Spezifität bei (0,2,0), [hidden] unten gewinnt. Die bearbeitende
+   Liste (div, role="group") bleibt eine Spalte von Zeilen. */
+.tl-table__cell > .tl-value-list:where(span) {
+  display: block;
+  inline-size: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In der Zelle liest sich die Variante untereinander als die eine Zeile, die die Zeile hoch ist: Einträge und Trenner
+   stehen im Fluss. */
+.tl-table__cell .tl-value-list--block > .tl-value-list__item,
+.tl-table__cell .tl-value-list--block > .tl-select__separator {
+  display: inline;
+}
+
+/* Ein Wert mit Zusatzknopf daneben (der Sprachknopf eines mehrsprachigen Texts): eine Reihe in Spaltenbreite, der Wert
+   nimmt den Platz (tl-stack--grow-first) und endet mit Ellipse. */
+.tl-table__cell > .tl-stack--row {
+  inline-size: 100%;
+  min-width: 0;
+}
+
+.tl-table__cell > .tl-stack--grow-first.tl-stack--row > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-table__cell > [hidden] {
+  display: none;
+}
+
+/* Ein Feld in der Zelle ist die Zelle: randlos, so hoch wie die Zeile. Sein Fokus ist der Basis-Ring
+   nach innen (3a §5.2); Fehler und Warnung zeichnen eine innere Linie in Statusfarbe — kein outline in
+   Statusfarbe (3a-Gate). Warnung vor Fehler: der Fehler steht später und gewinnt. */
+.tl-table__cell:has(.tl-field) {
+  padding: 0;
+  /* Gestreckt, nicht mittig: das Feld steckt in Hüllen (TLChild, tl-field-group), deren height: 100% nur
+     gegen eine gestreckte Höhe greift — mittig blieb das Feld so hoch wie sein Text (Sichtprüfung 23.10.). */
+  align-items: stretch;
+}
+
+.tl-table__cell .tl-field {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.tl-table__cell .tl-field:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Ein Feld, in das man schreiben kann, zeigt sich durch eine Linie unten in der Rahmenfarbe der Felder —
+   randlos und durchsichtig sah die Zelle im Bearbeiten-Modus aus wie im Lesen. Auf gezeigter und
+   ausgewählter Zeile hielte border-control 3:1 nicht (bis 2,44), dort trägt border-interactive die Linie.
+   Gleich spezifisch wie Warnung und Fehler, die danach stehen und mit ihrem Rahmen gewinnen. */
+.tl-table__cell .tl-field:not(:disabled, [readonly]) {
+  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-control);
+}
+
+:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly]) {
+  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-interactive);
+}
+
+.tl-table__cell .tl-field[data-tl-state~="warning"] {
+  box-shadow: inset 0 0 0 var(--tl-border-width-md) var(--tl-status-warning-border);
+}
+
+.tl-table__cell .tl-field[aria-invalid="true"],
+.tl-table__cell .tl-field[data-tl-state~="error"] {
+  box-shadow: inset 0 0 0 var(--tl-border-width-md) var(--tl-status-error-border);
+}
+
+.tl-table__cell .tl-field-group {
+  height: 100%;
+}
+
+/* --- Baum- und Gruppenzeilen ----------------------------------------------------- */
+
+/* Der Auf-/Zuklapper ist ein tl-toggle (size-control-sm). Der Einzug je Ebene ist seine Breite,
+   gerechnet im TSX und inline gesetzt: so steht jedes Kind unter der Beschriftung seiner Eltern. Ein
+   Blatt hält den Platz des Toggles frei. Gruppenzeile: tl-type-body-strong; die Anzahl tl-type-label. */
+.tl-table__tree {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+.tl-table__tree[hidden] { display: none; }
+
+.tl-table__spacer {
+  flex-shrink: 0;
+  width: var(--tl-size-control-sm);
+}
+
+.tl-table__value {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Anzahl der Gruppenzeile ist eine kleine Kapsel (U31), so hoch wie ein Badge. Text in text-primary: text-secondary
+   hielte auf surface-interactive-strong dunkel nur 4,27 (Paar text-primary / surface-interactive-strong, pairs.mjs). */
+.tl-table__count {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--tl-size-icon-sm);
+  height: var(--tl-size-icon-sm);
+  margin-inline-start: var(--tl-space-xs);
+  padding: 0 var(--tl-space-xs);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-interactive-strong);
+  color: var(--tl-text-primary);
+}
+
+/* --- Zeilenzahl (#29757) ---------------------------------------------------------- */
+
+/* Unter den Zeilen, außerhalb des Rollbehälters wie die Filterleiste: wie viele Zeilen die Tabelle hat
+   (von wie vielen, solange gefiltert) und wie viele ausgewählt sind. Leise gesetzt — eine Bemerkung über
+   die Tabelle, keine weitere Zeile —, die Ziffern gleich breit, damit der Text beim Tippen eines Filters
+   nicht zittert. Ein Live-Bereich (role=status); die Typo-Klasse trägt das TSX. */
+.tl-table__footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-control);
+  padding: var(--tl-space-xs) var(--tl-space-control-x);
+  overflow: hidden;
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tl-table__row-count,
+.tl-table__selection-count {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-table__selection-count::before {
+  content: "\00B7";
+  margin-inline-end: var(--tl-space-xs);
+}
+
+/* --- Leer und lädt nach ---------------------------------------------------------- */
+
+/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton in
+   Zeilenhöhe. Ohne Zeilen steht im Körper eine tl-status-Zeile. */
+.tl-table__placeholder {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--tl-space-control-x);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-table__placeholder[hidden] { display: none; }
+
+.tl-table__placeholder > .tl-skeleton {
+  flex: 1 1 auto;
+}
+
+/* Die Leerzeile bleibt am linken Rand des Körpers, auch wenn er waagerecht gescrollt ist: sonst stünde
+   „Keine Einträge" außerhalb des Bildes, sobald ein Filter die letzte Zeile nimmt (Sichtprüfung 12.10.). */
+.tl-table__body > [role="row"]:has(> .tl-status) {
+  position: sticky;
+  inset-inline-start: 0;
+}

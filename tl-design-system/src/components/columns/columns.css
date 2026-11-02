@@ -1,0 +1,24 @@
+/* Spalten — 3b §12.
+   Eine umbrechende Reihe von Spalten, jede wächst nach ihrem Gewicht. Die Flex-Basis einer Spalte setzt
+   das Control inline, weil sie mit der konfigurierten Umbruchbreite rechnet: solange der Behälter
+   mindestens so breit ist, ist der Term negativ und damit null, die Reihe teilt sich nach Gewicht;
+   darunter übersteigt er die Reihe, und jede Spalte steht in einer eigenen Zeile. Die Spalten stehen
+   oben und behalten die Höhe ihres Inhalts. Der Abstand ist ein Modifier aus drei Stufen. */
+
+.tl-columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.tl-columns[hidden] { display: none; }
+
+.tl-columns--gap-compact { gap: var(--tl-space-sm); }
+.tl-columns--gap-default { gap: var(--tl-space-md); }
+.tl-columns--gap-loose { gap: var(--tl-space-lg); }
+
+/* Das Minimum hält breiten Inhalt (ein langes Wort, eine Tabelle) davon ab, mehr als seinen Anteil zu
+   nehmen; das Maximum begrenzt die Basis einer gestapelten Spalte auf die Breite der Reihe. */
+.tl-columns__column {
+  min-width: 0;
+  max-width: 100%;
+}

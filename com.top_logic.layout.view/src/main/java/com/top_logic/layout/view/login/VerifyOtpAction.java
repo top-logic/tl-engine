@@ -16,23 +16,37 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DialogResult;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that verifies the one-time code entered in the MFA step of the login flow and,
- * on success, completes the deferred login.
+ * {@link ViewAction} that verifies the one-time code entered in the one-time-code or enrollment
+ * dialog and, on success, completes the step the dialog belongs to.
  *
  * <p>
  * Reads the code from its input (the transient {@link LoginAction#OTP_ENTRY_TYPE} form model), the
  * TOTP secret from the dialog's {@link LoginAction#SECRET_CHANNEL} channel and the account from its
  * {@link LoginAction#ACCOUNT_CHANNEL} channel. When {@link Config#getPersist() persist} is set (the
- * enrollment case) the just-confirmed secret is stored on the account before the login proceeds.
+ * enrollment case) the just-confirmed secret is stored on the account, replacing a secret stored
+ * before.
+ * </p>
+ *
+ * <p>
+ * In the login flow - the window is not logged in yet - a valid code completes the deferred login.
+ * In a window that is already logged in - an enrollment the user started from their settings - the
+ * window keeps its session: the dialog closes and the user is told that the second factor is set
+ * up, or - where the confirmed secret took the place of a stored one - that the authenticator app
+ * was changed.
  * </p>
  *
  * @implNote Verification is delegated to {@link MfaSupport#isValidCode(Password, String)}; the
@@ -40,7 +54,9 @@ import com.top_logic.util.error.TopLogicException;
  *           on {@link Person#MFA_SECRET_ATTR}.
  *           The codes checked against one secret are counted by the {@link LoginFailuresModule}
  *           (key {@link LoginFailuresModule#secretKey(Password)}): after repeated wrong codes,
- *           further codes are refused for a growing time without being checked.
+ *           further codes are refused for a growing time without being checked. Whether the window
+ *           is in the login flow is {@link TLContext#isAnonymous()}, the check that offers the login
+ *           command to a window ({@link AnonymousOnly}).
  */
 @InApp
 public class VerifyOtpAction implements ViewAction {
@@ -101,15 +117,29 @@ public class VerifyOtpAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.MFA_INVALID_CODE);
 		}
 
+		// What the user is told: a secret taking the place of a stored one changes the authenticator
+		// app, every other confirmation sets the second factor up.
+		ResKey1 done = _persist && account.getMFASecret() != null
+			? I18NConstants.MFA_CHANGED__USER
+			: I18NConstants.MFA_ENABLED__USER;
+
 		if (_persist) {
 			try (Transaction tx = account.tKnowledgeBase()
-				.beginTransaction(I18NConstants.MFA_ENABLED__USER.fill(account.getName()))) {
+				.beginTransaction(done.fill(account.getName()))) {
 				account.tUpdateByName(Person.MFA_SECRET_ATTR, secret);
 				tx.commit();
 			}
 		}
 
-		LoginAction.completeLogin(context, account.getName());
+		if (TLContext.isAnonymous()) {
+			LoginAction.completeLogin(context, account.getName());
+		} else {
+			DialogManager dialogManager = context.getDialogManager();
+			if (dialogManager != null) {
+				dialogManager.closeTopDialog(DialogResult.ok(null));
+			}
+			ViewMessages.info(context, done.fill(account.getName()));
+		}
 		return input;
 	}
 
@@ -128,7 +158,8 @@ public class VerifyOtpAction implements ViewAction {
 	}
 
 	/**
-	 * Completes the login, switching the session to the authenticated user.
+	 * Completes the login, switching the window to the authenticated user, or closes the
+	 * enrollment dialog of a logged-in window.
 	 */
 	@Override
 	public boolean changesViewState() {

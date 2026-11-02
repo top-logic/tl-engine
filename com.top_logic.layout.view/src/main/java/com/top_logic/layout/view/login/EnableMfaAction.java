@@ -38,6 +38,9 @@ import com.top_logic.util.error.TopLogicException;
  *           {@link com.top_logic.model.TLObject#tUpdateByName(String, Object)} on
  *           {@link Person#MFA_SECRET_ATTR} (avoiding the broken
  *           {@link Person#setMFASecret(Password)}).
+ *
+ * @see DisableMfaAction
+ * @see ResetMfaAction
  */
 public class EnableMfaAction implements ViewAction {
 

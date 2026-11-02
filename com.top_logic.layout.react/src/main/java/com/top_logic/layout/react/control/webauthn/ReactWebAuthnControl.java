@@ -5,15 +5,23 @@
  */
 package com.top_logic.layout.react.control.webauthn;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.json.JSON;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
+import com.top_logic.layout.react.protocol.FunctionCall;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
@@ -45,6 +53,25 @@ import com.top_logic.tool.execution.ExecutableState;
  * command and the error name {@link #INSECURE_CONTEXT_ERROR} or {@link #WEB_AUTHN_UNAVAILABLE_ERROR}.
  * The command reaches {@link WebAuthnListener#onUnavailable(ReactContext, String, String)}, whose
  * owner explains the cause in the tooltip.
+ * </p>
+ *
+ * <p>
+ * When it is displayed, the client reports the origin of the page once with the {@link #CMD_ORIGIN}
+ * command. The control keeps it as {@link #getPageOrigin()} and hands it to
+ * {@link WebAuthnListener#onPageOrigin(ReactContext, String)}, whose owner checks it against the
+ * origins its relying party accepts before offering a ceremony.
+ * </p>
+ *
+ * <p>
+ * The owner can tell the browser which credentials of its relying party are no longer valid, so
+ * that the browser or the password manager removes or hides them:
+ * {@link #signalUnknownCredential(String, String)} and
+ * {@link #signalAllAcceptedCredentials(String, String, Collection)} call the corresponding
+ * functions of the Web Authentication Signal API ({@code PublicKeyCredential.signalUnknownCredential()},
+ * {@code PublicKeyCredential.signalAllAcceptedCredentials()}). A signal is a one-time
+ * {@link FunctionCall} event to the client function {@link #CLIENT_FUNCTION}, not a part of the
+ * state; it is sent whatever the state of the button, also while no ceremony runs. A browser
+ * without the Signal API ignores it.
  * </p>
  *
  * <p>
@@ -134,7 +161,58 @@ public class ReactWebAuthnControl extends ReactControl {
 	/** Command sent shortly before the {@link #setOptions(String) options} expire, without arguments. */
 	public static final String CMD_REFRESH = "refresh";
 
+	/**
+	 * Command sent once when the client is displayed, with the origin of its page, see
+	 * {@link WebAuthnOriginArguments}.
+	 */
+	public static final String CMD_ORIGIN = "origin";
+
+	/** The global object of the client holding {@link #CLIENT_FUNCTION}. */
+	public static final String CLIENT_NAMESPACE = "TLReact";
+
+	/**
+	 * The client function receiving a signal: called with the name of the signal (e.g.
+	 * {@link #SIGNAL_UNKNOWN_CREDENTIAL}) and its options object.
+	 */
+	public static final String CLIENT_FUNCTION = "webAuthnSignal";
+
+	/**
+	 * Name of the signal that one credential is unknown to the relying party, the name of the
+	 * function {@code PublicKeyCredential.signalUnknownCredential()}; options {@link #RP_ID} and
+	 * {@link #CREDENTIAL_ID}.
+	 *
+	 * @see #signalUnknownCredential(String, String)
+	 */
+	public static final String SIGNAL_UNKNOWN_CREDENTIAL = "signalUnknownCredential";
+
+	/**
+	 * Name of the signal listing all credentials the relying party accepts for a user, the name of
+	 * the function {@code PublicKeyCredential.signalAllAcceptedCredentials()}; options
+	 * {@link #RP_ID}, {@link #USER_ID} and {@link #ALL_ACCEPTED_CREDENTIAL_IDS}.
+	 *
+	 * @see #signalAllAcceptedCredentials(String, String, Collection)
+	 */
+	public static final String SIGNAL_ALL_ACCEPTED_CREDENTIALS = "signalAllAcceptedCredentials";
+
+	/** Option of a signal: the ID of the relying party. */
+	public static final String RP_ID = "rpId";
+
+	/** Option of {@link #SIGNAL_UNKNOWN_CREDENTIAL}: the base64url-encoded credential ID. */
+	public static final String CREDENTIAL_ID = "credentialId";
+
+	/** Option of {@link #SIGNAL_ALL_ACCEPTED_CREDENTIALS}: the base64url-encoded user handle. */
+	public static final String USER_ID = "userId";
+
+	/**
+	 * Option of {@link #SIGNAL_ALL_ACCEPTED_CREDENTIALS}: the list of the base64url-encoded IDs of
+	 * all credentials the relying party accepts for the user.
+	 */
+	public static final String ALL_ACCEPTED_CREDENTIAL_IDS = "allAcceptedCredentialIds";
+
 	private final WebAuthnListener _listener;
+
+	/** The origin the client reported with {@link #CMD_ORIGIN}, {@code null} before. */
+	private String _pageOrigin;
 
 	/**
 	 * Creates a {@link ReactWebAuthnControl}.
@@ -265,6 +343,92 @@ public class ReactWebAuthnControl extends ReactControl {
 	}
 
 	/**
+	 * The origin of the page that displays this control, as the client reported it with
+	 * {@link #CMD_ORIGIN}; {@code null} as long as the client has not reported it.
+	 *
+	 * @see WebAuthnListener#onPageOrigin(ReactContext, String)
+	 */
+	public String getPageOrigin() {
+		return _pageOrigin;
+	}
+
+	/**
+	 * Tells the browser that a credential is unknown to the relying party, e.g. because it was
+	 * deleted on the server or its registration was refused after the authenticator had stored it.
+	 *
+	 * <p>
+	 * The browser calls {@code PublicKeyCredential.signalUnknownCredential()}, so that the
+	 * authenticator or password manager may remove the credential. A browser without that function
+	 * ignores the signal.
+	 * </p>
+	 *
+	 * @param rpId
+	 *        The ID of the relying party the credential belongs to; it must match the page.
+	 * @param credentialId
+	 *        The base64url-encoded ID of the credential.
+	 */
+	public void signalUnknownCredential(String rpId, String credentialId) {
+		Map<String, Object> options = new LinkedHashMap<>();
+		options.put(RP_ID, rpId);
+		options.put(CREDENTIAL_ID, credentialId);
+		signal(SIGNAL_UNKNOWN_CREDENTIAL, options);
+	}
+
+	/**
+	 * Tells the browser which credentials the relying party accepts for a user.
+	 *
+	 * <p>
+	 * The browser calls {@code PublicKeyCredential.signalAllAcceptedCredentials()}, so that the
+	 * authenticator or password manager may remove or hide the credentials of this user that are
+	 * not listed. A browser without that function ignores the signal.
+	 * </p>
+	 *
+	 * @param rpId
+	 *        The ID of the relying party; it must match the page.
+	 * @param userId
+	 *        The base64url-encoded user handle the credentials were registered for.
+	 * @param allAcceptedCredentialIds
+	 *        The base64url-encoded IDs of all credentials of the user the relying party accepts.
+	 */
+	public void signalAllAcceptedCredentials(String rpId, String userId, Collection<String> allAcceptedCredentialIds) {
+		Map<String, Object> options = new LinkedHashMap<>();
+		options.put(RP_ID, rpId);
+		options.put(USER_ID, userId);
+		options.put(ALL_ACCEPTED_CREDENTIAL_IDS, new ArrayList<>(allAcceptedCredentialIds));
+		signal(SIGNAL_ALL_ACCEPTED_CREDENTIALS, options);
+	}
+
+	/**
+	 * Sends a one-time signal to the browser of this control's window: a call of the client
+	 * function {@link #CLIENT_FUNCTION} with the name of the signal and its options.
+	 */
+	private void signal(String name, Map<String, Object> options) {
+		SSEUpdateQueue queue = getReactContext().getSSEQueue();
+		if (queue == null) {
+			return;
+		}
+		queue.enqueue(FunctionCall.create()
+			.setFunctionRef(CLIENT_NAMESPACE)
+			.setFunctionName(CLIENT_FUNCTION)
+			.setArguments(JSON.toString(List.of(name, options))));
+	}
+
+	/**
+	 * Handles the report of the client of the origin of its page.
+	 *
+	 * <p>
+	 * Accepted also while the control is {@link #setDisabled(boolean) disabled} or hidden, since it
+	 * describes the page, not an answer to a ceremony.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_ORIGIN, technical = true)
+	HandlerResult handleOrigin(ReactContext context, WebAuthnOriginArguments args) {
+		_pageOrigin = args.getOrigin();
+		_listener.onPageOrigin(context, _pageOrigin);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
 	 * Handles a failed or cancelled ceremony.
 	 */
 	@ReactCommandHandler(CMD_FAILURE)
@@ -328,6 +492,7 @@ public class ReactWebAuthnControl extends ReactControl {
 		result.add(CMD_FAILURE);
 		result.add(CMD_REFRESH);
 		result.add(CMD_UNAVAILABLE);
+		result.add(CMD_ORIGIN);
 		return result;
 	}
 

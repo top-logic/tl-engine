@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -19,8 +17,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
+import test.com.top_logic.security.passkey.PasskeyTestHost;
 import test.com.top_logic.security.passkey.SoftwareAuthenticator;
-import test.com.top_logic.security.passkey.TestPasskeyService;
 
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -69,15 +67,13 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 
 	private ReactContext _context;
 
-	private HttpServletRequest _request;
-
 	private PasskeySecondFactor _passkeyMethod;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
-		_request = TestPasskeyService.request("http", TestPasskeyService.HOST, TestPasskeyService.PORT);
+		PasskeyTestHost.useDefault();
 
 		PasskeySecondFactor.Config<?> config = TypedConfiguration.newConfigItem(PasskeySecondFactor.Config.class);
 		config.setName("passkey");
@@ -204,9 +200,9 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 	}
 
 	private Passkey register(Person account) throws Exception {
-		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(TestPasskeyService.ORIGIN, 0);
+		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(PasskeyTestHost.ORIGIN, 0);
 		PasskeyService service = PasskeyService.getInstance();
-		PendingRegistration registration = service.startRegistration(account, _request);
+		PendingRegistration registration = service.startRegistration(account);
 		return service.finishRegistration(registration, authenticator.create(registration.toOptionsJson()), LABEL);
 	}
 
@@ -261,6 +257,7 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 	 * The suite, with a knowledge base holding the passkey model.
 	 */
 	public static Test suite() {
+		PasskeyTestHost.init();
 		return KBSetup.getSingleKBTest(
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestDeletePasskeyAction.class),

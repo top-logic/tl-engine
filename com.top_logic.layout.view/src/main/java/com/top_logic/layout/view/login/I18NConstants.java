@@ -85,6 +85,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey VERIFY_PASSWORD_FIELD_LABEL;
 
 	/**
+	 * @en Confirm with your authenticator app
+	 */
+	public static ResKey VERIFY_SECOND_FACTOR_TITLE;
+
+	/**
+	 * @en Please enter the code your authenticator app currently shows to confirm this change.
+	 */
+	public static ResKey VERIFY_SECOND_FACTOR_MESSAGE;
+
+	/**
+	 * @en Code
+	 */
+	public static ResKey VERIFY_SECOND_FACTOR_FIELD_LABEL;
+
+	/**
 	 * @en The password is not correct. Please try again.
 	 */
 	public static ResKey ERROR_WRONG_PASSWORD;
@@ -121,6 +136,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 MFA_ENABLED__USER;
 
 	/**
+	 * @en Changed the authenticator app of "{0}".
+	 */
+	public static ResKey1 MFA_CHANGED__USER;
+
+	/**
 	 * @en No account selected to configure multi-factor authentication for.
 	 */
 	public static ResKey MFA_NO_ACCOUNT;
@@ -134,6 +154,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Disabled multi-factor authentication for "{0}".
 	 */
 	public static ResKey1 MFA_DISABLED__USER;
+
+	/**
+	 * @en Removed the authenticator app of "{0}".
+	 */
+	public static ResKey1 MFA_RESET__USER;
 
 	/**
 	 * @en Removed the authenticator app from "{0}". The account confirms its logins with its other

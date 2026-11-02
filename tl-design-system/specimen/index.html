@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Grundklassen</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/specimen/probe.theme.css">
+<style>
+  .specimen { display: grid; gap: var(--tl-space-lg); padding: var(--tl-space-xl); max-width: 64rem; margin: 0 auto; }
+  .specimen__bar { display: flex; gap: var(--tl-space-sm); align-items: center; }
+  .specimen__panel { background: var(--tl-surface-layer); border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+    border-radius: var(--tl-radius-md); padding: var(--tl-space-md); }
+  .specimen__row { display: flex; gap: var(--tl-space-sm); flex-wrap: wrap; align-items: center; }
+  .specimen__swatch { width: var(--tl-size-control); height: var(--tl-size-control); border-radius: var(--tl-radius-sm);
+    border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+  .specimen__field { height: var(--tl-size-control); padding: 0 var(--tl-space-control-x); border-radius: var(--tl-radius-sm);
+    border: var(--tl-border-width-sm) solid var(--tl-border-control); background: var(--tl-surface-field); color: var(--tl-text-primary); }
+  .specimen__field::placeholder { color: var(--tl-text-placeholder); }
+  .specimen__button { height: var(--tl-size-control); padding: 0 var(--tl-space-control-x); border-radius: var(--tl-radius-sm);
+    border: none; background: var(--tl-surface-brand); color: var(--tl-text-on-brand); cursor: pointer; }
+  .specimen__button:hover { background: var(--tl-surface-brand-hover); color: var(--tl-text-on-brand-hover); }
+  .specimen__status { padding: var(--tl-space-xs) var(--tl-space-sm); border-radius: var(--tl-radius-sm); border-left: var(--tl-border-width-accent) solid; }
+  table { border-collapse: collapse; }
+  td, th { height: var(--tl-size-row); padding: 0 var(--tl-space-control-x); border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator); text-align: left; }
+  td:last-child { text-align: right; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <span class="tl-type-heading-lg">Grundklassen</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+    <label class="tl-type-label">Theme
+      <select id="theme" class="specimen__field"><option value="">TopLogic</option><option value="probe">probe</option></select>
+    </label>
+    <a class="tl-type-label" href="/src/components/button/button.spec.html">Button →</a>
+    <a class="tl-type-label" href="/src/components/pill/pill.spec.html">Pill →</a>
+    <a class="tl-type-label" href="/src/components/avatar/avatar.spec.html">Avatar →</a>
+    <a class="tl-type-label" href="/src/components/progress/progress.spec.html">Progress →</a>
+    <a class="tl-type-label" href="/src/components/icon/icon.spec.html">Icon →</a>
+    <a class="tl-type-label" href="/src/components/field/field.spec.html">Feld →</a>
+    <a class="tl-type-label" href="/src/components/choice/choice.spec.html">Auswahl →</a>
+    <a class="tl-type-label" href="/src/components/select/select.spec.html">Select →</a>
+    <a class="tl-type-label" href="/src/components/form/form.spec.html">Formular →</a>
+    <a class="tl-type-label" href="/src/components/alert/alert.spec.html">Alert →</a>
+    <a class="tl-type-label" href="/src/components/badge/badge.spec.html">Badge →</a>
+    <a class="tl-type-label" href="/src/components/divider/divider.spec.html">Divider →</a>
+    <a class="tl-type-label" href="/src/components/toggle/toggle.spec.html">Toggle →</a>
+    <a class="tl-type-label" href="/src/components/status/status.spec.html">Status →</a>
+    <a class="tl-type-label" href="/src/components/reorder-list/reorder-list.spec.html">Liste →</a>
+    <a class="tl-type-label" href="/src/components/menu/menu.spec.html">Menu →</a>
+    <a class="tl-type-label" href="/src/components/toolbar/toolbar.spec.html">Toolbar →</a>
+    <a class="tl-type-label" href="/src/components/tabs/tabs.spec.html">Tabs →</a>
+    <a class="tl-type-label" href="/src/components/breadcrumb/breadcrumb.spec.html">Breadcrumb →</a>
+    <a class="tl-type-label" href="/src/components/skeleton/skeleton.spec.html">Skeleton →</a>
+    <a class="tl-type-label" href="/src/components/text/text.spec.html">Text →</a>
+    <a class="tl-type-label" href="/src/components/columns/columns.spec.html">Spalten →</a>
+    <a class="tl-type-label" href="/src/components/table/table.spec.html">Tabelle →</a>
+    <a class="tl-type-label" href="/src/components/tree/tree.spec.html">Baum →</a>
+    <a class="tl-type-label" href="/src/components/dialog/dialog.spec.html">Dialog →</a>
+    <a class="tl-type-label" href="/src/components/drawer/drawer.spec.html">Drawer →</a>
+    <a class="tl-type-label" href="/src/components/snackbar/snackbar.spec.html">Snackbar →</a>
+    <a class="tl-type-label" href="/src/components/notice-bar/notice-bar.spec.html">NoticeBar →</a>
+    <a class="tl-type-label" href="/src/components/overlay/overlay.spec.html">Overlay →</a>
+    <a class="tl-type-label" href="/src/components/media/media.spec.html">Media →</a>
+    <a class="tl-type-label" href="/src/components/prose/prose.spec.html">Prose →</a>
+    <a class="tl-type-label" href="/src/components/file/file.spec.html">File →</a>
+    <a class="tl-type-label" href="/src/components/steps/steps.spec.html">Steps →</a>
+    <a class="tl-type-label" href="/src/components/job-status/job-status.spec.html">JobStatus →</a>
+    <a class="tl-type-label" href="/src/components/calendar/calendar.spec.html">Kalender →</a>
+    <a class="tl-type-label" href="/src/components/board/board.spec.html">Board →</a>
+    <a class="tl-type-label" href="/src/components/dashboard/dashboard.spec.html">Dashboard →</a>
+    <a class="tl-type-label" href="/src/components/value-list/value-list.spec.html">Werteliste →</a>
+    <a class="tl-type-label" href="/src/components/tooltip/tooltip.spec.html">Tooltip →</a>
+    <a class="tl-type-label" href="/src/components/rich-text/rich-text.spec.html">Rich Text →</a>
+    <a class="tl-type-label" href="/src/components/compact-field/compact-field.spec.html">Compact field →</a>
+    <a class="tl-type-label" href="/src/components/chart/chart.spec.html">Chart →</a>
+    <a class="tl-type-label" href="/src/components/app-shell/app-shell.spec.html">AppShell →</a>
+    <a class="tl-type-label" href="/src/components/app-bar/app-bar.spec.html">AppBar →</a>
+    <a class="tl-type-label" href="/src/components/sidebar/sidebar.spec.html">Sidebar →</a>
+    <a class="tl-type-label" href="/src/components/bottom-bar/bottom-bar.spec.html">BottomBar →</a>
+    <a class="tl-type-label" href="/src/components/panel/panel.spec.html">Panel →</a>
+    <a class="tl-type-label" href="/src/components/card/card.spec.html">Karte →</a>
+    <a class="tl-type-label" href="/src/components/accordion/accordion.spec.html">Accordion →</a>
+    <a class="tl-type-label" href="/src/components/layout/layout.spec.html">Reihen →</a>
+    <a class="tl-type-label" href="/src/components/split/split.spec.html">Split →</a>
+    <a class="tl-type-label" href="/src/components/wizard/wizard.spec.html">Wizard →</a>
+    <a class="tl-type-label" href="/src/components/adaptive-detail/adaptive-detail.spec.html">Master-Detail →</a>
+    <a class="tl-type-label" href="/src/components/swatch/swatch.spec.html">Swatch →</a>
+    <a class="tl-type-label" href="/src/components/picker/picker.spec.html">Picker →</a>
+    <a class="tl-type-label" href="/src/components/color-picker/color-picker.spec.html">Farb-Picker →</a>
+    <a class="tl-type-label" href="/src/components/icon-picker/icon-picker.spec.html">Icon-Picker →</a>
+    <a class="tl-type-label" href="/src/components/slider/slider.spec.html">Slider →</a>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-display">Display 32</p>
+    <p class="tl-type-heading-lg">Heading lg 24 — Seitentitel</p>
+    <p class="tl-type-heading-md">Heading md 20 — Dialogtitel</p>
+    <p class="tl-type-heading-sm">Heading sm 16 — Abschnittstitel</p>
+    <p class="tl-type-body">Body 14 — alles Gelesene. Der Rahmen um ein Feld schuldet 3,0; die Zeile darunter trennt nur.</p>
+    <p class="tl-type-body-strong">Body strong 14 — Hervorhebung</p>
+    <p class="tl-type-label">Label 12 — Feldbeschriftung, Hilfstext</p>
+    <p class="tl-type-label-strong">Label strong 12 — Spaltenkopf</p>
+    <p class="tl-type-code">code 14 — {"tl": "script"} 0O 1lI</p>
+  </section>
+
+  <section class="specimen__panel">
+    <div class="specimen__row">
+      <input class="specimen__field tl-type-body" placeholder="Platzhalter">
+      <button class="specimen__button tl-type-body-strong">Speichern</button>
+      <a href="#" class="tl-type-body" style="color: var(--tl-text-link)">Link</a>
+    </div>
+    <p class="tl-type-label" style="color: var(--tl-text-helper)">Tab drücken: der Fokusring liegt außen, 2 px, Offset 2 px.</p>
+  </section>
+
+  <section class="specimen__panel">
+    <table class="tl-type-body">
+      <thead><tr><th class="tl-type-label-strong">Position</th><th class="tl-type-label-strong">Betrag</th></tr></thead>
+      <tbody>
+        <tr><td>Wartung</td><td class="tl-nums">1.234,00</td></tr>
+        <tr><td>Lizenz</td><td class="tl-nums">11.111,11</td></tr>
+        <tr><td>Support</td><td class="tl-nums">808,80</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="specimen__panel specimen__row">
+    <div class="specimen__status tl-type-body" style="background: var(--tl-status-error-subtle); border-color: var(--tl-status-error-border); color: var(--tl-text-primary)">Fehler</div>
+    <div class="specimen__status tl-type-body" style="background: var(--tl-status-warning-subtle); border-color: var(--tl-status-warning-border); color: var(--tl-text-primary)">Warnung</div>
+    <div class="specimen__status tl-type-body" style="background: var(--tl-status-success-subtle); border-color: var(--tl-status-success-border); color: var(--tl-text-primary)">Erfolg</div>
+    <div class="specimen__status tl-type-body" style="background: var(--tl-status-info-subtle); border-color: var(--tl-status-info-border); color: var(--tl-text-primary)">Info</div>
+    <div class="specimen__status tl-type-body" style="background: var(--tl-surface-brand-subtle); border-color: var(--tl-border-interactive); color: var(--tl-text-link)">Marke getönt</div>
+  </section>
+
+  <section class="specimen__panel specimen__row" id="swatches"></section>
+</main>
+<script type="module">
+  const html = document.documentElement;
+  mode.onchange = () => html.dataset.tlMode = mode.checked ? 'dark' : 'light';
+  density.onchange = () => html.dataset.tlDensity = density.checked ? 'compact' : 'normal';
+  theme.onchange = () => theme.value ? html.dataset.tlTheme = theme.value : delete html.dataset.tlTheme;
+  const css = await (await fetch('/dist/tokens.css')).text();
+  const names = [...new Set([...css.matchAll(/--tl-(surface-[a-z-]+|status-[a-z]+-surface|status-[a-z]+-subtle)(?=:)/g)].map((m) => m[1]))];
+  swatches.innerHTML = names.map((n) => `<div title="${n}" class="specimen__swatch" style="background: var(--tl-${n})"></div>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Split</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { height: 12rem; }
+  .stage .tl-split__pane { flex: 1 1 0; min-width: 0; min-height: 0; }
+  .stage .tl-split__pane[data-tl-state~="collapsed"] { flex: 0 0 auto; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Split</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Waagrecht: Griff mit Tastatur (Pfeile, Home, End)</p>
+    <div class="stage"><div class="tl-split tl-split--horizontal">
+      <div class="tl-split__pane" id="s1-a"><div class="tl-panel"><div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Liste</h2></div><div class="tl-panel__body"><div class="tl-inset tl-inset--panel"><p class="tl-type-body">Inhalt von Liste.</p></div></div></div></div>
+      <div class="tl-split__handle" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="s1-a" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" aria-label="Größe der Bereiche ändern"></div>
+      <div class="tl-split__pane" id="s1-b"><div class="tl-panel"><div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Detail</h2></div><div class="tl-panel__body"><div class="tl-inset tl-inset--panel"><p class="tl-type-body">Inhalt von Detail.</p></div></div></div></div>
+    </div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Senkrecht</p>
+    <div class="stage"><div class="tl-split tl-split--vertical">
+      <div class="tl-split__pane" id="s2-a"><div class="tl-panel"><div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Oben</h2></div><div class="tl-panel__body"><div class="tl-inset tl-inset--panel"><p class="tl-type-body">Inhalt von Oben.</p></div></div></div></div>
+      <div class="tl-split__handle" role="separator" tabindex="0" aria-orientation="horizontal" aria-controls="s2-a" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="Größe der Bereiche ändern"></div>
+      <div class="tl-split__pane" id="s2-b"><div class="tl-panel"><div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Unten</h2></div><div class="tl-panel__body"><div class="tl-inset tl-inset--panel"><p class="tl-type-body">Inhalt von Unten.</p></div></div></div></div>
+    </div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Waagrecht, erste Fläche eingeklappt: schmale Spalte, Titel senkrecht</p>
+    <div class="stage"><div class="tl-split tl-split--horizontal">
+      <div class="tl-split__pane" data-tl-state="collapsed" id="s3-a"><div class="tl-panel" data-tl-state="minimized"><div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Navigation</h2><div class="tl-titlebar__buttons"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Wiederherstellen" aria-expanded="false" data-tooltip="text:Wiederherstellen"><i class="tl-icon-sm bi bi-window-stack tl-button__icon" aria-hidden="true"></i></button></div></div></div></div>
+      <div class="tl-split__pane" id="s3-b"><div class="tl-panel"><div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Inhalt</h2></div><div class="tl-panel__body"><div class="tl-inset tl-inset--panel"><p class="tl-type-body">Inhalt von Inhalt.</p></div></div></div></div>
+    </div></div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

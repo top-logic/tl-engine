@@ -1,0 +1,69 @@
+/* Tooltip — Spec 2026-10-20 Welle 5d §5. Der Hinweis an einem Element (bridge/tooltip-host.ts, TooltipPopover.tsx):
+   die einzige invertierte Fläche des Pakets — ein Hinweis, kein Menü. Die Lage setzt floating-ui inline; hier
+   stehen Fläche, Ebene, Grenzen und Abstände. Die Schrift tragen die Typo-Klassen an Überschrift und Text.
+   Der Schatten steht am Tooltip (box-shadow aus shadow-popover, Plan-Review K4), der Pfeil hat keinen:
+   drop-shadow() nimmt die zweischichtige Schattenliste nicht. Ebene layer-tooltip: über dem Popover, in dem das
+   erklärte Element liegen kann (Menüeintrag, Option), und über dem Toast. */
+
+@keyframes tl-tooltip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tl-tooltip {
+  z-index: var(--tl-layer-tooltip);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-width: var(--tl-size-13);
+  margin: 0;
+  padding: 0;
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-inverse);
+  box-shadow: var(--tl-shadow-popover);
+  color: var(--tl-text-inverse);
+  pointer-events: none;
+  animation: tl-tooltip-in var(--tl-duration-fast) var(--tl-easing-entrance);
+}
+.tl-tooltip[hidden] { display: none; }
+
+/* Interaktiv (Text mit Link, Text zum Kopieren): der Zeiger darf hinein, der Text ist auswählbar. */
+.tl-tooltip[data-tl-state~="interactive"] {
+  pointer-events: auto;
+  cursor: text;
+  user-select: text;
+}
+
+/* Die Überschrift schließt oben an, der Text darunter trägt den Abstand zu ihr. */
+.tl-tooltip__caption {
+  padding: var(--tl-space-2xs) var(--tl-space-sm) 0;
+}
+
+/* Lange Wörter und Adressen brechen um, statt die Breite zu sprengen. */
+.tl-tooltip__body {
+  padding: var(--tl-space-2xs) var(--tl-space-sm);
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: start;
+}
+
+/* Erlaubtes HTML vom Server erbt Farbe und Schrift des Tooltips; der erste und letzte Block schließen bündig an. */
+.tl-tooltip__body * {
+  color: inherit;
+}
+
+.tl-tooltip__body > :first-child {
+  margin-block-start: 0;
+}
+
+.tl-tooltip__body > :last-child {
+  margin-block-end: 0;
+}
+
+.tl-tooltip__body :is(ol, ul) {
+  padding-inline-start: var(--tl-space-sm);
+}
+
+.tl-tooltip__arrow {
+  fill: var(--tl-surface-inverse);
+}

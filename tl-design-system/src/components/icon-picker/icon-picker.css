@@ -1,0 +1,64 @@
+/* Icon-Picker — Spec 2026-10-17 Welle 5a §5. Der Inhalt des Icon-Popups (Hülle: tl-picker, Feldknopf: tl-swatch,
+   Laden, leer, Fehler: tl-status). Das Popup ist size-13 im Quadrat und lässt sich von Hand größer ziehen. */
+
+.tl-picker.tl-icon-picker {
+  inline-size: var(--tl-size-13);
+  block-size: var(--tl-size-13);
+  overflow: hidden;
+  resize: both;
+}
+
+.tl-icon-picker__filter {
+  flex-shrink: 0;
+}
+
+/* Das Raster nimmt den Rest des Popups; der Rand von space-2xs hält den Fokusring der Randzellen im overflow. */
+.tl-icon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--tl-size-control));
+  align-content: start;
+  flex: 1 1 auto;
+  gap: var(--tl-space-2xs);
+  min-block-size: 0;
+  padding: var(--tl-space-2xs);
+  scroll-padding: var(--tl-space-xs); /* Fokus hält die Zelle samt Ring im Sichtfeld. */
+  overflow: auto;
+}
+.tl-icon-picker__grid[hidden] { display: none; }
+
+.tl-icon-picker__cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-control);
+  block-size: var(--tl-size-control);
+  border-radius: var(--tl-radius-sm);
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+.tl-icon-picker__cell[hidden] { display: none; }
+
+.tl-icon-picker__cell:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Gewählt ist eine Zelle im Raster: Markenton und Ring (innerer Schatten rundum), keine Kante am Anfang. */
+.tl-icon-picker__cell[aria-selected="true"] {
+  background: var(--tl-surface-selected);
+  box-shadow: inset 0 0 0 var(--tl-border-width-md) var(--tl-border-selected);
+}
+
+.tl-icon-picker__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+}
+.tl-icon-picker__advanced[hidden] { display: none; }
+
+.tl-icon-picker__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+.tl-icon-picker__preview[hidden] { display: none; }

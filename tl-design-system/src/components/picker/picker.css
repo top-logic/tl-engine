@@ -1,0 +1,34 @@
+/* Picker — Spec 2026-10-17 Welle 5a §3. Die Hülle der Popups von Farb- und Icon-Picker: eine Spalte aus Reitern
+   (tl-tabs), Inhalt und Knopfleiste (tl-button-bar) auf einem tl-popover. Keine Breite — das Popup richtet sich nach
+   seinem Inhalt. Den Rand der Reiter liefert tl-tabs. */
+
+.tl-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+}
+.tl-picker[hidden] { display: none; }
+
+/* Die Reiter nehmen den Rest der Hülle und schrumpfen mit ihr: der Inhalt im Reiterfeld (Raster) scrollt selbst,
+   statt dass das Popup als Ganzes scrollt. */
+.tl-picker__tabs {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Der Rand von space-2xs im Reiterfeld hält den Fokusring der Randelemente (Filter, Eingaben, Zellen) im
+   overflow des Feldes. */
+.tl-picker__tabs > .tl-tabs__panel {
+  padding: var(--tl-space-2xs);
+  scroll-padding: var(--tl-space-xs);
+}
+
+/* Ein Reiterfeld mit Mischer reserviert die Bahn des Scrollbalkens: erscheint er erst beim Schrumpfen, verengt er das
+   Feld, und das Popup scrollt auch seitlich. Das Raster des Icon-Pickers scrollt selbst und braucht das nicht. */
+.tl-picker__tabs > .tl-tabs__panel:has(.tl-color-picker__mixer) {
+  scrollbar-gutter: stable;
+}
+
+.tl-picker__actions {
+  flex-shrink: 0;
+}

@@ -1,0 +1,425 @@
+/* Auswahl — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“.
+   Checkbox, Radio und Schalter zeichnen sich aus Tokens (appearance: none), nicht aus Browser-
+   Standard und Akzentfarbe. Angekreuzt ist die Marke, der Haken die Beschriftung auf der Marke.
+   Gewählt ist, was das Attribut sagt: :checked, :indeterminate, aria-checked, aria-pressed. Die
+   Trefferfläche ist eine Control-Höhe; das Label gehört dazu. */
+
+.tl-checkbox,
+.tl-radio {
+  appearance: none;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-content: center;
+  /* Auf einer Textzeile (die Eingabe im Formularfeld) mittig statt auf der Grundlinie: die eines
+     inline-grid kommt vom ersten Kind, und das ist erst mit Haken das ::after — ohne diese Zeile sprang
+     das Kästchen beim Ankreuzen um 2,6 px (Sichtprüfung 12.10.). */
+  vertical-align: middle;
+  width: var(--tl-size-choice);
+  height: var(--tl-size-choice);
+  margin: 0;
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  background: var(--tl-surface-field);
+  cursor: pointer;
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+.tl-checkbox[hidden] { display: none; }
+.tl-radio[hidden] { display: none; }
+
+.tl-checkbox {
+  border-radius: var(--tl-radius-sm);
+}
+
+.tl-radio {
+  border-radius: var(--tl-radius-round);
+}
+
+/* Kein Zeigen auf Deaktiviertem und Schreibgeschütztem. :where hält die Spezifität bei (0,2,0), damit
+   Angekreuzt, Fehler und Warnung weiter über dem Zeigen stehen. */
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover {
+  border-color: var(--tl-border-emphasis);
+}
+
+/* Der Hof: beim Zeigen ein Ring um die Marke, beim Drücken ein kräftigerer — docs/skalen.md „Auswahlmarken
+   zeigen einen Hof“, „Höfe sind durchscheinend“. Die Schicht ist durchscheinend: was unter dem Hof liegt,
+   bleibt sichtbar, und er hebt sich auf jedem Grund gleich stark ab. Ein Schatten ohne Versatz und Unschärfe zeichnet nur außerhalb der Marke, verschiebt
+   nichts und folgt ihrer Form: Kreis am Radio, gerundetes Quadrat am Kästchen, Pille am Schalter. Die
+   Ausdehnung füllt die Marke auf die Trefferfläche size-control auf. Auslöser ist die Marke selbst und ihr
+   Label tl-choice — die Trefferfläche ist das Label. Die Wächter wie beim Rand. Der Label-Auslöser
+   steht in :where und bleibt bei (0,1,0), unter dem Drücken an der Marke (0,2,0); das Drücken steht später
+   und gewinnt über das Zeigen. Fokus allein zeigt keinen Hof — der Fokus ist der Ring aus base.css. */
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover,
+:where(.tl-choice:hover) .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])),
+:where(.tl-choice:hover) .tl-radio:where(:not(:disabled):not([aria-readonly="true"])) {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):active,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):active,
+:where(.tl-choice:active) .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])),
+:where(.tl-choice:active) .tl-radio:where(:not(:disabled):not([aria-readonly="true"])) {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-checkbox:checked,
+.tl-checkbox:indeterminate,
+.tl-radio:checked {
+  border-color: var(--tl-surface-brand);
+  background: var(--tl-surface-brand);
+}
+
+/* Der Haken: zwei Ränder eines gedrehten Rechtecks, Anteile des Kästchens. */
+.tl-checkbox:checked::after {
+  content: "";
+  width: calc(var(--tl-size-choice) * 0.3);
+  height: calc(var(--tl-size-choice) * 0.55);
+  border: solid var(--tl-text-on-brand);
+  border-width: 0 var(--tl-border-width-md) var(--tl-border-width-md) 0;
+  transform: translateY(calc(var(--tl-size-choice) * -0.06)) rotate(45deg);
+}
+
+.tl-checkbox:indeterminate::after {
+  content: "";
+  width: calc(var(--tl-size-choice) * 0.5);
+  height: var(--tl-border-width-md);
+  background: var(--tl-text-on-brand);
+}
+
+.tl-radio:checked::after {
+  content: "";
+  width: calc(var(--tl-size-choice) * 0.4);
+  height: calc(var(--tl-size-choice) * 0.4);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-text-on-brand);
+}
+
+/* --- Schalter ---------------------------------------------------------------- */
+
+.tl-checkbox--switch {
+  width: var(--tl-size-switch);
+  border-radius: var(--tl-radius-full);
+  justify-content: start;
+}
+
+.tl-checkbox--switch::after,
+.tl-checkbox--switch:checked::after {
+  content: "";
+  width: var(--tl-size-switch-knob);
+  height: var(--tl-size-switch-knob);
+  margin-inline-start: calc((var(--tl-size-choice) - var(--tl-size-switch-knob)) / 2 - var(--tl-border-width-sm));
+  border: 0;
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-icon-secondary);
+  transform: none;
+  transition: transform var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-checkbox--switch:checked::after {
+  background: var(--tl-text-on-brand);
+  transform: translateX(calc(var(--tl-size-switch) - var(--tl-size-choice)));
+}
+
+/* --- Zustände ----------------------------------------------------------------- */
+
+/* Deaktiviert schlägt Fehler und Warnung: ein deaktiviertes Control trägt keinen Prüfzustand. Am
+   Element selbst gewinnt :disabled durch die Reihenfolge, in Gruppen meiden die Regeln :disabled.
+   Warnung vor Fehler: gleiche Spezifität, der Fehler steht später und gewinnt, wenn beide gesetzt sind. */
+.tl-checkbox[data-tl-state~="warning"],
+.tl-choice-group[data-tl-state~="warning"] .tl-radio:not(:disabled) {
+  border-color: var(--tl-status-warning-border);
+}
+
+.tl-checkbox[aria-invalid="true"],
+.tl-radio[aria-invalid="true"],
+.tl-choice-group[aria-invalid="true"] .tl-radio:not(:disabled) {
+  border-color: var(--tl-status-error-border);
+}
+
+.tl-checkbox:disabled,
+.tl-radio:disabled {
+  border-color: var(--tl-border-disabled);
+  background: var(--tl-surface-disabled);
+  cursor: default;
+}
+
+.tl-checkbox:disabled:checked,
+.tl-radio:disabled:checked {
+  background: var(--tl-border-disabled);
+}
+
+/* Schreibgeschützt ist nicht deaktiviert: das Kästchen trägt aria-readonly statt disabled, die Engine
+   blockiert die Änderung. Die Füllung bleibt die Marke und hält ihren Kontrast; nur der Zeiger sagt,
+   dass hier nichts zu klicken ist. */
+.tl-checkbox[aria-readonly="true"],
+.tl-radio[aria-readonly="true"] {
+  cursor: default;
+}
+
+/* --- Label und Gruppe ------------------------------------------------------------ */
+
+.tl-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-control);
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+.tl-choice[hidden] { display: none; }
+
+.tl-choice:has(:disabled) {
+  color: var(--tl-text-disabled);
+  cursor: default;
+}
+
+.tl-choice:has([aria-readonly="true"]) {
+  cursor: default;
+}
+
+.tl-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--tl-space-control-gap);
+}
+.tl-choice-group[hidden] { display: none; }
+
+/* Untereinander statt nebeneinander (TLChoiceGroup, master #29654): jede Option so breit wie ihr Label,
+   keine umbrechende Reihe. */
+.tl-choice-group--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* --- Segmente ----------------------------------------------------------------- */
+
+/* Einfachwahl: role="radiogroup", Segmente role="radio" mit aria-checked. Mehrfachwahl:
+   role="group", Segmente mit aria-pressed. Das gewählte Segment trägt die Fläche selbst. */
+.tl-segmented {
+  display: inline-flex;
+  min-width: 0;
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-field);
+}
+.tl-segmented[hidden] { display: none; }
+
+.tl-segmented__segment {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  min-height: calc(var(--tl-size-control) - 2 * var(--tl-border-width-sm));
+  padding: 0 var(--tl-space-control-x);
+  border: var(--tl-border-width-sm) solid transparent;
+  border-radius: var(--tl-radius-sm);
+  background: transparent;
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+
+/* Das Label endet mit Ellipse. text-overflow wirkt nicht über einen Flex-Container auf seine Kinder,
+   darum trägt das Label ein eigenes Element. */
+.tl-segmented__label,
+.tl-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Tönung trägt das Segment selbst (data-tl-role), vor Zeigen und Gewählt. */
+/* @tl-roles: brand .tl-segmented__segment */
+/* @tl-roles: status .tl-segmented__segment */
+/* @tl-roles: category .tl-segmented__segment */
+
+.tl-segmented__segment:where(:not(:disabled)):hover {
+  background: var(--tl-surface-interactive-strong);
+}
+
+/* Das Segment liegt auf der Feldfläche: dort rückt die Skala eine Stufe vor wie bei den Knöpfen im Feld
+   (06.10.) — Zeigen -selected, Drücken -active; -hover hielte hell nur 1,01 (Sichtprüfung 12.10.). */
+.tl-segmented__segment:where(:not(:disabled)):active {
+  background: var(--tl-surface-interactive-active);
+}
+
+.tl-segmented__segment[aria-checked="true"],
+.tl-segmented__segment[aria-pressed="true"] {
+  border-color: var(--tl-border-interactive);
+  background: var(--tl-surface-brand-subtle);
+}
+
+/* Warnung vor Fehler: der Fehler steht später und gewinnt. */
+.tl-segmented[data-tl-state~="warning"] {
+  border-color: var(--tl-status-warning-border);
+}
+
+.tl-segmented[aria-invalid="true"],
+.tl-segmented[data-tl-state~="error"] {
+  border-color: var(--tl-status-error-border);
+}
+
+.tl-segmented__segment:disabled {
+  color: var(--tl-text-disabled);
+  cursor: default;
+}
+
+/* Deaktiviert zeigt ein Segment keine Rolle (wie der Chip): ohne Wahl weder Fläche noch Linie der
+   Rolle. Gewählt bleibt es erkennbar. */
+.tl-segmented__segment[data-tl-role]:disabled:not([aria-checked="true"]):not([aria-pressed="true"]) {
+  border-color: transparent;
+  background: transparent;
+}
+
+/* --- Chips -------------------------------------------------------------------- */
+
+.tl-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-xs);
+}
+.tl-chip-group[hidden] { display: none; }
+
+.tl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--tl-size-control-sm);
+  padding: 0 var(--tl-space-sm);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-field);
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+.tl-chip[hidden] { display: none; }
+
+/* Der leisere Text hinter der Beschriftung, etwa die Größe einer Datei (Part Chip, #29787): er kürzt nicht. */
+.tl-chip__detail {
+  flex-shrink: 0;
+  color: var(--tl-text-secondary);
+}
+
+/* Die Tönung trägt der Chip selbst (data-tl-role, 3b §11) — keine Pill in der Kapsel. Die Rollenregeln
+   stehen vor Zeigen und Gewählt: beide schlagen die Tönung bei gleicher Spezifität. */
+/* @tl-roles: brand .tl-chip */
+/* @tl-roles: status .tl-chip */
+/* @tl-roles: category .tl-chip */
+
+.tl-chip:where(:not(:disabled)):hover {
+  background: var(--tl-surface-interactive-strong);
+}
+
+/* Die Kapsel ist selbst Feldfläche (surface-field): Zeigen und Drücken rücken eine Stufe vor wie bei den
+   Knöpfen im Feld (06.10.); -hover hielte hell nur 1,01 (Sichtprüfung 12.10.). */
+.tl-chip:where(:not(:disabled)):active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Gewählt sieht aus wie angekreuzt: die Marke als Fläche, die Beschriftung auf der Marke. */
+.tl-chip[aria-pressed="true"] {
+  border-color: var(--tl-surface-brand);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-chip[aria-pressed="true"]:where(:not(:disabled)):hover {
+  border-color: var(--tl-surface-brand-hover);
+  background: var(--tl-surface-brand-hover);
+  color: var(--tl-text-on-brand-hover);
+}
+
+/* Auf der Marke trägt der leisere Text die Farbe der Beschriftung: das Grau von text-secondary
+   verschwände auf der Markenfläche, etwa die Zeilenzahl eines gewählten Presets (#29968). */
+.tl-chip[aria-pressed="true"] .tl-chip__detail {
+  color: inherit;
+}
+
+/* Warnung vor Fehler: der Fehler steht später und gewinnt. Den Prüfzustand zeigen nur ungewählte,
+   nicht deaktivierte Chips — ein gewählter trägt die Marke, ein deaktivierter keinen Prüfzustand.
+   role="group" erlaubt kein aria-invalid; der Fehler steht in data-tl-state. */
+.tl-chip-group[data-tl-state~="warning"] .tl-chip:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--tl-status-warning-border);
+}
+
+.tl-chip-group[data-tl-state~="error"] .tl-chip:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--tl-status-error-border);
+}
+
+.tl-chip:disabled {
+  border-color: var(--tl-border-disabled);
+  background: var(--tl-surface-disabled);
+  color: var(--tl-text-disabled);
+  cursor: default;
+}
+
+/* Deaktiviert und gewählt: wie .tl-checkbox:disabled:checked. */
+.tl-chip:disabled[aria-pressed="true"] {
+  border-color: var(--tl-border-disabled);
+  background: var(--tl-border-disabled);
+  color: var(--tl-text-disabled);
+}
+
+/* --- Entfernbare Kapsel -------------------------------------------------------- */
+
+/* Zwei Knöpfe in einer Kapsel (Filterleiste der Tabelle, 3b §11): span.tl-chip mit dem Umschalt-Knopf
+   tl-chip__toggle (aria-pressed) und dem Entfernen-Knopf tl-chip__remove (tl-button--icon --sm --ghost).
+   Die Kapsel zeichnet Rahmen und Fläche; gedrückt sieht sie aus wie ein gedrückter Knopf-Chip, und der
+   Entfernen-Knopf liest dann die Beschriftung auf der Marke. Das Entfernen ist derselbe Kreis innerhalb der
+   Kapsellinie wie im Select-Chip — eine Regel für beide in select.css (Entscheidung 07.10., „Gleiches wird
+   zusammengelegt“). */
+.tl-chip:has(> .tl-chip__toggle) {
+  padding: 0;
+  cursor: default;
+}
+
+:where(.tl-chip__toggle) {
+  font: inherit;
+}
+
+.tl-chip__toggle {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-sm);
+  border: 0;
+  border-radius: var(--tl-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tl-chip__toggle[hidden] { display: none; }
+
+/* Folgt das Entfernen, endet der Umschalt-Knopf am Label: der Abstand zum Kreis ist der gap der Kapsel
+   (space-2xs), wie zwischen Label und Kreis im Select-Chip. */
+.tl-chip__toggle:has(+ .tl-chip__remove) {
+  padding-inline-end: 0;
+}
+
+.tl-chip:has(> .tl-chip__toggle[aria-pressed="true"]) {
+  border-color: var(--tl-surface-brand);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-chip:has(> .tl-chip__toggle[aria-pressed="true"]):hover {
+  border-color: var(--tl-surface-brand-hover);
+  background: var(--tl-surface-brand-hover);
+  color: var(--tl-text-on-brand-hover);
+}
+
+.tl-chip:has(> .tl-chip__toggle[aria-pressed="true"]) > .tl-chip__remove {
+  color: inherit;
+}
+
+.tl-chip:has(> .tl-chip__toggle[aria-pressed="true"]) > .tl-chip__remove:hover {
+  background: var(--tl-surface-brand-active);
+  color: var(--tl-text-on-brand-active);
+}

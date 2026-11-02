@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — JobStatus</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">JobStatus</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Läuft: Schritte und Balken; nur die Live-Zeile trägt role="status", mit der Meldung</p>
+    <div class="tl-job-status">
+      <div class="tl-job-status__header">
+        <span class="tl-job-status__state tl-type-body-strong" id="j1-state">Läuft</span>
+        <span class="tl-job-status__elapsed tl-type-body tl-nums">00:42</span>
+        <span class="tl-job-status__cancel"><button type="button" class="tl-button tl-button--secondary"><span class="tl-button__label">Abbrechen</span></button></span>
+      </div>
+      <div class="tl-job-status__live tl-type-body" role="status"><span class="tl-visually-hidden">Läuft. Schritt: </span>Prüfen<div class="tl-job-status__message tl-type-body">1.204 von 2.680 Datensätzen geprüft</div></div>
+      <ol class="tl-steps tl-steps--vertical" aria-label="Schritte">
+        <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">1</span><span class="tl-steps__name tl-type-body">Daten lesen</span></li>
+        <li class="tl-steps__item" aria-current="step"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">2</span><span class="tl-steps__name tl-type-body-strong">Prüfen</span></li>
+        <li class="tl-steps__item"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">3</span><span class="tl-steps__name tl-type-body">Bericht schreiben</span></li>
+      </ol>
+      <div class="tl-job-status__bar"><div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="45" aria-labelledby="j1-state"><span class="tl-progress__track"><span class="tl-progress__fill"></span></span><span class="tl-progress__label tl-type-label tl-nums">45 %</span></div></div>
+    </div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Gescheitert: Fehler als eigene Zeile mit role="alert"</p>
+    <div class="tl-job-status">
+      <div class="tl-job-status__header">
+        <span class="tl-job-status__state tl-type-body-strong">Fehlgeschlagen</span>
+        <span class="tl-job-status__elapsed tl-type-body tl-nums">01:17</span>
+      </div>
+      <div class="tl-job-status__live tl-type-body" role="status"><span class="tl-visually-hidden">Fehlgeschlagen. Schritt: </span>Bericht schreiben</div>
+      <ol class="tl-steps tl-steps--vertical" aria-label="Schritte">
+        <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">1</span><span class="tl-steps__name tl-type-body">Daten lesen</span></li>
+        <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">2</span><span class="tl-steps__name tl-type-body">Prüfen</span></li>
+        <li class="tl-steps__item" aria-current="step"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">3</span><span class="tl-steps__name tl-type-body-strong">Bericht schreiben</span></li>
+      </ol>
+      <div class="tl-job-status__error tl-type-body" role="alert">Die Vorlage „Monatsbericht“ wurde nicht gefunden.</div>
+    </div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Abgeschlossen: Ergebnis</p>
+    <div class="tl-job-status">
+      <div class="tl-job-status__header">
+        <span class="tl-job-status__state tl-type-body-strong">Abgeschlossen</span>
+        <span class="tl-job-status__elapsed tl-type-body tl-nums">02:05</span>
+      </div>
+      <div class="tl-job-status__live tl-type-body" role="status"><span class="tl-visually-hidden">Abgeschlossen.</span></div>
+      <ol class="tl-steps tl-steps--vertical" aria-label="Schritte">
+        <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">1</span><span class="tl-steps__name tl-type-body">Daten lesen</span></li>
+        <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">2</span><span class="tl-steps__name tl-type-body">Prüfen</span></li>
+        <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">3</span><span class="tl-steps__name tl-type-body">Bericht schreiben</span></li>
+      </ol>
+      <div class="tl-job-status__result tl-type-body">Bericht mit 2.680 Datensätzen erstellt.</div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

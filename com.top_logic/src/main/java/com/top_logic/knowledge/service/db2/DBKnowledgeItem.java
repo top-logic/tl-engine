@@ -22,6 +22,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.attr.MODefaultProvider;
+import com.top_logic.dob.attr.storage.CachedComputedAttributeStorage;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.IdentifiedObject;
@@ -186,6 +187,33 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		 * necessary in DynamicKI, because the value of the koAttribute REV_MIN which is stored in
 		 * the array is used to detect lost updates. */
 		getLocalValues(context, IN_SESSION_REVISION, true);
+	}
+
+	/**
+	 * Discards the value of the given cache attribute in the current transaction.
+	 * 
+	 * <p>
+	 * The value is computed anew on the next access within the current transaction. Like
+	 * {@link #touch()}, this marks this item for change. Other transactions keep the cache value
+	 * of the committed state. A rollback restores the cache value of the committed state.
+	 * </p>
+	 * 
+	 * @param cacheAttribute
+	 *        The name of the attribute with a {@link CachedComputedAttributeStorage} whose value is
+	 *        discarded.
+	 * 
+	 * @see MetaObjectUtils#isCacheAttribute(MOAttribute)
+	 */
+	public final void discardCacheValue(String cacheAttribute) {
+		MOAttribute attribute = tTable().getAttributeOrNull(cacheAttribute);
+		if (attribute == null || !MetaObjectUtils.isCacheAttribute(attribute)) {
+			throw new IllegalArgumentException(
+				"No cache attribute '" + cacheAttribute + "' in table '" + tTable().getName() + "'.");
+		}
+		DBContext context = createDBContext();
+		checkLocallyModifiable(context);
+		Object[] localValues = getLocalValues(context, IN_SESSION_REVISION, true);
+		((CachedComputedAttributeStorage) attribute.getStorage()).discardCacheValue(attribute, localValues);
 	}
 
 	@Override

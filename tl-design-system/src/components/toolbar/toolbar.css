@@ -1,0 +1,59 @@
+/* Toolbar — docs/skalen.md „Gleiches wird zusammengelegt“ (W12).
+   Die Einträge sind Button-Controls; die Toolbar gibt ihnen die Erscheinung (ButtonDefaults) und sagt
+   ihnen, wann sie kompakt sind (iconOnly) — keine Regel hier liest tl-button__label. Trenner sind
+   tl-divider--vertical (Part Divider, #29787) und tragen die Marke tl-toolbar__separator, an der das Control
+   ihre Breite misst — ohne eigene Regel. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
+   data-tl-compact (Icons statt Label), data-tl-break (Trenner am Umbruch einer umbrechenden Leiste). */
+
+.tl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+  padding-block: var(--tl-space-2xs);
+  flex-shrink: 0;
+}
+.tl-toolbar[hidden] { display: none; }
+
+/* Eine kollabierende Toolbar nennt ihre natürliche Breite (Inline-Stil aus TLToolbar) und gibt sie bis
+   zum Überlauf-Trigger wieder her; ihr Inhalt sitzt am Ende, zu dem sie kollabiert. */
+.tl-toolbar[data-tl-overflow] {
+  flex-shrink: 1;
+  min-width: var(--tl-size-control);
+  justify-content: flex-end;
+}
+
+.tl-toolbar[data-tl-overflow="leading"] {
+  justify-content: flex-start;
+}
+
+/* Eine Leiste, die nicht kollabiert, sondern umbricht (Wysiwyg-Editor, tl-rich-text): die Gruppen gehen ganz in die
+   nächste Zeile; der Abstand zwischen den Zeilen ist der zwischen den Einträgen. */
+.tl-toolbar--wrap {
+  flex-wrap: wrap;
+}
+
+/* Ein Trenner, an dem die Leiste umbricht, trennt nichts: er steht am Zeilenende. Das Control misst die Zeilen und
+   setzt data-tl-break; der Trenner behält seinen Platz, damit das Verbergen keinen neuen Umbruch auslöst. */
+.tl-toolbar--wrap > .tl-divider[data-tl-break] {
+  visibility: hidden;
+}
+
+.tl-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+.tl-toolbar__group[hidden] { display: none; }
+
+.tl-toolbar__group > :empty {
+  display: none;
+}
+
+/* Eine Gruppe, die eine eingebettete Toolbar hält (die Befehle des Servers in der Leiste des Wysiwyg-Editors),
+   schrumpft unter ihren Inhalt: erst dann bekommt die eingebettete Toolbar weniger als ihre natürliche Breite und
+   kollabiert in ihren Überlauf, statt die Leiste über den Rand zu schieben. */
+.tl-toolbar__group:has(> .tl-toolbar) {
+  flex-shrink: 1;
+  min-width: 0;
+}

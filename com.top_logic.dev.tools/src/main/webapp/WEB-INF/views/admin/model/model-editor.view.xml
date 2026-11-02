@@ -8,13 +8,27 @@
 	selected - the model element, or the module itself while the diagram has no selection. The
 	toolbars create and delete modules, types and attributes through the ModelEditAction; the reload
 	channel is bumped after a diagram-affecting mutation so the diagram re-reads the (unchanged)
-	module input and reflects the change.
+	module input and reflects the change. Beside the diagram, the Instances tab lists all instances of
+	the class selected in the diagram, edits them in place, exports them to Excel or XML and imports an
+	XML file written by that export (admin/model/import-instances.view.xml).
 -->
 <view>
 	<channels>
 		<channel name="selectedModule"/>
 		<channel name="selectedPart"/>
 		<channel name="reload"/>
+		<channel name="selectedInstances"/>
+		<!-- Bumped after an import, so the instance table reads its rows again. -->
+		<channel name="instancesReload"/>
+		<!--
+			The selected instances that belong to the selected class. The instance table is built anew
+			for every class, but leaves a selection it has no rows for alone, so the selection made for
+			another class is not exported.
+		-->
+		<derived-channel name="exportedInstances"
+			expr="$selectedPart == null || !$selectedPart.instanceOf(`tl.model:TLClass`) ? null : { sel = $selectedInstances.filter(o -> $o.instanceOf($selectedPart)); $sel.isEmpty() ? null : $sel }"
+			inputs="selectedPart, selectedInstances"
+		/>
 		<!--
 			What the detail form edits: the selected model element, or the module itself while
 			nothing is selected in the diagram. A module carries a name and annotations like every
@@ -119,152 +133,161 @@
 							size="70"
 							unit="%"
 						>
-							<panel fill="true">
-								<title>
-									<en>Types</en>
-									<de>Typen</de>
-								</title>
-								<commands>
-									<generic-command
-										image="css:bi bi-plus-lg"
-										inputs="selectedModule"
-										placement="TOOLBAR"
+							<tab-bar active-tab="diagram">
+								<tabs>
+									<tab id="diagram"
+										icon="css:bi bi-diagram-3"
 									>
 										<label>
-											<en>New type</en>
-											<de>Neuer Typ</de>
+											<en>Diagram</en>
+											<de>Diagramm</de>
 										</label>
-										<executability>
-											<null-input-disabled/>
-										</executability>
-										<execute-script function="new(`tl.devtools:NewType`, transient: true)">
-											<with-result>
-												<open-dialog
-													bind-input-to="model"
-													dialog-view="admin/model/create-type.view.xml"
+										<panel fill="true">
+											<title>
+												<en>Types</en>
+												<de>Typen</de>
+											</title>
+											<commands>
+												<generic-command
+													image="css:bi bi-plus-lg"
+													inputs="selectedModule"
+													placement="TOOLBAR"
 												>
-													<bind
-														channel="selection"
-														to="selectedPart"
-													/>
-													<bind
-														channel="container"
-														to="selectedModule"
-													/>
-													<bind
-														channel="reload"
-														to="reload"
-													/>
-												</open-dialog>
-											</with-result>
-										</execute-script>
-									</generic-command>
-									<generic-command
-										image="css:bi bi-node-plus"
-										inputs="selectedPart"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>New attribute</en>
-											<de>Neues Attribut</de>
-										</label>
-										<executability>
-											<visible-if expr="$selectedPart != null &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLClassifier`)"/>
-										</executability>
-										<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
-											<with-result>
-												<open-dialog
-													bind-input-to="model"
-													dialog-view="admin/model/create-attribute.view.xml"
+													<label>
+														<en>New type</en>
+														<de>Neuer Typ</de>
+													</label>
+													<executability>
+														<null-input-disabled/>
+													</executability>
+													<execute-script function="new(`tl.devtools:NewType`, transient: true)">
+														<with-result>
+															<open-dialog
+																bind-input-to="model"
+																dialog-view="admin/model/create-type.view.xml"
+															>
+																<bind
+																	channel="selection"
+																	to="selectedPart"
+																/>
+																<bind
+																	channel="container"
+																	to="selectedModule"
+																/>
+																<bind
+																	channel="reload"
+																	to="reload"
+																/>
+															</open-dialog>
+														</with-result>
+													</execute-script>
+												</generic-command>
+												<generic-command
+													image="css:bi bi-node-plus"
+													inputs="selectedPart"
+													placement="TOOLBAR"
 												>
-													<bind
-														channel="selection"
-														to="selectedPart"
-													/>
-													<bind
-														channel="container"
-														to="selectedPart"
-													/>
-													<bind
-														channel="reload"
-														to="reload"
-													/>
-												</open-dialog>
-											</with-result>
-										</execute-script>
-									</generic-command>
-									<generic-command
-										image="css:bi bi-tag"
-										inputs="selectedPart"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>New classifier</en>
-											<de>Neuer Klassifikator</de>
-										</label>
-										<executability>
-											<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLEnumeration`) || $selectedPart.instanceOf(`tl.model:TLClassifier`))"/>
-										</executability>
-										<execute-script function="new(`tl.devtools:NewClassifier`, transient: true)">
-											<with-result>
-												<open-dialog
-													bind-input-to="model"
-													dialog-view="admin/model/create-classifier.view.xml"
+													<label>
+														<en>New attribute</en>
+														<de>Neues Attribut</de>
+													</label>
+													<executability>
+														<visible-if expr="$selectedPart != null &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLClassifier`)"/>
+													</executability>
+													<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
+														<with-result>
+															<open-dialog
+																bind-input-to="model"
+																dialog-view="admin/model/create-attribute.view.xml"
+															>
+																<bind
+																	channel="selection"
+																	to="selectedPart"
+																/>
+																<bind
+																	channel="container"
+																	to="selectedPart"
+																/>
+																<bind
+																	channel="reload"
+																	to="reload"
+																/>
+															</open-dialog>
+														</with-result>
+													</execute-script>
+												</generic-command>
+												<generic-command
+													image="css:bi bi-tag"
+													inputs="selectedPart"
+													placement="TOOLBAR"
 												>
-													<bind
-														channel="selection"
-														to="selectedPart"
+													<label>
+														<en>New classifier</en>
+														<de>Neuer Klassifikator</de>
+													</label>
+													<executability>
+														<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLEnumeration`) || $selectedPart.instanceOf(`tl.model:TLClassifier`))"/>
+													</executability>
+													<execute-script function="new(`tl.devtools:NewClassifier`, transient: true)">
+														<with-result>
+															<open-dialog
+																bind-input-to="model"
+																dialog-view="admin/model/create-classifier.view.xml"
+															>
+																<bind
+																	channel="selection"
+																	to="selectedPart"
+																/>
+																<bind
+																	channel="container"
+																	to="selectedPart"
+																/>
+																<bind
+																	channel="reload"
+																	to="reload"
+																/>
+															</open-dialog>
+														</with-result>
+													</execute-script>
+												</generic-command>
+												<generic-command
+													clique="more"
+													image="css:bi bi-trash"
+													inputs="selectedPart"
+													placement="TOOLBAR"
+												>
+													<label>
+														<en>Delete</en>
+														<de>Löschen</de>
+													</label>
+													<executability>
+														<null-input-disabled/>
+													</executability>
+													<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
+													<with-transaction>
+														<action class="com.top_logic.dev.tools.model.ModelEditAction"
+															mode="DELETE"
+														/>
+													</with-transaction>
+													<write-channel name="selectedPart"
+														clear="true"
 													/>
-													<bind
-														channel="container"
-														to="selectedPart"
+													<execute-script function="now()">
+														<with-result>
+															<write-channel name="reload"/>
+														</with-result>
+													</execute-script>
+												</generic-command>
+											</commands>
+											<flow-diagram selection="selectedPart">
+												<inputs>
+													<input
+														as="module"
+														channel="selectedModule"
 													/>
-													<bind
-														channel="reload"
-														to="reload"
-													/>
-												</open-dialog>
-											</with-result>
-										</execute-script>
-									</generic-command>
-									<generic-command
-										clique="more"
-										image="css:bi bi-trash"
-										inputs="selectedPart"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Delete</en>
-											<de>Löschen</de>
-										</label>
-										<executability>
-											<null-input-disabled/>
-										</executability>
-										<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
-										<with-transaction>
-											<action class="com.top_logic.dev.tools.model.ModelEditAction"
-												mode="DELETE"
-											/>
-										</with-transaction>
-										<write-channel name="selectedPart"
-											clear="true"
-										/>
-										<execute-script function="now()">
-											<with-result>
-												<write-channel name="reload"/>
-											</with-result>
-										</execute-script>
-									</generic-command>
-								</commands>
-								<flow-diagram selection="selectedPart">
-									<inputs>
-										<input
-											as="module"
-											channel="selectedModule"
-										/>
-										<input channel="reload"/>
-									</inputs>
-									<createChart><![CDATA[{
+													<input channel="reload"/>
+												</inputs>
+												<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
 		.filter(t -> $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`));
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
@@ -412,8 +435,131 @@
 				content: reactFlowGraphLayout($nodes,
 					list($genEdges, $refEdges).flatten())))
 }]]></createChart>
-								</flow-diagram>
-							</panel>
+											</flow-diagram>
+										</panel>
+									</tab>
+									<!--
+										All instances of the selected class, those of its subclasses included, so an
+										abstract class shows the instances of its concrete specializations. The table is
+										built anew for every selected class, since its columns and the types offered for
+										a new row are derived from the class when it is built.
+									-->
+									<tab id="instances"
+										icon="css:bi bi-table"
+									>
+										<label>
+											<en>Instances</en>
+											<de>Instanzen</de>
+										</label>
+										<switch
+											input="selectedPart"
+											rebuild="true"
+										>
+											<case test="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLClass`)">
+												<panel fill="true">
+													<title>
+														<en>Instances</en>
+														<de>Instanzen</de>
+													</title>
+													<title-content>
+														<text input="selectedPart"/>
+													</title-content>
+													<commands>
+														<generic-command
+															clique="export"
+															image="css:bi bi-filetype-xml"
+															inputs="exportedInstances"
+															placement="TOOLBAR"
+														>
+															<label>
+																<en>Export instances</en>
+																<de>Instanzen exportieren</de>
+															</label>
+															<tooltip>
+																<en>Downloads the selected instances as XML file, which "Import instances" reads in again.</en>
+																<de>Lädt die ausgewählten Instanzen als XML-Datei herunter, die "Instanzen importieren" wieder einliest.</de>
+															</tooltip>
+															<executability>
+																<null-input-disabled/>
+															</executability>
+															<execute-script function="instanceExport($exportedInstances)">
+																<with-result>
+																	<download/>
+																</with-result>
+															</execute-script>
+														</generic-command>
+														<generic-command
+															image="css:bi bi-upload"
+															inputs="selectedPart"
+															placement="TOOLBAR"
+														>
+															<label>
+																<en>Import instances</en>
+																<de>Instanzen importieren</de>
+															</label>
+															<tooltip>
+																<en>Creates the objects of an XML file written by "Export instances".</en>
+																<de>Legt die Objekte einer mit "Instanzen exportieren" geschriebenen XML-Datei an.</de>
+															</tooltip>
+															<open-dialog
+																bind-input-to="type"
+																dialog-view="admin/model/import-instances.view.xml"
+															>
+																<bind
+																	channel="reload"
+																	to="instancesReload"
+																/>
+															</open-dialog>
+														</generic-command>
+													</commands>
+													<!--
+														The form edits the rows of the table: in edit mode the selected rows are
+														edited, rows are added of the class or, for an abstract one, of a
+														concrete subclass chosen from a menu, and removed rows are deleted on
+														save. The instancesReload channel is bumped after an import, since the
+														table observes no fixed types.
+													-->
+													<form input="selectedPart">
+														<table
+															create-type-expr="$type"
+															inputs="selectedPart as type, instancesReload"
+															on-remove="DELETE"
+															row-edit="SELECTED"
+															selection="selectedInstances"
+															selection-mode="multi"
+															types-expr="$type"
+														>
+															<rows>all($type)</rows>
+															<export download-name="label($type)">
+																<sheet-name>
+																	<en>Instances</en>
+																	<de>Instanzen</de>
+																</sheet-name>
+															</export>
+														</table>
+													</form>
+												</panel>
+											</case>
+											<default>
+												<panel>
+													<title>
+														<en>Instances</en>
+														<de>Instanzen</de>
+													</title>
+													<inset>
+														<text>
+															<label>
+																<en>Select a class to see its instances.</en>
+																<de>Wählen Sie eine Klasse, um ihre Instanzen zu sehen.</de>
+															</label>
+														</text>
+													</inset>
+												</panel>
+											</default>
+										</switch>
+									</tab>
+								</tabs>
+							</tab-bar>
 						</pane>
 						<pane
 							size="30"

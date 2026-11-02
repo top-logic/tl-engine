@@ -1,0 +1,10 @@
+{
+  "theme": "probe",
+  "color": {
+    "brand": "#E8541E",
+    "gray": "warm",
+    "red": { "42": "#F07070" }
+  },
+  "font": { "font-1": "'Probe Sans', system-ui, sans-serif" },
+  "measure": { "corner-1": "0", "corner-2": "0" }
+}

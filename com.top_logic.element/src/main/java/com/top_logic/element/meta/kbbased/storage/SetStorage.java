@@ -561,10 +561,14 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	 *        The deletion policy of the reference.
 	 * @param unversioned
 	 *        Whether reference values must be stored unversioned.
+	 * @param bag
+	 *        Whether the reference may hold the same value more than once, see
+	 *        {@link TLStructuredTypePart#isBag()}.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
-		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy,
+			boolean unversioned, boolean bag) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned, bag);
 	}
 
 	/**

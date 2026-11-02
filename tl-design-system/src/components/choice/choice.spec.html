@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Auswahl</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .specimen__wrap { display: flex; flex-wrap: wrap; gap: var(--tl-space-md); }
+  /* 160 px: ein langes Label in Segment und Chip endet mit Ellipse. */
+  .specimen__narrow { width: 10rem; display: grid; gap: var(--tl-space-xs); }
+  /* Eine Linie durch die Mitte der Marken, wie die Wertlinie eines Schiebers: der Hof ist durchscheinend und
+     lässt sie sehen. Die Linie liegt hinter den Marken (z-index -1 im eigenen Stapelkontext). */
+  .specimen__line { position: relative; isolation: isolate; }
+  .specimen__line::before { content: ""; position: absolute; inset-inline: 0; top: 50%;
+    border-top: var(--tl-border-width-md) solid var(--tl-surface-brand); z-index: -1; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Auswahl</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: ein Zustand oder eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Checkbox</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox"> aus</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" checked> an</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" data-indeterminate> gemischt</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Checkbox, Zustände</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" aria-invalid="true"> Fehler</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" data-tl-state="warning"> Warnung</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" aria-invalid="true" data-tl-state="warning"> Fehler schlägt Warnung</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Checkbox, disabled</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" disabled> deaktiviert</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" disabled checked> deaktiviert</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">schreibgeschützt, aria-readonly</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" checked aria-readonly="true"> angekreuzt, schreibgeschützt</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked aria-readonly="true"> Schalter an, schreibgeschützt</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Schalter, role="switch"</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch"> Schalter aus</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked> Schalter an</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" aria-invalid="true"> Fehler</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" disabled checked> deaktiviert</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Hof, Zeigen (data-specimen="hover")</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="checkbox" class="tl-checkbox"> aus</label>
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="checkbox" class="tl-checkbox" checked> an</label>
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="radio" name="h1" class="tl-radio" checked> Radio</label>
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked> Schalter</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Hof, Drücken (data-specimen="active")</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body" data-specimen="active"><input type="checkbox" class="tl-checkbox"> aus</label>
+        <label class="tl-choice tl-type-body" data-specimen="active"><input type="checkbox" class="tl-checkbox" checked> an</label>
+        <label class="tl-choice tl-type-body" data-specimen="active"><input type="radio" name="h2" class="tl-radio" checked> Radio</label>
+        <label class="tl-choice tl-type-body" data-specimen="active"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch"> Schalter</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Hof über einer Linie: Zeigen, Drücken — die Linie bleibt sichtbar</span>
+      <span class="tl-choice-group specimen__line">
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="radio" name="h4" class="tl-radio" checked> Zeigen</label>
+        <label class="tl-choice tl-type-body" data-specimen="active"><input type="radio" name="h4" class="tl-radio"> Drücken</label>
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="checkbox" class="tl-checkbox"> Zeigen</label>
+        <label class="tl-choice tl-type-body" data-specimen="active"><input type="checkbox" class="tl-checkbox" checked> Drücken</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">kein Hof: gezeigt, aber deaktiviert / schreibgeschützt</span>
+      <span class="tl-choice-group">
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="checkbox" class="tl-checkbox" disabled checked> deaktiviert</label>
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="radio" name="h3" class="tl-radio" disabled> deaktiviert</label>
+        <label class="tl-choice tl-type-body" data-specimen="hover"><input type="checkbox" class="tl-checkbox" checked aria-readonly="true"> schreibgeschützt</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Radio, role="radiogroup"</span>
+      <span class="tl-choice-group" role="radiogroup" aria-label="Aktiv">
+        <label class="tl-choice tl-type-body"><input type="radio" name="r1" class="tl-radio" checked> Ja</label>
+        <label class="tl-choice tl-type-body"><input type="radio" name="r1" class="tl-radio"> Nein</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Radio, aria-invalid</span>
+      <span class="tl-choice-group" role="radiogroup" aria-label="Fehler" aria-invalid="true">
+        <label class="tl-choice tl-type-body"><input type="radio" name="r2" class="tl-radio"> Ja</label>
+        <label class="tl-choice tl-type-body"><input type="radio" name="r2" class="tl-radio"> Nein</label>
+        <label class="tl-choice tl-type-body"><input type="radio" name="r2" class="tl-radio" disabled> deaktiviert</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Radio, warning</span>
+      <span class="tl-choice-group" role="radiogroup" aria-label="Warnung" data-tl-state="warning">
+        <label class="tl-choice tl-type-body"><input type="radio" name="r3" class="tl-radio" checked> Ja</label>
+        <label class="tl-choice tl-type-body"><input type="radio" name="r3" class="tl-radio"> Nein</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Radio, disabled</span>
+      <span class="tl-choice-group" role="radiogroup" aria-label="Deaktiviert">
+        <label class="tl-choice tl-type-body"><input type="radio" name="r4" class="tl-radio" disabled checked> Ja</label>
+        <label class="tl-choice tl-type-body"><input type="radio" name="r4" class="tl-radio" disabled> Nein</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Segmente, Einfachwahl</span>
+      <div class="tl-segmented" role="radiogroup" aria-label="Ansicht">
+        <button type="button" role="radio" aria-checked="true" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Liste</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kacheln</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Tabelle</span></button>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Segmente, Mehrfachwahl</span>
+      <div class="tl-segmented" role="group" aria-label="Filter">
+        <button type="button" aria-pressed="true" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">offen</span></button>
+        <button type="button" aria-pressed="false" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">erledigt</span></button>
+        <button type="button" aria-pressed="false" class="tl-segmented__segment tl-type-label" disabled><span class="tl-segmented__label">archiviert</span></button>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Segmente, Fehler / Warnung</span>
+      <div class="specimen__wrap">
+        <div class="tl-segmented" role="radiogroup" aria-label="Ansicht mit Fehler" aria-invalid="true">
+          <button type="button" role="radio" aria-checked="false" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Liste</span></button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kacheln</span></button>
+        </div>
+        <div class="tl-segmented" role="group" aria-label="Filter mit Warnung" data-tl-state="warning">
+          <button type="button" aria-pressed="true" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">offen</span></button>
+          <button type="button" aria-pressed="false" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">erledigt</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Chips, role="group"</span>
+      <div class="tl-chip-group" role="group" aria-label="Tags">
+        <button type="button" aria-pressed="true" class="tl-chip tl-type-label"><span class="tl-chip__label">gewählt</span></button>
+        <button type="button" aria-pressed="false" class="tl-chip tl-type-label"><span class="tl-chip__label">frei</span></button>
+        <button type="button" aria-pressed="false" class="tl-chip tl-type-label" disabled><span class="tl-chip__label">deaktiviert</span></button>
+        <button type="button" aria-pressed="true" class="tl-chip tl-type-label" disabled><span class="tl-chip__label">gewählt, deaktiviert</span></button>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Chips, entfernbar</span>
+      <div class="tl-chip-group" role="group" aria-label="Filter">
+        <span class="tl-chip tl-type-label"><button type="button" aria-pressed="false" class="tl-chip__toggle"><span class="tl-chip__label">Offen</span></button><button type="button" class="tl-chip__remove tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Filter Offen entfernen" title="Entfernen"><i class="tl-icon-sm bi bi-x-lg" aria-hidden="true"></i></button></span>
+        <span class="tl-chip tl-type-label"><button type="button" aria-pressed="true" class="tl-chip__toggle"><span class="tl-chip__label">Erledigt</span></button><button type="button" class="tl-chip__remove tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Filter Erledigt entfernen" title="Entfernen"><i class="tl-icon-sm bi bi-x-lg" aria-hidden="true"></i></button></span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">Chips, Fehler / Warnung</span>
+      <div class="specimen__wrap">
+        <div class="tl-chip-group" role="group" aria-label="Tags mit Fehler" data-tl-state="error">
+          <button type="button" aria-pressed="true" class="tl-chip tl-type-label"><span class="tl-chip__label">gewählt</span></button>
+          <button type="button" aria-pressed="false" class="tl-chip tl-type-label"><span class="tl-chip__label">frei</span></button>
+          <button type="button" aria-pressed="false" class="tl-chip tl-type-label" disabled><span class="tl-chip__label">deaktiviert</span></button>
+        </div>
+        <div class="tl-chip-group" role="group" aria-label="Tags mit Warnung" data-tl-state="warning">
+          <button type="button" aria-pressed="true" class="tl-chip tl-type-label"><span class="tl-chip__label">gewählt</span></button>
+          <button type="button" aria-pressed="false" class="tl-chip tl-type-label"><span class="tl-chip__label">frei</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">langes Label, 160 px</span>
+      <div class="specimen__narrow">
+        <div class="tl-segmented" role="radiogroup" aria-label="Lang">
+          <button type="button" role="radio" aria-checked="true" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Eine sehr lange Option</span></button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Noch eine lange</span></button>
+        </div>
+        <div class="tl-chip-group" role="group" aria-label="Lang">
+          <button type="button" aria-pressed="true" class="tl-chip tl-type-label"><span class="tl-chip__label">Ein sehr langes Schlagwort im Chip</span></button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    // Radio-Namen je Fläche, sonst bilden die drei Kopien eine einzige Gruppe.
+    for (const r of rows.querySelectorAll('input[type="radio"]')) r.name = `${r.name}-${id}`;
+    document.getElementById(id).append(rows);
+  }
+  // Hof im Stand: Zeigen und Drücken lassen sich nicht statisch setzen. Die echten Regeln aus components.css
+  // werden kopiert, mit data-specimen statt :hover/:active am Label — keine zweite Fassung, die abweichen kann.
+  for (const sheet of document.styleSheets) {
+    if (!sheet.href || !sheet.href.endsWith('/dist/components.css')) continue;
+    for (const rule of [...sheet.cssRules]) {
+      if (!rule.selectorText || !rule.style.boxShadow || !rule.selectorText.includes('.tl-choice:')) continue;
+      const sel = rule.selectorText.split(',').map((x) => x.trim()).filter((x) => x.startsWith(':where(.tl-choice:'))
+        .map((x) => x.replace(/\.tl-choice:(hover|active)/, '.tl-choice[data-specimen="$1"]')).join(', ');
+      sheet.insertRule(`${sel} { box-shadow: ${rule.style.boxShadow}; }`, sheet.cssRules.length);
+    }
+  }
+  // Gemischt gibt es nur als Eigenschaft, nicht als HTML-Attribut.
+  for (const el of document.querySelectorAll('input[data-indeterminate]')) el.indeterminate = true;
+  // Schreibgeschützt: die Änderung wird blockiert, wie TLCheckbox es tut — nicht disabled.
+  document.addEventListener('click', (e) => { if (e.target.matches('input[aria-readonly="true"]')) e.preventDefault(); });
+  // Segmente und Chips schalten per Attribut, wie die Controls es tun.
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.tl-segmented__segment, .tl-chip');
+    if (!b || b.disabled) return;
+    if (b.hasAttribute('aria-pressed')) { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); return; }
+    for (const s of b.parentElement.querySelectorAll('[role="radio"]')) {
+      s.setAttribute('aria-checked', String(s === b));
+      s.tabIndex = s === b ? 0 : -1;
+    }
+  });
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

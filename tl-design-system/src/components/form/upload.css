@@ -1,0 +1,93 @@
+/* Upload — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“, Spec Welle 2 §6.
+   Der Upload-Knopf ist ein tl-button; hier liegt nur die Hülle darum (tl-upload) und die Drop-Zone des
+   Datei-Feldes (tl-file-upload). Dragover ist ein Attribut an der Drop-Zone. Die Markierung ist
+   gestrichelt in der Markenlinie und kein Fokusring: sie zeigt, wohin die Datei fällt, nicht, wo die
+   Tastatur steht. */
+
+.tl-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-control-gap);
+}
+/* Jeder Block, der display setzt, setzt auch [hidden]: sonst schlägt seine Klasse die Regel des Browsers. */
+.tl-upload[hidden] { display: none; }
+
+.tl-file-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+  border-radius: var(--tl-radius-sm);
+}
+.tl-file-upload[hidden] { display: none; }
+
+/* Eine Regel für alle Drop-Zonen (Welle 5b §6): das Datei-Feld, die Chip-Gruppe von TLFileChips und die
+   Werteliste, die ihre Werte durch Hochladen anfügt (#29852). */
+.tl-file-upload[data-tl-state~="dragover"],
+.tl-chip-group[data-tl-state~="dragover"],
+.tl-value-list[data-tl-state~="dragover"] {
+  outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
+  outline-offset: var(--tl-focus-offset);
+}
+
+.tl-file-upload__status {
+  color: var(--tl-text-secondary);
+}
+
+.tl-file-upload__status[role="alert"] {
+  color: var(--tl-status-error-text);
+}
+
+/* In der umbrechenden Chip-Gruppe von TLFileChips bricht die Fehlerzeile unter die Chips (Spec 5b §6.5). */
+.tl-chip-group > .tl-file-upload__status {
+  flex-basis: 100%;
+}
+
+/* Die Chips stehen in der Zeile der Gruppe; die Hülle gibt es nur, damit sie im kompakten Feld rollen. */
+.tl-chip-group__chips {
+  display: contents;
+}
+
+/* Kompakt, etwa in der Tabellenzelle (#29852): eine Zeile, nicht höher als ein Chip. Die Chips rollen seitwärts —
+   mit Rad und Trackpad, ohne eigenen Balken wie der Kopf der Tabelle —, der Knopf bleibt am Ende der Zeile außerhalb
+   der rollenden Reihe. */
+.tl-chip-group[data-tl-state~="compact"] {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tl-chip-group[data-tl-state~="compact"] > .tl-chip-group__chips {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+/* Ein Chip (tl-chip, ohne Daten tl-pill) behält seine Breite, während die Reihe rollt; ein langer Name endet mit
+   Ellipse in der sichtbaren Breite (max-width beider: 100 %). */
+.tl-chip-group[data-tl-state~="compact"] > .tl-chip-group__chips > *,
+.tl-chip-group[data-tl-state~="compact"] > .tl-button {
+  flex-shrink: 0;
+}
+
+/* Die Reihe schneidet, was über sie hinausragt, die Tabellenzelle ebenso: die Ringe liegen innen, wie beim
+   Compact field (compact-field.css). */
+.tl-chip-group[data-tl-state~="compact"] :focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Der Fehler bleibt in der Zeile, gekürzt; sein ganzer Text ist sein Tooltip. */
+.tl-chip-group[data-tl-state~="compact"] > .tl-file-upload__status {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

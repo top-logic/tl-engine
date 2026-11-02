@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Media</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Die Größe gibt im Control der Server inline; hier eine Klasse der Seite, damit kein Inline-Style steht. */
+  .stage { width: 12rem; height: 12rem; outline: var(--tl-border-width-sm) dashed var(--tl-border-separator); }
+  .stage--document { width: 24rem; height: 14rem; }
+  /* Die Vorschau: Seite 800 × 1130 px, verkleinert auf 12rem (192 px) Breite. Im Control gibt das der Server inline. */
+  .stage--preview { width: 12rem; aspect-ratio: 800 / 1130; }
+  .stage--preview > .tl-media__frame { width: 800px; height: 1130px; transform: scale(0.24); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Media</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Bild (TLImage): Einpassung als Variante</p>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">tl-media--cover</span>
+      <div class="tl-media tl-media--cover stage">
+        <img class="tl-media__frame" alt="Beispielbild, breit" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Crect width='200' height='100' fill='%23557799'/%3E%3Ccircle cx='100' cy='50' r='40' fill='%23DDE4EE'/%3E%3C/svg%3E">
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">tl-media--contain</span>
+      <div class="tl-media tl-media--contain stage">
+        <img class="tl-media__frame" alt="Beispielbild, breit" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Crect width='200' height='100' fill='%23557799'/%3E%3Ccircle cx='100' cy='50' r='40' fill='%23DDE4EE'/%3E%3C/svg%3E">
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">Platzhalter ohne Bild</span>
+      <div class="tl-media tl-media--cover stage">
+        <div class="tl-media__placeholder"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">PDF (TLPdfViewer) ohne Dokument</p>
+    <div class="specimen__row">
+      <span class="tl-type-label">tl-status, leer</span>
+      <div class="tl-status tl-type-body">Kein Dokument vorhanden.</div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">HTML-Dokument (TLHtml): Papier surface-document, in beiden Modi weiß</p>
+    <div class="specimen__row specimen__row--top">
+      <span class="tl-type-label">tl-media--document</span>
+      <div class="tl-media tl-media--document stage stage--document">
+        <iframe class="tl-media__frame" title="Beispieldokument" srcdoc="&lt;h1&gt;Bericht&lt;/h1&gt;&lt;p&gt;Fremdes HTML setzt einen weißen Grund voraus und bringt seine eigene Schrift mit.&lt;/p&gt;"></iframe>
+      </div>
+      <span class="tl-type-label">tl-media--preview</span>
+      <div class="tl-media tl-media--document tl-media--preview stage--preview">
+        <iframe class="tl-media__frame" title="Vorschau" aria-hidden="true" srcdoc="&lt;h1&gt;Bericht&lt;/h1&gt;&lt;p&gt;Die Seite ist für 800 px geschrieben und wird als Bild ihrer selbst verkleinert gezeigt.&lt;/p&gt;"></iframe>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

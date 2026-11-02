@@ -299,7 +299,7 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/** The {@link ReactCommandHandler} sent when the button is clicked. */
-	private static final String CMD_CLICK = "click";
+	public static final String CMD_CLICK = "click";
 
 	/**
 	 * Handles the click command from the React client.

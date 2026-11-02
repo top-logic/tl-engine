@@ -70,13 +70,22 @@
 				The "New chat" button is an ordinary view command: it writes null to the selection
 				channel, which deselects the list and shows the conversation's empty state. Any custom
 				action (execute-script, open-dialog, with-transaction, ...) can be configured the same way.
+				Like every command, it shows the state of its rules: while no chat is selected, the
+				conversation already is a new one, so the button is disabled and says so in its tooltip.
 			-->
 			<commands>
-				<generic-command image="css:bi bi-plus-lg">
+				<generic-command image="css:bi bi-plus-lg"
+					inputs="chatSession"
+				>
 					<label>
 						<en>New chat</en>
 						<de>Neuer Chat</de>
 					</label>
+					<executability>
+						<disabled-if>
+							<expr><![CDATA[if($chatSession == null, #("This is a new chat already."@en, "Dies ist bereits ein neuer Chat."@de), null)]]></expr>
+						</disabled-if>
+					</executability>
 					<write-channel name="chatSession"/>
 				</generic-command>
 			</commands>

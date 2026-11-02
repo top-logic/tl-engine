@@ -1094,6 +1094,26 @@
   background: var(--layer-hover);
 }
 
+/*
+ * A command its rules disable (#30106). The button stays in reach of the pointer, because its
+ * tooltip names the reason; pointing at it changes nothing.
+ */
+.rail-new:disabled,
+.rail-new:disabled:hover {
+  background: var(--tl-surface-disabled, var(--layer-01));
+  border-color: var(--tl-border-disabled, var(--border-subtle));
+  color: var(--tl-text-disabled, var(--text-secondary));
+  cursor: default;
+}
+
+/*
+ * The wrapper of a <data-list> header command adds no box of its own: the command's button inside
+ * it is the rail's "new" button.
+ */
+.rail-command {
+  display: contents;
+}
+
 .rail-search {
   display: flex;
   align-items: center;

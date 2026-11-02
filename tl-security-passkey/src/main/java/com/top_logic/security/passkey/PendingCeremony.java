@@ -28,14 +28,17 @@ public abstract class PendingCeremony {
 
 	private final RelyingParty _relyingParty;
 
+	private final RelyingPartyAddress _address;
+
 	private final Person _account;
 
 	private final long _deadline;
 
 	private boolean _answered;
 
-	PendingCeremony(RelyingParty relyingParty, Person account, long timeout) {
+	PendingCeremony(RelyingParty relyingParty, RelyingPartyAddress address, Person account, long timeout) {
 		_relyingParty = relyingParty;
+		_address = address;
 		_account = account;
 		_deadline = System.currentTimeMillis() + timeout;
 	}
@@ -73,17 +76,22 @@ public abstract class PendingCeremony {
 	}
 
 	/**
+	 * The address of the relying party the ceremony was started with.
+	 */
+	final RelyingPartyAddress getAddress() {
+		return _address;
+	}
+
+	/**
 	 * Marks the ceremony as answered.
 	 *
-	 * @throws TopLogicException
-	 *         If it was answered before or the timeout has passed.
+	 * @return Whether the answer is accepted: <code>false</code>, if the ceremony was answered
+	 *         before or its timeout has passed.
 	 */
-	final synchronized void answer() {
-		if (_answered || System.currentTimeMillis() > _deadline) {
-			_answered = true;
-			throw new TopLogicException(I18NConstants.ERROR_REQUEST_EXPIRED);
-		}
+	final synchronized boolean answer() {
+		boolean open = !_answered && System.currentTimeMillis() <= _deadline;
 		_answered = true;
+		return open;
 	}
 
 }

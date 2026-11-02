@@ -22,6 +22,9 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AbstractCompositionControl;
 import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.QueryRowSetBinding;
+import com.top_logic.layout.view.form.RowSetBinding;
+import com.top_logic.layout.view.form.RowSetBinding.RemoveMode;
 import com.top_logic.layout.view.form.RowSetEditSession;
 import com.top_logic.layout.view.form.RowSetOwner;
 import com.top_logic.layout.view.form.TLObjectOverlay;
@@ -147,6 +150,90 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 		assertEquals(2, ((List<?>) step.tValueByName(SUBSTEPS)).size());
 	}
 
+	/**
+	 * Removing a row whose rows are deleted removes the rows that are parts of it as well, changed
+	 * or not: they are deleted with their container, and the save neither writes them nor deletes
+	 * them a second time.
+	 */
+	public void testRemovedContainerTakesItsPartsAlong() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepsAndSubsteps(form, step, substep);
+		List<TLObject> buffers = rows.session().currentRows();
+		TLObject stepRow = buffers.get(0);
+		TLObject substepRow = buffers.get(1);
+
+		substepRow.tUpdateByName(NAME, RENAMED_SUBSTEP);
+		rows.removeRow(stepRow);
+		assertTrue(rows.session().currentRows().isEmpty());
+		assertEquals(0, rows._shownRows);
+
+		form.executeSave();
+
+		assertFalse(form.isEditMode());
+		assertFalse(step.tValid());
+		assertFalse(substep.tValid());
+	}
+
+	/**
+	 * Removing a container together with its parts, as removing all selected rows does, deletes
+	 * each of them once.
+	 */
+	public void testRemoveContainerAndItsParts() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepsAndSubsteps(form, step, substep);
+
+		rows.removeRows(rows.session().currentRows());
+		assertTrue(rows.session().currentRows().isEmpty());
+
+		form.executeSave();
+
+		assertFalse(form.isEditMode());
+		assertFalse(step.tValid());
+		assertFalse(substep.tValid());
+	}
+
+	/**
+	 * A part whose container is kept is not taken along by the removal of another row.
+	 */
+	public void testRemovedPartKeepsContainer() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepsAndSubsteps(form, step, substep);
+		List<TLObject> buffers = rows.session().currentRows();
+
+		rows.removeRow(buffers.get(1));
+		assertEquals(List.of(buffers.get(0)), rows.session().currentRows());
+
+		form.executeSave();
+
+		assertTrue(step.tValid());
+		assertFalse(substep.tValid());
+		assertEquals(List.of(), step.tValueByName(SUBSTEPS));
+	}
+
+	/**
+	 * A table of a step and its substep, deleting removed rows, in edit mode.
+	 */
+	private CompositionControl stepsAndSubsteps(FormControl form, TLObject step, TLObject substep) {
+		CompositionControl rows = new CompositionControl(form,
+			new QueryRowSetBinding(() -> List.of(step, substep), type(STEP), List.of(), RemoveMode.DELETE));
+		rows.init();
+		assertTrue(form.enterEditMode());
+		assertEquals(2, rows.session().currentRows().size());
+		return rows;
+	}
+
 	private TLObject createStepWithSubstep() {
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			TLObject step = DynamicModelService.getFactoryFor(MODULE).createObject(type(STEP));
@@ -198,6 +285,10 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 
 		CompositionControl(FormControl form, String attribute) {
 			super(reactContext(), form, attribute, "TLPanel");
+		}
+
+		CompositionControl(FormControl form, RowSetBinding binding) {
+			super(reactContext(), form, binding, "TLPanel");
 		}
 
 		CompositionControl(RowSetEditSession session) {

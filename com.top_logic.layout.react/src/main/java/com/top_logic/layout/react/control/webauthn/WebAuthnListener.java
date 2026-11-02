@@ -15,7 +15,9 @@ import com.top_logic.layout.react.ReactContext;
  * carry), so it verifies the credential. To retry after a failure, it gives the control fresh options
  * ({@link ReactWebAuthnControl#setOptions(String)}). The control has no error display: the listener
  * tells the user about a failure, e.g. through the messages of the window, and explains a button
- * that cannot be used in its {@link ReactWebAuthnControl#setTooltip(String) tooltip}.
+ * that cannot be used in its {@link ReactWebAuthnControl#setTooltip(String) tooltip}. Before
+ * offering a ceremony, it can check the {@link #onPageOrigin(ReactContext, String) origin of the
+ * page} against the origins its relying party accepts.
  * </p>
  */
 public interface WebAuthnListener {
@@ -78,6 +80,35 @@ public interface WebAuthnListener {
 	 */
 	default void onUnavailable(ReactContext context, String errorName, String message) {
 		// The disabled button is all the user sees.
+	}
+
+	/**
+	 * Called once when the control is displayed, with the origin of the page that displays it.
+	 *
+	 * <p>
+	 * A ceremony on this page reports this origin to the relying party, which refuses a credential
+	 * from an origin it does not accept - for a registration only after the authenticator has
+	 * already stored the key. A listener therefore compares the origin with the origins its relying
+	 * party accepts before offering a ceremony; for a page that does not match, it withholds the
+	 * {@link ReactWebAuthnControl#setOptions(String) options} or
+	 * {@link ReactWebAuthnControl#setDisabled(boolean) disables} the button and explains why in its
+	 * {@link ReactWebAuthnControl#setTooltip(String) tooltip}. The origin stays available as
+	 * {@link ReactWebAuthnControl#getPageOrigin()}, e.g. for options offered later.
+	 * </p>
+	 *
+	 * <p>
+	 * Reported also while the control is disabled or hidden, and before
+	 * {@link #onUnavailable(ReactContext, String, String)} on a page that cannot run a ceremony. Does
+	 * nothing by default.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the control.
+	 * @param origin
+	 *        The origin of the page, e.g. {@code https://app.example.com}, as sent by the client.
+	 */
+	default void onPageOrigin(ReactContext context, String origin) {
+		// A listener that accepts every origin has nothing to check.
 	}
 
 	/**

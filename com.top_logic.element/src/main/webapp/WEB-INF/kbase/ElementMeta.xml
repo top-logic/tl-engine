@@ -567,11 +567,15 @@
 			convention, the inherited index is replaced by the explicitly declared new 
 			index. This explicitly declared index superseeds the inherited auto-generated 
 			one. Therefore it makes no sense to add this index as additional index to 
-			the type. -->
-	    <mo_index name="source" unique="false">
+			the type. 
+			
+			The index is unique, since a reference that is no bag holds each value at most once. 
+			Bags are stored in the tables derived from "hasWrapperAttValueBagBaseAssociation". -->
+	    <mo_index name="source" unique="true">
 <index-parts>
 	        <index_part name="source" part="name" />
 	        <index_part name="metaAttribute" />
+	        <index_part name="dest" part="name" />
 </index-parts>
 	    </mo_index>
 
@@ -599,6 +603,42 @@
 	</association>
 
 	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperVeto">
+		<attributes>
+		    <destination
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="veto" 
+		    />
+		</attributes>
+	</association>
+
+	<!-- Base of the tables storing the links of bag references, where a value may occur more than once. -->
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperAttValueBagBaseAssociation" abstract="true">
+		<index>
+			<!-- Replaces the inherited unique index, see hasWrapperAttValueBaseAssociation. -->
+			<mo_index name="source" unique="false">
+				<index-parts>
+					<index_part name="source" part="name" />
+					<index_part name="metaAttribute" />
+				</index-parts>
+			</mo_index>
+		</index>
+	</association>
+
+	<association super_class="hasWrapperAttValueBagBaseAssociation" object_name="hasWrapperAttValueBag" db_name="HAS_WRAPPER_ATT_VALUE_BAG" />
+
+	<association super_class="hasWrapperAttValueBagBaseAssociation" object_name="hasWrapperDeleteRefererBag" db_name="HAS_WRAPPER_DEL_REF_BAG">
+		<attributes>
+		    <source
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="delete-referer" 
+				is-container="true"
+		    />
+		</attributes>
+	</association>
+
+	<association super_class="hasWrapperAttValueBagBaseAssociation" object_name="hasWrapperVetoBag" db_name="HAS_WRAPPER_VETO_BAG">
 		<attributes>
 		    <destination
 				override="true"
@@ -694,11 +734,17 @@
 				convention, the inherited index is replaced by the explicitly declared new 
 				index. This explicitly declared index superseeds the inherited auto-generated 
 				one. Therefore it makes no sense to add this index as additional index to 
-				the type. -->
-			<mo_index name="source" unique="false">
+				the type. 
+				
+				The index is unique, since a reference that is no bag holds each value at most once. 
+				Bags are stored in a separate table. -->
+			<mo_index name="source" unique="true">
 				<index-parts>
 			        <index_part name="source" part="name" />
 			        <index_part name="metaAttribute" />
+			        <!-- The complete destination including its revision: A reference may hold the 
+			        	same object in different revisions. -->
+			        <index_part name="dest" />
 				</index-parts>
 			</mo_index>
 		
@@ -751,11 +797,17 @@
 				convention, the inherited index is replaced by the explicitly declared new 
 				index. This explicitly declared index superseeds the inherited auto-generated 
 				one. Therefore it makes no sense to add this index as additional index to 
-				the type. -->
-			<mo_index name="source" unique="false">
+				the type. 
+				
+				The index is unique, since a reference that is no bag holds each value at most once. 
+				Bags are stored in a separate table. -->
+			<mo_index name="source" unique="true">
 				<index-parts>
 			        <index_part name="source" part="name" />
 			        <index_part name="metaAttribute" />
+			        <!-- The complete destination including its revision: A reference may hold the 
+			        	same object in different revisions. -->
+			        <index_part name="dest" />
 				</index-parts>
 			</mo_index>
 		
@@ -766,6 +818,32 @@
 			        <index_part name="metaAttribute" />
 				</index-parts>
 		    </mo_index>
+		</index>
+	</metaobject>
+
+	<!-- Database table storing the links of bag references to historic objects. -->
+	<metaobject object_name="hasHistoricValueBag" super_class="hasHistoricValue" db_name="HAS_HISTORIC_VALUE_BAG">
+		<index>
+			<!-- Replaces the inherited unique index, a bag may hold a value more than once. -->
+			<mo_index name="source" unique="false">
+				<index-parts>
+			        <index_part name="source" part="name" />
+			        <index_part name="metaAttribute" />
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<!-- Database table storing the links of bag references to both historic and current objects. -->
+	<metaobject object_name="hasMixedValueBag" super_class="hasMixedValue" db_name="HAS_MIXED_VALUE_BAG">
+		<index>
+			<!-- Replaces the inherited unique index, a bag may hold a value more than once. -->
+			<mo_index name="source" unique="false">
+				<index-parts>
+			        <index_part name="source" part="name" />
+			        <index_part name="metaAttribute" />
+				</index-parts>
+			</mo_index>
 		</index>
 	</metaobject>
 
@@ -872,6 +950,36 @@
 			db_name="HAS_WRAPPER_VETO_UNV"
 			object_name="hasWrapperVetoUnversioned"
 			super_class="hasWrapperVeto"
+			versioned="false"
+		/>
+		<metaobject
+			db_name="HAS_MIXED_VALUE_BAG_UNV"
+			object_name="hasMixedValueBagUnversioned"
+			super_class="hasMixedValueBag"
+			versioned="false"
+		/>
+		<metaobject
+			db_name="HAS_HISTORIC_VALUE_BAG_UNV"
+			object_name="hasHistoricValueBagUnversioned"
+			super_class="hasHistoricValueBag"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_DEL_REF_BAG_UNV"
+			object_name="hasWrapperDeleteRefererBagUnversioned"
+			super_class="hasWrapperDeleteRefererBag"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_BAG_UNV"
+			object_name="hasWrapperAttValueBagUnversioned"
+			super_class="hasWrapperAttValueBag"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_VETO_BAG_UNV"
+			object_name="hasWrapperVetoBagUnversioned"
+			super_class="hasWrapperVetoBag"
 			versioned="false"
 		/>
 		<metaobject

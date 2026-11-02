@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1718,6 +1719,92 @@ public class Util {
 			return Collections.emptyList();
 		}
 		throw new IllegalArgumentException("No TLType: " + owner.getTable());
+	}
+
+	/**
+	 * Fetches the references of the stored model whose association end has the given
+	 * {@link TLAssociationEnd#BAG_ATTR bag} flag.
+	 *
+	 * <p>
+	 * Only the current state of the model is considered. A reference that is defined in more than
+	 * one branch is reported once. Overriding references are not reported, since the links of a
+	 * reference are stored with the identifier of its {@link TLStructuredTypePart#getDefinition()
+	 * definition}.
+	 * </p>
+	 *
+	 * @param bag
+	 *        Whether to fetch the references that may hold a value more than once, or those holding
+	 *        each value at most once.
+	 * @return The qualified names (<code>module:Type#reference</code>) of the found references by
+	 *         the identifiers of their definitions, ordered by identifier. The identifier of the
+	 *         definition is the value of the reference column of the links of a reference.
+	 */
+	public Map<TLID, String> getTLReferenceDefinitionsByBag(PooledConnection connection, boolean bag)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String reference = "r";
+		String end = "e";
+		String owner = "t";
+		String module = "m";
+
+		String partTable = SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
+		String identifier = BasicTypes.IDENTIFIER_DB_NAME;
+		String revMax = BasicTypes.REV_MAX_DB_NAME;
+		String definition = refID(TLStructuredTypePart.DEFINITION_ATTR);
+
+		String identifierAlias = "id";
+		String referenceNameAlias = "referenceName";
+		String typeNameAlias = "typeName";
+		String moduleNameAlias = "moduleName";
+		CompiledStatement selectReferences = query(
+			select(
+				columns(
+					columnDef(identifier, reference, identifierAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME), reference, referenceNameAlias),
+					columnDef(SQLH.mangleDBName(TLNamed.NAME_ATTRIBUTE), owner, typeNameAlias),
+					columnDef(SQLH.mangleDBName(ApplicationObjectUtil.MODULE_NAME_ATTR), module, moduleNameAlias)),
+				innerJoin(
+					innerJoin(
+						innerJoin(
+							table(partTable, reference),
+							table(partTable, end),
+							and(
+								eqSQL(branchColumnRef(end), branchColumnRef(reference)),
+								eqSQL(column(end, identifier), column(reference, refID(TLReference.END_ATTR))),
+								eqSQL(column(end, revMax), literalLong(Revision.CURRENT_REV)),
+								eqSQL(column(end, SQLH.mangleDBName(TLAssociationEnd.BAG_ATTR)),
+									literal(DBType.BOOLEAN, Boolean.valueOf(bag))))),
+						table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE), owner),
+						and(
+							eqSQL(branchColumnRef(owner), branchColumnRef(reference)),
+							eqSQL(column(owner, identifier),
+								column(reference, refID(ApplicationObjectUtil.META_ELEMENT_ATTR))),
+							eqSQL(column(owner, revMax), literalLong(Revision.CURRENT_REV)))),
+					table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_MODULE), module),
+					and(
+						eqSQL(branchColumnRef(module), branchColumnRef(reference)),
+						eqSQL(column(module, identifier), column(owner, refID(PersistentType.MODULE_REF))),
+						eqSQL(column(module, revMax), literalLong(Revision.CURRENT_REV)))),
+				and(
+					eqSQL(
+						column(reference, SQLH.mangleDBName(ApplicationObjectUtil.IMPLEMENTATION_NAME)),
+						literalString(TLStructuredTypeColumns.REFERENCE_IMPL)),
+					eqSQL(column(reference, revMax), literalLong(Revision.CURRENT_REV)),
+					or(
+						isNull(column(reference, definition)),
+						eqSQL(column(reference, definition), column(reference, identifier)))),
+				orders(order(column(reference, identifier))))).toSql(sqlDialect);
+
+		Map<TLID, String> result = new LinkedHashMap<>();
+		try (ResultSet dbResult = selectReferences.executeQuery(connection)) {
+			while (dbResult.next()) {
+				result.putIfAbsent(tlId(dbResult, identifierAlias),
+					dbResult.getString(moduleNameAlias) + ":" + dbResult.getString(typeNameAlias) + "#"
+						+ dbResult.getString(referenceNameAlias));
+			}
+		}
+		return result;
 	}
 
 	private List<TypePart> getTLStructuredTypeParts(PooledConnection connection, Type type) throws SQLException {

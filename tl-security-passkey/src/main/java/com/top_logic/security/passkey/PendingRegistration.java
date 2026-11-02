@@ -20,9 +20,9 @@ public final class PendingRegistration extends PendingCeremony {
 
 	private final PublicKeyCredentialCreationOptions _request;
 
-	PendingRegistration(RelyingParty relyingParty, Person account, long timeout,
+	PendingRegistration(RelyingParty relyingParty, RelyingPartyAddress address, Person account, long timeout,
 			PublicKeyCredentialCreationOptions request) {
-		super(relyingParty, account, timeout);
+		super(relyingParty, address, account, timeout);
 		_request = request;
 	}
 

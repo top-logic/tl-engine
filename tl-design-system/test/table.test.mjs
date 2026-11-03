@@ -215,6 +215,9 @@ test('Tiefe: Zahlen rechtsbündig mit tabular-nums, Kopf mit ausgerichtet', () =
     assert.match(d, /justify-content:\s*flex-end/, el);
     assert.match(d, /font-variant-numeric:\s*tabular-nums/, el);
   }
+  // U43: ein Lesewert mit Auswahlliste ist ein Flex-Behälter über die ganze Zelle und erbt text-align nicht.
+  const values = declarationsOf(css, '.tl-table__cell[data-tl-align="end"] > .tl-select__values') ?? '';
+  assert.match(values, /justify-content:\s*flex-end/);
 });
 
 test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapsel', () => {

@@ -18,9 +18,9 @@ import com.top_logic.dob.ex.UnknownTypeException;
 /** 
  * A MORepository typically manages all the MOs found one scope.
  * <p>
- *  In top-logic the @see com.top_logic.knowledge.service.KnowledgeBase
+ *  In TopLogic the knowledge base
  *  uses the MORepository. Subclasses may use several sources
- *  (Java <code>Class</code>es, XML-Files, DatabaseSchemata) to create
+ *  (Java <code>Class</code>es, XML-Files, database schemata) to create
  *    theire Meta Objects.
  * </p>
  * 
@@ -29,7 +29,7 @@ import com.top_logic.dob.ex.UnknownTypeException;
 public interface MORepository extends TypeContext, Serializable {
 
     /**
-     * Return a MetaObject from the repository with the specified name.
+     * Return a {@link MetaObject} from the repository with the specified name.
      *
      * @exception   UnknownTypeException  if this type does not exist
      *              in the repository.
@@ -44,7 +44,7 @@ public interface MORepository extends TypeContext, Serializable {
 	 *        The type to add to this repository.
 	 * 
 	 * @throws DuplicateTypeException
-	 *         If a MetaObject for the given name already exists.
+	 *         If a {@link MetaObject} for the given name already exists.
 	 */
 	public void addMetaObject(MetaObject aMetaObject)
     	throws DuplicateTypeException;
@@ -65,15 +65,15 @@ public interface MORepository extends TypeContext, Serializable {
         throws UnknownTypeException;
 
     /**
-     * Returns true if this MORepository contains the specified MetaObject
+     * Returns true if this MORepository contains the specified {@link MetaObject}
      * or supports it otherwise false will be returned.
      */
     public boolean containsMetaObject (MetaObject aMetaObject);
 	
     /**
-     * Returns the names of all MetaObjects known in this repository.
+     * Returns the names of all {@link MetaObject}s known in this repository.
      *
-     * @return a List of Strings representing the MetaObjects' names.
+     * @return a List of Strings representing the {@link MetaObject}s' names.
      */
 	public List<String> getMetaObjectNames ();
 

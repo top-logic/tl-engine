@@ -7,14 +7,14 @@ package com.top_logic.dob.ex;
 
 import com.top_logic.dob.DataObjectException;
 
-/** This exception should be thrown when a type is defined twice in the repository
+/** This exception should be thrown when a type is defined twice in the repository.
  *
  * @author  Karsten Buch
  */
 public class DuplicateTypeException extends DataObjectException {
 
     /**
-     * Constructs a new DuplicateTypeException with the specified
+     * Constructs a new {@link DuplicateTypeException} with the specified
      * error message.
      */
     public DuplicateTypeException (String message) {

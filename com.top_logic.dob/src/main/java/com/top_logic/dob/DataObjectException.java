@@ -11,7 +11,7 @@ package com.top_logic.dob;
  */
 public class DataObjectException extends RuntimeException {
 
-    /** Constructs a new DataObjectException with the specified
+    /** Constructs a new {@link DataObjectException} with the specified
      * error message.
      */
     public DataObjectException (String message) {

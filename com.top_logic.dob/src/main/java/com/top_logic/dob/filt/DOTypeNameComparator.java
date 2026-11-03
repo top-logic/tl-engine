@@ -10,12 +10,13 @@ import java.util.Comparator;
 import com.top_logic.dob.DataObject;
 
 /**
- * Compare DataObjects by (MetaObject) Type Name.
+ * Compare {@link DataObject}s by ({@link com.top_logic.dob.MetaObject}) Type Name.
  * 
  * @author <a href="mailto:kha@top-logic.com">kha </a>
  */
 public class DOTypeNameComparator implements Comparator<DataObject> {
 
+	/** Singleton {@link DOTypeNameComparator} instance. */
 	public static final DOTypeNameComparator SINGLETON = new DOTypeNameComparator();
 
     /**
@@ -26,7 +27,7 @@ public class DOTypeNameComparator implements Comparator<DataObject> {
     }
     
 	/**
-	 * Compare to DataObjects by Type Name.
+	 * Compare to {@link DataObject}s by Type Name.
 	 */
 	@Override
 	public int compare(DataObject o1, DataObject o2) {

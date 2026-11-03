@@ -14,8 +14,8 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.ObjectContext;
 
 /**
- * The implementation of the DataObject. This one works with an internal array of
- * values. This array corosponse to the array in the MetaObjectImpl.
+ * The implementation of the {@link DataObject}. This one works with an internal array of
+ * values. This array corosponse to the array in the meta object.
  *
  * @author   <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -61,6 +61,7 @@ public abstract class DataObjectImpl extends AbstractDataObject implements Objec
     	return internalToString(getIdentifier());
     }
 
+	/** Creates the string representation of this object using the given name. */
 	protected final String internalToString(Object objectName) {
 		StringBuffer buf = new StringBuffer(64);
 		buf.append(tTable().getName());

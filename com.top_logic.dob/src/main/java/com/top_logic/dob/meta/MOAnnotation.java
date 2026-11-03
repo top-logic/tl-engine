@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Abstract;
 /**
  * Common super type of all {@link MOClass} annotations.
  * 
- * @see MOClass #getAnnotation(Class)
+ * @see MOClass#getAnnotation(Class)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

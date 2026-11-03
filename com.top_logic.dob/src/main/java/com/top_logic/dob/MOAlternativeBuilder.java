@@ -6,7 +6,7 @@
 package com.top_logic.dob;
 
 /**
- * Builder class to create {@link MOAlternative} 
+ * Builder class to create {@link MOAlternative}. 
  * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

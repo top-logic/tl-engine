@@ -58,12 +58,13 @@ import com.top_logic.dob.xml.DOXMLHandler;
 import com.top_logic.dsa.DataAccessException;
 
 /**
- * Uses and extends the features of DispatchingHandler to import an XML structure into a {@link DataObject}. 
+ * Uses and extends the features of {@link DispatchingHandler} to import an XML structure into a
+ * {@link DataObject}.
  * <ul>
  *   <li><em>StandardImport</em>: {@link DOList Data object lists} are created if a type "LIST" is encountered 
- *     and no value is given. A DataObject is created if the type DataObject or an unknown type name and a 
- *     <code>null</code> value are encountered. This is the normal behavior, if this instance has been 
- *     instantiated without a configuration name.</li>
+ *     and no value is given. A {@link DataObject} is created if the type {@link DataObject} or an
+ *     unknown type name and a <code>null</code> value are encountered. This is the normal behavior,
+ *     if this instance has been instantiated without a configuration name.</li>
  *   <li><em>DataObjectHandler</em>: </li> 
  *   <li><em>ContentHandler</em>: </li> 
  *   <li><em>StringListHandler</em>: </li> 
@@ -217,7 +218,7 @@ public class DOImporter extends DispatchingHandler {
     }
 
     /**
-	 * Return a collection of all imported DataObjects.
+	 * Return a collection of all imported {@link DataObject}s.
 	 * 
 	 * TODO KHA Why not return a List ?
      * 
@@ -232,9 +233,9 @@ public class DOImporter extends DispatchingHandler {
 	}
     
 	/**
-	 * Invoke the import of DataObject from the given file.
+	 * Invoke the import of {@link DataObject} from the given file.
      * 
-	 * @param aFile the file that should be converted into a DataObject.
+	 * @param aFile the file that should be converted into a {@link DataObject}.
 	 * @return true if the import has be completed
 	 */
 	public boolean doImport(File aFile) throws DataAccessException {
@@ -249,7 +250,7 @@ public class DOImporter extends DispatchingHandler {
 	}
 	
 	/**
-	 * Invoke the import of DataObject from the given file.
+	 * Invoke the import of {@link DataObject} from the given file.
      * 
 	 * @param   aStream    The input stream that should be converted into a data object.
 	 * @return  <code>true</code> if the import has be completed.
@@ -366,8 +367,9 @@ public class DOImporter extends DispatchingHandler {
 
 	/**
 	 * This class is an extension of the DOXMLHandler.
-	 * It adds the imported DataObject to the collection doColl of the outer class.
-	 * It is allowed to import DataObjects that contain other DataObjects and DOLists.
+	 * It adds the imported {@link DataObject} to the collection {@link #doColl} of the outer class.
+	 * It is allowed to import {@link DataObject}s that contain other {@link DataObject}s and
+	 * DOLists.
 	 * 
 	 * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
 	 */
@@ -379,10 +381,10 @@ public class DOImporter extends DispatchingHandler {
 		/**
 		 * Overwrite the method end element of the superclass.
 		 * It gets the last element from stack. This last element is the
-		 * parent-object of the actual DataObject (child). The child is assigned
+		 * parent-object of the actual {@link DataObject} (child). The child is assigned
 		 * to the parent.
-		 * If the stack is empty, there is no parent of the current DataObject. So the
-		 * current DataObject is the Root-Object and will be added to the doColl of 
+		 * If the stack is empty, there is no parent of the current {@link DataObject}. So the
+		 * current {@link DataObject} is the Root-Object and will be added to the {@link #doColl} of
 		 * the outer class.
 		 * 
 		 * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
@@ -428,12 +430,11 @@ public class DOImporter extends DispatchingHandler {
 		}	
 
 		/** 
-		 * Overwrite the method getValue of the superclass.
-		 * If a type of an element is DataObject or the value is null and the type is not LIST, 
-		 * assign the parameter name to instance-variable attrName. 
-		 * If a type LIST is encountered a DOList will be created as value.
-		 * This attrName will be assigned to a child-object when the parsing 
-		 * of the element is finished.
+		 * Overwrite the method {@link #getValue} of the superclass.
+		 * If a type of an element is {@link DataObject} or the value is null and the type is not
+		 * LIST, assign the parameter name to instance-variable <code>attrName</code>. If a type
+		 * LIST is encountered a DOList will be created as value. This <code>attrName</code> will be
+		 * assigned to a child-object when the parsing of the element is finished.
 		 * 
 		 * @see com.top_logic.dob.xml.DOXMLHandler#getValue(java.lang.String, java.lang.String, java.lang.String)
 		 */
@@ -463,10 +464,10 @@ public class DOImporter extends DispatchingHandler {
 		}
 
 		/** 
-		 * Overwrite the method handleDataObject of the superclass. If the current dataObject is a child-object,
-		 * the instance-variable result of the superclass is not null. It contains the parent
-		 * object of the current object. This parent-object is pushed onto the stack doStack
-		 * (instance-variable of the outer class).
+		 * Overwrite the method {@link #handleDataObject} of the superclass. If the current {@link
+		 * DataObject} is a child-object, the instance-variable result of the superclass is not
+		 * null. It contains the parent object of the current object. This parent-object is pushed
+		 * onto the stack <code>doStack</code> (instance-variable of the outer class).
 		 * 
 		 * @see com.top_logic.dob.xml.DOXMLHandler#handleDataObject(org.xml.sax.Attributes)
 		 */

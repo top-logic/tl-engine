@@ -17,11 +17,14 @@ import com.top_logic.dsa.ex.DataChangeException;
  */
 public abstract class AbstractDataChangeListener implements DataChangeListener {
 
-    protected abstract void dataCreated (DataChangeEvent anEvent);
+    /** Called in case some object is created. */
+	protected abstract void dataCreated (DataChangeEvent anEvent);
 
-    protected abstract void dataModified (DataChangeEvent anEvent);
+	/** Called in case some object is modified. */
+	protected abstract void dataModified (DataChangeEvent anEvent);
 
-    protected abstract void dataDeleted (DataChangeEvent anEvent);
+	/** Called in case some object is deleted. */
+	protected abstract void dataDeleted (DataChangeEvent anEvent);
 
     /** Called in case some Objects is deleted Recursivly ... */
     protected abstract void dataDeletedR (DataChangeEvent anEvent);

@@ -245,6 +245,79 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The object whose roles decide the access to the given object.
+	 *
+	 * <p>
+	 * This is the end of the chain of {@link #getAccessParent(TLClass) access parents} of the
+	 * object, or the object itself when its type decides for itself.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @return The object the roles of a user are looked up on, <code>null</code> when the chain of
+	 *         access parents leads nowhere or runs in a cycle, so that nobody decides for the object.
+	 * @implSpec An implementation without a notion of access parents answers the object itself.
+	 */
+	default TLObject getRoleHolder(TLObject object) {
+		return object;
+	}
+
+	/**
+	 * The operation checked on the {@link #getRoleHolder(TLObject) role holder} of the given object
+	 * in place of the given operation on the object.
+	 *
+	 * <p>
+	 * An object delegating to an access parent is not checked for the operation itself: the
+	 * operation is checked on the parent, possibly as another operation (creating or deleting a
+	 * part, for instance, is a modification of the whole). Along a chain of access parents, this
+	 * mapping applies at every step. Operations implying the given one on the object are checked
+	 * on the parent as well; they contribute to the
+	 * {@link #getAdmittingRoles(TLObject, BoundCommandGroup) admitting roles}.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @param operation
+	 *        The operation to perform on the object.
+	 * @return The operation checked on the role holder, the given operation for an object deciding
+	 *         for itself.
+	 * @implSpec An implementation without a notion of access parents answers the given operation.
+	 */
+	default BoundCommandGroup getOperationOnRoleHolder(TLObject object, BoundCommandGroup operation) {
+		return operation;
+	}
+
+	/**
+	 * The roles admitting the given operation on the given object, when held on its
+	 * {@link #getRoleHolder(TLObject) role holder}.
+	 *
+	 * <p>
+	 * For an object deciding for itself, these are the roles granted the operation, or an operation
+	 * implying it, on the object (on its type, or on the object itself for a module singleton with
+	 * rights of its own). For an object with an access parent, these are the roles admitting the
+	 * operation checked on the parent instead (see {@link #isAllowed(Person, TLObject, BoundCommandGroup)}),
+	 * collected along the chain of access parents.
+	 * </p>
+	 *
+	 * <p>
+	 * The bypasses of the access check (administrator, bypassed security checks, a type without
+	 * security) are not part of the answer.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @param operation
+	 *        The operation to perform on the object.
+	 * @return The admitting roles, empty when no role admits the operation or nobody decides for
+	 *         the object.
+	 * @implSpec The default answers the roles {@link #getAllowedRoles(TLClass, BoundCommandGroup)
+	 *           granted} the operation on the type of the object.
+	 */
+	default Set<BoundedRole> getAdmittingRoles(TLObject object, BoundCommandGroup operation) {
+		return object.tType() instanceof TLClass type ? getAllowedRoles(type, operation) : Collections.emptySet();
+	}
+
+	/**
 	 * Returns the roles granted the given command group on the given attribute. Relevant for READ
 	 * and WRITE command groups to implement attribute-level access rights.
 	 *

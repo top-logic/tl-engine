@@ -238,7 +238,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	/**
 	 * The key of the label of the given operation, the one of its command group.
 	 */
-	private static ResKey labelKey(BoundCommandGroup operation) {
+	static ResKey labelKey(BoundCommandGroup operation) {
 		return com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(operation.getID());
 	}
 

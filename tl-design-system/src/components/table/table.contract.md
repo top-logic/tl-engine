@@ -23,6 +23,7 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `columns[].filterable` | boolean | Die Kopfzelle trägt den Trichter (`tl-table__filter`). |
 | `columns[].filterActive` | boolean | Ein Filter der Spalte wirkt: `data-tl-state~="filtered"`, der Trichter heißt `js.table.filterActive` statt `js.table.filter`. |
 | `columns[].groupable` | boolean | Nach der Spalte darf gruppiert werden. |
+| `columns[].aggregate` | `true` | Nur an einer Spalte, die in der Gruppenzeile eine Aggregation zeigt. Der Gruppenwert läuft über die Spalten vor der ersten solchen Spalte hinweg (siehe `aria-colspan`); fehlt das Merkmal, läuft er bis an die angehefteten Spalten am Ende. |
 | `columns[].pinnedEnd` | boolean | Angeheftet am rechten Ende: `data-tl-state~="pinned"`, die erste davon `"pinned-first"`. |
 | `columns[].cssClass` | string | Klasse an jeder Zelle der Spalte, Kopf eingeschlossen. |
 | `columns[].tooltip` | string | Was die Überschrift über ihren Text hinaus sagt. |
@@ -192,6 +193,7 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `aria-expanded` | an aufklappbaren Zeilen und ihrem `tl-toggle` |
 | `aria-busy` | am Raster, solange Zeilen nachgeladen werden |
 | `data-tl-state~="cursor"` | an der Cursorzeile (genau eine, die Id aus `aria-activedescendant`) |
+| `aria-colspan` | an der ersten Zelle einer Gruppenzeile, wenn ihr Wert über Nachbarspalten läuft: die Zahl der Spalten, die sie deckt; die gedeckten Zellen werden nicht gezeichnet, die Zelle behält `data-col` der ersten Spalte, steht sie links fixiert, bleibt sie haften |
 | `data-tl-state~="group"` | an einer Gruppenzeile: eigene Zeilenform auf `--tl-surface-layer-muted`, der Gruppenwert halbfett (`tl-type-body-strong`), die Anzahl als Kapsel (`tl-table__count`) |
 | `data-tl-state~="even"` | an jeder zweiten Zeile, gezählt aus `rows[].index` (nicht aus dem DOM: die Zeilen sind virtuell gerendert und absolut gelegt, `nth-child` zählte die Fenster-Position); sie liest nur mit `data-tl-striped` an der Tabelle |
 | `data-tl-striped` | an `tl-table`, vorhanden = an: Zebra (die geraden Zeilen auf `--tl-surface-layer-muted`); ab Werk aus |

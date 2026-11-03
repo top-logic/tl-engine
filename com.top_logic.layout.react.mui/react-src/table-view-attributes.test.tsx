@@ -113,3 +113,89 @@ describe('the columns and rows', () => {
     expect(funnel.parentElement!.getAttribute('role')).toBe('columnheader');
   });
 });
+
+describe('the header row of a group', () => {
+  // Widths that tell the columns apart in a sum: 100 + 110 + 120 + 130 + 40.
+  const WIDE = [
+    { name: 'a', label: 'A', width: 100, sortable: true },
+    { name: 'b', label: 'B', width: 110, sortable: true },
+    { name: 'c', label: 'C', width: 120, sortable: true },
+    { name: 'd', label: 'D', width: 130, sortable: true },
+    { name: 'act', label: '', width: 40, sortable: false, pinnedEnd: true },
+  ];
+
+  function wideRow(index: number, extra: Record<string, unknown> = {}) {
+    const cells: Record<string, unknown> = {};
+    for (const column of WIDE) {
+      cells[column.name] = childControl(column.name + index, column.name + index);
+    }
+    return { id: 'r' + index, index, cells, ...extra };
+  }
+
+  function mountWide(columns: Array<Record<string, unknown>>, state: Record<string, unknown> = {}) {
+    mountTable({
+      columns,
+      rows: [wideRow(0, { groupCount: 2 }), wideRow(1)],
+      totalRowCount: 2,
+      treeMode: true,
+      ...state,
+    });
+  }
+
+  function cells(index: number): HTMLElement[] {
+    return Array.from(rowElement(index).querySelectorAll<HTMLElement>('[role="gridcell"]'));
+  }
+
+  it('lets its value span all columns but the pinned one when no column aggregates', async () => {
+    mountWide(WIDE);
+    await settle();
+
+    const group = cells(0);
+    expect(group.map(cell => cell.dataset.col)).toEqual(['a', 'act']);
+    expect(group[0].style.minWidth).toBe('460px');
+    expect(group[0].getAttribute('aria-colspan')).toBe('4');
+    expect(group[1].hasAttribute('aria-colspan')).toBe(false);
+    expect(group[1].getAttribute('data-tl-state')).toMatch(/\bpinned\b/);
+    expect(rowElement(0).getAttribute('data-tl-state')).toMatch(/\bgroup\b/);
+  });
+
+  it('stops in front of the first column that aggregates, which draws its cell', async () => {
+    mountWide(WIDE.map(column => (column.name === 'c' ? { ...column, aggregate: true } : column)));
+    await settle();
+
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'c', 'd', 'act']);
+    expect(cells(0)[0].style.minWidth).toBe('210px');
+    expect(cells(0)[0].getAttribute('aria-colspan')).toBe('2');
+    expect(cells(0)[1].hasAttribute('aria-colspan')).toBe(false);
+  });
+
+  it('spans nothing when the second column aggregates', async () => {
+    mountWide(WIDE.map(column => (column.name === 'b' ? { ...column, aggregate: true } : column)));
+    await settle();
+
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'b', 'c', 'd', 'act']);
+    expect(cells(0)[0].hasAttribute('aria-colspan')).toBe(false);
+  });
+
+  it('keeps the cells of a data row, one per column', async () => {
+    mountWide(WIDE);
+    await settle();
+
+    expect(cells(1).map(cell => cell.dataset.col)).toEqual(['a', 'b', 'c', 'd', 'act']);
+    expect(cells(1).some(cell => cell.hasAttribute('aria-colspan'))).toBe(false);
+    expect(cells(1)[0].style.minWidth).toBe('100px');
+  });
+
+  it('stops at the frozen columns when several are frozen, and sticks with a single one', async () => {
+    mountWide(WIDE, { frozenColumnCount: 2 });
+    await settle();
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'c', 'd', 'act']);
+    expect(cells(0)[0].style.minWidth).toBe('210px');
+    cleanup();
+
+    mountWide(WIDE, { frozenColumnCount: 1 });
+    await settle();
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'act']);
+    expect(cells(0)[0].getAttribute('data-tl-state')).toMatch(/\bfrozen\b/);
+  });
+});

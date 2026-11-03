@@ -1067,6 +1067,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 			def.setSortPriority(column.sortPriority());
 			def.setAlignment(column.alignment());
+			def.setAggregates(column.aggregates());
 			Map<String, Object> columnState = def.toStateMap();
 			columnState.put(COLUMN_FILTERABLE, Boolean.valueOf(column.filterable()));
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));

@@ -150,6 +150,19 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(ColumnAlignment.END, columns.get(1).alignment());
 	}
 
+	/** The view of a column tells whether the column aggregates the rows of a group. */
+	public void testColumnViewCarriesWhetherTheColumnAggregates() {
+		List<Column<Person, ?>> columns = List.of(
+			DefaultColumn.<Person, String> builder("name", Person::name).build(),
+			DefaultColumn.<Person, Integer> builder("age", Person::age)
+				.aggregate(group -> CellContent.text(String.valueOf(group.size())))
+				.build());
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+
+		assertFalse(view.columns().get(0).aggregates());
+		assertTrue(view.columns().get(1).aggregates());
+	}
+
 	public void testCellRendering() {
 		TableView<Person> view = newView();
 		Row<Person> first = view.rows(0, 1).get(0);

@@ -384,10 +384,25 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	 *         the layout referenced by the key.
 	 */
 	public static Map<String, List<BinaryData>> readLayouts() {
-		return new LayoutAnalyzer().readAll();
+		return readLayouts(newLog());
+	}
+
+	/**
+	 * Reads all layout files from file system.
+	 * 
+	 * @param log
+	 *        The {@link Protocol} to report layouts to whose overlays cannot be read. Such a layout
+	 *        is read without its overlays.
+	 * @return A map of layout key to (an potentially empty) list of overlay resources to apply to
+	 *         the layout referenced by the key.
+	 */
+	public static Map<String, List<BinaryData>> readLayouts(Protocol log) {
+		return new LayoutAnalyzer(log).readAll();
 	}
 
 	private static class LayoutAnalyzer {
+		private final Protocol _log;
+
 		FileManager _fileManager = FileManager.getInstance();
 
 		Set<String> _mainLayouts =
@@ -398,6 +413,10 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 		Set<String> _layoutKeys = new HashSet<>();
 
 		Map<String, List<BinaryData>> _overlaysByLayoutKey = new HashMap<>();
+
+		LayoutAnalyzer(Protocol log) {
+			_log = log;
+		}
 
 		public Map<String, List<BinaryData>> readAll() {
 			Set<String> layoutDirs = _fileManager.getResourcePaths(ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX);
@@ -451,8 +470,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 					_overlaysByLayoutKey.put(baseLayoutKey, layoutOverlays);
 				} catch (IOException exception) {
-					Logger.error("Failed to load overlays for layout '" + baseLayoutKey + "'.", exception,
-						LayoutStorage.class);
+					_log.error("Failed to load overlays for layout '" + baseLayoutKey + "'.", exception);
 				}
 			}
 		}

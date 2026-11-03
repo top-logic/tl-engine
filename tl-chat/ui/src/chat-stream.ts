@@ -45,15 +45,10 @@ export function openChatStream(at: ChatAddress): ChatStream {
  * A proxy that forwards the window's stream only in blocks of some kilobytes lets the start through
  * and holds back the small patches that follow; the stream then changes to polling, but only when
  * it learns that events are due. A React command tells it that by itself; a chat message goes
- * through `/chat/send` instead. An engine that polls by itself offers `expectEvents`; for one that
- * does not, `script/tl-window-stream.js` puts `TLWindowStream` in place (#940, temporary).
+ * through `/chat/send` instead.
  */
 export function expectFrames(): void {
-  if (bridge.expectEvents) {
-    bridge.expectEvents()
-  } else {
-    ;(window as unknown as { TLWindowStream?: { expect(): void } }).TLWindowStream?.expect()
-  }
+  bridge.expectEvents()
 }
 
 class WindowChatStream implements ChatStream {

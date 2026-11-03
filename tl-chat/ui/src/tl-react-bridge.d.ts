@@ -41,10 +41,9 @@ declare module 'tl-react-bridge' {
 
   /**
    * Tells the window's event stream that the server is writing events now, so that it checks they
-   * arrive and changes to polling when a proxy holds them back. Absent in an engine without that
-   * fallback.
+   * arrive and changes to polling when a proxy holds them back.
    */
-  export const expectEvents: ((serverLast?: number) => void) | undefined
+  export function expectEvents(serverLast?: number): void
 
   /**
    * Loads the page again because the server no longer knows it, unless that was done within the

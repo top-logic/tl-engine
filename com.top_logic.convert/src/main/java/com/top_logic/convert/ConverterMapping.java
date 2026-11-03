@@ -31,7 +31,7 @@ public final class ConverterMapping {
 
     
     /**
-     * Returns the fromMIMEType.
+     * Returns the MIME type to convert from.
      */
     public String getFromMIMEType() {
         return (fromMIMEType);
@@ -39,7 +39,7 @@ public final class ConverterMapping {
 
 
     /**
-     * Returns the toMIMEType.
+     * Returns the MIME type to convert to.
      */
     public String getToMIMEType() {
         return (toMIMEType);
@@ -97,9 +97,9 @@ public final class ConverterMapping {
     /**
      * This method returns the string representation of this object,
      * which contains the classname and the mapping, represented by this
-     * Class. This looks like "fromMIME->toMIME"
+     * Class. This looks like <code>Classname[fromMIME-&gt;toMIME]</code>.
      * 
-     * @return  Classname[fromMIME->toMIME]
+     * @return  <code>Classname[fromMIME-&gt;toMIME]</code>
      */
     @Override
 	public String toString() {

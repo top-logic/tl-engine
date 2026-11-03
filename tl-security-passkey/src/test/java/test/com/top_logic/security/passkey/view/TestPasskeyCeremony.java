@@ -40,13 +40,16 @@ import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.security.passkey.PasskeyCredentialRepository;
 import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 import com.top_logic.security.passkey.PendingRegistration;
 import com.top_logic.security.passkey.model.Passkey;
 import com.top_logic.security.passkey.view.I18NConstants;
 import com.top_logic.security.passkey.view.PasskeyAuthentication;
 import com.top_logic.security.passkey.view.PasskeyCeremony;
+import com.top_logic.security.passkey.view.PasskeyLoginElement;
 import com.top_logic.security.passkey.view.PasskeyRegistration;
 import com.top_logic.security.passkey.view.PasskeyRegistrationElement;
 import com.top_logic.security.passkey.view.PasskeySecondFactor;
@@ -154,6 +157,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** A ceremony offered for an account refuses the passkey of another account. */
 	public void testOtherAccountRefused() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyOwner");
 		Person other = account("ceremonyOther");
 		SoftwareAuthenticator authenticator = registered(account);
@@ -182,6 +186,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** Shortly before the pending ceremony expires, fresh options replace it without a message. */
 	public void testRefreshBeforeExpiry() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyRefresh");
 		SoftwareAuthenticator authenticator = registered(account);
 
@@ -206,6 +211,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** Options and acceptance of a pending ceremony expire after the same time. */
 	public void testOptionsCarryTheTimeout() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyTimeout");
 		PasskeyAuthentication ceremony = authentication();
 		ReactWebAuthnControl control = ceremony.createControl(_context, "Confirm", false);
@@ -217,6 +223,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** A credential answering no offered ceremony is refused. */
 	public void testWithdrawnCeremonyRefused() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyWithdrawn");
 		SoftwareAuthenticator authenticator = registered(account);
 
@@ -242,6 +249,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** A cancelled browser dialog shows a hint and offers fresh options; a refused automatic start shows nothing. */
 	public void testBrowserFailure() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyCancel");
 		registered(account);
 
@@ -292,6 +300,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** A page that cannot run a ceremony explains the disabled button in its tooltip, without a message. */
 	public void testUnavailable() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyInsecure");
 
 		PasskeyAuthentication ceremony = authentication();
@@ -442,6 +451,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** On a page whose origin the relying party does not accept, no ceremony is offered. */
 	public void testPageOriginMismatch() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyOrigin");
 		SoftwareAuthenticator authenticator = registered(account);
 		String pageOrigin = "http://192.168.1.10:8080";
@@ -476,6 +486,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** On a page whose origin the relying party accepts, the ceremony stays offered. */
 	public void testPageOriginAccepted() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyOriginOk");
 		SoftwareAuthenticator authenticator = registered(account);
 
@@ -542,11 +553,8 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** The passkey second factor is set up with a passkey and allowed unless MFA is disabled. */
 	public void testSecondFactor() throws Exception {
-		PasskeySecondFactor.Config<?> config = TypedConfiguration.newConfigItem(PasskeySecondFactor.Config.class);
-		config.setName("passkey");
-		config.update(config.descriptor().getProperty(PasskeySecondFactor.Config.LABEL), ResKey.text("Passkey"));
-		PasskeySecondFactor method =
-			(PasskeySecondFactor) new DefaultInstantiationContext(TestPasskeyCeremony.class).getInstance(config);
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
+		PasskeySecondFactor method = secondFactor();
 
 		Person account = account("ceremonyFactor");
 		assertFalse(method.isEnrolled(account));
@@ -563,6 +571,49 @@ public class TestPasskeyCeremony extends BasicTestCase {
 		assertFalse(method.canEnroll(PersonManager.getManager().getAnonymous()));
 	}
 
+	/** Passkeys that log in by themselves are no second factor, neither set up nor to set up. */
+	public void testNoSecondFactorForLogin() throws Exception {
+		PasskeySecondFactor method = secondFactor();
+		Person account = account("ceremonyNoFactor");
+		assertFalse(method.canEnroll(account));
+
+		registered(account);
+		assertTrue(PasskeyService.getInstance().isEnrolled(account));
+		assertFalse(method.isEnrolled(account));
+	}
+
+	/**
+	 * The button for a login with a passkey alone offers a ceremony for the usage
+	 * {@link PasskeyUsage#LOGIN} and is hidden for {@link PasskeyUsage#SECOND_FACTOR}.
+	 */
+	public void testPasswordlessButtonFollowsUsage() throws Exception {
+		ReactWebAuthnControl control = passwordlessButton();
+		assertFalse(control.isHidden());
+		assertNotNull(control.getOptions());
+
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
+		ReactWebAuthnControl hidden = passwordlessButton();
+		assertTrue(hidden.isHidden());
+		assertNull(hidden.getOptions());
+		assertEquals(text(com.top_logic.security.passkey.I18NConstants.ERROR_NO_PASSWORDLESS_LOGIN),
+			hidden.getTooltip());
+	}
+
+	private ReactWebAuthnControl passwordlessButton() {
+		PasskeyLoginElement.Config config = TypedConfiguration.newConfigItem(PasskeyLoginElement.Config.class);
+		config.update(config.descriptor().getProperty(PasskeyLoginElement.Config.LABEL), ResKey.text("Sign in"));
+		PasskeyLoginElement element =
+			(PasskeyLoginElement) new DefaultInstantiationContext(TestPasskeyCeremony.class).getInstance(config);
+		return (ReactWebAuthnControl) element.createControl(new DefaultViewContext(_context));
+	}
+
+	private static PasskeySecondFactor secondFactor() {
+		PasskeySecondFactor.Config<?> config = TypedConfiguration.newConfigItem(PasskeySecondFactor.Config.class);
+		config.setName("passkey");
+		config.update(config.descriptor().getProperty(PasskeySecondFactor.Config.LABEL), ResKey.text("Passkey"));
+		return (PasskeySecondFactor) new DefaultInstantiationContext(TestPasskeyCeremony.class).getInstance(config);
+	}
+
 	/** Outside the login, a passkey is created only for the account logged in. */
 	public void testRegistrationOnlyForCurrentUser() throws Exception {
 		Person account = account("ceremonySelf");
@@ -574,6 +625,7 @@ public class TestPasskeyCeremony extends BasicTestCase {
 
 	/** A registration completes the login only for an account setting up its second factor. */
 	public void testLoginRegistrationOnlyWhileEnrolling() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("ceremonyEnrolled");
 		registered(account);
 

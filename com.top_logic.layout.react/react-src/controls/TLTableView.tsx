@@ -69,6 +69,7 @@ const I18N_KEYS = {
   'js.table.selectAll': 'Select all rows',
   'js.table.selectRow': 'Select this row',
   'js.table.empty': 'No entries',
+  'js.table.rows': 'Rows of the table',
   'js.treeView.expand': 'Expand',
   'js.treeView.collapse': 'Collapse',
   'js.table.freezeUpTo': 'Freeze up to here',
@@ -521,8 +522,24 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     window.addEventListener('dragend', pressOver, true);
   }, [bodyFocusToGrid]);
 
+  // Whether the body scrolls - its rows or its columns do not fit. A body that scrolls is a tab stop
+  // of its own, with a name: the keyboard reaches what lies outside of it, its arrows scroll it (WCAG
+  // 2.1.1, axe scrollable-region-focusable), while the grid's arrows move the cursor.
+  const [bodyScrolls, setBodyScrolls] = React.useState(false);
+  const bodyScrollsRef = React.useRef(false);
+  bodyScrollsRef.current = bodyScrolls;
+  const measureBodyScrolls = React.useCallback(() => {
+    const body = scrollContainerRef.current;
+    setBodyScrolls(body !== null
+      && (body.scrollWidth > body.clientWidth || body.scrollHeight > body.clientHeight));
+  }, []);
+  // After every render - rows and columns change what the body holds; its own size, see the
+  // observer of the body below.
+  React.useLayoutEffect(measureBodyScrolls);
+
+  // A focus the keyboard put on a body that scrolls stays there; any other goes on to the grid.
   const handleBodyFocus = React.useCallback(() => {
-    if (!bodyPressRef.current) {
+    if (!bodyPressRef.current && !bodyScrollsRef.current) {
       bodyFocusToGrid();
     }
   }, [bodyFocusToGrid]);
@@ -1684,7 +1701,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     // The body gets its height from the containers filling, without a render of the table.
-    const observer = new ResizeObserver(() => restoreScrollRef.current());
+    const observer = new ResizeObserver(() => {
+      restoreScrollRef.current();
+      measureBodyScrolls();
+    });
     observer.observe(body);
     const timeout = window.setTimeout(() => {
       restoreTimedOutRef.current = true;
@@ -1981,13 +2001,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           })}
         </div>
       </div>
-      {/* Scrollable body; the focus stays on the grid. tabIndex -1: Chromium makes a scrolling
-          element without one a tab stop of its own. */}
+      {/* Scrollable body. While everything fits, the focus stays on the grid: tabIndex -1, else
+          Chromium makes a scrolling element a tab stop of its own. While it scrolls, it is one
+          (bodyScrolls). */}
       <div
         ref={scrollContainerRef}
         className="tl-table__body tl-type-body"
         role="rowgroup"
-        tabIndex={-1}
+        tabIndex={bodyScrolls ? 0 : -1}
+        aria-label={bodyScrolls ? i18n['js.table.rows'] : undefined}
         // A press on the body or a part of it that takes no focus - the empty area below the rows,
         // the selection cell beside its box - focuses the body (it carries a tabindex); the focus
         // belongs to the grid, which holds the keyboard and shows the ring.

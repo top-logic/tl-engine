@@ -1,0 +1,48 @@
+/* Dashboard — Spec 5c §6 (V5, V6, V12, V20), Vertrag dashboard.contract.md. Leser ist TLDashboard.
+   Kacheln in einem Raster, das die Engine packt (Spalten, Zeilen und Lage der Kacheln inline). Eine Kachel ist eine
+   Karte (tl-card: Fläche, Rand, Ecke, kein Schatten) und ein Overlay (tl-overlay tl-overlay--fill): der Inhalt ist
+   die Basis, im Bearbeiten liegen darüber die Abdeckung und der Ausblenden-Knopf (tl-overlay__action). Die Aktion
+   einer Kachel ist ein verborgener Knopf (tl-visually-hidden); hat er den Tastaturfokus, trägt die Kachel den Ring
+   (base.css). Bearbeiten ist data-tl-state~="edit" an der Wurzel; Einfügemarke und gezogene Kachel zeichnet drag.css
+   (das Raster trägt data-tl-axis="horizontal"). Den Innenabstand der Wurzel gibt tl-inset, den Abstand der Kacheln
+   liest das TSX aus --tl-space-md (useTokenPx) für Packung und Raster zugleich. */
+
+.tl-dashboard {
+  min-width: 0;
+}
+
+.tl-dashboard__grid {
+  inline-size: 100%;
+}
+
+/* Die Kachel hat eine feste Höhe (Zeilen des Rasters); was nicht passt, rollt. */
+.tl-dashboard__tile {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Die ganze Kachel nimmt den Klick der Aktion; eine deaktivierte Aktion lässt die Kachel, wie sie ist. */
+.tl-dashboard__tile:has(> .tl-dashboard__action:not(:disabled, [aria-disabled="true"])) {
+  cursor: pointer;
+}
+
+.tl-dashboard:not([data-tl-state~="edit"]) .tl-dashboard__tile:has(> .tl-dashboard__action:not(:disabled, [aria-disabled="true"])):hover {
+  border-color: var(--tl-border-interactive);
+}
+
+/* Der Name und die Tastatur-Bedienung der Kachel: außer Sicht (tl-visually-hidden), mit Abstand space-sm zur
+   Kachelkante, damit sein Ring nicht an der rollenden Kachel endet. Sichtbar ist der Ring der Kachel. */
+.tl-dashboard__action {
+  position: absolute;
+  inset-block-start: var(--tl-space-sm);
+  inset-inline-start: var(--tl-space-sm);
+}
+
+/* Im Bearbeiten deckt sie die Kachel (in tl-overlay__layer--fill) und nimmt den Zeiger: ein Klick erreicht den
+   Inhalt nicht, die Kachel lässt sich ziehen. Sie steht im DOM vor der Ebene mit dem Ausblenden-Knopf, der so
+   oben liegt — ohne z-index. */
+.tl-dashboard__cover {
+  flex: 1 1 auto;
+  cursor: move;
+}

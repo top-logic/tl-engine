@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Sidebar</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { position: relative; height: 26rem; overflow: hidden; transform: translateZ(0); background: var(--tl-surface-base); }
+  .stage .tl-dialog { position: absolute; }
+  .stage .tl-popover { position: absolute; inset-inline-start: 3.5rem; top: 4rem; }
+  .stage p { margin: var(--tl-space-md); }
+</style>
+</head>
+<body>
+<div class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Sidebar</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Ausgeklappt: aktuelle Seite, Befehl deaktiviert, Gruppe offen</p>
+    <div class="stage">
+      <div class="tl-sidebar">
+        <nav id="sb1-nav" class="tl-sidebar__nav" aria-label="Seitenleisten-Navigation">
+          <div class="tl-sidebar__header"><span class="tl-type-body-strong">TopLogic</span></div>
+          <div class="tl-sidebar__items">
+            <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="0"><i class="tl-menu__icon tl-icon-sm bi bi-house" aria-hidden="true"></i><span class="tl-menu__label">Start</span></button>
+            <button type="button" class="tl-menu__item tl-type-body-strong tl-sidebar__item" tabindex="-1" aria-current="page"><i class="tl-menu__icon tl-icon-sm bi bi-inbox" aria-hidden="true"></i><span class="tl-menu__label">Eingang</span><span class="tl-badge tl-type-label-strong tl-nums">3</span></button>
+            <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1" disabled data-tooltip="text:Keine Berechtigung"><i class="tl-menu__icon tl-icon-sm bi bi-trash" aria-hidden="true"></i><span class="tl-menu__label">Papierkorb leeren</span></button>
+            <div class="tl-menu__separator" role="none"><hr class="tl-divider"></div>
+            <div class="tl-menu__header tl-type-label" role="presentation">Verwaltung</div>
+            <div class="tl-sidebar__group">
+              <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1" aria-expanded="true"><i class="tl-menu__icon tl-icon-sm bi bi-people" aria-hidden="true"></i><span class="tl-menu__label">Benutzer</span><i class="tl-sidebar__chevron tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+              <div class="tl-sidebar__children">
+                <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1"><span class="tl-menu__label">Konten</span></button>
+                <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1"><span class="tl-menu__label">Rollen</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="tl-sidebar__collapse"><button type="button" class="tl-toggle tl-toggle--end" aria-expanded="true" aria-controls="sb1-nav" aria-label="Seitenleiste einklappen" data-tooltip="text:Seitenleiste einklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button></div>
+        </nav>
+        <div class="tl-sidebar__content"><p class="tl-type-body">Ansicht der aktuellen Seite.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Zugeklappte Gruppe mit der aktuellen Seite darin</p>
+    <div class="stage">
+      <div class="tl-sidebar">
+        <nav id="sb1b-nav" class="tl-sidebar__nav" aria-label="Seitenleisten-Navigation">
+          <div class="tl-sidebar__items">
+            <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="0"><i class="tl-menu__icon tl-icon-sm bi bi-house" aria-hidden="true"></i><span class="tl-menu__label">Start</span></button>
+            <div class="tl-sidebar__group">
+              <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1" aria-expanded="false" data-tl-state="contains-current"><i class="tl-menu__icon tl-icon-sm bi bi-gear" aria-hidden="true"></i><span class="tl-menu__label">Einstellungen</span><i class="tl-sidebar__chevron tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </nav>
+        <div class="tl-sidebar__content"><p class="tl-type-body">Die aktuelle Seite liegt in „Einstellungen“; der Kopf zeigt es.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Eingeklappt: Zähler an der Ecke, Gruppe mit offenem Flyout</p>
+    <div class="stage">
+      <div class="tl-sidebar" data-tl-state="collapsed">
+        <nav id="sb2-nav" class="tl-sidebar__nav" aria-label="Seitenleisten-Navigation">
+          <div class="tl-sidebar__items">
+            <button type="button" class="tl-menu__item tl-type-body-strong tl-sidebar__item" tabindex="0" aria-current="page" aria-label="Eingang" data-tooltip="text:Eingang"><span class="tl-icon-badge"><i class="tl-menu__icon tl-icon-sm bi bi-inbox" aria-hidden="true"></i><span class="tl-icon-badge__count"><span class="tl-badge tl-type-label-strong tl-nums">3</span></span></span></button>
+            <div class="tl-sidebar__group">
+              <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1" aria-haspopup="menu" aria-expanded="true" aria-label="Verwaltung" data-tooltip="text:Verwaltung"><i class="tl-menu__icon tl-icon-sm bi bi-people" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="tl-sidebar__collapse"><button type="button" class="tl-toggle tl-toggle--end" aria-expanded="false" aria-controls="sb2-nav" aria-label="Seitenleiste ausklappen" data-tooltip="text:Seitenleiste ausklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button></div>
+        </nav>
+        <div class="tl-sidebar__content"><p class="tl-type-body">Das Flyout ist das Menü an der Lage right-start.</p></div>
+      </div>
+      <div class="tl-popover tl-menu" role="menu">
+        <div class="tl-menu__header tl-type-label" role="presentation">Verwaltung</div>
+        <button type="button" class="tl-menu__item tl-type-body" role="menuitem" tabindex="0"><span class="tl-menu__label">Konten</span></button>
+        <button type="button" class="tl-menu__item tl-type-body-strong" role="menuitem" tabindex="-1" aria-current="page"><span class="tl-menu__label">Rollen</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Kompakt: die Nav im modalen Drawer</p>
+    <div class="stage">
+      <div class="tl-sidebar">
+        <div class="tl-dialog">
+          <aside class="tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container" data-tl-state="open" role="dialog" aria-modal="true" aria-label="Seitenleisten-Navigation" tabindex="-1">
+            <nav id="sb3-nav" class="tl-sidebar__nav" aria-label="Seitenleisten-Navigation">
+              <div class="tl-sidebar__items">
+                <button type="button" class="tl-menu__item tl-type-body-strong tl-sidebar__item" tabindex="0" aria-current="page"><i class="tl-menu__icon tl-icon-sm bi bi-inbox" aria-hidden="true"></i><span class="tl-menu__label">Eingang</span></button>
+                <button type="button" class="tl-menu__item tl-type-body tl-sidebar__item" tabindex="-1"><i class="tl-menu__icon tl-icon-sm bi bi-house" aria-hidden="true"></i><span class="tl-menu__label">Start</span></button>
+              </div>
+            </nav>
+          </aside>
+        </div>
+        <div class="tl-sidebar__content"><p class="tl-type-body">Die Seite liegt unter dem Scrim.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

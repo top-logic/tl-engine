@@ -7,7 +7,9 @@ package com.top_logic.security.passkey;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.UserVerificationRequirement;
 
 import com.top_logic.knowledge.wrap.person.Person;
 
@@ -24,6 +26,16 @@ public final class PendingRegistration extends PendingCeremony {
 			PublicKeyCredentialCreationOptions request) {
 		super(relyingParty, address, account, timeout);
 		_request = request;
+	}
+
+	/**
+	 * Whether the authenticator must verify the user (PIN, biometrics) for this registration.
+	 */
+	public boolean requiresUserVerification() {
+		return _request.getAuthenticatorSelection()
+			.flatMap(AuthenticatorSelectionCriteria::getUserVerification)
+			.map(UserVerificationRequirement.REQUIRED::equals)
+			.orElse(false);
 	}
 
 	/**

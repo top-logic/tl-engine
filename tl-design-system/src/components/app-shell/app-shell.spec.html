@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — AppShell</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { position: relative; height: 24rem; transform: translateZ(0); }
+  .stage p { margin: var(--tl-space-md); }
+  .specimen__notices { display: flex; flex-direction: column; gap: var(--tl-space-sm); }
+</style>
+</head>
+<body>
+<div class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">AppShell</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Kopf, zwei Hinweise bündig, Inhalt, Fuß</p>
+    <div class="stage">
+      <div class="tl-app-shell" data-tl-display="regular">
+        <div class="tl-app-shell__header"><header class="tl-app-bar tl-app-bar--elevated"><h1 class="tl-app-bar__title tl-type-heading-sm">TopLogic Demo</h1></header></div>
+        <div class="tl-app-shell__notices"><div class="specimen__notices">
+          <div role="status"><div class="tl-alert tl-notice-bar tl-type-body" data-tl-role="info"><div class="tl-alert__body"><div class="tl-alert__message">Wartung heute ab 18 Uhr.</div></div></div></div>
+          <div role="status"><div class="tl-alert tl-notice-bar tl-type-body" data-tl-role="warning"><div class="tl-alert__body"><div class="tl-alert__message">Die Sitzung läuft bald ab.</div></div></div></div>
+        </div></div>
+        <main class="tl-app-shell__content"><p class="tl-type-body">Inhalt (main). Die Ansicht trägt ihren Abstand selbst.</p></main>
+        <div class="tl-app-shell__footer"><nav class="tl-bottom-bar" aria-label="Navigation unten">
+        <button type="button" class="tl-bottom-bar__item" aria-current="page"><span class="tl-bottom-bar__icon"><i class="tl-icon-md bi bi-house" aria-hidden="true"></i></span><span class="tl-bottom-bar__label tl-type-label-strong">Start</span></button>
+        <button type="button" class="tl-bottom-bar__item"><span class="tl-bottom-bar__icon"><span class="tl-icon-badge"><i class="tl-icon-md bi bi-inbox" aria-hidden="true"></i><span class="tl-icon-badge__count"><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="3 neue">3</span></span></span></span><span class="tl-bottom-bar__label tl-type-label">Eingang</span></button>
+        <button type="button" class="tl-bottom-bar__item"><span class="tl-bottom-bar__icon"><i class="tl-icon-md bi bi-person" aria-hidden="true"></i></span><span class="tl-bottom-bar__label tl-type-label">Profil</span></button>
+      </nav></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

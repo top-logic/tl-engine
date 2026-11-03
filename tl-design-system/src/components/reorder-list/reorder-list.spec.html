@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Umsortierbare Liste</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Umsortierbare Liste</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Die Spaltenwahl: vor der Liste die Suche, dann fünf Einträge — einer ist fixiert, einer wird gezogen, vor
+       einem landet er, einer ist ausgeblendet. Darunter eine kleine Liste mit der letzten sichtbaren Spalte, deren
+       Auge gesperrt ist. Das Skript setzt beide auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--narrow specimen__row--top">
+      <span class="tl-type-label">Spaltenwahl</span>
+      <div>
+        <span class="tl-field-group tl-reorder-list__search"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+          <input class="tl-field tl-type-body" aria-label="Spalten filtern">
+        </span>
+        <span id="reorder-hint" hidden>Alt + Pfeil verschiebt</span>
+        <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
+          <!-- Die Spaltenwahl als Ebenen-Panel: Block Fixiert mit Name (zuletzt im Block), Status wird gezogen, Region
+               landet davor, Verantwortlich ausgeblendet, „Zuletzt geändert am“ mit Ellipse. -->
+          <li class="tl-reorder-list__section tl-type-label" role="presentation">Fixiert</li>
+          <li class="tl-reorder-list__item" data-tl-state="locked section-end">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Name verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-reorder-list__label">Name</span>
+            <span class="tl-reorder-list__actions">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Name lösen"><i class="tl-icon-sm bi bi-lock-fill tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Name ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+            </span>
+          </li>
+          <li class="tl-reorder-list__item" data-tl-state="dragging">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Status verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-reorder-list__label">Status</span>
+            <span class="tl-reorder-list__actions">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Status fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Status ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+            </span>
+          </li>
+          <li class="tl-reorder-list__item" data-tl-state="drop-before">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Region verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-reorder-list__label">Region</span>
+            <span class="tl-reorder-list__actions">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Region fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Region ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+            </span>
+          </li>
+          <li class="tl-reorder-list__item" data-tl-state="off">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Verantwortlich verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-reorder-list__label">Verantwortlich</span>
+            <span class="tl-reorder-list__actions">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Verantwortlich fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Verantwortlich einblenden"><i class="tl-icon-sm bi bi-eye-slash tl-button__icon" aria-hidden="true"></i></button>
+            </span>
+          </li>
+          <li class="tl-reorder-list__item">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Zuletzt geändert am verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+            <span class="tl-reorder-list__label">Zuletzt geändert am, mit einer Beschriftung, die mit Ellipse endet</span>
+            <span class="tl-reorder-list__actions">
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Zuletzt geändert am fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Zuletzt geändert am ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+            </span>
+          </li>
+        </ul>
+        <span class="tl-visually-hidden" role="status">Status, Position 2 von 5</span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top">
+      <span class="tl-type-label">Letzte sichtbare Spalte</span>
+      <!-- Nur noch Name ist sichtbar: sein Auge ist gesperrt und sagt, warum; Status daneben ist ausgeblendet. -->
+      <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
+        <li class="tl-reorder-list__item">
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Name verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+          <span class="tl-reorder-list__label">Name</span>
+          <span class="tl-reorder-list__actions">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Name fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Mindestens eine Spalte bleibt sichtbar" disabled data-tooltip="text:Mindestens eine Spalte bleibt sichtbar"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+          </span>
+        </li>
+        <li class="tl-reorder-list__item" data-tl-state="off">
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Status verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
+          <span class="tl-reorder-list__label">Status</span>
+          <span class="tl-reorder-list__actions">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Status fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Status einblenden"><i class="tl-icon-sm bi bi-eye-slash tl-button__icon" aria-hidden="true"></i></button>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    for (const a of ['aria-describedby', 'aria-labelledby', 'aria-controls'])
+      for (const el of rows.querySelectorAll('[' + a + ']')) el.setAttribute(a, el.getAttribute(a) + '-' + id);
+    document.getElementById(id).append(rows);
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

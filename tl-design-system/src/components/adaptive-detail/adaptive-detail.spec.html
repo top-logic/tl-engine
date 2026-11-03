@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Master-Detail</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { height: 16rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Master-Detail</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Kompakt: Leiste mit Breadcrumb, Detail im Drawer</p>
+    <div class="stage">
+      <div class="tl-adaptive-detail">
+        <div class="tl-adaptive-detail__bar">
+          <nav class="tl-breadcrumb" aria-label="Navigationspfad">
+            <ol class="tl-breadcrumb__list">
+              <li class="tl-breadcrumb__entry"><button type="button" class="tl-button tl-button--link tl-type-body"><span class="tl-button__label">Übersicht</span></button><i class="tl-breadcrumb__separator tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></li>
+              <li class="tl-breadcrumb__entry"><button type="button" class="tl-button tl-button--link tl-type-body"><span class="tl-button__label">Projekte</span></button><i class="tl-breadcrumb__separator tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></li>
+              <li class="tl-breadcrumb__entry"><span class="tl-breadcrumb__current tl-type-body" aria-current="page">Angebot 2026</span></li>
+            </ol>
+          </nav>
+        </div>
+        <div class="tl-adaptive-detail__content"><p class="tl-type-body">Die Auswahl bleibt hinter dem Detail stehen.</p></div>
+        <aside class="tl-drawer tl-drawer--end tl-drawer--medium tl-drawer--container" data-tl-state="open" aria-labelledby="ad1-title" tabindex="-1">
+          <div class="tl-titlebar">
+            <h2 class="tl-titlebar__title tl-type-heading-sm" id="ad1-title">Details</h2>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Schließen" data-tooltip="text:Schließen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button>
+          </div>
+          <div class="tl-drawer__body"><p class="tl-type-body">Inhalt.</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

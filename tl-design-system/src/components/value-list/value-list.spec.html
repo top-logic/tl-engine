@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Werteliste</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .spec-edit { max-width: 24rem; }
+  .spec-table { height: 12rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+  /* Breiten der Spalten sind Daten (columns[].width), das TSX setzt sie inline. */
+  .spec-table .tl-table__header-row > *, .spec-table .tl-table__row > * { flex-shrink: 0; }
+  .spec-w1 { width: 9rem; }
+  .spec-w2 { width: 12rem; }
+  .spec-w3 { width: 10rem; }
+  .spec-w4 { width: 3rem; }
+  .spec-row { width: 44rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Werteliste</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Lesend: in einer Zeile mit ausgeschriebenem Trenner (tl-select__separator), untereinander (tl-value-list--block)</p>
+    <div class="specimen__row"><span class="tl-type-label">in einer Zeile</span>
+      <span class="tl-value-list tl-type-body"><span class="tl-value-list__item"><span>Berlin</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Hamburg</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>München</span></span></span>
+    </div>
+    <div class="specimen__row"><span class="tl-type-label">untereinander</span>
+      <span class="tl-value-list tl-value-list--block tl-type-body"><span class="tl-value-list__item"><span>Erste Zeile eines Texts</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Zweite Zeile</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Dritte Zeile</span></span></span>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Bearbeitend (role="group"): Griff, Wert und Entfernen-Knopf je Zeile (Parts), darunter Hinzufügen; eine Zeile wird gezogen, die Einfügemarke steht unter einer anderen</p>
+    <div class="tl-value-list tl-type-body spec-edit" role="group" aria-label="Orte">
+      <div class="tl-value-list__row">
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Verschieben"><i class="bi bi-grip-vertical tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+        <span class="tl-value-list__item"><input class="tl-field tl-type-body" value="Berlin" aria-label="Ort 1"></span>
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Entfernen"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+      </div>
+      <div class="tl-value-list__row" data-tl-state="dragging">
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Verschieben"><i class="bi bi-grip-vertical tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+        <span class="tl-value-list__item"><input class="tl-field tl-type-body" value="Hamburg" aria-label="Ort 2"></span>
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Entfernen"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+      </div>
+      <div class="tl-value-list__row" data-tl-state="drop-after">
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Verschieben"><i class="bi bi-grip-vertical tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+        <span class="tl-value-list__item"><input class="tl-field tl-type-body" value="München" aria-label="Ort 3"></span>
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Entfernen"><i class="bi bi-x-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+      </div>
+      <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Hinzufügen"><i class="bi bi-plus-lg tl-icon-sm tl-button__icon" aria-hidden="true"></i></button>
+    </div>
+  </section>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">In der Tabellenzelle: die Liste füllt die Zelle und endet mit Ellipse, die Variante --block steht in einer Zeile; Wert mit Zusatzknopf (tl-stack--row, grow-first) endet mit Ellipse; Befehlsspalte (tl-table__cell--command) ohne Innenabstand, mittig</p>
+    <div class="spec-table">
+      <div class="tl-table tl-type-body">
+        <div class="tl-table__frame">
+          <div class="tl-table__grid" role="grid" aria-label="Orte" tabindex="0" aria-rowcount="3" aria-colcount="4" aria-activedescendant="vl-row-1">
+            <div class="tl-table__header" role="rowgroup">
+              <div class="tl-table__header-row spec-row" role="row" aria-rowindex="1">
+                <div class="tl-table__header-cell spec-w1" role="columnheader"><span class="tl-table__label">Name</span></div>
+                <div class="tl-table__header-cell spec-w2" role="columnheader"><span class="tl-table__label">Orte</span></div>
+                <div class="tl-table__header-cell spec-w3" role="columnheader"><span class="tl-table__label">Titel</span></div>
+                <div class="tl-table__header-cell tl-table__cell--command spec-w4" role="columnheader"><span class="tl-visually-hidden">Öffnen</span></div>
+              </div>
+            </div>
+            <div class="tl-table__body" role="rowgroup" tabindex="-1">
+              <div class="tl-table__canvas">
+                <div class="tl-table__row spec-row" role="row" id="vl-row-1" aria-rowindex="2" aria-selected="false" data-tl-state="cursor">
+                  <div class="tl-table__cell spec-w1" role="gridcell"><span>Vertrieb Nord</span></div>
+                  <div class="tl-table__cell spec-w2" role="gridcell"><span class="tl-value-list"><span class="tl-value-list__item"><span>Berlin</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Hamburg</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Bremen</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Kiel</span></span></span></div>
+                  <div class="tl-table__cell spec-w3" role="gridcell"><div class="tl-stack tl-stack--row tl-stack--grow-first tl-stack--align-center"><span>Bericht zum dritten Quartal</span><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Sprachen"><i class="bi bi-translate tl-icon-sm tl-button__icon" aria-hidden="true"></i></button></div></div>
+                  <div class="tl-table__cell tl-table__cell--command spec-w4" role="gridcell"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen"><i class="bi bi-box-arrow-up-right tl-icon-sm tl-button__icon" aria-hidden="true"></i></button></div>
+                </div>
+                <div class="tl-table__row spec-row" role="row" id="vl-row-2" aria-rowindex="3" aria-selected="false">
+                  <div class="tl-table__cell spec-w1" role="gridcell"><span>Notizen</span></div>
+                  <div class="tl-table__cell spec-w2" role="gridcell"><span class="tl-value-list tl-value-list--block"><span class="tl-value-list__item"><span>Erste Zeile</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Zweite Zeile</span></span><span class="tl-select__separator">, </span><span class="tl-value-list__item"><span>Dritte Zeile</span></span></span></div>
+                  <div class="tl-table__cell spec-w3" role="gridcell"><div class="tl-stack tl-stack--row tl-stack--grow-first tl-stack--align-center"><span>Kurz</span><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Sprachen"><i class="bi bi-translate tl-icon-sm tl-button__icon" aria-hidden="true"></i></button></div></div>
+                  <div class="tl-table__cell tl-table__cell--command spec-w4" role="gridcell"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen"><i class="bi bi-box-arrow-up-right tl-icon-sm tl-button__icon" aria-hidden="true"></i></button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 ---
-description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
+description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), depending on a preview version of the engine instead of a snapshot (version X.Y.Z-alphaN.n, tag PREVIEW/TL_<version>, change list, Renovate configuration), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
 order: 10
 ---
 
@@ -161,6 +161,49 @@ The POM of a generated application, reduced to the TopLogic parts:
 - **Repositories**: the generated POM declares the TopLogic repositories `tl-releases` and
   `tl-snapshots` for dependencies and plugins, so it builds without Maven settings, also against a
   TopLogic snapshot version.
+
+## Building on the development state: preview versions
+
+A project that needs engine changes not yet contained in a release depends on a **preview
+version** instead of the snapshot `X.Y.Z-SNAPSHOT`. A snapshot changes with every build of the
+engine's `master`, unnoticed and without a list of what changed; a preview version is fixed, and
+moving to the next one is a deliberate step with a known list of tickets.
+
+- **Publishing**: after every successful nightly build of the engine (all tests green), the release
+  job publishes the built state to the release repository `tl-releases`, without a commit on
+  `master`. The tag `PREVIEW/TL_<version>` of the engine repository contains exactly the published
+  sources.
+- **Version**: `X.Y.Z-alpha<N>.<n>`, where `X.Y.Z-SNAPSHOT` is the version of `master`, `N` the last
+  alpha release of `X.Y.Z` (`0` before the first one), and `n` the number of the nightly build (tag
+  `BUILD/BUILD-<n>`), e.g. `8.0.0-alpha12.813`. Maven orders a preview version after the alpha
+  release it is based on and before the next alpha release or the final release:
+  `8.0.0-alpha12 < 8.0.0-alpha12.813 < 8.0.0-alpha13 < 8.0.0 < 8.1.0-alpha0.820 < 8.1.0-alpha1`.
+- **Use**: set `tl.version` to the preview version. It is a release version, so the project needs
+  no snapshot repository and no `mvn -U`.
+
+  ```xml
+  <tl.version>8.0.0-alpha12.813</tl.version>
+  ```
+
+- **Change list**: each preview version has a pre-release in the engine repository,
+  `https://git.top-logic.com/TopLogic/tl-engine-7/releases/tag/PREVIEW/TL_<version>`, listing the
+  tickets since the previous preview version. The migration instructions of tickets that require
+  changes in dependent projects (section *Migration* of the ticket) come first.
+- **Retention**: preview versions, their tags and change lists are deleted after 8 weeks. Move on to
+  a newer preview version or a release before that.
+- **Renovate**: a project on a preview version gets the next one proposed. Since preview versions
+  are pre-releases, Renovate proposes them only from a pre-release of the same `X.Y.Z` unless
+  `ignoreUnstable` is switched off; the change list can be linked in the pull request:
+
+  ```json
+  {
+    "packageRules": [{
+      "matchPackageNames": ["com.top-logic:*"],
+      "ignoreUnstable": false,
+      "prBodyNotes": ["Changes: https://git.top-logic.com/TopLogic/tl-engine-7/releases/tag/PREVIEW/TL_{{{newVersion}}}"]
+    }]
+  }
+  ```
 
 ## Using a company parent POM
 

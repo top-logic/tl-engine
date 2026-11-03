@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Wizard</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Wizard</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Kopf: Zähler, Fortschritt, Schrittliste</p>
+    <div class="tl-wizard">
+      <div class="tl-wizard__header">
+        <span class="tl-wizard__counter tl-type-label tl-nums" aria-hidden="true">02 — 04</span>
+        <div class="tl-wizard__progress"><div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-labelledby="w1-p"><span class="tl-progress__track"><span class="tl-progress__fill"></span></span><span class="tl-progress__label tl-type-label tl-nums" id="w1-p">Schritt 2 von 4</span></div></div>
+        <ol class="tl-steps" aria-label="Schritte">
+          <li class="tl-steps__item" data-tl-state="done"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">1</span><button type="button" class="tl-button tl-button--link"><span class="tl-button__label">Willkommen</span></button></li>
+          <li class="tl-steps__item" aria-current="step"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">2</span><span class="tl-steps__name tl-type-body-strong">Profil</span></li>
+          <li class="tl-steps__item"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">3</span><span class="tl-steps__name tl-type-body">Fragen</span></li>
+          <li class="tl-steps__item"><span class="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">4</span><span class="tl-steps__name tl-type-body">Zusammenfassung</span></li>
+        </ol>
+      </div>
+      <div class="tl-wizard__body"><div class="tl-wizard__step"><div class="tl-inset"><p class="tl-type-body">Inhalt des Schritts.</p></div></div></div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "_": "Wache des gelöschten tlReactControls.css (Welle 5d, 20.10.): blocks ist leer und bleibt leer; test/ratchet.test.mjs bricht, wenn die Datei wieder entsteht oder ein Block eingetragen wird. Die Geschichte der Blöcke steht in docs/migration/altlast.md und in der Git-Historie dieser Datei.",
+  "blocks": {},
+  "_foreignTl": "Custom Properties im Namensraum --tl, die der Altbestand selbst DEFINIERT (nicht: liest). Lesen ist erlaubt — dafuer sind Tokens da; fremd ist nur, was hier auftaucht oder was kein Paket-Token ist. Einfang-Liste: jede Welle streicht, was sie ins Paket holt; Neues bricht den Test. --tl-toolbar-trigger-size und --tl-toolbar-shrink-priority (#29626) sind mit Welle 3a (Toolbar) gestrichen; die Host-Regeln lesen --tl-size-control. --tlText-tone (#29596, Text-Toene) ist mit Welle 3b E4 gestrichen; der Ton ist data-tl-tone. 07.10. aus #29752: --tlSlider-fill, -fill-color, -rest-color, -thumb und --tlSnackbar-bg, -fg (Welle 4/5); --tl-surface-state-hover und -active liest der Slider; sie sind Paket-Tokens aus Bernhards Branch CWS/CWS_29752_hoefe (nach main gemergt 07.10.), also nicht fremd. 14.10. Welle 4a: --tlSnackbar-bg/-fg gestrichen, die Farbe traegt tl-alert ueber data-tl-role. 20.10. Welle 5d Task 5: --tl-tt-padding gestrichen, die Abstaende des Tooltips stehen in tooltip.css; die Liste ist leer.",
+  "foreignTl": []
+}

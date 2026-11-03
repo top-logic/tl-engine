@@ -1,0 +1,51 @@
+/* Toggle — docs/skalen.md „Gleiches wird zusammengelegt“ (W4).
+   Ein Knopf, ein Glyph: der Chevron zeigt rechts (zu) und dreht bei aria-expanded auf unten (offen).
+   24 px quadratisch — die Mindest-Trefferfläche. Zeigen und Drücken mit dem Schleier; den Fokusring liefert base.css.
+   Ein Dropdown-Indikator (Select-Pfeil) ist kein Toggle: er zeigt unten = zu, oben = offen. */
+
+.tl-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-control-sm);
+  height: var(--tl-size-control-sm);
+  padding: 0;
+  border: var(--tl-border-width-sm) solid transparent;
+  border-radius: var(--tl-radius-sm);
+  background: transparent;
+  color: var(--tl-icon-primary);
+  cursor: pointer;
+}
+.tl-toggle[hidden] { display: none; }
+
+/* Zeigen und Drücken sind der durchscheinende Schleier als eigene Fläche (07.10.): der Toggle steht auf jedem
+   Grund — Formulargruppe, gezeigte und ausgewählte Tabellen- und Baumzeile —, eine deckende Stufe
+   (surface-interactive-hover) verschwände auf der gezeigten Zeile. Kein Hof: der Toggle ist ein Knopf und
+   trägt das Zeigen als Fläche (choice.contract.md „Höfe“); die Lint-Regel erlaubt die Schicht nur hier. */
+.tl-toggle:hover {
+  background: var(--tl-surface-state-hover);
+}
+
+.tl-toggle:active {
+  background: var(--tl-surface-state-active);
+}
+
+.tl-toggle:disabled {
+  color: var(--tl-icon-disabled);
+  background: transparent;
+  cursor: default;
+}
+
+.tl-toggle > .tl-icon-sm {
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-toggle[aria-expanded="true"] > .tl-icon-sm {
+  rotate: 90deg;
+}
+
+/* Öffnet der Inhalt zum Zeilenende hin (Seitenleiste, Part DisclosureToggle, #29787), dreht der Chevron offen
+   zurück zum Anfang. Eine Form des Toggles, kein Zustand: darum eine Variante. */
+.tl-toggle--end[aria-expanded="true"] > .tl-icon-sm {
+  rotate: 180deg;
+}

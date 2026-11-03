@@ -9,7 +9,8 @@ A second factor confirms a login after the password, before the session of the a
 The classic UI knows one method, a time-based one-time password (TOTP, RFC 6238) from an
 authenticator app. The React view UI asks the second-factor methods the application configures
 (`SecondFactorsConfig`); `com.top_logic.layout.view` configures TOTP, and a feature module adds
-further methods - `tl-security-passkey` adds passkeys, see the passkeys article of this chapter.
+further methods - `tl-security-passkey` adds passkeys, in an application whose passkeys are
+second factors (its option `usage`), see the passkeys article of this chapter.
 
 The implementation lives in `com.top_logic` (account model, classic dialogs) and
 `com.top_logic.layout.view` (React view UI); TOTP generation, verification and QR codes come from
@@ -217,7 +218,7 @@ The section "Two-factor authentication" of the "Security" tab of `settings-tabs.
 (`two-factor-section`) computes its status from it in the derived channel `secondFactors`
 (`observed-types="tl.accounts:Person"`); a module whose method keeps its state in objects of its
 own adds their type to the `observed-types` of that channel with an overlay, as
-`tl-security-passkey` does for `tl.security.passkey:Passkey`. Below the status, the column
+`tl-security-passkey` does for `tl.security.passkey:Passkey` (for passkeys used as second factor). Below the status, the column
 `two-factor-methods` holds one block per method - the authenticator app (`authenticator-app`) in
 the base view; a module appends the block of its own method with
 `<stack config:ref="two-factor-methods">`.
@@ -230,7 +231,8 @@ the base view; a module appends the block of its own method with
   (`Password.fromPlainText(...)`), not its encrypted string.
 - There are no recovery codes. A user who loses the authenticator app and has no other second
   factor needs an administrator reset or, in the classic UI, the e-mail based self-service reset.
-  A second method set up (in the React UI, e.g. a passkey) serves as fallback.
+  A second method set up (in the React UI, e.g. a passkey, where passkeys are second factors)
+  serves as fallback.
 - The classic UI knows TOTP only: an account whose only second factor is a passkey is treated
   there as having none - `optional` logs in with the password alone, `required` is sent into the
   TOTP set-up.

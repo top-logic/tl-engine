@@ -25,6 +25,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NOT_SET_UP;
 
 	/**
+	 * @en This application does not offer a login with a passkey alone. Log in with your password.
+	 */
+	public static ResKey ERROR_NO_PASSWORDLESS_LOGIN;
+
+	/**
+	 * @en This application does not use passkeys as second factor after the password. Log in with
+	 *     your passkey alone.
+	 */
+	public static ResKey ERROR_NO_SECOND_FACTOR;
+
+	/**
 	 * @en The passkey could not be registered: {0}
 	 */
 	public static ResKey1 ERROR_REGISTRATION_FAILED__REASON;

@@ -1,4 +1,4 @@
-import { React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
+import { React, rootClassName, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { bundle, toLanguage } from './i18n'
 
@@ -24,39 +24,18 @@ interface RowGroup {
   rows: DataRow[]
 }
 
-/** One header command button pushed by {@code DataListControl}: {label, icon} (icon is a ThemeImage). */
-interface DataButton {
-  label: string
-  icon: string
-}
-
-function readButtons(value: unknown): DataButton[] {
-  if (!Array.isArray(value)) return []
-  const out: DataButton[] = []
-  for (const raw of value) {
-    if (!raw || typeof raw !== 'object') continue
-    const button = raw as Record<string, unknown>
-    out.push({
-      label: typeof button.label === 'string' ? button.label : '',
-      icon: typeof button.icon === 'string' ? button.icon : '',
-    })
-  }
-  return out
-}
-
 /**
- * Renders a command's {@code ThemeImage} icon. A {@code css:<classes>} image (the common case, e.g.
- * a Bootstrap icon) renders as an icon font element; anything else falls back to a generic plus glyph.
+ * The header command buttons `DataListControl` puts into its state: the descriptors of the
+ * engine's command buttons, each rendered as a child control.
  */
-function ButtonIcon({ icon }: { icon: string }) {
-  if (icon.startsWith('css:')) {
-    return <i className={icon.slice('css:'.length)} aria-hidden="true" />
-  }
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M8 3.5v9M3.5 8h9" />
-    </svg>
-  )
+function readButtons(value: unknown): unknown[] {
+  return Array.isArray(value) ? value.filter((button) => button && typeof button === 'object') : []
+}
+
+/** The React key of a header button: its control id. */
+function buttonKey(button: unknown, index: number): string {
+  const id = (button as { controlId?: unknown }).controlId
+  return typeof id === 'string' ? id : String(index)
 }
 
 function readLines(value: unknown): DataLine[] {
@@ -327,19 +306,15 @@ export function TLDataList({ controlId }: TLCellProps) {
           ) : null}
         </div>
 
+        {/*
+          * A header command is the engine's command button: it shows its command's state - hidden,
+          * disabled with the reason as tooltip - and runs the command itself. The wrapper adds no box;
+          * it closes the drawer on a click of the button, which a disabled button does not receive.
+          */}
         {buttons.map((button, index) => (
-          <button
-            key={index}
-            type="button"
-            className="rail-new"
-            onClick={() => {
-              closeDrawer()
-              void command('button', { index })
-            }}
-          >
-            <ButtonIcon icon={button.icon} />
-            <span>{button.label || labels.newChat}</span>
-          </button>
+          <div key={buttonKey(button, index)} className="rail-command" onClick={closeDrawer}>
+            <TLChild control={button} />
+          </div>
         ))}
 
         {search ? (

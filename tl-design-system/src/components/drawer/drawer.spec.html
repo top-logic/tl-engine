@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Drawer</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { position: relative; height: 20rem; overflow: hidden; transform: translateZ(0); background: var(--tl-surface-base); }
+  .stage .tl-dialog { position: absolute; }
+  .stage p { margin: var(--tl-space-md); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Drawer</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Ende, mittel, offen, ohne Scrim</p>
+    <div class="stage"><p class="tl-type-body">Die Seite bleibt bedienbar.</p>
+      <aside class="tl-drawer tl-drawer--end tl-drawer--medium tl-drawer--container" data-tl-state="open" aria-labelledby="dr1-title" tabindex="-1">
+        <div class="tl-titlebar">
+          <h2 class="tl-titlebar__title tl-type-heading-sm" id="dr1-title">Details</h2>
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Schließen" data-tooltip="text:Schließen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button>
+        </div>
+        <div class="tl-drawer__body"><p class="tl-type-body">Inhalt.</p></div>
+      </aside>
+    </div>
+  </section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Anfang, schmal, offen, mit Scrim (modal)</p>
+    <div class="stage">
+      <div class="tl-dialog">
+        <aside class="tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container" data-tl-state="open" role="dialog" aria-modal="true" aria-labelledby="dr2-title" tabindex="-1">
+          <div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm" id="dr2-title">Navigation</h2></div>
+          <div class="tl-drawer__body"><p class="tl-type-body">Mobile Sidebar (4b).</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__panel"><p class="tl-type-heading-sm">Unten, schmal, offen</p>
+    <div class="stage">
+      <aside class="tl-drawer tl-drawer--bottom tl-drawer--narrow tl-drawer--container" data-tl-state="open" tabindex="-1">
+        <div class="tl-drawer__body"><p class="tl-type-body">Ohne Titel, ohne Kopf.</p></div>
+      </aside>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

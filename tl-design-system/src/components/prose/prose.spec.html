@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Prose</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Prose</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Fließtext vom Server (TLHtml eingebettet): nackte Elemente, die Schrift kommt aus den Typo-Klassen. -->
+  <template id="prose">
+    <div class="tl-prose">
+      <h1>Überschrift erster Ordnung</h1>
+      <p>Ein Absatz mit einem <a href="#">Link im Text</a>, der wie jeder Link im Paket aussieht.</p>
+      <h2>Überschrift zweiter Ordnung</h2>
+      <ul>
+        <li>Erster Punkt einer Liste</li>
+        <li>Zweiter Punkt mit <code>inline_code()</code></li>
+      </ul>
+      <h3>Überschrift dritter Ordnung</h3>
+      <pre><code>function gruss(name) {
+  return 'Hallo ' + name;
+}</code></pre>
+      <h4>Überschrift vierter Ordnung</h4>
+      <table>
+        <thead><tr><th>Spalte</th><th>Wert</th></tr></thead>
+        <tbody><tr><td>Breite</td><td>12</td></tr><tr><td>Höhe</td><td>8</td></tr></tbody>
+      </table>
+      <blockquote>Ein Zitat, eingerückt, mit einer Linie am Anfang.</blockquote>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('prose');
+  for (const id of ['on-layer', 'on-base']) document.getElementById(id).append(tpl.content.cloneNode(true));
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

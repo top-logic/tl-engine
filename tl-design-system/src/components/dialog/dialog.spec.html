@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Dialog</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { position: relative; height: 24rem; overflow: hidden; transform: translateZ(0); }
+  .stage .tl-dialog { position: absolute; }
+  .stage .tl-dialog__surface.wide { width: 28rem; }
+  .stage p { margin: var(--tl-space-md); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Dialog</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Fenster mit Toolbar, Körper, Fuß, Griffen</p>
+    <div class="stage">
+      <div class="tl-dialog">
+        <div class="tl-dialog__surface wide" role="dialog" aria-modal="true" aria-labelledby="d1-title">
+          <div class="tl-titlebar">
+            <h2 class="tl-titlebar__title tl-type-heading-sm" id="d1-title">Spalten wählen, mit einem Titel, der mit Ellipse endet</h2>
+            <div class="tl-titlebar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Werkzeuge"><div class="tl-toolbar__group"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Alle wählen" data-tooltip="text:Alle wählen"><i class="tl-icon-sm bi bi-check2-all tl-button__icon" aria-hidden="true"></i></button><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Zurücksetzen" data-tooltip="text:Zurücksetzen"><i class="tl-icon-sm bi bi-arrow-counterclockwise tl-button__icon" aria-hidden="true"></i></button></div></div></div>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Maximieren" data-tooltip="text:Maximieren"><i class="tl-icon-sm bi bi-window tl-button__icon" aria-hidden="true"></i></button>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Schließen" data-tooltip="text:Schließen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button>
+          </div>
+          <div class="tl-dialog__body"><p class="tl-type-body">Inhalt des Fensters.</p></div>
+          <div class="tl-button-bar">
+            <button type="button" class="tl-button tl-button--secondary">Abbrechen</button>
+            <button type="button" class="tl-button tl-button--primary">Ok</button>
+          </div>
+          <div class="tl-dialog__resize" data-tl-edge="n"></div><div class="tl-dialog__resize" data-tl-edge="ne"></div>
+          <div class="tl-dialog__resize" data-tl-edge="e"></div><div class="tl-dialog__resize" data-tl-edge="se"></div>
+          <div class="tl-dialog__resize" data-tl-edge="s"></div><div class="tl-dialog__resize" data-tl-edge="sw"></div>
+          <div class="tl-dialog__resize" data-tl-edge="w"></div><div class="tl-dialog__resize" data-tl-edge="nw"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Maximiert, ohne Fuß</p>
+    <div class="stage">
+      <div class="tl-dialog">
+        <div class="tl-dialog__surface" role="dialog" aria-modal="true" aria-labelledby="d2-title" data-tl-state="maximized">
+          <div class="tl-titlebar">
+            <h2 class="tl-titlebar__title tl-type-heading-sm" id="d2-title">Editor</h2>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Wiederherstellen" data-tooltip="text:Wiederherstellen"><i class="tl-icon-sm bi bi-window-stack tl-button__icon" aria-hidden="true"></i></button>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Schließen" data-tooltip="text:Schließen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button>
+          </div>
+          <div class="tl-dialog__body"><p class="tl-type-body">Maximiert füllt die Fläche den Scrim ohne Rand und Ecke.</p></div>
+          <div class="tl-button-bar"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

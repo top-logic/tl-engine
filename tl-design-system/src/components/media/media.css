@@ -1,0 +1,59 @@
+/* Media — Spec 2026-10-19 Welle 5b §5. Ein Block für eingebettete Inhalte: Bild, PDF, HTML-Dokument und -Vorschau,
+   Kamera-Video. Der Rahmen (img, iframe, video) füllt die Wurzel; die Größe gibt der Server inline. Die Einpassung
+   ist eine Variante, Spiegeln ein Zustand. */
+
+.tl-media {
+  display: block;
+  max-inline-size: 100%;
+  position: relative;
+}
+.tl-media[hidden] { display: none; }
+
+.tl-media__frame {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+}
+
+/* Ein Bild ist so breit wie das Bild, solange keine Größe es anders sagt (die gibt der Server inline); nur Bilder
+   tragen eine Einpassung, das Dokument füllt weiter. */
+.tl-media--cover,
+.tl-media--contain {
+  inline-size: fit-content;
+}
+
+.tl-media--cover .tl-media__frame { object-fit: cover; }
+.tl-media--contain .tl-media__frame { object-fit: contain; }
+
+/* Fremdes HTML (Dokument und Vorschau) setzt Weiß voraus: das Papier ist in beiden Modi weiß. */
+.tl-media--document .tl-media__frame {
+  background: var(--tl-surface-document);
+}
+
+/* Vorschau eines Dokuments: ein Bild einer Seite. Die Seite behält die Größe, für die sie geschrieben ist (inline),
+   liegt außerhalb des Flusses und wird von links oben verkleinert (transform inline); was übersteht, ist abgeschnitten
+   wie Papier. Sie wird angesehen, nicht benutzt: der Zeiger geht an das, was die Vorschau trägt. */
+.tl-media--preview {
+  overflow: hidden;
+}
+
+.tl-media--preview > .tl-media__frame {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* Kamera-Video (Spec 5b §4): gespiegelt ist ein Zustand am Video. */
+.tl-media__frame[data-tl-state~="mirrored"] {
+  transform: scaleX(-1);
+}
+
+/* Reservierter Platz ohne Bild. */
+.tl-media__placeholder {
+  inline-size: 100%;
+  block-size: 100%;
+}

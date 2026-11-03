@@ -25,6 +25,10 @@
 						>
 							<path>
 								<step attribute="DemoSecurity:DemoSecurity.A#singlePersonContact"/>
+								<step
+									attribute="tl.accounts:Person#contact"
+									inverse="true"
+								/>
 							</path>
 						</rule>
 
@@ -36,6 +40,10 @@
 						>
 							<path>
 								<step attribute="DemoSecurity:DemoSecurity.A#personContactList"/>
+								<step
+									attribute="tl.accounts:Person#contact"
+									inverse="true"
+								/>
 							</path>
 						</rule>
 

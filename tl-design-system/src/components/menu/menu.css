@@ -1,0 +1,98 @@
+/* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
+   Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
+   base.css ist der Cursor, innen, weil der Behälter scrollt. Zustände sind Attribute: aria-current
+   (in Kraft; das Gewicht trägt tl-type-body-strong, sonst tl-type-body), disabled. Der Ton (destruktiv)
+   ist kein Zustand und darum der Modifier tl-menu__item--danger. Zeigen ist
+   surface-interactive-hover — seit „Zeigen auf allen Gründen“ auch dunkel auf dem Overlay sichtbar. */
+
+.tl-menu {
+  display: flex;
+  flex-direction: column;
+}
+.tl-menu[hidden] { display: none; }
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-menu__item) { font: inherit; }
+
+.tl-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  width: 100%;
+  min-height: var(--tl-size-row);
+  padding: 0 var(--tl-space-control-x);
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+  background: transparent;
+  color: var(--tl-text-primary);
+  text-align: start;
+  cursor: pointer;
+}
+.tl-menu__item[hidden] { display: none; }
+
+.tl-menu__item:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-menu__item:active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Ton folgt der Aktion (docs/skalen.md): der Eintrag einer destruktiven Aktion trägt die drei Paare
+   von tl-button--ghost.tl-button--danger. Eine Klasse wie am Knopf, kein Attribut — Ton ist kein
+   Zustand. Steht nach dem Grundeintrag und vor :disabled: bei gleicher Spezifität gewinnt
+   deaktiviert, auch unter dem Zeiger. */
+.tl-menu__item--danger {
+  color: var(--tl-status-error-text);
+}
+
+.tl-menu__item--danger:hover {
+  background: var(--tl-status-error-surface);
+  color: var(--tl-text-on-status-error);
+}
+
+.tl-menu__item--danger:active {
+  background: var(--tl-status-error-surface-active);
+  color: var(--tl-text-on-status-error-active);
+}
+
+.tl-menu__item:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-menu__item:disabled {
+  color: var(--tl-text-disabled);
+  background: transparent;
+  cursor: default;
+}
+
+.tl-menu__icon {
+  flex-shrink: 0;
+}
+
+.tl-menu__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-menu__header {
+  padding: var(--tl-space-2xs) var(--tl-space-control-x);
+  color: var(--tl-text-secondary);
+}
+
+.tl-menu > .tl-divider,
+.tl-menu > .tl-menu__separator {
+  margin-block: var(--tl-space-2xs);
+}
+
+/* --- Auslöser --------------------------------------------------------------- */
+
+/* Eine Kontextmenü-Region ist reine Durchreiche: keine eigene Box. Ein Klick-Auslöser ist ein
+   nativer Knopf mit tl-button tl-button--ghost (Vertrag) — die Klasse markiert ihn nur. */
+.tl-menu-region[data-tl-trigger="contextmenu"] {
+  display: contents;
+}
+.tl-menu-region[hidden] { display: none; }

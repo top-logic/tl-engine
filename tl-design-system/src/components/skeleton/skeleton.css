@@ -1,0 +1,21 @@
+/* Skeleton — docs/skalen.md „Progress: ein Anteil, kein Urteil“ (die vertiefte Fläche).
+   Platzhalter für Inhalt, der lädt: die neutrale, vertiefte Fläche, die auch die Spur des Progress
+   trägt, und ein langsamer Puls. Maße setzt der Ort, an dem er steht (Zeile, Block, Kreis); das
+   Stylesheet kennt nur Mindesthöhe und Radius. Der globale Reduced-Motion-Schalter aus base.css beendet
+   die Animation nach einem Durchlauf, darum gibt es hier keine eigene Regel. `alternate` endet bei
+   opacity 0,5 — deshalb setzt nichts einen Fill-Mode, und die Ruhelage ist opacity 1 (wie beim
+   Progress-Sweep). Der Behälter trägt aria-busy, der Platzhalter ist aria-hidden. */
+
+.tl-skeleton {
+  display: block;
+  min-height: var(--tl-size-icon-sm);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-interactive-selected);
+  animation: tl-skeleton-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
+}
+.tl-skeleton[hidden] { display: none; }
+
+@keyframes tl-skeleton-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.5; }
+}

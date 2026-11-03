@@ -75,6 +75,9 @@
 		<!-- Archetypes -->
 		<module>tl-archetype-app</module>
 
+		<!-- The build context of the runtime image of an application, unpacked by its bin/image.sh. -->
+		<module>tl-app-runtime</module>
+
 		<!-- Module parents -->
 		<module>tl-parent-app</module>
 		<module>tl-parent-core</module>

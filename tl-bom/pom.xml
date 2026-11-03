@@ -103,6 +103,11 @@
 				<artifactId>tl-archetype-app</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-app-runtime</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<!-- Build tooling -->
 			<dependency>

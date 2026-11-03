@@ -26,7 +26,10 @@ mvn clean package -Pwith-postgresql -DdeployAspects=prod
 ## The runtime image
 
 The image is defined in the folder `tl-app-runtime` of the engine and built by its `build.sh`, which
-tags it `top-logic/tl-app-runtime:<version of tl-bom>`. It provides:
+tags it `top-logic/tl-app-runtime:<version of tl-bom>`. Its build context - `Dockerfile`, `setenv.sh`
+and `toplogic.config.xml` - is also published with every TopLogic version as the Maven artifact
+`com.top-logic:tl-app-runtime`, from which `bin/image.sh` of an application builds the image on a
+machine that does not have it. It provides:
 
 | What | How |
 |---|---|
@@ -63,7 +66,8 @@ The archetype generates for an application:
 - `src/main/docker/Dockerfile`: the image of the application as above. `TL_VERSION` and `APP` are
   build arguments.
 - `bin/image.sh [TAG]`: builds the application for operation with PostgreSQL and the image around it
-  (tag default `<artifact>:latest`). A missing runtime image is built from the engine checkout named
-  by `TL_ENGINE`, otherwise pulled.
+  (tag default `<artifact>:latest`). A runtime image the machine does not have yet is built from the
+  Maven artifact `com.top-logic:tl-app-runtime` of the application's `tl.version`, so no image
+  registry and no engine checkout is needed.
 - `src/main/docker/compose.yaml`: the application with its PostgreSQL on one machine, the secrets
   as files of `src/main/docker/secrets` (ignored by git).

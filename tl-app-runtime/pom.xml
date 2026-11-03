@@ -1,0 +1,48 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<!--
+		The build context of the runtime image top-logic/tl-app-runtime (README.md), published with every
+		TopLogic version. The image script of an application (bin/image.sh of the archetype) unpacks it
+		and builds the image on a machine that does not have it yet.
+	-->
+	<artifactId>tl-app-runtime</artifactId>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<name>${project.artifactId}</name>
+	<description>The build context of the runtime image of TopLogic applications.</description>
+
+	<developers>
+		<developer>
+			<name>The TopLogic Developers</name>
+			<email>info@top-logic.com</email>
+			<organization>Business Operation Systems GmbH</organization>
+			<organizationUrl>https://www.top-logic.com</organizationUrl>
+		</developer>
+	</developers>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>${project.basedir}</directory>
+				<includes>
+					<include>Dockerfile</include>
+					<include>setenv.sh</include>
+					<include>toplogic.config.xml</include>
+				</includes>
+			</resource>
+		</resources>
+	</build>
+</project>

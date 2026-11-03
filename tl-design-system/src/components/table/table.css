@@ -86,33 +86,6 @@
 }
 .tl-table__save[hidden] { display: none; }
 
-/* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
-
-/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): Titel, Abschnitt „Dichte“
-   mit Segmenten, zwei Schalter, Trennlinie, Einträge. Alles steht auf der Einrückung der Menüeinträge
-   (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
-   zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
-.tl-popover.tl-table-view-options {
-  gap: var(--tl-space-2xs);
-}
-
-/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
-   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. */
-.tl-table-view-options__title {
-  padding: var(--tl-space-2xs) var(--tl-space-control-x);
-  color: var(--tl-text-primary);
-}
-
-/* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
-.tl-table-view-options__segments {
-  margin-inline: var(--tl-space-control-x);
-}
-
-/* Ein Schalter ist eine Zeile des Popovers: Einrückung wie der Eintrag, der Zeiger-Hof gehört zur Marke. */
-.tl-table-view-options__switch {
-  padding-inline: var(--tl-space-control-x);
-}
-
 /* --- Rahmen und Raster ------------------------------------------------------------ */
 
 /* Der Rahmen trägt das Raster und, was über ihm liegt, aber keine Zelle ist: die Spaltenwahl, den Griff

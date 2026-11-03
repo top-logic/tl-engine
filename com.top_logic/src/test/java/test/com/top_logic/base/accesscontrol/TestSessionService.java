@@ -424,11 +424,12 @@ public class TestSessionService extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that a {@link UserEventListener} failing on the login neither aborts the login nor
-	 * keeps the following listeners from being notified (Ticket #30110).
+	 * Tests that a {@link UserEventListener} failing on the login, with an exception or an
+	 * {@link Error}, neither aborts the login nor keeps the following listeners from being notified
+	 * (Ticket #30110).
 	 */
 	public void testFailingListenerDoesNotAbortLogin() throws Exception {
-		SessionService service = newRecordingService(FailingListener.class);
+		SessionService service = newRecordingService(FailingListener.class, ErrorListener.class);
 		InvocationContext invocation = newInvocation();
 		HttpServletRequest request = invocation.getRequest();
 		Person root = PersonManager.getManager().getRoot();
@@ -488,6 +489,19 @@ public class TestSessionService extends BasicTestCase {
 		@Override
 		public void notifyUserEvent(UserEvent event) {
 			throw new IllegalStateException("Commit aborted in this test.");
+		}
+
+	}
+
+	/**
+	 * {@link UserEventListener} that fails with an {@link Error}, like a listener reaching an
+	 * unexpected state.
+	 */
+	public static class ErrorListener implements UserEventListener {
+
+		@Override
+		public void notifyUserEvent(UserEvent event) {
+			throw new AssertionError("Unexpected state in this test.");
 		}
 
 	}

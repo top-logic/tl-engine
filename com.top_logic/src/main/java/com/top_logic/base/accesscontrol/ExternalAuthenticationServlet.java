@@ -254,42 +254,61 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 				Logger.debug(message, ExternalAuthenticationServlet.class);
 			}
 		}
-		Person person = credentials.getPerson();
+		String sessionBefore = sessionId(request);
+		boolean loggedIn = false;
 		try {
-			loginUser(person, request, response);
-		} catch (LoginDeniedException exception) {
-			// Denied before the user was logged in.
-			throw exception;
-		} catch (RuntimeException exception) {
-			abortLogin(person, request);
-			throw exception;
+			loginUser(credentials.getPerson(), request, response);
+			loggedIn = true;
+		} finally {
+			if (!loggedIn) {
+				abortLogin(sessionBefore, request);
+			}
 		}
 		redirectToStartPage(request, response);
 	}
 
 	/**
-	 * Ends the session of the given request, if the failed login of the given user has already
-	 * registered it for that user.
+	 * The ID of the session of the given request, or <code>null</code> if the request has none.
+	 */
+	private static String sessionId(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		return session == null ? null : session.getId();
+	}
+
+	/**
+	 * Ends the session of the given request, if the failed login has already changed it.
 	 *
 	 * <p>
-	 * Such a session misses what the login would have installed after establishing it (e.g. the
+	 * Every login changes the session: it creates a session or changes the ID of the existing one,
+	 * before it sets the user and announces the login. A session whose ID still is the given one
+	 * has not been touched and is kept, whatever made the login fail (e.g. a denied login). A
+	 * changed session misses what the login would have installed afterwards (e.g. the
 	 * {@link #userTokens() tokens} of the external authentication). It must not stay logged in,
 	 * since a later request would reuse it (see {@link ExternalAuthentication#getReuseSession()}).
 	 * </p>
+	 *
+	 * <p>
+	 * Called while the exception of the failed login propagates, so a failure of its own is only
+	 * logged and does not replace that exception.
+	 * </p>
+	 *
+	 * @param sessionBefore
+	 *        The {@link #sessionId(HttpServletRequest) session ID} of the request before the login.
 	 */
-	private static void abortLogin(Person person, HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session == null) {
-			return;
+	private static void abortLogin(String sessionBefore, HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession(false);
+			if (session == null || session.getId().equals(sessionBefore)) {
+				return;
+			}
+			Logger.warn("Ending the session of a failed login.", ExternalAuthenticationServlet.class);
+			SessionService.getInstance().invalidateSession(session);
+		} catch (Throwable ex) {
+			if (ex instanceof VirtualMachineError) {
+				throw ex;
+			}
+			Logger.error("Failed to end the session of a failed login.", ex, ExternalAuthenticationServlet.class);
 		}
-		SessionService sessionService = SessionService.getInstance();
-		String sessionId = session.getId();
-		if (!person.equals(sessionService.getUser(sessionId))) {
-			return;
-		}
-		Logger.warn("Ending the session of user '" + getLoginName(person) + "', whose login failed.",
-			ExternalAuthenticationServlet.class);
-		sessionService.terminateSession(sessionId);
 	}
 
 	/**

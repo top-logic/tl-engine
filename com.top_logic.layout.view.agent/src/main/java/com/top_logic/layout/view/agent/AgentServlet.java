@@ -28,6 +28,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -118,6 +119,9 @@ public class AgentServlet extends TopLogicServlet {
 	private static final String FIELD_SUCCESS = "success";
 
 	private static final String FIELD_OBSERVATION = "observation";
+
+	/** Answer field of {@code /act} holding the {@link ReactCommandReply} of the command's handler. */
+	private static final String FIELD_REPLY = "reply";
 
 	private static final String FIELD_URL = "url";
 
@@ -344,8 +348,20 @@ public class AgentServlet extends TopLogicServlet {
 
 			String observation = scriptingSession.observeJson();
 			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + errorField(result)
-				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+				+ replyField(result) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		}
+	}
+
+	/**
+	 * The {@code ,"reply":{…}} JSON fragment carrying the {@link ReactCommandReply} of a command's
+	 * handler, or the empty string when it replied nothing.
+	 */
+	private static String replyField(HandlerResult result) {
+		ReactCommandReply reply = ReactCommandReply.of(result);
+		if (reply == null) {
+			return "";
+		}
+		return ",\"" + FIELD_REPLY + "\":" + reply.toJson();
 	}
 
 	/**

@@ -58,7 +58,9 @@ const LAST_EVENT_HEADER = 'X-TL-Last-Event';
  * Parsed JSON body a command is answered with.
  *
  * <p>Every answer carries {@code success}; a command that reports back beyond that adds its own
- * fields, which the caller reads by the name both sides agree on.</p>
+ * fields - the {@code ReactCommandReply} its handler attached to its result on the server - which
+ * the caller reads by the name both sides agree on. The names {@code success}, {@code error} and
+ * {@code errorCode} belong to the answer itself and never name a reply field.</p>
  */
 export type CommandResponse = Record<string, unknown>;
 
@@ -118,8 +120,10 @@ async function post(url: string, payload: CommandPayload): Promise<CommandRespon
   }
 }
 
-/** The answer of a command as a JSON object, or {@code undefined} if it is not one. */
-function parseResponse(body: string): CommandResponse | undefined {
+/**
+ * The answer of a command (or an upload) as a JSON object, or {@code undefined} if it is not one.
+ */
+export function parseResponse(body: string): CommandResponse | undefined {
   try {
     const parsed: unknown = JSON.parse(body);
     return typeof parsed === 'object' && parsed !== null ? (parsed as CommandResponse) : undefined;

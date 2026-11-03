@@ -10,7 +10,7 @@ import java.net.URL;
 import com.top_logic.basic.logging.LogConfigurator;
 
 /**
- * {@link LogConfigurator} for use with LogBack logging.
+ * {@link LogConfigurator} for use with Logback logging.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

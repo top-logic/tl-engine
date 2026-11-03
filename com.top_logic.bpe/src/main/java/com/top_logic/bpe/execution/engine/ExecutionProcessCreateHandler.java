@@ -25,6 +25,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.util.model.ModelService;
 
 /**
+ * Command that starts a new process execution at the start event of the creating component.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ExecutionProcessCreateHandler extends DefaultCreateAttributedCommandHandler {

@@ -10,7 +10,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.top_logic.ajax.client.compat.AJAXArguments;
 
 /**
- * The arguments for calling the GraphUpdateCommand.
+ * The arguments for calling the server command updating the graph.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

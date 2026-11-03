@@ -11,6 +11,9 @@ import com.top_logic.client.diagramjs.model.Shape;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 
 /**
+ * {@link EventHandler} for moved diagram-js elements. Updates the coordinates of the moved
+ * graph nodes.
+ * 
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public final class ElementsMoveEventHandler implements EventHandler {

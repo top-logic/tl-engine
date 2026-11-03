@@ -1738,11 +1738,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // columns after it that are not pinned and aggregate nothing - it stops in front of the first
   // column that shows an aggregate in the group row, as text runs on into empty cells of a
   // spreadsheet. The same for every group row, so it is computed from the columns, not per row.
-  // Frozen columns end it as well when there are several: the cell sticks to the start with them,
-  // and stretching it over the columns that scroll would cover them.
+  // With frozen columns the cell ends with them: it sticks to the start with them, and a sticky cell
+  // nearly as wide as the row scrolls away with it instead (the group value vanished), while an
+  // aggregate behind it would slide underneath.
   const groupSpan = (() => {
     let end = Math.min(1, columns.length);
-    const limit = frozenColumnCount > 1 ? Math.min(frozenColumnCount, columns.length) : columns.length;
+    const limit = frozenColumnCount > 0 ? Math.min(frozenColumnCount, columns.length) : columns.length;
     while (end > 0 && end < limit && !columns[end].pinnedEnd && !columns[end].aggregate) {
       end++;
     }

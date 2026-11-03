@@ -186,16 +186,17 @@ describe('the header row of a group', () => {
     expect(cells(1)[0].style.minWidth).toBe('100px');
   });
 
-  it('stops at the frozen columns when several are frozen, and sticks with a single one', async () => {
+  it('ends with the frozen columns, so it sticks with them', async () => {
+    mountWide(WIDE, { frozenColumnCount: 1 });
+    await settle();
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'b', 'c', 'd', 'act']);
+    expect(cells(0)[0].hasAttribute('aria-colspan')).toBe(false);
+    expect(cells(0)[0].getAttribute('data-tl-state')).toMatch(/\bfrozen\b/);
+    cleanup();
+
     mountWide(WIDE, { frozenColumnCount: 2 });
     await settle();
     expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'c', 'd', 'act']);
     expect(cells(0)[0].style.minWidth).toBe('210px');
-    cleanup();
-
-    mountWide(WIDE, { frozenColumnCount: 1 });
-    await settle();
-    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'act']);
-    expect(cells(0)[0].getAttribute('data-tl-state')).toMatch(/\bfrozen\b/);
   });
 });

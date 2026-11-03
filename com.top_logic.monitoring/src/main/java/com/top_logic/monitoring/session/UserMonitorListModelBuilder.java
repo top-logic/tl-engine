@@ -17,6 +17,9 @@ import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ListModelBuilder} providing the user sessions within the time range selected in a
+ * {@link SessionSearchComponent}.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class UserMonitorListModelBuilder implements ListModelBuilder {

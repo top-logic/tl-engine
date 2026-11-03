@@ -27,11 +27,17 @@ public class DemoFormTemplateContext extends FormContext {
 
 	/** {@link String}s to identify the {@link FormMember}s */
 	public static final String	TEMPLATE_FIELD					= "templateField";
+	/** Name of the field selecting the number of rows. */
 	public static final String	SELECT_NUMBER_OF_ROWS			= "selectNumberOfRows";
+	/** Name of the field selecting the number of columns. */
 	public static final String	SELECT_NUMBER_OF_COLUMNS		= "selectNumberOfColumns";
+	/** Name of the group with the controlling fields. */
 	public static final String	CONTROL_GROUP					= "controlGroup";
+	/** Name of the group whose layout is controlled by the selected numbers. */
 	public static final String	CONTROLLED_GROUP				= "controlledGroup";
+	/** Name of the form group demo. */
 	public static final String	FORM_GROUP						= "formGroupDemo";
+	/** Name of the simple group. */
 	public static final String 	SIMPLE_GROUP					= "simpleGroup";
 
 	/** Prefix of the name of the {@link FormGroup}s representing a row */

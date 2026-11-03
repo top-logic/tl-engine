@@ -139,6 +139,7 @@ public class DemoOrderContext extends FormContext {
 		CARRIERS.add(new DemoCarrier("O2", o2Numbers));
 	}
 
+	/** Options of the delivery option fields. */
 	public static final ArrayList DELIVERY_OPTIONS = new ArrayList();
 	static {
 		DELIVERY_OPTIONS.add("fast");
@@ -152,6 +153,7 @@ public class DemoOrderContext extends FormContext {
 	public final DemoPersonContext purchaser =
 		new DemoPersonContext(PURCHASER_NAME);
 
+	/** Field selecting the carrier. */
 	public final SelectField carrier =
 		FormFactory.newSelectField(CARRIER_NAME, CARRIERS);
 	{
@@ -192,6 +194,7 @@ public class DemoOrderContext extends FormContext {
 		});
 	}
 
+	/** Field selecting a dial prefix directly, which sets carrier and dial prefix accordingly. */
 	public final SelectField directDialPrefix;
 	ArrayList allPrefixes = new ArrayList();
 	{
@@ -227,6 +230,7 @@ public class DemoOrderContext extends FormContext {
 		});
 	}
 
+	/** Large list of {@link Integer}s used as options for the number fields. */
 	public static final List LARGE_INTEGER_LIST;
 	static {
 		LARGE_INTEGER_LIST = new ArrayList();
@@ -235,18 +239,23 @@ public class DemoOrderContext extends FormContext {
 		}
 	}
 
+	/** Field for the ISBN. */
 	public final StringField isbn = FormFactory.newStringField(ISBN_NAME);
 	{
 		isbn.setTooltipCaption("Testing encoding in captions: <\"&'\\>");
 		isbn.setTooltip("Testing encoding in tooltip: <\"&'\\>");
 	}
 
+	/** Field for the DUNS number. */
 	public final ComplexField duns = createDUNSField();
 
+	/** Field selecting a single delivery option. */
 	public final SelectField options = FormFactory.newSelectField(OPTIONS_NAME, DELIVERY_OPTIONS);
 
+	/** Field selecting multiple delivery options. */
 	public final SelectField multiOptions = FormFactory.newSelectField(MULTI_OPTIONS_NAME, DELIVERY_OPTIONS, true, false);
 
+	/** {@link Filter} selecting fixed options of the number fields. */
 	public static final Filter fixedNumbersFilter = new Filter() {
 		@Override
 		public boolean accept(Object anObject) {
@@ -255,19 +264,23 @@ public class DemoOrderContext extends FormContext {
 		}
 	};
 
+	/** Field selecting a single number. */
 	public final SelectField number = FormFactory.newSelectField(NUMBER_NAME, LARGE_INTEGER_LIST, false, false);
 	{
 		number.setFixedOptions(fixedNumbersFilter);
 	}
 
+	/** Field selecting up to five numbers. */
 	public final SelectField numbers = FormFactory.newSelectField(NUMBERS_NAME, LARGE_INTEGER_LIST, true, false);
 	{
 		numbers.setFixedOptions(fixedNumbersFilter);
 		numbers.addConstraint(new SelectionSizeConstraint(0, 5));
 	}
 
+	/** Field selecting the dial prefix of the selected carrier. */
 	public final SelectField dialPrefix = FormFactory.newSelectField(DIAL_PREFIX_NAME, Collections.EMPTY_LIST);
 
+	/** Field for the order date. */
 	public final ComplexField orderDate = FormFactory.newDateField("orderDate", null, false);
 
 	{
@@ -275,13 +288,17 @@ public class DemoOrderContext extends FormContext {
 		orderDate.setParser(HTMLFormatter.getInstance().getShortDateFormat());
 	}
 
+	/** Field for choosing a color. */
 	public final ComplexField colorChooser = FormFactory.newComplexField("colorChooser", ColorFormat.INSTANCE);
 
+	/** Field for the phone number. */
 	public final StringField phoneNumber = FormFactory.newStringField(PHONE_NUMBER_NAME);
 
+	/** Nested {@link FormContext} for the billing address. */
 	public final DemoAddressContext billingAddress =
 		new DemoAddressContext(BILLING_ADDRESS_NAME);
 
+	/** Field selecting from the recently used addresses. */
 	public final SelectField lastAddresses;
 	{
 		// Create an accessor that fetches values from an option object given a
@@ -341,9 +358,11 @@ public class DemoOrderContext extends FormContext {
 			new SetFilter(new HashSet(Arrays.asList(new Object[] {ADDRESS_1, ADDRESS_2, ADDRESS_3}))));
 	}
 
+	/** Field deciding whether a separate billing address is given. */
 	public final BooleanField hasSeparateBillingAddress =
 		FormFactory.newBooleanField(HAS_SEPARATE_BILLING_ADDRESS_NAME);
 
+	/** Nested {@link FormContext} for the delivery address. */
 	public final DemoAddressContext deliveryAddress =
 		new DemoAddressContext(DELIVERY_ADDRESS_NAME);
 
@@ -362,6 +381,7 @@ public class DemoOrderContext extends FormContext {
 		hasSeparateBillingAddress.initializeField(Boolean.FALSE);
 	}
 
+	/** Field deciding whether an insurance is required. */
 	public final BooleanField needEnsurance =
 		FormFactory.newBooleanField(NEED_ENSURANCE_NAME, null, false, false, null);
 
@@ -458,12 +478,14 @@ public class DemoOrderContext extends FormContext {
 		});
 	}
 
+    /** Fills the fields of this context with the values of the given order. */
     public void loadWith(DemoOrder order) {
     	purchaser.loadWith(order.getPurchaser());
     	billingAddress.loadWith(order.getBillingAddress());
     	deliveryAddress.loadWith(order.getDeliveryAddress());
     }
 
+    /** Stores the values of the fields of this context in the given order. */
     public void saveIn(DemoOrder order) {
     	purchaser.saveIn(order.getPurchaser());
     	billingAddress.saveIn(order.getBillingAddress());

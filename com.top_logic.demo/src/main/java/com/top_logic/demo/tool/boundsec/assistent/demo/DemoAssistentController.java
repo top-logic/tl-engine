@@ -20,7 +20,7 @@ import com.top_logic.tool.boundsec.commandhandlers.FormContextValidatingCommandH
 /**
  * For testing.
  * 
- * Please see the Specification and the FeatureAPI since the Javadoc
+ * Please see the Specification and the feature API since the Javadoc
  * is incomplete. 
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
@@ -34,6 +34,7 @@ public class DemoAssistentController extends AbstractAssistentController {
 	 */
 	public interface Config extends AbstractAssistentController.Config {
 
+		/** The components of the assistant steps in their order. */
 		@Mandatory
 		@ListBinding(attribute = "name")
 		List<ComponentName> getSteps();

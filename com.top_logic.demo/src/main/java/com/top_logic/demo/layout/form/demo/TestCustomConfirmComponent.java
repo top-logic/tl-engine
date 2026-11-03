@@ -34,6 +34,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 @SuppressWarnings("javadoc")
 public class TestCustomConfirmComponent extends EditComponent {
 
+	/** Name of the number input field. */
 	public static final String NUMBER_FIELD = "number";
 
 	/**
@@ -79,12 +80,14 @@ public class TestCustomConfirmComponent extends EditComponent {
 		return anObject == null || anObject instanceof Integer;
 	}
 
+	/** Apply command asking for a confirmation when the entered number exceeds a limit. */
 	public static class Apply extends AbstractCommandHandler {
 
 		private static final int DEFAULT_LIMIT = 1000;
 
 		private static final String LIMIT_PARAM = "limit";
 
+		/** Identifier of the {@link Apply} command. */
 		public static final String COMMAND_ID = "TestCustomConfirmComponentApply";
 
 		public Apply(InstantiationContext context, Config config) {

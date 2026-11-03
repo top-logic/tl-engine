@@ -50,34 +50,42 @@ public class DemoPerson {
 	         + " comment:"     + comment;
 	}
 
+	/** The given name of this person. */
 	public String getGivenName() {
 		return givenName;
 	}
 
+	/** The gender of this person. */
 	public String getGender() {
 		return gender;
 	}
 
+	/** The birth date of this person. */
 	public String getBirthdate() {
 		return birthdate;
 	}
 
+	/** The contact information of this person. */
 	public String getContact() {
 		return contact;
 	}
 
+	/** The surname of this person. */
 	public String getSurname() {
 		return surname;
 	}
 
+	/** The academic title of this person. */
 	public String getTitle() {
 		return title;
 	}
 	
+	/** The responsibility of this person. */
 	public String getResponsability() {
 		return responsability;
 	}
 	
+	/** The marital status of this person. */
 	public String getMarital() {
 		return marital;
 	}

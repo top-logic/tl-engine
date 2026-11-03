@@ -15,8 +15,28 @@ import jsinterop.annotations.JsType;
 @JsType(isNative = true, namespace = "services", name = "ajax")
 public class AJAX {
 
+	/**
+	 * Enqueues an AJAX request to the server without showing a wait pane.
+	 *
+	 * @param command
+	 *        The name of the server-side command to invoke.
+	 * @param args
+	 *        The arguments of the request.
+	 *
+	 * @see #execute(String, AJAXArguments, boolean)
+	 */
 	public static native void execute(String command, AJAXArguments args);
 
+	/**
+	 * Enqueues an AJAX request to the server.
+	 *
+	 * @param command
+	 *        The name of the server-side command to invoke.
+	 * @param args
+	 *        The arguments of the request.
+	 * @param useWaitPane
+	 *        Whether the UI is blocked by a wait pane until the request has been processed.
+	 */
 	public static native void execute(String command, AJAXArguments args, boolean useWaitPane);
 
 }

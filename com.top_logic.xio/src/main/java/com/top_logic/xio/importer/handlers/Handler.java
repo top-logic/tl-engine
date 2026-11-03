@@ -27,6 +27,10 @@ public interface Handler {
 	 * Configuration options for a {@link Handler}.
 	 */
 	interface Config<I extends Handler> extends PolymorphicConfiguration<I> {
+		/**
+		 * Identifier of this handler, under which it can be referenced from a
+		 * {@link com.top_logic.xio.importer.handlers.HandlerRef}.
+		 */
 		@Id(value = Handler.class)
 		@Nullable
 		String getId();

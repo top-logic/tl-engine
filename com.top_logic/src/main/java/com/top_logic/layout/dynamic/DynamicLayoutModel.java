@@ -36,7 +36,7 @@ import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.util.Utils;
 
 /**
- * The DynamicLayoutModel holds a current {@link LayoutComponent} based on a given object.
+ * The {@link DynamicLayoutModel} holds a current {@link LayoutComponent} based on a given object.
  * 
  * <p>
  * A list of {@link LayoutResolver}s is provide the proper layout for a given business model. The
@@ -118,6 +118,10 @@ public class DynamicLayoutModel implements SelectionModel<LayoutComponent> {
 		return defaultLayoutName;
 	}
     
+	/**
+	 * Instantiates the null and default layouts for the given container and displays the null
+	 * layout.
+	 */
 	public void init(DynamicLayoutContainer aParent) {
 		LayoutComponent theNullComponent = layouts.get(nullLayoutName);
 		if (theNullComponent == null) {
@@ -140,7 +144,7 @@ public class DynamicLayoutModel implements SelectionModel<LayoutComponent> {
     }
     
     /**
-     * @returna list of all components resolved so far
+     * All components resolved so far.
      */
 	public List<LayoutComponent> getComponents() {
 		if (_layoutsView == null) {
@@ -149,6 +153,9 @@ public class DynamicLayoutModel implements SelectionModel<LayoutComponent> {
 		return _layoutsView;
     }
     
+	/**
+	 * The number of layouts resolved so far.
+	 */
 	public int getSize() {
 		return layouts.size();
 	}
@@ -298,6 +305,9 @@ public class DynamicLayoutModel implements SelectionModel<LayoutComponent> {
 		throw new UnsupportedOperationException("Selection can not be set extenally.");
 	}
 
+    /**
+     * {@link Card} displaying a resolved layout.
+     */
     public static class DynamicCard implements Card {
 
         String key;

@@ -14,6 +14,9 @@ package com.top_logic.layout;
  */
 public class SimpleAccessor implements Accessor {
 
+    /**
+     * Singleton {@link SimpleAccessor} instance.
+     */
     public static final SimpleAccessor INSTANCE = new SimpleAccessor();
 
     /** 

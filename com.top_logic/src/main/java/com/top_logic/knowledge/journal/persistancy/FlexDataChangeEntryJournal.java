@@ -56,8 +56,10 @@ public class FlexDataChangeEntryJournal implements JournalPersistancyHandler {
 
 	private static final MetaObject CHANGE_TYPE = new MOClassImpl("Entry");
 
+	/** Name of the table storing the values before a change. */
 	public static final String JOURNAL_PRE_VALUE_TYPE_NAME = "JournalPreValue";
 
+	/** Name of the table storing the values after a change. */
 	public static final String JOURNAL_POST_VALUE_TYPE_NAME = "JournalPostValue";
 
 	/** Data table of values after a change */

@@ -17,7 +17,7 @@ import com.top_logic.layout.basic.AbstractAttachable;
 
 /**
  * The class {@link DefaultIdentityProvider} is an {@link IdentityProvider}
- * which can handle invalid ids and which is attachable
+ * which can handle invalid ids and which is attachable.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -79,6 +79,7 @@ public class DefaultIdentityProvider extends AbstractAttachable implements Ident
 		return nodesById.get(id);
 	}
 
+	/** Removes all IDs of nodes that have been invalidated from this provider. */
 	public void flush() {
 		checkAttached();
 		nodesById.keySet().removeAll(invalidIds);

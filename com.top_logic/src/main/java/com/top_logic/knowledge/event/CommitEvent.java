@@ -105,6 +105,7 @@ public class CommitEvent extends KnowledgeEvent {
 		return equalsCommitEvent(otherEvent);
 	}
 
+	/** Whether this event is equal to the given event. */
 	protected final boolean equalsCommitEvent(CommitEvent otherEvent) {
 		return super.equalsKnowledgeEvent(otherEvent) && 
 			this.commitTimeMillis == otherEvent.commitTimeMillis &&

@@ -115,7 +115,7 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
 	}
     
     /**
-     * Return the last modification date of the KnowledgeObject.
+     * Return the last modification date of the {@link KnowledgeObject}.
      * 
      * @return    The last modification date.
      */
@@ -167,8 +167,8 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
 	 * Get the physical representation of this Wrapper.
 	 * <p>
 	 * Note that the result is <code>null</code> when no physical representation is present. This is
-	 * the same as new DataAccessProxy({@link #getDSN()}) except for a null DSN. The DataAccessProxy
-	 * may be cached, so access should be faster.
+	 * the same as {@code new DataAccessProxy(getDSN())} except for a null DSN. The {@link
+	 * DataAccessProxy} may be cached, so access should be faster.
 	 * </p>
 	 *
 	 * @return the physical representation; may be null
@@ -182,7 +182,7 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
 	 * Get a Data Source Name identifying the physical representation of this Wrapper.
 	 * <p>
 	 * Note that the result may be e.g <code>null</code> or an empty String depending on the
-	 * underlying KnowledgeObject.
+	 * underlying {@link KnowledgeObject}.
 	 * </p>
 	 *
 	 * @return the DSN; may be null
@@ -201,11 +201,11 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
     /**
      * Get the {@link KnowledgeBase} of the wrapped object.
      * 
-     * Always use this KnowledgeBase when you need a KnowledgeBase to
-     * create new Objects. This will make your Wrapper Multi-KnowledgeBase
+     * Always use this {@link KnowledgeBase} when you need a {@link KnowledgeBase} to
+     * create new Objects. This will make your wrapper multi-knowledge-base
      * aware.
      * 
-     * @return KnowledgeBase
+     * @return {@link KnowledgeBase}
      */
 	default KnowledgeBase getKnowledgeBase() {
 		return tKnowledgeBase();

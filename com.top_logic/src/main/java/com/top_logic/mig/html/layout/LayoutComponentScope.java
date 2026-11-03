@@ -99,6 +99,9 @@ public class LayoutComponentScope extends ComponentContentHandler implements Fra
 		return out;
 	}
 	
+	/**
+	 * The registry that stores the command listeners of this scope.
+	 */
 	protected CommandListenerRegistry getRegistryImplementation() {
 		return registry;
 	}

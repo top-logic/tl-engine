@@ -10,7 +10,7 @@ import java.util.Date;
 import com.top_logic.basic.Logger;
 
 /**
- * The DummyDataImporter imports nothing, just kills time.
+ * The {@link DummyDataImporter} imports nothing, just kills time.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

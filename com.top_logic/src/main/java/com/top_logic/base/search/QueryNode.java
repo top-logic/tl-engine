@@ -12,8 +12,8 @@ import com.top_logic.base.search.visitors.PrefixVisitor;
  * Subclasses of this class represent nodes in the Query Languge.
  * 
  * <p>
- * This class cooperates with the QueryVisitor to implement a visitor pattern. It uses the constants
- * provided by the PrefixParser.
+ * This class cooperates with the {@link QueryVisitor} to implement a visitor pattern. It uses the
+ * constants provided by the {@link com.top_logic.base.search.parser.QueryPrefixConstants}.
  * </p>
  * 
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>

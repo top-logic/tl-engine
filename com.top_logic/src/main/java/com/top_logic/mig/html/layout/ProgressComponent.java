@@ -32,8 +32,8 @@ import com.top_logic.util.Resources;
  * <p>
  * The progress is shown as a progress bar. Above the progress bar is a description about what the
  * whole task is about(called the progress info). Below the progress bar is a description of the
- * current (sub)task (called the progress message). This information is provided by the
- * {@link com.top_logic.layout.progress.ProgressInfo#getMessage()} method.
+ * current (sub)task (called the progress message). This information is provided by the model of
+ * the component.
  * </p>
  * 
  * <p>
@@ -62,6 +62,9 @@ import com.top_logic.util.Resources;
  * interface, but this can be overriden.
  * </p>
  * 
+ * @implNote The progress message is taken from
+ *           {@link com.top_logic.layout.progress.ProgressInfo#getMessage()}.
+ * 
  * @author <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  * 
  * @deprecated Use {@link ProgressDialog}.
@@ -70,18 +73,18 @@ import com.top_logic.util.Resources;
 public abstract class ProgressComponent extends BoundComponent {
 
 	/**
-	 * Create a new ProgressComponent from XML.
+	 * Create a new {@link ProgressComponent} from XML.
 	 */
 	public ProgressComponent(InstantiationContext context, Config atts) throws ConfigurationException {
 		super(context, atts);
 	}
 
 	/**
-	 * Check if model implements ProgressInfo, if it does the model is returned.
+	 * Check if model implements {@link ProgressInfo}, if it does the model is returned.
 	 * 
-	 * Override this method if you can derive a ProgressInfo in some other way.
+	 * Override this method if you can derive a {@link ProgressInfo} in some other way.
 	 * 
-	 * @return the model if the model implements ProgressInfo, otherwise null
+	 * @return the model if the model implements {@link ProgressInfo}, otherwise null
 	 */
 	protected ProgressInfo getProgressInfo() {
 		Object theModel = getModel();

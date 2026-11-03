@@ -10,7 +10,8 @@ import java.util.Map;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * The NegateRule can be used to reverse the return value of {@link #isExecutable(LayoutComponent, Object, Map)}
+ * The {@link NegateRule} can be used to reverse the return value of {@link
+ * #isExecutable(LayoutComponent, Object, Map)}.
  *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -20,7 +21,7 @@ public class NegateRule implements ExecutabilityRule {
     private boolean isHidden;
 
     /**
-     * Create a new NegateRule
+     * Create a new {@link NegateRule}
      * @param aRule    the rule to invert
      * @param isHidden switch for the visibility to return in non executable state
      */

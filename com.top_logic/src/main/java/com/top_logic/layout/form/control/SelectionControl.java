@@ -77,6 +77,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 
 	private static final String	FORM_INPUT_CONSTANT	= "services.form.SelectionControl";
 
+	/** Commands supported by {@link SelectionControl}. */
 	public static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		AbstractFormFieldControlBase.COMMANDS,
 		new ControlCommand[] {
@@ -129,18 +130,22 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		this.columns = value;
 	}
 
+	/** Sets whether a button for clearing the selection is displayed. */
 	public void setClearButton(boolean value) {
 		this.hasClearButton = value;
 	}
 
+	/** Whether a button for clearing the selection is displayed. */
 	public boolean getClearButton() {
 		return this.hasClearButton;
 	}
 
+    /** Whether an input field for entering the selection as text is displayed. */
     public boolean hasInputField() {
     	return this.hasInputField;
     }
     
+    /** Setter for {@link #hasInputField()}. */
     public void setInputField(boolean value) {
     	this.hasInputField = value;
     }
@@ -155,26 +160,32 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		return hasClearButton;
 	}
 
+	/** Sets whether a button opening the selection popup is displayed. */
 	public void setPopupOpener(boolean showPopupOpener) {
 		hasPopupOpener = showPopupOpener;
 	}
 
+    /** Setter for {@link #useAutoCompletion()}. */
     public void setUseAutoCompletion(boolean value) {
     	this.useAutoCompletion = value;
     }
     
+    /** Whether auto-completion is offered for the text input. */
     public boolean useAutoCompletion() {
     	return this.useAutoCompletion;
     }
     
+	/** Setter for {@link #getOptionRenderer()}. */
 	public void setOptionRenderer(Renderer<Object> optionRenderer) {
 		this.optionRenderer = optionRenderer;
 	}
 
+	/** The {@link Renderer} for the options, {@code null} for the default rendering. */
 	public Renderer<Object> getOptionRenderer() {
 		return this.optionRenderer;
 	}
 
+	/** The displayed {@link SelectField}. */
 	public SelectField getSelectionModel() {
 		return (SelectField) super.getModel();
 	}
@@ -186,6 +197,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		return this.sendOptions;
 	}
 	
+	/** Sets the options to send to the client. */
 	public void setSendOptions(List someOptions) {
 		this.sendOptions = someOptions;
 	}
@@ -571,6 +583,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		out.append(";");
 	}
 
+    /** Writes a button opening the selection popup. */
     public static void writePopupButton(DisplayContext aContext, TagWriter anOut, Control aControl, boolean isDisabled, String anId, ControlCommand aCommand, String aLabel) throws IOException {
         /* 2. Render the dialog popup button. */
 
@@ -635,7 +648,9 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		}
 	}
 	
+	/** Message displayed when not all matching elements are shown in the auto-completion popup. */
 	public static final ResKey RES_KEY_MORE_ELEMENTS  = I18NConstants.COMPLETIOIN_MORE_ELEMENTS__DISPLAYED;
+	/** Message displayed when no element matches in the auto-completion popup. */
 	public static final ResKey RES_KEY_NO_ELEMENTS    = I18NConstants.COMPLETION_NO_ELEMENTS;
 	
 	private class AutoCompletionFloater implements HTMLFragment{
@@ -760,14 +775,21 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		}
 	}
 	
+	/** {@link ControlCommand} computing the auto-completion proposals for the entered text. */
 	public static class AutoCompletion extends ControlCommand {
 		
+		/** Singleton {@link AutoCompletion} instance. */
 		public static final SelectionControl.AutoCompletion INSTANCE = new AutoCompletion();
+		/** The ID of this command. */
 		public static final String COMMAND                   = "autoCompletion";
 		
+		/** Prefix of the JavaScript assignment of the matching entries. */
 		public static final String JS_CONST_MATCHING_ENTRIES = "services.form.SelectionControl.matchingEntries=";
+		/** Name of the argument containing the entered text. */
 		public static final String ENTERED_VALUE             = "enteredValue";
+		/** Name of the argument containing the ID of the input element. */
 		public static final String ELEMENT_ID                = "elementID";
+		/** The maximum number of entries displayed in the auto-completion popup. */
 		public static final int    MAX_DISPLAYED_ENTRIES     = 7;
 		
 		public AutoCompletion() {
@@ -806,9 +828,12 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		}
 	}
 
+	/** {@link ControlCommand} clearing the selection. */
 	public static class ClearSelection extends ControlCommand {
 
+		/** The ID of this command. */
 		public static final String COMMAND = "clearSelection";
+		/** Singleton {@link ClearSelection} instance. */
 		public static final SelectionControl.ClearSelection INSTANCE = new ClearSelection();
 		
 		/**
@@ -869,9 +894,12 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		}
 	}
 	
+	/** {@link ControlCommand} opening the selection popup. */
 	public static class OpenSelector extends ControlCommand {
 
+		/** The ID of this command. */
 		public static final String COMMAND = "openSelector";
+		/** Singleton {@link OpenSelector} instance. */
 		public static final SelectionControl.OpenSelector INSTANCE = new OpenSelector();
 		
 		/**
@@ -895,6 +923,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		}
 	}
 	
+	/** Opens the dialog for selecting the options of the given field. */
 	public static HandlerResult openSelectorPopup(DisplayContext commandContext, WindowScope windowScope, SelectField targetField) {
 		targetField.getOptionModel().resetBaseModel();
 		AbstractSelectDialog selectDialog = targetField.getSelectDialogProvider().createSelectDialog(targetField);

@@ -60,10 +60,10 @@ import com.top_logic.util.sched.task.result.TaskResultWrapper;
  * {@link TaskLogWrapper} for all cluster nodes. <br/>
  * Commits in this class have to be retried in most cases, if they fail. The reason is, that the
  * different schedulers of the cluster nodes are synchronized and communicating via the
- * KnowledgeBase. Therefore, concurrent write accesses can happen. Example: A task which is not node
- * local is told to stop from a user that is logged in on a different cluster node. But at the same
- * time the task is storing a warning. If they happen "concurrently" one of them will fail and has
- * to be retried.
+ * {@link KnowledgeBase}. Therefore, concurrent write accesses can happen. Example: A task which is
+ * not node local is told to stop from a user that is logged in on a different cluster node. But at
+ * the same time the task is storing a warning. If they happen "concurrently" one of them will fail
+ * and has to be retried.
  * </p>
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
@@ -249,7 +249,7 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	/**
 	 * <b>NEVER USE THIS CONSTRUCTOR!</b>
 	 * <p>
-	 * This constructor is only for the WrapperFactory!
+	 * This constructor is only for the {@link WrapperFactory}!
 	 * </p>
 	 */
 	public TaskLogWrapper(KnowledgeObject ko) {

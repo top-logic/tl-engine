@@ -123,6 +123,7 @@ public class BranchEvent extends KnowledgeEvent {
 		return equalsBranchEvent(otherEvent);
 	}
 
+	/** Whether this event is equal to the given event. */
 	protected final boolean equalsBranchEvent(BranchEvent otherEvent) {
 		return equalsKnowledgeEvent(otherEvent) && 
 			this.branchId == otherEvent.branchId &&

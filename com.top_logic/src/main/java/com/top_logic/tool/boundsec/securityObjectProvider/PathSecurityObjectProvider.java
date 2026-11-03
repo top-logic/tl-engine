@@ -85,7 +85,10 @@ public class PathSecurityObjectProvider extends AbstractConfiguredInstance<PathS
 	public static final String PATH_ELEMENT_SELECTION        = "selection";
 	/** Model. */
 	public static final String PATH_ELEMENT_MODEL            = "model";
-	/** Current BoundObject from getCurrentObject(BoundCommandGroup). NOTE: do not use plain, i.e. on current component. */
+	/**
+	 * Current {@link BoundObject} from getCurrentObject(BoundCommandGroup). NOTE: do not use plain,
+	 * i.e. on current component.
+	 */
 	public static final String PATH_ELEMENT_CURRENTOBJECT      = "currentobject";
 	
 	public static final PathSecurityObjectProvider MODEL_INSTANCE;
@@ -139,7 +142,8 @@ public class PathSecurityObjectProvider extends AbstractConfiguredInstance<PathS
 		 * This is compatibility code for a feature used in DPM:
 		 * 		- The model might be a Collection of BoundObjects
 		 * 		- The BoundChecker interface has no possibility to check Collections
-		 * 		- Therefore we return the first BoundObject that will be allowed when checking the given BoundCommandGroup
+		 * 		- Therefore we return the first {@link BoundObject} that will be allowed when
+		 * checking the given {@link BoundCommandGroup}
 		 */
 		if (theModel instanceof Collection) {
 			BoundObject theBO = null;

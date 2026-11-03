@@ -11,10 +11,15 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 
 /**
+ * {@link AJAXSupport} that never provides incremental updates.
+ * 
  * @author    <a href=mailto:kha@top-logic.com>bhu</a>
  */
 public final class NoAJAXSupport implements AJAXSupport {
 
+	/**
+	 * Singleton {@link NoAJAXSupport} instance.
+	 */
 	public static final NoAJAXSupport INSTANCE = new NoAJAXSupport(); 
 	
 	private NoAJAXSupport() {

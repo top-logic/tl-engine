@@ -19,9 +19,16 @@ import com.top_logic.util.Resources;
  */
 public class GroupResourceHelper {
     
+    /** First part of the resource keys of groups. */
     public static final String I18N_PREFIX_GROUP             = "group";
+
+    /** Part of the resource key of a group name. */
     public static final String I18N_INFIX_NAME               = "name";
+
+    /** Part of the resource key of a group description. */
     public static final String I18N_INFIX_DESCRIPTION        = "description";
+
+    /** Separator of the parts of the resource keys of groups. */
     public static final String I18N_SEPARATOR                = ".";
 
     /** i18n group name prefix */
@@ -53,7 +60,7 @@ public class GroupResourceHelper {
     }
     
     /**
-     * group.name.$groupID$ 
+     * {@code group.name.$groupID$} 
      */
 	public static ResKey getResKey(Group aGroup) {
         if (aGroup != null) {
@@ -64,7 +71,7 @@ public class GroupResourceHelper {
     }
     
     /**
-     * group.name.$groupID$ 
+     * {@code group.description.$groupID$} 
      */
 	public static ResKey getDescriptionResKey(Group aGroup) {
         if (aGroup != null) {

@@ -13,7 +13,7 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
 import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 /**
- * The AssistantSecurityObjectProvider is intended to be used in assistant step components
+ * The {@link AssistantSecurityObjectProvider} is intended to be used in assistant step components
  * to use the security object of the enclosing assistant component.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>

@@ -41,7 +41,7 @@ import com.top_logic.util.NoContextServlet;
 import com.top_logic.util.Resources;
 
 /**
- * Authenticate against external Systems (NTLN, GROPS, SiteMinder, LDAP, ...)
+ * Authenticate against external Systems (NTLM, GROPS, Site Minder, LDAP, ...).
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -387,6 +387,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 		return user != null && !PersonManager.getManager().isAnonymous(user);
 	}
 
+	/** Whether external authentication is enabled. */
 	protected boolean isExtAuthEnabled() {
 		return extAuthEnabled;
 	}

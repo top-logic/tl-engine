@@ -82,10 +82,12 @@ public class RevisionQueryArguments extends QueryArguments<RevisionQueryArgument
 		return dataRevision != NO_SPECIAL_DATA_REVISION;
 	}
 
+	/** The index of the first result row to deliver. */
 	public int getStartRow() {
 		return startRow;
 	}
 	
+	/** Setter for {@link #getStartRow()}. */
 	public RevisionQueryArguments setStartRow(int startRow) {
 		this.startRow = startRow;
 		return this;

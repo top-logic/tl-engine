@@ -24,7 +24,7 @@ public abstract class AbstractApplyCommand implements Command {
 	private final LayoutComponent component;
 
 	/**
-	 * Create a new AbstractApplyCommand
+	 * Creates a new {@link AbstractApplyCommand}.
 	 * 
 	 * @param component
 	 *        - the {@link LayoutComponent}, which represents the context of the apply command

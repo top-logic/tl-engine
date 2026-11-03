@@ -35,7 +35,7 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The ExportUtil contains useful static methods for exports.
+ * The {@link ExportUtil} contains useful static methods for exports.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -44,16 +44,23 @@ public class ExportUtil {
 	/** Name of the beacon tree fast list. */
 	public static final String BEACON_TREE_LIST_NAME = "tl.beacon.three";
 
+	/** Suffix appended to texts that have been cut. */
 	public static final String DOTS = "...";
 
 	/** Value which is used in POI PPT tables as empty cell values. */
 	public static final String EXPORT_EMPTY_CELL_VALUE = " ";
 
+    /** Image type of a medium sized horizontal beacon image. */
     public static final int IMAGE_HORIZONTAL_MED=0;
+    /** Image type of a small horizontal beacon image. */
     public static final int IMAGE_HORIZONTAL_SMALL=1;
+    /** Image type of a large horizontal beacon image. */
     public static final int IMAGE_HORIZONTAL_LARGE=2;
+    /** Image type of a vertical beacon image. */
     public static final int IMAGE_VERTICAL=3;
+    /** Image type of a large vertical beacon image. */
     public static final int IMAGE_VERTICAL_LARGE=4;
+    /** Image type of a small beacon image. */
     public static final int IMAGE_SMALL=5;
 
     protected ExportUtil() {
@@ -61,6 +68,16 @@ public class ExportUtil {
     }
 
 
+    /**
+     * Creates the {@link ExcelValue}s for the header and the content of the given table.
+     *
+     * @param aSheetName
+     *        The name of the sheet to export to.
+     * @param aTableControl
+     *        The table to export.
+     * @param startAtRow
+     *        The row of the header in the sheet.
+     */
     public static ExcelValue[] getExcelHeaderAndValuesFor(String aSheetName, TableControl aTableControl, int startAtRow) {
 		TableViewModel tableModel = aTableControl.getViewModel();
         ResourceView   resources  = aTableControl.getResources();
@@ -76,6 +93,16 @@ public class ExportUtil {
     }
 
 
+    /**
+     * Creates the {@link ExcelValue}s for the content of the given table model.
+     *
+     * @param aSheetName
+     *        The name of the sheet to export to.
+     * @param aTableModel
+     *        The table model to export.
+     * @param startAtRow
+     *        The first row in the sheet.
+     */
     public static ExcelValue[] getExcelValuesFor(String aSheetName, TableModel aTableModel, int startAtRow) {
         int           rowCount   = aTableModel.getRowCount();
         int           columCount = aTableModel.getColumnCount();
@@ -140,10 +167,16 @@ public class ExportUtil {
 
 
 
+    /**
+     * The label of the given object, cut to the given length.
+     *
+     * @see #cut(String, int)
+     */
     public static String cutLabel(Object object, int length) {
         return cut(MetaResourceProvider.INSTANCE.getLabel(object), length);
     }
 
+    /** The label of the given object, cut to the given length at the last comma. */
     public static String cutSeparator(Object object, int length) {
         String string = MetaResourceProvider.INSTANCE.getLabel(object);
         if (StringServices.isEmpty(string)) return "";
@@ -161,6 +194,11 @@ public class ExportUtil {
         return string;
     }
 
+    /**
+     * Cuts the given string to the given length and appends {@link #DOTS}, if necessary.
+     *
+     * @return The cut string, the empty string for an empty input.
+     */
     public static String cut(String string, int length) {
         if (StringServices.isEmpty(string)) return "";
         String cuttedString = StringServices.cutString(string, length);
@@ -330,28 +368,46 @@ public class ExportUtil {
 		return StringServices.isEmpty(value) ? EXPORT_EMPTY_CELL_VALUE : value;
 	}
 
+	/** Adds the given image to the given value map. */
 	public static void addImage(Map values, String key, BinaryData file) {
         values.put(key, file);
     }
 
+    /** Adds the label of the given object to the given value map. */
     public static void addLabel(Map values, String key, Object object) {
         addLabel(values, key, object, MetaResourceProvider.INSTANCE);
     }
 
+    /**
+     * Adds the label of the given object to the given value map.
+     *
+     * @param resourceProvider
+     *        The {@link ResourceProvider} that computes the label.
+     */
     public static void addLabel(Map values, String key, Object object, ResourceProvider resourceProvider) {
         values.put(key, resourceProvider.getLabel(object));
     }
 
+    /** Adds the given value unchanged to the given value map. */
     public static void addRawValue(Map values, String key, Object rawObject) {
         values.put(key, rawObject);
     }
 
+    /** Adds the given string unchanged to the given value map. */
     public static void addRawString(Map values, String key, String stringValue) {
         addRawValue(values, key, stringValue);
     }
 
 
 
+	/**
+	 * The beacon image for the given state.
+	 *
+	 * @param stateValue
+	 *        The beacon state (1: green, 2: yellow, 3: red, otherwise white).
+	 * @param horizontal
+	 *        Whether a horizontal or a vertical image is requested.
+	 */
 	public static BinaryData getBeaconStateImage(Number stateValue, boolean horizontal) {
         if(horizontal){
             return getBeaconStateImage(stateValue, IMAGE_HORIZONTAL_MED);
@@ -458,6 +514,14 @@ public class ExportUtil {
         }
     }
 
+	/**
+	 * The beacon image for the given state.
+	 *
+	 * @param stateValue
+	 *        The beacon state (1: green, 2: yellow, 3: red, otherwise white).
+	 * @param imageType
+	 *        The image type, one of the {@code IMAGE_*} constants of this class.
+	 */
 	public static BinaryData getBeaconStateImage(Number stateValue, int imageType) {
 		switch (Utils.getintValue(stateValue)) {
         case 1:
@@ -499,6 +563,11 @@ public class ExportUtil {
         }
     }
 
+	/**
+	 * Loads the image with the given path from the current theme.
+	 *
+	 * @throws TopLogicException If the image does not exist.
+	 */
 	public static BinaryData getImageFile(String relativePath) {
 		{
 			BinaryData theFile = FileManager.getInstance().getDataOrNull(ThemeFactory.getTheme().getFileLink(relativePath));

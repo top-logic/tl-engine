@@ -50,16 +50,16 @@ public abstract class BoundMainLayout extends MainLayout implements LayoutContai
 	/** Constant to use with <code>writeChangeJS()</code>. */
     public static final boolean RESET = true;
     
-    /** Constant for putting the BoundMainLayout into TLContext. */
+    /** Constant for putting the {@link BoundMainLayout} into TLContext. */
 	public static final Property<BoundChecker> ROOT_CHECKER = TypedAnnotatable.property(BoundChecker.class, "_root_checker_");
 
-    /** Construct a BoundMainLayout from (XML-)Attributes. */
+    /** Construct a {@link BoundMainLayout} from (XML-)Attributes. */
     public BoundMainLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
     }
 
     /**
-     * Store BoundMainLayout in TLContext to use it as root BoundChecker
+     * Store {@link BoundMainLayout} in TLContext to use it as root {@link BoundChecker}
      *  
      * @see com.top_logic.mig.html.layout.LayoutComponent#componentsResolved(InstantiationContext)
      */

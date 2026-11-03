@@ -26,6 +26,7 @@ public abstract class MarkerFieldProvider extends AbstractFieldProvider {
         return FormFactory.newBooleanField(aProperty, this.getInitialValue(aMolde, aAnAccessor, aProperty), false);
     }
 
+    /** The initial value of the marker field for the given row object. */
     protected abstract Boolean getInitialValue(Object aMolde, Accessor aAnAccessor, String aProperty);
 
 }

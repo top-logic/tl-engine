@@ -9,7 +9,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.ui.RectangleEdge;
 
 /**
- * The ChartConstants contains constants.
+ * The {@link ChartConstants} contains constants.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -21,6 +21,7 @@ public interface ChartConstants {
      *  (component name + CHART_CONTROL_SUFFIX. */
     public static final String CHART_CONTROL_SUFFIX = "chart";
     
+    /** Resource key of the message shown when a chart has no data. */
     public static final String NO_DATA = "reporting.chart.noData";
     
     /** @deprecated This constant can be used as key for the chart type.  */

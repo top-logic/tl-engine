@@ -179,7 +179,7 @@ public class ApplicationMonitorComponent extends FormComponent {
 	}
 
 	/**
-	 * Override the method createFormContext from {@link FormGroup}
+	 * Override the method {@link #createFormContext()} from {@link FormGroup}.
 	 */
 	@Override
 	public FormContext createFormContext() {

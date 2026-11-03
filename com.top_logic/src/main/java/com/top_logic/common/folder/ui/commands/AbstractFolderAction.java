@@ -12,6 +12,8 @@ import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.layout.form.model.AbstractDynamicCommand;
 
 /**
+ * Base class for commands operating on a {@link FolderContent}.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public abstract class AbstractFolderAction extends AbstractDynamicCommand {

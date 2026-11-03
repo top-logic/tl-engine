@@ -16,14 +16,17 @@ import java.util.Set;
  */
 public class FindComponentsNamedVisitor extends DefaultDescendingLayoutVisitor {
 
+	/** The names of the components to find. */
     protected Set/* <String> */ names;
     
+	/** The components found so far. */
     protected Collection/* <LayoutComponent> */ found;
 
+	/** The number of components found so far. */
     protected int foundCount;
 
     /** 
-     * Create a new FindComponensNamedVisitor with a Set of Names.
+     * Create a new {@link FindComponentsNamedVisitor} with a Set of Names.
      * 
      * @param someNames must not be empty or <code>null</code>.
      * @param into Results will be accumulated here.
@@ -41,7 +44,8 @@ public class FindComponentsNamedVisitor extends DefaultDescendingLayoutVisitor {
     }
 
     /** 
-     * Create a new FindComponensNamedVisitor with a Set of Names and a default ArrayList as result.
+     * Create a new {@link FindComponentsNamedVisitor} with a Set of Names and a default
+     * {@link ArrayList} as result.
      * 
      * @param someNames must not be empty or <code>null</code>.
      */
@@ -59,7 +63,7 @@ public class FindComponentsNamedVisitor extends DefaultDescendingLayoutVisitor {
         return super.visitLayoutComponent(aComponent);
     }
     
-    /** Return the Collection of LayoutComponents found, will be same as given in CTor.*/
+    /** Return the Collection of {@link LayoutComponent}s found, will be same as given in CTor.*/
     public Collection getFound() {
         return found;
     }

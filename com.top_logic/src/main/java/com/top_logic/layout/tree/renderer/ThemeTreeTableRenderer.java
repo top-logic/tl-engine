@@ -51,10 +51,12 @@ public class ThemeTreeTableRenderer extends TreeTableRenderer {
 		out.endAttribute();
 	}
 
+	/** Writes the CSS classes of the header cells, inside the class attribute. */
 	protected void writeHeaderClassesContent(TagWriter out) throws IOException {
 		out.append("treeTableTh");
 	}
 
+	/** {@link TableRowRenderer} writing the rows of a {@link ThemeTreeTableRenderer}. */
 	@Deprecated
     public static class ThemeTableRowRenderer extends TableRowRenderer {
 

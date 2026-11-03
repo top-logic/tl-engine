@@ -41,6 +41,7 @@ public class TransientFolderDefinition implements FolderDefinition {
 		return contents;
 	}
 
+	/** Adds the given content to this folder. */
 	public void add(Named content) {
 		contents.add(content);
 	}

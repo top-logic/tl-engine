@@ -50,7 +50,7 @@ public class ResourceResolver {
     }
 
     /**
-     * Get an Instance of the ResourceResolver.
+     * Get an Instance of the {@link ResourceResolver}.
      * 
      * @return an instance of hte resource resolver.
      */

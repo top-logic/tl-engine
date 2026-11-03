@@ -27,7 +27,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.tool.export.AbstractOfficeExportHandler.OfficeExportValueHolder;
 
 /**
- * POI version of Powerpoint working with pptx format only
+ * POI version of Powerpoint working with pptx format only.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -63,7 +63,7 @@ public class POIPowerpointX extends Powerpoint {
 	}
 
 	/**
-	 * a new SlideReplacerX
+	 * a new {@link SlideReplacerX}
 	 */
 	protected SlideReplacerX createReplacer() {
 		return new SlideReplacerX(this);

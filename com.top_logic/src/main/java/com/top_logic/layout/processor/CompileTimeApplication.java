@@ -23,6 +23,13 @@ public class CompileTimeApplication implements Application {
 
 	private final ModuleLayout _module;
 
+	/**
+	 * Creates the {@link CompileTimeApplication} for the given webapp directory within its
+	 * workspace.
+	 *
+	 * @param applicationRoot
+	 *        The webapp directory of the application.
+	 */
 	public static CompileTimeApplication createApplicationModule(File applicationRoot) throws IOException {
 		if (!applicationRoot.exists()) {
 			throw new FileNotFoundException("Application root diretory '" + applicationRoot + "' does not exist.");
@@ -35,6 +42,14 @@ public class CompileTimeApplication implements Application {
 			applicationRoot);
 	}
 
+	/**
+	 * Creates the {@link CompileTimeApplication} for the given webapp directory.
+	 *
+	 * @param workspaceRoot
+	 *        The workspace directory.
+	 * @param applicationRoot
+	 *        The webapp directory of the application.
+	 */
 	public static CompileTimeApplication createCompileTimeApplication(File workspaceRoot, File applicationRoot)
 			throws IOException {
 		

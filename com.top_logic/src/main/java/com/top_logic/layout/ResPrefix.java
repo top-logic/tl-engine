@@ -163,6 +163,13 @@ public abstract class ResPrefix implements ResourceView {
 		return internalCreate("class." + clazz.getName() + ".");
 	}
 
+	/**
+	 * Creates an empty {@link ResPrefix} that produces only keys of the form
+	 * {@link ResKey#none(Object, String)} that have no resource.
+	 * 
+	 * @param id
+	 *        Identifier for debugging purposes.
+	 */
 	public static ResPrefix none(Object id) {
 		return new NoPrefix(id);
 	}

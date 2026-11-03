@@ -70,18 +70,19 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * This class provides the selection of a color
+ * This class provides the selection of a color.
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */
 public class ColorChooserSelectionControl extends AbstractConstantControl {
 
+	/** Commands supported by {@link ColorChooserSelectionControl}. */
 	public static final Map<String, ControlCommand> COMMANDS = createCommandMap(new ControlCommand[] {
 															new SetColorCommand()
 	});
 	
 	/**
-	 * Colors to be displayed by color chooser for direct selection
+	 * Colors to be displayed by color chooser for direct selection.
 	 */
 	public static interface Config extends ConfigurationItem {
 		
@@ -845,7 +846,7 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 	}
 
 	/**
-	 * This command sets the color of the color chooser control
+	 * This command sets the color of the color chooser control.
 	 */
 	public static final class SetColorCommand extends ControlCommand {
 		

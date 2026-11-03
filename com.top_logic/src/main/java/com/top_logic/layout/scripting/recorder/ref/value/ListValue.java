@@ -22,9 +22,11 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
 @Deprecated
 public interface ListValue extends ValueRef {
 	
+	/** The list entries. */
 	@EntryTag("entry")
 	List<ModelName> getList();
 
+	/** Setter for {@link #getList()}. */
 	void setList(List<? extends ModelName> value);
 	
 }

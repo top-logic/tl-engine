@@ -48,7 +48,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * The DataImportAssistant imports data from files.
+ * The {@link DataImportAssistant} imports data from files.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */
@@ -84,7 +84,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 	public static final ExecutableState START_COMMITTING_DISABLED_STATE = ExecutableState.createDisabledState(I18NConstants.START_COMMITTING_DISABLED);
 
 
-    /** ExecutabilityRule for starting the parsing. */
+    /** {@link ExecutabilityRule} for starting the parsing. */
     public static final ExecutabilityRule START_PARSING_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -97,7 +97,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for starting the committing. */
+    /** {@link ExecutabilityRule} for starting the committing. */
     public static final ExecutabilityRule START_COMMITING_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -110,7 +110,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for parsing progress. */
+    /** {@link ExecutabilityRule} for parsing progress. */
     public static final ExecutabilityRule PARSED_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -118,7 +118,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for committing progress. */
+    /** {@link ExecutabilityRule} for committing progress. */
     public static final ExecutabilityRule COMMITTED_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -126,7 +126,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for importer progress. */
+    /** {@link ExecutabilityRule} for importer progress. */
     public static final ExecutabilityRule NOT_BUSY_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -208,13 +208,13 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
     }
 
     /**
-	 * Creates up to three StringFields, each one for a message list of the given result for the
-	 * given form group.
+	 * Creates up to three {@link StringField}s, each one for a message list of the given result for
+	 * the given form group.
 	 * 
 	 * @param theResult
-	 *        the progress result to create the StringField from
+	 *        the progress result to create the {@link StringField} from
 	 * @param aContext
-	 *        the FormGroup to add the StringField to
+	 *        the {@link FormGroup} to add the {@link StringField} to
 	 * @param resPrefix
 	 *        the resource prefix for message list header line i18n
 	 */
@@ -257,8 +257,8 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 
 
     /**
-     * The DataImportProgressStepCommandHandler does nothing. It is for the
-     * ExecutabilityRule only.
+     * The {@link DataImportProgressStepCommandHandler} does nothing. It is for the
+     * {@link ExecutabilityRule} only.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */
@@ -307,7 +307,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 
 
     /**
-     * The DataImportCancelCommandHandler does cleanup work.
+     * The {@link DataImportCancelCommandHandler} does cleanup work.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */

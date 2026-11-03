@@ -20,6 +20,7 @@ import com.top_logic.util.Resources;
  */
 public class NotEmptyConstraint extends AbstractConstraint {
 
+	/** Singleton {@link NotEmptyConstraint} instance. */
 	@SuppressWarnings("javadoc")
 	public static final NotEmptyConstraint INSTANCE = new NotEmptyConstraint();
 

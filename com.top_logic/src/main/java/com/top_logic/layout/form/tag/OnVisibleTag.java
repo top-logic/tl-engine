@@ -28,10 +28,12 @@ public class OnVisibleTag extends CompositeControlTag {
 
 	private String name;
 	
+	/** Sets the name of the member whose visibility is tested. */
 	public void setName(String name) {
 		this.name = name;
 	}
 	
+	/** The name of the member whose visibility is tested. */
 	public String getName() {
 		return name;
 	}

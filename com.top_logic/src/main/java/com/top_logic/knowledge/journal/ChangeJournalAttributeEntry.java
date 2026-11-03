@@ -6,6 +6,8 @@
 package com.top_logic.knowledge.journal;
 
 /**
+ * {@link JournalAttributeEntry} describing the change of an attribute value.
+ *
  * @author    <a href=mailto:tsa@top-logic.com>Theo Sattttteller</a>
  */
 public interface ChangeJournalAttributeEntry extends JournalAttributeEntry {

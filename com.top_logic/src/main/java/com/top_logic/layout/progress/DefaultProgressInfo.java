@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 
 /**
- * The DefaultProgressInfo is the default implementation of {@link ProgressInfo}.
+ * The {@link DefaultProgressInfo} is the default implementation of {@link ProgressInfo}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -118,6 +118,8 @@ public class DefaultProgressInfo implements ProgressInfo {
 	}
 
 	/**
+	 * Increments the current progress and reports the message with the given key.
+	 * 
 	 * @param messageKey
 	 *        The message resource key to use for {@link #incCurrent(String)}.
 	 */
@@ -230,7 +232,8 @@ public class DefaultProgressInfo implements ProgressInfo {
 	}
 
 	/**
-	 * Check if anInfo is not alive anymore when comparing with lastAlive.
+	 * Check if the given {@link ProgressInfo} is not alive anymore when comparing with the given
+	 * time of the last alive signal.
 	 * 
 	 * @param lastAlive
 	 *        will not be considered when negative

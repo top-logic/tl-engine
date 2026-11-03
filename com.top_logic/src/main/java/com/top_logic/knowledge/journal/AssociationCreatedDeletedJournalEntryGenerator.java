@@ -20,10 +20,16 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.util.Utils;
 
 /**
+ * Generator for {@link JournalEntry journal entries} of created and deleted associations.
+ *
  * @author    <a href=mailto:tsa@top-logic.com>Theo Sattttteller</a>
  */
 public class AssociationCreatedDeletedJournalEntryGenerator {
 
+    /**
+     * Creates the journal entries for the associations of the given object that are created or
+     * deleted.
+     */
     public static Collection getEntries(Wrapper aWrapper, Map someChanged, Map someCreated, Map someRemoved) {
         Collection theEntries = new ArrayList();
 		{

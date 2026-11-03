@@ -113,6 +113,7 @@ public abstract class AbstractUploadHandler extends AbstractCommandHandler {
 	 */
 	public static class UploadExecutabilityRule implements ExecutabilityRule {
 
+		/** Singleton instance of {@link UploadExecutabilityRule}. */
 		public static final ExecutabilityRule INSTANCE = new UploadExecutabilityRule();
 
 		private static final ExecutableState NOT_EXEC_NO_FILE_SELECTED = ExecutableState.createDisabledState(I18NConstants.NO_FILE_SELECTED);

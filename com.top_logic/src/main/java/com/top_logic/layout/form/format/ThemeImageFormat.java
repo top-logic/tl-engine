@@ -29,7 +29,7 @@ public class ThemeImageFormat extends Format {
 	}
 
 	/**
-	 * Returns the {@link StringBuffer} toAppendTo lenghtened by the path of the given theme image.
+	 * Returns the given {@link StringBuffer} lengthened by the path of the given theme image.
 	 * 
 	 * @see java.text.Format#format(java.lang.Object, java.lang.StringBuffer,
 	 *      java.text.FieldPosition)
@@ -52,8 +52,8 @@ public class ThemeImageFormat extends Format {
 
 	/**
 	 * Returns the theme image coded by the path in the source beginning from the index of the
-	 * ParsePosition. If the source is to short, the errorIndex of the ParsePosition is set to the
-	 * length of the source
+	 * {@link ParsePosition}. If the source is to short, the error index of the {@link
+	 * ParsePosition} is set to the length of the source
 	 * 
 	 * @see java.text.Format#parseObject(java.lang.String, java.text.ParsePosition)
 	 */

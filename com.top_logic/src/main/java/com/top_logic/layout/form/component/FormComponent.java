@@ -442,7 +442,7 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	/**
      * Check for changes of model by some other component.
      * 
-     * Must reset the FormContext to refetch the changed model.
+     * Must reset the {@link FormContext} to refetch the changed model.
      */
 	@Override
     protected boolean receiveModelChangedEvent(Object aModel, Object changedBy) {
@@ -455,7 +455,7 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
         return wasInvalidated;
     }
 
-    /** In case our model was deleted, take care of FormContext */
+    /** In case our model was deleted, take care of {@link FormContext} */
 	@Override
     protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
 		boolean becameInvalid;
@@ -723,7 +723,7 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 		TypedAnnotatable.property(LayoutComponent.class, "contextComponent");
 
 	/**
-	 * The FormControlSupport is a special {@link ControlSupport} which detaches
+	 * The {@link FormControlSupport} is a special {@link ControlSupport} which detaches
 	 * all displayed {@link Control}s when a complete redraw happens.
 	 * 
 	 * @author <a href=mailto:dbu@top-logic.com>dbu</a>
@@ -870,9 +870,9 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	 * Installs the link {@link FormContext} to its owning {@link FormHandler}.
 	 * 
 	 * <p>
-	 * Note: This method is a workaround for the fact that a SelectField rendered as
-	 * SelectionControl requires the context component for opening a separate window for choosing
-	 * options.
+	 * Note: This method is a workaround for the fact that a {@link SelectField} rendered as
+	 * {@link com.top_logic.layout.form.control.SelectionControl} requires the context component for
+	 * opening a separate window for choosing options.
 	 * </p>
 	 * 
 	 * @param aComponent

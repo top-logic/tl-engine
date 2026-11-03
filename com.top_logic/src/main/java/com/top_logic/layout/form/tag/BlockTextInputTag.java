@@ -13,6 +13,9 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.BlockTextInputControl;
 
 /**
+ * {@link TextInputTag} displaying a text block with different sizes in collapsed and expanded
+ * state.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class BlockTextInputTag extends TextInputTag {
@@ -32,58 +35,72 @@ public class BlockTextInputTag extends TextInputTag {
     public BlockTextInputTag() {
     }
 
+    /** The number of columns in collapsed state. */
     public int getColsCollapsed() {
         return (this.colsCollapsed);
     }
 
+    /** Setter for {@link #getColsCollapsed()}. */
     public void setColsCollapsed(int aColsCollapsed) {
         this.colsCollapsed = aColsCollapsed;
     }
 
+    /** The number of rows in collapsed state. */
     public int getRowsCollapsed() {
         return (this.rowsCollapsed);
     }
 
+    /** Setter for {@link #getRowsCollapsed()}. */
     public void setRowsCollapsed(int aRowsCollapsed) {
         this.rowsCollapsed = aRowsCollapsed;
     }
 
+    /** The number of columns in expanded state. */
     public int getColsExpanded() {
         return (this.colsExpanded);
     }
 
+    /** Setter for {@link #getColsExpanded()}. */
     public void setColsExpanded(int aColsExpanded) {
         this.colsExpanded = aColsExpanded;
     }
 
+    /** The number of rows in expanded state. */
     public int getRowsExpanded() {
         return (this.rowsExpanded);
     }
 
+    /** Setter for {@link #getRowsExpanded()}. */
     public void setRowsExpanded(int aRowsExpanded) {
         this.rowsExpanded = aRowsExpanded;
     }
 
+    /** The number of columns in collapsed state in edit mode. */
     public int getColsCollapsedEdit() {
         return (this.colsCollapsedEdit);
     }
 
+    /** Setter for {@link #getColsCollapsedEdit()}. */
     public void setColsCollapsedEdit(int aColsCollapsedEdit) {
         this.colsCollapsedEdit = aColsCollapsedEdit;
     }
 
+    /** The number of rows in expanded state in edit mode. */
     public int getRowsExpandedEdit() {
         return (this.rowsExpandedEdit);
     }
 
+    /** Setter for {@link #getRowsExpandedEdit()}. */
     public void setRowsExpandedEdit(int aRowsExpandedEdit) {
         this.rowsExpandedEdit = aRowsExpandedEdit;
     }
 
+    /** The number of columns in expanded state in edit mode. */
     public int getColsExpandedEdit() {
         return (this.colsExpandedEdit);
     }
 
+    /** Setter for {@link #getColsExpandedEdit()}. */
     public void setColsExpandedEdit(int aColsExpandedEdit) {
         this.colsExpandedEdit = aColsExpandedEdit;
     }

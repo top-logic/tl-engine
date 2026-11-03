@@ -63,8 +63,10 @@ public class PopupFilterDialogBuilder implements FilterDialogBuilder {
 
 	static final ResPrefix RES_PREFIX = ResPrefix.legacyClassLocal(PopupFilterDialogBuilder.class);
 
+	/** Default title of the filter dialog. */
 	public static final ResKey STANDARD_TITLE = RES_PREFIX.key("title");
 
+	/** Name of the field inverting the filter. */
 	public static final String INVERT_FIELD = "invert";
 
 	private static final String SHOW_ALL_FIELD = "showAll";
@@ -75,10 +77,13 @@ public class PopupFilterDialogBuilder implements FilterDialogBuilder {
 
 	private static final String BUTTON_FORM_GROUP = "buttons";
 
+	/** CSS class of the area containing the filter buttons. */
 	public static final String FILTER_BUTTONS_CSS_CLASS = "fltButtons";
 
+	/** CSS class of the area containing the filter settings. */
 	public static final String FILTER_CONTENT_AREA_CSS_CLASS = "fltSubContent";
 
+	/** CSS class of the area containing the filter commands. */
 	public static final String FILTER_COMMAND_AREA_CSS_CLASS = "fltCommandContent";
 
 	private static final String FILTER_CONTAINER_CLASS = "fltGlobalContainer";
@@ -163,6 +168,7 @@ public class PopupFilterDialogBuilder implements FilterDialogBuilder {
 		return DefaultSimpleCompositeControlRenderer.divWithCSSClass(containerClass);
 	}
 
+	/** Creates the content of the filter sidebar for the given filter model. */
 	public Control createSidebarContent(TableFilterModel filterModel, DisplayContext context,
 			FormContext form) {
 		ArrayList<TableFilterCommand> tableFilterCommands = new ArrayList<>(3);

@@ -12,6 +12,7 @@ package com.top_logic.base.services.simpleajax;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ElementReplacement extends DOMModification {
+	/** The <code>xsi:type</code> of an {@link ElementReplacement}. */
 	public static final String ELEMENT_REPLACEMENT_XSI_TYPE = "ElementReplacement";
 
 	/**

@@ -26,6 +26,7 @@ public interface IndexRef extends VersionedObjectRef {
 	 * The name of the object's {@link MOClass}.
 	 */
 	String getTableName();
+	/** Setter for {@link #getTableName()}. */
 	void setTableName(String typeName);
 
 	/**

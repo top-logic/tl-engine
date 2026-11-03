@@ -10,7 +10,7 @@ import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Default base implementation of {@link TLNamedPart}
+ * Default base implementation of {@link TLNamedPart}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

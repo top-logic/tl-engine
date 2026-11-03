@@ -9,7 +9,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * Returns a {@link CheckScopeProvider} which constantly returns an &quot;empty&quot;
- * {@link CheckScope}
+ * {@link CheckScope}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

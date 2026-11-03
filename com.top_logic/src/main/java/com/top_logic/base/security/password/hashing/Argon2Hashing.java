@@ -137,7 +137,7 @@ public class Argon2Hashing extends AbstractConfiguredInstance<Argon2Hashing.Conf
 		void setIterations(int iterations);
 
 		/**
-		 * The memory usage in KiB.
+		 * The memory usage in kibibytes.
 		 */
 		@IntDefault(4096)
 		@Name(MEMORY)

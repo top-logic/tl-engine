@@ -30,8 +30,8 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	private final ToolBar _toolBar;
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a title bar and a customized border (width
-	 * and color)
+	 * Create a new {@link DefaultPopupDialogModel}, which has a title bar and a customized border
+	 * (width and color)
 	 * 
 	 * @param dialogTitle
 	 *        The title of the dialog. If <code>null</code>, {@link #hasTitleBar} becomes
@@ -58,8 +58,8 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}
 
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a title bar, a border (color = theme based)
-	 * and a css class.
+	 * Create a new {@link DefaultPopupDialogModel}, which has a title bar, a border (color = theme
+	 * based) and a css class.
 	 * 
 	 * @param dialogTitle
 	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String, String)}.
@@ -73,8 +73,8 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}	
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a title bar and a border (color = theme
-	 * based)
+	 * Create a new {@link DefaultPopupDialogModel}, which has a title bar and a border (color =
+	 * theme based)
 	 * 
 	 * @param dialogTitle
 	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String, String)}.
@@ -88,7 +88,7 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}	
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a title bar.
+	 * Create a new {@link DefaultPopupDialogModel}, which has a title bar.
 	 * 
 	 * @param dialogTitle
 	 *        See {@link #DefaultPopupDialogModel(HTMLFragment, LayoutData, int, String, String)}
@@ -100,7 +100,7 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a customized border (width and color)
+	 * Create a new {@link DefaultPopupDialogModel}, which has a customized border (width and color)
 	 * 
 	 * @param layout
 	 *        - the layout definition of the dialog
@@ -114,7 +114,7 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}	
 	
 	/**
-	 * Create a new DefaultPopupDialogModel, which has a border (color = theme based)
+	 * Create a new {@link DefaultPopupDialogModel}, which has a border (color = theme based)
 	 * 
 	 * @param layout
 	 *        - the layout definition of the dialog
@@ -126,7 +126,7 @@ public class DefaultPopupDialogModel extends PropertyObservableBase implements P
 	}
 	
 	/**
-	 * Create a new pure DefaultPopupDialogModel
+	 * Create a new pure {@link DefaultPopupDialogModel}
 	 *
 	 * @param layout - the layout definition of the dialog
 	 */

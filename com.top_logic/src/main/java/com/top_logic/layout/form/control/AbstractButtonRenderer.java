@@ -32,11 +32,13 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
 
     private static final String XML_ATTRIBUTE_EXEC_STATE_IN_TOOLTIP = "execStateInTooltip";
 
+	/** Configuration options for {@link AbstractButtonRenderer}. */
 	public interface Config<I extends AbstractButtonRenderer<?>> extends PolymorphicConfiguration<I> {
 
 		/** Default value of {@link #getExecStateInTooltip()} when nothing is configured. */
 		boolean EXEC_STATE_IN_TTOLTIP_DEFAULT = true;
 
+		/** Whether the reason why a button can not be executed is displayed in its tooltip. */
 		@Name(XML_ATTRIBUTE_EXEC_STATE_IN_TOOLTIP)
 		@BooleanDefault(EXEC_STATE_IN_TTOLTIP_DEFAULT)
 		boolean getExecStateInTooltip();
@@ -66,6 +68,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
 		return _config;
 	}
     
+    /** Writes the {@code onclick} attribute of the given button. */
     protected void writeOnClickAttribute(DisplayContext context, TagWriter out, AbstractButtonControl<?> control) throws IOException {
 		out.beginAttribute(ONCLICK_ATTR);
 		control.writeOnClickContent(context, out);
@@ -141,6 +144,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
         }
     }
 
+	/** Writes the access key attribute, if the given model defines an access key. */
 	protected final void writeAccessKeyAttribute(TagWriter out, ButtonUIModel model) throws IOException {
 		char accessKey = model.getAccessKey();
 		if (accessKey != 0) {
@@ -176,6 +180,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
 		return button.getImage() != null;
 	}
 
+	/** The icon displayed for a button without an image. */
 	protected ThemeImage getMissingIcon(boolean isDisabled) {
 		return isDisabled ? Icons.BUTTON_MISSING_DISABLED : Icons.BUTTON_MISSING;
 	}

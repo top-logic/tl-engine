@@ -59,20 +59,24 @@ public class ListField extends ConstantField {
 		this.listModel.addListDataListener(new ListSelectionManager(this.selectionModel));
 	}
 
+	/** The model of the list entries. */
 	public ListModel getListModel() {
 		return listModel;
 	}
 
+	/** The selection model of the list. */
 	public ListSelectionModel getSelectionModel() {
 		return selectionModel;
 	}
 
+	/** The selected entries as set. */
 	public Set getSelectionSet() {
 		HashSet result = new HashSet();
 		addSelection(result);
 		return result;
 	}
 
+	/** The selected entries as list. */
 	public List getSelectionList() {
 		ArrayList result = new ArrayList();
 		addSelection(result);
@@ -87,10 +91,12 @@ public class ListField extends ConstantField {
 		}
 	}
 
+	/** The {@link Renderer} for the list entries. */
 	public Renderer<Object> getItemRenderer() {
 		return itemRenderer;
 	}
 
+	/** Setter for {@link #getItemRenderer()}. */
 	public void setItemRenderer(Renderer<Object> itemRenderer) {
 		this.itemRenderer = itemRenderer;
 	}

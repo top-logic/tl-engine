@@ -52,14 +52,14 @@ public class POIColumnWidthDescription extends POISheetDescription {
 	}
 
 	/**
-	 * Returns the width of this colDescription.
+	 * Returns the width of the described column.
 	 */
 	public int getWidth() {
 		return _width;
 	}
 
 	/**
-	 * Retusn the index of the column corresponding to this colDescription.
+	 * Returns the index of the described column.
 	 */
 	public int getColumn() {
 		return _column;

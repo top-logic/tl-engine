@@ -26,6 +26,8 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
+ * {@link Powerpoint} implementation based on POI for the binary <code>ppt</code> format.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class POIPowerpoint extends Powerpoint {
@@ -119,6 +121,10 @@ public class POIPowerpoint extends Powerpoint {
 		return true;
 	}
 
+	/**
+	 * Replaces the tokens in the given template with the given values and writes the result to the
+	 * given file.
+	 */
 	public void setValuesDirect(InputStream templateStream, File tmpFile, Map theValues) {
 		try {
 			POIPowerpointUtil theUtil = new POIPowerpointUtil();
@@ -144,6 +150,7 @@ public class POIPowerpoint extends Powerpoint {
         }
     }
 	
+	/** Replaces the tokens in all slide masters and slides of the given slide show. */
 	protected void processSlideShow(SlideShow<?, ?> aShow, POIPowerpointUtil aUtil, Map someReplacements)
 			throws IOException {
 		List<? extends MasterSheet<?, ?>> theMasters = aShow.getSlideMasters();
@@ -159,19 +166,23 @@ public class POIPowerpoint extends Powerpoint {
         this.postProcessSlideshow(aShow, aUtil, someReplacements);
 	}
 	
+	/** Reads the slide show from the given stream. */
 	protected SlideShow createSlideShow(InputStream aTemplateStream) throws IOException {
 		return new HSLFSlideShow(aTemplateStream);
 	}
 	
+	/** Replaces the tokens in the given slide master. */
 	protected void processSlideMaster(MasterSheet aMaster, POIPowerpointUtil aUtil, Map someReplacements)
 			throws IOException {
 	    aUtil.parseForTokens(aMaster, POIPowerpointUtil.shapesStable(aMaster), someReplacements);
 	}
 	
+	/** Replaces the tokens in the given slide. */
 	protected void processSlide(Slide aSlide, POIPowerpointUtil aUtil, Map someReplacements) throws IOException {
 	    aUtil.parseForTokens(aSlide, POIPowerpointUtil.shapesStable(aSlide), someReplacements);
 	}
 	
+	/** Hook called after all tokens have been replaced, replaces the template slides. */
 	protected void postProcessSlideshow(SlideShow aShow, POIPowerpointUtil aUtil, Map someReplacements) throws IOException {
 		this.slideReplacer.replaceSlides(aShow, aUtil, someReplacements);
 	}

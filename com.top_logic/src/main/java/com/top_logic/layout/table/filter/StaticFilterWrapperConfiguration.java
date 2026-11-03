@@ -12,7 +12,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.DisplayValue;
 
 /**
- * A configuration used by static filter wrappers
+ * A configuration used by static filter wrappers.
  * 
  * @author     <a href="mailto:sts@top-logic.com">sts</a>
  */
@@ -23,7 +23,7 @@ public class StaticFilterWrapperConfiguration extends FilterConfiguration {
 	private int matchCount;
 		
 	/**
-	 * Create a new StaticFilterWrapperConfiguration
+	 * Create a new {@link StaticFilterWrapperConfiguration}
 	 * 
 	 * @param filterDescription - the filter description
 	 */

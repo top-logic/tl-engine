@@ -30,6 +30,7 @@ public class IfExistsTag extends AbstractFormTag {
 	/** Flag, if member has to exist or not. */
     private boolean not;
 	
+	/** Sets the name of the member whose existence is tested. */
 	public void setName(String memberName) {
 		assert this.memberName == null;
 		

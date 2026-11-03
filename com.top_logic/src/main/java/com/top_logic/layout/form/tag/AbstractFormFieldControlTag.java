@@ -77,6 +77,7 @@ public abstract class AbstractFormFieldControlTag extends AbstractFormMemberCont
 		ControlTagUtil.writeControl(this, this.pageContext, getControl());
 	}
 
+	/** Applies the settings of this tag to the given control. */
 	protected void initControl(AbstractFormFieldControl control) {
 		if (tabindex.isSet())
 			control.setTabIndex(tabindex.get());

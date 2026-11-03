@@ -21,7 +21,7 @@ public interface SearchResult {
      * Get the Object that represents the search result.
      * The Object must not be null.
      *
-     * @return  the KnowledgeObject
+     * @return  the {@link com.top_logic.knowledge.objects.KnowledgeObject}
      */
     public Object getResult ();
 

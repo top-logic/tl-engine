@@ -9,7 +9,7 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.mig.html.DefaultResourceProvider;
 
 /**
- * Resource Provider for MetaObjects.
+ * Resource Provider for {@link MetaObject}s.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

@@ -14,11 +14,13 @@ import com.top_logic.layout.table.filter.AbstractClassificationTableFilterProvid
 import com.top_logic.model.TLClassifier;
 
 /**
- * The filter takes an array of FastListElements as configuration.
+ * The filter takes a set of {@link TLClassifier}s as configuration.
  * 
- * It accepts FastListElements or Lists or SelectFields as input Objects.
- * From them it extracts the contains, if they are FastListElements the accept method
- * will perform its duty.
+ * <p>
+ * It accepts classifiers, lists or {@link com.top_logic.layout.form.model.SelectField}s as input
+ * objects. From them it extracts the contents, if they are classifiers the accept method will
+ * perform its duty.
+ * </p>
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
@@ -43,7 +45,7 @@ public class TableFLElementFilter extends AbstractTableFLElementFilter {
     }
     
     /**
-     * Only accept the configured FastListElement
+     * Only accept the configured classifiers.
      * @see com.top_logic.basic.col.Filter#accept(java.lang.Object)
      */
     @Override

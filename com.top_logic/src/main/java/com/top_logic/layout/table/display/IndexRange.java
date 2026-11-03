@@ -24,10 +24,12 @@ public class IndexRange {
 		this.forcedVisibleIndexInRange = forcedVisibleIndexInRange;
 	}
 
+	/** The first index of this range. */
 	public int getFirstIndex() {
 		return firstIndex;
 	}
 
+	/** The last index of this range. */
 	public int getLastIndex() {
 		return lastIndex;
 	}
@@ -40,10 +42,12 @@ public class IndexRange {
 		return forcedVisibleIndexInRange;
 	}
 
+	/** The {@link IndexRange} that is not defined. */
 	public static IndexRange undefined() {
 		return UNDEFINED;
 	}
 
+	/** Creates an {@link IndexRange} consisting of a single index. */
 	public static IndexRange singleIndex(int visibleIndex) {
 		return IndexRange.multiIndex(visibleIndex, visibleIndex, visibleIndex);
 	}
@@ -57,6 +61,8 @@ public class IndexRange {
 	}
 
 	/**
+	 * Creates an {@link IndexRange} with a given index that must be visible.
+	 *
 	 * @param forcedVisibleIndexInRange
 	 *        - index, which shall be visible at least, even in case the range is larger than the client
 	 *        side's viewport

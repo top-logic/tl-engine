@@ -70,6 +70,7 @@ public class ZipFileCheck extends ValueCheck<ZipFileCheck.ZipFileCheckConfig> {
 		 */
 		public interface EntryConfig extends ConfigurationItem {
 
+			/** Configuration name of {@link #getPath()}. */
 			String PATH_PROPERTY_NAME = "path";
 			/**
 			 * The path of the ZIP entry to check.

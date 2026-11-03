@@ -52,7 +52,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * FolderComponent to display a WebFolder.
+ * {@link FolderComponent} to display a {@link WebFolder}.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -183,6 +183,12 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		return defaultModifiability(folder);
 	}
 
+	/**
+	 * Default implementation of {@link #getModifyability(WebFolder)}.
+	 *
+	 * @param folder
+	 *        The current {@link WebFolder}, may be <code>null</code>.
+	 */
 	public static ExecutableState defaultModifiability(WebFolder folder) {
 		if (folder == null) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
@@ -234,6 +240,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		return (aModel instanceof WebFolder) || (aModel instanceof Document) || (aModel instanceof DocumentVersion);
 	}
 
+	/** Whether the upload command is displayed. */
 	protected boolean hasUploadCommand() {
 		return _hasUploadCommand;
 	}
@@ -288,6 +295,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 			_withDescription = withDescription;
 		}
 
+		/** The selection model holding the folder to upload to. */
 		public SingleSelectionModel getFolderSelection() {
 			return _folderSelection;
 		}

@@ -17,6 +17,20 @@ import com.top_logic.util.Resources;
  */
 public interface CommandScriptWriter {
 
+	/**
+	 * Writes the script that executes the given command.
+	 * 
+	 * @param aPath
+	 *        The path to the component's frame.
+	 * @param aRes
+	 *        The resources for internationalization.
+	 * @param anOut
+	 *        The writer to write the script to.
+	 * @param aComponent
+	 *        The component the command is executed on.
+	 * @param aCommand
+	 *        The command to execute.
+	 */
 	public void writeCommandScript(String aPath, Resources aRes, PrintWriter anOut, LayoutComponent aComponent,
 			CommandHandler aCommand);
 }

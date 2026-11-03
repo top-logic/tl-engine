@@ -28,11 +28,14 @@ import com.top_logic.layout.form.model.AbstractButtonField;
  */
 public class NotExecutableListener {
 
+	/** Handle to a listener that can be registered at {@link FormMember}s. */
 	public interface Listener {
 		// pure sum interface
 
+		/** Registers this listener at the given member. */
 		void addAsListener(FormMember member);
 
+		/** Removes this listener from the given member. */
 		void removeAsListener(FormMember member);
 	}
 

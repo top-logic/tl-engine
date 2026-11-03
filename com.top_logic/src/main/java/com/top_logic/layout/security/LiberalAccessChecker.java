@@ -15,12 +15,15 @@ import com.top_logic.tool.boundsec.IGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * The LiberalAccessChecker grands access to anything.
+ * The {@link LiberalAccessChecker} grands access to anything.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class LiberalAccessChecker implements AccessChecker {
     
+    /**
+     * Singleton {@link LiberalAccessChecker} instance.
+     */
     public static final LiberalAccessChecker INSTANCE = new LiberalAccessChecker();
 
     /** the set of all access rights usually expected to be available */

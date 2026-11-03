@@ -42,45 +42,80 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class EVAAssistantController extends StepAssistantComponent {
 
+	/** Configuration name of {@link Config#getImportHandler()}. */
 	public static final String IMPORT_HANDLER = "importHandler";
     
+	/** Configuration name of {@link Config#getUploadHandler()}. */
     public static final String UPLOAD_HANDLER = "uploadHandler";
 
+	/** Configuration name of {@link Config#getExtension()}. */
     public static final String EXTENSION_NAME = "extension";
     
+	/**
+	 * Key in the data map of the {@link AssistentComponent} under which the validation result of
+	 * the uploaded file is stored.
+	 */
     public static final String VALIDATION_RESULT = "validationResult";
 
+	/**
+	 * Configuration of an {@link EVAAssistantController}.
+	 */
 	public interface Config extends StepAssistantComponent.Config {
 
+		/** Configuration name of {@link #getInputStep()}. */
 		String INPUT_STEP = "inputStep";
 
+		/** Configuration name of {@link #getProcessStep()}. */
 		String PROCESS_STEP = "processStep";
 
+		/** Configuration name of {@link #getOutputStep()}. */
 		String OUTPUT_STEP = "outputStep";
 
+		/** Configuration name of {@link #getErrorStep()}. */
 		String ERROR_STEP = "errorStep";
 
+		/**
+		 * Name of the first step, in which the file to import is uploaded and validated.
+		 */
 		@Name(INPUT_STEP)
 		ComponentName getInputStep();
 
+		/**
+		 * Name of the step that shows the validation result and starts the import.
+		 */
 		@Name(PROCESS_STEP)
 		ComponentName getProcessStep();
 
+		/**
+		 * Name of the final step that shows the result of the import.
+		 */
 		@Name(OUTPUT_STEP)
 		ComponentName getOutputStep();
 
+		/**
+		 * Name of the step that is displayed when a step fails.
+		 */
 		@Name(ERROR_STEP)
 		ComponentName getErrorStep();
 
+		/**
+		 * The file extensions accepted for upload.
+		 */
 		@Name(EXTENSION_NAME)
 		@Format(CommaSeparatedStrings.class)
 		List<String> getExtension();
 
+		/**
+		 * The handler that imports the uploaded file.
+		 */
 		@Name(IMPORT_HANDLER)
 		@Mandatory
 		@InstanceFormat
 		ProcessFileHandler getImportHandler();
 		
+		/**
+		 * The handler that receives and validates the uploaded file.
+		 */
 		@Name(UPLOAD_HANDLER)
 		@InstanceFormat
 		@InstanceDefault(UploadHandler.class)
@@ -264,6 +299,7 @@ public class EVAAssistantController extends StepAssistantComponent {
      */
 	public static class ImportCommandHandler extends AJAXCommandHandler {
 
+        /** The ID of this command. */
         public static final String COMMAND_ID = "processImportFile";
 
 		private EVAAssistantController _controller;
@@ -279,6 +315,9 @@ public class EVAAssistantController extends StepAssistantComponent {
 
         // Overridden methods from AJAXCommandHandler
 
+		/**
+		 * Creates an {@link ImportCommandHandler} for the given controller.
+		 */
 		public static CommandHandler newInstance(EVAAssistantController controller) {
 			ImportCommandHandler result = newInstance(ImportCommandHandler.class, COMMAND_ID);
 			result._controller = controller;

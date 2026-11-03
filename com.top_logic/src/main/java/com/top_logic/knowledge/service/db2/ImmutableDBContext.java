@@ -27,7 +27,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Immutable {@link DBContext}
+ * Immutable {@link DBContext}.
  * 
  * @since 5.8.0
  * 

@@ -30,9 +30,9 @@ import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * This is a special SubstitutionReferenceComponnent that references separate
- * windows. It defines some substitutions that are needed for handling of
- * multiple separate windows displaying the same components.
+ * Definition of a separate window, whose contents is defined by a referenced layout. It defines
+ * some substitutions that are needed for handling of multiple separate windows displaying the
+ * same components.
  * 
  * {@link WindowTemplate}s are registered at the {@link WindowManager}. The final
  * Components will be resolve on opening the Window.
@@ -64,6 +64,9 @@ public class WindowTemplate extends LayoutComponent {
 
 	}
 
+	/**
+	 * Configuration options for {@link WindowTemplate}.
+	 */
 	public interface Config extends LayoutComponent.Config, WindowConfig {
 
 		/** @see #getTemplate() */
@@ -73,9 +76,15 @@ public class WindowTemplate extends LayoutComponent {
 		@Override
 		Class<? extends LayoutComponent> getImplementationClass();
 
+		/**
+		 * Name of the layout displayed in the window.
+		 */
 		@Name(TEMPLATE)
 		String getTemplate();
 
+		/**
+		 * Arguments that are passed to the {@link #getTemplate() layout} of the window.
+		 */
 		@MapBinding
 		Map<String, String> getSubstitutions();
 
@@ -83,7 +92,7 @@ public class WindowTemplate extends LayoutComponent {
 
 	/**
 	 * This variable should be used in the referenced layout-xml to make names
-	 * of LayoutComponents unique and enable opening of multiple separate
+	 * of {@link LayoutComponent}s unique and enable opening of multiple separate
 	 * windows.
 	 */
 	public static final String NAME_PREFIX_ARGUMENT = "namePrefix";
@@ -105,10 +114,16 @@ public class WindowTemplate extends LayoutComponent {
 		}
 	}
 
+	/**
+	 * The {@link LayoutComponent} on which the template was defined.
+	 */
 	public LayoutComponent getOwner() {
 		return owner;
 	}
 
+	/**
+	 * Setter for {@link #getOwner()}.
+	 */
 	public void setOwner(LayoutComponent owner) {
 		this.owner = owner;
 	}
@@ -126,7 +141,8 @@ public class WindowTemplate extends LayoutComponent {
 	/**
 	 * Instantiates this template.
 	 * 
-	 * This is the deferred variant of resolveComponent, triggered by the {@link WindowManager}.
+	 * This is the deferred variant of resolving components, triggered by the
+	 * {@link WindowManager}.
 	 * 
 	 * @return The new window with the contents described by this template.
 	 */
@@ -173,6 +189,9 @@ public class WindowTemplate extends LayoutComponent {
 		_arguments.put(NAME_PREFIX_ARGUMENT, new StringValue(NAME_PREFIX_ARGUMENT, namePrefix));
 	}
 
+	/**
+	 * The name of the {@link WindowComponent} created by this template.
+	 */
 	public ComponentName getWindowName() {
 		StringBuilder name = new StringBuilder();
 		name.append("win_");
@@ -181,6 +200,11 @@ public class WindowTemplate extends LayoutComponent {
 		return ComponentName.newName(name.toString());
 	}
 
+	/**
+	 * Name of the layout displayed in the window.
+	 * 
+	 * @see Config#getTemplate()
+	 */
 	public String getTemplate() {
 		return config().getTemplate();
 	}

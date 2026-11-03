@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 
 /**
- * Configuration of the {@link KnowledgeBaseFactory}
+ * Configuration of the {@link KnowledgeBaseFactory}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

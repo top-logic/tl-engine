@@ -11,7 +11,7 @@ import com.top_logic.layout.form.I18NConstants;
 import com.top_logic.util.Resources;
 
 /**
- * Check if a String contains only digits
+ * Check if a String contains only digits.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */

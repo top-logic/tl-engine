@@ -28,7 +28,8 @@ public class LabelTag extends TagSupport {
 	private ResKey _key;
 
     /**
-     * Generates the tag for displaying a KnowledgeObject in the browser.
+     * Generates the tag for displaying a {@link com.top_logic.knowledge.objects.KnowledgeObject} in
+     * the browser.
      *
      * @return    SKIP_BODY
      */
@@ -47,7 +48,8 @@ public class LabelTag extends TagSupport {
     }
 
     /**
-     * Generates the end tag for displaying a KnowledgeObject in the browser.
+     * Generates the end tag for displaying a {@link
+     * com.top_logic.knowledge.objects.KnowledgeObject} in the browser.
      *
      * @return    EVAL_PAGE
      */

@@ -16,12 +16,13 @@ import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * A TimeRangeIterator for Days.
+ * A {@link TimeRangeIterator} for Days.
  * 
  * @author    <a href=mailto:kha@top-logic.com>kha</a>
  */
 public class DayRange extends TimeRangeIterator {
 
+    /** Days of the week ({@link Calendar} constants) that are not work days. */
     public static final Set<Integer> WEEKEND_DAYS = new HashSet<>();
 
     static {
@@ -46,14 +47,14 @@ public class DayRange extends TimeRangeIterator {
     /**
      * Secondary Constructor to be called by the factory functions.
      * 
-     * The Internal State will be set to the interval just before aStart.
+     * The Internal State will be set to the interval just before {@code aStart}.
      *       
      * @param loc Locale to use for Formatting and for creting the internal
      *        Calendar(s)
      * @param aStart first start for the time Ranges. 
-     *         will be aligned to the very first allowed Date for the TimeRange. 
+     *         will be aligned to the very first allowed Date for the time range. 
      * @param anEnd last date for the Time Ranges, 
-     *         will be aligned to the very last allowed Date for the TimeRange. 
+     *         will be aligned to the very last allowed Date for the time range. 
      */
     @Override
 	public void init(Locale loc, Date aStart, Date anEnd) {
@@ -130,7 +131,7 @@ public class DayRange extends TimeRangeIterator {
     }
 
     /** 
-     * Return number of days from start to endDate (inclusive).
+     * Return number of days from start to end date (inclusive).
      * 
      * The number of days is calculated by aligning start and end to to the same
      * time in the day (noon) and then by arithmetic operation which includes division by
@@ -150,7 +151,7 @@ public class DayRange extends TimeRangeIterator {
     }
     
     /**
-     * Return true if current Day is a WorkDay.
+     * Return true if current Day is a work day.
      */
     public boolean isWorkDay() {
         return DateUtil.isWorkDay(cal);
@@ -210,7 +211,7 @@ public class DayRange extends TimeRangeIterator {
         return size - holidayCnt;
     }
 
-	/** Unified Format used internally by this DayRange */
+	/** Unified Format used internally by this {@link DayRange} */
 	public static DateFormat getDayRangeFormat() {
 		// Note: This must not be shared among threads.
 		return CalendarUtil.newSimpleDateFormat("yyyy-DDD", Locale.US);

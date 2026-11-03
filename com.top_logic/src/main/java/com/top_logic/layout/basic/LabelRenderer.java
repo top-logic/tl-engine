@@ -15,7 +15,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 
 /**
  * {@link Renderer} that writes the label of a certain object by getting the actual label from a
- * {@link LabelProvider}
+ * {@link LabelProvider}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

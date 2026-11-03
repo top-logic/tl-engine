@@ -29,7 +29,7 @@ import com.top_logic.tool.export.Export.State;
 
 /**
  * <p>
- * The ExportRun implements a basic procedure of executing an export.
+ * The {@link ExportRun} implements a basic procedure of executing an export.
  * </p>
  * <p>
  * The procedure includes switching the export states from {@link State#RUNNING} to
@@ -53,10 +53,17 @@ public class ExportRun /*implements Runnable*/ {
         this.handler = ExportHandlerRegistry.getInstance().getHandler(anExport.getExportHandlerID());
     }
 
+    /**
+     * The {@link Export} executed by this run.
+     */
     public Export getExport() {
         return this.export;
     }
 
+    /**
+     * Executes the {@link #getExport() export} with its {@link ExportHandler} and stores the
+     * result.
+     */
     public void run() {
 
         if (State.RUNNING != this.export.getState()) {

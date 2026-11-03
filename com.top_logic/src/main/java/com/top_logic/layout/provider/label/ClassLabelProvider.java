@@ -10,7 +10,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.util.Resources;
 
 /**
- * a {@link LabelProvider} for {@link Class Classes} that uses {@link Class#getName()}.
+ * A {@link LabelProvider} for {@link Class Classes} that uses {@link Class#getName()}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

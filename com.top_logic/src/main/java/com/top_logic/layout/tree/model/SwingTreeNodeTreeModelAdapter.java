@@ -114,6 +114,7 @@ public class SwingTreeNodeTreeModelAdapter extends AbstractTreeModel<Object> imp
 		return node;
 	}
 
+    /** Sets the business object of the given node and informs listeners about the change. */
     public void setBusinessObject(Object aNode, Object businessObject) {
         ((DefaultMutableTreeNode) aNode).setUserObject(businessObject);
         if (hasListeners()) {
@@ -121,6 +122,7 @@ public class SwingTreeNodeTreeModelAdapter extends AbstractTreeModel<Object> imp
         }
     }
 
+    /** Adds the given child to the given node and informs listeners about the addition. */
     public void addChild(Object aNode, Object aChild) {
         ((DefaultMutableTreeNode) aNode).add((MutableTreeNode) aChild);
         if (hasListeners()) {
@@ -128,6 +130,7 @@ public class SwingTreeNodeTreeModelAdapter extends AbstractTreeModel<Object> imp
         }
     }
     
+    /** Removes the given node from its parent and informs listeners about the removal. */
     public void removeNode(Object aNode) {
         DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode) aNode;
         if (hasListeners()) {

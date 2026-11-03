@@ -26,7 +26,7 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * {@link FolderColumnDescriptionBuilder} which additionally creates and returns table configuration
- * for WebFolder and for a list of versions of a document.
+ * for {@link WebFolder} and for a list of versions of a document.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -70,7 +70,7 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 	}
 
 	/**
-	 * Creates and returns a table configuration suitable for a WebFolder.
+	 * Creates and returns a table configuration suitable for a {@link WebFolder}.
 	 */
     public TableConfiguration createWebFolderColumns() {
 		TableConfiguration tableConfig = TableConfiguration.table();
@@ -124,6 +124,15 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 		return column;
 	}
 
+	/**
+	 * Hides the lock and delete columns of the given table configuration, if the folder is
+	 * immutable.
+	 *
+	 * @param aManager
+	 *        The table configuration to adapt.
+	 * @param immutable
+	 *        Whether the folder is immutable.
+	 */
 	public static void applyImmutableProperty(TableConfiguration aManager, boolean immutable) {
 		ColumnConfiguration lockColumn = aManager.getDeclaredColumn(WebFolderAccessor.LOCK);
 		if (lockColumn != null && (!lockColumn.isFrozen())) {

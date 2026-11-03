@@ -26,13 +26,14 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.DatasetUtils;
 
 /**
- * The BarLineRenderer is a BarRenderer which draws only the top line of the bars.
+ * The {@link BarLineRenderer} is a {@link StackedBarRenderer} which draws only the top line of the
+ * bars.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class BarLineRenderer extends StackedBarRenderer {
 
-    /** The lineStrength of the bar */
+    /** The line strength of the bar. */
     protected double lineStrength;
 
 

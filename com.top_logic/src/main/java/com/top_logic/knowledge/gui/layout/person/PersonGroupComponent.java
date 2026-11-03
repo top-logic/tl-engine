@@ -42,6 +42,7 @@ import com.top_logic.util.TLContext;
  */
 public class PersonGroupComponent extends EditComponent {
 
+    /** Name of the form member displaying the groups of the person. */
     public static final String FORM_MEMBER_GROUP = "roles";
 
 
@@ -96,7 +97,7 @@ public class PersonGroupComponent extends EditComponent {
 
 
 	/**
-	 * Overridden to forward the resPrefic to the form.
+	 * Overridden to forward the resource prefix to the form.
 	 */
 	@Override
 	public FormContext createFormContext() {
@@ -158,12 +159,13 @@ public class PersonGroupComponent extends EditComponent {
     }
 
     /**
-     * Check if aCmdGroup is allowed in the BoundObject hierarchy of aRoot
+     * Check if {@code aCmdGroup} is allowed in the {@link BoundObject} hierarchy of {@code aRoot}
      *
      * @param aCmdGroup the command group
      * @param aRoot     the root object
      * @param aContext  the TLContext
-     * @return true if aCmdGroup is allowed in the BoundObject hierarchy of aRoot
+     * @return true if {@code aCmdGroup} is allowed in the {@link BoundObject} hierarchy of {@code
+     *         aRoot}
      */
     protected boolean allowInHierarchy(BoundCommandGroup aCmdGroup, BoundObject aRoot, TLContext aContext) {
 		Person user = aContext.currentUser();
@@ -185,10 +187,13 @@ public class PersonGroupComponent extends EditComponent {
     }
 
     /**
+     * Command applying the groups selected for the person.
+     *
      * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
      */
     public static class ApplyPersonGroupCommand extends AbstractApplyCommandHandler {
 
+        /** Default command ID of this handler. */
         public static final String COMMAND_ID = "applyPersonGroup";
 
         public ApplyPersonGroupCommand(InstantiationContext context, Config config) {
@@ -210,6 +215,8 @@ public class PersonGroupComponent extends EditComponent {
         }
         
         /**
+         * Updates the group memberships of the given model to the given list of groups.
+         *
          * @param    aList     The list of groups the model should be applied to.
          * @param    aModel    The bound object to be used for storage.
          * @return   Flag, if something has changed.
@@ -252,6 +259,8 @@ public class PersonGroupComponent extends EditComponent {
     }
 
     /**
+     * Command storing the groups of the person.
+     *
      * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
      */
     public static class SavePersonGroupCommand extends ApplyPersonGroupCommand {

@@ -12,7 +12,7 @@ import com.top_logic.layout.form.boxes.tag.BoxContainerTag;
 import com.top_logic.layout.form.boxes.tag.BoxTag;
 
 /**
- * Base class for {@link BoxTag}s
+ * Base class for {@link BoxTag}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

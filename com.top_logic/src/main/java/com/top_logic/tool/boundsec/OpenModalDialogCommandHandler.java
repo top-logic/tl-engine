@@ -395,6 +395,9 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		return this._dialogName;
     }
 
+	/**
+	 * The command ID of the command opening the dialog with the given name.
+	 */
 	public static String getOpenCommandName(ComponentName dialogName) {
 		String localName = dialogName.localName()
 			.replaceAll("\\.", "_").replaceAll("\\/", "_");
@@ -414,6 +417,18 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		return new OpenExecutabilityRule(this);
 	}
 
+	/**
+	 * Creates the configuration of the handler opening the given dialog.
+	 * 
+	 * @param log
+	 *        The log to report a missing dialog info to.
+	 * @param dialogParent
+	 *        The configuration of the component opening the dialog.
+	 * @param dialog
+	 *        The configuration of the dialog.
+	 * @return The handler configuration, or {@code null} if the dialog has no
+	 *         {@link LayoutComponent.Config#getDialogInfo() dialog info}.
+	 */
 	public static PolymorphicConfiguration<? extends CommandHandler> createDialogOpenHandler(Log log,
 			LayoutComponent.Config dialogParent, LayoutComponent.Config dialog) {
 		DialogInfo dialogInfo = dialog.getDialogInfo();
@@ -572,10 +587,23 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		config.getExecutability().add(newConfigItem);
 	}
 
+	/**
+	 * Sets {@link Config#getDialogName()} to the given value in the given config.
+	 * 
+	 * @return The given configuration, returned for convenience.
+	 */
 	public static <C extends Config> C updateDialogName(C config, ComponentName value) {
 		return update(config, Config.DIALOG_NAME_PROPERTY, value);
 	}
 
+	/**
+	 * The configuration of the handler opening the dialog with the given name.
+	 * 
+	 * <p>
+	 * The open handler of the given {@link DialogInfo} is used, if it has no dialog name, the
+	 * given name is set.
+	 * </p>
+	 */
 	public static PolymorphicConfiguration<? extends CommandHandler> createOpenHandler(DialogInfo dialogInfo,
 			ComponentName dialogName) {
 		PolymorphicConfiguration<? extends CommandHandler> openHandlerConfig = dialogInfo.getOpenHandler();

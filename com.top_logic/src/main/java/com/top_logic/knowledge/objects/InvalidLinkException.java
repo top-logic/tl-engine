@@ -17,7 +17,7 @@ public class InvalidLinkException extends DataObjectException {
 
 
     /**
-     * Constructs a new InvalidLinkException with the specified
+     * Constructs a new {@link InvalidLinkException} with the specified
      * error message.
      */
     public InvalidLinkException (String message) {
@@ -25,7 +25,7 @@ public class InvalidLinkException extends DataObjectException {
     }
 
     /**
-     * Constructs a new InvalidLinkException with some other, inner Exception
+     * Constructs a new {@link InvalidLinkException} with some other, inner Exception
      */
     public InvalidLinkException (Throwable inner) {
         super (inner);

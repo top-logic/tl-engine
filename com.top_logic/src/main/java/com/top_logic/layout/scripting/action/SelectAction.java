@@ -19,7 +19,7 @@ import com.top_logic.layout.scripting.runtime.action.SelectActionOp;
 public interface SelectAction extends ApplicationAction {
 
 	/**
-	 * How is the selection changed? {@link #INCREMENTAL incremental} or {@link #ABSOLUTE Absolute}?
+	 * How the selection is changed: {@link #INCREMENTAL} or {@link #ABSOLUTE}.
 	 */
 	public enum SelectionChangeKind {
 

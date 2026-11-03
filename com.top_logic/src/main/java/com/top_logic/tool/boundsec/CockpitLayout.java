@@ -10,9 +10,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 
 /**
- * With a CockpitLayout you can build portlets.
+ * With a {@link CockpitLayout} you can build portlets.
  * 
- * A CockpitLayout may contain any kind of component. On all contained
+ * A {@link CockpitLayout} may contain any kind of component. On all contained
  * components, that are <code>instanceof</code>
  * 
  * @author <a href="mailto:skr@top-logic.com">Sylwester Kras </a>

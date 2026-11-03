@@ -37,7 +37,7 @@ public class FieldAssertionOp<S extends FieldAssertion> extends FormAssertionOp<
 	/**
 	 * Subclasses should override this method to implement their assertions about the field. If the
 	 * field does not exist (field == null) this method is not called but instead an
-	 * ApplicationAssertion is thrown.
+	 * {@link com.top_logic.layout.scripting.runtime.action.ApplicationAssertion} is thrown.
 	 * 
 	 * @param field
 	 *        Is guaranteed to be not <code>null</code>.

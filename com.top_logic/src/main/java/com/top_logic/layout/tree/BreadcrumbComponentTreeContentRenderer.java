@@ -20,6 +20,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
 
 /**
+ * Breadcrumb content renderer that displays the title of a layout component, if a node
+ * represents a component.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class BreadcrumbComponentTreeContentRenderer extends BreadcrumbContentRenderer {

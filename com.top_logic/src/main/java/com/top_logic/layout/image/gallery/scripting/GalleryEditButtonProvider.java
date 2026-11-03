@@ -11,8 +11,8 @@ import com.top_logic.layout.image.gallery.GalleryControl;
 import com.top_logic.layout.image.gallery.GalleryModel;
 
 /**
- * {@link Mapping}, that retrieves the CommandModel, which opens gallery's edit dialog, from the
- * controlling {@link GalleryModel}.
+ * {@link Mapping}, that retrieves the {@link CommandModel}, which opens gallery's edit dialog, from
+ * the controlling {@link GalleryModel}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

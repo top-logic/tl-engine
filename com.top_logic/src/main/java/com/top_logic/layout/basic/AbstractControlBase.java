@@ -376,6 +376,10 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 		notifyListeners(UP_TO_DATE_PROPERTY, this, Boolean.TRUE, Boolean.FALSE);
 	}
 
+	/**
+	 * The {@link ControlCommand} of this control with the given name, or <code>null</code> if
+	 * there is no such command.
+	 */
 	protected ControlCommand getCommand(String commandName) {
 		return commandsByName.get(commandName);
 	}
@@ -639,6 +643,9 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 		// we are fine here. no things which have to be done here.
 	}
 
+	/**
+	 * Whether a complete repaint of this control has been requested.
+	 */
 	public boolean isRepaintRequested() {
 		return this.repaintRequired;
 	}
@@ -764,6 +771,9 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 		return Collections.unmodifiableMap(commandsByName);
 	}
 
+	/**
+	 * Clears a pending repaint request before this control is rendered.
+	 */
 	protected void reset() {
 		if (this.repaintRequired) {
 			this.repaintRequired = false;

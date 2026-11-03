@@ -46,7 +46,7 @@ public class CurrencySystem extends ManagedClass {
 	/** Name of Configuration property defining the main (System) Currency */
 	private static final String SYSTEM_CURRENCY = "system-currency";
 
-	/** Default SystemCurrency when none is found in property */
+	/** Default system currency when none is found in property. */
 	public static final String DEFAULT_SYSTEM_CURRENCY = "EUR";
 
 	/** The domestic currency used for conversion calculations. */
@@ -139,6 +139,15 @@ public class CurrencySystem extends ManagedClass {
 	}
 
 	/**
+	 * Creates a new currency with the given ISO 4217 code.
+	 *
+	 * @param code
+	 *        The three letter code of the new currency.
+	 * @param sortOrder
+	 *        The sort order of the new currency.
+	 * @throws IllegalArgumentException
+	 *         If the code is invalid or a currency with that code already exists.
+	 *
 	 * @param code
 	 *        New currency code.
 	 * @param sortOrder

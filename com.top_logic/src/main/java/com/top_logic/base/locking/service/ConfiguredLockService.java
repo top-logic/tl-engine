@@ -125,6 +125,7 @@ public class ConfiguredLockService<C extends ConfiguredLockService.Config<?>> ex
 
 			}
 
+			/** Configuration containing the {@link LockStrategy}s to apply. */
 			@Abstract
 			interface StrategyContainerConfig extends ConfigurationItem {
 				/**

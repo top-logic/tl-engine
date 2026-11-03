@@ -15,7 +15,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 /**
  * Interface describing a Unit.
  * 
- * (Translations should can done using a prefix + getName(),
+ * (Translations should can done using a prefix + {@link #getName()},
  *  but this is a business class and not a GUI class)
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
@@ -34,11 +34,13 @@ public interface Unit extends Wrapper {
 
     /** Return a Unit this one is based on.
      * 
-     * @return null for base units (isBaseUnit())
+     * @return null for base units ({@link #isBaseUnit()})
      */
     public Unit getBaseUnit();
     
     /** 
+     * Setter for {@link #getBaseUnit()}.
+     *
      * @param aUnit The new base unit.
      */
     public void setBaseUnit(Unit aUnit);
@@ -47,11 +49,13 @@ public interface Unit extends Wrapper {
      * Return the conversion factor to the base unit.
      * 
      * @return 0.0 in case Unit cannot be converted via a simple Factor (Celsius/Farenheit)
-     *         1.0 in case of a basUnit (getBaseUnit() == null)
+     *         1.0 in case of a base unit ({@link #getBaseUnit()} is null)
      */
     public double getConversionFactor() throws IllegalStateException;
     
     /** 
+     * Setter for {@link #getConversionFactor()}.
+     *
      * @param aFactor The new conversion factor between this unit and its base unit.
      */
     public void setConversionFactor(Double aFactor);
@@ -64,7 +68,7 @@ public interface Unit extends Wrapper {
     public NumberFormat getFormat(Locale aLocale);
 
     /**
-     * Return the NumberFormat using some default Locale.
+     * Return the {@link NumberFormat} using some default Locale.
      */ 
     public NumberFormat getFormat();
 
@@ -85,6 +89,8 @@ public interface Unit extends Wrapper {
     public Integer getSortOrder();
     
     /** 
+     * Setter for {@link #getSortOrder()}.
+     *
      * @param aSortOrder The new sort order of this unit.
      */
     public void setSortOrder(Integer aSortOrder);

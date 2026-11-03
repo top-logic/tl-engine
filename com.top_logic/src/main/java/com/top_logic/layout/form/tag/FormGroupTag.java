@@ -44,10 +44,12 @@ public class FormGroupTag extends GroupCellTag {
 		return FORM_GROUP_TAG;
 	}
 
+	/** Sets whether the group can be collapsed. */
 	public void setCollapsible(boolean collapsible) {
 		super.setPreventCollapse(!collapsible);
 	}
 
+	/** Whether the given content is well-formed XML. */
 	public static boolean assertWellformedXML(String content) {
 		content = new StringBuffer("<root>").append(content).append("</root>").toString();
 		try {

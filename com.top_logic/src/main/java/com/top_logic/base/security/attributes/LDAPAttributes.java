@@ -6,7 +6,7 @@
 package com.top_logic.base.security.attributes;
 
 /**
- * Constants for technical LDAP attribute names that apply to all types (object classes) 
+ * Constants for technical LDAP attribute names that apply to all types (object classes).
  *
  * @author <a href="mailto:Thomas.Richter@top-logic.com">Thomas Richter</a>
  */

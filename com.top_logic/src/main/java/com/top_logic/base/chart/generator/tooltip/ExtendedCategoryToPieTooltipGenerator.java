@@ -11,9 +11,10 @@ import org.jfree.data.general.PieDataset;
 import com.top_logic.base.chart.dataset.ExtendedCategoryToPieDataset;
 
 /**
- * The ExtendedCategoryToPieTooltipGenerator works together with the {@link ExtendedCategoryToPieDataset}.
- * The ExtendedCategoryToPieDataset stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getTooltipFor(Object)}. This object is that from the ExtendedCategoryToPieDataset.
+ * The {@link ExtendedCategoryToPieTooltipGenerator} works together with the {@link
+ * ExtendedCategoryToPieDataset}. The {@link ExtendedCategoryToPieDataset} stores objects (e.g.
+ * goals, risks, ...). A subclass needs only to implement this method {@link
+ * #getTooltipFor(Object)}. This object is that from the {@link ExtendedCategoryToPieDataset}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

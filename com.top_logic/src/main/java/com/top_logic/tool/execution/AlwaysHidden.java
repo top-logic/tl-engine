@@ -10,10 +10,13 @@ import java.util.Map;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ExecutabilityRule} that always hides the command.
+ * 
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */
 public class AlwaysHidden implements ExecutabilityRule {
 
+	/** Singleton instance of {@link AlwaysHidden}. */
 	public static final ExecutabilityRule INSTANCE = new AlwaysHidden();
 	
 	@Override

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * The MapResourceProvider creates labels provided within a map.
+ * The {@link MapResourceProvider} creates labels provided within a map.
  *
  * @author <a href=mailto:CBR@top-logic.com>CBR</a>
  */
@@ -21,7 +21,7 @@ public class MapResourceProvider extends DefaultResourceProvider {
 
 
     /**
-     * Creates a new MapResourceProvider with the given label map.
+     * Creates a new {@link MapResourceProvider} with the given label map.
      *
      * @param aLabelMap
      *            a map with the objects to label as keys and the labels as value

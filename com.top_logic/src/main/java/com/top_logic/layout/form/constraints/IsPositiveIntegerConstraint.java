@@ -16,8 +16,10 @@ import com.top_logic.util.Resources;
  */
 public class IsPositiveIntegerConstraint extends IsIntegerConstraint {
 
+    /** Singleton {@link IsPositiveIntegerConstraint} instance that accepts zero. */
     public static final IsPositiveIntegerConstraint INSTANCE = new IsPositiveIntegerConstraint();
 
+    /** Whether zero is an accepted value. */
     protected boolean includeZero;
 
     public IsPositiveIntegerConstraint() {

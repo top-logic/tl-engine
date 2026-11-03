@@ -58,7 +58,7 @@ public class TimeInputControl extends TextInputControl {
 	public static final int DEFAULT_COLUMN_SIZE = 3;
 
 	/**
-	 * Creates a TimeInputControl and sets the columms to DEFAULT_COLUMN_SIZE.
+	 * Creates a {@link TimeInputControl} and sets the columms to DEFAULT_COLUMN_SIZE.
 	 * 
 	 * @param model
 	 *        Server-side representation for this input field.

@@ -19,7 +19,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
- * Handler for export of powerpoint reports
+ * Handler for export of powerpoint reports.
  *
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
@@ -65,7 +65,7 @@ public class PowerpointExportHandler extends AbstractOfficeExportHandler {
     }
 
 	/**
-	 * the path of the templates relative to WEB-INF/reportTemplates
+	 * the path of the templates relative to {@code WEB-INF/reportTemplates}
 	 */
 	@Override
 	protected String getRelativeTemplatePath(){
@@ -80,7 +80,7 @@ public class PowerpointExportHandler extends AbstractOfficeExportHandler {
 	}
 
     /**
-     * For PowerPoint aValues.exportData must be a Map.
+     * For PowerPoint the export data of {@code aValues} must be a {@link Map}.
      */
     @Override
 	protected boolean checkExportData(OfficeExportValueHolder aValues) {

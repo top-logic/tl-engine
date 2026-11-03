@@ -30,6 +30,7 @@ public interface AttributeFieldRef extends FieldRef {
 	 * Reference to the attribute itself. 
 	 */
 	AttributeRef getAttributeRef();
+	/** Setter for {@link #getAttributeRef()}. */
 	void setAttributeRef(AttributeRef value);
 
 }

@@ -12,6 +12,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
 
 /**
+ * {@link Filter} that accepts the current {@link Person}, or any person for an administrator.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class IsCurrentPersonOrRootFilter implements Filter {

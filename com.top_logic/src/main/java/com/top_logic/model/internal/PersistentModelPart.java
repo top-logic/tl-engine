@@ -38,7 +38,7 @@ public abstract class PersistentModelPart extends AbstractBoundWrapper implement
 	/**
 	 * Name of the {@link MOAttribute} that stores the annotations for this model part.
 	 * 
-	 * see ModelMeta.xml
+	 * see <code>ModelMeta.xml</code>
 	 */
 	public static final String ANNOTATIONS_MO_ATTRIBUTE = TLModelPart.ANNOTATIONS_ATTR;
 

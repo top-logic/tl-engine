@@ -8,7 +8,7 @@ package com.top_logic.knowledge.gui.layout.webfolder;
 import com.top_logic.knowledge.wrap.WebFolder;
 
 /**
- * This interface may be implemented by a class knowing a webFolder to 
+ * This interface may be implemented by a class knowing a {@link WebFolder} to 
  * let others access it.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>

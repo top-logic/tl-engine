@@ -9,14 +9,19 @@ import java.io.File;
 import java.io.IOException;
 
 /**
+ * Base class for {@link CellStreamWriter} implementations.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public abstract class AbstractCellStreamWriter implements CellStreamWriter {
 
+	/** Index of the current column in the current row. */
 	protected int currentColumnIndex = 0;
 
+	/** Index of the current row in the current table. */
 	protected int currentRowIndex = 0;
 
+	/** Name of the current table. */
 	protected String currentTable = null;
 
 	@Override
@@ -82,11 +87,15 @@ public abstract class AbstractCellStreamWriter implements CellStreamWriter {
 		}
 	}
 
+	/** Finishes writing and returns the written file. */
 	protected abstract File internalClose() throws IOException;
 
+	/** Starts a new row. */
 	protected abstract void internalNewRow() throws IOException;
 
+	/** Writes the given value into the next cell of the current row. */
 	protected abstract void internalWrite(Object cellvalue) throws IOException;
 
+	/** Starts a new table with the given name. */
 	protected abstract void internalNewTable(String tablename) throws IOException;
 }

@@ -56,6 +56,10 @@ public class ColorUtil {
     /** prefix used for theme colors given as r-g-b values */
     public static final String THEME_COLOR_R_G_B_PREFIX = "#";
 
+    /**
+     * Mapping of the theme color names ({@link #THEME_COLOR_BLACK} etc.) to their {@link Color}
+     * values.
+     */
     public static final Map THEME_COLOR_MAP = (new MapBuilder())
                                                     .put(THEME_COLOR_BLACK,   Color.BLACK)
                                                     .put(THEME_COLOR_MAROON,  new Color(0x80, 0x00, 0x00))
@@ -119,6 +123,16 @@ public class ColorUtil {
         return new Color(theRed, theGreen, theBlue);
     }
 
+    /**
+     * Changes the intensity of the given color.
+     *
+     * @param aColor
+     *        The color to change. Must not be {@code null}.
+     * @param anIntensiveValue
+     *        A positive value returns a brighter color (see {@link #getBrighterColor(Color, int)}),
+     *        a negative value a darker color (see {@link #getDarkerColor(Color, int)}).
+     * @return The adapted color.
+     */
     public static Color adaptColorIntensity(Color aColor, int anIntensiveValue) {
         if (anIntensiveValue > 0) {
             return getBrighterColor(aColor, anIntensiveValue);

@@ -111,7 +111,7 @@ public class RepositoryMonitor extends AbstractMonitorComponent {
     }
 
     /**
-     * Return a DataAccessProxy that should exist to make this class happy.
+     * Return a {@link DataAccessProxy} that should exist to make this class happy.
      */
     protected DataAccessProxy getDAP() throws UnknownDBException {
         if (this.dap == null) {

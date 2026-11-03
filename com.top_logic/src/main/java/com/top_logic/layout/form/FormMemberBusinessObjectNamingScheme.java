@@ -14,7 +14,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
  * {@link ModelNamingScheme} that locates the business object attached to a {@link FormMember} via
- * {@link FormMember#setStableIdSpecialCaseMarker(Object)}
+ * {@link FormMember#setStableIdSpecialCaseMarker(Object)}.
  * 
  * @since 5.8.0
  * 

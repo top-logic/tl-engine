@@ -28,7 +28,7 @@ public class LayoutResolvedListener extends DefaultDescendingLayoutVisitor {
     private Map defaultsFor;
 
     /** 
-     * Creates a new LayoutResolvedListener.
+     * Creates a new {@link LayoutResolvedListener}.
      */
     public LayoutResolvedListener() {
         defaultsFor = new HashMap(32); // DPM: 20

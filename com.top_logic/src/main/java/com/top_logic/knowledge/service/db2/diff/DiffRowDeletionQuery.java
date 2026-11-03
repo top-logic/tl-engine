@@ -25,6 +25,24 @@ public class DiffRowDeletionQuery extends AbstractDiffDeletionQuery {
 
 	private static final String[] ROW_ID_ATTRIBUTES = DiffRowAttributesQuery.ROW_ID_ATTRIBUTES;
 	
+	/**
+	 * Creates a query for the rows of the given type that exist in the given source but not in
+	 * the destination.
+	 *
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param type
+	 *        The type of the compared objects.
+	 * @param sourceBranch
+	 *        The branch to compare.
+	 * @param sourceRev
+	 *        The revision to compare in the source branch.
+	 * @param destBranch
+	 *        The branch to compare with.
+	 * @param destRev
+	 *        The revision to compare with in the destination branch.
+	 * @return The new, initialized query.
+	 */
 	public static DiffRowDeletionQuery createDiffRowDeletionQuery(DBHelper sqlDialect, MOClass type, long sourceBranch, long sourceRev,
 			long destBranch, long destRev) {
 		final DiffRowDeletionQuery query = new DiffRowDeletionQuery(sqlDialect, type, sourceBranch, sourceRev, destBranch, destRev);
@@ -61,6 +79,9 @@ public class DiffRowDeletionQuery extends AbstractDiffDeletionQuery {
 		return new DiffRowDeletionResult(getSqlDialect(), executeStatement(connection), getType());
 	}
 	
+	/**
+	 * {@link DiffDeletionResult} of a {@link DiffRowDeletionQuery}.
+	 */
 	public static final class DiffRowDeletionResult extends DiffDeletionResult {
 
 		private final String _typeName;

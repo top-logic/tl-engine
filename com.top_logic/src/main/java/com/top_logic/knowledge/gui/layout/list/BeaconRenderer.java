@@ -69,6 +69,12 @@ public class BeaconRenderer implements Renderer<FastListElement> {
 			ResKey.legacy("beacon_" + BeaconFormFieldControlProvider.VAL_TYPE_BEACON + '_' + tooltipIndex));
 	}
 
+    /**
+     * The path of the beacon image for the given beacon value.
+     *
+     * @param aBeaconValue
+     *        The beacon value, may be <code>null</code>.
+     */
     public static String getImageKey(FastListElement aBeaconValue){
 		String theKey = EMPTY_VALUE;
     	if (aBeaconValue != null) {

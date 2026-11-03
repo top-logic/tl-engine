@@ -169,6 +169,7 @@ public abstract class AbstractProxyTag implements BodyTag, TryCatchFinally {
 		}
 	}
 	
+	/** The tag to which this proxy delegates. */
 	protected Tag getImplTag() {
 	    return this.impl;
 	}

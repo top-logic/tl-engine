@@ -62,6 +62,9 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 		/** Property name of {@link #getStructures()}. */
 		String STRUCTURES = "structures";
 
+		/**
+		 * Names of the model modules whose objects are subject to security.
+		 */
 		@Name(STRUCTURES)
 		@ListBinding(attribute = "name")
 		List<String> getStructures();
@@ -86,20 +89,23 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
         ReloadableManager.getInstance().addReloadable(this);
     }
 
+    /**
+     * The {@link AccessManager} service instance.
+     */
     public static AccessManager getInstance() {
         return Module.INSTANCE.getImplementationInstance();
     }
 
     /**
      * Get all roles the person has on the given object.
-     * This implementation is based on the basic hasRoles association.
+     * This implementation is based on the basic {@code hasRoles} association.
      *
      * @param aPerson
      *        the person
      * @param aBO
      *        a bound object
-     * @return Set of BoundRoles, never <code>null</code>; empty in case aPerson or aBO is
-     *         <code>null</code>
+     * @return Set of {@link BoundRole}s, never <code>null</code>; empty in case {@code aPerson} or
+     *         {@code aBO} is <code>null</code>
      */
 	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject aBO) {
 		if (aBO == null || aPerson == null || !ComponentUtil.isValid(aBO)) {
@@ -195,7 +201,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	 * @param aBO
 	 *        the bound object to check
 	 * @param someRoles
-	 *        a collection of BoundRoles
+	 *        a collection of {@link BoundRole}s
 	 * @return <code>true</code>, if the current person has one of the given roles at the given
 	 *         bound object, <code>false</code> otherwise
 	 */
@@ -212,17 +218,17 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
     }
 
     /**
-	 * Checks the given collection of BoundObjects and returns only these objects, on which the
-	 * given person has one of the given roles.
+	 * Checks the given collection of {@link BoundObject}s and returns only these objects, on which
+	 * the given person has one of the given roles.
 	 *
 	 * @param user
 	 *        the person to check
 	 * @param someRoles
-	 *        a collection of BoundRoles
+	 *        a collection of {@link BoundRole}s
 	 * @param objects
-	 *        the collection of BoundObjects to check
-	 * @return a collection containing only the allowed BoundObjects of the given collection
-	 *         someObjects; may be empty but not <code>null</code>
+	 *        the collection of {@link BoundObject}s to check
+	 * @return a collection containing only the allowed {@link BoundObject}s of the given collection
+	 *         {@code objects}; may be empty but not <code>null</code>
 	 */
 	public final <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Person user,
 			Collection<? extends BoundRole> someRoles, Collection<T> objects) {
@@ -253,6 +259,11 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 		return result;
 	}
 
+	/**
+	 * The names of the model modules whose objects are subject to security.
+	 * 
+	 * @see Config#getStructures()
+	 */
 	public final Collection<String> getStructureNames() {
 		return getConfig().getStructures();
 	}
@@ -348,8 +359,12 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
         // Nothing to do here - hook for subclasses only
     }
     
+	/**
+	 * Singleton holder for the {@link AccessManager}.
+	 */
 	public static final class Module extends TypedRuntimeModule<AccessManager> {
 
+		/** The singleton instance of this module. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

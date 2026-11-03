@@ -33,6 +33,7 @@ public class UnaryOperation extends Operation {
 		return expr;
 	}
 	
+	/** Setter for {@link #getExpr()}. */
 	public void setExpr(Expression expr) {
 		this.expr = expr;
 	}

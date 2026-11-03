@@ -75,6 +75,17 @@ public class HTMLLink {
         return getWindowOpen(anURL, aName, theProps);
     }
     
+    /**
+     * Creates a JavaScript snippet that opens the given URL in a new browser window.
+     *
+     * @param anURL
+     *        The URL to open.
+     * @param aName
+     *        The name of the new window.
+     * @param windowProperties
+     *        The window features, e.g. {@code "menubar=no,status=no"}. May be {@code null}.
+     * @return The {@code window.open(...)} script.
+     */
     public static String getWindowOpen(String anURL, String aName, String windowProperties) {
         if (windowProperties == null) {
             return "window.open('" + anURL + "', '" + aName + "', '');";

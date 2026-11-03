@@ -18,8 +18,10 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Handler for opening a dialog in edit mode.
- *
- * This handler isn't registered in the CommandHandlerFactory, because it isn't state less.
+ * 
+ * @implNote This handler isn't registered in the
+ *           {@link com.top_logic.tool.boundsec.CommandHandlerFactory}, because it isn't
+ *           stateless.
  * 
  * @author <a href="mailto:dbu@top-logic.com">Daniel Busche</a>
  */

@@ -71,6 +71,9 @@ public abstract class AbstractListModelView extends AbstractListModel implements
 		this.base = base;
 	}
 
+	/**
+	 * Whether this view is attached to its base model.
+	 */
 	public final boolean isAttached() {
 		return attachmentDelegate.isAttached();
 	}
@@ -90,7 +93,7 @@ public abstract class AbstractListModelView extends AbstractListModel implements
 	}
 
 	/**
-	 * If a listeners will be registered, the view starts to observe its ListModel.
+	 * If a listeners will be registered, the view starts to observe its {@link ListModel}.
 	 * 
 	 * @see javax.swing.AbstractListModel#addListDataListener(javax.swing.event.ListDataListener)
 	 */
@@ -101,7 +104,7 @@ public abstract class AbstractListModelView extends AbstractListModel implements
 	}
 
 	/**
-	 * If the last listener is removed, the view stops to observe its ListModel.
+	 * If the last listener is removed, the view stops to observe its {@link ListModel}.
 	 * 
 	 * @see javax.swing.AbstractListModel#removeListDataListener(javax.swing.event.ListDataListener)
 	 */

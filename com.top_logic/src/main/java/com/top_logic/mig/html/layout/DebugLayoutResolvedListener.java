@@ -17,7 +17,7 @@ import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.Logger;
 
 /**
- * Use this to dump/check extra information about your MainLayout.
+ * Use this to dump/check extra information about your {@link MainLayout}.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -75,7 +75,7 @@ public class DebugLayoutResolvedListener extends LayoutResolvedListener {
     }
     
     /**
-     * Update the componentTypeCount for the given component.
+     * Update the type count statistics for the given component.
      * 
      * @param aComponent the current component to handle
      */

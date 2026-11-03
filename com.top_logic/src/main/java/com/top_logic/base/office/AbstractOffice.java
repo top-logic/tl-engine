@@ -66,7 +66,7 @@ public abstract class AbstractOffice extends ManagedClass {
 	protected Map<String, TokenReplacer> tokenReplacers = new LinkedHashMap<>();
 
     /**
-     * Create a new AbstractOffice.
+     * Create a new {@link AbstractOffice}.
      */
     public AbstractOffice() {
     }
@@ -136,7 +136,7 @@ public abstract class AbstractOffice extends ManagedClass {
      *  
      * @param    aDoc        The document to be parsed.
      * @param    someRefs    The stack of references to be released later.
-     * @param    aMapping    Will be used to map from internal items to Strings or Basic JavaObjects
+     * @param aMapping Will be used to map from internal items to Strings or basic Java objects
      * @return   The values read from the office document (a map with the name 
      *           and the value of the form field in the given document).
      * @throws   Exception    If reading fails.
@@ -170,8 +170,10 @@ public abstract class AbstractOffice extends ManagedClass {
      */
     protected abstract Map getFields(Object aDoc, Stack<?> someRefs) throws Exception;
 
+    /** Saves the given document under the given name. */
     protected abstract void save(Object anAppl, Object aDoc, String aName, Stack<?> someRefs) throws Exception;
 
+    /** Closes the given document. */
     protected abstract void closeDocument(Object aDoc, Stack<?> someRefs) throws Exception;
 
     /**
@@ -192,6 +194,7 @@ public abstract class AbstractOffice extends ManagedClass {
 		return toString.toString();
     }
 
+    /** The version of the office application. */
     public String getVersion() throws OfficeException {
         Stack theStack = new Stack();
 
@@ -247,7 +250,7 @@ public abstract class AbstractOffice extends ManagedClass {
      * 
      * @param    aSource    The file to be parsed.
      * @param    aMapping   converts internal values to Strings or basic Java objects.
-     * @return   The map of found texts from that file null when aSource was null
+     * @return   The map of found texts from that file null when {@code aSource} was null
      *           or did not use the expected extension.
      * @throws   OfficeException    If parsing fails for a reason.
      */
@@ -331,7 +334,7 @@ public abstract class AbstractOffice extends ManagedClass {
      * @param aTemplate		the template file
      * @param aDestFile	    File identifying the generated document
      * @param aValueMap		the map of token name / token value pairs. The type of the token
-     * 						value depends on the TokenReplacer implementation
+     * 						value depends on the {@link TokenReplacer} implementation
      * @return true if creation succeeded
      */
     public boolean setValues(InputStream aTemplate, File aDestFile, Map<String, Object> aValueMap) throws OfficeException {
@@ -582,7 +585,7 @@ public abstract class AbstractOffice extends ManagedClass {
 	}
 	
     /**
-     * Compare Strings by their length descending (then by normal {@link String#compareTo(String)})
+     * Compare Strings by their length descending (then by normal {@link String#compareTo(String)}).
      * 
      * @author    <a href=mailto:klaus.halfmann@top-logic.com>Klaus Halfmann</a>
      */
@@ -651,7 +654,7 @@ public abstract class AbstractOffice extends ManagedClass {
 		 * The field values can be Strings for text fields or Object[][]s for
 		 * table fields.
 		 *  
-		 * If the replacement is not a List an IllegalArgumentException will be thrown.
+		 * If the replacement is not a List an {@link IllegalArgumentException} will be thrown.
 		 * 
 		 * @see AbstractOffice.TokenReplacer#replaceToken(String, Object, Object, Object, Stack)
 		 */
@@ -677,7 +680,7 @@ public abstract class AbstractOffice extends ManagedClass {
 	}
 
 	/**
-	 * Data class for ImageReplacer that contains an image file name (fully qualified)
+	 * Data class for replacing images that contains an image file name (fully qualified)
 	 * and an alignment info.
 	 * 
 	 * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
@@ -686,28 +689,41 @@ public abstract class AbstractOffice extends ManagedClass {
 
 		/** Horizontal alignment constants. */
 		public static final long HALIGN_LEFT   = 0x10000000;
+		/** Horizontal alignment: center the image. */
 		public static final long HALIGN_CENTER = 0x20000000;
+		/** Horizontal alignment: align the image right. */
 		public static final long HALIGN_RIGHT  = 0x30000000;
+	    /** Horizontal alignment: keep the position of the image. */
 	    public static final long HALIGN_NONE   = 0x40000000;
+	    /** Horizontal alignment: fit the image to the available width. */
 	    public static final long HALIGN_FIT    = 0x50000000;
 	    
 	    /** Vertical alignment constants. */
 		public static final long VALIGN_TOP    = 0x01000000;
+		/** Vertical alignment: center the image. */
 		public static final long VALIGN_CENTER = 0x02000000;
+		/** Vertical alignment: align the image to the bottom. */
 		public static final long VALIGN_BOTTOM = 0x03000000;
+		/** Vertical alignment: keep the position of the image. */
 		public static final long VALIGN_NONE   = 0x04000000;
+	    /** Vertical alignment: fit the image to the available height. */
 	    public static final long VALIGN_FIT    = 0x05000000;
 	
 	    /** Alignment, size, lock ratio fields. */
 	    public long    hAlignment;
+	    /** The vertical alignment, one of the <code>VALIGN_*</code> constants. */
 	    public long    vAlignment;
+	    /** The horizontal size in pixels. */
 	    public float   hSize;
+	    /** The vertical size in pixels. */
 	    public float   vSize;
+	    /** Whether the aspect ratio is kept when resizing. */
 	    public boolean lockRatio;
+	    /** The image file. */
 	    public File    imgFile;
 				
 		/** 
-		 * Create a new ImageReplacerData without alignment and resizing
+		 * Create a new {@link ImageReplacerData} without alignment and resizing
 		 * 
 		 * @param aFile the file. The file must exist.
 		 */
@@ -716,7 +732,7 @@ public abstract class AbstractOffice extends ManagedClass {
 		}
 		
 		/** 
-		 * Create a new ImageReplacerData
+		 * Create a new {@link ImageReplacerData}
 		 * 
 		 * @param aFile   		the file. The file must exist.
 		 * @param anHAlignment	the horiz. alignment (one of HALIGN_* above)

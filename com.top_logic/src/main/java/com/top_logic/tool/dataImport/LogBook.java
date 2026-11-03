@@ -17,7 +17,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
- * The LogBook holds the log entries of a progress.
+ * The {@link LogBook} holds the log entries of a progress.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -185,18 +185,18 @@ public class LogBook {
     }
 
     /**
-     * Gets the ProgressResult of the progress.
+     * Gets the {@link ProgressResult} of the progress.
      *
-     * @return the ProgressResult of the progress
+     * @return the {@link ProgressResult} of the progress
      */
     public ProgressResult getResult() {
         return this.result;
     }
 
     /**
-     * Gets the DefaultProgressInfo of the progress.
+     * Gets the {@link DefaultProgressInfo} of the progress.
      *
-     * @return the DefaultProgressInfo of the progress
+     * @return the {@link DefaultProgressInfo} of the progress
      */
     public DefaultProgressInfo getProgress() {
         return this.progress;

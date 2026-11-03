@@ -14,12 +14,14 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.util.Resources;
 
 /**
- * Constant holder describing how labels for FastListElements are fetched.
+ * Constant holder describing how labels for {@link
+ * com.top_logic.knowledge.wrap.list.FastListElement}s are fetched.
  *
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class FastListElementLabelProvider implements LabelProvider {
 
+	/** Singleton {@link FastListElementLabelProvider} instance. */
 	public static LabelProvider INSTANCE = new FastListElementLabelProvider();
 
 	/**
@@ -30,7 +32,7 @@ public class FastListElementLabelProvider implements LabelProvider {
 	}
 
 	/**
-	 * Fetch label via base LabelProvider then translate via Resources.
+	 * Fetch label via base {@link LabelProvider} then translate via Resources.
 	 */
 	@Override
 	public String getLabel(Object object) {

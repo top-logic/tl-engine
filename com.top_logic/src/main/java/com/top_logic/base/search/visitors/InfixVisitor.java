@@ -14,7 +14,8 @@ import com.top_logic.base.search.nodes.LiteralNode;
 import com.top_logic.base.search.nodes.UnaryNode;
 
 /**
- * Visitor for QueryNodes in infix order, using longer expressions.
+ * Visitor for {@link com.top_logic.base.search.QueryNode}s in infix order, using longer
+ * expressions.
  *<p>
  *  This class must be used single threaded only.
  *</p>
@@ -40,25 +41,25 @@ public class InfixVisitor extends AbstractVisitor {
         }
     }
 
-    /** Visit an AllNode */
+    /** Visit an {@link AllNode} */
     @Override
 	public void visitNode(AllNode all) {
         infixBuffer.append(all.getLongImage());
     }
 
-    /** Visit an ExampleNode */
+    /** Visit an {@link ExampleNode} */
     @Override
 	public void visitNode(ExampleNode example) {
         infixBuffer.append(example.getLongImage());
     }
 
-    /** Visit a LiteralNode */
+    /** Visit a {@link LiteralNode} */
     @Override
 	public void visitNode(LiteralNode aLiteral) throws QueryException {
         infixBuffer.append(aLiteral.getLongImage());
     }
     
-    /** Visit a LiteralNode */
+    /** Visit a {@link LiteralNode} */
     @Override
 	public void visitUnaryNode(UnaryNode aNode) throws QueryException  {
         infixBuffer.append(aNode.getLongOper());
@@ -67,7 +68,7 @@ public class InfixVisitor extends AbstractVisitor {
         infixBuffer.append(')');
     }
 
-    /** Visit a BinaryNode to create "(param oper param)" */
+    /** Visit a {@link BinaryNode} to create "(param oper param)" */
     @Override
 	public void visitBinaryNode(BinaryNode aNode)  throws QueryException  {
         infixBuffer.append("( ");
@@ -79,7 +80,7 @@ public class InfixVisitor extends AbstractVisitor {
         infixBuffer.append(" )");
     }
 
-    /** Append the ORDER BY part to the queryBuffer */
+    /** Append the ORDER BY part to the query buffer. */
     @Override
 	public void visitOrder(String orderBy[]) {
         if (orderBy != null)  {

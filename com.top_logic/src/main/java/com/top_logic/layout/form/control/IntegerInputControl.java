@@ -27,7 +27,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * The IntegerInputControl is a server-side {@link Control} implementation of
+ * The {@link IntegerInputControl} is a server-side {@link Control} implementation of
  * input fields for integers providing support for range constraints and buttons
  * for incrementing and decrementing the value of the field.
  * 
@@ -384,14 +384,14 @@ public class IntegerInputControl extends AbstractFormFieldControl {
     }
 
     /** 
-     * This method sets the onFocus for this control's text input.
+     * Sets the script executed when the text input of this control receives the focus.
      */
 	public void setOnFocus(DynamicText anOnFocus) {
         this.textInput.setOnFocus(anOnFocus);
     }
 
     /** 
-     * This method sets the onInput for this control's text input.
+     * Sets the script executed on input into the text input of this control.
      */
 	public void setOnInput(DynamicText anOnInput) {
 		this.textInput.setOnInput(anOnInput);

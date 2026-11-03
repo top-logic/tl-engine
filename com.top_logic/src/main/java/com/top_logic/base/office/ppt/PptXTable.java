@@ -23,7 +23,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.FileUtilities;
 
 /**
- * The PptTable represents a table of PptXCells.
+ * The {@link PptTable} represents a table of {@link PptXTableCell}s.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -205,10 +205,10 @@ public class PptXTable {
     }
 
 	/**
-	 * Replace aShape with aTable. This will insert a POI {@link PptXTable} into Powerpoint. Each
-	 * row of the resulting table will have the same size as aShape. If no specific font and style
-	 * is set to a {@link PptXTableCell} of aTable, the style and font settings of aShape will be
-	 * applied to the resulting cell.
+	 * Replace {@code aShape} with {@code aTable}. This will insert a POI {@link PptXTable} into
+	 * Powerpoint. Each row of the resulting table will have the same size as {@code aShape}. If no
+	 * specific font and style is set to a {@link PptXTableCell} of {@code aTable}, the style and
+	 * font settings of {@code aShape} will be applied to the resulting cell.
 	 */
 	public static void writeAsTable(XSLFSheet aParent, XSLFTextShape aShape, PptXTable aTable) {
         
@@ -384,7 +384,8 @@ public class PptXTable {
 	// }
 
 	/**
-	 * The PptXColumnDescription contains information about a single column of a {@link PptXTable}
+	 * The {@link PptXColumnDescription} contains information about a single column of a {@link
+	 * PptXTable}.
 	 */
 	public static class PptXColumnDescription {
 
@@ -393,7 +394,7 @@ public class PptXTable {
 		private boolean autoFit;
 
 		/**
-		 * Create a new PptXColumnDescription
+		 * Create a new {@link PptXColumnDescription}
 		 * 
 		 * @param aWidth
 		 *        the width

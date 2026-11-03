@@ -106,6 +106,7 @@ public class SelectFieldUtils {
 		}
 	}
 
+	/** Creates a sorted copy of the given collection. */
 	public static <T> List<T> sortCopy(Comparator<? super T> comparator, Collection<? extends T> inputList) {
 		List<T> outputList = new ArrayList<>(inputList);
 		Collections.sort(outputList, comparator);
@@ -122,6 +123,7 @@ public class SelectFieldUtils {
 		return joinOrdered(comparator, options, selection);
 	}
 
+	/** Creates a sorted list of the union of the given options and selection. */
 	public static <T> List<T> joinOrdered(Comparator<? super T> comparator, Iterable<? extends T> options,
 			Collection<? extends T> selection) {
 		List<T> union = join(CollectionUtil.toList(options), selection);

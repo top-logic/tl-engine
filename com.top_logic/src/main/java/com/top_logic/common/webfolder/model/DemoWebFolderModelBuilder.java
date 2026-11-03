@@ -27,12 +27,15 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class DemoWebFolderModelBuilder extends AbstractConfiguredInstance<DemoWebFolderModelBuilder.Config>
 		implements ModelBuilder {
 
+	/** Configuration options for {@link DemoWebFolderModelBuilder}. */
 	public interface Config extends PolymorphicConfiguration<ModelBuilder> {
+		/** ID of the web folder to display. */
 		@Name(XML_CONF_KEY_FOLDER_ID)
 		@Mandatory
 		String getFolderID();
 	}
 
+	/** Configuration name of {@link Config#getFolderID()}. */
 	public static final String XML_CONF_KEY_FOLDER_ID = "folderID";
 
     private String webFolderID;
@@ -67,9 +70,9 @@ public class DemoWebFolderModelBuilder extends AbstractConfiguredInstance<DemoWe
     }
 
     /**
-     * Get the WebFolder from the layout config.
+     * Get the {@link WebFolder} from the layout config.
      * 
-     * @return    The WebFolder from the layout config.
+     * @return    The {@link WebFolder} from the layout config.
      * @throws    Exception if creation fails.
      */
     protected final WebFolder getInitialFolder() throws Exception {

@@ -23,10 +23,12 @@ public class EditableListTag extends AbstractFormFieldControlTag {
 
 	private ActionListener onEdit;
 	
+	/** Setter for {@link #getOnEdit()}. */
 	public void setOnEdit(ActionListener onEdit) {
 		this.onEdit = onEdit;
 	}
 	
+	/** The listener that is informed when the user requests to edit the list. */
 	public ActionListener getOnEdit() {
 		return onEdit;
 	}

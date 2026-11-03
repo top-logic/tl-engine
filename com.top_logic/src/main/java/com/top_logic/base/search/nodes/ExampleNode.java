@@ -17,7 +17,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.simple.ExampleDataObject;
 
 /**
- * This node represents a DataObject given as an Example.
+ * This node represents a {@link DataObject} given as an Example.
  *<p>
  *  There is a Problem with the (Token) kinds. This class will
  *  not store the kinds per Attribute/Value pair, so when recreating
@@ -31,7 +31,7 @@ public class ExampleNode extends QueryNode {
     DataObject example;
 
     /** 
-     * Construct an ExampleNode with an arbitrary DataObject.
+     * Construct an {@link ExampleNode} with an arbitrary {@link DataObject}.
      *
      */
     public ExampleNode(DataObject example) {
@@ -40,7 +40,7 @@ public class ExampleNode extends QueryNode {
     }
     
     /** 
-     * Construct an ExampleNode with a Map of Key/Value pairs.
+     * Construct an {@link ExampleNode} with a Map of Key/Value pairs.
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants}
      */
     public ExampleNode(Map map) {

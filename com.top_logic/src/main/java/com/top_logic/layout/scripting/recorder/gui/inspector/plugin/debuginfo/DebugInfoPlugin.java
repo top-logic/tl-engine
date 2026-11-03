@@ -51,8 +51,8 @@ public abstract class DebugInfoPlugin<M> extends GuiInspectorPlugin<M> {
 	 * @param resPrefix
 	 *        The resource prefix to use for information provided by this {@link DebugInfoPlugin}.
 	 * @param internalName
-	 *        The internal name of the FormGroup, in which all UI elements of this
-	 *        {@link AssertionPlugin} are contained.
+	 *        The internal name of the {@link com.top_logic.layout.form.model.FormGroup}, in which
+	 *        all UI elements of this {@link AssertionPlugin} are contained.
 	 */
 	public DebugInfoPlugin(M model, ResPrefix resPrefix, String internalName) {
 		super(model, internalName);

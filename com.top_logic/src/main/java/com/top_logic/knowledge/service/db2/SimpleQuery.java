@@ -184,6 +184,8 @@ public class SimpleQuery<E> {
 	}
 
 	/**
+	 * Sets the parameters of this query.
+	 *
 	 * @param queryParameters
 	 *        sets the necessary parameters of the represented expression
 	 * 

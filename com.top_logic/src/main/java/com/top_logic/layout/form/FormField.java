@@ -390,7 +390,7 @@ public interface FormField extends FormMember {
 	public void checkDependency();
 
     /**
-     * Checks the fields current value against the FormFields constraints. In opposition to
+     * Checks the fields current value against the {@link FormField}s constraints. In opposition to
      * the {@link #check()} method, this method just applies the constraints of the field
      * without any side effects. In particular, this will not set the field in an error state
      * if a constraint fails.
@@ -400,7 +400,7 @@ public interface FormField extends FormMember {
     public boolean checkConstraints();
 
     /**
-     * Checks the given value against the FormFields constraints and checks, whether the
+     * Checks the given value against the {@link FormField}s constraints and checks, whether the
      * given value would be accepted by this field, regardless witch value is set at this
      * time. In opposition to the {@link #check()} method, this method just applies the
      * constraints of the field without any side effects.

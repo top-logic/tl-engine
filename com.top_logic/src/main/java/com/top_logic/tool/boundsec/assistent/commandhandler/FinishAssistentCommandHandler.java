@@ -24,6 +24,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 public class FinishAssistentCommandHandler extends
         CloseModalDialogCommandHandler {
 
+    /** The ID of this command. */
     public static final String COMMAND = "assistentFinish";
 
     public FinishAssistentCommandHandler(InstantiationContext context, Config config) {

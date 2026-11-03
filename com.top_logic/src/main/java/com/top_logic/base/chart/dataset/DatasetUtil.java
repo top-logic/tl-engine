@@ -12,7 +12,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 import com.top_logic.basic.StringServices;
 
 /**
- * The DatasetUtil contains useful static methods for JFreeChart datasets.
+ * The {@link DatasetUtil} contains useful static methods for JFreeChart datasets.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

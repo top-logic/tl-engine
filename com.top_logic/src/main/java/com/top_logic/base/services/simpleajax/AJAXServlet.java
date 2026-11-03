@@ -145,7 +145,7 @@ public class AJAXServlet extends TopLogicServlet {
      */
     private static final Integer NO_SEQUENCE = null;
     
-    /** Cache the AJAXRequestParser and the SAXParser per Thread */
+    /** Cache the {@link AJAXRequestParser} and the SAXParser per Thread */
     private static ThreadLocal<Object[]> cachedParsers    = new ThreadLocal<>();
 
     /**
@@ -689,6 +689,10 @@ public class AJAXServlet extends TopLogicServlet {
 	}
     
 
+	/**
+	 * Executes the command of the given request in the context of the given component and writes
+	 * the resulting client actions to the given writer.
+	 */
 	protected void processRequest(LayoutComponent contextComponent, CommandRequest ajaxRequest, UpdateWriter writer) {
     	DisplayContext context = writer.getDisplayContext();
         boolean isStaticCommand = ajaxRequest.isStatic();
@@ -862,7 +866,7 @@ public class AJAXServlet extends TopLogicServlet {
     }
     
     /**
-     * Lazy Accessor to AJAXRequestParser, cached per Thread. 
+     * Lazy Accessor to {@link AJAXRequestParser}, cached per Thread. 
      */
     protected Object[] getParsers() throws ParserConfigurationException, SAXException {
         Object[] parsers = cachedParsers.get();
@@ -874,7 +878,7 @@ public class AJAXServlet extends TopLogicServlet {
     }
     
     /**
-     * Reset AJAXRequestParser, cached per Thread. 
+     * Reset {@link AJAXRequestParser}, cached per Thread. 
      */
     protected final void clearParsers()  {
         cachedParsers.set(null);
@@ -985,6 +989,7 @@ public class AJAXServlet extends TopLogicServlet {
      */ 
 	public static final class AJAXLogHandler extends AbstractSystemAjaxCommand {
         
+		/** Singleton {@link AJAXLogHandler} instance. */
 		public static final CommandHandler INSTANCE = newInstance(AJAXLogHandler.class, "log");
 
 		public AJAXLogHandler(InstantiationContext context, Config config) {

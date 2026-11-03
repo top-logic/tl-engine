@@ -18,19 +18,34 @@ import com.top_logic.basic.config.format.MillisFormat;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public interface StartStopListenerConfig extends ConfigurationItem {
+	/** Configuration name of {@link #getStartupSleep()}. */
 	String STARTUP_SLEEP = "startupSleep";
+	/** Configuration name of {@link #getLockTimeout()}. */
 	String LOCK_TIMEOUT = "lockTimeout";
+	/** Configuration name of {@link #getDeferredBoot()}. */
 	String DEFERRED_BOOT = "deferredBoot";
+	/** Configuration name of {@link #getEnterMaintenanceMode()}. */
 	String ENTER_MAINTENANCE_MODE = "enterMaintenanceMode";
+	/** Configuration name of {@link #getDoInitLayouts()}. */
 	String DO_INIT_LAYOUTS = "doInitLayouts";
 
+	/**
+	 * Whether the layouts should be initialized during application startup.
+	 *
+	 * @implNote This option is currently not evaluated.
+	 */
 	@Name(DO_INIT_LAYOUTS)
 	@BooleanDefault(true)
 	boolean getDoInitLayouts();
 	
+	/** Whether the application enters the maintenance mode directly after startup. */
 	@Name(ENTER_MAINTENANCE_MODE)
 	boolean getEnterMaintenanceMode();
 	
+	/**
+	 * Whether the application is booted in the background by the {@link DeferredBootService}
+	 * instead of during the startup of the web application.
+	 */
 	@Name(DEFERRED_BOOT)
 	@BooleanDefault(false)
 	boolean getDeferredBoot();

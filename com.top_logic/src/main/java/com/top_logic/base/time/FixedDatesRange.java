@@ -13,11 +13,11 @@ import java.util.Locale;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * This is a TimeRangeIterator for some fixed number of dates.
+ * This is a {@link TimeRangeIterator} for some fixed number of dates.
  * 
  * The time Range is defined by the Time from the one Date
  * to the next. Might be used for things like Date- (Milestone-) 
- * Based PerformanceIndicators or such. 
+ * Based performance indicators or such. 
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
@@ -26,7 +26,7 @@ public class FixedDatesRange extends TimeRangeIterator {
     /** The fixed dates we actually care for */
     protected Date[] fixedDates;
     
-    /** index into fixedDates identifying the current date */
+    /** index into the fixed dates identifying the current date */
     protected int currDate;
     
     /**
@@ -56,14 +56,14 @@ public class FixedDatesRange extends TimeRangeIterator {
      * Secondary Constructor to be called by the factory functions.
      * 
      * Subclasses must override this to create the needed formatters.
-     * The Internal State will be set to the interval just before aStart.
+     * The Internal State will be set to the interval just before {@code aStart}.
      *       
      * @param loc Locale to use for Formatting and for creting the internal
      *        Calendar(s)
      * @param aStart first start for the time Ranges. 
-     *         will be aligned to the very first allowed Date for the TimeRange. 
+     *         will be aligned to the very first allowed Date for the time range. 
      * @param anEnd last date for the Time Ranges, 
-     *         will be aligned to the very last allowed Date for the TimeRange. 
+     *         will be aligned to the very last allowed Date for the time range. 
      * 
      * @throws IllegalArgumentException when anEnd is before start.
      */
@@ -122,7 +122,7 @@ public class FixedDatesRange extends TimeRangeIterator {
     }
 
     /** 
-     * Normalize aDate to be in some well defined "middle" of an interval.
+     * Normalize {@code aDate} to be in some well defined "middle" of an interval.
      */
     @Override
 	public Date align(Date aDate) {
@@ -164,7 +164,7 @@ public Date current() {
    }
 
    /** 
-    * Return number of Ranges which is just fixedDates.length.
+    * Return number of Ranges which is just the number of fixed dates.
     */
     @Override
 	public int getNumRanges() {

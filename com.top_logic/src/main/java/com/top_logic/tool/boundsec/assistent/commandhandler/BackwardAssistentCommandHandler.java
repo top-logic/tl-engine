@@ -19,13 +19,14 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * For switching back in the AssistentComponent.
+ * For switching back in the {@link AssistentComponent}.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
 public class BackwardAssistentCommandHandler extends
         AbstractAssistentSwitchCommandHandler {
 
+    /** The ID of this command. */
     public static final String COMMAND = "switchAssistentBackward";
 
 	private static final ExecutabilityRule EXEC = new ExecutabilityRule() {

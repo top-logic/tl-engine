@@ -16,8 +16,9 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
 
 /**
- * The ModelOrSecurityRootSecurityObjectProvider uses the model of the component as security object.
- * If no model is available it will fall back to the ({@link BoundHelper#getDefaultObject()}) object
+ * The {@link ModelOrSecurityRootSecurityObjectProvider} uses the model of the component as security
+ * object. If no model is available it will fall back to the ({@link
+ * BoundHelper#getDefaultObject()}) object
  *
  * @author <a href="mailto:kbu@top-logic.com">KBU</a>
  */

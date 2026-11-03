@@ -21,9 +21,11 @@ import com.top_logic.util.sched.task.TaskState;
 /**
  * An {@link TreeTableComponent} that is informed about {@link Task} {@link TaskState} changes.
  * <p>
- * The component is only informed while it is visible. It is therefore invalidated when it is
- * {@link #becomingInvisible()}.
+ * The component is only informed while it is visible. It is therefore invalidated when it becomes
+ * invisible.
  * </p>
+ * 
+ * @implNote The component is invalidated in {@link #becomingInvisible()}.
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */

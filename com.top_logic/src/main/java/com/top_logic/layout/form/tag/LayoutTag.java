@@ -16,6 +16,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public interface LayoutTag extends Tag {
 	
+    /** The {@link LayoutComponent} of this tag. */
     public LayoutComponent getComponent();
 
 }

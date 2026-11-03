@@ -21,7 +21,7 @@ public class AttributedWrapperComparator implements Comparator {
     protected Comparator inner;
     
     /** 
-     * Create a new AttributedWrapperComparator using the given Comparator.
+     * Create a new {@link AttributedWrapperComparator} using the given Comparator.
      */
     public AttributedWrapperComparator(String attributeName, Comparator anInner) {
         attribute = attributeName;

@@ -61,7 +61,7 @@ import com.top_logic.util.TLContext;
 public abstract class ThemeFactory extends ConfiguredManagedClass<ThemeFactory.Config> implements Reloadable {
 
 	/**
-	 * Configuration options for {@link ThemeFactory}
+	 * Configuration options for {@link ThemeFactory}.
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ThemeFactory> {
 		

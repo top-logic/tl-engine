@@ -21,7 +21,7 @@ public class SelectionModelFilter implements Filter<Object> {
 	private final Set<? extends Object> nonSelectableObjects;
 	
 	/**
-	 * Create a new SelectionModelFilter 
+	 * Create a new {@link SelectionModelFilter}.
 	 * 
 	 * @param nonSelectableObjects - the collection of objects, which are not selectable
 	 */

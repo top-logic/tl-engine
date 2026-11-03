@@ -15,7 +15,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 
 /**
- * {@link DefaultControlRenderer} that renders an {@link IDownloadControl} as simple link
+ * {@link DefaultControlRenderer} that renders an {@link IDownloadControl} as simple link.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

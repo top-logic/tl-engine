@@ -15,7 +15,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 
 /**
- * A utility class to create buttons for a SelectorContext.
+ * A utility class to create buttons for a {@link SelectorContext}.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

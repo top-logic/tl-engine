@@ -19,6 +19,13 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
  */
 public class CheckInstantiator {
 
+	/**
+	 * Convenience method for creating and filling an {@link EqualsCheckConfig}.
+	 *
+	 * @param expectedValue
+	 *        The value the checked value must be equal to.
+	 * @return Never <code>null</code>.
+	 */
 	public static EqualsCheckConfig equalsCheck(ModelName expectedValue) {
 		EqualsCheckConfig equalsCheck = TypedConfiguration.newConfigItem(EqualsCheck.EqualsCheckConfig.class);
 		equalsCheck.setImplementationClass(EqualsCheck.class);
@@ -39,6 +46,14 @@ public class CheckInstantiator {
 		return equalsCheck;
 	}
 
+	/**
+	 * Convenience method for creating and filling a {@link FileMatchConfig} that checks the binary
+	 * content of a file.
+	 *
+	 * @param expectedValue
+	 *        The expected file content.
+	 * @return Never <code>null</code>.
+	 */
 	public static FileMatchConfig binaryFileEqualityCheck(DataItemValue expectedValue) {
 		FileMatchConfig equalsCheck = TypedConfiguration.newConfigItem(AbstractFileEqualityCheck.FileMatchConfig.class);
 		equalsCheck.setImplementationClass(BinaryFileEqualityCheck.class);

@@ -36,7 +36,7 @@ public class FilterResult {
 	 *        - filter results (true / false) of the column filters
 	 * @param filterApplicability
 	 *        - whether a column filter could be applied to a given row, or not. Must have the same
-	 *        order and size as filterResults
+	 *        order and size as {@code filterResults}
 	 */
 	public FilterResult(int filterCount, BitSet filterResults, BitSet filterApplicability,
 			Map<ColumnFilterHolder, Object> filterCountState, Object evaluatedRow) {

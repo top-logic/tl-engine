@@ -17,6 +17,9 @@ import com.top_logic.basic.sql.DBType;
  */
 public interface SQL {
 	
+	/**
+	 * Argument of a prepared statement with its value and its database type.
+	 */
 	public static class Argument {
 
 		/**

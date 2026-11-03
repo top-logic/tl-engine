@@ -29,6 +29,10 @@ public class RegularExpressionLabelFilter implements Filter {
         return this.pattern.matcher(((FormMember) anObject).getLabel()).matches();
     }
     
+    /**
+     * Creates a {@link RegularExpressionLabelFilter} accepting {@link FormMember}s whose label
+     * matches the given regular expression.
+     */
     public static RegularExpressionLabelFilter getFilter(String anRegEx) {
         return new RegularExpressionLabelFilter(anRegEx);
     }

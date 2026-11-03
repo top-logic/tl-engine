@@ -346,7 +346,7 @@ public final class ExecutableState implements Comparable<ExecutableState> {
 	}
 
     /** 
-     * Create a new ExecutableState for some disabled case.
+     * Create a new {@link ExecutableState} for some disabled case.
      * 
      * @param aI18nReasonKey Resource explaining why something is disabled.
      */

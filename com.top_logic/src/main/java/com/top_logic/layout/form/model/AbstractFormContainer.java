@@ -301,6 +301,7 @@ public abstract class AbstractFormContainer extends AbstractFormMember implement
 		return FilterUtil.hasMatch(getDescendantFields(), FormField.HAS_ERROR);
 	}
 	
+	/** Whether some field of this container has warnings. */
 	public final boolean hasWarnings() {
         return FilterUtil.hasMatch(getDescendantFields(), FormField.HAS_WARNINGS);
     }

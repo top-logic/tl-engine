@@ -12,6 +12,8 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMemberVisitor;
 
 /**
+ * {@link StringField} that can be expanded to a multi-line input.
+ *
  * @author <a href="mailto:cwo@top-logic.com">cwo</a>
  */
 public class ExpandableStringField extends StringField implements CollapsibleFormMember {
@@ -31,6 +33,7 @@ public class ExpandableStringField extends StringField implements CollapsibleFor
         return v.visitExpandableStringField(this, arg);
     }
     
+    /** Toggles between the expanded and collapsed state. */
     public void toggleExpandedState() {
 		this.setCollapsed(!this._collapsed);
     }

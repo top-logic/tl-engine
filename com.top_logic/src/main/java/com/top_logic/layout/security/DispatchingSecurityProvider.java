@@ -13,8 +13,9 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.IGroup;
 
 /**
- * The DispatchingSecurityProvider can be used in TableComponents (to protect table columns) and in other scenarios
- * to protect the access to other properties by dispatching the access check to an AccessChecker registered for the property.
+ * The {@link DispatchingSecurityProvider} can be used in tables (to protect table columns)
+ * and in other scenarios to protect the access to other properties by dispatching the access check
+ * to an {@link AccessChecker} registered for the property.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
@@ -56,10 +57,10 @@ public class DispatchingSecurityProvider implements SecurityProvider {
 	}
 	
 	/**
-	 * Get the AccessChecker for the given property
+	 * Get the {@link AccessChecker} for the given property
 	 * 
 	 * @param aProperty the property
-	 * @return the AccessChecker. May be <code>null</code>.
+	 * @return the {@link AccessChecker}. May be <code>null</code>.
 	 */
 	protected AccessChecker getAccessChecker(String aProperty) {
 		return this.checkerByProperty.get(aProperty);

@@ -37,12 +37,12 @@ public class TopLogicSecurityException extends TopLogicException {
 	}
 
 	/**
-	 * Create a new "standalone" TopLogicSecurityException, not wrapping others.
+	 * Create a new "standalone" {@link TopLogicSecurityException}, not wrapping others.
 	 * 
 	 * Parameters may be passed to be inserted into the corresponding resource.
 	 * 
 	 * @param aClass
-	 *        where Exception occured, classname will be used as ResourcePrefix.
+	 *        where Exception occured, classname will be used as resource prefix.
 	 * @param aKey
 	 *        identifying the failed action, completing the resource-key
 	 * @param aParams
@@ -55,12 +55,12 @@ public class TopLogicSecurityException extends TopLogicException {
 	}
 
     /**
-     * Create a new "standalone" TopLogicException, not wrapping others.
+     * Create a new "standalone" {@link TopLogicException}, not wrapping others.
      * 
      * Parameters may be passed to be inserted into the corresponding resource.
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      */
@@ -70,14 +70,14 @@ public class TopLogicSecurityException extends TopLogicException {
 	}
 
     /**
-     * Create a TopLogicException wrapping a Throwable.
-     * If Throwable is known to be a TopLogicException, use corresponding CTor
+     * Create a {@link TopLogicException} wrapping a Throwable.
+     * If Throwable is known to be a {@link TopLogicException}, use corresponding CTor
      * instead.
      * 
      * Parameters may be passed to be inserted into the corresponding i18n-message.
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      * @param aParams optional parameter, may be null(use e.g. for messages, 
@@ -93,12 +93,12 @@ public class TopLogicSecurityException extends TopLogicException {
 	}
 
     /**
-     * Create a TopLogicException wrapping a Throwable without params.
+     * Create a {@link TopLogicException} wrapping a Throwable without params.
      * 
      * Parameters may be passed to be inserted into the corresponding i18n-message.
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      * @param cause   original cause, must not ba null.
@@ -111,19 +111,19 @@ public class TopLogicSecurityException extends TopLogicException {
 	}
 
     /**
-     * Create a TopLogicException wrapping a TopLogicException.
+     * Create a {@link TopLogicException} wrapping a {@link TopLogicException}.
      * 
      * Parameters may be passed to be inserted into the corresponding resource.
      * 
-     * (Easier variant when cause is known to be a TopLogicException)
+     * (Easier variant when cause is known to be a {@link TopLogicException})
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      * @param aParams optional parameter, may be null (use e.g. for messages, 
      *                use {0}{1} in translations to  refer to them)
-     * @param aCause  A TopLogicException, must not be null.
+     * @param aCause  A {@link TopLogicException}, must not be null.
      * 
      * @throws NullPointerException if cause is null
      */

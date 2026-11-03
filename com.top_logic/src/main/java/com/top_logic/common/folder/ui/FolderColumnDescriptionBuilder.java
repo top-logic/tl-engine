@@ -38,6 +38,8 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * Factory for the column configurations of a folder table.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public abstract class FolderColumnDescriptionBuilder {
@@ -66,6 +68,7 @@ public abstract class FolderColumnDescriptionBuilder {
 		this.allowDelete = canDelete;
 	}
 
+	/** Configures the column displaying the name of folder contents. */
 	public ColumnConfiguration createNameColumn(ColumnConfiguration column) {
 		column.setComparator(getComparator());
 		column.setRenderer(getRenderer());
@@ -76,10 +79,12 @@ public abstract class FolderColumnDescriptionBuilder {
 		return column;
 	}
 
+	/** The comparator for the name column. */
 	protected Comparator getComparator() {
 		return ContentComparator.INSTANCE;
 	}
 
+	/** The renderer for the name column. */
 	protected Renderer<Object> getRenderer() {
 		return ResourceRenderer.INSTANCE;
 	}
@@ -126,10 +131,12 @@ public abstract class FolderColumnDescriptionBuilder {
 		return column;
 	}
 
+	/** Configures the column with the download command. */
 	public ColumnConfiguration createDownloadColumn(ColumnConfiguration column) {
 		return this.createButtonColumn(column);
 	}
 
+	/** Configures the column displaying the modification date. */
 	public ColumnConfiguration createDateColumn(ColumnConfiguration column) {
 		column.setSelectable(false);
 		column.setSortable(true);
@@ -141,6 +148,7 @@ public abstract class FolderColumnDescriptionBuilder {
 		return column;
 	}
 
+	/** Configures the column displaying the type of folder contents. */
 	public ColumnConfiguration createTypeColumn(ColumnConfiguration column) {
 		column.setSelectable(false);
 		column.setSortable(true);
@@ -150,6 +158,7 @@ public abstract class FolderColumnDescriptionBuilder {
 		return column;
 	}
 
+	/** Configures the column displaying the size of documents. */
 	public ColumnConfiguration createSizeColumn(ColumnConfiguration column) {
 		column.setSelectable(false);
 		column.setSortable(true);
@@ -161,42 +170,50 @@ public abstract class FolderColumnDescriptionBuilder {
 		return column;
 	}
 
+	/** Configures the column with the command adding content to the clipboard. */
 	public ColumnConfiguration createClipboardColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		result.setVisible(allowClipboard.isVisible());
 		return result;
 	}
 
+	/** Configures the column with the lock command. */
 	public ColumnConfiguration createLockColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		result.setVisible(this.allowWrite.isVisible());
 		return result;
 	}
 
+	/** Configures the column with the version command. */
 	public ColumnConfiguration createVersionColumn(ColumnConfiguration column) {
 		return this.createButtonColumn(column);
 	}
 
+	/** Configures the column with the mail command. */
 	public ColumnConfiguration createMailColumn(ColumnConfiguration column) {
 		return this.createButtonColumn(column);
 	}
 
+	/** Configures the column with the delete command. */
 	public ColumnConfiguration createDeleteColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		result.setVisible(this.allowDelete.isVisible());
 		return result;
 	}
 
+	/** Configures the column with the command showing similar documents. */
 	public ColumnConfiguration createSimilarDocsColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		return result;
 	}
 
+	/** Configures the column with the command showing keywords. */
 	public ColumnConfiguration createKeywordsColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		return result;
 	}
 
+	/** Configures a column displaying a command button. */
 	public ColumnConfiguration createButtonColumn(ColumnConfiguration column) {
 		column.setSelectable(false);
 		column.setFieldProvider(getFieldProvider());
@@ -206,17 +223,19 @@ public abstract class FolderColumnDescriptionBuilder {
 		return column;
 	}
 
+	/** The {@link FieldProvider} for command columns. */
 	protected FieldProvider getFieldProvider() {
 		return createFolderFieldProvider(allowClipboard, allowWrite, allowDelete);
 	}
 
 
+	/** The {@link ControlProvider} for command columns. */
 	protected ControlProvider getControlProvider() {
 		return DefaultFormFieldControlProvider.INSTANCE;
 	}
 
 	/**
-	 * Creates and returns a FieldProvider for the given states.
+	 * Creates and returns a {@link FieldProvider} for the given states.
 	 */
 	protected abstract FieldProvider createFolderFieldProvider(ExecutableState allowClipboard,
 			ExecutableState allowWrite,

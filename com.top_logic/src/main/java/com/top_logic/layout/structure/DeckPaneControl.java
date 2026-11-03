@@ -95,7 +95,7 @@ public class DeckPaneControl extends ContainerControl<DeckPaneControl> {
 	 * 
 	 * @param anIndex
 	 *            the index of the child which shall be shown. must be geq 0 and leq
-	 *            {@link #getChildren()}.getSize().
+	 *            {@link #getChildren()}{@code .size()}.
 	 */
 	public final void setActiveChildIndex(int anIndex) {
 		if (0 <= anIndex && anIndex < getChildren().size()) {

@@ -9,14 +9,14 @@ import com.top_logic.base.search.QueryException;
 import com.top_logic.base.search.QueryVisitor;
 
 /**
- * UnaryFilters are "$" (TEXT), "@" (ID) and "#" (TYPE)
+ * {@link UnaryFilter}s are "$" (TEXT), "@" (ID) and "#" (TYPE).
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 public class UnaryFilter extends UnaryNode {
 
     /** 
-     * Construct a UnaryFilter Node with the given Literal subnode 
+     * Construct a {@link UnaryFilter} Node with the given Literal subnode 
      *
      * @param aKind One of the Values found in 
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants }
@@ -28,7 +28,7 @@ public class UnaryFilter extends UnaryNode {
     }
 
     /** 
-     * Construct a UnaryFilter Node with the given (String)-Literal
+     * Construct a {@link UnaryFilter} Node with the given (String)-Literal
      *
      * @param aKind One of the Values found in 
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants }

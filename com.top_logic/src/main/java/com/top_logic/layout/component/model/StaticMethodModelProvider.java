@@ -25,7 +25,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class StaticMethodModelProvider implements ModelProvider {
 
 	/**
-	 * Configuration options for {@link StaticMethodModelProvider}
+	 * Configuration options for {@link StaticMethodModelProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<ModelProvider> {
 		@Override

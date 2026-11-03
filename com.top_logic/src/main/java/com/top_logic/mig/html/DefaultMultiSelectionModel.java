@@ -27,7 +27,7 @@ public class DefaultMultiSelectionModel<T> extends AbstractMultiSelectionModel<T
 
 	private final Set<T> selectedView = Collections.unmodifiableSet(selected);
 	/**
-	 * Create a new DefaultMultiSelectionModel, which allows to select all objects
+	 * Create a new {@link DefaultMultiSelectionModel}, which allows to select all objects
 	 *
 	 */
 	public DefaultMultiSelectionModel(SelectionModelOwner owner) {
@@ -35,7 +35,7 @@ public class DefaultMultiSelectionModel<T> extends AbstractMultiSelectionModel<T
 	}
 	
 	/**
-	 * Create a new DefaultMultiSelectionModel, with a subset of non selectable objects
+	 * Create a new {@link DefaultMultiSelectionModel}, with a subset of non selectable objects
 	 * 
 	 * @param selectionFilter - the {@link Filter filter}, which defines, if an object is selectable, or not
 	 */

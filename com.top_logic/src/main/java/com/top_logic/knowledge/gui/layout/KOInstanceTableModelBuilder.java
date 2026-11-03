@@ -30,7 +30,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class KOInstanceTableModelBuilder extends AbstractConfiguredInstance<KOInstanceTableModelBuilder.Config>
 		implements ListModelBuilder {
 	
+	/** Configuration options for {@link KOInstanceTableModelBuilder}. */
 	public interface Config extends PolymorphicConfiguration<ListModelBuilder> {
+		/** Name of the type whose objects are displayed. */
 		@Name(META_OBJECT_PROPERTY)
 		@Mandatory
 		String getMetaObject();

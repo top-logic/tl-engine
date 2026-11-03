@@ -6,7 +6,7 @@
 package com.top_logic.knowledge.journal;
 
 /**
- * Result attribute entry that holds a message based result attribute
+ * Result attribute entry that holds a message based result attribute.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  *

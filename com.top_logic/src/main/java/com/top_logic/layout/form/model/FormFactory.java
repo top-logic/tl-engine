@@ -523,6 +523,7 @@ public class FormFactory {
 		return implementation.newListField(name, listModel, selectionModel);
 	}
 
+	/** Creates a new {@link TableField} for the options of the given {@link SelectField}. */
 	public static TableField newTableField(String aName, SelectField aMember, FormContainer container,
 			FieldProvider aFieldProvider, String[] someColumns, ControlProvider[] someProviders, Accessor anAccessor) {
 		TableConfiguration theManager = TableConfiguration.table();
@@ -542,6 +543,7 @@ public class FormFactory {
 		return newTableField(aName, new FormTableModel(theModel, container));
 	}
 
+	/** Creates a new {@link TableField} for the given row objects. */
 	public static TableField newTableField(String aName, FormContainer container, List someObjects,
 			FieldProvider aFieldProvider, String[] someColumns, ControlProvider[] someProviders, Accessor anAccessor) {
 		SelectField selectField = newSelectField(aName, someObjects, MULTIPLE, someObjects, !IMMUTABLE);
@@ -897,6 +899,7 @@ public class FormFactory {
 		return implementation.createSelectField(name, optionModel, multiple, mandatory, immutable, constraint);
 	}
 
+	/** Creates a new {@link SelectionTableField}. */
 	public static SelectionTableField newSelectionTableField(
 			String name, List<?> options, Accessor optionAccessor,
 			boolean multiple, List<?> initialSelection, boolean mandatory, boolean immutable,
@@ -1250,7 +1253,7 @@ public class FormFactory {
 	}
 
 	/**
-	 * Creates a CommandFiled whose command needs no arguments
+	 * Creates a {@link CommandField} whose command needs no arguments.
 	 * 
 	 * @see FormFactory#newCommandField(String, CommandHandler, LayoutComponent, Map)
 	 */

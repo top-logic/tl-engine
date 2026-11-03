@@ -153,6 +153,12 @@ public class ActionFactory {
 		return selectObject(selectableComponentName, objectName, labelProviderConfig);
 	}
 
+	/**
+	 * Create an {@link ApplicationAction} that selects the object with the given label.
+	 *
+	 * @param labelProviderConfig
+	 *        Configuration of the {@link LabelProvider} that computes the label of an object.
+	 */
 	public static SelectObject selectObject(ComponentName selectableComponentName, String objectName,
 			final PolymorphicConfiguration<? extends LabelProvider> labelProviderConfig) {
 		SelectObject result = selectObject(selectableComponentName, labelMatcher(objectName, labelProviderConfig));
@@ -170,6 +176,13 @@ public class ActionFactory {
 		return checkSelection(selectableComponentName, objectName, labelProviderConfig);
 	}
 
+	/**
+	 * Create an {@link ApplicationAction} that checks, whether an object with the the given label
+	 * is selected.
+	 *
+	 * @param labelProviderConfig
+	 *        Configuration of the {@link LabelProvider} that computes the label of an object.
+	 */
 	public static SelectObject checkSelection(ComponentName selectableComponentName, String objectName,
 			final PolymorphicConfiguration<? extends LabelProvider> labelProviderConfig) {
 		SelectObject result = selectObject(selectableComponentName, labelMatcher(objectName, labelProviderConfig));
@@ -213,7 +226,7 @@ public class ActionFactory {
 	}
 
 	/**
-	 * Is not working for TabBars. Use {@link #formInput(ModelName, List)} instead if possible.
+	 * Is not working for tab bars. Use {@link #formInput(ModelName, List)} instead if possible.
 	 */
 	@Deprecated
 	public static FormAction formInput(ComponentName componentName, List<? extends FieldValue> fieldInputs) {
@@ -455,6 +468,16 @@ public class ActionFactory {
 		return item;
 	}
 	
+	/**
+	 * Create an {@link ApplicationAction} that changes the selection of a selection model.
+	 *
+	 * @param modelName
+	 *        Name of the selection model.
+	 * @param selectionRef
+	 *        The object to select or deselect.
+	 * @param changeKind
+	 *        Whether the selection is changed incrementally or replaced.
+	 */
 	public static ApplicationAction selectObject(ModelName modelName, SelectionRef selectionRef,
 			SelectionChangeKind changeKind) {
 		SelectAction selectAction = ActionFactory.newApplicationAction(SelectAction.class, SelectActionOp.class);
@@ -464,6 +487,18 @@ public class ActionFactory {
 		return selectAction;
 	}
 
+	/**
+	 * Create an {@link ApplicationAction} that changes the selection of the given selection model.
+	 *
+	 * @param namedModel
+	 *        The selection model.
+	 * @param target
+	 *        The object to select or deselect.
+	 * @param selectionState
+	 *        Whether the object is selected or deselected.
+	 * @param changeKind
+	 *        Whether the selection is changed incrementally or replaced.
+	 */
 	public static ApplicationAction selectObject(NamedModel namedModel, Object target, boolean selectionState,
 			SelectionChangeKind changeKind) {
 		ModelName modelName = namedModel.getModelName();
@@ -471,11 +506,18 @@ public class ActionFactory {
 		return selectObject(modelName, selectionRef, changeKind);
 	}
 
+	/** Create an {@link ApplicationAction} that logs out the current user. */
 	public static ApplicationAction logout() {
 		LogoutAction item = ActionFactory.newApplicationAction(LogoutAction.class);
 		return item;
 	}
 
+	/**
+	 * Create an {@link ApplicationAction} that is executed by the given custom implementation.
+	 *
+	 * @param opClass
+	 *        The public implementation class of the action.
+	 */
 	public static ApplicationAction customAction(Class<? extends AbstractApplicationActionOp<?>> opClass) {
 		assert (opClass.getModifiers() & Modifier.PUBLIC) != 0 : "Action implementation is not public: " + opClass;
 		
@@ -483,6 +525,12 @@ public class ActionFactory {
 		return item;
 	}
 
+	/**
+	 * Create an {@link ApplicationAction} that executes the given {@link SimpleActionOp}.
+	 *
+	 * @param implClass
+	 *        The public implementation class with a public default constructor.
+	 */
 	public static SimpleActionWrapperOp.Config simpleAction(Class<? extends SimpleActionOp> implClass) {
 		assert (implClass.getModifiers() & Modifier.PUBLIC) != 0 : "Action implementation is not public: " + implClass;
 		
@@ -556,7 +604,7 @@ public class ActionFactory {
 	}
 
 	/**
-	 * Creates a {@link ModelName} ValueContext for the given {@link FormMember} name.
+	 * Creates a {@link ValueInContextName} for the given {@link FormMember} name.
 	 */
 	public static ValueInContextName createValueInContext(ModelName formMemberName, ModelName expectedValue) {
 		ValueInContextName valueInContext = TypedConfiguration.newConfigItem(ValueInContextName.class);

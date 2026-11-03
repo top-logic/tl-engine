@@ -37,7 +37,7 @@ public class RangeConstraint extends AbstractConstraint implements IRangeConstra
 	private ResKey2 _errorKeyToSmall;
 
     /**
-	 * Creates a new RangeConstraint without ranges. Use the method
+	 * Creates a new {@link RangeConstraint} without ranges. Use the method
 	 * {@link #setLowerAndUpper(Comparable, Comparable)} to set the lower and
 	 * upper bound.
 	 */
@@ -47,12 +47,12 @@ public class RangeConstraint extends AbstractConstraint implements IRangeConstra
     }
     
     /** 
-     * Create a new RangeConstraint with lower an upper bounds.
+     * Creates a new {@link RangeConstraint} with lower and upper bounds.
      * 
      * @param aLower null indicates no lower limit
-     * @param anUpper null indicates no anUpper limit
+     * @param anUpper null indicates no upper limit
      * 
-     * @throws IllegalArgumentException when both are null or aLower &gt; anUpper.
+     * @throws IllegalArgumentException when both are null or {@code aLower > anUpper}.
      */
     public RangeConstraint(Comparable aLower, Comparable anUpper) {
     	setLowerAndUpper(aLower, anUpper);

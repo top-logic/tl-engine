@@ -91,6 +91,9 @@ public class SerializingTransformer implements DataTransformation {
 		 */
 		public interface TypeStrategy extends ConfigurationItem {
 
+			/**
+			 * @see #getTypeName()
+			 */
 			String TYPE_NAME_PROPERTY = "name";
 
 			/**
@@ -116,6 +119,9 @@ public class SerializingTransformer implements DataTransformation {
 			 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 			 */
 			public interface AttributeStrategy extends ConfigurationItem {
+				/**
+				 * @see #getAttributeName()
+				 */
 				String ATTRIBUTE_NAME_PROPERTY = "name";
 
 				/**

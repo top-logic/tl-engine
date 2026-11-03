@@ -15,7 +15,7 @@ import com.top_logic.layout.progress.DefaultProgressInfo;
 import com.top_logic.layout.progress.ProgressResult;
 
 /**
- * The AbstractDataImporter is an abstract superclass for data importer which divides the
+ * The {@link AbstractDataImporter} is an abstract superclass for data importer which divides the
  * import process into the three steps preparing, parsing and committing.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>

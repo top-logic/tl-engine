@@ -12,12 +12,13 @@ import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.mig.html.DefaultResourceProvider;
 
 /**
- * Resource provider for ContentDefinitions
+ * Resource provider for the {@link Named} contents of a {@link FolderDefinition}.
  * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ContentDefinitionResourceProvider extends DefaultResourceProvider {
 
+	/** Singleton {@link ContentDefinitionResourceProvider} instance. */
 	public static ContentDefinitionResourceProvider INSTANCE = new ContentDefinitionResourceProvider();
 
 	@Override

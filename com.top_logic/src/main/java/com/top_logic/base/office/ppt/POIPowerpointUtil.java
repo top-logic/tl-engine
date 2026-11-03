@@ -65,30 +65,38 @@ public class POIPowerpointUtil {
 	 * Token prefixes
 	 */
 	public static final String PREFIX_VALUE          = "VALUE_";
+	/** Token prefix for a value replacing the text of a table cell. */
 	public static final String PREFIX_CELLVALUE      = "CELLVALUE_";
+	/** Token prefix for a picture. */
 	public static final String PREFIX_PICTURE        = "PICTURE_";
 
 	@Deprecated
 	public static final String PREFIX_VTABLE         = "VTABLE_";
 
+	/** Token prefix for a table whose size is adapted to the data. */
 	public static final String PREFIX_AUTOTABLE      = "AUTOTABLE_";
+	/** Token prefix for a table with fixed size. */
 	public static final String PREFIX_FIXEDTABLE     = "FIXEDTABLE_";
 
 	@Deprecated
 	public static final String PREFIX_TEMPLATESLIDE  = "TEMPSLIDE_";
 
+	/** Token postfix of the title of a slide. */
 	public static final String POSTFIX_TITLE         = "_TITLE";
 
 	@Deprecated
 	public static final String TEMPTABLE             = "tempTable";
+	/** Token for the number of slides. */
 	public static final String SLIDE_COUNT           = "SL_COUNT";
 
 
+	/** All token prefixes. */
 	public static final String[] PREFIX_VALUES = new String[] {
 		PREFIX_VALUE, PREFIX_CELLVALUE, PREFIX_PICTURE, PREFIX_VTABLE,
 		PREFIX_AUTOTABLE, PREFIX_FIXEDTABLE, PREFIX_TEMPLATESLIDE
 	};
 
+	/** Index of the first cell. */
 	public static final int FIRST_CELL = 1;
 	
 //	private static final String FONT_SIZE   = "fontSize";
@@ -293,6 +301,7 @@ public class POIPowerpointUtil {
 		}
 	}
 	
+	/** Copies the text of the old shape including the formatting to the new shape. */
 	public static void setText(SlideShow aShow, TextShape<?,?> aNewShape, TextShape<?,?> anOldShape) {
 		List<? extends TextParagraph<?, ?, ?>> oldParagraphs = anOldShape.getTextParagraphs();
 
@@ -335,6 +344,7 @@ public class POIPowerpointUtil {
 		newParagraph.setTextAlign(oldParagraph.getTextAlign());
 	}
 
+	/** Copies the formatting of the old text run to the new text run. */
 	public static void applyRichTextRun(TextRun aNew, TextRun anOld) {
         aNew.setBold(anOld.isBold());
         aNew.setItalic(anOld.isItalic());
@@ -355,6 +365,7 @@ public class POIPowerpointUtil {
 		aNew.setSuperscript(anOld.getSuperscript());
     }
 	
+	/** The title of the given sheet, if it is a slide, otherwise <code>null</code>. */
 	protected static String extractTitle(Sheet aSheet) {
 	    if (aSheet instanceof Slide) {
 	        return StringServices.trim(((Slide) aSheet).getTitle());
@@ -1024,6 +1035,7 @@ public class POIPowerpointUtil {
 		}
 	}
 
+    /** Sets the given text to the given shape. */
     protected void setText2TextShape(Sheet aSlide, TextShape aShape, String aText) {
 		aShape.setText(aText);
     }
@@ -1115,11 +1127,16 @@ public class POIPowerpointUtil {
 		}
 	}
 
+	/**
+	 * A copy of the list of shapes of the given container that is stable against modifications of
+	 * the container.
+	 */
 	public static <S extends Shape<S, P>, P extends TextParagraph<S, P, ?>> List<S> shapesStable(
 			ShapeContainer<S, P> shapeContainer) {
 		return new ArrayList<>(shapes(shapeContainer));
 	}
 
+	/** The shapes of the given container. */
 	public static <S extends Shape<S, P>, P extends TextParagraph<S, P, ?>> List<S> shapes(
 			ShapeContainer<S, P> shapeContainer) {
 		return shapeContainer.getShapes();

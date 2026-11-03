@@ -36,6 +36,7 @@ public class TreeStructureModelAdaptor<N> extends TreeModelAdapter<N> implements
 		return getTreeModelImpl().getParent(node);
 	}
 
+	/** The adapted {@link TLTreeModel}. */
 	protected final TLTreeModel<N> getTreeModelImpl() {
 		return (TLTreeModel<N>) impl;
 	}

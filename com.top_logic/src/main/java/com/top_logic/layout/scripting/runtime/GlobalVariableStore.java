@@ -148,7 +148,7 @@ public final class GlobalVariableStore {
 	}
 
 	/**
-	 * Returns a new, mutable {@link Map} with all the variableName -> variableValue mappings.
+	 * Returns a new, mutable {@link Map} with all the variable name to variable value mappings.
 	 */
 	public Map<String, Object> getMappings() {
 		return new HashMap<>(_variables);

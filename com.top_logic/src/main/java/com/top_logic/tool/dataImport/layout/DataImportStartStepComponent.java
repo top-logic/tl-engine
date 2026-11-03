@@ -31,7 +31,7 @@ import com.top_logic.tool.dataImport.AbstractDataImporter;
 import com.top_logic.tool.execution.ExecutabilityRule;
 
 /**
- * The DataImportStartStepComponent is the first step of the DataImportAssistant.
+ * The {@link DataImportStartStepComponent} is the first step of the {@link DataImportAssistant}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -115,7 +115,7 @@ public class DataImportStartStepComponent extends FormComponent {
     }
 
     /**
-     * The DataImportStartStepCommandHandler starts the data import parsing.
+     * The {@link DataImportStartStepCommandHandler} starts the data import parsing.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */

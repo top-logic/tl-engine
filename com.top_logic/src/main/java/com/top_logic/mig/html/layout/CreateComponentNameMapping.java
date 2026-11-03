@@ -153,6 +153,12 @@ public class CreateComponentNameMapping extends XMain {
 		}
 	}
 
+	/**
+	 * Entry point of the command line tool.
+	 * 
+	 * @param args
+	 *        The command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new CreateComponentNameMapping().runMainCommandLine(args);
 	}

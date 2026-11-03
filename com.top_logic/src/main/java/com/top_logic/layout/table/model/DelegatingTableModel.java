@@ -165,6 +165,7 @@ public class DelegatingTableModel implements EditableRowTableModel, WrappedModel
 		return inner.getValueAt(rowObject, columnName);
 	}
 
+    /** The table model this model delegates to. */
     protected final EditableRowTableModel getInner() {
         return inner;
     }

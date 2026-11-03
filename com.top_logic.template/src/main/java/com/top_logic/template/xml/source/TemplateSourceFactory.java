@@ -97,7 +97,7 @@ public class TemplateSourceFactory extends ConfiguredManagedClass<TemplateSource
 	}
 
 	/**
-	 * Resolves the given templateReference with the known {@link TemplateSource}s.
+	 * Resolves the given template reference with the known {@link TemplateSource}s.
 	 * 
 	 * @throws RuntimeException
 	 *         If no responsible {@link TemplateSource} is found.
@@ -107,7 +107,7 @@ public class TemplateSourceFactory extends ConfiguredManagedClass<TemplateSource
 	}
 
 	/**
-	 * Resolves the given templateReference with the known {@link TemplateSource}s.
+	 * Resolves the given template reference with the known {@link TemplateSource}s.
 	 * 
 	 * @param context
 	 *        The {@link TemplateSource} that resolved the calling template, or <code>null</code>,

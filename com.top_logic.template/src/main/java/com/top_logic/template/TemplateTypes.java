@@ -26,6 +26,9 @@ import com.top_logic.template.util.SimpleLongFormat;
  */
 public class TemplateTypes {
 
+	/**
+	 * Name of the root type all structured types of a template inherit from.
+	 */
 	public static final String TYPE_NAME_ROOT = "_object";
 
 	/**
@@ -33,18 +36,39 @@ public class TemplateTypes {
 	 */
 	public static final String IMPLICIT_THIS_TYPE = "_this";
 
+	/**
+	 * Name of the type of string values.
+	 */
 	public static final String TYPE_NAME_STRING = "string";
 
+	/**
+	 * Name of the type of XML values.
+	 */
 	public static final String TYPE_NAME_XML = "xml";
 
+	/**
+	 * Name of the type of boolean values.
+	 */
 	public static final String TYPE_NAME_BOOLEAN = "boolean";
 
+	/**
+	 * Name of the type of integer values.
+	 */
 	public static final String TYPE_NAME_INTEGER = "integer";
 
+	/**
+	 * Name of the type of floating point values.
+	 */
 	public static final String TYPE_NAME_FLOAT = "float";
 
+	/**
+	 * Name of the type of date values.
+	 */
 	public static final String TYPE_NAME_DATE = "date";
 
+	/**
+	 * Creates the predefined types of the template language, indexed by their names.
+	 */
 	public static LinkedHashMap<String, MetaObject> buildTypesMap() {
 		LinkedHashMap<String, MetaObject> types = new LinkedHashMap<>();
 		types.put(TYPE_NAME_STRING, MOPrimitive.STRING);
@@ -57,6 +81,9 @@ public class TemplateTypes {
 		return types;
 	}
 
+	/**
+	 * Creates the formats for parsing and formatting values of the predefined primitive types.
+	 */
 	public static FormatMap buildFormatMap() {
 		FormatMap formatMap = new FormatMap();
 		// Normally, there is no format needed to "parse" or "format" a String.
@@ -71,6 +98,14 @@ public class TemplateTypes {
 		return formatMap;
 	}
 
+	/**
+	 * Adds an empty implicit 'this' type (without attributes) to the given type map.
+	 *
+	 * @param typeMap
+	 *         The types indexed by name, must contain the {@link #TYPE_NAME_ROOT root type}.
+	 *
+	 * @see #IMPLICIT_THIS_TYPE
+	 */
 	public static void buildEmptyThisType(Map<String, MetaObject> typeMap) {
 		MOClassImpl newType = new MOClassImpl(IMPLICIT_THIS_TYPE);
 		newType.setSuperclass((MOClass) typeMap.get(TYPE_NAME_ROOT));

@@ -24,6 +24,9 @@ import com.top_logic.template.tree.parameter.StructuredParameterValue;
  */
 public class DumpVisitor implements TemplateVisitor<Void, StringBuilder> {
 
+	/**
+	 * Creates a dump of the syntax tree rooted at the given node.
+	 */
 	public static StringBuilder toString(TemplateNode node) {
 		StringBuilder buffer = new StringBuilder();
 		node.visit(new DumpVisitor(), buffer);

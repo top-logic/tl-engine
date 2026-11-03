@@ -11,6 +11,8 @@ import java.util.Map;
 import com.top_logic.template.tree.TemplateNode;
 
 /**
+ * Result of checking a template.
+ *
  * @author    <a href=mailto:tbe@top-logic.com>tbe</a>
  */
 public class CheckResult {
@@ -30,18 +32,30 @@ public class CheckResult {
 		this.templateAreas = someAreas;
 	}
 
+	/**
+	 * The root node of the checked template.
+	 */
 	public TemplateNode getNode() {
 		return this.node;
 	}
 	
+	/**
+	 * The IDs defined in the checked template.
+	 */
 	public Map<String, String> getIds() {
 		return this.ids;
 	}
 	
+	/**
+	 * The references used in the checked template.
+	 */
 	public List<String> getReferences() {
 		return this.references;
 	}
 
+	/**
+	 * The {@link TemplateArea}s of the checked template, indexed by name.
+	 */
 	public Map<String, TemplateArea> getTemplateAreas() {
 		return templateAreas;
 	}

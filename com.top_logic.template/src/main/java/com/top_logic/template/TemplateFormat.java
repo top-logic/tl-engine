@@ -8,7 +8,7 @@ package com.top_logic.template;
 import com.top_logic.basic.StringServices;
 
 /**
- * The format of a template: Either {@link #XML} or {@link #COMS}
+ * The format of a template: Either {@link #XML} or {@link #COMS}.
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */

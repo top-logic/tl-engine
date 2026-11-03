@@ -37,7 +37,7 @@ import com.top_logic.util.TLContextManager;
 public final class ApplyApplicationAction extends ActionReplayCommand {
 
 	/**
-	 * Configuration options for {@link ApplyApplicationAction}
+	 * Configuration options for {@link ApplyApplicationAction}.
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
 

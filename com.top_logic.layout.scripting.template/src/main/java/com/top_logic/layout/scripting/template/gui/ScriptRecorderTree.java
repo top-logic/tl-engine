@@ -193,8 +193,14 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		}
 	}
 
+	/**
+	 * Command pasting recorded actions into the script recorder tree.
+	 */
 	public static final class Paste extends AbstractSystemCommand {
 
+		/**
+		 * Creates a {@link Paste} from configuration.
+		 */
 		public Paste(InstantiationContext context, Config config) {
 			super(context, config);
 		}
@@ -239,8 +245,14 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		}
 	}
 
+	/**
+	 * Command moving the selected action out of its enclosing group.
+	 */
 	public static final class UnGroup extends AbstractSystemCommand {
 
+		/**
+		 * Creates an {@link UnGroup} from configuration.
+		 */
 		public UnGroup(InstantiationContext context, Config config) {
 			super(context, config);
 		}
@@ -314,8 +326,14 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		}
 	}
 
+	/**
+	 * Command combining the selected actions into a new group.
+	 */
 	public static final class Group extends AbstractSystemCommand {
 
+		/**
+		 * Creates a {@link Group} from configuration.
+		 */
 		public Group(InstantiationContext context, Config config) {
 			super(context, config);
 		}
@@ -411,17 +429,33 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		}
 	}
 
+	/**
+	 * Command starting or pausing the recording of user actions.
+	 */
 	public static final class Start extends AbstractSystemCommand {
 
 		private final Config _config;
 
+		/**
+		 * Configuration options for {@link Start}.
+		 */
 		public interface Config extends AbstractSystemCommand.Config {
 
+			/**
+			 * The image of the command while recording, offering to pause the recording.
+			 */
 			ThemeImage getPauseImage();
+
+			/**
+			 * The label of the command while recording, offering to pause the recording.
+			 */
 			ResKey getPauseLabel();
 
 		}
 
+		/**
+		 * Creates a {@link Start} from configuration.
+		 */
 		public Start(InstantiationContext context, Config config) {
 			super(context, config);
 			_config = config;
@@ -524,6 +558,9 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		return getUIModel();
 	}
 
+	/**
+	 * Whether user actions are currently recorded.
+	 */
 	public boolean isRecording() {
 		return _isRecording;
 	}
@@ -730,10 +767,17 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		return (ActionChain) action(parent);
 	}
 
+	/**
+	 * Whether the given tree node represents an {@link ApplicationAction}.
+	 */
 	public static Boolean isActionNode(Object node) {
 		return action(node) != null;
 	}
 
+	/**
+	 * The {@link ApplicationAction} represented by the given tree node, or {@code null} if the
+	 * given object is not such a node.
+	 */
 	public static ApplicationAction action(Object node) {
 		if (!(node instanceof TLTreeNode<?>)) {
 			return null;
@@ -742,6 +786,10 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		return action((TLTreeNode<?>) node);
 	}
 
+	/**
+	 * The {@link ApplicationAction} represented by the given tree node, or {@code null} if there
+	 * is none.
+	 */
 	public static ApplicationAction action(TLTreeNode<?> node) {
 		if (node == null) {
 			return null;

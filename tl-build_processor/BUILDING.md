@@ -1,14 +1,12 @@
 # How to build after an update
 
-For Eclipse to index class files during compilation, the file `type-indexer.jar` must be build containing the module with all its dependencies. To achive this, do the following steps: 
+For Eclipse to index class files during compilation, the file `type-indexer.jar` must be built containing the module with all its dependencies. To achieve this, do the following steps from the project root:
 
-## Build dependencies and tl-build_processor and move the result to `type-indexer.jar`
+## Build dependencies and tl-build_processor and copy the result to `type-indexer.jar`
 
 ```
-cd com.top_logic.basic.shared && mvn clean install && cd ..
-cd com.top_logic.common.json && mvn clean install && cd ..
-cd com.top_logic.xref && mvn clean install && cd ..
-cd tl-build_processor && mvn clean install && mv target/tl-build-processor-7.6.0-SNAPSHOT-jar-with-dependencies.jar type-indexer.jar && cd ..
+mvn clean install -pl com.top_logic.basic.shared,com.top_logic.common.json,com.top_logic.xref,tl-build_processor
+cp tl-build_processor/target/tl-build-processor-*-jar-with-dependencies.jar tl-build_processor/type-indexer.jar
 ```
 
 

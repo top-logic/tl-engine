@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.time.Instant;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
@@ -13,6 +15,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.provider.I18NConstants;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.util.Resources;
@@ -23,8 +26,9 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * A run that finds no provider to choose its model from fails with a {@link TopLogicException}
- * naming the secrets to provide. Its message is a resource key; the chat shows the text of that key in the
- * user's language, not the key.
+ * naming the secrets to provide. A run whose model has a provider without its key ends with a
+ * provider error naming the secret. Both messages are resource keys; the chat shows the text of the
+ * key in the user's language, not the key.
  * </p>
  *
  * @see ChatProcessor#errorMessage(Throwable)
@@ -60,6 +64,31 @@ public class TestChatErrorMessage extends TestCase {
 		ProviderException failure = new ProviderException(ProviderException.Kind.RATE_LIMITED, 429, "Too many requests");
 
 		assertEquals(failure.getMessage(), ChatProcessor.errorMessage(failure));
+	}
+
+	/** A provider failure with a message for the user shows that message in the user's language. */
+	public void testProviderFailureWithAKeyIsTranslated() {
+		ResKey error = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
+			.fill("model", "provider", ResKey.text(SECRET));
+		ProviderException failure = new ProviderException(ProviderException.Kind.AUTHENTICATION, -1, error);
+
+		assertEquals(Resources.getInstance().getString(error), ChatProcessor.errorMessage(failure));
+	}
+
+	/**
+	 * The provider error a run reports is shown with the text of its key in the user's language, and
+	 * in the provider's words where it has none.
+	 */
+	public void testProviderErrorEventIsTranslated() {
+		ResKey error = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
+			.fill("model", "provider", ResKey.text(SECRET));
+		String message = ChatProcessor.providerErrorMessage(new AgentEvent.ProviderError("run", 1, Instant.now(),
+			ProviderException.Kind.AUTHENTICATION.name(), "logged text", error));
+
+		assertEquals(Resources.getInstance().getString(error), message);
+		assertTrue(message, message.contains(SECRET));
+		assertEquals("Overloaded", ChatProcessor.providerErrorMessage(new AgentEvent.ProviderError("run", 1,
+			Instant.now(), ProviderException.Kind.OVERLOADED.name(), "Overloaded")));
 	}
 
 	/** Any other failure is told with its own message. */

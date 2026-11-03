@@ -47,7 +47,6 @@ import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -115,11 +114,18 @@ public class TestInactiveProvider extends TestCase {
 		AgentLoop loop = loop(PRIMARY);
 		Recording run = runRefused(loop);
 
-		assertEquals(message(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
-			.fill(PRIMARY, PRIMARY, ResKey.text(key(PRIMARY)))), run.result().errorMessage());
-		assertContains(run.result().errorMessage(), key(PRIMARY));
 		assertEquals("The failure reaches the listeners like any provider failure.",
-			List.of(Kind.AUTHENTICATION.name()), run.providerErrors());
+			List.of(Kind.AUTHENTICATION.name()), run.providerErrors().stream().map(AgentEvent.ProviderError::kind).toList());
+		ResKey key = run.providerErrors().get(0).messageKey();
+		assertNotNull("The message for the user travels as resource key, translated where it is shown.", key);
+		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, key.plain());
+		Object[] arguments = key.arguments();
+		assertEquals(PRIMARY, arguments[0]);
+		assertEquals(PRIMARY, arguments[1]);
+		assertEquals(ResKey.text(key(PRIMARY)), arguments[2]);
+		assertEquals("The result and the log carry the text in the language of the log.", logText(key),
+			run.result().errorMessage());
+		assertContains(run.result().errorMessage(), key(PRIMARY));
 		assertEquals(List.of(), script(PRIMARY).calledModels());
 		assertNull("A provider that was not called says nothing about its model.",
 			_service.modelHealth().mark(PRIMARY));
@@ -213,8 +219,10 @@ public class TestInactiveProvider extends TestCase {
 
 		Recording run = runRefused(loop(PRIMARY));
 
-		assertEquals(message(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
-			.fill(PRIMARY, PRIMARY, ResKey.text(key(PRIMARY)))), run.result().errorMessage());
+		ResKey key = run.providerErrors().get(0).messageKey();
+		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, key.plain());
+		assertEquals(PRIMARY, key.arguments()[0]);
+		assertContains(run.result().errorMessage(), key(PRIMARY));
 		assertNull(_service.modelHealth().mark(PRIMARY));
 		assertNull(_service.modelHealth().mark(SECOND));
 	}
@@ -272,11 +280,11 @@ public class TestInactiveProvider extends TestCase {
 	// ---- Fixture ----
 
 	/**
-	 * What one run produced: its result, the switches it reported and the kinds of the provider
+	 * What one run produced: its result, the switches it reported and the provider
 	 * errors it reported.
 	 */
 	private record Recording(AgentResult result, List<AgentEvent.ModelSwitched> switches,
-			List<String> providerErrors) {
+			List<AgentEvent.ProviderError> providerErrors) {
 		// The parts, nothing more.
 	}
 
@@ -289,9 +297,9 @@ public class TestInactiveProvider extends TestCase {
 		return run;
 	}
 
-	/** The text of the given key in the language a run reports in. */
-	private static String message(ResKey key) {
-		return Resources.getInstance().getString(key);
+	/** The text of the given key in the language of the log. */
+	private static String logText(ResKey key) {
+		return ResourcesModule.getInstance().getLogBundle().getString(key);
 	}
 
 	private static Recording run(AgentLoop loop) {
@@ -299,12 +307,12 @@ public class TestInactiveProvider extends TestCase {
 		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("do something"))));
 		List<AgentEvent.ModelSwitched> switches = new ArrayList<>();
-		List<String> providerErrors = new ArrayList<>();
+		List<AgentEvent.ProviderError> providerErrors = new ArrayList<>();
 		AgentEventListener listener = event -> {
 			if (event instanceof AgentEvent.ModelSwitched e) {
 				switches.add(e);
 			} else if (event instanceof AgentEvent.ProviderError e) {
-				providerErrors.add(e.kind());
+				providerErrors.add(e);
 			}
 		};
 		AgentResult result = loop.run(conversation, ToolContext.unrestricted(), listener);

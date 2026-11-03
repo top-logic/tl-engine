@@ -106,7 +106,6 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
-import com.top_logic.util.Resources;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -1056,7 +1055,8 @@ public class AgentLoop {
 		StopReason stopReason = stopReasonFor(e, context);
 		boolean cancelled = stopReason == StopReason.ABORTED;
 		if (!cancelled) {
-			emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
+			emit(listener,
+				new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage(), e.errorKey()));
 		}
 		emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 		emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
@@ -2579,16 +2579,16 @@ public class AgentLoop {
 	 * <p>
 	 * The run ends on it like on any other provider failure: with
 	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#AUTHENTICATION} - the kind a
-	 * provider reports for a key it does not accept - and the given reason as message, in the
-	 * language of the run's context.
+	 * provider reports for a key it does not accept - and the given reason as message. The reason
+	 * travels as resource key (see {@link ProviderException#errorKey()}), so that the chat shows it
+	 * in the language of the user who reads it.
 	 * </p>
 	 *
 	 * @param reason
 	 *        Why no provider can be called, naming the secret to provide.
 	 */
 	private static ProviderException noCredentials(ResKey reason) {
-		return new ProviderException(ProviderException.Kind.AUTHENTICATION, -1,
-			Resources.getInstance().getString(reason));
+		return new ProviderException(ProviderException.Kind.AUTHENTICATION, -1, reason);
 	}
 
 	/**

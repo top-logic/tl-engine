@@ -106,7 +106,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
-import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.Resources;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -2496,8 +2496,9 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * A model whose provider has no credentials is not called at all: it is passed over without a
-	 * mark, and a run left with no model whose provider has them fails with a
-	 * {@link TopLogicException} naming the secret to provide, not with a provider error.
+	 * mark, and a run left with no model whose provider has them ends like a run whose provider
+	 * refused its key - with a {@link ProviderException.Kind#AUTHENTICATION} failure, whose message
+	 * names the secret to provide.
 	 * </p>
 	 *
 	 * @param call
@@ -2510,7 +2511,7 @@ public class AgentLoop {
 		if (chain.size() <= 1) {
 			ResKey unavailable = unavailableReason(chain.get(0));
 			if (unavailable != null) {
-				throw new TopLogicException(unavailable);
+				throw noCredentials(unavailable);
 			}
 			return call.call();
 		}
@@ -2567,9 +2568,27 @@ public class AgentLoop {
 		}
 		if (unavailable != null && unavailableCount == tried) {
 			// Nothing was called: the user is told which secret to provide, not that models failed.
-			throw new TopLogicException(unavailable);
+			throw noCredentials(unavailable);
 		}
 		throw new ProviderException(ProviderException.Kind.UNKNOWN, -1, exhausted(chain));
+	}
+
+	/**
+	 * The failure of a run that found no model whose provider has its credentials.
+	 *
+	 * <p>
+	 * The run ends on it like on any other provider failure: with
+	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#AUTHENTICATION} - the kind a
+	 * provider reports for a key it does not accept - and the given reason as message, in the
+	 * language of the run's context.
+	 * </p>
+	 *
+	 * @param reason
+	 *        Why no provider can be called, naming the secret to provide.
+	 */
+	private static ProviderException noCredentials(ResKey reason) {
+		return new ProviderException(ProviderException.Kind.AUTHENTICATION, -1,
+			Resources.getInstance().getString(reason));
 	}
 
 	/**

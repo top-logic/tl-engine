@@ -22,8 +22,8 @@ import com.top_logic.util.error.TopLogicException;
  * What the chat tells the user a failed run died of.
  *
  * <p>
- * A run that finds no provider with its credentials fails with a {@link TopLogicException} naming
- * the secrets to provide. Its message is a resource key; the chat shows the text of that key in the
+ * A run that finds no provider to choose its model from fails with a {@link TopLogicException}
+ * naming the secrets to provide. Its message is a resource key; the chat shows the text of that key in the
  * user's language, not the key.
  * </p>
  *

@@ -206,7 +206,7 @@ public class ChatProcessor {
 	 * <p>
 	 * The provider's own words for a provider failure. For a failure that carries a message for the
 	 * user - a {@link I18NFailure}, such as the {@link com.top_logic.util.error.TopLogicException}
-	 * naming the secret a run without any available provider needs - that message in the user's
+	 * naming the secrets a run needs when no provider is available to choose its model - that message in the user's
 	 * language, looked for one level down as well, like {@link #providerFailure(Throwable)}.
 	 * Otherwise the exception's message.
 	 * </p>

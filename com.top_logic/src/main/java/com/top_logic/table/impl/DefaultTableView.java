@@ -927,11 +927,6 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
-	public boolean isPersonalized() {
-		return _store != null && _id != null;
-	}
-
-	@Override
 	public boolean savesNamedFilters() {
 		return _filterStore != null && _id != null;
 	}
@@ -1152,9 +1147,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		_state.setFrozenCount(defaults.getFrozenCount());
 		_state.setSort(defaults.getSort());
 		_state.setGrouping(defaults.getGrouping());
-		_state.setDensity(defaults.getDensity());
-		_state.setStriped(defaults.isStriped());
-		_state.setColumnLines(defaults.isColumnLines());
 		fitArrangement();
 		searchScopeChanged();
 		pushOrder();
@@ -1162,16 +1154,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		_source.withGrouping(_state.getGrouping());
 		persist();
 		fireColumnsChanged();
-	}
-
-	@Override
-	public void setViewOptions(String density, boolean striped, boolean columnLines) {
-		// A density this version does not know is the default, as when it is read back.
-		boolean known = TableViewState.DENSITY_NORMAL.equals(density) || TableViewState.DENSITY_COMPACT.equals(density);
-		_state.setDensity(known ? density : TableViewState.DENSITY_DEFAULT);
-		_state.setStriped(striped);
-		_state.setColumnLines(columnLines);
-		persist();
 	}
 
 	/**
@@ -1332,10 +1314,6 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (search != null && !search.isEmpty()) {
 			_state.setSearch(search);
 		}
-
-		_state.setDensity(persisted.getDensity());
-		_state.setStriped(persisted.isStriped());
-		_state.setColumnLines(persisted.isColumnLines());
 
 		if (!_state.getFilters().isEmpty() || _state.getSearch() != null) {
 			applyFilter();

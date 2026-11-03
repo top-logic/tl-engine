@@ -95,7 +95,7 @@ export interface FilterPresetsProps {
   presets: readonly FilterPreset[];
   /** The ID of the preset in force; empty if none is. */
   activeId: string;
-  /** What changes the width of a chip without a change of the presets (the density of the table). */
+  /** What changes the width of a chip without a change of the presets (the density of the page, as the row height the table follows). */
   densityKey: string;
   /** The attribute marking the chip of a preset that can be deleted. */
   chipAttr: string;

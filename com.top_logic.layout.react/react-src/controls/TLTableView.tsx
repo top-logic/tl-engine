@@ -444,7 +444,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The client measures what the design system says (3b §3): a row is size-row high, so the table
   // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
   // rendered from the first layout on, so the token is read where the rows inherit it.
-  const viewDensity = (state.viewDensity as string) ?? '';
   const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
   /**
@@ -1758,11 +1757,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tl-table', fillClass)}
-      // The look of the table the person chose (view options): its density, stripes and column lines. The
-      // package styles by these attributes; the density also reaches the row height (useTokenPx above).
-      data-tl-density={viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : undefined}
-      data-tl-striped={state.striped ? '' : undefined}
-      data-tl-column-lines={state.columnLines ? '' : undefined}
       data-tl-state={dropState ? (dropRefused
           ? (dropState.row === null ? 'drop-refused' : undefined)
           : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
@@ -1784,7 +1778,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <FilterPresets
               presets={namedFilters}
               activeId={activeNamedFilter}
-              densityKey={viewDensity}
+              densityKey={String(rowHeight)}
               chipAttr={FILTER_CHIP_ATTR}
               moreText={i18n['js.table.morePresets']}
               clearLabel={i18n['js.table.clearFilter']}

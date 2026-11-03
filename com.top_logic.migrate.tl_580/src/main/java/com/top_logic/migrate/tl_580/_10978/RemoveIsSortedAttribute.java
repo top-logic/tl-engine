@@ -12,8 +12,8 @@ import com.top_logic.migrate.tl.attribute.RemoveAttributeValue;
 import com.top_logic.migrate.tl.util.LazyEventRewriter;
 
 /**
- * Class containing rewriter that fixes Ticket #10978, i.e. it removes the attribute isSorted from
- * type {@link #META_ATTRIBUTE_TYPE}.
+ * Class containing rewriter that fixes Ticket #10978, i.e. it removes the attribute
+ * {@link #IS_SORTED_ATTRIBUTE} from type {@link #META_ATTRIBUTE_TYPE}.
  * 
  * @since 5.8.0
  * 

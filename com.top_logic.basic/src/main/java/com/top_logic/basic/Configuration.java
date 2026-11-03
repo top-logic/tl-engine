@@ -25,7 +25,7 @@ import com.top_logic.basic.config.TypedConfiguration;
  * <p>
  * Prefered usage is
  * <code>Configuration.getConfiguration (this).getValue ("myKey")</code>.
- * The result will already have been run through the AliasManager.
+ * The result will already have been run through the {@link AliasManager}.
  * There is no need to do so again.
  * </p>
  *
@@ -279,7 +279,7 @@ public abstract class Configuration {
 	}
 
 	/**
-     * Get the value pre-AliasManager.
+     * Get the value before applying the {@link AliasManager}.
      *
      * @param aName the name; must not be null
      *
@@ -309,7 +309,7 @@ public abstract class Configuration {
         }
         
         /**
-         * Forward to rawValues.
+         * Forward to {@link #rawValues}.
          */
         @Override
 		public String toString() {
@@ -408,7 +408,7 @@ public abstract class Configuration {
      * Class or Object that can be used. One example would be
      * the automatic setup of several instances of the same
      * class with different properties (provided as a constructor
-     * argument). Cf. with e.g the DataSourceAdaptor/DataAccessService
+     * argument). Cf. with e.g the data source adaptor / data access service
      * setup in <i>TopLogic</i> 4.1. It should never be used when you
      * want give your configuration a fancy name or when accessing
      * the configuration of another class.
@@ -463,7 +463,7 @@ public abstract class Configuration {
      * Configuration classes. It must never be used
      * anywhere else.
      *
-     * @return XMLProperties.getInstance ()
+     * @return {@link XMLProperties#getInstance()}
      *
      *
      * #author Michael Eriksson

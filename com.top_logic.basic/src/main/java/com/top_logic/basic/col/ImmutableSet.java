@@ -47,6 +47,9 @@ public abstract class ImmutableSet<E> extends AbstractSet<E> {
 		throw failure();
 	}
 
+	/**
+	 * Creates the exception thrown by all modifying operations.
+	 */
 	protected UnsupportedOperationException failure() {
 		return new UnsupportedOperationException("Immutable collection cannot be modified.");
 	}

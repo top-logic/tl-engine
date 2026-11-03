@@ -77,6 +77,12 @@ public class WebXmlTask extends Main {
 		builder.dumpTo(new File(webApp, "WEB-INF/web.xml"));
 	}
 
+	/**
+	 * Main entry point.
+	 *
+	 * @param args
+	 *        The command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new WebXmlTask().runMain(args);
 	}

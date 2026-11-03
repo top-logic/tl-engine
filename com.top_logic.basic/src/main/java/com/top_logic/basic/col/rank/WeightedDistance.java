@@ -14,15 +14,21 @@ import java.util.Arrays;
  */
 public class WeightedDistance implements Distance {
 
+    /**
+     * The distances to combine.
+     */
     protected Distance basedOn[];
     
+    /**
+     * The weights of the {@link #basedOn} distances.
+     */
     protected float    factors[];
 
     /** Optionally store calculated distance in this array */
     protected float    baseDistances[];
 
     /** 
-     * Create a new WeightedDistance based on given distances.
+     * Create a new {@link WeightedDistance} based on given distances.
      * 
      * @param store allow retrival of intermediate results.
      */
@@ -35,14 +41,14 @@ public class WeightedDistance implements Distance {
     }
 
     /** 
-     * Create a new WeightedDistance based on given distances.
+     * Create a new {@link WeightedDistance} based on given distances.
      */
     public WeightedDistance(Distance[] basedOn, float[] factors) {
         this(basedOn ,factors, false);
     }
 
     /** 
-     * Create a new WeightedDistance based on given distances using 1 as factor.
+     * Create a new {@link WeightedDistance} based on given distances using 1 as factor.
      */
     public WeightedDistance(Distance[] aBasedOn) {
         this (aBasedOn,  new float[aBasedOn.length]);
@@ -50,28 +56,28 @@ public class WeightedDistance implements Distance {
     }
 
     /** 
-     * Create a new WeightedDistance based on two other distances.
+     * Create a new {@link WeightedDistance} based on two other distances.
      */
     public WeightedDistance(Distance d1, Distance d2) {
         this (new Distance[] {d1, d2});
     }
 
     /** 
-     * Create a new WeightedDistance based on two other distances and factors.
+     * Create a new {@link WeightedDistance} based on two other distances and factors.
      */
     public WeightedDistance(Distance d1, Distance d2, float f1, float f2) {
         this (new Distance[] {d1, d2}, new float[] { f1, f2 });
     }
 
     /** 
-     * Create a new WeightedDistance based on two other distances and factors.
+     * Create a new {@link WeightedDistance} based on two other distances and factors.
      */
     public WeightedDistance(Distance d1, Distance d2, float f1, float f2, boolean store) {
         this (new Distance[] {d1, d2}, new float[] { f1, f2 }, store);
     }
 
     /**
-     * Compute distance of o1 and o2 by weighting the baseDistances with given factors.
+     * Compute distance of o1 and o2 by weighting the {@link #baseDistances} with given factors.
      */
     @Override
 	public float distance(Object o1, Object o2) {

@@ -24,7 +24,7 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 public class H2Helper extends DBHelper {
 
 	/**
-	 * Configuration of the {@link H2Helper}
+	 * Configuration of the {@link H2Helper}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -262,7 +262,7 @@ public class H2Helper extends DBHelper {
 	/**
 	 * Create a valid SQL statement to drop an index.
 	 * 
-	 * H2 does not need (or use) the tableName
+	 * H2 does not need (or use) the {@code tableName}
 	 */
 	@Override
 	public void appendDropIndex(Appendable sql, String idxName, String tableName) throws IOException {

@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 import com.top_logic.basic.config.ImplementationClassesProvider;
 
 /**
- * The {@link ImplClasses} is an annotation for {@link ImplementationClassesProvider}
+ * The {@link ImplClasses} is an annotation for {@link ImplementationClassesProvider}.
  * 
  * @since 5.7.3
  * 
@@ -24,6 +24,9 @@ import com.top_logic.basic.config.ImplementationClassesProvider;
 @TagName("implementation-classes")
 public @interface ImplClasses {
 
+	/**
+	 * The {@link ImplementationClassesProvider} to use.
+	 */
 	Class<? extends ImplementationClassesProvider> value();
 }
 

@@ -27,6 +27,9 @@ public class ScheduledThread extends Thread {
         setDaemon(true);
     }
 
+    /**
+     * The {@link Batch} executed by this thread.
+     */
     public Batch getTarget () {
         return target;
     }
@@ -50,7 +53,7 @@ public class ScheduledThread extends Thread {
     /** 
      * Reroute this to the Target.
      * 
-     * Calls target.signalStop() and than interrupts the Thread,
+     * Calls {@link Batch#signalStop()} on the target and than interrupts the Thread,
      * 
      * @return false to indicate that you are not willing to stop 
      *          (Special wish from JCO)

@@ -13,7 +13,9 @@ import java.lang.annotation.Target;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * Annotation class for annotating a default value of type {@link Boolean#TYPE}.
+ * Annotation class for annotating a default value of type <code>boolean</code>.
+ * 
+ * @implNote The annotated property has the primitive type {@link Boolean#TYPE}.
  * 
  * @since 5.7.3
  * 
@@ -24,6 +26,9 @@ import com.top_logic.basic.config.annotation.TagName;
 @TagName("boolean-default")
 public @interface BooleanDefault {
 
+	/**
+	 * The default value.
+	 */
 	boolean value();
 
 }

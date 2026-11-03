@@ -52,11 +52,29 @@ public interface CustomizationContainer extends ConfigurationItem {
 	@Abstract
 	interface CustomizationConfig extends NamedConfigMandatory {
 
+		/**
+		 * Visitor pattern.
+		 *
+		 * @param v
+		 *        The visitor.
+		 * @param arg
+		 *        Argument passed to the visitor.
+		 * @return The result of the visit.
+		 */
 		<R, A> R visit(CustomizationConfig.CustomizationVisitor<R, A> v, A arg);
 
+		/**
+		 * Visitor of {@link CustomizationConfig}s.
+		 */
 		interface CustomizationVisitor<R, A> {
+			/**
+			 * Visits a {@link TypeCustomizationConfig}.
+			 */
 			R visitType(CustomizationContainer.TypeCustomizationConfig customization, A arg);
 
+			/**
+			 * Visits a {@link PropertyCustomizationConfig}.
+			 */
 			R visitProperty(CustomizationContainer.PropertyCustomizationConfig customization, A arg);
 		}
 	}
@@ -78,6 +96,9 @@ public interface CustomizationContainer extends ConfigurationItem {
 		@Format(TypeCustomizationConfig.TypeReferenceFormat.class)
 		String getName();
 
+		/**
+		 * Format checking that a value is the name of an existing class.
+		 */
 		class TypeReferenceFormat extends AbstractConfigurationValueProvider<String> {
 
 			public TypeReferenceFormat() {
@@ -94,6 +115,15 @@ public interface CustomizationContainer extends ConfigurationItem {
 				return value;
 			}
 
+			/**
+			 * Resolves the class with the given name.
+			 *
+			 * @param propertyName
+			 *        The property being parsed, for error reporting.
+			 * @param value
+			 *        The fully qualified class name.
+			 * @return The resolved class.
+			 */
 			public static Class<?> parseReference(String propertyName, String value)
 					throws ConfigurationException {
 				return ConfigUtil.getClassForNameMandatory(Object.class, propertyName, value);
@@ -114,12 +144,20 @@ public interface CustomizationContainer extends ConfigurationItem {
 	@TagName(PropertyCustomizationConfig.TAG_NAME)
 	interface PropertyCustomizationConfig extends CustomizationContainer.CustomizationConfig, CustomizationContainer.AnnotationContainer {
 
+		/**
+		 * Short-cut tag name for a {@link PropertyCustomizationConfig}.
+		 *
+		 * @see CustomizationContainer#getCustomizations()
+		 */
 		String TAG_NAME = "property";
 
 		@Override
 		@Format(PropertyCustomizationConfig.PropertyReferenceFormat.class)
 		String getName();
 
+		/**
+		 * Format checking that a value references an existing configuration property.
+		 */
 		class PropertyReferenceFormat extends AbstractConfigurationValueProvider<String> {
 
 			public PropertyReferenceFormat() {
@@ -136,6 +174,15 @@ public interface CustomizationContainer extends ConfigurationItem {
 				return value;
 			}
 
+			/**
+			 * Resolves the property referenced by the given value.
+			 *
+			 * @param propertyName
+			 *        The property being parsed, for error reporting.
+			 * @param value
+			 *        The reference in the form <code>config.interface.Name#property-name</code>.
+			 * @return The resolved property.
+			 */
 			public static PropertyDescriptor parseReference(String propertyName, String value)
 					throws ConfigurationException {
 				int nameSepIndex = value.indexOf('#');

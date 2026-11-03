@@ -83,6 +83,12 @@ public interface ConfigBuilder extends ConfigurationItem {
 	@FrameworkInternal
 	void disableChecks();
 
+	/**
+	 * Marks the given property as not being explicitly set.
+	 *
+	 * @param property
+	 *        The property to reset.
+	 */
 	void resetValueSet(PropertyDescriptor property);
 
 }

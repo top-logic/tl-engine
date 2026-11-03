@@ -19,7 +19,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.shared.collection.map.MapUtilShared;
 
 /**
- * The MapUtil contains useful static methods for maps of Lists or Sets.
+ * The {@link MapUtil} contains useful static methods for maps of Lists or Sets.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

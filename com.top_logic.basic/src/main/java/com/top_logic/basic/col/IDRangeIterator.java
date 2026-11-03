@@ -6,7 +6,7 @@
 package com.top_logic.basic.col;
 
 /**
- * The basic idea of the IDRangeIterator is that it can iterates over a
+ * The basic idea of the {@link IDRangeIterator} is that it can iterates over a
  * collection of objects which have unique identifiers and user interface
  * representations. The identifiers can be used for the internal identification
  * and the user interface representation can be shown to the user.

@@ -29,6 +29,9 @@ import com.top_logic.basic.module.category.RuntimeCategory;
 @ServiceCategory.Of(RuntimeCategory.class)
 public final class TypeKeyRegistry extends ManagedClass {
 
+	/**
+	 * Configuration name of the type key provider.
+	 */
 	public static final String PROVIDER_CLASS_CONFIGNAME = "provider";
 	
 	/**
@@ -67,6 +70,9 @@ public final class TypeKeyRegistry extends ManagedClass {
 		_provider = context.getInstance(config.getProvider());
 	}
 
+	/**
+	 * The type key of the given object.
+	 */
 	public static TypeKeyProvider.Key lookupTypeKey(Object obj) {
 		return getInstance().getTypeProvider().lookupTypeKey(obj);
 	}
@@ -85,6 +91,9 @@ public final class TypeKeyRegistry extends ManagedClass {
 		return _provider;
 	}
 
+    /**
+     * Module for instantiation of the {@link TypeKeyRegistry}.
+     */
     public static class Module extends TypedRuntimeModule<TypeKeyRegistry>{
     	
     	/** Singleton {@link TypeKeyRegistry.Module} instance. */

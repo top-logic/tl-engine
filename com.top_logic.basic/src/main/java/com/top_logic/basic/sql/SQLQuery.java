@@ -23,8 +23,17 @@ import java.sql.Statement;
  */
 public class SQLQuery
 {
+    /**
+     * The connection to execute the query in.
+     */
     protected Connection  con;
+    /**
+     * The statement of the query.
+     */
     protected Statement   stm;
+    /**
+     * The result of the query.
+     */
     protected ResultSet   res;
 
         /** Helper function to just execute a simple (update) query */
@@ -65,7 +74,7 @@ public class SQLQuery
     protected SQLQuery() { 
     }
 
-    /** Creates a Query and execute the given query to produce a ResultSet. */
+    /** Creates a Query and execute the given query to produce a {@link ResultSet}. */
     public SQLQuery(Connection connection, String sql)
         throws SQLException
     {

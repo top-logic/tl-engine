@@ -59,7 +59,7 @@ import com.top_logic.basic.io.path.PathCollector;
 import com.top_logic.basic.util.RegExpUtil;
 
 /**
- * The FileUtilities contain some useful classes to handle files and directories.
+ * The {@link FileUtilities} contain some useful classes to handle files and directories.
  *
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -392,7 +392,7 @@ public abstract class FileUtilities extends StreamUtilities {
    }
 
 	/**
-	 * Reads lines of text from file and adds them to a StringBuilder,
+	 * Reads lines of text from file and adds them to a {@link StringBuilder},
 	 * concatenated by '\n'.
 	 * <p>
 	 * Since it operates on lines it will convert \n\r or \r to \n . In addition
@@ -405,7 +405,7 @@ public abstract class FileUtilities extends StreamUtilities {
 	 * @param file
 	 *        the lines will be retrieved from this file.
 	 * @param buf
-	 *        a StringBuilder that will be used to insert the lines.
+	 *        a {@link StringBuilder} that will be used to insert the lines.
 	 * 
 	 * @throws FileNotFoundException
 	 *         will be raised, if file could not be found
@@ -666,7 +666,7 @@ public abstract class FileUtilities extends StreamUtilities {
 	 * @param aFile
 	 *        while that will be written to.
 	 * 
-	 * @return File same as aFile
+	 * @return File same as {@code aFile}
 	 * 
 	 * @exception IOException
 	 *            from the underlying Streams/Writes
@@ -760,11 +760,11 @@ public abstract class FileUtilities extends StreamUtilities {
 	}
 	
     /**
-	 * Copies a on File to another keeping the lastModified Date.
+	 * Copies a on File to another keeping the last modified date.
 	 *
 	 * The destination file will be overridden. The new file will be writable even when the source
-	 * file was locked, or read-only. The function will set the LastModified date of aDest to the
-	 * LastModified date of aSource, this may however fail, which is not checked.
+	 * file was locked, or read-only. The function will set the last modified date of {@code aDest}
+	 * to the last modified date of {@code aSource}, this may however fail, which is not checked.
 	 *
 	 * @param aSource
 	 *        The Source file to copy.
@@ -779,11 +779,11 @@ public abstract class FileUtilities extends StreamUtilities {
     }
 
 	/**
-	 * Copies a on File to another keeping the lastModified Date.
+	 * Copies a on File to another keeping the last modified date.
 	 *
 	 * The destination file will be overridden. The new file will be writable even when the source
-	 * file was locked, or read-only. The function will set the LastModified date of aDest to the
-	 * LastModified date of aSource, this may however fail, which is not checked.
+	 * file was locked, or read-only. The function will set the last modified date of {@code aDest}
+	 * to the last modified date of {@code aSource}, this may however fail, which is not checked.
 	 *
 	 * @param aSource
 	 *        The Source file to copy.
@@ -798,7 +798,7 @@ public abstract class FileUtilities extends StreamUtilities {
 	}
 
 	/**
-	 * Copies a on File to another keeping the lastModified Date.
+	 * Copies a on File to another keeping the last modified date.
 	 * 
 	 * The destination file will be overridden. The new file will be writable
 	 * even when the source file was locked, or read-only.
@@ -808,8 +808,8 @@ public abstract class FileUtilities extends StreamUtilities {
 	 * @param aDest
 	 *        The new file.
 	 * @param copyLastModified
-	 *        will set the LastModified date of aDest to the LastModified date
-	 *        of aSource, this may however fail, which is not checked.
+	 *        will set the last modified date of {@code aDest} to the last modified date
+	 *        of {@code aSource}, this may however fail, which is not checked.
 	 * 
 	 * @throws IOException
 	 *         in case one of the operations fails.
@@ -825,7 +825,7 @@ public abstract class FileUtilities extends StreamUtilities {
 	}
 
 	/**
-	 * Copies a on File to another keeping the lastModified Date.
+	 * Copies a on File to another keeping the last modified date.
 	 * 
 	 * The destination file will be overridden. The new file will be writable even when the source
 	 * file was locked, or read-only.
@@ -835,8 +835,8 @@ public abstract class FileUtilities extends StreamUtilities {
 	 * @param aDest
 	 *        The new file.
 	 * @param copyLastModified
-	 *        will set the LastModified date of aDest to the LastModified date of aSource, this may
-	 *        however fail, which is not checked.
+	 *        will set the last modified date of {@code aDest} to the last modified date of {@code
+	 *        aSource}, this may however fail, which is not checked.
 	 * 
 	 * @throws IOException
 	 *         in case one of the operations fails.
@@ -934,7 +934,7 @@ public abstract class FileUtilities extends StreamUtilities {
         return parent.list( getExtensionFilter(extension));   
     }
     
-    /** Helper function to create a FileNameFilter matching Extensions */
+    /** Helper function to create a {@link FilenameFilter} matching Extensions */
     public static FilenameFilter getExtensionFilter(final String extension) {
         return new FilenameFilter() {
             @Override
@@ -947,9 +947,9 @@ public abstract class FileUtilities extends StreamUtilities {
     /**
      * Selects the first entry with a desired ending in a zipped input stream.
      * 
-     * @param endsWith A ZipEntry ending with this name will be considered. 
+     * @param endsWith A {@link ZipEntry} ending with this name will be considered. 
      * 
-     * @return null when no such ZipEntry with was found
+     * @return null when no such {@link ZipEntry} with was found
      */
     public static ZipInputStream getEntryStream(ZipInputStream aZipInputStream, String endsWith) throws IOException {
         ZipEntry theCurrentEntry = aZipInputStream.getNextEntry();
@@ -963,8 +963,8 @@ public abstract class FileUtilities extends StreamUtilities {
     }
     
     /**
-     * reads the given File as a ByteArray
-     * @return byteArray from File
+     * reads the given File as a byte array
+     * @return byte array from File
      */
     public static byte[] getBytesFromFile(File file) throws IOException {
     

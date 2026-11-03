@@ -26,6 +26,9 @@ import com.top_logic.basic.StringServices;
  */
 public class XMLStreamUtil {
 
+	/**
+	 * Pattern matching a text that consists of white space only.
+	 */
 	public static final Pattern WHITESPACES_ONLY = Pattern.compile("\\s*");
 
 	/**
@@ -496,7 +499,7 @@ public class XMLStreamUtil {
 	}
 
 	/**
-	 * XML eXternal Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
+	 * XML External Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
 	 * attack against an application that parses XML input. This attack occurs when untrusted XML
 	 * input containing a reference to an external entity is processed by a weakly configured XML
 	 * parser. This attack may lead to the disclosure of confidential data, denial of service,
@@ -681,6 +684,8 @@ public class XMLStreamUtil {
 	}
 
 	/**
+	 * Ensures that the given reader has more events.
+	 * 
 	 * @throws RuntimeException
 	 *         If {@link #hasNext(XMLStreamReader)} returns false.
 	 */

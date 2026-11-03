@@ -9,10 +9,10 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/** Handler for XML that will accumulate the Elements String in a StringBuffer.
+/** Handler for XML that will accumulate the Elements String in a {@link StringBuffer}.
  * <p>
- *  You should subclass this handler and override the endElement() function.
- *  Then you can fetch the accumulated String via {@link #getString()}.
+ *  You should subclass this handler and override the {@link #endElement(String, String, String)}
+ *  function. Then you can fetch the accumulated String via {@link #getString()}.
  *</p>
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -26,7 +26,7 @@ public class ElementHandler extends DefaultHandler
     private String          last;
           
     /**
-     * Overriden to create the StringBuffer.
+     * Overriden to create the {@link StringBuffer}.
      */
     @Override
 	public void startDocument() throws SAXException {
@@ -35,7 +35,7 @@ public class ElementHandler extends DefaultHandler
         super.startDocument();
     }
 
-    /** Overriden to release the StringBuffer and the last parsed String */   
+    /** Overriden to release the {@link StringBuffer} and the last parsed String */   
     @Override
 	public void endDocument()  
             throws SAXException  {
@@ -61,6 +61,9 @@ public class ElementHandler extends DefaultHandler
         last = null;
     }
     
+    /**
+     * The accumulated string, resetting the buffer.
+     */
     protected String getStringDestructive() {
         String theString = this.getString();
 
@@ -68,7 +71,10 @@ public class ElementHandler extends DefaultHandler
 
         return (theString);
     }
-    /** Return the String accumulated so far, usually called by endElement */
+    /**
+     * Return the String accumulated so far, usually called by
+     * {@link #endElement(String, String, String)}.
+     */
     public String getString() {
         if (last == null) {
             last = buf.toString();

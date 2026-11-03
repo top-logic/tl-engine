@@ -20,7 +20,7 @@ import com.top_logic.basic.Logger;
 
 
 /** 
- * Create Objects from JDBC-ResultSets via JavaBeans / Reflection.
+ * Create Objects from JDBC result sets via <i>JavaBeans</i> / Reflection.
  *
  * This builder creates a new instance of his
  * template class (handed over during instanciation) and fills this with the
@@ -39,7 +39,7 @@ public class ObjectBuilder {
     /** Property Descriptions for the template class*/
     PropertyDescriptor	desciptors[];
 
-    /** Constructs a ObjectBuilder for the given Class.
+    /** Constructs a {@link ObjectBuilder} for the given Class.
      *
      * @param    aTemplate    The class of the instances to be returned.
      */

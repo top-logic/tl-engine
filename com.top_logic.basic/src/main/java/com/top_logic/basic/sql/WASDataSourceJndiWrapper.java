@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 
 /**
- * {@link DataSourceProxy} for the WebSphere Application Server.
+ * {@link DataSourceProxy} for the <i>WebSphere</i> Application Server.
  * 
  * @author <a href="mailto:aru@top-logic.com">aru</a>
  */
@@ -24,6 +24,12 @@ public class WASDataSourceJndiWrapper extends DataSourceProxy {
 		return impl;
 	}
 
+	/**
+	 * Sets the wrapped data source by looking it up via JNDI.
+	 *
+	 * @param jndiName
+	 *        The JNDI name of the data source.
+	 */
 	public void setJndiImpl(String jndiName) {
 		impl = SQLH.fetchJNDIDataSource(jndiName);
 	}

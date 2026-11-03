@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  * 
  * <p>
  * They are collected here even if they have their own class and file to easily find them.
- * It's not called ThrowableUtil as "Throwable" is a rarely used term.
+ * It's not called <code>ThrowableUtil</code> as "Throwable" is a rarely used term.
  * It's called "exception handling" after all, not "throwable handling".
  * </p>
  * 

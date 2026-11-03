@@ -20,10 +20,17 @@ import com.top_logic.basic.vars.IVariableExpander;
  */
 public class AliasedXMLReader extends XMLStreamReaderAdapter {
 
+	/**
+	 * Creates an {@link AliasedXMLReader} for the given reader.
+	 */
 	public static XMLStreamReader createAliasedXMLReader(XMLStreamReader reader, IVariableExpander expander) {
 		return new AliasedXMLReader(reader, expander);
 	}
 	
+	/**
+	 * Creates an {@link AliasedXMLReader} for the given reader using the given system ID for
+	 * locations.
+	 */
 	public static XMLStreamReader createAliasedXMLReader(XMLStreamReader reader, final String systemId,
 			IVariableExpander expander) {
 		if (reader.getClass().getName().equals("com.bea.xml.stream.MXParser")) {

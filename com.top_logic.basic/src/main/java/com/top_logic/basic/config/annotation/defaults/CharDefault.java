@@ -13,8 +13,9 @@ import java.lang.annotation.Target;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * Annotation class for annotating a default value of type
- * {@link Character#TYPE}.
+ * Annotation class for annotating a default value of type <code>char</code>.
+ * 
+ * @implNote The annotated property has the primitive type {@link Character#TYPE}.
  * 
  * @since 5.7.3
  * 
@@ -25,6 +26,9 @@ import com.top_logic.basic.config.annotation.TagName;
 @TagName("char-default")
 public @interface CharDefault {
 
+	/**
+	 * The default value.
+	 */
 	char value();
 
 }

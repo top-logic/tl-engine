@@ -6,12 +6,12 @@
 package com.top_logic.basic.col;
 
 /**
- * A Matcher is used for a LabelProvider in combination with a SelectField that
+ * A Matcher is used for a label provider in combination with a select field that
  * supports autocompletion. It is necessary if other information than just the
  * normal lable should be used, e.g. the login id for Persons.
  * 
  * An example can be found in
- * com.top_logic.contact.layout.PersonContactLabelProvider.
+ * <code>com.top_logic.contact.layout.PersonContactLabelProvider</code>.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

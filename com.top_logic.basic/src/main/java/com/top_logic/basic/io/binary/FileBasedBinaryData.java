@@ -62,7 +62,7 @@ public class FileBasedBinaryData extends AbstractBinaryData {
 	}
 
    /** 
-     * Creates a new FileInputStream on the internal File.
+     * Creates a new {@link FileInputStream} on the internal File.
      * 
      * @see BinaryData#getStream()
      */

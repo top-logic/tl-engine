@@ -8,7 +8,7 @@ package com.top_logic.basic.col;
 import java.util.List;
 
 /**
- * IDRangeIterator that is based on a List. 
+ * {@link IDRangeIterator} that is based on a List. 
  * 
  * The Iterator is no awrae of changes in the List.
  * 

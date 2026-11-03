@@ -33,6 +33,8 @@ public interface TypedFilter {
 	Class<?> getType();
 
 	/**
+	 * Checks the given object.
+	 * 
 	 * @param object
 	 *        Is allowed to be null. Whether null results in {@link FilterResult#INAPPLICABLE} is up
 	 *        to the concrete implementation.

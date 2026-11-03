@@ -24,6 +24,9 @@ import com.top_logic.basic.config.PropertyKind;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Key {
 	
+	/**
+	 * Name of the property of the entries that is used as key.
+	 */
 	String value();
 
 }

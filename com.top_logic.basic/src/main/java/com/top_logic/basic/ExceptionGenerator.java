@@ -91,6 +91,8 @@ public class ExceptionGenerator {
     }
 
     /**
+     * Throws an {@link Exception}, if the given flag is active.
+     * 
      * @param    aKey    The activation flag.
      * @return   <code>true</code>.
      * @throws   Exception    If generator is active and given flag is activated.
@@ -104,6 +106,8 @@ public class ExceptionGenerator {
     }
 
     /**
+     * Throws an {@link IOException}, if the given flag is active.
+     * 
      * @param    aKey    The activation flag.
      * @return   <code>true</code>.
      * @throws   IOException    If generator is active and given flag is activated.
@@ -117,6 +121,8 @@ public class ExceptionGenerator {
     }
 
     /**
+     * Throws an {@link IllegalArgumentException}, if the given flag is active.
+     * 
      * @param    aKey    The activation flag.
      * @return   <code>true</code>.
      * @throws   IllegalArgumentException    If generator is active and given flag is activated.
@@ -130,6 +136,8 @@ public class ExceptionGenerator {
     }
 
     /**
+     * Throws a {@link NullPointerException}, if the given flag is active.
+     * 
      * @param    aKey    The activation flag.
      * @return   <code>true</code>.
      * @throws   NullPointerException    If generator is active and given flag is activated.
@@ -143,6 +151,8 @@ public class ExceptionGenerator {
     }
 
     /**
+     * Throws an {@link SQLException}, if the given flag is active.
+     * 
      * @param    aKey    The activation flag.
      * @return   <code>true</code>.
      * @throws   SQLException    If generator is active and given flag is activated.

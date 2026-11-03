@@ -66,6 +66,9 @@ public abstract class Traversal<T> {
      */
     private boolean frozen;
 
+	/**
+	 * Access to the traversed graph.
+	 */
 	protected final GraphAccess<T> access;
 
 	/**

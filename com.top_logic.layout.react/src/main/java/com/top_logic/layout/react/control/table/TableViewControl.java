@@ -412,6 +412,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_CSS_CLASS = "cssClass";
 
 	/**
+	 * Per-column state key, {@code false} for a column the client leaves out in the compact
+	 * display, see {@link #setHiddenWhenCompact(Set)}. Absent for a column shown there as well.
+	 */
+	private static final String COLUMN_COMPACT = "compact";
+
+	/**
 	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
 	 * which the client offers on the heading. Absent for a column whose label has none.
 	 */
@@ -627,6 +633,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the user may choose which columns are displayed, and in which order. */
 	private boolean _columnSelect = true;
 
+	/** The columns left out in the compact display, see {@link #setHiddenWhenCompact(Set)}. */
+	private Set<String> _hiddenWhenCompact = Set.of();
+
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
 
@@ -727,6 +736,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Sets the columns the table leaves out in the compact display, on a phone, by name.
+	 *
+	 * <p>
+	 * The client shows them as soon as the window is wide enough again; the arrangement of the
+	 * table - which columns it displays, in which order, how many frozen - is the same in both
+	 * displays.
+	 * </p>
+	 */
+	public void setHiddenWhenCompact(Set<String> columns) {
+		_hiddenWhenCompact = Set.copyOf(columns);
+		refreshColumns();
 	}
 
 	/**
@@ -1070,6 +1093,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
+			}
+			if (_hiddenWhenCompact.contains(column.name())) {
+				columnState.put(COLUMN_COMPACT, Boolean.FALSE);
 			}
 			String tooltip = description(resources, column.label());
 			if (!StringServices.isEmpty(tooltip)) {

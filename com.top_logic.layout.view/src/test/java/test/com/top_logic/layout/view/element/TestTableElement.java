@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -431,6 +432,21 @@ public class TestTableElement extends TestCase {
 			List.of(), milestones.declaredNames());
 		assertEquals("Columns nothing is known about yet do not sort the table.",
 			List.of(), milestones.defaultSort());
+	}
+
+	/**
+	 * Tests that a column declared {@code compact="false"} is the one the table leaves out on a
+	 * phone, and that every other column is shown there as well.
+	 */
+	public void testColumnsHiddenWhenCompact() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		List<ColumnDeclaration> declarations =
+			ColumnDeclarations.instantiate(context, readTableConfig().getColumns());
+		context.checkErrors();
+
+		assertEquals(Set.of("owner"), ColumnDeclarations.hiddenWhenCompact(declarations));
+		assertEquals("A column is shown on a phone unless it says otherwise.", List.of(),
+			declarations.get(0).hiddenWhenCompact());
 	}
 
 	/**

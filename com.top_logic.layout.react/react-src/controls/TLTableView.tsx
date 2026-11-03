@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -186,6 +186,11 @@ interface ColumnState {
    * Absent for a label that describes itself.
    */
   tooltip?: string;
+  /**
+   * {@code false} for a column the table leaves out in the compact display, on a phone; absent for
+   * a column shown there as well.
+   */
+  compact?: boolean;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -431,7 +436,22 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       && isEditorTarget(active);
   }, []);
 
-  const columns = (state.columns as ColumnState[]) ?? [];
+  const allColumns = (state.columns as ColumnState[]) ?? [];
+  // The columns displayed: in the compact display without the ones a phone can do without. The
+  // server counts all of them - in a column's target position and in the frozen columns - so these
+  // counts are translated, see fullCount and shownCount.
+  const compact = useDisplayClass() === 'compact';
+  const columns = React.useMemo(
+    () => (compact ? allColumns.filter((col) => col.compact !== false) : allColumns),
+    [allColumns, compact]);
+  /** How many of all columns the first given number of displayed columns reach. */
+  const fullCount = React.useCallback(
+    (count: number) => (count <= 0 ? 0 : allColumns.indexOf(columns[Math.min(count, columns.length) - 1]) + 1),
+    [allColumns, columns]);
+  /** How many displayed columns are among the first given number of all columns. */
+  const shownCount = React.useCallback(
+    (count: number) => columns.filter((col) => allColumns.indexOf(col) < count).length,
+    [allColumns, columns]);
   const totalRowCount = (state.totalRowCount as number) ?? 0;
   const rows = (state.rows as RowState[]) ?? [];
   /** The first row of the window the body showed last, unlike the start of the rows sent. */
@@ -455,7 +475,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const selectedRows = (state.selectedRows as number[] | undefined) ?? NO_ROWS;
   const selectedIndexes = React.useMemo(() => new Set(selectedRows), [selectedRows]);
   const isSelected = (row: RowState) => selectedIndexes.has(row.index);
-  const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
+  const frozenColumnCount = shownCount((state.frozenColumnCount as number) ?? 0);
   const treeMode = (state.treeMode as boolean) ?? false;
   /** The column the rows are grouped by, empty when they are not grouped. */
   const grouping = (state.grouping as string) ?? '';
@@ -559,7 +579,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const columnReorder = useListReorder({
     axis: 'horizontal',
     count: columns.length,
-    onMove: (from, to) => sendCommand('columnReorder', { column: columns[from].name, targetIndex: to }),
+    onMove: (from, to) => sendCommand('columnReorder',
+      { column: columns[from].name, targetIndex: allColumns.indexOf(columns[to]) }),
   });
   const columnDragging = columnReorder.dragIndex !== null;
 
@@ -1364,9 +1385,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleFreezeUpTo = React.useCallback(() => {
     if (!contextMenu) return;
-    sendCommand('setFrozenColumnCount', { count: contextMenu.colIdx + 1 });
+    sendCommand('setFrozenColumnCount', { count: fullCount(contextMenu.colIdx + 1) });
     setContextMenu(null);
-  }, [contextMenu, sendCommand]);
+  }, [contextMenu, sendCommand, fullCount]);
 
   const handleUnfreezeAll = React.useCallback(() => {
     sendCommand('setFrozenColumnCount', { count: 0 });
@@ -1425,7 +1446,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onEnd: () => {
         setFrozenPreview(null);
         if (target.count !== frozenColumnCount) {
-          sendCommand('setFrozenColumnCount', { count: target.count });
+          sendCommand('setFrozenColumnCount', { count: fullCount(target.count) });
         }
       },
 
@@ -1434,7 +1455,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         setFrozenPreview(null);
       },
     });
-  }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
+  }, [columns, frozenWidth, frozenColumnCount, sendCommand, fullCount]);
 
   // -- Filter handler: open the server-side filter dialog for a column. --
   const handleOpenFilter = React.useCallback((columnName: string, event: React.MouseEvent) => {

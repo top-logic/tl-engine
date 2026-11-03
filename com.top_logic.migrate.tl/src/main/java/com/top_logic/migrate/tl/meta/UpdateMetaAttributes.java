@@ -43,6 +43,9 @@ import com.top_logic.model.TLStructuredTypePart;
  */
 public class UpdateMetaAttributes {
 
+	/**
+	 * Default directory of the factory configuration in the web application.
+	 */
 	public static final String DEFAULT_FACTORY_CONFIG_PATH = "/WEB-INF/conf";
 
 	/**

@@ -41,6 +41,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.SelectControlProvider;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLClass;
@@ -87,6 +88,12 @@ public class TestOptionLabels extends TestCase {
 	/** The expression computing the label of an option. */
 	private static final String LABEL_FUNCTION =
 		"key -> if($key == \"" + GIT + "\", \"" + GIT_LABEL + "\", \"" + GITEA_LABEL + "\")";
+
+	/** The label a control of a single field displays every option with. */
+	private static final String CONTROL_LABEL = "Short";
+
+	/** The expression computing the label of an option in a single field. */
+	private static final String CONTROL_LABEL_FUNCTION = "key -> \"" + CONTROL_LABEL + "\"";
 
 	private ReactContext _context;
 
@@ -179,6 +186,39 @@ public class TestOptionLabels extends TestCase {
 		assertEquals(List.of(GITEA_LABEL), valueLabels(control));
 	}
 
+	/**
+	 * Labels configured at the control of a field label its value there, while a table column of
+	 * the attribute keeps the labels of the options source.
+	 */
+	public void testTheLabelsOfTheControlHoldForTheFieldAlone() throws Exception {
+		TLStructuredTypePart part = attribute("overridden", true, false);
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(GITEA, List.of(GITEA, GIT), false);
+
+		ReactControl control = _controls.createFieldControl(_context, part, model, controlLabels());
+
+		assertEquals(List.of(CONTROL_LABEL), valueLabels(control));
+		Column<Object, ?> column = ColumnProviderService.getInstance()
+			.createColumn("overridden", ResKey.text("overridden"), ColumnType.of(part), row -> row);
+		assertEquals(GITEA_LABEL, column.searchText(GITEA));
+	}
+
+	/** A select control labeling its options by {@link #CONTROL_LABEL_FUNCTION}. */
+	private static SelectControlProvider.Config controlLabels() throws ConfigurationException {
+		SelectControlProvider.Config control = TypedConfiguration.newConfigItem(SelectControlProvider.Config.class);
+		control.update(control.descriptor().getProperty(SelectControlProvider.Config.OPTION_LABELS),
+			labelProvider(CONTROL_LABEL_FUNCTION));
+		return control;
+	}
+
+	/** A {@link LabelProviderByExpression} computing labels by the given expression. */
+	private static LabelProviderByExpression.Config<?> labelProvider(String function) throws ConfigurationException {
+		LabelProviderByExpression.Config<?> labels =
+			TypedConfiguration.newConfigItem(LabelProviderByExpression.Config.class);
+		labels.update(labels.descriptor().getProperty(LabelProviderByExpression.Config.LABEL),
+			ExprFormat.INSTANCE.getValue(LabelProviderByExpression.Config.LABEL, function));
+		return labels;
+	}
+
 	/** A table column of the attribute shows the label and is searched by it. */
 	public void testATableColumnIsSearchedByTheLabel() throws Exception {
 		TLStructuredTypePart part = attribute("column", true, false);
@@ -227,11 +267,8 @@ public class TestOptionLabels extends TestCase {
 		generator.update(generator.descriptor().getProperty(OptionsByExpression.Config.ALPHABETICAL_ORDER),
 			Boolean.valueOf(alphabetical));
 		if (labeled) {
-			LabelProviderByExpression.Config<?> labels =
-				TypedConfiguration.newConfigItem(LabelProviderByExpression.Config.class);
-			labels.update(labels.descriptor().getProperty(LabelProviderByExpression.Config.LABEL),
-				ExprFormat.INSTANCE.getValue(LabelProviderByExpression.Config.LABEL, LABEL_FUNCTION));
-			generator.update(generator.descriptor().getProperty(OptionsByExpression.Config.OPTION_LABELS), labels);
+			generator.update(generator.descriptor().getProperty(OptionsByExpression.Config.OPTION_LABELS),
+				labelProvider(LABEL_FUNCTION));
 		}
 		TLOptions result = TypedConfiguration.newConfigItem(TLOptions.class);
 		result.setGenerator((PolymorphicConfiguration) generator);

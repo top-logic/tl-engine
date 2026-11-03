@@ -30,7 +30,7 @@ public class ChatSessionListResponse extends de.haumacher.msgbuf.data.AbstractDa
 	}
 
 	/**
-	 * All sessions for the current user, sorted by lastUpdated descending.
+	 * All sessions for the current user, sorted by {@link ChatSessionDto#getLastUpdated()} descending.
 	 */
 	public final java.util.List<com.top_logic.ai.chat.api.messages.ChatSessionDto> getSessions() {
 		return _sessions;

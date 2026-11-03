@@ -560,7 +560,10 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
 			try {
 				consumer.accept(theEvent);
-			} catch (RuntimeException ex) {
+			} catch (Throwable ex) {
+				if (ex instanceof VirtualMachineError) {
+					throw ex;
+				}
 				// The session is already established or ended. A failing consumer (e.g. the
 				// UserMonitor that records the login and cannot commit) must not leave it half logged
 				// in.

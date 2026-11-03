@@ -38,7 +38,7 @@ public interface ReportHandler {
     public void finishReport();
     
     /**
-     * a ReportResult with the successfully generated report or an error
+     * a {@link ReportResult} with the successfully generated report or an error
      *         message when something went wrong
      */
     public ReportResult getReportResult ();
@@ -60,7 +60,7 @@ public interface ReportHandler {
     public ExpansionContext initializeExpansionContext(ReportToken aToken);
     
     /**
-     * Initialize the expansion engine based on the given ReportToken and the
+     * Initialize the expansion engine based on the given {@link ReportToken} and the
      * type of report. In most cases this will be the same engine.
      * 
      * @param aToken the information usefull for initialization of the engine

@@ -31,12 +31,33 @@ import com.top_logic.util.TLContext;
  */
 public abstract class AbstractReport implements ReportHandler, StaticSymbolResolver {
 
+    /**
+     * Whether the report has been processed completely.
+     */
     protected boolean processingComplete;
+    /**
+     * The result of the report generation.
+     */
     protected ReportResult reportResult;
+    /**
+     * The user who requested the report.
+     */
     protected UserInterface contextUser;
+    /**
+     * The context providing the objects and locale of the report.
+     */
     protected ExpansionContext context;
+    /**
+     * The engine expanding the symbols of the template.
+     */
     protected ExpansionEngine engine;
+    /**
+     * Access to the template and the generated report document.
+     */
     protected ReportReaderWriter readerWriter;
+    /**
+     * Resolver for the static symbols of the template.
+     */
     protected StaticSymbolResolver resolver;
 
     /**
@@ -86,7 +107,7 @@ public abstract class AbstractReport implements ReportHandler, StaticSymbolResol
     }
 
     /**
-     * initialize the ReaderWriter with the right file locations!
+     * initialize the {@link #readerWriter} with the right file locations!
      * 
      * @see com.top_logic.reporting.office.ReportHandler#prepare()
      */
@@ -177,8 +198,8 @@ public abstract class AbstractReport implements ReportHandler, StaticSymbolResol
     }
 
     /**
-     * In this special case we create a SimpleExpansionContext capable of storing a list of 
-     * business objects, as taken from the ReportToken and defining the output file path for
+     * In this special case we create a {@link BasicExpansionContext} capable of storing a list of 
+     * business objects, as taken from the {@link ReportToken} and defining the output file path for
      * the generated report. 
      * 
      * @see com.top_logic.reporting.office.ReportHandler#initializeExpansionContext(com.top_logic.reporting.office.ReportToken)
@@ -191,7 +212,7 @@ public abstract class AbstractReport implements ReportHandler, StaticSymbolResol
     }
 
     /**
-     * The standard ExpansionEngine is capable of interpreting the basic symbol syntax.
+     * The standard {@link ExpansionEngine} is capable of interpreting the basic symbol syntax.
      * 
      * @see com.top_logic.reporting.office.ReportHandler#initializeExpansionEngine(com.top_logic.reporting.office.ReportToken)
      */

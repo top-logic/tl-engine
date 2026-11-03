@@ -7,10 +7,10 @@ package com.top_logic.reporting.office;
 
 
 /**
- * The ExpansionObject is the representation of the symbols respectively the
+ * The {@link ExpansionObject} is the representation of the symbols respectively the
  * expanded object resulting from the symbol. The symbol is expanded by an
  * {@link com.top_logic.reporting.office.ExpansionEngine} in a given
- * {@link com.top_logic.reporting.office.ExpansionContext}. The ExpansionObject
+ * {@link com.top_logic.reporting.office.ExpansionContext}. The {@link ExpansionObject}
  * stores the type of the symbol and all relevant information to allow replacing
  * the symbol.
  * 
@@ -18,6 +18,9 @@ package com.top_logic.reporting.office;
  */
 public class ExpansionObject {
     
+    /**
+     * Type of a symbol that is resolved by a {@link StaticSymbolResolver}.
+     */
     public static final String STATIC = "static";
     
     /** reference to the key to find the expansion in the original document */
@@ -65,7 +68,7 @@ public class ExpansionObject {
     }
     
     /**
-     * Only return the expanded object is the isExpanded flag is <code>true</code>.
+     * Only return the expanded object if {@link #isExpanded()} is <code>true</code>.
      * @return the expanded object
      * @throws IllegalStateException if the ExpandedObject is not expanded.
      */

@@ -19,7 +19,7 @@ public interface ExpansionContext {
     /**
      * The locale this report is to render. This may influence the template the report handler
      * uses for generation.
-     * @return a Locale. In case nothing was specified the @see Locale.getDefault() is returned.
+     * @return a Locale. In case nothing was specified {@link Locale#getDefault()} is returned.
      */
     public Locale getReportLocale();
 

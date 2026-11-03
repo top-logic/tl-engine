@@ -18,11 +18,11 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * The central class responsible for creating office based reports.
  * 
- * The normal usage workflow for this ReportGenerator is the following:
+ * The normal usage workflow for this {@link ReportGenerator} is the following:
  * <ol>
- *   <li>order a Report and receive a ReportToken</li>
+ *   <li>order a Report and receive a {@link ReportToken}</li>
  *   <li>ask if the report generation is complete</li>
- *   <li>get the ReportResult for the ReportToken</li>
+ *   <li>get the ReportResult for the {@link ReportToken}</li>
  * </ol>
  * 
  * TODO JCO activate the queueing mechanism for reports.
@@ -30,8 +30,13 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ReportGenerator implements Reloadable {
     
+    /** Report type of PowerPoint reports. */
     protected static final String PPT_REPORT     = "ppt_report";
+
+    /** Report type of Excel reports. */
     protected static final String EXCEL_REPORT   = "excel_report";
+
+    /** Report type of Word reports. */
     protected static final String WORD_REPORT    = "word_report";
 
     /** the one and only instance of the generator */
@@ -39,11 +44,15 @@ public class ReportGenerator implements Reloadable {
     
     /** some queues for different kinds of reports */
     protected ReportQueue pptQueue;
+
+    /** The queue of {@link #EXCEL_REPORT Excel reports}. */
     protected ReportQueue excelQueue;
+
+    /** The queue of {@link #WORD_REPORT Word reports}. */
     protected ReportQueue wordQueue;
 
     /**
-     * the sole instance of this ReportGenerator.
+     * the sole instance of this {@link ReportGenerator}.
      */
     public static ReportGenerator getInstance () {
         if (singleton == null) {
@@ -95,7 +104,7 @@ public class ReportGenerator implements Reloadable {
     /**
      * This method returns the completion state of the specified report.
      * 
-     * @param aToken the ReportToken to find the report
+     * @param aToken the {@link ReportToken} to find the report
      * @return <code>true</code> if the report is available and the processing is complete.
      */
     public boolean reportReady (ReportToken aToken){
@@ -106,7 +115,7 @@ public class ReportGenerator implements Reloadable {
     }
     
     /**
-     * The report results in an reportResult which is returned here.
+     * The report results in a {@link ReportResult} which is returned here.
      * If no report for the token is found
      * @param aToken the handle to identify the report which is generated
      * @return an result object containing the created report or an error message if something went wrong
@@ -149,7 +158,7 @@ public class ReportGenerator implements Reloadable {
      * At the moment there is only a limited number of queues explicitly for ppt, xls or doc!
      * 
      * @param aToken the token we use for idenfying the reports.
-     * @return the ReportQueue this token refers to, is either powerpoint or excel or word!
+     * @return the {@link ReportQueue} this token refers to, is either powerpoint or excel or word!
      * @throws IllegalArgumentException when an unknown kind of report is requested!
      */
     protected ReportQueue getReportQueue (ReportToken aToken) {
@@ -174,7 +183,7 @@ public class ReportGenerator implements Reloadable {
      * If something with the configuration or report type is amiss a standard (error)
      * report handler will be instanciated!
      * 
-     * @param aToken the token to identify the reportHandler to create and
+     * @param aToken the token to identify the report handler to create and
      *            provide the environment.
      * @return an instance to represent the report to be processed.
      */
@@ -219,7 +228,15 @@ public class ReportGenerator implements Reloadable {
     }
 
     
+    /**
+     * Cache of {@link #getReportTypes()}.
+     */
     protected Properties reportTypes;
+
+    /**
+     * The configured report types, mapping report type names to the classes of their
+     * {@link ReportHandler}s.
+     */
     protected Properties getReportTypes () {
         if (reportTypes == null) {
             XMLProperties xmlProp = XMLProperties.getInstance();

@@ -9,7 +9,7 @@ package com.top_logic.reporting.office;
 
 /**
  * This default implementation of the interfaces assumes the key to resolve is a key in the
- * ExpansionContext.
+ * {@link ExpansionContext}.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */

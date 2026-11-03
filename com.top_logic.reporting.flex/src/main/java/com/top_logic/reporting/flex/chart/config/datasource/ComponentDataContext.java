@@ -8,7 +8,7 @@ package com.top_logic.reporting.flex.chart.config.datasource;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Default DataContext for charts created and displayed in {@link LayoutComponent}s.
+ * Default {@link DataContext} for charts created and displayed in {@link LayoutComponent}s.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */

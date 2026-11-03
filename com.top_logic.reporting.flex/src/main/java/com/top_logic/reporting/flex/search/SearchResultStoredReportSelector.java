@@ -47,7 +47,7 @@ import com.top_logic.util.TLContext;
 /**
  * Selector-component for new search-reporting. The current search-result and existing
  * stored-querries can be used as datasource. According to the type of the currently displayed
- * objects a SelectField with existing stored-reports is displayed.
+ * objects a {@link SelectField} with existing stored-reports is displayed.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
@@ -84,6 +84,9 @@ public class SearchResultStoredReportSelector extends ExpressionSelectorComponen
 
 	}
 
+	/**
+	 * Name of the field for selecting a stored report.
+	 */
 	@CalledFromJSP
 	public static final String REPORT_SELECTION_FIELD = "reportSelection";
 
@@ -305,6 +308,9 @@ public class SearchResultStoredReportSelector extends ExpressionSelectorComponen
 		return (SelectField) getFormContext().getMember(SearchFieldSupport.STORED_QUERY);
 	}
 
+	/**
+	 * The currently selected stored report, <code>null</code> if none is selected.
+	 */
 	public FlexReport getCurrentSelection() {
 		SelectField field = getSelectorField();
 		if (field == null) {

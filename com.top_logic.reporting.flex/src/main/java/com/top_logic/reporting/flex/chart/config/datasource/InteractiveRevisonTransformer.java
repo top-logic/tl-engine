@@ -34,6 +34,9 @@ import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilder;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilderUtil;
 
 /**
+ * {@link Transformer} that replaces the objects by their versions in a revision, which the user
+ * can select interactively.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class InteractiveRevisonTransformer implements InteractiveBuilder<Transformer, ChartContextObserver>,
@@ -156,8 +159,10 @@ public class InteractiveRevisonTransformer implements InteractiveBuilder<Transfo
 	}
 
 	/**
+	 * The revision selected in the given container.
+	 *
 	 * @param container
-	 *        the FormContainer that has been filled in
+	 *        the {@link FormContainer} that has been filled in
 	 *        {@link #createUI(FormContainer, ChartContextObserver)}
 	 * @return the selected {@link Revision} retrieved from the container
 	 */

@@ -11,7 +11,7 @@ import com.top_logic.reporting.common.tree.TreeAxis;
 import com.top_logic.reporting.flex.chart.config.chartbuilder.tree.TreeAxisTimeSeriesChartBuilder;
 
 /**
- * Used for {@link TreeAxisTimeSeriesChartBuilder} to provide icons for the {@link TreeAxis}
+ * Used for {@link TreeAxisTimeSeriesChartBuilder} to provide icons for the {@link TreeAxis}.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */

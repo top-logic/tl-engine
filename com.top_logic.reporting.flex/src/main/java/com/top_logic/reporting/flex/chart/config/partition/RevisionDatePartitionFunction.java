@@ -28,9 +28,18 @@ public class RevisionDatePartitionFunction<C extends RevisionDatePartitionFuncti
 	 * 
 	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
-    @SuppressWarnings("javadoc")
-    public enum DateType {
-        DAY, WEEK, MONTH, YEAR;
+	public enum DateType {
+		/** Partition by day. */
+		DAY,
+
+		/** Partition by week. */
+		WEEK,
+
+		/** Partition by month. */
+		MONTH,
+
+		/** Partition by year. */
+		YEAR;
 	}
 
 	/**

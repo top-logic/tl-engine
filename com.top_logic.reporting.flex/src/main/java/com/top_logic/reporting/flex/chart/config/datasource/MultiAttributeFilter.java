@@ -110,6 +110,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Utils;
 
 /**
+ * Filter for the displayed objects, in which the user can interactively select attributes and
+ * the values the objects must have in these attributes.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class MultiAttributeFilter implements InteractiveBuilder<Filter<Object>, ChartContextObserver>,
@@ -257,6 +260,8 @@ public class MultiAttributeFilter implements InteractiveBuilder<Filter<Object>, 
 		}
 
 		/**
+		 * Initializes the given view with the configured values.
+		 *
 		 * @param ma
 		 *        the attribute this filter is about
 		 * @param member
@@ -287,6 +292,8 @@ public class MultiAttributeFilter implements InteractiveBuilder<Filter<Object>, 
 		}
 
 		/**
+		 * Initializes the given fields with the configured values.
+		 *
 		 * @param ma
 		 *        the attribute this filter is about
 		 * @param fromField

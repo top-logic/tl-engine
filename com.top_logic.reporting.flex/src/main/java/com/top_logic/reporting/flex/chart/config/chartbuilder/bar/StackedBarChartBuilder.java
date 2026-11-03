@@ -79,7 +79,7 @@ public class StackedBarChartBuilder extends BarChartBuilder {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -88,7 +88,7 @@ public class StackedBarChartBuilder extends BarChartBuilder {
 	/**
 	 * Factory method to create an initialized {@link StackedBarChartBuilder}.
 	 * 
-	 * @return a new StackedBarChartBuilder.
+	 * @return a new {@link StackedBarChartBuilder}.
 	 */
 	public static StackedBarChartBuilder instance() {
 		return (StackedBarChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(item());

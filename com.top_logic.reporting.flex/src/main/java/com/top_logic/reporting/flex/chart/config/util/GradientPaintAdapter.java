@@ -18,7 +18,7 @@ import com.top_logic.reporting.flex.chart.config.color.ColorContext;
 import com.top_logic.reporting.flex.chart.config.color.ColorProvider;
 
 /**
- * {@link ColorProvider} that translates an input-color from another ColorProvider to a
+ * {@link ColorProvider} that translates an input-color from another {@link ColorProvider} to a
  * {@link GradientPaint}.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
@@ -79,6 +79,8 @@ public class GradientPaintAdapter implements ColorProvider, ConfiguredInstance<G
 	}
 
 	/**
+	 * Creates a {@link GradientPaint} starting with the given color.
+	 *
 	 * @param rgbShift
 	 *        the value the components from the input-color should be shifted
 	 * @param color

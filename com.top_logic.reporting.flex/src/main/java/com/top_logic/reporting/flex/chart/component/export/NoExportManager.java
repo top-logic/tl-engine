@@ -20,7 +20,7 @@ import com.top_logic.tool.export.AbstractOfficeExportHandler.OfficeExportValueHo
 public class NoExportManager implements ExportManager {
 
 	/**
-	 * Singleton <code>INSTANCE</code> of NoExportManager
+	 * Singleton <code>INSTANCE</code> of {@link NoExportManager}
 	 */
 	public static NoExportManager INSTANCE = new NoExportManager();
 

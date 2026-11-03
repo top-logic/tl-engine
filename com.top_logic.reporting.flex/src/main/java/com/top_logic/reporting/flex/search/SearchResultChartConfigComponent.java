@@ -52,6 +52,8 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * {@link ChartConfigComponent} displaying a chart of the result of a search.
+ *
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class SearchResultChartConfigComponent extends ChartConfigComponent {

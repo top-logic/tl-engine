@@ -133,8 +133,8 @@ public class NumberIntervalPartition extends SingleValuePartition {
 	}
 
 	/**
-	 * Interval size 0 means no interval, thus behavior becomes that of a SingleValuePartition
-	 * using discrete values as partitions
+	 * Interval size 0 means no interval, thus behavior becomes that of a {@link
+	 * SingleValuePartition} using discrete values as partitions
 	 * 
 	 * @return false if the configured interval size is 0.
 	 * 
@@ -305,7 +305,7 @@ public class NumberIntervalPartition extends SingleValuePartition {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(TLStructuredTypePart ma, double size) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

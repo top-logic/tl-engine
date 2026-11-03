@@ -29,7 +29,7 @@ import com.top_logic.reporting.flex.chart.config.partition.Criterion;
 import com.top_logic.reporting.flex.chart.config.util.KeyCompare;
 
 /**
- * Dataset-builder for {@link CategoryDataset}
+ * Dataset-builder for {@link CategoryDataset}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -73,14 +73,15 @@ public class CategoryDatasetBuilder extends AbstractDatasetBuilder<CategoryDatas
 	}
 
 	/**
-	 * Util method to create a CategoryDataset from a ChartTree. A maximum depth of 3 is supported.
+	 * Util method to create a {@link CategoryDataset} from a {@link ChartTree}. A maximum depth of
+	 * 3 is supported.
 	 * 
 	 * @param tree
 	 *        the universal chart-model to be transformed into a JFreeChart-Dataset
 	 * @param builder
 	 *        the Dataset-builder providing unique instances used as key (see
 	 *        {@link AbstractDatasetBuilder#getUniqueName(Comparable)}
-	 * @return a new CategoryDataset initialized with the values from the tree
+	 * @return a new {@link CategoryDataset} initialized with the values from the tree
 	 */
 	public static CategoryDataset generateCategoryDataset(ChartTree tree, AbstractDatasetBuilder<?> builder) {
 
@@ -92,15 +93,15 @@ public class CategoryDatasetBuilder extends AbstractDatasetBuilder<CategoryDatas
 	}
 
 	/**
-	 * Util-method that adds the value from a ChartNode to the dataset and also registers this node
-	 * so it can be found when generating tooltips or urls.
+	 * Util-method that adds the value from a {@link ChartNode} to the dataset and also registers
+	 * this node so it can be found when generating tooltips or urls.
 	 * 
 	 * @param dataset
 	 *        the {@link Dataset} to add the value to
 	 * @param dataKey
 	 *        The key to identify the given node in the {@link Dataset}.
 	 * @param node
-	 *        the ChartNode to be registered for the row- and column-key
+	 *        the {@link ChartNode} to be registered for the row- and column-key
 	 */
 	public static void addValueAndRegisterNode(DefaultCategoryDataset dataset, CategoryDataKey dataKey,
 			ChartNode node) {
@@ -111,7 +112,7 @@ public class CategoryDatasetBuilder extends AbstractDatasetBuilder<CategoryDatas
 	}
 
 	/**
-	 * {@link DataKey}-implementation used for {@link CategoryDataset}
+	 * {@link DataKey}-implementation used for {@link CategoryDataset}.
 	 */
 	public static class CategoryDataKey extends AbstractDataKey<Comparable<?>, Comparable<?>> {
 
@@ -212,6 +213,15 @@ public class CategoryDatasetBuilder extends AbstractDatasetBuilder<CategoryDatas
 		return dataset;
 	}
 
+	/**
+	 * Collects the keys of the nodes of each level of the given tree.
+	 *
+	 * @param tree
+	 *        The tree to collect the keys from.
+	 * @param builder
+	 *        The builder whose sort order is used to sort the keys.
+	 * @return For each level of the tree the sorted list of keys of the nodes on that level.
+	 */
 	public static List<List<Comparable<?>>> collectSortedKeysByLevel(ChartTree tree,
 			AbstractDatasetBuilder<?> builder) {
 		List<Set<Comparable<?>>> keysByLevel = collectKeys(tree, builder);

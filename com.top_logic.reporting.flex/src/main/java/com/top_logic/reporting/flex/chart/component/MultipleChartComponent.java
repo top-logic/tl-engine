@@ -197,6 +197,11 @@ public class MultipleChartComponent extends FormComponent implements ExportAware
 		return result;
 	}
 
+	/**
+	 * The images of all charts of this component for export.
+	 *
+	 * @return One image per chart, empty if there is nothing to export.
+	 */
 	public List<BinaryContent> getContentForExport() {
 		List<JFreeChart> charts = getChartsForExport();
 		if (charts.isEmpty()) {
@@ -284,7 +289,7 @@ public class MultipleChartComponent extends FormComponent implements ExportAware
 	 *        of the content for debug-reasons
 	 * @param dimension
 	 *        the size of the chart
-	 * @return a new MemoryBinaryContent containing the chart-image
+	 * @return a new {@link MemoryBinaryContent} containing the chart-image
 	 */
 	public static MemoryBinaryContent writeContent(JFreeChart chart, String name, Dimension dimension) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();

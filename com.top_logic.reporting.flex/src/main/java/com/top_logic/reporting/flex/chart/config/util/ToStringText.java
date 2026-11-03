@@ -103,7 +103,7 @@ public class ToStringText implements Comparable<ToStringText> {
 
 	/**
 	 * Special implementation of {@link ToStringText} to provide more context-information in
-	 * {@link #toString()}
+	 * {@link #toString()}.
 	 */
 	public static class NotSetText extends ToStringText {
 

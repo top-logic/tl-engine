@@ -29,7 +29,7 @@ import com.top_logic.reporting.flex.chart.config.partition.Criterion.CoordinateC
 import com.top_logic.reporting.flex.chart.config.partition.Criterion.ValueCriterion;
 
 /**
- * Dataset-builder for {@link XYSeriesCollection}
+ * Dataset-builder for {@link XYSeriesCollection}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -119,7 +119,7 @@ public class XYSeriesBuilder extends AbstractDatasetBuilder<XYSeriesCollection> 
 	}
 
 	/**
-	 * {@link DataKey}-implementation used for {@link XYDataset}
+	 * {@link DataKey}-implementation used for {@link XYDataset}.
 	 */
 	public static class XYSeriesDataKey extends AbstractDataKey<UniqueName, Double> {
 

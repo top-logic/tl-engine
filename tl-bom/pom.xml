@@ -92,7 +92,7 @@
 		<!-- WebAuthn relying party library (passkeys), see tl-security-passkey. -->
 		<yubico-webauthn.version>2.10.1</yubico-webauthn.version>
 		<batik.version>1.20</batik.version>
-		<commonmark.version>0.31.0</commonmark.version>
+		<commonmark.version>0.32.0</commonmark.version>
 		<tl.license.version>7.8.2</tl.license.version>
 	</properties>
 

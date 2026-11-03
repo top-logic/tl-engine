@@ -6,7 +6,6 @@
 package com.top_logic.contact.filter;
 
 import com.top_logic.contact.business.CompanyContact;
-import com.top_logic.contact.mandatoraware.COSContactConstants;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.form.model.FormContext;
@@ -34,7 +33,7 @@ public class ClientFilter extends CompanyContactFilter {
         }
         
         CompanyContact theContact = (CompanyContact) anObject;
-        Boolean isClientB = (Boolean) theContact.getValue(COSContactConstants.CLIENT);
+        Boolean isClientB = (Boolean) theContact.getValue(CompanyContact.ATT_CLIENT);
         boolean isClient = (isClientB == null) ? false : isClientB.booleanValue();
         
         return isClient;

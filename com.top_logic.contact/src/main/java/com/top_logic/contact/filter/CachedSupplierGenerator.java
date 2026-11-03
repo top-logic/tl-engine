@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.contact.business.CompanyContact;
 import com.top_logic.contact.business.ContactFactory;
-import com.top_logic.contact.mandatoraware.COSContactConstants;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
 
@@ -49,7 +48,7 @@ public class CachedSupplierGenerator extends ListGeneratorAdaptor {
 	}
 	
 	protected String getBooleanAttributeToCheck() {
-		return COSContactConstants.SUPPLIER;
+		return CompanyContact.ATT_SUPPLIER;
 	}
 
 }

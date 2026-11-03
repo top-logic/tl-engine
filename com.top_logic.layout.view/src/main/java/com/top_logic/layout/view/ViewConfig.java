@@ -143,6 +143,9 @@ public interface ViewConfig extends ConfigurationItem {
 		/** Configuration name for {@link #isAnonymous()}. */
 		String ANONYMOUS = "anonymous";
 
+		/** Configuration name for {@link #isHoldUrl()}. */
+		String HOLD_URL = "hold-url";
+
 		/**
 		 * The view file, relative to {@code /WEB-INF/views/} in the webapp, e.g.
 		 * {@code demo/pdf-demo.view.xml}.
@@ -170,5 +173,23 @@ public interface ViewConfig extends ConfigurationItem {
 		@Name(ANONYMOUS)
 		@BooleanDefault(false)
 		boolean isAnonymous();
+
+		/**
+		 * Whether the page keeps the URL it was opened with, instead of showing the route of its
+		 * display in the address bar.
+		 *
+		 * <p>
+		 * An entry point usually is an application of its own: the address bar follows the
+		 * navigation inside it, and its addresses are deep links. A page whose address carries
+		 * what the page is about - e.g. an invitation opened as {@code join.view.xml?token=...} -
+		 * would lose that: its display has no route for the query, so the address composed from
+		 * the display drops it, and a reload shows the page without it. Such an entry point holds
+		 * its URL, the way the {@link ViewConfig#getLoginView() login view} holds the URL it stands
+		 * in for: the address bar keeps the view file and the query, and a reload shows the same
+		 * page again. Navigating inside the page then no longer changes the address bar.
+		 * </p>
+		 */
+		@Name(HOLD_URL)
+		boolean isHoldUrl();
 	}
 }

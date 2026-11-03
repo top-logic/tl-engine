@@ -400,7 +400,7 @@ public class ViewServlet extends TopLogicServlet {
 	 *        existing tab).
 	 * @param holdUrl
 	 *        Whether the page keeps the requested URL instead of taking it up - the login view, and
-	 *        an entry point other than the default view. See
+	 *        an entry point that {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL}. See
 	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
@@ -726,8 +726,9 @@ public class ViewServlet extends TopLogicServlet {
 	 *        The URL to take up, starting with the page path; {@code null} for none.
 	 * @param holdUrl
 	 *        Whether the page takes the URL up not at all, but {@link RouteManager#holdUrl(String)
-	 *        holds} it. The login view is not the page the URL addresses, and an entry point other
-	 *        than the default view has no route: both keep the address that was asked for.
+	 *        holds} it. The login view is not the page the URL addresses, and an entry point that
+	 *        {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL} carries what it is about in its
+	 *        address: both keep the address that was asked for.
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String pagePath,
 			String url, boolean holdUrl) {
@@ -766,8 +767,8 @@ public class ViewServlet extends TopLogicServlet {
 	 * Which view is displayed and whether that view is the application's login view are one
 	 * decision, made by {@link ViewServlet#resolveView(ViewConfig, String, boolean)}: the login
 	 * view stands in for the page the URL names, while every other view <em>is</em> that page.
-	 * The login view, and an entry point other than the default view, keep the requested URL
-	 * ({@link #holdsUrl()}); a route and the default view are
+	 * The login view, and an entry point declared {@link ViewConfig.EntryPoint#isHoldUrl() to hold
+	 * its URL}, keep the requested URL ({@link #holdsUrl()}); every other URL is
 	 * {@link RouteManager#adoptUrl(String) adopted}.
 	 * </p>
 	 *
@@ -777,24 +778,13 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param loginView
 	 *        Whether the displayed view is the {@link ViewConfig#getLoginView() login view} shown
 	 *        in place of the page the URL names.
-	 * @param entryPoint
-	 *        Whether the displayed view is an entry point other than the
-	 *        {@link ViewConfig#getDefaultView() default view}.
+	 * @param holdsUrl
+	 *        Whether the page keeps the URL it was requested with instead of taking it up: the login
+	 *        view, which is not the page the URL addresses, and an entry point that
+	 *        {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL}.
 	 */
-	public record ViewResolution(String viewPath, boolean loginView, boolean entryPoint) {
-
-		/**
-		 * Whether the page keeps the URL it was requested with.
-		 *
-		 * <p>
-		 * The login view is not the page the URL addresses. An entry point other than the default
-		 * view is that page, but no route describes it: its address is its view file and the query
-		 * it was called with, which a route taken up from the display would replace.
-		 * </p>
-		 */
-		public boolean holdsUrl() {
-			return loginView || entryPoint;
-		}
+	public record ViewResolution(String viewPath, boolean loginView, boolean holdsUrl) {
+		// Pure result of the resolution.
 	}
 
 	/**
@@ -844,7 +834,7 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static ViewResolution resolveNamedView(ViewConfig config, String namedView, boolean anonymous) {
 		if (anonymous && hasLoginView(config) && !isAnonymousEntryPoint(config, namedView)) {
-			return new ViewResolution(config.getLoginView().fullPath(), true, false);
+			return new ViewResolution(config.getLoginView().fullPath(), true, true);
 		}
 		if (namedView == null) {
 			return new ViewResolution(config.getDefaultView().fullPath(), false, false);
@@ -852,8 +842,9 @@ public class ViewServlet extends TopLogicServlet {
 		if (!isEntryPoint(config, namedView)) {
 			return new ViewResolution(null, false, false);
 		}
+		ViewConfig.EntryPoint entryPoint = entryPoint(config, namedView);
 		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false,
-			!isDefaultView(config, namedView));
+			entryPoint != null && entryPoint.isHoldUrl());
 	}
 
 	/**

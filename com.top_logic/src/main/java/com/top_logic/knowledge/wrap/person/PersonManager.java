@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.RegExpValueProvider;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -44,6 +45,7 @@ import com.top_logic.util.license.LicenseTool;
  */
 @ServiceDependencies({
 	ApplicationConfig.Module.class,
+	SecretStoreService.Module.class,
 	LockService.Module.class,
 	TLSecurityDeviceManager.Module.class,
 	InitialGroupManager.Module.class,
@@ -132,6 +134,17 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		@Name(ANONYMOUS_USER_NAME)
 		String getAnonymousUserName();
 	}
+
+	/**
+	 * Name of the secret in the {@link SecretStoreService} holding the password the
+	 * {@link #getSuperUserName() super user} gets when the account is created (or its password is
+	 * reset).
+	 *
+	 * <p>
+	 * Without this secret, a random password is created and written to the log.
+	 * </p>
+	 */
+	public static final String INITIAL_PASSWORD_SECRET = "tl_initial_password";
 
 	/**
 	 * Creates a {@link PersonManager} from configuration.
@@ -310,8 +323,7 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 			Logger.info("No password setting for root user allowed.", PersonManager.class);
 			return;
 		}
-		String initialPassword =
-			Environment.getSystemPropertyOrEnvironmentVariable("tl_initial_password", null);
+		String initialPassword = SecretStoreService.lookupSecret(INITIAL_PASSWORD_SECRET);
 
 		String message;
 		if (initialPassword == null) {
@@ -319,7 +331,7 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 			message = "Initial password for '" + loginName + "': " + initialPassword;
 			Logger.info(message, PersonManager.class);
 		} else {
-			message = "Initial password for '" + loginName + "' set up from environment variable.";
+			message = "Initial password for '" + loginName + "' set up from the secret '" + INITIAL_PASSWORD_SECRET + "'.";
 			Logger.info(message, PersonManager.class);
 		}
 		TLContext.getContext().set(AbstractStartStopListener.PASSWORD_INITIALIZATION_MESSAGE, message);

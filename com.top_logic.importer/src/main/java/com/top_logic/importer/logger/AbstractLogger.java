@@ -15,6 +15,8 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.Resources;
 
 /**
+ * Base class for {@link ImportLogger}s writing formatted log texts.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public abstract class AbstractLogger implements ImportLogger{
@@ -25,6 +27,7 @@ public abstract class AbstractLogger implements ImportLogger{
         this.res = Resources.getInstance();
 	}
 	
+	/** Formats and logs a message of the given type. */
 	protected void log(String type, Object caller, ResKey key, Object... params) {
 		log(this.getLogText(type, ResKey.message(key, params), caller));
 	}
@@ -68,6 +71,7 @@ public abstract class AbstractLogger implements ImportLogger{
 	    log(INFO, caller, key, params);
 	}
 
+	/** Creates the log text with time stamp, type, thread, caller and message. */
 	protected String getLogText(String type, ResKey message, Object caller) {
 	    Date date = new Date();
 		String dateTime = HTMLFormatter.getInstance().formatDateTime(date);
@@ -89,6 +93,7 @@ public abstract class AbstractLogger implements ImportLogger{
 		return logText;
 	}
     
+    /** The {@link Resources} for translating messages. */
     protected Resources getRes() {
         return res;
     }
@@ -114,5 +119,6 @@ public abstract class AbstractLogger implements ImportLogger{
 	}
 	
 
+	/** Writes the given formatted log text. */
 	protected abstract void log(String stack);
 }

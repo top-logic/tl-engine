@@ -32,6 +32,7 @@ public class FirstLastLogger extends AbstractLogger{
 		skipped = false;
 	}
 
+	/** The first and the last logged messages, one per line. */
 	public String getString() {
 		
 		StringBuffer buf = new StringBuffer();

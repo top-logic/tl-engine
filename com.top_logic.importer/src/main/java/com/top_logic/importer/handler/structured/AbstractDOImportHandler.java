@@ -68,11 +68,13 @@ public abstract class AbstractDOImportHandler<C extends XMLFileImportParser.Mapp
         return this.type;
     }
 
+    /** The object of the {@link #getType() type} of this handler from the given current objects. */
     @SuppressWarnings("unchecked")
     protected O getCurrentObject(Map<String, Object> someObjects) {
         return (O) someObjects.get(this.getType());
     }
 
+    /** The command handler with the given ID. */
     @SuppressWarnings("unchecked")
     protected <T extends CommandHandler> T getCommandHandler(String aCommandID) {
         return (T) CommandHandlerFactory.getInstance().getHandler(aCommandID);

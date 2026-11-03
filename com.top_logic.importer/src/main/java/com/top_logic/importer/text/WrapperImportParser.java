@@ -20,6 +20,8 @@ import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.importer.excel.transformer.FastListElementTransformer;
 
 /**
+ * Collection of {@link TextImportParser}s creating references to business objects.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class WrapperImportParser {
@@ -31,6 +33,7 @@ public class WrapperImportParser {
      */
     public static class Person extends TextImportParser<com.top_logic.knowledge.wrap.person.Person> {
 
+        /** Configuration options for {@link Person}. */
         public interface Config extends TextImportParser.Config {
         }
 
@@ -51,20 +54,27 @@ public class WrapperImportParser {
      */
     public static class FastListElement extends TextImportParser<com.top_logic.knowledge.wrap.list.FastListElement> {
 
+        /** Configuration options for {@link FastListElement}. */
         public interface Config extends TextImportParser.Config {
+            /** Mapping of texts to names of classifiers. */
             @MapBinding(key="value",attribute="element")
             Map<String, String> getMappings();
             
+            /** Character separating several values in a text. */
             @CharDefault(',')
             char getSeparator();
             
+            /** Name of the classification to look up classifiers by their label. */
             String getListName();
 
+            /** Value to use, if the text cannot be resolved. */
             String getFallbackName();
 
+            /** Whether a value must be given. */
             @BooleanDefault(false)
             boolean isMandatory();
             
+            /** Whether to create a new classifier, if none with the given label exists. */
             @BooleanDefault(false)
             boolean isCreate();
         }
@@ -105,6 +115,7 @@ public class WrapperImportParser {
      */
     public abstract static class AbstractContact<T extends com.top_logic.contact.business.AbstractContact> extends TextImportParser<com.top_logic.contact.business.AbstractContact> {
 
+        /** Configuration options for {@link AbstractContact}. */
         public interface Config extends TextImportParser.Config {
 
             /** List of attributes to create a unique ID for the contact . */
@@ -143,11 +154,13 @@ public class WrapperImportParser {
 
         // Protected methods
 
+        /** Creates the list of all contacts of the type of this parser. */
         @SuppressWarnings("unchecked")
         protected List<T> createContactList() {
             return ContactFactory.getInstance().getAllContacts(this.type);
         }
 
+        /** The contact with the given ID, or {@code null}. */
         protected T getContact(String aName) {
             for (T theContact : this.getAllContacts()) {
                 if (aName.equals(this.getID(theContact))) {
@@ -158,6 +171,11 @@ public class WrapperImportParser {
             return null;
         }
 
+        /**
+         * Builds the ID of the given contact from its attributes.
+         *
+         * @see Config#getUID()
+         */
         protected String getID(T aContact) {
             StringBuilder theBuilder = null;
 
@@ -179,6 +197,7 @@ public class WrapperImportParser {
             return theBuilder.toString();
         }
 
+        /** All contacts of the type of this parser. */
         protected List<T> getAllContacts() {
             if (this.contacts == null) {
                 this.contacts = this.createContactList();

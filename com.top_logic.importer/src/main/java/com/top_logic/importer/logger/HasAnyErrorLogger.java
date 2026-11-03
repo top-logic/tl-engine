@@ -36,6 +36,7 @@ public class HasAnyErrorLogger implements ImportLogger {
     public void info(Object caller, ResKey key, Object... params) {
     }
 
+	/** Whether an error was logged. */
 	public boolean hasError(){
 		return technicalErrorLogged;
 	}

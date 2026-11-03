@@ -91,6 +91,20 @@ public abstract class AbstractImportParser implements ConfiguredInstance<Abstrac
 		return this.config;
 	}
 
+	/**
+	 * Reads and validates the given file.
+	 *
+	 * <p>
+	 * If the file can be read and a component is given, the read data and the logger are stored in
+	 * the component for the following import.
+	 * </p>
+	 *
+	 * @param aComponent
+	 *        The assistant component to store the read data in, may be {@code null}.
+	 * @param aFile
+	 *        The file to import.
+	 * @return The messages reported while reading the file.
+	 */
 	public List<ImportMessage> validateFile(AssistentComponent aComponent, BinaryData aFile) {
         ImportLogger theLogger = this.createLogger(aComponent);
 

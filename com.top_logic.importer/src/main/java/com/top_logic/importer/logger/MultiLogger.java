@@ -53,6 +53,7 @@ public class MultiLogger implements ImportLogger {
 		}
 	}
 
+	/** The first contained logger of the given type, or {@code null}. */
 	@SuppressWarnings("unchecked")
     public <T> T getLogger(Class<T> expectedType){
 		for(ImportLogger logger : loggers){
@@ -63,6 +64,7 @@ public class MultiLogger implements ImportLogger {
 		return null;
 	}
 	
+	/** Closes all contained {@link FileLogger}s. */
 	public void close(){
 		for(ImportLogger logger : loggers){
 			if(logger instanceof FileLogger){
@@ -71,14 +73,17 @@ public class MultiLogger implements ImportLogger {
 		}
 	}
 
+	/** Whether the contained {@link HasAnyErrorLogger} has logged an error. */
 	public boolean hasError() {
 		return this.getLogger(HasAnyErrorLogger.class).hasError();
 	}
 
+	/** Adds the given logger. */
 	public void add(ImportLogger logger) {
 		loggers.add(logger);
 	}
 
+	/** Removes the given logger. */
 	public void remove(ImportLogger logger) {
 		loggers.remove(logger);
 	}

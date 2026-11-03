@@ -24,14 +24,18 @@ import com.top_logic.knowledge.wrap.Wrapper;
  */
 public class CDataDOImportHandler<C extends CDataDOImportHandler.Config, O extends Wrapper> extends AbstractAttributedDOImportHandler<C, O> {
 
+    /** Configuration options for {@link CDataDOImportHandler}. */
     public interface Config extends AbstractAttributedDOImportHandler.Config {
 
+        /** Name of the attribute to store the text in. */
         @Mandatory
         String getKey();
 
+        /** Name of the attribute of the imported data containing the language of the text. */
         @StringDefault("Language")
         String getLanguageKey();
         
+        /** The language whose texts are imported. */
         @StringDefault("DE")
         String getLanguage();
     }
@@ -67,6 +71,10 @@ public class CDataDOImportHandler<C extends CDataDOImportHandler.Config, O exten
         }
     }
 
+    /**
+     * Stores the text of the given data object in the given attribute, if the data object has the
+     * given language.
+     */
     protected void setLanguageString(O anAttributed, DataObject aDO, String aKey, String aLanguage, StructureImportResult aResult) throws NoSuchAttributeException {
         String theLang = (String) aDO.getAttributeValue(this.languageKey);
 
@@ -76,6 +84,7 @@ public class CDataDOImportHandler<C extends CDataDOImportHandler.Config, O exten
         }
     }
 
+    /** The trimmed character data of the given data object. */
     protected String toString(DataObject aDO) throws NoSuchAttributeException {
         String theString = (String) aDO.getAttributeValue("_cdata");
 

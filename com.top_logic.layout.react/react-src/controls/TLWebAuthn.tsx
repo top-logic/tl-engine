@@ -50,6 +50,7 @@ interface WebAuthnState extends Record<string, unknown> {
   autoStart?: boolean;
   disabled?: boolean;
   tooltip?: string | null;
+  hidden?: boolean;
 }
 
 /**
@@ -85,6 +86,11 @@ interface WebAuthnState extends Record<string, unknown> {
  * when the component is mounted. Shortly before options with a `publicKey.timeout` expire, the
  * component asks with the command `refresh` for fresh ones, unless a ceremony runs. Unmounted
  * during a ceremony, the component aborts it.</p>
+ *
+ * <p>A hidden button (`hidden`) renders nothing, so that its place in the container collapses, also
+ * where it is rendered as a child of another control rather than at a mount point of its own. While
+ * hidden, it reports nothing, starts no ceremony and asks for no fresh options; the origin of the
+ * page and a page that cannot run a ceremony are reported once it is shown.</p>
  */
 const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<WebAuthnState>();
@@ -102,9 +108,10 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
   const kind: WebAuthnKind = state.kind === KIND_CREATE ? KIND_CREATE : KIND_GET;
   const options = state.options ?? null;
   const disabled = state.disabled === true || options === null || unavailable !== null;
+  const hidden = state.hidden === true;
 
   const start = React.useCallback(() => {
-    if (runningRef.current || options === null) {
+    if (runningRef.current || options === null || hidden) {
       return;
     }
     const controller = new AbortController();
@@ -131,15 +138,20 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
         setRunning(false);
       }
     });
-  }, [kind, options, sendCommand]);
+  }, [kind, options, hidden, sendCommand]);
 
-  // The origin of the page, and a page that cannot run a ceremony: reported once, when mounted.
+  // The origin of the page, and a page that cannot run a ceremony: reported once, when first shown.
+  const reportedRef = React.useRef(false);
   React.useEffect(() => {
+    if (hidden || reportedRef.current) {
+      return;
+    }
+    reportedRef.current = true;
     sendCommand(CMD_ORIGIN, { [ARG_ORIGIN]: window.location.origin });
     if (unavailable !== null) {
       sendCommand(CMD_UNAVAILABLE, { [ARG_ERROR_NAME]: unavailable.name, [ARG_MESSAGE]: unavailable.message });
     }
-  }, [unavailable, sendCommand]);
+  }, [hidden, unavailable, sendCommand]);
 
   // When the current options arrived, as the start of their timeout.
   const receivedRef = React.useRef<{ options: string | null; at: number }>({ options, at: Date.now() });
@@ -148,7 +160,7 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   // Fresh options shortly before the current ones expire, not while a ceremony runs.
-  const refreshable = !running && !disabled;
+  const refreshable = !running && !disabled && !hidden;
   React.useEffect(() => {
     if (!refreshable) {
       return undefined;
@@ -156,8 +168,8 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
     return watchExpiry(options, receivedRef.current.at, () => sendCommand(CMD_REFRESH));
   }, [options, refreshable, sendCommand]);
 
-  // Automatic start: once, when mounted.
-  const autoStartRef = React.useRef(state.autoStart === true && !disabled);
+  // Automatic start: once, when mounted shown.
+  const autoStartRef = React.useRef(state.autoStart === true && !disabled && !hidden);
   React.useEffect(() => {
     if (autoStartRef.current) {
       autoStartRef.current = false;
@@ -179,6 +191,13 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
   const display: ButtonStateJson.DisplayMode = !state.image
     ? 'label-only'
     : defaults.iconOnly && appearance !== 'menu-item' ? 'icon-only' : 'icon-label';
+
+  // A hidden button renders nothing: its empty place (e.g. an item of a form grid) can then
+  // collapse, so it leaves no gap between its visible neighbors. The hooks above stay in effect and
+  // do nothing while hidden.
+  if (hidden) {
+    return null;
+  }
 
   return (
     <Button

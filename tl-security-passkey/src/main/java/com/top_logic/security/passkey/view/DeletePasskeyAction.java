@@ -25,6 +25,8 @@ import com.top_logic.layout.view.login.DisableMfaAction;
 import com.top_logic.layout.view.login.SecondFactor;
 import com.top_logic.layout.view.login.SecondFactorStep;
 import com.top_logic.security.passkey.PasskeyCredentialRepository;
+import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 import com.top_logic.security.passkey.model.Passkey;
 import com.top_logic.security.passkey.model.TlSecurityPasskeyFactory;
 import com.top_logic.tool.execution.ExecutableState;
@@ -40,6 +42,8 @@ import com.top_logic.util.error.TopLogicException;
  * only second factor either: the deletion is refused unless the account keeps another passkey or
  * another {@link SecondFactorStep#configured() configured} method of the login it has set up, e.g.
  * an authenticator app. A command with this action is disabled for such a passkey and tells why.
+ * If the passkeys of the application log in by themselves ({@link PasskeyUsage#LOGIN}), they are
+ * no second factor, and every passkey may be deleted.
  * </p>
  *
  * <p>
@@ -152,11 +156,15 @@ public class DeletePasskeyAction extends DeleteObjectAction {
 	 * @param methods
 	 *        The second factor methods of the login. Methods for passkeys are not asked: whether
 	 *        the account keeps a passkey is decided by its passkeys other than the given one.
-	 * @return The reason shown to the user if the passkey is the last second factor of an account
-	 *         that is {@link MfaRequirement#REQUIRED required} to use one, <code>null</code>
+	 * @return The reason shown to the user if the passkeys of the application are second factors
+	 *         ({@link PasskeyUsage#SECOND_FACTOR}) and the passkey is the last second factor of an
+	 *         account that is {@link MfaRequirement#REQUIRED required} to use one, <code>null</code>
 	 *         otherwise.
 	 */
 	public static ResKey refusal(Passkey passkey, List<? extends SecondFactor> methods) {
+		if (PasskeyService.getInstance().getUsage() != PasskeyUsage.SECOND_FACTOR) {
+			return null;
+		}
 		Person account = PasskeyCredentialRepository.getOwner(passkey);
 		if (account == null || account.getMFARequirement() != MfaRequirement.REQUIRED) {
 			return null;

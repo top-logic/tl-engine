@@ -15,6 +15,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
+import test.com.top_logic.security.passkey.PasskeyTestHost;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -28,6 +29,7 @@ import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 import com.top_logic.security.passkey.view.PasskeyFunctions;
 import com.top_logic.util.model.ModelService;
 
@@ -46,14 +48,17 @@ public class TestPasskeyFunctions extends BasicTestCase {
 			}
 		}
 		_accounts.clear();
+		PasskeyTestHost.use(PasskeyUsage.LOGIN);
 		super.tearDown();
 	}
 
 	/**
-	 * <code>passkeyMayUse()</code> is true for an account with a second factor, false for an
-	 * account whose second factor is disabled and for the anonymous account.
+	 * <code>passkeyMayUse()</code> with passkeys as second factor: true for an account with a
+	 * second factor, false for an account whose second factor is disabled and for the anonymous
+	 * account.
 	 */
 	public void testMayUse() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		QueryExecutor mayUse = compile("a -> passkeyMayUse($a)");
 
 		Person account = TestPerson.createPerson("functionsMayUse");
@@ -65,6 +70,25 @@ public class TestPasskeyFunctions extends BasicTestCase {
 			tx.commit();
 		}
 		assertEquals(Boolean.FALSE, mayUse.execute(account));
+
+		assertEquals(Boolean.FALSE, mayUse.execute(PersonManager.getManager().getAnonymous()));
+	}
+
+	/**
+	 * <code>passkeyMayUse()</code> with passkeys that log in by themselves: true also for an
+	 * account whose second factor is disabled, false for the anonymous account.
+	 */
+	public void testMayUseForLogin() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.LOGIN);
+		QueryExecutor mayUse = compile("a -> passkeyMayUse($a)");
+
+		Person account = TestPerson.createPerson("functionsMayUseLogin");
+		_accounts.add(account);
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Disable MFA"))) {
+			account.setMFARequirement(MfaRequirement.DISABLED);
+			tx.commit();
+		}
+		assertEquals(Boolean.TRUE, mayUse.execute(account));
 
 		assertEquals(Boolean.FALSE, mayUse.execute(PersonManager.getManager().getAnonymous()));
 	}

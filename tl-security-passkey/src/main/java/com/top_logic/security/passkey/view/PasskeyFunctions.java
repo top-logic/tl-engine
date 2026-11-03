@@ -27,8 +27,9 @@ public class PasskeyFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * This is how a view offers the creation of a passkey only to an account that may have one:
-	 * <code>passkeyMayUse(currentUser())</code>. Neither the anonymous account nor an account whose
-	 * second factor is switched off for good may create one.
+	 * <code>passkeyMayUse(currentUser())</code>. The anonymous account never may create one. If
+	 * the passkeys of the application log in by themselves, every other account may; if they are
+	 * second factors, an account whose second factor is switched off for good may not.
 	 * </p>
 	 *
 	 * @param account

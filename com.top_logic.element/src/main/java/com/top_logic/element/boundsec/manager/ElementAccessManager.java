@@ -651,6 +651,10 @@ public class ElementAccessManager extends AccessManager {
 
 	@Override
 	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
+		if (!object.tValid()) {
+			// A deleted object has no security parents.
+			return Collections.emptyList();
+		}
 		Set<TLObject> out = new HashSet<>();
 		if (object.tType() instanceof TLClass type) {
 			getRoleParentRules(type).forEach(rule -> rule.getContent(object, out));

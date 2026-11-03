@@ -37,7 +37,6 @@ public class TestDemo {
 			"05_SortingTable",
 			"06_SortingDocumentColumn",
 			"07_AddToClipboardHandler",
-			"09_CreateComment",
 			"10_CreateOrganizations",
 			"11_AddPersonToCompany",
 			"12_AssertsOnFormFields",

@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.layout.AbstractEditContactComponent;
-import com.top_logic.contact.mandatoraware.COSPersonContact;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
@@ -225,7 +224,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
                 Person thePerson = ((PersonContact) aModel).getPerson();
 
                 if (thePerson != null) {
-                    theResult = COSPersonContact.getRepresentations(thePerson);
+                    theResult = getRepresentations(thePerson);
                 }
             }
             catch (Exception ex) {
@@ -234,4 +233,21 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
         }
         return theResult;
     }
+
+	/**
+	 * The contacts of the persons the given person is a representative for.
+	 */
+	private static List<PersonContact> getRepresentations(Person person) {
+		List<PersonContact> result = new ArrayList<>();
+		for (Group group : Group.getGroups(person, false, true)) {
+			if (group.isRepresentativeGroup()) {
+				Person represented = (Person) group.getBoundObject();
+				PersonContact contact = ContactFactory.getInstance().getContactForPerson(represented);
+				if (contact != null && !result.contains(contact)) {
+					result.add(contact);
+				}
+			}
+		}
+		return result;
+	}
 }

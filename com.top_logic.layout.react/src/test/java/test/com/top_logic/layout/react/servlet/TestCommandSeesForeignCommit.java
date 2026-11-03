@@ -50,7 +50,8 @@ import com.top_logic.util.TLContext;
 
 /**
  * Tests that a command posted to {@link ReactServlet} sees the commits other threads made since
- * the last request of its window.
+ * the last request of its window, and that a command ending its own session is answered as a
+ * stale window.
  */
 public class TestCommandSeesForeignCommit extends BasicTestCase {
 
@@ -73,6 +74,9 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 
 	private HttpSession _session;
 
+	/** The ID of {@link #_session}, which an ended session no longer tells. */
+	private String _sessionId;
+
 	private Person _person;
 
 	@Override
@@ -84,18 +88,20 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 		_client = _runner.newClient();
 		_person = createPerson();
 		_session = login(_person);
+		_sessionId = _session.getId();
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		TLSubSessionContext subSession = sessionContext().getSubSession(WINDOW);
-		ReactWindowRegistry registry = ReactWindowRegistry.forSession(_session);
+		// A test may have ended the session, and its windows with it.
+		TLSubSessionContext subSession = isValid(_session) ? sessionContext().getSubSession(WINDOW) : null;
 		if (subSession != null) {
+			ReactWindowRegistry registry = ReactWindowRegistry.forSession(_session);
 			ThreadContextManager.inContext(subSession, () -> registry.windowClosed(WINDOW));
 		}
 		// Cleans up in a context of its own, whatever the requests served in the test thread left.
 		ThreadContext.inSystemContext(TestCommandSeesForeignCommit.class, () -> {
-			SessionService.getInstance().terminateSession(_session.getId());
+			SessionService.getInstance().terminateSession(_sessionId);
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			try (Transaction tx = kb.beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 				_person.tDelete();
@@ -136,6 +142,38 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 		assertEquals("The command must see the commit of the other thread.", changed, seen.get());
 	}
 
+	/**
+	 * A command that ends the session of its window while it runs is answered as a stale window,
+	 * not as an internal error.
+	 */
+	public void testCommandEndingItsSessionAnswersStaleUi() throws Exception {
+		displayWindow(new ReactCommandTarget() {
+			@Override
+			public String getID() {
+				return CONTROL_ID;
+			}
+
+			@Override
+			public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+				// E.g. the command removed the account of the user, and with it all of its sessions.
+				ThreadContext.inSystemContext(TestCommandSeesForeignCommit.class,
+					() -> SessionService.getInstance().terminateSession(_sessionId));
+				// Whatever reads the session afterwards fails.
+				_session.getAttribute(WINDOW);
+				return HandlerResult.DEFAULT_RESULT;
+			}
+		});
+
+		// Read the body of the error answer instead of failing on its status.
+		_client.setExceptionsThrownOnErrorStatus(false);
+		InvocationContext invocation = postCommand();
+		assertEquals(HttpServletResponse.SC_UNAUTHORIZED, invocation.getResponse().getStatus());
+		String body = new String(invocation.getServletResponse().getInputStream().readAllBytes(),
+			StandardCharsets.UTF_8);
+		assertTrue("The answer must name the stale window: " + body,
+			body.contains("\"errorCode\":\"" + ReactServlet.ERROR_CODE_STALE_UI + "\""));
+	}
+
 	private InvocationContext postCommand() throws Exception {
 		String body = JSON.toString(Map.of(
 			"controlId", CONTROL_ID,
@@ -169,6 +207,15 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 	private <T> T inWindow(Supplier<T> action) {
 		TLSubSessionContext subSession = sessionContext().getSubSession(WINDOW);
 		return ThreadContextManager.inContext(subSession, action::get);
+	}
+
+	private static boolean isValid(HttpSession session) {
+		try {
+			session.getCreationTime();
+			return true;
+		} catch (IllegalStateException ex) {
+			return false;
+		}
 	}
 
 	private TLSessionContext sessionContext() {

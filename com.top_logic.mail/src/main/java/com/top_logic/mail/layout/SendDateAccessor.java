@@ -15,6 +15,7 @@ import com.top_logic.mail.base.Mail;
  */
 public class SendDateAccessor extends ReadOnlyAccessor<Object> {
 
+	/** Name of the property providing the send date. */
 	public static final String SEND_DATE = "sendDate";
 
 	@Override

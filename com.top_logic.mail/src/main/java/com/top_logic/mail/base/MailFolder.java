@@ -23,7 +23,7 @@ public interface MailFolder extends ContainerWrapper {
     /** The type of KO wrapped by this class */
     public static final String OBJECT_NAME = "MailFolder";
 
-    /** Name of the association to the parent element (e.g. WebFolder). */
+    /** Name of the association to the parent element (e.g. a web folder). */
     public static final String PARENT_LINK = "hasMailBox";
 
     /** The name of the mail (subject). */

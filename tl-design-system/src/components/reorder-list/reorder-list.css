@@ -1,0 +1,115 @@
+/* Umsortierbare Liste — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W11), 3b §8.
+   ul.tl-reorder-list > li.tl-reorder-list__item: vorn der Griff (tl-reorder-list__handle, ein
+   tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter die
+   Beschriftung und rechts Schloss und Auge (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
+   oder Fokus (Spec 2026-10-12, #29825) über tl-reveal-on-hover (layout.css, Spec 5d §6). Die Ziehen-Optik zeichnet
+   drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
+   hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
+   Suche bleibt stehen, nur die Liste scrollt, und die Höhe gibt der Behälter (Sichtprüfung 12.10.). */
+
+.tl-reorder-list {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--tl-size-popover-max);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.tl-reorder-list[hidden] { display: none; }
+
+/* Mit Suche davor füllen Suche und Liste den Behälter, der sie trägt (die Spaltenwahl: ein Fenster mit
+   fester Höhe): eine Spalte mit Innenabstand, damit der Fokusring der Suche ganz zu sehen ist; die
+   Liste nimmt den Rest und scrollt allein. Vorher war die Liste fest size-popover-max hoch und lief im
+   kleineren Fensterkörper über — zwei Scrollbereiche ineinander, die Suche scrollte weg (12.10.).
+   Weniger Treffer lassen die Liste leer auslaufen; die Höhe hält der Behälter. */
+:where(:has(> .tl-reorder-list__search)) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding: var(--tl-space-md) var(--tl-space-md) 0;
+}
+
+.tl-reorder-list__search ~ .tl-reorder-list {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+.tl-reorder-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-row);
+  padding: 0 var(--tl-space-control-x);
+}
+.tl-reorder-list__item[hidden] { display: none; }
+
+/* In :where wie jede Fläche eines Ablage-Ziels (drag.css übermalt sie). */
+:where(.tl-reorder-list__item:hover) {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-reorder-list__handle {
+  color: var(--tl-icon-secondary);
+  cursor: grab;
+}
+
+.tl-reorder-list__handle:active {
+  cursor: grabbing;
+}
+
+.tl-reorder-list__handle:focus-visible,
+.tl-reorder-list__actions > .tl-button:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Die Beschriftung nimmt den Rest der Zeile und endet mit Ellipse. */
+.tl-reorder-list__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Rechts am Ende der Zeile: Schloss (fixieren) und Auge (aus- und einblenden). Ihre Plätze sind immer reserviert,
+   damit die Zeile beim Zeigen nicht springt. */
+.tl-reorder-list__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  margin-inline-start: auto;
+}
+
+/* Gesetzte Zustände bleiben zu sehen, auch ohne Zeigen (tl-reveal-on-hover verbirgt sie sonst): das Auge einer
+   ausgeblendeten, das Schloss einer fixierten Spalte. */
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
+.tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
+  opacity: 1;
+}
+
+/* Ausgeblendet: die Spalte behält ihren Platz, ihr Name tritt zurück. Der Eintrag bleibt bedienbar — die
+   WCAG-Ausnahme für text-disabled gilt nur für inaktive Elemente, darum text-secondary; das zugeklappte Auge trägt
+   den Zustand mit. */
+.tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label {
+  color: var(--tl-text-secondary);
+}
+
+/* Der Block „Fixiert“: eine Überschrift davor, eine Linie unter seinem letzten Eintrag. */
+.tl-reorder-list__section {
+  padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
+  color: var(--tl-text-secondary);
+}
+
+.tl-reorder-list__item[data-tl-state~="section-end"] {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Die Suche ab elf Einträgen steht vor der Liste: eine tl-field-group mit Lupe; der Abstand sitzt an
+   der Gruppe, nicht am Feld (wie im Select-Popup). */
+.tl-reorder-list__search {
+  margin-bottom: var(--tl-space-xs);
+}

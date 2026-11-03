@@ -8,8 +8,11 @@ package com.top_logic.layout.form.format;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.util.List;
 import java.util.Objects;
 
+import org.commonmark.Extension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -19,11 +22,27 @@ import com.top_logic.basic.xml.TagWriter;
 /**
  * Service class to handle String values in <i>CommonMark</i> syntax.
  * 
+ * <p>
+ * Besides plain <i>CommonMark</i>, tables in the syntax of <i>GitHub Flavored Markdown</i> are
+ * rendered as HTML tables.
+ * </p>
+ * 
  * @see "https://commonmark.org/"
+ * @see "https://github.github.com/gfm/#tables-extension-"
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class CommonMark {
+
+	/**
+	 * The syntax extensions understood in addition to plain <i>CommonMark</i>.
+	 */
+	private static final List<Extension> EXTENSIONS = List.of(TablesExtension.create());
+
+	/**
+	 * The parser is thread-safe and can be shared.
+	 */
+	private static final Parser PARSER = Parser.builder().extensions(EXTENSIONS).build();
 
 	/**
 	 * Renders a {@link String} in common mark syntax to an HTML fragment.
@@ -80,12 +99,9 @@ public class CommonMark {
 	public static void writeCommonMark(TagWriter out, String value, boolean escapeHTML) throws IOException {
 		Objects.requireNonNull(value, "Given value must not be null.");
 
-		Parser parser = Parser
-			.builder()
-			.build();
 		Node node;
 		try {
-			node = parser.parse(value);
+			node = PARSER.parse(value);
 		} catch (RuntimeException ex) {
 			// Value could not be parsed
 			out.writeText(value);
@@ -93,6 +109,7 @@ public class CommonMark {
 		}
 		HtmlRenderer renderer = HtmlRenderer
 			.builder()
+			.extensions(EXTENSIONS)
 			.escapeHtml(escapeHTML)
 			.sanitizeUrls(true)
 			.build();

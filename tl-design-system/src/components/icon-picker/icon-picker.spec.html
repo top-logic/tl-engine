@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Icon-Picker</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Icon-Picker</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Feldknopf: gewählt, leer, Fehler</p>
+    <button type="button" class="tl-swatch" aria-label="Icon wählen"><i class="bi bi-star"></i></button>
+    <button type="button" class="tl-swatch" data-tl-state="empty" aria-label="Kein Icon"><i class="bi bi-grid"></i></button>
+    <button type="button" class="tl-swatch" aria-invalid="true" aria-required="true" aria-label="Icon, ungültig"><i class="bi bi-star"></i></button>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Raster mit gewählter Zelle, ein Tab-Halt</p>
+    <div class="tl-icon-picker__grid" role="listbox" aria-label="Icons">
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="house"><i class="bi tl-icon-md bi-house"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="gear"><i class="bi tl-icon-md bi-gear"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="true" tabindex="0" aria-label="star"><i class="bi tl-icon-md bi-star"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="person"><i class="bi tl-icon-md bi-person"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="envelope"><i class="bi tl-icon-md bi-envelope"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="trash"><i class="bi tl-icon-md bi-trash"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="pencil"><i class="bi tl-icon-md bi-pencil"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="search"><i class="bi tl-icon-md bi-search"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="bell"><i class="bi tl-icon-md bi-bell"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="calendar"><i class="bi tl-icon-md bi-calendar"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="folder"><i class="bi tl-icon-md bi-folder"></i></div>
+      <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="heart"><i class="bi tl-icon-md bi-heart"></i></div>
+    </div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Laden, keine Treffer, Fehler (tl-status)</p>
+    <div class="tl-status tl-type-body" role="status"><span class="tl-spinner" role="progressbar" aria-label="Icons laden"></span><span>Icons laden</span></div>
+    <div class="tl-status tl-type-body" role="status">Keine Treffer</div>
+    <div class="tl-status tl-type-body" role="alert">Die Icons konnten nicht geladen werden. <button type="button" class="tl-button tl-button--link">Erneut laden</button></div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Erweitert: Klasse und Vorschau</p>
+    <div class="tl-icon-picker__advanced">
+      <label class="tl-type-label">Klasse <input class="tl-field" value="bi bi-star"></label>
+      <div class="tl-icon-picker__preview"><span class="tl-type-label">Vorschau</span><i class="bi bi-star"></i></div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Das ganze Popup: Reiter, Filter, Raster (scrollt), Aktionen — focus-clip misst es mit</p>
+    <div class="tl-popover tl-picker tl-icon-picker" role="dialog" aria-label="Icon wählen">
+      <div class="tl-tabs tl-picker__tabs">
+        <div class="tl-tabs__list" role="tablist">
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="ip-t1" aria-selected="true" aria-controls="ip-p1" tabindex="0">Einfach</button>
+          <button type="button" class="tl-tabs__tab tl-type-body" role="tab" id="ip-t2" aria-selected="false" aria-controls="ip-p2" tabindex="-1">Erweitert</button>
+        </div>
+        <div class="tl-tabs__panel" role="tabpanel" id="ip-p1" aria-labelledby="ip-t1">
+          <div class="tl-icon-picker__filter"><input class="tl-field" aria-label="Filter" placeholder="Filtern"></div>
+          <div class="tl-icon-picker__grid" role="listbox" aria-label="Alle Icons">
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="house 1"><i class="bi tl-icon-md bi-house"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="gear 1"><i class="bi tl-icon-md bi-gear"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="true" tabindex="0" aria-label="star 1"><i class="bi tl-icon-md bi-star"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="person 1"><i class="bi tl-icon-md bi-person"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="envelope 1"><i class="bi tl-icon-md bi-envelope"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="trash 1"><i class="bi tl-icon-md bi-trash"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="pencil 1"><i class="bi tl-icon-md bi-pencil"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="search 1"><i class="bi tl-icon-md bi-search"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="bell 1"><i class="bi tl-icon-md bi-bell"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="calendar 1"><i class="bi tl-icon-md bi-calendar"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="folder 1"><i class="bi tl-icon-md bi-folder"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="heart 1"><i class="bi tl-icon-md bi-heart"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="house 2"><i class="bi tl-icon-md bi-house"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="gear 2"><i class="bi tl-icon-md bi-gear"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="star 2"><i class="bi tl-icon-md bi-star"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="person 2"><i class="bi tl-icon-md bi-person"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="envelope 2"><i class="bi tl-icon-md bi-envelope"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="trash 2"><i class="bi tl-icon-md bi-trash"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="pencil 2"><i class="bi tl-icon-md bi-pencil"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="search 2"><i class="bi tl-icon-md bi-search"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="bell 2"><i class="bi tl-icon-md bi-bell"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="calendar 2"><i class="bi tl-icon-md bi-calendar"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="folder 2"><i class="bi tl-icon-md bi-folder"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="heart 2"><i class="bi tl-icon-md bi-heart"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="house 3"><i class="bi tl-icon-md bi-house"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="gear 3"><i class="bi tl-icon-md bi-gear"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="star 3"><i class="bi tl-icon-md bi-star"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="person 3"><i class="bi tl-icon-md bi-person"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="envelope 3"><i class="bi tl-icon-md bi-envelope"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="trash 3"><i class="bi tl-icon-md bi-trash"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="pencil 3"><i class="bi tl-icon-md bi-pencil"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="search 3"><i class="bi tl-icon-md bi-search"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="bell 3"><i class="bi tl-icon-md bi-bell"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="calendar 3"><i class="bi tl-icon-md bi-calendar"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="folder 3"><i class="bi tl-icon-md bi-folder"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="heart 3"><i class="bi tl-icon-md bi-heart"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="house 4"><i class="bi tl-icon-md bi-house"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="gear 4"><i class="bi tl-icon-md bi-gear"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="star 4"><i class="bi tl-icon-md bi-star"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="person 4"><i class="bi tl-icon-md bi-person"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="envelope 4"><i class="bi tl-icon-md bi-envelope"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="trash 4"><i class="bi tl-icon-md bi-trash"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="pencil 4"><i class="bi tl-icon-md bi-pencil"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="search 4"><i class="bi tl-icon-md bi-search"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="bell 4"><i class="bi tl-icon-md bi-bell"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="calendar 4"><i class="bi tl-icon-md bi-calendar"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="folder 4"><i class="bi tl-icon-md bi-folder"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="heart 4"><i class="bi tl-icon-md bi-heart"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="house 5"><i class="bi tl-icon-md bi-house"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="gear 5"><i class="bi tl-icon-md bi-gear"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="star 5"><i class="bi tl-icon-md bi-star"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="person 5"><i class="bi tl-icon-md bi-person"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="envelope 5"><i class="bi tl-icon-md bi-envelope"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="trash 5"><i class="bi tl-icon-md bi-trash"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="pencil 5"><i class="bi tl-icon-md bi-pencil"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="search 5"><i class="bi tl-icon-md bi-search"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="bell 5"><i class="bi tl-icon-md bi-bell"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="calendar 5"><i class="bi tl-icon-md bi-calendar"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="folder 5"><i class="bi tl-icon-md bi-folder"></i></div>
+        <div class="tl-icon-picker__cell" role="option" aria-selected="false" tabindex="-1" aria-label="heart 5"><i class="bi tl-icon-md bi-heart"></i></div>
+          </div>
+        </div>
+        <div class="tl-tabs__panel" role="tabpanel" id="ip-p2" aria-labelledby="ip-t2" hidden><p class="tl-type-body">Klasse und Vorschau.</p></div>
+      </div>
+      <div class="tl-button-bar tl-picker__actions">
+        <button type="button" class="tl-button tl-button--ghost tl-button--danger">Leeren</button>
+        <button type="button" class="tl-button tl-button--secondary">Abbrechen</button>
+        <button type="button" class="tl-button tl-button--primary">OK</button>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

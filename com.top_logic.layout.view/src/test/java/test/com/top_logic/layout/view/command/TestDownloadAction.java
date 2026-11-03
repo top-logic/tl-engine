@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.command;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ActionArguments;
@@ -89,6 +91,42 @@ public class TestDownloadAction extends TestCase {
 		assertEquals("tickets.txt", delivered.getName());
 		assertEquals("text/plain", delivered.getContentType());
 		assertEquals("content", new String(delivered.getStream().readAllBytes(), StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * Tests that a file given as a mere {@link BinaryDataSource} - written on demand, as an export
+	 * produces it - is delivered under its name with its content.
+	 */
+	public void testDeliversDataSource() throws IOException {
+		BinaryDataSource source = new BinaryDataSource() {
+			@Override
+			public String getName() {
+				return "objects.xml";
+			}
+
+			@Override
+			public long getSize() {
+				return -1;
+			}
+
+			@Override
+			public String getContentType() {
+				return "text/xml";
+			}
+
+			@Override
+			public void deliverTo(OutputStream out) throws IOException {
+				out.write("<objects/>".getBytes(StandardCharsets.UTF_8));
+			}
+		};
+
+		Object result = run(new DownloadAction(null), context(), source);
+
+		assertSame("The chain continues with the file.", source, result);
+		BinaryData delivered = _window._delivered.get(0);
+		assertEquals("objects.xml", delivered.getName());
+		assertEquals("text/xml", delivered.getContentType());
+		assertEquals("<objects/>", new String(delivered.getStream().readAllBytes(), StandardCharsets.UTF_8));
 	}
 
 	/**

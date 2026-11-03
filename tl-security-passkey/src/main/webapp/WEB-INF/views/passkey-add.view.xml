@@ -7,7 +7,7 @@
 	A dialog of its own because the browser asks the authenticator for a new passkey only in
 	answer to a click of the user, and the click that opened this dialog was spent on the password.
 	The passkey is created for the account that is logged in, whatever the dialog is opened with.
-	Once it is stored, the dialog closes; the table it was opened from shows the new passkey.
+	Once it is stored, the dialog closes; the list it was opened from shows the new passkey.
 -->
 <view>
 	<window

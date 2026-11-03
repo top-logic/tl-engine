@@ -60,7 +60,6 @@
 
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
-				<group-mapper class="com.top_logic.contact.boundsec.manager.rule.ContactGroupMapper"/>
 				<security-parents>
 					<rule
 						id="SecRootForCompanyContact"

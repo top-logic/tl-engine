@@ -109,6 +109,12 @@ public class LoginAction implements ViewAction {
 	/** Dialog channel carrying the QR-code image shown during MFA enrollment. */
 	public static final String QR_CHANNEL = "qr";
 
+	/**
+	 * Dialog channel carrying the freshly generated TOTP secret as plain text, for entering it into
+	 * an authenticator app by hand during MFA enrollment.
+	 */
+	public static final String SECRET_TEXT_CHANNEL = "secret-text";
+
 	/** Name of the transient model type holding the OTP form input. */
 	public static final String OTP_ENTRY_TYPE = "tl.login:OtpEntry";
 

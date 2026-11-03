@@ -122,7 +122,7 @@ import com.top_logic.util.TLContext;
  * @param <C>
  *        The type of the configuration.
  *
- * @implNote {@link #tableId()} derives the {@link TableId} from
+ * @implNote {@link #tableId(RowTypes)} derives the {@link TableId} from
  *           {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()} when one is
  *           configured, and from the structural signature otherwise.
  */
@@ -147,6 +147,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getTypes()}. */
 		String TYPES = "types";
+
+		/** Configuration name for {@link #getTypesExpr()}. */
+		String TYPES_EXPR = "types-expr";
 
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
@@ -191,10 +194,52 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
 		 * labels from the model attributes. When unset, the type is derived from the first
 		 * row.
+		 *
+		 * <p>
+		 * The first type is the row type: the columns are resolved against it, and a table
+		 * declaring no columns shows its main properties. The attributes of all types that no
+		 * displayed column covers are offered in the column selection. The types are part of the
+		 * table's identity, under which its personalization is stored.
+		 * </p>
+		 *
+		 * <p>
+		 * Where the types are only known at runtime, {@link #getTypesExpr()} computes them
+		 * instead; a table declares at most one of the two.
+		 * </p>
 		 */
 		@Name(TYPES)
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getTypes();
+
+		/**
+		 * TL-Script expression computing the {@link #getTypes() types} of the row objects from the
+		 * {@link #getInputs() inputs}: a model type, a collection of model types, or nothing.
+		 *
+		 * <p>
+		 * The computed types mean exactly what the same types configured in {@link #getTypes()}
+		 * mean: the first is the row type, the attributes of all of them are offered in the column
+		 * selection, and the table's identity, under which its personalization is stored, is built
+		 * from their names - with a {@link #getPersonalizationKey() personalization key}, too - so
+		 * the column choices of the user are kept per type. A result of nothing means no types, as
+		 * an unset {@link #getTypes()} does.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their {@code as} names, e.g. {@code inputs="selectedType as type"} with
+		 * {@code types-expr="$type"}. It is evaluated once, when the table is built: a change of an
+		 * input changes the rows, but not the types of a table built before. To follow a changing
+		 * type, place the table in a {@code <switch rebuild="true">} over the input, which builds
+		 * it again for every value.
+		 * </p>
+		 *
+		 * <p>
+		 * A table declares at most one of {@link #getTypes()} and this expression.
+		 * </p>
+		 */
+		@Name(TYPES_EXPR)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getTypesExpr();
 
 		/**
 		 * The columns to display, in display order.
@@ -731,6 +776,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/** The instantiated {@link Config#getExport()} command, {@code null} for a table not exported. */
 	private final TableExportCommand _export;
 
+	/** The compiled {@link Config#getTypesExpr()}, {@code null} for a table with fixed types. */
+	private final QueryExecutor _typesExpr;
+
 	/**
 	 * A {@link PresetConfig} with its criterion expressions compiled.
 	 *
@@ -798,6 +846,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		TableExportCommand.Config export = config.getExport();
 		_export = export == null ? null : new TableExportCommand(export);
+
+		_typesExpr = InputScript.compile(config, Config.TYPES_EXPR);
+		if (_typesExpr != null && !config.getTypes().isEmpty()) {
+			context.error("A <" + tagName() + "> states its types either as fixed types ('" + Config.TYPES
+				+ "') or by an expression ('" + Config.TYPES_EXPR + "'), not both.");
+		}
 	}
 
 	/**
@@ -820,7 +874,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * Binds the selection of a table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
 	 * to its {@link Config#getSelection() selection channel}.
 	 *
 	 * @param <B>
@@ -853,7 +907,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * A read-only table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
@@ -865,6 +919,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The table view the control displays.
 	 * @param source
 	 *        The row source of the view.
+	 * @param tableId
+	 *        The {@link #tableId(RowTypes) identity} of the table.
 	 * @param columns
 	 *        All columns of the table.
 	 * @param declaredNames
@@ -875,7 +931,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The descriptors of the declared columns.
 	 */
 	protected record ReadOnlyTable<S extends RowSource<Object>, B>(TableViewControl<Object> control,
-			DefaultTableView<Object> view, S source, List<Column<Object, ?>> columns, List<String> declaredNames,
+			DefaultTableView<Object> view, S source, TableId tableId, List<Column<Object, ?>> columns,
+			List<String> declaredNames,
 			B selectionBinding, List<ColumnSetup> setups) {
 		// Pure data.
 	}
@@ -885,6 +942,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * personalization and the presets, and the control displaying it, with the selection, the filter
 	 * channels, the activation and the dragging and dropping of rows wired.
 	 *
+	 * @param types
+	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
 	 * @param rowType
 	 *        The model type of the rows, {@code null} when it is unknown.
 	 * @param inputValues
@@ -906,13 +965,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        channel}, if one is configured.
 	 */
 	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
-			TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
+			RowTypes types, TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
 			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
 			SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
-		List<ColumnDeclaration> declarations = columns(rowType);
+		List<ColumnDeclaration> declarations = columns(types, rowType);
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
+		TableId tableId = tableId(types);
 		List<ColumnSetup> setups =
 			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
 		// The activation button and the cells edited in place reach the table control through
@@ -930,8 +990,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		initialState.setGrouping(grouping);
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
-			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
-			declaredFilters(columns, declaredNames, inputValues), filterStore(), _initialFilter);
+			PersonalConfigViewStateStore.INSTANCE, tableId, hiddenByDefault,
+			declaredFilters(tableId, columns, declaredNames, inputValues), filterStore(), _initialFilter);
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
@@ -963,7 +1023,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		control.setActivationHandler(activationHandler(context, activation));
 
-		return new ReadOnlyTable<>(control, view, source, columns, declaredNames, selectionBinding, setups);
+		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups);
 	}
 
 	/**
@@ -986,7 +1046,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (_presets.isEmpty()) {
 			return false;
 		}
-		table.view().setDeclaredFilters(declaredFilters(table.columns(), table.declaredNames(), inputValues));
+		table.view().setDeclaredFilters(
+			declaredFilters(table.tableId(), table.columns(), table.declaredNames(), inputValues));
 		return true;
 	}
 
@@ -1144,6 +1205,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * chip the user clicks are already computed.
 	 * </p>
 	 *
+	 * @param tableId
+	 *        The {@link #tableId(RowTypes) identity} of the table, naming it in the reports of
+	 *        presets that cannot be applied.
 	 * @param columns
 	 *        All columns of the table, whose filters translate the criteria.
 	 * @param declaredNames
@@ -1155,8 +1219,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        the arguments of every criterion expression, as they are the arguments of the
 	 *        functions computing the rows.
 	 */
-	protected final List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Collection<String> declaredNames,
-			Object[] arguments) {
+	protected final List<NamedFilter> declaredFilters(TableId tableId, List<? extends Column<?, ?>> columns,
+			Collection<String> declaredNames, Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -1169,7 +1233,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
 				preset.cssClass(), preset.counted()));
 		}
-		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
+		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns,
 			ColumnDeclarations.withheld(declaredNames, columns));
 	}
 
@@ -1425,30 +1489,73 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
+	 * The types of the rows for a build of this table: the configured {@link Config#getTypes()
+	 * types}, or the result of {@link Config#getTypesExpr()} for the given input values.
+	 *
+	 * <p>
+	 * A build of the table's control asks for its types once, and everything depending on them -
+	 * the {@link #tableId(RowTypes) identity}, the {@link #columns(RowTypes, TLStructuredType)
+	 * columns}, the {@link #resolveRowType(RowTypes, Collection) row type} - is derived from that
+	 * answer.
+	 * </p>
+	 *
+	 * @param inputValues
+	 *        The values of the {@link Config#getInputs() input channels}, in declaration order;
+	 *        not consulted by a table with fixed types.
+	 * @throws IllegalStateException
+	 *         If {@link Config#getTypesExpr()} computes something else than model types.
+	 */
+	public final RowTypes types(Object[] inputValues) {
+		if (_typesExpr == null) {
+			return RowTypes.configured(_config.getTypes());
+		}
+		Object result = _typesExpr.execute(inputValues);
+		Collection<?> values = result instanceof Collection<?> collection ? collection
+			: (result == null ? List.of() : List.of(result));
+		List<TLStructuredType> types = new ArrayList<>(values.size());
+		for (Object value : values) {
+			if (!(value instanceof TLStructuredType type)) {
+				throw new IllegalStateException("The '" + Config.TYPES_EXPR + "' of a <" + tagName()
+					+ "> must compute model types, got: " + value);
+			}
+			types.add(type);
+		}
+		return RowTypes.computed(types);
+	}
+
+	/**
 	 * The stable identity of this table, under which its personalization and the user's saved
 	 * filters are stored.
 	 *
 	 * <p>
 	 * The configured {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()
 	 * personalization key} when there is one. Without it, the identity is the table's structural
-	 * signature - its row types plus the names of its declared columns - which changes whenever a
-	 * column is added or removed, so that a configured key is what keeps a personalization across
-	 * an edit of the view.
+	 * signature - the names of its row types plus the names of its declared columns - which
+	 * changes whenever a column is added or removed, so that a configured key is what keeps a
+	 * personalization across an edit of the view.
 	 * </p>
+	 *
+	 * <p>
+	 * Row types computed by {@link Config#getTypesExpr()} are part of the identity in either case,
+	 * so that the table keeps a personalization of its own per type it is built for.
+	 * </p>
+	 *
+	 * @param types
+	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
 	 */
-	public TableId tableId() {
+	public TableId tableId(RowTypes types) {
 		String personalizationKey = _config.getPersonalizationKey();
 		if (!StringServices.isEmpty(personalizationKey)) {
 			// Namespaced, so that a short key cannot collide with the structural signature of some
 			// other table.
-			return new TableId(KEY_PREFIX + personalizationKey);
+			if (!types.isComputed()) {
+				return new TableId(KEY_PREFIX + personalizationKey);
+			}
+			return new TableId(KEY_PREFIX + personalizationKey + '|' + String.join(",", types.qualifiedNames()));
 		}
 		StringBuilder key = new StringBuilder();
-		List<TLModelPartRef> types = _config.getTypes();
-		if (types != null) {
-			for (TLModelPartRef type : types) {
-				key.append(type.qualifiedName()).append(',');
-			}
+		for (String type : types.qualifiedNames()) {
+			key.append(type).append(',');
 		}
 		key.append('|');
 		for (String column : _declaredNames) {
@@ -1469,16 +1576,18 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * someone chose. A row type declaring no main properties shows all of its non-hidden attributes.
 	 * </p>
 	 *
+	 * @param types
+	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
 	 * @param rowType
 	 *        The model type of the rows, or {@code null} when it is unknown.
 	 */
-	public List<ColumnDeclaration> columns(TLStructuredType rowType) {
+	public List<ColumnDeclaration> columns(RowTypes types, TLStructuredType rowType) {
 		List<ColumnDeclaration> displayed =
 			_declarations.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _declarations;
 		List<String> displayedNames =
 			_declarations.isEmpty() ? ColumnDeclarations.declaredNames(displayed) : _declaredNames;
 		List<ColumnDeclaration> result = new ArrayList<>(displayed);
-		result.addAll(offeredColumns(displayedNames, rowType));
+		result.addAll(offeredColumns(displayedNames, types, rowType));
 		if (result.isEmpty()) {
 			throw new IllegalStateException(
 				"A table requires either explicit <column>s or a resolvable row type to derive them from.");
@@ -1488,32 +1597,27 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * The columns this table <em>offers</em> in addition to the ones it shows: those of its
-	 * {@link Config#getTypes() configured types} that no displayed column covers and that a form
-	 * would display, too - so a user can add any attribute of the row type to the table through the
+	 * {@link #types(Object[]) types} that no displayed column covers and that a form would
+	 * display, too - so a user can add any attribute of the row type to the table through the
 	 * column selection, without the table having to enumerate them all.
 	 *
 	 * @param covered
 	 *        The names of the displayed columns, which are not offered a second time.
+	 * @param types
+	 *        The types of the rows.
 	 * @param rowType
-	 *        The model type of the rows, which the configured types are resolved in.
+	 *        The model type of the rows, which configured types are resolved in.
 	 */
-	private List<ColumnDeclaration> offeredColumns(Collection<String> covered, TLStructuredType rowType) {
-		// Only an explicitly configured type gives a stable set of columns; a type guessed from the
-		// first row would offer different columns depending on the data at hand.
-		List<TLModelPartRef> typeRefs = _config.getTypes();
-		if (typeRefs == null || typeRefs.isEmpty()) {
+	private List<ColumnDeclaration> offeredColumns(Collection<String> covered, RowTypes types,
+			TLStructuredType rowType) {
+		// Only explicitly stated types give a stable set of columns; a type guessed from the first
+		// row would offer different columns depending on the data at hand.
+		if (types.isEmpty()) {
 			return List.of();
 		}
-		TLModel model = ColumnResolution.model(rowType);
 		Set<String> seen = new LinkedHashSet<>(covered);
 		List<ColumnDeclaration> result = new ArrayList<>();
-		for (TLModelPartRef typeRef : typeRefs) {
-			TLStructuredType type;
-			try {
-				type = typeRef.resolveClass(model);
-			} catch (ConfigurationException ex) {
-				throw new RuntimeException("Failed to resolve type: " + typeRef.qualifiedName(), ex);
-			}
+		for (TLStructuredType type : types.resolve(ColumnResolution.model(rowType))) {
 			List<ColumnDeclaration> offered = ColumnDeclarations.offeredColumns(seen, type);
 			seen.addAll(ColumnDeclarations.declaredNames(offered));
 			result.addAll(offered);
@@ -1522,17 +1626,17 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * Resolves the row type used for column-label resolution: the first configured
-	 * {@link Config#getTypes() type}, or the type of the first row, or {@code null}.
+	 * Resolves the row type used for column-label resolution: the first of the given types, or the
+	 * type of the first row, or {@code null}.
+	 *
+	 * @param types
+	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
+	 * @param rows
+	 *        The rows the type of the first one is taken from, when there are no types.
 	 */
-	protected final TLStructuredType resolveRowType(Collection<?> rows) {
-		List<TLModelPartRef> typeRefs = _config.getTypes();
-		if (typeRefs != null && !typeRefs.isEmpty()) {
-			try {
-				return typeRefs.get(0).resolveClass();
-			} catch (ConfigurationException ex) {
-				throw new RuntimeException("Failed to resolve type: " + typeRefs.get(0).qualifiedName(), ex);
-			}
+	protected final TLStructuredType resolveRowType(RowTypes types, Collection<?> rows) {
+		if (!types.isEmpty()) {
+			return types.first();
 		}
 		for (Object row : rows) {
 			if (row instanceof TLObject object) {
@@ -1540,6 +1644,101 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The types of the rows of a table, as one build of its control sees them: the configured
+	 * {@link Config#getTypes() types} or those computed by {@link Config#getTypesExpr()}.
+	 *
+	 * @see AbstractTableElement#types(Object[])
+	 */
+	public static final class RowTypes {
+
+		private final List<TLModelPartRef> _configured;
+
+		private final List<TLStructuredType> _computed;
+
+		private RowTypes(List<TLModelPartRef> configured, List<TLStructuredType> computed) {
+			_configured = configured;
+			_computed = computed;
+		}
+
+		/**
+		 * The {@link RowTypes} of the given configured type references.
+		 */
+		static RowTypes configured(List<TLModelPartRef> types) {
+			return new RowTypes(types == null ? List.of() : List.copyOf(types), null);
+		}
+
+		/**
+		 * The {@link RowTypes} of the given computed types.
+		 */
+		static RowTypes computed(List<TLStructuredType> types) {
+			return new RowTypes(null, List.copyOf(types));
+		}
+
+		/**
+		 * Whether the types are computed by {@link Config#getTypesExpr()}, so that they may differ
+		 * from one build of the table to the next.
+		 */
+		public boolean isComputed() {
+			return _computed != null;
+		}
+
+		/**
+		 * Whether there are no types, so that the row type is derived from the first row.
+		 */
+		public boolean isEmpty() {
+			return _computed != null ? _computed.isEmpty() : _configured.isEmpty();
+		}
+
+		/**
+		 * The qualified names of the types, in their order.
+		 */
+		public List<String> qualifiedNames() {
+			if (_computed != null) {
+				return _computed.stream().map(TLModelUtil::qualifiedName).toList();
+			}
+			return _configured.stream().map(TLModelPartRef::qualifiedName).toList();
+		}
+
+		/**
+		 * The types, configured ones resolved in the given model.
+		 */
+		public List<TLStructuredType> resolve(TLModel model) {
+			if (_computed != null) {
+				return _computed;
+			}
+			List<TLStructuredType> result = new ArrayList<>(_configured.size());
+			for (TLModelPartRef ref : _configured) {
+				result.add(resolveClass(ref, model));
+			}
+			return result;
+		}
+
+		/**
+		 * The first type, a configured one resolved in the application model.
+		 *
+		 * @throws IllegalStateException
+		 *         If there are no types.
+		 */
+		public TLStructuredType first() {
+			if (isEmpty()) {
+				throw new IllegalStateException("No row types.");
+			}
+			if (_computed != null) {
+				return _computed.get(0);
+			}
+			return resolveClass(_configured.get(0), null);
+		}
+
+		private static TLStructuredType resolveClass(TLModelPartRef ref, TLModel model) {
+			try {
+				return model == null ? ref.resolveClass() : ref.resolveClass(model);
+			} catch (ConfigurationException ex) {
+				throw new RuntimeException("Failed to resolve type: " + ref.qualifiedName(), ex);
+			}
+		}
 	}
 
 	/**

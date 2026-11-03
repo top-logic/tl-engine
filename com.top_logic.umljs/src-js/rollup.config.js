@@ -11,7 +11,8 @@ import {
 
 import pkg from './package.json';
 
-const outputDir = 'dist';
+// The bundles are build products served by the module's web fragment.
+const outputDir = '../src/main/webapp/script/umljs';
 
 const distros = [
   {

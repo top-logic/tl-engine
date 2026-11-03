@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>Mock — Spaltenwahl als Ebenen-Panel (Spec 2026-10-12, #29825)</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<style>
+/* Bildquelle für docs/bilder/2026-10-12-spaltenwahl-*.png. Was hier steht, ist der VORSCHLAG der Spec
+   (Stufe 1 und 2) — es ist noch nicht im Paket. Nur Tokens; .is-hover / .is-focus stehen für :hover und
+   :focus-within, damit ein Standbild beide Zustände zeigen kann. ?mode=dark schaltet dunkel, ?stage=2 Stufe 2. */
+body { margin: 0; background: var(--tl-surface-base); color: var(--tl-text-primary); font-family: var(--tl-font-family-sans); }
+.mock[hidden] { display: none; }
+.mock { display: flex; gap: var(--tl-space-xl); align-items: flex-start; padding: var(--tl-space-xl); }
+.mock__note { max-width: 18rem; }
+.mock__note p { margin: 0 0 var(--tl-space-sm); color: var(--tl-text-secondary); }
+.mock__note b { color: var(--tl-text-primary); }
+
+/* Fensterrahmen wie TLWindow (Welle 4), nur für das Bild. */
+.win { inline-size: 26rem; background: var(--tl-surface-overlay); border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md); box-shadow: var(--tl-shadow-overlay); display: flex; flex-direction: column; }
+.win__head { display: flex; align-items: center; justify-content: space-between; min-block-size: var(--tl-size-bar);
+  padding: 0 var(--tl-space-sm) 0 var(--tl-space-md); border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+.win__body { display: flex; flex-direction: column; gap: var(--tl-space-xs); padding: var(--tl-space-md) var(--tl-space-md) 0; }
+.win__foot { display: flex; justify-content: flex-end; gap: var(--tl-space-xs); padding: var(--tl-space-sm) var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator); margin-top: var(--tl-space-sm); }
+
+/* --- Vorschlag Stufe 1: tl-reorder-list mit __actions, __section, off, section-end --- */
+.tl-reorder-list { max-height: none; }
+.tl-reorder-list__item { gap: var(--tl-space-2xs); }
+.tl-reorder-list__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-reorder-list__actions { display: flex; gap: var(--tl-space-2xs); margin-inline-start: auto; }
+.tl-reorder-list__handle,
+.tl-reorder-list__actions > .tl-button { opacity: 0; }
+.tl-reorder-list__item.is-hover .tl-reorder-list__handle,
+.tl-reorder-list__item.is-hover .tl-reorder-list__actions > .tl-button,
+.tl-reorder-list__item.is-focus .tl-reorder-list__handle,
+.tl-reorder-list__item.is-focus .tl-reorder-list__actions > .tl-button,
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
+.tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock { opacity: 1; }
+.tl-reorder-list__item.is-hover { background: var(--tl-surface-interactive-hover); }
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__label { color: var(--tl-text-disabled); }
+.tl-reorder-list__item[data-tl-state~="section-end"] { border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+.tl-reorder-list__section { list-style: none; padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
+  color: var(--tl-text-secondary); }
+.mock-ring { outline: var(--tl-focus-width) solid var(--tl-focus); outline-offset: calc(-1 * var(--tl-focus-offset)); }
+
+/* --- Vorschlag Stufe 2: Gruppe, Einzug, Namensfeld, Band im Tabellenkopf --- */
+.tl-reorder-list__item--group .tl-reorder-list__label { font-weight: inherit; }
+.mock-indent { inline-size: var(--tl-size-control-sm); flex: 0 0 auto; }
+.mock-rename { flex: 1 1 auto; min-width: 0; }
+.mock-table { inline-size: 30rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-layer); overflow: hidden; }
+.mock-table__band, .mock-table__head, .mock-table__row { display: grid; grid-template-columns: 7rem 7rem 5rem 6rem 5rem; }
+.mock-table__band > span { min-block-size: var(--tl-size-control-sm); display: flex; align-items: center; justify-content: center;
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+.mock-table__band > .is-group { grid-column: span 3; background: var(--tl-surface-interactive-hover); border-inline: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+.mock-table__head > span { min-block-size: var(--tl-size-bar); display: flex; align-items: center; padding: 0 var(--tl-space-control-x);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-emphasis); }
+.mock-table__row > span { min-block-size: var(--tl-size-row); display: flex; align-items: center; padding: 0 var(--tl-space-control-x);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+</style>
+</head>
+<body>
+<main class="mock" id="stage1">
+  <div class="win" role="dialog" aria-label="Spalten">
+    <div class="win__head"><span class="tl-type-heading-sm">Spalten</span>
+      <span><button class="tl-button tl-button--icon tl-button--sm tl-button--ghost" type="button"><i class="tl-icon-sm bi bi-square"></i></button>
+      <button class="tl-button tl-button--icon tl-button--sm tl-button--ghost" type="button"><i class="tl-icon-sm bi bi-x-lg"></i></button></span></div>
+    <div class="win__body">
+      <span class="tl-field-group tl-reorder-list__search"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+        <input class="tl-field tl-type-body" type="search" placeholder="Spalte finden"></span>
+      <ul class="tl-reorder-list tl-type-body">
+        <li class="tl-reorder-list__section tl-type-label">Fixiert</li>
+        <li class="tl-reorder-list__item" data-row="Name"></li>
+        <li class="tl-reorder-list__item is-hover" data-tl-state="section-end" data-row="Nummer" data-lock="1"></li>
+        <li class="tl-reorder-list__item is-hover" data-row="Text" data-hover="1"></li>
+        <li class="tl-reorder-list__item" data-tl-state="off" data-row="Aliasnamen" data-hidden="1"></li>
+        <li class="tl-reorder-list__item" data-row="Status"></li>
+        <li class="tl-reorder-list__item is-focus" data-row="Priorität" data-focus="eye"></li>
+        <li class="tl-reorder-list__item" data-tl-state="off" data-row="Notizen" data-hidden="1"></li>
+        <li class="tl-reorder-list__item" data-row="Betrag"></li>
+      </ul>
+    </div>
+    <div class="win__foot">
+      <button class="tl-button tl-button--secondary" type="button"><span class="tl-button__label">Standard wiederherstellen</span></button>
+      <button class="tl-button tl-button--secondary" type="button"><span class="tl-button__label">Abbrechen</span></button>
+      <button class="tl-button tl-button--primary" type="button"><span class="tl-button__label">Ok</span></button>
+    </div>
+  </div>
+  <div class="mock__note tl-type-body">
+    <p><b>Fixiert</b> — Name und Nummer stehen beim Scrollen links. Schloss zu bleibt sichtbar.</p>
+    <p><b>Zeigen</b> (Nummer, Text) — Griff vorn, Schloss und Auge rechts erscheinen.</p>
+    <p><b>Ausgeblendet</b> (Aliasnamen, Notizen) — Name blass, Auge zu bleibt sichtbar, Platz bleibt.</p>
+    <p><b>Tastatur</b> (Priorität) — Tab auf dem Auge: Griff, Schloss, Auge erscheinen, Ring am Auge.</p>
+  </div>
+</main>
+
+<main class="mock" id="stage2" hidden>
+  <div class="win" role="dialog" aria-label="Spalten">
+    <div class="win__head"><span class="tl-type-heading-sm">Spalten</span>
+      <span><button class="tl-button tl-button--icon tl-button--sm tl-button--ghost" type="button"><i class="tl-icon-sm bi bi-x-lg"></i></button></span></div>
+    <div class="win__body">
+      <ul class="tl-reorder-list tl-type-body">
+        <li class="tl-reorder-list__item" data-row="Name"></li>
+        <li class="tl-reorder-list__item tl-reorder-list__item--group is-hover" data-row="Adresse" data-group="open"></li>
+        <li class="tl-reorder-list__item" data-row="Straße" data-indent="1"></li>
+        <li class="tl-reorder-list__item" data-row="PLZ" data-indent="1"></li>
+        <li class="tl-reorder-list__item" data-row="Ort" data-indent="1"></li>
+        <li class="tl-reorder-list__item tl-reorder-list__item--group" data-row="Kontakt" data-group="rename"></li>
+        <li class="tl-reorder-list__item" data-row="E-Mail" data-indent="1"></li>
+        <li class="tl-reorder-list__item" data-row="Telefon" data-tl-state="drop-onto" data-indent="1"></li>
+        <li class="tl-reorder-list__item" data-row="Status" data-tl-state="dragging"></li>
+      </ul>
+    </div>
+    <div class="win__foot">
+      <button class="tl-button tl-button--secondary" type="button"><span class="tl-button__label">Abbrechen</span></button>
+      <button class="tl-button tl-button--primary" type="button"><span class="tl-button__label">Ok</span></button>
+    </div>
+  </div>
+  <div class="specimen-col" style="display:flex;flex-direction:column;gap:var(--tl-space-md)">
+    <div class="mock__note tl-type-body" style="max-width:30rem">
+      <p><b>Gruppe anlegen</b> — Spalte auf eine andere ziehen (Marke „darauf“): es entsteht eine Gruppe, ihr Name ist sofort zum Tippen offen (Kontakt).</p>
+      <p><b>Gruppe</b> — auf- und zuklappbar, Spalten eingerückt; Auge und Schloss gelten für die ganze Gruppe.</p>
+      <p><b>In der Tabelle</b> — über den Köpfen der Gruppe ein Band mit ihrem Namen.</p>
+    </div>
+    <div class="mock-table tl-type-body">
+      <div class="mock-table__band tl-type-label-strong"><span></span><span class="is-group">Adresse</span><span></span></div>
+      <div class="mock-table__head tl-type-label-strong"><span>Name</span><span>Straße</span><span>PLZ</span><span>Ort</span><span>Status</span></div>
+      <div class="mock-table__row"><span>Login 1</span><span>Hauptstr. 4</span><span>44137</span><span>Dortmund</span><span>Offen</span></div>
+      <div class="mock-table__row"><span>Layout 3</span><span>Ringweg 12</span><span>50667</span><span>Köln</span><span>Offen</span></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get('mode') === 'dark') document.documentElement.dataset.tlMode = 'dark';
+  if (q.get('stage') === '2') { document.getElementById('stage1').hidden = true; document.getElementById('stage2').hidden = false; }
+  const btn = (icon, label, extra = '') =>
+    `<button type="button" class="tl-button tl-button--icon tl-button--sm tl-button--ghost ${extra}" aria-label="${label}">` +
+    `<i class="tl-button__icon tl-icon-sm bi ${icon}"></i></button>`;
+  const lockedBlock = new Set(['Name', 'Nummer']);
+  for (const li of document.querySelectorAll('.tl-reorder-list__item')) {
+    const name = li.dataset.row;
+    const locked = lockedBlock.has(name) && !!li.closest('#stage1');
+    if (locked) li.dataset.tlState = ((li.dataset.tlState || '') + ' locked').trim();
+    const hidden = li.dataset.hidden === '1';
+    const indent = li.dataset.indent ? '<span class="mock-indent"></span>' : '';
+    let label = `<span class="tl-reorder-list__label">${name}</span>`;
+    let toggle = '';
+    if (li.dataset.group === 'open') toggle = `<button type="button" class="tl-toggle" aria-expanded="true" aria-label="Adresse zuklappen"><i class="tl-icon-sm bi bi-chevron-right"></i></button>`;
+    if (li.dataset.group === 'rename') {
+      toggle = `<button type="button" class="tl-toggle" aria-expanded="true" aria-label="Kontakt zuklappen"><i class="tl-icon-sm bi bi-chevron-right"></i></button>`;
+      label = `<input class="tl-field tl-type-body mock-rename mock-ring" value="Kontakt">`;
+    }
+    li.innerHTML =
+      btn('bi-grip-vertical', `${name} verschieben`, 'tl-reorder-list__handle') + indent + toggle + label +
+      `<span class="tl-reorder-list__actions">` +
+        btn(locked ? 'bi-lock-fill' : 'bi-unlock', locked ? `${name} lösen` : `${name} fixieren`, 'tl-reorder-list__lock') +
+        btn(hidden ? 'bi-eye-slash' : 'bi-eye', hidden ? `${name} einblenden` : `${name} ausblenden`,
+            'tl-reorder-list__eye' + (li.dataset.focus === 'eye' ? ' mock-ring' : '')) +
+      `</span>`;
+  }
+</script>
+</body>
+</html>

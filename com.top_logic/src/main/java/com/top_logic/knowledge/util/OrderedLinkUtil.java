@@ -505,10 +505,19 @@ public class OrderedLinkUtil {
 			_orderAttribute = orderAttribute;
 		}
 	
+		/**
+		 * Compares the given links by their order attribute.
+		 * 
+		 * <p>
+		 * A link without order value is sorted as if it had the order value <code>0</code>. Such
+		 * links exist, when the links of an unordered reference are read by the storage of an
+		 * ordered reference after the reference became ordered.
+		 * </p>
+		 */
 		@Override
 		public int compare(TLObject item1, TLObject item2) {
-			int index1 = getOrder(item1).intValue();
-			int index2 = getOrder(item2).intValue();
+			int index1 = orderValue(item1);
+			int index2 = orderValue(item2);
 
 			if (index1 < index2) {
 				return -1;
@@ -519,8 +528,9 @@ public class OrderedLinkUtil {
 			}
 		}
 
-		private Number getOrder(TLObject link) {
-			return OrderedLinkUtil.getOrder(link, _orderAttribute);
+		private int orderValue(TLObject link) {
+			Number order = OrderedLinkUtil.getOrder(link, _orderAttribute);
+			return order == null ? 0 : order.intValue();
 		}
 	}
 

@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-design-system</artifactId>
+	<name>${project.artifactId}</name>
+	<description>TopLogic design system: primitives, tokens, base classes and component styles, generated into the stylesheets served under /style/tl-design-system/.</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+  <!--
+    The stylesheets are not checked in. `tools/generate.mjs` writes them from `src/` into
+    `src/main/webapp/style/tl-design-system/` during `generate-resources`, and the engine packs that folder as
+    `target/${project.artifactId}-${project.version}-web-fragment.war`. There are no npm dependencies, hence no
+    `npm install`.
+  -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+
+          <!--
+            The package tests run in the `test` phase, after surefire (declared in the parent pom; Maven orders
+            the executions of one phase by the order of their plugins in the effective pom), so that a failing
+            frontend test does not abort the module before its Java side is reported. The frontend plugin binds
+            `skipTests` to `${skipTests}` and `testFailureIgnore` to `${maven.test.failure.ignore}` in this
+            phase: the tests run with `-DskipTests=false` and are skipped by default, and a failure fails the
+            build unless failures are ignored.
+
+            `npm test` leaves out the tests that need a browser (`npm run test:dom`), because the build node may
+            have no Chrome.
+          -->
+          <execution>
+            <id>npm-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>test</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

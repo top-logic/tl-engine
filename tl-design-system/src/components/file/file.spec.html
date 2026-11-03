@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — File</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">File</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Dateizeile (TLDownload, TLBinaryField)</p>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">gefüllt</span>
+      <div class="tl-file">
+        <span class="tl-file__name tl-type-body">Bericht.pdf</span>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Herunterladen" data-tooltip="text:Herunterladen"><i class="tl-icon-md bi bi-download tl-button__icon" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">leer</span>
+      <div class="tl-file" data-tl-state="empty">
+        <span class="tl-file__name tl-type-body">Keine Datei</span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--flow">
+      <span class="tl-type-label">langer Name</span>
+      <div class="tl-file">
+        <span class="tl-file__name tl-type-body" title="Quartalsbericht_2026_Q3_Vertrieb_Region_Nord_final_überarbeitet_v7.pdf">Quartalsbericht_2026_Q3_Vertrieb_Region_Nord_final_überarbeitet_v7.pdf</span>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Herunterladen" data-tooltip="text:Herunterladen"><i class="tl-icon-md bi bi-download tl-button__icon" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

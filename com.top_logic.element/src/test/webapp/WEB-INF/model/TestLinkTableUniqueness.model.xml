@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestLinkTableUniqueness">
+			<types>
+				<class name="Parent">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<reference name="set"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+						<reference name="bag"
+							bag="true"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+						<reference name="historic"
+							history-type="historic"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+				<class name="Child">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -180,6 +180,31 @@ page, and `<login-methods/>` shows its message (`ExternalLoginFailure`) above th
 `ExternalAuthenticationServlet` with `reuseSession` reuses only an authenticated session: the
 anonymous session the view UI starts every browser with does not suppress the external login.
 
+### Finding the account of an external login
+
+Which account an external login logs in is decided by the `ExternalUserMapping`
+(`com.top_logic.base.accesscontrol`) configured as `user-mapping` (a class name) of the pac4j client
+(`ClientConfigurator$Config`) or of `J2eeRemoteUserAuthenticationServlet$Config`. The default
+`DefaultExternalUserMapping` looks up the account by name (`Person.byName`), `LDAPUserMapping`
+additionally requires the account to belong to the given LDAP.
+
+The pac4j login hands the mapping the whole verified identity,
+`findAccountForIdentity(ExternalIdentity)`: the client name, the subject (`UserProfile.getId()`,
+for OpenID Connect the claim `sub`), the login name extracted by the client's `UserNameExtractor`,
+and the claims (the profile attributes without the tokens of the login). By default the method
+resolves the name through `findAccountForExternalName(String)`, so a mapping that only knows names
+behaves the same for every login. The header login knows only a name and calls
+`findAccountForExternalName` directly.
+
+An application overrides `findAccountForIdentity` to find an account by the stable subject
+instead of a name the user may change, or to link an invited account on the first login by a
+verified e-mail claim. The mapping runs in the request of the login servlet, before the session is
+logged in and without an open transaction: creating or linking an account needs a transaction of
+its own. It also runs when a running session confirms its user once more, so it must find the same
+account for the same identity. An `UnknownAccountException` shows the page for unknown accounts
+(`unknownAccountPage` of `ApplicationPages$Config`), any other `LoginDeniedException` fails the
+login.
+
 ## Pitfalls
 
 - The two `LoginHook` interfaces are unrelated: `com.top_logic.base.accesscontrol.LoginHook`

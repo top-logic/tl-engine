@@ -29,7 +29,6 @@ import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.BidiHashMap;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -39,12 +38,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -73,7 +70,6 @@ import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.tool.boundsec.manager.SimpleGroupMapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
@@ -102,19 +98,11 @@ public class ElementAccessManager extends AccessManager {
 	 */
 	public interface Config extends AccessManager.Config {
 
-		/** Property name of {@link #getGroupMapper()}. */
-		String GROUP_MAPPER = "group-mapper";
-
 		/** Property name of {@link #getMetaElements()}. */
 		String META_ELEMENTS = "meta-elements";
 
 		/** Property name of {@link #getSecurityParents()}. */
 		String SECURITY_PARENTS = "security-parents";
-
-		@Name(GROUP_MAPPER)
-		@InstanceFormat
-		@InstanceDefault(SimpleGroupMapper.class)
-		Mapping getGroupMapper();
 
 		@Name(META_ELEMENTS)
 		@Key(MEConfig.NAME_ATTRIBUTE)
@@ -186,8 +174,6 @@ public class ElementAccessManager extends AccessManager {
 	public ElementAccessManager(InstantiationContext context, Config config) {
 		super(context, config);
 		_boundHelper = (ElementBoundHelper) BoundHelper.getInstance();
-
-		groupMapper = getConfig().getGroupMapper();
 	}
 
 	@Override
@@ -265,8 +251,6 @@ public class ElementAccessManager extends AccessManager {
 	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents = Collections.emptyMap();
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
-
-	private final Mapping groupMapper;
 
     /** Flag indicating that storage/cache based subclasses should refresh their storage/cache. */
     protected boolean dirty = false;
@@ -368,10 +352,6 @@ public class ElementAccessManager extends AccessManager {
 		}
 		return TLModelUtil.findModule(structureName);
 	}
-
-    public Mapping getGroupMapper() {
-        return (groupMapper);
-    }
 
     /**
      * Note: storage/cache based subclasses must override this method and check the
@@ -768,11 +748,16 @@ public class ElementAccessManager extends AccessManager {
     /**
 	 * Gets the groups the given person is member of.
 	 *
+	 * <p>
+	 * These are the groups the roles of the person are looked up for: the representative group of
+	 * the person and every group the person is a member of, directly or through a nested group.
+	 * </p>
+	 *
 	 * @param aPerson
 	 *        the person to get the groups from
 	 * @return {@link List} with the {@link Group}s the given person is member of.
 	 */
-    protected List<Group> getGroups(Person aPerson) {
+    public List<Group> getGroups(Person aPerson) {
         if (aPerson == null || !aPerson.tValid()) return Collections.emptyList();
         Group theGroup = aPerson.getRepresentativeGroup();
         List<Group> theGroupList = (theGroup == null ? new ArrayList<>() : CollectionUtil.intoList(theGroup));

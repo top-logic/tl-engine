@@ -1,0 +1,18 @@
+/* NoticeBar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert als Balken über die volle Breite: ohne Ecke,
+   Linie unten und am Zeilenanfang (die Linie der Bedeutung). Farbe, Ansage und Text aus tl-alert. Klickbar ist der
+   Balken ein role="button"; den Ring gibt base.css jedem [tabindex]. */
+
+.tl-notice-bar {
+  border-radius: 0;
+  border-block-start-width: 0;
+  border-inline-end-width: 0;
+}
+
+.tl-notice-bar[role="button"] {
+  cursor: pointer;
+}
+
+/* Der Countdown springt nicht, weil seine Ziffern gleich breit sind (tl-nums im Markup). */
+.tl-notice-bar__countdown {
+  white-space: nowrap;
+}

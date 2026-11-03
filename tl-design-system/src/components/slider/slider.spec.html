@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Slider</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  #f-rest { inline-size: 40%; }
+  #f-err { inline-size: 70%; }
+  #f-warn { inline-size: 55%; }
+  #f-dis { inline-size: 30%; }
+  .specimen__base .tl-slider { max-inline-size: 24rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Slider</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Slider: Ruhe, Fehler, Warnung, deaktiviert</p>
+    <span class="tl-slider">
+      <span class="tl-slider__track"><span id="f-rest" class="tl-slider__fill"></span></span>
+      <input class="tl-slider__input" type="range" min="0" max="100" value="40" aria-valuetext="40 %" aria-label="Ruhe">
+      <output class="tl-slider__value tl-type-body tl-nums"><span class="tl-slider__text">40 %</span><span class="tl-slider__sizer">0 %</span><span class="tl-slider__sizer">100 %</span></output>
+    </span>
+    <span class="tl-slider">
+      <span class="tl-slider__track"><span id="f-err" class="tl-slider__fill"></span></span>
+      <input class="tl-slider__input" type="range" min="0" max="100" value="70" aria-valuetext="70 %" aria-label="Fehler" aria-invalid="true" aria-required="true">
+      <output class="tl-slider__value tl-type-body tl-nums"><span class="tl-slider__text">70 %</span><span class="tl-slider__sizer">0 %</span><span class="tl-slider__sizer">100 %</span></output>
+    </span>
+    <span class="tl-slider" data-tl-state="warning">
+      <span class="tl-slider__track"><span id="f-warn" class="tl-slider__fill"></span></span>
+      <input class="tl-slider__input" type="range" min="0" max="100" value="55" aria-valuetext="55 %" aria-label="Warnung">
+      <output class="tl-slider__value tl-type-body tl-nums"><span class="tl-slider__text">55 %</span><span class="tl-slider__sizer">0 %</span><span class="tl-slider__sizer">100 %</span></output>
+    </span>
+    <span class="tl-slider">
+      <span class="tl-slider__track"><span id="f-dis" class="tl-slider__fill"></span></span>
+      <input class="tl-slider__input" type="range" min="0" max="100" value="30" aria-valuetext="30 %" aria-label="Deaktiviert" disabled>
+      <output class="tl-slider__value tl-type-body tl-nums"><span class="tl-slider__text">30 %</span><span class="tl-slider__sizer">0 %</span><span class="tl-slider__sizer">100 %</span></output>
+    </span>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

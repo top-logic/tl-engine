@@ -1,0 +1,45 @@
+/* Snackbar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert mit eigener Hülle: Farbe, Linie, Titel, Text,
+   Schließen-Knopf und Ansage kommen aus tl-alert (data-tl-role, role="alert" nur bei error); hier stehen Lage,
+   Ebene, Schatten und Bewegung. Toast: Schatten und Rahmen (skalen.md) — der Rahmen ist die Linie der Bedeutung. */
+
+.tl-snackbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--tl-space-md);
+  z-index: var(--tl-layer-toast);
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(var(--tl-size-toast-max), calc(100% - 2 * var(--tl-space-md)));
+  margin-inline: auto;
+  box-shadow: var(--tl-shadow-drag);
+  animation: tl-snackbar-in var(--tl-duration-base) var(--tl-easing-entrance);
+}
+
+.tl-snackbar[data-tl-state~="exiting"] {
+  animation: tl-snackbar-out var(--tl-duration-base) var(--tl-easing-exit) forwards;
+}
+
+@keyframes tl-snackbar-in {
+  from { opacity: 0; transform: translateY(var(--tl-space-sm)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-snackbar-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Die Meldung kann HTML sein (CommandErrors: Titel und eine Liste der Einzelmeldungen); deren Umbrüche stehen im
+   Markup, nicht im Text. */
+.tl-snackbar .tl-alert__message {
+  white-space: normal;
+}
+
+.tl-snackbar .tl-alert__message ul {
+  margin: var(--tl-space-2xs) 0 0;
+  padding-inline-start: var(--tl-space-lg);
+}
+
+.tl-snackbar .tl-alert__message li + li {
+  margin-top: var(--tl-space-2xs);
+}

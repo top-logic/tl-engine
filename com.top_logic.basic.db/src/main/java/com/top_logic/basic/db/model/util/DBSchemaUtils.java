@@ -802,6 +802,79 @@ public class DBSchemaUtils {
 	}
 
 	/**
+	 * Adapts the primary key and the complete set of indexes of an existing table to a target
+	 * definition.
+	 *
+	 * <p>
+	 * In addition to {@link #alignKeys(Log, PooledConnection, DBTable, DBTable)}, which converts the
+	 * primary key and the indexes of the same name, the indexes that exist only in the current
+	 * definition are dropped, and the indexes that exist only in the target definition are created.
+	 * An index to create is skipped, if the database already holds it (by its name, or by its
+	 * columns and uniqueness under another name).
+	 * </p>
+	 *
+	 * <p>
+	 * A unique index of the target definition can only be created, if the rows of the table do not
+	 * violate it; otherwise the database access fails.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Log} to report the changes to.
+	 * @param connection
+	 *        The connection to the database containing the table.
+	 * @param current
+	 *        The definition the existing table was created from, part of a {@link DBSchema}.
+	 * @param target
+	 *        The target definition of the table with the same name, part of a {@link DBSchema}.
+	 * @return Whether the table was changed.
+	 * @throws SQLException
+	 *         If the database access fails.
+	 */
+	public static boolean alignIndexes(Log log, PooledConnection connection, DBTable current, DBTable target)
+			throws SQLException {
+		boolean changed = alignKeys(log, connection, current, target);
+
+		List<DBIndex> removedIndexes = new ArrayList<>();
+		for (DBIndex currentIndex : current.getIndices()) {
+			if (target.getIndex(currentIndex.getName()) == null) {
+				removedIndexes.add(currentIndex);
+			}
+		}
+		List<DBIndex> addedIndexes = new ArrayList<>();
+		for (DBIndex targetIndex : target.getIndices()) {
+			if (current.getIndex(targetIndex.getName()) == null) {
+				addedIndexes.add(targetIndex);
+			}
+		}
+		if (removedIndexes.isEmpty() && addedIndexes.isEmpty()) {
+			return changed;
+		}
+
+		DBHelper sqlDialect = connection.getSQLDialect();
+		String tableName = target.getDBName();
+		DBTable existing = extractTable(connection, tableName);
+		for (DBIndex currentIndex : removedIndexes) {
+			if (dropExistingIndex(log, connection, existing, currentIndex)) {
+				log.info("Dropped index '" + currentIndex.getName() + "' of table '" + tableName + "'.");
+				changed = true;
+			}
+		}
+		if (!removedIndexes.isEmpty()) {
+			existing = extractTable(connection, tableName);
+		}
+		for (DBIndex targetIndex : addedIndexes) {
+			if (existingIndex(sqlDialect, existing, targetIndex) != null) {
+				continue;
+			}
+			executeSQL(connection, toSQL(sqlDialect, targetIndex));
+			log.info("Created index '" + targetIndex.getName() + "' of table '" + tableName + "' with columns "
+				+ columnNames(targetIndex) + ".");
+			changed = true;
+		}
+		return changed;
+	}
+
+	/**
 	 * Adapts the primary key, the indexes and the given columns of an existing table to a target
 	 * definition.
 	 *

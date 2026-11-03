@@ -2308,8 +2308,7 @@ public class ChatServlet extends TopLogicServlet {
 		// Install the resolved sub-session directly into this request's interaction, the same way
 		// the layout AJAXServlet binds the addressed sub-session. The interaction is request-scoped
 		// (set up by TopLogicServlet without a sub-session) and torn down at the end of the request,
-		// so no explicit restore is needed. Going through ThreadContextManager.inContext(...) would
-		// instead log an "Overriding subsession" info on every request.
+		// so no explicit restore is needed.
 		TLContextManager.getInteraction().installSubSessionContext(subSession);
 		// Which conversation of the window this is, read once: the handlers below resolve their
 		// tracker through currentTracker(), which has no request to read the parameter from.

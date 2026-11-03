@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Swatch</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  #s-fill { background: #3b82c4; }
+  #s-ro { background: #c43b6a; }
+  #s-err { background: #3bc47a; }
+  #s-warn { background: #e0b020; }
+  #s-wide { background: #7a3bc4; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Swatch</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Swatch: gefüllt, leer (Schachbrett), lesend (span), Fehler, Warnung, breit</p>
+    <button type="button" id="s-fill" class="tl-swatch tl-swatch--color" aria-label="Farbe wählen"></button>
+    <button type="button" class="tl-swatch tl-swatch--color" data-tl-state="empty" aria-label="Keine Farbe"></button>
+    <span id="s-ro" class="tl-swatch tl-swatch--color" role="img" aria-label="Farbe, nur lesbar"></span>
+    <button type="button" id="s-err" class="tl-swatch tl-swatch--color" aria-invalid="true" aria-required="true" aria-label="Farbe, ungültig"></button>
+    <button type="button" id="s-warn" class="tl-swatch tl-swatch--color" data-tl-state="warning" aria-label="Farbe, Warnung"></button>
+    <button type="button" id="s-wide" class="tl-swatch tl-swatch--color tl-swatch--wide" aria-label="Farbe, breit"></button>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

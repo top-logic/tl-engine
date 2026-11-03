@@ -1,0 +1,54 @@
+/* Kachelstapel — Spec 2026-10-16 Welle 4c §8. Rahmen übereinander, der aktive oben; verdeckte behalten ihren
+   Steuerbaum und ihre Box (Scroll- und Eingabezustand bleiben), unsichtbar und nicht fokussierbar. Der Wechsel
+   gleitet (slide.css): useKeyedTransition markiert den ankommenden Rahmen und eine Kopie des gehenden in
+   data-tl-state, die Wurzel die Richtung (backward; vorwärts ohne Marke). */
+
+.tl-tile-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.tl-tile-stack[hidden] { display: none; }
+
+.tl-tile-stack__frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-tile-stack__frame[data-tl-state~="covered"] {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.tl-tile-stack__frame[data-tl-state~="entering"] {
+  animation: tl-slide-in-forward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="entering"],
+.tl-tile-stack__frame[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-backward;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-forward;
+}
+
+/* Ein Bild des gehenden Rahmens über dem Stapel: kein Platz im Layout, keine Eingabe. */
+.tl-tile-stack__frame[data-tl-state~="exiting"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: tl-slide-out-forward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="exiting"],
+.tl-tile-stack__frame[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-backward;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-forward;
+}

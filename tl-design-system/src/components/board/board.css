@@ -1,0 +1,81 @@
+/* Board — Spec 5c §5 (V23, V5, V6, V29), Vertrag board.contract.md. Leser ist TLKanbanBoard.
+   Spalten nebeneinander, in jeder eine Auswahlliste von Karten. Eine Karte ist ein tl-item mit role="option": Zeigen
+   (Hof), Ring und Haken der Auswahl zeichnet layout.css, den Fokusring base.css. Einfügelinie, Ablegen in die
+   Spalte, Ablehnung und die gezogene Karte zeichnet allein drag.css über data-tl-state; der Grund einer Ablehnung
+   ist tl-drop-hint (drag.css). Der Zähler ist tl-badge. Die Schrift setzen die Typo-Klassen am Element. */
+
+.tl-board {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--tl-space-md);
+  padding: var(--tl-space-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 0;
+}
+.tl-board[hidden] { display: none; }
+
+/* Eine Spalte wächst von size-12 bis size-13; mehr Spalten, als passen, rollen waagerecht. Die Spalte ist eine Mulde
+   auf surface-base, die Karte liegt darauf in surface-layer — in beiden Modi heller als die Spalte (layer-nested wäre
+   hell gleich der Karte und dunkel heller als sie: die Karte läge versenkt). */
+.tl-board__column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 var(--tl-size-12);
+  min-width: var(--tl-size-12);
+  max-width: var(--tl-size-13);
+  min-height: 0;
+  background: var(--tl-surface-base);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+}
+.tl-board__column[hidden] { display: none; }
+
+.tl-board__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  color: var(--tl-text-primary);
+}
+.tl-board__header[hidden] { display: none; }
+
+.tl-board__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Karten-Liste rollt senkrecht; ihr Innenabstand hält den Fokusring der Karten in der Liste. */
+.tl-board__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--tl-space-sm);
+  overflow-y: auto;
+}
+.tl-board__cards[hidden] { display: none; }
+
+/* Die Fläche der Karte; Ecke, Zeiger und Lage (position) gibt tl-item[role="option"]. */
+/* Rechts hält die Karte die Ecke des Auswahlhakens frei (tl-item__check: Abstand xs, Breite icon-md, dazu xs Luft) —
+   immer, nicht erst gewählt: sonst deckt der Haken einen Knopf der Kartenansicht, oder der Inhalt springt beim Wählen.
+   Die Karte schrumpft nicht: tl-item setzt min-height: 0, und in der rollenden Liste stauchte das die Karten unter
+   ihren Text, statt die Liste rollen zu lassen (wie .tl-panel__body > *). */
+.tl-board__card {
+  flex-shrink: 0;
+  padding: var(--tl-space-sm) calc(var(--tl-space-xs) + var(--tl-size-icon-md) + var(--tl-space-xs)) var(--tl-space-sm) var(--tl-space-md);
+  background: var(--tl-surface-layer);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Eine Karte, die sich ziehen lässt, zeigt das Greifen; das Attribut role hebt die Regel über den Zeiger von
+   tl-item (layout.css steht im Bundle danach). */
+.tl-board__card[role="option"][draggable="true"] {
+  cursor: grab;
+}

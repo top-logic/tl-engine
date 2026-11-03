@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -12,6 +13,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
@@ -73,6 +75,17 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		public void onRowSetValidationChanged(RowSetEditSession session) {
 			updateCompositionErrorDisplay();
 		}
+		@Override
+		public void onRowValueChanged(RowSetEditSession session, TLObject row, TLStructuredTypePart part) {
+			rowValueChanged(row, part);
+		}
+
+		@Override
+		public void onRowChanged(RowSetEditSession session, TLObject row,
+				Collection<TLStructuredTypePart> parts) {
+			rowChanged(row, parts);
+		}
+
 	};
 
 	/**
@@ -286,6 +299,34 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	}
 
 	/**
+	 * Called after the value of an attribute of a row was changed through its cell, so that a
+	 * presentation can show what depends on the value anew.
+	 *
+	 * @param row
+	 *        The row whose value changed.
+	 * @param part
+	 *        The attribute whose value changed.
+	 */
+	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
+		// Hook for subclasses.
+	}
+
+	/**
+	 * Called after values of a row were changed without passing its cells, by a dialog editing the
+	 * parts of another row, so that a presentation can show the row and what depends on it anew.
+	 *
+	 * @param row
+	 *        The row whose values changed.
+	 * @param parts
+	 *        The attributes whose values changed.
+	 *
+	 * @see RowSetEditSession.Listener#onRowChanged(RowSetEditSession, TLObject, Collection)
+	 */
+	protected void rowChanged(TLObject row, Collection<TLStructuredTypePart> parts) {
+		// Hook for subclasses.
+	}
+
+	/**
 	 * Reflects the current validation error of the row-set {@link #fieldModel()} in the
 	 * presentation.
 	 *
@@ -328,10 +369,10 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	// -- Row Manipulation --
 
 	/**
-	 * Adds a new, empty row to the row set.
+	 * Adds a new, empty row of the only type offered for new rows to the row set.
 	 *
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
-	 *         binding offers no row creation.
+	 * @return The created transient row object, or {@code null} if no edit session is running or not
+	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow() {
@@ -339,17 +380,40 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	}
 
 	/**
-	 * Adds a new row to the row set, optionally initialized by the given function.
+	 * Adds a new row of the only type offered for new rows to the row set, optionally initialized by
+	 * the given function.
 	 *
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
-	 *         binding offers no row creation.
+	 * @return The created transient row object, or {@code null} if no edit session is running or not
+	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow(Consumer<TLObject> initializer) {
 		return _session == null ? null : _session.addRow(initializer);
+	}
+
+	/**
+	 * Adds a new, empty row of the given type to the row set.
+	 *
+	 * @param type
+	 *        The type of the new row, one of the {@link #createTypes() types offered for new rows}.
+	 * @return The created transient row object, or {@code null} if no edit session is running or the
+	 *         given type is not offered for new rows.
+	 * @see RowSetEditSession#addRow(TLClass, Consumer)
+	 */
+	public TLObject addRowOfType(TLClass type) {
+		return _session == null ? null : _session.addRow(type, null);
+	}
+
+	/**
+	 * The types the user may choose from for a new row, empty while no edit session is running.
+	 *
+	 * @see RowSetEditSession#createTypes()
+	 */
+	public List<TLClass> createTypes() {
+		return _session == null ? List.of() : _session.createTypes();
 	}
 
 	/**
@@ -362,6 +426,17 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	public void removeRow(TLObject rowObject) {
 		if (_session != null) {
 			_session.removeRow(rowObject);
+		}
+	}
+
+	/**
+	 * Removes the given rows from the row set at once.
+	 *
+	 * @see RowSetEditSession#removeRows(Collection)
+	 */
+	public void removeRows(Collection<? extends TLObject> rowObjects) {
+		if (_session != null) {
+			_session.removeRows(rowObjects);
 		}
 	}
 

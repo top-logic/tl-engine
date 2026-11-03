@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Reihen</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .box { min-height: 2rem; min-width: 4rem; background: var(--tl-surface-brand-subtle); border: 1px dashed var(--tl-border-interactive); }
+  .wrap { background: var(--tl-surface-layer); }
+  .cols3 { grid-template-columns: repeat(3, 1fr); }
+  .narrow { max-width: 20rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Reihen</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Stack, Reihe, Abstand compact</p>
+    <div class="tl-stack tl-stack--row tl-stack--gap-compact"><div class="box"></div><div class="box"></div><div class="box"></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Stack, Reihe, Abstand default</p>
+    <div class="tl-stack tl-stack--row tl-stack--gap-default"><div class="box"></div><div class="box"></div><div class="box"></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Stack, Reihe, Abstand loose</p>
+    <div class="tl-stack tl-stack--row tl-stack--gap-loose"><div class="box"></div><div class="box"></div><div class="box"></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Grid, drei Spalten, Abstand default</p>
+    <div class="tl-grid tl-grid--gap-default cols3"><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Inset: Seite space-lg, Panel space-md, Karte space-xs space-md</p>
+    <div class="wrap"><div class="tl-inset"><div class="box"></div></div></div>
+    <div class="tl-panel"><div class="tl-panel__body"><div class="tl-inset tl-inset--panel"><div class="box"></div></div></div></div>
+    <div class="tl-card"><div class="tl-card__body"><div class="tl-inset tl-inset--card"><div class="box"></div></div></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Bounded: Breite begrenzt, mittig; Item als Hülle</p>
+    <div class="tl-stack tl-stack--column tl-bounded narrow"><div class="tl-item"><div class="box"></div></div><div class="tl-item"><div class="box"></div></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Deck: ein Kind, dessen Größe</p>
+    <div class="tl-deck"><div class="box"></div></div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Auswählbare Karten (Q24): Hof beim Zeigen, Ring ausgewählt, Fokus aus base.css</p>
+    <div class="tl-stack tl-stack--column tl-stack--gap-compact narrow" role="listbox" aria-label="Exposés">
+      <div class="tl-item" role="option" aria-selected="false" tabindex="-1"><div class="tl-card"><div class="tl-card__body tl-card__body--pad-default"><p class="tl-type-body">Altbau am Park</p></div></div></div>
+      <div class="tl-item" role="option" aria-selected="true" tabindex="0"><div class="tl-card"><div class="tl-card__body tl-card__body--pad-default"><p class="tl-type-body">Loft am Hafen</p></div></div><span class="tl-item__check" aria-hidden="true"></span></div>
+      <div class="tl-item" role="option" aria-selected="false" tabindex="-1"><div class="tl-card"><div class="tl-card__body tl-card__body--pad-default"><p class="tl-type-body">Reihenhaus am Feld</p></div></div></div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

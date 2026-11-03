@@ -585,8 +585,6 @@ public class ChatSSEHandler implements ChatEventHandler {
 				+ "\",\"toolName\":\"" + JsonEscape.escape(e.toolName())
 				+ "\",\"message\":\"" + JsonEscape.escape(e.message()) + "\"}");
 		} else if (event instanceof AgentEvent.ApprovalRequired e) {
-			Logger.info("SSE: Sending approval_required for tool '" + e.toolName()
-				+ "' (approvalRequestId=" + e.approvalRequestId() + ")", ChatSSEHandler.class);
 			sendEvent("approval_required", DtoMapper.toJson(ApprovalRequiredEvent.create()
 				.setToolCallId(e.toolCallId())
 				.setApprovalRequestId(e.approvalRequestId())
@@ -836,9 +834,6 @@ public class ChatSSEHandler implements ChatEventHandler {
 		}
 		for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
 			if (!_emittedInteractionIds.contains(req.getId())) {
-				Logger.info("Emitting user interaction event (id: " + req.getId()
-					+ ", type: " + req.getType() + ", header: " + req.getHeader() + ")",
-					ChatSSEHandler.class);
 				try {
 					sendEvent("user_interaction", DtoMapper.toJson(
 						DtoMapper.toUserInteractionEvent(req)));

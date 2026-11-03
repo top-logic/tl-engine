@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Icon</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .specimen__list { display: grid; gap: var(--tl-space-2xs); }
+  .specimen__item { display: flex; gap: var(--tl-space-xs); align-items: center; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Icon</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Vier Stufen nach Rolle</p>
+    <div class="specimen__row specimen__row--flow"><span class="tl-type-label">sm — neben Text</span><span class="tl-icon-sm" aria-hidden="true"><i class="bi bi-folder"></i></span><span class="tl-type-body">Projekte</span></div>
+    <div class="specimen__row specimen__row--flow"><span class="tl-type-label">md — ist das Control</span><button type="button" class="tl-button tl-button--ghost" aria-label="Suchen"><i class="bi bi-search tl-button__icon tl-icon-md" aria-hidden="true"></i></button></div>
+    <div class="specimen__row specimen__row--flow"><span class="tl-type-label">lg — eine Aussage</span><span class="tl-icon-lg" role="img" aria-label="Gespeichert" title="Gespeichert"><i class="bi bi-check-circle" aria-hidden="true"></i></span></div>
+    <div class="specimen__row specimen__row--flow"><span class="tl-type-label">glyph — Richtung</span><span class="tl-type-label">Meilensteine</span><span class="tl-icon-glyph" aria-hidden="true"><i class="bi bi-chevron-right"></i></span></div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Das 1-em-Quadrat hält eine Spalte in Flucht</p>
+    <div class="specimen__list">
+      <div class="specimen__item"><span class="tl-icon-sm" aria-hidden="true"><i class="bi bi-house"></i></span><span class="tl-type-body">Start</span></div>
+      <div class="specimen__item"><span class="tl-icon-sm" aria-hidden="true"><i class="bi bi-arrows-fullscreen"></i></span><span class="tl-type-body">Vollbild</span></div>
+      <div class="specimen__item"><span class="tl-icon-sm" aria-hidden="true"><i class="bi bi-dot"></i></span><span class="tl-type-body">Punkt</span></div>
+      <div class="specimen__item"><img class="tl-icon-sm" alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230b5ed7'/%3E%3C/svg%3E"><span class="tl-type-body">Bild-Icon, ohne Inline-Breite</span></div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

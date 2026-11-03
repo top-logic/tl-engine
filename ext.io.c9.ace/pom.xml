@@ -10,14 +10,14 @@
   <artifactId>ext-io-c9-ace</artifactId>
   
 	<name>${project.artifactId}</name>
-	<description>Ace version 1.5.0 - the high performance code editor for the web</description>
+	<description>Ace - the high performance code editor for the web</description>
   <url>https://ace.c9.io/</url>
   
   <licenses>
   	<license>
   		<name>BSD-3-Clause (BSD-3-Clause "New" or "Revised" License)</name>
-  		<url>https://github.com/ajaxorg/ace/blob/v1.5.0/LICENSE</url>
-  		<comments>https://github.com/ajaxorg/ace/tree/v1.5.0/lib/ace</comments>
+  		<url>https://github.com/ajaxorg/ace/blob/master/LICENSE</url>
+  		<comments>https://github.com/ajaxorg/ace/tree/master/src</comments>
   	</license>
   </licenses>
   
@@ -27,4 +27,43 @@
       <artifactId>tl-core</artifactId>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>npm-install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

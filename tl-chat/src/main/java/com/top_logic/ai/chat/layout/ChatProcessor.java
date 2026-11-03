@@ -276,9 +276,6 @@ public class ChatProcessor {
 			// behind. See PendingInteractionRegistry.
 			PendingInteractionRegistry.register(taskId, TLContext.currentUser(), taskTracker, state);
 
-			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
-				ChatProcessor.class);
-
 			if (!state.isWake()) {
 				boolean hasAttachments = attachments != null && !attachments.isEmpty();
 				boolean hasText = userMessage != null && !userMessage.trim().isEmpty();

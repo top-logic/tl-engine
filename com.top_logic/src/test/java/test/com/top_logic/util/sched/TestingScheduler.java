@@ -201,6 +201,13 @@ public class TestingScheduler extends Scheduler {
     	super.startUp();
     }
 
+	/**
+	 * Make {@link #shutDown()} visible for testing.
+	 */
+	public final void accessibleShutDown() {
+		super.shutDown();
+	}
+
 	@Override
 	public SchedulerEntryStorage getEntries() {
 		return super.getEntries();

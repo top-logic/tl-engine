@@ -299,7 +299,7 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/** The {@link ReactCommandHandler} sent when the button is clicked. */
-	private static final String CMD_CLICK = "click";
+	public static final String CMD_CLICK = "click";
 
 	/**
 	 * Handles the click command from the React client.
@@ -329,7 +329,9 @@ public class ReactButtonControl extends ReactControl {
 		if (!offered.isExecutable()) {
 			return HandlerResult.notExecutable(offered);
 		}
-		return _action.execute(context);
+		// The rendered button carries the ID of this control, so a follow-up menu of the command
+		// can be placed at it.
+		return CommandTrigger.runTriggeredBy(getID(), () -> _action.execute(context));
 	}
 
 	/**

@@ -83,8 +83,9 @@ public class TotpSecondFactor extends AbstractSecondFactor<TotpSecondFactor.Conf
 
 	/**
 	 * The channel values of the {@link LoginAction#MFA_ENROLL_VIEW enrollment dialog} for the given
-	 * account: a fresh secret and its QR code on the {@link LoginAction#SECRET_CHANNEL} /
-	 * {@link LoginAction#QR_CHANNEL} channels. The secret is stored only once
+	 * account: a fresh secret on the {@link LoginAction#SECRET_CHANNEL}, as QR code on the
+	 * {@link LoginAction#QR_CHANNEL} and in plain text for manual entry on the
+	 * {@link LoginAction#SECRET_TEXT_CHANNEL}. The secret is stored only once
 	 * {@link VerifyOtpAction} confirms a valid code generated from it.
 	 */
 	static Map<String, Object> enrollmentChannels(Person account) {
@@ -94,6 +95,7 @@ public class TotpSecondFactor extends AbstractSecondFactor<TotpSecondFactor.Conf
 		channels.put(LoginAction.ACCOUNT_CHANNEL, account);
 		channels.put(LoginAction.SECRET_CHANNEL, secret);
 		channels.put(LoginAction.QR_CHANNEL, MfaSupport.createQrCode(account, secret));
+		channels.put(LoginAction.SECRET_TEXT_CHANNEL, secret.decrypt());
 		return channels;
 	}
 

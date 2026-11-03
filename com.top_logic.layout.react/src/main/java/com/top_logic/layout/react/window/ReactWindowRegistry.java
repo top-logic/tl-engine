@@ -699,8 +699,6 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (windowId == null) {
 			return;
 		}
-		Logger.info("windowClosed(" + windowId + "), known windows: " + _windows.keySet(),
-			ReactWindowRegistry.class);
 		WindowEntry entry = _windows.remove(windowId);
 		if (entry != null) {
 			String singletonKey = entry.getOptions().getSingletonKey();
@@ -719,19 +717,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		String windowId = entry.getWindowId();
 		Runnable closeCallback = entry.getCloseCallback();
 		if (closeCallback != null) {
-			Logger.info("Running close callback for '" + windowId + "'.",
-				ReactWindowRegistry.class);
 			try {
 				closeCallback.run();
-				Logger.info("Close callback completed for '" + windowId + "'.",
-					ReactWindowRegistry.class);
 			} catch (Exception ex) {
 				Logger.error("Error in window close callback for window '" + windowId + "'.",
 					ex, ReactWindowRegistry.class);
 			}
-		} else {
-			Logger.info("No close callback for '" + windowId + "'.",
-				ReactWindowRegistry.class);
 		}
 		ReactControl rootControl = entry.getRootControl();
 		if (rootControl != null) {

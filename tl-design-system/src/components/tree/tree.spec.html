@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Baum</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Der Baum füllt seinen Behälter (Fill-Vertrag); im Specimen begrenzt ihn die Seite. */
+  .specimen__tree { height: 20rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Baum</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Drei Ebenen</p>
+    <p class="tl-type-label">Der Baum hat beim Laden den Fokus; der Cursor liegt auf „Berichte“ (Ring innen am Knoten), „Konzepte“
+      ist ausgewählt, „Archiv“ lädt seine Kinder (aria-busy, darunter die Ladezeile als treeitem eine Ebene tiefer), auf
+      „Entwürfe“ liegt ein Ablegen (drop-onto). Der Einzug je Ebene ist die Breite des Toggles; Blätter halten ihren Platz mit dem Platzhalter.</p>
+
+    <div class="specimen__tree">
+      <ul class="tl-tree tl-type-body" role="tree" aria-label="Ordner" tabindex="0" aria-activedescendant="tree-node-berichte" id="tree">
+        <li class="tl-tree__node" role="treeitem" id="tree-node-projekte" aria-level="1" aria-expanded="true" aria-selected="false">
+          <button type="button" class="tl-toggle" tabindex="-1" aria-expanded="true" aria-label="Projekte zuklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+          <span class="tl-tree__content">Projekte</span>
+        </li>
+        <li class="tl-tree__node" role="treeitem" id="tree-node-berichte" aria-level="2" aria-selected="false" data-tl-state="cursor">
+          <span class="tl-tree__spacer"></span>
+          <span class="tl-tree__content">Berichte</span>
+        </li>
+        <li class="tl-tree__node" role="treeitem" id="tree-node-konzepte" aria-level="2" aria-expanded="true" aria-selected="true">
+          <button type="button" class="tl-toggle" tabindex="-1" aria-expanded="true" aria-label="Konzepte zuklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+          <span class="tl-tree__content">Konzepte</span>
+        </li>
+        <li class="tl-tree__node" role="treeitem" id="tree-node-entwuerfe" aria-level="3" aria-selected="false" data-tl-state="drop-onto">
+          <span class="tl-tree__spacer"></span>
+          <span class="tl-tree__content">Entwürfe mit einem sehr langen Namen, der nicht umbricht und keine Ellipse trägt — der Baum rollt waagerecht</span>
+        </li>
+        <li class="tl-tree__node" role="treeitem" id="tree-node-archiv" aria-level="2" aria-expanded="true" aria-busy="true" aria-selected="false">
+          <button type="button" class="tl-toggle" tabindex="-1" aria-expanded="true" aria-label="Archiv zuklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+          <span class="tl-tree__content">Archiv</span>
+        </li>
+        <li class="tl-status tl-type-body" role="treeitem" aria-level="3" aria-label="Lädt">
+          <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-busy="true" aria-hidden="true">
+            <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+          </div>
+        </li>
+        <li class="tl-tree__node" role="treeitem" id="tree-node-vorlagen" aria-level="1" aria-expanded="false" aria-selected="false">
+          <button type="button" class="tl-toggle" tabindex="-1" aria-expanded="false" aria-label="Vorlagen aufklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+          <span class="tl-tree__content">Vorlagen</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+</main>
+<script>
+  // Einzug je Ebene: die Breite des Toggles (im TSX aus Token-Pixeln gerechnet).
+  for (const node of document.querySelectorAll('.tl-tree [aria-level]')) {
+    const level = Number(node.getAttribute('aria-level'));
+    if (level > 1) node.style.paddingInlineStart = 'calc(' + (level - 1) + ' * var(--tl-size-control-sm))';
+  }
+  document.getElementById('tree').focus({ preventScroll: true });
+
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

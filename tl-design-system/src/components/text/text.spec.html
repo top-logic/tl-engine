@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Text</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .specimen__narrow { width: 8rem; }
+  .specimen__brand { background: var(--tl-surface-brand); padding: var(--tl-space-xs) var(--tl-space-sm); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Text</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <template id="rows">
+    <div class="specimen__row"><span class="tl-type-label">display → tl-type-display</span><span class="tl-text tl-type-display">Display</span></div>
+    <div class="specimen__row"><span class="tl-type-label">headline → tl-type-heading-lg</span><span class="tl-text tl-type-heading-lg">Überschrift</span></div>
+    <div class="specimen__row"><span class="tl-type-label">title → tl-type-heading-sm</span><span class="tl-text tl-type-heading-sm">Titel</span></div>
+    <div class="specimen__row"><span class="tl-type-label">body → tl-type-body</span><span class="tl-text tl-type-body">Fließtext</span></div>
+    <div class="specimen__row"><span class="tl-type-label">label → tl-type-label</span><span class="tl-text tl-type-label">Beschriftung</span></div>
+    <div class="specimen__row"><span class="tl-type-label">caption → tl-type-label</span><span class="tl-text tl-type-label">Bildunterschrift</span></div>
+    <div class="specimen__row"><span class="tl-type-label">strong → tl-type-body-strong</span><span class="tl-text tl-type-body-strong">Stark</span></div>
+    <div class="specimen__row"><span class="tl-type-label">strong → tl-type-label-strong</span><span class="tl-text tl-type-label-strong">Stark, klein</span></div>
+    <div class="specimen__row"><span class="tl-type-label">ohne Ton (erbt)</span><span class="tl-text tl-type-body">Primär</span></div>
+    <div class="specimen__row"><span class="tl-type-label">secondary</span><span class="tl-text tl-type-body" data-tl-tone="secondary">Sekundär</span></div>
+    <div class="specimen__row"><span class="tl-type-label">helper</span><span class="tl-text tl-type-body" data-tl-tone="helper">Hilfetext</span></div>
+    <div class="specimen__row"><span class="tl-type-label">placeholder</span><span class="tl-text tl-type-body" data-tl-tone="placeholder">Platzhalter</span></div>
+    <div class="specimen__row"><span class="tl-type-label">success</span><span class="tl-text tl-type-body" data-tl-tone="success">Erfolg</span></div>
+    <div class="specimen__row"><span class="tl-type-label">warning</span><span class="tl-text tl-type-body" data-tl-tone="warning">Warnung</span></div>
+    <div class="specimen__row"><span class="tl-type-label">error</span><span class="tl-text tl-type-body" data-tl-tone="error">Fehler</span></div>
+    <div class="specimen__row"><span class="tl-type-label">on-brand (auf Marke)</span><span class="specimen__brand"><span class="tl-text tl-type-body" data-tl-tone="on-brand">Auf Markenfläche</span></span></div>
+    <div class="specimen__row"><span class="tl-type-label">Zeilenumbrüche des Werts</span><span class="tl-text tl-type-body">Meilenstein M1 löschen?
+Fällig: 31.12.2026
+Tickets: 4</span></div>
+    <div class="specimen__row"><span class="tl-type-label">--truncate</span><div class="specimen__narrow"><span class="tl-text tl-text--truncate tl-type-body">Ein sehr langer Text, der in der schmalen Zelle mit einer Ellipse endet</span></div></div>
+    <div class="specimen__row"><span class="tl-type-label">Pill als Wurzel</span><span class="tl-pill tl-type-label" data-tl-role="warning"><span class="tl-pill__label">Offen</span></span></div>
+    <div class="specimen__row"><span class="tl-type-label">leer: kein Platz</span><span class="tl-text tl-type-body"></span></div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById("rows");
+  for (const id of ["on-layer", "on-base", "on-overlay"]) document.getElementById(id).append(tpl.content.cloneNode(true));
+  const html = document.documentElement;
+  document.getElementById("mode").addEventListener("change", (e) => html.setAttribute("data-tl-mode", e.target.checked ? "dark" : "light"));
+  document.getElementById("density").addEventListener("change", (e) => html.setAttribute("data-tl-density", e.target.checked ? "compact" : "normal"));
+</script>
+</body>
+</html>

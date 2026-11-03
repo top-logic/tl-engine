@@ -19,6 +19,7 @@ import javax.xml.stream.XMLStreamException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.io.binary.BinaryData;
 
@@ -50,11 +51,20 @@ public class ViewOverlayMerger {
 	 * Merges every view that has more than one same-path copy across the modules on the current
 	 * {@link FileManager} and writes the merged result into the given target web application.
 	 *
+	 * <p>
+	 * A view whose copies cannot be merged is reported as an error to the given {@link Protocol},
+	 * naming the view and the cause, and is not written. The remaining views are merged, so that
+	 * one run reports every defective view. Whether the errors abort the build is decided by the
+	 * caller through {@link Protocol#checkErrors()}.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Protocol} to report views to that cannot be merged.
 	 * @param targetWebappDirectory
 	 *        The expanded web application the deployed WAR is built from.
 	 */
 	@CalledByReflection
-	public static void mergeOverlaidViews(File targetWebappDirectory) {
+	public static void mergeOverlaidViews(Protocol log, File targetWebappDirectory) {
 		FileManager fileManager = FileManager.getInstance();
 
 		List<String> viewPaths = new ArrayList<>();
@@ -65,7 +75,7 @@ public class ViewOverlayMerger {
 			try {
 				overlays = fileManager.getDataOverlays(viewPath);
 			} catch (IOException ex) {
-				Logger.error("Cannot resolve view overlays: " + viewPath, ex, ViewOverlayMerger.class);
+				log.error("Cannot resolve view overlays: " + viewPath, ex);
 				continue;
 			}
 			if (overlays.size() <= 1) {
@@ -77,7 +87,7 @@ public class ViewOverlayMerger {
 				Logger.info("Merged " + overlays.size() + " overlays for view: " + viewPath,
 					ViewOverlayMerger.class);
 			} catch (Exception ex) {
-				Logger.error("Failed to merge view overlays: " + viewPath, ex, ViewOverlayMerger.class);
+				log.error("Failed to merge view overlays: " + viewPath, ex);
 			}
 		}
 	}

@@ -1,0 +1,24 @@
+/* Gleiten — Spec 2026-10-16 Welle 4c §8 (Q21). Ein Versatz für jeden Wechsel, der vorwärts oder zurück führt:
+   Wizard-Schritt, Rahmen des Kachelstapels. Das Ankommende kommt von der Seite, zu der es geht, das Gehende blendet
+   zur anderen aus. Dauer und Kurve setzt die Regel, die die Keyframes nennt; in Schreibrichtung rechts-nach-links
+   nennt sie die gespiegelten. Mehr Bewegung im UI-Durchgang nach Welle 5. */
+
+@keyframes tl-slide-in-forward {
+  from { opacity: 0; transform: translateX(var(--tl-space-md)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-slide-in-backward {
+  from { opacity: 0; transform: translateX(calc(-1 * var(--tl-space-md))); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-slide-out-forward {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(calc(-1 * var(--tl-space-md))); }
+}
+
+@keyframes tl-slide-out-backward {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(var(--tl-space-md)); }
+}

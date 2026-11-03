@@ -1,0 +1,93 @@
+/* Split — Spec 2026-10-16 Welle 4c §6 (Q17). Flächen nebeneinander oder untereinander, dazwischen ein Griff mit
+   role=separator: fokussierbar, Pfeiltasten, Home und End (bridge/separator.ts, derselbe wie der Spaltengriff der
+   Tabelle). In Ruhe eine Linie — Flächen brauchen eine Grenze —, unter dem Zeiger, beim Ziehen und mit Fokus kräftig.
+   Sind alle Flächen eingeklappt, kippt die Achse (data-tl-state~="all-collapsed"); eine eingeklappte Fläche im
+   waagrechten Split zeigt den Kopf ihres Panels als schmale Spalte mit senkrechtem Titel. */
+
+.tl-split {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.tl-split[hidden] { display: none; }
+
+.tl-split--horizontal { flex-direction: row; }
+.tl-split--vertical { flex-direction: column; }
+.tl-split--horizontal[data-tl-state~="all-collapsed"] { flex-direction: column; }
+.tl-split--vertical[data-tl-state~="all-collapsed"] { flex-direction: row; }
+
+.tl-split__handle {
+  position: relative;
+  flex: none;
+  touch-action: none;
+}
+
+.tl-split--horizontal > .tl-split__handle {
+  width: var(--tl-space-xs);
+  cursor: col-resize;
+}
+
+.tl-split--vertical > .tl-split__handle {
+  height: var(--tl-space-xs);
+  cursor: row-resize;
+}
+
+.tl-split__handle::after {
+  content: "";
+  position: absolute;
+  background: var(--tl-border-separator);
+}
+
+.tl-split--horizontal > .tl-split__handle::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--tl-border-width-sm);
+  translate: -50% 0;
+}
+
+.tl-split--vertical > .tl-split__handle::after {
+  right: 0;
+  left: 0;
+  top: 50%;
+  height: var(--tl-border-width-sm);
+  translate: 0 -50%;
+}
+
+.tl-split__handle:hover::after,
+.tl-split__handle:active::after,
+.tl-split__handle:focus-visible::after {
+  background: var(--tl-border-interactive);
+}
+
+.tl-split--horizontal > .tl-split__handle:is(:hover, :active, :focus-visible)::after {
+  width: var(--tl-border-width-md);
+}
+
+.tl-split--vertical > .tl-split__handle:is(:hover, :active, :focus-visible)::after {
+  height: var(--tl-border-width-md);
+}
+
+/* Der Ring liegt innen: der Griff ist space-xs breit, der Ring reicht nicht über ihn hinaus. */
+.tl-split__handle:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Eingeklappt im waagrechten Split: der Kopf als schmale Spalte, Knöpfe oben, Titel senkrecht darunter. */
+.tl-split__pane[data-tl-state~="collapsed"] .tl-titlebar {
+  flex-direction: column-reverse;
+  justify-content: start;
+  align-items: center;
+  height: 100%;
+  padding: var(--tl-space-xs);
+  border-bottom: 0;
+}
+
+.tl-split__pane[data-tl-state~="collapsed"] .tl-titlebar__title {
+  flex: 0 1 auto;
+  writing-mode: vertical-rl;
+}
+
+.tl-split__pane[data-tl-state~="collapsed"] :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+  flex-direction: column;
+}

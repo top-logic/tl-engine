@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Compact field</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Die Tabelle füllt ihren Behälter (Fill-Vertrag); im Specimen begrenzt ihn die Seite. */
+  .specimen__table { height: 12rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Compact field</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Die Wurzel ist eine Reihe (TLStack) mit tl-compact-field; Vorschau mit Ellipse, Öffner als kleiner Icon-Knopf. -->
+  <template id="read">
+    <div class="tl-stack tl-stack--row tl-stack--gap-compact tl-stack--align-center tl-stack--grow-first tl-compact-field">
+      <span class="tl-text tl-text--truncate tl-compact-field__preview">Abnahme mit Prüfprotokoll, zwei Nachträgen und einer Begründung, die nicht in die Zeile passt</span>
+      <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-button--sm tl-compact-field__opener tl-reveal-on-hover" aria-label="Ganzen Wert anzeigen"><i class="tl-button__icon tl-icon-sm bi bi-arrows-angle-expand" aria-hidden="true"></i></button>
+    </div>
+  </template>
+  <template id="edit">
+    <div class="tl-stack tl-stack--row tl-stack--gap-compact tl-stack--align-center tl-stack--grow-first tl-compact-field tl-field" data-tl-state="edit">
+      <span class="tl-text tl-text--truncate tl-compact-field__preview">Abnahme mit Prüfprotokoll, zwei Nachträgen und einer Begründung, die nicht in die Zeile passt</span>
+      <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-button--sm tl-compact-field__opener" aria-label="Wert bearbeiten"><i class="tl-button__icon tl-icon-sm bi bi-pencil" aria-hidden="true"></i></button>
+    </div>
+  </template>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">In einer Tabellenzeile</p>
+    <p class="tl-type-label">Lesend erscheint der Öffner beim Zeigen auf die Zeile und mit dem Tastaturfokus (tl-reveal-on-hover);
+      bearbeitbar ist die Zelle ein Feld, der Öffner steht im Rahmen am Ende. Die dritte Zeile zeigt alles: kein Öffner.</p>
+    <div class="specimen__table">
+      <div class="tl-table tl-type-body">
+        <div class="tl-table__frame">
+          <div class="tl-table__grid" role="grid" aria-label="Aufträge" aria-rowcount="4" aria-colcount="3">
+            <div class="tl-table__header" role="rowgroup">
+              <div class="tl-table__header-row" role="row" aria-rowindex="1">
+                <div class="tl-table__header-cell" role="columnheader"><span class="tl-table__label">Auftrag</span></div>
+                <div class="tl-table__header-cell" role="columnheader"><span class="tl-table__label">Abnahme</span></div>
+                <div class="tl-table__header-cell" role="columnheader"><span class="tl-table__label">Betrag</span></div>
+              </div>
+            </div>
+            <div class="tl-table__body" role="rowgroup">
+              <div class="tl-table__canvas">
+                <div class="tl-table__row" role="row" aria-rowindex="2">
+                  <div class="tl-table__cell" role="gridcell">Auftrag 1041</div>
+                  <div class="tl-table__cell" role="gridcell" data-slot="read"></div>
+                  <div class="tl-table__cell" role="gridcell">1.234,00</div>
+                </div>
+                <div class="tl-table__row" role="row" aria-rowindex="3">
+                  <div class="tl-table__cell" role="gridcell">Auftrag 1042</div>
+                  <div class="tl-table__cell" role="gridcell" data-slot="edit"></div>
+                  <div class="tl-table__cell" role="gridcell">808,80</div>
+                </div>
+                <div class="tl-table__row" role="row" aria-rowindex="4">
+                  <div class="tl-table__cell" role="gridcell">Auftrag 1043</div>
+                  <div class="tl-table__cell" role="gridcell">
+                    <div class="tl-stack tl-stack--row tl-stack--gap-compact tl-stack--align-center tl-stack--grow-first tl-compact-field">
+                      <span class="tl-text tl-text--truncate tl-compact-field__preview">Kurz</span>
+                      <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-button--sm tl-compact-field__opener tl-reveal-on-hover" aria-label="Ganzen Wert anzeigen" hidden><i class="tl-button__icon tl-icon-sm bi bi-arrows-angle-expand" aria-hidden="true"></i></button>
+                    </div>
+                  </div>
+                  <div class="tl-table__cell" role="gridcell">11.111,11</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Im Formular</p>
+    <div class="specimen__row specimen__row--narrow">
+      <span class="tl-type-label">Lesend</span>
+      <div data-slot="read"></div>
+    </div>
+    <div class="specimen__row specimen__row--narrow">
+      <span class="tl-type-label">Bearbeitbar</span>
+      <div data-slot="edit"></div>
+    </div>
+  </section>
+</main>
+<script>
+  for (const slot of document.querySelectorAll('[data-slot]'))
+    slot.append(document.getElementById(slot.dataset.slot).content.cloneNode(true));
+  // Breiten sind Daten (Zustand columns[].width): das TSX setzt sie inline, hier das Skript.
+  const WIDTHS = [160, 280, 120];
+  for (const row of document.querySelectorAll('.tl-table__header-row, .tl-table__row')) {
+    [...row.children].forEach((cell, i) => { cell.style.width = WIDTHS[i] + 'px'; cell.style.flexShrink = '0'; });
+    row.style.width = WIDTHS.reduce((a, b) => a + b, 0) + 'px';
+  }
+  document.querySelector('.tl-table__canvas').style.width = WIDTHS.reduce((a, b) => a + b, 0) + 'px';
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

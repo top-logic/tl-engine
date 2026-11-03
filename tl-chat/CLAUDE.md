@@ -357,7 +357,7 @@ upstream as one clean diff.
 | `search` / `collapsible` / `title` / `empty-text` | The list's own chrome. |
 | `collapsed` | First-load state of a collapsible list; not remembered across page loads. |
 | `drawer-below` | Host width in rem (default 44) below which a collapsible list becomes a drawer - see below. 0 keeps a column at every width. |
-| `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s. |
+| `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s, each rendered as the engine's command button (`ReactButtonControl`, a child control in the `buttons` state): hidden while its rules hide it (`<access>`, `<visible-if>`), disabled with the reason as tooltip while they disable it (`<disabled-if>`), and following every change of its state. |
 | `<row-commands><command>` | Commands offered on a single row - see below. |
 | `row-channel` | Name of the local channel a row command reads its row from. Default `row`. |
 | `row-actions` | `hover` (default) / `always` / `none` - when a row shows its trigger. |

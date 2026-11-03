@@ -68,7 +68,7 @@ final class ChatApprovalCallback implements ApprovalCallback {
 		if (_chat.approvalMode() == ApprovalMode.AUTO_APPROVE) {
 			return ApprovalResult.Approved::new;
 		}
-		Logger.info("Approval requested for tool '" + request.toolName()
+		Logger.debug(() -> "Approval requested for tool '" + request.toolName()
 			+ "' (mode=" + request.mode() + ", approvalRequestId="
 			+ request.approvalRequestId() + "). Blocking until user responds.",
 			ChatApprovalCallback.class);

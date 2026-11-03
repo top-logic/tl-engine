@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Toggle</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Toggle</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
+  <template id="rows">
+    <div class="specimen__row">
+      <span class="tl-type-label">zu</span>
+      <div class="specimen__toolbar">
+        <button type="button" class="tl-toggle" aria-expanded="false" aria-controls="body-zu" aria-label="Abschnitt aufklappen" title="Abschnitt aufklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+        <span class="tl-type-body">Abschnitt</span>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">offen</span>
+      <div class="specimen__toolbar">
+        <button type="button" class="tl-toggle" aria-expanded="true" aria-controls="body-offen" aria-label="Abschnitt zuklappen" title="Abschnitt zuklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+        <span class="tl-type-body">Abschnitt</span>
+      </div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">deaktiviert</span>
+      <div class="specimen__toolbar">
+        <button type="button" class="tl-toggle" aria-expanded="false" aria-controls="body-aus" aria-label="Abschnitt aufklappen" disabled><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
+        <span class="tl-type-body">Abschnitt</span>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+  <section class="specimen__overlay" id="on-overlay"><p class="tl-type-heading-sm">Auf surface-overlay</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base', 'on-overlay']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    document.getElementById(id).append(rows);
+  }
+  for (const t of document.querySelectorAll('.tl-toggle:not(:disabled)')) t.addEventListener('click', () => t.setAttribute('aria-expanded', t.getAttribute('aria-expanded') === 'true' ? 'false' : 'true'));
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

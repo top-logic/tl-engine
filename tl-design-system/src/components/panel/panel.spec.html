@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Panel</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .stage { position: relative; height: 14rem; }
+  #shrink { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Panel</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Kopf mit Titel, Toolbar und Knöpfen; Körper; Knopfleiste</p>
+    <div class="tl-panel">
+      <div class="tl-titlebar">
+        <h2 class="tl-titlebar__title tl-type-heading-sm" id="p1-title">Kunden</h2>
+        <div class="tl-titlebar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle"><div class="tl-toolbar__group"><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Neu</span></button><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Export</span></button></div></div></div>
+        <div class="tl-titlebar__buttons">
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Minimieren" aria-expanded="true" aria-controls="p1-body" data-tooltip="text:Minimieren"><i class="tl-icon-sm bi bi-dash-lg tl-button__icon" aria-hidden="true"></i></button>
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Maximieren" data-tooltip="text:Maximieren"><i class="tl-icon-sm bi bi-window tl-button__icon" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div class="tl-panel__body" id="p1-body"><div class="tl-inset tl-inset--panel"><p class="tl-type-body">Inhalt des Panels.</p></div></div>
+      <div class="tl-button-bar"><div class="tl-toolbar" role="toolbar" aria-label="Aktionen"><div class="tl-toolbar__group"><button type="button" class="tl-button tl-button--secondary"><span class="tl-button__label">Abbrechen</span></button><button type="button" class="tl-button tl-button--primary"><span class="tl-button__label">Speichern</span></button></div></div></div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Kopf ohne Toolbar — gleich hoch; nur Toolbar — am Ende</p>
+    <div class="tl-panel">
+      <div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Ohne Toolbar</h2>
+        <div class="tl-titlebar__buttons"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Maximieren" data-tooltip="text:Maximieren"><i class="tl-icon-sm bi bi-window tl-button__icon" aria-hidden="true"></i></button></div>
+      </div>
+      <div class="tl-panel__body"><p class="tl-type-body">Körper.</p></div>
+    </div>
+    <div class="tl-panel">
+      <div class="tl-titlebar"><div class="tl-titlebar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle"><div class="tl-toolbar__group"><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Aktualisieren</span></button></div></div></div></div>
+      <div class="tl-panel__body"><p class="tl-type-body">Ein Kopf ohne Titel: die Toolbar steht am Ende.</p></div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Minimiert: der ganze Kopf öffnet</p>
+    <div class="tl-panel" data-tl-state="minimized">
+      <div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Minimiert</h2>
+        <div class="tl-titlebar__buttons"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Wiederherstellen" aria-expanded="false" data-tooltip="text:Wiederherstellen"><i class="tl-icon-sm bi bi-window-stack tl-button__icon" aria-hidden="true"></i></button></div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Als Karte, Knöpfe beim Zeigen</p>
+    <div class="tl-panel tl-card tl-panel--hover-actions">
+      <div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Kommentar</h2>
+        <div class="tl-titlebar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle"><div class="tl-toolbar__group"><button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Bearbeiten" data-tooltip="text:Bearbeiten"><i class="tl-icon-sm bi bi-pencil tl-button__icon" aria-hidden="true"></i></button></div></div></div>
+      </div>
+      <div class="tl-panel__body"><div class="tl-inset tl-inset--card"><p class="tl-type-body">Ein Eintrag einer Liste.</p></div></div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Maximiert über dem Behälter</p>
+    <div class="stage"><p class="tl-type-body">Darunter liegender Inhalt.</p>
+      <div class="tl-panel" data-tl-state="maximized">
+        <div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Maximiert</h2>
+          <div class="tl-titlebar__buttons"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Wiederherstellen" data-tooltip="text:Wiederherstellen"><i class="tl-icon-sm bi bi-window-stack tl-button__icon" aria-hidden="true"></i></button></div>
+        </div>
+        <div class="tl-panel__body"><p class="tl-type-body">Escape stellt wieder her.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__base"><p class="tl-type-heading-sm">Nachgeben (titlebar-height.test.mjs setzt die Breite)</p>
+    <div class="stage" id="shrink">
+      <div class="tl-panel">
+        <div class="tl-titlebar"><h2 class="tl-titlebar__title tl-type-heading-sm">Ein langer Titel des Panels, der zuletzt kürzt</h2>
+          <div class="tl-titlebar__actions"><div class="tl-toolbar" role="toolbar" aria-label="Befehle" data-tl-overflow="trailing"><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Neu anlegen</span></button><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Exportieren</span></button><button type="button" class="tl-button tl-button--ghost"><span class="tl-button__label">Drucken</span></button></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge'
+import { isPageLeaving, React, useTLCommand } from 'tl-react-bridge'
 import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
 import type { ReactNode } from 'react'
 import {
@@ -12,12 +12,9 @@ import {
   createSession,
   deleteSession,
   fetchCapabilities,
-  fetchPendingInteractions,
-  fetchRunSnapshot,
   ForbiddenError,
   RefusedError,
   listSessions,
-  listSubagents,
   loadSession,
   loadSubagentTranscript,
   regenerate as regenerateTurn,
@@ -26,12 +23,21 @@ import {
   sendMessage,
   setApprovalMode,
   truncate,
+  readRunState,
   turnsJsonToMessages,
   wokenList,
   type ChatAddress,
+  type RunState,
   type SessionDetail,
 } from './api'
-import { expectFrames, openChatStream, type ChatStream, type StreamFrame } from './chat-stream'
+import {
+  CMD_REFRESH_RUN_STATE,
+  expectFrames,
+  openChatStream,
+  type ChatCommand,
+  type ChatStream,
+  type StreamFrame,
+} from './chat-stream'
 import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
@@ -824,6 +830,19 @@ export class ChatStore {
 
   private refs = 0
 
+  /**
+   * How the chat reaches the server through its elements: the command function of each element
+   * subscribed now, the latest last.
+   *
+   * The stream and the run state are commands of a chat control on the server, and every chat
+   * element is one, so whichever is mounted can carry them - the server keeps the stream for as long
+   * as any of them is displayed, not only the one it was attached through.
+   */
+  private readonly commands: ChatCommand[] = []
+
+  /** The command function of the element that left last, for the detach its leaving causes. */
+  private lastCommand: ChatCommand | null = null
+
   /** Whether any element is watching. The effects run only while one is. */
   private live = false
 
@@ -1085,8 +1104,13 @@ export class ChatStore {
 
   getState = (): ChatState => this.snapshot
 
-  subscribe = (listener: () => void): (() => void) => {
+  /**
+   * Joins an element: `listener` hears every change, `command` is how the store may reach the server
+   * through that element's control.
+   */
+  subscribe = (listener: () => void, command?: ChatCommand): (() => void) => {
     this.listeners.add(listener)
+    if (command) this.commands.push(command)
     this.refs += 1
     if (this.refs === 1) {
       this.live = true
@@ -1101,9 +1125,23 @@ export class ChatStore {
       if (released) return
       released = true
       this.listeners.delete(listener)
+      if (command) {
+        const index = this.commands.lastIndexOf(command)
+        if (index >= 0) this.commands.splice(index, 1)
+        this.lastCommand = command
+      }
       this.refs -= 1
       if (this.refs <= 0) this.quiesce()
     }
+  }
+
+  /**
+   * Sends a command to a chat control of this conversation, through the element that joined last;
+   * answered with `undefined` while no element has brought a command function.
+   */
+  private readonly command: ChatCommand = (name, args) => {
+    const command = this.commands[this.commands.length - 1] ?? this.lastCommand
+    return command ? command(name, args) : Promise.resolve(undefined)
   }
 
   /**
@@ -1401,7 +1439,7 @@ export class ChatStore {
 
     const open = () => {
       if (closed) return
-      const es = openChatStream(at)
+      const es = openChatStream(this.command)
       source = es
       const on = (name: string, fn: (e: StreamFrame) => void) =>
         es.addEventListener(name, (event: StreamFrame) => {
@@ -1425,6 +1463,7 @@ export class ChatStore {
 
       es.addEventListener('open', markAlive)
       on('connected', () => undefined)
+      on('run_state', (e) => this.applyRunState(readRunState(e.data)))
       on('heartbeat', () => undefined)
 
       on('run_started', (e) => {
@@ -1829,12 +1868,13 @@ export class ChatStore {
         })
       })
 
-      es.onerror = (error) => {
-        // The one refusal a new stream cannot cure is `stale_window`: the page is being reloaded,
-        // and asking again would only repeat it, once a second, for as long as the page is open.
-        // Any other failure - a server that is restarting answers nothing useful yet - is tried
-        // again, and the window's own stream reloads the page once the server is back.
-        if (this.staleWindow(error)) return
+      es.onerror = () => {
+        // The one refusal a new stream cannot cure is that of a window the server does not know:
+        // the bridge is loading the page again by then, and asking again would only repeat it,
+        // once a second, for as long as the page is open. Any other failure - a server that is
+        // restarting answers nothing useful yet - is tried again, and the window's own stream
+        // reloads the page once the server is back.
+        if (isPageLeaving()) return
         this.patch({ connection: 'reconnecting' })
         reopen()
       }
@@ -1912,16 +1952,6 @@ export class ChatStore {
   }
 
   /**
-   * Puts the run this chat may still be in back on screen.
-   *
-   * The transcript travels with the session, but the stream replays nothing: after a reload the
-   * progress list is empty, the composer is idle and the open card - an approval, or a question the
-   * agent asked - is gone, while the agent is still parked on it. `GET /chat/updates` says whether
-   * the run is working and what it has got through; `GET /chat/interactions` says what is waiting
-   * for this user. Both are best effort - a chat that shows only what the transcript says is what a
-   * failure here leaves behind, which is what every reload used to look like.
-   */
-  /**
    * Adds a piece of the answer to the message being written.
    *
    * `end` is where the piece ends in the run's text; zero when the server does not say. A piece
@@ -1982,25 +2012,30 @@ export class ChatStore {
     for (const delta of held) this.appendDelta(delta.text, delta.end)
   }
 
-  private async recoverRunState(sessionId: string): Promise<void> {
-    const at = this.at
-    const [snapshot, pending] = await Promise.all([
-      fetchRunSnapshot(at).catch(() => null),
-      fetchPendingInteractions(at).catch(() => []),
-    ])
-    // The user may have moved to another chat while this was in flight.
-    if (this.state.sessionId !== sessionId) return
-    if (snapshot) {
-      this.patch({ busy: snapshot.processing, tasks: parseTasksJson(snapshot.tasksJson) })
-      if (snapshot.processing) {
-        // The last answer of a restored transcript is the paragraph the agent is still writing, not
-        // a finished one, so it is shown as streaming and carries no answer actions (#512).
-        const open = [...this.state.messages].reverse().find((m) => m.type === 'assistant_text')
-        if (open) this.dispatch({ type: 'RESUME_TEXT', id: open.id })
-      }
+  /**
+   * Puts the run this chat may still be in back on screen.
+   *
+   * The transcript travels with the session, but the stream replays nothing: after a reload the
+   * progress list is empty, the composer is idle and the open card - an approval, or a question the
+   * agent asked - is gone, while the agent is still parked on it. The `run_state` frame says whether
+   * the run is working, what it has got through, what is waiting for this user and which subagents
+   * the run has; the server sends it when the stream is attached and again on
+   * {@link CMD_REFRESH_RUN_STATE}. A frame about another chat than the one on screen - the window
+   * has moved on, or is still opening one - is not this chat's.
+   */
+  private applyRunState(run: RunState): void {
+    const sessionId = this.state.sessionId
+    if (!run.sessionId || run.sessionId !== sessionId || this.opening) return
+    // First, so that a request a subagent asks names the subagent the list knows.
+    this.patch({ subagents: run.subagents, subagentBudget: run.budget })
+    this.patch({ busy: run.processing, tasks: parseTasksJson(run.tasksJson) })
+    if (run.processing) {
+      // The last answer of a restored transcript is the paragraph the agent is still writing, not
+      // a finished one, so it is shown as streaming and carries no answer actions (#512).
+      const open = [...this.state.messages].reverse().find((m) => m.type === 'assistant_text')
+      if (open) this.dispatch({ type: 'RESUME_TEXT', id: open.id })
     }
-    for (const item of pending) {
-      if (item.sessionId !== sessionId) continue
+    for (const item of run.interactions) {
       // A request past its deadline can no longer be answered: the agent has stopped waiting for
       // it, and a card nobody is listening to would lock the composer behind a decision that leads
       // nowhere.
@@ -2064,13 +2099,13 @@ export class ChatStore {
     }
   }
 
+  /**
+   * Asks for the conversation's `run_state` frame again, which brings the subagents with their costs
+   * and budget: the live `subagent_*` frames keep their status current, but not what they cost.
+   * The answer arrives on the stream ({@link applyRunState}).
+   */
   async refreshSubagents(): Promise<void> {
-    try {
-      const list = await listSubagents(this.at)
-      this.patch({ subagents: list.subagents, subagentBudget: list.budget })
-    } catch {
-      this.patch({ subagents: [], subagentBudget: undefined })
-    }
+    await this.command(CMD_REFRESH_RUN_STATE)
   }
 
   /**
@@ -2166,9 +2201,8 @@ export class ChatStore {
           measuredTokens: promptTokens(detail.lastPromptUsage),
           composition: detail.lastComposition ?? undefined,
         }))
-        await this.refreshSubagents()
-        if (choice !== this.choice) return
-        await this.recoverRunState(id)
+        // The run of the chat now open, on the stream: the server has just made it the window's.
+        await this.command(CMD_REFRESH_RUN_STATE)
       },
 
       /**
@@ -2720,13 +2754,17 @@ export interface ChatHandle {
  * Joins the chat with the given id.
  *
  * Every element that passes the same id sees the same conversation, the same run and the same one
- * stream; the first to arrive opens the stream and the last to leave closes it.
+ * stream; the first to arrive opens the stream and the last to leave closes it. Must be called by a
+ * component the bridge mounted for a chat control (`ChatControl` on the server): the store sends its
+ * stream commands through the element's control.
  */
 export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The bootstrap seeds a store that does not exist yet; an existing one keeps what it has and
   // takes only the fields `attach` below reacts to, so a second element joining changes nothing.
   const store = useMemo(() => chatStore(chatId, boot), [chatId])
-  const subscribe = useCallback((listener: () => void) => store.subscribe(listener), [store])
+  // The element's own control is how the store reaches the server through this element.
+  const command = useTLCommand()
+  const subscribe = useCallback((listener: () => void) => store.subscribe(listener, command), [store, command])
   const chat = useSyncExternalStore(subscribe, store.getState, store.getState)
   useEffect(
     () => store.attach(boot),

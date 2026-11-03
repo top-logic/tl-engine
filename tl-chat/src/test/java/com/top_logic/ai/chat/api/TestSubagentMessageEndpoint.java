@@ -202,7 +202,7 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 	}
 
 	/**
-	 * The list of the window's subagents says what each run cost and the budget they spend from, so
+	 * The list of the window's subagents - in its {@code run_state} frame - says what each run cost and the budget they spend from, so
 	 * the panel can sum them up (#783). A run reports US dollars; the list converts them into the
 	 * system currency at today's rate (#858).
 	 */
@@ -230,17 +230,9 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 		assertTrue(json, json.contains("\"cost\":0.025,\"currency\":\"USD\""));
 	}
 
-	private String listSubagents() throws Exception {
-		ChatSessionRegistry.register(TLContextManager.getSubSession(), null, _leadWindow);
-		Recording answer = new Recording();
-		InvocationContext invocation = runner.newClient().newInvocation(
-			new com.meterware.httpunit.GetMethodWebRequest("http://localhost/chat/subagents"));
-		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, answer.asResponse(), mia);
-		});
-		_servlet.get(request, answer.asResponse());
-		return answer.text();
+	/** The {@code run_state} frame of the lead's window, which lists its subagents, as JSON. */
+	private String listSubagents() {
+		return DtoMapper.toJson(RunStateFrame.of(_leadWindow, mia));
 	}
 
 	private String body(String parentToolCallId, String text) {

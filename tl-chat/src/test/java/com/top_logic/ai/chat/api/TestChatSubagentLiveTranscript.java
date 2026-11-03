@@ -53,7 +53,7 @@ import com.top_logic.util.model.ModelService;
  * A running subagent's transcript opens while it works (issue #700).
  *
  * <p>
- * Its run id used to be set only after the run had ended, so {@code GET /chat/subagents} offered no
+ * Its run id used to be set only after the run had ended, so the subagent list offered no
  * transcript for a running child, and its recorded execution holds none until then anyway. The run id
  * is now set at the run's start, and the transcript endpoint reads the child's live log while it
  * works.
@@ -75,6 +75,9 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 
 	private SubagentJob _job;
 
+	/** The window of the chat whose lead started the subagent. */
+	private TaskProgressTracker _window;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -87,14 +90,14 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 		}
 		_servlet = new TestSubagentMessageEndpoint.Probe();
 
-		TaskProgressTracker window = new TaskProgressTracker();
-		assertTrue(window.getSessionManager().switchSession(chatId(), lena));
+		_window = new TaskProgressTracker();
+		assertTrue(_window.getSessionManager().switchSession(chatId(), lena));
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		ChatSessionRegistry.register(subSession, null, window);
+		ChatSessionRegistry.register(subSession, null, _window);
 
 		// A child as the spawner leaves it while it works: running, its run id taken from the run's
 		// start, recording into its own log.
-		SubagentJobRegistry registry = window.getActiveSubagentRegistry();
+		SubagentJobRegistry registry = _window.getActiveSubagentRegistry();
 		_job = registry.register("researcher", "find X", new CancellationToken());
 		_job.markRunning();
 		_job.setChildRunId(UUID.randomUUID().toString());
@@ -108,7 +111,8 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 
 	/** The panel offers the transcript of a child that is still running. */
 	public void testARunningChildHasATranscript() throws Exception {
-		String list = get("/chat/subagents");
+		// The list the panel shows comes in the window's run_state frame.
+		String list = DtoMapper.toJson(RunStateFrame.of(_window, lena));
 
 		assertTrue(list, list.contains("\"subagentId\":\"" + _job.subagentId() + "\""));
 		assertTrue(list, list.contains("\"hasTranscript\":true"));

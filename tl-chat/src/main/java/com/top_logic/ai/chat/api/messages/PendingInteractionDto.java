@@ -1,8 +1,8 @@
 package com.top_logic.ai.chat.api.messages;
 
 /**
- * A pending human-in-the-loop request (approval/question/choice) awaiting the current user,
- * with the chat session it belongs to so the client can link to it.
+ * A pending human-in-the-loop request (approval/question/choice) awaiting the current user, with
+ * the chat session it belongs to, as a {@link RunStateEvent} lists it.
  */
 public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 

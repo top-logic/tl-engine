@@ -102,10 +102,13 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * </p>
  *
  * <p>
- * The handler lives while its window is displayed: known to the registry, served by the same queue,
- * its page not unloaded. A tab that is closed or reloaded stops it, and with it the window's
- * presence in {@link ChatEventHandlerRegistry} - what waking a lead for subagent news and marking a
- * result seen go by.
+ * A chat control of the window starts it with the command the browser sends when the first chat
+ * element of the conversation mounts ({@code ChatControl}), and the binding of the conversation
+ * stops it when the browser detaches it or no chat element of the conversation is displayed in the
+ * window any more. It also stops by itself once its window is no longer displayed: known to the
+ * registry, served by the same queue, its page not unloaded. A tab that is closed or reloaded stops
+ * it, and with it the window's presence in {@link ChatEventHandlerRegistry} - what waking a lead for
+ * subagent news and marking a result seen go by.
  * </p>
  *
  * <p>
@@ -113,6 +116,7 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * </p>
  * <ul>
  * <li>{@code connected} - Initial connection state</li>
+ * <li>{@code run_state} - The run of the conversation as it stands, see {@link RunStateFrame}</li>
  * <li>{@code run_started}, {@code run_completed} - Run lifecycle</li>
  * <li>{@code turn_started}, {@code turn_completed} - Turn lifecycle</li>
  * <li>{@code text_delta}, {@code thinking_delta} - LLM streaming</li>
@@ -130,6 +134,9 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * </ul>
  */
 public class ChatSSEHandler implements ChatEventHandler {
+
+	/** Name of the frame {@link RunStateFrame} builds. */
+	static final String RUN_STATE = "run_state";
 
 	private static final long FLUSH_INTERVAL_MS = 50;
 	private static final long HEARTBEAT_INTERVAL_MS = 15000;
@@ -169,7 +176,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 	 * The frames of the current flush cycle, each written by {@link #frame(String, String)}.
 	 *
 	 * <p>
-	 * Written by the flush task only, and by {@link #start()} before that task is scheduled.
+	 * Written while holding this handler's monitor: by the flush task, by {@link #start()} and by
+	 * {@link #sendRunState()}.
 	 * </p>
 	 */
 	private final List<String> _frames = new ArrayList<>();
@@ -283,10 +291,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	/**
-	 * Whether this handler writes to the given listener id.
+	 * Whether this handler writes to the listener id of the given token, see {@link #isToken(String)}.
 	 */
-	boolean writesTo(String listener) {
-		return _listener.equals(listener);
+	public boolean writesTo(String token) {
+		return _listener.equals(listenerId(token));
 	}
 
 	/**
@@ -300,13 +308,28 @@ public class ChatSSEHandler implements ChatEventHandler {
 
 	/**
 	 * Starts sending this conversation's frames.
+	 *
+	 * <p>
+	 * The first frames - {@code connected}, the approval mode and the {@code run_state} - are written
+	 * before this method returns, so that a start within an interaction delivers them together with
+	 * it. The listener id is registered with the window's queue for the same reason: the patches
+	 * address no control, and an interaction would otherwise drop them as updates of a control it
+	 * stopped displaying.
+	 * </p>
 	 */
 	public void start() {
 		// Registering also drops the handler of an earlier attach of the same tracker.
 		ChatEventHandlerRegistry.register(this);
+		_queue.registerListener(_listener);
 
-		sendConnectedEvent();
-		flushFrames();
+		synchronized (this) {
+			sendConnectedEvent();
+			String runState = runStateFrame();
+			if (runState != null) {
+				sendEvent(RUN_STATE, runState);
+			}
+			flushFrames();
+		}
 
 		_flushTask = SSE_EXECUTOR.scheduleWithFixedDelay(
 			this::flushAndPoll,
@@ -321,9 +344,43 @@ public class ChatSSEHandler implements ChatEventHandler {
 	public void stop() {
 		if (_closed.compareAndSet(false, true)) {
 			ChatEventHandlerRegistry.unregister(this);
+			if (_queue != null) {
+				_queue.unregisterListener(_listener);
+			}
 			if (_flushTask != null) {
 				_flushTask.cancel(false);
 			}
+		}
+	}
+
+	/**
+	 * Writes the {@code run_state} frame again, built as the conversation stands now (see
+	 * {@link RunStateFrame}).
+	 *
+	 * <p>
+	 * Written in order behind the frames still waiting, and before this method returns, so that a
+	 * call within an interaction delivers it together with that interaction.
+	 * </p>
+	 */
+	public void sendRunState() {
+		String runState = _closed.get() ? null : runStateFrame();
+		if (runState == null) {
+			return;
+		}
+		_eventQueue.add(new Frame(RUN_STATE, runState));
+		flushAndPoll();
+	}
+
+	/**
+	 * The data of the {@code run_state} frame, <code>null</code> when it could not be built - the
+	 * stream goes on without it, as it would for a window that has nothing to recover.
+	 */
+	private String runStateFrame() {
+		try {
+			return DtoMapper.toJson(RunStateFrame.of(_tracker, _account));
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to build the run state of a chat window.", ex, ChatSSEHandler.class);
+			return null;
 		}
 	}
 
@@ -453,23 +510,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 		Chat chat = _tracker.getChat();
 		int messageCount = chat.getMessages().size();
 
-		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
-		boolean processing = false;
-		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
-		if (procState != null && procState.isProcessing()) {
-			String procSessionId = procState.getSessionId();
-			String activeSessionId = _tracker.getActiveSessionId();
-			if (procSessionId == null || procSessionId.equals(activeSessionId)) {
-				processing = true;
-			}
-		}
-
 		try {
 			ConnectedEvent event = ConnectedEvent.create()
 				.setMessageSeq(messageCount)
-				.setTimelineSeq(0)
-				.setProcessing(processing)
-				.setTaskId(currentTaskId != null ? currentTaskId : "");
+				.setTimelineSeq(0);
 			sendEvent("connected", DtoMapper.toJson(event));
 		} catch (Exception e) {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
@@ -482,7 +526,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 	 * Drains the event queue, emits SSE frames, polls for user interactions, and sends
 	 * heartbeats when idle.
 	 */
-	private void flushAndPoll() {
+	private synchronized void flushAndPoll() {
 		if (_closed.get()) {
 			return;
 		}

@@ -68,8 +68,19 @@ declare module 'tl-react-bridge' {
     ...classes: (string | false | null | undefined)[]
   ): string
 
+  /**
+   * The parsed answer of a command: `success`, and the fields the command's handler attached to its
+   * result on the server (`ReactCommandReply`), read by the names both sides agree on.
+   */
+  export type CommandResponse = Record<string, unknown>
+
+  /**
+   * The function that sends a command to the control the calling component renders, through the
+   * window's FIFO command channel. It resolves with the command's answer, or with `undefined` when
+   * the command failed or the page started leaving before its turn came; it never rejects.
+   */
   export function useTLCommand(): (
     command: string,
     args?: Record<string, unknown>,
-  ) => Promise<unknown>
+  ) => Promise<CommandResponse | undefined>
 }

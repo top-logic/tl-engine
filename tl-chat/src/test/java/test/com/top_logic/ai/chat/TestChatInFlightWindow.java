@@ -29,6 +29,8 @@ import com.meterware.servletunit.ServletRunner;
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.RunStateFrame;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -114,6 +116,9 @@ public class TestChatInFlightWindow extends BasicTestCase {
 	/** The correlation id of the approval the run is parked on. */
 	private String _approvalId;
 
+	/** The window the tests ask from: a second tab, a reloaded page, a new login. */
+	private TaskProgressTracker _restored;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -151,7 +156,8 @@ public class TestChatInFlightWindow extends BasicTestCase {
 
 		// Every test here asks from a window that has no run of its own, which is what a second tab,
 		// a reloaded page and a new login all are to this servlet.
-		inWindow(new TaskProgressTracker());
+		_restored = new TaskProgressTracker();
+		inWindow(_restored);
 	}
 
 	@Override
@@ -261,7 +267,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 	public void testTheRestoredWindowIsToldTheChatIsWorking() throws Exception {
 		restore();
 
-		String body = updates();
+		String body = runState();
 
 		assertTrue("The run of another window must still make this chat busy: " + body,
 			body.contains("\"processing\":true"));
@@ -272,7 +278,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		restore();
 		runEnded();
 
-		String body = updates();
+		String body = runState();
 
 		assertFalse("Nothing is running here: " + body, body.contains("\"processing\":true"));
 	}
@@ -507,9 +513,12 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		return asNina(new GetMethodWebRequest("http://localhost/chat/sessions/" + chatId()));
 	}
 
-	/** What {@code GET /chat/updates} answers Nina, as JSON. */
-	private String updates() throws Exception {
-		return asNina(new GetMethodWebRequest("http://localhost/chat/updates"));
+	/**
+	 * The {@code run_state} frame the restored window sends Nina once the chat is open, as JSON - what
+	 * the chat's stream says when it is attached or asked again ({@link RunStateFrame}).
+	 */
+	private String runState() {
+		return DtoMapper.toJson(RunStateFrame.of(_restored, nina));
 	}
 
 	private String asNina(GetMethodWebRequest get) throws Exception {

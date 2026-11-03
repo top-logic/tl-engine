@@ -12,20 +12,29 @@ import { unseenBadge } from './progress-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
 import {
+  ARG_STREAM,
+  CMD_ATTACH_STREAM,
+  CMD_REFRESH_RUN_STATE,
+  FIELD_ATTACHED,
+  type ChatCommand,
+} from './chat-stream'
+import {
   emitPatch,
   isSubscribed,
   resetTLBridge,
   setPageLeaving,
   setStaleReload,
   staleReloadCalls,
+  type CommandResponse,
 } from '../test/tl-react-bridge'
 
 /**
  * The store's world, without a browser.
  *
  * `chat-store.ts` is deliberately free of the DOM apart from timers and the stream, so the whole
- * surface a test has to stand in for is `window.setTimeout`, `window.location`, `fetch` and the
- * window's event stream, which the bridge stub delivers. Rendering is not what these tests are about - what a chat element does with the
+ * surface a test has to stand in for is `window.setTimeout`, `window.location`, `fetch`, the
+ * window's event stream, which the bridge stub delivers, and the commands of the chat controls,
+ * which {@link control} answers as the server's `ChatControl` would. Rendering is not what these tests are about - what a chat element does with the
  * state is `App`'s business, and the regression gate for that is the untouched suites beside this
  * one.
  */
@@ -51,18 +60,56 @@ let cancelBodies: Record<string, unknown>[] = []
 /** Every `POST /chat/subagents/{id}/message`, in order: its URL and body. */
 let subagentMessages: { url: string; body: Record<string, unknown> }[] = []
 
+/** Every command the store sent, in order: the conversation whose control it went to, and its name. */
+let commands: { conversation: string; name: string }[] = []
+
 /**
- * One stream the store attached: its `POST /chat/stream`, and the patches the window's event stream
- * delivers to the listener id that request named - the server's `ChatSSEHandler` on the other end.
+ * What the server's `run_state` frame says on `refreshRunState`; `null` sends none, which is what
+ * a conversation with nothing to recover sends in effect.
+ */
+let runStateFrame: (() => Record<string, unknown>) | null = null
+
+/** Held to make the `run_state` frame arrive late, so another frame can arrive before it. */
+let runStateGate: Promise<void> = Promise.resolve()
+
+/** Decides whether an attach is refused, answered like a failed command; none is by default. */
+let refuseAttach: (() => boolean) | null = null
+
+/**
+ * The command function of a chat element of the given conversation: answers the stream commands as
+ * the server's `ChatControl` does, and every other command with success.
+ */
+function control(conversation = 'chat'): ChatCommand {
+  return async (name: string, args?: Record<string, unknown>): Promise<CommandResponse | undefined> => {
+    commands.push({ conversation, name })
+    if (name === CMD_ATTACH_STREAM) {
+      if (refuseAttach?.()) return undefined
+      new FakeStream(String(args?.[ARG_STREAM]), conversation)
+      return { success: true, [FIELD_ATTACHED]: true }
+    }
+    if (name === CMD_REFRESH_RUN_STATE) {
+      await runStateGate
+      const frame = runStateFrame?.()
+      const stream = streams.filter((item) => item.conversation === conversation && !item.closed).pop()
+      if (frame) stream?.emit('run_state', frame)
+    }
+    return { success: true }
+  }
+}
+
+/**
+ * One stream the store attached: the conversation whose control it attached through, and the
+ * patches the window's event stream delivers to the listener id the attach named - the server's
+ * `ChatSSEHandler` on the other end.
  */
 class FakeStream {
-  readonly url: string
+  readonly conversation: string
 
   private readonly listenerId: string
 
-  constructor(url: string) {
-    this.url = url
-    this.listenerId = 'tl-chat-stream:' + new URL(url, 'http://host').searchParams.get('stream')
+  constructor(token: string, conversation: string) {
+    this.conversation = conversation
+    this.listenerId = 'tl-chat-stream:' + token
     streams.push(this)
   }
 
@@ -109,6 +156,10 @@ beforeEach(() => {
   requested = []
   cancelBodies = []
   subagentMessages = []
+  commands = []
+  runStateFrame = null
+  runStateGate = Promise.resolve()
+  refuseAttach = null
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -118,10 +169,6 @@ beforeEach(() => {
   resetTLBridge()
   globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
     requested.push(url)
-    if (url.includes('/chat/stream')) {
-      if (init?.method === 'POST') new FakeStream(url)
-      return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
-    }
     if (init?.method === 'PUT' && url.includes('/chat/preferences')) {
       preferenceWrites.push(JSON.parse(init.body ?? '{}'))
       return { ok: true, status: 200, json: async () => ({}) }
@@ -177,7 +224,7 @@ describe('the connections a chat holds', () => {
       close(): void {}
     }
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -194,11 +241,11 @@ describe('the connections a chat holds', () => {
 describe('one store per chat id', () => {
   it('gives two elements on one id the same store and one stream', async () => {
     const first = chatStore('alpha', BOOT)
-    const releaseFirst = first.subscribe(() => undefined)
+    const releaseFirst = first.subscribe(() => undefined, control())
     const second = chatStore('alpha', BOOT)
     expect(second).toBe(first)
 
-    const releaseSecond = second.subscribe(() => undefined)
+    const releaseSecond = second.subscribe(() => undefined, control())
     first.attach(BOOT)
     second.attach(BOOT)
     await settle()
@@ -220,8 +267,8 @@ describe('one store per chat id', () => {
     const beta = chatStore('beta', BOOT)
     expect(beta).not.toBe(alpha)
 
-    const releaseAlpha = alpha.subscribe(() => undefined)
-    const releaseBeta = beta.subscribe(() => undefined)
+    const releaseAlpha = alpha.subscribe(() => undefined, control())
+    const releaseBeta = beta.subscribe(() => undefined, control())
     alpha.attach(BOOT)
     beta.attach(BOOT)
     await settle()
@@ -235,8 +282,8 @@ describe('one store per chat id', () => {
 
   it('closes the stream when the last element leaves, and not before', async () => {
     const store = chatStore('alpha', BOOT)
-    const releaseFirst = store.subscribe(() => undefined)
-    const releaseSecond = store.subscribe(() => undefined)
+    const releaseFirst = store.subscribe(() => undefined, control())
+    const releaseSecond = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     expect(streams).toHaveLength(1)
@@ -260,8 +307,8 @@ describe('one store per chat id', () => {
     const rail = chatStore('alpha', BOOT)
     expect(rail).toBe(conversation)
 
-    const releaseConversation = conversation.subscribe(() => undefined)
-    const releaseRail = rail.subscribe(() => undefined)
+    const releaseConversation = conversation.subscribe(() => undefined, control())
+    const releaseRail = rail.subscribe(() => undefined, control())
     conversation.attach(BOOT)
     await settle()
 
@@ -276,8 +323,8 @@ describe('one store per chat id', () => {
   it('lets a rail built before the transcript subscribed announce itself to it', () => {
     const conversation = chatStore('alpha', BOOT)
     const rail = chatStore('alpha', BOOT)
-    const releaseConversation = conversation.subscribe(() => undefined)
-    const releaseRail = rail.subscribe(() => undefined)
+    const releaseConversation = conversation.subscribe(() => undefined, control())
+    const releaseRail = rail.subscribe(() => undefined, control())
 
     const unregister = rail.actions.registerRail()
     expect(conversation.getState().railMounted).toBe(true)
@@ -305,8 +352,8 @@ describe('one store per chat id', () => {
 
     const leftStore = chatStore(left, BOOT)
     const rightStore = chatStore(right, BOOT)
-    const releaseLeft = leftStore.subscribe(() => undefined)
-    const releaseRight = rightStore.subscribe(() => undefined)
+    const releaseLeft = leftStore.subscribe(() => undefined, control())
+    const releaseRight = rightStore.subscribe(() => undefined, control())
 
     leftStore.actions.dispatch({ type: 'ADD_USER', id: 'u1', text: 'links' })
     rightStore.actions.dispatch({ type: 'ADD_USER', id: 'u2', text: 'rechts' })
@@ -325,7 +372,7 @@ describe('one store per chat id', () => {
    */
   it('reconnects when the same store is subscribed again', async () => {
     const store = chatStore('alpha', BOOT)
-    const first = store.subscribe(() => undefined)
+    const first = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     expect(streams).toHaveLength(1)
@@ -333,7 +380,7 @@ describe('one store per chat id', () => {
     first()
     expect(streams[0].closed).toBe(true)
 
-    const second = store.subscribe(() => undefined)
+    const second = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     expect(streams).toHaveLength(2)
@@ -356,11 +403,11 @@ describe('one store per chat id', () => {
    */
   it('two elements on one chat-id see the same session list', async () => {
     const sessions = chatStore('main', BOOT)
-    const releaseSessions = sessions.subscribe(() => undefined)
+    const releaseSessions = sessions.subscribe(() => undefined, control())
     const app = chatStore('main', BOOT)
     expect(app).toBe(sessions)
 
-    const releaseApp = app.subscribe(() => undefined)
+    const releaseApp = app.subscribe(() => undefined, control())
     sessions.attach(BOOT)
     await settle()
 
@@ -375,7 +422,7 @@ describe('one store per chat id', () => {
 describe('the transcript', () => {
   it('is what chatReducer makes of the dispatched actions', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     store.actions.dispatch({ type: 'ADD_USER', id: 'u1', text: 'Wie hoch ist die Rechnung?' })
     store.actions.dispatch({ type: 'ADD_ASSISTANT', id: 'a1', text: '', isStreaming: true })
@@ -435,7 +482,7 @@ describe('the host\'s context prefix', () => {
    */
   it('contextTag sees the transcript without the outgoing message', async () => {
     const fresh = chatStore('alpha', BOOT)
-    const releaseFresh = fresh.subscribe(() => undefined)
+    const releaseFresh = fresh.subscribe(() => undefined, control())
     const firstTurn: number[] = []
 
     await fresh.actions.send('allererste Frage', [], { contextTag: turnCounter(firstTurn) })
@@ -447,7 +494,7 @@ describe('the host\'s context prefix', () => {
     releaseFresh()
 
     const ongoing = chatStore('beta', BOOT)
-    const releaseOngoing = ongoing.subscribe(() => undefined)
+    const releaseOngoing = ongoing.subscribe(() => undefined, control())
     // One completed exchange already in the transcript.
     ongoing.actions.dispatch({ type: 'ADD_USER', id: 'u1', text: 'erste Frage' })
     ongoing.actions.dispatch({ type: 'ADD_ASSISTANT', id: 'a1', text: 'Antwort', isStreaming: false })
@@ -464,7 +511,7 @@ describe('the host\'s context prefix', () => {
 
   it('sends the draft unchanged when the host contributes no prefix', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     await store.actions.send('ohne Prefix', [])
 
@@ -484,7 +531,7 @@ describe('the host\'s context prefix', () => {
 describe('context facts', () => {
   it('carries the facts with the message and leaves the text alone', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     const facts = [
       { name: 'Project', value: 'Airport expansion', stable: true },
       { name: 'Open invoice', value: 'none', stable: false },
@@ -502,7 +549,7 @@ describe('context facts', () => {
 
   it('sends no facts field when the page states nothing', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     await store.actions.send('Was steht an?', [])
 
@@ -540,7 +587,7 @@ describe('the stream', () => {
    */
   it('keeps which subagent asks a question or an approval', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -580,7 +627,7 @@ describe('the stream', () => {
    */
   it('keeps each subagent\'s steps and text apart from the transcript', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -627,7 +674,7 @@ describe('the stream', () => {
    */
   it('ends the card of a subagent this window did not see start', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -661,7 +708,7 @@ describe('the stream', () => {
    */
   it('sends a message to one subagent and marks it read when the subagent has read it', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -691,7 +738,7 @@ describe('the stream', () => {
    */
   it('keeps a synchronous delegation\'s steps out of the lead\'s transcript', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -715,7 +762,7 @@ describe('the stream', () => {
   /* The end frame names the stop reason: a stop at a limit reads as such, not as done (#786). */
   it('ends a subagent stopped at its limit as such', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -736,7 +783,7 @@ describe('the stream', () => {
    */
   it('shows a queued subagent as waiting until the server says it started', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -765,7 +812,7 @@ describe('the stream', () => {
    */
   it('shows a queued subagent whose first act is an approval as running', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -791,7 +838,7 @@ describe('the stream', () => {
   /* A step of a queued subagent is no evidence that it started; only the server's frame is. */
   it('leaves a queued subagent queued on a step of its own', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -808,7 +855,7 @@ describe('the stream', () => {
   /* A start frame that arrives after the subagent's end does not bring it back to life. */
   it('keeps an ended subagent ended on a late start frame', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -829,7 +876,7 @@ describe('the stream', () => {
    */
   it('opens a turn started for subagent news with the wake line', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -859,7 +906,7 @@ describe('the stream', () => {
 
   it('drives the run state and the transcript', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -888,7 +935,7 @@ describe('the stream', () => {
    */
   it('applies the authoritative text that arrives after the run ended', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -914,7 +961,7 @@ describe('the stream', () => {
    */
   it('keeps a sticky notice over one run start and no further one', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -939,7 +986,7 @@ describe('the stream', () => {
    */
   it('writes a provider error into the transcript, not only into the notice strip', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -967,7 +1014,7 @@ describe('the stream', () => {
    */
   it('says that the agent waits for a busy model, until the model answers', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -994,7 +1041,7 @@ describe('the stream', () => {
    */
   it('writes a model switch into the transcript as a notice', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -1026,7 +1073,7 @@ describe('the stream', () => {
    */
   it('writes a rolled-back transaction into the transcript as a notice', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -1054,7 +1101,7 @@ describe('the stream', () => {
   /** A committed turn is the normal course of things and says nothing. */
   it('writes no notice for a transaction that committed', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -1080,7 +1127,7 @@ describe('the stream', () => {
    */
   it('writes a cancel into the transcript as one notice, not as an error', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     const stream = streams[0]
@@ -1120,7 +1167,7 @@ describe('the layout preferences', () => {
    */
   it('writes once for a handler that changes three of them', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     // Booting writes nothing: the bootstrap IS what the server holds.
@@ -1150,7 +1197,7 @@ describe('the layout preferences', () => {
    */
   it('does not write back the layout it booted with', async () => {
     const store = chatStore('alpha', { ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: 3 })
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach({ ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: 3 })
     await settle()
 
@@ -1162,7 +1209,7 @@ describe('the layout preferences', () => {
 
   it('does not write for a session that is not signed in', async () => {
     const store = chatStore('alpha', { ...BOOT, authenticated: false })
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach({ ...BOOT, authenticated: false })
     await settle()
 
@@ -1182,7 +1229,7 @@ describe('a mounted rail', () => {
    */
   it('is not announced until a rail registers, and is withdrawn when it leaves', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     expect(store.getState().railMounted).toBe(false)
 
     const unregister = store.actions.registerRail()
@@ -1213,7 +1260,7 @@ describe('a mounted rail', () => {
   /** Counted, not flagged: a remount during development leaves the flag set once, not stuck off. */
   it('stays announced while a second rail is still mounted', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     const first = store.actions.registerRail()
     const second = store.actions.registerRail()
@@ -1235,13 +1282,13 @@ describe('a mounted rail', () => {
    */
   it('survives a quiesce between a rail registering and unregistering', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     const unregister = store.actions.registerRail()
 
     release()
     unregister()
 
-    const again = store.subscribe(() => undefined)
+    const again = store.subscribe(() => undefined, control())
     store.actions.registerRail()
     expect(store.getState().railMounted).toBe(true)
 
@@ -1256,7 +1303,7 @@ describe('a mounted rail', () => {
    */
   it('publishes the badge total the toggle shows and records', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.actions.registerRail()
 
     store.actions.publishBadgeTotal(3)
@@ -1280,7 +1327,7 @@ describe('a mounted rail', () => {
    */
   it('counts the conversations mounted outside a dock, and only those', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     expect(store.getState().conversationsOutsideDock).toBe(0)
 
     const inDock = store.actions.registerConversation(true)
@@ -1309,7 +1356,7 @@ describe('a mounted rail', () => {
    */
   it('records what has been seen without touching the rail', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.actions.registerRail()
     store.actions.publishBadgeTotal(4)
 
@@ -1325,7 +1372,7 @@ describe('a mounted rail', () => {
   /** Nothing to count once the rail is gone: a stale number on the button would open nothing. */
   it('drops the badge total when the last rail leaves', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     const unregister = store.actions.registerRail()
     store.actions.publishBadgeTotal(2)
@@ -1341,7 +1388,7 @@ describe('a mounted rail', () => {
    */
   it('applies the configured open default until the user decides', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     expect(store.getState().sideOpen).toBe(false)
 
     store.actions.applyRailDefault(true)
@@ -1359,7 +1406,7 @@ describe('a mounted rail', () => {
   /** A rail the user closed stays closed on the next page load, configured default or not. */
   it('lets the stored rail state overrule the configured default', () => {
     const store = chatStore('alpha', { ...BOOT, railOpen: false, railOpenDefault: true })
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     expect(store.getState().sideOpen).toBe(false)
     store.actions.applyRailDefault(true)
@@ -1380,7 +1427,7 @@ describe('a mounted rail', () => {
       collapsedSections: ['context'],
       sectionChoices: { context: true, progress: false },
     })
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     // context: configured collapsed, expanded by the user. progress: configured open, collapsed.
     expect(store.getState().collapsedSections).toEqual(['progress'])
@@ -1395,7 +1442,7 @@ describe('a mounted rail', () => {
   /** Toggling a section is a decision, and decisions are what gets stored. */
   it('records a section toggle as the user choice', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1419,7 +1466,7 @@ describe('a mounted rail', () => {
    */
   it('stores a pane width as whole pixels', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1436,7 +1483,7 @@ describe('a mounted rail', () => {
   /** An unregister that runs twice must not push the count below zero. */
   it('ignores a repeated unregister', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     const unregister = store.actions.registerRail()
     unregister()
@@ -1512,7 +1559,7 @@ describe('the bootstrap', () => {
       railOpen: true,
       paneWidth: 480,
     })
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     expect(store.getState().traceMode).toBe('detailed')
     expect(store.getState().sideOpen).toBe(true)
@@ -1527,31 +1574,35 @@ describe('the bootstrap', () => {
  *
  * `GET /chat/sessions/{id}` brings the transcript, but the stream replays nothing: before this the
  * page came back with an empty Fortschritt list, an idle composer and no sign of the approval the
- * agent was blocked on, while the run carried on server-side.
+ * agent was blocked on, while the run carried on server-side. The `run_state` frame the server
+ * sends after a chat was opened brings them back.
  */
 describe('recovering a run on boot', () => {
-  /** What `/chat/updates` and `/chat/interactions` answer in the test at hand. */
+  /** What the `run_state` frame says in the test at hand. */
   let runState: { processing: boolean; tasksJson: string }
   let waiting: Record<string, unknown>[]
-  /** Held to make the feed answer late, so a frame can arrive while it is in flight. */
-  let feedGate: Promise<void>
+  /** Which chat the frame is about. */
+  let about: string
 
   beforeEach(() => {
     runState = { processing: false, tasksJson: '' }
     waiting = []
-    feedGate = Promise.resolve()
-    const globals = globalThis as unknown as Record<string, unknown>
-    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
-    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
-      if (url.includes('/chat/updates')) {
-        return { ok: true, status: 200, json: async () => runState }
-      }
-      if (url.includes('/chat/interactions')) {
-        await feedGate
-        return { ok: true, status: 200, json: async () => ({ interactions: waiting }) }
-      }
-      return inner(url, init)
-    })
+    about = 's1'
+    runStateFrame = () => ({ sessionId: about, ...runState, interactions: waiting })
+  })
+
+  it('asks for the run state of the chat it has opened, once the chat is open', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control())
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    expect(commands.map((command) => command.name)).toEqual([CMD_ATTACH_STREAM, CMD_REFRESH_RUN_STATE])
+    expect(requested.filter((url) => /\/chat\/(updates|interactions|subagents)\b/.test(url))).toEqual([])
+
+    release()
   })
 
   it('brings back the progress list and the busy composer', async () => {
@@ -1562,7 +1613,7 @@ describe('recovering a run on boot', () => {
       }),
     }
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1587,7 +1638,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1606,25 +1657,100 @@ describe('recovering a run on boot', () => {
   })
 
   /**
-   * Two reasons not to rebuild a card: it belongs to another chat, or its deadline has passed - the
-   * agent has stopped waiting for it, so a card offering that decision leads nowhere. Both hold for
-   * a question exactly as for an approval.
+   * The subagent panel asks for the run state again when it opens: the live `subagent_*` frames keep
+   * the statuses current, but not what the subagents cost or the budget they spend from.
    */
-  it('leaves a foreign and an expired request alone', async () => {
+  it('refreshes the subagents through the run state on the stream', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control())
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    runStateFrame = () => ({ sessionId: 's1', subagents: [{ subagentId: 'sa-9', status: 'DONE', cost: 0.25 }] })
+
+    await store.actions.refreshSubagents()
+
+    expect(commands.map((command) => command.name)).toEqual([
+      CMD_ATTACH_STREAM,
+      CMD_REFRESH_RUN_STATE,
+      CMD_REFRESH_RUN_STATE,
+    ])
+    expect(store.getState().subagents).toMatchObject([{ subagentId: 'sa-9', cost: 0.25 }])
+
+    release()
+  })
+
+  /**
+   * A recovered card says which background subagent asks, and the subagent list comes with it:
+   * both travel in the one `run_state` frame, the list applied first so the card can name the agent.
+   */
+  it('names the subagent that asks, and brings the subagents back', async () => {
     waiting = [
-      { requestId: 'r2', type: 'approval', header: 't', sessionId: 's2', remainingMs: 40_000 },
+      {
+        requestId: 'r6',
+        type: 'approval',
+        header: 'writeInvoice',
+        sessionId: 's1',
+        remainingMs: 40_000,
+        askedBySubagentId: 'sa-3',
+        askedByAgent: '',
+      },
+    ]
+    const frame = runStateFrame
+    runStateFrame = () => ({
+      ...frame?.(),
+      subagents: [{ subagentId: 'sa-3', targetAgentName: 'writer', status: 'RUNNING' }],
+      budget: { tokens: 1000, money: -1, currency: '' },
+    })
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control())
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    expect(store.getState().subagents.map((item) => item.subagentId)).toEqual(['sa-3'])
+    expect(store.getState().subagentBudget).toMatchObject({ tokens: 1000 })
+    const card = store.getState().messages.find((m) => m.type === 'approval_request')
+    expect(card).toMatchObject({ askedBy: { subagentId: 'sa-3', agent: 'writer' } })
+
+    release()
+  })
+
+  /**
+   * A request whose deadline has passed is not rebuilt: the agent has stopped waiting for it, so a
+   * card offering that decision leads nowhere. This holds for a question exactly as for an approval.
+   */
+  it('leaves an expired request alone', async () => {
+    waiting = [
       { requestId: 'r3', type: 'approval', header: 't', sessionId: 's1', remainingMs: 0 },
-      { requestId: 'r4', type: 'question', header: 't', sessionId: 's2', remainingMs: 40_000 },
       { requestId: 'r4b', type: 'choice', header: 't', sessionId: 's1', remainingMs: 0 },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
     await store.actions.selectSession('s1')
     expect(store.getState().messages.filter((m) => m.type === 'approval_request')).toHaveLength(0)
     expect(store.getState().messages.filter((m) => m.type === 'interaction_request')).toHaveLength(0)
+
+    release()
+  })
+
+  /** The run state of another chat - the one the window showed before, say - is not this chat's. */
+  it('ignores the run state of another chat', async () => {
+    about = 's2'
+    runState = { processing: true, tasksJson: '' }
+    waiting = [{ requestId: 'r2', type: 'approval', header: 't', sessionId: 's2', remainingMs: 40_000 }]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control())
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    expect(store.getState().busy).toBe(false)
+    expect(store.getState().messages.filter((m) => m.type === 'approval_request')).toHaveLength(0)
 
     release()
   })
@@ -1651,7 +1777,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1687,7 +1813,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1714,7 +1840,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1728,10 +1854,10 @@ describe('recovering a run on boot', () => {
     release()
   })
 
-  /** The stream and the feed both report the same question; the user must see one card. */
-  it('does not double a question the stream delivered while the feed was in flight', async () => {
+  /** The stream and the run state both report the same question; the user must see one card. */
+  it('does not double a question the stream delivered while the run state was on its way', async () => {
     let openFeed: () => void = () => undefined
-    feedGate = new Promise<void>((resolve) => {
+    runStateGate = new Promise<void>((resolve) => {
       openFeed = resolve
     })
     waiting = [
@@ -1746,7 +1872,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1767,10 +1893,10 @@ describe('recovering a run on boot', () => {
     release()
   })
 
-  /** The stream and the feed both report the same approval; the user must see one card. */
-  it('does not double a card the stream delivered while the feed was in flight', async () => {
+  /** The stream and the run state both report the same approval; the user must see one card. */
+  it('does not double a card the stream delivered while the run state was on its way', async () => {
     let openFeed: () => void = () => undefined
-    feedGate = new Promise<void>((resolve) => {
+    runStateGate = new Promise<void>((resolve) => {
       openFeed = resolve
     })
     waiting = [
@@ -1783,7 +1909,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1815,7 +1941,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1846,7 +1972,7 @@ describe('recovering a run on boot', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1870,7 +1996,7 @@ describe('recovering a run on boot', () => {
   /** A chat with nothing in flight comes back exactly as it did before. */
   it('says nothing about a chat whose run has ended', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1923,7 +2049,7 @@ describe('the turn settings', () => {
   it('attaches exactly the servers it is given, and marks the attachment as chosen', async () => {
     withCapabilities()
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -1951,7 +2077,7 @@ describe('the turn settings', () => {
   it('keeps an agent chosen before the catalogue arrived, and gives it its model', async () => {
     withCapabilities()
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     // Not the entry point, so applying the entry point regardless would be visible here.
     store.actions.selectAgent('Berta')
     store.attach(BOOT)
@@ -1970,7 +2096,7 @@ describe('the turn settings', () => {
   it('resets the model and the attachment to what the agent itself uses', async () => {
     withCapabilities()
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2035,7 +2161,7 @@ describe('eventBelongsToChat', () => {
 describe('the composer seam', () => {
   it('replaces the draft, and the composer is what focuses and moves the caret', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     const drafts: string[] = []
     store.actions.bindComposer({
       insertReference: () => undefined,
@@ -2053,7 +2179,7 @@ describe('the composer seam', () => {
 
   it('inserts a reference token, as picking it from the "@" menu does', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     const tokens: string[] = []
     store.actions.bindComposer({
       insertReference: (token) => tokens.push(token.label),
@@ -2075,7 +2201,7 @@ describe('the composer seam', () => {
 
   it('does nothing at all while no composer is mounted', () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.actions.bindComposer(null)
 
     expect(() => store.actions.setDraft('Bitte erkläre die Rechnung.')).not.toThrow()
@@ -2093,15 +2219,15 @@ describe('the composer seam', () => {
  * waited for an answer that never came. Every call therefore names its conversation.
  */
 describe('every request names its conversation', () => {
-  it('puts the chat id on the stream, the capabilities, the sessions and the layout', async () => {
+  it('puts the chat id on the capabilities, the sessions and the layout, and attaches through its own control', async () => {
     const store = chatStore('belege', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control('belege'))
     store.attach(BOOT)
     await settle()
     store.actions.toggleSide(0)
     await settle()
 
-    expect(streams[0].url).toContain('conversation=belege')
+    expect(streams[0].conversation).toBe('belege')
     for (const url of requested) {
       expect(url).toContain('conversation=belege')
     }
@@ -2121,7 +2247,7 @@ describe('every request names its conversation', () => {
   it('keeps the layout key apart from the conversation', async () => {
     const boot = { ...BOOT, layoutKey: '' }
     const store = chatStore('v42', boot)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(boot)
     await settle()
     store.actions.toggleSide(0)
@@ -2137,15 +2263,14 @@ describe('every request names its conversation', () => {
   it('gives two conversations of one window two different addresses', async () => {
     const page = chatStore('page', BOOT)
     const dock = chatStore('dock', BOOT)
-    const releasePage = page.subscribe(() => undefined)
-    const releaseDock = dock.subscribe(() => undefined)
+    const releasePage = page.subscribe(() => undefined, control('page'))
+    const releaseDock = dock.subscribe(() => undefined, control('dock'))
     page.attach(BOOT)
     dock.attach(BOOT)
     await settle()
 
     expect(streams).toHaveLength(2)
-    expect(streams.map((stream) => stream.url.includes('conversation=page'))).toContain(true)
-    expect(streams.map((stream) => stream.url.includes('conversation=dock'))).toContain(true)
+    expect(streams.map((stream) => stream.conversation).sort()).toEqual(['dock', 'page'])
 
     releasePage()
     releaseDock()
@@ -2162,7 +2287,7 @@ describe('every request names its conversation', () => {
 describe('stopping a run', () => {
   it('names the chat, so a window that did not start the run can stop it', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     await store.actions.send('Mach etwas Langes.', [])
     const chat = sentBodies[0].sessionId
@@ -2230,15 +2355,10 @@ describe('a window opened while the run is in flight', () => {
     loads = 0
     inFlight = undefined
     gate = null
+    runStateFrame = () => ({ sessionId: 's1', ...runState, interactions: waiting })
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
     globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
-      if (url.includes('/chat/updates')) {
-        return { ok: true, status: 200, json: async () => runState }
-      }
-      if (url.includes('/chat/interactions')) {
-        return { ok: true, status: 200, json: async () => ({ interactions: waiting }) }
-      }
       if (/\/chat\/sessions\/[^/?]/.test(url)) {
         loads++
         // Read now, not when the test lets the answer go: the snapshot is what it was when asked.
@@ -2258,7 +2378,7 @@ describe('a window opened while the run is in flight', () => {
   it('renders the open turn, with the approval inside it', async () => {
     turnsJson = IN_FLIGHT
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2277,7 +2397,7 @@ describe('a window opened while the run is in flight', () => {
   it('shows the last answer of a running turn as still streaming', async () => {
     turnsJson = IN_FLIGHT
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2309,7 +2429,7 @@ describe('a window opened while the run is in flight', () => {
       },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2364,7 +2484,7 @@ describe('a window opened while the run is in flight', () => {
     ])
     runState = { processing: false, tasksJson: '' }
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2400,7 +2520,7 @@ describe('a window opened while the run is in flight', () => {
     let release = () => undefined as void
     gate = new Promise((resolve) => (release = resolve))
     const store = chatStore('alpha', BOOT)
-    const unsubscribe = store.subscribe(() => undefined)
+    const unsubscribe = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2433,7 +2553,7 @@ describe('a window opened while the run is in flight', () => {
     let release = () => undefined as void
     gate = new Promise((resolve) => (release = resolve))
     const store = chatStore('alpha', BOOT)
-    const unsubscribe = store.subscribe(() => undefined)
+    const unsubscribe = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2470,7 +2590,7 @@ describe('a window opened while the run is in flight', () => {
     ])
     inFlight = { streamedChars: 14 }
     const store = chatStore('alpha', BOOT)
-    const unsubscribe = store.subscribe(() => undefined)
+    const unsubscribe = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2493,7 +2613,7 @@ describe('a window opened while the run is in flight', () => {
     turnsJson = WRITING
     inFlight = { streamedChars: 15 }
     const store = chatStore('alpha', BOOT)
-    const unsubscribe = store.subscribe(() => undefined)
+    const unsubscribe = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2516,7 +2636,7 @@ describe('a window opened while the run is in flight', () => {
   it('reads the conversation back when a completion arrives with no run of its own', async () => {
     turnsJson = IN_FLIGHT
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2603,7 +2723,7 @@ describe('a window the server no longer knows', () => {
   it('reloads the page on a refused send and gives the reloaded composer the text back', async () => {
     staleOn('/chat/send')
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     const staleDrafts: string[] = []
     const staleComposer = {
       insertReference: () => undefined,
@@ -2632,7 +2752,7 @@ describe('a window the server no longer knows', () => {
 
     // The reloaded page: a fresh store for the same chat, and its composer mounts.
     const reloaded = chatStore('alpha', BOOT)
-    const releaseReloaded = reloaded.subscribe(() => undefined)
+    const releaseReloaded = reloaded.subscribe(() => undefined, control())
     const drafts: string[] = []
     reloaded.actions.bindComposer({
       insertReference: () => undefined,
@@ -2656,7 +2776,7 @@ describe('a window the server no longer knows', () => {
   it('keeps the text of the send that creates a chat, too', async () => {
     staleOn('/chat/sessions')
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
 
     const sent = await store.actions.send('Neue Frage', [])
 
@@ -2673,7 +2793,7 @@ describe('a window the server no longer knows', () => {
     setStaleReload(false)
     staleOn('/chat/send')
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
 
     const sent = await store.actions.send('noch einmal', [])
@@ -2690,7 +2810,7 @@ describe('a window the server no longer knows', () => {
     setPageLeaving(true)
     staleOn('/chat/send')
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
 
     const sent = await store.actions.send('kurz vor dem Login', [])
@@ -2704,43 +2824,39 @@ describe('a window the server no longer knows', () => {
     release()
   })
 
-  it('stops asking for a stream the server refuses for an unknown window', async () => {
-    staleOn('/chat/stream')
+  /**
+   * The bridge answers a command of a window the server no longer knows by loading the page again;
+   * an attach the page is leaving over is not asked for again.
+   */
+  it('stops asking for a stream once the page is being left', async () => {
+    refuseAttach = () => {
+      setPageLeaving(true)
+      return true
+    }
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await new Promise((resolve) => setTimeout(resolve, 1_200))
 
-    expect(requested.filter((url) => url.includes('/chat/stream'))).toHaveLength(1)
+    expect(commands.filter((command) => command.name === CMD_ATTACH_STREAM)).toHaveLength(1)
     expect(streams).toHaveLength(0)
-    expect(staleReloadCalls()).toBe(1)
 
     release()
   })
 
   it('asks again for a stream the server failed to start for any other reason', async () => {
-    const globals = globalThis as unknown as Record<string, unknown>
-    const before = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
     let failures = 1
-    globals.fetch = vi.fn(async (url: string, init?: unknown) => {
-      if (url.includes('/chat/stream') && failures > 0) {
-        failures--
-        requested.push(url)
-        return { ok: false, status: 503, json: async () => ({}), clone: () => ({ json: async () => ({}) }) }
-      }
-      return before(url, init)
-    })
+    refuseAttach = () => failures-- > 0
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await new Promise((resolve) => setTimeout(resolve, 1_200))
 
-    expect(requested.filter((url) => url.includes('/chat/stream'))).toHaveLength(2)
+    expect(commands.filter((command) => command.name === CMD_ATTACH_STREAM)).toHaveLength(2)
     expect(streams).toHaveLength(1)
     expect(streams[0].closed).toBe(false)
-    expect(staleReloadCalls()).toBe(0)
 
     release()
   })
@@ -2797,7 +2913,7 @@ describe('choosing a chat while another one loads', () => {
 
   it('shows the latest choice even when an earlier transcript arrives after it', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 
@@ -2836,7 +2952,7 @@ describe('choosing a chat while another one loads', () => {
       { id: 'current', title: 'Jetzt' },
     ]
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     // The host's channel names the page's conversation as the element mounts, before the session
     // list - which is what the restore waits for - has come back.
     const chosen = store.actions.selectSession('current')
@@ -2895,7 +3011,7 @@ describe('the auto-approve switch', () => {
 
   it('shows the mode the opened chat is run with, not the one the page loaded with', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     expect(store.getState().autoApprove).toBe(false)
@@ -2909,7 +3025,7 @@ describe('the auto-approve switch', () => {
   it('names the open chat, so the server stores the mode with it', async () => {
     storedMode = 'MANUAL'
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await store.actions.selectSession('s1')
@@ -2927,7 +3043,7 @@ describe('the auto-approve switch', () => {
   it('starts a new chat with the position the person chose last', async () => {
     storedMode = 'MANUAL'
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await store.actions.selectSession('s1')
@@ -2946,7 +3062,7 @@ describe('the auto-approve switch', () => {
   /** Opening a chat shows its own mode; it is no choice of the person's. */
   it('starts a new chat off after opening a chat that is on', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await store.actions.selectSession('s1')
@@ -2962,7 +3078,7 @@ describe('the auto-approve switch', () => {
   it('starts with the choice the page boots with', async () => {
     const boot = { ...BOOT, autoApprove: true }
     const store = chatStore('alpha', boot)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(boot)
     await settle()
 
@@ -2974,7 +3090,7 @@ describe('the auto-approve switch', () => {
   it('names the position of the switch with every send', async () => {
     storedMode = 'MANUAL'
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await store.actions.selectSession('s1')
@@ -2990,7 +3106,7 @@ describe('the auto-approve switch', () => {
 
   it('shows a chat that stores no mode as manual', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
     await store.actions.selectSession('s1')
@@ -3009,7 +3125,7 @@ describe('the auto-approve switch', () => {
    */
   it('stores a mode set before the first send with the chat that send creates', async () => {
     const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
+    const release = store.subscribe(() => undefined, control())
     store.attach(BOOT)
     await settle()
 

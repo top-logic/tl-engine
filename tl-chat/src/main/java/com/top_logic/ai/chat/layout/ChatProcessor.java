@@ -515,8 +515,9 @@ public class ChatProcessor {
 	 * cancels polling when processing is done.
 	 *
 	 * <p>
-	 * Used by the SSE handler, the servlet, and the scheduled polling runnable so updates
-	 * continue regardless of navigation.
+	 * Called by the run when it has produced its answer, and whenever the {@code run_state} frame of a
+	 * window is built ({@link com.top_logic.ai.chat.api.RunStateFrame}), so that a run that ended
+	 * without reaching its end - an error - is forgotten too.
 	 * </p>
 	 */
 	public static boolean applyPollUpdates(AIProcessingState state, Chat chat,
@@ -525,8 +526,8 @@ public class ChatProcessor {
 			return false;
 		}
 
-		// Synchronize on the state to prevent concurrent calls (from SSE handler poll,
-		// /chat/updates servlet, or overlapping SSE reconnects) from double-processing.
+		// Synchronize on the state to prevent concurrent calls (from the run itself, from building
+		// the run_state frame of a window, or from overlapping attaches) from double-processing.
 		synchronized (state) {
 			boolean hasUpdates = false;
 			String currentTaskId = state.getCurrentTaskId();

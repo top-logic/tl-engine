@@ -1,7 +1,7 @@
 package com.top_logic.ai.chat.api.messages;
 
 /**
- * One background subagent, as GET /chat/subagents lists it.
+ * One background subagent, as a {@link RunStateEvent} lists it.
  */
 public class SubagentJobDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 

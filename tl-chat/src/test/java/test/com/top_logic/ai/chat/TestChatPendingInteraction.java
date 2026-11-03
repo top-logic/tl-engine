@@ -71,7 +71,7 @@ import com.top_logic.util.model.ModelService;
  * {@link AIProcessingState}, and that state hangs on the {@link TaskProgressTracker} of one window.
  * Before #393 {@code POST /chat/respond} looked the request up in the tracker of the window the
  * answer arrived from, so a second tab - or a reloaded page, which is a new window - could see the
- * pending request through {@code GET /chat/interactions} but could not answer it: the answer was
+ * pending request in its {@code run_state} frame but could not answer it: the answer was
  * logged as late and dropped, and the run stayed parked until its timeout.
  * </p>
  *
@@ -274,7 +274,7 @@ public class TestChatPendingInteraction extends BasicTestCase {
 	 * <p>
 	 * The window the run belongs to hears the outcome from the run itself
 	 * ({@code approval_resolved}), and is deliberately left out here; a window that listed the
-	 * request through {@code GET /chat/interactions} has no run to hear it from, and would keep
+	 * request from its {@code run_state} frame has no run to hear it from, and would keep
 	 * showing a card nobody is waiting on.
 	 * </p>
 	 */

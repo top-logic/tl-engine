@@ -36,8 +36,8 @@ import com.top_logic.tl.ai.core.session.ConversationLogListener;
  * <li><em>Answering</em> what the run asks: a run that asks for an approval, or asks the user a
  * question, parks its thread on a future in the {@link UserInteractionStore} of its state. A second
  * window, a reloaded page whose window is a new one, or the same account signing in again could see
- * the pending request - {@code GET /chat/interactions} reads it from the persisted
- * {@code InteractionRequest} rows and is account-scoped - but had no way to answer it, and the run
+ * the pending request - the {@code run_state} frame reads it from the persisted
+ * {@code InteractionRequest} rows of the account - but had no way to answer it, and the run
  * stayed parked until its timeout (issue #393). {@link #find(Person, String)} finds it by the
  * request id.</li>
  * <li><em>Stopping</em> it: the same window barrier made the stop button of a second tab, or of the

@@ -7,72 +7,6 @@ option NoInterfaces;
 option NoXml;
 
 /**
- * One message in the chat.
- */
-message MessageDto {
-	/**
-	 * Message ID.
-	 */
-	string id;
-
-	/**
-	 * "user", "agent", or "system".
-	 */
-	string role;
-
-	/**
-	 * Display name of the user who sent this message.
-	 */
-	string userName;
-
-	/**
-	 * Message text content.
-	 */
-	string content;
-
-	/**
-	 * Pre-rendered HTML for the message content (agent messages only; null for user/system).
-	 */
-	string contentHtml;
-
-	/**
-	 * Formatted timestamp string.
-	 */
-	string time;
-
-	/**
-	 * Attachment metadata (file name, type, size). Binary data is NOT persisted.
-	 */
-	repeated AttachmentDto attachments;
-}
-
-/**
- * Response body for GET /chat/updates.
- */
-message ChatUpdatesResponse {
-	/**
-	 * Whether an AI task is currently in progress.
-	 */
-	boolean processing;
-
-	/**
-	 * All messages in the chat.
-	 */
-	repeated MessageDto messages;
-
-	/**
-	 * The open session's task list as JSON, in the format the <code>task_update</code> SSE frame
-	 * carries (<code>TaskStore.toJson()</code>).
-	 *
-	 * <p>
-	 * The stream replays nothing, so this is how a page that was reloaded in mid-run gets the
-	 * progress it was showing back.
-	 * </p>
-	 */
-	string tasksJson;
-}
-
-/**
  * File attachment metadata and optional binary data.
  */
 message AttachmentDto {
@@ -87,7 +21,7 @@ message AttachmentDto {
 	string mimeType;
 
 	/**
-	 * Base64-encoded file content. Present in ChatSendRequest (upload); null in persisted MessageDto.
+	 * Base64-encoded file content. Present in ChatSendRequest (upload); null where only the metadata is kept.
 	 */
 	string base64Data;
 
@@ -406,6 +340,10 @@ message MessageFeedbackRequest {
 
 /**
  * SSE connected event payload.
+ *
+ * <p>
+ * The state of the conversation's run follows in a {@link RunStateEvent} of its own.
+ * </p>
  */
 message ConnectedEvent {
 	/**
@@ -418,15 +356,43 @@ message ConnectedEvent {
 	 */
 	int timelineSeq;
 
+}
+
+/**
+ * SSE run_state event payload: the run of the conversation a window shows, as the server sees it
+ * now.
+ *
+ * <p>
+ * The stream replays nothing, so this is what a window that attaches - a reloaded page, a second
+ * tab, a stream that was attached again after a silence - and a window that opens another chat
+ * learn the run from: whether the agent is still working, the progress it has made, the approvals
+ * and questions waiting for the user, and the background subagents with what they spend from.
+ * </p>
+ */
+message RunStateEvent {
+	/** The chat this state is about; empty while the window shows no saved chat. */
+	string sessionId;
+
 	/**
-	 * Whether an AI task is currently in progress.
+	 * Whether the agent is still working on this chat - in this window or in another window of the
+	 * account.
 	 */
 	boolean processing;
 
 	/**
-	 * Current task ID, or null if none.
+	 * The chat's task list as JSON, in the format the <code>task_update</code> frame carries
+	 * (<code>TaskStore.toJson()</code>); empty when there is none.
 	 */
-	string taskId;
+	string tasksJson;
+
+	/** The approvals and questions of this chat waiting for the acting account, oldest first. */
+	repeated PendingInteractionDto interactions;
+
+	/** Every background subagent the chat's registry knows, whatever its status. */
+	repeated SubagentJobDto subagents;
+
+	/** The budget the subagents share; absent when no subagent's run is bounded. */
+	SubagentBudgetDto budget;
 }
 
 /**
@@ -470,8 +436,8 @@ message ChatSessionListResponse {
 }
 
 /**
- * A pending human-in-the-loop request (approval/question/choice) awaiting the current user,
- * with the chat session it belongs to so the client can link to it.
+ * A pending human-in-the-loop request (approval/question/choice) awaiting the current user, with
+ * the chat session it belongs to, as a {@link RunStateEvent} lists it.
  */
 message PendingInteractionDto {
 	/**
@@ -556,17 +522,6 @@ message PendingInteractionDto {
 
 	/** The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is. */
 	string askedByAgent;
-}
-
-/**
- * Response body for GET /chat/interactions: pending requests across all of the current
- * user's chat sessions, oldest first.
- */
-message PendingInteractionsResponse {
-	/**
-	 * All pending requests awaiting the current user.
-	 */
-	repeated PendingInteractionDto interactions;
 }
 
 /**
@@ -1117,16 +1072,7 @@ message SubagentMessageRequest {
 	string text;
 }
 
-/** Answer of GET /chat/subagents: the subagents of this window's chat, and what they spend from. */
-message SubagentListResponse {
-	/** Every subagent the chat's registry knows, whatever its status. */
-	repeated SubagentJobDto subagents;
-
-	/** The budget the subagents share; absent when no subagent's run is bounded. */
-	SubagentBudgetDto budget;
-}
-
-/** One background subagent, as GET /chat/subagents lists it. */
+/** One background subagent, as a {@link RunStateEvent} lists it. */
 message SubagentJobDto {
 	/** The subagent's id. */
 	string subagentId;

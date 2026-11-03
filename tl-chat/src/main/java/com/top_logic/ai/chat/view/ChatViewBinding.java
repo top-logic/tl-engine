@@ -7,6 +7,8 @@ package com.top_logic.ai.chat.view;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -19,6 +21,7 @@ import java.util.function.Function;
 
 import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.ChatPreferencesStore;
+import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -30,6 +33,9 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.Resources;
@@ -112,6 +118,23 @@ public final class ChatViewBinding {
 	 * @see #offerSubject(ViewChannel)
 	 */
 	private volatile ViewChannel _subject;
+
+	/**
+	 * The chat controls of this conversation the window displays now.
+	 *
+	 * <p>
+	 * What keeps {@link #_stream} going: the browser holds one stream per conversation for all its
+	 * chat elements, and attaches it through whichever of them mounted first. The stream must
+	 * therefore outlive the control it was attached through, as long as another chat element of the
+	 * conversation is displayed.
+	 * </p>
+	 */
+	private final Set<ReactControl> _shown = Collections.newSetFromMap(new IdentityHashMap<>());
+
+	/**
+	 * The stream the browser attached for this conversation, <code>null</code> while it has none.
+	 */
+	private ChatSSEHandler _stream;
 
 	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId,
 			String conversation) {
@@ -463,6 +486,103 @@ public final class ChatViewBinding {
 	}
 
 	/**
+	 * Notes that a chat control of this conversation is displayed in the window.
+	 *
+	 * @see #hidden(ReactControl)
+	 */
+	public void shown(ReactControl control) {
+		synchronized (_shown) {
+			_shown.add(control);
+		}
+	}
+
+	/**
+	 * Notes that a chat control of this conversation is no longer displayed - detached or disposed -
+	 * and stops the conversation's stream when it was the last one.
+	 *
+	 * <p>
+	 * The browser drops a conversation's store, and with it the stream, when the last chat element of
+	 * the conversation unmounts; this is the same rule on the server. It is what ends a stream whose
+	 * browser cannot say so any more: a page that is reloaded or closed detaches or disposes the
+	 * window's controls, while a command it would send on leaving is not sent.
+	 * </p>
+	 */
+	public void hidden(ReactControl control) {
+		ChatSSEHandler ended;
+		synchronized (_shown) {
+			if (!_shown.remove(control) || !_shown.isEmpty()) {
+				return;
+			}
+			ended = _stream;
+			_stream = null;
+		}
+		if (ended != null) {
+			ended.stop();
+		}
+	}
+
+	/**
+	 * Starts sending this conversation's frames to the browser window of the given context, to the
+	 * listener id of the given token, and stops the stream this conversation had before.
+	 *
+	 * @param context
+	 *        The context of the control the browser asked through; names the window and its queue.
+	 * @param token
+	 *        The browser's part of the listener id, see {@link ChatSSEHandler#isToken(String)}.
+	 * @return Whether the stream was started; <code>false</code> for a token that is not acceptable
+	 *         or a context without a window.
+	 */
+	public boolean attachStream(ReactContext context, String token) {
+		SSEUpdateQueue queue = context.getSSEQueue();
+		ReactWindowRegistry registry = context.getWindowRegistry();
+		if (!ChatSSEHandler.isToken(token) || queue == null || registry == null) {
+			return false;
+		}
+		ChatSSEHandler started =
+			new ChatSSEHandler(_tracker, currentPerson(), registry, context.getWindowName(), queue, token);
+		ChatSSEHandler replaced;
+		synchronized (_shown) {
+			replaced = _stream;
+			_stream = started;
+		}
+		started.start();
+		if (replaced != null) {
+			replaced.stop();
+		}
+		return true;
+	}
+
+	/**
+	 * Stops the stream an {@link #attachStream(ReactContext, String)} with the same token started; a
+	 * stream a later attach started is left alone.
+	 */
+	public void detachStream(String token) {
+		ChatSSEHandler ended;
+		synchronized (_shown) {
+			ended = _stream;
+			if (ended == null || !ended.writesTo(token)) {
+				return;
+			}
+			_stream = null;
+		}
+		ended.stop();
+	}
+
+	/**
+	 * Sends the conversation's {@code run_state} frame again, built as the conversation stands now -
+	 * after the window has opened another chat, say. A no-op while the conversation has no stream.
+	 */
+	public void sendRunState() {
+		ChatSSEHandler stream;
+		synchronized (_shown) {
+			stream = _stream;
+		}
+		if (stream != null) {
+			stream.sendRunState();
+		}
+	}
+
+	/**
 	 * Writes the bootstrap every chat element needs into the control's state.
 	 *
 	 * <p>
@@ -529,9 +649,13 @@ public final class ChatViewBinding {
 		return tracker;
 	}
 
-	private static void storeUser(TaskProgressTracker tracker) {
+	private static Person currentPerson() {
 		TLContext tlContext = TLContext.getContext();
-		Person person = tlContext == null ? null : tlContext.getPerson();
+		return tlContext == null ? null : tlContext.getPerson();
+	}
+
+	private static void storeUser(TaskProgressTracker tracker) {
+		Person person = currentPerson();
 		if (person == null) {
 			return;
 		}

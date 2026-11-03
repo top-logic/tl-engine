@@ -40,6 +40,7 @@ export function resetTLBridge(): void {
   staleReloadAnswer = true
   staleReloads = 0
   pageLeaving = false
+  commandAnswer = async () => undefined
 }
 
 /** What `reloadForStaleUi` answers, and how often it was called. */
@@ -131,16 +132,37 @@ export function rootClassName(
   return all.filter(Boolean).join(' ')
 }
 
-const dispatch = async (name: string, args?: Record<string, unknown>): Promise<unknown> => {
+/** See `CommandResponse` of the real bridge. */
+export type CommandResponse = Record<string, unknown>
+
+/** What a dispatched command is answered with; `undefined` by default, like a failed command. */
+let commandAnswer: (name: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined> =
+  async () => undefined
+
+/** Sets how a dispatched command is answered, until the next reset. */
+export function answerCommands(
+  answer: (name: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined>,
+): void {
+  commandAnswer = answer
+}
+
+/**
+ * The command function `useTLCommand` hands out: records the command, then answers it as
+ * `answerCommands` set.
+ */
+export const tlCommand = async (
+  name: string,
+  args?: Record<string, unknown>,
+): Promise<CommandResponse | undefined> => {
   dispatched.push({ name, args })
-  return undefined
+  return commandAnswer(name, args)
 }
 
 export function useTLCommand(): (
   command: string,
   args?: Record<string, unknown>,
-) => Promise<unknown> {
-  return dispatch
+) => Promise<CommandResponse | undefined> {
+  return tlCommand
 }
 
 /** Ends the fill chain, which a test has no layout for: renders the children as they are. */

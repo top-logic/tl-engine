@@ -304,28 +304,7 @@ export async function sendFeedback(
   if (!res.ok) throw new Error(`feedback failed (${res.status})`)
 }
 
-/** What a run that is still in flight looks like from outside the stream. */
-export interface RunSnapshot {
-  /** Whether the open session's agent is still working. */
-  processing: boolean
-  /** The run's task list, in the format the `task_update` frame carries; empty when there is none. */
-  tasksJson: string
-}
-
-/**
- * The open session's run, as the server sees it now.
- *
- * The SSE stream replays nothing, so a page that was reloaded in mid-run learns from here that the
- * agent is still working and what it has got through so far.
- */
-export async function fetchRunSnapshot(at: ChatAddress): Promise<RunSnapshot> {
-  const data = await readJson<{ processing?: boolean; tasksJson?: string }>(
-    await chatFetch(withWindow('/chat/updates', at), { credentials: 'include' }),
-  )
-  return { processing: data.processing === true, tasksJson: data.tasksJson ?? '' }
-}
-
-/** One human-in-the-loop request waiting for this user, as `/chat/interactions` reports it. */
+/** One human-in-the-loop request waiting for this user, as the `run_state` frame lists it. */
 export interface PendingInteraction {
   requestId: string
   /** `approval`, `question` or `choice`. */
@@ -359,28 +338,62 @@ export interface PendingInteraction {
 }
 
 /**
- * Every approval and question waiting for this user, across their chats.
+ * The run of the open chat as the server sees it now: the `run_state` frame, which the server sends
+ * when the stream is attached and again on `refreshRunState` (`RunStateFrame` on the server).
  *
- * Neither has a server poll of its own that a new window hears - the stream re-emits a pending
- * question only into the window whose run it is - so this is what lets a reloaded page put the card
- * back in front of the user instead of a composer that is locked for no visible reason.
+ * The stream replays nothing, so this is what lets a reloaded page say that the agent is still
+ * working, show the progress it has made, put a waiting approval or question back in front of the
+ * user instead of a composer that is locked for no visible reason, and list the background
+ * subagents with what they spend from.
  */
-export async function fetchPendingInteractions(at: ChatAddress): Promise<PendingInteraction[]> {
-  const data = await readJson<{ interactions?: Partial<PendingInteraction>[] }>(
-    await chatFetch(withWindow('/chat/interactions', at), { credentials: 'include' }),
-  )
-  return (data.interactions ?? []).map((item) => ({
-    requestId: item.requestId ?? '',
-    type: item.type ?? '',
-    header: item.header ?? '',
-    prompt: item.prompt ?? '',
-    payload: item.payload ?? '',
-    toolMode: item.toolMode ?? '',
-    multiSelect: item.multiSelect === true,
-    options: item.options ?? [],
-    sessionId: item.sessionId ?? '',
-    remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
-  }))
+export interface RunState {
+  /** The chat this state is about; empty while the window shows no saved chat. */
+  sessionId: string
+  /** Whether the chat's agent is still working, in this window or another one of the account. */
+  processing: boolean
+  /** The run's task list, in the format the `task_update` frame carries; empty when there is none. */
+  tasksJson: string
+  /** The approvals and questions of this chat waiting for this user. */
+  interactions: PendingInteraction[]
+  subagents: SubagentActivity[]
+  /** The budget the subagents share; absent when no subagent's run is bounded. */
+  budget?: SubagentBudget
+}
+
+/** The payload of a `run_state` frame, with a default for every field the server left out. */
+export function readRunState(data: unknown): RunState {
+  const raw = (data ?? {}) as {
+    sessionId?: string
+    processing?: boolean
+    tasksJson?: string
+    interactions?: Partial<PendingInteraction>[]
+    subagents?: SubagentActivity[]
+    budget?: SubagentBudget
+  }
+  return {
+    sessionId: raw.sessionId ?? '',
+    processing: raw.processing === true,
+    tasksJson: raw.tasksJson ?? '',
+    interactions: (raw.interactions ?? []).map((item) => ({
+      requestId: item.requestId ?? '',
+      type: item.type ?? '',
+      header: item.header ?? '',
+      prompt: item.prompt ?? '',
+      payload: item.payload ?? '',
+      toolMode: item.toolMode ?? '',
+      multiSelect: item.multiSelect === true,
+      options: item.options ?? [],
+      sessionId: item.sessionId ?? '',
+      remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
+      askedBySubagentId: item.askedBySubagentId ?? '',
+      askedByAgent: item.askedByAgent ?? '',
+    })),
+    // The job ends DONE whatever stopped its run; a stop at a limit reads as such (#786).
+    subagents: (raw.subagents ?? []).map((item) =>
+      item.status === 'DONE' ? { ...item, status: completedStatus(item.stopReason) } : item,
+    ),
+    budget: raw.budget ?? undefined,
+  }
 }
 
 /**
@@ -408,30 +421,6 @@ export async function respond(at: ChatAddress, body: Record<string, unknown>): P
     body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`respond failed (${res.status})`)
-}
-
-/**
- * Asks the server to send this conversation's frames over the window's own event stream, as
- * patches to the listener `tl-chat-stream:<token>` - see `openChatStream`.
- */
-export async function attachChatStream(at: ChatAddress, token: string): Promise<void> {
-  const res = await chatFetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
-    method: 'POST',
-    credentials: 'include',
-  })
-  if (!res.ok) throw new Error(`attach failed (${res.status})`)
-}
-
-/**
- * Stops the frames `attachChatStream` started for the same token. Best effort, and sent with
- * `keepalive` so that it still goes out while the page is being left.
- */
-export function detachChatStream(at: ChatAddress, token: string): void {
-  void fetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
-    method: 'DELETE',
-    credentials: 'include',
-    keepalive: true,
-  }).catch(() => undefined)
 }
 
 export async function improvePrompt(
@@ -478,18 +467,6 @@ export async function cancelPromptImprovement(at: ChatAddress, requestId: string
     credentials: 'include',
     body: JSON.stringify({ requestId }),
   })
-}
-
-/** The subagents of this window's chat, and the budget they spend from when the run has one. */
-export async function listSubagents(at: ChatAddress): Promise<{ subagents: SubagentActivity[]; budget?: SubagentBudget }> {
-  const data = await readJson<{ subagents?: SubagentActivity[]; budget?: SubagentBudget }>(
-    await chatFetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
-  )
-  // The job ends DONE whatever stopped its run; a stop at a limit reads as such (#786).
-  const subagents = (data.subagents ?? []).map((item) =>
-    item.status === 'DONE' ? { ...item, status: completedStatus(item.stopReason) } : item,
-  )
-  return { subagents, budget: data.budget }
 }
 
 /**

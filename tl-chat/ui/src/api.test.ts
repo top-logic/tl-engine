@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { turnsJsonToMessages } from './api'
+import { readRunState, turnsJsonToMessages } from './api'
 
 /**
  * What a re-opened chat makes of the recorded turns.
@@ -126,5 +126,36 @@ describe('a persisted turn', () => {
       isError: true,
       output: 'The server stopped while this call was running. Its result is unknown.',
     })
+  })
+})
+
+/** What the store makes of the `run_state` frame. */
+describe('the run state of a chat', () => {
+  it('fills in what the server left out', () => {
+    expect(readRunState({})).toEqual({
+      sessionId: '',
+      processing: false,
+      tasksJson: '',
+      interactions: [],
+      subagents: [],
+      budget: undefined,
+    })
+  })
+
+  /** The asking subagent is what a recovered card names; dropping it made the card the lead's. */
+  it('keeps who asks a waiting request', () => {
+    const state = readRunState({
+      sessionId: 's1',
+      interactions: [{ requestId: 'r1', type: 'approval', askedBySubagentId: 'sa-1', askedByAgent: 'writer' }],
+    })
+
+    expect(state.interactions[0]).toMatchObject({ askedBySubagentId: 'sa-1', askedByAgent: 'writer' })
+  })
+
+  /** A subagent's job ends DONE whatever stopped it; a stop at a limit reads as such (#786). */
+  it('reads a subagent stopped at a limit as such', () => {
+    const state = readRunState({ subagents: [{ subagentId: 'sa-1', status: 'DONE', stopReason: 'MAX_TURNS' }] })
+
+    expect(state.subagents[0].status).toBe('LIMIT')
   })
 })

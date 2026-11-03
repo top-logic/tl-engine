@@ -28,7 +28,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -75,9 +74,7 @@ import com.top_logic.util.TLContext;
  * token in that draft.
  * </p>
  */
-public class ChatConversationControl extends ReactControl {
-
-	private final ChatViewBinding _binding;
+public class ChatConversationControl extends ChatControl {
 
 	/**
 	 * The {@code input} channel and what the browser is told of it, or <code>null</code> when the
@@ -167,17 +164,14 @@ public class ChatConversationControl extends ReactControl {
 
 	/** Creates a {@link ChatConversationControl}. */
 	public ChatConversationControl(ViewContext context, Config config) {
-		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
+		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
+		// "default".
+		super(context, blankToDefault(config.getReactElement(), "TLChatConversation"),
+			ChatScope.resolve(context, config.getChatId()), "chat-conversation");
 		setCssClass(config.getCssClass());
 
-		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
-		// "default". The browser keys its store by what we push here, so it must be the resolved id.
-		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId, "chat-conversation");
 		String configuredImprover = blankToNull(config.getPromptImproverAgent());
-		_binding.tracker().setPromptImproverAgentName(configuredImprover);
-		_binding.writeSharedState(this::putState);
-		putState("chatId", chatId);
+		binding().tracker().setPromptImproverAgentName(configuredImprover);
 		// Whether this conversation is the one a <chat-dock/> frames. A dock stands down while a
 		// conversation of its chat is on the page, and its own must not be what triggers that.
 		putState("insideDock", Boolean.valueOf(ChatDockScope.isInsideDock(context)));
@@ -259,8 +253,8 @@ public class ChatConversationControl extends ReactControl {
 		ChannelRef subjectRef = config.getSubject();
 		if (subjectRef != null) {
 			ViewChannel subject = context.resolveChannel(subjectRef);
-			Runnable offer = () -> _binding.offerSubject(subject);
-			Runnable withdraw = () -> _binding.withdrawSubject(subject);
+			Runnable offer = () -> binding().offerSubject(subject);
+			Runnable withdraw = () -> binding().withdrawSubject(subject);
 			addAttachListener(offer);
 			addDetachListener(withdraw);
 			addCleanupAction(withdraw);
@@ -313,8 +307,8 @@ public class ChatConversationControl extends ReactControl {
 			}
 			String name = ref.getChannelName();
 			ViewChannel channel = context.resolveChannel(ref);
-			Runnable open = () -> _binding.allowPresenting(name, channel);
-			Runnable close = () -> _binding.denyPresenting(name, channel);
+			Runnable open = () -> binding().allowPresenting(name, channel);
+			Runnable close = () -> binding().denyPresenting(name, channel);
 			addAttachListener(open);
 			addDetachListener(close);
 			addCleanupAction(close);
@@ -343,21 +337,6 @@ public class ChatConversationControl extends ReactControl {
 		addCleanupAction(() -> channel.removeListener(listener));
 		apply.accept(channel.get());
 		return channel;
-	}
-
-	/**
-	 * Re-reads the user's stored layout.
-	 *
-	 * <p>
-	 * A browser reload re-renders the control tree the window already holds, so this hook is the
-	 * only place that runs again. Writing the layout in the constructor would replay the first
-	 * render's rail state for the life of the window (Gitea #423).
-	 * </p>
-	 */
-	@Override
-	protected void onBeforeWrite() {
-		super.onBeforeWrite();
-		_binding.writeRenderState(this::putState);
 	}
 
 	@Override
@@ -1091,13 +1070,5 @@ public class ChatConversationControl extends ReactControl {
 		}
 		String trimmed = value.trim();
 		return trimmed.isEmpty() ? null : trimmed;
-	}
-
-	private static String blankToDefault(String value, String fallback) {
-		if (value == null) {
-			return fallback;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? fallback : trimmed;
 	}
 }

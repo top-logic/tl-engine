@@ -50,8 +50,8 @@ import com.top_logic.util.TLContext;
 
 /**
  * Tests that a command posted to {@link ReactServlet} sees the commits other threads made since
- * the last request of its window, and that a command ending its own session is answered as a
- * stale window.
+ * the last request of its window, and that a command ending its own session is no internal
+ * error.
  */
 public class TestCommandSeesForeignCommit extends BasicTestCase {
 
@@ -143,10 +143,12 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 	}
 
 	/**
-	 * A command that ends the session of its window while it runs is answered as a stale window,
-	 * not as an internal error.
+	 * A command that ends the session of its window while it runs - e.g. by removing the account of
+	 * the user, and with it all of its sessions - is answered like any other command, not as an
+	 * internal error: nothing reads the session after the command. The window then is stale like
+	 * any window of an ended session, and its next request is answered as such.
 	 */
-	public void testCommandEndingItsSessionAnswersStaleUi() throws Exception {
+	public void testCommandEndingItsSessionIsNoInternalError() throws Exception {
 		displayWindow(new ReactCommandTarget() {
 			@Override
 			public String getID() {
@@ -155,20 +157,21 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 
 			@Override
 			public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
-				// E.g. the command removed the account of the user, and with it all of its sessions.
 				ThreadContext.inSystemContext(TestCommandSeesForeignCommit.class,
 					() -> SessionService.getInstance().terminateSession(_sessionId));
-				// Whatever reads the session afterwards fails.
-				_session.getAttribute(WINDOW);
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		});
 
-		// Read the body of the error answer instead of failing on its status.
+		// Read the body of an error answer instead of failing on its status.
 		_client.setExceptionsThrownOnErrorStatus(false);
 		InvocationContext invocation = postCommand();
-		assertEquals(HttpServletResponse.SC_UNAUTHORIZED, invocation.getResponse().getStatus());
-		String body = new String(invocation.getServletResponse().getInputStream().readAllBytes(),
+		assertEquals(HttpServletResponse.SC_OK, invocation.getResponse().getStatus());
+		assertFalse("The command ended the session.", isValid(_session));
+
+		InvocationContext next = postCommand();
+		assertEquals(HttpServletResponse.SC_UNAUTHORIZED, next.getResponse().getStatus());
+		String body = new String(next.getServletResponse().getInputStream().readAllBytes(),
 			StandardCharsets.UTF_8);
 		assertTrue("The answer must name the stale window: " + body,
 			body.contains("\"errorCode\":\"" + ReactServlet.ERROR_CODE_STALE_UI + "\""));

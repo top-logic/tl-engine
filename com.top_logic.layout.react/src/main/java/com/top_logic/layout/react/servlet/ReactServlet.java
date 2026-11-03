@@ -481,29 +481,8 @@ public class ReactServlet extends TopLogicServlet {
 					break;
 			}
 		} catch (Exception ex) {
-			if (!isValid(session)) {
-				// The session ended while the request ran, e.g. a command removed the account and with
-				// it all of its sessions: whatever read the session afterwards failed. The window is
-				// stale like any window of an ended session, and reloads.
-				Logger.info("Session ended while handling React request " + pathInfo + ": " + ex.getMessage(),
-					ReactServlet.class);
-				sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "Session ended.");
-				return;
-			}
 			Logger.error("Error handling React request: " + pathInfo, ex, ReactServlet.class);
 			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal error.");
-		}
-	}
-
-	/**
-	 * Whether the given session has not been invalidated.
-	 */
-	private static boolean isValid(HttpSession session) {
-		try {
-			session.getCreationTime();
-			return true;
-		} catch (IllegalStateException ex) {
-			return false;
 		}
 	}
 

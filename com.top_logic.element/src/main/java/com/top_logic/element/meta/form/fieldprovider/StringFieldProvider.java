@@ -16,6 +16,7 @@ import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
@@ -88,6 +89,10 @@ public class StringFieldProvider extends AbstractFieldProvider {
 			Comparator optionOrder = options.getOptionOrder();
 			if (optionOrder != null) {
 				result.setOptionComparator(optionOrder);
+			}
+			LabelProvider optionLabels = options.getOptionLabels();
+			if (optionLabels != null) {
+				result.setOptionLabelProvider(optionLabels);
 			}
 			return result;
 		}

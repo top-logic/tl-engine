@@ -159,67 +159,142 @@ public class SQLFactory {
 		return new SQLTuple(expressions);
 	}
 
+	/**
+	 * Creates an inner {@link SQLJoin} without join condition (cross join).
+	 */
 	public static SQLJoin innerJoin(SQLTableReference leftTable, SQLTableReference rightTable) {
 		return join(true, leftTable, rightTable, SQLBoolean.TRUE);
 	}
 	
+	/**
+	 * Creates an inner {@link SQLJoin} of the given tables.
+	 *
+	 * @param condition
+	 *         The join condition.
+	 */
 	public static SQLJoin innerJoin(SQLTableReference leftTable, SQLTableReference rightTable, SQLExpression condition) {
 		return join(true, leftTable, rightTable, condition);
 	}
 
+	/**
+	 * Creates a left outer {@link SQLJoin} of the given tables.
+	 *
+	 * @param condition
+	 *         The join condition.
+	 */
 	public static SQLJoin leftJoin(SQLTableReference leftTable, SQLTableReference rightTable, SQLExpression condition) {
 		return join(false, leftTable, rightTable, condition);
 	}
 
+	/**
+	 * Creates a {@link SQLJoin} of the given tables.
+	 *
+	 * @param inner
+	 *         Whether to create an inner join, or a left outer join.
+	 * @param condition
+	 *         The join condition.
+	 */
 	public static SQLJoin join(boolean inner, SQLTableReference leftTable, SQLTableReference rightTable, SQLExpression condition) {
 		return new SQLJoin(inner, leftTable, rightTable, condition);
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of all rows of the given table.
+	 */
 	public static SQLSelect select(List<SQLColumnDefinition> columns, SQLTableReference from) {
 		return select(columns, from, SQLBoolean.TRUE);
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of the rows matching the given condition.
+	 */
 	public static SQLSelect select(List<SQLColumnDefinition> columns, SQLTableReference from, SQLExpression where) {
 		return select(columns, from, where, noOrder());
 	}
 
+	/**
+	 * Creates a distinct {@link SQLSelect} of all rows of the given table.
+	 */
 	public static SQLSelect selectDistinct(List<SQLColumnDefinition> columns, SQLTableReference from) {
 		return selectDistinct(columns, from, SQLBoolean.TRUE);
 	}
 
+	/**
+	 * Creates a distinct {@link SQLSelect} of the rows matching the given condition.
+	 */
 	public static SQLSelect selectDistinct(List<SQLColumnDefinition> columns, SQLTableReference from,
 			SQLExpression where) {
 		return selectDistinct(columns, from, where, noOrder());
 	}
 
+	/**
+	 * Creates a distinct {@link SQLSelect} of the rows matching the given condition in the given
+	 * order.
+	 */
 	public static SQLSelect selectDistinct(List<SQLColumnDefinition> columns, SQLTableReference from,
 			SQLExpression where, List<SQLOrder> orderBy) {
 		return select(true, columns, from, where, orderBy);
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of the rows matching the given condition in the given order.
+	 */
 	public static SQLSelect select(List<SQLColumnDefinition> columns, SQLTableReference from, SQLExpression where,
 			List<SQLOrder> orderBy) {
 		return select(false, columns, from, where, orderBy);
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of all rows of the given table.
+	 *
+	 * @param distinct
+	 *         Whether duplicate result rows are eliminated.
+	 */
 	public static SQLSelect select(boolean distinct, List<SQLColumnDefinition> columns, SQLTableReference from) {
 		return select(distinct, columns, from, SQLBoolean.TRUE);
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of the rows matching the given condition.
+	 *
+	 * @param distinct
+	 *         Whether duplicate result rows are eliminated.
+	 */
 	public static SQLSelect select(boolean distinct, List<SQLColumnDefinition> columns, SQLTableReference from,
 			SQLExpression where) {
 		return select(distinct, columns, from, where, noOrder());
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of the rows matching the given condition in the given order.
+	 *
+	 * @param distinct
+	 *         Whether duplicate result rows are eliminated.
+	 */
 	public static SQLSelect select(boolean distinct, List<SQLColumnDefinition> columns, SQLTableReference from, SQLExpression where, List<SQLOrder> orderBy) {
 		return select(distinct, columns, from, where, orderBy, SQLLimit.NO_LIMIT);
 	}
 
+	/**
+	 * Creates a {@link SQLSelect} of the rows matching the given condition in the given order,
+	 * restricted to the given range of result rows.
+	 *
+	 * @param distinct
+	 *         Whether duplicate result rows are eliminated.
+	 */
 	public static SQLSelect select(boolean distinct, List<SQLColumnDefinition> columns, SQLTableReference from,
 			SQLExpression where, List<SQLOrder> orderBy, SQLLimit limit) {
 		return new SQLSelect(distinct, columns, from, where, orderBy, limit);
 	}
 	
+	/**
+	 * Creates a sub-query that can be used as table in another statement.
+	 *
+	 * @param select
+	 *         The selection statement of the sub-query.
+	 * @param tableAlias
+	 *         The alias name through which the result of the sub-query is accessed.
+	 */
 	public static SQLSubQuery subQuery(SQLSelectionStatement select, String tableAlias) {
 		return new SQLSubQuery(select, tableAlias);
 	}
@@ -371,10 +446,18 @@ public class SQLFactory {
 		return new SQLDropColumn(table, columnName);
 	}
 
+	/**
+	 * Creates an empty INSERT statement for the given table.
+	 *
+	 * @see SQLInsert#set(String, SQLExpression)
+	 */
 	public static SQLInsert insert(SQLTable table) {
 		return insert(table, new ArrayList<>(), new ArrayList<>());
 	}
 	
+	/**
+	 * Creates an INSERT statement setting the given columns to the given values.
+	 */
 	public static SQLInsert insert(SQLTable table, List<String> columnNames, List<? extends SQLExpression> values) {
 		return new SQLInsert(table, columnNames, values);
 	}
@@ -394,28 +477,53 @@ public class SQLFactory {
 		return new SQLInsertSelect(table, columnNames, select);
 	}
 
+	/**
+	 * Creates an UPDATE statement setting the given columns to the given values in all rows
+	 * matching the given condition.
+	 */
 	public static SQLUpdate update(SQLTable table, SQLExpression where, List<String> columns,
 			List<SQLExpression> values) {
 		return new SQLUpdate(table, where, columns, values);
 	}
 
+	/**
+	 * Creates a distinct UNION of the given selects.
+	 */
 	public static SQLUnion union(List<SQLSelect> selects) {
 		return union(true, selects);
 	}
 	
+	/**
+	 * Creates a UNION of the given selects.
+	 *
+	 * @param distinct
+	 *         Whether duplicate result rows are eliminated.
+	 */
 	public static SQLUnion union(boolean distinct, List<SQLSelect> selects) {
 		return union(distinct, selects, new ArrayList<>()); // Note: SQLPart expressions are
 															// mutable.
 	}
 	
+	/**
+	 * Creates a distinct UNION of the given selects with the given result order.
+	 */
 	public static SQLUnion union(List<SQLSelect> selects, List<SQLOrder> orderBy) {
 		return union(true, selects, orderBy);
 	}
 	
+	/**
+	 * Creates a UNION of the given selects with the given result order.
+	 *
+	 * @param distinct
+	 *         Whether duplicate result rows are eliminated.
+	 */
 	public static SQLUnion union(boolean distinct, List<SQLSelect> selects, List<SQLOrder> orderBy) {
 		return new SQLUnion(distinct, selects, orderBy);
 	}
 
+	/**
+	 * Creates the binary expression for the given operator.
+	 */
 	public static SQLExpression binaryExpression(SQLOp op, SQLExpression leftExpr, SQLExpression rightExpr) {
 		switch (op) {
 		case add:
@@ -533,14 +641,23 @@ public class SQLFactory {
 		return function(SQLFun.count, expr);
 	}
 
+	/**
+	 * Creates a call to the given SQL function.
+	 */
 	public static SQLExpression function(SQLFun fun, SQLExpression... arguments) {
 		return function(fun, Arrays.asList(arguments));
 	}
 	
+	/**
+	 * Creates a call to the given SQL function.
+	 */
 	public static SQLExpression function(SQLFun fun, List<SQLExpression> arguments) {
 		return new SQLFunction(fun, arguments);
 	}
 	
+	/**
+	 * Creates an expression testing whether the given expression is <code>NULL</code>.
+	 */
 	public static SQLExpression isNull(SQLExpression expr) {
 		if (expr instanceof SQLColumnReference && ((SQLColumnReference) expr).isNotNull()) {
 			return SQLBoolean.FALSE;
@@ -592,6 +709,10 @@ public class SQLFactory {
 		return inSet(expr, setLiteral(values, types));
 	}
 
+	/**
+	 * Creates an expression testing whether the value of the given expression is contained in the
+	 * given set of values.
+	 */
 	public static SQLExpression inSet(SQLExpression expr, SQLExpression values) {
 		return new SQLInSet(expr, values);
 	}
@@ -603,6 +724,9 @@ public class SQLFactory {
 		return new SQLInSetSelect(expr, select);
 	}
 
+	/**
+	 * Creates a greater-or-equal comparison.
+	 */
 	public static SQLExpression ge(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr instanceof SQLLiteral) {
 			if (rightExpr instanceof SQLLiteral) {
@@ -627,6 +751,9 @@ public class SQLFactory {
 		return new SQLBinaryExpression(SQLOp.ge, leftExpr, rightExpr);
 	}
 	
+	/**
+	 * Creates a less-or-equal comparison.
+	 */
 	public static SQLExpression le(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr instanceof SQLLiteral) {
 			if (rightExpr instanceof SQLLiteral) {
@@ -651,6 +778,9 @@ public class SQLFactory {
 		return new SQLBinaryExpression(SQLOp.le, leftExpr, rightExpr);
 	}
 	
+	/**
+	 * Creates a greater-than comparison.
+	 */
 	public static SQLExpression gt(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr instanceof SQLLiteral) {
 			if (rightExpr instanceof SQLLiteral) {
@@ -675,6 +805,9 @@ public class SQLFactory {
 		return new SQLBinaryExpression(SQLOp.gt, leftExpr, rightExpr);
 	}
 	
+	/**
+	 * Creates a less-than comparison.
+	 */
 	public static SQLExpression lt(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr instanceof SQLLiteral) {
 			if (rightExpr instanceof SQLLiteral) {
@@ -801,6 +934,9 @@ public class SQLFactory {
 		return eq(leftExpr, rightExpr, true);
 	}
 
+	/**
+	 * Creates the conjunction of the given expressions (<code>TRUE</code>, if none are given).
+	 */
 	public static SQLExpression and(SQLExpression... exprs) {
 		if (exprs == null || exprs.length == 0) {
 			return SQLBoolean.TRUE;
@@ -814,6 +950,9 @@ public class SQLFactory {
 		return result;
 	}
 	
+	/**
+	 * Creates the conjunction of the given expressions.
+	 */
 	public static SQLExpression and(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr == SQLBoolean.TRUE) {
 			return rightExpr;
@@ -832,6 +971,9 @@ public class SQLFactory {
 		}
 	}
 
+	/**
+	 * Creates the disjunction of the given expressions (<code>FALSE</code>, if none are given).
+	 */
 	public static SQLExpression or(SQLExpression... exprs) {
 		if (exprs == null || exprs.length == 0) {
 			return SQLBoolean.FALSE;
@@ -845,6 +987,9 @@ public class SQLFactory {
 		return result;
 	}
 	
+	/**
+	 * Creates the disjunction of the given expressions.
+	 */
 	public static SQLExpression or(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr == SQLBoolean.TRUE) {
 			return SQLBoolean.TRUE;
@@ -863,6 +1008,9 @@ public class SQLFactory {
 		}
 	}
 	
+	/**
+	 * Creates the negation of the given expression.
+	 */
 	public static SQLExpression not(SQLExpression expr) {
 		if (expr == SQLBoolean.TRUE) {
 			return SQLBoolean.FALSE;
@@ -888,10 +1036,24 @@ public class SQLFactory {
 		}
 	}
 	
+	/**
+	 * Creates a {@link SQLOrder} by the given expression.
+	 *
+	 * @param descending
+	 *         Whether to sort in descending order.
+	 * @param collationHint
+	 *         Hint for the collation to use for sorting.
+	 */
 	public static SQLOrder order(boolean descending, CollationHint collationHint, SQLExpression expr) {
 		return new SQLOrder(descending, collationHint, expr);
 	}
 	
+	/**
+	 * Creates a {@link SQLOrder} by the given expression.
+	 *
+	 * @param descending
+	 *         Whether to sort in descending order.
+	 */
 	public static SQLOrder order(boolean descending, SQLExpression expr) {
 		return order(descending, CollationHint.NONE, expr);
 	}
@@ -1187,6 +1349,9 @@ public class SQLFactory {
 		return table(tableName, NO_TABLE_ALIAS);
 	}
 
+	/**
+	 * Creates a reference to the given table accessed through the given alias.
+	 */
 	public static SQLTable table(String tableName, String tableAlias) {
 		return new SQLTable(tableName, tableAlias);
 	}
@@ -1215,10 +1380,16 @@ public class SQLFactory {
 		return columnDef(column(tableAlias, columnName), aliasName);
 	}
 
+	/**
+	 * Select column definition for the given expression.
+	 */
 	public static SQLColumnDefinition columnDef(SQLExpression expr) {
 		return columnDef(expr, null);
 	}
 
+	/**
+	 * Select column definition for the given expression accessible through the given alias name.
+	 */
 	public static SQLColumnDefinition columnDef(SQLExpression expr, String aliasName) {
 		return new SQLColumnDefinition(expr, aliasName);
 	}
@@ -1235,6 +1406,14 @@ public class SQLFactory {
 		return limit(startRow, stopRow);
 	}
 
+	/**
+	 * Limits the database result to the given range of rows.
+	 *
+	 * @param startRow
+	 *         The first row to retrieve.
+	 * @param stopRow
+	 *         The row before which retrieval stops (exclusive).
+	 */
 	public static SQLLimit limit(SQLExpression startRow, SQLExpression stopRow) {
 		return new SQLLimit(startRow, stopRow);
 	}

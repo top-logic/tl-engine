@@ -29,32 +29,53 @@ public class SQLJoin extends AbstractSQLTableReference {
 		this.condition = condition;
 	}
 	
+	/**
+	 * Whether this is an inner join, or a left outer join.
+	 */
 	public boolean isInner() {
 		return inner;
 	}
 	
+	/**
+	 * The left table of the join.
+	 */
 	public SQLTableReference getLeftTable() {
 		return leftTable;
 	}
 
+	/**
+	 * Setter for {@link #getLeftTable()}.
+	 */
 	public void setLeftTable(SQLTableReference tableReference) {
 		assert leftTable != null;
 		this.leftTable = tableReference;
 	}
 
+	/**
+	 * The right table of the join.
+	 */
 	public SQLTableReference getRightTable() {
 		return rightTable;
 	}
 	
+	/**
+	 * Setter for {@link #getRightTable()}.
+	 */
 	public void setRightTable(SQLTableReference rightTable) {
 		assert rightTable != null;
 		this.rightTable = rightTable;
 	}
 
+	/**
+	 * The join condition.
+	 */
 	public SQLExpression getCondition() {
 		return condition;
 	}
 
+	/**
+	 * Setter for {@link #getCondition()}.
+	 */
 	public final void setCondition(SQLExpression condition) {
 		assert condition != null;
 		this.condition = condition;

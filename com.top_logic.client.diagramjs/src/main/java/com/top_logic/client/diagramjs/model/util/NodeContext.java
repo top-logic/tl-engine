@@ -8,7 +8,7 @@ package com.top_logic.client.diagramjs.model.util;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * DiagramJS node context.
+ * Diagram-js node context.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

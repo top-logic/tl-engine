@@ -43,7 +43,7 @@ import com.top_logic.office.word.tokenReplacer.DOCXTableReplacer;
 public class DOCXWordAccess extends WordAccess {
 
 	/**
-	 * Create a new instance of DOCXWordAccess
+	 * Create a new instance of {@link DOCXWordAccess}.
 	 */
 	@CalledByReflection
 	public DOCXWordAccess(InstantiationContext context, ServiceConfiguration config) {

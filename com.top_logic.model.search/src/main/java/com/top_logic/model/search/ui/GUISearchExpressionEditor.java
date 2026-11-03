@@ -46,7 +46,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * GUI based editor to create SearchExpressions.
+ * GUI based editor to create {@link SearchExpression}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

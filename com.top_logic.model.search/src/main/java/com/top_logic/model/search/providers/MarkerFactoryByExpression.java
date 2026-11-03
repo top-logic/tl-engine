@@ -130,7 +130,7 @@ public class MarkerFactoryByExpression<C extends MarkerFactoryByExpression.Confi
 		 * 
 		 * <p>
 		 * When overlap is true given {@link CalendarControl} fields don't have to be completely in
-		 * the range of upperBound and lowerBound to be "in range".
+		 * the range of {@link #getUpperBound()} and {@link #getLowerBound()} to be "in range".
 		 * </p>
 		 */
 		@Name(OVERLAP)

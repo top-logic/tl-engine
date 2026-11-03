@@ -8,6 +8,7 @@ package test.com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -70,9 +71,16 @@ public class TestAccordionElement extends BasicTestCase {
 
 	private FixtureViews _views;
 
+	/** The language of the sub-session before the test, restored afterwards. */
+	private Locale _previousLocale;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+
+		// The labels are compared in English, whatever the language of the machine the test runs on.
+		_previousLocale = TLContextManager.getSubSession().getCurrentLocale();
+		TLContextManager.getSubSession().setCurrentLocale(Locale.ENGLISH);
 
 		_views = new FixtureViews(TestAccordionElement.class);
 		_context = new DefaultViewContext(
@@ -87,6 +95,7 @@ public class TestAccordionElement extends BasicTestCase {
 		clearPersonalization();
 		_context = null;
 		_views = null;
+		TLContextManager.getSubSession().setCurrentLocale(_previousLocale);
 
 		super.tearDown();
 	}

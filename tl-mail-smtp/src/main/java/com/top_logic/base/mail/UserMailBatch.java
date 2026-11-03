@@ -96,13 +96,13 @@ public class UserMailBatch extends BatchImpl {
     }
     
     /**
-     * Create and return a collection of UserInterfaces.
+     * Create and return a collection of {@link UserInterface}s.
      * 
-     * This collection contains all UserInterfaces of users, that names
-     * occurs in the instance-variable userList, and of all users that belongs 
-     * to a role that name occurs in the instance-variable userList.
+     * This collection contains all {@link UserInterface}s of users, that names
+     * occurs in the instance-variable {@link #userList}, and of all users that belongs 
+     * to a role that name occurs in the instance-variable {@link #userList}.
      * 
-     * @return a Collection of UserInterface
+     * @return a Collection of {@link UserInterface}
      */
     protected Collection<UserInterface> createRecipientSet(){
         Collection                  theNames       = this.createNameSet();

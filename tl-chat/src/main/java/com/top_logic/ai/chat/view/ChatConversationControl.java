@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
@@ -41,6 +42,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContext;
@@ -213,14 +215,14 @@ public class ChatConversationControl extends ChatControl {
 		if (mention != null) {
 			setupMention(context, mention);
 		}
-		// What this page states about the situation. Evaluated here - on the server, in the acting
-		// user's context - and pushed to the browser, which sends it back with every message. The
-		// user's own text is never touched by any of this.
+		// What this page states about the situation. Evaluated on the server, in the acting user's
+		// context, whenever a message is sent in this chat. The user's own text is never touched by
+		// any of this.
 		// The selection first, because it is the one thing the user is most likely asking about, and
 		// the block is read top down.
 		setupSelection(context, config.getSelection());
 		setupContext(context, config.getContext());
-		publishFacts();
+		offerFacts();
 		// The other direction: what this page offers the user to ask, evaluated the same way and for
 		// the same reason - a card that names the open invoice has to be re-evaluated when another
 		// one is opened.
@@ -676,8 +678,8 @@ public class ChatConversationControl extends ChatControl {
 	 *
 	 * <p>
 	 * Not {@link Context#getFacts() a fact} the host wrote, but the same thing once it reaches the
-	 * model: one line of the {@code <turn-context>} block, re-evaluated whenever the selection
-	 * channel changes. What it says is {@link ChatSelection}'s to decide, so that every page states
+	 * model: one line of the {@code <turn-context>} block, read from the selection channel when a
+	 * message is sent. What it says is {@link ChatSelection}'s to decide, so that every page states
 	 * a selection the same way - label, type and the identifier the tools read back.
 	 * </p>
 	 */
@@ -689,15 +691,14 @@ public class ChatConversationControl extends ChatControl {
 		QueryExecutor naming =
 			selection.getLabel() == null ? null : QueryExecutor.compile(selection.getLabel());
 		_facts.add(new SelectionSpec(selection.getName(), channel, naming));
-		refreshFactsOn(channel);
 	}
 
 	/**
-	 * Compiles the {@code <context>} facts and keeps them current.
+	 * Compiles the {@code <context>} facts.
 	 *
 	 * <p>
-	 * A fact is re-evaluated whenever one of its input channels changes, so what the browser holds is
-	 * what the page was showing. The harness renders the stable ones into the environment block of
+	 * A fact is evaluated when a message is sent, over the values its input channels hold then, so
+	 * the run is told what the page is showing. The harness renders the stable ones into the environment block of
 	 * the system prompt and the rest into the turn; it does not touch the message text.
 	 * </p>
 	 */
@@ -711,45 +712,45 @@ public class ChatConversationControl extends ChatControl {
 			_facts.add(new FactSpec(fact.getName(), fact.getStable(), QueryExecutor.compile(fact.getValue())));
 		}
 		for (ChannelRef ref : facts.getInputs()) {
-			ViewChannel channel = context.resolveChannel(ref);
-			_factInputs.add(channel);
-			refreshFactsOn(channel);
+			_factInputs.add(context.resolveChannel(ref));
 		}
 	}
 
-	/** Re-evaluates everything this page states whenever the given channel changes. */
-	private void refreshFactsOn(ViewChannel channel) {
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializeFacts();
-		channel.addListener(listener);
-		addCleanupAction(() -> channel.removeListener(listener));
-	}
-
-	/** Publishes what this page states, once both sources have been compiled. */
-	private void publishFacts() {
+	/**
+	 * Offers what this page states to the messages sent in its chat, for as long as this control is
+	 * displayed.
+	 *
+	 * <p>
+	 * The facts are evaluated when a message is sent ({@link ChatViewBinding#facts()}), so the run
+	 * is told what the page shows at that moment.
+	 * </p>
+	 */
+	private void offerFacts() {
 		if (_facts.isEmpty()) {
 			return;
 		}
-		serializeFacts();
-		// A channel written while this control was detached notified nobody, so the values are read
-		// again when it comes back - the same reason the mention candidates are.
-		addAttachListener(this::serializeFacts);
+		Supplier<List<EnvironmentFact>> facts = this::currentFacts;
+		Runnable offer = () -> binding().offerFacts(facts);
+		Runnable withdraw = () -> binding().withdrawFacts(facts);
+		addAttachListener(offer);
+		addDetachListener(withdraw);
+		addCleanupAction(withdraw);
+		if (isAttached()) {
+			offer.run();
+		}
 	}
 
-	/** Evaluates every fact and pushes the result to the browser. */
-	private void serializeFacts() {
+	/** Evaluates every fact as the page states it now. */
+	List<EnvironmentFact> currentFacts() {
 		Object[] arguments = new Object[_factInputs.size()];
 		for (int n = 0; n < arguments.length; n++) {
 			arguments[n] = _factInputs.get(n).get();
 		}
-		List<Map<String, Object>> out = new ArrayList<>(_facts.size());
+		List<EnvironmentFact> out = new ArrayList<>(_facts.size());
 		for (ContextEntry fact : _facts) {
-			Map<String, Object> entry = new LinkedHashMap<>();
-			entry.put("name", fact.name());
-			entry.put("value", fact.evaluate(arguments));
-			entry.put("stable", Boolean.valueOf(fact.stable()));
-			out.add(entry);
+			out.add(new EnvironmentFact(fact.name(), fact.evaluate(arguments), fact.stable()));
 		}
-		putState("contextFacts", out);
+		return List.copyOf(out);
 	}
 
 	/**
@@ -877,7 +878,7 @@ public class ChatConversationControl extends ChatControl {
 	 *
 	 * <p>
 	 * Two implementations - a host's {@code <fact>} and the {@code <selection/>} - because they are
-	 * one thing to everything downstream: the browser echoes them back with the message and the
+	 * one thing to everything downstream: a message sent in the chat is told both, and the
 	 * harness sorts them into the system prompt or the turn by {@link #stable()} alone.
 	 * </p>
 	 */
@@ -1091,13 +1092,5 @@ public class ChatConversationControl extends ChatControl {
 			return flag.booleanValue();
 		}
 		return value != null && Boolean.parseBoolean(String.valueOf(value));
-	}
-
-	private static String blankToNull(String value) {
-		if (value == null) {
-			return null;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? null : trimmed;
 	}
 }

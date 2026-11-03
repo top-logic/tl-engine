@@ -10,7 +10,6 @@ import {
   modelBoundSource,
   readComposerControls,
   promptCardsVisible,
-  readContextFacts,
   readPromptCards,
   readThreadConfig,
   tokenWrite,
@@ -140,50 +139,6 @@ describe('modelBoundSource', () => {
   })
 })
 
-describe('readContextFacts', () => {
-  it('reads what the control computed from its <context> facts', () => {
-    expect(
-      readContextFacts([
-        { name: 'Project', value: 'Airport expansion', stable: true },
-        { name: 'Open invoice', value: 'none', stable: false },
-      ]),
-    ).toEqual([
-      { name: 'Project', value: 'Airport expansion', stable: true },
-      { name: 'Open invoice', value: 'none', stable: false },
-    ])
-  })
-
-  it('treats a fact as stable unless it says otherwise', () => {
-    expect(readContextFacts([{ name: 'Project', value: 'Airport' }])).toEqual([
-      { name: 'Project', value: 'Airport', stable: true },
-    ])
-  })
-
-  it('is empty when the element configured no context', () => {
-    expect(readContextFacts(undefined)).toEqual([])
-    expect(readContextFacts('x')).toEqual([])
-    expect(readContextFacts([])).toEqual([])
-  })
-
-  it('skips a row without a name, which states nothing', () => {
-    expect(readContextFacts([{ value: 'Airport' }, null, { name: 'Tenant', value: 'ACME' }])).toEqual([
-      { name: 'Tenant', value: 'ACME', stable: true },
-    ])
-  })
-
-  it('reads a missing value as empty rather than as "undefined"', () => {
-    expect(readContextFacts([{ name: 'Project' }])).toEqual([
-      { name: 'Project', value: '', stable: true },
-    ])
-  })
-})
-
-/**
- * The prompt cards a page offers, and when they are shown.
- *
- * The texts arrive already evaluated - the server did that, in the acting user's context - so what
- * the browser owns is only which of them are worth a button and whether the row belongs on screen.
- */
 describe('readPromptCards', () => {
   it('reads what the control computed from its <prompts> cards', () => {
     expect(

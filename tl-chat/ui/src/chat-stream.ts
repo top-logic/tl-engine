@@ -70,19 +70,6 @@ export function openChatStream(command: ChatCommand): ChatStream {
   return new WindowChatStream(command)
 }
 
-/**
- * Tells the window's event stream that the server is writing frames for this chat now, so that it
- * checks they arrive.
- *
- * A proxy that forwards the window's stream only in blocks of some kilobytes lets the start through
- * and holds back the small patches that follow; the stream then changes to polling, but only when
- * it learns that events are due. A React command - the attach among them - tells it that by
- * itself; a chat message goes through `/chat/send` instead.
- */
-export function expectFrames(): void {
-  bridge.expectEvents()
-}
-
 class WindowChatStream implements ChatStream {
   onerror: ((error: unknown) => void) | null = null
 

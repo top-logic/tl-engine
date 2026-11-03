@@ -15,9 +15,8 @@ import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,12 +40,17 @@ import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatCommandDriver;
+import com.top_logic.ai.chat.view.ChatControl;
+import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
@@ -216,7 +220,8 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 
 	/**
 	 * A chat the server opens without a mode runs manual (#808); the browser names the person's
-	 * choice when it creates a chat (see {@link #testAChatIsCreatedWithTheModeItNames()}).
+	 * choice with the send that creates a chat (see
+	 * {@code TestChatRunAccess#testAChatIsCreatedWithTheModeItsSendNames}).
 	 */
 	public void testANewChatStartsManual() throws Exception {
 		assertEquals(ApprovalMode.AUTO_APPROVE, _window.getApprovalMode());
@@ -233,24 +238,6 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		TaskProgressTracker fresh = new TaskProgressTracker();
 		fresh.setActiveSessionId(idOf(created), anna);
 		assertEquals(ApprovalMode.MANUAL, fresh.getApprovalMode());
-	}
-
-	/**
-	 * A conversation that has no chat yet keeps the mode in the browser, which names it when it
-	 * creates the chat: the chat stores it at once.
-	 */
-	public void testAChatIsCreatedWithTheModeItNames() throws Exception {
-		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/sessions",
-			new ByteArrayInputStream("{\"title\":\"Neu\",\"approvalMode\":\"AUTO_APPROVE\"}"
-				.getBytes(StandardCharsets.UTF_8)), "application/json"), anna);
-		assertEquals(HttpServletResponse.SC_OK, answer.status());
-		Matcher id = Pattern.compile("\"id\":\"([^\"]+)\"").matcher(answer.body());
-		assertTrue("The answer names the created chat: " + answer.body(), id.find());
-		HistoryUtils.updateSessionRevision();
-
-		TaskProgressTracker fresh = new TaskProgressTracker();
-		fresh.setActiveSessionId(id.group(1), anna);
-		assertEquals(ApprovalMode.AUTO_APPROVE, fresh.getApprovalMode());
 	}
 
 	/**
@@ -274,14 +261,18 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	 * the browser answered by itself.
 	 */
 	public void testASendTakesTheModeTheSwitchShows() throws Exception {
-		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/send",
-			new ByteArrayInputStream(("{\"text\":\"Hallo\",\"sessionId\":\"" + id()
-				+ "\",\"approvalMode\":\"MANUAL\"}").getBytes(StandardCharsets.UTF_8)), "application/json"),
-			anna);
+		ChatCommandDriver driver = new ChatCommandDriver("approvalWindow", "approval-" + getName());
+		ChatConversationControl conversation = driver.conversation(anna);
+		try {
+			driver.command(conversation, ChatControl.CMD_SEND, Map.of(ChatControl.ARG_TEXT, "Hallo",
+				ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_APPROVAL_MODE, ApprovalMode.MANUAL.name()));
 
-		assertEquals(answer.body(), HttpServletResponse.SC_OK, answer.status());
-		assertEquals(ApprovalMode.MANUAL, _window.getApprovalMode());
-		assertEquals(ApprovalMode.MANUAL, modeANewWindowOpens());
+			assertEquals(ApprovalMode.MANUAL, ChatCommandDriver.tracker(conversation).getApprovalMode());
+			assertEquals(ApprovalMode.MANUAL, modeANewWindowOpens());
+		} finally {
+			conversation.cleanupTree();
+			driver.close();
+		}
 	}
 
 	// --- Fixture ---
@@ -436,6 +427,8 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 				new TestSuite(TestApprovalModeSwitch.class),
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE,
+				FieldControlService.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE));
 	}

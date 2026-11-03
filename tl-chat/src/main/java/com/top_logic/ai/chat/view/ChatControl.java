@@ -6,31 +6,55 @@
 package com.top_logic.ai.chat.view;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.RunStateFrame;
+import com.top_logic.ai.chat.api.SendRefusal;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
+import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
+import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatProcessor;
+import com.top_logic.ai.chat.layout.ChatState;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.limits.RunLimits;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Base class of the controls of the chat elements that join a conversation's browser store - a
@@ -61,7 +85,7 @@ import com.top_logic.util.TLContext;
  * another account and an id that names nothing are answered alike.
  * </p>
  */
-public abstract class ChatControl extends ReactControl implements DataProvider {
+public abstract class ChatControl extends ReactControl implements DataProvider, UploadHandler {
 
 	/**
 	 * Command that starts sending the conversation's frames to the window's event stream, as
@@ -164,9 +188,166 @@ public abstract class ChatControl extends ReactControl implements DataProvider {
 	/** State key of the conversation the browser keys its store by. */
 	public static final String STATE_CHAT_ID = "chatId";
 
+	/**
+	 * Command that sends a message in the conversation: into the chat {@link #ARG_SESSION_ID} names,
+	 * or into a chat the send creates when it names none.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_TEXT} and the turn settings {@link #ARG_AGENT}, {@link #ARG_MODEL},
+	 * {@link #ARG_MCP_OVERRIDE}, {@link #ARG_MCP_SERVERS}, {@link #ARG_EFFORT} and
+	 * {@link #ARG_APPROVAL_MODE}; a send that creates its chat titles it {@link #ARG_TITLE}. The
+	 * message carries the files attached to it ({@link #handleUpload(DisplayContext, Collection)})
+	 * and is told what the page states about the situation ({@link ChatViewBinding#facts()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Answered with {@link #FIELD_STATUS}, {@link #FIELD_REASON} for a refusal, and for a message that
+	 * went with the chat it went to ({@link #FIELD_SESSION_ID}) and what that chat supports
+	 * ({@link #FIELD_FEATURES}). A chat the send created and could not send into is deleted again.
+	 * </p>
+	 */
+	public static final String CMD_SEND = "send";
+
+	/**
+	 * Command that drops a turn of a chat and everything after it, and sends the edited message in
+	 * its place - in one command, so that no other command of the window can come between the two.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SESSION_ID}, {@link #ARG_FROM_TURN} and the arguments of {@link #CMD_SEND}.
+	 * Nothing is dropped from a send that is refused. Answered like {@link #CMD_SEND}, plus
+	 * {@link #FIELD_REMOVED_TURNS}.
+	 * </p>
+	 */
+	public static final String CMD_EDIT_SEND = "editSend";
+
+	/**
+	 * Command that answers the last message of a chat again: the last turn is dropped and its message
+	 * sent once more.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SESSION_ID} and the turn settings of {@link #CMD_SEND}. Answered with
+	 * {@link #FIELD_STATUS}, {@link #FIELD_REASON}, {@link #FIELD_REMOVED_TURNS} and the message sent
+	 * again ({@link #FIELD_TEXT}). A regenerate that is refused drops nothing.
+	 * </p>
+	 */
+	public static final String CMD_REGENERATE = "regenerate";
+
+	/**
+	 * Command that takes one file off the message being written; takes {@link #ARG_ATTACHMENT_ID}.
+	 */
+	public static final String CMD_REMOVE_ATTACHMENT = "removeAttachment";
+
+	/** Argument of {@link #CMD_SEND}: the message. */
+	public static final String ARG_TEXT = "text";
+
+	/** Argument of {@link #CMD_SEND}: the title of a chat the send creates. */
+	public static final String ARG_TITLE = "title";
+
+	/** Argument of {@link #CMD_SEND}: the agent of the turn; empty runs the account's entry point. */
+	public static final String ARG_AGENT = "agent";
+
+	/** Argument of {@link #CMD_SEND}: the model of the turn; empty keeps the agent's. */
+	public static final String ARG_MODEL = "model";
+
+	/**
+	 * Argument of {@link #CMD_SEND}: whether {@link #ARG_MCP_SERVERS} replace the agent's configured
+	 * MCP servers for the turn.
+	 */
+	public static final String ARG_MCP_OVERRIDE = "mcpOverride";
+
+	/** Argument of {@link #CMD_SEND}: the MCP servers of the turn, see {@link #ARG_MCP_OVERRIDE}. */
+	public static final String ARG_MCP_SERVERS = "mcpServers";
+
+	/** Argument of {@link #CMD_SEND}: how hard the model may think; empty keeps the agent's. */
+	public static final String ARG_EFFORT = "effort";
+
+	/**
+	 * Argument of {@link #CMD_SEND}: the position of the auto-approve switch at the send, an
+	 * {@link ApprovalMode} name; the turn runs with it. Empty keeps the chat's stored mode.
+	 */
+	public static final String ARG_APPROVAL_MODE = "approvalMode";
+
+	/** Argument of {@link #CMD_EDIT_SEND}: the zero-based index of the first turn to drop. */
+	public static final String ARG_FROM_TURN = "fromTurn";
+
+	/** Argument of {@link #CMD_REMOVE_ATTACHMENT}: the id of the file. */
+	public static final String ARG_ATTACHMENT_ID = "attachmentId";
+
+	/**
+	 * Field of the answer to {@link #CMD_SEND}, {@link #CMD_EDIT_SEND} and {@link #CMD_REGENERATE}:
+	 * what became of the request, one of {@link #STATUS_PROCESSING}, {@link #STATUS_BUSY},
+	 * {@link #STATUS_FORBIDDEN}, {@link #STATUS_REJECTED}, {@link #STATUS_NOT_FOUND} and
+	 * {@link #STATUS_ERROR}.
+	 */
+	public static final String FIELD_STATUS = "status";
+
+	/**
+	 * Field of the answer: why the request was refused, a sentence in the user's language; absent
+	 * unless it was. In the answer to an upload: why files were not attached, one sentence each.
+	 */
+	public static final String FIELD_REASON = "reason";
+
+	/** Field of the answer to {@link #CMD_SEND}: the chat the message went to. */
+	public static final String FIELD_SESSION_ID = "sessionId";
+
+	/** Field of the answer to {@link #CMD_SEND}: what the chat the message went to supports. */
+	public static final String FIELD_FEATURES = "features";
+
+	/** Field of the answer to {@link #CMD_EDIT_SEND} and {@link #CMD_REGENERATE}: how many turns went. */
+	public static final String FIELD_REMOVED_TURNS = "removedTurns";
+
+	/** Field of the answer to {@link #CMD_REGENERATE}: the message sent again. */
+	public static final String FIELD_TEXT = "text";
+
+	/** {@link #FIELD_STATUS}: the message went, a run answers it. */
+	public static final String STATUS_PROCESSING = "processing";
+
+	/** {@link #FIELD_STATUS}: the chat is answering something else. */
+	public static final String STATUS_BUSY = "busy";
+
+	/**
+	 * {@link #FIELD_STATUS}: the acting account may not make this request, or the chat's answerer
+	 * does not support it; {@link #FIELD_REASON} says which.
+	 */
+	public static final String STATUS_FORBIDDEN = "forbidden";
+
+	/**
+	 * {@link #FIELD_STATUS}: this installation has no room for the run right now;
+	 * {@link #FIELD_REASON} says so. Distinct from {@link #STATUS_BUSY}, which is about this chat,
+	 * and from {@link #STATUS_ERROR}: the user may try again in a moment.
+	 */
+	public static final String STATUS_REJECTED = "rejected";
+
+	/**
+	 * {@link #FIELD_STATUS}: the request names something there is none of - a chat of another
+	 * account answered exactly like one that does not exist, or an agent of a name no agent has.
+	 */
+	public static final String STATUS_NOT_FOUND = "notFound";
+
+	/** {@link #FIELD_STATUS}: nothing was sent - an empty message, nothing to answer again. */
+	public static final String STATUS_ERROR = "error";
+
+	/**
+	 * State key of the files attached to the message being written, a list of
+	 * {@link DraftAttachmentDto}.
+	 */
+	public static final String STATE_DRAFT_ATTACHMENTS = "draftAttachments";
+
+	/** The title of a chat a send creates when the browser names none. */
+	private static final String DEFAULT_TITLE = "New Chat";
+
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 
+	/** The name of an uploaded file the browser named none for. */
+	private static final String UPLOAD_FILE_NAME = "upload.bin";
+
+	/** The name a message goes under when the account has none. */
+	private static final String ANONYMOUS_NAME = "Anonymous";
+
 	private final ChatViewBinding _binding;
+
+	/** Writes the attached files into this control's state; listens while the control is displayed. */
+	private final Runnable _publishAttachments = this::publishAttachments;
 
 	/**
 	 * Creates a {@link ChatControl}.
@@ -191,6 +372,18 @@ public abstract class ChatControl extends ReactControl implements DataProvider {
 		addAttachListener(() -> _binding.shown(this));
 		addDetachListener(hidden);
 		addCleanupAction(hidden);
+
+		// The browser refuses a larger file before it is transmitted.
+		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(maxUploadSize()));
+		publishAttachments();
+		ChatAttachments attachments = _binding.attachments();
+		Runnable unlisten = () -> attachments.removeListener(_publishAttachments);
+		addAttachListener(() -> {
+			attachments.addListener(_publishAttachments);
+			publishAttachments();
+		});
+		addDetachListener(unlisten);
+		addCleanupAction(unlisten);
 	}
 
 	/** The window's binding of the conversation this element joins. */
@@ -211,6 +404,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider {
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
 		_binding.writeRenderState(this::putState);
+		publishAttachments();
+	}
+
+	private void publishAttachments() {
+		putState(STATE_DRAFT_ATTACHMENTS, _binding.attachments().list());
 	}
 
 	/**
@@ -277,6 +475,447 @@ public abstract class ChatControl extends ReactControl implements DataProvider {
 			ChatHistoryService.deleteSession(session);
 		}
 		return ReactCommandReply.create().put(FIELD_DELETED, Boolean.valueOf(session != null)).toResult();
+	}
+
+	/**
+	 * Sends a message, see {@link #CMD_SEND}.
+	 */
+	@ReactCommandHandler(value = CMD_SEND, params = {
+		@ReactParam(name = ARG_TEXT, type = "string", description = "The message."),
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat to send into; empty creates a chat."),
+		@ReactParam(name = ARG_TITLE, type = "string", description = "The title of a chat the send creates."),
+		@ReactParam(name = ARG_AGENT, type = "string", description = "The agent of the turn."),
+		@ReactParam(name = ARG_MODEL, type = "string", description = "The model of the turn."),
+		@ReactParam(name = ARG_MCP_OVERRIDE, type = "boolean",
+			description = "Whether the named MCP servers replace the agent's own."),
+		@ReactParam(name = ARG_MCP_SERVERS, type = "array", description = "The MCP servers of the turn."),
+		@ReactParam(name = ARG_EFFORT, type = "string", description = "How hard the model may think."),
+		@ReactParam(name = ARG_APPROVAL_MODE, type = "string",
+			description = "The position of the auto-approve switch at the send.")
+	})
+	public HandlerResult send(Map<String, Object> args) {
+		return sendTurn(args, null).toResult();
+	}
+
+	/**
+	 * Drops a turn and sends the edited message in its place, see {@link #CMD_EDIT_SEND}.
+	 */
+	@ReactCommandHandler(value = CMD_EDIT_SEND, params = {
+		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The chat whose turn is edited."),
+		@ReactParam(name = ARG_FROM_TURN, type = "number", description = "The first turn to drop."),
+		@ReactParam(name = ARG_TEXT, type = "string", description = "The edited message."),
+		@ReactParam(name = ARG_AGENT, type = "string", description = "The agent of the turn."),
+		@ReactParam(name = ARG_MODEL, type = "string", description = "The model of the turn."),
+		@ReactParam(name = ARG_MCP_OVERRIDE, type = "boolean",
+			description = "Whether the named MCP servers replace the agent's own."),
+		@ReactParam(name = ARG_MCP_SERVERS, type = "array", description = "The MCP servers of the turn."),
+		@ReactParam(name = ARG_EFFORT, type = "string", description = "How hard the model may think."),
+		@ReactParam(name = ARG_APPROVAL_MODE, type = "string",
+			description = "The position of the auto-approve switch at the send.")
+	})
+	public HandlerResult editSend(Map<String, Object> args) {
+		Person person = actingPerson();
+		if (person == null) {
+			return status(STATUS_FORBIDDEN).toResult();
+		}
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		Number fromTurn = args == null ? null : (args.get(ARG_FROM_TURN) instanceof Number n ? n : null);
+		if (sessionId == null || fromTurn == null) {
+			return status(STATUS_ERROR).toResult();
+		}
+		TLObject session = ChatSessionIds.ownedSession(sessionId, person);
+		if (session == null) {
+			return status(STATUS_NOT_FOUND).toResult();
+		}
+		// Busy means a run of that chat is writing into the turns that would go; a run of another
+		// chat does not touch them.
+		if (_binding.tracker().hasActiveProcessingStateFor(sessionId)) {
+			return status(STATUS_BUSY).toResult();
+		}
+		ConversationBackend backend = ChatTranscripts.backendOf(session);
+		SendRefusal refusal = backend == null ? null
+			: SendRefusal.unsupported(backend.features().editMessages(),
+				com.top_logic.ai.chat.backend.I18NConstants.EDIT_NOT_SUPPORTED);
+		if (refusal != null) {
+			return refused(refusal).toResult();
+		}
+		return sendTurn(args, Integer.valueOf(fromTurn.intValue())).toResult();
+	}
+
+	/**
+	 * Sends a message, after dropping the turns from {@code fromTurn} on.
+	 *
+	 * @param fromTurn
+	 *        The first turn to drop, <code>null</code> for a plain send. An edited message carries no
+	 *        files: the files attached to the message being written stay for it.
+	 */
+	private ReactCommandReply sendTurn(Map<String, Object> args, Integer fromTurn) {
+		Person person = actingPerson();
+		if (person == null) {
+			return status(STATUS_FORBIDDEN);
+		}
+		boolean edit = fromTurn != null;
+		ChatAttachments draft = _binding.attachments();
+		List<ChatAttachments.Entry> attached = edit ? List.of() : draft.entries();
+		String text = stringArg(args, ARG_TEXT);
+		String message = text == null ? "" : text.trim();
+		if (message.isEmpty() && attached.isEmpty()) {
+			return status(STATUS_ERROR);
+		}
+		ApprovalMode shown;
+		try {
+			String mode = blankToNull(stringArg(args, ARG_APPROVAL_MODE));
+			shown = mode == null ? null : ApprovalMode.valueOf(mode);
+		} catch (IllegalArgumentException ex) {
+			return status(STATUS_ERROR);
+		}
+
+		TaskProgressTracker tracker = _binding.tracker();
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		TLObject created = null;
+		if (sessionId == null) {
+			// The first send is what brings a chat into being, titled after what was said, with the
+			// mode the user set on it before it existed, about what the page shows now.
+			created = ChatHistoryService.createSession(blankToDefault(stringArg(args, ARG_TITLE), DEFAULT_TITLE),
+				person, shown == null ? ApprovalMode.MANUAL : shown, _binding.subject());
+			if (created == null) {
+				return status(STATUS_ERROR);
+			}
+			// The chat was written on the store's writer thread, at a revision newer than this
+			// thread's view of the knowledge base.
+			HistoryUtils.updateSessionRevision();
+			sessionId = ChatSessionIds.idOf(created);
+		} else if (ChatSessionIds.ownedSession(sessionId, person) == null) {
+			// The id arrives from the browser, so without this it names whichever chat the caller
+			// cares to type.
+			return status(STATUS_NOT_FOUND);
+		}
+		boolean sent = false;
+		try {
+			if (!tracker.setActiveSessionId(sessionId, person)) {
+				return status(STATUS_NOT_FOUND);
+			}
+			ReactCommandReply reply = sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn);
+			sent = STATUS_PROCESSING.equals(reply.getFields().get(FIELD_STATUS));
+			if (sent) {
+				draft.removeAll(attached);
+			}
+			return reply;
+		} finally {
+			if (created != null && !sent) {
+				// A send that went nowhere has produced nothing to keep, and an empty chat in the
+				// list is a row the user would have to tidy away.
+				ChatHistoryService.deleteSession(created);
+			}
+		}
+	}
+
+	/** Sends a message into the chat the conversation has just been switched to. */
+	private ReactCommandReply sendInto(TaskProgressTracker tracker, Person person, String sessionId,
+			String message, List<ChatAttachments.Entry> attached, ApprovalMode shown, Map<String, Object> args,
+			Integer fromTurn) {
+		// The turn runs with the mode the switch shows at the send, whatever reached the server
+		// before: a switch still on its way must not make the turn ask while the browser answers by
+		// itself, or approve while the person sees the switch off.
+		if (shown != null) {
+			if (tracker.getApprovalMode() != shown) {
+				ApprovalChoice.applyToChat(tracker, person, sessionId, shown);
+			}
+			ApprovalChoice.save(shown);
+		}
+		String effort = blankToNull(stringArg(args, ARG_EFFORT));
+		ChatProcessor.ChatRunOptions options = runOptions(args, effort);
+		ConversationBackend backend = ChatTranscripts.backendOf(ChatSessionIds.ownedSession(sessionId, person));
+		// A conversation a backend answers runs no agent of this application, so what the agent policy
+		// says about the account's agents does not apply to it; what the backend supports does.
+		SendRefusal refusal = backend == null
+			? SendRefusal.forRun(person, options)
+			: (attached.isEmpty() ? null : SendRefusal.unsupported(backend.features().attachments(),
+				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED));
+		if (refusal != null) {
+			return refused(refusal);
+		}
+		// One reading of the account's spend for the pre-check, the send and the run (#835).
+		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
+		int removedTurns = 0;
+		if (fromTurn != null) {
+			// Before the turns are dropped: an edit refused afterwards would have removed what the
+			// user still has and given them nothing in its place.
+			String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
+			if (noRoom != null) {
+				return status(STATUS_REJECTED).put(FIELD_REASON, noRoom);
+			}
+			ChatState chat = tracker.getSessionManager().getActiveChatState();
+			removedTurns = removeTurnsFrom(tracker, chat, person, fromTurn.intValue()).turns();
+		}
+		tracker.setEffort(effort);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, TLContextManager.getSubSession(),
+			userName(tracker, person), message, ChatAttachments.contentOf(attached), options, _binding.facts(),
+			spendReading);
+		ReactCommandReply reply = sendResult(result);
+		if (fromTurn != null) {
+			reply.put(FIELD_REMOVED_TURNS, Integer.valueOf(removedTurns));
+		}
+		if (result.getTaskId() != null) {
+			reply.put(FIELD_SESSION_ID, sessionId).put(FIELD_FEATURES, ChatTranscripts.featuresDto(backend));
+		}
+		return reply;
+	}
+
+	/**
+	 * Answers the last message again, see {@link #CMD_REGENERATE}.
+	 *
+	 * <p>
+	 * The previous answer is not kept beside the new one: the user asked for that turn to be done
+	 * differently, so the turn is removed - from the session's memory and from its recorded
+	 * transcript - and the same user message is sent once more. What the browser then shows is the
+	 * replacement, in the place the old answer occupied.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_REGENERATE, params = {
+		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The chat whose last answer is redone."),
+		@ReactParam(name = ARG_AGENT, type = "string", description = "The agent of the new run."),
+		@ReactParam(name = ARG_MODEL, type = "string", description = "The model of the new run."),
+		@ReactParam(name = ARG_MCP_OVERRIDE, type = "boolean",
+			description = "Whether the named MCP servers replace the agent's own."),
+		@ReactParam(name = ARG_MCP_SERVERS, type = "array", description = "The MCP servers of the new run."),
+		@ReactParam(name = ARG_EFFORT, type = "string", description = "How hard the model may think.")
+	})
+	public HandlerResult regenerate(Map<String, Object> args) {
+		Person person = actingPerson();
+		if (person == null) {
+			return status(STATUS_FORBIDDEN).toResult();
+		}
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		TLObject session = sessionId == null ? null : ChatSessionIds.ownedSession(sessionId, person);
+		if (session == null) {
+			return status(STATUS_NOT_FOUND).toResult();
+		}
+		TaskProgressTracker tracker = _binding.tracker();
+		// Switches the conversation to the chat, as a send does: it starts a run, and a run is sent
+		// into the chat the conversation shows. The regenerate button sits under an answer of the chat
+		// on screen, so this is the chat it shows already.
+		tracker.setActiveSessionId(sessionId, person);
+		if (tracker.hasActiveProcessingState()) {
+			return status(STATUS_BUSY).toResult();
+		}
+		String effort = blankToNull(stringArg(args, ARG_EFFORT));
+		ChatProcessor.ChatRunOptions options = runOptions(args, effort);
+		// Before the turn is removed, not after: a regenerate that is refused must leave the answer it
+		// was going to replace where it is.
+		ConversationBackend backend = ChatTranscripts.backendOf(session);
+		SendRefusal refusal = backend == null
+			? SendRefusal.forRun(person, options)
+			: SendRefusal.unsupported(backend.features().regenerate(),
+				com.top_logic.ai.chat.backend.I18NConstants.REGENERATE_NOT_SUPPORTED);
+		if (refusal != null) {
+			return refused(refusal).toResult();
+		}
+		// One reading of the account's spend for the pre-check here, the send's and the run's (#835).
+		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
+		String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
+		if (noRoom != null) {
+			return status(STATUS_REJECTED).put(FIELD_REASON, noRoom).toResult();
+		}
+		ChatState chat = tracker.getSessionManager().getActiveChatState();
+		int turnCount = chat.log().turnCount();
+		if (turnCount == 0) {
+			return status(STATUS_ERROR).toResult();
+		}
+		Removed removed = removeTurnsFrom(tracker, chat, person, turnCount - 1);
+		if (removed.text().isEmpty()) {
+			return status(STATUS_ERROR).toResult();
+		}
+		tracker.setEffort(effort);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, TLContextManager.getSubSession(),
+			userName(tracker, person), removed.text(), List.of(), options, _binding.facts(), spendReading);
+		return sendResult(result)
+			.put(FIELD_REMOVED_TURNS, Integer.valueOf(removed.turns()))
+			.put(FIELD_TEXT, removed.text())
+			.toResult();
+	}
+
+	/**
+	 * Takes a file off the message being written, see {@link #CMD_REMOVE_ATTACHMENT}.
+	 */
+	@ReactCommandHandler(value = CMD_REMOVE_ATTACHMENT, params = {
+		@ReactParam(name = ARG_ATTACHMENT_ID, type = "string", description = "The id of the file.")
+	})
+	public void removeAttachment(Map<String, Object> args) {
+		String id = stringArg(args, ARG_ATTACHMENT_ID);
+		if (id != null) {
+			_binding.attachments().remove(id);
+		}
+	}
+
+	/**
+	 * Attaches the uploaded files to the message being written in this conversation.
+	 *
+	 * <p>
+	 * A file the message cannot carry - of another type than an image or PDF, one file more than
+	 * {@link ChatAttachments#MAX_ATTACHMENTS} - is not attached; the answer says why under
+	 * {@link #FIELD_REASON}, one sentence per file. The files attached are in this control's state
+	 * ({@link #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat control of the
+	 * conversation.
+	 * </p>
+	 */
+	@Override
+	public HandlerResult handleUpload(DisplayContext context, Collection<jakarta.servlet.http.Part> parts) {
+		if (actingPerson() == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		ChatAttachments attachments = _binding.attachments();
+		List<String> refused = new ArrayList<>();
+		for (jakarta.servlet.http.Part part : parts) {
+			if (!UploadSupport.FILE_PART.equals(part.getName())) {
+				continue;
+			}
+			String fileName = blankToDefault(part.getSubmittedFileName(), UPLOAD_FILE_NAME);
+			byte[] content;
+			try (InputStream in = part.getInputStream()) {
+				content = in.readAllBytes();
+			} catch (IOException ex) {
+				throw new UncheckedIOException("Failed to read the attachment '" + fileName + "'.", ex);
+			}
+			ResKey refusal = attachments.add(fileName, part.getContentType(), content);
+			if (refusal != null) {
+				refused.add(Resources.getInstance().getString(refusal));
+			}
+		}
+		ReactCommandReply reply = ReactCommandReply.create();
+		if (!refused.isEmpty()) {
+			reply.put(FIELD_REASON, refused);
+		}
+		return reply.toResult();
+	}
+
+	/**
+	 * The size limit of one attached file: {@link ChatAttachments#MAX_ATTACHMENT_SIZE}, or the
+	 * application's own limit where that is smaller.
+	 */
+	@Override
+	public long maxUploadSize() {
+		return UploadSupport.effectiveMaxUploadSize(ChatAttachments.MAX_ATTACHMENT_SIZE);
+	}
+
+	/** The answer to a send that went to {@link ChatProcessor#sendMessage}. */
+	private static ReactCommandReply sendResult(ChatProcessor.SendResult result) {
+		if (result.isRejected()) {
+			// Neither forbidden nor broken: this installation has no room for the run right now, and
+			// the browser shows the sentence rather than a failure.
+			return status(STATUS_REJECTED).put(FIELD_REASON, result.getReason());
+		}
+		if (result.getTaskId() == null) {
+			return status(result.isBusy() ? STATUS_BUSY : STATUS_ERROR);
+		}
+		return status(STATUS_PROCESSING);
+	}
+
+	private static ReactCommandReply status(String status) {
+		return ReactCommandReply.create().put(FIELD_STATUS, status);
+	}
+
+	private static ReactCommandReply refused(SendRefusal refusal) {
+		return status(refusal.status()).put(FIELD_REASON, refusal.reason());
+	}
+
+	/** The turn settings a send, an edit or a regenerate names. */
+	private static ChatProcessor.ChatRunOptions runOptions(Map<String, Object> args, String effort) {
+		return new ChatProcessor.ChatRunOptions(
+			blankToNull(stringArg(args, ARG_AGENT)),
+			blankToNull(stringArg(args, ARG_MODEL)),
+			Boolean.TRUE.equals(args == null ? null : args.get(ARG_MCP_OVERRIDE)),
+			stringsArg(args, ARG_MCP_SERVERS),
+			effort);
+	}
+
+	/** The display name of the acting account, resolved once and remembered on the tracker. */
+	private static String userName(TaskProgressTracker tracker, Person person) {
+		String stored = tracker.getUserName();
+		if (stored != null) {
+			return stored;
+		}
+		String name = person.getName();
+		if (name == null) {
+			return ANONYMOUS_NAME;
+		}
+		tracker.setUserName(name);
+		return name;
+	}
+
+	/** What a truncation took away. */
+	private record Removed(int turns, String text) {
+		// Pure data.
+	}
+
+	/**
+	 * Removes turn {@code fromTurn} and everything after it from the live session and from what is
+	 * recorded for it.
+	 *
+	 * <p>
+	 * Three things hold a copy of a conversation and all three have to forget it: the conversation
+	 * memory the model is given, the conversation log the UI is rebuilt from, and the per-run
+	 * transcripts in the knowledge base. Ratings of removed turns go too - they describe answers
+	 * that no longer exist.
+	 * </p>
+	 *
+	 * @param chat
+	 *        The chat to remove the turns from.
+	 * @return how many turns went, and the user text of the first of them
+	 */
+	private static Removed removeTurnsFrom(TaskProgressTracker tracker, ChatState chat, Person person,
+			int fromTurn) {
+		ConversationLog log = chat.log();
+		List<Turn> turns = log.turns();
+		if (fromTurn < 0 || fromTurn >= turns.size()) {
+			return new Removed(0, "");
+		}
+		String text = userTextOf(turns.get(fromTurn));
+		int removed = log.removeFrom(fromTurn);
+
+		ConversationMemory memory = chat.memory();
+		if (memory != null) {
+			ConversationLogReplay.rebuildMemory(log, memory.conversation());
+		}
+		chat.dropFeedbackFrom(fromTurn);
+
+		String sessionId = chat.sessionId();
+		if (sessionId != null) {
+			// Guarded again here, not only in the handler: this is the call that deletes, and it must
+			// be impossible to reach it through a path that forgot to ask whose session it is.
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+			if (session != null) {
+				ChatHistoryService.truncateConversation(session, fromTurn);
+			}
+		}
+		tracker.getSessionManager().persist(chat);
+		return new Removed(removed, text);
+	}
+
+	/** The text the user contributed to a turn, joined over its parts. */
+	private static String userTextOf(Turn turn) {
+		StringBuilder text = new StringBuilder();
+		for (Part part : turn.userParts()) {
+			if (part instanceof Part.TextPart textPart) {
+				if (text.length() > 0) {
+					text.append('\n');
+				}
+				text.append(textPart.text());
+			}
+		}
+		return text.toString();
+	}
+
+	/**
+	 * The signed-in account acting, <code>null</code> for a window nobody is signed in to: the chat
+	 * has no anonymous mode.
+	 */
+	private static Person actingPerson() {
+		if (TLContext.isAnonymous()) {
+			return null;
+		}
+		return currentPerson();
 	}
 
 	/**
@@ -354,6 +993,25 @@ public abstract class ChatControl extends ReactControl implements DataProvider {
 	private static String stringArg(Map<String, Object> args, String key) {
 		Object value = args == null ? null : args.get(key);
 		return value instanceof String text ? text : null;
+	}
+
+	private static List<String> stringsArg(Map<String, Object> args, String key) {
+		Object value = args == null ? null : args.get(key);
+		if (!(value instanceof Collection<?> values)) {
+			return List.of();
+		}
+		List<String> result = new ArrayList<>(values.size());
+		for (Object element : values) {
+			if (element instanceof String text) {
+				result.add(text);
+			}
+		}
+		return result;
+	}
+
+	/** The given value trimmed, or <code>null</code> for a value that is empty or only blanks. */
+	protected static String blankToNull(String value) {
+		return blankToDefault(value, null);
 	}
 
 	/** The given value, or the fallback for a value that is empty or only blanks. */

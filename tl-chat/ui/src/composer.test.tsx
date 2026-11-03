@@ -63,6 +63,9 @@ function baseProps(extra: Record<string, unknown> = {}) {
     noticeTone: 'info',
     onDismissNotice: () => {},
     onSend: async () => true,
+    attachments: [],
+    onAttach: async () => '',
+    onRemoveAttachment: () => undefined,
     onStop: () => {},
     ...extra,
   }

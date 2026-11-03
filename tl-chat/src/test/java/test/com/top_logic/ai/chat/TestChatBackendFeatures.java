@@ -5,47 +5,42 @@
  */
 package test.com.top_logic.ai.chat;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.ai.chat.TestChatServletOwnership.Recording;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.servletunit.InvocationContext;
-import com.meterware.servletunit.ServletRunner;
 
-import com.top_logic.ai.chat.api.ChatServlet;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
+import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
 import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.backend.I18NConstants;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.ScriptedBackend;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatCommandDriver;
+import com.top_logic.ai.chat.view.ChatControl;
+import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
@@ -61,7 +56,6 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -69,8 +63,8 @@ import com.top_logic.util.model.ModelService;
  * not by what the agent policy says about the account's own agents.
  *
  * <p>
- * The servlet is driven directly, exactly as {@link TestChatServletOwnership} drives it. The backend
- * is the test resolver {@link ScriptedBackend}, claiming one conversation per test.
+ * The commands of the chat controls are run as the browser sends them ({@link ChatCommandDriver}).
+ * The backend is the test resolver {@link ScriptedBackend}, claiming one conversation per test.
  * </p>
  */
 public class TestChatBackendFeatures extends BasicTestCase {
@@ -87,9 +81,9 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 	private static Person anna;
 
-	private static ServletRunner runner;
+	private ChatCommandDriver _driver;
 
-	private TestChatServletOwnership.Probe _servlet;
+	private ChatConversationControl _conversation;
 
 	private TaskProgressTracker _window;
 
@@ -100,23 +94,20 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		super.setUp();
 		if (anna == null) {
 			anna = TestPerson.createPerson("anna-with-a-backend");
-			runner = new ServletRunner();
-			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
 		_chat = (AgentSession) ChatHistoryService.createSession("Backend " + getName(), anna);
 		HistoryUtils.updateSessionRevision();
-		_servlet = new TestChatServletOwnership.Probe();
-
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		_window = new TaskProgressTracker();
-		ChatSessionRegistry.register(subSession, null, _window);
+		_driver = new ChatCommandDriver("backendWindow", "backend-" + getName());
+		_conversation = _driver.conversation(anna);
+		_window = ChatCommandDriver.tracker(_conversation);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
 		awaitIdle();
 		ScriptedBackend.reset();
+		_conversation.cleanupTree();
+		_driver.close();
 		super.tearDown();
 	}
 
@@ -133,14 +124,12 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	public void testSendIsNotAskedAboutTheAccountsAgents() throws Exception {
 		claim(BackendFeatures.NONE);
 
-		Recording response = post("/send", "{\"text\":\"Hallo\",\"sessionId\":\"" + id()
-			+ "\",\"agent\":\"" + INFRASTRUCTURE_AGENT + "\"}");
+		Map<String, Object> reply = command(ChatControl.CMD_SEND, Map.of(ChatControl.ARG_TEXT, "Hallo",
+			ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT));
 
-		assertEquals(response._body.toString(), HttpServletResponse.SC_OK, response._status);
-		String body = response._body.toString();
-		assertTrue(body, body.contains("\"status\":\"processing\""));
-		assertTrue("The send tells the client what the conversation supports: " + body,
-			body.contains("\"regenerate\":false"));
+		assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatControl.FIELD_STATUS));
+		ConversationFeaturesDto features = (ConversationFeaturesDto) reply.get(ChatControl.FIELD_FEATURES);
+		assertFalse("The send tells the client what the conversation supports: " + reply, features.isRegenerate());
 
 		awaitIdle();
 		HistoryUtils.updateSessionRevision();
@@ -151,20 +140,19 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 	/** The same send in a conversation of the framework's own agent is refused, as before. */
 	public void testInternalConversationIsStillAskedAboutTheAccountsAgents() throws Exception {
-		Recording response = post("/send", "{\"text\":\"Hallo\",\"sessionId\":\"" + id()
-			+ "\",\"agent\":\"" + INFRASTRUCTURE_AGENT + "\"}");
+		Map<String, Object> reply = command(ChatControl.CMD_SEND, Map.of(ChatControl.ARG_TEXT, "Hallo",
+			ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT));
 
-		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
-		assertTrue(response._body.toString(), response._body.toString().contains("\"status\":\"forbidden\""));
+		assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatControl.FIELD_STATUS));
 	}
 
 	/** A backend that cannot answer again is refused a regenerate, with the reason. */
 	public void testRegenerateIsRefused() throws Exception {
 		claim(BackendFeatures.NONE);
 
-		Recording response = post("/regenerate", "{\"sessionId\":\"" + id() + "\"}");
+		Map<String, Object> reply = command(ChatControl.CMD_REGENERATE, Map.of(ChatControl.ARG_SESSION_ID, id()));
 
-		assertRefused(response, I18NConstants.REGENERATE_NOT_SUPPORTED);
+		assertRefused(reply, I18NConstants.REGENERATE_NOT_SUPPORTED);
 	}
 
 	/**
@@ -173,33 +161,36 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	public void testSupportedRegenerateIsNotAskedAboutTheAccountsAgents() throws Exception {
 		claim(new BackendFeatures(true, false, false, false, false, false, false, false));
 
-		Recording response = post("/regenerate", "{\"sessionId\":\"" + id() + "\",\"agent\":\""
-			+ INFRASTRUCTURE_AGENT + "\"}");
+		Map<String, Object> reply = command(ChatControl.CMD_REGENERATE,
+			Map.of(ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT));
 
-		assertEquals(response._body.toString(), HttpServletResponse.SC_OK, response._status);
 		// The chat has no turn to answer again, which is how this request gets that far and starts
 		// nothing: what is asserted is that it was not refused.
-		assertTrue(response._body.toString(), response._body.toString().contains("\"status\":\"error\""));
+		assertEquals(reply.toString(), ChatControl.STATUS_ERROR, reply.get(ChatControl.FIELD_STATUS));
 	}
 
 	/** A backend that cannot drop turns is refused an edit. */
-	public void testTruncateIsRefused() throws Exception {
+	public void testEditIsRefused() throws Exception {
 		claim(BackendFeatures.NONE);
 
-		Recording response = post("/truncate", "{\"sessionId\":\"" + id() + "\",\"fromTurn\":0}");
+		Map<String, Object> reply = command(ChatControl.CMD_EDIT_SEND, Map.of(ChatControl.ARG_TEXT, "Anders",
+			ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_FROM_TURN, Integer.valueOf(0)));
 
-		assertRefused(response, I18NConstants.EDIT_NOT_SUPPORTED);
+		assertRefused(reply, I18NConstants.EDIT_NOT_SUPPORTED);
 	}
 
 	/** A backend that accepts no files is refused a message with one. */
 	public void testAttachmentIsRefused() throws Exception {
 		claim(BackendFeatures.NONE);
 
-		Recording response = post("/send", "{\"text\":\"Sieh dir das an\",\"sessionId\":\"" + id()
-			+ "\",\"attachments\":[{\"fileName\":\"dot.png\",\"mimeType\":\"image/png\",\"size\":4,"
-			+ "\"base64Data\":\"iVBORw0K\"}]}");
+		assertEquals(Map.of(), _driver.upload(_conversation, "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
 
-		assertRefused(response, I18NConstants.ATTACHMENTS_NOT_SUPPORTED);
+		Map<String, Object> reply = command(ChatControl.CMD_SEND,
+			Map.of(ChatControl.ARG_TEXT, "Sieh dir das an", ChatControl.ARG_SESSION_ID, id()));
+
+		assertRefused(reply, I18NConstants.ATTACHMENTS_NOT_SUPPORTED);
+		assertEquals("A refused send leaves the file with the message.", 1,
+			ChatCommandDriver.attachments(_conversation).entries().size());
 	}
 
 	/** Loading a backend's conversation tells the client what it supports. */
@@ -256,12 +247,10 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		ScriptedBackend.install(session -> session.equals(claimed) ? backend : null);
 	}
 
-	private static void assertRefused(Recording response, ResKey reason) {
-		String body = response._body.toString();
-		assertEquals(body, HttpServletResponse.SC_FORBIDDEN, response._status);
-		assertTrue(body, body.contains("\"status\":\"forbidden\""));
-		assertTrue("The client shows the reason: " + body,
-			body.contains(Resources.getInstance().getString(reason)));
+	private static void assertRefused(Map<String, Object> reply, ResKey reason) {
+		assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatControl.FIELD_STATUS));
+		assertEquals("The client shows the reason: " + reply, Resources.getInstance().getString(reason),
+			reply.get(ChatControl.FIELD_REASON));
 	}
 
 	/** Waits until no run of the test's chat is in flight, so that none outlives its test. */
@@ -273,16 +262,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		}
 	}
 
-	private Recording post(String path, String body) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = runner.newClient().newInvocation(new PostMethodWebRequest(
-			"http://localhost/chat" + path,
-			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)),
-			"application/json"));
-		HttpServletRequest request = invocation.getRequest();
-		login(request, response);
-		_servlet.post(request, response.asResponse());
-		return response;
+	private Map<String, Object> command(String name, Map<String, Object> arguments) {
+		return _driver.command(_conversation, name, arguments);
 	}
 
 	/** The chat as Anna's window reads it when it opens it. */
@@ -290,12 +271,6 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		ChatSessionDetailResponse detail = ChatTranscripts.sessionDetail(_window, anna, id());
 		assertNotNull("Anna's chat must be found.", detail);
 		return DtoMapper.toJson(detail);
-	}
-
-	private static void login(HttpServletRequest request, Recording response) throws Exception {
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, response.asResponse(), anna);
-		});
 	}
 
 	private String id() {
@@ -318,6 +293,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
 				AgentPolicyService.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE,
+				FieldControlService.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE,
 				ConversationBackendService.Module.INSTANCE));

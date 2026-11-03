@@ -515,19 +515,19 @@ export interface SessionSummary {
   lastUpdated?: string
 }
 
-export interface Attachment {
+/**
+ * A file attached to the message being written, as the chat control states it: the file itself
+ * waits on the server until the message is sent, and `id` is what takes it off again.
+ */
+export interface DraftAttachment {
+  id: string
   fileName: string
   mimeType: string
-  base64Data: string
   size: number
 }
 
 /**
- * One fact the page states about the situation a message is sent in.
- *
- * Computed on the server from the chat element's `<context>` configuration and pushed into the
- * control state; the browser only carries it back, because the run happens on a background thread
- * long after those channels were read. The message text is never touched by it.
+ * One fact about the situation a message is sent in, as the Kontext section lists it.
  */
 export interface ContextFact {
   name: string
@@ -539,22 +539,6 @@ export interface ContextFact {
    * of one conversation or the provider's prompt cache misses on every one of them.
    */
   stable: boolean
-}
-
-export interface SendPayload {
-  text: string
-  sessionId: string
-  agent?: string
-  model?: string
-  mcpOverride: boolean
-  mcpServers: string[]
-  attachments?: Attachment[]
-  /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
-  effort?: string
-  /** What the page states about the situation this message is asked in. */
-  facts?: ContextFact[]
-  /** The position of the auto-approve switch at the send; the turn runs with it. */
-  approvalMode?: 'AUTO_APPROVE' | 'MANUAL'
 }
 
 export interface TokenUsage {

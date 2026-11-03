@@ -10,7 +10,6 @@ import {
 import {
   answerCommands,
   emitPatch,
-  expectEventsCalls,
   isSubscribed,
   resetTLBridge,
   tlCommand,
@@ -50,16 +49,6 @@ beforeEach(() => {
 })
 
 describe('the chat stream', () => {
-  it('leaves checking that the first frames arrive to the attach command itself', async () => {
-    // A proxy that forwards the window's stream in blocks of kilobytes holds back the small chat
-    // frames; the window changes to polling only when it is told that events are due - which the
-    // answer of every command tells it, the attach among them.
-    openChatStream(tlCommand)
-    await settle()
-
-    expect(expectEventsCalls()).toBe(0)
-  })
-
   it('asks for the frames of its conversation, under a listener id of its own', async () => {
     const stream = openChatStream(tlCommand)
     await settle()

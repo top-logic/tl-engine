@@ -18,6 +18,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.ChatPreferencesStore;
@@ -38,6 +39,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -118,6 +120,19 @@ public final class ChatViewBinding {
 	 * @see #offerSubject(ViewChannel)
 	 */
 	private volatile ViewChannel _subject;
+
+	/**
+	 * What the displayed {@code <chat-conversation>} of this chat states about the situation,
+	 * {@code null} while no displayed element states anything.
+	 *
+	 * @see #offerFacts(Supplier)
+	 */
+	private volatile Supplier<List<EnvironmentFact>> _facts;
+
+	/**
+	 * The files attached to the message being written in this conversation.
+	 */
+	private final ChatAttachments _attachments = new ChatAttachments();
 
 	/**
 	 * The chat controls of this conversation the window displays now.
@@ -332,9 +347,9 @@ public final class ChatViewBinding {
 	 * {@code subject} of a {@code <chat-conversation>} - for as long as its element is displayed.
 	 *
 	 * <p>
-	 * Read when the conversation comes into being, by {@link #subjectOf(TypedAnnotatable, String)},
-	 * on the request that creates it: a conversation is about what the page shows when it is
-	 * created, and is stamped before its first message is sent.
+	 * Read when the conversation comes into being, by {@link #subject()}, in the first send of a
+	 * conversation, which creates it ({@link ChatControl#CMD_SEND}): a conversation is about what the
+	 * page shows when it is created, and is stamped before its first message is sent.
 	 * </p>
 	 */
 	public void offerSubject(ViewChannel channel) {
@@ -362,27 +377,41 @@ public final class ChatViewBinding {
 	}
 
 	/**
-	 * What a conversation created now in the chat {@code conversation} of {@code scope}'s window is
-	 * about, or <code>null</code> when the window shows no such chat or the chat names no subject.
+	 * Lets a message sent in this chat be told what the page states about the situation - the
+	 * {@code <context>} and {@code <selection/>} of a {@code <chat-conversation>} - for as long as
+	 * its element is displayed.
 	 *
-	 * @param scope
-	 *        The window's sub-session. May be <code>null</code>, which names nothing.
-	 * @param conversation
-	 *        The conversation of the window, as the client names it.
+	 * <p>
+	 * Read when a message is sent, by {@link #facts()}, so the run is told what the page states at
+	 * that moment.
+	 * </p>
+	 *
+	 * @param facts
+	 *        Evaluates the facts as the page states them now.
 	 */
-	public static TLObject subjectOf(TypedAnnotatable scope, String conversation) {
-		if (scope == null) {
-			return null;
+	public void offerFacts(Supplier<List<EnvironmentFact>> facts) {
+		_facts = facts;
+	}
+
+	/**
+	 * Undoes one {@link #offerFacts(Supplier)}, for an element that is no longer displayed; a later
+	 * offer is left alone.
+	 */
+	public void withdrawFacts(Supplier<List<EnvironmentFact>> facts) {
+		if (_facts == facts) {
+			_facts = null;
 		}
-		Map<String, ChatViewBinding> map = scope.get(BINDINGS);
-		if (map == null) {
-			return null;
-		}
-		ChatViewBinding binding;
-		synchronized (map) {
-			binding = map.get(ChatSessionRegistry.key(conversation));
-		}
-		return binding == null ? null : binding.subject();
+	}
+
+	/** What the page states about the situation now; empty while it states nothing. */
+	public List<EnvironmentFact> facts() {
+		Supplier<List<EnvironmentFact>> facts = _facts;
+		return facts == null ? List.of() : facts.get();
+	}
+
+	/** The files attached to the message being written in this conversation. */
+	public ChatAttachments attachments() {
+		return _attachments;
 	}
 
 	/**

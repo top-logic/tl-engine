@@ -1472,7 +1472,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * observes the marker at its next turn, by which time its execution row may already be gone -
 	 * so this narrows the window rather than closing it; it is what keeps a run from carrying on
 	 * writing into a session the user has thrown away. Every delete path goes through here, so the
-	 * REST {@code DELETE /chat/sessions/{id}} is covered by the same guard.
+	 * chat controls' {@code deleteSession} command is covered by the same guard.
 	 * </p>
 	 */
 	public void deleteSession(AgentSession session) {

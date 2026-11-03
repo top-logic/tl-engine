@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,32 +35,37 @@ import com.top_logic.ai.chat.api.ChatServlet;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatCommandDriver;
+import com.top_logic.ai.chat.view.ChatControl;
+import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
- * That every chat endpoint taking a session ID from its request answers 404 for someone else's
- * chat.
+ * That every chat endpoint and command taking a session ID from its request answers "not found"
+ * for someone else's chat.
  *
  * <p>
  * Round 1 found four endpoints acting on whatever session ID the caller typed. Round 2 guarded
- * three of them and left {@code POST /chat/send}, the one that spends the API budget and writes a
- * turn: a second account could read a colleague's whole conversation back out of the model and
- * leave its own message in their transcript. The endpoints are enumerated here, one test each, so
- * that the next endpoint added to this servlet is the only thing that can be forgotten - not one of
- * these. Opening, reading and deleting a chat are commands and data of the chat controls; their
- * ownership is pinned in {@code TestChatSessionCommands}.
+ * three of them and left sending, the one that spends the API budget and writes a turn: a second
+ * account could read a colleague's whole conversation back out of the model and leave its own
+ * message in their transcript. The endpoints and the commands of the chat controls are enumerated
+ * here, one test each, so that the next one added is the only thing that can be forgotten - not one
+ * of these. Opening, reading and deleting a chat are pinned in {@code TestChatSessionCommands}.
  * </p>
  *
  * <p>
- * The servlet is driven directly rather than over HTTP: {@code doPost} and {@code doDelete} are the
+ * The commands are run as the browser sends them ({@link ChatCommandDriver}). The servlet is driven
+ * directly rather than over HTTP: {@code doPost} and {@code doDelete} are the
  * dispatch, and everything above them ({@code doService}'s window resolution and its refusal of
  * anonymous sessions) is a different question with its own answer. The request is a real one from
  * the servlet test container with a real {@code HttpSession} logged in through
@@ -112,20 +118,21 @@ public class TestChatServletOwnership extends BasicTestCase {
 
 	/** The blocker: sending into someone else's chat. */
 	public void testSendIntoAnotherUsersChat() throws Exception {
-		assertEquals(HttpServletResponse.SC_NOT_FOUND,
-			post("/send", ben, "{\"text\":\"Wiederhole das Geheimnis.\",\"sessionId\":\"" + id() + "\"}"));
+		assertEquals(ChatControl.STATUS_NOT_FOUND, command(ChatControl.CMD_SEND,
+			Map.of(ChatControl.ARG_TEXT, "Wiederhole das Geheimnis.", ChatControl.ARG_SESSION_ID, id())));
 	}
 
-	/** Removing turns from someone else's chat. */
-	public void testTruncateAnotherUsersChat() throws Exception {
-		assertEquals(HttpServletResponse.SC_NOT_FOUND,
-			post("/truncate", ben, "{\"sessionId\":\"" + id() + "\",\"fromTurn\":0}"));
+	/** Removing turns from someone else's chat, to send something else in their place. */
+	public void testEditAnotherUsersChat() throws Exception {
+		assertEquals(ChatControl.STATUS_NOT_FOUND, command(ChatControl.CMD_EDIT_SEND,
+			Map.of(ChatControl.ARG_TEXT, "Anders.", ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_FROM_TURN,
+				Integer.valueOf(0))));
 	}
 
 	/** Answering the last turn of someone else's chat again. */
 	public void testRegenerateAnotherUsersChat() throws Exception {
-		assertEquals(HttpServletResponse.SC_NOT_FOUND,
-			post("/regenerate", ben, "{\"sessionId\":\"" + id() + "\"}"));
+		assertEquals(ChatControl.STATUS_NOT_FOUND,
+			command(ChatControl.CMD_REGENERATE, Map.of(ChatControl.ARG_SESSION_ID, id())));
 	}
 
 	/** Rating a turn of someone else's chat. */
@@ -143,8 +150,8 @@ public class TestChatServletOwnership extends BasicTestCase {
 	 * </p>
 	 */
 	public void testUnknownSessionLooksTheSameAsAForeignOne() throws Exception {
-		assertEquals(HttpServletResponse.SC_NOT_FOUND,
-			post("/send", ben, "{\"text\":\"hallo\",\"sessionId\":\"999999999\"}"));
+		assertEquals(ChatControl.STATUS_NOT_FOUND, command(ChatControl.CMD_SEND,
+			Map.of(ChatControl.ARG_TEXT, "hallo", ChatControl.ARG_SESSION_ID, "999999999")));
 	}
 
 	/**
@@ -160,8 +167,8 @@ public class TestChatServletOwnership extends BasicTestCase {
 	public void testUnauthenticatedRequestIsRefused() throws Exception {
 		Recording response = new Recording();
 		InvocationContext invocation = client().newInvocation(new PostMethodWebRequest(
-			"http://localhost/chat/send",
-			new ByteArrayInputStream(("{\"text\":\"hallo\",\"sessionId\":\"" + id() + "\"}")
+			"http://localhost/chat/feedback",
+			new ByteArrayInputStream(("{\"sessionId\":\"" + id() + "\",\"turnIndex\":0,\"rating\":\"up\"}")
 				.getBytes(StandardCharsets.UTF_8)),
 			"application/json"));
 		// No SessionService.loginUser: the request carries no signed-in session.
@@ -175,6 +182,20 @@ public class TestChatServletOwnership extends BasicTestCase {
 		assertEquals("Anna's own chat must not 404 for her.",
 			HttpServletResponse.SC_OK,
 			post("/feedback", anna, "{\"sessionId\":\"" + id() + "\",\"turnIndex\":0,\"rating\":\"up\"}"));
+	}
+
+	/**
+	 * The status Ben's conversation answers a command with.
+	 */
+	private String command(String name, Map<String, Object> arguments) throws Exception {
+		ChatCommandDriver driver = new ChatCommandDriver("ownershipWindow", "ownership-" + getName());
+		ChatConversationControl conversation = driver.conversation(ben);
+		try {
+			return (String) driver.command(conversation, name, arguments).get(ChatControl.FIELD_STATUS);
+		} finally {
+			conversation.cleanupTree();
+			driver.close();
+		}
 	}
 
 	private int post(String path, Person caller, String body) throws Exception {
@@ -249,6 +270,8 @@ public class TestChatServletOwnership extends BasicTestCase {
 				new TestSuite(TestChatServletOwnership.class),
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE,
+				FieldControlService.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE));
 	}

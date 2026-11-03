@@ -36,7 +36,8 @@ export function resetTLBridge(): void {
   controlState = {}
   dispatched = []
   patchListeners.clear()
-  expectedEvents = 0
+  uploads.length = 0
+  uploadAnswer = async () => ({ success: true })
   staleReloadAnswer = true
   staleReloads = 0
   pageLeaving = false
@@ -74,19 +75,6 @@ export function isPageLeaving(): boolean {
 /** Sets what `isPageLeaving` answers. */
 export function setPageLeaving(leaving: boolean): void {
   pageLeaving = leaving
-}
-
-/** How often the chat told the window's stream to check that its events arrive. */
-let expectedEvents = 0
-
-/** See `expectEvents` of the real bridge. */
-export function expectEvents(): void {
-  expectedEvents++
-}
-
-/** How often `expectEvents` was called since the last reset. */
-export function expectEventsCalls(): number {
-  return expectedEvents
 }
 
 /** The listeners `subscribe` added, by the id the window's stream addresses its patches to. */
@@ -163,6 +151,28 @@ export function useTLCommand(): (
   args?: Record<string, unknown>,
 ) => Promise<CommandResponse | undefined> {
   return tlCommand
+}
+
+/** The uploads `useTLUpload`'s function sent since the last reset: the files of each. */
+export const uploads: File[][] = []
+
+/** What an upload is answered with; a plain success by default. */
+let uploadAnswer: (files: File[]) => Promise<CommandResponse | undefined> = async () => ({ success: true })
+
+/** Sets how an upload is answered, until the next reset. */
+export function answerUploads(answer: (files: File[]) => Promise<CommandResponse | undefined>): void {
+  uploadAnswer = answer
+}
+
+/** The upload function `useTLUpload` hands out: records the files, then answers as `answerUploads` set. */
+export const tlUpload = async (formData: FormData): Promise<CommandResponse | undefined> => {
+  const files = formData.getAll('file').filter((value): value is File => value instanceof File)
+  uploads.push(files)
+  return uploadAnswer(files)
+}
+
+export function useTLUpload(): (formData: FormData) => Promise<CommandResponse | undefined> {
+  return tlUpload
 }
 
 /** What `useTLDataUrl` hands out: a data URL of a control named for the test. */

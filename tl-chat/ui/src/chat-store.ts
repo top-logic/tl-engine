@@ -1,4 +1,4 @@
-import { isPageLeaving, React, useTLCommand, useTLDataUrl } from 'tl-react-bridge'
+import { isPageLeaving, React, useTLCommand, useTLDataUrl, useTLUpload } from 'tl-react-bridge'
 import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
 import type { ReactNode } from 'react'
 import {
@@ -9,31 +9,39 @@ import {
   delegationEnd,
   sendSubagentMessage,
   type SubagentMessageStatus,
-  createSession,
+  BusyError,
   deleteSession,
+  editSend as editSendTurn,
   ForbiddenError,
   RefusedError,
   loadSession,
   loadSubagentTranscript,
   openSession,
   readCapabilities,
+  readDraftAttachments,
   readSessions,
   regenerate as regenerateTurn,
+  removeAttachment,
   respond,
   sendFeedback,
   sendMessage,
   setApprovalMode,
-  truncate,
+  STATE_DRAFT_ATTACHMENTS,
   readRunState,
   turnsJsonToMessages,
   wokenList,
+  uploadAttachments,
   type ChatAddress,
+  type ChatUpload,
   type RunState,
+  type SendRequest,
   type SessionDetail,
+  type TurnAnswer,
+  type TurnSettings,
 } from './api'
+import { selectAttachments } from './attachments'
 import {
   CMD_REFRESH_RUN_STATE,
-  expectFrames,
   openChatStream,
   type ChatCommand,
   type ChatStream,
@@ -55,7 +63,7 @@ import { parseTasksJson, type AgentTask } from './progress-model'
 import { argsSummary } from './plain-text'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
-import { keepUnsent, StaleWindowError, takeUnsent } from './stale-window'
+import { keepUnsent, takeUnsent } from './stale-window'
 import { citedSources, latestAnswerSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
@@ -78,13 +86,12 @@ import {
   type AgentOption,
   type ApprovalOutcome,
   type Asker,
-  type Attachment,
-  type ContextFact,
   type Capabilities,
   type ChatMessage,
   type Citation,
   type ConnectionState,
   type ContextComposition,
+  type DraftAttachment,
   type MessageFeedback,
   type ModelOption,
   type NoticeTone,
@@ -345,6 +352,8 @@ export interface ChatBootstrap {
   capabilities?: unknown
   /** The account's chats, as the element's control state carries them (read with `readSessions`). */
   sessions?: unknown
+  /** The files attached to the message, as the control state carries them (`readDraftAttachments`). */
+  draftAttachments?: unknown
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
@@ -373,6 +382,7 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     // As the state holds them: the store reads them only when the server sent new ones.
     capabilities: state.capabilities,
     sessions: state.sessions,
+    draftAttachments: state[STATE_DRAFT_ATTACHMENTS],
   }
 }
 
@@ -553,13 +563,10 @@ export interface ChatState {
   conversationsOutsideDock: number
 
   /**
-   * What the page states about the situation, as the `<chat-conversation>` control computed it.
-   *
-   * The store only carries it: it is evaluated on the server, in the acting user's context, and
-   * travels with every message so that the run - which happens on a background thread minutes
-   * later - is told the same thing the page was showing. It never changes the message text.
+   * The files attached to the message being written, as the chat controls state them: the files
+   * wait on the server, which the send takes them from.
    */
-  contextFacts: ContextFact[]
+  draftAttachments: DraftAttachment[]
 
   /**
    * The sum of the mounted rail's section badges.
@@ -649,13 +656,21 @@ export interface ChatActions {
   selectSession(id: string): Promise<void>
   newChat(): void
   deleteSession(id: string): Promise<void>
-  send(text: string, attachments: Attachment[], options?: SendOptions): Promise<boolean>
+  /** Sends a turn, with the files attached to it ({@link ChatState.draftAttachments}). */
+  send(text: string, options?: SendOptions): Promise<boolean>
   editSend(messageId: string, turnIndex: number, text: string, options?: SendOptions): Promise<boolean>
   regenerate(messageId: string, turnIndex: number): Promise<void>
   rate(turnIndex: number, rating: Rating, note?: string): Promise<void>
   stop(): void
-  /** Takes over what the `<chat-conversation>` control computed from its `<context>` facts. */
-  setContextFacts(facts: ContextFact[]): void
+  /**
+   * Attaches files to the message being written: those the server would refuse are left out, the
+   * others are uploaded.
+   *
+   * @returns why files were not attached, ready to show; empty when all of them were.
+   */
+  attach(files: File[]): Promise<string>
+  /** Takes a file off the message being written. */
+  removeAttachment(id: string): void
   selectAgent(name: string): void
   selectModel(id: string): void
   toggleMcp(name: string): void
@@ -774,25 +789,6 @@ function sameList<T>(a: readonly T[], b: readonly T[]): boolean {
 }
 
 /**
- * Whether two fact lists say the same thing.
- *
- * Compared by value rather than by identity: the control state hands out a fresh array on every
- * render, and patching the store with an equal one would re-render every subscriber of the chat on
- * each of them.
- */
-function sameFacts(a: readonly ContextFact[], b: readonly ContextFact[]): boolean {
-  return (
-    a.length === b.length &&
-    a.every(
-      (fact, index) =>
-        fact.name === b[index].name &&
-        fact.value === b[index].value &&
-        fact.stable === b[index].stable,
-    )
-  )
-}
-
-/**
  * The chat list with `id` titled as the server just answered for it.
  *
  * Opening a chat reads its transcript, and that answer carries the title as the server has it now.
@@ -836,6 +832,7 @@ function memo<A extends unknown[], T>(compute: (...deps: A) => T): (...deps: A) 
 interface ElementLink {
   command: ChatCommand
   dataUrl: string
+  upload?: ChatUpload
 }
 
 /**
@@ -864,6 +861,12 @@ export class ChatStore {
 
   /** The link of the element that left last, for the detach its leaving causes. */
   private lastLink: ElementLink | null = null
+
+  /** How many files are on their way to the server now. */
+  private attaching = 0
+
+  /** Settles once the files on their way to the server have arrived. */
+  private uploads: Promise<void> = Promise.resolve()
 
   /** Whether the server's capabilities have arrived, which is when the first agent is chosen. */
   private capsTaken = false
@@ -1120,23 +1123,24 @@ export class ChatStore {
       railDrawer: false,
       railDrawerOpen: false,
       conversationsOutsideDock: 0,
-      contextFacts: [],
+      draftAttachments: [],
       badgeTotal: 0,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
     this.takeLists(boot.capabilities, boot.sessions)
+    this.takeAttachments(boot.draftAttachments)
   }
 
   getState = (): ChatState => this.snapshot
 
   /**
-   * Joins an element: `listener` hears every change, `command` and `dataUrl` are how the store may
-   * reach the server through that element's control.
+   * Joins an element: `listener` hears every change, `command`, `dataUrl` and `upload` are how the
+   * store may reach the server through that element's control.
    */
-  subscribe = (listener: () => void, command?: ChatCommand, dataUrl = ''): (() => void) => {
+  subscribe = (listener: () => void, command?: ChatCommand, dataUrl = '', upload?: ChatUpload): (() => void) => {
     this.listeners.add(listener)
-    const link: ElementLink | null = command ? { command, dataUrl } : null
+    const link: ElementLink | null = command ? { command, dataUrl, upload } : null
     if (link) this.links.push(link)
     this.refs += 1
     if (this.refs === 1) {
@@ -1169,6 +1173,15 @@ export class ChatStore {
   private readonly command: ChatCommand = (name, args) => {
     const link = this.link()
     return link ? link.command(name, args) : Promise.resolve(undefined)
+  }
+
+  /**
+   * Uploads to a chat control of this conversation, through the same element {@link command} uses;
+   * answered with `undefined` while no element has brought an upload function.
+   */
+  private readonly upload: ChatUpload = (formData) => {
+    const upload = this.link()?.upload
+    return upload ? upload(formData) : Promise.resolve(undefined)
   }
 
   /** The data URL of a chat control of this conversation, of the same element {@link command} uses. */
@@ -1205,6 +1218,14 @@ export class ChatStore {
     }
     const list = readSessions(sessions)
     if (list) this.patch({ sessions: list, sessionsLoading: false })
+  }
+
+  /** Takes the files attached to the message, when an element's control state brings new ones. */
+  takeAttachments = (raw: unknown): void => {
+    const files = readDraftAttachments(raw)
+    if (files && JSON.stringify(files) !== JSON.stringify(this.state.draftAttachments)) {
+      this.patch({ draftAttachments: files })
+    }
   }
 
   /**
@@ -2123,45 +2144,141 @@ export class ChatStore {
     await this.command(CMD_REFRESH_RUN_STATE)
   }
 
-  /**
-   * Answers a call the server refused because it does not know this page's window.
-   *
-   * The page is being reloaded by then (`chatFetch`), which renders the window - and this chat - in
-   * the session the browser holds now. What the user was sending is kept for the reloaded page to
-   * put back into the composer. When the guard refused the reload, because the page was reloaded a
-   * moment ago and is still unknown, the user is told instead of the page reloading itself in a
-   * loop.
-   *
-   * @returns whether the error was that refusal.
-   */
-  private staleWindow(err: unknown, unsent = ''): boolean {
-    if (!(err instanceof StaleWindowError)) return false
-    if (err.reloading) {
-      keepUnsent(this.chatId, unsent)
-    } else {
-      this.showNotice(this.labels.staleWindow, '', { tone: 'warn', sticky: true })
+  /** The settings of a turn, as the composer shows them now. */
+  private get turnSettings(): TurnSettings {
+    return {
+      agent: this.state.agent,
+      model: this.state.model,
+      mcpOverride: this.state.mcpDirty,
+      mcpServers: this.state.mcp,
+      effort: this.state.effort || undefined,
     }
-    return true
   }
 
   /**
-   * Takes back a chat this send had just created, when the send produced nothing to keep.
+   * Sends a turn: a new message, or with `edit` the edited message in place of the turn the user
+   * changed.
    *
-   * The chat comes into being before the request, because it is what the turn is written into. A
-   * refused send leaves it empty, and an empty chat in the rail is a row the user has to notice and
-   * tidy away - for a refusal they did not cause and cannot act on. Only a chat this very send
-   * created is taken back: an existing conversation is never touched.
+   * A send in a conversation that has no chat yet is what brings the chat into being, titled after
+   * what was said; the server creates it with the send, answers with its id, and takes it back
+   * again when the message could not be sent. A new message carries the files attached to it,
+   * once those on their way have arrived; an edited one carries none.
+   *
+   * @returns whether the text left the composer.
    */
-  private async discardEmptyChat(createdHere: boolean, id: string): Promise<void> {
-    if (!createdHere || !id) return
-    try {
-      await deleteSession(this.command, id)
-    } catch {
-      // Best effort: an undeleted empty chat is untidy, not broken.
+  private async startTurn(
+    text: string,
+    options: SendOptions,
+    edit: { messageId: string; turnIndex: number } | null,
+  ): Promise<boolean> {
+    const labels = this.labels
+    const active = this.state.sessionId
+    if (edit && !active) return false
+    if (!edit) await this.uploads
+    this.showNotice('')
+    // Composed before the dispatch below, because the host's prefix describes the conversation
+    // this message is being added to, not the one it is already in. `App` got that for free: it
+    // read a ref assigned during render, which a `useReducer` dispatch in the same handler
+    // cannot have updated. This store's dispatch does update its state at once, so reading it
+    // afterwards would hand the host the outgoing message - and a host that counts turns would
+    // put the wrong number into every prompt.
+    const outbound = composeOutboundText(text, options.contextTag?.({ messages: this.state.messages }))
+    const sent = edit ? [] : this.state.draftAttachments
+    // What an edit takes away, to put back when the server refuses it; and whether a run was
+    // already going, which a refused send must not end in the composer.
+    const before = this.state.messages
+    const wasBusy = this.state.busy
+    const feedback = this.state.feedback
+    if (edit) {
+      this.dispatch({ type: 'REMOVE_FROM_USER', id: edit.messageId })
+      this.patch({ feedback: feedback.filter((entry) => entry.turnIndex < edit.turnIndex) })
+      this.setRun((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
     }
-    // The server sends the list without it; until then the rail must not show it either.
-    this.patch({ sessionId: '', sessions: withoutSession(this.state.sessions, id) })
-    this.dispatch({ type: 'RESET' })
+    // Appended before the request, not after it: the server starts streaming the answer the
+    // moment it accepts the message, and an await here would let the first assistant event
+    // reach the reducer first - on a new chat the answer then appeared above the question.
+    // A refused send takes the message back out again.
+    const messageId = randomId()
+    this.dispatch({
+      type: 'ADD_USER',
+      id: messageId,
+      text: text || labels.attachmentOnly,
+      edited: options.edited,
+    })
+    this.patch({ busy: true })
+    this.setRun((s) => ({ ...s, busy: true }))
+    const request: SendRequest = {
+      text: outbound,
+      sessionId: active ?? '',
+      title: active ? undefined : autoTitle(text || labels.attachmentOnly),
+      // The turn runs with what the switch shows now, not with what reached the server; a chat the
+      // send creates stores it.
+      approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
+      ...this.turnSettings,
+    }
+    // Kept for the reloaded page, should the page be reloaded under the user's hands because the
+    // server no longer knows it: the command then never answers here.
+    keepUnsent(this.chatId, text)
+    let answer: TurnAnswer
+    try {
+      answer = edit
+        ? await editSendTurn(this.command, edit.turnIndex, request)
+        : await sendMessage(this.command, request)
+    } catch (err) {
+      if (!isPageLeaving()) takeUnsent(this.chatId)
+      if (edit) {
+        this.dispatch({ type: 'REPLACE', messages: before })
+        this.patch({ feedback })
+      } else {
+        this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
+      }
+      this.patch({ busy: wasBusy })
+      this.setRun((s) => ({ ...s, busy: wasBusy }))
+      // A refusal is not a failure: the server wrote a sentence for this user saying what they
+      // may not use, and it reads as information rather than as something that went wrong.
+      // A RefusedError says the same thing about a ceiling that will pass, so it is not sticky -
+      // the answer is to send again in a moment, and a strip the user has to dismiss first is in
+      // the way of exactly that.
+      if (err instanceof ForbiddenError) {
+        this.showNotice(err.reason || labels.notAllowed, '', {
+          tone: 'info',
+          sticky: !(err instanceof RefusedError),
+        })
+      } else if (err instanceof BusyError) {
+        this.showNotice(labels.busyHint, '', { tone: 'info' })
+      } else {
+        this.showNotice(labels.sendFailed, '', { tone: 'warn' })
+      }
+      return false
+    }
+    takeUnsent(this.chatId)
+    const sessionId = answer.sessionId || active
+    if (!active && sessionId) {
+      // The chat this send created: in the list at once, titled after what was said; the server's
+      // list follows with the command's model events.
+      this.patch({
+        sessionId,
+        sessions: withSession(this.state.sessions, { id: sessionId, title: request.title ?? '' }),
+      })
+    }
+    // The send is where a new chat learns who answers it.
+    if (answer.features && this.state.sessionId === sessionId) {
+      const features = readFeatures(answer.features)
+      if (!sameFeatures(features, this.state.features)) this.patch({ features })
+    }
+    if (sent.length > 0) {
+      // The server took them off with the send; until its state says so, the composer must not
+      // show them either.
+      const gone = new Set(sent.map((file) => file.id))
+      this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => !gone.has(file.id)) })
+    }
+    // Dropping the edited turn is what editing always does; saying so only helps when answers
+    // the user could still see went with it. Sticky: the run start that follows used to clear the
+    // strip in the same instant this line was written into it.
+    if (edit && answer.removedTurns > 1) {
+      this.showNotice(labels.laterTurnsRemoved(answer.removedTurns - 1), '', { tone: 'info', sticky: true })
+    }
+    return true
   }
 
   private declareActions(): ChatActions {
@@ -2271,147 +2388,18 @@ export class ChatStore {
        * @returns whether the text left the composer. A refused send keeps the draft where the user
        *          can still see and re-send it, which is why this is not fire-and-forget.
        */
-      send: async (text: string, attachments: Attachment[], options: SendOptions = {}) => {
-        const at = this.at
-        const labels = this.labels
-        let active = this.state.sessionId
-        // Whether this send is what created the chat. A send that is then refused has produced
-        // nothing to keep, and an empty chat left in the rail is a row the user has to tidy away
-        // themselves.
-        let createdHere = false
-        if (!active) {
-          // The first send is what brings a chat into being, titled after what was said.
-          let created: SessionSummary
-          try {
-            // The mode the user set on this new chat before it existed is stored with it.
-            created = await createSession(
-              at,
-              autoTitle(text || labels.attachmentOnly),
-              this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
-            )
-            // Only the switch: a chat created now has no transcript and no run to show.
-            await openSession(this.command, created.id)
-          } catch (err) {
-            if (this.staleWindow(err, text)) return false
-            throw err
-          }
-          active = created.id
-          createdHere = true
-          // The server sends the list with it once the window hears of the new chat; its title is
-          // shown from the start.
-          this.patch({ sessionId: active, sessions: withSession(this.state.sessions, created) })
-        }
-        this.showNotice('')
-        // Composed before the dispatch below, because the host's prefix describes the conversation
-        // this message is being added to, not the one it is already in. `App` got that for free: it
-        // read a ref assigned during render, which a `useReducer` dispatch in the same handler
-        // cannot have updated. This store's dispatch does update its state at once, so reading it
-        // afterwards would hand the host the outgoing message - and a host that counts turns would
-        // put the wrong number into every prompt.
-        const outbound = composeOutboundText(
-          text,
-          options.contextTag?.({ messages: this.state.messages }),
-        )
-        // Appended before the request, not after it: the server starts streaming the answer the
-        // moment it accepts the message, and an await here would let the first assistant event
-        // reach the reducer first - on a new chat the answer then appeared above the question.
-        // A refused send takes the message back out again.
-        const messageId = randomId()
-        this.dispatch({
-          type: 'ADD_USER',
-          id: messageId,
-          text: text || labels.attachmentOnly,
-          edited: options.edited,
-        })
-        this.patch({ busy: true })
-        this.setRun((s) => ({ ...s, busy: true }))
-        try {
-          const accepted = await sendMessage(at, {
-            text: outbound,
-            sessionId: active,
-            agent: this.state.agent,
-            model: this.state.model,
-            mcpOverride: this.state.mcpDirty,
-            mcpServers: this.state.mcp,
-            attachments,
-            effort: this.state.effort || undefined,
-            facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
-            // The turn runs with what the switch shows now, not with what reached the server.
-            approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
-          })
-          // The send is where a new chat learns who answers it: its session is created by this send.
-          if (accepted?.features && this.state.sessionId === active) {
-            const features = readFeatures(accepted.features)
-            if (!sameFeatures(features, this.state.features)) this.patch({ features })
-          }
-          expectFrames()
-        } catch (err) {
-          this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
-          this.patch({ busy: false })
-          this.setRun((s) => ({ ...s, busy: false }))
-          // A refusal is not a failure: the server wrote a sentence for this user saying what they
-          // may not use, and it reads as information rather than as something that went wrong.
-          // A RefusedError says the same thing about a ceiling that will pass, so it is not sticky -
-          // the answer is to send again in a moment, and a strip the user has to dismiss first is in
-          // the way of exactly that.
-          if (err instanceof ForbiddenError) {
-            const temporary = err instanceof RefusedError
-            await this.discardEmptyChat(createdHere, active)
-            this.showNotice(err.reason || labels.notAllowed, '', {
-              tone: 'info',
-              sticky: !temporary,
-            })
-            return false
-          }
-          if (this.staleWindow(err, text)) return false
-          const busyRefusal = err instanceof Error && err.message === 'busy'
-          await this.discardEmptyChat(createdHere && !busyRefusal, active)
-          this.showNotice(busyRefusal ? labels.busyHint : labels.sendFailed, '', {
-            tone: busyRefusal ? 'info' : 'warn',
-          })
-          return false
-        }
-        return true
-      },
+      send: (text: string, options: SendOptions = {}) => this.startTurn(text, options, null),
 
       /**
        * Sends an edited message in place of the one the user changed.
        *
        * Nothing happens until this point: the bubble is edited in the thread, and only a send drops
-       * the turn and everything after it - here and on the server - and starts the conversation
-       * again from the new wording. A cancelled edit leaves the conversation exactly as it was.
+       * the turn and everything after it - here and on the server, in the one command that sends the
+       * new wording, so nothing can come between the two. A cancelled edit leaves the conversation
+       * exactly as it was, and so does an edit the server refuses.
        */
-      editSend: async (messageId: string, turnIndex: number, text: string, options: SendOptions = {}) => {
-        const at = this.at
-        const labels = this.labels
-        const active = this.state.sessionId
-        if (!active) return false
-        this.showNotice('')
-        let removed = 0
-        try {
-          const result = await truncate(at, active, turnIndex)
-          if (result.status === 'busy') {
-            this.showNotice(labels.busyHint, '', { tone: 'info' })
-            return false
-          }
-          removed = result.removedTurns ?? 0
-        } catch {
-          this.showNotice(labels.sendFailed)
-          return false
-        }
-        this.dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
-        this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex < turnIndex) })
-        this.setRun((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
-        const sent = await this.actions.send(text, [], { ...options, edited: true })
-        // Dropping the edited turn is what editing always does; saying so only helps when answers
-        // the user could still see went with it.
-        // Sticky: the send that follows an edit is what starts the run, and a run start used to
-        // clear the strip in the same instant this line was written into it.
-        if (sent && removed > 1) {
-          this.showNotice(labels.laterTurnsRemoved(removed - 1), '', { tone: 'info', sticky: true })
-        }
-        return sent
-      },
+      editSend: (messageId: string, turnIndex: number, text: string, options: SendOptions = {}) =>
+        this.startTurn(text, { ...options, edited: true }, { messageId, turnIndex }),
 
       /**
        * Answers the last message again.
@@ -2421,39 +2409,23 @@ export class ChatStore {
        * place.
        */
       regenerate: async (messageId: string, turnIndex: number) => {
-        const at = this.at
         const labels = this.labels
         const active = this.state.sessionId
         if (!active || this.state.regenerating) return
         this.showNotice('')
         this.patch({ regenerating: true })
         try {
-          const result = await regenerateTurn(at, {
-            sessionId: active,
-            agent: this.state.agent,
-            model: this.state.model,
-            mcpOverride: this.state.mcpDirty,
-            mcpServers: this.state.mcp,
-            effort: this.state.effort || undefined,
-            facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
-          })
-          expectFrames()
-          if (result.status === 'busy') {
-            this.showNotice(labels.busyHint, '', { tone: 'info' })
-            return
-          }
-          if (result.status !== 'ok') {
-            this.showNotice(labels.sendFailed)
-            return
-          }
+          const result = await regenerateTurn(this.command, active, this.turnSettings)
           // The turn is gone server side; drop it here too and let the run rebuild it.
           this.dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
           this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex) })
-          this.dispatch({ type: 'ADD_USER', id: randomId(), text: result.text ?? '' })
+          this.dispatch({ type: 'ADD_USER', id: randomId(), text: result.text })
           this.patch({ busy: true })
           this.setRun((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
         } catch (err) {
-          if (err instanceof ForbiddenError) {
+          if (err instanceof BusyError) {
+            this.showNotice(labels.busyHint, '', { tone: 'info' })
+          } else if (err instanceof ForbiddenError) {
             this.showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
           } else {
             this.showNotice(labels.sendFailed)
@@ -2505,9 +2477,31 @@ export class ChatStore {
         writeEffort(level || null)
       },
 
-      setContextFacts: (facts: ContextFact[]) => {
-        if (sameFacts(this.state.contextFacts, facts)) return
-        this.patch({ contextFacts: facts })
+      attach: async (files: File[]) => {
+        const labels = this.labels
+        const { usable, problems } = selectAttachments(
+          files,
+          this.state.draftAttachments.length + this.attaching,
+          labels,
+        )
+        if (usable.length > 0) {
+          this.attaching += usable.length
+          const upload = uploadAttachments(this.upload, usable)
+            .catch(() => [labels.attachFailed])
+            .finally(() => {
+              this.attaching -= usable.length
+            })
+          // A send waits for what is on its way, so the file goes with the message it was meant for.
+          const before = this.uploads
+          this.uploads = Promise.all([before, upload]).then(() => undefined)
+          problems.push(...(await upload))
+        }
+        return problems.join(' · ')
+      },
+
+      removeAttachment: (id: string) => {
+        this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => file.id !== id) })
+        void removeAttachment(this.command, id)
       },
 
       selectTraceMode: (mode: TraceMode) => {
@@ -2784,9 +2778,10 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The element's own control is how the store reaches the server through this element.
   const command = useTLCommand()
   const dataUrl = useTLDataUrl()
+  const upload = useTLUpload()
   const subscribe = useCallback(
-    (listener: () => void) => store.subscribe(listener, command, dataUrl),
-    [store, command, dataUrl],
+    (listener: () => void) => store.subscribe(listener, command, dataUrl, upload),
+    [store, command, dataUrl, upload],
   )
   const chat = useSyncExternalStore(subscribe, store.getState, store.getState)
   useEffect(
@@ -2797,5 +2792,6 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   )
   // The state's own values: they change only when the server sends new ones.
   useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])
+  useEffect(() => store.takeAttachments(boot.draftAttachments), [store, boot.draftAttachments])
   return { chat, actions: store.actions, runs: store.runs }
 }

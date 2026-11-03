@@ -1,3 +1,4 @@
+import type { CommandResponse } from 'tl-react-bridge'
 import type { ChatCommand } from './chat-stream'
 import type { ConversationFeatures } from './features'
 import { argsSummary } from './plain-text'
@@ -6,14 +7,12 @@ import { chatFetch } from './stale-window'
 import { keepLast, MAX_CHILD_STEPS, subagentStatus } from './types'
 import type {
   ApprovalOutcome,
-  Attachment,
   Capabilities,
   ChatMessage,
   ContextComposition,
-  ContextFact,
+  DraftAttachment,
   ImprovePromptResponse,
   InteractionOption,
-  SendPayload,
   SessionSummary,
   MessageFeedback,
   Rating,
@@ -218,25 +217,6 @@ async function readData<T>(dataUrl: string, key: string): Promise<T> {
   return (await res.json()) as T
 }
 
-/**
- * Creates a chat. `approvalMode` is the mode the user set before the chat existed; the chat stores
- * it at once, because a chat that stores no mode runs with auto-approve off (#808).
- */
-export async function createSession(
-  at: ChatAddress,
-  title: string,
-  approvalMode: 'AUTO_APPROVE' | 'MANUAL' = 'MANUAL',
-): Promise<SessionSummary> {
-  return readJson<SessionSummary>(
-    await chatFetch(withWindow('/chat/sessions', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ title, approvalMode }),
-    }),
-  )
-}
-
 export interface SessionDetail {
   id: string
   title: string
@@ -273,34 +253,196 @@ export async function loadSession(dataUrl: string, id: string): Promise<SessionD
   return readData<SessionDetail>(dataUrl, dataKey(DATA_SESSION, id))
 }
 
-export async function sendMessage(
-  at: ChatAddress,
-  payload: SendPayload,
-): Promise<{ taskId?: string; status: string; features?: Partial<ConversationFeatures> }> {
-  const res = await chatFetch(withWindow('/chat/send', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(payload),
+/**
+ * Command that sends a message; one without a chat creates it. Must match `ChatControl#CMD_SEND`.
+ */
+export const CMD_SEND = 'send'
+
+/**
+ * Command that drops a turn and sends the edited message in its place. Must match
+ * `ChatControl#CMD_EDIT_SEND`.
+ */
+export const CMD_EDIT_SEND = 'editSend'
+
+/** Command that answers the last message again. Must match `ChatControl#CMD_REGENERATE`. */
+export const CMD_REGENERATE = 'regenerate'
+
+/** Command that takes a file off the message. Must match `ChatControl#CMD_REMOVE_ATTACHMENT`. */
+export const CMD_REMOVE_ATTACHMENT = 'removeAttachment'
+
+/** Argument: the message. Must match `ChatControl#ARG_TEXT`. */
+export const ARG_TEXT = 'text'
+
+/** Argument: the title of a chat the send creates. Must match `ChatControl#ARG_TITLE`. */
+export const ARG_TITLE = 'title'
+
+/** Argument: the agent of the turn. Must match `ChatControl#ARG_AGENT`. */
+export const ARG_AGENT = 'agent'
+
+/** Argument: the model of the turn. Must match `ChatControl#ARG_MODEL`. */
+export const ARG_MODEL = 'model'
+
+/** Argument: whether the MCP servers replace the agent's own. Must match `ChatControl#ARG_MCP_OVERRIDE`. */
+export const ARG_MCP_OVERRIDE = 'mcpOverride'
+
+/** Argument: the MCP servers of the turn. Must match `ChatControl#ARG_MCP_SERVERS`. */
+export const ARG_MCP_SERVERS = 'mcpServers'
+
+/** Argument: how hard the model may think. Must match `ChatControl#ARG_EFFORT`. */
+export const ARG_EFFORT = 'effort'
+
+/** Argument: the auto-approve switch at the send. Must match `ChatControl#ARG_APPROVAL_MODE`. */
+export const ARG_APPROVAL_MODE = 'approvalMode'
+
+/** Argument: the first turn an edit drops. Must match `ChatControl#ARG_FROM_TURN`. */
+export const ARG_FROM_TURN = 'fromTurn'
+
+/** Argument: the id of an attached file. Must match `ChatControl#ARG_ATTACHMENT_ID`. */
+export const ARG_ATTACHMENT_ID = 'attachmentId'
+
+/** Field of the answer: what became of the request. Must match `ChatControl#FIELD_STATUS`. */
+export const FIELD_STATUS = 'status'
+
+/** Field of the answer: why it was refused. Must match `ChatControl#FIELD_REASON`. */
+export const FIELD_REASON = 'reason'
+
+/** Field of the answer: the chat the message went to. Must match `ChatControl#FIELD_SESSION_ID`. */
+export const FIELD_SESSION_ID = 'sessionId'
+
+/** Field of the answer: what that chat supports. Must match `ChatControl#FIELD_FEATURES`. */
+export const FIELD_FEATURES = 'features'
+
+/** Field of the answer: how many turns went. Must match `ChatControl#FIELD_REMOVED_TURNS`. */
+export const FIELD_REMOVED_TURNS = 'removedTurns'
+
+/** Field of the answer: the message sent again. Must match `ChatControl#FIELD_TEXT`. */
+export const FIELD_TEXT = 'text'
+
+/** Status: the message went. Must match `ChatControl#STATUS_PROCESSING`. */
+export const STATUS_PROCESSING = 'processing'
+
+/** Status: the chat is answering something else. Must match `ChatControl#STATUS_BUSY`. */
+export const STATUS_BUSY = 'busy'
+
+/** Status: the account may not make the request. Must match `ChatControl#STATUS_FORBIDDEN`. */
+export const STATUS_FORBIDDEN = 'forbidden'
+
+/** Status: no room for the run right now. Must match `ChatControl#STATUS_REJECTED`. */
+export const STATUS_REJECTED = 'rejected'
+
+/** State key of the files attached to the message. Must match `ChatControl#STATE_DRAFT_ATTACHMENTS`. */
+export const STATE_DRAFT_ATTACHMENTS = 'draftAttachments'
+
+/** Name of the multipart part of an uploaded file. Must match `UploadSupport#FILE_PART`. */
+const UPLOAD_FILE_PART = 'file'
+
+/** A send the chat refused because it is answering something else. */
+export class BusyError extends Error {
+  constructor() {
+    super(STATUS_BUSY)
+    this.name = 'BusyError'
+  }
+}
+
+/** The settings of a turn, as the composer shows them at the send. */
+export interface TurnSettings {
+  agent?: string
+  model?: string
+  mcpOverride: boolean
+  mcpServers: string[]
+  /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
+  effort?: string
+}
+
+/** What a send names besides its settings. */
+export interface SendRequest extends TurnSettings {
+  text: string
+  /** The chat to send into; empty creates one. */
+  sessionId: string
+  /** The title of the chat the send creates. */
+  title?: string
+  /** The position of the auto-approve switch at the send; the turn runs with it. */
+  approvalMode?: 'AUTO_APPROVE' | 'MANUAL'
+}
+
+/** What a message that went answers. */
+export interface TurnAnswer {
+  /** The chat the message went to; for a send that created it, the new chat. */
+  sessionId: string
+  /** Which functions beyond sending that chat supports. */
+  features?: Partial<ConversationFeatures>
+  /** How many turns an edit or a regenerate dropped. */
+  removedTurns: number
+  /** The message a regenerate sent again. */
+  text: string
+}
+
+function settingsArgs(settings: TurnSettings): Record<string, unknown> {
+  return {
+    [ARG_AGENT]: settings.agent,
+    [ARG_MODEL]: settings.model,
+    [ARG_MCP_OVERRIDE]: settings.mcpOverride,
+    [ARG_MCP_SERVERS]: settings.mcpServers,
+    [ARG_EFFORT]: settings.effort,
+  }
+}
+
+/**
+ * Sends a turn command and reads its answer.
+ *
+ * @throws ForbiddenError for a request the account may not make, with the server's sentence;
+ *         RefusedError when there is no room for the run right now; BusyError while the chat answers
+ *         something else; an Error for anything else that did not send the message.
+ */
+async function turn(command: ChatCommand, name: string, args: Record<string, unknown>): Promise<TurnAnswer> {
+  const answer = await command(name, args)
+  const status = answer?.[FIELD_STATUS]
+  const reason = typeof answer?.[FIELD_REASON] === 'string' ? (answer[FIELD_REASON] as string) : ''
+  if (status === STATUS_FORBIDDEN) throw new ForbiddenError(reason)
+  if (status === STATUS_REJECTED) throw new RefusedError(reason)
+  if (status === STATUS_BUSY) throw new BusyError()
+  if (status !== STATUS_PROCESSING) throw new Error(typeof status === 'string' ? status : `${name} failed`)
+  const sessionId = answer?.[FIELD_SESSION_ID]
+  const removed = answer?.[FIELD_REMOVED_TURNS]
+  const text = answer?.[FIELD_TEXT]
+  return {
+    sessionId: typeof sessionId === 'string' ? sessionId : '',
+    features: (answer?.[FIELD_FEATURES] ?? undefined) as Partial<ConversationFeatures> | undefined,
+    removedTurns: typeof removed === 'number' ? removed : 0,
+    text: typeof text === 'string' ? text : '',
+  }
+}
+
+/**
+ * Sends a message, with the files attached to it on the server; a request without a chat creates
+ * one, titled `title`, and answers with its id.
+ */
+export function sendMessage(command: ChatCommand, request: SendRequest): Promise<TurnAnswer> {
+  return turn(command, CMD_SEND, {
+    [ARG_TEXT]: request.text,
+    [ARG_SESSION_ID]: request.sessionId,
+    [ARG_TITLE]: request.title,
+    [ARG_APPROVAL_MODE]: request.approvalMode,
+    ...settingsArgs(request),
   })
-  if (res.status === 403) {
-    throw await forbidden(res)
-  }
-  if (res.status === 429) {
-    throw await refused(res)
-  }
-  const data = (await res.json()) as {
-    taskId?: string
-    status?: string
-    features?: Partial<ConversationFeatures>
-  }
-  if (res.status === 409 || data.status === 'busy') {
-    throw new Error('busy')
-  }
-  if (!res.ok || data.status === 'error') {
-    throw new Error(data.status ?? `send failed (${res.status})`)
-  }
-  return { taskId: data.taskId, status: data.status ?? 'processing', features: data.features }
+}
+
+/**
+ * Drops turn `fromTurn` and everything after it and sends the edited message in its place, in one
+ * command: nothing is dropped from an edit that is refused.
+ */
+export function editSend(
+  command: ChatCommand,
+  fromTurn: number,
+  request: SendRequest,
+): Promise<TurnAnswer> {
+  return turn(command, CMD_EDIT_SEND, {
+    [ARG_TEXT]: request.text,
+    [ARG_SESSION_ID]: request.sessionId,
+    [ARG_FROM_TURN]: fromTurn,
+    [ARG_APPROVAL_MODE]: request.approvalMode,
+    ...settingsArgs(request),
+  })
 }
 
 /**
@@ -309,49 +451,50 @@ export async function sendMessage(
  * The previous turn is removed server side before the same message is sent once more, so the new
  * answer takes the old one's place instead of following it.
  */
-export async function regenerate(
-  at: ChatAddress,
-  payload: {
-    sessionId: string
-    agent?: string
-    model?: string
-    mcpOverride: boolean
-    mcpServers: string[]
-    effort?: string
-    facts?: ContextFact[]
-  },
-): Promise<TruncateResult> {
-  return readJson<TruncateResult>(
-    await chatFetch(withWindow('/chat/regenerate', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    }),
-  )
+export function regenerate(command: ChatCommand, sessionId: string, settings: TurnSettings): Promise<TurnAnswer> {
+  return turn(command, CMD_REGENERATE, { [ARG_SESSION_ID]: sessionId, ...settingsArgs(settings) })
 }
 
-/** Drops a turn and everything after it, and hands back the user text of the dropped turn. */
-export async function truncate(
-  at: ChatAddress,
-  sessionId: string,
-  fromTurn: number,
-): Promise<TruncateResult> {
-  return readJson<TruncateResult>(
-    await chatFetch(withWindow('/chat/truncate', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ sessionId, fromTurn }),
-    }),
-  )
+/** Takes a file off the message being written. */
+export async function removeAttachment(command: ChatCommand, id: string): Promise<void> {
+  await command(CMD_REMOVE_ATTACHMENT, { [ARG_ATTACHMENT_ID]: id })
 }
 
-export interface TruncateResult {
-  status: 'ok' | 'busy' | 'rejected' | 'error'
-  removedTurns?: number
-  text?: string
-  taskId?: string
+/** An upload to a chat control (`useTLUpload`). */
+export type ChatUpload = (formData: FormData) => Promise<CommandResponse | undefined>
+
+/**
+ * Uploads files to be attached to the message being written; they then stand in the control state
+ * ({@link readDraftAttachments}).
+ *
+ * @returns why files were not attached, one sentence each; empty when all of them were.
+ * @throws when the upload did not reach the server.
+ */
+export async function uploadAttachments(upload: ChatUpload, files: File[]): Promise<string[]> {
+  if (files.length === 0) return []
+  const form = new FormData()
+  for (const file of files) form.append(UPLOAD_FILE_PART, file, file.name)
+  const answer = await upload(form)
+  if (!answer) throw new Error('upload failed')
+  const reasons = answer[FIELD_REASON]
+  return Array.isArray(reasons) ? reasons.filter((reason): reason is string => typeof reason === 'string') : []
+}
+
+/**
+ * The files attached to the message being written, as a chat control states them; `undefined` when
+ * the state carries none.
+ */
+export function readDraftAttachments(data: unknown): DraftAttachment[] | undefined {
+  if (!Array.isArray(data)) return undefined
+  return data
+    .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+    .map((item) => ({
+      id: String(item.id ?? ''),
+      fileName: String(item.fileName ?? ''),
+      mimeType: String(item.mimeType ?? ''),
+      size: Number(item.size ?? 0),
+    }))
+    .filter((item) => item.id !== '')
 }
 
 /** Records, changes or withdraws what the user thought of one answer. */
@@ -510,8 +653,8 @@ export async function improvePrompt(
 /**
  * Turns "auto-approve" on or off. The server stores the mode as the person's last choice, which a
  * new chat starts with, and with the chat `sessionId` names; it tells the account's other windows
- * showing that chat (#658). A conversation that has no chat yet passes `null` and names the mode in
- * `createSession`.
+ * showing that chat (#658). A conversation that has no chat yet passes `null` and names the mode with
+ * the send that creates the chat (`sendMessage`).
  */
 export async function setApprovalMode(
   at: ChatAddress,
@@ -602,25 +745,6 @@ export async function loadSubagentTranscript(dataUrl: string, id: string, runId?
   const key = runId ? dataKey(DATA_SUBAGENT, id, runId) : dataKey(DATA_SUBAGENT, id)
   const detail = await readData<SessionDetail>(dataUrl, key)
   return turnsJsonToMessages(detail.turnsJson, detail.runs)
-}
-
-export function fileToAttachment(file: File): Promise<Attachment> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = () => reject(reader.error)
-    reader.onload = () => {
-      const result = String(reader.result ?? '')
-      const comma = result.indexOf(',')
-      const base64Data = comma >= 0 ? result.slice(comma + 1) : result
-      resolve({
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        base64Data,
-        size: file.size,
-      })
-    }
-    reader.readAsDataURL(file)
-  })
 }
 
 interface PersistedPart {

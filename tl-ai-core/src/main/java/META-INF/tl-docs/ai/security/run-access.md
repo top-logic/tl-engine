@@ -46,7 +46,7 @@ Asked about one name a request asks for, against the roles the account holds on 
 | 4 | Any held role is named in this section | Denied |
 | 5 | Otherwise | The section's `default` decides |
 
-Rule 3 keeps the rule set usable: every client of `/chat/send` sends the model it shows, which is the agent's own until the user picks another, and a rule that called that a *choice* would refuse every request of a restricted role. Its consequence: **a `<grant>` is a floor, never a ceiling.** It adds to what the role's agents already use and cannot take anything away - a role granted only the small model still runs on the large one when that is what its agent is assigned. Bounding a role downwards is a `<deny>` or a different agent assignment, never a narrower grant.
+Rule 3 keeps the rule set usable: every chat client sends the model it shows with its `send`, which is the agent's own until the user picks another, and a rule that called that a *choice* would refuse every request of a restricted role. Its consequence: **a `<grant>` is a floor, never a ceiling.** It adds to what the role's agents already use and cannot take anything away - a role granted only the small model still runs on the large one when that is what its agent is assigned. Bounding a role downwards is a `<deny>` or a different agent assignment, never a narrower grant.
 
 Rule 4 is the allowlist reading of a role entry, and it is why `default="all"` and a role entry do not contradict each other: naming a role restricts its holders and leaves everybody else where they were, so one role is restricted in a running application without touching anyone. A role entry with no `<grants>` says "this role may use none of them".
 
@@ -74,14 +74,14 @@ An agent the application runs **for** a user instead of letting them talk to it 
 The mark is a statement about the agent, not about a role, and `<agent-access>` cannot lift it:
 
 - no menu offers it - not the chat's capabilities, not the delegate catalogue, not `list_agents`, and not the options of an agent record's `delegations`;
-- a request that names it anyway is answered **403** with *"The agent … cannot be talked to: the application runs it for you."* - `/chat/send`, `/chat/regenerate`, a delegation, a `spawn_subagent`, a TL-Script `aiAgentChat`, a scheduled run;
+- a request that names it anyway is refused with *"The agent … cannot be talked to: the application runs it for you."* - the chat's `send` and `regenerate`, a delegation, a `spawn_subagent`, a TL-Script `aiAgentChat`, a scheduled run;
 - this holds under `<agent-access default="all">`, under a role that explicitly grants the agent by name, and in an application that wrote no policy at all.
 
 The product's own call path still works: what makes the improve-prompt run legal is not which class started it but what the run says about itself - it is built with `SecurityContext.withoutAgentChoice()`, the one seam that states in code that the **product**, and not the user, named this agent. An entry point of an application that runs an infrastructure agent on a user's behalf says the same thing the same way. Mark an agent `infrastructure` when it does a piece of work on a user's behalf and its answer is consumed by the application rather than read as a reply; to hide an agent from most roles, use `<agent-access>` - an `infrastructure` agent is hidden from everybody, administrators included.
 
 ## Where it is enforced
 
-`AgentFactory.runAgent(..., RunOverrides)` is the choke point - the chat, `AgentRunner`, the scheduler and TL-Script all pass through it - and it authorizes before applying anything of the request, so no provider round trip is spent on a run that may not happen. `RoleAccessPolicy` decides all three sections, and `RunAuthorization` carries the decision on the security context. A refusal is a `ToolSecurityException` carrying a `ResKey`; `/chat/send` and `/chat/regenerate` pre-check the same three questions and answer **403** with that text, which the user reads in the notice strip above the composer, in their language.
+`AgentFactory.runAgent(..., RunOverrides)` is the choke point - the chat, `AgentRunner`, the scheduler and TL-Script all pass through it - and it authorizes before applying anything of the request, so no provider round trip is spent on a run that may not happen. `RoleAccessPolicy` decides all three sections, and `RunAuthorization` carries the decision on the security context. A refusal is a `ToolSecurityException` carrying a `ResKey`; the chat's `send` and `regenerate` commands pre-check the same three questions and answer `forbidden` with that text, which the user reads in the notice strip above the composer, in their language.
 
 The chat's capabilities (the state of a `<chat-conversation>`) list the agents and MCP servers a run of that account accepts. The model list is the one thing a single payload cannot make exact - it is written per render, and the agent can change without another round trip - so it lists the models the account may choose with *some* agent it may run, and marks each with whether the account's roles grant it; the shipped chat narrows that to the selected agent.
 

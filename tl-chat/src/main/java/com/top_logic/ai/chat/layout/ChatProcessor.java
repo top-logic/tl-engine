@@ -287,7 +287,7 @@ public class ChatProcessor {
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
-			// may not be ready when /chat/send arrives. Retry briefly to allow it to connect.
+			// may not be ready when the send arrives. Retry briefly to allow it to connect.
 			ChatEventHandler sseHandler = ChatEventHandlerRegistry.find(taskTracker);
 			if (sseHandler == null) {
 				for (int i = 0; i < 10 && sseHandler == null; i++) {
@@ -432,7 +432,7 @@ public class ChatProcessor {
 
 			// Run the agent chosen in the chat UI, or - when the request names none - the one this
 			// account may run. Resolved exactly as the chat's capabilities report it and as the pre-check
-			// of /chat/send asks about it: a client that is told one entry point and runs another is
+			// of the send asks about it: a client that is told one entry point and runs another is
 			// refused for an agent nobody chose. Falls back to the configured entry point when this
 			// account may run nothing, so that the refusal below is the ordinary one.
 			ChatRunOptions options = state.getRunOptions();
@@ -679,7 +679,7 @@ public class ChatProcessor {
 
 		// SSE handler lookup is deferred to the background task (executeOrchestrator)
 		// to avoid a race condition: the JS client reconnects SSE during session switching,
-		// and the new SSE connection may not be established yet when /chat/send arrives.
+		// and the new SSE connection may not be established yet when the send arrives.
 
 		// Pass state directly to background task so it is immune to tracker-level overwrites
 		Future<?> future;

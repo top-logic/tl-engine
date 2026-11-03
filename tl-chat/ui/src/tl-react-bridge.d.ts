@@ -40,12 +40,6 @@ declare module 'tl-react-bridge' {
   export function subscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
 
   /**
-   * Tells the window's event stream that the server is writing events now, so that it checks they
-   * arrive and changes to polling when a proxy holds them back.
-   */
-  export function expectEvents(serverLast?: number): void
-
-  /**
    * Loads the page again because the server no longer knows it, unless that was done within the
    * last seconds (one guard for every part of the page) or the page is leaving anyway.
    *
@@ -83,6 +77,14 @@ declare module 'tl-react-bridge' {
     command: string,
     args?: Record<string, unknown>,
   ) => Promise<CommandResponse | undefined>
+
+  /**
+   * The function that uploads files to the control the calling component renders (`UploadHandler`
+   * on the server). It resolves with the answer of the upload, or with `undefined` when the upload
+   * failed or was not transmitted - a file larger than the control's `maxUploadSize` state is
+   * refused before it is sent; it never rejects.
+   */
+  export function useTLUpload(): (formData: FormData) => Promise<CommandResponse | undefined>
 
   /**
    * The URL of the data the control the calling component renders serves (`DataProvider` on the

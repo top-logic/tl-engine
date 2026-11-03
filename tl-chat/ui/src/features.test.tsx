@@ -120,6 +120,9 @@ function composerProps() {
     noticeTone: 'info',
     onDismissNotice: () => {},
     onSend: async () => true,
+    attachments: [],
+    onAttach: async () => '',
+    onRemoveAttachment: () => undefined,
     onStop: () => {},
   }
 }

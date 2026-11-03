@@ -77,7 +77,7 @@ public class TestModelAccess extends TestCase {
 	 * The model the agent is assigned is permitted even to a role that is permitted no model.
 	 *
 	 * <p>
-	 * The load-bearing case: every client of {@code /chat/send} sends the model it is showing, which is
+	 * The load-bearing case: every chat client sends the model it is showing with its send, which is
 	 * the agent's own until the user picks another one. A rule that called that a choice would refuse
 	 * every request of a restricted role.
 	 * </p>

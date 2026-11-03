@@ -24,7 +24,6 @@ import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 import {
   type ApprovalRequest,
-  type Attachment,
   type ChatMessage,
   type InteractionRequest,
   type Citation,
@@ -149,8 +148,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   }, [actions])
 
   const onSend = useCallback(
-    (text: string, attachments: Attachment[], edited?: boolean): Promise<boolean> =>
-      actions.send(text, attachments, { edited, contextTag }),
+    (text: string): Promise<boolean> => actions.send(text, { contextTag }),
     [actions, contextTag],
   )
 
@@ -439,6 +437,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             noticeTone={chat.noticeTone}
             onDismissNotice={() => actions.showNotice('')}
             onSend={onSend}
+            attachments={chat.draftAttachments}
+            onAttach={actions.attach}
+            onRemoveAttachment={actions.removeAttachment}
             onStop={actions.stop}
             ref={composer}
             placeholder={placeholder || undefined}

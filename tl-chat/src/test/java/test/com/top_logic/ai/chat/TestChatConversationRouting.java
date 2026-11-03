@@ -108,7 +108,7 @@ public class TestChatConversationRouting extends BasicTestCase {
 		// sub-sessions, so a window id taken before it names nothing the servlet can resolve.
 		_client = runner.newClient();
 		Recording login = new Recording();
-		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://localhost/chat/send"));
+		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://localhost/chat/feedback"));
 		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(invocation.getRequest(), login.asResponse(), user);
 		});

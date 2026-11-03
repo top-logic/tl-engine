@@ -12,12 +12,29 @@ import { unseenBadge } from './progress-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
 import {
+  ARG_FROM_TURN,
   ARG_SESSION_ID,
+  ARG_TEXT,
+  ARG_TITLE,
   CMD_DELETE_SESSION,
+  CMD_EDIT_SEND,
+  CMD_REGENERATE,
+  CMD_REMOVE_ATTACHMENT,
   CMD_SELECT_SESSION,
+  CMD_SEND,
   FIELD_DELETED,
   FIELD_OPENED,
+  FIELD_REASON,
+  FIELD_REMOVED_TURNS,
   FIELD_RUN_STATE,
+  FIELD_SESSION_ID,
+  FIELD_STATUS,
+  FIELD_TEXT,
+  STATE_DRAFT_ATTACHMENTS,
+  STATUS_BUSY,
+  STATUS_FORBIDDEN,
+  STATUS_PROCESSING,
+  STATUS_REJECTED,
 } from './api'
 import {
   ARG_STREAM,
@@ -31,8 +48,9 @@ import {
   isSubscribed,
   resetTLBridge,
   setPageLeaving,
-  setStaleReload,
-  staleReloadCalls,
+  tlUpload,
+  uploads,
+  answerUploads,
   type CommandResponse,
 } from '../test/tl-react-bridge'
 
@@ -59,11 +77,20 @@ let streams: FakeStream[] = []
 /** The `PUT /chat/preferences` bodies the store wrote, in order. */
 let preferenceWrites: unknown[] = []
 
-/** The `text` of every `POST /chat/send`, in order - what the model would actually receive. */
+/** The text of every send, in order - what the model would actually receive. */
 let sentTexts: string[] = []
 
-/** The whole body of every `POST /chat/send`, in order. */
+/** The arguments of every send, edit and regenerate, in order. */
 let sentBodies: Record<string, unknown>[] = []
+
+/** The name of every send, edit and regenerate command, in order. */
+let turnCommands: string[] = []
+
+/**
+ * Answers a send, an edit or a regenerate instead of the default, which sends it into the chat it
+ * names or into the chat `s1` it creates.
+ */
+let turnAnswer: ((name: string, args: Record<string, unknown>) => Promise<CommandResponse | undefined>) | null = null
 
 /** Every URL the store asked `fetch` for, in order. */
 let requested: string[] = []
@@ -120,6 +147,18 @@ function control(conversation = 'chat'): ChatCommand {
     if (name === CMD_DELETE_SESSION) {
       deleted.push(String(args?.[ARG_SESSION_ID]))
       return { success: true, [FIELD_DELETED]: true }
+    }
+    if (name === CMD_SEND || name === CMD_EDIT_SEND || name === CMD_REGENERATE) {
+      const body = { ...(args ?? {}) }
+      sentBodies.push(body)
+      turnCommands.push(name)
+      if (name !== CMD_REGENERATE) sentTexts.push(String(body[ARG_TEXT]))
+      if (turnAnswer) return turnAnswer(name, body)
+      return {
+        success: true,
+        [FIELD_STATUS]: STATUS_PROCESSING,
+        [FIELD_SESSION_ID]: (body[ARG_SESSION_ID] as string) || 's1',
+      }
     }
     return { success: true }
   }
@@ -181,6 +220,8 @@ beforeEach(() => {
   preferenceWrites = []
   sentTexts = []
   sentBodies = []
+  turnCommands = []
+  turnAnswer = null
   requested = []
   cancelBodies = []
   subagentMessages = []
@@ -211,18 +252,9 @@ beforeEach(() => {
       cancelBodies.push(JSON.parse(init?.body ?? '{}'))
       return { ok: true, status: 200, json: async () => ({ cancelled: true }) }
     }
-    if (url.includes('/chat/send')) {
-      const body = JSON.parse(init?.body ?? '{}')
-      sentBodies.push(body)
-      sentTexts.push(body.text)
-      return { ok: true, status: 200, json: async () => ({ status: 'processing' }) }
-    }
-    // The transcript of a chat the store opened, and a created chat.
+    // The transcript of a chat the store opened.
     if (url.includes(SESSION_DATA)) {
       return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '' }) }
-    }
-    if (url.includes('/chat/sessions')) {
-      return { ok: true, status: 200, json: async () => ({ id: 's1', title: 'Ein Chat' }) }
     }
     return { ok: true, status: 200, json: async () => ({}) }
   })
@@ -511,7 +543,7 @@ describe('the host\'s context prefix', () => {
     const releaseFresh = fresh.subscribe(() => undefined, control(), DATA_URL)
     const firstTurn: number[] = []
 
-    await fresh.actions.send('allererste Frage', [], { contextTag: turnCounter(firstTurn) })
+    await fresh.actions.send('allererste Frage', { contextTag: turnCounter(firstTurn) })
 
     expect(firstTurn).toEqual([1])
     expect(sentTexts[0]).toBe('<context>turn: 1</context>\nallererste Frage')
@@ -526,7 +558,7 @@ describe('the host\'s context prefix', () => {
     ongoing.actions.dispatch({ type: 'ADD_ASSISTANT', id: 'a1', text: 'Antwort', isStreaming: false })
     const secondTurn: number[] = []
 
-    await ongoing.actions.send('zweite Frage', [], { contextTag: turnCounter(secondTurn) })
+    await ongoing.actions.send('zweite Frage', { contextTag: turnCounter(secondTurn) })
 
     expect(secondTurn).toEqual([2])
     expect(sentTexts[1]).toBe('<context>turn: 2</context>\nzweite Frage')
@@ -539,7 +571,7 @@ describe('the host\'s context prefix', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
 
-    await store.actions.send('ohne Prefix', [])
+    await store.actions.send('ohne Prefix')
 
     expect(sentTexts).toEqual(['ohne Prefix'])
 
@@ -549,56 +581,229 @@ describe('the host\'s context prefix', () => {
 })
 
 /**
- * What a page states about the situation travels beside the message, never inside it (#437).
- *
- * The facts are computed on the server, out of the chat element's `<context>`; the store only
- * carries them back with the send, so the harness can render the stable ones into the system prompt.
+ * Sending is a command of the chat controls (`ChatControl#CMD_SEND`): one command creates the chat
+ * a first message goes to, an edit drops and sends in one, and the files attached to the message
+ * wait on the server.
+ */
+describe('sending', () => {
+  /** A labelled stand-in for a picked file. */
+  function file(name: string, type: string, size = 4): File {
+    return new File([new Uint8Array(size)], name, { type })
+  }
+
+  it('creates the chat a first message goes to with the send, in one command', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+
+    expect(await store.actions.send('Wie viele Rechnungen sind offen?')).toBe(true)
+
+    expect(turnCommands).toEqual([CMD_SEND])
+    expect(sentBodies[0][ARG_SESSION_ID]).toBe('')
+    expect(sentBodies[0][ARG_TITLE]).toBe('Wie viele Rechnungen sind offen?')
+    expect(commands.map((command) => command.name)).not.toContain(CMD_SELECT_SESSION)
+    expect(store.getState().sessionId).toBe('s1')
+    expect(store.getState().sessions.map((session) => session.title)).toEqual(['Wie viele Rechnungen sind offen?'])
+
+    await store.actions.send('Und davon überfällig?')
+    expect(sentBodies[1][ARG_SESSION_ID]).toBe('s1')
+    expect(sentBodies[1][ARG_TITLE]).toBeUndefined()
+
+    await settle()
+    release()
+  })
+
+  it('shows the reason of a refusal, keeps no chat, and takes the message back', async () => {
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_FORBIDDEN, [FIELD_REASON]: 'Nicht erlaubt.' })
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+
+    expect(await store.actions.send('Hallo')).toBe(false)
+
+    expect(store.getState().notice).toBe('Nicht erlaubt.')
+    expect(store.getState().noticeTone).toBe('info')
+    expect(store.getState().sessionId).toBeNull()
+    expect(store.getState().sessions).toEqual([])
+    expect(store.getState().messages).toEqual([])
+    expect(store.getState().busy).toBe(false)
+    // The server takes back the chat it created for the refused send; the browser asks nothing.
+    expect(deleted).toEqual([])
+
+    await settle()
+    release()
+  })
+
+  it('tells a ceiling that will pass from a refusal, and the busy chat from both', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_REJECTED, [FIELD_REASON]: 'Gleich wieder.' })
+    expect(await store.actions.send('Hallo')).toBe(false)
+    expect(store.getState().notice).toBe('Gleich wieder.')
+    expect(store.getState().noticeTone).toBe('info')
+
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_BUSY })
+    expect(await store.actions.send('Hallo')).toBe(false)
+    expect(store.getState().notice).toBe(bundle('de').busyHint)
+    expect(store.getState().busy).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  it('keeps showing the run that made the chat refuse a send as busy', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+    streams[0].emit('run_started', { runId: 'r1' })
+    expect(store.getState().busy).toBe(true)
+
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_BUSY })
+    expect(await store.actions.send('Zu früh')).toBe(false)
+
+    expect(store.getState().notice).toBe(bundle('de').busyHint)
+    expect(store.getState().busy).toBe(true)
+
+    await settle()
+    release()
+  })
+
+  it('edits in one command, and puts the conversation back when the edit is refused', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    await store.actions.send('erste Frage')
+    store.actions.dispatch({ type: 'ADD_ASSISTANT', id: 'a1', text: 'Antwort', isStreaming: false })
+    const userId = store.getState().messages[0].id
+    const before = store.getState().messages
+
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_BUSY })
+    expect(await store.actions.editSend(userId, 0, 'andere Frage')).toBe(false)
+    expect(turnCommands).toEqual([CMD_SEND, CMD_EDIT_SEND])
+    expect(sentBodies[1][ARG_FROM_TURN]).toBe(0)
+    expect(sentBodies[1][ARG_SESSION_ID]).toBe('s1')
+    expect(store.getState().messages).toEqual(before)
+
+    turnAnswer = async () => ({
+      success: true,
+      [FIELD_STATUS]: STATUS_PROCESSING,
+      [FIELD_SESSION_ID]: 's1',
+      [FIELD_REMOVED_TURNS]: 1,
+    })
+    expect(await store.actions.editSend(userId, 0, 'andere Frage')).toBe(true)
+    const texts = store.getState().messages.filter((m) => m.type === 'user').map((m) => (m as { text: string }).text)
+    expect(texts).toEqual(['andere Frage'])
+
+    await settle()
+    release()
+  })
+
+  it('answers the last message again, with the message the server sent again', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    await store.actions.send('erste Frage')
+    store.actions.dispatch({ type: 'ADD_ASSISTANT', id: 'a1', text: 'Antwort', isStreaming: false })
+    const userId = store.getState().messages[0].id
+    turnAnswer = async () => ({
+      success: true,
+      [FIELD_STATUS]: STATUS_PROCESSING,
+      [FIELD_REMOVED_TURNS]: 1,
+      [FIELD_TEXT]: 'erste Frage',
+    })
+
+    await store.actions.regenerate(userId, 0)
+
+    expect(turnCommands).toEqual([CMD_SEND, CMD_REGENERATE])
+    expect(store.getState().messages.map((m) => m.type)).toEqual(['user'])
+    expect(store.getState().busy).toBe(true)
+
+    turnAnswer = async () => ({ success: true, [FIELD_STATUS]: STATUS_FORBIDDEN, [FIELD_REASON]: 'Nein.' })
+    await store.actions.regenerate(store.getState().messages[0].id, 0)
+    expect(store.getState().notice).toBe('Nein.')
+
+    await settle()
+    release()
+  })
+
+  it('uploads the files the server takes, and says why it left the others out', async () => {
+    answerUploads(async () => ({ success: true, [FIELD_REASON]: ['zwei.png: zu viele'] }))
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+
+    const refused = await store.actions.attach([
+      file('eins.png', 'image/png'),
+      file('zwei.png', 'image/png'),
+      file('notiz.txt', 'text/plain'),
+    ])
+
+    expect(uploads.map((files) => files.map((f) => f.name))).toEqual([['eins.png', 'zwei.png']])
+    expect(refused).toBe(`notiz.txt: ${bundle('de').onlyImagesAndPdf} · zwei.png: zu viele`)
+
+    await settle()
+    release()
+  })
+
+  it('shows the files the control state lists, and sends a message with them once they arrived', async () => {
+    let arrive: () => void = () => undefined
+    answerUploads(
+      () =>
+        new Promise((resolve) => {
+          arrive = () => resolve({ success: true })
+        }),
+    )
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+
+    const attaching = store.actions.attach([file('bild.png', 'image/png')])
+    const sending = store.actions.send('Was zeigt das Bild?')
+    await settle()
+    // The send waits for the file on its way.
+    expect(turnCommands).toEqual([])
+
+    store.takeAttachments(
+      readBootstrap({ [STATE_DRAFT_ATTACHMENTS]: [{ id: 'f1', fileName: 'bild.png', mimeType: 'image/png', size: 4 }] })
+        .draftAttachments,
+    )
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['bild.png'])
+    arrive()
+    await attaching
+    expect(await sending).toBe(true)
+
+    expect(turnCommands).toEqual([CMD_SEND])
+    expect(store.getState().draftAttachments).toEqual([])
+
+    await settle()
+    release()
+  })
+
+  it('takes a file off the message through the command', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+    store.takeAttachments([{ id: 'f1', fileName: 'a.pdf', mimeType: 'application/pdf', size: 4 }])
+
+    store.actions.removeAttachment('f1')
+
+    expect(store.getState().draftAttachments).toEqual([])
+    expect(commands.map((command) => command.name)).toContain(CMD_REMOVE_ATTACHMENT)
+
+    await settle()
+    release()
+  })
+})
+
+/**
+ * What a page states about the situation travels beside the message, never inside it (#437): the
+ * server evaluates the chat element's `<context>` when the message is sent, so the browser carries
+ * none of it.
  */
 describe('context facts', () => {
-  it('carries the facts with the message and leaves the text alone', async () => {
+  it('sends the text alone: the server states the facts itself', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
-    const facts = [
-      { name: 'Project', value: 'Airport expansion', stable: true },
-      { name: 'Open invoice', value: 'none', stable: false },
-    ]
 
-    store.actions.setContextFacts(facts)
-    await store.actions.send('Was steht an?', [])
+    await store.actions.send('Was steht an?')
 
     expect(sentTexts).toEqual(['Was steht an?'])
-    expect(sentBodies[0].facts).toEqual(facts)
-
-    await settle()
-    release()
-  })
-
-  it('sends no facts field when the page states nothing', async () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-
-    await store.actions.send('Was steht an?', [])
-
     expect(sentBodies[0].facts).toBeUndefined()
-
-    await settle()
-    release()
-  })
-
-  it('ignores a repeated set, so an unchanged page does not re-render the chat', async () => {
-    const store = chatStore('alpha', BOOT)
-    let renders = 0
-    const release = store.subscribe(() => {
-      renders += 1
-    })
-    const facts = [{ name: 'Project', value: 'Airport expansion', stable: true }]
-
-    store.actions.setContextFacts(facts)
-    const afterFirst = renders
-    store.actions.setContextFacts([{ name: 'Project', value: 'Airport expansion', stable: true }])
-
-    expect(renders).toBe(afterFirst)
-    expect(store.getState().contextFacts).toEqual(facts)
 
     await settle()
     release()
@@ -2302,10 +2507,10 @@ describe('stopping a run', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
 
-    await store.actions.send('Mach etwas Langes.', [])
-    const chat = sentBodies[0].sessionId
-    expect(typeof chat).toBe('string')
-    expect(chat).not.toBe('')
+    await store.actions.send('Mach etwas Langes.')
+    // The chat the send created.
+    const chat = store.getState().sessionId
+    expect(chat).toBe('s1')
 
     store.actions.stop()
     await settle()
@@ -2693,30 +2898,6 @@ describe('a window opened while the run is in flight', () => {
 describe('a window the server no longer knows', () => {
   let storage: Map<string, string>
 
-  /** The server's answer for a window it cannot resolve (`ChatServlet#sendStaleWindow`). */
-  function staleAnswer() {
-    const answer = {
-      ok: false,
-      status: 409,
-      json: async () => ({ status: 'error', error: 'stale_window' }),
-      clone: () => answer,
-    }
-    return answer
-  }
-
-  /** Answers the calls whose URL contains `path` as a stale window, everything else as before. */
-  function staleOn(path: string): void {
-    const globals = globalThis as unknown as Record<string, unknown>
-    const before = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
-    globals.fetch = vi.fn(async (url: string, init?: unknown) => {
-      if (url.includes(path)) {
-        requested.push(url)
-        return staleAnswer()
-      }
-      return before(url, init)
-    })
-  }
-
   beforeEach(() => {
     storage = new Map()
     const win = (globalThis as unknown as { window: Record<string, unknown> }).window
@@ -2733,8 +2914,15 @@ describe('a window the server no longer knows', () => {
     vi.restoreAllMocks()
   })
 
-  it('reloads the page on a refused send and gives the reloaded composer the text back', async () => {
-    staleOn('/chat/send')
+  /**
+   * The bridge answers a command of a window the server no longer knows by loading the page again;
+   * the send's command is then never answered here, and the text waits for the reloaded page.
+   */
+  it('keeps the text of a send the page is reloaded over, for the reloaded composer', async () => {
+    turnAnswer = async () => {
+      setPageLeaving(true)
+      return undefined
+    }
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
     const staleDrafts: string[] = []
@@ -2746,7 +2934,7 @@ describe('a window the server no longer knows', () => {
     store.actions.bindComposer(staleComposer)
     store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
 
-    const sent = await store.actions.send('Hallo nach dem Kontowechsel', [])
+    const sent = await store.actions.send('Hallo nach dem Kontowechsel')
     // The refusing page renders once more before the reload takes it away, and binds its composer
     // again as it does on every render: the text is for the reloaded page, not for this one.
     store.actions.bindComposer(null)
@@ -2754,14 +2942,12 @@ describe('a window the server no longer knows', () => {
     expect(staleDrafts).toEqual([])
 
     expect(sent).toBe(false)
-    expect(staleReloadCalls()).toBe(1)
-    // Not the "agent is still working" hint a 409 used to be read as: nothing is running.
-    expect(store.getState().notice).toBe('')
     expect(store.getState().busy).toBe(false)
     expect(store.getState().messages).toHaveLength(1)
 
     await settle()
     release()
+    setPageLeaving(false)
 
     // The reloaded page: a fresh store for the same chat, and its composer mounts.
     const reloaded = chatStore('alpha', BOOT)
@@ -2786,52 +2972,27 @@ describe('a window the server no longer knows', () => {
     releaseReloaded()
   })
 
-  it('keeps the text of the send that creates a chat, too', async () => {
-    staleOn('/chat/sessions')
+  it('keeps nothing for a reload when a send fails on a page that stays', async () => {
+    turnAnswer = async () => undefined
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
 
-    const sent = await store.actions.send('Neue Frage', [])
+    const sent = await store.actions.send('noch einmal')
 
     expect(sent).toBe(false)
-    expect(staleReloadCalls()).toBe(1)
-    expect(sentTexts).toEqual([])
-    expect([...storage.values()]).toContain('Neue Frage')
+    expect(store.getState().notice).toBe(bundle('de').sendFailed)
+    expect([...storage.keys()].filter((key) => key.startsWith('tl-chat-unsent'))).toEqual([])
 
     await settle()
     release()
   })
 
-  it('does not reload again right after a reload, and says why instead', async () => {
-    setStaleReload(false)
-    staleOn('/chat/send')
+  it('keeps nothing for a reload once the message went', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
 
-    const sent = await store.actions.send('noch einmal', [])
-
-    expect(sent).toBe(false)
-    expect(staleReloadCalls()).toBe(1)
-    expect(store.getState().notice).toBe(bundle('de').staleWindow)
-
-    await settle()
-    release()
-  })
-
-  it('keeps the text and stays quiet when the page is on its way to another one', async () => {
-    setPageLeaving(true)
-    staleOn('/chat/send')
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
-
-    const sent = await store.actions.send('kurz vor dem Login', [])
-
-    expect(sent).toBe(false)
-    expect(staleReloadCalls()).toBe(0)
-    expect(store.getState().notice).toBe('')
-    expect([...storage.values()]).toContain('kurz vor dem Login')
+    expect(await store.actions.send('Hallo')).toBe(true)
+    expect([...storage.keys()].filter((key) => key.startsWith('tl-chat-unsent'))).toEqual([])
 
     await settle()
     release()
@@ -2988,17 +3149,11 @@ describe('choosing a chat while another one loads', () => {
 describe('the auto-approve switch', () => {
   /** The body of every `POST /chat/approval-mode`, in order. */
   let modeBodies: Record<string, unknown>[]
-  /** The body of every `POST /chat/sessions`, in order. */
-  let createBodies: Record<string, unknown>[]
-  /** The body of every `POST /chat/send`, in order. */
-  let sendBodies: Record<string, unknown>[]
   /** What the transcript of the chat says about its mode. */
   let storedMode: string
 
   beforeEach(() => {
     modeBodies = []
-    createBodies = []
-    sendBodies = []
     storedMode = 'AUTO_APPROVE'
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
@@ -3006,12 +3161,6 @@ describe('the auto-approve switch', () => {
       if (url.includes('/chat/approval-mode')) {
         modeBodies.push(JSON.parse(init?.body ?? '{}'))
         return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
-      }
-      if (init?.method === 'POST' && /\/chat\/sessions(\?|$)/.test(url)) {
-        createBodies.push(JSON.parse(init.body ?? '{}'))
-      }
-      if (url.includes('/chat/send')) {
-        sendBodies.push(JSON.parse(init?.body ?? '{}'))
       }
       if (url.includes(SESSION_DATA)) {
         return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '', approvalMode: storedMode }) }
@@ -3063,9 +3212,11 @@ describe('the auto-approve switch', () => {
     store.actions.newChat()
     expect(store.getState().autoApprove).toBe(true)
 
-    await store.actions.send('Erste Frage', [])
-    expect(createBodies).toHaveLength(1)
-    expect(createBodies[0].approvalMode).toBe('AUTO_APPROVE')
+    await store.actions.send('Erste Frage')
+    // The send that creates the chat names the mode the chat is created with.
+    expect(sentBodies).toHaveLength(1)
+    expect(sentBodies[0][ARG_SESSION_ID]).toBe('')
+    expect(sentBodies[0].approvalMode).toBe('AUTO_APPROVE')
     await settle()
     release()
   })
@@ -3105,13 +3256,13 @@ describe('the auto-approve switch', () => {
     store.attach(BOOT)
     await settle()
     await store.actions.selectSession('s1')
-    await store.actions.send('Erste Frage', [])
+    await store.actions.send('Erste Frage')
     await settle()
     await store.actions.toggleAutoApprove()
-    await store.actions.send('Zweite Frage', [])
+    await store.actions.send('Zweite Frage')
     await settle()
 
-    expect(sendBodies.map((body) => body.approvalMode)).toEqual(['MANUAL', 'AUTO_APPROVE'])
+    expect(sentBodies.map((body) => body.approvalMode)).toEqual(['MANUAL', 'AUTO_APPROVE'])
     release()
   })
 
@@ -3144,10 +3295,12 @@ describe('the auto-approve switch', () => {
     expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE' }])
     expect(store.getState().autoApprove).toBe(true)
 
-    await store.actions.send('Erste Frage', [])
+    await store.actions.send('Erste Frage')
 
-    expect(createBodies).toHaveLength(1)
-    expect(createBodies[0].approvalMode).toBe('AUTO_APPROVE')
+    // The send that creates the chat names the mode the chat is created with.
+    expect(sentBodies).toHaveLength(1)
+    expect(sentBodies[0][ARG_SESSION_ID]).toBe('')
+    expect(sentBodies[0].approvalMode).toBe('AUTO_APPROVE')
     await settle()
     release()
   })

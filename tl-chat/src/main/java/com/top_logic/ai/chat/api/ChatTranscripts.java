@@ -16,14 +16,18 @@ import java.util.TimeZone;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
+import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
 import com.top_logic.ai.chat.api.messages.InFlightRunDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.RecordedRunDto;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
+import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.ConversationBackend;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
@@ -120,11 +124,11 @@ public final class ChatTranscripts {
 			return null;
 		}
 
-		ConversationBackend backend = ChatServlet.backendOf(session);
+		ConversationBackend backend = backendOf(session);
 		ChatSessionDetailResponse response = ChatSessionDetailResponse.create()
 			.setId(sessionId)
 			.setTitle(ChatHistoryService.getTitle(session))
-			.setFeatures(ChatServlet.featuresDto(backend));
+			.setFeatures(featuresDto(backend));
 		boolean open = tracker != null && sessionId.equals(tracker.getActiveSessionId());
 
 		ChatProcessor.AIProcessingState running = RunStateFrame.runInFlight(person, sessionId);
@@ -418,4 +422,37 @@ public final class ChatTranscripts {
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
 	}
+	/** The backend that answers the given chat, or <code>null</code> for the framework's own agent. */
+	public static ConversationBackend backendOf(TLObject session) {
+		if (!(session instanceof AgentSession agentSession)) {
+			return null;
+		}
+		try {
+			return ConversationBackendService.backendFor(agentSession);
+		} catch (RuntimeException ex) {
+			// The run asks again and fails there, where the user is told; a request that only reads
+			// the conversation must not break on it.
+			Logger.warn("Could not ask which backend answers chat " + session.tHandle().getObjectName().toExternalForm() + ".", ex,
+				ChatTranscripts.class);
+			return null;
+		}
+	}
+
+	/**
+	 * What the chat offers in a conversation answered by the given backend, or by the framework's
+	 * own agent for <code>null</code>.
+	 */
+	public static ConversationFeaturesDto featuresDto(ConversationBackend backend) {
+		BackendFeatures features = backend == null ? BackendFeatures.INTERNAL : backend.features();
+		return ConversationFeaturesDto.create()
+			.setRegenerate(features.regenerate())
+			.setEditMessages(features.editMessages())
+			.setAgentPicker(features.agentPicker())
+			.setModelPicker(features.modelPicker())
+			.setEffortPicker(features.effortPicker())
+			.setMcpPicker(features.mcpPicker())
+			.setAttachments(features.attachments())
+			.setApprovals(features.approvals());
+	}
+
 }

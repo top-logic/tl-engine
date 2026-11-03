@@ -249,7 +249,9 @@ public class KafkaMessageDetailColumnRenderer extends AbstractShowObjectColumnRe
 		}
 	}
 
-	@SuppressWarnings("javadoc")
+	/**
+	 * {@link DefaultValueFactory} that parses integral JSON numbers as {@link Long} values.
+	 */
 	public static class LongValueFactory extends DefaultValueFactory {
 
 		/** Only instance of this factory. */

@@ -42,16 +42,16 @@ public abstract class DataManager extends ManagedClass {
 	}
 
     /**
-	 * Create an empty DataObject that an be used optimally by this DataManager.
+	 * Create an empty {@link DataObject} that an be used optimally by this {@link DataManager}.
 	 * <p>
-	 * (It is assumed, that the id and type will match those of a KnowledgeObject as it is used in
-	 * the FlexWrapper)
+	 * (It is assumed, that the id and type will match those of a knowledge object as it is used in
+	 * the flex wrapper)
 	 * </p>
 	 * 
 	 * @param aType
-	 *        An arbitrary type for the new DataObject.
+	 *        An arbitrary type for the new {@link DataObject}.
 	 * @param anID
-	 *        An arbitrary id for the new DataObject.
+	 *        An arbitrary id for the new {@link DataObject}.
 	 * @param size
 	 *        A hint how many Attributes you expect.
 	 */
@@ -60,14 +60,14 @@ public abstract class DataManager extends ManagedClass {
     /**
 	 * Load the object defined by the given information.
 	 * 
-	 * This method load the data object defined by the given ID and type. The returned DataObject
-	 * should act as the one stored for returning data.
+	 * This method load the data object defined by the given ID and type. The returned
+	 * {@link DataObject} should act as the one stored for returning data.
 	 * 
 	 * @param aType
 	 *        The type of the meta object of the data object.
 	 * @param anID
 	 *        The ID of the data object to be found.
-	 * @return The found DataObject or <code>null</code>, if no such object defined in the
+	 * @return The found {@link DataObject} or <code>null</code>, if no such object defined in the
 	 *         persistency.
 	 * 
 	 * @throws SQLException
@@ -140,10 +140,13 @@ public abstract class DataManager extends ManagedClass {
     /**
 	 * Close this {@link DataManager} by removing all its resources.
 	 * 
-	 * After calling close() the DataManager cannot be used any more.
+	 * After calling close() the {@link DataManager} cannot be used any more.
 	 */
     public abstract void close();
 
+    /**
+     * The configured {@link DataManager} service.
+     */
     public static DataManager getInstance() {
     	return Module.INSTANCE.getImplementationInstance();
     }

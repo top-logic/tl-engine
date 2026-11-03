@@ -11,7 +11,8 @@ import com.top_logic.graph.layouter.model.edge.SimpleLayoutEdgePartitioner;
 
 /**
  * Default {@link NodePortEdgesAssigner} which maps each outgoing {@link LayoutEdge} to a new
- * {@link NodePort}. Incoming {@link LayoutEdge}s are partitioned by the existence of an userObject.
+ * {@link NodePort}. Incoming {@link LayoutEdge}s are partitioned by the existence of a
+ * {@link LayoutEdge#getBusinessObject() business object}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

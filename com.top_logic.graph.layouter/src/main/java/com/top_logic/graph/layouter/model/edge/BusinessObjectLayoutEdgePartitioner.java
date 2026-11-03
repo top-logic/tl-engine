@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 
 /**
- * Partition a set of {@link LayoutEdge}'s. Edges are separated by the existance of an userObject.
+ * Partition a set of {@link LayoutEdge}'s. Edges are separated by the existence of a
+ * {@link LayoutEdge#getBusinessObject() business object}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

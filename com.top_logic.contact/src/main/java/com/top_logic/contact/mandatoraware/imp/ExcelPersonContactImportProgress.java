@@ -14,7 +14,7 @@ import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout;
 
 /**
- * Show the Progress of the ExcelPersonContactImporter.
+ * Show the Progress of the {@link ExcelPersonContactImporter}.
  * 
  * This is the GUI view into the {@link ExcelPersonContactImporter}.
  * 
@@ -26,7 +26,7 @@ public class ExcelPersonContactImportProgress extends ProgressComponent {
     protected transient ExcelPersonContactImporter model;
     
     /** 
-     * Create a new ExcelPersonContactImportProgress from XML.
+     * Create a new {@link ExcelPersonContactImportProgress} from XML.
      */
     public ExcelPersonContactImportProgress(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);

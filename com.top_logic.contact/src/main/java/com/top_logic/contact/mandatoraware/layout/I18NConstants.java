@@ -10,7 +10,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * Resources for mandatoraware contact components
+ * Resources for mandatoraware contact components.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */

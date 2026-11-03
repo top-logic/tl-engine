@@ -63,9 +63,9 @@ public class COSEditCompanyContactComponent extends EditCompanyContactComponent 
 	}
 
     /**
-     * Create the FomContext fo the CompanyContact.
+     * Create the form context for the {@link CompanyContact}.
      *
-     * Overriden for COS to disable client/supplierConstraint when Company is
+     * Overriden for COS to disable client/supplier constraint when Company is
      * used as Client or supplier somewhere.
      * Also handles SAP numbers in FKey2 if needed.
      */

@@ -30,11 +30,19 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.currency.Currency;
 
 /**
+ * Imports supplier volumes from an Excel file.
+ * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 public class XLSVolumeImporter extends POIExcelImporter {
 
+	/**
+	 * The expected (German) column names.
+	 */
 	protected String COLUMNS[] = {"Lieferant", "Umsatz", "Währung"};
+	/**
+	 * The expected English column names.
+	 */
 	protected String COLUMNS_EN[] = {"Supplier", "Volume", "Currency"};
 	
 	/**
@@ -62,7 +70,7 @@ public class XLSVolumeImporter extends POIExcelImporter {
     private Date date;
 	
 	/** 
-	 * Create a new XLSVolumeImporter
+	 * Create a new {@link XLSVolumeImporter}.
 	 * 
 	 * @param importSource		the XLS file
 	 * @param aMandator			the mandator on which the volumes will be imported

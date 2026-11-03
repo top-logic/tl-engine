@@ -33,15 +33,24 @@ import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.element.structured.wrap.Mandator;
 
 /**
- * The PlainCSVImporter can return a list of DataObjects or GenericValueMaps reading them
- * in from a CSV file.
+ * The {@link PlainCSVImporter} can return a list of {@link DataObject}s or {@link GenericValueMap}s
+ * reading them in from a CSV file.
  * 
  * @author    <a href="mailto:TEH@top-logic.com">TEH</a>
  */
 public class PlainCSVImporter extends DataObjectImportTask implements GenericFileImporter {
 
+    /**
+     * Property whether to delete the import file after import.
+     */
     public static final String DELETE_WHEN_DONE = "deleteWhenDone";
+    /**
+     * Property holding the import file.
+     */
     public static final String IMPORT_FILE      = "importFile";
+    /**
+     * Property holding the type of the created data objects.
+     */
     public static final String MO_TYPE          = "moType";
 
     /**
@@ -54,6 +63,9 @@ public class PlainCSVImporter extends DataObjectImportTask implements GenericFil
      */
 	protected BinaryData importFile;
 
+    /**
+     * The column names found in the file.
+     */
     protected String[] firstColumnNames;
 
     private String moType;
@@ -112,7 +124,7 @@ public class PlainCSVImporter extends DataObjectImportTask implements GenericFil
     }
 
     /**
-     * Transform the CSV data into DataObjects
+     * Transform the CSV data into {@link DataObject}s
      *
      * @see com.top_logic.contact.mandatoraware.imp.DataObjectImportTask#getImportObjects(com.top_logic.element.structured.wrap.Mandator)
      */
@@ -188,12 +200,12 @@ public class PlainCSVImporter extends DataObjectImportTask implements GenericFil
     }
 
     /**
-     * Get the column names used as DataObject attribute names.
+     * Get the column names used as {@link DataObject} attribute names.
      *
      * Note that these attribute names have to be complete
      * at least from the first column to the last column to be imported!
      *
-     * @return the column names used as DataObject attribute names
+     * @return the column names used as {@link DataObject} attribute names
      */
     @Override
 	public String[] getColumns() {

@@ -25,6 +25,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Creates company contacts with mandator information.
+ * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 public class COSCompanyContactCreateHandler extends CompanyContactCreateHandler {

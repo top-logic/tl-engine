@@ -17,6 +17,8 @@ import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.util.TLContext;
 
 /**
+ * Utilities for formatting and parsing values of SAP systems.
+ * 
  * @author    <a href=mailto:fsc@top-logic.com>Mandelfried Müller</a>
  */
 public class SAPFormatHelper {
@@ -38,7 +40,7 @@ public class SAPFormatHelper {
 	 * Fill a SAP no with leading '0's so that it has 10 digits
 	 * 
 	 * @param aSAPN	the SAP no (possibly lacking leading 0s)
-	 * @return the 10-digit SAP no or <code>null</code> if aSAPN is
+	 * @return the 10-digit SAP no or <code>null</code> if {@code aSAPN} is
 	 * <code>null</code> or if it contains chars other than digits.
 	 */
 	public static String fillSAPNo(String aSAPN) {
@@ -150,16 +152,25 @@ public class SAPFormatHelper {
 		}
 	}
 	
+	/**
+	 * Formats a price in the user's locale.
+	 */
 	public static String formatPrice(Double aPrize) {
 		NumberFormat thePriceFormat = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(TLContext.getLocale()));
 		return thePriceFormat.format(aPrize);
 	}
 	
+	/**
+	 * Formats an exchange rate in the user's locale.
+	 */
 	public static String formatExchRate(Double aRate) {
 		NumberFormat theExchRateFormat = new DecimalFormat("#,##0.0000", new DecimalFormatSymbols(TLContext.getLocale()));
 		return theExchRateFormat.format(aRate);
 	}
 	
+	/**
+	 * Formats a quantity in the user's locale.
+	 */
 	public static String formatQuantity(Double aQuantity) {
 		NumberFormat theQuantityFormat = new DecimalFormat("#,##0.##", new DecimalFormatSymbols(TLContext.getLocale()));
 		return theQuantityFormat.format(aQuantity);

@@ -42,22 +42,37 @@ import com.top_logic.util.sched.Scheduler;
  */
 public class SAPProgressComponent extends AJAXProgressComponent {
 
+    /**
+     * Configuration of the {@link SAPProgressComponent}.
+     */
     public interface Config extends AJAXProgressComponent.Config {
 
+		/**
+		 * Default command handlers executed when the import is finished.
+		 */
 		String FINISH_COMMANDS =
 			AJAXProgressComponent.Config.FINISH_COMMAND_HANDLERS + ',' + FinishSAPImportCommandHandler.COMMAND_ID;
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/**
+		 * Name of the import task to run.
+		 */
 		@Name(ATT_TASKNAME)
 		@Mandatory
 		String getTaskname();
 
+		/**
+		 * Whether missing contacts are created.
+		 */
 		@Name(ATT_CREATE)
 		@BooleanDefault(false)
 		boolean getCreate();
 
+		/**
+		 * Properties for creating the import task.
+		 */
 		@Name(ATT_CREATEPROPS)
 		String getCreateProperties();
 
@@ -72,8 +87,17 @@ public class SAPProgressComponent extends AJAXProgressComponent {
 		}
 	}
 
+	/**
+	 * Configuration name of {@link Config#getTaskname()}.
+	 */
 	public static final String ATT_TASKNAME    = "taskname";
+    /**
+     * Configuration name of {@link Config#getCreate()}.
+     */
     public static final String ATT_CREATE      = "create";
+    /**
+     * Configuration name of {@link Config#getCreateProperties()}.
+     */
     public static final String ATT_CREATEPROPS = "createProperties";
 
     /** The name of the task to run. */
@@ -86,7 +110,7 @@ public class SAPProgressComponent extends AJAXProgressComponent {
     protected String createProps;
 
     /** 
-     * Create a new SAPProgressComponent from XML.
+     * Create a new {@link SAPProgressComponent} from XML.
      */
     public SAPProgressComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -132,12 +156,17 @@ public class SAPProgressComponent extends AJAXProgressComponent {
     }
 
     /**
+     * Command starting the SAP import.
+     * 
      * @author    <a href=mailto:mga@top-logic.com>mga</a>
      */
     public static class StartSAPImportCommandHandler extends AJAXCommandHandler {
 
         // Constants
 
+        /**
+         * Command ID of this handler.
+         */
         public static final String COMMAND_ID = "startSAPImport";
 
 		/**
@@ -230,6 +259,9 @@ public class SAPProgressComponent extends AJAXProgressComponent {
      */
     public static class FinishSAPImportCommandHandler extends AJAXCommandHandler {
         
+        /**
+         * Command ID of this handler.
+         */
         public static final String COMMAND_ID = "finishSAPImport";
 
         /**

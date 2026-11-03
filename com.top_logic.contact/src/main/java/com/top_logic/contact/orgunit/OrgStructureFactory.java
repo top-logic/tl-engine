@@ -155,6 +155,9 @@ public class OrgStructureFactory extends StructuredElementWrapperFactory {
 		return (OrgStructureFactory) StructuredElementFactory.getInstanceForStructure(ORG_STRUCTURE_STRUCTURE);
 	}
 
+	/**
+	 * The name of the managed structure.
+	 */
 	protected String getStructureName() {
 		return ORG_STRUCTURE_STRUCTURE;
 	}

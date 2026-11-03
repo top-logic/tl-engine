@@ -29,7 +29,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
- * Mandator-aware person contact
+ * Mandator-aware person contact.
  *
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -89,7 +89,7 @@ public class COSPersonContact extends PersonContact implements COSContactConstan
 	 *
 	 * @param aContactList the contact list
 	 * @param aMandatorList may be null and will not be checked then
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	protected static List getFilteredList(List aContactList, List aMandatorList) {
 		if (aContactList == null || aMandatorList == null) {
@@ -110,13 +110,13 @@ public class COSPersonContact extends PersonContact implements COSContactConstan
 	}
 
 	/**
-	 * Get the PersonContacts whose name matches the given name
+	 * Get the {@link PersonContact}s whose name matches the given name
 	 * and of of the given mandators
 	 *
 	 * @param aSurname may be null
 	 * @param aFirstName may be null
 	 * @param aMandatorList may be null and will not be checked then
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	public static List getListByName (String aSurname, String aFirstName, List aMandatorList) {
 	   List theContacts;

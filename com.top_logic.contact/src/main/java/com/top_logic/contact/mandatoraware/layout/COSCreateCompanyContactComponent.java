@@ -29,7 +29,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Create CompanyContacts in COS adding a Mandator info
+ * Create company contacts in COS adding a Mandator info.
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */

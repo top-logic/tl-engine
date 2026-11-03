@@ -17,14 +17,14 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
 
 /**
- * Cache the result (Suppliers)
+ * Cache the result (Suppliers).
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
 public class CachedSupplierGenerator extends ListGeneratorAdaptor {
 
 	/** 
-	 * Public Ctor for GeneratorFactory
+	 * Public Ctor for generator factory.
 	 */
 	public CachedSupplierGenerator() {
 		super();
@@ -48,6 +48,9 @@ public class CachedSupplierGenerator extends ListGeneratorAdaptor {
 		return result;
 	}
 	
+	/**
+	 * Name of the boolean attribute marking the companies to deliver.
+	 */
 	protected String getBooleanAttributeToCheck() {
 		return COSContactConstants.SUPPLIER;
 	}

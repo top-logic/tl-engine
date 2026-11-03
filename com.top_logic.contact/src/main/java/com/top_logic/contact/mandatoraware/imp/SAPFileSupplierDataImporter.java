@@ -57,7 +57,7 @@ import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
 
 /**
- * The SAPFileSupplierDataImporter creates or updates CompanyContacts from  
+ * The {@link SAPFileSupplierDataImporter} creates or updates {@link CompanyContact}s from  
  * a plain ascii file.
  * 
  * The format of the data file may be configured using 
@@ -268,6 +268,11 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         }
     }
     
+    /**
+     * Adds the given contact to the cache.
+     *
+     * @return Whether the contact was added.
+     */
     protected final boolean addToCache(CompanyContact contact) {
         String fkey = this.getFKey(contact);
         if (StringServices.isEmpty(fkey)) {
@@ -291,6 +296,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         return true;
     }
 
+    /**
+     * The cached contact with the given foreign key of the given mandator.
+     */
     protected final CompanyContact getFromCache(Mandator mandator, String fkey) {
         Map<String, CompanyContact> innerMap = this.ccCache.get(mandator);
         if (innerMap == null) {
@@ -300,11 +308,17 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         return innerMap.get(SAPFormatHelper.fillSAPNo(fkey));
     }
 
+    /**
+     * Whether a transaction is running.
+     */
     protected final boolean inTransaction() {
         return this.currentTransaction != null;
     }
     
     
+    /**
+     * Begins a new transaction.
+     */
     protected final void beginTransaction() {
         if (this.inTransaction()) {
             throw new IllegalStateException("There is alreay an open transaction");
@@ -313,6 +327,11 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
 		this.currentTransaction = this.kBase.beginTransaction(I18NConstants.SAP_IMPORT);
     }
     
+    /**
+     * Commits the current transaction.
+     *
+     * @return Whether the commit succeeded.
+     */
     protected final boolean commitTransaction() {
         if (! this.inTransaction()) {
             throw new IllegalStateException("There is no open transaction");
@@ -588,7 +607,7 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
     }
     
     /**
-     * Extract an AddressHolder with values from a data object
+     * Extract an {@link AddressHolder} with values from a data object
      */
     protected AddressHolder getAddress(DataObject aDo) throws Exception {
         AddressHolder theAddress = new AddressHolder();
@@ -631,6 +650,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         return (String) this.getValue(aDo, CompanyContact.FKEY2_ATTRIBUTE);
     }
     
+    /**
+     * The name of the import file of the given mandator for the given date.
+     */
     protected final String getFilename(Mandator mandator, Date aDate) {
         
         String variable = mandator.getString(FILE_VARIABLE_PART);
@@ -723,6 +745,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         }
     }
     
+    /**
+     * The converted value of the given attribute of the given data object.
+     */
     protected final Object getValue(DataObject aDo, String anAttribute) throws NoSuchAttributeException {
         Object theValue = aDo.getAttributeValue(anAttribute);
         if (theValue instanceof String) {
@@ -731,6 +756,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         return theValue;
     }
     
+    /**
+     * Converts the raw value of the given attribute.
+     */
     protected final Object convertValue(String anAttribute, String theValue) {
         
         Mapping theMapping = (Mapping) this.mappingFunctions.get(anAttribute);
@@ -760,6 +788,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         //Logger.error(aMessage, aAnException, this.getClass());
     }
     
+    /**
+     * Description of the given contact for log messages.
+     */
     protected String printContact(CompanyContact aContact) {
         if (aContact.tValid()) {
             return aContact.getForeignKey2() + " " + aContact.getName(); 
@@ -769,6 +800,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         }
     }
     
+    /**
+     * Maps <code>X</code> to <code>true</code>, all other values to <code>false</code>.
+     */
     public static class BooleanXMapping implements Mapping {
         @Override
 		public Object map(Object aInput) {
@@ -776,6 +810,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         }
     }
     
+    /**
+     * Maps a country code to a {@link Country}.
+     */
     public static class CountryMapping implements Mapping {
         @Override
 		public Object map(Object aInput) {
@@ -783,6 +820,9 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
         }
     }
     
+    /**
+     * Fills up a SAP number with leading zeros.
+     */
     public static class SAPKeyMapping implements Mapping {
         @Override
 		public Object map(Object aInput) {

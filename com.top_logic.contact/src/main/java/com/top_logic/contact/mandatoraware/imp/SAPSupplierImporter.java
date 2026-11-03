@@ -52,7 +52,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
        "REGIO" , "STRAS", "BRSCH" , "TELF1" , "TELFX" , "ZZSPC_SPL" };
 
     /** 
-     * The DatasourceName configured to import from.
+     * The data source name configured to import from.
      * 
      * When mandator is given then the name of the attribute
      * where such a datsource is found
@@ -68,7 +68,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     /** When true Company Contacts will be deleted if they are not used anymore */
     protected final boolean delete;
 
-    /** The KnowledgeBase to import into */
+    /** The {@link KnowledgeBase} to import into */
     protected transient KnowledgeBase kBase;
     
     /** Used for ceration of Contacts */
@@ -86,7 +86,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     private Set<CompanyContact> importedCompanies;
     
     /** 
-     * Create a new SAPSupplierImporter from (XML-) properties.
+     * Create a new {@link SAPSupplierImporter} from (XML-) properties.
      * 
      * @param prop Properties to configure the task and 
      */
@@ -135,9 +135,9 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
 
     /** 
-     * Retrieve the List of DataObjects we are going to import.
+     * Retrieve the List of {@link DataObject}s we are going to import.
      * 
-     * This allows test classes to supply a DataObject for testing.
+     * This allows test classes to supply a {@link DataObject} for testing.
      */
     @Override
 	protected List getImportObjects(Mandator aMandator) throws DatabaseAccessException, DataObjectException {
@@ -151,6 +151,9 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
         return (DOList) this.getDAP(aMandator).getObjectEntry().getAttributeValue(aTable);
     }
 
+    /**
+     * The data access proxy for the SAP system of the given mandator.
+     */
     protected final DataAccessProxy getDAP(Mandator aMandator) throws DatabaseAccessException, DataObjectException {
         DataAccessProxy theDAP = this.dapByMandator.get(aMandator);
         if (theDAP == null) {
@@ -161,10 +164,10 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
     
     /**
-     * Return a DatasourceName where the Data can be found.
+     * Return a data source name where the Data can be found.
      * 
      * This version extracts the value from the mandator if not null,
-     * otherwise importFrom will be returned directly.
+     * otherwise {@link #importFrom} will be returned directly.
      * 
      * @param aMandator the mandator
      */
@@ -182,9 +185,9 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
     
     /** 
-     * Setup the kBase for importing.
+     * Setup the {@link #kBase} for importing.
      * 
-     * This will call setupLogWriter() so be sure to call super.
+     * This will call {@link #setupLogWriter()} so be sure to call super.
      */
     @Override
 	protected void setupImport() throws Exception {
@@ -197,7 +200,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
 
     /** 
-     * Check that the first COLUMNS are Attributes of aMeta.
+     * Check that the first COLUMNS are Attributes of {@code aMeta}.
      * 
      * @throws DataObjectException when format is not OK.
      */
@@ -222,7 +225,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
     
     /** 
-     * Import a single DataObject.
+     * Import a single {@link DataObject}.
      */
     @Override
 	protected void importItem(DataObject aDo, Mandator aMandator) throws Exception {
@@ -419,7 +422,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
 
     /** 
-     * Overridden to clear the kBase.
+     * Overridden to clear the {@link #kBase}.
      */
     @Override
 	protected void tearDownImport() {
@@ -433,10 +436,16 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
     }
 
 	
+	/**
+	 * Whether the given SAP number belongs to an internal supplier.
+	 */
 	public static Boolean isInternalSupplier(String aSAPNo) {
 	    return Boolean.valueOf(!StringServices.isEmpty(aSAPNo) && aSAPNo.indexOf("VERB") >= 0);
 	}
 	
+	/**
+	 * Import step processing all entries of a SAP table.
+	 */
 	protected abstract class AbstractFunction {
         private final String name;
         private final String tablename;
@@ -448,14 +457,23 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
             this.doCommit  = needsCommit;
         }
         
+        /**
+         * The name of this step.
+         */
         public String getName() {
             return (this.name);
         }
         
+        /**
+         * The name of the processed table.
+         */
         public String getTablename() {
             return (this.tablename);
         }
         
+        /**
+         * Processes all entries of the table for the given mandator.
+         */
         public void run(Mandator aMandator) {
             logInfo("Begin " + this, null);
             try {
@@ -496,6 +514,9 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
             logInfo("Finished " + this, null);
         }
         
+        /**
+         * Processes a single table entry.
+         */
         protected abstract void eval(Object anObject, Mandator aMandator) throws Exception;
         
         @Override

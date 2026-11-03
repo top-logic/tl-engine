@@ -34,9 +34,15 @@ public class ImportSAPVolumeController extends AbstractAssistentController {
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
 	public interface Config extends AbstractAssistentController.Config {
+		/**
+		 * Name of the upload step.
+		 */
 		@Mandatory
 		ComponentName getUploadStep();
 
+		/**
+		 * Name of the step showing the import progress.
+		 */
 		@Mandatory
 		ComponentName getProgressStep();
 	}
@@ -98,7 +104,7 @@ public class ImportSAPVolumeController extends AbstractAssistentController {
      * Add an Upload Command as part of switching to the next step.
      * 
      * @param aCurrentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command handler to perform before the switch action. May be null.
      */
     @Override
 	public CommandHolder getAdditionaleCommandForNext(ComponentName aCurrentStepName) {
@@ -127,7 +133,7 @@ public class ImportSAPVolumeController extends AbstractAssistentController {
     }
     
     /** 
-     * disableForwardButton when when ProgressInfo is not finished.
+     * {@link #disableForwardButton(ComponentName)} when when {@link ProgressInfo} is not finished.
      */
     @Override
 	public boolean disableForwardButton(ComponentName aCurrentStepName) {
@@ -139,7 +145,7 @@ public class ImportSAPVolumeController extends AbstractAssistentController {
     }
     
     /** 
-     * Check if CSVFileUploadComponent created a file an eventually delete it.
+     * Check if {@link CSVFileUploadComponent} created a file an eventually delete it.
      */
     @Override
 	public void dialogFinished() {
@@ -149,10 +155,16 @@ public class ImportSAPVolumeController extends AbstractAssistentController {
         }
     }
     
+	/**
+	 * Name of the upload step.
+	 */
 	protected ComponentName getUploadStepname() {
 		return getConfig().getUploadStep();
     }
     
+	/**
+	 * Name of the step showing the import progress.
+	 */
 	protected ComponentName getImportStepname() {
 		return getConfig().getProgressStep();
     }

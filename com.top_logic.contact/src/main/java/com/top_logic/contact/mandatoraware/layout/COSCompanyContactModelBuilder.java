@@ -27,6 +27,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * Builds the list of the company contacts of the selected mandator.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class COSCompanyContactModelBuilder extends CompanyContactModelBuilder {
@@ -51,6 +53,9 @@ public class COSCompanyContactModelBuilder extends CompanyContactModelBuilder {
         return (((COSCompanyContact) anObject).getMandator());
     }
     
+    /**
+     * The company contacts of the given mandator.
+     */
     protected List retrieveListFromModel(LayoutComponent aComponent, Object aModel) {
         try {
 			Collection theColl = AttributeOperations.getReferers((Wrapper) aModel, this.getMandatorMetaAttribute());

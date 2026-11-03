@@ -11,7 +11,7 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.model.TLObject;
 
 /**
- * Accept the value if it is a CompanyContact that may act as a Client
+ * Accept the value if it is a {@link CompanyContact} that may act as a Client.
  * 
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
@@ -19,14 +19,14 @@ import com.top_logic.model.TLObject;
 public class ClientFilter extends MandatorAwareContactFilter {
 
     /**
-     * Default public CTor for FilterFactory
+     * Default public CTor for filter factory.
      */
     public ClientFilter() {
         super();
     }
     
     /** 
-     * Check for CompanyContact and client property
+     * Check for {@link CompanyContact} and client property
      */
     @Override
 	protected boolean checkBasics(TLObject anAttributed, EditContext editContext,

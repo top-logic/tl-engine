@@ -17,7 +17,7 @@ import com.top_logic.layout.form.model.FormFactory;
 
 
 /**
- * CreateComponent to set up new Person Contacts.
+ * Create component to set up new Person Contacts.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */

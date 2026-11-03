@@ -26,7 +26,8 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The MandatorAwareContactGenerator caches {@link MandatorAware}s indexed by their {@link Mandator}
+ * The {@link MandatorAwareContactGenerator} caches {@link MandatorAware}s indexed by their {@link
+ * Mandator}.
  *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -55,6 +56,9 @@ public abstract class MandatorAwareContactGenerator extends ListGeneratorAdaptor
 			return false;
 		}
 
+		/**
+		 * The mandators to deliver contacts for.
+		 */
 		public List<Mandator> getMandators() {
 			return this.collect;
 		}

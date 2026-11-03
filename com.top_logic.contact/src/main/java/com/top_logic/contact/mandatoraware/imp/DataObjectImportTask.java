@@ -45,7 +45,7 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 
 /**
- * Generic Import Task for a List of DataObjects.
+ * Generic Import Task for a List of {@link DataObject}s.
  *
  * TODO KHA move to TL when stable enough.
  *
@@ -53,7 +53,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
  */
 public abstract class DataObjectImportTask extends TaskImpl implements ProgressInfo, MonitorComponent, InContext {
 
-    /** Initial (maximum) size of stringWriter. */
+    /** Initial (maximum) size of the log. */
     protected static final int INITAL_LOGSIZE = 1024;
 
     /** Property name for an optional log file to be written. */
@@ -62,7 +62,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     /** Total number of records being imported */
     protected int totalSize = 1;
 
-    /** Current number of records already imported [0..totalSize] */
+    /** Current number of records already imported [0..{@link #totalSize}] */
     protected int currentSize;
 
     /** Number of Records that where OK */
@@ -77,7 +77,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     /** Set to true when Import was completed */
     protected boolean finished;
 
-    /** Message to show to User via progressInfo */
+    /** Message to show to User via progress info */
     protected StringBuffer message = new StringBuffer(INITAL_LOGSIZE);
 
 	/** One of {@link MonitorMessage} INFO/ERROR/FATAL (see {@link #checkState(MonitorResult)}). */
@@ -89,10 +89,13 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     /** Log writer to be used, may be <code>null</code> if not configured by {@link #LOG_FILE_NAME}. */
     private PrintWriter logWriter;
 
+    /**
+     * Whether to set up a system context for the import.
+     */
     protected final boolean setTLContext;
 
     /**
-     * Create a new none configured DataObjectImportTask.
+     * Create a new none configured {@link DataObjectImportTask}.
      *
      * May be used by subclasses when importer is not used as task, bu8t directly.
      */
@@ -102,7 +105,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     }
 
     /**
-	 * Create a new DataObjectImportTask from Properties, as used by Scheduler.
+	 * Create a new {@link DataObjectImportTask} from Properties, as used by Scheduler.
 	 */
     public DataObjectImportTask(Properties prop) {
         super(prop);
@@ -131,23 +134,23 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
 	}
 
     /**
-     * Override to return the List of DataObjects to import.
+     * Override to return the List of {@link DataObject}s to import.
      *
      * @param aMandator The Mandator for which to import. May be <code>null</code> if not needed.
      */
     abstract protected List getImportObjects(Mandator aMandator) throws DatabaseAccessException, DataObjectException;
 
     /**
-     * Override to validate that aMeta has all needed attributes.
+     * Override to validate that {@code aMeta} has all needed attributes.
      *
-     * Should be called once for every different kind of MetaObject.
+     * Should be called once for every different kind of {@link MetaObject}.
      *
      * @throws DataObjectException when format is not OK.
      */
     abstract protected void checkFormat(MetaObject aMeta) throws DataObjectException;
 
     /**
-     * Import a single DataObject.
+     * Import a single {@link DataObject}.
      */
     abstract protected void importItem(DataObject aDo, Mandator aMandator) throws Exception;
 
@@ -204,6 +207,14 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
 	 */
 	protected abstract void startImport();
 
+	/**
+	 * Imports the data of the given mandator.
+	 *
+	 * @param aMandator
+	 *        The mandator to import for, may be <code>null</code>.
+	 * @param doRecurse
+	 *        Whether to import for the child mandators, too.
+	 */
 	protected void startImport(Mandator aMandator, boolean doRecurse) {
 		if (this.shouldImport(aMandator)) {
 			String addInfo = "";
@@ -292,7 +303,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
 	/**
      * Hook for subclasses do setup something before importing.
      *
-     * This will call setupLogWriter() so be sure to call super.
+     * This will call {@link #setupLogWriter()} so be sure to call super.
 	 * @throws Exception TODO
      */
     protected void setupImport() throws Exception {
@@ -332,7 +343,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     /**
      * Hook for subclasses do tear down something after importing.
      *
-     * This will set {@link #message} to the content (if not null) of the StringWriter.
+     * This will set {@link #message} to the content (if not null) of the log.
      */
     protected void tearDownImport() {
         this.finished = true;
@@ -363,7 +374,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     }
 
     /**
-     * Log an Error to normal logger and (if configured) the logWriter.
+     * Log an Error to normal logger and (if configured) the log writer.
      */
     protected void logError(String aMessage, Throwable anException) {
         String theMessage = "ERROR: " + aMessage;
@@ -379,7 +390,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     }
 
     /**
-     * Log a Warning to normal logger and (if configured) the logWriter.
+     * Log a Warning to normal logger and (if configured) the log writer.
      */
     protected void logWarn(String aMessage, Throwable anException) {
         String theMessage = "WARN: " + aMessage;
@@ -395,7 +406,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
     }
 
     /**
-     * Log some information to normal logger and (if configured) the logWriter.
+     * Log some information to normal logger and (if configured) the log writer.
      */
     protected void logInfo(String aMessage, Throwable anException) {
         String theMessage = "INFO: " + aMessage;
@@ -457,7 +468,7 @@ public abstract class DataObjectImportTask extends TaskImpl implements ProgressI
 	}
 
 	/**
-	 * Describe this MonitorComponent by using the Tasks name.
+	 * Describe this {@link MonitorComponent} by using the Tasks name.
 	 */
     @Override
 	public String getDescription() {

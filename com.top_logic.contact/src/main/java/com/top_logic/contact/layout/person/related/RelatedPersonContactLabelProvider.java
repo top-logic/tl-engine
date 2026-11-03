@@ -18,6 +18,9 @@ import com.top_logic.knowledge.wrap.person.Person;
  */
 public class RelatedPersonContactLabelProvider extends PersonContactLabelProvider {
 	
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static final RelatedPersonContactLabelProvider INSTANCE = new RelatedPersonContactLabelProvider();
 
 	protected RelatedPersonContactLabelProvider() {

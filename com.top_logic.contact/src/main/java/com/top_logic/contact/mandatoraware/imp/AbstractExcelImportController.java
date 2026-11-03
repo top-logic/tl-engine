@@ -18,6 +18,8 @@ import com.top_logic.tool.boundsec.assistent.CommandHolder;
 import com.top_logic.tool.boundsec.commandhandlers.UploadHandler;
 
 /**
+ * Controller of an assistant uploading and importing an Excel file.
+ * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class AbstractExcelImportController extends AbstractAssistentController {
@@ -26,10 +28,16 @@ public class AbstractExcelImportController extends AbstractAssistentController {
 		super(context, config);
 	}
 
+	/**
+	 * The name of the upload step.
+	 */
 	protected ComponentName getUploadStep() {
 		return this.assistent.getName().append("Upload");
     }
 
+	/**
+	 * The name of the import step.
+	 */
 	protected ComponentName getImportStep() {
 		return this.assistent.getName().append("Progress");
     }
@@ -82,7 +90,7 @@ public class AbstractExcelImportController extends AbstractAssistentController {
      * Add an Upload Command as part of switching to the next step.
      * 
      * @param aCurrentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command handler to perform before the switch action. May be null.
      */
     @Override
 	public CommandHolder getAdditionaleCommandForNext(ComponentName aCurrentStepName) {
@@ -95,7 +103,7 @@ public class AbstractExcelImportController extends AbstractAssistentController {
     }
  
     /** 
-     * Check if CSVFileUploadComponent created a file an eventually delete it.
+     * Check if {@link CSVFileUploadComponent} created a file an eventually delete it.
      */
     @Override
 	public void dialogFinished() {
@@ -122,7 +130,7 @@ public class AbstractExcelImportController extends AbstractAssistentController {
     }
 
     /** 
-     * DisableForwardButton when whie ProgressInfo is not finished.
+     * Disable the forward button while {@link ProgressInfo} is not finished.
      */
     @Override
 	public boolean disableForwardButton(ComponentName aCurrentStepName) {

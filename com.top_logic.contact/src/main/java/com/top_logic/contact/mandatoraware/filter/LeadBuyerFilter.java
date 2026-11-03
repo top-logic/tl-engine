@@ -21,9 +21,9 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * LeadBuyer filter.
- * Takes PersonContacts as inputs but uses the companies of which the
- * contacts are lead buyers as search wrappers.
+ * Lead buyer filter.
+ * Takes {@link com.top_logic.contact.business.PersonContact}s as inputs but uses the companies of
+ * which the contacts are lead buyers as search wrappers.
  *
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */

@@ -21,27 +21,93 @@ public class SAPSupplierRecord {
     /** Kreditor in original record, but actually is SAP-Nr */
     public Integer sapNr;
     
+    /**
+     * Country.
+     */
     public String Lnd;
+    /**
+     * First name line.
+     */
     public String Name1;
+    /**
+     * Second name line.
+     */
     public String Name2;
+    /**
+     * City.
+     */
     public String Ort;
+    /**
+     * District.
+     */
     public String Ortsteil;
+    /**
+     * Post office box.
+     */
     public String Postfach;
+    /**
+     * ZIP code of the post office box.
+     */
     public String PLZPostf;
+    /**
+     * ZIP code.
+     */
     public String Postleitz;
+    /**
+     * Region.
+     */
     public String Rg;
+    /**
+     * Search term.
+     */
     public String SuchBegr;
+    /**
+     * Street.
+     */
     public String Strasse;
+    /**
+     * Address.
+     */
     public String Adresse;
+    /**
+     * First name line of the post office box address.
+     */
     public String PlzName1;
+    /**
+     * Second name line of the post office box address.
+     */
     public String PlzName2;
+    /**
+     * City of the post office box.
+     */
     public String PlzOrt;
+    /**
+     * Industry sector.
+     */
     public String Branche;
+    /**
+     * Telebox number.
+     */
     public String Telebox;
+    /**
+     * First phone number.
+     */
     public String Telefon1;
+    /**
+     * Second phone number.
+     */
     public String Telefon2;
+    /**
+     * Fax number.
+     */
     public String Telefaxnummer;
+    /**
+     * Teletex number.
+     */
     public String Teletexnummer;
+    /**
+     * Telex number.
+     */
     public String Telexnummer;
 
     /** 
@@ -59,7 +125,7 @@ public class SAPSupplierRecord {
     }
 
     /**
-     * Fill up given sapNr with zeros to 10 places.
+     * Fill up given {@code sapNr} with zeros to 10 places.
      */
     public static final String getSAPNr(String sapNr) {
         return ZEROS.substring(0, ZEROS.length() - sapNr.length()) + sapNr;

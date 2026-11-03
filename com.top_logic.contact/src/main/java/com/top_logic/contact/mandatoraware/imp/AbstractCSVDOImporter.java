@@ -20,6 +20,8 @@ import com.top_logic.element.genericimport.interfaces.GenericImporter.GenericFil
 import com.top_logic.element.structured.wrap.Mandator;
 
 /**
+ * Base class for importing data objects from CSV files.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class AbstractCSVDOImporter extends DataObjectImportTask implements
@@ -80,6 +82,9 @@ public class AbstractCSVDOImporter extends DataObjectImportTask implements
     }
 
     
+    /**
+     * Creates the reader for the import file.
+     */
     protected CSVReader setupReader() throws Exception {
 		return new CSVReader(new InputStreamReader(this.sourceFile.getStream()));
     }

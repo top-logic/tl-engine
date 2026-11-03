@@ -14,7 +14,7 @@ import com.top_logic.element.core.util.AllElementVisitor;
 import com.top_logic.element.structured.wrap.Mandator;
 
 /**
- * Accepts Mandators that are the initial mandator, one of the parents, or a child (optional)
+ * Accepts Mandators that are the initial mandator, one of the parents, or a child (optional).
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */

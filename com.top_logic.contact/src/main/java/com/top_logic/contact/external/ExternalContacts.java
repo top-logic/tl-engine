@@ -44,6 +44,9 @@ import com.top_logic.knowledge.wrap.person.Person;
  */
 public class ExternalContacts implements Reloadable {
 
+    /**
+     * Name of the column holding the user ID.
+     */
     public static final String USER_ID = "userID";
 
 	/**
@@ -145,6 +148,11 @@ public class ExternalContacts implements Reloadable {
 			contact == null ? Collections.EMPTY_SET : Collections.singleton(contact));
 	}
 
+	/**
+	 * Sets the contacts assigned to the given attribute of the given object.
+	 *
+	 * @return The contacts that were assigned before.
+	 */
 	public static HashSet<ExternalContact> updateContacts(TLID objectId, TLID attributeId, Date notBefore, Set<ExternalContact> contacts) throws SQLException {
 		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
@@ -207,6 +215,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 	
+	/**
+	 * The contacts currently assigned to the given attribute of the given object.
+	 */
 	public static Set<ExternalContact> getCurrentContacts(TLID objectId, TLID attributeId) throws SQLException {
 		ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
@@ -227,6 +238,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 
+    /**
+     * All contacts ever assigned to the given attribute of the given object.
+     */
     public static Set<ExternalContact> getContactHistory(TLID objectId, TLID attributeId) throws SQLException {
         ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
@@ -250,7 +264,7 @@ public class ExternalContacts implements Reloadable {
     /** 
      * Get the Person with the UNumber of the given contact
      * 
-     * @param aContact	the ExternalContact
+     * @param aContact	the {@link ExternalContact}
      * @return the Person or <code>null</code> if no matching person can be found
      */
     public static Person getPersonForExternalContact(ExternalContact aContact) {
@@ -267,10 +281,11 @@ public class ExternalContacts implements Reloadable {
     }
     
     /** 
-     * Get the PersonContact with the UNumber of the given contact
+     * Get the {@link PersonContact} with the UNumber of the given contact
      * 
-     * @param aContact	the ExternalContact
-     * @return the PersonContact or <code>null</code> if no matching PersonContact can be found
+     * @param aContact	the {@link ExternalContact}
+     * @return the {@link PersonContact} or <code>null</code> if no matching {@link PersonContact}
+     *         can be found
      */
     public static PersonContact getContactForExternalContact(ExternalContact aContact) {
     	if (aContact == null) {
@@ -291,6 +306,9 @@ public class ExternalContacts implements Reloadable {
     	return null;
     }
 	
+	/**
+	 * Removes all assignments of the given object.
+	 */
 	public static void dropObjectHistory(TLID objectId) throws SQLException {
 		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
@@ -304,6 +322,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 
+	/**
+	 * Stores the given contact.
+	 */
 	public static void newContact(ExternalContact contact) throws SQLException {
 		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
@@ -317,6 +338,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 
+	/**
+	 * Removes the contact with the given U-number of the given system.
+	 */
 	public static void dropContact(String uNumber, String aSystem) throws SQLException {
 		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
@@ -331,6 +355,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 	
+	/**
+	 * Removes all contacts.
+	 */
 	public static void dropAllContacts() throws SQLException {
 		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
@@ -342,6 +369,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 	
+	/**
+	 * Removes all contacts of the given system.
+	 */
 	public static void dropAllContactsBySysID(String aSysID) throws SQLException {
 		KnowledgeBase db = PersistencyLayer.getKnowledgeBase();
 		CommitContext ctx = KBUtils.createCommitContext(db);
@@ -358,6 +388,9 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 	
+	/**
+	 * The contact with the given U-number of the given system.
+	 */
 	public static ExternalContact getContact(String uNumber, String aSystemID) throws SQLException {
 	    ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
@@ -389,6 +422,9 @@ public class ExternalContacts implements Reloadable {
         }
 	}
 	
+	/**
+	 * All stored contacts.
+	 */
 	public static List<ExternalContact> getAllContacts() throws SQLException {
 		ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 		DBHelper sqlDialect = pool.getSQLDialect();
@@ -405,6 +441,12 @@ public class ExternalContacts implements Reloadable {
 		}
 	}
 
+	/**
+	 * The IDs of all systems.
+	 *
+	 * @param used
+	 *        Whether to return only systems from which contacts are stored.
+	 */
 	public static List<String> getAllSystemIDs(boolean used) throws SQLException {
 	    ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
         PooledConnection ctx = pool.borrowReadConnection();
@@ -422,6 +464,9 @@ public class ExternalContacts implements Reloadable {
         }
 	}
 	
+	/**
+	 * All stored contacts, cached.
+	 */
 	public static List<ExternalContact> getAllContactsCached() throws SQLException {
 		if (cachedContacts == null) {
 			cachedContacts = getAllContacts();
@@ -430,6 +475,9 @@ public class ExternalContacts implements Reloadable {
 		return cachedContacts;
 	}
 	
+	/**
+	 * Invalidates the cache of {@link #getAllContactsCached()}.
+	 */
 	public static void resetContactCache() {
 		cachedContacts = null;
 	}

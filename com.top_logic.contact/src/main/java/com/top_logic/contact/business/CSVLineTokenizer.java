@@ -86,10 +86,16 @@ public class CSVLineTokenizer {
         this(anInput, aTokenStartQuote, aTokenEndQuote, aSeparator, aNewLine, aRequiresQuotes, anAllowMultiline, false);
     }
     
+    /**
+     * The number of tokens of a line.
+     */
     public int getTokenCount() {
         return this.tokenCount;
     }
     
+    /**
+     * The tokens of the next line.
+     */
     public List getNextEntry() throws InvalidLineException, IOException {
         String theCurrentLine = this.getNextLine();
         String theRemainingContent = theCurrentLine;
@@ -220,6 +226,9 @@ public class CSVLineTokenizer {
         return theResult;
     }
     
+    /**
+     * Exception signaling a line with an unexpected number of tokens.
+     */
     public class InvalidLineException extends Exception {
         int lineNumber;
         String content;

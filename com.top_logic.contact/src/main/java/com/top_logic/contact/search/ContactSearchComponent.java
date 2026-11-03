@@ -30,6 +30,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Search component for contacts.
+ * 
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class ContactSearchComponent extends AttributedSearchComponent {
@@ -56,6 +58,9 @@ public class ContactSearchComponent extends AttributedSearchComponent {
         return (Mandator) ((theMaster instanceof Selectable) ? ((Selectable) theMaster).getSelected() : theMaster.getModel());
     }
 
+    /**
+     * The mandator attribute of the searched type.
+     */
     public TLStructuredTypePart getMandatorAttribute() {
         try {
 			return MetaElementUtil.getMetaAttribute(this.getSearchMetaElement(), COSCompanyContact.ATTRIBUTE_MANDATOR);

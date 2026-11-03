@@ -65,9 +65,12 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     /** When true Company Contacts will be created instead of ignoring them */
     protected boolean create;
 
-    /** The KnowledgeBase to import into */
+    /** The {@link KnowledgeBase} to import into */
     protected transient KnowledgeBase kBase;
     
+    /**
+     * The currently running transaction.
+     */
     protected Transaction currentTransaction;
     
     /** Used for creation of Contacts */
@@ -85,8 +88,14 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     /** Indicates if original Data is in SAP-System */ 
     protected boolean isSupplierImport;
     
+    /**
+     * The contacts found in the import.
+     */
     protected Collection foundContacts;
     
+    /**
+     * Name of the attribute marking the imported role (supplier or client).
+     */
     protected String attName;
 
     /** 
@@ -97,7 +106,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     protected Mandator mandator;
     
     /** 
-     * Create a new ExcelSupplier20060126Importer for given File.
+     * Create a new {@link ExcelSupplier20060529Importer} for given File.
      * @param aCreate   When true Company Contacts will be created instead of ignoring them.
      * @param aMandator when != null only Contacts for this mandator will be updated, 
      *                  otherwise the first matching contact will be updated or created.  
@@ -107,7 +116,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     }
     
     /** 
-     * Create a new ExcelSupplier20060126Importer for given File.
+     * Create a new {@link ExcelSupplier20060529Importer} for given File.
      * @param aCreate   When true Company Contacts will be created instead of ignoring them.
      * @param aDeltaImport		if true only add suppliers. Delete used ones otherwise.
      * @param aSupplierImport	if true interpret data as suppliers and as clients otherwise.
@@ -131,9 +140,9 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     }
 
     /** 
-     * Setup the kBase for importing.
+     * Setup the {@link #kBase} for importing.
      * 
-     * This will call setupLogWriter() so be sure to call super.
+     * This will call {@link #setupLogWriter()} so be sure to call super.
      */
     @Override
 	protected void setupImport() {
@@ -145,7 +154,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     }
 
     /** 
-     * Check that the first column (as found in aRow) is as expected.
+     * Check that the first column (as found in {@code aRow}) is as expected.
      * 
      * @throws IOException when format is not OK.
      */
@@ -338,7 +347,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
     }
 
     /** 
-     * Overriden to for last commit and to clear the kBase.
+     * Overriden to for last commit and to clear the {@link #kBase}.
      */
     @Override
 	protected void tearDownImport() {

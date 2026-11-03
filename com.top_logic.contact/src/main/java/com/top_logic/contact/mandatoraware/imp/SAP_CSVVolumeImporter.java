@@ -26,7 +26,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.currency.Currency;
 
 /**
- * Import SAP Volume data into existing COSCompanyContacts.
+ * Import SAP Volume data into existing {@link COSCompanyContact}s.
  * 
  * Not is use since we can access the SAP System directly.
  * 
@@ -50,7 +50,7 @@ public class SAP_CSVVolumeImporter extends CSVImporter {
     private Date date;
 	
     /** 
-     * Create a new SAPVolumeImporter importing from given file.
+     * Create a new {@link SAP_CSVVolumeImporter} importing from given file.
      */
     public SAP_CSVVolumeImporter(File aImportSource, boolean aDeleteWhenDone, Mandator aMandator, boolean isMandatorAware) {
         super(aImportSource, aDeleteWhenDone);
@@ -65,7 +65,7 @@ public class SAP_CSVVolumeImporter extends CSVImporter {
     }
 
     /** 
-     * Overriden to create a SimpleCSVTokenizer with ';' as seperator.
+     * Overriden to create a {@link SimpleCSVTokenizer} with ';' as seperator.
      */
     @Override
 	protected SimpleCSVTokenizer createTokenizer(String aFirstLine) {
@@ -106,7 +106,7 @@ public class SAP_CSVVolumeImporter extends CSVImporter {
     }
     
     /** 
-     * Import a Line like sapNr,value,currency into a COSCompanyContact.
+     * Import a Line like <code>sapNr,value,currency</code> into a {@link COSCompanyContact}.
      */
     @Override
 	protected void importLine(String aLine, SimpleCSVTokenizer aCsvToken)

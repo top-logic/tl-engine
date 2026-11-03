@@ -23,6 +23,9 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class COSPersonContactCreateHandler extends PersonContactCreateHandler {
 
+	/**
+	 * Default instance of this class.
+	 */
 	public static final COSPersonContactCreateHandler INSTANCE = newInstance(COSPersonContactCreateHandler.class,
 		COMMAND_ID);
 

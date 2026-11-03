@@ -18,6 +18,9 @@ import com.top_logic.layout.ReadOnlyAccessor;
  */
 public class CompanyContactAccessor extends ReadOnlyAccessor<Object> {
 
+    /**
+     * Path to the mandator of the lead buyer.
+     */
     public static final String MANDATOR_STRUCTURE = "leadBuyer.mandator";
 
     /** The default instance of this accessor (will display overall validity). */ 

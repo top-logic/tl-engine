@@ -23,6 +23,9 @@ public class ExcelSupplierImportTask extends TaskImpl {
 
 	ExcelSupplier20060529Importer importBatch;
 	
+    /**
+     * Pattern of the names of the files to import.
+     */
     protected String fileNamePattern;
     boolean doCreate;
     boolean isDeltaImport;

@@ -37,20 +37,38 @@ import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.element.structured.wrap.Mandator;
 
 /**
- * Import the content of an XLS file using DataObjects as import object format. Finds the min and
- * max column and row and creates DataObjects from the data found using the Strings returned by
- * {@link #getColumns()} as attribute names. A more generic algorithm might use a header row to get
- * the column names.
+ * Import the content of an XLS file using {@link DataObject}s as import object format. Finds the
+ * min and max column and row and creates {@link DataObject}s from the data found using the Strings
+ * returned by {@link #getColumns()} as attribute names. A more generic algorithm might use a header
+ * row to get the column names.
  * 
  * @author <a href=mailto:kbu@top-logic.com>kbu</a>
  */
 public abstract class AbstractExcelDOImporter extends DataObjectImportTask implements GenericFileImporter {
 
+    /**
+     * Property whether to delete the import file after import.
+     */
     public static final String DELETE_WHEN_DONE = "deleteWhenDone";
+    /**
+     * Property holding the import file.
+     */
     public static final String IMPORT_FILE      = "importFile";
+    /**
+     * Property holding the name of the sheet to import.
+     */
     public static final String SHEET_NAME       = "sheetName";
+    /**
+     * Property holding the type of the created data objects.
+     */
     public static final String MO_TYPE          = "moType";
+    /**
+     * Property holding the row with the column names.
+     */
     public static final String COL_NAME_ROW     = "colNameRow";
+    /**
+     * Property holding the first row with data.
+     */
     public static final String FIRST_DATA_ROW   = "firstDataRow";
 
 	/**
@@ -71,12 +89,30 @@ public abstract class AbstractExcelDOImporter extends DataObjectImportTask imple
 	 * Note: First row is assumed to contain title data and is NOT imported!
 	 */
 	protected int minRow;
+	/**
+	 * The last row containing data.
+	 */
 	protected int maxRow;
+	/**
+	 * The row containing the column names.
+	 */
 	protected int colNameRow;
+	/**
+	 * The first row containing data.
+	 */
 	protected int firstDataRow;
+	/**
+	 * The first column containing data.
+	 */
 	protected String minCol;
+	/**
+	 * The last column containing data.
+	 */
 	protected String maxCol;
 
+	/**
+	 * The column names found in the file.
+	 */
 	protected String[] firstColumnNames;
 
 	private String moType;
@@ -154,7 +190,7 @@ public abstract class AbstractExcelDOImporter extends DataObjectImportTask imple
 	}
 
 	/**
-	 * Transform the XLS data into DataObjects
+	 * Transform the XLS data into {@link DataObject}s
 	 *
 	 * @see com.top_logic.contact.mandatoraware.imp.DataObjectImportTask#getImportObjects(com.top_logic.element.structured.wrap.Mandator)
 	 */
@@ -201,6 +237,9 @@ public abstract class AbstractExcelDOImporter extends DataObjectImportTask imple
     	return theRes;
 	}
 
+	/**
+	 * Whether the given column names match the {@link #getExpectedColumnNames()}.
+	 */
 	protected boolean checkColumnFormat(String[] excelColumnNames) {
 	    
 	    String[] expected = this.getExpectedColumnNames();
@@ -213,6 +252,9 @@ public abstract class AbstractExcelDOImporter extends DataObjectImportTask imple
 	    return ArrayUtil.equals(excelColumnNames, expected);
 	}
 	
+	/**
+	 * The expected column names.
+	 */
 	protected abstract String[] getExpectedColumnNames();
 	
 	@Override
@@ -308,12 +350,12 @@ public abstract class AbstractExcelDOImporter extends DataObjectImportTask imple
     }
 
 	/**
-	 * Get the column names used as DataObject attribute names.
+	 * Get the column names used as {@link DataObject} attribute names.
 	 *
 	 * Note that these attribute names have to be complete
 	 * at least from the first column to the last column to be imported!
 	 *
-	 * @return the column names used as DataObject attribute names
+	 * @return the column names used as {@link DataObject} attribute names
 	 */
 	@Override
 	public String[] getColumns() {
@@ -360,6 +402,9 @@ public abstract class AbstractExcelDOImporter extends DataObjectImportTask imple
     	this.readFile();
     }
 
+    /**
+     * Access to the Excel file.
+     */
     protected ExcelAccess getExcelAccess() {
         return ExcelAccess.newInstance();
     }

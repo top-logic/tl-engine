@@ -10,7 +10,7 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.model.TLObject;
 
 /**
- * Check for CompanyContact
+ * Check for {@link CompanyContact}.
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -18,7 +18,7 @@ import com.top_logic.model.TLObject;
 public class COSCompanyContactFilter extends MandatorAwareContactFilter {
 
     /**
-	 * Check for CompanyContact and client property
+	 * Check for {@link CompanyContact} and client property
 	 */
     @Override
 	protected boolean checkBasics(TLObject anAttributed, EditContext attributeUpdate,

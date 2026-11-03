@@ -45,7 +45,7 @@ public class SAPPersonImporter extends DataObjectImportTask  {
         "MOBIL", "TPRIV", "TELFX", "EMAIL", "MAYBE", "REMARK"};
 
     /** 
-     * The DatasourceName configured to import from.
+     * The data source name configured to import from.
      * 
      * When mandator is given then the name of the attribute
      * where such a datsource is found
@@ -58,7 +58,7 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     /** When true Company Contacts will be created instead of ignoring them */
     protected boolean create;
 
-    /** The KnowledgeBase to import into */
+    /** The {@link KnowledgeBase} to import into */
     protected transient KnowledgeBase kBase;
     
     /** Used for creation of Contacts */
@@ -68,12 +68,12 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     protected int commit;
 
 	/**
-	 * Mandators where PersonContacts are found. 
+	 * Mandators where person contacts are found. 
 	 */
 	protected List mandators;
 
     /** 
-     * Create a new SAPPersonImporter from (XML-) properties.
+     * Create a new {@link SAPPersonImporter} from (XML-) properties.
      * 
      * @param prop Properties to configure the task and 
      */
@@ -111,9 +111,9 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     }
 
     /** 
-     * Retrieve the List of DataObjects we are going to import.
+     * Retrieve the List of {@link DataObject}s we are going to import.
      * 
-     * This allows test classes to supply a DataObject for testing.
+     * This allows test classes to supply a {@link DataObject} for testing.
      */
     @Override
 	protected List getImportObjects(Mandator aMandator) throws DatabaseAccessException, DataObjectException {
@@ -132,10 +132,10 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     }
 
     /**
-     * Return a DatasourceName where the Data can be found.
+     * Return a data source name where the Data can be found.
      * 
      * This version extracts the value from the mandator if not null,
-     * otherwise importFrom will be returned directly.
+     * otherwise {@link #importFrom} will be returned directly.
      * 
      * @param aMandator the mandator
      */
@@ -153,9 +153,9 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     }
     
     /** 
-     * Setup the kBase for importing.
+     * Setup the {@link #kBase} for importing.
      * 
-     * This will call setupLogWriter() so be sure to call super.
+     * This will call {@link #setupLogWriter()} so be sure to call super.
      */
     @Override
 	protected void setupImport() throws Exception {
@@ -166,7 +166,7 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     }
 
     /** 
-     * Check that the first COLUMNS are Attributes of aMeta.
+     * Check that the first COLUMNS are Attributes of {@code aMeta}.
      * 
      * @throws DataObjectException when format is not OK.
      */
@@ -186,7 +186,7 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     }
     
     /** 
-     * Import a single DataObject.
+     * Import a single {@link DataObject}.
      */
     @Override
 	protected void importItem(DataObject aDo, Mandator aMandator) throws Exception {
@@ -318,7 +318,7 @@ public class SAPPersonImporter extends DataObjectImportTask  {
     
 
     /** 
-     * Overriden to clear the kBase.
+     * Overriden to clear the {@link #kBase}.
      */
     @Override
 	protected void tearDownImport() {

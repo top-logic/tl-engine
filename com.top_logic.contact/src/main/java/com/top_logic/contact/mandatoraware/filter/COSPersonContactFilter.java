@@ -10,7 +10,7 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.model.TLObject;
 
 /**
- * Accept the value if it is a PersonContact
+ * Accept the value if it is a {@link PersonContact}.
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -18,7 +18,7 @@ import com.top_logic.model.TLObject;
 public class COSPersonContactFilter extends MandatorAwareContactFilter {
 
 	/**
-	 * Accept the value if it is a PersonContact
+	 * Accept the value if it is a {@link PersonContact}
 	 */
 	@Override
 	protected boolean checkBasics(TLObject anAttributed, EditContext editContext,

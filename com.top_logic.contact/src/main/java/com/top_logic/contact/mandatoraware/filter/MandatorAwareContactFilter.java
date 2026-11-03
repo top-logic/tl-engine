@@ -27,13 +27,16 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Checks if contact is attached to suitable mandator
+ * Checks if contact is attached to suitable mandator.
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 @Deprecated
 public abstract class MandatorAwareContactFilter extends AbstractAttributedValueFilter implements CollectionCheckingValueFilter {
 
+	/**
+	 * Name of the mandator attribute.
+	 */
 	public static final String MANDATOR_ATTRIBUTE = "mandator";
 
 	/**
@@ -92,11 +95,17 @@ public abstract class MandatorAwareContactFilter extends AbstractAttributedValue
         return true;
 	}
 	
+	/**
+	 * Hook for checks of a single value independent of the mandator.
+	 */
 	protected boolean checkBasics(TLObject anAttributed, EditContext editContext,
 			Object anObject) {
 		return true;
 	}
 	
+	/**
+	 * The values of the given list passing {@link #checkBasics(TLObject, EditContext, Object)}.
+	 */
 	protected List checkBasics(TLObject anAttributed, EditContext editContext,
 			FormContext aContext, List aList) {
     	List theRes = new ArrayList();
@@ -114,7 +123,7 @@ public abstract class MandatorAwareContactFilter extends AbstractAttributedValue
     }
 	
     /**
-	 * Accept the value if it is a CompanyContact that may act as a Client
+	 * Accept the value if it is a company contact that may act as a Client
 	 */
     @Override
 	public boolean accept(Object anObject, EditContext editContext) {
@@ -139,7 +148,8 @@ public abstract class MandatorAwareContactFilter extends AbstractAttributedValue
     }
 
 	/**
-	 * Check Mandator on a collection of MandatorAware objects and return the matching objects
+	 * Check Mandator on a collection of {@link MandatorAware} objects and return the matching
+	 * objects
 	 * 
 	 * @param anAttributed
 	 *        the attibuted (e.g. a Contract). May be <code>null</code> in a search (update
@@ -195,6 +205,9 @@ public abstract class MandatorAwareContactFilter extends AbstractAttributedValue
         return aContactList;
 	}
         
+	/**
+	 * Whether the given edit context is a search.
+	 */
 	public static boolean isSearch(TLObject anAttributed, EditContext editContext) {
 		boolean isSearch = false;
 
@@ -204,6 +217,9 @@ public abstract class MandatorAwareContactFilter extends AbstractAttributedValue
 		return isSearch;
 	}
 
+	/**
+	 * The mandator selected in the given edit context.
+	 */
 	public static Mandator getMandator(TLObject anAttributed, EditContext editContext) {
 		if (editContext != null) {
 			try {

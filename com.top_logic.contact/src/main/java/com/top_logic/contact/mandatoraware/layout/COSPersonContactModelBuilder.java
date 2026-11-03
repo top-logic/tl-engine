@@ -27,7 +27,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The COSCompanyContactModelBuilder is mandatoraware
+ * The {@link COSPersonContactModelBuilder} is mandator aware.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -52,6 +52,9 @@ public class COSPersonContactModelBuilder extends PersonContactModelBuilder {
         return (((MandatorAware) anObject).getMandator());
     }
     
+    /**
+     * The person contacts of the given mandator.
+     */
     protected List retrieveListFromModel(LayoutComponent aComponent, Object aModel) {
         try {
 			Collection theColl = AttributeOperations.getReferers((Wrapper) aModel, this.getMandatorMetaAttribute());

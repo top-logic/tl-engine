@@ -22,7 +22,7 @@ import com.top_logic.contact.business.CSVImporter;
  * 
  * This is a Customer specific component and needs modifications for generic 
  * (if possible) usage. The customer wishes to compare these with existing 
- *  CompanyContacts and / or ContractNumbers...) 
+ *  company contacts and / or contract numbers...)
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
@@ -45,7 +45,7 @@ public class SAP_CSVSupplierImporter extends CSVImporter {
     protected Map sapRecords;
 
     /** 
-     * Create a new SAPSupplierImporter for given file
+     * Create a new {@link SAP_CSVSupplierImporter} for given file
      * 
      * @param deleteWhenDone when true file will be deleted after import.
      */
@@ -71,7 +71,7 @@ public class SAP_CSVSupplierImporter extends CSVImporter {
     }
     
     /** 
-     * Overriden to create a SimpleCSVTokenizer for ';'.
+     * Overriden to create a {@link SimpleCSVTokenizer} for ';'.
      */
     @Override
 	protected SimpleCSVTokenizer createTokenizer(String firstLine) {
@@ -81,7 +81,7 @@ public class SAP_CSVSupplierImporter extends CSVImporter {
     }
     
     /** 
-     * Create the sapRecord Map based on size of importFile.
+     * Create the SAP record map based on size of the import file.
      */
     @Override
 	protected void setupImport() {
@@ -94,7 +94,7 @@ public class SAP_CSVSupplierImporter extends CSVImporter {
     }
 
     /** 
-     * Create a new SAPSupplierRecord by parsing the given CsvToken
+     * Create a new {@link SAPSupplierRecord} by parsing the given tokenizer.
      */
     @Override
 	protected void importLine(String aLine, SimpleCSVTokenizer aCsvToken)

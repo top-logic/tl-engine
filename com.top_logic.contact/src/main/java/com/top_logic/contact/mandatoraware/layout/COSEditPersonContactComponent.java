@@ -44,6 +44,9 @@ import com.top_logic.tool.execution.ExecutableState;
  */
 public class COSEditPersonContactComponent extends EditPersonContactComponent {
 
+	/**
+	 * Name of the lead buyer field.
+	 */
 	public static final String PARAM_LEAD_BUYER = "leadBuyer";
 
 	/**
@@ -60,7 +63,7 @@ public class COSEditPersonContactComponent extends EditPersonContactComponent {
 	}
 
     /**
-	 * Generate a COSEditPersonContactComponent from XML.
+	 * Generate a {@link COSEditPersonContactComponent} from XML.
 	 */
 	public COSEditPersonContactComponent(InstantiationContext context, Config someAttrs) throws ConfigurationException {
 		super(context, someAttrs);
@@ -124,8 +127,14 @@ public class COSEditPersonContactComponent extends EditPersonContactComponent {
         return theResult;
     }
 
+	/**
+	 * Switches to edit mode for contacts.
+	 */
 	public static class ContactSwitchEditCommandHandler extends SwitchEditCommandHandler {
 
+        /**
+         * Command ID of this handler.
+         */
         public static final String COMMAND_ID = "ContactSwitchEditCommand";
 
 		public ContactSwitchEditCommandHandler(InstantiationContext context, Config config) {

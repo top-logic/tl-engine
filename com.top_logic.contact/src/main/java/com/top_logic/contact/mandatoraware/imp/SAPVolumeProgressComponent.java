@@ -13,13 +13,19 @@ import com.top_logic.basic.sched.Batch;
 import com.top_logic.mig.html.layout.ProgressComponent;
 
 /**
- * Show the Progress of the SAPVolumeImporter.
+ * Show the Progress of the {@link SAPVolumeImporter}.
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public class SAPVolumeProgressComponent extends ProgressComponent {
 
+    /**
+     * Configuration of the {@link SAPVolumeProgressComponent}.
+     */
     public interface Config extends ProgressComponent.Config {
+		/**
+		 * Whether the volumes are imported for the selected mandator only.
+		 */
 		@Name(XML_ATTRIBUTE_MANDATORE_AWARE)
 		@BooleanDefault(true)
 		boolean getMandatorAware();
@@ -27,12 +33,15 @@ public class SAPVolumeProgressComponent extends ProgressComponent {
 
 	/** Copy of model actually found in scheduler */
     protected transient Batch model;
-	/** Copy of model actually stored in AssitentComponenet */
+	/** Copy of model actually stored in the assistant component */
 	public static final String XML_ATTRIBUTE_MANDATORE_AWARE = "mandatorAware";
+	/**
+	 * See {@link Config#getMandatorAware()}.
+	 */
 	protected boolean mandatorAware;
     
     /** 
-     * Create a new SAPVolumeProgressComponent from XML.
+     * Create a new {@link SAPVolumeProgressComponent} from XML.
      */
     public SAPVolumeProgressComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);

@@ -21,10 +21,15 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InViewModeExecutable;
 
 /**
+ * Opens the dialog for creating a contact, if the selected mandator allows contacts.
+ * 
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */
 public class COSAddContactOpenDialogHandler extends OpenModalDialogCommandHandler {
 
+	/**
+	 * Configuration of the {@link COSAddContactOpenDialogHandler}.
+	 */
 	public interface Config extends OpenModalDialogCommandHandler.Config {
 
 		@Override
@@ -41,7 +46,13 @@ public class COSAddContactOpenDialogHandler extends OpenModalDialogCommandHandle
 	}
 	
 	
+	/**
+	 * Rule allowing the creation of contacts only for mandators that allow contacts.
+	 */
 	public static class MandatorAllowsCreateExecutable implements ExecutabilityRule {
+	    /**
+	     * Singleton instance of this class.
+	     */
 	    public static final ExecutabilityRule INSTANCE = new MandatorAllowsCreateExecutable();
 	    
 		@Override

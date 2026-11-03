@@ -16,7 +16,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Create PersonContacts in COS adding a Mandator info.
+ * Create person contacts in COS adding a Mandator info.
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */

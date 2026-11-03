@@ -26,7 +26,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The ContactSearchFilterSupport adds support for mandator filters in the
+ * The {@link ContactSearchFilterSupport} adds support for mandator filters in the
  * contact search. The default configuration would create multi selection fields
  * for the mandator filter. This is not wanted for purchasing. so the multi
  * selection fields have to be replaced by single selection fields and their
@@ -36,8 +36,14 @@ import com.top_logic.model.TLStructuredTypePart;
  */
 public class ContactSearchFilterSupport extends SearchFilterSupport {
    
+    /**
+     * Singleton instance of this class.
+     */
     public static final ContactSearchFilterSupport INSTANCE = new ContactSearchFilterSupport();
     
+	/**
+	 * Annotation storing the name of the mandator attribute.
+	 */
 	public static final Property<String> MANDATOR_CONSTANT = TypedAnnotatable.property(String.class, "mandatorAttributeName");
 
 	@Override

@@ -12,7 +12,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.progress.AJAXProgressComponent;
 
 /**
- * Show the Progress of the ExcelSupplierImport.
+ * Show the Progress of the Excel supplier import.
  * 
  * This is the GUI view into the {@link ExcelSupplier20060529Importer}.
  * 
@@ -20,11 +20,20 @@ import com.top_logic.layout.progress.AJAXProgressComponent;
  */
 public class ExcelSupplierImportProgress extends AJAXProgressComponent {
 
+	/**
+	 * Configuration of the {@link ExcelSupplierImportProgress}.
+	 */
 	public interface Config extends AJAXProgressComponent.Config {
+		/**
+		 * Whether only new suppliers are added.
+		 */
 		@Name(XML_ATTRIBUTE_DELTA_IMPORT)
 		@BooleanDefault(true)
 		boolean getDeltaImport();
 
+		/**
+		 * Whether the data is imported as suppliers (otherwise as clients).
+		 */
 		@Name(XML_ATTRIBUTE_SUPPLIER_IMPORT)
 		@BooleanDefault(true)
 		boolean getSupplierImport();
@@ -42,7 +51,7 @@ public class ExcelSupplierImportProgress extends AJAXProgressComponent {
     protected transient boolean isDeltaImport;
     
     /** 
-     * Create a new SAPVolumeProgressComponent from XML.
+     * Create a new {@link ExcelSupplierImportProgress} from XML.
      */
     public ExcelSupplierImportProgress(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);

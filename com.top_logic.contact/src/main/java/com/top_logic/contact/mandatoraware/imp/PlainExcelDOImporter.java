@@ -10,6 +10,8 @@ import java.util.Properties;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
+ * Imports data objects from an Excel file without checking the columns.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class PlainExcelDOImporter extends AbstractExcelDOImporter {

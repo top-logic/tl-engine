@@ -35,20 +35,32 @@ public class ImportSAPController extends AbstractAssistentController {
 	 */
 	public interface Config extends AbstractAssistentController.Config {
 
+		/**
+		 * Name of the step showing the imported data.
+		 */
 		@Mandatory
 		ComponentName getShowTablesStep();
 
+		/**
+		 * Name of the final step.
+		 */
 		@Mandatory
 		ComponentName getFinishStep();
 
+		/**
+		 * Name of the upload step.
+		 */
 		@Mandatory
 		ComponentName getUploadStep();
 
+		/**
+		 * Name of the step showing the import progress.
+		 */
 		@Mandatory
 		ComponentName getImportProgressStep();
 	}
 
-	/** Key to store the Map of imported SAPRecords in the AssistentComponenet */
+	/** Key to store the Map of imported SAPRecords in the assistant component */
     public final static String SAP_SUPPLIERS = SAPSupplierRecord.class.getName() + ".list";
     
 	public ImportSAPController(InstantiationContext context, Config config) {
@@ -113,7 +125,7 @@ public class ImportSAPController extends AbstractAssistentController {
      * Add an Upload Command as part of switching to the next step.
      * 
      * @param aCurrentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command handler to perform before the switch action. May be null.
      */
     @Override
 	public CommandHolder getAdditionaleCommandForNext(ComponentName aCurrentStepName) {
@@ -126,7 +138,7 @@ public class ImportSAPController extends AbstractAssistentController {
     }
  
     /** 
-     * Check if CSVFileUploadComponent created a file an eventually delete it.
+     * Check if {@link CSVFileUploadComponent} created a file an eventually delete it.
      */
     @Override
 	public void dialogFinished() {
@@ -137,7 +149,7 @@ public class ImportSAPController extends AbstractAssistentController {
     }
     
     /** 
-     * disableForwardButton when when ProgressInfo is not finished.
+     * {@link #disableForwardButton(ComponentName)} when when {@link ProgressInfo} is not finished.
      */
     @Override
 	public boolean disableForwardButton(ComponentName aCurrentStepName) {

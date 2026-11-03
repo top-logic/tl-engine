@@ -7,7 +7,7 @@ package com.top_logic.contact.mandatoraware;
 
 /** 
  * Constants for additional attributes of
- * CompanyContacts in COS
+ * {@link com.top_logic.contact.business.CompanyContact}s in COS.
  *
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
@@ -27,24 +27,39 @@ public interface COSContactConstants {
      * Name used for the default person and company contacts.
      */
     public static final String DEFAULT_CONTACT_NAME       = "Default";
+    /**
+     * First name of the default contact.
+     */
     public static final String DEFAULT_CONTACT_FIRST_NAME = "Person";
+    /**
+     * Name of the default supplier.
+     */
     public static final String DEFAULT_CONTACT_SUPPLIER   = DEFAULT_CONTACT_NAME + " Supplier";
+    /**
+     * Name of the default client.
+     */
     public static final String DEFAULT_CONTACT_CLIENT     = DEFAULT_CONTACT_NAME + " Client";
 
-    /** Name of CurrencyAttribute, compare to contactFactoryConfiguration.xml */
+    /** Name of currency attribute, compare to <code>contactFactoryConfiguration.xml</code>. */
     public static final String ATTRIBUTE_CURRENCY   = "currency";
     
-    /** Name of volme attribute, compare to contactFactoryConfiguration.xml */
+    /** Name of volume attribute, compare to <code>contactFactoryConfiguration.xml</code>. */
     public static final String ATTRIBUTE_VOLUME     = "volume";
 
     /** 
-     * Name of optional cage attribute, compare to contactFactoryConfiguration.xml 
+     * Name of optional cage attribute, compare to <code>contactFactoryConfiguration.xml</code>.
      * 
      * (Commercial And Government Entity-Code)
      */
     public static final String ATTRIBUTE_CAGE       = "cage";
 
+    /**
+     * Name of the e-mail attribute.
+     */
     public static final String ATTRIBUTE_EMAIL      = "email";
+    /**
+     * Name of the department attribute.
+     */
     public static final String ATTRIBUTE_DEPT       = "department";
     
     /** the mandator to which the contact is attached. */

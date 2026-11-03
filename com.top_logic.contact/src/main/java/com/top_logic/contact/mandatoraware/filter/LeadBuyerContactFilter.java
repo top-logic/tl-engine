@@ -19,7 +19,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Get suitable PersonContacts for leadbuyership.
+ * Get suitable {@link com.top_logic.contact.business.PersonContact}s for leadbuyership.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */

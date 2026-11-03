@@ -9,6 +9,8 @@ import com.top_logic.contact.business.CompanyContact;
 import com.top_logic.contact.mandatoraware.COSContactConstants;
 
 /**
+ * Filter accepting companies that act as supplier.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated

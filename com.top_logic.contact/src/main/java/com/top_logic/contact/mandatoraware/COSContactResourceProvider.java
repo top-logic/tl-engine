@@ -57,7 +57,7 @@ public class COSContactResourceProvider extends ContactResourceProvider {
     }
 
     /** 
-     * Return the tool tip Text for a CompanyContact.
+     * Return the tool tip Text for a {@link CompanyContact}.
      */
     @Override
 	protected ResKey getTooltipForCompany(CompanyContact aCompany) {

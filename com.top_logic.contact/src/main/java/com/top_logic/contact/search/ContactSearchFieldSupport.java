@@ -28,6 +28,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * Support for the fields of the contact search, replacing the mandator field.
+ * 
  * @author    <a href=mailto:tbe@top-logic.com>tbe</a>
  */
 public class ContactSearchFieldSupport extends SearchFieldSupport {

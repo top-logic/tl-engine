@@ -16,7 +16,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 
 /**
- * Generate {@link PersonContact}s that are bound to a part of {@link Mandator}-Structure
+ * Generate {@link PersonContact}s that are bound to a part of {@link Mandator}-Structure.
  * 
  * @author <a href=mailto:kbu@top-logic.com>kbu</a>
  */

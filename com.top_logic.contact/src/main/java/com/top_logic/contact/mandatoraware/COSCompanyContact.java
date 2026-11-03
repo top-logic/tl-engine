@@ -22,25 +22,37 @@ import com.top_logic.knowledge.wrap.currency.Currency;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
- * Extends the CompanyContact for COS Specific values.
+ * Extends the {@link CompanyContact} for COS Specific values.
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public class COSCompanyContact extends CompanyContact implements COSContactConstants, MandatorAware {
 
+    /**
+     * Name of the name attribute.
+     */
     public static final String ATTRIBUTE_NAME       = CompanyContact.NAME_ATTRIBUTE;
 
+    /**
+     * Name of the attribute holding the SAP number.
+     */
     public static final String ATTRIBUTE_SAP_NR     = CompanyContact.FKEY2_ATTRIBUTE;
     
+	/**
+	 * Name of the foreign key attribute.
+	 */
 	public static final String ATTRIBUTE_FKEY = CompanyContact.FKEY_ATTRIBUTE;
     
+    /**
+     * Name of the mandator attribute.
+     */
     public static final String ATTRIBUTE_MANDATOR   = COSContactConstants.ATTRIBUTE_MANDATOR;
 
     /** Lead Buyer attribute. */
     public static final String ATTRIBUTE_LEAD_BUYER = "leadBuyer";
 	
     /** 
-     * CTor as of Contract with WrapperFactory.
+     * CTor as of Contract with wrapper factory.
      */
     public COSCompanyContact(KnowledgeObject ko) {
         super(ko);
@@ -107,10 +119,11 @@ public class COSCompanyContact extends CompanyContact implements COSContactConst
 	 * Get the contacts of the given type whose fkey no. matches the given one
 	 * and one of the given mandators
 	 * 
-	 * @param aType the contact type (ContactFactory.PERSON_TYPE/COMPANY_TYPE(default))
+	 * @param aType the contact type ({@link ContactFactory#PERSON_TYPE} or {@link
+	 *        ContactFactory#COMPANY_TYPE} (default))
 	 * @param fKey may be null
 	 * @param aMandatorList may be null and will not be checked then
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	public static List getListByFKey(String aType, String fKey, List aMandatorList) {
 		List theContacts =
@@ -119,6 +132,9 @@ public class COSCompanyContact extends CompanyContact implements COSContactConst
 	   return getFilteredList(theContacts, aMandatorList);
 	}
 
+	/**
+	 * The company with the given SAP number.
+	 */
 	public static COSCompanyContact getBySAP(KnowledgeBase aKB, String aSAPNo) {
 	    final AbstractContact theContact = CompanyContact.getByForeignKey2(aKB, SAPFormatHelper.fillSAPNo(aSAPNo));
 
@@ -126,11 +142,12 @@ public class COSCompanyContact extends CompanyContact implements COSContactConst
 	}
 
 	/**
-	 * Fast way to fetch some AbstractContacts by their SAP No.
+	 * Fast way to fetch some {@link AbstractContact}s by their SAP No.
 	 * 
-	 * @param aType the contact type (ContactFactory.PERSON_TYPE/COMPANY_TYPE(default))
+	 * @param aType the contact type ({@link ContactFactory#PERSON_TYPE} or {@link
+	 *        ContactFactory#COMPANY_TYPE} (default))
 	 * @param aSAPNo may be null and will be ignored then.
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	public static List getListBySAP (String aType, String aSAPNo, Mandator aMandator) {
 	   List theContacts  = ContactFactory.getInstance().getAllContactsWithAttribute(aType, AbstractContact.FKEY2_ATTRIBUTE, aSAPNo, false);
@@ -138,12 +155,13 @@ public class COSCompanyContact extends CompanyContact implements COSContactConst
 	}
 	
 	/**
-	 * Fast way to fetch some AbstractContacts by their SAP No.
+	 * Fast way to fetch some {@link AbstractContact}s by their SAP No.
 	 * 
-	 * @param aType the contact type (ContactFactory.PERSON_TYPE/COMPANY_TYPE(default))
+	 * @param aType the contact type ({@link ContactFactory#PERSON_TYPE} or {@link
+	 *        ContactFactory#COMPANY_TYPE} (default))
 	 * @param aSAPNo may be null and will be ignored then.
 	 * @param aMandatorList the list of allowed Mandators as owners of the contacts. No check if <code>null</code>
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	public static List getListBySAP (String aType, String aSAPNo, List aMandatorList) {
 	   List theContacts  = ContactFactory.getInstance().getAllContactsWithAttribute(aType, AbstractContact.FKEY2_ATTRIBUTE, aSAPNo, false);
@@ -151,11 +169,12 @@ public class COSCompanyContact extends CompanyContact implements COSContactConst
 	}
 	
 	/**
-	 * Fast way to fetch some AbstractContacts by their Mandator.
+	 * Fast way to fetch some {@link AbstractContact}s by their Mandator.
 	 * 
-	 * @param aType the contact type (ContactFactory.PERSON_TYPE/COMPANY_TYPE(default))
+	 * @param aType the contact type ({@link ContactFactory#PERSON_TYPE} or {@link
+	 *        ContactFactory#COMPANY_TYPE} (default))
 	 * @param aMandatorList the list of allowed Mandators as owners of the contacts. No check if <code>null</code>
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	public static List getListByMandators (String aType, List aMandatorList) {
 	   List theContacts  = ContactFactory.getInstance().getAllContacts(aType);
@@ -167,7 +186,7 @@ public class COSCompanyContact extends CompanyContact implements COSContactConst
 	 * 
 	 * @param aContactList the contact list
 	 * @param aMandatorList may be null and will not be checked then
-	 * @return the list of AbstractContacts
+	 * @return the list of {@link AbstractContact}s
 	 */
 	protected static List getFilteredList(List aContactList, List aMandatorList) {
 		if (aContactList == null || aMandatorList == null) {

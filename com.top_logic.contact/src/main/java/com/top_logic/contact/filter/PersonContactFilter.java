@@ -10,7 +10,7 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ContextFreeAttributeValueFilter;
 
 /**
- * Accept the value if it is a PersonContact
+ * Accept the value if it is a {@link PersonContact}
  * 
  * TODO KHA/HBU use some generic class filter.
  * 
@@ -20,14 +20,14 @@ import com.top_logic.element.meta.kbbased.filtergen.ContextFreeAttributeValueFil
 public class PersonContactFilter extends ContextFreeAttributeValueFilter {
 
     /**
-     * Default public CTor for FilterFactory
+     * Default public CTor for filter factory.
      */
     public PersonContactFilter() {
         super();
     }
 
     /**
-     * Accept the value if it is a PersonContact
+     * Accept the value if it is a {@link PersonContact}
      * 
      * @see com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter#accept(Object, EditContext)
      */

@@ -35,9 +35,15 @@ public class ExcelSupplierImportController extends AbstractAssistentController {
 	 */
 	public interface Config extends AbstractAssistentController.Config {
 
+		/**
+		 * Name of the upload step.
+		 */
 		@Name("uploadStep")
 		ComponentName getUploadStep();
 
+		/**
+		 * Name of the import step.
+		 */
 		@Name("uploadStep")
 		ComponentName getImportStep();
 	}
@@ -115,7 +121,7 @@ public class ExcelSupplierImportController extends AbstractAssistentController {
      * Add an Upload Command as part of switching to the next step.
      * 
      * @param aCurrentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command handler to perform before the switch action. May be null.
      */
     @Override
 	public CommandHolder getAdditionaleCommandForNext(ComponentName aCurrentStepName) {
@@ -128,7 +134,7 @@ public class ExcelSupplierImportController extends AbstractAssistentController {
     }
  
     /** 
-     * Check if CSVFileUploadComponent created a file an eventually delete it.
+     * Check if {@link CSVFileUploadComponent} created a file an eventually delete it.
      */
     @Override
 	public void dialogFinished() {
@@ -155,7 +161,7 @@ public class ExcelSupplierImportController extends AbstractAssistentController {
     }
 
     /** 
-     * DisableForwardButton when whie ProgressInfo is not finished.
+     * Disable the forward button while {@link ProgressInfo} is not finished.
      */
     @Override
 	public boolean disableForwardButton(ComponentName aCurrentStepName) {
@@ -167,6 +173,8 @@ public class ExcelSupplierImportController extends AbstractAssistentController {
     }
     
     /**
+     * Whether the given step is the import step.
+     * 
      * @param aStepName a step name
      * @return true if the step name is the import step name
      */
@@ -175,6 +183,8 @@ public class ExcelSupplierImportController extends AbstractAssistentController {
     }
     
     /**
+     * Whether the given step is the upload step.
+     * 
      * @param aStepName a step name
      * @return true if the step name is the upload step name
      */

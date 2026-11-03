@@ -26,7 +26,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.currency.Currency;
 
 /**
- * Import SAP Volume data into existing COSCompanyContacts.
+ * Import SAP Volume data into existing {@link COSCompanyContact}s.
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
@@ -41,13 +41,13 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
      protected String COLUMNS[] = { 
         "LIFNR", "CURRENCY", "VOLUME" };
 
-     /** The DatasourceName configured to import from */
+     /** The data source name configured to import from */
      protected String importFrom;
      
      /** Map of currencies, indexed by code */
      protected Map currencies;
      
-     /** The KnowledgeBase to import into */
+     /** The {@link KnowledgeBase} to import into */
      protected transient KnowledgeBase kBase;
 
      /** 
@@ -69,7 +69,7 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
      }*/
      
      /**
-      * Create a SAPVolumeImporter impoerting from given DataSourceName.
+      * Create a {@link SAPVolumeImporter} impoerting from given data source name.
       */
 	public SAPVolumeImporter(String name, String aDSN) {
 		super(name);
@@ -99,9 +99,9 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
     }
      
      /** 
-      * Retrieve the List of DataObjects we are going to import.
+      * Retrieve the List of {@link DataObject}s we are going to import.
       * 
-      * This allow test classes to supply a DataObject for testing.
+      * This allow test classes to supply a {@link DataObject} for testing.
       */
      @Override
 	protected List getImportObjects(Mandator aMandator) throws DatabaseAccessException, DataObjectException {
@@ -111,7 +111,7 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
      }
      
      /** 
-      * Check that the first COLUMNS are Attributes of aMeta.
+      * Check that the first COLUMNS are Attributes of {@code aMeta}.
       * 
       * @throws DataObjectException when format is not OK.
       */
@@ -125,7 +125,7 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
          }
      }
      /** 
-      * Import a single DataObject.
+      * Import a single {@link DataObject}.
       */
      @Override
 	protected void importItem(DataObject aDo, Mandator aMandator) throws Exception {
@@ -168,7 +168,7 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
      }
      
      /**
-      * Fill up given sapNr with zeros to 10 places.
+      * Fill up given {@code sapNr} with zeros to 10 places.
       * 
       * TODO KHA may not be needed...
       */
@@ -200,7 +200,7 @@ public class SAPVolumeImporter extends DataObjectImportTask  {
      
 
      /** 
-      * Overriden to clear the kBase and the kBase.
+      * Overriden to clear the {@link #kBase}.
       */
      @Override
 	protected void tearDownImport() {

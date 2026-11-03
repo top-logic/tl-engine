@@ -39,6 +39,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.element.AccordionElement;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Tests {@link AccordionElement}: the sections an {@code <accordion>} is written with, what they

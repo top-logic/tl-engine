@@ -39,6 +39,7 @@ import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -692,7 +693,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			FieldModel model, ReactFieldControlProvider fieldControl) {
 		return fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
 			.setOrdered(multiple && part.isOrdered())
-			.setOptionOrder(optionOrder(part, fieldControl));
+			.setOptionOrder(optionOrder(part, fieldControl))
+			.setOptionLabels(optionLabels(part, fieldControl));
 	}
 
 	/**
@@ -1465,6 +1467,30 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return AttributeOptions.byLabel();
 		}
 		return AttributeOptions.orderFor(part);
+	}
+
+	/**
+	 * The labels the options of the given attribute and its values are displayed with, decided by
+	 * the source the options come from like their
+	 * {@link #optionOrder(TLStructuredTypePart, ReactFieldControlProvider) order}.
+	 *
+	 * <p>
+	 * The values of an option source configured for the control of the attribute are labeled by
+	 * themselves. The options of the attribute itself are labeled as
+	 * {@link AttributeOptions#labelsFor(TLStructuredTypePart)} says.
+	 * </p>
+	 *
+	 * @param fieldControl
+	 *        The control the field names, {@code null} for none.
+	 * @return The labels of the options, or {@code null} to label them the way any object is
+	 *         labeled.
+	 */
+	private LabelProvider optionLabels(TLStructuredTypePart part, ReactFieldControlProvider fieldControl) {
+		if (configuredProvider(part, fieldControl) instanceof SelectControlProvider select
+			&& configuredOptions(part, select) != null) {
+			return null;
+		}
+		return AttributeOptions.labelsFor(part);
 	}
 
 	/**

@@ -132,6 +132,19 @@
 							<free-entry/>
 						</annotations>
 					</property>
+					<property name="channel"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<options-by-expression function="t -&gt; ['email', 'phone', 'portal']">
+									<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+										label="key -&gt; switch ($key) { 'email': #('E-mail'@en, 'E-Mail'@de); 'phone': #('Telephone'@en, 'Telefon'@de); 'portal': #('Customer portal'@en, 'Kundenportal'@de); default: $key; }"
+									/>
+								</options-by-expression>
+							</options>
+						</annotations>
+					</property>
 				</attributes>
 			</class>
 			<class name="Keyword">

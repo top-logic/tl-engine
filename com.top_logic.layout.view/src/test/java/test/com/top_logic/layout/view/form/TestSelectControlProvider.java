@@ -237,6 +237,17 @@ public class TestSelectControlProvider extends TestCase {
 		assertEquals(FRUITS_BY_LABEL, offered(fruits(provider(SelectDisplay.CHIPS), byLabel())));
 	}
 
+	/** Labels the field states for its options label the options handed to the client. */
+	public void testTheOptionLabelsOfTheFieldLabelTheOptions() {
+		FieldSpec field = FieldSpec.of(String.class, LABEL)
+			.setOptionLabels(option -> option.toString().toUpperCase());
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, FRUITS, false);
+
+		ReactControl control = provider(SelectDisplay.CHIPS).createControl(_context, field, model);
+
+		assertEquals(List.of("PEAR", "APPLE", "FIG"), offered((ReactDropdownSelectControl) control));
+	}
+
 	/** The configuration of a provider offering its options in the given order, as chips. */
 	private static SelectControlProvider.Config orderConfig(OptionOrder order) throws Exception {
 		return readConfig("<input-control "

@@ -20,6 +20,7 @@ import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.element.meta.kbbased.storage.mappings.JavaEnumMapping;
 import com.top_logic.layout.LabelComparator;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.provider.MetaResourceProvider;
@@ -236,6 +237,28 @@ public class AttributeOptions {
 			return null;
 		}
 		return byLabel();
+	}
+
+	/**
+	 * The labels the options of the given attribute and its values are displayed with, or
+	 * {@code null} to label them the way any object is labeled.
+	 *
+	 * <p>
+	 * The source of the options decides, as it decides their order: an options annotation states
+	 * labels of its own through {@link Generator#getOptionLabels()}, see
+	 * {@link OptionsByExpression.Config#getOptionLabels()}. Options of any other source are
+	 * labeled by themselves.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute whose options are offered, {@code null} for none.
+	 */
+	public static LabelProvider labelsFor(TLStructuredTypePart part) {
+		if (part == null) {
+			return null;
+		}
+		Generator generator = AttributeOperations.getOptions(part);
+		return generator == null ? null : generator.getOptionLabels();
 	}
 
 	/**

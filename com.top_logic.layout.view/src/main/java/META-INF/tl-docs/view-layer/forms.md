@@ -39,6 +39,29 @@ order it computes (unless the `<value-input>` states an `option-order` of its ow
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
 
+The source of the options also decides their labels, through `FieldSpec.getOptionLabels()` (`null`
+for the label any object has, `MetaLabelProvider`): an `options-by-expression` annotation states
+labels of its own with `option-labels` (`Generator#getOptionLabels()`, read by
+`AttributeOptions.labelsFor(part)`). This suits options that are keys - a text naming an entry of a
+registry - which are displayed by what they stand for while the value stays the key. The labels
+reach the list of options, the selected value, the read-only display of the field, and the table
+column of the attribute, which is sorted and searched by them; an alphabetical order sorts by them,
+the images stay those of the options.
+
+```xml
+<property name="providerType" type="tl.core:String">
+	<annotations>
+		<options>
+			<options-by-expression function="x -> ['gitea', 'git']">
+				<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+					label="key -> if($key == 'git', #('Git server'@en, 'Git-Server'@de), 'Gitea')"
+				/>
+			</options-by-expression>
+		</options>
+	</annotations>
+</property>
+```
+
 The options of a `<field>` of a reference follow the model while the field is displayed: an instance
 of the class the reference points to that is created, changed or deleted - by this user in another
 view, or by another user - computes the options again (`AttributeSelectFieldModel#observeWhileDisplayed`,

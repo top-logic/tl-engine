@@ -540,6 +540,7 @@
 										<value>$row.get(`demo.tickets:Ticket#keywords`).map(k -&gt; $k.get(`demo.tickets:Keyword#name`) + ' (' + if($k.get(`demo.tickets:Keyword#catalog`) == null, '-', label($k.get(`demo.tickets:Keyword#catalog`))) + ')').join(', ')</value>
 									</computed-column>
 									<column attribute="estimate"/>
+									<column attribute="channel"/>
 									<computed-column name="comments"
 										type="tl.core:Integer"
 									>
@@ -679,6 +680,7 @@
 								</input-control>
 							</field>
 							<field attribute="estimate"/>
+							<field attribute="channel"/>
 							<commands>
 								<generic-command
 									image="css:bi bi-pencil"

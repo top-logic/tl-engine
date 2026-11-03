@@ -27,6 +27,7 @@ import com.top_logic.element.meta.kbbased.storage.StringSetStorage;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.provider.CombinedResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -430,8 +431,11 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		// A resource provider rather than a label provider: an option is presented by its label and
 		// its image, and the image is what a plain label provider cannot answer - the control drops
 		// it for want of one. The two registries of LabelProviderService fall back to each other,
-		// so a type registered only for its label is labelled exactly as before.
-		LabelProvider labels = MetaResourceProvider.INSTANCE;
+		// so a type registered only for its label is labelled exactly as before. Labels the source of
+		// the options states replace the labels, the images stay the ones of the options.
+		LabelProvider optionLabels = field.getOptionLabels();
+		LabelProvider labels = optionLabels == null ? MetaResourceProvider.INSTANCE
+			: new CombinedResourceProvider(MetaResourceProvider.INSTANCE, optionLabels);
 		Comparator<?> optionOrder =
 			_order == null ? field.getOptionOrder() : AttributeOptions.comparator(_order);
 		// An ordered attribute keeps the order the user gives its selection; an unordered one is

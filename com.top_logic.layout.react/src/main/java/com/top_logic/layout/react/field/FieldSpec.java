@@ -594,10 +594,26 @@ public final class FieldSpec {
 	}
 
 	/**
-	 * Labels for the {@link #getOptions() options}, or {@code null} to label them generically.
+	 * Labels for the options of a value chosen from options and for the values chosen, or
+	 * {@code null} to label them generically.
+	 *
+	 * <p>
+	 * The source of the options decides: options that are keys - a text naming an entry of a
+	 * registry, say - are displayed by labels of their own, while the value stays the key.
+	 * </p>
 	 */
 	public LabelProvider getOptionLabels() {
 		return _optionLabels;
+	}
+
+	/**
+	 * Sets the {@link #getOptionLabels() labels} of the options.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setOptionLabels(LabelProvider optionLabels) {
+		_optionLabels = optionLabels;
+		return this;
 	}
 
 	/**

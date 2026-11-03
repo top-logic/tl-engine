@@ -103,47 +103,6 @@ com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missi
 com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.getAttribute
 com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.getMetaElement
 com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.java: Missing documentation: com.top_logic.element.boundsec.manager.rule.config.PathElementConfig.isInverse
-com.top_logic.element.comment.layout.BulletinBoardRenderer.java: Missing documentation: com.top_logic.element.comment.layout.BulletinBoardRenderer
-com.top_logic.element.comment.layout.BulletinBoardRenderer.java: Missing documentation: com.top_logic.element.comment.layout.BulletinBoardRenderer.INSTANCE
-com.top_logic.element.comment.layout.BulletinBoardRenderer.java: Missing documentation: com.top_logic.element.comment.layout.BulletinBoardRenderer.handleBB
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.comment.layout.CommentDialogComponent.NewCommentOpenerHandler
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.Config
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.Config.getEditComment
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.EDIT_COMMENT_XML_ATTRIBUTE
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.NewCommentHandler
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.OwnerExecutabilityRule.COMMAND_ATTRIBUTE
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.OwnerExecutabilityRule.WRAPPER_ATTRIBUTE
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.afterHandleEdit
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.afterHandleNew
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.getBaseComment
-com.top_logic.element.comment.layout.CommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentDialogComponent.getCommentsAttributeName
-com.top_logic.element.comment.layout.CommentResourceProvider.java: Missing documentation: com.top_logic.element.comment.layout.CommentResourceProvider
-com.top_logic.element.comment.layout.CommentResourceProvider.java: Missing documentation: com.top_logic.element.comment.layout.CommentResourceProvider.INSTANCE_COMMENT
-com.top_logic.element.comment.layout.CommentTableComponent.java: Invalid camel case word 'CommentTableComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.Config
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.Config.getAttribute
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.EDIT_COMMENT_COMPONENT_NAME
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.QUOTE_COMMENT_COMPONENT_NAME
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.XML_COMMENTS_ATTRIBUTE
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.getCommentsAttributeName
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.getEditComponentName
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.getEditComponentOpener
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.getNewCommentDialogOpenerCommandId
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.getQuoteComponentName
-com.top_logic.element.comment.layout.CommentTableComponent.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableComponent.getQuoteComponentOpener
-com.top_logic.element.comment.layout.CommentTableModelBuilder.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableModelBuilder
-com.top_logic.element.comment.layout.CommentTableRenderer.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableRenderer.writeCommandButton
-com.top_logic.element.comment.layout.CommentTableRenderer.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableRenderer.writeCommentAdorner
-com.top_logic.element.comment.layout.CommentTableRenderer.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableRenderer.writeCommentContent
-com.top_logic.element.comment.layout.CommentTableRenderer.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableRenderer.writeCommentCreator
-com.top_logic.element.comment.layout.CommentTableRenderer.java: Missing documentation: com.top_logic.element.comment.layout.CommentTableRenderer.writeCommentDate
-com.top_logic.element.comment.layout.ConfiguredCommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.ConfiguredCommentDialogComponent
-com.top_logic.element.comment.layout.ConfiguredCommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.ConfiguredCommentDialogComponent.Config
-com.top_logic.element.comment.layout.ConfiguredCommentDialogComponent.java: Missing documentation: com.top_logic.element.comment.layout.ConfiguredCommentDialogComponent.Config.getCommentAttributeName
-com.top_logic.element.comment.wrap.Comment.java: Missing documentation: com.top_logic.element.comment.wrap.Comment.CONTENT_ATTRIBUTE
-com.top_logic.element.comment.wrap.Comment.java: Missing documentation: com.top_logic.element.comment.wrap.Comment.KO_TYPE
-com.top_logic.element.comment.wrap.Comment.java: Missing documentation: com.top_logic.element.comment.wrap.Comment.getContent
-com.top_logic.element.comment.wrap.Comment.java: Missing documentation: com.top_logic.element.comment.wrap.Comment.setContent
 com.top_logic.element.config.ConfigTypeResolver.java: Missing documentation: com.top_logic.element.config.ConfigTypeResolver.interfaceType
 com.top_logic.element.config.ConfigurationSupport.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.config.ConfigurationSupport.java: Missing documentation: com.top_logic.element.config.ConfigurationSupport.getData
@@ -630,7 +589,6 @@ com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Invalid cam
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Missing documentation: com.top_logic.element.layout.provider.MetaElementLabelProvider
 com.top_logic.element.layout.provider.ZipFolderNameProvider.java: Missing documentation: com.top_logic.element.layout.provider.ZipFolderNameProvider.INSTANCE
 com.top_logic.element.layout.scripting.ChildNamingScheme.java: Missing documentation: com.top_logic.element.layout.scripting.ChildNamingScheme.ChildName
-com.top_logic.element.layout.scripting.CommentNamingScheme.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.scripting.CommentNamingScheme
 com.top_logic.element.layout.scripting.ScriptingElementUtil.java: Invalid camel case word 'ScriptingFramework', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.scripting.ScriptingElementUtil.java: Missing documentation: com.top_logic.element.layout.scripting.ScriptingElementUtil.getMetaElement
 com.top_logic.element.layout.scripting.ScriptingElementUtil.java: Missing documentation: com.top_logic.element.layout.scripting.ScriptingElementUtil.navigateBackwards

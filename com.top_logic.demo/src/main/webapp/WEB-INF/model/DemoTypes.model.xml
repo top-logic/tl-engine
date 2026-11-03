@@ -514,11 +514,6 @@
 					kind="forwards"
 					type="tl.units:AbstractUnit"
 				/>
-				<reference name="comments"
-					kind="forwards"
-					multiple="true"
-					type="tl.comments:Comment"
-				/>
 				<property name="date"
 					type="tl.core:Date"
 				/>
@@ -1996,23 +1991,6 @@
 									<chain>
 										<config-reference name="parent"/>
 										<get-value attribute="complexUnit"/>
-									</chain>
-								</expression-evaluation>
-							</derived-storage>
-						</storage-algorithm>
-					</annotations>
-				</property>
-				<property name="comments"
-					multiple="true"
-					type="tl.comments:Comment"
-				>
-					<annotations>
-						<storage-algorithm>
-							<derived-storage>
-								<expression-evaluation>
-									<chain>
-										<config-reference name="parent"/>
-										<get-value attribute="comments"/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>

@@ -763,33 +763,6 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="tl.comments">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
 					<module name="tl.changelog">
 						<grant
 							inherit="true"

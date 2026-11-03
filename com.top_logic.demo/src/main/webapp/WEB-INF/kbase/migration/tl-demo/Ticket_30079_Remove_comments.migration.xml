@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Removes the demo attributes of type tl.comments:Comment, whose module the engine has removed in
+	tl-element:Ticket_30079_Remove_comments. delete-reference also drops the stored links to the
+	deleted comments.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30079_Remove_comments"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_30079_Remove_comments"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_contact_attribute"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<pre-processors>
+		<delete-reference name="DemoTypes:DemoTypes.A#comments"/>
+		<delete-property name="DemoTypes:DemoTypes.X#comments"/>
+	</pre-processors>
+</migration>

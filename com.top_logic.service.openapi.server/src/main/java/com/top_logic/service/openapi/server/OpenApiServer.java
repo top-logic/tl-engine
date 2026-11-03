@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,6 +78,7 @@ import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticat
 import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.PathItem;
 import com.top_logic.service.openapi.server.impl.ComputationFailure;
+import com.top_logic.service.openapi.server.impl.FailureMessages;
 import com.top_logic.service.openapi.server.impl.ServiceMethodBuilder;
 import com.top_logic.service.openapi.server.layout.OpenAPIExporter;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
@@ -614,14 +614,17 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 
 			responsePlainText(resp, HttpServletResponse.SC_BAD_REQUEST, message);
 		} catch (ComputationFailure ex) {
-			String message = "API request to '" + handler.getPath() + "' failed: " + messages(ex);
+			// The message has been built within the interaction context of the request. The messages
+			// of the causes must not be resolved here, because they may access objects that can only
+			// be loaded within that context.
+			String message = "API request to '" + handler.getPath() + "' failed: " + ex.getMessage();
 			Logger.info(message, OpenApiServer.class);
 
 			responsePlainText(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
 		} catch (AuthenticationFailure ex) {
 			ex.enhanceResponse(resp, handler.getPath());
 		} catch (Throwable ex) {
-			String message = "API request to '" + handler.getPath() + "' failed: " + messages(ex);
+			String message = "API request to '" + handler.getPath() + "' failed: " + FailureMessages.messages(ex);
 			Logger.error(message, ex, OpenApiServer.class);
 
 			responsePlainText(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
@@ -633,43 +636,6 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		response.setContentType("text/plain");
 		response.setCharacterEncoding(StringServices.UTF8);
 		response.getWriter().write(message);
-	}
-
-	private static String messages(Throwable ex) {
-		StringBuilder buffer = new StringBuilder();
-		appendMessages(buffer, new HashSet<>(), ex);
-		return buffer.toString();
-	}
-
-	private static void appendMessages(StringBuilder buffer, Set<String> seenMessages, Throwable ex) {
-		String message = getMessage(ex);
-		if (seenMessages.add(message)) {
-			appendMessage(buffer, message);
-		}
-
-		Throwable cause = ex.getCause();
-		if (cause != null) {
-			appendMessages(buffer, seenMessages, cause);
-		}
-	}
-
-	private static String getMessage(Throwable ex) {
-		String message = ex.getMessage();
-		if (message == null) {
-			message = ex.getClass().getName();
-		}
-		return message;
-	}
-
-	private static void appendMessage(StringBuilder buffer, String message) {
-		int length = buffer.length();
-		if (length > 0) {
-			if (buffer.charAt(length - 1) == '.') {
-				buffer.setLength(length - 1);
-			}
-			buffer.append(": ");
-		}
-		buffer.append(message);
 	}
 
 	private Pair<PathHandler, Map<String, String>> findHandler(String methodName, String pathInfo) {

@@ -69,13 +69,14 @@ The archetype rejects these combinations:
 The generated application contains the model (`WEB-INF/model`), the knowledge base declarations
 (`WEB-INF/kbase`), the configuration (`WEB-INF/conf`), the shell `WEB-INF/views/app.view.xml`
 (React) and/or the folder `WEB-INF/layouts` (classic), the deployment configurations
-`deploy/local` and `deploy/prod`, the Debian package sources `src/main/deb`, a Docker build in
-`src/main/docker`, a test `TestApp`, Eclipse project files and launch configurations (*Start*,
+`deploy/local` and `deploy/prod`, the Debian package sources `src/main/deb`, the
+[container image](doc:docker-image) in `src/main/docker` with its build script `bin/image.sh`, a
+test `TestApp`, Eclipse project files and launch configurations (*Start*,
 *Setup*, *Test*, *Generate*, ...), and the developer overlay `.mvn/jvm.config`,
 `local.conf.xml.template` for local secrets.
 
 A fragment has no deployment, no start configuration and no shell of its own: `web.xml`,
-`app.view.xml`, `deploy`, `src/main/deb`, `src/main/docker`, `local.conf.xml.template`,
+`app.view.xml`, `deploy`, `src/main/deb`, `src/main/docker`, `bin/image.sh`, `local.conf.xml.template`,
 `.mvn/jvm.config` and the *Start* / *Setup* launch configurations are left out; instead it has a
 `META-INF/web-fragment.xml`, and its `metaConf.txt` lists only its own configuration.
 

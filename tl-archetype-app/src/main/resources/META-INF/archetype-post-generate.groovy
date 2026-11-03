@@ -54,6 +54,7 @@ def appOnly = [
 	"deploy",
 	"src/main/deb",
 	"src/main/docker",
+	"bin/image.sh",
 	"local.conf.xml.template",
 	".mvn/jvm.config",
 	"bin/launch/Start " + properties.getProperty("DisplayName") + ".launch",
@@ -70,7 +71,7 @@ if (mvnDir.isDirectory() && mvnDir.list().length == 0) {
 	mvnDir.delete();
 }
 
-def createDocker = new File(projectDir, "src/main/docker/createDocker.sh");
-if (createDocker.isFile()) {
-	createDocker.setExecutable(true, false);
+def imageScript = new File(projectDir, "bin/image.sh");
+if (imageScript.isFile()) {
+	imageScript.setExecutable(true, false);
 }

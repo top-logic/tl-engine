@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The configuration of the installation in the runtime image, loaded after the configuration of
+	the application (system property tl_config, set in bin/setenv.sh).
+
+	The named secrets of the installation (database password, provider keys, client secrets, ...)
+	are the files of /run/secrets named like the secret, each holding the plain secret: Docker and
+	Compose secrets, Kubernetes secret volumes. A secret without a file is taken from the
+	environment variable of its name. The application therefore ships no configuration of the
+	secret storage of its own for operation; a single secret stored elsewhere is an override in the
+	autoconf folder (article credentials/secret-stores).
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.credential.SecretStoreService">
+			<instance class="com.top_logic.basic.credential.SecretStoreService">
+				<store class="com.top_logic.basic.credential.ChainSecretStore">
+					<stores>
+						<directory-store directory="/run/secrets"/>
+						<env-store/>
+					</stores>
+				</store>
+			</instance>
+		</config>
+	</services>
+</application>

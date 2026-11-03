@@ -22,7 +22,7 @@
 		<dependency name="Ticket_29492_enlarge_layout_key"
 			module="tl"
 		/>
-		<dependency name="Ticket_29852_binary_attribute_values"
+		<dependency name="Ticket_30031_unique_link_tables"
 			module="tl-element"
 		/>
 	</dependencies>

@@ -12,11 +12,41 @@
 		module="tl-demo"
 	/>
 	<dependencies>
+		<dependency name="Ticket_28710_Added_contact_attribute"
+			module="tl-demo"
+		/>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
 		<dependency name="Ticket_30079_Remove_comments"
 			module="tl-element"
 		/>
-		<dependency name="Ticket_28710_Added_contact_attribute"
-			module="tl-demo"
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="X05_Ticket_26702_fix_spelling_of_attachment"
+			module="tl-mail"
 		/>
 	</dependencies>
 	<pre-processors>

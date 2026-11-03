@@ -26,7 +26,7 @@ public class SimpleTextDiff {
 	
 	
 	/**
-	 * Creates a new SimpleTextDiff ...
+	 * Creates a new {@link SimpleTextDiff} ...
 	 * 
 	 * @param text1 - the source text to compare with
 	 * @param text2 - the destination text to compare with the source text
@@ -91,38 +91,65 @@ public class SimpleTextDiff {
 
 	
 	
+	/**
+	 * Statistics about the differences between the two texts.
+	 */
 	public RootCompareStatistic getStatistic() {
 		return (statistic);
 	}
 
+	/**
+	 * The source text to compare with.
+	 */
 	public String getText1() {
 		return (text1);
 	}
 
+	/**
+	 * Setter for {@link #getText1()}.
+	 */
 	public void setText1(String text1) {
 		this.text1 = text1;
 	}
 
+	/**
+	 * The destination text to compare with the source text.
+	 */
 	public String getText2() {
 		return (text2);
 	}
 
+	/**
+	 * Setter for {@link #getText2()}.
+	 */
 	public void setText2(String text2) {
 		this.text2 = text2;
 	}
 
+	/**
+	 * The text to display in the HTML table head above the source text column.
+	 */
 	public String getTableHeadText1() {
 		return (tableHeadText1);
 	}
 
+	/**
+	 * Setter for {@link #getTableHeadText1()}.
+	 */
 	public void setTableHeadText1(String tableHeadText1) {
 		this.tableHeadText1 = tableHeadText1;
 	}
 
+	/**
+	 * The text to display in the HTML table head above the destination text column.
+	 */
 	public String getTableHeadText2() {
 		return (tableHeadText2);
 	}
 
+	/**
+	 * Setter for {@link #getTableHeadText2()}.
+	 */
 	public void setTableHeadText2(String tableHeadText2) {
 		this.tableHeadText2 = tableHeadText2;
 	}

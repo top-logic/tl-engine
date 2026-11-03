@@ -38,15 +38,31 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.mig.html.layout.LayoutConstants;
 
 /**
+ * Compares the entries of two ZIP archives.
+ *
+ * <p>
+ * The result of a comparison is a tree of {@link EntryResult}s, one for each file and directory
+ * contained in at least one of the archives.
+ * </p>
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ZipReader {
 
+	/**
+	 * Separator of path elements in the names of ZIP entries.
+	 */
 	public static final String SEPARATOR = "/";
+	/**
+	 * Encoding used for reading the contents of the compared ZIP entries.
+	 */
 	public static final String ENCODING = Configuration.getConfiguration(ZipReader.class).getValue("DefaultEncoding", LayoutConstants.UTF_8 /* StreamUtilities.ENCODING*/);
 	
 	private CompareExecutedListener listener = null;
 	
+	/**
+	 * Sets the listener that is informed when all changes of a comparison have been seen.
+	 */
 	public void setListener(CompareExecutedListener aCLE) {
 		listener = aCLE;
 	}
@@ -55,7 +71,7 @@ public class ZipReader {
 	/**
 	 * reads the entries from the given zip file and returns a map of names an zip entries
 	 * 
-	 * @return Map name -> ZipEntry
+	 * @return Map name -> {@link ZipEntry}
 	 */
 	public Map<String, ZipEntry> readEntries(ZipFile zipFile){
 		List<String> hlp = new ArrayList<>();
@@ -120,6 +136,9 @@ public class ZipReader {
 		return res;
 	}
 
+	/**
+	 * The names of all files (no directories) in the given ZIP archive.
+	 */
 	public List<String> getFileNames(ZipFile aFile) {
 		Map<String, ZipEntry> entries = readEntries(aFile);
 		List<String> theResult = new ArrayList<>();
@@ -133,6 +152,11 @@ public class ZipReader {
 		return theResult;
 	}
 	
+	/**
+	 * Builds the tree of entries of the given ZIP archive.
+	 *
+	 * @return The root directory containing all top-level entries.
+	 */
 	public SimpleResult buildTree(ZipFile aFile) {
 
 		Map<String, ZipEntry> entries = readEntries(aFile);
@@ -169,6 +193,15 @@ public class ZipReader {
 		return theRoot;
 	}
 
+	/**
+	 * Compares the contents of the two given ZIP archives.
+	 *
+	 * @param zip1
+	 *         The source archive.
+	 * @param zip2
+	 *         The destination archive.
+	 * @return The root of the comparison result tree.
+	 */
 	public EntryResult compare(ZipFile zip1, ZipFile zip2){
 		
 		buildTree(zip1);
@@ -324,6 +357,11 @@ public class ZipReader {
 		return names;
 	}
 
+	/**
+	 * Node of the tree of entries of a single ZIP archive.
+	 *
+	 * @see ZipReader#buildTree(ZipFile)
+	 */
 	public static class SimpleResult {
 		private final String name;
 		private SimpleResult parent;
@@ -340,18 +378,31 @@ public class ZipReader {
 		}
 		
 
+		/**
+		 * Setter for {@link #getParent()}.
+		 */
 		public void setParent(SimpleResult aParent) {
             this.parent = aParent;
         }
 
+        /**
+         * The entries contained in this directory.
+         */
         public List<SimpleResult> getChildren(){
 			return children;
 		}
 		
+		/**
+		 * Adds an entry contained in this directory.
+		 */
 		public void addChild(SimpleResult entry) {
 			children.add(entry);
 		}
 
+		/**
+		 * The path of the directory containing this entry, ending with {@link ZipReader#SEPARATOR}
+		 * (empty for a top-level entry).
+		 */
 		public String getPath() {
 			String hlp=null;
 			if(isDirectory()){
@@ -367,15 +418,24 @@ public class ZipReader {
 		}
 
 
+		/**
+		 * Whether this entry is a directory.
+		 */
 		public boolean isDirectory() {
 			return name.endsWith(SEPARATOR) || parent == null;
 		}
 		
 
+		/**
+		 * The full name of this entry in the ZIP archive.
+		 */
 		public String getName(){
 			return name;
 		}
 		
+		/**
+		 * The name of this entry relative to its parent directory.
+		 */
 		public String getPlainName() {
 		    if (parent != null) {
 		        return name.substring(parent.getName().length());
@@ -383,6 +443,9 @@ public class ZipReader {
 		    return name;
 		}
 		
+		/**
+		 * The directory containing this entry, {@code null} for the root.
+		 */
 		public SimpleResult getParent(){
 			return parent;
 		}
@@ -393,12 +456,30 @@ public class ZipReader {
 		}
 	}
 	
+	/**
+	 * Result of comparing a single entry (file or directory) of two ZIP archives.
+	 */
 	public static class EntryResult{
 
+		/**
+		 * The comparison state of an entry.
+		 */
 		public enum State implements ExternallyNamed {
+			/**
+			 * The entry only exists in the destination archive.
+			 */
 			NEW("new"),
+			/**
+			 * The entry only exists in the source archive.
+			 */
 			DELETED("deleted"),
+			/**
+			 * The entry is equal in both archives.
+			 */
 			NO_CHANGE("noChange"),
+			/**
+			 * The entry exists in both archives with different contents.
+			 */
 			CHANGE("change"),
 			;
 
@@ -442,6 +523,12 @@ public class ZipReader {
 			computeState();
 		}
 		
+		/**
+		 * Computes the state of all directories in the tree rooted at this entry from the states of
+		 * their children.
+		 *
+		 * @return The resulting {@link #getStateAsString() state} of this entry.
+		 */
 		public String setUpStateRecursively() {
 			internalSetUpStateRecursively();
 			return getStateAsString();
@@ -478,11 +565,19 @@ public class ZipReader {
 			}
 		}
 
+		/**
+		 * Creates the {@link #getStatistics() statistics} of this entry.
+		 */
 		public void initCompareStatistics() {
 			statistics = new CompareStatistics(this);
 			
 		}
 		
+		/**
+		 * Creates the {@link #getStatistics() statistics} of this entry as root of the comparison.
+		 *
+		 * @see RootCompareStatistic
+		 */
 		public void initRootCompareStatistic() {
 			RootCompareStatistic theRootCS = new RootCompareStatistic(this);
 			theRootCS.setCompareExecutedListener(listener);
@@ -490,18 +585,32 @@ public class ZipReader {
 
 		}
 		
+		/**
+		 * The name of the source archive.
+		 */
 		public String getSourceName(){
 			return zip0.getName();
 		}
 
+		/**
+		 * The name of the destination archive.
+		 */
 		public String getDestName(){
 			return zip1.getName();
 		}
 	    
+	    /**
+	     * The contents of this entry in the source archive, empty if the entry does not exist
+	     * there.
+	     */
 	    public String getSource(){
 	    	return getAsString(zipEntries[0],zip0);
 	    }
 
+	    /**
+	     * The contents of this entry in the destination archive, empty if the entry does not exist
+	     * there.
+	     */
 	    public String getDest(){
 	    	return getAsString(zipEntries[1], zip1);
 	    	
@@ -522,22 +631,38 @@ public class ZipReader {
 		}
 
 
+		/**
+		 * Setter for {@link #getParent()}.
+		 */
 		public void setParent(EntryResult aParent) {
             this.parent = aParent;
         }
 
+		/**
+		 * The directory containing this entry, {@code null} for the root.
+		 */
 		public EntryResult getParent() {
 			return this.parent;
 		}
 		
+        /**
+         * The entries contained in this directory.
+         */
         public List<EntryResult> getChildren(){
 			return children;
 		}
 		
+		/**
+		 * Adds an entry contained in this directory.
+		 */
 		public void addChild(EntryResult entry) {
 			children.add(entry);
 		}
 
+		/**
+		 * The path of the directory containing this entry, ending with {@link ZipReader#SEPARATOR}
+		 * (empty for a top-level entry).
+		 */
 		public String getPath() {
 			String hlp=null;
 			if(isDirectory()){
@@ -553,6 +678,9 @@ public class ZipReader {
 		}
 
 
+		/**
+		 * Whether this entry is a directory.
+		 */
 		public boolean isDirectory() {
 			return name.endsWith(SEPARATOR) || parent == null;
 		}
@@ -601,10 +729,16 @@ public class ZipReader {
 		}
 
 
+		/**
+		 * The full name of this entry in the ZIP archives.
+		 */
 		public String getName(){
 			return name;
 		}
 		
+		/**
+		 * The name of this entry relative to its parent directory.
+		 */
 		public String getPlainName() {
 		    if (parent != null) {
 		        return name.substring(parent.getName().length());
@@ -632,10 +766,16 @@ public class ZipReader {
 //			}
 //		}
 
+		/**
+		 * The comparison state of this entry.
+		 */
 		public State getState() {
 			return state;
 		}
 
+		/**
+		 * The external name of {@link #getState()}.
+		 */
 		public String getStateAsString() {
 			return getState().getExternalName();
         }
@@ -649,37 +789,69 @@ public class ZipReader {
 //			return zip1;
 //		}
 		
+        /**
+         * The entry in the source archive, {@code null} if it does not exist there.
+         */
         public ZipEntry getSourceEntry(){
         	return zipEntries[0];
         }
         
+        /**
+         * The entry in the destination archive, {@code null} if it does not exist there.
+         */
         public ZipEntry getDestEntry(){
         	return zipEntries[1];
         }
 
 
+		/**
+		 * Statistics about the changes of this entry.
+		 */
 		public CompareStatistics getStatistics() {
 			return (statistics);
 		}
 
+		/**
+		 * The previous entry in the navigation order of the comparison result.
+		 */
 		public EntryResult getPreviousEntryResult() {
 			return (previousEntryResult);
 		}
 
+		/**
+		 * Setter for {@link #getPreviousEntryResult()}.
+		 */
 		public void setPreviousEntryResult(EntryResult previousEntryResult) {
 			this.previousEntryResult = previousEntryResult;
 		}
 
+		/**
+		 * The next entry in the navigation order of the comparison result.
+		 */
 		public EntryResult getNextEntryResult() {
 			return (nextEntryResult);
 		}
 
+		/**
+		 * Setter for {@link #getNextEntryResult()}.
+		 */
 		public void setNextEntryResult(EntryResult nextEntryResult) {
 			this.nextEntryResult = nextEntryResult;
 		}
         
 	}
 
+	/**
+	 * Compares the ZIP archives stored in the given documents.
+	 *
+	 * @param aFirstVersion
+	 *         The document containing the source archive.
+	 * @param aSecondVersion
+	 *         The document containing the destination archive.
+	 * @return The root of the comparison result tree.
+	 *
+	 * @see #compare(ZipFile, ZipFile)
+	 */
 	public EntryResult compare(Document aFirstVersion, Document aSecondVersion) {
 		 ZipFile zipFile1 = getZipFromDocument(aFirstVersion);
          ZipFile zipFile2 = getZipFromDocument(aSecondVersion);

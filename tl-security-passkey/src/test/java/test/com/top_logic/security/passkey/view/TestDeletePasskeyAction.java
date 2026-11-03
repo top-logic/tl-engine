@@ -47,6 +47,7 @@ import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 import com.top_logic.security.passkey.PendingRegistration;
 import com.top_logic.security.passkey.model.Passkey;
 import com.top_logic.security.passkey.view.DeletePasskeyAction;
@@ -74,6 +75,7 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 		super.setUp();
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		PasskeyTestHost.useDefault();
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 
 		PasskeySecondFactor.Config<?> config = TypedConfiguration.newConfigItem(PasskeySecondFactor.Config.class);
 		config.setName("passkey");
@@ -123,6 +125,19 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 		}
 		assertTrue(passkey.tValid());
 		assertEquals(List.of(passkey), PasskeyService.getInstance().getPasskeys(account));
+	}
+
+	/** Passkeys that log in by themselves are no second factor: a required account deletes its last one. */
+	public void testLoginPasskeyIsNoSecondFactor() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.LOGIN);
+		Person account = account("deleteLogin", MfaRequirement.REQUIRED);
+		Passkey passkey = register(account);
+
+		assertFalse(_passkeyMethod.isEnrolled(account));
+		assertNull(DeletePasskeyAction.refusal(passkey, List.of(_passkeyMethod)));
+
+		delete(passkey);
+		assertFalse(passkey.tValid());
 	}
 
 	/** A required account keeping another passkey deletes one of them, but not the last one. */

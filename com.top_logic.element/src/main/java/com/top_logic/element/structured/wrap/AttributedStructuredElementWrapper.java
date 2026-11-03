@@ -24,7 +24,7 @@ import com.top_logic.knowledge.service.db2.KnowledgeItemImpl;
 public class AttributedStructuredElementWrapper extends
 		StructuredElementWrapper implements AttributedObject, PersistentTLScope {
 
-    /** Type of the KnowledgeObject used */
+    /** Type of the {@link KnowledgeObject} used */
     public static final String OBJECT_NAME = "StructuredElement";
     
 	/**

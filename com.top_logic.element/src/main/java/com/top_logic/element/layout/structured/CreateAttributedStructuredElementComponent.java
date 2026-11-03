@@ -50,7 +50,13 @@ import com.top_logic.model.TLObject;
 @Deprecated
 public class CreateAttributedStructuredElementComponent extends CreateAttributedComponent implements ValueListener {
 
+    /**
+	 * Configuration options for {@link CreateAttributedStructuredElementComponent}.
+	 */
     public interface Config extends CreateAttributedComponent.Config {
+		/**
+		 * Name of the structure in which new elements are created.
+		 */
 		@Name(CreateAttributedStructuredElementComponent.XML_CONFIG_STRUCTURE_NAME)
 		@Mandatory
 		String getStructureName();
@@ -195,10 +201,16 @@ public class CreateAttributedStructuredElementComponent extends CreateAttributed
 		return anObject instanceof StructuredElement;
 	}
 
+    /**
+	 * The root element of the structure handled by this component.
+	 */
     protected StructuredElement getRoot() {
         return this.getFactory().getRoot();
     }
 
+    /**
+	 * The {@link StructuredElementFactory} of the structure handled by this component.
+	 */
     protected StructuredElementFactory getFactory() {
         return StructuredElementFactory.getInstanceForStructure(this.structureName);
     }

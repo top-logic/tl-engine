@@ -7,7 +7,7 @@ package com.top_logic.element.genericimport.interfaces;
 
 
 /**
- * The {@link GenericTypeResolver} maps the types of external objects (i.e. GenericValueMap)
+ * The {@link GenericTypeResolver} maps the types of external objects (i.e. {@link GenericValueMap})
  * to internal object types that can be understand by <i>TopLogic</i>.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>

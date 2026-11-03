@@ -28,7 +28,10 @@ import com.top_logic.tool.boundsec.BoundObject;
  */
 public class Comment extends AttributedWrapper {
 
+    /** Name of the attribute holding the text of the comment. */
     public static final String CONTENT_ATTRIBUTE = "content";
+
+    /** Name of the table storing comments. */
     public static final String KO_TYPE = "Comment";
 
     public Comment(KnowledgeObject ko) {
@@ -62,10 +65,16 @@ public class Comment extends AttributedWrapper {
         }
     }
 
+    /**
+     * The text of this comment.
+     */
     public String getContent() {
         return this.getValue(CONTENT_ATTRIBUTE).toString();
     }
 
+    /**
+     * Setter for {@link #getContent()}.
+     */
     public void setContent(String aNewContent) {
         this.setValue(CONTENT_ATTRIBUTE, aNewContent);
     }

@@ -169,6 +169,16 @@ public class UpgradeModel extends XMain {
 		return in;
 	}
 
+	/**
+	 * Transforms a model definition without namespace (legacy format) into the format of the
+	 * namespace {@link ElementSchemaConstants#MODEL_6_NS} without resolving references.
+	 * 
+	 * @param plainName
+	 *        The name of the definition, used as prefix for the created temporary files.
+	 * @param content
+	 *        The legacy definition.
+	 * @return The temporary file holding the transformed definition.
+	 */
 	public static File transformRaw(String plainName, BinaryContent content) throws IOException {
 		File phase1Result = File.createTempFile(plainName, ".v55.xml", Settings.getInstance().getTempDir());
 		Transformer phase1Transformer = UPGRADE_FACTORY_TRANSFORMER;

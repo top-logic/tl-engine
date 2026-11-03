@@ -24,6 +24,7 @@ public class PublishedFlexWrapperLabelProvider implements LabelProvider {
 
 	private String PUBLISHED_MARKER = "* ";
 
+	/** Singleton {@link PublishedFlexWrapperLabelProvider} instance. */
 	public static final PublishedFlexWrapperLabelProvider INSTANCE = new PublishedFlexWrapperLabelProvider();
 
 	private PublishedFlexWrapperLabelProvider() {
@@ -57,10 +58,16 @@ public class PublishedFlexWrapperLabelProvider implements LabelProvider {
 		return theLabel;
 	}
 
+	/**
+	 * The prefix of labels of objects created by other users.
+	 */
 	public String getMarker() {
     	return (PUBLISHED_MARKER);
     }
 
+	/**
+	 * Setter for {@link #getMarker()}.
+	 */
 	public void setMarker(String aMarker) {
     	PUBLISHED_MARKER = aMarker;
     }

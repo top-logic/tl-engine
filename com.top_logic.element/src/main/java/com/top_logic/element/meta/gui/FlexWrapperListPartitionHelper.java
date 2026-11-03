@@ -14,7 +14,7 @@ import com.top_logic.basic.Configuration;
 import com.top_logic.util.TLContext;
 
 /** 
- * This class is a helper-class for the partition of List of FlexWrappers.
+ * This class is a helper-class for the partition of a list of flex wrappers.
  * For this partition the flex-attribute name is regarded.
  *
  * @author    <a href="mailto:hbo@top-logic.com">hbo</a>
@@ -40,8 +40,9 @@ public class FlexWrapperListPartitionHelper {
 	private int partitionSize = -1;
 	
 	/**
-	 * Get-method for attribute allElements.
-	 * @return the list elements.
+	 * The list elements to partition.
+	 *
+	 * @see #setAllElements(List)
 	 */
 	public List getAllElements() {
 		return allElements;
@@ -49,40 +50,49 @@ public class FlexWrapperListPartitionHelper {
 
 
 	/**
-	 * Get-method for attribute namedIntervalls.
-	 * @return all named intervals
+	 * All named intervals of the partition.
+	 *
+	 * @see #setNamedIntervalls(List)
 	 */
 	public List getNamedIntervalls() {
 		return namedIntervalls;
 	}
 
 	/**
-	 * Set-method for attribute allElements.
-	 * @param list the list elements
+	 * Setter for {@link #getAllElements()}.
+	 *
+	 * @param list
+	 *        the list elements
 	 */
 	public void setAllElements(List list) {
 		allElements = list;
 	}
 
 	/**
-	 * Set-method for attribute allFilterNames.
-	 * @param strings all filter names
+	 * Setter for {@link #getAllFilterNames(List)}.
+	 *
+	 * @param strings
+	 *        all filter names
 	 */
 	public void setAllFilterNames(String[] strings) {
 		allFilterNames = strings;
 	}
 
 	/**
-	 * Set-method for attribute filterNames.
-	 * @param strings the filter names ('All' will be added automtically)
+	 * Setter for {@link #getFilterNames(List)}.
+	 *
+	 * @param strings
+	 *        the filter names ('All' will be added automatically)
 	 */
 	public void setFilterNames(String[] strings) {
 		filterNames = strings;
 	}
 
 	/**
-	 * Set-method for attribute namedIntervalls.
-	 * @param list the intervals
+	 * Setter for {@link #getNamedIntervalls()}.
+	 *
+	 * @param list
+	 *        the intervals
 	 */
 	public void setNamedIntervalls(List list) {
 		namedIntervalls = list;
@@ -91,7 +101,9 @@ public class FlexWrapperListPartitionHelper {
 	 * Create and return an ordered, partition list.
 	 * @param filters a String-Array that contains the partition-name at position 0. (e.g. A...C)
 	 * @param aList the List the should be partitioned
-	 * @param ascending true if aList has an ascending order and false if the list has a descending order.
+	 * @param ascending
+	 *        true if the given list has an ascending order and false if the list has a descending
+	 *        order.
 	 * @return a partitioned list
 	 */
 	public List helpSorting(String[] filters, List aList, boolean ascending){
@@ -131,8 +143,7 @@ public class FlexWrapperListPartitionHelper {
 	}
 	
 	/**
-	 * Get-method for attribute filterNames. 
-	 * (Lazy-initialization)
+	 * The names of the partitions (lazy initialization).
 	 *  
 	 * @param aList an ordered list that should be partition.
 	 * @return the filter names
@@ -146,7 +157,7 @@ public class FlexWrapperListPartitionHelper {
 	
 	/**
 	 * Create an array of partition-names.
-	 * The partition-method of FlexWrapperListPartition is invoked.
+	 * The partition-method of {@link FlexWrapperListPartition} is invoked.
 	 */		
 	public String[] createFilterNames(List aList) {
 		int thePartitionSize = this.getPartitionSize();
@@ -164,11 +175,11 @@ public class FlexWrapperListPartitionHelper {
 	}
 	
 	/**
-	* Get-method for attribute allFilterNames. 
-	* (Lazy-initialization)
+	* The names of the partitions with the additional filter 'All' at the first position (lazy
+	* initialization).
 	*  
 	* @param aList an ordered list that should be partition.
-	* @return all filter names (adds 'All' as a filter if only filterNames is defined)
+	* @return all filter names
 	*/
 	public String[] getAllFilterNames(List aList){
 		if (this.allFilterNames == null ){
@@ -183,9 +194,8 @@ public class FlexWrapperListPartitionHelper {
 			
 	}
 	/**
-	 * Set the given list for attribute allElements and set the attributes
-	 * allFilterNames and filterNames null. 
-	 * This forces a new partition.
+	 * Set the given list as {@link #getAllElements() elements} and reset the
+	 * {@link #getFilterNames(List) filter names}. This forces a new partition.
 	 */
 	public void resetAttributes(List aList){
 	

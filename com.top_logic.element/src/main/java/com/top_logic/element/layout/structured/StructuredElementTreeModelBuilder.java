@@ -42,13 +42,26 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class StructuredElementTreeModelBuilder
 		extends AbstractConfiguredInstance<StructuredElementTreeModelBuilder.Config> implements ModelBuilder {
 
+	/**
+	 * Configuration options for {@link StructuredElementTreeModelBuilder}.
+	 */
 	public interface Config extends PolymorphicConfiguration<ModelBuilder> {
+		/**
+		 * Filter selecting the elements displayed in the tree.
+		 *
+		 * <p>
+		 * If not set, all elements are displayed.
+		 * </p>
+		 */
 		@Name(TREE_FILTER_ATTRIBUTE)
 		@InstanceFormat
 		Filter<? super StructuredElement> getTreeFilter();
 	}
 
+	/** Configuration name of {@link Config#getTreeFilter()}. */
 	public static final String TREE_FILTER_ATTRIBUTE = "treeFilter";
+
+	/** The filter selecting the elements displayed in the tree, never <code>null</code>. */
 	protected final Filter<? super StructuredElement> _treeFilter;
 
 	public StructuredElementTreeModelBuilder(InstantiationContext context, Config config) throws ConfigurationException {
@@ -60,6 +73,12 @@ public class StructuredElementTreeModelBuilder
 		this._treeFilter = filter;
 	}
 
+	/**
+	 * Writes the configured tree filter as XML attribute, if it is not the default filter.
+	 *
+	 * @param anOut
+	 *        The writer to write to.
+	 */
 	public void writeFieldsAsXML(TagWriter anOut) throws IOException {
 		if (_treeFilter != FilterFactory.trueFilter()) {
 			anOut.writeAttribute(TREE_FILTER_ATTRIBUTE, _treeFilter.getClass().getName());

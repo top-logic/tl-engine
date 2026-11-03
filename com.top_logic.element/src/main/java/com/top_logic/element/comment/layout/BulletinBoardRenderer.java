@@ -20,6 +20,9 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.Resources;
 
 /**
+ * {@link Renderer} for comment texts that converts line breaks, bulletin board quotes, and links to
+ * HTML.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public class BulletinBoardRenderer implements Renderer<String>, HTMLConstants {
@@ -28,6 +31,7 @@ public class BulletinBoardRenderer implements Renderer<String>, HTMLConstants {
 
 	private static final String PROTOCOL = "protocol";
 
+	/** Singleton {@link BulletinBoardRenderer} instance. */
 	public static final BulletinBoardRenderer INSTANCE = new BulletinBoardRenderer();
 
 	private static final String PROTOCOL_PATTERN = "(?<protocol>(?i:http|https|rtsp|ftp|file)://)";
@@ -57,6 +61,14 @@ public class BulletinBoardRenderer implements Renderer<String>, HTMLConstants {
         aWriter.writeContent(theContent);
     }
 
+    /**
+     * Converts the bulletin board quotes ({@code [quote=author]...[/quote]}) in the given text to
+     * HTML.
+     * 
+     * @param aContent
+     *        The XML-encoded comment text.
+     * @return The text with quotes replaced by HTML.
+     */
     protected String handleBB(String aContent) {
         int theQuoteStart = aContent.indexOf("[quote");
         int theQuoteEnd   = aContent.lastIndexOf("[/quote]");

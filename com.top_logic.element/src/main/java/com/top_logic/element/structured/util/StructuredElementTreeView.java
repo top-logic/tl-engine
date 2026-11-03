@@ -12,12 +12,13 @@ import com.top_logic.basic.col.TreeView;
 import com.top_logic.element.structured.StructuredElement;
 
 /**
- * TreeView for StructuredElements.
+ * {@link TreeView} for {@link StructuredElement}s.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class StructuredElementTreeView implements TreeView {
 
+    /** Singleton {@link StructuredElementTreeView} instance. */
     public static final StructuredElementTreeView INSTANCE = new StructuredElementTreeView();
 
     @Override

@@ -31,7 +31,14 @@ import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
  */
 public class CommentTableComponent extends TableComponent implements DecorationValueProvider {
     
+	/**
+	 * Configuration options for {@link CommentTableComponent}.
+	 */
 	public interface Config extends TableComponent.Config {
+
+		/**
+		 * Name of the attribute of the model holding the comments to display.
+		 */
 		@Name(XML_COMMENTS_ATTRIBUTE)
 		@StringDefault(COMMENTS_ATTRIBUTE)
 		String getAttribute();
@@ -54,10 +61,13 @@ public class CommentTableComponent extends TableComponent implements DecorationV
 
 	}
 
+	/** Configuration name of {@link Config#getQuoteCommentComponentName()}. */
 	public static final String QUOTE_COMMENT_COMPONENT_NAME = "quoteCommentComponentName";
 
+	/** Configuration name of {@link Config#getEditCommentComponentName()}. */
 	public static final String EDIT_COMMENT_COMPONENT_NAME = "editCommentComponentName";
 
+    /** Configuration name of {@link Config#getAttribute()}. */
     public static final String XML_COMMENTS_ATTRIBUTE = "attribute";
 
     private static final String COMMENTS_ATTRIBUTE = "comments";
@@ -78,7 +88,7 @@ public class CommentTableComponent extends TableComponent implements DecorationV
 
     
     /** 
-     * Creates a new instance of CommentTableComponent.
+     * Creates a new instance of {@link CommentTableComponent}.
      */
     public CommentTableComponent(InstantiationContext context, Config attr) throws ConfigurationException {
         super(context, attr);
@@ -164,26 +174,50 @@ public class CommentTableComponent extends TableComponent implements DecorationV
 		return getCommandById(openHandlerName);
 	}
 
+    /**
+     * Name of the attribute of the model holding the comments.
+     * 
+     * @see Config#getAttribute()
+     */
     public String getCommentsAttributeName() {
         return this.commentsAttributeName;
     }
     
+    /**
+     * The command of the given component that opens the dialog for creating a new comment.
+     */
     public static CommandHandler getNewCommentDialogOpenerCommandId(LayoutComponent aComponent) {
         return aComponent.getCommandById("openNewCommentDialogDialog");
     }
 
+	/**
+	 * Name of the component editing a comment.
+	 * 
+	 * @see Config#getEditCommentComponentName()
+	 */
 	public ComponentName getEditComponentName() {
 		return _editCommentComponentName;
 	}
 
+	/**
+	 * Name of the component quoting a comment.
+	 * 
+	 * @see Config#getQuoteCommentComponentName()
+	 */
 	public ComponentName getQuoteComponentName() {
 		return _quoteCommentComponentName;
 	}
 
+	/**
+	 * The command opening the component that edits a comment.
+	 */
 	public CommandHandler getEditComponentOpener() {
 		return _editCommentComponentOpener;
 	}
 
+	/**
+	 * The command opening the component that quotes a comment.
+	 */
 	public CommandHandler getQuoteComponentOpener() {
 		return _quoteCommentComponentOpener;
 	}

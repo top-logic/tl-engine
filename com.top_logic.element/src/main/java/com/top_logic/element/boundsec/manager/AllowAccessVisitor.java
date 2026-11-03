@@ -33,7 +33,7 @@ public class AllowAccessVisitor extends AllElementVisitor {
     private Collection          roles;
     
     /**
-     * Create a new AllowAccessVisitor with some estimated size.
+     * Create a new {@link AllowAccessVisitor} with some estimated size.
      */
     public AllowAccessVisitor(int aEstimatedSize, Collection someRoles) {
         super(aEstimatedSize);
@@ -41,7 +41,8 @@ public class AllowAccessVisitor extends AllElementVisitor {
     }
     
     /**
-     * Check all elements of type BoundObject via {@link AccessManager#hasRole(BoundObject, Collection)}
+     * Check all elements of type {@link BoundObject} via
+     * {@link AccessManager#hasRole(BoundObject, Collection)}.
      */
     @Override
 	public boolean onVisit(StructuredElement element, int depth) {
@@ -56,6 +57,19 @@ public class AllowAccessVisitor extends AllElementVisitor {
         return false;
     }
     
+    /**
+     * Creates a visitor that collects all visited elements on which the current user has access in
+     * the given command group.
+     *
+     * @param size
+     *        The estimated number of collected elements.
+     * @param aGroup
+     *        The command group to check.
+     * @param aChecker
+     *        The component defining the roles required for the command group.
+     * @return An {@link AllElementVisitor} collecting all elements, if the current user is
+     *         administrator, an {@link AllowAccessVisitor} otherwise.
+     */
     public static AllElementVisitor createVisitor(int size, BoundCommandGroup aGroup, BoundComponent aChecker) {
         if (ThreadContext.isAdmin()) {
             return new AllElementVisitor(size);

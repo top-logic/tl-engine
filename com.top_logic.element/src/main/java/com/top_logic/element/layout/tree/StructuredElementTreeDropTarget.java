@@ -94,8 +94,8 @@ public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 	/**
 	 * Calculates and returns the new parent.
 	 * <p>
-	 * If this method is changed or overridden, getIndex(StructuredElement, Position) needs to be
-	 * adapted, too.
+	 * If this method is changed or overridden, {@link #getIndex(StructuredElement, Position)} needs
+	 * to be adapted, too.
 	 * </p>
 	 */
 	protected StructuredElement getParent(StructuredElement target, Position position) {
@@ -148,8 +148,8 @@ public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 	/**
 	 * Calculates and returns the index in the new parent.
 	 * <p>
-	 * If this method is changed or overridden, getParent(StructuredElement, Position) needs to be
-	 * adapted, too.
+	 * If this method is changed or overridden, {@link #getParent(StructuredElement, Position)}
+	 * needs to be adapted, too.
 	 * </p>
 	 */
 	protected int getIndex(StructuredElement target, Position position) {

@@ -70,43 +70,85 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /** 
- * This component is used to configure a {@link GenericDataImportConfiguration}
+ * This component is used to configure a {@link GenericDataImportConfiguration}.
  *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportConfigComponent extends FormComponent implements GenericDataImportConfigurationAware {
 
+    /**
+     * Configuration options for {@link GenericDataImportConfigComponent}.
+     */
     public interface Config extends FormComponent.Config {
+		/**
+		 * The number of rows of the imported data shown as preview while mapping the columns.
+		 */
 		@Name(XML_CONF_MAX_ROWS)
 		@IntDefault(3)
 		int getRowSize();
 
+		/**
+		 * Whether the user may decide if new objects are created during the import.
+		 */
 		@Name(XML_CONF_ALLOW_CREATE)
 		@BooleanDefault(false)
 		boolean getAllowCreate();
 
+		/**
+		 * Whether the user may decide if existing objects are updated during the import.
+		 */
 		@Name(XML_CONF_ALLOW_UPDATE)
 		@BooleanDefault(false)
 		boolean getAllowUpdate();
 
+		/**
+		 * Whether the user may decide if the import commits its changes.
+		 */
 		@Name(XML_CONF_ALLOW_COMMIT)
 		@BooleanDefault(false)
 		boolean getAllowCommit();
 	}
 
+	/**
+	 * Name of the field selecting the type of the imported objects.
+	 */
 	public static final String META_ELEMENT_SELECT_FIELD = "metaElement";
 
+    /**
+     * Name of the field selecting the column that identifies the imported objects.
+     */
     public static final String FKEY_SELECT_FIELD         = "fkeySel";
 
+    /**
+     * Name of the table field mapping the import columns to attributes.
+     */
     public static final String META_ATTRIBUTE_TABLE      = "gdiTable";
 
+    /**
+     * Name of the field in a column header selecting the attribute the column is mapped to.
+     */
     public static final String HEADER_SELECT_TYPE        = "maSelect";
 
+    /**
+     * Control style displaying the error of the attribute selection in a column header.
+     */
     public static final String HEADER_ERROR_TYPE         = "headerError";
 
+    /**
+     * Configuration name of {@link Config#getRowSize()}.
+     */
     public static final String XML_CONF_MAX_ROWS         = "rowSize";
+    /**
+     * Configuration name of {@link Config#getAllowCreate()}.
+     */
     public static final String XML_CONF_ALLOW_CREATE     = "allowCreate";
+    /**
+     * Configuration name of {@link Config#getAllowUpdate()}.
+     */
     public static final String XML_CONF_ALLOW_UPDATE     = "allowUpdate";
+    /**
+     * Configuration name of {@link Config#getAllowCommit()}.
+     */
     public static final String XML_CONF_ALLOW_COMMIT     = "allowCommit";
 
     // MetaElements of object that can be imported here
@@ -444,10 +486,20 @@ public class GenericDataImportConfigComponent extends FormComponent implements G
         }
     }
 
+    /**
+     * Command storing the column-attribute mapping and the import options entered in a
+     * {@link GenericDataImportConfigComponent} into its import configuration.
+     */
     public static class GenericDataImportConverterConfigHandler extends AJAXCommandHandler {
 
+        /**
+         * Command ID of the {@link GenericDataImportConverterConfigHandler}.
+         */
         public static final String COMMAND_ID = "configureGDIConverter";
 
+		/**
+		 * Singleton {@link GenericDataImportConverterConfigHandler} instance.
+		 */
 		public static final CommandHandler INSTANCE = newInstance(GenericDataImportConverterConfigHandler.class,
 			COMMAND_ID);
 
@@ -529,6 +581,9 @@ public class GenericDataImportConfigComponent extends FormComponent implements G
         }
     }
 
+    /**
+     * {@link Mapping} resolving an imported key to an object of the import cache.
+     */
     public abstract static class GenericCacheBasedMapping extends AbstractGenericDataImportBase implements Mapping {
 
         GenericCache cache;

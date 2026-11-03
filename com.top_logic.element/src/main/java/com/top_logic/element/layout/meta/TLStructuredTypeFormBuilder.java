@@ -354,13 +354,26 @@ public class TLStructuredTypeFormBuilder
 
 			}
 
+			/**
+			 * {@link Filter} accepting the classes that can be used as generalization of the
+			 * edited type.
+			 */
 			public class IsExtendableType implements Filter<TLModelPart> {
 				private TLClass _edited;
 
+				/**
+				 * Creates an {@link IsExtendableType}.
+				 *
+				 * @param edited
+				 *        The type being edited, or <code>null</code> when creating a new type.
+				 */
 				public IsExtendableType(TLClass edited) {
 					_edited = edited;
 				}
 
+				/**
+				 * Creates an {@link IsExtendableType} for a new type.
+				 */
 				public IsExtendableType() {
 					this(null);
 				}

@@ -24,7 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 
 /**
- * Create/remove MetaAttributes in/from MetaElements.
+ * Create/remove attributes in/from types.
  * 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */

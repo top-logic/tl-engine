@@ -19,6 +19,7 @@ import com.top_logic.util.TLContext;
  */
 public class FlexWrapperAdminComparator implements Comparator {
 
+	/** Singleton {@link FlexWrapperAdminComparator} instance. */
 	public static final FlexWrapperAdminComparator INSTANCE = new FlexWrapperAdminComparator();
 
 	@Override

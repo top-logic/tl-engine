@@ -58,6 +58,13 @@ public abstract class AbstractGridHandler<R> implements GridHandler<R> {
 		_grid = grid;
 	}
 
+	/**
+	 * Converts the given business objects to grid rows.
+	 *
+	 * @param modelObjects
+	 *        The business objects, may be <code>null</code>.
+	 * @return The grid rows of the given objects, never <code>null</code>.
+	 */
 	protected final List<R> toRows(Collection<?> modelObjects) {
 		if (modelObjects == null) {
 			return Collections.emptyList();
@@ -69,6 +76,13 @@ public abstract class AbstractGridHandler<R> implements GridHandler<R> {
 		return rows;
 	}
 
+	/**
+	 * Converts the given grid rows to their business objects.
+	 *
+	 * @param accessedObjects
+	 *        The grid rows.
+	 * @return The business objects of the given rows. Rows without business object are skipped.
+	 */
 	protected final List<Object> toModels(Collection<? extends R> accessedObjects) {
 		ArrayList<Object> baseObjects = new ArrayList<>(accessedObjects.size());
 		for (R rowGroup : accessedObjects) {

@@ -15,10 +15,13 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
+ * {@link WrapperResourceProvider} for {@link Comment}s, labeling a comment with its creator.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class CommentResourceProvider extends WrapperResourceProvider {
 
+    /** Singleton {@link CommentResourceProvider} instance. */
     public static final CommentResourceProvider INSTANCE_COMMENT = new CommentResourceProvider();
 
     @Override

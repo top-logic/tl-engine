@@ -20,7 +20,7 @@ import com.top_logic.model.TLObject;
 public interface CollectionCheckingValueFilter extends AttributedValueFilter {
 
 	/**
-	 * Check on a collection of MandatorAware objects and return the matching objects
+	 * Check on a collection of objects and return the matching objects.
 	 * 
 	 * @param anAttributed
 	 *        the attibuted (e.g. a Contract). May be <code>null</code> in a search (update

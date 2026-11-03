@@ -18,7 +18,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 
 /**
- * The MetaElementBasedUpdateHandler is used to update a business object with a
+ * The {@link MetaElementBasedUpdateHandler} is used to update a business object with a
  * map of values during import.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -52,6 +52,19 @@ public class MetaElementBasedUpdateHandler extends MetaElementBasedImportBase im
         return updateAttributes(theAttributed, aDO, aFKeyAttr);
     }
     
+	/**
+	 * Updates the attributes of the given object with the imported values.
+	 *
+	 * @param anAttribted
+	 *        The object to update.
+	 * @param aDO
+	 *        The imported values.
+	 * @param aForeignKey
+	 *        The name of the foreign key attribute.
+	 * @return The updated object.
+	 * @throws UpdateException
+	 *         If updating fails.
+	 */
 	public Object updateAttributes(TLObject anAttribted, GenericValueMap aDO, String aForeignKey)
 			throws UpdateException {
         try {
@@ -84,6 +97,16 @@ public class MetaElementBasedUpdateHandler extends MetaElementBasedImportBase im
         }
     }
     
+	/**
+	 * Sets a single attribute value.
+	 *
+	 * @param attributed
+	 *        The object to update.
+	 * @param attribute
+	 *        The name of the attribute.
+	 * @param newValue
+	 *        The new value.
+	 */
 	protected void setValue(TLObject attributed, String attribute, Object newValue) {
 		attributed.tUpdateByName(attribute, newValue);
     }

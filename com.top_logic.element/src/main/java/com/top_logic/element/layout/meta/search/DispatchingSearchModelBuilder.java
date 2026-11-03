@@ -22,7 +22,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Extend the ExtendedSearchModelBuilder to dispatch to sub-modelBuilders via type.
+ * {@link ExtendedSearchModelBuilder} that dispatches to other model builders depending on the
+ * searched type.
  * 
  * @author    tdi
  */
@@ -32,8 +33,17 @@ public class DispatchingSearchModelBuilder
     /** XML-Attribute that will result in a call to {@link #setModelBuilders(List)} */
     private static final String XML_LIST_MODEL_BUILDERS = "modelBuilders";
     
+	/**
+	 * Configuration options for {@link DispatchingSearchModelBuilder}.
+	 */
 	public static interface Config extends PolymorphicConfiguration<DispatchingSearchModelBuilder> {
 
+		/**
+		 * The model builders to dispatch to.
+		 * <p>
+		 * Each model builder is used for searches in the type it delivers as its default type.
+		 * </p>
+		 */
 		@Name(XML_LIST_MODEL_BUILDERS)
 		@InstanceFormat
 		List<ExtendedSearchModelBuilder> getModelBuilders();
@@ -51,7 +61,7 @@ public class DispatchingSearchModelBuilder
 	private Config _config;
     
     /**
-     * Creates a new DispatchingSearchModelBuilder wit a pre build map.
+     * Creates a new {@link DispatchingSearchModelBuilder} wit a pre build map.
      * 
      * @param aBuilderMap
      *            The builder map contains the model builder for the configured
@@ -62,7 +72,7 @@ public class DispatchingSearchModelBuilder
     }
     
     /**
-     * Create a DispatchingSearchModelBuilder with an empty Map.
+     * Create a {@link DispatchingSearchModelBuilder} with an empty Map.
      */
     @CalledByReflection
     public DispatchingSearchModelBuilder() {
@@ -70,7 +80,7 @@ public class DispatchingSearchModelBuilder
     }
     
     /**
-     * Create a DispatchingSearchModelBuilder from XML.
+     * Create a {@link DispatchingSearchModelBuilder} from XML.
      */
 	public DispatchingSearchModelBuilder(InstantiationContext context, Config config) throws ConfigurationException {
 		this();

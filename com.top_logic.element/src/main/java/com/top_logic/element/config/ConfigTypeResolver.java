@@ -180,6 +180,13 @@ public class ConfigTypeResolver {
 		}
 	}
 
+	/**
+	 * The qualified name of the interface type of the given table in the module of the table
+	 * types.
+	 * 
+	 * @param moName
+	 *        Name of the table.
+	 */
 	@CalledByReflection
 	public static String interfaceType(String moName) {
 		return ApplicationObjectUtil.TL_TABLES_MODULE + ":"

@@ -14,6 +14,9 @@ import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ListModelBuilder} for a {@link CommentTableComponent} providing the comments of the
+ * component's model.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public class CommentTableModelBuilder implements ListModelBuilder {

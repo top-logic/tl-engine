@@ -31,7 +31,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * security presets for business objects are provided.
  * 
  * The business object itself is responsible for
- * registering with the Mandator structure (cf. @link com.top_logic.element.structured.wrap.Mandator#registerType(String, String, Collection))
+ * registering with the Mandator structure
  * and creating the security attributes on it 
  * (as we don't know the correct attribute types).
  * 
@@ -64,7 +64,8 @@ public class Mandator extends AttributedStructuredElementWrapper {
 	 * Stores all info about all registered types.
 	 */
 	private static Map<String, Map<String, TLStructuredTypePart>> typeConfigs;
-	protected static final String KEY_MANDATORATTID = "KEY_MANDATORATTID";
+	/** Key of the attribute referencing the mandator in the registered type information. */
+	private static final String KEY_MANDATORATTID = "KEY_MANDATORATTID";
     
 	public Mandator(KnowledgeObject ko) {
 		super(ko);
@@ -122,6 +123,9 @@ public class Mandator extends AttributedStructuredElementWrapper {
 		return theInfos.get(aKey);
 	}
 
+	/**
+	 * Whether this mandator may be moved, i.e. it is not the root mandator.
+	 */
 	@CalledFromJSP
 	public boolean allowsMove() {
 	    return (!this.isRoot());
@@ -148,6 +152,8 @@ public class Mandator extends AttributedStructuredElementWrapper {
 	}
 
 	/**
+	 * All objects of the given type attached to this mandator.
+	 *
 	 * @param aType
 	 *        the type
 	 * @return all objects of the given type attached to this mandator via the registered attribute
@@ -176,9 +182,11 @@ public class Mandator extends AttributedStructuredElementWrapper {
 	}
 
 	/**
+	 * Whether there are objects of the given type attached to this mandator.
+	 *
 	 * @param aType
 	 *        the type
-	 * @return true if there are any objects of the the given type attached to this mandator via the
+	 * @return true if there are any objects of the given type attached to this mandator via the
 	 *         registered attribute
 	 */
 	public boolean hasObjectsOfType(String aType) {
@@ -213,6 +221,12 @@ public class Mandator extends AttributedStructuredElementWrapper {
         return (Mandator) theVisitor.getHit();
     }
 
+    /**
+     * Get a mandator by its name.
+     *
+     * @param    aName    The name of the requested mandator.
+     * @return   The requested mandator, <code>null</code> if there is none.
+     */
     public static Mandator getMandatorByName(String aName) {
         Mandator      theRoot    = Mandator.getRootMandator();
         OneHitVisitor theVisitor = new OneHitVisitor(new WrapperValueFilter(TLNamed.NAME_ATTRIBUTE, aName));
@@ -222,7 +236,11 @@ public class Mandator extends AttributedStructuredElementWrapper {
         return (Mandator) theVisitor.getHit();
     }
     
+    /**
+     * {@link Comparator} sorting mandators by their label.
+     */
     public static class MandatorByLabelComparator implements Comparator {
+        /** Singleton {@link MandatorByLabelComparator} instance. */
         public static final MandatorByLabelComparator INSTANCE = new MandatorByLabelComparator();
         
         /**

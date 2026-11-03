@@ -61,6 +61,29 @@ public abstract class AbstractWrapperFieldProvider extends AbstractSelectFieldPr
 		boolean shouldShowTableDialog();
 	}
 
+	/**
+	 * Creates a {@link SelectField} selecting objects from the options of the given attribute.
+	 *
+	 * @param editContext
+	 *        The edited attribute.
+	 * @param name
+	 *        The name of the field.
+	 * @param isMultiple
+	 *        Whether multiple values can be selected.
+	 * @param isOrdered
+	 *        Whether the selection is ordered.
+	 * @param isMandatoryDefault
+	 *        Whether a value is required.
+	 * @param isSearch
+	 *        Whether the field is used in a search.
+	 * @param mandatoryCheckerDefault
+	 *        The constraint checking the mandatory state, may be {@code null}.
+	 * @param isDisabled
+	 *        Whether the field is disabled.
+	 * @param isForList
+	 *        Whether the field is displayed in a list.
+	 * @return The new field.
+	 */
 	protected SelectField newSelectWrapperSetField(
 			EditContext editContext,
 			String name,

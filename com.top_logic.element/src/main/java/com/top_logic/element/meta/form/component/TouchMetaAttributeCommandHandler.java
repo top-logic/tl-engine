@@ -30,10 +30,13 @@ import com.top_logic.tool.execution.NegateRule;
  */
 public class TouchMetaAttributeCommandHandler extends AJAXCommandHandler {
 
+    /** Default ID of this command handler. */
     public static final String COMMAND_ID = "touchMetaAttribute";
 
+    /** Name of the parameter holding the ID of the field whose attribute is touched. */
     public static final String PARAMETER_FIELD = "field";
 
+    /** All parameters of this command. */
     public static final String[] PARAMETERS = new String[] {
         PARAMETER_FIELD
     };

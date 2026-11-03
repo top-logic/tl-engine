@@ -20,7 +20,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 
 /**
- * {@link ModelNamingScheme} for {@link Comment}
+ * {@link ModelNamingScheme} for {@link Comment}s.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

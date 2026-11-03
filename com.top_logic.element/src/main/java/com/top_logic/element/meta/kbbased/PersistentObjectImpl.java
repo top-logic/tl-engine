@@ -50,14 +50,23 @@ public class PersistentObjectImpl {
 
 	private static final String ATTRIBUTE_SUFFIX_LAST_CHANGED = "_last_changed";
 
+	/**
+	 * Adds the given type to the scope of the given object.
+	 */
 	public static void addMetaElement(TLObject self, TLClass aMetaElement) {
 		PersistentScope.addMetaElement(self, aMetaElement);
 	}
 
+	/**
+	 * Sets the type of the given object.
+	 */
 	public static void setMetaElement(TLObject self, TLClass aMetaElement) {
 		AbstractWrapper.setReference(self, PersistentObject.TYPE_REF, aMetaElement);
 	}
 
+	/**
+	 * The type of the given object.
+	 */
 	public static TLClass tType(TLObject self) {
 		return self.tGetDataReference(TLClass.class, PersistentObject.TYPE_REF);
 	}
@@ -232,14 +241,23 @@ public class PersistentObjectImpl {
 		return Collections.emptySet();
 	}
 
+	/**
+	 * Removes the given type from the scope of the given object.
+	 */
 	public static void removeMetaElement(TLObject self, TLClass aMetaElement) {
 		PersistentScope.removeMetaElement(self, aMetaElement);
 	}
 
+	/**
+	 * The type with the given name in the given scope.
+	 */
 	public static TLClass getMetaElement(TLScope self, String aMetaElementType) {
 		return PersistentScope.getMetaElement(self, aMetaElementType);
 	}
 
+	/**
+	 * All types defined in the given scope.
+	 */
 	public static Set<TLClass> getMetaElements(TLScope self) {
 		return PersistentScope.getMetaElements(self);
 	}
@@ -307,8 +325,8 @@ public class PersistentObjectImpl {
 	}
 
     /**
-	 * Integrates MetaAttributes. Falls back to FlexWrapper mechanism if there is no attribute of
-	 * the given name.
+	 * Integrates model attributes. Falls back to the plain storage of the object if there is no
+	 * attribute of the given name.
 	 */
 	public static Object getValue(TLObject self, String anAttribute) {
 		TLStructuredType type = self.tType();
@@ -324,6 +342,9 @@ public class PersistentObjectImpl {
 		return getValue(self, part);
     }
 
+	/**
+	 * The value of the given attribute of the given object.
+	 */
 	public static Object getValue(TLObject self, TLStructuredTypePart part) {
 		return AttributeOperations.getAttributeValue(self, part);
 	}
@@ -367,8 +388,8 @@ public class PersistentObjectImpl {
 	}
 
     /**
-	 * Integrates MetaAttributes. Falls back to FlexWrapper mechanism if there is no attribute of
-	 * the given name.
+	 * Integrates model attributes. Falls back to the plain storage of the object if there is no
+	 * attribute of the given name.
 	 */
 	public static void setValue(TLObject self, String aKey, Object aValue) {
 		notifyPreChange(self, aKey, aValue);
@@ -388,6 +409,10 @@ public class PersistentObjectImpl {
 		setValue(self, part, aValue);
     }
 
+	/**
+	 * Sets the value of the given attribute of the given object and updates its last change
+	 * date.
+	 */
 	public static void setValue(TLObject self, TLStructuredTypePart attribute, Object value) {
 		try {
 			if (!AttributeOperations.isCollectionValued(attribute)) {
@@ -414,6 +439,10 @@ public class PersistentObjectImpl {
         }
 	}
 
+	/**
+	 * Updates the last change date of the given attribute, if the attribute has an active
+	 * validity check.
+	 */
 	public static void touch(TLObject self, TLStructuredTypePart part) {
 		if (AttributeOperations.getValidityCheck(part).isActive()) {
 			String lastChangeProperty = getTouchProperty(part);
@@ -424,6 +453,9 @@ public class PersistentObjectImpl {
 		}
 	}
 
+	/**
+	 * Name of the property storing the last change date of the given attribute.
+	 */
 	public static String getTouchProperty(TLStructuredTypePart part) {
 		return part.getName() + ATTRIBUTE_SUFFIX_LAST_CHANGED;
 	}

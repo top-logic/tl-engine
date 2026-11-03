@@ -10,7 +10,7 @@ import com.top_logic.knowledge.objects.CreateException;
 import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
- * The GenericCreateHandler creates an business object out of {@link DataObject}. 
+ * The {@link GenericCreateHandler} creates an business object out of {@link DataObject}. 
  * Typically the handler creates {@link Wrapper} or {@link Wrapper}. 
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>

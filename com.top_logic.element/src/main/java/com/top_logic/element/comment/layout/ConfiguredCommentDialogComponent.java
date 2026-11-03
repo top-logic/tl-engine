@@ -11,11 +11,20 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
+ * {@link CommentDialogComponent} with an explicitly configured comments attribute.
+ * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class ConfiguredCommentDialogComponent extends CommentDialogComponent {
 
+    /**
+     * Configuration options for {@link ConfiguredCommentDialogComponent}.
+     */
     public interface Config extends CommentDialogComponent.Config {
+
+		/**
+		 * Name of the attribute of the commented object that holds its comments.
+		 */
 		@Name("commentAttributeName")
 		@Mandatory
 		String getCommentAttributeName();

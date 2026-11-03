@@ -48,11 +48,23 @@ import com.top_logic.model.TLClass;
 public class AttributedSearchResultComponent extends TableComponent
 		implements SupportColumnChange, AttributedSearchResultSetAware {
 
+	/**
+	 * Configuration options for {@link AttributedSearchResultComponent}.
+	 */
 	public interface Config extends TableComponent.Config {
+		/**
+		 * Comma separated list of the names of the types whose search results are displayed.
+		 * <p>
+		 * May be empty. If not empty, {@link #getMetaElementBuilder()} must be given.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_META_ELEMENT)
 		@Mandatory
 		String getMetaElement();
 
+		/**
+		 * The search model builder resolving the type names given in {@link #getMetaElement()}.
+		 */
 		@Name(XML_CONFIG_META_ELEMENT_BUILDER)
 		PolymorphicConfiguration<? extends SearchModelBuilder> getMetaElementBuilder();
 
@@ -62,8 +74,10 @@ public class AttributedSearchResultComponent extends TableComponent
 		PolymorphicConfiguration<? extends ListModelBuilder> getModelBuilder();
 	}
 
+	/** Configuration name of {@link Config#getMetaElement()}. */
 	public static final String XML_CONFIG_META_ELEMENT = "metaElement";
 
+	/** Configuration name of {@link Config#getMetaElementBuilder()}. */
     public static final String XML_CONFIG_META_ELEMENT_BUILDER = "metaElementBuilder";
 
     private Set<? extends TLClass> metaElements;
@@ -259,6 +273,9 @@ public class AttributedSearchResultComponent extends TableComponent
 		}
 	}
 
+	/**
+	 * Sets the default sort order of the given table to sorting by the first result column.
+	 */
 	protected void adaptTableConfigurationToDefaultSortOrder(TableConfiguration table) {
 		AttributedSearchResultSet model = getSearchResult();
 		if (model == null) {
@@ -273,6 +290,13 @@ public class AttributedSearchResultComponent extends TableComponent
 		table.setDefaultSortOrder(createDefaultSortConfig(columns));
 	}
 
+	/**
+	 * Creates the default sort order for the given result columns.
+	 *
+	 * @param theColumns
+	 *        The result columns, not empty.
+	 * @return Ascending sort order of the first column.
+	 */
 	protected List<SortConfig> createDefaultSortConfig(List<String> theColumns) {
 		return Collections.singletonList(SortConfigFactory.ascending(theColumns.get(0)));
 	}

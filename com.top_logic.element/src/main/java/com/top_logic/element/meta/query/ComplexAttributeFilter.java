@@ -19,6 +19,9 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
 
 /**
+ * {@link SimpleAttributeFilter} for attributes with a complex primitive type that is stored using a
+ * {@link StorageMapping}.
+ *
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class ComplexAttributeFilter extends SimpleAttributeFilter {

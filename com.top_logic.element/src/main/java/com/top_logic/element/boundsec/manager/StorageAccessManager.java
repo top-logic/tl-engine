@@ -49,7 +49,7 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
 
 /**
- * The StorageAccessManager stores roles in the security storage for fast access.
+ * The {@link StorageAccessManager} stores roles in the security storage for fast access.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
@@ -107,14 +107,29 @@ public class StorageAccessManager extends ElementAccessManager {
 		@Name(SKIP_REBUILD_ON_STARTUP)
 		boolean getSkipRebuildOnStartup();
 
+		/**
+		 * Whether the roles of a person are computed once for all objects and cached for the
+		 * person.
+		 * 
+		 * <p>
+		 * If not set, the roles of a person are looked up in the security storage for each access
+		 * check.
+		 * </p>
+		 */
 		@Name(USE_PERSON_ROLE_CACHE)
 		boolean getUsePersonRoleCache();
 
+		/**
+		 * The storage holding the precomputed roles of all users on all objects.
+		 */
 		@Name(STORAGE)
 		@ImplementationClassDefault(SecurityStorage.class)
 		@ItemDefault
 		PolymorphicConfiguration<? extends SecurityStorage> getStorage();
 
+		/**
+		 * The component updating the security storage, when objects or role assignments change.
+		 */
 		@Name(UPDATE_MANAGER)
 		@ImplementationClassDefault(ElementSecurityUpdateManager.class)
 		@ItemDefault
@@ -147,7 +162,7 @@ public class StorageAccessManager extends ElementAccessManager {
     private final ElementSecurityUpdateManager securityUpdateManager;
 
     /**
-     * Flag indicating that the StorageAccessManager has already been started (the
+     * Flag indicating that the {@link StorageAccessManager} has already been started (the
      * {@link #reload()} method has been called).
      */
     protected boolean started = false;
@@ -180,7 +195,7 @@ public class StorageAccessManager extends ElementAccessManager {
     
     /**
      * Flag indicating whether to skip storage rebuild on application startup. This will
-     * override the rebuildAfterStartup and resetOnInit flags.
+     * override the {@link #rebuildAfterStartup} and {@link #resetOnInit} flags.
      */
     protected boolean skipRebuildOnStartup;
 

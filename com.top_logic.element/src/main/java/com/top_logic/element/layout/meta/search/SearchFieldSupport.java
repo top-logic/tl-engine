@@ -82,19 +82,35 @@ import com.top_logic.util.resource.ResourceMapMapping;
  */
 public class SearchFieldSupport {
 
+	/** Name of the field for selecting a {@link StoredQuery}. */
     public static final String STORED_QUERY = "storedQuery";
 
+	/** Name of the field for selecting the type to search for. */
     public static final String META_ELEMENT = "metaElement";
 
+	/** Name of the full text search field. */
     public static final String FULL_TEXT = "fullText";
 
+	/** Name of the field for selecting the result columns. */
     public static final String TABLE_COLUMNS = "tableColumns";
 
+	/**
+	 * Name of the field (and query parameter) whether all words of the full text search must
+	 * match.
+	 */
     public static final String FULLTEXT_PARAM_MODE = "fullTextMode";
     
+	/**
+	 * Name of the field (and query parameter) whether the full text search only finds exact
+	 * matches.
+	 */
     public static final String FULLTEXT_PARAM_EXACT_MATCH = "fullTextExactMatch";
 
 
+	/**
+	 * Property of the search {@link FormContext} holding the component that displays the search
+	 * form.
+	 */
 	public static final Property<ControlComponent> CONTROL_COMPONENT_KEY =
 		TypedAnnotatable.property(ControlComponent.class, "CONTROL_COMPONENT_KEY");
 
@@ -156,10 +172,10 @@ public class SearchFieldSupport {
     }
 
     /**
-     * Get a form field for the StoredQueries
+     * Get a form field for the {@link StoredQuery stored queries}.
      *
      * @param    aQuery    the currently selected query. May be <code>null</code>
-     * @return   A FormField for the StoredQueries
+     * @return   A {@link FormField} for the stored queries.
      */
     public static SelectField getStoredQueryConstraint(TLClass aME, StoredQuery aQuery) {
 		{
@@ -327,6 +343,18 @@ public class SearchFieldSupport {
 		return false;
 	}
 
+	/**
+	 * Creates the form group for publishing the selected {@link StoredQuery} to other groups.
+	 * <p>
+	 * The group is only visible if the selected query is already published and the current user
+	 * is the owner of the query.
+	 * </p>
+	 *
+	 * @param aComponent
+	 *        The search component.
+	 * @param resPrefix
+	 *        The resource prefix for the labels of the group.
+	 */
 	public FormGroup getPublishingFormGroup(AttributedSearchComponent aComponent, ResPrefix resPrefix) {
 		FormGroup theGroup = new FormGroup(QueryUtils.FORM_GROUP, resPrefix);
 
@@ -480,6 +508,19 @@ public class SearchFieldSupport {
         }
     }
 
+	/**
+	 * Adds the "relevant and negate" checkbox for the search field of the given attribute.
+	 *
+	 * @param aFormCtx
+	 *        The search form to add the checkbox to.
+	 * @param anUpdate
+	 *        The description of the search field.
+	 * @param doNegate
+	 *        Whether the search criterion is negated.
+	 * @param isRelevant
+	 *        Whether the search criterion is relevant. If not, the checkbox has no value.
+	 * @return The new checkbox.
+	 */
     protected BooleanField addRelevantAndNegateMember(AttributeFormContext aFormCtx, AttributeUpdate anUpdate, boolean doNegate, boolean isRelevant) {
         Boolean       theNegateTristate = isRelevant ? Boolean.valueOf(!doNegate) : null;
         TLStructuredTypePart theMA             = anUpdate.getAttribute();
@@ -491,6 +532,19 @@ public class SearchFieldSupport {
         return theField;
     }
 
+	/**
+	 * Adds the "relevant and negate" checkbox for the search field with the given name.
+	 *
+	 * @param aFormCtx
+	 *        The search form to add the checkbox to.
+	 * @param aBasicID
+	 *        The name of the search field.
+	 * @param doNegate
+	 *        Whether the search criterion is negated.
+	 * @param isRelevant
+	 *        Whether the search criterion is relevant. If not, the checkbox has no value.
+	 * @return The new checkbox.
+	 */
     public static BooleanField addRelevantAndNegateMember(AttributeFormContext aFormCtx, String aBasicID, boolean doNegate, boolean isRelevant) {
         Boolean      theNegateTristate = isRelevant ? Boolean.valueOf(!doNegate) : null;
         BooleanField theField = FormFactory.newBooleanField(SearchFilterSupport.getRelevantAndNegateMemberName(aBasicID), theNegateTristate, false);
@@ -500,8 +554,13 @@ public class SearchFieldSupport {
         return theField;
     }
 
+	/**
+	 * {@link ValueListener} of the {@link SearchFieldSupport#STORED_QUERY} field loading the
+	 * selected {@link StoredQuery} into the search form.
+	 */
     public static class ChangeStoredQueryListener implements ValueListener {
 
+		/** Singleton {@link ChangeStoredQueryListener} instance. */
         public static final ChangeStoredQueryListener INSTANCE = new ChangeStoredQueryListener();
 
         // Implementation of interface ValueListener
@@ -544,10 +603,14 @@ public class SearchFieldSupport {
     }
 
     /**
+	 * {@link ValueListener} of the {@link SearchFieldSupport#META_ELEMENT} field switching the type
+	 * to search for.
+	 * 
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
      */
     public static class ChangeMetaElementListener implements ValueListener {
 
+		/** Singleton {@link ChangeMetaElementListener} instance. */
         public static final ChangeMetaElementListener INSTANCE = new ChangeMetaElementListener();
 
         // Implementation of interface ValueListener
@@ -572,12 +635,19 @@ public class SearchFieldSupport {
     }
 
     /**
+	 * {@link ValueListener} of a "relevant and negate" checkbox marking the corresponding search
+	 * field as positive, negated, or irrelevant criterion.
+	 * 
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
      */
     public static class ChangeColorListener implements ValueListener {
 
 		private static final ChangeColorListener INSTANCE = new ChangeColorListener();
 
+		/**
+		 * Adds a {@link ChangeColorListener} to the given checkbox and initializes the style of
+		 * the corresponding search field.
+		 */
 		public static void addTo(FormField member) {
         	member.addValueListener(INSTANCE);
 			initialize(member, INSTANCE);
@@ -629,6 +699,18 @@ public class SearchFieldSupport {
             }
         }
 
+		/**
+		 * Updates the CSS class of the given search field according to the checkbox value.
+		 *
+		 * @param aComp
+		 *        The component displaying the search form.
+		 * @param field
+		 *        The search field to update.
+		 * @param newValue
+		 *        The new value of the checkbox: {@link Boolean#TRUE} for a positive criterion,
+		 *        {@link Boolean#FALSE} for a negated criterion, <code>null</code> for an irrelevant
+		 *        one.
+		 */
 		public void changeColor(ControlComponent aComp, FormField field, Object newValue) {
 			Boolean isPositive = (Boolean) newValue;
 			updateCssClass(field, isPositive == null, isPositive);
@@ -637,10 +719,14 @@ public class SearchFieldSupport {
     }
 
     /**
+	 * {@link ValueListener} of a search field marking it as relevant search criterion as soon as
+	 * a value is entered.
+	 * 
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
      */
     public static class InputListener implements ValueListener {
 
+		/** Singleton {@link InputListener} instance. */
         public static final InputListener INSTANCE = new InputListener();
 
         //enforce use of INSTANCE 
@@ -722,6 +808,9 @@ public class SearchFieldSupport {
     }
 
     /**
+	 * {@link ValueListener} of a group of search fields marking the group as relevant search
+	 * criterion as soon as one of the fields has a value.
+	 * 
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
      */
     public static class GroupInputListener implements ValueListener {
@@ -738,7 +827,11 @@ public class SearchFieldSupport {
         // Constructors
 
         /**
-         * Creates a {@link SearchFieldSupport}.GroupInputListener.
+         * Creates a {@link GroupInputListener}.
+         *
+         * @param somePartners
+         *        Mapping of the participating fields to the {@link Mapping} deciding which values
+         *        are considered empty.
          */
         public GroupInputListener(Map somePartners) {
             this.partners = somePartners;
@@ -782,7 +875,11 @@ public class SearchFieldSupport {
 
     }
 
+	/**
+	 * {@link Mapping} that maps empty values to <code>null</code> and keeps all other values.
+	 */
     public static class SimpleNullMapping implements Mapping {
+		/** Singleton {@link SimpleNullMapping} instance. */
         public static final SimpleNullMapping INSTANCE = new SimpleNullMapping();
         @Override
 		public Object map(Object anInput) {
@@ -792,7 +889,8 @@ public class SearchFieldSupport {
 
 
     /**
-     * Change the color of the inputFileds when change and disable the #STORED_QUERY field.
+     * Change the color of the input fields when changed and disable the
+     * {@link SearchFieldSupport#STORED_QUERY} field.
      *
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
      */
@@ -804,15 +902,27 @@ public class SearchFieldSupport {
 		private static final InputColorListener INSTANCE = new InputColorListener(false);
 
         /**
-		 * Instance for Fields in FormGroups. Each FormField within the same
+		 * Instance for Fields in FormGroups. Each {@link FormField} within the same
 		 * group is affected as well.
 		 */
 		private static final InputColorListener SIBLING_INSTANCE = new InputColorListener(true);
 
+		/**
+		 * Adds an {@link InputColorListener} to the given field, that affects only the field
+		 * itself.
+		 */
 		public static void addTo(FormField field) {
 			addTo(field, false);
 		}
 
+		/**
+		 * Adds an {@link InputColorListener} to the given field.
+		 *
+		 * @param field
+		 *        The field to observe.
+		 * @param siblings
+		 *        Whether all fields in the same group are affected as well.
+		 */
 		public static void addTo(FormField field, boolean siblings) {
 			ValueListener listener = siblings ? SIBLING_INSTANCE : INSTANCE;
 			field.addValueListener(listener);
@@ -963,6 +1073,20 @@ public class SearchFieldSupport {
     	}
     }
 
+	/**
+	 * Adds the full text search field and its option fields to the given search form.
+	 *
+	 * @param aContext
+	 *        The search form.
+	 * @param aQuery
+	 *        The query to take the initial values from, may be <code>null</code>.
+	 * @param useRelevantAndNegate
+	 *        Whether a "relevant and negate" checkbox is added.
+	 * @param isAnd
+	 *        Default for whether all words must match.
+	 * @param exactMatch
+	 *        Default for whether only exact matches are found.
+	 */
     public void addFullTextField(AttributeFormContext aContext, StoredQuery aQuery, boolean useRelevantAndNegate, boolean isAnd, boolean exactMatch) {
         Collection theFilters = null;
         
@@ -1049,6 +1173,9 @@ public class SearchFieldSupport {
         return theMember;
     }
 
+	/**
+	 * {@link Comparator} comparing values by their internationalized labels.
+	 */
     public static class I18NComparator implements Comparator {
 
 		private ResPrefix resPrefix;

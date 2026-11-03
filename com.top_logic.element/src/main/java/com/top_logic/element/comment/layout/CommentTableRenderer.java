@@ -107,6 +107,9 @@ public class CommentTableRenderer extends DefaultTableRenderer {
 		}
     }
 
+	/**
+	 * Writes the name of the creator of the given comment.
+	 */
 	protected void writeCommentCreator(TagWriter aWriter, Comment aComment) throws IOException {
         Person theCreator = aComment.getCreator();
         if (theCreator != null) {
@@ -114,15 +117,24 @@ public class CommentTableRenderer extends DefaultTableRenderer {
         }
     }
     
+	/**
+	 * Writes the creation date of the given comment.
+	 */
 	protected void writeCommentDate(TagWriter aWriter, Comment aComment) throws IOException {
         aWriter.writeContent(HTMLFormatter.getInstance().formatDateTime(aComment.getCreated()));
     }
     
+	/**
+	 * Writes the text of the given comment.
+	 */
 	protected void writeCommentContent(DisplayContext aContext, TagWriter aWriter, Comment aComment)
 			throws IOException {
         BulletinBoardRenderer.INSTANCE.write(aContext, aWriter, aComment.getContent());
     }
 
+	/**
+	 * Writes the buttons for editing and quoting the given comment.
+	 */
 	protected void writeCommentAdorner(DisplayContext aContext, TagWriter aWriter, Comment aComment)
 			throws IOException {
 		CommentTableComponent theComp = (CommentTableComponent) MainLayout.getComponent(aContext);
@@ -133,6 +145,32 @@ public class CommentTableRenderer extends DefaultTableRenderer {
 			theComp.getQuoteComponentName(), Icons.QUOTE, Icons.QUOTE_DISABLED);
     }
 
+	/**
+	 * Writes a button executing the given command on the given comment.
+	 * 
+	 * <p>
+	 * Nothing is written, if no component name is given or the command is hidden.
+	 * </p>
+	 * 
+	 * @param context
+	 *        The current rendering context.
+	 * @param out
+	 *        The writer to write to.
+	 * @param aComp
+	 *        The component displaying the comments.
+	 * @param aComment
+	 *        The comment to execute the command on.
+	 * @param command
+	 *        The command to execute.
+	 * @param aName
+	 *        The name of the command (currently not used).
+	 * @param componentName
+	 *        The name of the dialog component the command opens.
+	 * @param enabledImage
+	 *        The icon of an executable command.
+	 * @param disabledImage
+	 *        The icon of a disabled command.
+	 */
 	protected void writeCommandButton(DisplayContext context, TagWriter out, BoundComponent aComp, Comment aComment,
 			CommandHandler command, String aName, ComponentName componentName, ThemeImage enabledImage, ThemeImage disabledImage)
 			throws IOException {

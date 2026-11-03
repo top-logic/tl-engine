@@ -168,6 +168,14 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		return _logHandler;
 	}
 
+	/**
+	 * Updates the security storage for the changes of the given change set.
+	 * 
+	 * @param change
+	 *        The changes that were made in a commit.
+	 * @param aHandler
+	 *        The commit handler to use for updating the security storage.
+	 */
 	public synchronized void handleSecurityUpdate(TLObjectChangeSet change, CommitHandler aHandler) {
 
 		KnowledgeBase kb = change.kb();

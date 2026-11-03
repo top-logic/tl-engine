@@ -53,11 +53,17 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class CommentDialogComponent extends FormComponent {
 
+    /**
+     * Configuration options for {@link CommentDialogComponent}.
+     */
     public interface Config extends FormComponent.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/**
+		 * Whether the dialog edits an existing comment instead of creating a new one.
+		 */
 		@Name(EDIT_COMMENT_XML_ATTRIBUTE)
 		@BooleanDefault(false)
 		boolean getEditComment();
@@ -72,6 +78,7 @@ public class CommentDialogComponent extends FormComponent {
 
 	}
 
+	/** Configuration name of {@link Config#getEditComment()}. */
 	public static final String EDIT_COMMENT_XML_ATTRIBUTE = "editComment";
 
     private static final String CREATE_NEW_COMMENT_HANDLER = "addComment";
@@ -130,16 +137,35 @@ public class CommentDialogComponent extends FormComponent {
         return new FormContext("comment", this.getResPrefix(), Collections.singletonList(theField));
     }
 
+    /**
+     * Name of the attribute holding the comments of the commented object.
+     */
     protected String getCommentsAttributeName() {
         return ((CommentTableComponent) this.getDialogParent()).getCommentsAttributeName();
     }
 
+    /**
+     * Hook called after a new comment has been created.
+     * 
+     * @param aComment
+     *        The new comment.
+     * @param aHandlerRsult
+     *        The result of the command.
+     */
     protected void afterHandleNew(Comment aComment, HandlerResult aHandlerRsult) {
         LayoutComponent theParent = this.getDialogParent();
 		removeFormContext();
         theParent.invalidate();
     }
 
+    /**
+     * Hook called after a comment has been edited.
+     * 
+     * @param aComment
+     *        The edited comment.
+     * @param aHandlerRsult
+     *        The result of the command.
+     */
     protected void afterHandleEdit(Comment aComment, HandlerResult aHandlerRsult) {
 		removeFormContext();
         LayoutComponent theParent = this.getDialogParent();
@@ -155,11 +181,17 @@ public class CommentDialogComponent extends FormComponent {
     	super.becomingInvisible();
     }
 
+    /**
+     * The comment that is edited or quoted, {@code null} when a new comment is created without
+     * quote.
+     */
     public Comment getBaseComment() {
 		return (Comment) getModel();
     }
 
     /**
+     * Command creating a new comment from the input of the dialog.
+     * 
      * @author    <a href=mailto:mga@top-logic.com>mga</a>
      */
     public static class NewCommentHandler extends AbstractCommandHandler {
@@ -282,10 +314,10 @@ public class CommentDialogComponent extends FormComponent {
 
         // Constants
 
-        
+        /** Argument name holding the ID of the command to check. */
         public static final String COMMAND_ATTRIBUTE = "command";
 
-        
+        /** Argument name holding the comment the command is executed on. */
 		public static final String WRAPPER_ATTRIBUTE = SimpleOpenDialog.MODEL;
 
 		/** Singleton {@link OwnerExecutabilityRule} instance. */
@@ -346,7 +378,7 @@ public class CommentDialogComponent extends FormComponent {
     }
 
     /**
-     * TODO TSA what is this command needed for ?
+     * Opens the dialog for creating a new comment.
      *
      * @author    <a href=mailto:tsa@top-logic.com>Theo Sattler</a>
      */

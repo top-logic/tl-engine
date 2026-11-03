@@ -8,6 +8,8 @@ package com.top_logic.element.genericimport;
 import java.util.Properties;
 
 /**
+ * {@link TypeResolverBase} using the configured type mapping without further checks.
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class ConfiguredTypeResolver extends TypeResolverBase {

@@ -102,11 +102,11 @@ public abstract class RoleComputation {
 	 * Checks the given collection and returns only these objects with the given roles.
 	 * 
 	 * @param someRoles
-	 *        A collection of BoundRoles.
+	 *        A collection of {@link BoundRole}s.
 	 * @param someObjects
-	 *        The collection of BoundObjects to check.
-	 * @return A collection containing only the allowed BoundObjects of the given collection
-	 *         someObjects, may be empty but not <code>null</code>.
+	 *        The collection of {@link BoundObject}s to check.
+	 * @return A collection containing only the allowed {@link BoundObject}s of the given collection
+	 *         {@code someObjects}, may be empty but not <code>null</code>.
 	 */
 	public abstract <T extends BoundObject> Collection<T> getAllowedBusinessObjects(
 			Collection<? extends BoundRole> someRoles,
@@ -159,8 +159,8 @@ public abstract class RoleComputation {
 	/**
 	 * Normally the {@link #findAllowedBusinessObjects(Collection, List, Collection)} method uses
 	 * the in-statement-query of the security storage. In some cases this query could be slow (e.g.
-	 * if someObject has many elements). If this method returns <code>true</code>, another query
-	 * without in-statement will be used instead.
+	 * if {@code someObjects} has many elements). If this method returns <code>true</code>, another
+	 * query without in-statement will be used instead.
 	 * 
 	 * @return <code>true</code>, if no in-statement-query should be used, <code>false</code>
 	 *         otherwise.

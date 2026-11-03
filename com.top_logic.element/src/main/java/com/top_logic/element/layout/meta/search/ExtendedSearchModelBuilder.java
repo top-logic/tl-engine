@@ -19,8 +19,8 @@ import com.top_logic.model.TLClass;
 public interface ExtendedSearchModelBuilder extends SearchModelBuilder {
 
 	/**
-	 * This method returns the path to the jsp (e.g.v
-	 * '/jsp/project/search/SearchInput.jsp') of the given meta element and
+	 * This method returns the path to the jsp (e.g.
+	 * <code>/jsp/project/search/SearchInput.jsp</code>) of the given meta element and
 	 * NEVER <code>null</code>.
 	 * 
 	 * @param aMetaElement

@@ -8,7 +8,7 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 import com.top_logic.reporting.report.model.partition.function.DatePartitionFunction;
 
 /**
- * The XMLDateElement describes the XML-representation of a {@link DatePartitionFunction}.
+ * The {@link XMLDateElement} describes the XML-representation of a {@link DatePartitionFunction}.
  *
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

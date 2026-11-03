@@ -43,9 +43,9 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * The ReportingChartComponent takes the information from the SearchInput and the objects from the
- * SearchResultSet and creates a suitable {@link RevisedReport}. This report is then used to create the
- * chart.
+ * The {@link ReportingChartComponent} takes the information from the search input and the objects
+ * from the search result and creates a suitable {@link RevisedReport}. This report is then used to
+ * create the chart.
  *
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

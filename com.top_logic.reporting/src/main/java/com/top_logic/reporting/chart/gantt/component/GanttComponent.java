@@ -80,9 +80,11 @@ public class GanttComponent extends AbstractImageComponent {
 		 */
 		String ROWS_PER_PAGE = "rowsPerPage";
 
+		/** Algorithm creating the Gantt chart image. */
 		@Name(XML_CONFIG_CHART_CREATOR)
 		PolymorphicConfiguration<? extends AbstractGanttChartCreator> getChartCreator();
 
+		/** Algorithm exporting the Gantt chart, e.g. as PDF. */
 		@Name(XML_CONFIG_CHART_EXPORTER)
 		@ImplementationClassDefault(GanttChartExporter.class)
 		PolymorphicConfiguration<? extends GanttChartExporter> getChartExporter();
@@ -272,6 +274,7 @@ public class GanttComponent extends AbstractImageComponent {
 		}
 	}
 
+	/** The (error) message displayed instead of the chart, or {@code null} if there is none. */
 	public String getMessage() {
 		return _message;
 	}

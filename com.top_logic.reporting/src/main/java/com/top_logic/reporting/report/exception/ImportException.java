@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The ImportException is thrown if a report could not imported.
+ * The {@link ImportException} is thrown if a report could not imported.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -13,7 +13,7 @@ import com.top_logic.reporting.data.processing.transformator.TableTransformator;
 import com.top_logic.reporting.data.processing.transformator.TransformatorFactory;
 
 /**
- * The AbtractTableDescriptor extends the AbstractDescription.
+ * The {@link AbstractTableDescriptor} extends the abstract description.
  * KHA: This is plain wrong when I look at the code ?
  * This way the always everthesame stuff
  * if done by this abstract implementation, so the specific implementation does not need to care for it
@@ -71,7 +71,7 @@ public abstract class AbstractTableDescriptor implements TableDescriptor{
 
 
 	/**
-	 * Returns the aHeaderColumn.
+	 * Returns the header column.
 	 * @return List
 	 */
 	@Override
@@ -80,7 +80,7 @@ public abstract class AbstractTableDescriptor implements TableDescriptor{
 	}
 
 	/**
-	 * Returns the aHeaderRow.
+	 * Returns the header row.
 	 * @return List
 	 */
 	@Override

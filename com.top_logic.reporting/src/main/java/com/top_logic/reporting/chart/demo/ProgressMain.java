@@ -38,7 +38,7 @@ import com.top_logic.reporting.common.tree.TreeInfo;
 import com.top_logic.reporting.common.tree.TreeInfoNode;
 
 /**
- * The ProgressMain generates a example progress chart with a tree axis.
+ * The {@link ProgressMain} generates a example progress chart with a tree axis.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -21,7 +21,7 @@ import com.top_logic.reporting.data.processing.transformator.common.EntryExtract
  * 
  * All Transformators for use with this factory have to declare a 
  * Contructor with the pattern (String)
- * where the String is the SectionName of the configuration section 
+ * where the String is the section name of the configuration section 
  * containing the transformators parameters.
  * Each Transformator has to have such a configuration section. 
  * Each section has to contain an entry named "class".
@@ -48,8 +48,10 @@ public class TransformatorFactory implements Reloadable {
 		 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 		 */
 		interface Transformator extends NamedConfigMandatory, PolymorphicConfiguration<EntryExtractor> {
+			/** Resource key of the display name of the transformator. */
 			String getDisplayKey();
 
+			/** Comma separated list of the indices of the entries to extract. */
 			String getIndices();
 		}
 

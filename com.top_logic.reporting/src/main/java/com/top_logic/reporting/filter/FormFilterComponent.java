@@ -28,10 +28,12 @@ import com.top_logic.reporting.filter.model.FilterModel;
  */
 public class FormFilterComponent extends FormComponent implements Updatable {
 
+	/** Configuration options for {@link FormFilterComponent}. */
 	public interface Config extends FormComponent.Config {
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/** The configuration creating the filter fields and the filter model. */
 		@Name(LAYOUT_ATTRIBUTE_CONFIGURATION_CLASS)
 		@Mandatory
 		@InstanceFormat
@@ -78,6 +80,7 @@ public class FormFilterComponent extends FormComponent implements Updatable {
 		}
 	}
 	
+	/** Creates a new filter model and sends it to the other components. */
 	public void sendSlaveModel() {
 		FormFilterConfiguration configuration = getConfiguration();
 		setFilterModel(configuration.createNewFilterModel(this));
@@ -101,9 +104,9 @@ public class FormFilterComponent extends FormComponent implements Updatable {
 	}
 	
 	/**
-	 * This method returns the filterModel.
+	 * This method returns the filter model.
 	 * 
-	 * @return Returns the filterModel.
+	 * @return Returns the filter model.
 	 */
 	public FilterModel getFilterModel() {
 		return this.filterModel;

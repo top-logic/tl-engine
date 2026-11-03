@@ -12,6 +12,8 @@ import com.top_logic.layout.Accessor;
 import com.top_logic.reporting.report.model.ItemVO;
 
 /**
+ * Function computing a value from a collection of business objects.
+ *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 @Deprecated
@@ -23,6 +25,11 @@ public interface AggregationFunction extends CollectionFilter {
     @Deprecated
 	public  static final String IGNORE_NULL             = "ignoreNullValues";
     
+    /**
+     * Computes the value of this function for the given objects.
+     *
+     * @return The item describing the result.
+     */
     public ItemVO getValueObjectFor(Collection someObjects);
 
 	/**

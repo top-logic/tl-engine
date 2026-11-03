@@ -75,6 +75,13 @@ public interface Value {
 	 */
 	public int getNumberEntries();
 	
+	/**
+	 * Creates a new value consisting only of the entries at the given indices.
+	 *
+	 * @param indices
+	 *        The indices of the entries to keep.
+	 * @return The projected value.
+	 */
 	public Value projectOn(int[] indices);
 	
 	
@@ -113,7 +120,8 @@ public interface Value {
 	 * This method has to act just like that ! Of course your implementation of this interface can override
 	 * equals() and hashcode(), but this interface cannot force you to do so. Still this interface wants to provide
 	 * access to an "equals" method which compares the content, not the references. This is what this method is for,
-	 * If you already plan to override equals() and hashCode(), just call equals() in your implementation of this method.
+	 * If you already plan to override {@link Object#equals(Object)} and {@link Object#hashCode()},
+	 * just call {@link Object#equals(Object)} in your implementation of this method.
      * 
      * KHA: So there is actually no need to have this function since every sane
      *      class should have some meaningfull equals Method().

@@ -17,10 +17,15 @@ import com.top_logic.util.Resources;
  * @author    <a href=mailto:tbe@top-logic.com>tbe</a>
  */
 public abstract class ReportingTooltipGenerator implements ReportConstants {
+	/** The translated name of the count function. */
 	protected final String translatedCount;
+	/** The translated label for the amount. */
 	protected final String amount;
+	/** The translated label for the attribute. */
 	protected final String attribute;
+	/** The translated label for the function. */
 	protected final String function;
+	/** The translated label for the range. */
 	protected final String range;
 
 	public ReportingTooltipGenerator() {

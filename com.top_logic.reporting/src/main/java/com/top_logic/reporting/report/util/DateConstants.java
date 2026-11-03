@@ -23,7 +23,7 @@ import com.top_logic.reporting.common.period.HalfYear;
 import com.top_logic.util.Resources;
 
 /**
- * This interface contains some useful constants for date granularities
+ * This class contains some useful constants for date granularities.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -46,6 +46,14 @@ public class DateConstants {
 	/** the int representation of a year in hours */
 	public static final int					YEAR			= DAY * 365; // 8760
 
+	/**
+	 * The date format for the labels of a date range.
+	 *
+	 * @param aDateRange
+	 *        One of the granularity constants of this class, e.g. {@link #MONTH}.
+	 * @param useBusinessYear
+	 *        Whether quarters and years are relative to the business year.
+	 */
 	public static DateFormat getDateFormat(int aDateRange, boolean useBusinessYear) {
 		switch (aDateRange) {
     		case HOUR:
@@ -68,6 +76,7 @@ public class DateConstants {
 		}
 	}
 	
+	/** The date format for the labels of the given time period class. */
 	public static DateFormat getDateFormat(Class aPeriod) {
         if(aPeriod.equals(Hour.class)) {
 			return CalendarUtil.newSimpleDateFormat("dd");
@@ -103,6 +112,7 @@ public class DateConstants {
 		return CalendarUtil.newSimpleDateFormat("yyyy-MM-dd HH:mm");
 	}
 	
+	/** The date format for tooltips of the given time period class. */
 	public static DateFormat getDateFormatForTooltip(Class aPeriod) {
         if(aPeriod.equals(Hour.class)) {
 			return CalendarUtil.newSimpleDateFormat("dd");

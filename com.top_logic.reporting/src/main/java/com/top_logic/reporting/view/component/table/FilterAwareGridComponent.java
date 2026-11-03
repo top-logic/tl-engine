@@ -22,6 +22,7 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
  */
 public class FilterAwareGridComponent extends GridComponent implements FilterAwareComponent {
 	
+	/** Configuration options for {@link FilterAwareGridComponent}. */
 	public interface Config extends GridComponent.Config {
 		@Override
 		@FormattedDefault("path:master.currentObject")

@@ -9,8 +9,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * The NeedsAttribute Annotation must be specified for {@link AggregationFunction}s to declare
- * whether the attribute is mandatory or not.
+ * The {@link NeedsAttribute} Annotation must be specified for {@link AggregationFunction}s to
+ * declare whether the attribute is mandatory or not.
  * 
  * @author <a href=mailto:tbe@top-logic.com>tbe</a>
  */
@@ -18,5 +18,6 @@ import java.lang.annotation.RetentionPolicy;
 @Deprecated
 public @ interface NeedsAttribute {
 	 // needs an attribute by default 
+    /** Whether the function needs an attribute. */
     boolean value() default true;
 }

@@ -25,27 +25,31 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Use this component together with the {@link DefaultProducerChartComponent} if
  * you haven't additional filters. If you want to use the {@link DefaultProducerChartComponent}
- * you need a {@link AbstractFilterComponent} as parent. The DefaultProducerFilterComponent can
- * be used if the chart needs no additional information but the model of the parent. This
+ * you need a {@link AbstractFilterComponent} as parent. The {@link DefaultProducerFilterComponent}
+ * can be used if the chart needs no additional information but the model of the parent. This
  * component wraps only the model in {@link FilterVO} which can be used for the
- * {@link DefaultProducerChartComponent}. If you have additional filter, you must implement
- * a new sub class of {@link AbstractFilterComponent}.
+ * {@link DefaultProducerChartComponent}. If you have additional filter, you must implement a new
+ * sub class of {@link AbstractFilterComponent}.
  *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class DefaultProducerFilterComponent extends AbstractFilterComponent {
 
+    /** Configuration options for {@link DefaultProducerFilterComponent}. */
     public interface Config extends AbstractFilterComponent.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/** Name of the chart context class. The class must have a default constructor. */
 		@Name(LAYOUT_ATTRIBUTE_CHART_CONTEXT_CLASS_NAME)
 		String getChartContextClass();
 
+		/** Name of the class checking whether an object is supported by the filter. */
 		@Name(LAYOUT_ATTRIBUTE_CHECKER_CLASS_NAME)
 		String getCheckerClass();
 
+		/** Name of the class defining the filter fields. */
 		@Name(LAYOUT_ATTRIBUTE_FILTER_CONFIGURATION_NAME)
 		String getConfigurationClass();
 
@@ -168,6 +172,7 @@ public class DefaultProducerFilterComponent extends AbstractFilterComponent {
     	return super.resetFormContext(oldModel,aModel);
     }
     
+    /** The label of the fieldset containing the filter fields. */
     public String getFieldsetLabel() {
         if (this.filterConfiguration != null) {
             return this.filterConfiguration.getFieldsetLabel();

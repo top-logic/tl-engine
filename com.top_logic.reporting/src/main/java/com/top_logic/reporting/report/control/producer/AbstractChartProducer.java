@@ -40,20 +40,26 @@ import com.top_logic.util.Resources;
 
 
 /**
+ * Base class for algorithms creating charts.
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public abstract class AbstractChartProducer extends AbstractConfiguredInstance<AbstractChartProducer.Config>
 		implements ChartProducer {
 
+	/** Configuration options for {@link AbstractChartProducer}. */
 	public interface Config extends PolymorphicConfiguration<ChartProducer> {
+		/** Whether the chart displays a legend. */
 		@Name(XML_ATTRIBUTE_SHOW_LEGEND)
 		@BooleanDefault(LEGEND)
 		boolean getShowLegend();
 
+		/** Whether the chart displays tooltips. */
 		@Name(XML_ATTRIBUTE_SHOW_TOOLTIPS)
 		@BooleanDefault(!TOOLTIPS)
 		boolean getShowTooltips();
 
+		/** Whether the chart items are linked. */
 		@Name(XML_ATTRIBUTE_SHOW_URLS)
 		@BooleanDefault(!URLS)
 		boolean getShowURLs();
@@ -122,6 +128,7 @@ public abstract class AbstractChartProducer extends AbstractConfiguredInstance<A
         this.showURLs     = someAttrs.getShowURLs();
     }
 
+	 /** Creates the chart for the given context. */
 	 protected abstract JFreeChart createChart(ChartContext aChartContext);
 
 	@Override
@@ -129,38 +136,92 @@ public abstract class AbstractChartProducer extends AbstractConfiguredInstance<A
 		return AbstractChartProducer.adaptChart(aContext, this.createChart(aContext));
 	}
 
+	/**
+	 * The value for the given key in the given context as {@code double}.
+	 *
+	 * @param aDefault
+	 *        The value to use, if the context has no such value.
+	 */
 	public double getDouble(ChartContext aChartContext, String aKey, double aDefault) {
 		return ValueUtil.getDoubleValue(aChartContext.getValue(aKey), aDefault);
 	}
 
+    /**
+     * The value for the given key in the given context as {@code int}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public int getInt(ChartContext aChartContext, String aKey, int aDefault) {
         return ValueUtil.getIntValue(aChartContext.getValue(aKey), aDefault);
     }
 
+    /**
+     * The value for the given key in the given context as {@link String}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public String getString(ChartContext aChartContext, String aKey, String aDefault) {
         return ValueUtil.getStringValue(aChartContext.getValue(aKey), aDefault);
     }
 
+    /**
+     * The value for the given key in the given context as {@code boolean}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public static boolean getBoolean(ChartContext aChartContext, String aKey, boolean aDefault) {
         return ValueUtil.getBooleanValue(aChartContext.getValue(aKey), aDefault);
     }
 
+    /**
+     * The value for the given key in the given context as {@link Paint}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public Paint getPaint(ChartContext aChartContext, String aKey, Paint aDefault) {
         return ValueUtil.getPaint(aChartContext.getValue(aKey), aDefault);
     }
 
+    /**
+     * The value for the given key in the given context as {@link Paint}.
+     *
+     * @param aDefault
+     *        The color code to use, if the context has no such value.
+     */
     public Paint getPaint(ChartContext aChartContext, String aKey, String aDefault) {
         return ValueUtil.getPaint(aChartContext.getValue(aKey), Color.decode(aDefault));
     }
 
+    /**
+     * The value for the given key in the given context as {@link Shape}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public Shape getShape(ChartContext aChartContext, String aKey, Shape aDefault) {
         return ValueUtil.getShapeValue(aChartContext.getValue(aKey), aDefault);
     }
 
+    /**
+     * The value for the given key in the given context as {@link DateFormat}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public DateFormat getDateFormat(ChartContext aChartContext, String aKey, DateFormat aDefault) {
     	return ValueUtil.getDateFormat(aChartContext.getValue(aKey), aDefault);
     }
 
+    /**
+     * The value for the given key in the given context as {@link Date}.
+     *
+     * @param aDefault
+     *        The value to use, if the context has no such value.
+     */
     public Date getDate(ChartContext aChartContext, String aKey, Date aDefault) {
     	Object value = aChartContext.getValue(aKey);
 
@@ -184,11 +245,11 @@ public abstract class AbstractChartProducer extends AbstractConfiguredInstance<A
     /**
 	 * This method returns the i18n label from the chart context. If the chart
 	 * context doesn't contain a label the default label is used. The default
-	 * label is get from the resouces (key = aDefaultPrefix + aKey).
+	 * label is get from the resouces (key = {@code aDefaultPrefix} + {@code aKey}).
 	 *
 	 * E.g. the chart context has no label for
 	 * key            = title
-	 * aDefaultPrefix = reporting.chart.eva.
+	 * {@code aDefaultPrefix} = reporting.chart.eva.
 	 * => reporting.chart.eva.title
 	 *
 	 * @param aChartContext
@@ -217,11 +278,11 @@ public abstract class AbstractChartProducer extends AbstractConfiguredInstance<A
     /**
      * This method returns the i18n label from the chart context. If the chart
      * context doesn't contain a label the default label is used. The default
-     * label is get from the resouces (key = aDefaultPrefix + aKey).
+     * label is get from the resouces (key = {@code aDefaultPrefix} + {@code aKey}).
      *
      * E.g. the chart context has no label for
      * key            = title
-     * aDefaultPrefix = reporting.chart.eva.
+     * {@code aDefaultPrefix} = reporting.chart.eva.
      * => reporting.chart.eva.title
      *
      * @param aChartContext
@@ -238,6 +299,7 @@ public abstract class AbstractChartProducer extends AbstractConfiguredInstance<A
         return label;
     }
 
+    /** The background paint of the chart, given by the context or by the theme. */
     public static Paint getBackgroundPaint(ChartContext aChartContext, JFreeChart aChart) {
         Paint thePaint = (Paint) aChartContext.getValue(VALUE_PAINT_BACKGROUND);
 
@@ -248,22 +310,27 @@ public abstract class AbstractChartProducer extends AbstractConfiguredInstance<A
         return thePaint;
     }
     
+    /** The background paint of the plot area of the chart, given by the theme. */
     public static Paint getChartBackgroundPaint(ChartContext aChartContext, JFreeChart aChart) {
         return ReportUtilities.getThemeChartBackgroundColor();
     }
 
+    /** Whether the chart displays a legend. */
     public boolean showLegend(ChartContext aChartContext) {
     	return getBoolean(aChartContext, VALUE_SHOW_LEGEND, showLegend);
     }
 
+    /** Whether the chart items are linked. */
     public boolean showUrls(ChartContext aChartContext) {
     	return getBoolean(aChartContext, VALUE_SHOW_URLS, showURLs);
     }
 
+    /** Whether the chart displays tooltips. */
     public boolean showTooltips(ChartContext aChartContext) {
     	return getBoolean(aChartContext, VALUE_SHOW_TOOLTIPS, showTooltips);
     }
 
+    /** The current chart theme. */
     public static StandardChartTheme getChartTheme() {
         return (StandardChartTheme) ChartFactory.getChartTheme();
     }

@@ -9,6 +9,9 @@ import org.jfree.chart.urls.PieURLGenerator;
 import org.jfree.data.general.PieDataset;
 
 /**
+ * {@link PieURLGenerator} creating a JavaScript call of a configured function with the index of
+ * the clicked pie section.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ChartDetailPieURLGenerator implements PieURLGenerator {

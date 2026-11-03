@@ -17,9 +17,12 @@ import com.top_logic.layout.form.model.ImageField;
  */
 public interface ChartGotoAware {
 
+    /** The columns displayed in the result table of a goto. */
     public List getSearchResultColumns();
 
     /** 
+     * The objects represented by the given item of the given chart.
+     * 
      * @param aChartName name of the  (A {@link FormGroup} or {@link ImageField} to) retrieve the values from.
      * @param aSeries may be -1 indicating "all"
      * @param anItem  may be -1 indicating "all"

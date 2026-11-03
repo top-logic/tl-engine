@@ -33,7 +33,7 @@ public class ValueChangedEvent implements FilterModelEvent {
 	private Object newValue;
 	
 	/**
-	 * Creates a new ValueChangedEvent.
+	 * Creates a new {@link ValueChangedEvent}.
 	 * 
 	 * @param valueIdentifier
 	 *            A value identifier (e.g. attribute name). Null is permitted.
@@ -56,30 +56,30 @@ public class ValueChangedEvent implements FilterModelEvent {
 	}
 
 	/**
-	 * This method returns the valueIdentifier or <code>null</code>.
+	 * This method returns the value identifier or <code>null</code>.
 	 * 
 	 * E.g. the model is a {@link Wrapper} and an attribute is changed then the
 	 * value identifier could be the attribute name.
 	 * 
-	 * @return Returns the valueIdentifier or <code>null</code>.
+	 * @return Returns the value identifier or <code>null</code>.
 	 */
 	public Object getValueIdentifier() {
 		return this.valueIdentifier;
 	}
 
 	/**
-	 * This method returns the oldValue.
+	 * This method returns the old value.
 	 * 
-	 * @return Returns the oldValue.
+	 * @return Returns the old value.
 	 */
 	public Object getOldValue() {
 		return this.oldValue;
 	}
 
 	/**
-	 * This method returns the newValue.
+	 * This method returns the new value.
 	 * 
-	 * @return Returns the newValue.
+	 * @return Returns the new value.
 	 */
 	public Object getNewValue() {
 		return this.newValue;

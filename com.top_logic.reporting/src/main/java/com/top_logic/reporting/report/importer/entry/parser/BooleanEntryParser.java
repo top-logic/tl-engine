@@ -6,7 +6,7 @@
 package com.top_logic.reporting.report.importer.entry.parser;
 
 /**
- * The BooleanEntryParser parses tags with the tag name 'boolean'.
+ * The {@link BooleanEntryParser} parses tags with the tag name 'boolean'.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

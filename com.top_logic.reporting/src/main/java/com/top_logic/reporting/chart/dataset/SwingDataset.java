@@ -13,8 +13,8 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import com.top_logic.reporting.chart.info.swing.SwingRenderingInfo;
 
 /**
- * The SwingDataset is the corresponding dataset for the 
- * {@link com.top_logic.reporting.chart.renderer.SwingRenderer}. The SwingDataset contains 
+ * The {@link SwingDataset} is the corresponding dataset for the 
+ * {@link com.top_logic.reporting.chart.renderer.SwingRenderer}. The {@link SwingDataset} contains 
  * the normal JFreeChart dataset information like value, series and category and 
  * additionally a {@link com.top_logic.reporting.chart.info.swing.SwingRenderingInfo} 
  * for each series and category.
@@ -51,7 +51,7 @@ public class SwingDataset extends DefaultCategoryDataset {
     }
     
     /**
-     * This method sets a new entry into the SwingDataset.
+     * This method sets a new entry into the {@link SwingDataset}.
      * 
      * @param aValue    A value.
      * @param aSeries   A series index as String. The index starts with '0', '1', ...

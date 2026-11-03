@@ -12,7 +12,7 @@ import com.top_logic.reporting.report.model.aggregation.AggregationFunction;
 import com.top_logic.reporting.report.model.partition.Partition;
 
 /**
- * The ItemVO represents one item in a {@link Report}.
+ * The {@link ItemVO} represents one item in a {@link Report}.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -35,7 +35,7 @@ public class ItemVO {
 	private AggregationFunction aggregationFunction;
 	
 	/**
-	 * The {@link Partition} this ItemVO belongs to. It can be used to request the criteria
+	 * The {@link Partition} this {@link ItemVO} belongs to. It can be used to request the criteria
 	 * used to partition the set of <code>BusinessObjects</code>.
 	 */
 	private Partition firstPartition;
@@ -88,6 +88,7 @@ public class ItemVO {
 		return this.suffix;
 	}
 
+	/** The prefix of the label of this item. */
 	public String getPrefix() {
 		return this.prefix;
 	}
@@ -151,7 +152,7 @@ public class ItemVO {
 	}
 
 	/**
-	 * Returns the {@link Partition} this ItemVO belongs to.
+	 * Returns the {@link Partition} this {@link ItemVO} belongs to.
 	 * 
 	 * @return a {@link Partition}
 	 */
@@ -176,10 +177,12 @@ public class ItemVO {
 //    	this.secondPartition = secondPartition;
 //    }
 
+	/** Setter for {@link #getAggregationFunction()}. */
 	public void setAggregationFunction(AggregationFunction aFunction) {
 	    this.aggregationFunction = aFunction;
 	}
 
+	/** The {@link AggregationFunction} that computed the value of this item. */
 	public AggregationFunction getAggregationFunction() {
 	    return this.aggregationFunction;
 	}

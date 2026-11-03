@@ -9,6 +9,9 @@ import org.jfree.chart.urls.XYURLGenerator;
 import org.jfree.data.xy.XYDataset;
 
 /**
+ * {@link XYURLGenerator} creating a JavaScript call of the
+ * {@link ChartGotoAwareGotoHandler} for the clicked item.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ChartGotoAwareURLGenerator implements XYURLGenerator {

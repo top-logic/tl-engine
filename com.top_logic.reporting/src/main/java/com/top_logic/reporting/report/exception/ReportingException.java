@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The ReportingException is the global exception for the reporting.
+ * The {@link ReportingException} is the global exception for the reporting.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

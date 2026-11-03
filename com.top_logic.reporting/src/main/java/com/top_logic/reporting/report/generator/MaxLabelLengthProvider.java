@@ -12,7 +12,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.layout.LabelProvider;
 
 /**
- * The MaxLabelLengthProvider stores labels for objects. All labels are minimized which are
+ * The {@link MaxLabelLengthProvider} stores labels for objects. All labels are minimized which are
  * longer as the maximum label length. The minimized labels are unique. 
  * This label provider knows only labels for object which are added before 
  * (see {@link #addLabel(Object, String)}).

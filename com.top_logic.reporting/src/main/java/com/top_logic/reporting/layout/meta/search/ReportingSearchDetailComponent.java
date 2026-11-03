@@ -53,10 +53,12 @@ public class ReportingSearchDetailComponent extends AttributedSearchResultCompon
         super(context, someAttrs);
     }
 
+    /** The title of the chart details tab. */
     public String getTitle(Resources someResources) {
 		return someResources.getString(I18NConstants.CHART_DETAILS_TAB);
     }
 
+    /** Displays the given result in the given detail component. */
     public static void showDetailDialog(ReportingSearchDetailComponent aDetail, AttributedSearchResultSet aResult) {
         aDetail.setModel(aResult);
     }
@@ -67,6 +69,7 @@ public class ReportingSearchDetailComponent extends AttributedSearchResultCompon
     public static class SearchReportDetailChartHandler extends OpenModalDialogCommandHandler{
 
         // Constants
+        /** The command ID of {@link SearchReportDetailChartHandler}. */
         public static final String COMMAND_ID = "showSearchReportDetailChart";
         /** The name of the chart from which we are called */
         public static final String CHART_NAME = "chartName";
@@ -80,12 +83,16 @@ public class ReportingSearchDetailComponent extends AttributedSearchResultCompon
 		 */
         public static final String DETAIL_TABLE = "detailTable";
 
+        /** Name of the command opening the chart details. */
         public static final String OPEN_HANDLER_NAME    = "showChartDetails";
+        /** Name of the argument holding the command opening the chart details. */
         public static final String CHART_DETAIL_HANDLER = "detailHandler";
 
 		private ComponentName _detailTable;
 
+		/** Configuration options for {@link SearchReportDetailChartHandler}. */
 		public interface Config extends OpenModalDialogCommandHandler.Config {
+			/** The table displaying the objects of the clicked chart item. */
 			@Name(DETAIL_TABLE)
 			ComponentName getDetailTable();
 		}
@@ -179,6 +186,17 @@ public class ReportingSearchDetailComponent extends AttributedSearchResultCompon
 
 
 
+        /**
+         * Creates the search result for the objects of the clicked chart item.
+         *
+         * @param someSearchElements
+         *        The objects of the clicked chart item.
+         * @param anOldSearchResult
+         *        The search result the chart was created from.
+         * @param aConfiguration
+         *        The configuration of the report.
+         * @return The new search result.
+         */
         protected ReportingAttributedSearchResultSet createSearchResultSet(Collection<?> someSearchElements, AttributedSearchResultSet anOldSearchResult, ReportConfiguration aConfiguration) {
 			return new ReportingAttributedSearchResultSet(someSearchElements, anOldSearchResult.getTypes(),
 				anOldSearchResult.getResultColumns(), anOldSearchResult.getSearchMessages(), aConfiguration);

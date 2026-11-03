@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.renderer;
 import com.top_logic.reporting.chart.info.ProgressInfo;
 
 /**
- * The ProgressRenderer draws a progress chart.
+ * The {@link ProgressRenderer} draws a progress chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

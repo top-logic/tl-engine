@@ -7,10 +7,10 @@ package com.top_logic.reporting.report.xmlutilities;
 
 
 /**
- * The XMLReportUtilities is a static class to load, parse and write xml files.
+ * The {@link XMLReportUtilities} is a static class to load, parse and write xml files.
  * 
- * This XMLReportUtilities provides useful method to get nodes, node lists or extract data from nodes or
- * attributes.
+ * This {@link XMLReportUtilities} provides useful method to get nodes, node lists or extract data
+ * from nodes or attributes.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

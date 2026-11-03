@@ -27,7 +27,7 @@ import com.top_logic.reporting.report.model.partition.criteria.interval.NumberIn
 
 
 /**
- * The NumberPartitionFunction creates categories from Number values.
+ * The {@link NumberPartitionFunction} creates categories from Number values.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -67,6 +67,7 @@ public class NumberPartitionFunction extends AbstractPartitionFunction {
         this.setPartitionFilters(someFilters);
     }
 	
+	/** The configuration of this function. */
 	protected NumberPartitionConfiguration getNumberPartitionConfiguration() {
 	    return (NumberPartitionConfiguration) super.getConfiguration();
 	}
@@ -173,30 +174,43 @@ public class NumberPartitionFunction extends AbstractPartitionFunction {
 	    return new NumberIntervalCriteria(this.getBegin(), this.getEnd(), this.getGranularity(), this.getAddtionalSettings());
 	}
 	
+	/** Configuration of a {@link NumberPartitionFunction}. */
 	public interface NumberPartitionConfiguration extends PartitionFunctionConfiguration {
 	    
 	    @Override
 		@ClassDefault(NumberPartitionFunction.class)
 	    Class getImplementationClass();
 
+	    /** Configuration name of {@link #shouldUseAutomaticRange()}. */
 	    String USE_AUTOMATIC_RANGE_NAME = "useAutomaticRange";
+	    /** Whether the partitioned interval is computed from the values of the objects. */
 	    @Name(USE_AUTOMATIC_RANGE_NAME)
 	    boolean shouldUseAutomaticRange();
+        /** Setter for {@link #shouldUseAutomaticRange()}. */
         void setUseAutomaticRange(boolean useAutomaticRange);
         
+        /** Configuration name of {@link #getIntervalStart()}. */
         String INTERVAL_START_NAME = "intervalStart";
+        /** The start of the partitioned interval. */
         @Name(INTERVAL_START_NAME)
         Double getIntervalStart();
+        /** Setter for {@link #getIntervalStart()}. */
         void setIntervalStart(Double aStart);
         
+        /** Configuration name of {@link #getIntervalEnd()}. */
         String INTERVAL_END_NAME = "intervalEnd";
+        /** The end of the partitioned interval. */
         @Name(INTERVAL_END_NAME)
         Double getIntervalEnd();
+        /** Setter for {@link #getIntervalEnd()}. */
         void setIntervalEnd(Double anEnd);
         
+        /** Configuration name of {@link #getSubIntervalLength()}. */
         String SUB_INTERVAL_LENGTH_NAME = "subIntervalLength";
+        /** The length of the sub intervals. */
         @Name(SUB_INTERVAL_LENGTH_NAME)
         Double getSubIntervalLength();
+        /** Setter for {@link #getSubIntervalLength()}. */
         void setSubIntervalLength(Double aLength);
 	}
 }

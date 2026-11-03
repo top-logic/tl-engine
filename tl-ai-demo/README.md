@@ -55,8 +55,8 @@ The start page is `/view/` - the React view layer. `WEB-INF/views/app.view.xml` 
 `chat` - the Chat page's own - so the dock opens what that page shows, and on the Chat page itself
 it hides, launcher included: there is nothing there for it to open, and showing both would give one
 `draft` channel two composers and one remembered layout two rails. A dock on a chat id of its own
-would be a second conversation and would work: since #502 every `/chat/*` call names its
-conversation beside its window, and the server holds an active session, a run and a stream for each.
+would be a second conversation and would work: since #502 every command of the chat goes to a chat
+control of its own conversation, and the server holds an active session, a run and a stream for each.
 Note that the id is written **twice** in `app.view.xml`, on the `<chat-dock>` and on the `<chat>`
 inside it: the dock contains the chat, and a chat scope only reaches downward.
 
@@ -91,8 +91,8 @@ the one that switches to the other theme (`style/tl-ai-demo-shell.css`). Everyth
 chat included, follows the choice without a reload.
 
 The chat needs a signed-in user. A visitor who has not logged in gets an anonymous TopLogic session,
-and `ChatServlet` answers every request from such a session with 401, so the chat shows a sign-in
-note instead of a composer - the agent works with the user's data and the user's permissions.
+and the chat controls refuse every command from such a session, so the chat shows a sign-in note
+instead of a composer - the agent works with the user's data and the user's permissions.
 
 **The classic UI** (`WEB-INF/layouts/mainTabbar.layout.xml`) serves the administration through the
 LayoutServlet; the event domain has React views only. Reach it at

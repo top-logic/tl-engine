@@ -38,34 +38,12 @@ export function resetTLBridge(): void {
   patchListeners.clear()
   uploads.length = 0
   uploadAnswer = async () => ({ success: true })
-  staleReloadAnswer = true
-  staleReloads = 0
   pageLeaving = false
   commandAnswer = async () => undefined
 }
 
-/** What `reloadForStaleUi` answers, and how often it was called. */
-let staleReloadAnswer = true
-let staleReloads = 0
-
 /** Whether `isPageLeaving` says the page is leaving. */
 let pageLeaving = false
-
-/** See `reloadForStaleUi` of the real bridge: answers what `setStaleReload` set, `true` by default. */
-export function reloadForStaleUi(): boolean {
-  staleReloads++
-  return staleReloadAnswer
-}
-
-/** Sets what `reloadForStaleUi` answers. */
-export function setStaleReload(answer: boolean): void {
-  staleReloadAnswer = answer
-}
-
-/** How often `reloadForStaleUi` was called since the last reset. */
-export function staleReloadCalls(): number {
-  return staleReloads
-}
 
 /** See `isPageLeaving` of the real bridge. */
 export function isPageLeaving(): boolean {

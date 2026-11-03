@@ -87,7 +87,9 @@ describe('the gates', () => {
 
 function composerProps() {
   return {
-    at: { windowId: 'w1', chatId: 'features' },
+    onImprovePrompt: async (_draft: string, requestId: string) => ({ requestId, status: 'cancelled', improvedText: '', reason: '' }),
+    onCancelImprovePrompt: () => {},
+    onRespond: async () => {},
     agents: [],
     models: [{ id: 'claude-opus-5', label: 'Opus' }],
     agent: 'assistant',

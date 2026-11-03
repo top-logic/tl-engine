@@ -110,6 +110,14 @@ public final class ChatCommandDriver {
 		return control;
 	}
 
+	/**
+	 * Makes the given account the one the next commands act as, in every conversation of the
+	 * driver's window; <code>null</code> is a window nobody is signed in to.
+	 */
+	public void actAs(Person person) {
+		TLContextManager.getSubSession().setPerson(person);
+	}
+
 	/** The conversation's tracker, which the runs of its commands are registered on. */
 	public static TaskProgressTracker tracker(ChatControl control) {
 		return control.binding().tracker();

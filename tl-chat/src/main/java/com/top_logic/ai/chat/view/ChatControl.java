@@ -15,21 +15,29 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.chat.api.AccountRuns;
 import com.top_logic.ai.chat.api.ApprovalChoice;
+import com.top_logic.ai.chat.api.ChatPreferencesStore;
+import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.RunStateFrame;
 import com.top_logic.ai.chat.api.SendRefusal;
+import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
+import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatState;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -56,6 +64,9 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
+
 /**
  * Base class of the controls of the chat elements that join a conversation's browser store - a
  * {@code <chat-conversation>}, a {@code <chat-rail>}, a {@code <chat-dock>}, a rail section.
@@ -77,8 +88,14 @@ import com.top_logic.util.TLContextManager;
  * </p>
  *
  * <p>
- * For the same reason every one of them answers the commands that open and delete a chat of the
- * account ({@link #CMD_SELECT_SESSION}, {@link #CMD_DELETE_SESSION}) and serves the transcripts the
+ * For the same reason every one of them answers the commands the browser sends about the
+ * conversation: opening and deleting a chat of the account ({@link #CMD_SELECT_SESSION},
+ * {@link #CMD_DELETE_SESSION}), sending ({@link #CMD_SEND}, {@link #CMD_EDIT_SEND},
+ * {@link #CMD_REGENERATE}), answering and stopping runs and subagents ({@link #CMD_RESPOND},
+ * {@link #CMD_CANCEL}, {@link #CMD_MESSAGE_SUBAGENT}, {@link #CMD_CANCEL_SUBAGENT}), the
+ * auto-approve switch ({@link #CMD_SET_APPROVAL_MODE}), ratings ({@link #CMD_RATE}), the prompt
+ * improver ({@link #CMD_IMPROVE_PROMPT}) and the layout ({@link #CMD_SAVE_LAYOUT}); and it serves
+ * the transcripts the
  * browser reads ({@link #getDownloadData(String)}): a chat's transcript is read from the
  * {@code /react-api/data} endpoint of the control, under a key {@link #DATA_SESSION} or
  * {@link #DATA_SUBAGENT}. Every one of them is checked against the acting account: a chat of
@@ -332,6 +349,176 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * {@link DraftAttachmentDto}.
 	 */
 	public static final String STATE_DRAFT_ATTACHMENTS = "draftAttachments";
+
+	/**
+	 * Command that answers an approval or a question a run of the account waits for, whichever of
+	 * the account's windows started the run (#393).
+	 *
+	 * <p>
+	 * Takes {@link #ARG_REQUEST_ID}, {@link #ARG_RESPONSE}, and for an approval {@link #ARG_TOOL_NAME}
+	 * and {@link #ARG_COMMENT}, for a choice question {@link #ARG_OWN_WORDS}. Answered with
+	 * {@link #FIELD_STATUS}: {@link #STATUS_OK}, or {@link #STATUS_IGNORED} when no run of the
+	 * account waits for the request - which a request of another account is answered with too.
+	 * </p>
+	 *
+	 * @see AccountRuns#respond(Person, String, String, String, String, String)
+	 */
+	public static final String CMD_RESPOND = "respond";
+
+	/**
+	 * Command that stops the run of a chat of the account, whichever of its windows started it
+	 * (#465).
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SESSION_ID}; without one, stops what this conversation runs. Answered with
+	 * {@link #FIELD_CANCELLED}.
+	 * </p>
+	 *
+	 * @see AccountRuns#cancel(TaskProgressTracker, Person, String)
+	 */
+	public static final String CMD_CANCEL = "cancel";
+
+	/**
+	 * Command that turns "auto-approve" on or off: for the chat {@link #ARG_SESSION_ID} names, and as
+	 * the person's last choice, which a new chat starts with (#658, #948).
+	 *
+	 * <p>
+	 * Takes {@link #ARG_MODE}, an {@link ApprovalMode} name. A command without a chat comes from a
+	 * conversation that has no chat yet: it only stores the person's choice, and the send that
+	 * creates the chat names the mode ({@link #ARG_APPROVAL_MODE}). A run of the chat that is working
+	 * takes the new mode with its next approval, whichever window started it (#943). Answered with
+	 * {@link #FIELD_STATUS}: {@link #STATUS_OK}, {@link #STATUS_NOT_FOUND} for a chat of another
+	 * account, {@link #STATUS_ERROR} for a mode there is none of.
+	 * </p>
+	 */
+	public static final String CMD_SET_APPROVAL_MODE = "setApprovalMode";
+
+	/**
+	 * Command that records what the user thought of one answer of a chat, in the chat's metadata.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SESSION_ID}, {@link #ARG_TURN_INDEX}, {@link #ARG_RATING} and
+	 * {@link #ARG_NOTE}; the chat the conversation shows stays shown. Answered with
+	 * {@link #FIELD_STATUS}: {@link #STATUS_OK}, or {@link #STATUS_NOT_FOUND} for a chat of another
+	 * account.
+	 * </p>
+	 */
+	public static final String CMD_RATE = "rate";
+
+	/**
+	 * Command that starts improving the draft in the composer, with the prompt improver configured
+	 * for the conversation.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_DRAFT} and {@link #ARG_REQUEST_ID}, and is answered at once - the improvement
+	 * is a call to a model and runs on a chat worker, so the window's other commands are not held up
+	 * behind it. Its result arrives as a {@link ChatSSEHandler#PROMPT_IMPROVED} frame on the
+	 * conversation's stream, naming the request id. Answered with {@link #FIELD_STATUS}:
+	 * {@link #STATUS_STARTED}; {@link #STATUS_ERROR} for a request or configuration that cannot be
+	 * run; {@link #STATUS_REJECTED} with {@link #FIELD_REASON} when there is no room for the run.
+	 * </p>
+	 */
+	public static final String CMD_IMPROVE_PROMPT = "improvePrompt";
+
+	/**
+	 * Command that cancels the improvement {@link #ARG_REQUEST_ID} names; its frame says
+	 * {@code cancelled}. Answered with {@link #FIELD_CANCELLED}.
+	 */
+	public static final String CMD_CANCEL_PROMPT_IMPROVEMENT = "cancelPromptImprovement";
+
+	/**
+	 * Command that writes to one background subagent of a chat of the account, from its card.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SUBAGENT_ID}, {@link #ARG_SESSION_ID}, {@link #ARG_PARENT_TOOL_CALL_ID} and
+	 * {@link #ARG_TEXT}. Answered with {@link #FIELD_STATUS} - one of the
+	 * {@link AccountRuns.SubagentMessageStatus} codes - and {@link #FIELD_MESSAGE_ID}.
+	 * </p>
+	 *
+	 * @see AccountRuns#messageSubagent(TaskProgressTracker, Person, String, String, String, String)
+	 */
+	public static final String CMD_MESSAGE_SUBAGENT = "messageSubagent";
+
+	/**
+	 * Command that stops one background subagent of a chat of the account; takes the arguments of
+	 * {@link #CMD_MESSAGE_SUBAGENT} but the text, answered with {@link #FIELD_CANCELLED}.
+	 */
+	public static final String CMD_CANCEL_SUBAGENT = "cancelSubagent";
+
+	/**
+	 * Technical command that stores the user's layout of one chat - rail, pane width, sections - in
+	 * the personal configuration ({@link ChatPreferencesStore}).
+	 *
+	 * <p>
+	 * Takes {@link #ARG_LAYOUT_KEY}, the key the layout is stored under - one layout per
+	 * {@code chat-id} - and {@link #ARG_LAYOUT}, a {@link ChatPreferencesDto} holding what the user
+	 * decided: a fact they never touched is absent.
+	 * </p>
+	 */
+	public static final String CMD_SAVE_LAYOUT = "saveLayout";
+
+	/** Argument of {@link #CMD_RESPOND} and the prompt improvement: the id of the request. */
+	public static final String ARG_REQUEST_ID = "requestId";
+
+	/** Argument of {@link #CMD_RESPOND}: the decision or the answer. */
+	public static final String ARG_RESPONSE = "response";
+
+	/** Argument of {@link #CMD_RESPOND}: the tool an approval is about. */
+	public static final String ARG_TOOL_NAME = "toolName";
+
+	/** Argument of {@link #CMD_RESPOND}: why a tool call was denied. */
+	public static final String ARG_COMMENT = "comment";
+
+	/** Argument of {@link #CMD_RESPOND}: what the user typed for a choice question. */
+	public static final String ARG_OWN_WORDS = "ownWords";
+
+	/** Argument of {@link #CMD_SET_APPROVAL_MODE}: an {@link ApprovalMode} name. */
+	public static final String ARG_MODE = "mode";
+
+	/** Argument of {@link #CMD_RATE}: the zero-based index of the turn whose answer is rated. */
+	public static final String ARG_TURN_INDEX = "turnIndex";
+
+	/** Argument of {@link #CMD_RATE}: {@code up}, {@code down}, or empty to withdraw a rating. */
+	public static final String ARG_RATING = "rating";
+
+	/** Argument of {@link #CMD_RATE}: free text the user added. */
+	public static final String ARG_NOTE = "note";
+
+	/** Argument of {@link #CMD_IMPROVE_PROMPT}: the draft to improve. */
+	public static final String ARG_DRAFT = "draft";
+
+	/** Argument of {@link #CMD_MESSAGE_SUBAGENT} and {@link #CMD_CANCEL_SUBAGENT}: the subagent's id. */
+	public static final String ARG_SUBAGENT_ID = "subagentId";
+
+	/**
+	 * Argument of {@link #CMD_MESSAGE_SUBAGENT} and {@link #CMD_CANCEL_SUBAGENT}: the lead's tool call
+	 * that started the subagent, which tells it from a namesake.
+	 */
+	public static final String ARG_PARENT_TOOL_CALL_ID = "parentToolCallId";
+
+	/** Argument of {@link #CMD_SAVE_LAYOUT}: the key the layout is stored under. */
+	public static final String ARG_LAYOUT_KEY = "layoutKey";
+
+	/** Argument of {@link #CMD_SAVE_LAYOUT}: the layout, as a {@link ChatPreferencesDto}. */
+	public static final String ARG_LAYOUT = "layout";
+
+	/**
+	 * Field of the answer to {@link #CMD_CANCEL}, {@link #CMD_CANCEL_PROMPT_IMPROVEMENT} and
+	 * {@link #CMD_CANCEL_SUBAGENT}: whether something was stopped.
+	 */
+	public static final String FIELD_CANCELLED = "cancelled";
+
+	/** Field of the answer to {@link #CMD_MESSAGE_SUBAGENT}: the id of the message sent. */
+	public static final String FIELD_MESSAGE_ID = "messageId";
+
+	/** {@link #FIELD_STATUS}: done. */
+	public static final String STATUS_OK = "ok";
+
+	/** {@link #FIELD_STATUS} of {@link #CMD_RESPOND}: no run of the account waits for the request. */
+	public static final String STATUS_IGNORED = "ignored";
+
+	/** {@link #FIELD_STATUS} of {@link #CMD_IMPROVE_PROMPT}: the improvement runs. */
+	public static final String STATUS_STARTED = "started";
 
 	/** The title of a chat a send creates when the browser names none. */
 	private static final String DEFAULT_TITLE = "New Chat";
@@ -747,6 +934,223 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		if (id != null) {
 			_binding.attachments().remove(id);
 		}
+	}
+
+	/**
+	 * Answers what a run of the account asks, see {@link #CMD_RESPOND}.
+	 */
+	@ReactCommandHandler(value = CMD_RESPOND, params = {
+		@ReactParam(name = ARG_REQUEST_ID, type = "string", required = true,
+			description = "The id of the approval or question."),
+		@ReactParam(name = ARG_RESPONSE, type = "string", required = true,
+			description = "APPROVED, APPROVED_FOR_SESSION, REJECTED, or the answer to a question."),
+		@ReactParam(name = ARG_TOOL_NAME, type = "string", description = "The tool an approval is about."),
+		@ReactParam(name = ARG_COMMENT, type = "string", description = "Why a tool call was denied."),
+		@ReactParam(name = ARG_OWN_WORDS, type = "string",
+			description = "What the user typed for a choice question.")
+	})
+	public HandlerResult respond(Map<String, Object> args) {
+		Person person = actingPerson();
+		boolean answered = person != null && AccountRuns.respond(person, stringArg(args, ARG_REQUEST_ID),
+			stringArg(args, ARG_RESPONSE), stringArg(args, ARG_TOOL_NAME), stringArg(args, ARG_COMMENT),
+			stringArg(args, ARG_OWN_WORDS));
+		return status(answered ? STATUS_OK : STATUS_IGNORED).toResult();
+	}
+
+	/**
+	 * Stops the run of a chat of the account, see {@link #CMD_CANCEL}.
+	 */
+	@ReactCommandHandler(value = CMD_CANCEL, params = {
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat whose run is stopped; empty stops what this conversation runs.")
+	})
+	public HandlerResult cancel(Map<String, Object> args) {
+		Person person = actingPerson();
+		boolean cancelled = person != null
+			&& AccountRuns.cancel(_binding.tracker(), person, blankToNull(stringArg(args, ARG_SESSION_ID)));
+		return ReactCommandReply.create().put(FIELD_CANCELLED, Boolean.valueOf(cancelled)).toResult();
+	}
+
+	/**
+	 * Turns "auto-approve" on or off, see {@link #CMD_SET_APPROVAL_MODE}.
+	 */
+	@ReactCommandHandler(value = CMD_SET_APPROVAL_MODE, params = {
+		@ReactParam(name = ARG_MODE, type = "string", required = true, description = "AUTO_APPROVE or MANUAL."),
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat switched; empty for a conversation that has no chat yet.")
+	})
+	public HandlerResult setApprovalMode(Map<String, Object> args) {
+		Person person = actingPerson();
+		if (person == null) {
+			return status(STATUS_FORBIDDEN).toResult();
+		}
+		ApprovalMode mode;
+		try {
+			String name = blankToNull(stringArg(args, ARG_MODE));
+			if (name == null) {
+				return status(STATUS_ERROR).toResult();
+			}
+			mode = ApprovalMode.valueOf(name);
+		} catch (IllegalArgumentException ex) {
+			return status(STATUS_ERROR).toResult();
+		}
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		if (sessionId != null) {
+			if (ChatSessionIds.ownedSession(sessionId, person) == null) {
+				return status(STATUS_NOT_FOUND).toResult();
+			}
+			ApprovalChoice.applyToChat(_binding.tracker(), person, sessionId, mode);
+		}
+		ApprovalChoice.save(mode);
+		return status(STATUS_OK).toResult();
+	}
+
+	/**
+	 * Records what the user thought of one answer, see {@link #CMD_RATE}.
+	 *
+	 * <p>
+	 * The rating lands in the chat's metadata bag rather than in the transcript: a transcript is
+	 * written per run and a rating arrives after it, while the metadata is the chat's own and is
+	 * rewritten whole on every persist. That is also where an evaluation reads the ratings back from,
+	 * keyed by the turn they belong to.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_RATE, params = {
+		@ReactParam(name = ARG_SESSION_ID, type = "string", required = true,
+			description = "The chat the rated answer belongs to."),
+		@ReactParam(name = ARG_TURN_INDEX, type = "number", required = true,
+			description = "The zero-based index of the turn whose answer is rated."),
+		@ReactParam(name = ARG_RATING, type = "string", description = "up, down, or empty to withdraw."),
+		@ReactParam(name = ARG_NOTE, type = "string", description = "Free text the user added.")
+	})
+	public HandlerResult rate(Map<String, Object> args) {
+		Person person = actingPerson();
+		if (person == null) {
+			return status(STATUS_FORBIDDEN).toResult();
+		}
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		Number turnIndex = args == null ? null : (args.get(ARG_TURN_INDEX) instanceof Number n ? n : null);
+		if (sessionId == null || turnIndex == null) {
+			return status(STATUS_ERROR).toResult();
+		}
+		if (ChatSessionIds.ownedSession(sessionId, person) == null) {
+			return status(STATUS_NOT_FOUND).toResult();
+		}
+		TaskProgressTracker tracker = _binding.tracker();
+		// The rated chat, not the one the conversation shows: a rating is no reason to switch it.
+		ChatState chat = tracker.getSessionManager().chatStateFor(sessionId, person);
+		String note = stringArg(args, ARG_NOTE);
+		chat.setFeedback(turnIndex.intValue(), blankToNull(stringArg(args, ARG_RATING)), note == null ? "" : note);
+		tracker.getSessionManager().persist(chat);
+		return status(STATUS_OK).toResult();
+	}
+
+	/**
+	 * Starts improving the draft in the composer, see {@link #CMD_IMPROVE_PROMPT}.
+	 */
+	@ReactCommandHandler(value = CMD_IMPROVE_PROMPT, params = {
+		@ReactParam(name = ARG_DRAFT, type = "string", required = true, description = "The draft to improve."),
+		@ReactParam(name = ARG_REQUEST_ID, type = "string", required = true,
+			description = "The id the result frame names.")
+	})
+	public HandlerResult improvePrompt(Map<String, Object> args) {
+		if (actingPerson() == null) {
+			return status(STATUS_FORBIDDEN).toResult();
+		}
+		ChatViewBinding binding = _binding;
+		try {
+			PromptImprovementProcessor.start(binding.tracker(), stringArg(args, ARG_REQUEST_ID),
+				stringArg(args, ARG_DRAFT), TLContextManager.getSubSession(),
+				result -> binding.sendPromptImproved(PromptImprovedEvent.create()
+					.setRequestId(result.requestId())
+					.setImprovedText(result.improvedText())
+					.setStatus(result.status())
+					.setReason(result.reason())));
+		} catch (PromptImprovementException ex) {
+			if (ex.getFailure() == PromptImprovementProcessor.Failure.NO_ROOM) {
+				Logger.info("Prompt improvement refused: " + ex.getMessage(), ChatControl.class);
+				return status(STATUS_REJECTED)
+					.put(FIELD_REASON,
+						Resources.getInstance().getString(com.top_logic.tl.ai.core.limits.I18NConstants.TOO_MANY_RUNS_IN_PROGRESS))
+					.toResult();
+			}
+			Logger.info("Prompt improvement not started: " + ex.getMessage(), ChatControl.class);
+			return status(STATUS_ERROR).toResult();
+		}
+		return status(STATUS_STARTED).toResult();
+	}
+
+	/**
+	 * Cancels a prompt improvement, see {@link #CMD_CANCEL_PROMPT_IMPROVEMENT}.
+	 */
+	@ReactCommandHandler(value = CMD_CANCEL_PROMPT_IMPROVEMENT, params = {
+		@ReactParam(name = ARG_REQUEST_ID, type = "string", required = true,
+			description = "The id of the improvement to cancel.")
+	})
+	public HandlerResult cancelPromptImprovement(Map<String, Object> args) {
+		String requestId = blankToNull(stringArg(args, ARG_REQUEST_ID));
+		boolean cancelled = requestId != null && _binding.tracker().cancelPromptImprovement(requestId);
+		return ReactCommandReply.create().put(FIELD_CANCELLED, Boolean.valueOf(cancelled)).toResult();
+	}
+
+	/**
+	 * Writes to a background subagent, see {@link #CMD_MESSAGE_SUBAGENT}.
+	 */
+	@ReactCommandHandler(value = CMD_MESSAGE_SUBAGENT, params = {
+		@ReactParam(name = ARG_SUBAGENT_ID, type = "string", required = true, description = "The subagent's id."),
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat whose lead started it; empty for the chat this conversation shows."),
+		@ReactParam(name = ARG_PARENT_TOOL_CALL_ID, type = "string",
+			description = "The lead's tool call that started it."),
+		@ReactParam(name = ARG_TEXT, type = "string", required = true, description = "What the user writes.")
+	})
+	public HandlerResult messageSubagent(Map<String, Object> args) {
+		AccountRuns.SubagentMessage answer = AccountRuns.messageSubagent(_binding.tracker(), actingPerson(),
+			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
+			stringArg(args, ARG_PARENT_TOOL_CALL_ID), stringArg(args, ARG_TEXT));
+		return status(answer.status().code()).put(FIELD_MESSAGE_ID, answer.messageId()).toResult();
+	}
+
+	/**
+	 * Stops a background subagent, see {@link #CMD_CANCEL_SUBAGENT}.
+	 */
+	@ReactCommandHandler(value = CMD_CANCEL_SUBAGENT, params = {
+		@ReactParam(name = ARG_SUBAGENT_ID, type = "string", required = true, description = "The subagent's id."),
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat whose lead started it; empty for the chat this conversation shows."),
+		@ReactParam(name = ARG_PARENT_TOOL_CALL_ID, type = "string",
+			description = "The lead's tool call that started it.")
+	})
+	public HandlerResult cancelSubagent(Map<String, Object> args) {
+		boolean cancelled = AccountRuns.cancelSubagent(_binding.tracker(), actingPerson(),
+			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
+			stringArg(args, ARG_PARENT_TOOL_CALL_ID));
+		return ReactCommandReply.create().put(FIELD_CANCELLED, Boolean.valueOf(cancelled)).toResult();
+	}
+
+	/**
+	 * Stores the user's layout of a chat, see {@link #CMD_SAVE_LAYOUT}.
+	 */
+	@ReactCommandHandler(value = CMD_SAVE_LAYOUT, technical = true, params = {
+		@ReactParam(name = ARG_LAYOUT_KEY, type = "string", description = "The key the layout is stored under."),
+		@ReactParam(name = ARG_LAYOUT, type = "object", required = true, description = "The layout.")
+	})
+	public void saveLayout(Map<String, Object> args) {
+		if (actingPerson() == null) {
+			return;
+		}
+		Object layout = args == null ? null : args.get(ARG_LAYOUT);
+		if (!(layout instanceof Map<?, ?>)) {
+			return;
+		}
+		ChatPreferencesDto preferences;
+		try {
+			preferences = ChatPreferencesDto.readChatPreferencesDto(new JsonReader(new StringR(JSON.toString(layout))));
+		} catch (IOException | RuntimeException ex) {
+			Logger.info("Ignoring an unreadable chat layout: " + ex.getMessage(), ChatControl.class);
+			return;
+		}
+		ChatPreferencesStore.save(stringArg(args, ARG_LAYOUT_KEY), preferences);
 	}
 
 	/**

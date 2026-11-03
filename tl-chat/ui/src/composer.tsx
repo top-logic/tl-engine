@@ -1,6 +1,6 @@
 import { React } from 'tl-react-bridge'
-import { cancelPromptImprovement, improvePrompt } from './api'
-import type { ChatAddress } from './api'
+import { ForbiddenError } from './api'
+import type { InteractionAnswer, PromptImproved } from './api'
 import { ACCEPT_ATTRIBUTE, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
 import type { RunStore } from './store'
@@ -253,7 +253,9 @@ export function plusMenuVisible(flags: {
 
 export const Composer = React.memo(
   React.forwardRef(function Composer({
-  at,
+  onImprovePrompt,
+  onCancelImprovePrompt,
+  onRespond,
   agents,
   models,
   agent,
@@ -308,8 +310,15 @@ export const Composer = React.memo(
   placeholder,
   runs,
 }: {
-  /** The conversation this composer belongs to - its window and its chat id. */
-  at: ChatAddress
+  /**
+   * Improves the draft: settles with the result once the model is done, see
+   * `ChatActions.improvePrompt`.
+   */
+  onImprovePrompt: (draft: string, requestId: string) => Promise<PromptImproved>
+  /** Cancels an improvement {@link onImprovePrompt} started. */
+  onCancelImprovePrompt: (requestId: string) => void
+  /** Answers an approval or a question of the cards above the field. */
+  onRespond: (answer: InteractionAnswer) => Promise<void>
   agents: AgentOption[]
   models: ModelOption[]
   agent: string
@@ -426,7 +435,6 @@ export const Composer = React.memo(
   const modelMenu = useRef<HTMLDivElement>(null)
   const surface = useRef<HTMLDivElement>(null)
   const improveId = useRef<string | null>(null)
-  const abort = useRef<AbortController | null>(null)
   // No model to choose while no provider has its credentials; the run's error names the missing secret.
   const modelPicker = modelPickerEnabled && models.length > 0
   const showPlus = plusMenuVisible({
@@ -631,16 +639,16 @@ export const Composer = React.memo(
     const draft = text.trim()
     if (draftIsEmpty(text) || improving) return
     const requestId = randomId()
+    const previous = improveId.current
     improveId.current = requestId
-    abort.current?.abort()
-    abort.current = new AbortController()
+    if (previous) onCancelImprovePrompt(previous)
     setImproving(true)
     setImproveError('')
     setImproveUnchanged(false)
     try {
-      const result = await improvePrompt(at, draft, requestId, abort.current.signal)
+      const result = await onImprovePrompt(draft, requestId)
       if (improveId.current !== requestId) return
-      const improvedText = result.improvedText || result.text || ''
+      const improvedText = result.improvedText
       if (result.status === 'completed' && improvedText) {
         if (improvedText.trim() === draft) {
           // The server hands the draft back when there is nothing to rewrite - a confirmation, a
@@ -653,20 +661,23 @@ export const Composer = React.memo(
         }
         area.current?.focus()
       } else if (result.status !== 'cancelled' && result.status !== 'stale') {
-        setImproveError(labels.improveFailed)
+        setImproveError(result.reason || labels.improveFailed)
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return
-      setImproveError(labels.improveFailed)
+      if (improveId.current !== requestId) return
+      setImproveError((err instanceof ForbiddenError && err.reason) || labels.improveFailed)
     } finally {
-      if (improveId.current === requestId) setImproving(false)
+      if (improveId.current === requestId) {
+        improveId.current = null
+        setImproving(false)
+      }
     }
   }
 
   const cancelImprove = () => {
     const requestId = improveId.current
-    abort.current?.abort()
-    if (requestId) void cancelPromptImprovement(at, requestId)
+    improveId.current = null
+    if (requestId) onCancelImprovePrompt(requestId)
     setImproving(false)
     area.current?.focus()
   }
@@ -700,7 +711,7 @@ export const Composer = React.memo(
         <PromptStack
           approvals={pendingApprovals}
           questions={pendingQuestions}
-          at={at}
+          onRespond={onRespond}
           labels={labels}
           dispatch={dispatch}
         />

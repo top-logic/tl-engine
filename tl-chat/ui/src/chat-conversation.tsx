@@ -292,7 +292,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this conversation's requests go. Memoised, because the composer is `React.memo`d and a
   // fresh object on every render would defeat that.
-  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
   // What the element configured, as far as the open conversation supports it.
   const config = useMemo(() => gateThreadConfig(readThreadConfig(state), chat.features), [state, chat.features])
   const controls = useMemo(
@@ -612,7 +611,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
         ) : null}
         <Composer
-          at={at}
+          onImprovePrompt={actions.improvePrompt}
+          onCancelImprovePrompt={actions.cancelPromptImprovement}
+          onRespond={actions.respond}
           agents={chat.caps.agents}
           models={chat.offeredModels}
           agent={chat.agent}

@@ -68,8 +68,8 @@ import com.top_logic.util.TLContextManager;
  * the two update paths meet in one page: the React servlet resolves the window name of a React
  * command to the classic sub-session and its {@code MainLayout}, so the classic repaints and
  * {@code InfoService} messages a React command causes reach the page over the React event stream,
- * while classic commands keep using the AJAX servlet. It is also the window id the chat's
- * {@code /chat/*} API is addressed with.
+ * while classic commands keep using the AJAX servlet. The chat's commands are React commands of its
+ * chat controls, so they reach the classic window the same way.
  * </p>
  *
  * <p>

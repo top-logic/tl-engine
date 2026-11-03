@@ -3,7 +3,6 @@ import type { ChatCommand } from './chat-stream'
 import type { ConversationFeatures } from './features'
 import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
-import { chatFetch } from './stale-window'
 import { keepLast, MAX_CHILD_STEPS, subagentStatus } from './types'
 import type {
   ApprovalOutcome,
@@ -11,7 +10,6 @@ import type {
   ChatMessage,
   ContextComposition,
   DraftAttachment,
-  ImprovePromptResponse,
   InteractionOption,
   SessionSummary,
   MessageFeedback,
@@ -24,50 +22,6 @@ import type {
   ToolCallStatus,
   WokenSubagent,
 } from './types'
-
-export function apiBase(): string {
-  const path = window.location.pathname
-  for (const marker of ['/view/', '/servlet/']) {
-    const idx = path.indexOf(marker)
-    if (idx >= 0) return path.substring(0, idx)
-  }
-  return ''
-}
-
-/**
- * Where a `/chat/*` call goes: the browser window, and which conversation of it.
- *
- * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
- * elements - and each has its own active session, its own run and its own event stream on the
- * server. A bare window id is the window's unnamed conversation, which is what a host calling
- * these functions with a window id alone gets (the classic `chat-client.js` was one until #618).
- *
- * The parameter is `conversation` rather than `chatId` because `PUT /chat/preferences` already
- * spells a `chatId`, and that one is the key the *layout* is stored under - the same string for
- * every element of a chat, and the empty one for an `<agent-chat>`, whose conversation is its own.
- */
-export type ChatAddress = string | { windowId: string; chatId: string }
-
-function withWindow(path: string, at: ChatAddress): string {
-  const sep = path.includes('?') ? '&' : '?'
-  const windowId = typeof at === 'string' ? at : at.windowId
-  const chatId = typeof at === 'string' ? '' : at.chatId
-  const conversation = chatId ? `&conversation=${encodeURIComponent(chatId)}` : ''
-  return `${apiBase()}${path}${sep}windowId=${encodeURIComponent(windowId)}${conversation}`
-}
-
-async function readJson<T>(res: Response): Promise<T> {
-  if (res.status === 403) {
-    throw await forbidden(res)
-  }
-  if (res.status === 429) {
-    throw await refused(res)
-  }
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`)
-  }
-  return (await res.json()) as T
-}
 
 /**
  * A request the account may not make, with the reason the server wrote for this user.
@@ -93,26 +47,6 @@ export class RefusedError extends ForbiddenError {
   constructor(reason: string) {
     super(reason)
     this.name = 'RefusedError'
-  }
-}
-
-/** Reads the reason out of a 403, falling back to nothing rather than to the status line. */
-async function forbidden(res: Response): Promise<ForbiddenError> {
-  try {
-    const data = (await res.json()) as { reason?: string }
-    return new ForbiddenError(data.reason ?? '')
-  } catch {
-    return new ForbiddenError('')
-  }
-}
-
-/** Reads the reason out of a 429, the same way. */
-async function refused(res: Response): Promise<RefusedError> {
-  try {
-    const data = (await res.json()) as { reason?: string }
-    return new RefusedError(data.reason ?? '')
-  } catch {
-    return new RefusedError('')
   }
 }
 
@@ -497,23 +431,6 @@ export function readDraftAttachments(data: unknown): DraftAttachment[] | undefin
     .filter((item) => item.id !== '')
 }
 
-/** Records, changes or withdraws what the user thought of one answer. */
-export async function sendFeedback(
-  at: ChatAddress,
-  sessionId: string,
-  turnIndex: number,
-  rating: Rating,
-  note?: string,
-): Promise<void> {
-  const res = await chatFetch(withWindow('/chat/feedback', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ sessionId, turnIndex, rating: rating ?? '', note: note ?? '' }),
-  })
-  if (!res.ok) throw new Error(`feedback failed (${res.status})`)
-}
-
 /** One human-in-the-loop request waiting for this user, as the `run_state` frame lists it. */
 export interface PendingInteraction {
   requestId: string
@@ -606,48 +523,180 @@ export function readRunState(data: unknown): RunState {
   }
 }
 
+/** Command that stops the run of a chat. Must match `ChatControl#CMD_CANCEL`. */
+export const CMD_CANCEL = 'cancel'
+
+/** Command that answers an approval or a question. Must match `ChatControl#CMD_RESPOND`. */
+export const CMD_RESPOND = 'respond'
+
+/** Command that switches auto-approve. Must match `ChatControl#CMD_SET_APPROVAL_MODE`. */
+export const CMD_SET_APPROVAL_MODE = 'setApprovalMode'
+
+/** Command that rates an answer. Must match `ChatControl#CMD_RATE`. */
+export const CMD_RATE = 'rate'
+
+/** Command that starts improving a draft. Must match `ChatControl#CMD_IMPROVE_PROMPT`. */
+export const CMD_IMPROVE_PROMPT = 'improvePrompt'
+
+/** Command that cancels an improvement. Must match `ChatControl#CMD_CANCEL_PROMPT_IMPROVEMENT`. */
+export const CMD_CANCEL_PROMPT_IMPROVEMENT = 'cancelPromptImprovement'
+
+/** Command that writes to a subagent. Must match `ChatControl#CMD_MESSAGE_SUBAGENT`. */
+export const CMD_MESSAGE_SUBAGENT = 'messageSubagent'
+
+/** Command that stops a subagent. Must match `ChatControl#CMD_CANCEL_SUBAGENT`. */
+export const CMD_CANCEL_SUBAGENT = 'cancelSubagent'
+
+/** Argument: the id of an approval, a question or an improvement. Must match `ChatControl#ARG_REQUEST_ID`. */
+export const ARG_REQUEST_ID = 'requestId'
+
+/** Argument: the decision or the answer. Must match `ChatControl#ARG_RESPONSE`. */
+export const ARG_RESPONSE = 'response'
+
+/** Argument: the tool an approval is about. Must match `ChatControl#ARG_TOOL_NAME`. */
+export const ARG_TOOL_NAME = 'toolName'
+
+/** Argument: why a tool call was denied. Must match `ChatControl#ARG_COMMENT`. */
+export const ARG_COMMENT = 'comment'
+
+/** Argument: what the user typed for a choice question. Must match `ChatControl#ARG_OWN_WORDS`. */
+export const ARG_OWN_WORDS = 'ownWords'
+
+/** Argument: an approval mode. Must match `ChatControl#ARG_MODE`. */
+export const ARG_MODE = 'mode'
+
+/** Argument: the turn whose answer is rated. Must match `ChatControl#ARG_TURN_INDEX`. */
+export const ARG_TURN_INDEX = 'turnIndex'
+
+/** Argument: the rating. Must match `ChatControl#ARG_RATING`. */
+export const ARG_RATING = 'rating'
+
+/** Argument: the note of a rating. Must match `ChatControl#ARG_NOTE`. */
+export const ARG_NOTE = 'note'
+
+/** Argument: the draft to improve. Must match `ChatControl#ARG_DRAFT`. */
+export const ARG_DRAFT = 'draft'
+
+/** Argument: the subagent's id. Must match `ChatControl#ARG_SUBAGENT_ID`. */
+export const ARG_SUBAGENT_ID = 'subagentId'
+
+/** Argument: the lead's call that started a subagent. Must match `ChatControl#ARG_PARENT_TOOL_CALL_ID`. */
+export const ARG_PARENT_TOOL_CALL_ID = 'parentToolCallId'
+
+/** Field of the answer: whether something was stopped. Must match `ChatControl#FIELD_CANCELLED`. */
+export const FIELD_CANCELLED = 'cancelled'
+
+/** Field of the answer: the id of a message to a subagent. Must match `ChatControl#FIELD_MESSAGE_ID`. */
+export const FIELD_MESSAGE_ID = 'messageId'
+
+/** Status: done. Must match `ChatControl#STATUS_OK`. */
+export const STATUS_OK = 'ok'
+
+/** Status: no run of the account waits for the request. Must match `ChatControl#STATUS_IGNORED`. */
+export const STATUS_IGNORED = 'ignored'
+
+/** Status: the improvement runs. Must match `ChatControl#STATUS_STARTED`. */
+export const STATUS_STARTED = 'started'
+
+/**
+ * Name of the frame with the result of an improvement. Must match `ChatSSEHandler#PROMPT_IMPROVED`.
+ */
+export const FRAME_PROMPT_IMPROVED = 'prompt_improved'
+
+/** The position of the auto-approve switch. Must match the `ApprovalMode` names. */
+export type ApprovalModeName = 'AUTO_APPROVE' | 'MANUAL'
+
+/** The status of an answer, or `undefined` when the command did not reach the server. */
+function statusOf(answer: CommandResponse | undefined): unknown {
+  return answer?.[FIELD_STATUS]
+}
+
 /**
  * Stops the run of the given chat.
  *
  * The chat is named rather than left to the server, so the stop reaches the run wherever it is:
  * the run's state hangs on the window that started it, and a second tab or a reloaded page is a
- * different window (issue #465). A stop without a chat still works and stops whatever this window
- * is running.
+ * different window (issue #465). A stop without a chat stops whatever this conversation is running.
  */
-export async function cancelRun(at: ChatAddress, sessionId?: string | null): Promise<void> {
-  await chatFetch(withWindow('/chat/cancel', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ sessionId: sessionId ?? '' }),
-  })
+export async function cancelRun(command: ChatCommand, sessionId?: string | null): Promise<void> {
+  await command(CMD_CANCEL, { [ARG_SESSION_ID]: sessionId ?? '' })
 }
 
-export async function respond(at: ChatAddress, body: Record<string, unknown>): Promise<void> {
-  const res = await chatFetch(withWindow('/chat/respond', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`respond failed (${res.status})`)
+/** The user's answer to an approval or a question. */
+export interface InteractionAnswer {
+  requestId: string
+  /** `APPROVED`, `APPROVED_FOR_SESSION`, `REJECTED`, or the answer to a question. */
+  response: string
+  /** The tool an approval is about; an `APPROVED_FOR_SESSION` approves it for the chat. */
+  toolName?: string
+  /** Why a tool call was denied. */
+  comment?: string
+  /** What the user typed for a choice question, beside the options picked. */
+  ownWords?: string
 }
 
-export async function improvePrompt(
-  at: ChatAddress,
-  text: string,
-  requestId: string,
-  signal?: AbortSignal,
-): Promise<ImprovePromptResponse> {
-  return readJson<ImprovePromptResponse>(
-    await chatFetch(withWindow('/chat/improve-prompt', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ draft: text, requestId }),
-      signal,
-    }),
-  )
+/**
+ * Answers an approval or a question a run of the account waits for, whichever window started it.
+ * An answer nothing waits for any more is no failure.
+ *
+ * @throws when the answer did not reach the server.
+ */
+export async function respond(command: ChatCommand, answer: InteractionAnswer): Promise<void> {
+  const reply = await command(CMD_RESPOND, {
+    [ARG_REQUEST_ID]: answer.requestId,
+    [ARG_RESPONSE]: answer.response,
+    [ARG_TOOL_NAME]: answer.toolName,
+    [ARG_COMMENT]: answer.comment,
+    [ARG_OWN_WORDS]: answer.ownWords,
+  })
+  const status = statusOf(reply)
+  if (status !== STATUS_OK && status !== STATUS_IGNORED) throw new Error('respond failed')
+}
+
+/**
+ * Starts improving a draft; the result arrives as a {@link FRAME_PROMPT_IMPROVED} frame naming
+ * `requestId`.
+ *
+ * @throws RefusedError when there is no room for the run right now, with the server's sentence;
+ *         an Error when the improvement was not started.
+ */
+export async function startPromptImprovement(command: ChatCommand, draft: string, requestId: string): Promise<void> {
+  const answer = await command(CMD_IMPROVE_PROMPT, { [ARG_DRAFT]: draft, [ARG_REQUEST_ID]: requestId })
+  const status = statusOf(answer)
+  if (status === STATUS_STARTED) return
+  const reason = typeof answer?.[FIELD_REASON] === 'string' ? (answer[FIELD_REASON] as string) : ''
+  if (status === STATUS_REJECTED) throw new RefusedError(reason)
+  if (status === STATUS_FORBIDDEN) throw new ForbiddenError(reason)
+  throw new Error('improve prompt failed')
+}
+
+/** Cancels the improvement `requestId` names. */
+export async function cancelPromptImprovement(command: ChatCommand, requestId: string): Promise<void> {
+  await command(CMD_CANCEL_PROMPT_IMPROVEMENT, { [ARG_REQUEST_ID]: requestId })
+}
+
+/** The result of an improvement, as its {@link FRAME_PROMPT_IMPROVED} frame states it. */
+export interface PromptImproved {
+  requestId: string
+  /** `completed`, `cancelled`, `stale`, `error` or `forbidden`. */
+  status: string
+  /** The improved draft; empty unless `completed`. */
+  improvedText: string
+  /** Why the improvement was refused, a sentence for the user; empty unless it was. */
+  reason: string
+}
+
+/** Reads a {@link FRAME_PROMPT_IMPROVED} frame. */
+export function readPromptImproved(data: unknown): PromptImproved | undefined {
+  if (data == null || typeof data !== 'object') return undefined
+  const raw = data as Record<string, unknown>
+  if (typeof raw.requestId !== 'string' || !raw.requestId) return undefined
+  return {
+    requestId: raw.requestId,
+    status: typeof raw.status === 'string' ? raw.status : '',
+    improvedText: typeof raw.improvedText === 'string' ? raw.improvedText : '',
+    reason: typeof raw.reason === 'string' ? raw.reason : '',
+  }
 }
 
 /**
@@ -655,84 +704,95 @@ export async function improvePrompt(
  * new chat starts with, and with the chat `sessionId` names; it tells the account's other windows
  * showing that chat (#658). A conversation that has no chat yet passes `null` and names the mode with
  * the send that creates the chat (`sendMessage`).
+ *
+ * @throws when the switch was not stored.
  */
 export async function setApprovalMode(
-  at: ChatAddress,
-  mode: 'AUTO_APPROVE' | 'MANUAL',
+  command: ChatCommand,
+  mode: ApprovalModeName,
   sessionId: string | null,
 ): Promise<void> {
-  const res = await chatFetch(withWindow('/chat/approval-mode', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(sessionId ? { mode, sessionId } : { mode }),
-  })
-  if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
+  const answer = await command(
+    CMD_SET_APPROVAL_MODE,
+    sessionId ? { [ARG_MODE]: mode, [ARG_SESSION_ID]: sessionId } : { [ARG_MODE]: mode },
+  )
+  if (statusOf(answer) !== STATUS_OK) throw new Error('approval mode not stored')
 }
 
-export async function cancelPromptImprovement(at: ChatAddress, requestId: string): Promise<void> {
-  await chatFetch(withWindow('/chat/improve-prompt/cancel', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ requestId }),
+/**
+ * Records, changes or withdraws what the user thought of one answer.
+ *
+ * @throws when the rating was not stored.
+ */
+export async function rateAnswer(
+  command: ChatCommand,
+  sessionId: string,
+  turnIndex: number,
+  rating: Rating,
+  note?: string,
+): Promise<void> {
+  const answer = await command(CMD_RATE, {
+    [ARG_SESSION_ID]: sessionId,
+    [ARG_TURN_INDEX]: turnIndex,
+    [ARG_RATING]: rating ?? '',
+    [ARG_NOTE]: note ?? '',
   })
+  if (statusOf(answer) !== STATUS_OK) throw new Error('rating not stored')
 }
 
 /**
  * Stops one background subagent of the given chat, whichever window of the account started it.
  *
  * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ * @throws when the stop did not reach the server.
  */
 export async function cancelSubagent(
-  at: ChatAddress,
+  command: ChatCommand,
   id: string,
   sessionId: string | null,
   parentToolCallId?: string,
 ): Promise<void> {
-  const query = `?sessionId=${encodeURIComponent(sessionId ?? '')}&parentToolCallId=${encodeURIComponent(parentToolCallId ?? '')}`
-  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}${query}`, at), {
-    method: 'DELETE',
-    credentials: 'include',
+  const answer = await command(CMD_CANCEL_SUBAGENT, {
+    [ARG_SUBAGENT_ID]: id,
+    [ARG_SESSION_ID]: sessionId ?? '',
+    [ARG_PARENT_TOOL_CALL_ID]: parentToolCallId ?? '',
   })
-  if (!res.ok) throw new Error(`cancel subagent failed (${res.status})`)
+  if (!answer) throw new Error('cancel subagent failed')
 }
 
 /**
  * What the server answered a message the user wrote to a subagent: `sent` - it reads it at the start
  * of its next turn; `ended` - it has ended and reads no more; `unknown` - no such subagent in this
- * account's chat; `empty` - there was no text.
+ * account's chat; `empty` - there was no text. Must match `AccountRuns.SubagentMessageStatus`.
  */
 export type SubagentMessageStatus = 'sent' | 'ended' | 'unknown' | 'empty'
+
+const SUBAGENT_MESSAGE_STATUSES: SubagentMessageStatus[] = ['sent', 'ended', 'unknown', 'empty']
 
 /**
  * Writes to one running background subagent, from its card.
  *
  * @param sessionId The chat whose lead started it.
  * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ * @throws when the message did not reach the server.
  */
 export async function sendSubagentMessage(
-  at: ChatAddress,
+  command: ChatCommand,
   id: string,
   sessionId: string | null,
   parentToolCallId: string,
   text: string,
 ): Promise<{ status: SubagentMessageStatus; messageId: string }> {
-  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/message`, at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ sessionId: sessionId ?? '', parentToolCallId, text }),
+  const answer = await command(CMD_MESSAGE_SUBAGENT, {
+    [ARG_SUBAGENT_ID]: id,
+    [ARG_SESSION_ID]: sessionId ?? '',
+    [ARG_PARENT_TOOL_CALL_ID]: parentToolCallId,
+    [ARG_TEXT]: text,
   })
-  // The refusals carry their reason in the same shape as the success.
-  if (!res.ok && res.status !== 400 && res.status !== 404 && res.status !== 409) {
-    throw new Error(`message to subagent failed (${res.status})`)
-  }
-  const data = (await res.json()) as { status?: string; messageId?: string }
-  const known: SubagentMessageStatus[] = ['sent', 'ended', 'unknown', 'empty']
-  const status = known.find((item) => item === data.status)
-  if (!status) throw new Error(`message to subagent failed (${res.status})`)
-  return { status, messageId: data.messageId ?? '' }
+  const status = SUBAGENT_MESSAGE_STATUSES.find((item) => item === statusOf(answer))
+  if (!status) throw new Error('message to subagent failed')
+  const messageId = answer?.[FIELD_MESSAGE_ID]
+  return { status, messageId: typeof messageId === 'string' ? messageId : '' }
 }
 
 /**

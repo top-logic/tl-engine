@@ -3,6 +3,7 @@ import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } f
 import type { ReactNode } from 'react'
 import {
   autoTitle,
+  cancelPromptImprovement,
   cancelRun,
   cancelSubagent,
   completedStatus,
@@ -17,22 +18,26 @@ import {
   loadSession,
   loadSubagentTranscript,
   openSession,
+  FRAME_PROMPT_IMPROVED,
+  rateAnswer,
   readCapabilities,
   readDraftAttachments,
+  readPromptImproved,
   readSessions,
   regenerate as regenerateTurn,
   removeAttachment,
   respond,
-  sendFeedback,
   sendMessage,
   setApprovalMode,
+  startPromptImprovement,
   STATE_DRAFT_ATTACHMENTS,
   readRunState,
   turnsJsonToMessages,
   wokenList,
   uploadAttachments,
-  type ChatAddress,
   type ChatUpload,
+  type InteractionAnswer,
+  type PromptImproved,
   type RunState,
   type SendRequest,
   type SessionDetail,
@@ -63,7 +68,7 @@ import { parseTasksJson, type AgentTask } from './progress-model'
 import { argsSummary } from './plain-text'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
-import { keepUnsent, takeUnsent } from './stale-window'
+import { keepUnsent, takeUnsent } from './unsent'
 import { citedSources, latestAnswerSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
@@ -418,7 +423,7 @@ const RUN_SCOPED_EVENTS = new Set([
 /**
  * Whether a stream frame belongs to the conversation this store is showing.
  *
- * A stream belongs to one conversation: every `/chat/*` call names its window *and* its chat id,
+ * A stream belongs to one conversation: every command goes to a chat control of its conversation,
  * and the server holds a `TaskProgressTracker` - one active session, one processing state - for
  * each of them. So a frame arriving here is already this conversation's, and what is left for this
  * guard is the frame that names a session other than the one the store has open: a run of this
@@ -684,6 +689,21 @@ export interface ChatActions {
   selectEffort(level: string): void
   selectTraceMode(mode: TraceMode): void
   toggleAutoApprove(): Promise<void>
+  /**
+   * Answers an approval or a question a run of the account waits for.
+   *
+   * @throws when the answer did not reach the server.
+   */
+  respond(answer: InteractionAnswer): Promise<void>
+  /**
+   * Improves the draft with the conversation's prompt improver: starts the improvement and settles
+   * with its result, which the server sends on the stream when the model is done.
+   *
+   * @throws when the improvement was not started; a `RefusedError` carries the server's sentence.
+   */
+  improvePrompt(draft: string, requestId: string): Promise<PromptImproved>
+  /** Cancels an improvement; its promise settles at once as `cancelled`. */
+  cancelPromptImprovement(requestId: string): void
   /** Stops one background subagent; the starting call tells it from a namesake of another window. */
   cancelSubagent(id: string, parentToolCallId?: string): Promise<void>
   /**
@@ -868,6 +888,9 @@ export class ChatStore {
   /** Settles once the files on their way to the server have arrived. */
   private uploads: Promise<void> = Promise.resolve()
 
+  /** The improvements started and not yet answered, by request id: what settles each one's promise. */
+  private readonly improvements = new Map<string, (result: PromptImproved) => void>()
+
   /** Whether the server's capabilities have arrived, which is when the first agent is chosen. */
   private capsTaken = false
 
@@ -1008,17 +1031,6 @@ export class ChatStore {
     return this.state.railDrawer ? { railDrawerOpen: false } : { sideOpen: false, railDecided: true }
   }
 
-  /**
-   * Where this store's `/chat/*` calls go: its window, and which conversation of it.
-   *
-   * The window alone is not an address: a window can show a page's chat beside a `<chat-dock>`'s or
-   * two `<agent-chat>` elements, and each of them has an active session, a run and an event stream
-   * of its own on the server.
-   */
-  private get at(): ChatAddress {
-    return { windowId: this.state.windowId, chatId: this.chatId }
-  }
-
   /** What the user decided per fact, which is what is stored - never what the page happens to show. */
   private get layout(): ChatPreferences {
     const { railDecided, sideOpen, badgeSeen, sectionChoices } = this.state
@@ -1038,7 +1050,7 @@ export class ChatStore {
   /**
    * Whether a composer has been bound to this store yet.
    *
-   * A message a stale window could not send is given back to the first composer of the reloaded
+   * A message the page was reloaded over before it went is given back to the first composer of the reloaded
    * page, and to no later one: the element binds its composer on every render, and the page that
    * refused the send renders again before the reload takes it away - it would take the message back
    * out of storage and lose it with itself.
@@ -1281,7 +1293,7 @@ export class ChatStore {
    * Runs the effects once the synchronous work is over.
    *
    * A microtask rather than a call per setter, because a handler that changes three things - open
-   * the rail, mark the badges seen, close the pane - must produce the one `PUT /chat/preferences`
+   * the rail, mark the badges seen, close the pane - must produce the one `saveLayout` command
    * React's batching produced, not three.
    */
   private schedule(): void {
@@ -1349,7 +1361,7 @@ export class ChatStore {
           // choice used to be lost (#423).
           if (sameLayout(next, this.storedLayout)) return
           this.storedLayout = next
-          void savePreferences(this.at, this.layoutKey, next)
+          void savePreferences(this.command, this.layoutKey, next)
         },
       },
       {
@@ -1434,7 +1446,6 @@ export class ChatStore {
     // heartbeat every 15 s - is therefore attached again, and so is one the server failed to
     // start. A session that is not signed in attaches none.
     if (!this.state.authenticated) return
-    const at = this.at
     let closed = false
     let source: ChatStream | null = null
     let staleTimer = 0
@@ -1629,6 +1640,14 @@ export class ChatStore {
         const data = frameData<{ mode?: string }>(e.data, {})
         this.patch({ autoApprove: data.mode === 'AUTO_APPROVE' })
       })
+      on(FRAME_PROMPT_IMPROVED, (e) => {
+        const result = readPromptImproved(e.data)
+        if (!result) return
+        const done = this.improvements.get(result.requestId)
+        if (!done) return
+        this.improvements.delete(result.requestId)
+        done(result)
+      })
       on('approval_required', (e) => {
         const data = frameData<{
           approvalRequestId?: string
@@ -1641,12 +1660,11 @@ export class ChatStore {
         }>(e.data, {})
         if (!data.approvalRequestId) return
         if (this.state.autoApprove) {
-          void respond(at, {
+          void respond(this.command, {
             requestId: data.approvalRequestId,
             response: 'APPROVED',
             toolName: data.toolName,
-            argsJson: data.argsJson,
-          })
+          }).catch(() => undefined)
           return
         }
         this.dispatch({
@@ -1754,12 +1772,11 @@ export class ChatStore {
           case 'approval_required':
             if (!data.approvalRequestId) break
             if (this.state.autoApprove) {
-              void respond(at, {
+              void respond(this.command, {
                 requestId: data.approvalRequestId,
                 response: 'APPROVED',
                 toolName: data.toolName,
-                argsJson: data.argsJson,
-              })
+              }).catch(() => undefined)
               break
             }
             this.dispatch({
@@ -2437,13 +2454,12 @@ export class ChatStore {
 
       /** Records what the user thought of an answer, or withdraws an earlier rating. */
       rate: async (turnIndex: number, rating: Rating, note?: string) => {
-        const at = this.at
         const active = this.state.sessionId
         if (!active) return
         const others = this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex)
         this.patch({ feedback: rating ? [...others, { turnIndex, rating, note }] : others })
         try {
-          await sendFeedback(at, active, turnIndex, rating, note)
+          await rateAnswer(this.command, active, turnIndex, rating, note)
         } catch {
           // The rating is a convenience, not the conversation: a failed write is not worth an error
           // banner, but it must not look recorded either.
@@ -2453,7 +2469,7 @@ export class ChatStore {
 
       stop: () => {
         // Named, so that the stop reaches the run even when this is not the window that started it.
-        void cancelRun(this.at, this.state.sessionId)
+        void cancelRun(this.command, this.state.sessionId)
       },
 
       selectAgent: (name: string) => this.applyAgent(name, this.state.caps.agents),
@@ -2510,7 +2526,6 @@ export class ChatStore {
       },
 
       toggleAutoApprove: async () => {
-        const at = this.at
         const next = !this.state.autoApprove
         const previous = this.approvalChoice
         this.patch({ autoApprove: next })
@@ -2518,7 +2533,7 @@ export class ChatStore {
         // The server stores the switch as the person's choice, and with the open chat. A
         // conversation that has no chat yet names the mode with the send that creates the chat.
         try {
-          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
+          await setApprovalMode(this.command, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
         } catch {
           this.patch({ autoApprove: !next })
           this.approvalChoice = previous
@@ -2527,12 +2542,11 @@ export class ChatStore {
         if (!next) return
         for (const message of this.state.messages) {
           if (message.type !== 'approval_request' || message.outcome !== 'pending') continue
-          void respond(at, {
+          void respond(this.command, {
             requestId: message.approvalRequestId,
             response: 'APPROVED',
             toolName: message.toolName,
-            argsJson: message.argsJson,
-          })
+          }).catch(() => undefined)
           this.dispatch({
             type: 'RESOLVE_APPROVAL',
             approvalRequestId: message.approvalRequestId,
@@ -2541,8 +2555,27 @@ export class ChatStore {
         }
       },
 
+      respond: (answer: InteractionAnswer) => respond(this.command, answer),
+
+      improvePrompt: (draft: string, requestId: string) =>
+        new Promise<PromptImproved>((resolve, reject) => {
+          // Before the command goes: its result may come on the stream before the answer does.
+          this.improvements.set(requestId, resolve)
+          startPromptImprovement(this.command, draft, requestId).catch((err: unknown) => {
+            this.improvements.delete(requestId)
+            reject(err)
+          })
+        }),
+
+      cancelPromptImprovement: (requestId: string) => {
+        const done = this.improvements.get(requestId)
+        this.improvements.delete(requestId)
+        done?.({ requestId, status: 'cancelled', improvedText: '', reason: '' })
+        void cancelPromptImprovement(this.command, requestId)
+      },
+
       cancelSubagent: async (id: string, parentToolCallId?: string) => {
-        await cancelSubagent(this.at, id, this.state.sessionId, parentToolCallId)
+        await cancelSubagent(this.command, id, this.state.sessionId, parentToolCallId)
         this.patch({
           subagents: this.state.subagents.map((item) =>
             item.subagentId === id ? { ...item, status: 'CANCELLED' } : item,
@@ -2551,7 +2584,7 @@ export class ChatStore {
       },
 
       messageSubagent: async (id: string, parentToolCallId: string, text: string) => {
-        const answer = await sendSubagentMessage(this.at, id, this.state.sessionId, parentToolCallId, text)
+        const answer = await sendSubagentMessage(this.command, id, this.state.sessionId, parentToolCallId, text)
         if (answer.status === 'sent') {
           this.patch({
             subagentLive: { ...this.state.subagentLive, [id]: addNote(this.state.subagentLive[id], answer.messageId, text) },
@@ -2563,12 +2596,11 @@ export class ChatStore {
       refreshSubagents: () => this.refreshSubagents(),
 
       stopSubagents: async () => {
-        const at = this.at
         const active = this.state.subagents.filter(
           (item) => !isEnded(item.status),
         )
         const sessionId = this.state.sessionId
-        await Promise.all(active.map((item) => cancelSubagent(at, item.subagentId, sessionId, item.parentToolCallId)))
+        await Promise.all(active.map((item) => cancelSubagent(this.command, item.subagentId, sessionId, item.parentToolCallId)))
         this.patch({
           subagents: this.state.subagents.map((item) =>
             isEnded(item.status) ? item : { ...item, status: 'CANCELLED' },
@@ -2654,7 +2686,7 @@ export class ChatStore {
       markBadgesSeen: (badgeTotal: number) => {
         const seen = Number.isFinite(badgeTotal) && badgeTotal > 0 ? Math.round(badgeTotal) : 0
         // Guarded rather than patched blindly: the layout is persisted from a state change, and an
-        // unchanged watermark would put a PUT /chat/preferences on every open of the dock.
+        // unchanged watermark would put a `saveLayout` on every open of the dock.
         if (seen === this.state.badgeSeen) return
         this.patch({ badgeSeen: seen })
       },

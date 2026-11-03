@@ -96,7 +96,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	}
 
 	/**
-	 * Correlation ID of the underlying <code>InteractionRequest</code> (used for /chat/respond).
+	 * Correlation ID of the underlying <code>InteractionRequest</code> (what the {@code respond} command of a chat control names).
 	 */
 	public final String getRequestId() {
 		return _requestId;

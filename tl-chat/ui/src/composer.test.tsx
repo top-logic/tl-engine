@@ -30,7 +30,14 @@ const TAIL = '\u200b'
 
 function baseProps(extra: Record<string, unknown> = {}) {
   return {
-    windowId: 'w1',
+    onImprovePrompt: async (_draft: string, requestId: string) => ({
+      requestId,
+      status: 'cancelled',
+      improvedText: '',
+      reason: '',
+    }),
+    onCancelImprovePrompt: () => {},
+    onRespond: async () => {},
     agents: [],
     models: [],
     agent: 'assistant',
@@ -253,6 +260,81 @@ describe('the composer under a burst of input', () => {
     await burst(field, ' Kurz.')
     expect(chip()).toBeUndefined()
     expect(errors).toEqual([])
+  })
+
+  /** The chip that starts an improvement, once the pause after typing has shown it. */
+  async function improveChip(): Promise<HTMLButtonElement> {
+    const find = () =>
+      Array.from(document.querySelectorAll<HTMLButtonElement>('.overlay-chip')).find(
+        (element) => element.textContent?.includes(bundle('en').improvePrompt),
+      )
+    await eventually(() => expect(find()).toBeTruthy())
+    return find()!
+  }
+
+  it('starts an improvement and puts in the draft the result brings', async () => {
+    // The command answers at once; the result comes later, as a frame on the stream, which is what
+    // the promise of onImprovePrompt settles with.
+    const started: { draft: string; requestId: string }[] = []
+    let finish: (improvedText: string) => void = () => undefined
+    const { field, draft } = await mount({
+      promptImprovementEnabled: true,
+      onImprovePrompt: (text: string, requestId: string) =>
+        new Promise((resolve) => {
+          started.push({ draft: text, requestId })
+          finish = (improvedText) => resolve({ requestId, status: 'completed', improvedText, reason: '' })
+        }),
+    })
+    await burst(field, 'bericht kurz')
+    ;(await improveChip()).click()
+    await eventually(() => expect(started).toHaveLength(1))
+    expect(started[0].draft).toBe('bericht kurz')
+    expect(document.body.textContent).toContain(bundle('en').improving)
+
+    finish('Fasse den Bericht kurz zusammen.')
+
+    await eventually(() => expect(draft()).toBe('Fasse den Bericht kurz zusammen.'))
+  })
+
+  it('cancels the improvement it started and keeps the draft', async () => {
+    const cancelled: string[] = []
+    const started: string[] = []
+    const { field, draft } = await mount({
+      promptImprovementEnabled: true,
+      onImprovePrompt: (_text: string, requestId: string) => {
+        started.push(requestId)
+        return new Promise(() => undefined)
+      },
+      onCancelImprovePrompt: (requestId: string) => cancelled.push(requestId),
+    })
+    await burst(field, 'bericht kurz')
+    ;(await improveChip()).click()
+    await eventually(() => expect(started).toHaveLength(1))
+    const cancel = Array.from(document.querySelectorAll<HTMLButtonElement>('.overlay-chip')).find((element) =>
+      element.textContent?.includes(bundle('en').improving),
+    )
+    cancel!.click()
+
+    await eventually(() => expect(cancelled).toEqual(started))
+    expect(draft()).toBe('bericht kurz')
+  })
+
+  it('shows the sentence of an improvement the server refused', async () => {
+    const { field } = await mount({
+      promptImprovementEnabled: true,
+      onImprovePrompt: async (_text: string, requestId: string) => ({
+        requestId,
+        status: 'forbidden',
+        improvedText: '',
+        reason: 'Dieses Modell ist für Sie nicht freigegeben.',
+      }),
+    })
+    await burst(field, 'bericht kurz')
+    ;(await improveChip()).click()
+
+    await eventually(() =>
+      expect(document.body.textContent).toContain('Dieses Modell ist für Sie nicht freigegeben.'),
+    )
   })
 
   it('survives an "@" mention opened and taken in the middle of a burst', async () => {

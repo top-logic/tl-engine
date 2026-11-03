@@ -12,17 +12,28 @@ import { unseenBadge } from './progress-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
 import {
+  ARG_DRAFT,
   ARG_FROM_TURN,
+  ARG_MODE,
+  ARG_REQUEST_ID,
   ARG_SESSION_ID,
+  ARG_SUBAGENT_ID,
   ARG_TEXT,
   ARG_TITLE,
+  CMD_CANCEL,
+  CMD_CANCEL_PROMPT_IMPROVEMENT,
   CMD_DELETE_SESSION,
+  CMD_IMPROVE_PROMPT,
+  CMD_MESSAGE_SUBAGENT,
+  CMD_SET_APPROVAL_MODE,
   CMD_EDIT_SEND,
   CMD_REGENERATE,
   CMD_REMOVE_ATTACHMENT,
   CMD_SELECT_SESSION,
   CMD_SEND,
+  FIELD_CANCELLED,
   FIELD_DELETED,
+  FIELD_MESSAGE_ID,
   FIELD_OPENED,
   FIELD_REASON,
   FIELD_REMOVED_TURNS,
@@ -30,11 +41,15 @@ import {
   FIELD_SESSION_ID,
   FIELD_STATUS,
   FIELD_TEXT,
+  FRAME_PROMPT_IMPROVED,
+  RefusedError,
   STATE_DRAFT_ATTACHMENTS,
   STATUS_BUSY,
   STATUS_FORBIDDEN,
+  STATUS_OK,
   STATUS_PROCESSING,
   STATUS_REJECTED,
+  STATUS_STARTED,
 } from './api'
 import {
   ARG_STREAM,
@@ -43,6 +58,7 @@ import {
   FIELD_ATTACHED,
   type ChatCommand,
 } from './chat-stream'
+import { ARG_LAYOUT, ARG_LAYOUT_KEY, CMD_SAVE_LAYOUT } from './preferences'
 import {
   emitPatch,
   isSubscribed,
@@ -74,7 +90,7 @@ const SESSION_DATA = 'key=session%2F'
 /** Every stream the store attached, in the order it attached them. */
 let streams: FakeStream[] = []
 
-/** The `PUT /chat/preferences` bodies the store wrote, in order. */
+/** The layouts the store saved (`saveLayout`), in order. */
 let preferenceWrites: unknown[] = []
 
 /** The text of every send, in order - what the model would actually receive. */
@@ -95,14 +111,20 @@ let turnAnswer: ((name: string, args: Record<string, unknown>) => Promise<Comman
 /** Every URL the store asked `fetch` for, in order. */
 let requested: string[] = []
 
-/** The body of every `POST /chat/cancel`, in order. */
+/** The arguments of every stop (`cancel`), in order. */
 let cancelBodies: Record<string, unknown>[] = []
 
-/** Every `POST /chat/subagents/{id}/message`, in order: its URL and body. */
-let subagentMessages: { url: string; body: Record<string, unknown> }[] = []
+/** The arguments of every message to a subagent, in order. */
+let subagentMessages: Record<string, unknown>[] = []
 
-/** Every command the store sent, in order: the conversation whose control it went to, and its name. */
-let commands: { conversation: string; name: string }[] = []
+/**
+ * Every command the store sent, in order: the conversation whose control it went to, its name and
+ * its arguments.
+ */
+let commands: { conversation: string; name: string; args: Record<string, unknown> }[] = []
+
+/** Answers an `improvePrompt` instead of the default, which starts it. */
+let improveAnswer: CommandResponse | undefined | null = null
 
 /**
  * What the server's `run_state` frame says on `refreshRunState`; `null` sends none, which is what
@@ -128,7 +150,7 @@ let refuseAttach: (() => boolean) | null = null
  */
 function control(conversation = 'chat'): ChatCommand {
   return async (name: string, args?: Record<string, unknown>): Promise<CommandResponse | undefined> => {
-    commands.push({ conversation, name })
+    commands.push({ conversation, name, args: { ...(args ?? {}) } })
     if (name === CMD_ATTACH_STREAM) {
       if (refuseAttach?.()) return undefined
       new FakeStream(String(args?.[ARG_STREAM]), conversation)
@@ -143,6 +165,24 @@ function control(conversation = 'chat'): ChatCommand {
     if (name === CMD_SELECT_SESSION) {
       const frame = runStateFrame?.()
       return { success: true, [FIELD_OPENED]: !refuseOpen, ...(frame ? { [FIELD_RUN_STATE]: frame } : {}) }
+    }
+    if (name === CMD_SAVE_LAYOUT) {
+      preferenceWrites.push(args?.[ARG_LAYOUT])
+      return { success: true }
+    }
+    if (name === CMD_CANCEL) {
+      cancelBodies.push({ ...(args ?? {}) })
+      return { success: true, [FIELD_CANCELLED]: true }
+    }
+    if (name === CMD_MESSAGE_SUBAGENT) {
+      subagentMessages.push({ ...(args ?? {}) })
+      return { success: true, [FIELD_STATUS]: 'sent', [FIELD_MESSAGE_ID]: 'm1' }
+    }
+    if (name === CMD_SET_APPROVAL_MODE) {
+      return { success: true, [FIELD_STATUS]: STATUS_OK }
+    }
+    if (name === CMD_IMPROVE_PROMPT) {
+      return improveAnswer === null ? { success: true, [FIELD_STATUS]: STATUS_STARTED } : improveAnswer
     }
     if (name === CMD_DELETE_SESSION) {
       deleted.push(String(args?.[ARG_SESSION_ID]))
@@ -226,6 +266,7 @@ beforeEach(() => {
   cancelBodies = []
   subagentMessages = []
   commands = []
+  improveAnswer = null
   runStateFrame = null
   runStateGate = Promise.resolve()
   refuseAttach = null
@@ -238,20 +279,8 @@ beforeEach(() => {
     clearTimeout: (id: number) => clearTimeout(id),
   }
   resetTLBridge()
-  globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+  globals.fetch = vi.fn(async (url: string) => {
     requested.push(url)
-    if (init?.method === 'PUT' && url.includes('/chat/preferences')) {
-      preferenceWrites.push(JSON.parse(init.body ?? '{}'))
-      return { ok: true, status: 200, json: async () => ({}) }
-    }
-    if (/\/chat\/subagents\/[^/]+\/message/.test(url)) {
-      subagentMessages.push({ url, body: JSON.parse(init?.body ?? '{}') })
-      return { ok: true, status: 200, json: async () => ({ status: 'sent', messageId: 'm1' }) }
-    }
-    if (url.includes('/chat/cancel')) {
-      cancelBodies.push(JSON.parse(init?.body ?? '{}'))
-      return { ok: true, status: 200, json: async () => ({ cancelled: true }) }
-    }
     // The transcript of a chat the store opened.
     if (url.includes(SESSION_DATA)) {
       return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '' }) }
@@ -948,8 +977,11 @@ describe('the stream', () => {
     expect(await store.actions.messageSubagent('sa-1', 'call-1', 'Only 2026.')).toBe('sent')
 
     expect(subagentMessages).toHaveLength(1)
-    expect(subagentMessages[0].url).toContain('/chat/subagents/sa-1/message')
-    expect(subagentMessages[0].body).toMatchObject({ parentToolCallId: 'call-1', text: 'Only 2026.' })
+    expect(subagentMessages[0]).toMatchObject({
+      [ARG_SUBAGENT_ID]: 'sa-1',
+      parentToolCallId: 'call-1',
+      text: 'Only 2026.',
+    })
     expect(store.getState().subagentLive['sa-1'].notes).toEqual([{ id: 'm1', text: 'Only 2026.', read: false }])
 
     stream.emit('delegation_event', {
@@ -2335,9 +2367,8 @@ describe('the turn settings', () => {
 /**
  * The frames of somebody else's turn.
  *
- * Every `/chat/*` call is keyed by the window alone, so both stores of a window with two chat ids
- * attach to one server-side tracker and see one stream. A frame naming a session that is not the
- * open one is the other conversation's.
+ * A stream belongs to one conversation of the window. A frame naming a session that is not the
+ * open one is of a run the conversation has since moved away from.
  */
 describe('eventBelongsToChat', () => {
   it('drops a run-scoped frame that names another session', () => {
@@ -2435,10 +2466,11 @@ describe('the composer seam', () => {
  * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
  * elements - and the server holds an active session, a run and an event stream for each. It used to
  * hold one per window, so the second conversation to send took the first one's stream and the first
- * waited for an answer that never came. Every call therefore names its conversation.
+ * waited for an answer that never came. Every command therefore goes to a chat control of its own
+ * conversation, and no request goes to `/chat/*`.
  */
 describe('every request names its conversation', () => {
-  it('puts the chat id on the layout, and attaches through its own control', async () => {
+  it('sends the layout and attaches through a control of its own conversation', async () => {
     const store = chatStore('belege', BOOT)
     const release = store.subscribe(() => undefined, control('belege'), DATA_URL)
     store.attach(BOOT)
@@ -2447,33 +2479,30 @@ describe('every request names its conversation', () => {
     await settle()
 
     expect(streams[0].conversation).toBe('belege')
-    for (const url of requested) {
-      expect(url).toContain('conversation=belege')
-    }
-    expect(requested.some((url) => url.includes('/chat/preferences'))).toBe(true)
+    const layouts = commands.filter((item) => item.name === CMD_SAVE_LAYOUT)
+    expect(layouts).toHaveLength(1)
+    expect(commands.every((item) => item.conversation === 'belege')).toBe(true)
+    expect(requested.filter((url) => url.includes('/chat/'))).toEqual([])
 
     release()
   })
 
   /**
-   * The layout key and the conversation are two different keys on the preferences call.
-   *
-   * `chatId` is where the layout is stored - the empty one for an `<agent-chat>` - while
-   * `conversation` is which chat of the window is asking, which is how the servlet resolves the
-   * request at all.
+   * The layout key and the conversation are two different keys: the layout key is where the layout
+   * is stored, the conversation is the chat of the window whose control the command goes to.
    */
   it('keeps the layout key apart from the conversation', async () => {
     const boot = { ...BOOT, layoutKey: '' }
     const store = chatStore('v42', boot)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    const release = store.subscribe(() => undefined, control('v42'), DATA_URL)
     store.attach(boot)
     await settle()
     store.actions.toggleSide(0)
     await settle()
 
-    const layout = requested.find((url) => url.includes('/chat/preferences'))
-    expect(layout).toContain('chatId=&')
-    expect(layout).toContain('conversation=v42')
+    const layout = commands.find((item) => item.name === CMD_SAVE_LAYOUT)
+    expect(layout?.conversation).toBe('v42')
+    expect(layout?.args[ARG_LAYOUT_KEY]).toBe('')
 
     release()
   })
@@ -2515,8 +2544,75 @@ describe('stopping a run', () => {
     store.actions.stop()
     await settle()
 
-    expect(cancelBodies).toEqual([{ sessionId: chat }])
+    expect(cancelBodies).toEqual([{ [ARG_SESSION_ID]: chat }])
 
+    release()
+  })
+})
+
+/**
+ * Improving a prompt: the command answers at once, and the result comes as a frame on the stream
+ * (`prompt_improved`), so the window's other commands do not wait for the model.
+ */
+describe('improving a prompt', () => {
+  it('settles with the result the stream brings for its request', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+
+    const result = store.actions.improvePrompt('bericht kurz', 'r1')
+    await settle()
+    const started = commands.filter((item) => item.name === CMD_IMPROVE_PROMPT)
+    expect(started.map((item) => item.args)).toEqual([{ [ARG_DRAFT]: 'bericht kurz', [ARG_REQUEST_ID]: 'r1' }])
+
+    // The result of another request is not this one's.
+    streams[0].emit(FRAME_PROMPT_IMPROVED, { requestId: 'r0', status: 'completed', improvedText: 'Falsch.' })
+    streams[0].emit(FRAME_PROMPT_IMPROVED, {
+      requestId: 'r1',
+      status: 'completed',
+      improvedText: 'Fasse den Bericht kurz zusammen.',
+    })
+
+    await expect(result).resolves.toEqual({
+      requestId: 'r1',
+      status: 'completed',
+      improvedText: 'Fasse den Bericht kurz zusammen.',
+      reason: '',
+    })
+    release()
+  })
+
+  it('settles a cancelled improvement at once and tells the server', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+
+    const result = store.actions.improvePrompt('bericht kurz', 'r2')
+    store.actions.cancelPromptImprovement('r2')
+
+    await expect(result).resolves.toMatchObject({ requestId: 'r2', status: 'cancelled' })
+    await settle()
+    expect(commands.filter((item) => item.name === CMD_CANCEL_PROMPT_IMPROVEMENT).map((item) => item.args)).toEqual([
+      { [ARG_REQUEST_ID]: 'r2' },
+    ])
+    // A late frame of the cancelled request changes nothing.
+    streams[0].emit(FRAME_PROMPT_IMPROVED, { requestId: 'r2', status: 'cancelled' })
+    release()
+  })
+
+  it('fails with the sentence of a start the server has no room for', async () => {
+    improveAnswer = { success: true, [FIELD_STATUS]: STATUS_REJECTED, [FIELD_REASON]: 'Gerade ist kein Platz.' }
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+
+    const failure = await store.actions.improvePrompt('bericht kurz', 'r3').catch((err: unknown) => err)
+
+    expect(failure).toBeInstanceOf(RefusedError)
+    expect((failure as RefusedError).reason).toBe('Gerade ist kein Platz.')
     release()
   })
 })
@@ -2889,11 +2985,10 @@ describe('a window opened while the run is in flight', () => {
  * A page whose window the server no longer knows (issue #574).
  *
  * A login or logout in another tab of the same browser, or an application restart, replaces the
- * session behind an open page. Its chat calls then reach a session that never rendered the window,
- * and the server answers `409 stale_window`. The chat used to take that for "the agent is busy" on
- * a send - dropping what the user typed - and to re-open a refused stream once a second for as long
- * as the page stayed open. Loading the page again is what renders the window in the session the
- * browser holds now; these pin that the chat does that once, and keeps the user's text across it.
+ * session behind an open page. Its commands then reach a session that never rendered the window, and
+ * the bridge's command channel loads the page again, which renders the window in the session the
+ * browser holds now; the command is never answered here. These pin that the chat keeps the user's
+ * text across that reload and does not ask for a refused stream again and again.
  */
 describe('a window the server no longer knows', () => {
   let storage: Map<string, string>
@@ -3147,21 +3242,16 @@ describe('choosing a chat while another one loads', () => {
  * choice, and a send names the position the switch shows.
  */
 describe('the auto-approve switch', () => {
-  /** The body of every `POST /chat/approval-mode`, in order. */
-  let modeBodies: Record<string, unknown>[]
+  /** The arguments of every switch (`setApprovalMode`), in order. */
+  const modeBodies = () => commands.filter((item) => item.name === CMD_SET_APPROVAL_MODE).map((item) => item.args)
   /** What the transcript of the chat says about its mode. */
   let storedMode: string
 
   beforeEach(() => {
-    modeBodies = []
     storedMode = 'AUTO_APPROVE'
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
     globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
-      if (url.includes('/chat/approval-mode')) {
-        modeBodies.push(JSON.parse(init?.body ?? '{}'))
-        return { ok: true, status: 200, json: async () => ({ status: 'ok' }) }
-      }
       if (url.includes(SESSION_DATA)) {
         return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '', approvalMode: storedMode }) }
       }
@@ -3192,7 +3282,7 @@ describe('the auto-approve switch', () => {
 
     await store.actions.toggleAutoApprove()
 
-    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE', sessionId: 's1' }])
+    expect(modeBodies()).toEqual([{ [ARG_MODE]: 'AUTO_APPROVE', [ARG_SESSION_ID]: 's1' }])
     release()
   })
 
@@ -3292,7 +3382,7 @@ describe('the auto-approve switch', () => {
     await settle()
 
     await store.actions.toggleAutoApprove()
-    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE' }])
+    expect(modeBodies()).toEqual([{ [ARG_MODE]: 'AUTO_APPROVE' }])
     expect(store.getState().autoApprove).toBe(true)
 
     await store.actions.send('Erste Frage')

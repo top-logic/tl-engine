@@ -976,7 +976,7 @@ public class ChatProcessor {
 		String base64 = att.getBase64Data();
 		if (mimeType.startsWith("image/")) {
 			if (!ImageContent.isAccepted(mimeType)) {
-				// The upload check in ChatServlet refuses this type already, so reaching here means a
+				// The upload of an attachment (ChatAttachments) refuses this type already, so reaching here means a
 				// caller that bypassed it. It is still answered the way every other unsendable
 				// attachment is - a marker the model can explain to the user - rather than by building
 				// a payload only the provider can reject.

@@ -69,7 +69,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this chat's requests go. Memoised, because the composer is `React.memo`d and a fresh
   // object on every render would defeat that.
-  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
 
   /** Whether the session drawer is open. Below its breakpoint the rail is a drawer, not a column. */
   const [railOpen, setRailOpen] = useState(false)
@@ -398,7 +397,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
           />
           <Composer
             runs={runs}
-            at={at}
+            onImprovePrompt={actions.improvePrompt}
+            onCancelImprovePrompt={actions.cancelPromptImprovement}
+            onRespond={actions.respond}
             agents={chat.caps.agents}
             models={chat.offeredModels}
             agent={chat.agent}

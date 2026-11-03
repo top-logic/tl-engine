@@ -98,26 +98,12 @@ message ConversationFeaturesDto {
 }
 
 /**
- * Request body for POST /chat/improve-prompt.
+ * The {@code prompt_improved} frame: the result of an improvement the {@code improvePrompt}
+ * command of a chat control started.
  */
-message ImprovePromptRequest {
+message PromptImprovedEvent {
 	/**
-	 * Draft text to improve.
-	 */
-	string draft;
-
-	/**
-	 * Browser-generated correlation ID.
-	 */
-	string requestId;
-}
-
-/**
- * Response body for POST /chat/improve-prompt.
- */
-message ImprovePromptResponse {
-	/**
-	 * Correlation ID from the request.
+	 * Correlation ID the command named.
 	 */
 	string requestId;
 
@@ -127,8 +113,8 @@ message ImprovePromptResponse {
 	string improvedText;
 
 	/**
-	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
-	 * account may not make.
+	 * Result status: "completed", "cancelled", "stale" (a newer request replaced this one), "error",
+	 * or "forbidden" for a run the acting account may not make.
 	 */
 	string status;
 
@@ -136,16 +122,6 @@ message ImprovePromptResponse {
 	 * Why the request was refused, in the acting user's language; empty unless it was.
 	 */
 	string reason;
-}
-
-/**
- * Request body for POST /chat/improve-prompt/cancel.
- */
-message CancelPromptImprovementRequest {
-	/**
-	 * Correlation ID of the request to cancel.
-	 */
-	string requestId;
 }
 
 /**
@@ -163,23 +139,6 @@ message MessageFeedbackDto {
 
 	/** ISO-8601 timestamp of when the rating was given. */
 	string recordedAt;
-}
-
-/**
- * Request body for POST /chat/feedback.
- */
-message MessageFeedbackRequest {
-	/** Session the rated answer belongs to. */
-	string sessionId;
-
-	/** Zero-based index of the turn whose answer was rated. */
-	int turnIndex;
-
-	/** "up", "down", or empty to withdraw an earlier rating. */
-	string rating;
-
-	/** Free text the user added; optional. */
-	string note;
 }
 
 /**
@@ -275,7 +234,7 @@ message ChatSessionDto {
  */
 message PendingInteractionDto {
 	/**
-	 * Correlation ID of the underlying <code>InteractionRequest</code> (used for /chat/respond).
+	 * Correlation ID of the underlying <code>InteractionRequest</code> (what the {@code respond} command of a chat control names).
 	 */
 	string requestId;
 
@@ -861,21 +820,6 @@ message SubagentStatusEvent {
 	string stopReason;
 }
 
-/**
- * Request body for POST /chat/subagents/{id}/message: the user writes to one running background
- * subagent from its card.
- */
-message SubagentMessageRequest {
-	/** The chat whose lead started the subagent; empty means the chat this window shows. */
-	string sessionId;
-
-	/** The id of the lead's tool call that started the subagent, which tells it from a namesake. */
-	string parentToolCallId;
-
-	/** What the user writes. */
-	string text;
-}
-
 /** One background subagent, as a {@link RunStateEvent} lists it. */
 message SubagentJobDto {
 	/** The subagent's id. */
@@ -939,19 +883,6 @@ message SubagentBudgetDto {
 
 	/** The ISO 4217 code of {@link #getMoney()}; empty when the run bounds no money. */
 	string currency;
-}
-
-/** Answer of POST /chat/subagents/{id}/message. */
-message SubagentMessageResponse {
-	/**
-	 * {@code sent} - the subagent reads it at the start of its next turn; {@code ended} - the
-	 * subagent has ended and reads no more messages; {@code unknown} - no such subagent of this
-	 * account; {@code empty} - there is no text.
-	 */
-	string status;
-
-	/** The id of the message sent; the frame that says it was read names it. */
-	string messageId;
 }
 
 /** One message the user wrote to a subagent. */

@@ -390,7 +390,7 @@ public final class PendingInteractionRegistry {
 	 * window started them.
 	 *
 	 * <p>
-	 * What {@code POST /chat/approval-mode} brings in line besides the copies the windows hold: a run
+	 * What the auto-approve switch ({@code ChatControl#CMD_SET_APPROVAL_MODE}) brings in line besides the copies the windows hold: a run
 	 * reads the switch of its own chat at every approval (#943), and the run may have been started
 	 * in a window other than the one the switch is changed in.
 	 * </p>
@@ -427,7 +427,7 @@ public final class PendingInteractionRegistry {
 	 * The run this account has in the given chat, whichever window started it.
 	 *
 	 * <p>
-	 * What {@code POST /chat/cancel} stops. The chat is what the user is looking at when they press
+	 * What the stop button ({@code ChatControl#CMD_CANCEL}) stops. The chat is what the user is looking at when they press
 	 * stop, and it is the account's own chat by the time this is asked - the window it runs in is
 	 * not something the user can be expected to have kept.
 	 * </p>

@@ -502,13 +502,6 @@ export interface SubagentStatusEvent {
   stopReason?: string
 }
 
-export interface ImprovePromptResponse {
-  requestId: string
-  status: string
-  improvedText?: string
-  text?: string
-}
-
 export interface SessionSummary {
   id: string
   title: string

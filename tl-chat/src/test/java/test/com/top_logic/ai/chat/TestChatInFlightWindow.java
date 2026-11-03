@@ -73,9 +73,8 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * The servlet is driven directly, exactly as {@link TestChatServletOwnership} drives it, and the run
- * is set up the way {@code ChatProcessor} sets one up: starting a real agent would need a provider,
- * a model and a tool catalog to ask about something the servlet decides on its own.
+ * The run is set up the way {@code ChatProcessor} sets one up: starting a real agent would need a
+ * provider, a model and a tool catalog to ask about something the chat decides on its own.
  * </p>
  */
 public class TestChatInFlightWindow extends BasicTestCase {
@@ -141,7 +140,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		PendingInteractionRegistry.register(_taskId, nina, _windowA, _run);
 
 		// Every test here asks from a window that has no run of its own, which is what a second tab,
-		// a reloaded page and a new login all are to this servlet.
+		// a reloaded page and a new login all are to the server.
 		_restored = new TaskProgressTracker();
 		inWindow(_restored);
 	}

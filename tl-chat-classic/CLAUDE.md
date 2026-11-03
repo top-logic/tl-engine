@@ -31,7 +31,7 @@ write one.
      command causes are forwarded to the page over the React event stream (`/react-api/events`).
    - Classic commands keep going through the AJAX servlet, which re-renders this component - and
      with it the React root tag, with the tree's current state - when its tab is shown.
-   - The chat's own API (`/chat/*`) is addressed with the same window id.
+   - The chat's commands are React commands of its chat controls, so they go the same way.
 3. The tree gets the window chrome a React page has: the snackbar (the window's error sink, so an
    error of a React command is shown over the classic page), the context menu and the dialog
    manager.

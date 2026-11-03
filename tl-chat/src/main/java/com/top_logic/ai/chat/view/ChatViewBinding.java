@@ -24,6 +24,7 @@ import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.ChatPreferencesStore;
 import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
+import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.layout.WelcomeName;
@@ -52,8 +53,8 @@ import com.top_logic.util.TLContextManager;
  * constructor. Four elements on one chat would then load {@link ChatPreferencesStore} four times
  * and race on one {@code PersonalConfiguration} key. This class does that work once per
  * (sub-session, conversation), and the tracker with it: a window that shows two conversations has a
- * tracker for each, which the {@link com.top_logic.ai.chat.api.ChatServlet} resolves from the
- * {@code windowId} and the {@code chatId} the client sends - see {@link ChatSessionRegistry}.
+ * tracker for each, registered in {@link ChatSessionRegistry}, which the commands of the chat
+ * controls of that conversation act on.
  * </p>
  *
  * <p>
@@ -80,7 +81,7 @@ public final class ChatViewBinding {
 	private final String _chatId;
 
 	/**
-	 * The conversation this binding's tracker belongs to - what the client echoes as {@code chatId}.
+	 * The conversation this binding's tracker belongs to.
 	 *
 	 * <p>
 	 * The same string as {@link #_chatId} for every element there is: a chat's conversation is its
@@ -267,8 +268,8 @@ public final class ChatViewBinding {
 	}
 
 	/**
-	 * The conversation this binding's tracker serves - what the client echoes as {@code chatId} on
-	 * every {@code /chat/*} call.
+	 * The conversation this binding's tracker serves - the key it is registered under in
+	 * {@link ChatSessionRegistry}.
 	 */
 	public String conversation() {
 		return _conversation;
@@ -294,7 +295,7 @@ public final class ChatViewBinding {
 		return _windowId;
 	}
 
-	/** Webapp context path, for building {@code /chat/*} URLs. */
+	/** Webapp context path. */
 	public String contextPath() {
 		return _contextPath;
 	}
@@ -608,6 +609,25 @@ public final class ChatViewBinding {
 		}
 		if (stream != null) {
 			stream.sendRunState();
+		}
+	}
+
+	/**
+	 * Sends the result of a prompt improvement on the conversation's stream - the one attached when
+	 * the result is there, which need not be the one attached when the improvement started.
+	 *
+	 * <p>
+	 * Called from the chat worker that ran the improvement. A conversation that has no stream by then
+	 * is not displayed any more, and nobody waits for the result.
+	 * </p>
+	 */
+	public void sendPromptImproved(PromptImprovedEvent event) {
+		ChatSSEHandler stream;
+		synchronized (_shown) {
+			stream = _stream;
+		}
+		if (stream != null) {
+			stream.sendPromptImproved(event);
 		}
 	}
 

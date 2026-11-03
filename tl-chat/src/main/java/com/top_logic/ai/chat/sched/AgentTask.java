@@ -434,7 +434,7 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	}
 
 	/**
-	 * Stops the run through its cancellation token, as {@code /chat/cancel} does - never by
+	 * Stops the run through its cancellation token, as the chat's stop button does - never by
 	 * interrupting the agent thread, which may be reading the database: an interrupt during a read
 	 * closes H2's file for the whole application.
 	 */

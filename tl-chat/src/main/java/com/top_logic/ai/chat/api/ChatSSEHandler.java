@@ -33,6 +33,7 @@ import com.top_logic.ai.chat.api.messages.LeadWokenEvent;
 import com.top_logic.ai.chat.api.messages.WokenSubagent;
 import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
 import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
+import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
 import com.top_logic.ai.chat.api.messages.RunStartedEvent;
@@ -130,6 +131,7 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * <li>{@code provider_error} - Unrecoverable provider errors</li>
  * <li>{@code message_complete} - Final assistant message with HTML</li>
  * <li>{@code user_interaction} - Polled from UserInteractionStore</li>
+ * <li>{@link #PROMPT_IMPROVED} - The result of a prompt improvement</li>
  * <li>{@code heartbeat} - Keep-alive ping</li>
  * </ul>
  */
@@ -137,6 +139,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 
 	/** Name of the frame {@link RunStateFrame} builds. */
 	static final String RUN_STATE = "run_state";
+
+	/** Name of the frame that carries the result of a prompt improvement, see {@link #sendPromptImproved}. */
+	public static final String PROMPT_IMPROVED = "prompt_improved";
 
 	private static final long FLUSH_INTERVAL_MS = 50;
 	private static final long HEARTBEAT_INTERVAL_MS = 15000;
@@ -471,6 +476,13 @@ public class ChatSSEHandler implements ChatEventHandler {
 	@Override
 	public void sendInteractionResolved(InteractionResolvedEvent event) {
 		enqueue("interaction_resolved", DtoMapper.toJson(event));
+	}
+
+	/**
+	 * Queues the result of a prompt improvement the window's {@code improvePrompt} command started.
+	 */
+	public void sendPromptImproved(PromptImprovedEvent event) {
+		enqueue(PROMPT_IMPROVED, DtoMapper.toJson(event));
 	}
 
 	@Override

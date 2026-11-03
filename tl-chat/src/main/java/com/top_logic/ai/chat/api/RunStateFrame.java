@@ -209,7 +209,7 @@ public final class RunStateFrame {
 			// subagent_completed/subagent_failed frames. Running jobs show their task.
 			String detail = job.result() != null ? job.result().finalText() : job.taskBrief();
 			// Lets the client offer a "view transcript" affordance only when the recorded child run is
-			// available (GET /chat/subagents/{id}/transcript).
+			// available (the data key subagent/<id>/<run id> of a chat control).
 			boolean hasTranscript = job.childRunId() != null && !job.childRunId().isEmpty();
 			event.addSubagent(withCost(SubagentJobDto.create()
 				.setSubagentId(Objects.toString(job.subagentId(), ""))

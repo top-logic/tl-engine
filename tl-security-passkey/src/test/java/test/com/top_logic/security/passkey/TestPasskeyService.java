@@ -391,8 +391,33 @@ public class TestPasskeyService extends BasicTestCase {
 		assertEquals(6, passkey.getSignatureCount());
 	}
 
-	/** An account with multi-factor authentication disabled and the anonymous account cannot register. */
-	public void testDisabledAccountCannotRegister() throws Exception {
+	/**
+	 * With passkeys that log in by themselves, an account with multi-factor authentication disabled
+	 * registers a passkey like any other; the anonymous account cannot.
+	 */
+	public void testDisabledAccountRegistersForLogin() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.LOGIN);
+		Person account = account("passkeyDisabledLogin");
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Disable MFA"))) {
+			account.setMFARequirement(MfaRequirement.DISABLED);
+			tx.commit();
+		}
+		assertTrue(service().mayUsePasskeys(account));
+		Passkey passkey = register(account, new SoftwareAuthenticator(ORIGIN, 0));
+		assertEquals(List.of(passkey), service().getPasskeys(account));
+
+		Person anonymous = PersonManager.getManager().getAnonymous();
+		assertFalse(service().mayUsePasskeys(anonymous));
+		assertFails(I18NConstants.ERROR_PASSKEYS_NOT_ALLOWED__ACCOUNT.fill(anonymous.getName()),
+			() -> service().startRegistration(anonymous));
+	}
+
+	/**
+	 * With passkeys as second factor, an account with multi-factor authentication disabled and the
+	 * anonymous account cannot register.
+	 */
+	public void testDisabledAccountCannotRegisterSecondFactor() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("passkeyDisabled");
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Disable MFA"))) {
 			account.setMFARequirement(MfaRequirement.DISABLED);

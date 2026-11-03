@@ -389,8 +389,10 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 *         {@link #finishRegistration(PendingRegistration, String, String)}.
 	 * @throws TopLogicException
 	 *         If passkeys are not {@link #isAvailable() set up}
-	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), or the account must not use passkeys: the
-	 *         anonymous account and an account with {@link MfaRequirement#DISABLED}.
+	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), or the account must not
+	 *         {@link #mayUsePasskeys(Person) use passkeys}: the anonymous account, and for the
+	 *         {@link #getUsage() usage} {@link PasskeyUsage#SECOND_FACTOR} an account with
+	 *         {@link MfaRequirement#DISABLED}.
 	 */
 	public PendingRegistration startRegistration(Person account) {
 		RelyingParty relyingParty = relyingParty();
@@ -434,9 +436,10 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 * @throws PasskeyRefusedException
 	 *         If the credential cannot be parsed, the ceremony ran on an origin the relying party
 	 *         does not accept, the registration was answered before or has expired, the label is
-	 *         empty, the account must not use passkeys, the authenticator did not verify the user
-	 *         although required, the credential is registered already, or the credential does not
-	 *         pass the checks of the library.
+	 *         empty, the account must not {@link #mayUsePasskeys(Person) use passkeys} (in the
+	 *         usage of the passkeys), the authenticator did not verify the user although required,
+	 *         the credential is registered already, or the credential does not pass the checks of
+	 *         the library.
 	 */
 	public Passkey finishRegistration(PendingRegistration pending, String credentialJson, String label) {
 		boolean open = pending.answer();
@@ -707,13 +710,17 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 * Whether the given account may register passkeys.
 	 *
 	 * <p>
-	 * Not the anonymous account and not an account with {@link MfaRequirement#DISABLED}.
+	 * Never the anonymous account. For the {@link #getUsage() usage} {@link PasskeyUsage#LOGIN},
+	 * a passkey is a way to log in like the password, so every other account may register one.
+	 * For {@link PasskeyUsage#SECOND_FACTOR}, a passkey is a second factor, which an account with
+	 * {@link MfaRequirement#DISABLED} must not use.
 	 * </p>
 	 */
 	public boolean mayUsePasskeys(Person account) {
-		return account != null
-			&& !PersonManager.getManager().isAnonymous(account)
-			&& account.getMFARequirement() != MfaRequirement.DISABLED;
+		if (account == null || PersonManager.getManager().isAnonymous(account)) {
+			return false;
+		}
+		return getUsage() == PasskeyUsage.LOGIN || account.getMFARequirement() != MfaRequirement.DISABLED;
 	}
 
 	private void checkMayUsePasskeys(Person account) {

@@ -5,14 +5,32 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.RunStateFrame;
+import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
+import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContext;
 
 /**
  * Base class of the controls of the chat elements that join a conversation's browser store - a
@@ -33,8 +51,17 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link ChatViewBinding#hidden(ReactControl)}), which is what the browser expects of it - the
  * first chat element to mount opens it, the last to leave closes it.
  * </p>
+ *
+ * <p>
+ * For the same reason every one of them answers the commands that open and delete a chat of the
+ * account ({@link #CMD_SELECT_SESSION}, {@link #CMD_DELETE_SESSION}) and serves the transcripts the
+ * browser reads ({@link #getDownloadData(String)}): a chat's transcript is read from the
+ * {@code /react-api/data} endpoint of the control, under a key {@link #DATA_SESSION} or
+ * {@link #DATA_SUBAGENT}. Every one of them is checked against the acting account: a chat of
+ * another account and an id that names nothing are answered alike.
+ * </p>
  */
-public abstract class ChatControl extends ReactControl {
+public abstract class ChatControl extends ReactControl implements DataProvider {
 
 	/**
 	 * Command that starts sending the conversation's frames to the window's event stream, as
@@ -70,8 +97,74 @@ public abstract class ChatControl extends ReactControl {
 	/** Field of the answer to {@link #CMD_ATTACH_STREAM}: whether the stream was started. */
 	public static final String FIELD_ATTACHED = "attached";
 
+	/**
+	 * Command that opens one chat of the account in this window's conversation: the conversation's
+	 * agent runs, approval mode, ratings and effort are that chat's from then on.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SESSION_ID}; answered with {@link #FIELD_OPENED} and, for a chat that was
+	 * opened, with the chat's run state in {@link #FIELD_RUN_STATE}. The transcript is read
+	 * afterwards, under {@link #DATA_SESSION}.
+	 * </p>
+	 */
+	public static final String CMD_SELECT_SESSION = "selectSession";
+
+	/**
+	 * Command that deletes one chat of the account, with everything recorded in it.
+	 *
+	 * <p>
+	 * Takes {@link #ARG_SESSION_ID}; answered with {@link #FIELD_DELETED}. The chat lists of the
+	 * account's windows follow the deletion by themselves, see {@link SessionListWatch}.
+	 * </p>
+	 */
+	public static final String CMD_DELETE_SESSION = "deleteSession";
+
+	/** Argument of {@link #CMD_SELECT_SESSION} and {@link #CMD_DELETE_SESSION}: the chat's id. */
+	public static final String ARG_SESSION_ID = "sessionId";
+
+	/** Field of the answer to {@link #CMD_SELECT_SESSION}: whether the chat was opened. */
+	public static final String FIELD_OPENED = "opened";
+
+	/**
+	 * Field of the answer to {@link #CMD_SELECT_SESSION}: the opened chat's run state, as the
+	 * {@code run_state} frame of the stream carries it.
+	 *
+	 * <p>
+	 * In the answer rather than on the stream, because the browser applies it once the transcript
+	 * it belongs to is on screen, which is after the command has been answered.
+	 * </p>
+	 */
+	public static final String FIELD_RUN_STATE = "runState";
+
+	/** Field of the answer to {@link #CMD_DELETE_SESSION}: whether the chat was deleted. */
+	public static final String FIELD_DELETED = "deleted";
+
+	/**
+	 * First part of the data key of a chat's transcript: {@code session/<chat id>}.
+	 *
+	 * @see #getDownloadData(String)
+	 * @see ChatTranscripts#sessionDetail(TaskProgressTracker, Person, String)
+	 */
+	public static final String DATA_SESSION = "session";
+
+	/**
+	 * First part of the data key of a subagent's transcript: {@code subagent/<subagent id>}, or
+	 * {@code subagent/<subagent id>/<run id>} for a subagent whose card names its recorded run.
+	 *
+	 * @see #getDownloadData(String)
+	 * @see ChatTranscripts#subagentTranscript(TaskProgressTracker, Person, String, String)
+	 */
+	public static final String DATA_SUBAGENT = "subagent";
+
+	/**
+	 * Separator of the parts of a data key; each part after the first is URL-encoded.
+	 */
+	public static final String DATA_KEY_SEPARATOR = "/";
+
 	/** State key of the conversation the browser keys its store by. */
 	public static final String STATE_CHAT_ID = "chatId";
+
+	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 
 	private final ChatViewBinding _binding;
 
@@ -148,6 +241,114 @@ public abstract class ChatControl extends ReactControl {
 	@ReactCommandHandler(value = CMD_REFRESH_RUN_STATE, technical = true)
 	public void refreshRunState() {
 		_binding.sendRunState();
+	}
+
+	/**
+	 * Opens a chat of the account in this window's conversation, see {@link #CMD_SELECT_SESSION}.
+	 */
+	@ReactCommandHandler(value = CMD_SELECT_SESSION, params = {
+		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The id of the chat to open.")
+	})
+	public HandlerResult selectSession(Map<String, Object> args) {
+		Person person = currentPerson();
+		String id = stringArg(args, ARG_SESSION_ID);
+		ReactCommandReply reply = ReactCommandReply.create();
+		if (ChatSessionIds.ownedSession(id, person) == null) {
+			return reply.put(FIELD_OPENED, Boolean.FALSE).toResult();
+		}
+		TaskProgressTracker tracker = _binding.tracker();
+		boolean opened = tracker.getSessionManager().switchSession(id, person);
+		reply.put(FIELD_OPENED, Boolean.valueOf(opened));
+		if (opened) {
+			reply.put(FIELD_RUN_STATE, RunStateFrame.of(tracker, person));
+		}
+		return reply.toResult();
+	}
+
+	/**
+	 * Deletes a chat of the account, see {@link #CMD_DELETE_SESSION}.
+	 */
+	@ReactCommandHandler(value = CMD_DELETE_SESSION, params = {
+		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The id of the chat to delete.")
+	})
+	public HandlerResult deleteSession(Map<String, Object> args) {
+		TLObject session = ChatSessionIds.ownedSession(stringArg(args, ARG_SESSION_ID), currentPerson());
+		if (session != null) {
+			ChatHistoryService.deleteSession(session);
+		}
+		return ReactCommandReply.create().put(FIELD_DELETED, Boolean.valueOf(session != null)).toResult();
+	}
+
+	/**
+	 * The transcript a data key names, as JSON ({@link ChatSessionDetailResponse}), or
+	 * <code>null</code> - answered as not found - for a key that names nothing of the acting
+	 * account.
+	 *
+	 * <p>
+	 * A key is {@link #DATA_SESSION} or {@link #DATA_SUBAGENT}, followed by the ids it names, each
+	 * after a {@link #DATA_KEY_SEPARATOR}.
+	 * </p>
+	 */
+	@Override
+	public BinaryData getDownloadData(String key) {
+		if (key == null) {
+			return null;
+		}
+		String[] parts = key.split(DATA_KEY_SEPARATOR, -1);
+		advanceSessionRevision();
+		Person person = currentPerson();
+		TaskProgressTracker tracker = _binding.tracker();
+		ChatSessionDetailResponse data;
+		try {
+			if (DATA_SESSION.equals(parts[0]) && parts.length == 2) {
+				data = ChatTranscripts.sessionDetail(tracker, person, decode(parts[1]));
+			} else if (DATA_SUBAGENT.equals(parts[0]) && (parts.length == 2 || parts.length == 3)) {
+				data = ChatTranscripts.subagentTranscript(tracker, person, decode(parts[1]),
+					parts.length == 3 ? decode(parts[2]) : null);
+			} else {
+				data = null;
+			}
+		} catch (IOException ex) {
+			Logger.error("Failed to read the transcript '" + key + "'.", ex, ChatControl.class);
+			return null;
+		}
+		if (data == null) {
+			return null;
+		}
+		return BinaryDataFactory.createBinaryData(DtoMapper.toJson(data).getBytes(StandardCharsets.UTF_8),
+			CONTENT_TYPE_JSON);
+	}
+
+	/**
+	 * Advances the window's view of the knowledge base to the latest commit before a transcript is
+	 * read: a run records its transcript on the writer thread of the {@code AgentExecutionStore}, and
+	 * the window's stable view would otherwise not include what it recorded since the window's last
+	 * command.
+	 *
+	 * <p>
+	 * The data request is a sanctioned point for that: it runs no command, opens no transaction and
+	 * renders nothing.
+	 * </p>
+	 */
+	private static void advanceSessionRevision() {
+		if (ThreadContextManager.getInteraction() == null) {
+			return;
+		}
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (RuntimeException ex) {
+			Logger.info("Could not advance session revision: " + ex.getMessage(), ChatControl.class);
+		}
+	}
+
+	private static String decode(String part) {
+		return URLDecoder.decode(part, StandardCharsets.UTF_8);
+	}
+
+	/** The acting account. */
+	protected static Person currentPerson() {
+		TLContext context = TLContext.getContext();
+		return context == null ? null : context.getPerson();
 	}
 
 	private static String stringArg(Map<String, Object> args, String key) {

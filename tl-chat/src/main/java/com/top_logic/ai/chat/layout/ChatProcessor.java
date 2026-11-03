@@ -431,7 +431,7 @@ public class ChatProcessor {
 			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, chatState, cancellationToken);
 
 			// Run the agent chosen in the chat UI, or - when the request names none - the one this
-			// account may run. Resolved exactly as /chat/capabilities reports it and as the pre-check
+			// account may run. Resolved exactly as the chat's capabilities report it and as the pre-check
 			// of /chat/send asks about it: a client that is told one entry point and runs another is
 			// refused for an agent nobody chose. Falls back to the configured entry point when this
 			// account may run nothing, so that the refusal below is the ordinary one.

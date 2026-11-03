@@ -83,4 +83,10 @@ declare module 'tl-react-bridge' {
     command: string,
     args?: Record<string, unknown>,
   ) => Promise<CommandResponse | undefined>
+
+  /**
+   * The URL of the data the control the calling component renders serves (`DataProvider` on the
+   * server), to which the caller appends `&key=…`.
+   */
+  export function useTLDataUrl(): string
 }

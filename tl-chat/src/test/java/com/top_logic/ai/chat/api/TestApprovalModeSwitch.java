@@ -30,7 +30,6 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.servletunit.ServletRunner;
@@ -87,10 +86,6 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 
 		void post(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 			doPost(req, resp);
-		}
-
-		void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-			doGet(req, resp);
 		}
 	}
 
@@ -175,11 +170,12 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		ChatSessionRegistry.register(TLContextManager.getSubSession(), null, newWindow);
 		assertEquals(ApprovalMode.MANUAL, newWindow.getApprovalMode());
 
-		Answer opened = call(new GetMethodWebRequest("http://localhost/chat/sessions/" + id()), anna, true);
+		// What the open does - the selectSession command of a chat control - and what is read then.
+		assertTrue(newWindow.getSessionManager().switchSession(id(), anna));
+		String opened = DtoMapper.toJson(ChatTranscripts.sessionDetail(newWindow, anna, id()));
 
-		assertEquals(HttpServletResponse.SC_OK, opened.status());
-		assertTrue("The chat is opened with the mode it stores: " + opened.body(),
-			opened.body().contains("\"approvalMode\":\"AUTO_APPROVE\""));
+		assertTrue("The chat is opened with the mode it stores: " + opened,
+			opened.contains("\"approvalMode\":\"AUTO_APPROVE\""));
 	}
 
 	/**
@@ -246,7 +242,7 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	public void testAChatIsCreatedWithTheModeItNames() throws Exception {
 		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/sessions",
 			new ByteArrayInputStream("{\"title\":\"Neu\",\"approvalMode\":\"AUTO_APPROVE\"}"
-				.getBytes(StandardCharsets.UTF_8)), "application/json"), anna, false);
+				.getBytes(StandardCharsets.UTF_8)), "application/json"), anna);
 		assertEquals(HttpServletResponse.SC_OK, answer.status());
 		Matcher id = Pattern.compile("\"id\":\"([^\"]+)\"").matcher(answer.body());
 		assertTrue("The answer names the created chat: " + answer.body(), id.find());
@@ -262,7 +258,7 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	 * the person's choice, which a new chat starts with.
 	 */
 	public void testASwitchWithoutAChatStoresThePersonsChoice() throws Exception {
-		Answer answer = call(post("{\"mode\":\"AUTO_APPROVE\"}"), anna, false);
+		Answer answer = call(post("{\"mode\":\"AUTO_APPROVE\"}"), anna);
 
 		assertEquals(HttpServletResponse.SC_OK, answer.status());
 		assertEquals(ApprovalMode.AUTO_APPROVE, ApprovalChoice.load());
@@ -281,7 +277,7 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/send",
 			new ByteArrayInputStream(("{\"text\":\"Hallo\",\"sessionId\":\"" + id()
 				+ "\",\"approvalMode\":\"MANUAL\"}").getBytes(StandardCharsets.UTF_8)), "application/json"),
-			anna, false);
+			anna);
 
 		assertEquals(answer.body(), HttpServletResponse.SC_OK, answer.status());
 		assertEquals(ApprovalMode.MANUAL, _window.getApprovalMode());
@@ -306,7 +302,7 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 
 	private Answer switchTo(ApprovalMode mode, Person caller) throws Exception {
 		Answer answer =
-			call(post("{\"mode\":\"" + mode.name() + "\",\"sessionId\":\"" + id() + "\"}"), caller, false);
+			call(post("{\"mode\":\"" + mode.name() + "\",\"sessionId\":\"" + id() + "\"}"), caller);
 		HistoryUtils.updateSessionRevision();
 		return answer;
 	}
@@ -316,17 +312,13 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), "application/json");
 	}
 
-	private Answer call(WebRequest webRequest, Person caller, boolean get) throws Exception {
+	private Answer call(WebRequest webRequest, Person caller) throws Exception {
 		Answer answer = new Answer();
 		HttpServletRequest request = runner.newClient().newInvocation(webRequest).getRequest();
 		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, answer.asResponse(), caller);
 		});
-		if (get) {
-			_servlet.get(request, answer.asResponse());
-		} else {
-			_servlet.post(request, answer.asResponse());
-		}
+		_servlet.post(request, answer.asResponse());
 		return answer;
 	}
 

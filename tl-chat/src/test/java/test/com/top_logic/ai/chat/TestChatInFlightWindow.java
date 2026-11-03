@@ -10,27 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.ai.chat.TestChatServletOwnership.Recording;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.servletunit.InvocationContext;
-import com.meterware.servletunit.ServletRunner;
-
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
-import com.top_logic.ai.chat.api.ChatServlet;
 import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.RunStateFrame;
+import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -43,7 +36,6 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -94,9 +86,6 @@ public class TestChatInFlightWindow extends BasicTestCase {
 
 	private static TLObject ninasChat;
 
-	private static ServletRunner runner;
-
-	private TestChatServletOwnership.Probe _servlet;
 
 	/** The window the run was started in - the one that is gone by the time the tests look. */
 	private TaskProgressTracker _windowA;
@@ -130,10 +119,7 @@ public class TestChatInFlightWindow extends BasicTestCase {
 			// until something else moved its revision on, and whichever test ran first could not
 			// open it.
 			HistoryUtils.updateSessionRevision();
-			runner = new ServletRunner();
-			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
-		_servlet = new TestChatServletOwnership.Probe();
 
 		_log = new ConversationLog();
 		_listener = new ConversationLogListener(_log);
@@ -243,17 +229,10 @@ public class TestChatInFlightWindow extends BasicTestCase {
 
 	/** Another account's window reaches none of this. */
 	public void testAnotherAccountSeesNothingOfTheRun() throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = runner.newClient().newInvocation(
-			new GetMethodWebRequest("http://localhost/chat/sessions/" + chatId()));
-		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, response.asResponse(), otto);
-		});
-		_servlet.get(request, response.asResponse());
-
-		assertEquals("A chat that is not yours is not yours to read.",
-			HttpServletResponse.SC_NOT_FOUND, response._status);
+		assertFalse("A chat that is not yours is not yours to open.",
+			_restored.getSessionManager().switchSession(chatId(), otto));
+		assertNull("A chat that is not yours is not yours to read.",
+			ChatTranscripts.sessionDetail(_restored, otto, chatId()));
 	}
 
 	/**
@@ -508,9 +487,15 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		_windowA.removeProcessingState(_taskId);
 	}
 
-	/** What {@code GET /chat/sessions/{id}} answers Nina, as JSON. */
+	/**
+	 * What the restored window reads when Nina opens the chat there, as JSON: the open (the
+	 * {@code selectSession} command of a chat control), then the transcript.
+	 */
 	private String restore() throws Exception {
-		return asNina(new GetMethodWebRequest("http://localhost/chat/sessions/" + chatId()));
+		assertTrue(_restored.getSessionManager().switchSession(chatId(), nina));
+		ChatSessionDetailResponse detail = ChatTranscripts.sessionDetail(_restored, nina, chatId());
+		assertNotNull("Nina's chat must be found.", detail);
+		return DtoMapper.toJson(detail);
 	}
 
 	/**
@@ -519,18 +504,6 @@ public class TestChatInFlightWindow extends BasicTestCase {
 	 */
 	private String runState() {
 		return DtoMapper.toJson(RunStateFrame.of(_restored, nina));
-	}
-
-	private String asNina(GetMethodWebRequest get) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = runner.newClient().newInvocation(get);
-		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, response.asResponse(), nina);
-		});
-		_servlet.get(request, response.asResponse());
-		assertEquals(HttpServletResponse.SC_OK, response._status);
-		return response._body.toString();
 	}
 
 	/** Registers a chat UI of the given account for the given window. */

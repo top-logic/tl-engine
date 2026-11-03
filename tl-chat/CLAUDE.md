@@ -13,17 +13,19 @@ Both served by `ChatServlet` at `/chat/*`:
 1. **REST API** (JSON):
    - `POST /chat/send` – Send user message, starts background AI processing. Returns `{ taskId, status }`. Its `facts` are what the page states about the situation (`<chat-conversation><context>`), computed on the server and echoed back by the browser; the harness renders the stable ones into the run's system prompt and the message text stays untouched. `POST /chat/regenerate` carries them too.
    - `POST /chat/sessions` – Create new chat session.
-   - `GET /chat/sessions` – List all sessions for current user.
-   - `GET /chat/sessions/{id}` – Load session and activate server-side.
-   - `PUT /chat/sessions/{id}/title` – Update session title.
-   - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
    - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. Its `chatId` is the key the layout is *stored* under, not the conversation the request comes from; the conversation travels beside it as `conversation=…`, like on every other call. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeRenderState`, re-read on every render), so a second round trip would only repeat it.
 
 2. **Push** (real-time frames, on the window's event stream): `ChatSSEHandler` receives `AgentEvent`s and emits structured frames: `connected`, `run_state`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
    - **Attach** is the technical React command `attachStream` (`ChatControl.CMD_ATTACH_STREAM`, argument `stream` = the token, answered with `attached`), which every chat control answers - `ChatConversationControl`, `ChatRailControl`, `ChatDockControl`, `ChatSectionControl` all extend `ChatControl`. The store sends it through the command function of whichever of its elements joined last (`useChat` hands the element's `useTLCommand()` to `ChatStore.subscribe`), so it travels the window's FIFO command channel like every other command, and its answer is what tells the window's stream that the first frames are due (`expectEvents`). The frames travel on the event stream the browser window already holds for the React layer (`/react-api/events`), as one `PatchEvent` per 50 ms flush to the listener id `tl-chat-stream:<token>`, which the browser subscribes with the bridge's `subscribe` before it asks (`chat-stream.ts`). The token is new for every attach, so the frames of a replaced handler reach nobody. The handler registers that id with the window's queue (`SSEUpdateQueue.registerListener`): the first frames are written inside the command's interaction, and an interaction drops a patch to an id that names no displayed control.
    - **Detach** is `detachStream` with the same token, sent when the last chat element of the conversation leaves a page that stays open, or when the store attaches again after a silence.
    - **Lifetime.** The stream belongs to the conversation of the window, not to the control it was attached through: `ChatViewBinding` keeps it and the set of the conversation's chat controls displayed in the window, and stops it when the last of them is detached or disposed - the server half of the store's "first element opens, last one closes". That is also what ends the stream of a page that is left (reloaded, closed): `command-channel.ts` sends no command once the page is leaving, while the window's unload detaches its controls and `windowClosed` disposes them. The handler further stops itself once its window is no longer displayed (`isWindowShown`). It lives, therefore, while its window shows the chat, and that is what "a window shows this chat" means for waking a lead and marking a result seen.
-   - **Run state in one frame.** The stream replays nothing, so `ChatSSEHandler.start()` writes a `run_state` frame (`RunStateEvent`, built by `RunStateFrame.of(tracker, account)`) right after `connected`: the chat it is about, whether it is processing (in this window or another window of the account), its task list, the approvals and questions of that chat waiting for the account (with the shape and asker only the waiting run knows), and the subagents with their costs and budget. `refreshRunState` (`ChatControl.CMD_REFRESH_RUN_STATE`) sends it again (`ChatViewBinding.sendRunState()`); the store sends it after it opened a chat and when the subagent panel opens - the live `subagent_*` frames keep the statuses current, not the costs and the budget. Building the frame also runs `ChatProcessor.applyPollUpdates`, which forgets a run that ended with an error. The store applies a frame only to the chat it shows, once it is open (`applyRunState`).
+   - **The chats of the account** are not `/chat/*` calls but state, commands and data of the chat controls (`ChatControl`), so they travel the window's command channel and event stream like everything else:
+     - **The list** (id, title, `lastUpdated` of every chat of the account - no paging, the list is small) is the `sessions` state entry of `<chat-conversation>` (`SessionListWatch.SESSIONS`, a list of `ChatSessionDto`), written on every render and again whenever the account's chats change - see "the browser store keeps the chat list" below. The agents, models and MCP servers the account may choose from are its `capabilities` entry (`ChatConversationControl.STATE_CAPABILITIES`, `ChatCapabilities.build`), computed on every render, in the session's language. A visitor gets neither. The store takes both whenever the element's state brings new ones (`ChatStore.takeLists`); the first capabilities choose the agent.
+     - **Opening a chat** is the command `selectSession` (`ChatControl.CMD_SELECT_SESSION`, argument `sessionId`): it checks that the account owns the chat, switches the conversation's tracker to it (`ChatSessionManager.switchSession`) and answers `opened` plus the chat's `runState` (`RunStateFrame.of`). The run state comes in the answer, not on the stream, because the store applies it once the transcript is on screen - a frame arriving while it opens a chat is dropped. The transcript is read afterwards, as data of the same control: `ChatControl` is a `DataProvider`, and `/react-api/data?controlId=…&windowName=…&key=session/<id>` answers the `ChatSessionDetailResponse` (`ChatTranscripts.sessionDetail`: the run in flight, else the window's live log, else the recorded runs; ratings, effort and approval mode only for the chat the conversation has open). The store builds the URL from the element's `useTLDataUrl()`, handed to `ChatStore.subscribe` beside its command function. After a first send creates a chat, the store sends only the `selectSession`.
+     - **A subagent's transcript** is `key=subagent/<id>[/<runId>]` (`ChatTranscripts.subagentTranscript`): the live log while the subagent works, its recorded run afterwards, found by the run id its card names when the window holds no job for it any more. Every id in a key is URL-encoded (`ChatControl.DATA_KEY_SEPARATOR`).
+     - **Deleting a chat** is the command `deleteSession` (`ChatControl.CMD_DELETE_SESSION`, answered `deleted`); `ChatHistoryService.deleteSession` cascades over recorded executions, tasks and interactions, and `ChatWindowService.onSessionDeleted` drops the chat out of the owner's windows.
+     - Every one of them answers a chat of another account exactly like an id that names nothing (`opened`/`deleted` false, data not found), so the answer says nothing about which ids exist (`TestChatSessionCommands`).
+   - **Run state in one frame.** The stream replays nothing, so `ChatSSEHandler.start()` writes a `run_state` frame (`RunStateEvent`, built by `RunStateFrame.of(tracker, account)`) right after `connected`: the chat it is about, whether it is processing (in this window or another window of the account), its task list, the approvals and questions of that chat waiting for the account (with the shape and asker only the waiting run knows), and the subagents with their costs and budget. `refreshRunState` (`ChatControl.CMD_REFRESH_RUN_STATE`) sends it again (`ChatViewBinding.sendRunState()`); the store sends it when the subagent panel opens, and the answer to `selectSession` carries it for the chat just opened - the live `subagent_*` frames keep the statuses current, not the costs and the budget. Building the frame also runs `ChatProcessor.applyPollUpdates`, which forgets a run that ended with an error. The store applies a frame only to the chat it shows, once it is open (`applyRunState`).
 
    The chat therefore works only in a window of the React layer - a React page or a classic tab through `tl-chat-classic`; there is no stand-alone event stream.
 
@@ -169,7 +171,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
-- **`ConversationBackend`** (`…chat.backend`) – What answers a conversation instead of the framework's agent (an external process); chosen per run by the `ConversationBackendResolver`s of `ConversationBackendService` (none configured here). `ChatProcessor.executeOrchestrator` is the run frame both share, `runInternal` the framework agent's part, `BackendRun` the backend's (recording through `RunRecording`, events only on the worker thread). Its `BackendFeatures` reach the browser as `features` of `GET /chat/sessions/{id}` and `POST /chat/send`, where `ui/src/features.ts` gates the controls; `ChatServlet` refuses an unsupported regenerate, edit or attachment and skips the agent policy for such a chat. See the developer article `ai/chat-ui`
+- **`ConversationBackend`** (`…chat.backend`) – What answers a conversation instead of the framework's agent (an external process); chosen per run by the `ConversationBackendResolver`s of `ConversationBackendService` (none configured here). `ChatProcessor.executeOrchestrator` is the run frame both share, `runInternal` the framework agent's part, `BackendRun` the backend's (recording through `RunRecording`, events only on the worker thread). Its `BackendFeatures` reach the browser as `features` of a chat's transcript (`ChatTranscripts.sessionDetail`) and of `POST /chat/send`, where `ui/src/features.ts` gates the controls; `ChatServlet` refuses an unsupported regenerate, edit or attachment and skips the agent policy for such a chat. See the developer article `ai/chat-ui`
 - **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See the developer article `ai/limits-and-caching` (run limits)
 - **`TaskProgressTracker`** – One window's chat: its processing states, and accessors that read and write the `ChatState` of the chat the window shows
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
@@ -209,7 +211,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 
 - **Module**: `tl.ai.execution` (tl-ai-core), **Types**: `AgentSession` (kind CHAT) + `AgentExecution` per run
 - Session: `title`, `kind`, `owner`, `metadata` (approved tools, approval mode, tasks, skills), timestamps
-- The approval mode in `metadata` is the chat's "auto-approve" switch, and only the switch writes it: `POST /chat/approval-mode` names the chat and stores the mode at once, and every other save of the bag keeps the stored mode, so no window writes back the mode it opened the chat with (#658). `GET /chat/sessions/{id}` answers it as `approvalMode`, which the switch shows. A chat that stores no mode runs `MANUAL` (#808). The switch also belongs to the person (#948): every `POST /chat/approval-mode`, also one without a chat, stores the position as the person's last choice (`ApprovalChoice`, `PersonalConfiguration` key `tl-chat.approvalMode`); the chat controls boot with it (`approvalMode` in the state), and a new chat starts with it. The browser names the mode with `POST /chat/sessions` (`approvalMode`), so the chat it creates stores it, as a scheduled task's mode is, and with every `POST /chat/send`, so the turn runs with the position the switch shows.
+- The approval mode in `metadata` is the chat's "auto-approve" switch, and only the switch writes it: `POST /chat/approval-mode` names the chat and stores the mode at once, and every other save of the bag keeps the stored mode, so no window writes back the mode it opened the chat with (#658). A chat's transcript (`ChatTranscripts.sessionDetail`) answers it as `approvalMode`, which the switch shows. A chat that stores no mode runs `MANUAL` (#808). The switch also belongs to the person (#948): every `POST /chat/approval-mode`, also one without a chat, stores the position as the person's last choice (`ApprovalChoice`, `PersonalConfiguration` key `tl-chat.approvalMode`); the chat controls boot with it (`approvalMode` in the state), and a new chat starts with it. The browser names the mode with `POST /chat/sessions` (`approvalMode`), so the chat it creates stores it, as a scheduled task's mode is, and with every `POST /chat/send`, so the turn runs with the position the switch shows.
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
@@ -238,9 +240,9 @@ reactor.
 
 ## Front end
 
-The chat UI is a React application in `ui/`. It talks to the servlet above and to nothing else - no
-TopLogic command handlers, no AJAX framework - so the same bundle would run against any host that
-serves `/chat/*`.
+The chat UI is a React application in `ui/`. It talks to the servlet above and to the chat controls
+of its window through the React bridge - their state, their commands and their data (see "Push" and
+"the chats of the account" above) - and to nothing else: no TopLogic AJAX framework.
 
 This React chat is the only chat front end. A LayoutServlet application shows it in a classic tab
 through the separate module `tl-chat-classic` (#618), which writes these same view elements into a
@@ -448,14 +450,16 @@ grouping) and tells the other windows; `aiSessionDelete` also asks a live run to
 chat out of every window that holds it. Both refuse a session the acting account neither owns nor
 administers.
 
-The browser store keeps its own copy of the chat list, and the conversation's header and the
-`App` rail read titles from it. The model events of such a write therefore reach the store through
-`SessionListWatch` on `<chat-conversation>`: it counts a created chat of the account, a chat whose
-title is not the one it saw last, and any deletion into the `sessionsRevision` state entry, and the
-element re-reads `GET /chat/sessions` whenever that count moves (`useSessionsRevision`). Not every
-update counts - a run writes its chat's bookkeeping several times per send, and counting those made
-one send cost four list reads instead of one. Opening a chat also takes the title its transcript load answers with,
-so a window that missed the count shows the current title as soon as the chat is opened (#596).
+The browser store keeps the chat list, and the conversation's header and the `App` rail read titles
+from it. The list is the `sessions` state entry of `<chat-conversation>`, which `SessionListWatch`
+writes on every render and again when the model events of such a write reach it: it reads the list
+again for a created chat of the account, a chat whose title is not the one it saw last, and any
+deletion, and sends it when it differs from what the browser was told. Not every update counts - a
+run writes its chat's bookkeeping several times per send, and counting those made one send cost four
+list reads instead of one. A delete through the conversation's own `deleteSession` and the chat a
+first send creates are in the store's list at once; the server's list follows with the command's
+model events. Opening a chat also takes the title its transcript answers with, so a window that
+missed a change shows the current title as soon as the chat is opened (#596).
 
 This module registers the bundle on `ClientResources` itself (`tl-chat.conf.config.xml`, #642), so
 an application that depends on `tl-chat` needs no entry of its own:
@@ -570,9 +574,10 @@ restart. An installation that wants to change two texts and keep receiving the r
 writes that overlay file by hand instead, naming only the two properties it replaces - which is what
 the configuration overlay merge is for, and what `TestShippedAgentOverride` pins.
 
-`GET /chat/capabilities` is filtered by the acting account (#392): the agents and the MCP servers it
-lists are exactly what a run of that account accepts. The **models** are the one thing a single
-payload cannot make exact - it is fetched once and the agent changes without another round trip - so
+The `capabilities` state of `<chat-conversation>` is filtered by the acting account (#392): the agents
+and the MCP servers it lists are exactly what a run of that account accepts. The **models** are the
+one thing a single payload cannot make exact - it is written per render and the agent changes without
+another round trip - so
 it lists what the account may choose with *some* agent it may run and marks each with
 `grantedToRole`; `modelsFor()` in `models.ts` narrows that to `granted ∪ {selected agent's model}`
 before the picker sees it. A request that names something the account may not use is answered **403**
@@ -600,7 +605,7 @@ it rewrites a draft and never answers as a persona.
 | `context-usage.tsx` | The context ring and its popover, plus how each number is derived |
 | `prompts.tsx` | Approval and question cards above the composer, with their countdowns |
 | `markdown.tsx` / `highlight.ts` | Markdown rendering, sanitizing, code blocks |
-| `api.ts` | Every call to `/chat/*`, plus the persisted-transcript to message mapping |
+| `api.ts` | Every call to `/chat/*`, the commands and data keys of the chat controls for opening, deleting and reading a chat (`openSession`, `deleteSession`, `loadSession`, `loadSubagentTranscript`), reading the capabilities and the chat list out of the control state, plus the persisted-transcript to message mapping |
 | `stale-window.ts` | `chatFetch`, which every `/chat/*` call goes through: a `409 stale_window` (the server does not know this page's window, e.g. after a login in another tab) reloads the page once, under the engine's own reload guard, and the text of a refused send waits in `sessionStorage` for the reloaded composer (#574) |
 | `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, the `runStore` snapshot a host may subscribe to, shared types |
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
@@ -969,8 +974,8 @@ write** from outside. It follows a write, not the value standing on the channel 
 changes these itself (restoring a session brings back its effort, picking an agent brings its model
 and its servers) and the channel learns of that one round trip later, so acting on the standing
 value would undo every such change. A host that pre-selects an agent for its page therefore writes
-the channel once and the composer keeps it, including across the `GET /chat/capabilities` answer
-that arrives afterwards.
+the channel once and the composer keeps it, including across the capabilities that arrive with the
+conversation's state afterwards.
 
 A channel is a second way past the composer's own filtering, so a write is refused exactly where a
 send naming the same value is: `ChatTurnChannels` asks `AgentFactory.runRefusal`, which is the

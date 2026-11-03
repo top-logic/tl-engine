@@ -22,12 +22,14 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 
 import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
@@ -204,7 +206,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	public void testSessionDetailCarriesTheBackendsFeatures() throws Exception {
 		claim(BackendFeatures.NONE);
 
-		String body = get("/sessions/" + id());
+		String body = detail();
 
 		assertTrue(body, body.contains("\"features\":{"));
 		assertTrue(body, body.contains("\"regenerate\":false"));
@@ -216,7 +218,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 	/** Loading a conversation of the framework's own agent tells the client: everything. */
 	public void testSessionDetailOfAnInternalConversationSupportsEverything() throws Exception {
-		String body = get("/sessions/" + id());
+		String body = detail();
 
 		assertTrue(body, body.contains("\"features\":{"));
 		assertTrue(body, body.contains("\"regenerate\":true"));
@@ -283,15 +285,11 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		return response;
 	}
 
-	private String get(String path) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation =
-			runner.newClient().newInvocation(new GetMethodWebRequest("http://localhost/chat" + path));
-		HttpServletRequest request = invocation.getRequest();
-		login(request, response);
-		_servlet.get(request, response.asResponse());
-		assertEquals(response._body.toString(), HttpServletResponse.SC_OK, response._status);
-		return response._body.toString();
+	/** The chat as Anna's window reads it when it opens it. */
+	private String detail() throws Exception {
+		ChatSessionDetailResponse detail = ChatTranscripts.sessionDetail(_window, anna, id());
+		assertNotNull("Anna's chat must be found.", detail);
+		return DtoMapper.toJson(detail);
 	}
 
 	private static void login(HttpServletRequest request, Recording response) throws Exception {

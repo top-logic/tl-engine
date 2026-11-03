@@ -90,10 +90,6 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 		void delete(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 			doDelete(req, resp);
 		}
-
-		void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-			doGet(req, resp);
-		}
 	}
 
 	@Override

@@ -426,16 +426,6 @@ message ChatSessionDto {
 }
 
 /**
- * Response body for GET /chat/sessions.
- */
-message ChatSessionListResponse {
-	/**
-	 * All sessions for the current user, sorted by lastUpdated descending.
-	 */
-	repeated ChatSessionDto sessions;
-}
-
-/**
  * A pending human-in-the-loop request (approval/question/choice) awaiting the current user, with
  * the chat session it belongs to, as a {@link RunStateEvent} lists it.
  */
@@ -541,17 +531,8 @@ message CreateSessionRequest {
 }
 
 /**
- * Request body for PUT /chat/sessions/{id}/title.
- */
-message UpdateTitleRequest {
-	/**
-	 * New title for the session.
-	 */
-	string title;
-}
-
-/**
- * Response body for GET /chat/sessions/{id} (full session load).
+ * One chat as a window shows it when it opens the chat, as a chat control serves it to the
+ * browser; the transcript of a background subagent comes in the same shape.
  */
 message ChatSessionDetailResponse {
 	/**
@@ -563,11 +544,6 @@ message ChatSessionDetailResponse {
 	 * Session title.
 	 */
 	string title;
-
-	/**
-	 * Messages JSON blob (raw string, parsed by client).
-	 */
-	string messagesJson;
 
 	/**
 	 * Turn-based entries (V2 format) as a JSON array of <code>PersistedTurn</code> objects
@@ -1091,7 +1067,7 @@ message SubagentJobDto {
 
 	/**
 	 * Whether its recorded run is available, so that the client offers a "view transcript"
-	 * affordance only where GET /chat/subagents/{id}/transcript has something to answer.
+	 * affordance only where the subagent's transcript has something to answer.
 	 */
 	bool hasTranscript;
 

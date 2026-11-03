@@ -108,7 +108,7 @@ public class TestChatConversationRouting extends BasicTestCase {
 		// sub-sessions, so a window id taken before it names nothing the servlet can resolve.
 		_client = runner.newClient();
 		Recording login = new Recording();
-		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://localhost/chat/capabilities"));
+		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://localhost/chat/send"));
 		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(invocation.getRequest(), login.asResponse(), user);
 		});
@@ -237,7 +237,7 @@ public class TestChatConversationRouting extends BasicTestCase {
 	public void testAnUnknownConversationIsRefusedAsAStaleWindow() throws Exception {
 		register(PAGE);
 
-		assertEquals(HttpServletResponse.SC_CONFLICT, get("/capabilities", "never-rendered")._status);
+		assertEquals(HttpServletResponse.SC_CONFLICT, post("/approval-mode", "never-rendered", "{}")._status);
 	}
 
 	private TaskProgressTracker register(String conversation) {
@@ -245,13 +245,6 @@ public class TestChatConversationRouting extends BasicTestCase {
 		tracker.setWindowId(_windowId);
 		ChatSessionRegistry.register(_subSession, conversation, tracker);
 		return tracker;
-	}
-
-	private Recording get(String path, String conversation) throws Exception {
-		Recording response = new Recording();
-		_servlet.dispatch(_client.newInvocation(new GetMethodWebRequest(url(path, conversation))).getRequest(),
-			response.asResponse());
-		return response;
 	}
 
 	private Recording post(String path, String conversation, String body) throws Exception {

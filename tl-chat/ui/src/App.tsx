@@ -1,6 +1,6 @@
 import { React, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import { chatIdOf, readBootstrap, useChat, useSessionsRevision } from './chat-store'
+import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
 import { agentLabel, modelLabel } from './models'
 import { SessionRail } from './chrome'
@@ -67,8 +67,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () => gateComposerControls(readComposerControls({}), chat.features),
     [chat.features],
   )
-  // A chat renamed elsewhere - a script, another tab (#596).
-  useSessionsRevision(state, actions)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this chat's requests go. Memoised, because the composer is `React.memo`d and a fresh
   // object on every render would defeat that.

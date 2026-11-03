@@ -1,3 +1,4 @@
+import type { ChatCommand } from './chat-stream'
 import type { ConversationFeatures } from './features'
 import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
@@ -116,28 +117,105 @@ async function refused(res: Response): Promise<RefusedError> {
   }
 }
 
-export async function fetchCapabilities(at: ChatAddress): Promise<Capabilities> {
-  const data = await readJson<{
+/**
+ * The agents, models and MCP servers the account may choose from, as the `<chat-conversation>`
+ * control states them (`ChatConversationControl#STATE_CAPABILITIES`); `undefined` when the state
+ * carries none, which every other chat element's does.
+ */
+export function readCapabilities(data: unknown): Capabilities | undefined {
+  if (data == null || typeof data !== 'object') return undefined
+  const raw = data as {
     entryPointAgent?: string
     agents?: Capabilities['agents']
     models?: Capabilities['models']
     mcpServers?: Capabilities['mcpServers']
     promptImproverAvailable?: boolean
-  }>(await chatFetch(withWindow('/chat/capabilities', at), { credentials: 'include' }))
+  }
   return {
-    entryPointAgent: data.entryPointAgent,
-    agents: data.agents ?? [],
-    models: data.models ?? [],
-    mcpServers: data.mcpServers ?? [],
-    promptImproverAvailable: data.promptImproverAvailable !== false,
+    entryPointAgent: raw.entryPointAgent,
+    agents: raw.agents ?? [],
+    models: raw.models ?? [],
+    mcpServers: raw.mcpServers ?? [],
+    promptImproverAvailable: raw.promptImproverAvailable !== false,
   }
 }
 
-export async function listSessions(at: ChatAddress): Promise<SessionSummary[]> {
-  const data = await readJson<{ sessions?: SessionSummary[] }>(
-    await chatFetch(withWindow('/chat/sessions', at), { credentials: 'include' }),
-  )
-  return data.sessions ?? []
+/**
+ * The account's chats, as the `<chat-conversation>` control states them (`SessionListWatch#SESSIONS`)
+ * with every render and whenever they change; `undefined` when the state carries none.
+ */
+export function readSessions(data: unknown): SessionSummary[] | undefined {
+  if (!Array.isArray(data)) return undefined
+  return data
+    .filter((item): item is Partial<SessionSummary> => item != null && typeof item === 'object')
+    .map((item) => ({
+      id: item.id ?? '',
+      title: item.title ?? '',
+      ...(item.lastUpdated ? { lastUpdated: item.lastUpdated } : {}),
+    }))
+}
+
+/** Command that opens a chat in the window's conversation. Must match `ChatControl#CMD_SELECT_SESSION`. */
+export const CMD_SELECT_SESSION = 'selectSession'
+
+/** Command that deletes a chat of the account. Must match `ChatControl#CMD_DELETE_SESSION`. */
+export const CMD_DELETE_SESSION = 'deleteSession'
+
+/** Argument naming the chat. Must match `ChatControl#ARG_SESSION_ID`. */
+export const ARG_SESSION_ID = 'sessionId'
+
+/** Field of the open's answer: whether the chat was opened. Must match `ChatControl#FIELD_OPENED`. */
+export const FIELD_OPENED = 'opened'
+
+/** Field of the open's answer: the chat's run state. Must match `ChatControl#FIELD_RUN_STATE`. */
+export const FIELD_RUN_STATE = 'runState'
+
+/** Field of the delete's answer: whether the chat was deleted. Must match `ChatControl#FIELD_DELETED`. */
+export const FIELD_DELETED = 'deleted'
+
+/** First part of the data key of a chat's transcript. Must match `ChatControl#DATA_SESSION`. */
+export const DATA_SESSION = 'session'
+
+/** First part of the data key of a subagent's transcript. Must match `ChatControl#DATA_SUBAGENT`. */
+export const DATA_SUBAGENT = 'subagent'
+
+/** Separator of the parts of a data key. Must match `ChatControl#DATA_KEY_SEPARATOR`. */
+export const DATA_KEY_SEPARATOR = '/'
+
+/** The data key of the given kind for the given ids; every id is URL-encoded. */
+export function dataKey(kind: string, ...ids: string[]): string {
+  return [kind, ...ids.map((id) => encodeURIComponent(id))].join(DATA_KEY_SEPARATOR)
+}
+
+/**
+ * Opens a chat in the window's conversation: from now on its runs, approval mode, ratings and effort
+ * are the conversation's.
+ *
+ * @returns the chat's run state, applied once its transcript is on screen.
+ * @throws when the chat was not opened - it is not this account's, or does not exist.
+ */
+export async function openSession(command: ChatCommand, id: string): Promise<RunState | undefined> {
+  const answer = await command(CMD_SELECT_SESSION, { [ARG_SESSION_ID]: id })
+  if (answer?.[FIELD_OPENED] !== true) throw new Error(`chat ${id} was not opened`)
+  const run = answer[FIELD_RUN_STATE]
+  return run == null ? undefined : readRunState(run)
+}
+
+/** Deletes a chat of the account, with everything recorded in it. */
+export async function deleteSession(command: ChatCommand, id: string): Promise<void> {
+  const answer = await command(CMD_DELETE_SESSION, { [ARG_SESSION_ID]: id })
+  if (answer?.[FIELD_DELETED] !== true) throw new Error(`chat ${id} was not deleted`)
+}
+
+/**
+ * Reads one data item of a chat control (`ChatControl#getDownloadData`) from the bridge's data URL
+ * of the element (`useTLDataUrl`).
+ */
+async function readData<T>(dataUrl: string, key: string): Promise<T> {
+  if (!dataUrl) throw new Error('no chat element to read from')
+  const res = await fetch(`${dataUrl}&key=${encodeURIComponent(key)}`, { credentials: 'include' })
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  return (await res.json()) as T
 }
 
 /**
@@ -190,20 +268,9 @@ export interface SessionDetail {
   features?: Partial<ConversationFeatures>
 }
 
-export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {
-  return readJson<SessionDetail>(
-    await chatFetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
-      credentials: 'include',
-    }),
-  )
-}
-
-export async function deleteSession(at: ChatAddress, id: string): Promise<void> {
-  const res = await chatFetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
-    method: 'DELETE',
-    credentials: 'include',
-  })
-  if (!res.ok) throw new Error(`delete failed (${res.status})`)
+/** Reads an opened chat as the window shows it ({@link openSession} first). */
+export async function loadSession(dataUrl: string, id: string): Promise<SessionDetail> {
+  return readData<SessionDetail>(dataUrl, dataKey(DATA_SESSION, id))
 }
 
 export async function sendMessage(
@@ -531,13 +598,9 @@ export async function sendSubagentMessage(
  * @param runId The run its recorded part names, for a subagent the server holds no job for any
  *   more - an earlier server life, a chat this window no longer holds.
  */
-export async function loadSubagentTranscript(at: ChatAddress, id: string, runId?: string): Promise<ChatMessage[]> {
-  const query = runId ? `?runId=${encodeURIComponent(runId)}` : ''
-  const detail = await readJson<SessionDetail>(
-    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript${query}`, at), {
-      credentials: 'include',
-    }),
-  )
+export async function loadSubagentTranscript(dataUrl: string, id: string, runId?: string): Promise<ChatMessage[]> {
+  const key = runId ? dataKey(DATA_SUBAGENT, id, runId) : dataKey(DATA_SUBAGENT, id)
+  const detail = await readData<SessionDetail>(dataUrl, key)
   return turnsJsonToMessages(detail.turnsJson, detail.runs)
 }
 

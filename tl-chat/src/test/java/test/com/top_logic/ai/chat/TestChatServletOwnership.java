@@ -54,7 +54,8 @@ import com.top_logic.util.model.ModelService;
  * turn: a second account could read a colleague's whole conversation back out of the model and
  * leave its own message in their transcript. The endpoints are enumerated here, one test each, so
  * that the next endpoint added to this servlet is the only thing that can be forgotten - not one of
- * these.
+ * these. Opening, reading and deleting a chat are commands and data of the chat controls; their
+ * ownership is pinned in {@code TestChatSessionCommands}.
  * </p>
  *
  * <p>
@@ -84,10 +85,6 @@ public class TestChatServletOwnership extends BasicTestCase {
 
 		void post(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 			doPost(req, resp);
-		}
-
-		void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-			doGet(req, resp);
 		}
 
 		void delete(HttpServletRequest req, HttpServletResponse resp) throws Exception {
@@ -135,15 +132,6 @@ public class TestChatServletOwnership extends BasicTestCase {
 	public void testFeedbackOnAnotherUsersChat() throws Exception {
 		assertEquals(HttpServletResponse.SC_NOT_FOUND,
 			post("/feedback", ben, "{\"sessionId\":\"" + id() + "\",\"turnIndex\":0,\"rating\":\"up\"}"));
-	}
-
-	/** Deleting someone else's chat. */
-	public void testDeleteAnotherUsersChat() throws Exception {
-		Recording response = new Recording();
-		_servlet.delete(request("/sessions/" + id(), ben, "", response), response.asResponse());
-		assertEquals(HttpServletResponse.SC_NOT_FOUND, response._status);
-		assertNotNull("The chat must still be there.",
-			ChatHistoryService.findOwnedSessionById(id(), anna));
 	}
 
 	/**

@@ -165,6 +165,13 @@ export function useTLCommand(): (
   return tlCommand
 }
 
+/** What `useTLDataUrl` hands out: a data URL of a control named for the test. */
+export const TL_DATA_URL = '/react-api/data?controlId=test-control&windowName=test-window'
+
+export function useTLDataUrl(): string {
+  return TL_DATA_URL
+}
+
 /** Ends the fill chain, which a test has no layout for: renders the children as they are. */
 export function FillBarrier({ children }: { children?: RealReact.ReactNode }) {
   return RealReact.createElement(RealReact.Fragment, null, children)

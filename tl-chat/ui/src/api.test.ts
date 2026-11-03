@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { readRunState, turnsJsonToMessages } from './api'
+import { dataKey, DATA_SESSION, DATA_SUBAGENT, readRunState, turnsJsonToMessages } from './api'
 
 /**
  * What a re-opened chat makes of the recorded turns.
@@ -157,5 +157,12 @@ describe('the run state of a chat', () => {
     const state = readRunState({ subagents: [{ subagentId: 'sa-1', status: 'DONE', stopReason: 'MAX_TURNS' }] })
 
     expect(state.subagents[0].status).toBe('LIMIT')
+  })
+})
+
+describe('dataKey', () => {
+  it('encodes every id, so an id with a separator in it stays one part', () => {
+    expect(dataKey(DATA_SESSION, 'a/b')).toBe('session/a%2Fb')
+    expect(dataKey(DATA_SUBAGENT, 'sa-1', 'run 2')).toBe('subagent/sa-1/run%202')
   })
 })

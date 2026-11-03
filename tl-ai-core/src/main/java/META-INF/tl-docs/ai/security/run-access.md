@@ -1,5 +1,5 @@
 ---
-description: Read before restricting which agents, models and MCP servers a role may use - <agent-access default="all|none">, <model-access default="assigned|all|none">, <mcp-access default="agent|all|none"> in the AiToolAccessService policy, the five decision rules (RoleAccessPolicy, RunAuthorization), infrastructure agents (infrastructure="true", SecurityContext.withoutAgentChoice), the chat entry point, /chat/capabilities and 403 refusals, delegation, and the boot check of names (AgentNameCheck).
+description: Read before restricting which agents, models and MCP servers a role may use - <agent-access default="all|none">, <model-access default="assigned|all|none">, <mcp-access default="agent|all|none"> in the AiToolAccessService policy, the five decision rules (RoleAccessPolicy, RunAuthorization), infrastructure agents (infrastructure="true", SecurityContext.withoutAgentChoice), the chat entry point, the chat's capabilities and 403 refusals, delegation, and the boot check of names (AgentNameCheck).
 order: 75
 ---
 
@@ -50,7 +50,7 @@ Rule 3 keeps the rule set usable: every client of `/chat/send` sends the model i
 
 Rule 4 is the allowlist reading of a role entry, and it is why `default="all"` and a role entry do not contradict each other: naming a role restricts its holders and leaves everybody else where they were, so one role is restricted in a running application without touching anyone. A role entry with no `<grants>` says "this role may use none of them".
 
-A request asks about very little - the chat sends a model and, when the user attached one, a server. So the run asks the two remaining questions on its own behalf before it starts - is the model my agent is assigned denied to this account, is any server my agent declares denied to it - and refuses if either is. Without them rule 1 would answer only when a client happened to name the denied thing. The consequence for whoever writes the policy: **denying what an agent itself uses takes that agent away from the role**, and `/chat/capabilities` drops it for the same reason - a menu that offered it would offer a turn that comes back refused. Deny what a role's own agents use only when that is meant.
+A request asks about very little - the chat sends a model and, when the user attached one, a server. So the run asks the two remaining questions on its own behalf before it starts - is the model my agent is assigned denied to this account, is any server my agent declares denied to it - and refuses if either is. Without them rule 1 would answer only when a client happened to name the denied thing. The consequence for whoever writes the policy: **denying what an agent itself uses takes that agent away from the role**, and the chat's capabilities drop it for the same reason - a menu that offered it would offer a turn that comes back refused. Deny what a role's own agents use only when that is meant.
 
 `none` refuses the same requests as `assigned` and `agent` do, because of rule 3; what it changes is what a client is *offered* - under `none` the menu is empty, so the choice is not shown at all. Administrators bypass all three sections, as they bypass the tool layer and the engine's model rights. There is no background ceiling here: which agent a run is and what it runs on is settled before it starts.
 
@@ -58,7 +58,7 @@ A request asks about very little - the chat sends a model and, when the user att
 
 Only the agents a user is meant to **talk to** need a grant. Two agents the chat runs *for* the user are outside `<agent-access>`, because it decides which persona **answers**, and neither of them answers:
 
-- **The chat entry point.** A request that names no agent runs the configured entry point when the account may run it, and otherwise the first agent it may run - `AgentFactory.defaultAgentFor`, which `/chat/capabilities` reports and `ChatProcessor` runs, so the menu and the run cannot name different agents. A restricted role therefore gets its own agent, not a refusal naming one it was never offered. An account that may run none at all is refused with a sentence of its own.
+- **The chat entry point.** A request that names no agent runs the configured entry point when the account may run it, and otherwise the first agent it may run - `AgentFactory.defaultAgentFor`, which the chat's capabilities report and `ChatProcessor` runs, so the menu and the run cannot name different agents. A restricted role therefore gets its own agent, not a refusal naming one it was never offered. An account that may run none at all is refused with a sentence of its own.
 - **The prompt improver**, and every agent a client hides from its picker. Its run is built with `SecurityContext.withoutAgentChoice()`, which drops the agent dimension and nothing else - the model, the MCP servers and every tool it calls stay decided. A `<deny>` on the model the improver is assigned therefore switches it off for that role, and the chat stops offering the "improve prompt" button rather than offering a refusal.
 
 ### Infrastructure agents
@@ -73,7 +73,7 @@ An agent the application runs **for** a user instead of letting them talk to it 
 
 The mark is a statement about the agent, not about a role, and `<agent-access>` cannot lift it:
 
-- no menu offers it - not `/chat/capabilities`, not the delegate catalogue, not `list_agents`, and not the options of an agent record's `delegations`;
+- no menu offers it - not the chat's capabilities, not the delegate catalogue, not `list_agents`, and not the options of an agent record's `delegations`;
 - a request that names it anyway is answered **403** with *"The agent … cannot be talked to: the application runs it for you."* - `/chat/send`, `/chat/regenerate`, a delegation, a `spawn_subagent`, a TL-Script `aiAgentChat`, a scheduled run;
 - this holds under `<agent-access default="all">`, under a role that explicitly grants the agent by name, and in an application that wrote no policy at all.
 
@@ -83,7 +83,7 @@ The product's own call path still works: what makes the improve-prompt run legal
 
 `AgentFactory.runAgent(..., RunOverrides)` is the choke point - the chat, `AgentRunner`, the scheduler and TL-Script all pass through it - and it authorizes before applying anything of the request, so no provider round trip is spent on a run that may not happen. `RoleAccessPolicy` decides all three sections, and `RunAuthorization` carries the decision on the security context. A refusal is a `ToolSecurityException` carrying a `ResKey`; `/chat/send` and `/chat/regenerate` pre-check the same three questions and answer **403** with that text, which the user reads in the notice strip above the composer, in their language.
 
-`/chat/capabilities` lists the agents and MCP servers a run of that account accepts. The model list is the one thing a single payload cannot make exact - it is fetched once, and the agent can change without another round trip - so it lists the models the account may choose with *some* agent it may run, and marks each with whether the account's roles grant it; the shipped chat narrows that to the selected agent.
+The chat's capabilities (the state of a `<chat-conversation>`) list the agents and MCP servers a run of that account accepts. The model list is the one thing a single payload cannot make exact - it is written per render, and the agent can change without another round trip - so it lists the models the account may choose with *some* agent it may run, and marks each with whether the account's roles grant it; the shipped chat narrows that to the selected agent.
 
 **Delegation is bounded by the acting principal too**, not only by the parent agent's `delegations` list: `buildAgentLoop` and `buildSubagentLoop` refuse an agent the account may not run, and `AgentCapabilities` drops such an agent from the delegate catalogue and from `list_agents`, so the model does not ask for it. The same holds for an agent whose own model or own server a role denies, and for an `infrastructure` agent, which is nobody's delegate. To let an orchestrator delegate to a specialist, grant the specialist to the same role.
 

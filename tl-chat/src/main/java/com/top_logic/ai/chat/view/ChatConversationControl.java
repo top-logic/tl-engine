@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.top_logic.ai.chat.api.ChatCapabilities;
+import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Context;
@@ -77,12 +80,21 @@ import com.top_logic.util.TLContext;
 public class ChatConversationControl extends ChatControl {
 
 	/**
+	 * State key of the agents, models and MCP servers the acting account may choose from
+	 * ({@link ChatCapabilities}), computed on every render.
+	 */
+	public static final String STATE_CAPABILITIES = "capabilities";
+
+	/**
 	 * The {@code input} channel and what the browser is told of it, or <code>null</code> when the
 	 * element wires none and the browser's store is the source.
 	 */
 	private final SessionSelection _selection;
 
 	private final ViewChannel _busyChannel;
+
+	/** The account's chat list, as the browser is told it. */
+	private final SessionListWatch _sessions;
 
 	private final ViewChannel _agentChannel;
 
@@ -241,12 +253,12 @@ public class ChatConversationControl extends ChatControl {
 			_selection.apply();
 		}
 
-		// The browser reads the open chat's title from its own copy of the chat list; this is what
-		// tells it that copy is out of date (#596).
-		SessionListWatch sessions = new SessionListWatch(TlAiExecutionFactory.getAgentSessionType(),
-			ChatConversationControl::currentPerson, this::putState);
-		addAttachListener(() -> sessions.attach(context.getModelScope()));
-		addDetachListener(sessions::detach);
+		// The chats of the account, which the conversation's header and the App rail read their titles
+		// from: written with every render, and again whenever they change (#596).
+		_sessions = new SessionListWatch(TlAiExecutionFactory.getAgentSessionType(),
+			ChatConversationControl::signedInPerson, ChatTranscripts::sessionList, this::putState);
+		addAttachListener(() -> _sessions.attach(context.getModelScope()));
+		addDetachListener(_sessions::detach);
 
 		// What a conversation started here is about: offered to the chat while displayed, and read by
 		// the request that creates the conversation, before its first message is sent.
@@ -337,6 +349,28 @@ public class ChatConversationControl extends ChatControl {
 		addCleanupAction(() -> channel.removeListener(listener));
 		apply.accept(channel.get());
 		return channel;
+	}
+
+	/**
+	 * Writes what is read for the acting account on every render: its chat list and what it may
+	 * choose from in the composer - the agents, models and MCP servers
+	 * ({@link #STATE_CAPABILITIES}).
+	 */
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		_sessions.write();
+		Person person = signedInPerson();
+		putState(STATE_CAPABILITIES, person == null ? ChatCapabilitiesResponse.create()
+			: ChatCapabilities.build(person, binding().tracker().getPromptImproverAgentName()));
+	}
+
+	/**
+	 * The acting account, <code>null</code> for a visitor: the chat has no anonymous mode, and the
+	 * chats stored against the anonymous account are no visitor's to see.
+	 */
+	private static Person signedInPerson() {
+		return TLContext.isAnonymous() ? null : currentPerson();
 	}
 
 	@Override
@@ -1050,11 +1084,6 @@ public class ChatConversationControl extends ChatControl {
 	/** A display label for an expression result (formats dates, objects and text uniformly). */
 	private static String label(Object value) {
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
-	}
-
-	private static Person currentPerson() {
-		TLContext context = TLContext.getContext();
-		return context == null ? null : context.getPerson();
 	}
 
 	private static boolean truthy(Object value) {

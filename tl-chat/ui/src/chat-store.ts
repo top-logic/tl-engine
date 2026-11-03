@@ -1,4 +1,4 @@
-import { isPageLeaving, React, useTLCommand } from 'tl-react-bridge'
+import { isPageLeaving, React, useTLCommand, useTLDataUrl } from 'tl-react-bridge'
 import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
 import type { ReactNode } from 'react'
 import {
@@ -11,12 +11,13 @@ import {
   type SubagentMessageStatus,
   createSession,
   deleteSession,
-  fetchCapabilities,
   ForbiddenError,
   RefusedError,
-  listSessions,
   loadSession,
   loadSubagentTranscript,
+  openSession,
+  readCapabilities,
+  readSessions,
   regenerate as regenerateTurn,
   respond,
   sendFeedback,
@@ -102,7 +103,7 @@ import {
 } from './types'
 import { randomId } from './ids'
 
-const { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } = React
+const { useCallback, useEffect, useMemo, useSyncExternalStore } = React
 
 /**
  * Without a frame for this long the stream counts as stale and is re-opened.
@@ -337,6 +338,13 @@ export interface ChatBootstrap {
    * Set by {@code <chat-rail/>} from each section's {@code open} flag (D3).
    */
   collapsedSections?: string[]
+  /**
+   * The agents, models and MCP servers the account may choose from, as the element's control state
+   * carries them (read with `readCapabilities`); absent from every element but a conversation.
+   */
+  capabilities?: unknown
+  /** The account's chats, as the element's control state carries them (read with `readSessions`). */
+  sessions?: unknown
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
@@ -362,6 +370,9 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     collapsedSections: Array.isArray(state.collapsedSections)
       ? state.collapsedSections.map((id) => String(id))
       : undefined,
+    // As the state holds them: the store reads them only when the server sent new ones.
+    capabilities: state.capabilities,
+    sessions: state.sessions,
   }
 }
 
@@ -638,12 +649,6 @@ export interface ChatActions {
   selectSession(id: string): Promise<void>
   newChat(): void
   deleteSession(id: string): Promise<void>
-  /**
-   * Reads the chat list again, because the server said this account's chats changed - a rename in
-   * a session list, a script, another tab. The open chat's title is read from that list, so this
-   * is what makes the header follow a rename (#596).
-   */
-  reloadSessions(): Promise<void>
   send(text: string, attachments: Attachment[], options?: SendOptions): Promise<boolean>
   editSend(messageId: string, turnIndex: number, text: string, options?: SendOptions): Promise<boolean>
   regenerate(messageId: string, turnIndex: number): Promise<void>
@@ -804,6 +809,16 @@ export function withTitle(sessions: SessionSummary[], id: string, title: string 
   return next
 }
 
+/** The list without the given chat. */
+function withoutSession(sessions: SessionSummary[], id: string): SessionSummary[] {
+  return sessions.some((session) => session.id === id) ? sessions.filter((session) => session.id !== id) : sessions
+}
+
+/** The list with the given chat first, unless it is in it already. */
+function withSession(sessions: SessionSummary[], created: SessionSummary): SessionSummary[] {
+  return sessions.some((session) => session.id === created.id) ? sessions : [created, ...sessions]
+}
+
 /** Keeps the previous result while the inputs are unchanged, as `useMemo` does. */
 function memo<A extends unknown[], T>(compute: (...deps: A) => T): (...deps: A) => T {
   let last: unknown[] | undefined
@@ -815,6 +830,12 @@ function memo<A extends unknown[], T>(compute: (...deps: A) => T): (...deps: A) 
     }
     return value
   }
+}
+
+/** How the store reaches the server through one of its elements: the element's control's command and data URL. */
+interface ElementLink {
+  command: ChatCommand
+  dataUrl: string
 }
 
 /**
@@ -831,17 +852,21 @@ export class ChatStore {
   private refs = 0
 
   /**
-   * How the chat reaches the server through its elements: the command function of each element
-   * subscribed now, the latest last.
+   * How the chat reaches the server through its elements: the command function and the data URL of
+   * each element subscribed now, the latest last.
    *
-   * The stream and the run state are commands of a chat control on the server, and every chat
-   * element is one, so whichever is mounted can carry them - the server keeps the stream for as long
-   * as any of them is displayed, not only the one it was attached through.
+   * The stream, the run state, opening a chat and its transcript are commands and data of a chat
+   * control on the server, and every chat element is one, so whichever is mounted can carry them -
+   * the server keeps the stream for as long as any of them is displayed, not only the one it was
+   * attached through.
    */
-  private readonly commands: ChatCommand[] = []
+  private readonly links: ElementLink[] = []
 
-  /** The command function of the element that left last, for the detach its leaving causes. */
-  private lastCommand: ChatCommand | null = null
+  /** The link of the element that left last, for the detach its leaving causes. */
+  private lastLink: ElementLink | null = null
+
+  /** Whether the server's capabilities have arrived, which is when the first agent is chosen. */
+  private capsTaken = false
 
   /** Whether any element is watching. The effects run only while one is. */
   private live = false
@@ -1100,17 +1125,19 @@ export class ChatStore {
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
+    this.takeLists(boot.capabilities, boot.sessions)
   }
 
   getState = (): ChatState => this.snapshot
 
   /**
-   * Joins an element: `listener` hears every change, `command` is how the store may reach the server
-   * through that element's control.
+   * Joins an element: `listener` hears every change, `command` and `dataUrl` are how the store may
+   * reach the server through that element's control.
    */
-  subscribe = (listener: () => void, command?: ChatCommand): (() => void) => {
+  subscribe = (listener: () => void, command?: ChatCommand, dataUrl = ''): (() => void) => {
     this.listeners.add(listener)
-    if (command) this.commands.push(command)
+    const link: ElementLink | null = command ? { command, dataUrl } : null
+    if (link) this.links.push(link)
     this.refs += 1
     if (this.refs === 1) {
       this.live = true
@@ -1125,10 +1152,10 @@ export class ChatStore {
       if (released) return
       released = true
       this.listeners.delete(listener)
-      if (command) {
-        const index = this.commands.lastIndexOf(command)
-        if (index >= 0) this.commands.splice(index, 1)
-        this.lastCommand = command
+      if (link) {
+        const index = this.links.lastIndexOf(link)
+        if (index >= 0) this.links.splice(index, 1)
+        this.lastLink = link
       }
       this.refs -= 1
       if (this.refs <= 0) this.quiesce()
@@ -1140,8 +1167,44 @@ export class ChatStore {
    * answered with `undefined` while no element has brought a command function.
    */
   private readonly command: ChatCommand = (name, args) => {
-    const command = this.commands[this.commands.length - 1] ?? this.lastCommand
-    return command ? command(name, args) : Promise.resolve(undefined)
+    const link = this.link()
+    return link ? link.command(name, args) : Promise.resolve(undefined)
+  }
+
+  /** The data URL of a chat control of this conversation, of the same element {@link command} uses. */
+  private dataUrl(): string {
+    return this.link()?.dataUrl ?? ''
+  }
+
+  private link(): ElementLink | null {
+    return this.links[this.links.length - 1] ?? this.lastLink
+  }
+
+  /**
+   * Takes the capabilities and the chat list an element's control state carries, when it carries
+   * them: the server writes them with every render of a `<chat-conversation>` and the list again
+   * whenever the account's chats change.
+   *
+   * The first capabilities choose the agent: one already chosen wins over the entry point - the
+   * `agent` channel may have named one before they arrived, and so may the user. Re-applying it
+   * against the catalogue is what gives it its model and its servers, which it could not have had
+   * until now. Later ones - a render in another language - leave the turn settings alone.
+   */
+  takeLists = (capabilities: unknown, sessions: unknown): void => {
+    const caps = readCapabilities(capabilities)
+    if (caps && JSON.stringify(caps) !== JSON.stringify(this.state.caps)) {
+      this.patch({ caps })
+      if (!this.capsTaken) {
+        this.capsTaken = true
+        const chosen = caps.agents.find((a) => a.name === this.state.agent)?.name
+        const initial =
+          chosen ?? caps.agents.find((a) => a.name === caps.entryPointAgent)?.name ?? caps.agents[0]?.name ?? ''
+        if (initial) this.applyAgent(initial, caps.agents)
+        else if (caps.models[0]) this.patch({ model: caps.models[0].id })
+      }
+    }
+    const list = readSessions(sessions)
+    if (list) this.patch({ sessions: list, sessionsLoading: false })
   }
 
   /**
@@ -1274,10 +1337,6 @@ export class ChatStore {
       },
       {
         deps: (s) => [s.authenticated, s.windowId],
-        run: () => this.loadCapabilities(),
-      },
-      {
-        deps: (s) => [s.authenticated, s.windowId],
         run: () => this.connect(),
       },
       // The ring must be readable before the first run, and must follow a model change at once, so
@@ -1314,42 +1373,6 @@ export class ChatStore {
         run: () => this.restoreRememberedSession(),
       },
     ]
-  }
-
-  private loadCapabilities(): (() => void) | void {
-    // Nothing to ask for in a session the servlet answers with 401.
-    if (!this.state.authenticated) return
-    const at = this.at
-    let cancelled = false
-    void (async () => {
-      try {
-        const [nextCaps, nextSessions] = await Promise.all([
-          fetchCapabilities(at),
-          listSessions(at),
-        ])
-        if (cancelled) return
-        // An agent already chosen wins over the entry point: the `agent` channel may have named one
-        // before this answer arrived, and so may the user. Re-applying it against the fresh catalogue
-        // is what gives it its model and its servers, which it could not have had until now.
-        const chosen = nextCaps.agents.find((a) => a.name === this.state.agent)?.name
-        const initial =
-          chosen ??
-          nextCaps.agents.find((a) => a.name === nextCaps.entryPointAgent)?.name ??
-          nextCaps.agents[0]?.name ??
-          ''
-        this.patch({ caps: nextCaps, sessions: nextSessions, sessionsError: '' })
-        if (initial) this.applyAgent(initial, nextCaps.agents)
-        else if (nextCaps.models[0]) this.patch({ model: nextCaps.models[0].id })
-      } catch (err) {
-        console.error('[tl-chat-ui] capabilities', err)
-        if (!cancelled) this.patch({ sessionsError: this.labels.chatsLoadFailed })
-      } finally {
-        if (!cancelled) this.patch({ sessionsLoading: false })
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
   }
 
   /**
@@ -1943,14 +1966,6 @@ export class ChatStore {
     })
   }
 
-  private async refreshSessions(): Promise<void> {
-    try {
-      this.patch({ sessions: await listSessions(this.at), sessionsError: '' })
-    } catch {
-      this.patch({ sessionsError: this.labels.chatsRefreshFailed })
-    }
-  }
-
   /**
    * Adds a piece of the answer to the message being written.
    *
@@ -2020,8 +2035,9 @@ export class ChatStore {
    * agent asked - is gone, while the agent is still parked on it. The `run_state` frame says whether
    * the run is working, what it has got through, what is waiting for this user and which subagents
    * the run has; the server sends it when the stream is attached and again on
-   * {@link CMD_REFRESH_RUN_STATE}. A frame about another chat than the one on screen - the window
-   * has moved on, or is still opening one - is not this chat's.
+   * {@link CMD_REFRESH_RUN_STATE}, and answers the open of a chat with it ({@link openSession}). A
+   * state of another chat than the one on screen - the window has moved on, or is still opening
+   * one - is not this chat's.
    */
   private applyRunState(run: RunState): void {
     const sessionId = this.state.sessionId
@@ -2086,11 +2102,10 @@ export class ChatStore {
    * a window that never asked would have shown.
    */
   private async reloadTranscript(): Promise<void> {
-    const at = this.at
     const sessionId = this.state.sessionId
     if (!sessionId) return
     try {
-      const detail = await loadSession(at, sessionId)
+      const detail = await loadSession(this.dataUrl(), sessionId)
       // The user may have moved to another chat while this was in flight.
       if (this.state.sessionId !== sessionId) return
       this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson, detail.runs) })
@@ -2140,13 +2155,13 @@ export class ChatStore {
   private async discardEmptyChat(createdHere: boolean, id: string): Promise<void> {
     if (!createdHere || !id) return
     try {
-      await deleteSession(this.at, id)
+      await deleteSession(this.command, id)
     } catch {
       // Best effort: an undeleted empty chat is untidy, not broken.
     }
-    this.patch({ sessionId: '' })
+    // The server sends the list without it; until then the rail must not show it either.
+    this.patch({ sessionId: '', sessions: withoutSession(this.state.sessions, id) })
     this.dispatch({ type: 'RESET' })
-    await this.refreshSessions()
   }
 
   private declareActions(): ChatActions {
@@ -2158,7 +2173,6 @@ export class ChatStore {
         // The chat the latest choice leads to: the one being opened, or else the one on screen.
         // Asking for it again must not start a second opening, which could only land late (#577).
         if (id === (this.opening?.sessionId ?? this.state.sessionId)) return
-        const at = this.at
         const choice = ++this.choice
         this.assistantId = null
         this.runId = null
@@ -2171,8 +2185,11 @@ export class ChatStore {
         this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         this.opening = { sessionId: id, held: [] }
         let detail: SessionDetail
+        let runState: RunState | undefined
         try {
-          detail = await loadSession(at, id)
+          // The chat becomes the conversation's on the server first: the transcript is read from it.
+          runState = await openSession(this.command, id)
+          detail = await loadSession(this.dataUrl(), id)
         } catch (error) {
           if (choice === this.choice) this.opening = null
           throw error
@@ -2201,8 +2218,9 @@ export class ChatStore {
           measuredTokens: promptTokens(detail.lastPromptUsage),
           composition: detail.lastComposition ?? undefined,
         }))
-        // The run of the chat now open, on the stream: the server has just made it the window's.
-        await this.command(CMD_REFRESH_RUN_STATE)
+        // The run of the chat now open, as the server answered the open: applied now that the
+        // transcript it belongs to is on screen.
+        if (runState && choice === this.choice) this.applyRunState(runState)
       },
 
       /**
@@ -2232,7 +2250,9 @@ export class ChatStore {
       },
 
       deleteSession: async (id: string) => {
-        await deleteSession(this.at, id)
+        await deleteSession(this.command, id)
+        // The server sends the list without it; until then the rail must not show it either.
+        this.patch({ sessions: withoutSession(this.state.sessions, id) })
         if (this.state.sessionId === id) {
           this.noticeSticky = false
           this.patch({
@@ -2243,10 +2263,7 @@ export class ChatStore {
           })
           this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         }
-        await this.refreshSessions()
       },
-
-      reloadSessions: () => this.refreshSessions(),
 
       /**
        * Sends a turn.
@@ -2272,15 +2289,17 @@ export class ChatStore {
               autoTitle(text || labels.attachmentOnly),
               this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
             )
-            await loadSession(at, created.id)
+            // Only the switch: a chat created now has no transcript and no run to show.
+            await openSession(this.command, created.id)
           } catch (err) {
             if (this.staleWindow(err, text)) return false
             throw err
           }
           active = created.id
           createdHere = true
-          this.patch({ sessionId: active })
-          await this.refreshSessions()
+          // The server sends the list with it once the window hears of the new chat; its title is
+          // shown from the start.
+          this.patch({ sessionId: active, sessions: withSession(this.state.sessions, created) })
         }
         this.showNotice('')
         // Composed before the dispatch below, because the host's prefix describes the conversation
@@ -2563,7 +2582,7 @@ export class ChatStore {
         })
       },
 
-      loadSubagentTranscript: (id: string, runId?: string) => loadSubagentTranscript(this.at, id, runId),
+      loadSubagentTranscript: (id: string, runId?: string) => loadSubagentTranscript(this.dataUrl(), id, runId),
 
       openPane: (content: ReactNode, options: PaneOpenOptions) => {
         // Opening a pane opens the side, and that is the user opening it: a reload shows what they
@@ -2764,7 +2783,11 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   const store = useMemo(() => chatStore(chatId, boot), [chatId])
   // The element's own control is how the store reaches the server through this element.
   const command = useTLCommand()
-  const subscribe = useCallback((listener: () => void) => store.subscribe(listener, command), [store, command])
+  const dataUrl = useTLDataUrl()
+  const subscribe = useCallback(
+    (listener: () => void) => store.subscribe(listener, command, dataUrl),
+    [store, command, dataUrl],
+  )
   const chat = useSyncExternalStore(subscribe, store.getState, store.getState)
   useEffect(
     () => store.attach(boot),
@@ -2772,24 +2795,7 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
     // re-run what a sign-in or a late window id is what really changes.
     [store, boot.windowId, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
   )
+  // The state's own values: they change only when the server sends new ones.
+  useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])
   return { chat, actions: store.actions, runs: store.runs }
-}
-
-/**
- * Re-reads the chat list whenever the element's control state says this account's chats changed.
- *
- * The server counts those changes into `sessionsRevision` - a rename in the session list, a
- * script, another tab (`SessionListWatch`). The store reads its chat list, and with it the title the
- * header shows, only on its own occasions otherwise, so a renamed chat kept its old title in an open
- * conversation until the page was loaded again (#596). The count a mount starts with is no news: the
- * store reads the list when it boots.
- */
-export function useSessionsRevision(state: Record<string, unknown>, actions: ChatActions): void {
-  const revision = typeof state.sessionsRevision === 'number' ? state.sessionsRevision : 0
-  const seen = useRef(revision)
-  useEffect(() => {
-    if (seen.current === revision) return
-    seen.current = revision
-    void actions.reloadSessions()
-  }, [revision, actions])
 }

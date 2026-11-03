@@ -7,16 +7,13 @@ package com.top_logic.ai.chat.api;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,27 +25,19 @@ import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
-import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
 import com.top_logic.ai.chat.api.messages.FactDto;
-import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
 import com.top_logic.ai.chat.api.messages.RegenerateRequest;
 import com.top_logic.ai.chat.api.messages.TruncateRequest;
 import com.top_logic.ai.chat.api.messages.TruncateResponse;
-import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
-import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
-import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
-import com.top_logic.ai.chat.api.messages.InFlightRunDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
-import com.top_logic.ai.chat.api.messages.RecordedRunDto;
 import com.top_logic.ai.chat.api.messages.SubagentMessageRequest;
 import com.top_logic.ai.chat.api.messages.SubagentMessageResponse;
-import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
@@ -64,8 +53,6 @@ import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
-import com.top_logic.tl.ai.core.cost.CostConversion;
-import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -86,34 +73,22 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
-import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * JSON API for the agentic chat: POST /chat/send, the sessions, the answers to approvals and
+ * JSON API for the agentic chat: POST /chat/send, the creation of a chat, the answers to approvals and
  * questions. The chat's frames and the state of its run reach the browser on the window's event
  * stream, attached by a command of the chat's controls (see {@link ChatSSEHandler}).
  *
@@ -139,7 +114,6 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_SUBAGENTS = "/subagents";
-	private static final String PATH_CAPABILITIES = "/capabilities";
 
 	private static final String PATH_REGENERATE = "/regenerate";
 
@@ -148,7 +122,6 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_FEEDBACK = "/feedback";
 
 	private static final String PATH_PREFERENCES = "/preferences";
-	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String MESSAGE_SUFFIX = "/message";
 
 	/** The longest message the user may write to a subagent, in characters. */
@@ -262,31 +235,6 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		advanceSessionRevision();
-		String pathInfo = req.getPathInfo();
-		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path");
-			return;
-		}
-		if (pathInfo.startsWith(PATH_SUBAGENTS + "/") && pathInfo.endsWith(TRANSCRIPT_SUFFIX)) {
-			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length(),
-				pathInfo.length() - TRANSCRIPT_SUFFIX.length());
-			handleSubagentTranscript(req, resp, id);
-			return;
-		}
-		if (pathInfo.equals(PATH_CAPABILITIES) || pathInfo.equals(PATH_CAPABILITIES + "/")) {
-			handleCapabilities(req, resp);
-			return;
-		}
-		if (pathInfo.startsWith(PATH_SESSIONS)) {
-			handleSessionGet(req, resp, pathInfo);
-			return;
-		}
-		resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
-	}
-
-	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
@@ -296,10 +244,6 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_PREFERENCES) || pathInfo.equals(PATH_PREFERENCES + "/")) {
 			handlePutPreferences(req, resp);
-			return;
-		}
-		if (pathInfo.startsWith(PATH_SESSIONS)) {
-			handleSessionPut(req, resp, pathInfo);
 			return;
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -316,10 +260,6 @@ public class ChatServlet extends TopLogicServlet {
 		if (pathInfo.startsWith(PATH_SUBAGENTS + "/")) {
 			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length());
 			handleCancelSubagent(req, resp, id);
-			return;
-		}
-		if (pathInfo.startsWith(PATH_SESSIONS + "/")) {
-			handleDeleteSession(req, resp, pathInfo);
 			return;
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -768,7 +708,7 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/** The backend that answers the given chat, or <code>null</code> for the framework's own agent. */
-	private static ConversationBackend backendOf(TLObject session) {
+	static ConversationBackend backendOf(TLObject session) {
 		if (!(session instanceof AgentSession agentSession)) {
 			return null;
 		}
@@ -1283,166 +1223,6 @@ public class ChatServlet extends TopLogicServlet {
 		return Objects.equals(run.getSessionId(), window.getActiveSessionId());
 	}
 
-	/**
-	 * Adds the paragraph the running turn is in the middle of writing to the last turn.
-	 *
-	 * <p>
-	 * The log records streamed text at message boundaries, so between them it holds everything the
-	 * turn has said except its unfinished last sentence. A window opening the chat mid-stream has to
-	 * be shown that sentence too, or it renders a turn that stops earlier than the one the reader
-	 * was watching. It is appended to the snapshot that is about to be sent and never written into
-	 * the log - recording it is the agent's own business.
-	 * </p>
-	 *
-	 * @param conv
-	 *        The snapshot being sent; a no-op when it has no turn.
-	 * @param running
-	 *        The run in flight, or <code>null</code> when the conversation has none.
-	 * @param response
-	 *        The answer the snapshot is sent in; told where in the run's text the snapshot ends.
-	 */
-	private static void appendStreamedText(PersistedConversationV2 conv, ChatProcessor.AIProcessingState running,
-			ChatSessionDetailResponse response) {
-		if (running == null) {
-			return;
-		}
-		ConversationLogListener listener = running.getLogListener();
-		ConversationLogListener.StreamedText streamed =
-			listener == null ? new ConversationLogListener.StreamedText("", 0) : listener.streamedText();
-		// Where this snapshot ends in the run's text, so the window can tell which of the deltas it
-		// is about to receive it already shows (issue #544).
-		response.setInFlight(InFlightRunDto.create().setStreamedChars(streamed.end()));
-		String pending = streamed.pending();
-		if (pending.isEmpty() || conv.getTurns().isEmpty()) {
-			return;
-		}
-		PersistedTurn last = conv.getTurns().get(conv.getTurns().size() - 1);
-		last.addAssistantPart(PersistedPart.create()
-			.setId("streaming-" + last.getId())
-			.setType("text")
-			.setTimestamp(System.currentTimeMillis())
-			.setTextData(TextPartDto.create().setText(pending)));
-	}
-
-	private void handleSessionGet(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
-			throws IOException {
-		Person person = resolveCurrentPerson(req);
-		if (person == null) {
-			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-			return;
-		}
-
-		resp.setContentType(CONTENT_TYPE_JSON);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-
-		// GET /chat/sessions — list all
-		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
-			List<TLObject> sessions = ChatHistoryService.getSessionsForUser(person);
-			ChatSessionListResponse response = ChatSessionListResponse.create();
-			for (TLObject session : sessions) {
-				ChatSessionDto dto = ChatSessionDto.create()
-					.setId(getObjectId(session))
-					.setTitle(ChatHistoryService.getTitle(session));
-				Date lastUpdated = ChatHistoryService.getLastUpdated(session);
-				if (lastUpdated != null) {
-					dto.setLastUpdated(formatIso(lastUpdated));
-				}
-				response.addSession(dto);
-			}
-			resp.getWriter().write(DtoMapper.toJson(response));
-			return;
-		}
-
-		// GET /chat/sessions/{id} — load single session + activate server-side
-		String sessionId = extractSessionId(pathInfo);
-		if (sessionId != null && !sessionId.contains("/")) {
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
-			if (session == null) {
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-
-			TaskProgressTracker tracker = currentTracker();
-
-			// Activate session on the tracker (switches Chat + ChatMemory)
-			if (tracker != null) {
-				tracker.getSessionManager().switchSession(sessionId, person);
-			}
-
-			// Build response with structured entries
-			ConversationBackend backend = backendOf(session);
-			ChatSessionDetailResponse response = ChatSessionDetailResponse.create()
-				.setId(sessionId)
-				.setTitle(ChatHistoryService.getTitle(session))
-				.setFeatures(featuresDto(backend));
-
-			// What this conversation looks like right now, in three descending preferences.
-			//
-			// A run in flight is the first of them, and it is the only one that can answer for a
-			// window other than the one that started the run: the open turn - the user's message,
-			// what the agent has said so far, its steps, the approval it is parked on - lives in
-			// the ConversationLog of the run's own window. The database has it complete only when
-			// the run ends - before that, only as far as its last checkpoint: the run's start and
-			// every wait for a person (#598). A second tab, a reloaded page and a new login all load
-			// the conversation from what is persisted, and were then shown a transcript that ended
-			// before what they were looking at (issue #512).
-			ChatProcessor.AIProcessingState running = RunStateFrame.runInFlight(person, sessionId);
-			String messagesJson = null;
-			if (running != null) {
-				ConversationLog runLog = running.getConversationLog();
-				if (runLog != null && runLog.turnCount() > 0) {
-					messagesJson = ConversationLogSerializer.toJson(runLog);
-				}
-			}
-			if (messagesJson == null && tracker != null) {
-				// The live log of the now-active session: this window's own, which holds the open
-				// turn when the run was started here.
-				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
-				if (convLog.turnCount() > 0) {
-					messagesJson = ConversationLogSerializer.toJson(convLog);
-				}
-			}
-			if (messagesJson == null) {
-				messagesJson = ChatHistoryService.loadConversationJson(session);
-			}
-			if (messagesJson != null && !messagesJson.isEmpty()) {
-				response.setMessagesJson(messagesJson);
-				PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
-					new JsonReader(new StringR(messagesJson)));
-				appendStreamedText(conv, running, response);
-				for (PersistedTurn turn : conv.getTurns()) {
-					computeContentHtml(turn);
-				}
-				response.setTurnsJson(serializeTurns(conv.getTurns()));
-				describeLastPrompt(response, conv.getTurns());
-				describeRuns(response, session, conv.getTurns());
-			}
-			if (backend != null) {
-				// The model of a backend is not one of this application's: the window is the one the
-				// backend reports, none while it reports none.
-				response.setContextWindow(backend.contextWindow());
-			}
-
-			// The ratings, the effort and the approval mode come from the session's metadata bag,
-			// which the switch above has just loaded onto the tracker.
-			if (tracker != null) {
-				for (MessageFeedbackDto entry : tracker.getFeedback()) {
-					response.addFeedback(entry);
-				}
-				String effort = tracker.getEffort();
-				if (effort != null) {
-					response.setLastEffort(effort);
-				}
-				response.setApprovalMode(tracker.getApprovalMode().name());
-			}
-
-			resp.getWriter().write(DtoMapper.toJson(response));
-			return;
-		}
-
-		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-	}
-
 	private void handleCreateSession(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Person person = resolveCurrentPerson(req);
 		if (person == null) {
@@ -1492,105 +1272,6 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(DtoMapper.toJson(result));
-	}
-
-	private void handleSessionPut(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
-			throws IOException {
-		Person person = resolveCurrentPerson(req);
-		if (person == null) {
-			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-			return;
-		}
-
-		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-		// PUT /chat/sessions/{id}/title
-		if (pathInfo.endsWith("/title")) {
-			String sessionId = extractSessionIdBeforeSuffix(pathInfo, "/title");
-			UpdateTitleRequest body;
-			try {
-				body = UpdateTitleRequest.readUpdateTitleRequest(new JsonReader(new StringR(jsonBody)));
-			} catch (Exception e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
-				return;
-			}
-			final String newTitle = body.getTitle();
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
-			if (session != null) {
-				ChatHistoryService.updateTitle(session, newTitle);
-				resp.setStatus(HttpServletResponse.SC_OK);
-			} else {
-				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			}
-			return;
-		}
-
-		// PUT /chat/sessions/{id}/messages was removed: the server is the only persistence
-		// writer (per-execution transcripts written by the agent runner). Clients must not
-		// push conversation state.
-		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-	}
-
-	/**
-	 * GET /chat/subagents/{id}/transcript - the transcript of one background subagent's child run, as
-	 * a {@code turnsJson} array in the same shape a session load returns: its live log while it works,
-	 * its recorded execution once it has ended. A subagent this window holds no job for any more is
-	 * found by the {@code runId} parameter its recorded part names.
-	 *
-	 * <p>
-	 * Lets the background-tasks panel open a subagent's full transcript (turns, tool calls). The
-	 * subagent id is resolved against the active session's {@link SubagentJobRegistry} to its
-	 * recorded child run; access is restricted to executions whose session the user owns.
-	 * </p>
-	 */
-	private void handleSubagentTranscript(HttpServletRequest req, HttpServletResponse resp, String id)
-			throws IOException {
-		Person person = resolveCurrentPerson(req);
-		if (person == null) {
-			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-			return;
-		}
-
-		resp.setContentType(CONTENT_TYPE_JSON);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-
-		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
-		SubagentJob job = registry == null ? null : registry.get(id);
-		// A subagent of an earlier server life, or of a chat this window no longer holds, has no job
-		// any more; the card that asks names the run its part recorded. The run is still checked to
-		// belong to this user below, so naming one gains nothing.
-		String runId = job != null ? job.childRunId() : req.getParameter("runId");
-		if (runId == null || runId.isEmpty()) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-
-		String transcript;
-		ConversationLog liveLog = job == null ? null : job.liveLog();
-		if (job != null && !job.status().isTerminal() && liveLog != null) {
-			// While the child works its execution holds no transcript yet; what it has done so far
-			// is in its live log. The job came from this window's own registry, so it is the user's.
-			transcript = ConversationLogSerializer.toJson(liveLog.turns());
-		} else {
-			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
-			AgentSession session = execution == null ? null : execution.getSession();
-			if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-			transcript = execution.getTranscript();
-		}
-		ChatSessionDetailResponse response = ChatSessionDetailResponse.create().setId(id);
-		if (transcript != null && !transcript.isEmpty()) {
-			response.setMessagesJson(transcript);
-			PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
-				new JsonReader(new StringR(transcript)));
-			for (PersistedTurn turn : conv.getTurns()) {
-				computeContentHtml(turn);
-			}
-			response.setTurnsJson(serializeTurns(conv.getTurns()));
-		}
-		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
 	/**
@@ -1699,28 +1380,6 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write("{\"cancelled\":" + cancelled + "}");
 	}
 
-	private void handleDeleteSession(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
-			throws IOException {
-		Person person = resolveCurrentPerson(req);
-		if (person == null) {
-			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-			return;
-		}
-
-		String sessionId = extractSessionId(pathInfo);
-		if (sessionId == null || sessionId.contains("/")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
-		TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
-		if (session != null) {
-			ChatHistoryService.deleteSession(session);
-			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-		} else {
-			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-		}
-	}
-
 	/**
 	 * The attachment types an upload may declare: every image a provider accepts, plus PDF.
 	 *
@@ -1736,94 +1395,6 @@ public class ChatServlet extends TopLogicServlet {
 		Set<String> allowed = new LinkedHashSet<>(ImageContent.ACCEPTED_MEDIA_TYPES);
 		allowed.add("application/pdf");
 		return Collections.unmodifiableSet(allowed);
-	}
-
-	/**
-	 * Restores the context-usage figures of a re-opened session from its transcript.
-	 *
-	 * <p>
-	 * Only the last turn that actually reached the model contributes: its last agent-loop
-	 * iteration's prompt size is the exact context that model saw, and the window is looked up from
-	 * the model that ran it. Turns written before the transcript carried a per-iteration usage
-	 * leave the figures unset, so the client falls back to its own estimate rather than showing a
-	 * summed prompt size as if it were one.
-	 * </p>
-	 */
-	private static void describeLastPrompt(ChatSessionDetailResponse response, List<PersistedTurn> turns) {
-		for (int i = turns.size() - 1; i >= 0; i--) {
-			PersistedTurn turn = turns.get(i);
-			if (!turn.hasLastIterationUsage()) {
-				continue;
-			}
-			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage = turn.getLastIterationUsage();
-			if (promptTokens(usage) <= 0) {
-				continue;
-			}
-			response.setLastPromptUsage(TokenUsageDto.create()
-				.setInputTokens(usage.getInputTokens())
-				.setOutputTokens(usage.getOutputTokens())
-				.setThinkingTokens(usage.getThinkingTokens())
-				.setCacheReadTokens(usage.getCacheReadTokens())
-				.setCacheWriteTokens(usage.getCacheWriteTokens()));
-			if (turn.hasContextComposition()) {
-				var composition = turn.getContextComposition();
-				response.setLastComposition(ContextCompositionEvent.create()
-					.setSystemPromptTokens(composition.getSystemPromptTokens())
-					.setToolDefinitionTokens(composition.getToolDefinitionTokens())
-					.setMessageTokens(composition.getMessageTokens())
-					.setToolResultTokens(composition.getToolResultTokens())
-					.setToolCount(composition.getToolCount())
-					.setLoadedSkills(composition.getLoadedSkills()));
-			}
-			String model = turn.getModel();
-			if (model != null && !model.isEmpty()) {
-				response.setLastModel(model);
-				response.setContextWindow(contextWindowOf(model));
-			}
-			return;
-		}
-	}
-
-	/**
-	 * Adds the recorded runs of the conversation, by the turn each of them ended with: when they
-	 * started and ended, and what they cost in the currency the chat shows costs in
-	 * ({@link CostConversion}).
-	 */
-	private static void describeRuns(ChatSessionDetailResponse response, TLObject session,
-			List<PersistedTurn> turns) {
-		Map<String, ChatHistoryService.RecordedRun> runs = ChatHistoryService.recordedRuns(session);
-		if (runs.isEmpty()) {
-			return;
-		}
-		for (PersistedTurn turn : turns) {
-			ChatHistoryService.RecordedRun run = runs.get(turn.getId());
-			if (run == null) {
-				continue;
-			}
-			RecordedRunDto dto = RecordedRunDto.create()
-				.setTurnId(turn.getId())
-				.setStartedAt(run.startedAt() == null ? 0 : run.startedAt().getTime())
-				.setEndedAt(run.endedAt() == null ? 0 : run.endedAt().getTime());
-			if (run.cost() != null) {
-				Money shown = CostConversion.shown(run.cost(), null);
-				dto.setCost(shown.amount()).setCurrency(shown.currency());
-			}
-			response.addRun(dto);
-		}
-	}
-
-	private static int promptTokens(
-			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage) {
-		return usage.getInputTokens() + usage.getCacheReadTokens() + usage.getCacheWriteTokens();
-	}
-
-	/** Context window of a configured model, or zero when the model is unknown to this deployment. */
-	private static int contextWindowOf(String model) {
-		if (!LLMProviderService.Module.INSTANCE.isActive()) {
-			return 0;
-		}
-		ModelInfo info = LLMProviderService.getInstance().getModel(model);
-		return info == null || info.limits() == null ? 0 : info.limits().contextWindow();
 	}
 
 	private static String validateAttachments(List<AttachmentDto> attachments) {
@@ -1969,24 +1540,6 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write("{\"status\":\"error\",\"error\":\"stale_window\"}");
 	}
 
-	/** Extracts session ID from path like "/sessions/123". */
-	private static String extractSessionId(String pathInfo) {
-		String rest = pathInfo.substring(PATH_SESSIONS.length());
-		if (rest.startsWith("/")) {
-			rest = rest.substring(1);
-		}
-		if (rest.endsWith("/")) {
-			rest = rest.substring(0, rest.length() - 1);
-		}
-		return rest.isEmpty() ? null : rest;
-	}
-
-	/** Extracts session ID from path like "/sessions/123/title". */
-	private static String extractSessionIdBeforeSuffix(String pathInfo, String suffix) {
-		String withoutSuffix = pathInfo.substring(0, pathInfo.length() - suffix.length());
-		return extractSessionId(withoutSuffix);
-	}
-
 	/**
 	 * Advances the subsession's KB revision at request begin so this request sees all commits
 	 * made so far — in particular the {@code AgentExecutionStore} writer thread's commits from a
@@ -2012,73 +1565,6 @@ public class ChatServlet extends TopLogicServlet {
 
 	private static String getObjectId(TLObject obj) {
 		return obj.tHandle().getObjectName().toExternalForm();
-	}
-
-	private static String formatIso(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return sdf.format(date);
-	}
-
-	/**
-	 * Serializes turns to a JSON array string for {@code ChatSessionDetailResponse.turnsJson}.
-	 */
-	private static String serializeTurns(List<PersistedTurn> turns) throws IOException {
-		StringW buffer = new StringW();
-		try (JsonWriter json = new JsonWriter(buffer)) {
-			json.beginArray();
-			for (PersistedTurn turn : turns) {
-				turn.writeTo(json);
-			}
-			json.endArray();
-		}
-		return buffer.toString();
-	}
-
-	/**
-	 * Extracts text from assistant parts after the last tool call and sets server-rendered
-	 * {@code contentHtml} on the turn. Pre-tool narration is excluded so that only the
-	 * agent's final response is rendered.
-	 */
-	private static void computeContentHtml(PersistedTurn turn) {
-		List<PersistedPart> parts = turn.getAssistantParts();
-
-		int lastToolIndex = -1;
-		for (int i = parts.size() - 1; i >= 0; i--) {
-			if ("tool_call".equals(parts.get(i).getType())) {
-				lastToolIndex = i;
-				break;
-			}
-		}
-
-		StringBuilder text = new StringBuilder();
-		for (int i = lastToolIndex + 1; i < parts.size(); i++) {
-			PersistedPart part = parts.get(i);
-			if ("text".equals(part.getType()) && part.getTextData() != null) {
-				text.append(part.getTextData().getText());
-			}
-		}
-		if (text.length() > 0) {
-			turn.setContentHtml(Converters.markdownToHtmlString(text.toString()));
-		}
-	}
-
-	/**
-	 * The agents, models and MCP servers the caller may use.
-	 *
-	 * <p>
-	 * Takes the request because the answer depends on who asks: the policy of {@code #392} filters
-	 * this list to what a run of that account would actually accept.
-	 * </p>
-	 */
-	private void handleCapabilities(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		TaskProgressTracker tracker = currentTracker();
-		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
-		resp.setStatus(HttpServletResponse.SC_OK);
-		resp.setContentType(CONTENT_TYPE_JSON);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(
-			DtoMapper.toJson(ChatCapabilities.build(resolveCurrentPerson(req), improver)));
 	}
 
 	/**

@@ -21,13 +21,14 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
 
+import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -454,14 +455,8 @@ public class TestChatRunAccess extends BasicTestCase {
 	}
 
 	/**
-	 * The capabilities payload of the acting account, as JSON, read in the given language.
-	 *
-	 * <p>
-	 * The language is switched <em>after</em> the login, because logging in sets the sub-session to
-	 * the account's own locale - a switch made before it would be undone by it, and the payload would
-	 * come back in the account's language whichever one the test named (#578). That is also the order
-	 * a real reader has: logged in first, language chosen afterwards.
-	 * </p>
+	 * The capabilities payload of the acting account, as JSON, read in the given language - what a
+	 * {@code <chat-conversation>} writes into its state on a render in that language (#578).
 	 *
 	 * <p>
 	 * Through {@code withLocale} rather than by setting the locale, so the test leaves the sub-session
@@ -473,24 +468,13 @@ public class TestChatRunAccess extends BasicTestCase {
 	 *        The reader's language, or {@code null} for the account's own.
 	 */
 	private String capabilities(Locale locale) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = client().newInvocation(
-			new GetMethodWebRequest("http://localhost/chat/capabilities"));
-		HttpServletRequest request = invocation.getRequest();
-		login(request, anna, response);
+		TaskProgressTracker tracker = ChatSessionRegistry.tracker(TLContextManager.getSubSession(), null);
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
 		if (locale == null) {
-			_servlet.get(request, response.asResponse());
-		} else {
-			TLContextManager.getSubSession().withLocale(locale, () -> {
-				try {
-					_servlet.get(request, response.asResponse());
-				} catch (Exception ex) {
-					throw new RuntimeException(ex);
-				}
-				return null;
-			});
+			return DtoMapper.toJson(ChatCapabilities.build(anna, improver));
 		}
-		return response._body.toString();
+		return TLContextManager.getSubSession().withLocale(locale,
+			() -> DtoMapper.toJson(ChatCapabilities.build(anna, improver)));
 	}
 
 	/** The value of a top-level string field of a JSON object. */

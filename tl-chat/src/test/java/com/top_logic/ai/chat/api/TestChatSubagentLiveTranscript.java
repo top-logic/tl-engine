@@ -9,8 +9,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -19,11 +17,6 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.servletunit.InvocationContext;
-import com.meterware.servletunit.ServletRunner;
-
-import com.top_logic.ai.chat.api.TestSubagentMessageEndpoint.Recording;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -31,7 +24,6 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -55,8 +47,8 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * Its run id used to be set only after the run had ended, so the subagent list offered no
  * transcript for a running child, and its recorded execution holds none until then anyway. The run id
- * is now set at the run's start, and the transcript endpoint reads the child's live log while it
- * works.
+ * is now set at the run's start, and the transcript a chat control serves
+ * ({@link ChatTranscripts#subagentTranscript}) is the child's live log while it works.
  * </p>
  */
 public class TestChatSubagentLiveTranscript extends BasicTestCase {
@@ -69,9 +61,6 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 
 	private static TLObject othersChat;
 
-	private static ServletRunner runner;
-
-	private TestSubagentMessageEndpoint.Probe _servlet;
 
 	private SubagentJob _job;
 
@@ -85,10 +74,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 			lena = TestPerson.createPerson("lena-with-a-worker");
 			lenasChat = ChatHistoryService.createSession("Lenas Chat", lena);
 			HistoryUtils.updateSessionRevision();
-			runner = new ServletRunner();
-			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
-		_servlet = new TestSubagentMessageEndpoint.Probe();
 
 		_window = new TaskProgressTracker();
 		assertTrue(_window.getSessionManager().switchSession(chatId(), lena));
@@ -120,7 +106,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 
 	/** The transcript of a running child is what it has done so far. */
 	public void testTheTranscriptOfARunningChildIsItsLiveLog() throws Exception {
-		String transcript = get("/chat/subagents/" + _job.subagentId() + "/transcript");
+		String transcript = transcript(_job.subagentId(), null);
 
 		assertTrue(transcript, transcript.contains("Searching the archive first."));
 		assertTrue(transcript, transcript.contains("find X"));
@@ -133,7 +119,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 	public void testARecordedRunIsFoundByTheRunIdItsPartNames() throws Exception {
 		String runId = recordedRun(lenasChat, "The recorded report.");
 
-		String transcript = get("/chat/subagents/sa-77/transcript?runId=" + runId);
+		String transcript = transcript("sa-77", runId);
 
 		assertTrue(transcript, transcript.contains("The recorded report."));
 	}
@@ -146,10 +132,7 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 		}
 		String runId = recordedRun(othersChat, "Not Lena's.");
 
-		Recording response = request("/chat/subagents/sa-77/transcript?runId=" + runId);
-
-		assertEquals(404, response._status);
-		assertFalse(response._body.toString().contains("Not Lena's."));
+		assertNull("Not Lena's: found as nothing.", ChatTranscripts.subagentTranscript(_window, lena, "sa-77", runId));
 	}
 
 	/** A finished child run in the given chat, with a transcript holding the given answer. */
@@ -166,22 +149,11 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 		return runId;
 	}
 
-	private String get(String path) throws Exception {
-		Recording response = request(path);
-		assertEquals(response._body.toString(), 200, response._status);
-		return response._body.toString();
-	}
-
-	private Recording request(String path) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = runner.newClient().newInvocation(
-			new GetMethodWebRequest("http://localhost" + path));
-		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, response.asResponse(), lena);
-		});
-		_servlet.get(request, response.asResponse());
-		return response;
+	/** The transcript Lena's window reads of the given subagent, as JSON. */
+	private String transcript(String subagentId, String runId) throws Exception {
+		var transcript = ChatTranscripts.subagentTranscript(_window, lena, subagentId, runId);
+		assertNotNull("The transcript must be found.", transcript);
+		return DtoMapper.toJson(transcript);
 	}
 
 	private static String chatId() {

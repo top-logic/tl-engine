@@ -37,6 +37,7 @@ An agent outside the browser has no cookie. It presents a credential as `Authori
 - A credential that may only observe is refused (403) on every `POST`: it reads `/windows`, `/observe` and `/record/steps` only.
 - An agent cannot outlive the session it was admitted to: `AgentAccess` registers the session under the credential's key when the credential is issued and drops the registration when the session ends. A credential of an ended session admits nobody (401).
 - With no authenticator configured, only browsers reach the endpoint.
+- Every request the endpoint admits to no session - no credential, an unrecognized one, the credential of an ended session, no session cookie - is answered 401 with `{"error": ...}`, never redirected to the login page: the servlet skips the framework's cookie check (`isCookieCheckRequired()`), which an agent could not pass.
 
 The module configures the token authenticator:
 

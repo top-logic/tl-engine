@@ -105,8 +105,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getVisible()}. */
 		String VISIBLE = "visible";
 
-		/** Configuration name for {@link #getCompact()}. */
-		String COMPACT = "compact";
+		/** Configuration name for {@link #isHiddenWhenCompact()}. */
+		String HIDE_WHEN_COMPACT = "hide-when-compact";
 
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
@@ -208,18 +208,22 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		boolean getVisible();
 
 		/**
-		 * Whether the column is shown in the compact display, on a phone.
+		 * Whether the table leaves the column out while the window is compact, on a phone.
 		 *
 		 * <p>
-		 * {@code false} leaves the column out while the window is compact, so that a table whose
-		 * columns would not fit a phone shows the ones it cannot do without instead of scrolling
-		 * sideways. The column is back as soon as the window is wide enough; the user's own
-		 * arrangement of the table stays as it is.
+		 * A table whose columns do not fit a phone would scroll sideways, and a column the reader
+		 * needs could end up out of sight. Marking the columns a phone can do without lets the
+		 * table show the ones it cannot do without instead.
+		 * </p>
+		 *
+		 * <p>
+		 * The column comes back as soon as the window is wide enough again. The user's own
+		 * arrangement of the table - the columns displayed, their order, the frozen columns - stays
+		 * as it is; the column only takes no room while the window is compact.
 		 * </p>
 		 */
-		@Name(COMPACT)
-		@BooleanDefault(true)
-		boolean getCompact();
+		@Name(HIDE_WHEN_COMPACT)
+		boolean isHiddenWhenCompact();
 
 		/**
 		 * The order of this column's values: an expression comparing two cell values, by which the
@@ -387,8 +391,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final boolean _hiddenByDefault;
 
-	/** See {@link Config#getCompact()}. */
-	private final boolean _compact;
+	/** See {@link Config#isHiddenWhenCompact()}. */
+	private final boolean _hiddenWhenCompact;
 
 	private final boolean _sortable;
 
@@ -420,7 +424,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
-		_compact = config.getCompact();
+		_hiddenWhenCompact = config.isHiddenWhenCompact();
 		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
@@ -482,7 +486,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_display = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
-		_compact = true;
+		_hiddenWhenCompact = false;
 		_sortable = true;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
@@ -497,7 +501,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	@Override
 	public List<String> hiddenWhenCompact() {
-		return _compact ? List.of() : declaredNames();
+		return _hiddenWhenCompact ? declaredNames() : List.of();
 	}
 
 	@Override

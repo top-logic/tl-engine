@@ -98,7 +98,7 @@ function mountTable({ compact = false, frozenColumnCount = 0 } = {}): void {
   element.id = TABLE_ID;
   document.body.appendChild(element);
   const columns = ['person', 'budget', 'used'].map(name =>
-    ({ name, label: name, width: 150, sortable: false, ...(name === 'budget' ? { compact: false } : {}) }));
+    ({ name, label: name, width: 150, sortable: false, ...(name === 'budget' ? { hideWhenCompact: true } : {}) }));
   const rows = [0, 1].map(index => ({ id: 'r' + index, index, cells: Object.fromEntries(columns.map(column => [column.name, cell(`c${index}-${column.name}`)])) }));
   act(() => mount(TABLE_ID, 'TLTableView', {
     columns, rows, totalRowCount: rows.length, scrollStart: 0, selectionMode: 'single', selectedRows: [],
@@ -175,6 +175,14 @@ describe('the columns of a table on a phone', () => {
     expect(headings()).toEqual(['person', 'used']);
     expect(cellsOfFirstRow()).toEqual(['c0-person', 'c0-used']);
     expect(document.querySelector(`#${TABLE_ID} [role=grid]`)!.getAttribute('aria-colcount')).toBe('2');
+  });
+
+  it('show the frozen columns the server counts without the columns left out', () => {
+    mountTable({ compact: true, frozenColumnCount: 2 });
+    const states = [...document.querySelectorAll(`#${TABLE_ID} [role=columnheader]`)]
+      .map(heading => heading.getAttribute('data-tl-state') ?? '');
+    expect(states[0]).toContain('frozen-last');
+    expect(states[1]).not.toContain('frozen');
   });
 
   it('freeze up to a column counting the columns left out', async () => {

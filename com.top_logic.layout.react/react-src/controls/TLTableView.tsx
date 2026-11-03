@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
+import { fullCount as fullCountOf, fullIndex, shownColumns, shownCount } from './compactColumns';
 import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
@@ -187,10 +188,10 @@ interface ColumnState {
    */
   tooltip?: string;
   /**
-   * {@code false} for a column the table leaves out in the compact display, on a phone; absent for
-   * a column shown there as well.
+   * {@code true} for a column the table leaves out while the window is compact, on a phone; absent
+   * for a column shown there as well.
    */
-  compact?: boolean;
+  hideWhenCompact?: boolean;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -439,18 +440,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const allColumns = (state.columns as ColumnState[]) ?? [];
   // The columns displayed: in the compact display without the ones a phone can do without. The
   // server counts all of them - in a column's target position and in the frozen columns - so these
-  // counts are translated, see fullCount and shownCount.
+  // counts are translated, see compactColumns.
   const compact = useDisplayClass() === 'compact';
-  const columns = React.useMemo(
-    () => (compact ? allColumns.filter((col) => col.compact !== false) : allColumns),
-    [allColumns, compact]);
+  const columns = React.useMemo(() => shownColumns(allColumns, compact), [allColumns, compact]);
   /** How many of all columns the first given number of displayed columns reach. */
-  const fullCount = React.useCallback(
-    (count: number) => (count <= 0 ? 0 : allColumns.indexOf(columns[Math.min(count, columns.length) - 1]) + 1),
-    [allColumns, columns]);
-  /** How many displayed columns are among the first given number of all columns. */
-  const shownCount = React.useCallback(
-    (count: number) => columns.filter((col) => allColumns.indexOf(col) < count).length,
+  const fullCount = React.useCallback((count: number) => fullCountOf(allColumns, columns, count),
     [allColumns, columns]);
   const totalRowCount = (state.totalRowCount as number) ?? 0;
   const rows = (state.rows as RowState[]) ?? [];
@@ -475,7 +469,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const selectedRows = (state.selectedRows as number[] | undefined) ?? NO_ROWS;
   const selectedIndexes = React.useMemo(() => new Set(selectedRows), [selectedRows]);
   const isSelected = (row: RowState) => selectedIndexes.has(row.index);
-  const frozenColumnCount = shownCount((state.frozenColumnCount as number) ?? 0);
+  const frozenColumnCount = shownCount(allColumns, columns, (state.frozenColumnCount as number) ?? 0);
   const treeMode = (state.treeMode as boolean) ?? false;
   /** The column the rows are grouped by, empty when they are not grouped. */
   const grouping = (state.grouping as string) ?? '';
@@ -580,7 +574,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     axis: 'horizontal',
     count: columns.length,
     onMove: (from, to) => sendCommand('columnReorder',
-      { column: columns[from].name, targetIndex: allColumns.indexOf(columns[to]) }),
+      { column: columns[from].name, targetIndex: fullIndex(allColumns, columns, to) }),
   });
   const columnDragging = columnReorder.dragIndex !== null;
 

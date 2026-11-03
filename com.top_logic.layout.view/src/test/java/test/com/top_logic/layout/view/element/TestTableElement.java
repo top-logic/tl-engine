@@ -435,7 +435,7 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
-	 * Tests that a column declared {@code compact="false"} is the one the table leaves out on a
+	 * Tests that a column declared {@code hide-when-compact="true"} is the one the table leaves out on a
 	 * phone, and that every other column is shown there as well.
 	 */
 	public void testColumnsHiddenWhenCompact() throws Exception {

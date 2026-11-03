@@ -15,7 +15,8 @@
 	
 	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
 	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
-	hidden and is offered in the column selection.
+	hidden and is offered in the column selection. A column declared with hide-when-compact="true"
+	("Tickets" in "Map rows") is left out while the window is compact, on a phone.
 -->
 <view>
 	<channels>
@@ -43,7 +44,8 @@
 						every column computes its value from the row. The declared type of a computed column
 						decides how its values are displayed, sorted and filtered, and what a group row
 						aggregates. The share column is declared with visible="false": it starts out
-						hidden and is offered in the column selection.
+						hidden and is offered in the column selection. The tickets column is declared with
+						hide-when-compact="true": on a phone the table shows the milestones only.
 					-->
 					<table personalization-key="table-columns-map-rows">
 						<columns>
@@ -58,6 +60,7 @@
 								<value><![CDATA[$row["name"]]]></value>
 							</computed-column>
 							<computed-column name="count"
+								hide-when-compact="true"
 								type="tl.core:Integer"
 							>
 								<label>

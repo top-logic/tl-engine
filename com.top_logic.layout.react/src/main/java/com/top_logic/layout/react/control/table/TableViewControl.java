@@ -412,10 +412,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_CSS_CLASS = "cssClass";
 
 	/**
-	 * Per-column state key, {@code false} for a column the client leaves out in the compact
-	 * display, see {@link #setHiddenWhenCompact(Set)}. Absent for a column shown there as well.
+	 * Per-column state key, {@code true} for a column the client leaves out while the window is
+	 * compact, see {@link #setHiddenWhenCompact(Set)}. Absent for a column shown there as well.
 	 */
-	private static final String COLUMN_COMPACT = "compact";
+	private static final String COLUMN_HIDE_WHEN_COMPACT = "hideWhenCompact";
 
 	/**
 	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
@@ -1095,7 +1095,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
 			if (_hiddenWhenCompact.contains(column.name())) {
-				columnState.put(COLUMN_COMPACT, Boolean.FALSE);
+				columnState.put(COLUMN_HIDE_WHEN_COMPACT, Boolean.TRUE);
 			}
 			String tooltip = description(resources, column.label());
 			if (!StringServices.isEmpty(tooltip)) {

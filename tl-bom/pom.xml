@@ -617,6 +617,11 @@
 				<artifactId>tl-layout-view-contact</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-monitoring-view</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<!-- AI modules -->
 			<dependency>

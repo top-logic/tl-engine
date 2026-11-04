@@ -1,4 +1,4 @@
-import { React, ThemeIcon, Menu, usePart, pressClosedSurface, ICON_LIST_CLOSED, ICON_REMOVE } from 'tl-react-bridge';
+import { React, ThemeIcon, Menu, usePart, usePopupTrigger, ICON_LIST_CLOSED, ICON_REMOVE } from 'tl-react-bridge';
 
 const { useState, useRef, useCallback, useLayoutEffect } = React;
 
@@ -284,6 +284,8 @@ const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
   });
 
   const close = useCallback(() => setOpen(false), []);
+  // The press that closes the menu is the press of the chip as well: its click does not open it again.
+  const trigger = usePopupTrigger(open, setOpen, 'menu');
 
   const choose = (id: string) => {
     dropFocusWish.current?.();
@@ -338,14 +340,9 @@ const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
             ref={moreRef}
             className={MORE_CLASS}
             label={<>{moreText.replace('{0}', String(menu.length))}<ThemeIcon encoded={ICON_LIST_CLOSED} className="tl-icon-sm" /></>}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            // The press that closes the menu is the press of this chip as well: its click must not open it again.
-            onClick={() => {
-              if (!pressClosedSurface()) {
-                setOpen((wasOpen) => !wasOpen);
-              }
-            }}
+            aria-haspopup={trigger.haspopup}
+            aria-expanded={trigger.expanded}
+            onClick={trigger.onClick}
           />
         )}
       </span>

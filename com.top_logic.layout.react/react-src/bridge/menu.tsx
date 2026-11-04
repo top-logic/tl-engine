@@ -1,24 +1,23 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { usePart } from './parts';
-import { useCloseOnOutsidePress } from './outside-press';
-import { useFocusTrap } from './tl-react-bridge';
 import { anchoredOverlayProps } from './focus-trap';
-import { usePopover } from './popover';
 import type { PopoverAnchor, PopoverOptions } from './popover';
+import { usePopupSurface } from './popup-surface';
 import { ThemeIcon } from './ThemeIcon';
 import { tooltipProps } from './tooltip-host';
 
-const { useCallback, useEffect, useRef } = React;
+const { useCallback, useEffect } = React;
 
 const ITEM = '[role="menuitem"]:not([disabled]), [role="menuitemcheckbox"]:not([disabled]), [role="menuitemradio"]:not([disabled])';
 
 /**
  * Roving tabindex over the entries of a menu: exactly one entry is in the tab order, the one that
- * has focus; arrows cycle, Home/End jump, Escape closes; disabled and hidden entries are skipped. Shared by
- * Menu and the toolbar overflow.
+ * has focus; arrows cycle, Home/End jump; disabled and hidden entries are skipped. Shared by
+ * Menu and the toolbar overflow. Escape is not the menu's but its surface's (usePopupSurface), which
+ * takes it wherever the focus is. A key an entry has handled itself (`preventDefault`) is left alone.
  */
-export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean, onClose: () => void): { onKeyDown: (e: React.KeyboardEvent) => void } {
+export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean): { onKeyDown: (e: React.KeyboardEvent) => void } {
   // Only rendered entries rove: an entry inside a hidden wrapper (the upload button renders
   // `<span hidden>` around its menuitem) cannot take focus, and as a target it would stall the arrows.
   const items = useCallback(
@@ -32,6 +31,7 @@ export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: bo
   }, [open, items]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.defaultPrevented) return;
     const all = items();
     if (all.length === 0) return;
     const current = all.indexOf(document.activeElement as HTMLElement);
@@ -40,12 +40,11 @@ export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: bo
     else if (e.key === 'ArrowUp') next = (current - 1 + all.length) % all.length;
     else if (e.key === 'Home') next = 0;
     else if (e.key === 'End') next = all.length - 1;
-    else if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
     if (next < 0) return;
     e.preventDefault();
     all.forEach((el, i) => el.setAttribute('tabindex', i === next ? '0' : '-1'));
     all[next].focus();
-  }, [items, onClose]);
+  }, [items]);
 
   return { onKeyDown };
 }
@@ -61,23 +60,15 @@ export interface MenuProps {
 }
 
 /**
- * The one menu: a tl-popover with entries, portaled to the body, placed by usePopover, closed on
- * Escape and on a press outside. Mounted only while open - a caller that needs its entries to stay
- * live (the toolbar overflow) keeps them mounted itself and uses useRovingMenu directly.
+ * The one menu: a tl-popover with entries, portaled to the body, in the shell of every floating surface
+ * (usePopupSurface): placed at its anchor and held to the room there, closed on Escape and on a press
+ * outside, the focus on its first entry while open and back where it was afterwards. Its trigger is
+ * wired by usePopupTrigger. Mounted only while open - a caller that needs its entries to stay live (the
+ * toolbar overflow) keeps them mounted itself, in the same shell, and uses useRovingMenu directly.
  */
 export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id, className, children }) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const { setFloating, style } = usePopover({ open, anchor, placement });
-  // Both the own ref and the popover's go on the surface. A plain callback rather than floating-ui's
-  // useMergeRefs: that one's return type comes from the React types of this module and fails to match
-  // the JSX of a module with its own copy of @types/react.
-  const setRefs = useCallback((el: HTMLDivElement | null) => {
-    ref.current = el;
-    setFloating(el);
-  }, [setFloating]);
-  useCloseOnOutsidePress(open, [ref], onClose);
-  useFocusTrap(open, ref, 'first');
-  const { onKeyDown } = useRovingMenu(ref, open, onClose);
+  const { surfaceRef, setRefs, style } = usePopupSurface({ open, anchor, placement, onClose, initialFocus: 'first' });
+  const { onKeyDown } = useRovingMenu(surfaceRef, open);
 
   if (!open) return null;
   return createPortal(

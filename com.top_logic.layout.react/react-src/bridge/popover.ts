@@ -7,7 +7,7 @@
  * caller's.
  */
 import React from 'react';
-import { useFloating, useHover, safePolygon, autoUpdate, offset, flip, shift } from '@floating-ui/react';
+import { useFloating, useHover, safePolygon, autoUpdate, offset, flip, shift, size } from '@floating-ui/react';
 import { tokenPx } from './token-px';
 import { HOVER_DELAY_MS, CLOSE_DELAY_MS_INTERACTIVE } from './tooltip-host';
 
@@ -50,6 +50,16 @@ export interface PopoverOptions {
   placement?: PopoverPlacement;
   /** Opens and closes the surface on hovering its anchor, which must then be an element. */
   hover?: PopoverHover;
+
+  /**
+   * Whether the surface is held to the room on the side of its anchor it stands on: its height is at most that room
+   * (the viewport edge keeping the gap), and at most --tl-size-popover-max, so that a surface too high for either
+   * side scrolls instead of covering its anchor. Set on the floating element itself (see {@link fittedMaxHeight}).
+   *
+   * <p>Not for a surface that caps its height lower in the design system - the popup of a select shows eight rows:
+   * the inline height would lift that cap.</p>
+   */
+  fitHeight?: boolean;
 }
 
 /**
@@ -62,16 +72,45 @@ function gapPx(): number {
 }
 
 /**
+ * The max height of a surface held to the room at its anchor (see {@link PopoverOptions.fitHeight}): the room in
+ * whole pixels, never below zero, and at most --tl-size-popover-max. The token stays a reference for the browser to
+ * resolve; the design system's cap on tl-popover is the same token.
+ */
+export function fittedMaxHeight(availableHeight: number): string {
+  return `min(${Math.max(0, Math.floor(availableHeight))}px, var(--tl-size-popover-max))`;
+}
+
+/**
+ * Writes the room size() found onto the floating element. Directly, not through React state: size() measures the
+ * element again right after and, if the cap changed its height, has the placement computed once more with it - so
+ * flip decides with the height the surface really has, in the same pass. One function for all surfaces, so that
+ * useFloating, which compares the middleware of two renders, sees the same middleware.
+ */
+function applyFittedHeight({ availableHeight, elements }: { availableHeight: number; elements: { floating: HTMLElement } }): void {
+  elements.floating.style.maxHeight = fittedMaxHeight(availableHeight);
+}
+
+/**
  * The placement rules: offset by the gap, flipped to the other side where it does not fit, and shifted
  * along both axes so that, where neither side has room, the surface overlaps its anchor instead of
- * leaving the viewport.
+ * leaving the viewport. With `fitHeight` (see {@link PopoverOptions.fitHeight}), the height is held to the
+ * room on the side flip has chosen, keeping the gap to the viewport edge as shift does.
+ *
+ * <p>The height is fitted between flip and shift: after shift, which moves the surface along the side axis
+ * as well, size() takes the whole height of the viewport as the room, and the surface would cover its anchor
+ * instead of scrolling.</p>
  */
-export function popoverMiddleware(gap: number) {
-  return [offset(gap), flip(), shift({ padding: gap, crossAxis: true })];
+export function popoverMiddleware(gap: number, fitHeight = false) {
+  return [
+    offset(gap),
+    flip(),
+    ...(fitHeight ? [size({ padding: gap, apply: applyFittedHeight })] : []),
+    shift({ padding: gap, crossAxis: true }),
+  ];
 }
 
 export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElement | null) => void; style: React.CSSProperties } {
-  const { open, anchor, placement = 'bottom-start', hover } = opts;
+  const { open, anchor, placement = 'bottom-start', hover, fitHeight = false } = opts;
   // Two getComputedStyle calls per render would run per keystroke in a select: read on opening only.
   const gap = React.useMemo(gapPx, [open]);
   const hoverRef = React.useRef(hover);
@@ -81,7 +120,7 @@ export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElemen
     onOpenChange: next => hoverRef.current?.onOpenChange(next),
     placement,
     strategy: 'fixed',
-    middleware: popoverMiddleware(gap),
+    middleware: popoverMiddleware(gap, fitHeight),
     whileElementsMounted: open ? autoUpdate : undefined,
   });
   useHover(context, {

@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart, tokenPx, useChildStates } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useI18N, rootClassName, createPortal, usePopupSurface, usePopupTrigger, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart, tokenPx, useChildStates } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { MenuSeparator, useRovingMenu } from 'tl-react-bridge';
 
@@ -121,41 +121,37 @@ const InlineGroup: React.FC<{ units: PlacedUnit[] }> = ({ units }) => {
 
 /**
  * Renders a clique group as a dropdown menu: the part `MenuTrigger` opening a tl-menu, whose
- * entries are the group's buttons, presented as menu items (ButtonDefaults `menu-item`).
+ * entries are the group's buttons, presented as menu items (ButtonDefaults `menu-item`). The menu
+ * is in the shell of every floating surface (usePopupSurface) and stays mounted while closed; the
+ * shell binds Escape, the focus trap and the outside press to the open state only.
  */
 const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitIndex?: number }> =
     ({ group, align = 'end', unitIndex }) => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
   // The trigger looks like the buttons beside it.
   const inheritedAppearance = useButtonDefaults().appearance ?? 'ghost';
   const MenuTrigger = usePart('MenuTrigger');
 
-  const handleToggle = useCallback(() => {
-    setOpen(prev => !prev);
-  }, []);
   const close = useCallback(() => setOpen(false), []);
 
+  // A press on the trigger is no press outside the dropdown: the trigger toggles it on its click.
+  const trigger = usePopupTrigger(open, setOpen, 'menu', true);
+
   // Placed at the trigger edge the group grows away from: a trailing group opens to the left of its
-  // right edge, a leading one to the right of its left edge.
-  const { setFloating, style } = usePopover({
+  // right edge, a leading one to the right of its left edge. While open, the focus is trapped in the
+  // dropdown (on its first item) and returns when it closes, so keystrokes can't leak to the background.
+  const { surfaceRef, setRefs, style } = usePopupSurface({
     open,
     anchor: triggerRef.current,
     placement: align === 'start' ? 'bottom-start' : 'bottom-end',
+    onClose: close,
+    initialFocus: 'first',
+    inside: [triggerRef],
   });
-  const setMenuRefs = useMergeRefs<HTMLDivElement>([menuRef, setFloating]);
 
-  // Close on a press outside the dropdown. A press on the trigger is left to the trigger, which
-  // toggles the dropdown on its click.
-  useCloseOnOutsidePress(open, [menuRef, triggerRef], close);
-
-  // While open, trap focus in the dropdown (initial focus on the first item) and restore it to
-  // the trigger when it closes, so keystrokes can't leak to the background.
-  useFocusTrap(open, menuRef, 'first');
-
-  // Arrows, Home, End move between the entries; Escape closes.
-  const { onKeyDown } = useRovingMenu(menuRef, open, close);
+  // Arrows, Home, End move between the entries.
+  const { onKeyDown } = useRovingMenu(surfaceRef, open);
 
   const visibleItems = group.items.filter(item => item != null);
   const sections = (group.subGroups ?? [])
@@ -185,14 +181,15 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
       <MenuTrigger
         ref={triggerRef}
         appearance={inheritedAppearance}
-        expanded={open}
+        expanded={trigger.expanded}
+        haspopup={trigger.haspopup}
         label={label}
         icon={group.icon}
         // Don't steal focus from the content (e.g. a table) on mouse-open: the menu acts on the
         // current selection, so focus should return there after a command's dialog closes. The
         // menu's own focus trap still moves focus into the dropdown while it is open.
         onMouseDown={(e) => e.preventDefault()}
-        onClick={handleToggle}
+        onClick={trigger.onClick}
       />
       {/* The dropdown stays mounted (only hidden when closed) so its item controls keep
           their live SSE subscription. If items were mounted lazily on open, they would read
@@ -203,7 +200,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
           portal. */}
       {createPortal(
         <div
-          ref={setMenuRefs}
+          ref={setRefs}
           className="tl-popover tl-menu"
           role="menu"
           hidden={!open}

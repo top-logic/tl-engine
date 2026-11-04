@@ -121,3 +121,29 @@ describe('the cost of a run', () => {
     expect(metas.map((m) => ('currency' in m ? m.currency : undefined))).toEqual([undefined, 'USD'])
   })
 })
+
+/**
+ * A model request opens its answer message when it starts and thinks before it writes; the thought
+ * stands in front of that message, in the order it happened (#30143).
+ */
+describe('a thought of a model request', () => {
+  it('stands before the answer message the request opened', () => {
+    const messages = run([
+      { type: 'ADD_ASSISTANT', id: 'a1', text: '', isStreaming: true },
+      { type: 'APPEND_THINKING', delta: 'Erst ' },
+      { type: 'APPEND_THINKING', delta: 'überlegen' },
+      { type: 'APPEND_TEXT', id: 'a1', delta: 'Lissabon' },
+    ])
+    expect(messages.map((m) => m.type)).toEqual(['thinking', 'assistant_text'])
+    expect(messages[0].type === 'thinking' && messages[0].content).toBe('Erst überlegen')
+  })
+
+  it('follows an answer that has text already', () => {
+    const messages = run([
+      { type: 'ADD_ASSISTANT', id: 'a1', text: '', isStreaming: true },
+      { type: 'APPEND_TEXT', id: 'a1', delta: 'Lissabon' },
+      { type: 'APPEND_THINKING', delta: 'Noch etwas' },
+    ])
+    expect(messages.map((m) => m.type)).toEqual(['assistant_text', 'thinking'])
+  })
+})

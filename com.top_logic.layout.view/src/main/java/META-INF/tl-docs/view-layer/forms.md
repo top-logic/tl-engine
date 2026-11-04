@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -190,7 +190,8 @@ between `min` and `max`, snapping to `step` (whole numbers where nothing is stat
 its bounds, which `@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)` demands of
 the configuration - `min` and `max` are mandatory as soon as `display` is `slider` and ignored
 otherwise. The slider exchanges its value as a number rather than as formatted text, so no locale
-format reads it. `unit` is written after the value and after both bounds (`12,5 %`).
+format reads it. `unit` is written after the value and, on a slider, after both bounds (`12,5 %`),
+see [the unit and the format of a number](#the-unit-and-the-format-of-a-number).
 
 `min`, `max`, `step` and `unit` are TL-Script expressions. A literal is a constant range:
 
@@ -227,6 +228,70 @@ zero - is refused when the configuration is instantiated if it is constant. A ra
 inputs may be unusable for a while, e.g. while a channel is still empty: the slider is then
 disabled until the channels yield a usable range. A slider with inputs resolves its channels in
 the view it is created in; created outside of a view, it is refused.
+
+### The unit and the format of a number
+
+A number attribute names the unit it is measured in with the `<unit>` annotation (`TLUnit`, for
+`INT` and `FLOAT` types). The unit is written after the value - in the input and the read-only
+field of a form, after the value and the bounds of a slider, in a [table cell](doc:view-layer/tables#units-of-numbers-in-cells) -
+and is display only: the user types the number without it, it is no part of the format, and no
+value is converted. `value` is a TL-Script expression: a constant, an internationalized text
+written in the language of the user, or a function of the object owning the attribute for a unit
+that differs per object.
+
+```xml
+<property name="processingTime"
+	type="tl.core:Double"
+>
+	<annotations>
+		<unit value="#(&quot;min&quot;@en, &quot;Min.&quot;@de)"/>
+		<format>
+			<decimal pattern="0.###"/>
+		</format>
+	</annotations>
+</property>
+<property name="weight"
+	type="tl.core:Double"
+>
+	<annotations>
+		<unit value="d -> $d.get(`my:Item#weightUnit`)"/>
+	</annotations>
+</property>
+```
+
+- **Which unit wins.** The `unit` of the field's `NumberInputControlProvider` wins over the
+  annotation of the attribute, the annotation of the attribute over one of its type. A result of
+  nothing or an empty text writes no unit.
+- **When it is computed.** A function is called with the object of the form when the field is
+  created and again when the form switches to another object; it is evaluated without access
+  checks. While the form is edited - also in a create dialog -, the function reads the values
+  entered in the form, like the other scripts of a form (see [derived fields](#derived-fields)),
+  and the unit follows them before anything is saved: entering `g` in the `weightUnit` of the
+  demo changes the unit of its `weight`. Cancel shows the unit of the stored object again. A field
+  no object owns (a `<value-input>`) writes a constant unit, but calls no function.
+- **The shortest representation.** The pattern `0.###` writes a number with as many decimal places
+  as it has, up to three: `120 min`, `0,5 min` for a German user. A number typed into a field of
+  fractional numbers is a fractional number also without a fraction - `45` stores `45.0`.
+
+A field states a format of its own with the nested `<format>` of its `NumberInputControlProvider`,
+taking the same definition as the `<format>` annotation of an attribute; it wins over that
+annotation for the input, the text beside the handle of a slider, and its bounds. Here a field of
+an attribute that states neither unit nor format:
+
+```xml
+<field attribute="amount">
+	<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+		unit="'EUR'"
+	>
+		<format>
+			<decimal pattern="#,##0.00"/>
+		</format>
+	</input-control>
+</field>
+```
+
+Demo: *Attributes* (`views/attributes.view.xml` in `com.top_logic.demo.react`) - the group
+*Numbers* of the form of the tab *Selector + Form* and of the edit dialog of the tab *Table*.
 
 **A truth value** — `BooleanControlProvider`, option `display` (`BooleanPresentation`): the box that
 is ticked by default, `switch` for a handle sliding between the two states, `radio` and `select` for

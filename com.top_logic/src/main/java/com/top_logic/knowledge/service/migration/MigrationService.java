@@ -247,7 +247,12 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 	private final ConnectionPool _connectionPool;
 
-	private MigrationInfo _migrationInfo;
+	private MigrationInfo _migrationInfo = MigrationInfo.NO_MIGRATION;
+
+	/**
+	 * The lock held while migrating, <code>null</code> outside the migration.
+	 */
+	private MigrationLock _migrationLock;
 
 	private File _kbDump;
 
@@ -268,51 +273,63 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	public MigrationService(InstantiationContext context, Config config) {
 		super(context, config);
 		_connectionPool = ConnectionPoolRegistry.getDefaultConnectionPool();
-		_migrationInfo = fetchMigrations(context);
 	}
 
-	private MigrationInfo fetchMigrations(InstantiationContext context) {
+	/**
+	 * Whether the database can be migrated at all.
+	 */
+	private boolean isMigrationEnabled(Log log) {
 		if (_connectionPool.isDryRun()) {
-			context.info("No automatical data migration, because system is in \"dry run\" mode.");
-			_automaticMigration = false;
-			return MigrationInfo.NO_MIGRATION;
+			log.info("No automatical data migration, because system is in \"dry run\" mode.");
+			return false;
 		}
-		PooledConnection connection = _connectionPool.borrowReadConnection();
-		try {
-			return createMigrations(context, connection);
-		} catch (SQLException ex) {
-			context.error("Unable to fetch migration scripts.", ex);
-			_automaticMigration = false;
-			return MigrationInfo.NO_MIGRATION;
-		} finally {
-			_connectionPool.releaseReadConnection(connection);
-		}
-	}
-
-	private MigrationInfo createMigrations(InstantiationContext context, PooledConnection connection)
-			throws SQLException {
-
 		if (Environment.getSystemPropertyOrEnvironmentVariable(InitialTableSetup.NO_DATABASE_TABLE_SETUP, false)) {
 			StringBuilder info = new StringBuilder();
 			info.append("No automatical migration, because system property '");
 			info.append(InitialTableSetup.NO_DATABASE_TABLE_SETUP);
 			info.append("' is set.");
-			context.info(info.toString());
-			_automaticMigration = false;
-			return MigrationInfo.NO_MIGRATION;
-		} else if (!DBProperties.tableExists(connection)) {
-			StringBuilder info = new StringBuilder();
-			info.append("No database table ");
-			info.append(DBProperties.TABLE_NAME);
-			info.append(" to read versions from.");
-			context.info(info.toString(), Protocol.WARN);
-			_automaticMigration = false;
-			return MigrationInfo.NO_MIGRATION;
+			log.info(info.toString());
+			return false;
 		}
+		PooledConnection connection = _connectionPool.borrowReadConnection();
+		try {
+			if (!DBProperties.tableExists(connection)) {
+				StringBuilder info = new StringBuilder();
+				info.append("No database table ");
+				info.append(DBProperties.TABLE_NAME);
+				info.append(" to read versions from.");
+				log.info(info.toString(), Protocol.WARN);
+				return false;
+			}
+		} catch (SQLException ex) {
+			log.error("Unable to check for database table " + DBProperties.TABLE_NAME + ".", ex);
+			return false;
+		} finally {
+			_connectionPool.releaseReadConnection(connection);
+		}
+		return true;
+	}
 
-		Config config = getConfig();
-		List<String> migrationModules = config.getModules();
-		return relevantMigrations(context, connection, migrationModules, config.getAllowDowngrade());
+	/**
+	 * Determines the migrations to apply from the versions currently stored in the database.
+	 *
+	 * <p>
+	 * Must be called while holding the {@link MigrationLock}: Another node may have migrated the
+	 * database in the meantime.
+	 * </p>
+	 */
+	private MigrationInfo fetchMigrations(Log log) {
+		PooledConnection connection = _connectionPool.borrowReadConnection();
+		try {
+			Config config = getConfig();
+			List<String> migrationModules = config.getModules();
+			return relevantMigrations(log, connection, migrationModules, config.getAllowDowngrade());
+		} catch (SQLException ex) {
+			log.error("Unable to fetch migration scripts.", ex);
+			return MigrationInfo.NO_MIGRATION;
+		} finally {
+			_connectionPool.releaseReadConnection(connection);
+		}
 	}
 
 	/**
@@ -531,7 +548,37 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	protected void startUp() {
 		super.startUp();
 		LogProtocol log = new LogProtocol(MigrationService.class);
-		migrate(log);
+		if (!isMigrationEnabled(log)) {
+			log.checkErrors();
+			_automaticMigration = false;
+			_migrationInfo = MigrationInfo.NO_MIGRATION;
+			return;
+		}
+
+		/* The migration runs before the cluster startup token is acquired (the token requires the
+		 * persistency layer, i.e. a migrated database). The migration lock prevents nodes starting
+		 * concurrently from migrating the same database at the same time. */
+		try (MigrationLock lock = acquireLock(log)) {
+			_migrationLock = lock;
+
+			// Determine the pending migrations only after acquiring the lock: A node that had to
+			// wait finds the database migrated by the other node.
+			_migrationInfo = fetchMigrations(log);
+			log.checkErrors();
+
+			migrate(log);
+		} finally {
+			_migrationLock = null;
+		}
+	}
+
+	private MigrationLock acquireLock(Protocol log) {
+		try {
+			return MigrationLock.acquire(log, _connectionPool);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw log.fatal("Interrupted while waiting for the migration lock.", ex);
+		}
 	}
 
 	/**
@@ -827,6 +874,10 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			log.info("Adapting database");
 			StopWatch sw = StopWatch.createStartedWatch();
 			DataMigration.dropAndRecreateDatabase(connection, kbConfig, in);
+
+			// The properties table holding the migration lock has been dropped and re-created.
+			_migrationLock.restore();
+
 			log.info("Database adapted in " + sw);
 		} catch (Exception ex) {
 			log.error("Unable to install SQL.", ex);

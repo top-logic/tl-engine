@@ -33,7 +33,8 @@ const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display:
  *     placeholder → `placeholder`;</li>
  * <li>multiline, rows → a multi-line `TextField`; preformatted → its text area in the code font of
  *     the design system, without wrapping its lines (`wrap="off"`);</li>
- * <li>icon → a start adornment ({@link ThemeIcon}); action → an end adornment;</li>
+ * <li>icon → a start adornment ({@link ThemeIcon}); suffix and action → an end adornment, the
+ *     suffix text ahead of the action;</li>
  * <li>disabled → `disabled`; readOnly → `readOnly` of the input;</li>
  * <li>validation → `error` (with `aria-invalid`) or color `warning`; required →
  *     `aria-required` - not `required`, which would mark a label the field does not have;</li>
@@ -44,8 +45,8 @@ const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display:
  * </ul>
  */
 const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
-  id, ref, role, value, type, inputMode, placeholder, multiline, rows, preformatted, icon, action, disabled, readOnly,
-  required, validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
+  id, ref, role, value, type, inputMode, placeholder, multiline, rows, preformatted, icon, action, suffix, disabled,
+  readOnly, required, validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
   ...attributes
 }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,8 +81,8 @@ const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
           startAdornment: !multiline && icon
             ? <InputAdornment position="start"><ThemeIcon encoded={icon} className={ICON_CLASS} /></InputAdornment>
             : undefined,
-          endAdornment: !multiline && action
-            ? <InputAdornment position="end">{action}</InputAdornment>
+          endAdornment: !multiline && (suffix || action)
+            ? <InputAdornment position="end">{suffix}{action}</InputAdornment>
             : undefined,
         },
         htmlInput: {

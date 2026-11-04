@@ -81,7 +81,10 @@ import com.top_logic.util.error.TopLogicException;
  * <li>{@value #MILESTONE}: the type of the composition {@value #MILESTONES} of a project,
  * {@value #NOTE}: the type of the composition {@value #NOTES} of a category. Neither is configured,
  * so both are decided by their container, the access parent a composition part gets by
- * default.</li>
+ * default. Further compositions of milestones of a project carry display annotations:
+ * <code>hiddenMilestones</code> is hidden, <code>fixedMilestones</code> read-only,
+ * <code>laterMilestones</code> hidden on creation, and <code>approvedMilestones</code> is hidden by
+ * a dynamic visibility while the project is not {@value #APPROVED}.</li>
  * <li>{@value #REMARK}: a type whose access parent is computed by a script, so that the types of its
  * access parents are not known statically.</li>
  * </ul>

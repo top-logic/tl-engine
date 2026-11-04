@@ -5,11 +5,17 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
+
+import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -21,45 +27,44 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 
 /**
- * Tells the browser that the acting account's chats changed on the server, so its store reads the
- * list again.
+ * Keeps the acting account's chat list in the browser's state, and follows its changes.
  *
  * <p>
- * The browser's store keeps its own copy of the chat list - from {@code GET /chat/sessions} - and
- * reads the title of the open chat, which the conversation's header shows, from that copy. It read
- * the list when it booted and after its own sends and deletes, and at no other time. A chat renamed
- * anywhere else - the row menu of a {@code <data-list>}, {@code aiSessionRename} from a script,
- * another tab - therefore kept its old title in the header until the page was loaded again, and
- * switching to another chat and back did not help, because that reads the same copy (#596).
+ * The browser's store shows the account's chats in the rail and reads the title of the open chat,
+ * which the conversation's header shows, from that list. The list is written with every render of
+ * the element ({@link #write()}), and again whenever the account's chats change on the server - a
+ * chat renamed in the row menu of a {@code <data-list>}, by {@code aiSessionRename} from a script or
+ * in another tab, a chat created by a first send, a chat deleted anywhere (#596).
  * </p>
  *
  * <p>
- * The server does know: {@code aiSessionRename} commits through the {@code AgentExecutionStore}, the
- * engine delivers that commit to every window whose model listeners it affects, and the events
- * reach this listener on the window's own model scope. This
- * counts the changes that concern the account's chats into {@link #REVISION}; the browser re-reads
- * the list whenever that count moves. The count, not the titles, because the list is what the
- * browser has to follow - a rename moves a chat to "today" in the rail as well.
+ * The server knows of such a change: {@code aiSessionRename} commits through the
+ * {@code AgentExecutionStore}, the engine delivers that commit to every window whose model
+ * listeners it affects, and the events reach this listener on the window's own model scope. This
+ * reads the list again for a change that concerns the account's chats, and writes it into
+ * {@link #SESSIONS} when it differs from the one the browser was told.
  * </p>
  *
  * <p>
- * <b>What counts.</b> A chat of the account that was created, and one whose title is not the title
- * this watch saw last. Not every update: a running agent writes its chat's bookkeeping several
- * times per send, and counting each write made one send cost four list reads instead of one. The
- * first update of a chat this watch has not seen yet counts, because nothing says what its title
- * was before - so a run costs at most one extra read per chat, and a rename is never missed. A
- * deletion always counts: a deleted object can no longer be asked whose it was, and a list read
- * again for somebody else's deletion costs one request.
+ * <b>What is read again for.</b> A chat of the account that was created, and one whose title is not
+ * the title this watch saw last. Not every update: a running agent writes its chat's bookkeeping
+ * several times per send, and reading the list for each write made one send cost four list reads
+ * instead of one. The first update of a chat this watch has not seen yet counts, because nothing
+ * says what its title was before - so a run costs at most one extra read per chat, and a rename is
+ * never missed. A deletion always counts: a deleted object can no longer be asked whose it was, and
+ * a list read again for somebody else's deletion costs one query and sends nothing.
  * </p>
  */
 final class SessionListWatch implements ModelListener {
 
-	/** State key: how often the account's chats changed while this element was showing. */
-	static final String REVISION = "sessionsRevision";
+	/** State key: the chats of the acting account, most recently updated first. */
+	static final String SESSIONS = "sessions";
 
 	private final TLStructuredType _type;
 
 	private final Supplier<Person> _user;
+
+	private final Function<Person, List<ChatSessionDto>> _list;
 
 	private final BiConsumer<String, Object> _state;
 
@@ -67,7 +72,11 @@ final class SessionListWatch implements ModelListener {
 
 	private boolean _attachedBefore;
 
-	private int _revision;
+	/**
+	 * What the browser was last told, one entry per chat, to tell a list that changed from one read
+	 * again for nothing.
+	 */
+	private List<List<String>> _written;
 
 	/** The title each chat of the account had when this watch last saw it change. */
 	private final Map<ObjectKey, String> _titles = new HashMap<>();
@@ -79,14 +88,24 @@ final class SessionListWatch implements ModelListener {
 	 *        The chat session type, {@code tl.ai.execution:AgentSession}.
 	 * @param user
 	 *        The acting account; only its chats count.
+	 * @param list
+	 *        Reads the chat list of an account.
 	 * @param state
 	 *        Where the browser's state is written.
 	 */
-	SessionListWatch(TLStructuredType type, Supplier<Person> user, BiConsumer<String, Object> state) {
+	SessionListWatch(TLStructuredType type, Supplier<Person> user, Function<Person, List<ChatSessionDto>> list,
+			BiConsumer<String, Object> state) {
 		_type = type;
 		_user = user;
+		_list = list;
 		_state = state;
-		_state.accept(REVISION, Integer.valueOf(_revision));
+	}
+
+	/** Writes the account's chat list as it is now, for a render of the element. */
+	void write() {
+		List<ChatSessionDto> list = _list.apply(_user.get());
+		_written = keys(list);
+		_state.accept(SESSIONS, list);
 	}
 
 	/**
@@ -94,7 +113,7 @@ final class SessionListWatch implements ModelListener {
 	 *
 	 * <p>
 	 * A second attach - the element comes back after the user was on another page of the shell -
-	 * counts as a change: what happened meanwhile was not heard, and a store another element kept
+	 * reads the list again: what happened meanwhile was not heard, and a store another element kept
 	 * alive would still hold the list it had.
 	 * </p>
 	 */
@@ -166,8 +185,23 @@ final class SessionListWatch implements ModelListener {
 		return !seen || !Objects.equals(before, _titles.get(key));
 	}
 
+	/** Reads the list again and tells the browser, if it is not what the browser was told. */
 	private void changed() {
-		_state.accept(REVISION, Integer.valueOf(++_revision));
+		List<ChatSessionDto> list = _list.apply(_user.get());
+		List<List<String>> keys = keys(list);
+		if (keys.equals(_written)) {
+			return;
+		}
+		_written = keys;
+		_state.accept(SESSIONS, list);
+	}
+
+	private static List<List<String>> keys(List<ChatSessionDto> list) {
+		List<List<String>> result = new ArrayList<>(list.size());
+		for (ChatSessionDto session : list) {
+			result.add(Arrays.asList(session.getId(), session.getTitle(), session.getLastUpdated()));
+		}
+		return result;
 	}
 
 }

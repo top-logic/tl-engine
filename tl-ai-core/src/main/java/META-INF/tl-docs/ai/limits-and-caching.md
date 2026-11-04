@@ -51,7 +51,7 @@ The settings are read through `RunLimitSettings` from the running services, so a
 | `n` | `q > 0` | `n` workers, `q` wait, the next is refused |
 | `n` | `-1` | `n` workers, the next is refused |
 
-A ceiling makes a send **wait**, because somebody who asked a question wants the answer late rather than not at all. Only the last two rows refuse: `ChatProcessor.sendMessage` asks `ChatRunExecutor.hasRoom()` before it writes anything down and answers `SendResult.rejected(reason)`, which `ChatServlet` turns into HTTP 429 with `{"status":"rejected","reason":"..."}`; the React client throws a `RefusedError` and shows the sentence in the composer's notice strip. Between that check and the submit another request can take the last place; `ChatRunExecutor.submit` then throws `NoRoom`, and the refusal is said in the conversation, under the user's message.
+A ceiling makes a send **wait**, because somebody who asked a question wants the answer late rather than not at all. Only the last two rows refuse: `ChatProcessor.sendMessage` asks `ChatRunExecutor.hasRoom()` before it writes anything down and answers `SendResult.rejected(reason)`, which the `send` command of the chat controls answers with `{"status":"rejected","reason":"..."}`; the React client throws a `RefusedError` and shows the sentence in the composer's notice strip. Between that check and the submit another request can take the last place; `ChatRunExecutor.submit` then throws `NoRoom`, and the refusal is said in the conversation, under the user's message.
 
 ### The per-account cap and the budgets
 

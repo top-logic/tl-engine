@@ -1531,7 +1531,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * An administrator may change any session. That mirrors {@code ToolAuthorization} and
 	 * {@code RunAuthorization}, where an administrator already bypasses the layer, and it is what
 	 * makes a {@code <data-list>} over all sessions usable as an administration view. It does not
-	 * loosen {@code ChatServlet}, which stays strictly owner-only: there the guard also defends
+	 * loosen the commands of the chat controls, which stay strictly owner-only: there the guard also defends
 	 * against a guessed id arriving from a browser, and no administration surface asks for it.
 	 * </p>
 	 */

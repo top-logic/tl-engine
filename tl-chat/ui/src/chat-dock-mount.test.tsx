@@ -29,7 +29,6 @@ let serial = 0
 function dockState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     chatId,
-    windowId: 'w1',
     authenticated: true,
     language: 'en',
     icon: 'css:bi bi-stars',

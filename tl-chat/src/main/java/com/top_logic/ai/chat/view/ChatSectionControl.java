@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.top_logic.ai.chat.view.ChatSectionElement.Config;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -31,9 +30,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * question - how many rows a list has - writes the channel on the server and pays nothing.
  * </p>
  */
-public class ChatSectionControl extends ReactControl {
-
-	private final ChatViewBinding _binding;
+public class ChatSectionControl extends ChatControl {
 
 	private final ViewChannel _badgeChannel;
 
@@ -50,36 +47,17 @@ public class ChatSectionControl extends ReactControl {
 	 *        Registered React element rendering this section when the configuration names none.
 	 */
 	public ChatSectionControl(ViewContext context, Config config, String tag, String defaultReactElement) {
-		super(context, null, blankToDefault(config.getReactElement(), defaultReactElement));
-		setCssClass(config.getCssClass());
-
 		// The section's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
-		// "default". The browser keys its store by what we push here, so it must be the resolved id.
-		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId, tag);
-		_binding.writeSharedState(this::putState);
-		putState("chatId", chatId);
+		// "default".
+		super(context, blankToDefault(config.getReactElement(), defaultReactElement),
+			ChatScope.resolve(context, config.getChatId()), tag);
+		setCssClass(config.getCssClass());
 
 		ChannelRef badgeRef = config.getBadge();
 		_badgeChannel = badgeRef == null ? null : context.resolveChannel(badgeRef);
 		// The browser only reports a count when somebody is listening; without a channel the round
 		// trip would end nowhere.
 		putState("badge", Boolean.valueOf(_badgeChannel != null));
-	}
-
-	/**
-	 * Re-reads the user's stored layout.
-	 *
-	 * <p>
-	 * A browser reload re-renders the control tree the window already holds, so this hook is the
-	 * only place that runs again. Writing the layout in the constructor would replay the first
-	 * render's rail state for the life of the window (Gitea #423).
-	 * </p>
-	 */
-	@Override
-	protected void onBeforeWrite() {
-		super.onBeforeWrite();
-		_binding.writeRenderState(this::putState);
 	}
 
 	/**
@@ -111,13 +89,5 @@ public class ChatSectionControl extends ReactControl {
 			}
 		}
 		return 0;
-	}
-
-	private static String blankToDefault(String value, String fallback) {
-		if (value == null) {
-			return fallback;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? fallback : trimmed;
 	}
 }

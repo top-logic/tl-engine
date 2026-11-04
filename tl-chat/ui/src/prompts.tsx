@@ -1,6 +1,5 @@
 import { React } from 'tl-react-bridge'
-import { respond } from './api'
-import type { ChatAddress } from './api'
+import type { InteractionAnswer } from './api'
 import type { bundle } from './i18n'
 import type { ChatAction } from './reducer'
 import { ToolId } from './tool-id'
@@ -15,13 +14,14 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 export function PromptStack({
   approvals,
   questions,
-  at,
+  onRespond,
   labels,
   dispatch,
 }: {
   approvals: ApprovalRequest[]
   questions: InteractionRequest[]
-  at: ChatAddress
+  /** Answers a card; throws when the answer did not reach the server. */
+  onRespond: (answer: InteractionAnswer) => Promise<void>
   labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
@@ -29,10 +29,10 @@ export function PromptStack({
   return (
     <div className="prompt-stack">
       {approvals.map((item) => (
-        <ApprovalCard key={item.id} item={item} at={at} labels={labels} dispatch={dispatch} />
+        <ApprovalCard key={item.id} item={item} onRespond={onRespond} labels={labels} dispatch={dispatch} />
       ))}
       {questions.map((item) => (
-        <QuestionCard key={item.id} item={item} at={at} labels={labels} dispatch={dispatch} />
+        <QuestionCard key={item.id} item={item} onRespond={onRespond} labels={labels} dispatch={dispatch} />
       ))}
     </div>
   )
@@ -198,12 +198,27 @@ function isEmptyArguments(value: unknown): boolean {
  * value, but this block is the last thing between a payload and the reader, and it must not be the
  * reason a transcript fails to render.
  */
-function valueText(value: unknown): string {
+export function valueText(value: unknown): string {
   if (typeof value === 'string') return value
   try {
     return JSON.stringify(value, null, 2) ?? String(value)
   } catch {
     return String(value)
+  }
+}
+
+/**
+ * A call's arguments as values: the JSON string the server sent decoded, a decoded input as it is.
+ * What does not parse stays the (trimmed) string it arrived as.
+ */
+export function parseArguments(args: unknown): unknown {
+  if (typeof args !== 'string') return args
+  const raw = args.trim()
+  if (!raw) return ''
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return raw
   }
 }
 
@@ -224,16 +239,8 @@ function valueText(value: unknown): string {
  * and in the transcript the reader opens afterwards.
  */
 export function argumentsText(args: unknown): string {
-  let parsed: unknown = args
-  if (typeof args === 'string') {
-    const raw = args.trim()
-    if (!raw) return ''
-    try {
-      parsed = JSON.parse(raw)
-    } catch {
-      return raw
-    }
-  }
+  const parsed = parseArguments(args)
+  if (typeof parsed === 'string') return parsed
   if (isEmptyArguments(parsed)) return ''
   if (typeof parsed !== 'object' || Array.isArray(parsed)) return valueText(parsed)
   return Object.entries(parsed as Record<string, unknown>)
@@ -295,22 +302,17 @@ export function ToolArguments({ args, labels }: { args: unknown; labels: Labels 
 
 function ApprovalCard({
   item,
-  at,
+  onRespond,
   labels,
   dispatch,
 }: {
   item: ApprovalRequest
-  at: ChatAddress
+  onRespond: (answer: InteractionAnswer) => Promise<void>
   labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
   const send = async (response: 'APPROVED' | 'APPROVED_FOR_SESSION' | 'REJECTED') => {
-    await respond(at, {
-      requestId: item.approvalRequestId,
-      response,
-      toolName: item.toolName,
-      argsJson: item.argsJson,
-    })
+    await onRespond({ requestId: item.approvalRequestId, response, toolName: item.toolName })
     dispatch({ type: 'RESOLVE_APPROVAL', approvalRequestId: item.approvalRequestId, outcome: response })
   }
   return (
@@ -360,12 +362,12 @@ function AskedBy({ asker, labels }: { asker?: Asker; labels: Labels }) {
 
 function QuestionCard({
   item,
-  at,
+  onRespond,
   labels,
   dispatch,
 }: {
   item: InteractionRequest
-  at: ChatAddress
+  onRespond: (answer: InteractionAnswer) => Promise<void>
   labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
@@ -376,7 +378,7 @@ function QuestionCard({
   const [own, setOwn] = useState(false)
   const choice = item.interactionType === 'choice' && item.options ? item.options : null
   const submit = async (answer: string, ownWords?: string) => {
-    await respond(at, { requestId: item.requestId, response: answer, ...(ownWords ? { ownWords } : {}) })
+    await onRespond({ requestId: item.requestId, response: answer, ...(ownWords ? { ownWords } : {}) })
     dispatch({ type: 'RESOLVE_INTERACTION', requestId: item.requestId })
   }
   const toggle = (label: string) => {

@@ -32,7 +32,9 @@ public interface UploadHandler {
 	 *        The display context.
 	 * @param parts
 	 *        The multipart parts from the request.
-	 * @return The result of handling the upload.
+	 * @return The result of handling the upload. A
+	 *         {@link com.top_logic.layout.react.control.ReactCommandReply} attached to it is written
+	 *         into the answer of the upload request, e.g. the identifiers of the received files.
 	 */
 	HandlerResult handleUpload(DisplayContext context, Collection<Part> parts);
 

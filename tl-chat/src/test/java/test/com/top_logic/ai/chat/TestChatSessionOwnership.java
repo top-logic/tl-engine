@@ -28,7 +28,7 @@ import com.top_logic.util.model.ModelService;
  * Chat session IDs are small sequential integers that arrive in a request body, so "the session the
  * caller named" and "the caller's session" are two different things, and every path that confuses
  * them hands one user another user's conversation. That has now happened twice: round 1 left it
- * open on four endpoints, round 2 closed three of them and left {@code POST /chat/send}, where a
+ * open on four endpoints, round 2 closed three of them and left the send, where a
  * second account could read a colleague's whole chat out of the model and write a turn into their
  * transcript.
  * </p>
@@ -99,7 +99,7 @@ public class TestChatSessionOwnership extends BasicTestCase {
 	 * The exploit, at the level it was exploited.
 	 *
 	 * <p>
-	 * {@code POST /chat/send} handed the body's session ID to the session manager, which loaded the
+	 * The send handed the session ID it was given to the session manager, which loaded the
 	 * conversation into the caller's memory - that is how ben read anna's chat back out of the
 	 * model. The manager now refuses, so even a handler that forgot to ask leaves the caller with
 	 * the session they had.

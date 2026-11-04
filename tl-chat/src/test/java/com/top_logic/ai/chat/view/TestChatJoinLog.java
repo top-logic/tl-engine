@@ -51,8 +51,8 @@ public class TestChatJoinLog extends TestCase {
 	 * Two conversations in one window are an ordinary page, and are not reported.
 	 *
 	 * <p>
-	 * They used to be: every {@code /chat/*} call was keyed by the window alone, so both attached to
-	 * one active session and one run and each showed the other's answer. Every call now names its
+	 * They used to be: every chat request was keyed by the window alone, so both attached to
+	 * one active session and one run and each showed the other's answer. Every command now goes to its
 	 * conversation and the server holds a tracker for each (Gitea #502), so there is nothing here to
 	 * warn about - only the tally.
 	 * </p>

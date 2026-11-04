@@ -53,7 +53,6 @@ let serial = 0
 function railState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     chatId,
-    windowId: 'w1',
     authenticated: true,
     language: 'en',
     // The user left the rail open on a wide page.

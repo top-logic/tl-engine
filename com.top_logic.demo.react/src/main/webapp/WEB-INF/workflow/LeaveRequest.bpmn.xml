@@ -149,6 +149,7 @@
 								<field attribute="name"/>
 								<field attribute="from"/>
 								<field attribute="to"/>
+								<field attribute="reason"/>
 							</form>
 							<form
 								input="rejection"

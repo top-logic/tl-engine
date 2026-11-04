@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the task screen (bpe/task.view.xml) choosing how a task with several options is
+	finished. The model channel holds the task (a tl.bpe.execution:Token), the table lists its
+	options (bpeOptions) with the errors blocking each of them; the default option is preselected.
+	"Finish" refuses a blocked option, confirms the warnings of the chosen one, finishes the task
+	with it (bpeFinish) and writes the task that follows for the user, or nothing, to the channel
+	next, which the task screen binds to its task.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="option"
+			init="$model == null ? null : bpeDefaultOption($model)"
+			inputs="model"
+		/>
+		<channel name="next"/>
+		<derived-channel name="optionErrors"
+			expr="$option == null ? null : bpeErrors($model, $option).join('\n')"
+			inputs="model, option"
+		/>
+	</channels>
+	<window width="600px">
+		<title>
+			<en>Finish task</en>
+			<de>Aufgabe abschließen</de>
+		</title>
+		<inset>
+			<text>
+				<label>
+					<en>How does the process continue?</en>
+					<de>Wie geht der Prozess weiter?</de>
+				</label>
+			</text>
+		</inset>
+		<table
+			inputs="model as token"
+			selection="option"
+			types="tl.bpe.bpml:Edge"
+		>
+			<columns>
+				<computed-column name="label"
+					inputs="model as token"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Option</en>
+						<de>Option</de>
+					</label>
+					<value>bpeOptionLabel($token, $row).localize()</value>
+				</computed-column>
+				<computed-column name="errors"
+					inputs="model as token"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Not possible because</en>
+						<de>Nicht möglich, weil</de>
+					</label>
+					<value>bpeErrors($token, $row).join(', ')</value>
+				</computed-column>
+			</columns>
+			<rows>$token == null ? list() : bpeOptions($token)</rows>
+		</table>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-check-lg"
+					inputs="option, model as token, optionErrors as errors"
+				>
+					<label>
+						<en>Finish</en>
+						<de>Abschließen</de>
+					</label>
+					<executability>
+						<null-input-disabled/>
+						<disabled-if expr="if($errors == null || $errors.isEmpty(), null, $errors)"/>
+					</executability>
+					<confirm expr="bpeWarnings($token, $option).join('\n')"/>
+					<with-transaction>
+						<commitMessage>
+							<en>Finished a task.</en>
+							<de>Aufgabe abgeschlossen.</de>
+						</commitMessage>
+						<execute-script function="bpeFinish($token, $option)"/>
+						<with-result>
+							<write-channel name="next"/>
+							<close-dialog/>
+						</with-result>
+					</with-transaction>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

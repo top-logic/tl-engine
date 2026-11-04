@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The task page of the process engine: the open tasks of the current user (bpeTasks) and the
+	task screen of the selected one (bpe/task.view.xml).
+
+	The list follows every change of a token (observed-types), so a task created or finished
+	anywhere - in this window, another session or a background job - appears in or leaves the
+	list while it is displayed. "Start process" (bpe/start-process.view.xml) starts a process and
+	selects its first task; the task screen writes the task that follows a finished one, or
+	nothing, to the selection.
+
+	The selected task is carried in the address bar (task/<id>), so a reload keeps it and a link
+	opens it. Another view leads to a task with <show-view view="bpe/tasks.view.xml"> binding the
+	channel selectedTask.
+
+	Ids for fragments: the split panel main with the panes list and detail, the panel list-panel
+	(toolbar of the task list) and the table tasks.
+-->
+<view>
+	<channels>
+		<channel name="selectedTask"/>
+		<derived-channel name="selectedTaskId"
+			expr="objectId($selectedTask)"
+			inputs="selectedTask"
+			reverse="$value.objectResolve(`tl.bpe.execution:Token`)"
+		/>
+	</channels>
+	<param-bindings>
+		<bind
+			channel="selectedTaskId"
+			prefix="task"
+			route-param="task"
+		/>
+	</param-bindings>
+	<split-panel id="main"
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane id="list"
+				min-size="240"
+				size="45"
+				unit="%"
+			>
+				<panel id="list-panel">
+					<title>
+						<en>My tasks</en>
+						<de>Meine Aufgaben</de>
+					</title>
+					<commands>
+						<generic-command
+							check-dirty="SELF"
+							image="css:bi bi-play-circle"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Start process</en>
+								<de>Prozess starten</de>
+							</label>
+							<tooltip>
+								<en>Starts a process of a released workflow and opens its first task.</en>
+								<de>Startet einen Prozess eines freigegebenen Workflows und öffnet seine erste Aufgabe.</de>
+							</tooltip>
+							<open-dialog dialog-view="bpe/start-process.view.xml">
+								<bind
+									channel="selection"
+									to="selectedTask"
+								/>
+							</open-dialog>
+						</generic-command>
+					</commands>
+					<table id="tasks"
+						observed-types="tl.bpe.execution:Token"
+						selection="selectedTask"
+						types="tl.bpe.execution:Token"
+					>
+						<columns>
+							<column attribute="name">
+								<label>
+									<en>Task</en>
+									<de>Aufgabe</de>
+								</label>
+							</column>
+							<computed-column name="workflow"
+								type="tl.bpe.bpml:Collaboration"
+							>
+								<label>
+									<en>Workflow</en>
+									<de>Workflow</de>
+								</label>
+								<value>$row.get(`tl.bpe.execution:Token#processExecution`).get(`tl.bpe.execution:ProcessExecution#collaboration`)</value>
+							</computed-column>
+							<column attribute="executionNumber">
+								<label>
+									<en>No.</en>
+									<de>Nr.</de>
+								</label>
+							</column>
+							<column attribute="startDate"
+								sort="DESC"
+							>
+								<label>
+									<en>Since</en>
+									<de>Seit</de>
+								</label>
+							</column>
+						</columns>
+						<rows>bpeTasks()</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane id="detail"
+				size="55"
+				unit="%"
+			>
+				<switch input="selectedTask">
+					<case test="$selectedTask != null">
+						<view-ref view="bpe/task.view.xml">
+							<bind
+								channel="token"
+								to="selectedTask"
+							/>
+						</view-ref>
+					</case>
+					<default>
+						<panel>
+							<title>
+								<en>Task</en>
+								<de>Aufgabe</de>
+							</title>
+							<inset>
+								<text>
+									<label>
+										<en>Select a task, or start a process.</en>
+										<de>Wählen Sie eine Aufgabe aus, oder starten Sie einen Prozess.</de>
+									</label>
+								</text>
+							</inset>
+						</panel>
+					</default>
+				</switch>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

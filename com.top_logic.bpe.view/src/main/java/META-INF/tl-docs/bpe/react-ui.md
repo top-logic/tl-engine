@@ -1,5 +1,5 @@
 ---
-description: Read before showing or editing the BPMN diagram of a workflow definition (tl.bpe.bpml:Collaboration) in a .view.xml - the <bpmn-editor> element of tl-bpe-view (BpmnEditorElement, BpmnEditorControl), its input, selection and diagram channels, editable, saving with bpmlUpdateFromDiagram, unsaved changes -, before working on the Workflows section of the administration (admin/workflows/workflows.view.xml, its diagram edit mode and properties form), and before writing or embedding the step view of a manual task (tl.bpe.bpml:ManualTask#view, the channels token and process, viewParse).
+description: Read before showing or editing the BPMN diagram of a workflow definition (tl.bpe.bpml:Collaboration) in a .view.xml - the <bpmn-editor> element of tl-bpe-view (BpmnEditorElement, BpmnEditorControl), its input, selection and diagram channels, editable, saving with bpmlUpdateFromDiagram, unsaved changes -, before working on the Workflows section of the administration (admin/workflows/workflows.view.xml, its diagram edit mode and properties form), before writing or embedding the step view of a manual task (tl.bpe.bpml:ManualTask#view, the channels token and process, viewParse, bpeDefaultStepView), and before working on or embedding the task screens - the Tasks item of the application shell, bpe/tasks.view.xml (My tasks, Start process), bpe/task.view.xml (the task screen and its Finish command) and bpe/finish-task.view.xml.
 order: 30
 ---
 
@@ -164,9 +164,77 @@ and binds two channels the step view declares:
 
 **Designing it.** The command *Design step view* of the properties pane, shown for a manual task,
 opens the View Designer on the attribute (`<open-view-designer attribute="tl.bpe.bpml:ManualTask#view"/>`).
-For a task without a step view, it first stores an initial one: the two channels and a form on
-`process` with a field for each attribute the model type of the participant declares itself. The
-initial view is built as XML text and turned into the configuration with the TL-Script function
-`viewParse(xml)` of `tl-layout-view`, which reads a text like a `.view.xml` file into a
-`ViewElement.Config`, the value of a `tl.view:ViewDefinition` attribute. Storing the step view does
+For a task without a step view, it first stores an initial one, `bpeDefaultStepView(task)`
+(`StepViewFunctions`): the two channels and a form on `process` with a field for each attribute the
+model type of the participant declares itself - the view the [task screen](#working-on-tasks) shows
+for a task without a step view. The function builds the view as XML text and turns it into the
+configuration with `viewParse(xml)` of `tl-layout-view`, which reads a text like a `.view.xml` file
+into a `ViewElement.Config`, the value of a `tl.view:ViewDefinition` attribute. Storing the step view does
 not change the diagram, so the editor keeps a change of the diagram that is not saved yet.
+
+## Working on tasks
+
+`tl-bpe-view` adds the item *Tasks* (`tasks`) to the section `application` of the application shell
+with an overlay of `WEB-INF/views/app.view.xml` (see [the application shell](doc:view-layer/app-shell)),
+so every React application containing the module offers its users their tasks. An application
+places the item among its own ones with `<nav-item id="tasks" config:position="…"/>` in its own
+overlay of the shell, or takes it out with `config:operation="remove"`.
+
+The item shows `bpe/tasks.view.xml`, built on the [task execution](doc:bpe/task-execution) functions:
+
+- **My tasks**, a table of `bpeTasks()` - the task (the token's name), the workflow, the number of the
+  process and the time the task is waiting since. The table observes `tl.bpe.execution:Token`, so a task appears and
+  disappears while the page is displayed, whoever started or finished it. The selected task is the
+  channel `selectedTask`, carried in the address bar as `task/<id>`; another view leads to a task with
+  `<show-view view="bpe/tasks.view.xml"><bind channel="selectedTask" expr="$token"/></show-view>`
+  (see [navigation](doc:view-layer/navigation#entry-points)).
+- **Start process** opens `bpe/start-process.view.xml`, listing `bpeStartEvents()` with their
+  workflow. *Start* calls `bpeStart` in a transaction and selects the first task
+  (`bpeStartTask`) when the user works on it right away: the start event does not require a
+  review, or the user is an actor of the task. Otherwise the task waits in the task lists of its
+  actors.
+- **The task screen** `bpe/task.view.xml` of the selected task. It declares the channel `token` and
+  can be embedded wherever an application shows a token:
+
+  ```xml
+  <view-ref view="bpe/task.view.xml">
+  	<bind channel="token" to="selectedTask"/>
+  </view-ref>
+  ```
+
+  It embeds the step view of the task with a `<dynamic-view>` and binds the channels of the
+  [contract](#the-step-view-of-a-manual-task), `process` being derived from the token. A task without a
+  step view - a manual task none was designed for, or a task of another kind - shows
+  `bpeDefaultStepView(task)`, the TL-Script function of `tl-bpe-view` that also gives *Design step
+  view* its initial view: the two channels and a form on `process` with a field for each attribute
+  the model type of the participant declares itself. The dynamic view observes
+  `tl.bpe.bpml:ManualTask`, so a step view applied in the View Designer is shown at once.
+
+### Finishing a task
+
+*Finish* in the toolbar of the task screen completes the task with one of its options
+(`bpeOptions`):
+
+- The command declares `check-dirty="SELF"`: input of the step view that is not saved yet is asked
+  about before anything else - saved or discarded, or the command is cancelled. The options and
+  their conditions are thus evaluated on the stored process, and finishing never loses an input.
+- With a single option, an error of the option (`bpeErrors`) is shown in a `<notify kind="error"
+  stop="true">` that ends the command, a warning (`bpeWarnings`) is asked in a `<confirm>`, and
+  `bpeFinish` completes the task in a transaction.
+- With several options - the outgoing flows of a gateway the user decides at - the dialog
+  `bpe/finish-task.view.xml` lists them with their labels (`bpeOptionLabel`) and the errors blocking
+  them, with the default option (`bpeDefaultOption`) preselected; *Finish* there is disabled for a
+  blocked option, confirms the warnings and calls `bpeFinish` with the chosen option.
+
+The result of `bpeFinish` - the next task of the same process the user is an actor for, or nothing -
+is written to `token`. The user goes on with the next step of the process, or the screen empties and
+the finished task leaves *My tasks*. The task screen completes a task without additional data: an
+option with a form type (`bpeFormType`) is finished with `additional` left empty.
+
+`com.top_logic.demo.react` ships the workflow *Urlaubsantrag* (`WEB-INF/workflow/LeaveRequest.bpmn.xml`,
+imported at startup by `InitialProcessSetup`), released by its `state` extension, so a process of it
+is started from *Tasks* right away: its first task *Antrag prüfen* edits the `demo.process:LeaveRequest`
+and is finished at a gateway offering *genehmigen* and *ablehnen*. A process is started empty, so
+the attributes of the leave request are not mandatory; instead, the flow leaving the task blocks
+both options while name, first or last day is missing (an error shown in the choice dialog), and
+rejecting a request without a reason asks for a confirmation (a warning).

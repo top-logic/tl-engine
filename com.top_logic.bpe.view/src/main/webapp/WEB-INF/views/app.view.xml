@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the task page of the process engine (bpe/tasks.view.xml) to the application
+	shell defined by tl-layout-view (WEB-INF/views/app.view.xml): the item "tasks" at the beginning
+	of the section "application". An application positions it among its own items with
+	<nav-item id="tasks" config:position="..."/>, or removes it with config:operation="remove".
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<sidebar config:ref="sidebar">
+		<items>
+			<section id="application">
+				<nav-item id="tasks"
+					config:position="begin"
+					icon="css:bi bi-list-check"
+				>
+					<view-ref view="bpe/tasks.view.xml"/>
+					<label>
+						<en>Tasks</en>
+						<de>Aufgaben</de>
+					</label>
+				</nav-item>
+			</section>
+		</items>
+	</sidebar>
+</view>

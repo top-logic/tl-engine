@@ -23,8 +23,9 @@
 	diagram, which would drop a change that is not saved.
 
 	"Design step view" opens the View Designer on the step view of a manual task, after storing an
-	initial step view for a task that has none: the channels token and process of the step-view
-	contract and a form showing the attributes of the participant's process type on process.
+	initial step view for a task that has none: bpeDefaultStepView, the view the task screen shows
+	for a task without a step view (the channels token and process of the step-view contract and a
+	form showing the attributes of the participant's process type on process).
 -->
 <view>
 	<channels>
@@ -409,21 +410,7 @@
 											<en>Created the step view of task {0}.</en>
 											<de>Schrittansicht der Aufgabe {0} angelegt.</de>
 										</commitMessage>
-										<execute-script>
-											<function><![CDATA[{
-	type = $task
-		.get(`tl.bpe.bpml:Node#process`)
-		.get(`tl.bpe.bpml:Process#participant`)
-		.get(`tl.bpe.bpml:Participant#modelType`);
-	fields = $type
-		.get(`tl.model:TLStructuredType#localParts`)
-		.map(p -> '<field attribute="' + $p.get(`tl.model:TLNamedPart#name`) + '"/>')
-		.reduce('', all -> field -> $all + $field);
-	$task.set(`tl.bpe.bpml:ManualTask#view`, viewParse(
-		'<view><channels><channel name="token"/><channel name="process"/></channels>'
-		+ '<form input="process" with-inset="true">' + $fields + '</form></view>'));
-}]]></function>
-										</execute-script>
+										<execute-script function="$task.set(`tl.bpe.bpml:ManualTask#view`, bpeDefaultStepView($task))"/>
 									</with-transaction>
 								</then>
 							</if>

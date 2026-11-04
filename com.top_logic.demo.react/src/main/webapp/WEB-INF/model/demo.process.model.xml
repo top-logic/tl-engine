@@ -4,7 +4,9 @@
 	<modules>
 		<!--
 			Process data of the demo workflow "Urlaubsantrag" (WEB-INF/workflow/LeaveRequest.bpmn.xml):
-			a running process of the workflow is a leave request.
+			a running process of the workflow is a leave request. A process is started empty and its
+			data is entered in its first task, so no attribute is mandatory; the sequence flow leaving
+			the task refuses to continue while name, from or to is missing.
 		-->
 		<module name="demo.process">
 			<class name="LeaveRequest">
@@ -16,15 +18,12 @@
 				</annotations>
 				<attributes>
 					<property name="name"
-						mandatory="true"
 						type="tl.core:String"
 					/>
 					<property name="from"
-						mandatory="true"
 						type="tl.core:Date"
 					/>
 					<property name="to"
-						mandatory="true"
 						type="tl.core:Date"
 					/>
 					<property name="reason"

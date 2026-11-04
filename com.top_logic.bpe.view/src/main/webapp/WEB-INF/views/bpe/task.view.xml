@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The task screen: the step view of the task on the channel token (a tl.bpe.execution:Token)
+	and the command finishing the task.
+
+	The step view is the view stored on the manual task (tl.bpe.bpml:ManualTask#view), embedded
+	with the channels token and process of the step-view contract; a task without one shows
+	bpeDefaultStepView, a form on the process with the attributes of the participant's process
+	type. Designing the step view in the workflow administration shows the new view at once
+	(observed-types).
+
+	"Finish" asks about unsaved changes on the page first (check-dirty), so the step view's input
+	is saved or discarded before the decision is evaluated. A task with a single option is
+	finished right away: errors of the option are reported and stop, warnings are confirmed.
+	A task with several options opens bpe/finish-task.view.xml to choose one. The task that
+	follows for the user in the same process (the result of bpeFinish), or nothing, is written
+	to token.
+
+	Ids for fragments: the panel task (its toolbar) and the dynamic view step-view.
+-->
+<view>
+	<channels>
+		<channel name="token"/>
+		<derived-channel name="process"
+			expr="$token.get(`tl.bpe.execution:Token#processExecution`)"
+			inputs="token"
+		/>
+		<derived-channel name="taskTitle"
+			expr="if($token == null, null, label($token) + ' · ' + label($process.get(`tl.bpe.execution:ProcessExecution#collaboration`)) + ' ' + $process.get(`tl.bpe.execution:ProcessExecution#executionNumber`))"
+			inputs="token, process"
+		/>
+	</channels>
+	<panel id="task">
+		<title>
+			<en>Task</en>
+			<de>Aufgabe</de>
+		</title>
+		<title-content>
+			<text input="taskTitle"/>
+		</title-content>
+		<commands>
+			<generic-command
+				check-dirty="SELF"
+				clique="commit"
+				image="css:bi bi-check2-square"
+				inputs="token"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Finish</en>
+					<de>Abschließen</de>
+				</label>
+				<tooltip>
+					<en>Completes the task, and the process continues.</en>
+					<de>Schließt die Aufgabe ab, und der Prozess geht weiter.</de>
+				</tooltip>
+				<executability>
+					<null-input-hidden/>
+				</executability>
+				<execute-script function="bpeOptions($token)">
+					<with-result as="options">
+						<if test="$options.size() &gt; 1">
+							<then>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="bpe/finish-task.view.xml"
+									value="token"
+								>
+									<bind
+										channel="next"
+										to="token"
+									/>
+								</open-dialog>
+							</then>
+							<else>
+								<notify
+									display="dialog"
+									expr="bpeErrors($token, $options.firstElement()).join('\n')"
+									kind="error"
+									stop="true"
+								/>
+								<confirm expr="bpeWarnings($token, $options.firstElement()).join('\n')"/>
+								<with-transaction>
+									<commitMessage>
+										<en>Finished a task.</en>
+										<de>Aufgabe abgeschlossen.</de>
+									</commitMessage>
+									<execute-script function="bpeFinish($token, $options.firstElement())"/>
+									<with-result>
+										<write-channel name="token"/>
+									</with-result>
+								</with-transaction>
+							</else>
+						</if>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<dynamic-view id="step-view"
+			inputs="token"
+			observed-types="tl.bpe.bpml:ManualTask"
+			view="$token == null ? null : { node = $token.get(`tl.bpe.execution:Token#node`); view = if($node.instanceOf(`tl.bpe.bpml:ManualTask`), $node.get(`tl.bpe.bpml:ManualTask#view`), null); if($view != null, $view, bpeDefaultStepView($node)); }"
+		>
+			<bind
+				channel="token"
+				to="token"
+			/>
+			<bind
+				channel="process"
+				to="process"
+			/>
+		</dynamic-view>
+	</panel>
+</view>

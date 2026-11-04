@@ -79,6 +79,14 @@ public class TestRefetchLockHolder extends AbstractDBKnowledgeBaseTest {
 
 	/**
 	 * Commit that blocks after having acquired the refetch lock until the test releases it.
+	 *
+	 * <p>
+	 * The commit blocks in {@link CommittableAdapter#complete(CommitContext)}, i.e. after the
+	 * database commit but before the refetch lock is released. Blocking before the database commit
+	 * (e.g. in {@link CommittableAdapter#commit(CommitContext)}) would keep the new revision row
+	 * locked: On databases with locking reads (MS SQL Server) the refetch then blocks in the
+	 * database while reading the last revision and never reaches the refetch lock.
+	 * </p>
 	 */
 	private class BlockingCommit implements Execution {
 
@@ -88,9 +96,8 @@ public class TestRefetchLockHolder extends AbstractDBKnowledgeBaseTest {
 			newB("b1");
 			kb().addCommittable(new CommittableAdapter() {
 				@Override
-				public boolean commit(CommitContext context) {
+				public void complete(CommitContext context) {
 					awaitRelease();
-					return true;
 				}
 			});
 			commit(tx);

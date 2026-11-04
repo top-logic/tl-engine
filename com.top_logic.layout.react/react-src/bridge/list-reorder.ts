@@ -18,7 +18,8 @@
  * and it is what the caller forwards unchanged. A drop reports the item and side it was released on
  * as well ({@link ReorderDropTarget}): in a list whose items form sections, the place after the last
  * item of one section and the place before the first item of the next are the same position, and
- * only the side of the drop tells into which section the item goes.
+ * only the side of the drop tells into which section the item goes; such a list also has the drop at
+ * the item's own position reported ({@link ListReorderOptions.reportUnmoved}).
  *
  * A list may group items into zones ({@link ListReorderOptions.zoneOf}): a zone takes an item as a
  * whole - its own items keep their order - so its items show no insertion mark, and the pointer over
@@ -201,10 +202,24 @@ export interface ListReorderOptions {
   keyOf?(index: number): string;
 
   /**
+   * Whether a drop that leaves the item at its own position is reported as well, as `onMove(from, from, target)`.
+   *
+   * In a plain list such a drop - right after the item's predecessor, right before its successor - changes nothing
+   * and is not reported. A list whose positions carry a state needs it: where two blocks meet (the frozen and the
+   * movable columns), "after the last of the one" and "before the first of the other" are the same position, and
+   * only the {@link ReorderDropTarget} tells into which block the item goes - dropping the first of the second block
+   * after the last of the first one moves it across the line without changing its position. Keyboard steps are not
+   * affected. Absent: `false`.
+   */
+  reportUnmoved?: boolean;
+
+  /**
    * The zone the item at the given position belongs to, or `null` for an item that is a position of its own.
    *
    * An item of a zone shows no insertion mark: the pointer over it makes its zone the target, and a drop there
-   * goes to {@link onZoneDrop}. Absent: no item belongs to a zone.
+   * goes to {@link onZoneDrop}. This holds for the dragged item itself as well - over an item of its own zone, the
+   * zone is the target, and {@link acceptsZone} decides on it like for any other item. Absent: no item belongs to
+   * a zone.
    */
   zoneOf?(index: number): string | null;
 
@@ -254,8 +269,13 @@ export interface ListReorder {
   dropTarget: ReorderDropTarget | null;
 
   /**
-   * The zone a drop would currently go into, or `null` while the pointer is over no zone taking the dragged item;
-   * set exclusively of {@link dropTarget}.
+   * The zone a drop would currently go into, or `null` while the pointer is over no zone taking the dragged item.
+   *
+   * A zone that refuses the item ({@link ListReorderOptions.acceptsZone}) is no target and is not set here, so a
+   * control highlighting the target zone from this value never highlights a refused one. Set exclusively of
+   * {@link dropTarget}: the pointer moving on to an item, to another zone or to a refused target replaces or clears
+   * both, a drop and the end of the drag clear both. Leaving the items for the padding of the list keeps the last
+   * one, so that a drop released there ({@link containerProps}) still goes where the pointer was last.
    */
   dropZone: string | null;
 
@@ -302,8 +322,8 @@ export function reorderState(state: ReorderItemState): 'dragging' | 'drop-before
  */
 export function useListReorder(options: ListReorderOptions): ListReorder {
   const {
-    axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf, accepts, zoneOf, acceptsZone,
-    onZoneDrop, onStep,
+    axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf, accepts, reportUnmoved = false,
+    zoneOf, acceptsZone, onZoneDrop, onStep,
   } = options;
   const t = useI18N(I18N_KEYS);
   const hintId = useId();
@@ -331,6 +351,8 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   keyOfRef.current = keyOf;
   const acceptsRef = useRef(accepts);
   acceptsRef.current = accepts;
+  const reportUnmovedRef = useRef(reportUnmoved);
+  reportUnmovedRef.current = reportUnmoved;
   const zoneOfRef = useRef(zoneOf);
   zoneOfRef.current = zoneOf;
   const acceptsZoneRef = useRef(acceptsZone);
@@ -489,7 +511,8 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     if (from < to) {
       to--;
     }
-    if (to !== from) {
+    // A drop at the item's own position changes nothing, unless the side of the drop is a state of the list.
+    if (to !== from || reportUnmovedRef.current) {
       onMoveRef.current(from, to, target);
     }
   }, [disarm, setDragIndex, setDropTarget, setDropZone]);

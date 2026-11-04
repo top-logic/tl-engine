@@ -194,6 +194,57 @@ describe('dropping on an item', () => {
 
     expect(onMove).not.toHaveBeenCalled();
   });
+
+  describe('at the line between two blocks', () => {
+    // Block A: a, b; block B: c, d. After the last of A and before the first of B is one position.
+    const initial = ['a', 'b', 'c', 'd'];
+
+    it('reports the drop at the item\'s own position where the list asks for it', async () => {
+      const onMove = vi.fn();
+      render({ initial, options: { onMove, reportUnmoved: true } });
+      const data = transfer();
+
+      // The first of block B after the last of block A.
+      await pickUp('c', data);
+      over(item('b'), data, 'after');
+      drop(item('b'), data);
+      expect(onMove).toHaveBeenCalledTimes(1);
+      expect(onMove).toHaveBeenCalledWith(2, 2, { index: 1, side: 'after' });
+
+      // The last of block A before the first of block B.
+      await pickUp('b', data);
+      over(item('c'), data, 'before');
+      drop(item('c'), data);
+      expect(onMove).toHaveBeenCalledTimes(2);
+      expect(onMove).toHaveBeenLastCalledWith(1, 1, { index: 2, side: 'before' });
+    });
+
+    it('reports no drop at the item\'s own position by default', async () => {
+      const onMove = vi.fn();
+      render({ initial, options: { onMove } });
+      const data = transfer();
+
+      await pickUp('c', data);
+      over(item('b'), data, 'after');
+      drop(item('b'), data);
+
+      expect(onMove).not.toHaveBeenCalled();
+    });
+
+    it('leaves the keyboard steps as they are', () => {
+      const onMove = vi.fn();
+      render({ initial, options: { onMove, reportUnmoved: true } });
+
+      handle('a').focus();
+      press('a', 'ArrowUp');
+      expect(onMove).not.toHaveBeenCalled();
+
+      handle('c').focus();
+      press('c', 'ArrowUp');
+      expect(onMove).toHaveBeenCalledTimes(1);
+      expect(onMove).toHaveBeenCalledWith(2, 1);
+    });
+  });
 });
 
 describe('zones', () => {

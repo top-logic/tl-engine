@@ -26,7 +26,8 @@ public interface ColumnFilterUI {
 
 	/**
 	 * Builds the filter form for one opening of the popover, and again after the filter was
-	 * removed, so that the form shows no filter.
+	 * removed. What the new form shows is up to the UI: one that remembers its last input across
+	 * openings shows it again, ready to be applied anew.
 	 *
 	 * <p>
 	 * The popover keeps its content away from its border, so the form is returned without an inset

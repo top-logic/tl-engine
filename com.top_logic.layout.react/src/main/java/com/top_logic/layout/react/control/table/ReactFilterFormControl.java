@@ -26,8 +26,9 @@ import com.top_logic.table.FilterState;
  * </p>
  *
  * <p>
- * Removing the filter clears it and builds the form anew, so that the form shows what is filtered
- * now: nothing.
+ * Removing the filter clears it and builds the form anew from the filter as it is then: the form of
+ * a built-in filter shows no filter; the filter UI of an application shows what it builds - one
+ * that remembers its last input shows it again (see {@link ColumnFilterUI#buildForm}).
  * </p>
  */
 public class ReactFilterFormControl extends ReactControl {

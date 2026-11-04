@@ -106,10 +106,12 @@ interface HostProps {
   trapFocus?: boolean;
   initialFocus?: PopupInitialFocus;
   onClose?: () => void;
+  /** What the surface lays out, see PopoverOptions.layoutKey. */
+  layoutKey?: unknown;
 }
 
 /** A trigger and the surface it opens, wired as the menus and popovers of the bridge wire them. */
-function Host({ label = 'Trigger', mounted = false, inside = false, trapFocus, initialFocus = 'first', onClose }: HostProps) {
+function Host({ label = 'Trigger', mounted = false, inside = false, trapFocus, initialFocus = 'first', onClose, layoutKey }: HostProps) {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const close = () => {
@@ -124,6 +126,7 @@ function Host({ label = 'Trigger', mounted = false, inside = false, trapFocus, i
     initialFocus,
     trapFocus,
     inside: inside ? [triggerRef] : [],
+    layoutKey,
   });
   return (
     <div>
@@ -307,16 +310,21 @@ describe('the height of a surface', () => {
   const GAP = 8;
   const ANCHOR_TOP = 300;
   const ANCHOR_BOTTOM = 320;
-  /** The height the surface's content asks for: more than the room on either side of the anchor. */
-  const CONTENT_HEIGHT = 500;
+  /** A height more than the room on either side of the anchor; there is more room above (292) than below (272). */
+  const TALL = 500;
+  /** A height that fits below the anchor. */
+  const SHORT = 100;
+  /** The height the surface's content asks for. */
+  let contentHeight = TALL;
 
   /** The number of pixels in the max height of the surface, its content height if it has none. */
   function heightOf(element: HTMLElement): number {
     const cap = /^min\((\d+)px/.exec(element.style.maxHeight);
-    return cap ? Math.min(CONTENT_HEIGHT, Number(cap[1])) : CONTENT_HEIGHT;
+    return cap ? Math.min(contentHeight, Number(cap[1])) : contentHeight;
   }
 
   beforeEach(() => {
+    contentHeight = TALL;
     const html = document.documentElement;
     vi.spyOn(html, 'clientWidth', 'get').mockReturnValue(VIEWPORT_WIDTH);
     vi.spyOn(html, 'clientHeight', 'get').mockReturnValue(VIEWPORT_HEIGHT);
@@ -360,6 +368,50 @@ describe('the height of a surface', () => {
     const roomAbove = ANCHOR_TOP - GAP - GAP;
     expect(element.style.maxHeight).toBe(`min(${roomAbove}px, var(--tl-size-popover-max))`);
     expect(topOf(element) + heightOf(element)).toBeLessThanOrEqual(ANCHOR_TOP - GAP);
+  });
+
+  /** Whether the surface stands above its anchor, else below it. */
+  function above(element: HTMLElement): boolean {
+    return topOf(element) + heightOf(element) <= ANCHOR_TOP - GAP;
+  }
+
+  /** A change of the viewport, which has the surface placed again (autoUpdate). */
+  async function placedAgain() {
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    await positioned();
+  }
+
+  it('keeps the side it opened on while it shrinks: a search narrowing its list does not move it below', async () => {
+    render(<Host />);
+    keyboardClick(button('Trigger'));
+    await positioned();
+    expect(above(surface()!)).toBe(true);
+
+    contentHeight = SHORT;
+    await placedAgain();
+
+    expect(above(surface()!)).toBe(true);
+  });
+
+  it('keeps its side while it grows within one layout, and decides anew for a new layout: above, where there is more room', async () => {
+    contentHeight = SHORT;
+    render(<Host layoutKey="view" />);
+    keyboardClick(button('Trigger'));
+    await positioned();
+    expect(above(surface()!)).toBe(false);
+
+    // Growing in the same layout: the side stays, the surface scrolls.
+    contentHeight = TALL;
+    await placedAgain();
+    expect(above(surface()!)).toBe(false);
+
+    // Another page: too high for below, more room above.
+    act(() => root!.render(<Host layoutKey="columns" />));
+    await positioned();
+    expect(above(surface()!)).toBe(true);
+    expect(surface()!.style.maxHeight).toBe(`min(${ANCHOR_TOP - GAP - GAP}px, var(--tl-size-popover-max))`);
   });
 });
 

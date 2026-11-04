@@ -20,6 +20,12 @@ export interface PickerPopoverProps {
 
   /** Closes the popup; called on Escape and on a press outside. */
   onClose: () => void;
+
+  /**
+   * What the popup lays out, e.g. the page it shows: a new value decides anew on which side of the anchor it stands
+   * (usePopupSurface). Absent: it keeps the side it opened on.
+   */
+  layoutKey?: unknown;
   children: React.ReactNode;
 }
 
@@ -31,7 +37,7 @@ export interface PickerPopoverProps {
  * mounted before the picker opens: the position and the return of the focus read it on mount. Its Escape scope is
  * registered on mount, so inside a window it is the newer scope and closes the picker, not the window.
  */
-export const PickerPopover: React.FC<PickerPopoverProps> = ({ anchorRef, label, className, initialFocus, trapFocus, onClose, children }) => {
+export const PickerPopover: React.FC<PickerPopoverProps> = ({ anchorRef, label, className, initialFocus, trapFocus, onClose, layoutKey, children }) => {
   const { setRefs, style } = usePopupSurface({
     open: true,
     anchor: anchorRef.current,
@@ -39,6 +45,7 @@ export const PickerPopover: React.FC<PickerPopoverProps> = ({ anchorRef, label, 
     onClose,
     initialFocus,
     trapFocus,
+    layoutKey,
   });
 
   return createPortal(

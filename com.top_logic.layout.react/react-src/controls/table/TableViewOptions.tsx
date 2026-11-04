@@ -411,6 +411,9 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
           className="tl-menu tl-table-view-options"
           initialFocus={selectedSegment}
           onClose={close}
+          // The pages differ in height, and the selection fills the second one when it arrives: each is placed anew,
+          // on the side with room for it; within a page the side stays, also while the search narrows the list.
+          layoutKey={page + ':' + (controlIdOf(selection) ?? '')}
         >
           {/* Hidden, not unmounted, while the other page shows: what the page holds stays as it is. */}
           <TableViewOptions

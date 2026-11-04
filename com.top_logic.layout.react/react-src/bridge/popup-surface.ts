@@ -6,7 +6,8 @@
  * <ul>
  * <li>Placed by {@link usePopover} at its anchor, its height held to the room on the side it stands on
  *     (`fitHeight` of usePopover): a surface too high for either side scrolls instead of covering its
- *     anchor.</li>
+ *     anchor. The side is decided when it opens and kept while it is open; a surface that changes what it
+ *     lays out (another page) names it by `layoutKey`, and its side is decided anew.</li>
  * <li>Closed by a press outside ({@link useCloseOnOutsidePress}) and by Escape. Escape is bound in a keyboard scope
  *     of its own, registered when the surface opens and hence above the scopes around it: it closes the surface
  *     wherever the focus is - still on the trigger after a press, in a field of the surface - and inside a window
@@ -70,6 +71,12 @@ export interface PopupSurfaceOptions {
    * toggles the surface on its click (see {@link usePopupTrigger}).
    */
   inside?: ReadonlyArray<InsideRef>;
+
+  /**
+   * What the surface lays out, e.g. the page it shows: a new value decides anew which side of the anchor the surface
+   * stands on, as when it opened (see `PopoverOptions.layoutKey`). Absent: the side of the opening is kept.
+   */
+  layoutKey?: unknown;
 }
 
 export interface PopupSurface<T extends HTMLElement> {
@@ -101,9 +108,9 @@ function focusTarget(surface: HTMLElement, initialFocus: PopupInitialFocus): HTM
  * @returns The ref callback and the style for the root element of the surface, and a ref holding that element.
  */
 export function usePopupSurface<T extends HTMLElement = HTMLDivElement>(options: PopupSurfaceOptions): PopupSurface<T> {
-  const { open, anchor, placement, onClose, initialFocus, trapFocus = true, inside = [] } = options;
+  const { open, anchor, placement, onClose, initialFocus, trapFocus = true, inside = [], layoutKey } = options;
   const surfaceRef = useRef<T | null>(null);
-  const { setFloating, style } = usePopover({ open, anchor, placement, fitHeight: true });
+  const { setFloating, style } = usePopover({ open, anchor, placement, fitHeight: true, layoutKey });
   // A plain callback rather than floating-ui's useMergeRefs: that one's return type comes from the React types of
   // this module and fails to match the JSX of a module with its own copy of @types/react.
   const setRefs = useCallback((element: T | null) => {

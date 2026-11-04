@@ -292,6 +292,9 @@
 					<property name="locked"
 						type="tl.core:Boolean"
 					/>
+					<property name="partsHidden"
+						type="tl.core:Boolean"
+					/>
 
 					<property name="flags"
 						bag="true"
@@ -515,7 +518,15 @@
 						multiple="true"
 						ordered="true"
 						type="DemoPart"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#partsHidden`), &quot;hidden&quot;, if($obj.get(`demo.react:Demo#locked`), &quot;read-only&quot;, &quot;default&quot;))"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</reference>
 				</attributes>
 			</class>
 			<class name="DemoPart">

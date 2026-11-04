@@ -154,6 +154,7 @@
 					<en>Parts</en>
 					<de>Teile</de>
 				</label>
+				<field attribute="partsHidden"/>
 				<!-- Marks the parts with an amount above 100. -->
 				<composition-table
 					attribute="parts"

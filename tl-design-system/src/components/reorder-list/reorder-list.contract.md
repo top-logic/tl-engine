@@ -14,6 +14,7 @@ das Aussehen; wer ins Bild passen will, liest die Tokens.
 | `entries[].label` | string | Beschriftung und Teil des Griff-Namens. |
 | `entries[].visible` | boolean | Sichtbar; ausgeblendet trägt der Eintrag `data-tl-state="off"` und steht im Abschnitt „Ausgeblendet“ (s. u.), mit Griff, ziehbar. |
 | `entries[].locked` | boolean | Fixiert (Zustand `locked`); fixierte Einträge stehen als Block vorn, im Abschnitt „Fixiert“. |
+| `revision` | number | Zahl der Befehle der Spaltenwahl, die der Server beantwortet hat — abgelehnte, wirkungslose und gescheiterte eingeschlossen; sie kommt mit der Liste in einem Patch. Die Liste zählt die Befehle, die sie gesendet hat, und zeigt nach einem Zug ihre Vorhersage, bis `revision` sie eingeholt hat (Z8). Ohne `revision` im Zustand zeigt sie keine Vorhersage. |
 
 Die Liste hat **immer alle drei Abschnitte** in **einem** Rollbereich (`ul`), jeder mit einer Überschrift `tl-reorder-list__section`:
 „Fixiert“, „Beweglich“ (die Überschrift steht immer, nicht nur hinter „Fixiert“) und „Ausgeblendet“. Ein leerer Abschnitt bleibt als Ablagefläche
@@ -34,14 +35,14 @@ nicht an — keine Hervorhebung, `dropEffect = none`; den „nicht erlaubt“-Ze
 Ab elf Einträgen steht vor der Liste eine Suche — dieselbe wie in der Tabelle: `tl-field-group` mit Lupe,
 `input.tl-field type="search"` und, solange Text steht, Löschknopf (`js.textInput.clear`), nach dem Löschen
 bleibt der Fokus im Feld. Sie filtert mit `filterOptions` (3b §9), und die
-Liste rendert nur die passenden Einträge. Jeder behält seine Position unter allen sichtbaren: Ziehen und
-Alt + Pfeil rechnen mit ihr, ein Eintrag lässt sich also neben einen ausgefilterten ablegen. Mit der Suche
+Liste rendert nur die passenden Einträge. Jeder behält seine Position in der ganzen Anzeige-Liste (fixierte, bewegliche,
+ausgeblendete, wie ohne Suche): Ziehen und Alt + Pfeil rechnen mit ihr, ein Eintrag lässt sich also neben einen ausgefilterten ablegen. Mit der Suche
 davor füllen Suche und Liste ihren Behälter als Spalte mit Innenabstand `--tl-space-md` (oben und
 seitlich): die Suche bleibt stehen, nur die Liste scrollt. Die Höhe gibt der Behälter — die Spaltenwahl sitzt auf der
 zweiten Seite des Popovers der Ansicht, das mit dem freien Platz wächst, so schrumpft es beim Tippen nicht (Sichtprüfung 12.10.;
-vorher war die Liste fest `--tl-size-popover-max` hoch und lief im kleineren Fensterkörper über). Alt + Pfeil verschiebt in einer gefilterten Liste um eine Stelle der **ganzen**
-Liste der sichtbaren Spalten (Ausgeblendete zählen nicht); liegt ein ausgefilterter Eintrag dazwischen, ändert sich sichtbar nichts,
-nur die Ansage. An der Grenze des Blocks geschieht nichts und nichts wird angesagt.
+vorher war die Liste fest `--tl-size-popover-max` hoch und lief im kleineren Fensterkörper über). Alt + Pfeil verschiebt in einer gefilterten Liste wie ohne Suche:
+um eine Stelle der **ganzen** Anzeige-Liste und über die Grenzen der Abschnitte hinweg (Z7, s. Tastatur); liegt ein ausgefilterter Eintrag
+dazwischen, ändert sich sichtbar nichts, nur die Ansage.
 
 ## Aktionen
 
@@ -60,7 +61,7 @@ Hinweis („Alt + Pfeil verschiebt“); er ist fokussierbar wie jeder Knopf.
 | Taste | auf dem Griff |
 |---|---|
 | `Alt` + `ArrowUp` / `ArrowDown` | verschiebt den Eintrag um eine Stelle nach oben bzw. unten und sendet denselben Befehl wie das Ziehen (`columnMove`); der Fokus bleibt am Griff. Waagerecht (`data-tl-axis="horizontal"`): `Alt` + `ArrowLeft` / `ArrowRight`. |
-| an den Grenzen der Abschnitte (Z7) | Alt + ↑ auf der ersten beweglichen fixiert sie (ans Ende von „Fixiert“), Alt + ↓ auf der letzten fixierten löst sie, Alt + ↓ auf der letzten beweglichen blendet aus (nicht die letzte sichtbare), Alt + ↑ auf einer ausgeblendeten blendet sie am Ende von „Beweglich“ ein. Ist „Beweglich“ leer, löst Alt + ↓ auf der letzten fixierten. Innerhalb von „Ausgeblendet“ und Alt + ↓ auf einer ausgeblendeten, Alt + ↑ auf der ersten fixierten: nichts, keine Ansage. |
+| an den Grenzen der Abschnitte (Z7) | Alt + ↑ auf der ersten beweglichen fixiert sie (ans Ende von „Fixiert“), Alt + ↓ auf der letzten fixierten löst sie, Alt + ↓ auf der letzten beweglichen blendet aus (nicht die letzte sichtbare), Alt + ↑ auf einer ausgeblendeten blendet sie am Ende von „Beweglich“ ein. Ist „Beweglich“ leer, löst Alt + ↓ auf der letzten fixierten. Innerhalb von „Ausgeblendet“, Alt + ↓ auf einer ausgeblendeten und Alt + ↑ auf der ersten fixierten: nichts, keine Ansage. |
 | `Tab` | weiter zu Schloss und Auge des Eintrags, dann zum nächsten Griff; ein unsichtbarer Knopf erscheint mit dem Fokus. |
 
 Nach jedem Verschieben sagt ein Live-Bereich mit `role="status"` „<Name>, Position n von m“ an
@@ -83,7 +84,7 @@ Die Texte der Platzhalter: `js.table.columnDropLocked`, `js.table.columnDropMova
 | Behälter mit Suche | Spalte, Abstand `--tl-space-xs`, Innenabstand `--tl-space-md` oben und seitlich, so hoch wie sein Behälter |
 | Eintrag | Höhe `--tl-size-row` (als `min-height`), Innenabstand seitlich `--tl-space-control-x`, Lücke `--tl-space-xs`; Zeiger `pointer`, beim Zeigen `--tl-surface-interactive-hover`; Beschriftung `--tl-text-secondary` bei `off`. Bei `last` (die letzte sichtbare Spalte, ein Klick bewirkt nichts): Zeiger `default`, keine Hover-Fläche, Tooltip „Mindestens eine Spalte bleibt sichtbar“ an der Zeile (nicht nur am gesperrten Auge) |
 | Knöpfe rechts | `tl-reorder-list__actions`, Lücke `--tl-space-2xs`; Griff und Knöpfe tragen `tl-reveal-on-hover` (`layout.contract.md`): `opacity` 0, beim Zeigen und bei Tastaturfokus in der Zeile (`:has(:focus-visible)`, nicht `:focus-within`) 1, Übergang `--tl-duration-fast`; ohne Zeigen (`hover: none`) immer 1 |
-| Abschnitte „Fixiert“, „Beweglich“, „Ausgeblendet“ | Überschrift `tl-reorder-list__section` in `tl-type-label`, `--tl-text-secondary`. Jeder Abschnitt außer dem ersten beginnt mit einer Trennlinie im Bild von `tl-divider`: `border-top` `--tl-border-width-sm` solid `--tl-border-separator`, davor Abstand `--tl-space-2xs`; unter dem letzten Eintrag eines Blocks steht keine Linie |
+| Abschnitte „Fixiert“, „Beweglich“, „Ausgeblendet“ | Überschrift `tl-reorder-list__section` in `tl-type-label`, `--tl-text-secondary`. Jeder Abschnitt außer dem ersten beginnt mit einer Trennlinie im Bild von `tl-divider`: `border-top` `--tl-border-width-sm` solid `--tl-border-separator`, darunter zum Innenabstand `--tl-space-xs` der Überschrift `--tl-space-2xs` hinzu (`padding-block-start`, kein Außenabstand: Linie und Abstand gehören zur Überschrift, ihre Ablagefläche reicht bis an die Linie, und an der Grenze trifft das Ziehen keine Lücke); unter dem letzten Eintrag eines Blocks steht keine Linie |
 | Platzhalter | `tl-reorder-list__empty`: Höhe `--tl-size-row` (als `min-height`), Innenabstand seitlich `--tl-space-control-x`, Text `--tl-text-secondary` |
 | Zielabschnitt | `data-tl-state="drop-target"` an Überschrift, Zeilen und Platzhalter des Abschnitts: Fläche `--tl-surface-interactive-strong` (die Fläche von `drop-onto`), kein Rahmen je Element, nicht die Hover-Fläche |
 | Griff | `tl-button--icon --sm --ghost`, Icon in `--tl-icon-secondary`; der Fokusring aus `base.css` liegt innen (`outline-offset` −`--tl-focus-offset`), weil die Liste scrollt; das gilt auch für Schloss und Auge |
@@ -123,7 +124,7 @@ Klassen:
 | `tl-reorder-list__lock` | das Schloss, mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
 | `tl-reorder-list__eye` | das Auge, ebenso |
 | `tl-reorder-list__section` | `li` mit der Überschrift eines Abschnitts („Fixiert“, „Beweglich“, „Ausgeblendet“), `role="presentation"`, `tl-type-label`; nimmt die Ablage an wie der Platzhalter seiner Zone |
-| `tl-reorder-list__empty` | `li` eines leeren Abschnitts: der leise Hinweis „Hierher ziehen, um …“, nimmt die Ablage der Zone an |
+| `tl-reorder-list__empty` | `li` eines leeren Abschnitts, `role="presentation"` wie die Überschrift: der leise Hinweis „Hierher ziehen, um …“, nimmt die Ablage der Zone an |
 | `tl-visually-hidden` | der Live-Bereich: gelesen, nicht gezeigt (der Hinweis trägt `hidden`, siehe Attribute) |
 
 Symbole (Griff, Schloss, Auge, Suche, Löschen) sind `ThemeIcon` in `tl-icon-sm`, Knopf-Icons mit `tl-button__icon`.

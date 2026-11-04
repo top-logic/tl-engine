@@ -124,13 +124,15 @@
 }
 
 /* Die Abschnitte „Fixiert“, „Beweglich“, „Ausgeblendet“: je eine Überschrift davor. Jeder außer dem ersten beginnt mit der
-   Trennlinie im Bild von tl-divider (border-separator, border-width-sm) und einem kleinen Abstand davor (Z5, R12). */
+   Trennlinie im Bild von tl-divider (border-separator, border-width-sm) und einem kleinen Abstand (Z5, R12). Der Abstand
+   ist Innenabstand der Überschrift, kein Außenabstand: Linie und Abstand gehören zur Überschrift, ihre Ablagefläche reicht
+   bis an die Linie. Ein Außenabstand gehörte der Liste, die keine Ablage annimmt — über der Lücke träfe das Ziehen nichts. */
 .tl-reorder-list__section {
   padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
   color: var(--tl-text-secondary);
 }
 .tl-reorder-list__section:not(:first-child) {
-  margin-block-start: var(--tl-space-2xs);
+  padding-block-start: calc(var(--tl-space-2xs) + var(--tl-space-xs));
   border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 

@@ -225,6 +225,14 @@ test('Spaltenwahl: Zeile mit Zeiger, die letzte sichtbare ohne Zeiger und Hover;
   const md = readComponent('reorder-list', 'reorder-list.contract.md');
   assert.deepEqual(missingInContract(md, ['tl-reorder-list__section', 'last']), []);
   for (const w of ['„Beweglich“', '„Ausgeblendet“', 'Ziehen geht über jede Grenze']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
+  // Die Abschnitte sind Ablagezonen (Z1–Z8): ein Befehl columnMove für Ziehen und Tastatur, columnReorder sendet die Spaltenwahl
+  // nicht mehr; die Platzhalter, die Ansagen beim Wechsel des Abschnitts, der Zielzustand und die Revision stehen im Vertrag.
+  assert.deepEqual(missingInContract(md, ['columnMove', 'revision',
+    'js.table.columnDropLocked', 'js.table.columnDropMovable', 'js.table.columnDropHidden',
+    'js.table.columnMovedLocked', 'js.table.columnMovedMovable', 'js.table.columnMovedHidden']), []);
+  assert.doesNotMatch(md, /columnReorder/, 'die Spaltenwahl kennt columnReorder nicht mehr');
+  for (const w of ['„Hierher ziehen, um zu fixieren“', '„Hierher ziehen, um zu lösen“', '„Hierher ziehen, um auszublenden“',
+    'data-tl-state="drop-target"']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
   const html = readComponent('reorder-list', 'reorder-list.spec.html');
   for (const t of ['>Fixiert<', '>Beweglich<', '>Ausgeblendet<', 'data-tl-state="last"', 'bi-plus', 'tl-reorder-list__section'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);

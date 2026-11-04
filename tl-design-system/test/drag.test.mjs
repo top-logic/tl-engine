@@ -152,10 +152,14 @@ test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Abschnitte mit T
   assert.match(aus, /color:\s*var\(--tl-text-secondary\)/);
   assert.doesNotMatch(aus, /text-disabled/);
   // Jeder Abschnitt außer dem ersten beginnt mit der Trennlinie im Bild von tl-divider (Z5); eine Linie unter dem letzten
-  // Eintrag eines Blocks gibt es nicht.
+  // Eintrag eines Blocks gibt es nicht. Der Abstand an der Linie ist Innenabstand der Überschrift, kein Außenabstand:
+  // Linie und Abstand gehören zur Überschrift, die Ablagefläche reicht bis an die Linie. Ein Außenabstand gehörte der
+  // Liste, die keine Ablage annimmt — eine Lücke, über der das Ziehen nichts trifft.
   const linie = declarationsOf(liste, '.tl-reorder-list__section:not(:first-child)') ?? '';
   assert.match(linie, /border-top:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
-  assert.match(linie, /margin-block-start:\s*var\(--tl-space-2xs\)/);
+  assert.match(linie, /padding-block-start:\s*calc\(var\(--tl-space-2xs\) \+ var\(--tl-space-xs\)\)/);
+  assert.doesNotMatch(linie, /margin/);
+  assert.doesNotMatch(declarationsOf(liste, '.tl-reorder-list__section') ?? '', /margin/);
   // Der Zielabschnitt trägt die Fläche von drop-onto, nicht den Hover-Token.
   const ziel = readGenerated('drag', 'drag.css');
   assert.match(declarationsOf(ziel, '[data-tl-state~="drop-target"]') ?? '', /background:\s*var\(--tl-surface-interactive-strong\)/);

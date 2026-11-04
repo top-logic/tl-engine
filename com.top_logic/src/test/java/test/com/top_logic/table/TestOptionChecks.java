@@ -5,19 +5,24 @@
  */
 package test.com.top_logic.table;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.table.Column;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Option;
+import com.top_logic.table.TableView;
 import com.top_logic.table.filter.OptionChecks;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
+import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.ListRowSource;
 
 /**
  * Test for {@link OptionChecks}, the mapping between check marks and the table filter state.
@@ -57,17 +62,24 @@ public class TestOptionChecks extends TestCase {
 		FilterState state = OptionChecks.state(OPTIONS, Set.of());
 		assertNotNull(state);
 		assertFalse("Must survive DefaultTableView.filter, which drops empty states.", state.isEmpty());
-		Predicate<Object> p = effective(state);
-		for (Option option : OPTIONS) {
-			assertFalse(p.test(option.value()));
-		}
-		assertTrue("Cells without a value are not an option and stay visible.", p.test(null));
+		TableView<Row> view = newView();
+		view.filter("status", state);
+		// Cells without a value are not an option and stay visible; so does a value that is no option yet.
+		assertEquals(Arrays.asList(null, "Neu"), statuses(view));
 	}
 
 	public void testNewValueStaysVisible() {
-		Predicate<Object> p = effective(OptionChecks.state(OPTIONS, Set.of("Offen", "Laufend")));
-		assertTrue(p.test("Neu"));
-		assertFalse(p.test("Erledigt"));
+		TableView<Row> view = newView();
+		view.filter("status", OptionChecks.state(OPTIONS, Set.of("Offen", "Laufend")));
+		assertEquals(Arrays.asList("Offen", "Laufend", null, "Neu"), statuses(view));
+	}
+
+	public void testAllCheckedRemovesFilter() {
+		TableView<Row> view = newView();
+		view.filter("status", OptionChecks.state(OPTIONS, Set.of("Offen")));
+		assertEquals(Arrays.asList("Offen", null, "Neu"), statuses(view));
+		view.filter("status", OptionChecks.state(OPTIONS, ALL));
+		assertEquals(5, view.rowCount());
 	}
 
 	public void testEmptyIncludeIsNoFilter() {
@@ -82,15 +94,21 @@ public class TestOptionChecks extends TestCase {
 		assertFalse(new OptionsColumnFilter<Object>(OPTIONS).predicate(new OptionsFilterState(Set.of("a"))).test(null));
 	}
 
-	/**
-	 * The effective value predicate as {@code ColumnLogic} (package private) builds it: inversion is
-	 * unwrapped and the inner predicate negated.
-	 */
-	private static Predicate<Object> effective(FilterState state) {
-		OptionsColumnFilter<Object> filter = new OptionsColumnFilter<>(OPTIONS);
-		if (state instanceof NegatedFilterState negated) {
-			return filter.predicate(negated.inner()).negate();
-		}
-		return filter.predicate(state);
+	private record Row(String status) {
+		// Test fixture.
+	}
+
+	private static TableView<Row> newView() {
+		Column<Row, String> status = DefaultColumn.<Row, String> builder("status", Row::status)
+			.filter(new OptionsColumnFilter<String>(OPTIONS))
+			.build();
+		List<Column<Row, ?>> columns = List.of(status);
+		List<Row> rows = Arrays.asList(new Row("Offen"), new Row("Laufend"), new Row("Erledigt"), new Row(null),
+			new Row("Neu"));
+		return DefaultTableView.create(columns, new ListRowSource<>(rows, columns));
+	}
+
+	private static List<String> statuses(TableView<Row> view) {
+		return view.rows(0, view.rowCount()).stream().map(r -> r.data().status()).toList();
 	}
 }

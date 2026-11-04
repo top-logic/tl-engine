@@ -40,6 +40,8 @@ public final class OptionChecks {
 	 * @param state
 	 *        The current filter state, or {@code null} for no filter.
 	 * @return The checked option values; all of them if the state does not restrict the options.
+	 *         A state this class cannot map (any other type) is deliberately shown as "everything
+	 *         checked", since there is no meaningful check mark for it.
 	 */
 	public static Set<Object> checked(List<Option> options, FilterState state) {
 		Set<Object> all = values(options);
@@ -51,6 +53,7 @@ public final class OptionChecks {
 			all.retainAll(shown.selected());
 			return all;
 		}
+		// Deliberate: states of unknown form (and null) have no check-mark meaning, show all checked.
 		return all;
 	}
 

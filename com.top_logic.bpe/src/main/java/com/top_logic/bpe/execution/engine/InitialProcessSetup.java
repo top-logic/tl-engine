@@ -48,7 +48,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.tool.boundsec.config.AccessConfigurationSetup;
 import com.top_logic.util.Resources;
 import com.top_logic.util.StartupHooks;
@@ -329,12 +328,12 @@ public class InitialProcessSetup implements StartupAction {
 	 *        The BPML source file.
 	 * @return The newly created {@link Collaboration}.
 	 * 
-	 * @see #importBPML(DisplayContext, KnowledgeBase, BinaryContent)
+	 * @see #importBPML(KnowledgeBase, BinaryContent)
 	 */
 	public static Collaboration importWorkflow(KnowledgeBase kb, BinaryData bpml) {
 		Collaboration collaboration;
 		try {
-			collaboration = importBPML(DefaultDisplayContext.getDisplayContext(), kb, bpml);
+			collaboration = importBPML(kb, bpml);
 		} catch (XMLStreamException | IOException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_IMPORT_FAILED__DETAILS.fill(ex.getMessage()), ex)
 				.initSeverity(ErrorSeverity.WARNING);
@@ -361,8 +360,26 @@ public class InitialProcessSetup implements StartupAction {
 	 * @param data
 	 *        The BPML source to parse.
 	 * @return The newly created {@link Collaboration}.
+	 * 
+	 * @deprecated Use {@link #importBPML(KnowledgeBase, BinaryContent)}.
 	 */
+	@Deprecated
 	public static Collaboration importBPML(DisplayContext context, KnowledgeBase kb, BinaryContent data)
+			throws XMLStreamException, IOException {
+		return importBPML(kb, data);
+	}
+
+	/**
+	 * Parses the given BPML content and creates a new {@link Collaboration} in the
+	 * {@link KnowledgeBase}.
+	 *
+	 * @param kb
+	 *        The target {@link KnowledgeBase}.
+	 * @param data
+	 *        The BPML source to parse.
+	 * @return The newly created {@link Collaboration}.
+	 */
+	public static Collaboration importBPML(KnowledgeBase kb, BinaryContent data)
 			throws XMLStreamException, IOException {
 		try (InputStream in = data.getStream()) {
 			// Importing a process model runs with definer's rights, see
@@ -383,6 +400,8 @@ public class InitialProcessSetup implements StartupAction {
 	 * @return The newly created {@link Collaboration}.
 	 * @throws XMLStreamException
 	 *         If the BPML source contains errors that prevent a valid import.
+	 * @throws TopLogicException
+	 *         If the source contains no workflow definition.
 	 */
 	public static Collaboration importBPML(Source source, ModelBinding binding) throws XMLStreamException {
 		BufferingI18NLog errors = new BufferingI18NLog();
@@ -394,6 +413,10 @@ public class InitialProcessSetup implements StartupAction {
 		Collaboration newCollaboration = importer.importBPML(binding, source);
 		if (errors.hasEntries(Level.WARN)) {
 			throw errors.asException(I18NConstants.ERROR_IMPORT_FAILED);
+		}
+		if (newCollaboration == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_WORKFLOW_DEFINITION)
+				.initSeverity(ErrorSeverity.WARNING);
 		}
 		return newCollaboration;
 	}

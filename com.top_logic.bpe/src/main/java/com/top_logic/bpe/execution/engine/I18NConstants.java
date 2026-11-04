@@ -30,6 +30,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_IMPORT_FAILED;
 
 	/**
+	 * @en The file contains no BPMN workflow definition.
+	 */
+	public static ResKey ERROR_NO_WORKFLOW_DEFINITION;
+
+	/**
 	 * @en Imported workflows.
 	 */
 	public static ResKey IMPORTED_WORKFLOWS;

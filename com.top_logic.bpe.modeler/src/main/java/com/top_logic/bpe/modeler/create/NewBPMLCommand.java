@@ -5,21 +5,12 @@
  */
 package com.top_logic.bpe.modeler.create;
 
-import java.io.IOException;
 import java.util.Map;
-
-import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.io.BinaryContent;
-import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.bpe.bpml.BPMLDefinitions;
 import com.top_logic.bpe.bpml.model.Collaboration;
-import com.top_logic.bpe.bpml.model.Participant;
-import com.top_logic.bpe.execution.engine.InitialProcessSetup;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.values.edit.EditorFactory;
@@ -51,20 +42,8 @@ public class NewBPMLCommand extends AbstractCreateCommandHandler {
 			Map<String, Object> arguments) {
 		NewForm form = (NewForm) EditorFactory.getModel(formContainer);
 
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		BinaryContent data = new ClassRelativeBinaryContent(NewBPMLCommand.class, "default-diagram.bpmn.xml");
-		Collaboration collaboration;
-		try {
-			collaboration =
-				InitialProcessSetup.importBPML(DefaultDisplayContext.getDisplayContext(), kb, data);
-		} catch (XMLStreamException | IOException ex) {
-			throw reportProblem(ex);
-		}
-		collaboration.setName(form.getName());
+		Collaboration collaboration = BPMLDefinitions.createCollaboration(form.getName());
 		collaboration.setIcon(form.getIcon());
-		for (Participant p : collaboration.getParticipants()) {
-			p.setName(form.getName());
-		}
 		return collaboration;
 	}
 

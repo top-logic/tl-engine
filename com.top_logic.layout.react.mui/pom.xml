@@ -19,6 +19,28 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-react</artifactId>
     </dependency>
+
+    <!--
+      The JS tests mount the adapters around the real editors of these modules: they import the
+      editors from the sources of the modules, and the libraries of the editors (Tiptap, Chart.js,
+      CodeMirror) resolve from the node_modules the npm install of each module fills. Depending on
+      the modules builds them, and with them their node_modules, before this module.
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-chartjs</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-codeedit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-wysiwyg</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -53,6 +75,22 @@
             </goals>
             <configuration>
               <arguments>run build</arguments>
+            </configuration>
+          </execution>
+
+          <!--
+            The JS tests, run like the Java tests: with -DskipTests=false, failing the build unless
+            failures are ignored, reported into target/surefire-reports (see vitest.config.ts). The
+            execution is explained in the pom of tl-layout-react.
+          -->
+          <execution>
+            <id>npm-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>test</arguments>
             </configuration>
           </execution>
         </executions>

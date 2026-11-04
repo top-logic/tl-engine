@@ -5,53 +5,50 @@
  */
 package com.top_logic.layout.view.designer;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.FileManager;
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
-import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.xml.XMLPrettyPrinter;
-import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationWriter;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * A {@link ViewCommand} that serializes modified
- * {@link com.top_logic.layout.view.UIElement.Config} trees back to {@code .view.xml} files.
+ * A {@link ViewCommand} that stores the modified views of a design session: back to their
+ * {@code .view.xml} files, or into the attributes of the model objects they are stored on.
  *
  * <p>
- * Reads the {@link DesignSession} from the configured channel and writes the view of every file
- * opened in it that was modified back to disk, the files not shown at the moment included. The
- * {@link com.top_logic.layout.view.ViewLoader} cache auto-invalidates via timestamps on next
- * access.
+ * Reads the {@link DesignSession} from the configured channel and {@link DesignSource#save(String)
+ * saves} every view opened in it that was modified, the views not shown at the moment included. A
+ * view file is reloaded by the {@link com.top_logic.layout.view.ViewLoader}, whose cache
+ * invalidates itself via timestamps on next access, and the main application window is told to
+ * show the saved files anew. A stored view is shown anew by the elements displaying it, which
+ * observe the object it is stored on.
  * </p>
  */
 public class SaveDesignCommand implements ViewCommand {
@@ -96,48 +93,42 @@ public class SaveDesignCommand implements ViewCommand {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		// Only the modified files, of all files opened in the session.
-		Map<String, ViewElement.Config> fileConfigs = session.getDirtyViews();
+		// Only the modified views, of all views opened in the session.
+		Map<DesignSource, ViewElement.Config> dirtyViews = session.getDirtyViews();
 
-		if (fileConfigs.isEmpty()) {
+		if (dirtyViews.isEmpty()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		// Serialize every dirty view and check that it can be read back again, before writing any of
+		// Serialize every dirty view and check that it can be read back again, before storing any of
 		// them. An editor can produce a configuration that serializes but that the view loader
-		// rejects, and writing it would leave the application unable to load the view.
-		Map<String, String> contents = new LinkedHashMap<>();
-		for (Map.Entry<String, ViewElement.Config> entry : fileConfigs.entrySet()) {
+		// rejects, and storing it would leave the application unable to load the view.
+		Map<DesignSource, String> contents = new LinkedHashMap<>();
+		for (Map.Entry<DesignSource, ViewElement.Config> entry : dirtyViews.entrySet()) {
 			contents.put(entry.getKey(), serialize(entry.getKey(), entry.getValue()));
 		}
-		for (Map.Entry<String, String> entry : contents.entrySet()) {
+		for (Map.Entry<DesignSource, String> entry : contents.entrySet()) {
 			checkLoadable(entry.getKey(), entry.getValue());
 		}
 
-		// Write only dirty files back to disk.
-		for (Map.Entry<String, String> entry : contents.entrySet()) {
-			writeViewFile(entry.getKey(), entry.getValue());
+		// Store only the dirty views.
+		Set<String> savedFiles = new LinkedHashSet<>();
+		for (Map.Entry<DesignSource, String> entry : contents.entrySet()) {
+			DesignSource source = entry.getKey();
+			source.save(entry.getValue());
+			session.markSaved(List.of(source));
+			if (source instanceof FileDesignSource file) {
+				savedFiles.add(file.getPath());
+			}
 		}
-		session.markSaved(contents.keySet());
 
-		// Trigger hot-reload in the main application window.
-		if (viewContext.hasChannel(OpenDesignerCommand.APP_CONTEXT_CHANNEL)) {
+		// Trigger hot-reload of the saved files in the main application window.
+		if (!savedFiles.isEmpty() && viewContext.hasChannel(OpenDesignerCommand.APP_CONTEXT_CHANNEL)) {
 			ViewChannel appContextChannel =
 				viewContext.resolveChannel(new ChannelRef(OpenDesignerCommand.APP_CONTEXT_CHANNEL));
-			Object appContextValue = appContextChannel.get();
-			com.top_logic.basic.Logger.info(
-				"SaveDesign: appContext type=" + (appContextValue != null ? appContextValue.getClass().getName() : "null")
-				+ ", isViewContext=" + (appContextValue instanceof ViewContext),
-				SaveDesignCommand.class);
-			if (appContextValue instanceof ViewContext appViewContext) {
-				com.top_logic.basic.Logger.info(
-					"SaveDesign: firing viewChanged for paths: " + fileConfigs.keySet(),
-					SaveDesignCommand.class);
-				appViewContext.fireViewChanged(fileConfigs.keySet());
+			if (appContextChannel.get() instanceof ViewContext appViewContext) {
+				appViewContext.fireViewChanged(savedFiles);
 			}
-		} else {
-			com.top_logic.basic.Logger.info(
-				"SaveDesign: no appContext channel found", SaveDesignCommand.class);
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
@@ -146,12 +137,12 @@ public class SaveDesignCommand implements ViewCommand {
 	/**
 	 * Serializes the given view configuration to XML.
 	 */
-	private String serialize(String viewPath, ViewElement.Config viewConfig) {
+	private String serialize(DesignSource source, ViewElement.Config viewConfig) {
 		StringWriter buffer = new StringWriter();
 		try (Writer out = buffer) {
 			new ConfigurationWriter(out).write("view", ViewElement.Config.class, viewConfig);
 		} catch (XMLStreamException | IOException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_SAVE_VIEW_FAILED__PATH.fill(viewPath), ex);
+			throw new TopLogicException(I18NConstants.ERROR_SAVE_VIEW_FAILED__PATH.fill(source.getLabel()), ex);
 		}
 		return buffer.toString();
 	}
@@ -166,38 +157,15 @@ public class SaveDesignCommand implements ViewCommand {
 	 * </p>
 	 *
 	 * @throws TopLogicException
-	 *         If the content cannot be loaded. Nothing is written in that case, so the files on disk
+	 *         If the content cannot be loaded. Nothing is stored in that case, so the stored views
 	 *         stay loadable and the reported problem can be corrected in the designer.
 	 */
-	private void checkLoadable(String viewPath, String content) {
+	private void checkLoadable(DesignSource source, String content) {
 		try {
-			ViewLoader.parseConfig(List.of(CharacterContents.newContent(content, viewPath)));
+			ViewLoader.parseConfig(List.of(CharacterContents.newContent(content, source.getId())));
 		} catch (ConfigurationException ex) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS.fill(viewPath, ex.getMessage()), ex);
-		}
-	}
-
-	/**
-	 * Writes the given serialized view to the specified view path.
-	 */
-	private void writeViewFile(String viewPath, String content) {
-		File file = FileManager.getInstance().getIDEFileOrNull(viewPath);
-		if (file == null) {
-			throw new TopLogicException(
-				com.top_logic.layout.view.I18NConstants.ERROR_SAVE_VIEW_NO_IDE_FILE__PATH.fill(viewPath));
-		}
-
-		try (Writer out = new OutputStreamWriter(new FileOutputStream(file), StringServices.CHARSET_UTF_8)) {
-			out.write(content);
-		} catch (IOException ex) {
-			throw new TopLogicException(
-				com.top_logic.layout.view.I18NConstants.ERROR_SAVE_VIEW_FAILED__PATH.fill(viewPath), ex);
-		}
-		try {
-			XMLPrettyPrinter.normalizeFile(file);
-		} catch (Exception ex) {
-			Logger.warn("Failed to normalize XML: " + viewPath, ex, SaveDesignCommand.class);
+				I18NConstants.ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS.fill(source.getLabel(), ex.getMessage()), ex);
 		}
 	}
 }

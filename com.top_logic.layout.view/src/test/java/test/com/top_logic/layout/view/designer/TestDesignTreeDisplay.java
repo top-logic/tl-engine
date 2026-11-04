@@ -21,6 +21,7 @@ import com.top_logic.layout.view.designer.AddChildCommand;
 import com.top_logic.layout.view.designer.DesignTreeBuilder;
 import com.top_logic.layout.view.designer.DesignTreeDisplay;
 import com.top_logic.layout.view.designer.DesignTreeNode;
+import com.top_logic.layout.view.designer.FileDesignSource;
 import com.top_logic.layout.view.designer.RemoveElementCommand;
 import com.top_logic.layout.view.designer.VirtualDesignTreeNode;
 import com.top_logic.layout.view.element.AppShellElement;
@@ -32,7 +33,7 @@ import com.top_logic.layout.view.element.StackElement;
  */
 public class TestDesignTreeDisplay extends TestCase {
 
-	private static final String FILE = "/WEB-INF/views/test.view.xml";
+	private static final FileDesignSource FILE = new FileDesignSource("/WEB-INF/views/test.view.xml");
 
 	private DesignTreeNode _shell;
 

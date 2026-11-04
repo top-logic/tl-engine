@@ -66,7 +66,8 @@ import com.top_logic.util.error.TopLogicException;
  * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
  * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET}
- * (with a constant default) to no role.</li>
+ * (with a constant default) to no role. Its attribute {@value #VIEW} stores a view configuration
+ * (datatype {@code tl.view:ViewDefinition}), with the rights of the task.</li>
  * <li>{@value #STEP}: the type of the compositions {@value #STEPS} of a project and
  * {@value #SUBSTEPS} of a step. A step has its container as access parent. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET} to no
@@ -104,6 +105,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the type of the objects in the composition {@link #TASKS}. */
 	protected static final String TASK = "Task";
+
+	/** Name of the {@link #TASK} attribute storing a view configuration. */
+	protected static final String VIEW = "view";
 
 	/**
 	 * Name of the {@link #TASK} reference defaulting to the context the task is created in.

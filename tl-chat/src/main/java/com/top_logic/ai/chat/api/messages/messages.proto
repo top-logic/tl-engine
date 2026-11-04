@@ -196,6 +196,9 @@ message RunStateEvent {
 
 	/** The budget the subagents share; absent when no subagent's run is bounded. */
 	SubagentBudgetDto budget;
+
+	/** Where the chat's run waits for a free worker; absent when it does not wait. */
+	RunWaitingEvent waiting;
 }
 
 /**
@@ -934,6 +937,24 @@ message WokenSubagent {
 
 	/** For {@code ASKS}, the start of what it asks; empty otherwise. */
 	string question;
+}
+
+/**
+ * SSE event saying that the run of a chat waits for a free worker of the installation, and where in
+ * the queue; or, with position 0, that it waits no longer.
+ */
+message RunWaitingEvent {
+	/** The chat whose run waits. */
+	string sessionId;
+
+	/**
+	 * The run's place among the runs waiting for a free worker, counted from 1; 0 once it no longer
+	 * waits - it started, or it was cancelled.
+	 */
+	int position;
+
+	/** The notice line to show while the run waits; empty when {@link #position} is 0. */
+	string text;
 }
 
 /**

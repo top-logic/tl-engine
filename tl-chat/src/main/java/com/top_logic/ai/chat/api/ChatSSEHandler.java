@@ -37,6 +37,7 @@ import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
 import com.top_logic.ai.chat.api.messages.RunStartedEvent;
+import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
 import com.top_logic.ai.chat.api.messages.TextDeltaEvent;
 import com.top_logic.ai.chat.api.messages.ThinkingDeltaEvent;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
@@ -132,6 +133,7 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * <li>{@code message_complete} - Final assistant message with HTML</li>
  * <li>{@code user_interaction} - Polled from UserInteractionStore</li>
  * <li>{@link #PROMPT_IMPROVED} - The result of a prompt improvement</li>
+ * <li>{@link #RUN_WAITING} - A send's run waits for a free worker, or no longer does</li>
  * <li>{@code heartbeat} - Keep-alive ping</li>
  * </ul>
  */
@@ -142,6 +144,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 
 	/** Name of the frame that carries the result of a prompt improvement, see {@link #sendPromptImproved}. */
 	public static final String PROMPT_IMPROVED = "prompt_improved";
+
+	/** Name of the frame that says where a send's run waits for a free worker, see {@link #sendRunWaiting}. */
+	public static final String RUN_WAITING = "run_waiting";
 
 	private static final long FLUSH_INTERVAL_MS = 50;
 	private static final long HEARTBEAT_INTERVAL_MS = 15000;
@@ -493,6 +498,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 	/** The data of an {@code approval_mode} frame. */
 	private static String approvalModeFrame(ApprovalMode mode) {
 		return "{\"mode\":\"" + mode.name() + "\"}";
+	}
+
+	@Override
+	public void sendRunWaiting(RunWaitingEvent event) {
+		enqueue(RUN_WAITING, DtoMapper.toJson(event));
 	}
 
 	@Override

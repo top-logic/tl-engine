@@ -485,6 +485,34 @@ export interface RunState {
   subagents: SubagentActivity[]
   /** The budget the subagents share; absent when no subagent's run is bounded. */
   budget?: SubagentBudget
+  /** Where the chat's run waits for a free worker; absent when it does not wait. */
+  waiting?: RunWaiting
+}
+
+/**
+ * Name of the frame that says where a send's run waits for a free worker, or that it no longer
+ * does. Must match `ChatSSEHandler#RUN_WAITING`.
+ */
+export const FRAME_RUN_WAITING = 'run_waiting'
+
+/** Where a send's run waits for a free worker, as its {@link FRAME_RUN_WAITING} frame states it. */
+export interface RunWaiting {
+  /** The chat whose run waits. */
+  sessionId: string
+  /** The run's place in the queue, counted from 1; 0 once it no longer waits. */
+  position: number
+  /** The notice line the server worded for the user; empty when the run no longer waits. */
+  text: string
+}
+
+/** Reads a {@link FRAME_RUN_WAITING} frame, or the `waiting` part of a `run_state` frame. */
+export function readRunWaiting(data: unknown): RunWaiting {
+  const raw = (data ?? {}) as Partial<RunWaiting>
+  return {
+    sessionId: raw.sessionId ?? '',
+    position: typeof raw.position === 'number' ? raw.position : 0,
+    text: raw.text ?? '',
+  }
 }
 
 /** The payload of a `run_state` frame, with a default for every field the server left out. */
@@ -496,6 +524,7 @@ export function readRunState(data: unknown): RunState {
     interactions?: Partial<PendingInteraction>[]
     subagents?: SubagentActivity[]
     budget?: SubagentBudget
+    waiting?: Partial<RunWaiting>
   }
   return {
     sessionId: raw.sessionId ?? '',
@@ -520,6 +549,7 @@ export function readRunState(data: unknown): RunState {
       item.status === 'DONE' ? { ...item, status: completedStatus(item.stopReason) } : item,
     ),
     budget: raw.budget ?? undefined,
+    waiting: raw.waiting ? readRunWaiting(raw.waiting) : undefined,
   }
 }
 

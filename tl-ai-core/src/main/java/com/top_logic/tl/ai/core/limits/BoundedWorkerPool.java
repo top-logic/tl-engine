@@ -6,6 +6,8 @@
 package com.top_logic.tl.ai.core.limits;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -17,6 +19,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
 
@@ -50,6 +53,11 @@ import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
  * that a task can tell whether waiting for another task of the same pool could wait forever - see
  * {@link #submitNested(Callable)}.
  * </p>
+ *
+ * <p>
+ * A caller that wants to tell somebody that their task waits submits it with
+ * {@link #submit(Runnable, IntConsumer)} and learns the task's place in the queue as it changes.
+ * </p>
  */
 public final class BoundedWorkerPool {
 
@@ -82,6 +90,12 @@ public final class BoundedWorkerPool {
 
 	/** The pool in place, built on first use so that the configuration is read once the services are up. */
 	private volatile Built _built;
+
+	/**
+	 * The waiting tasks whose place is reported, see {@link #submit(Runnable, IntConsumer)}, in the
+	 * order they were submitted. Guarded by itself.
+	 */
+	private final Map<Future<?>, Watch> _watched = new LinkedHashMap<>();
 
 	/**
 	 * Creates a {@link BoundedWorkerPool}.
@@ -132,6 +146,62 @@ public final class BoundedWorkerPool {
 	 */
 	public Future<?> submit(Runnable task) {
 		return pool().submit(task);
+	}
+
+	/**
+	 * Runs the given task on a worker, or queues it and reports its place in the queue while it
+	 * waits.
+	 *
+	 * <p>
+	 * The observer is told nothing for a task that a worker takes at once - one that finds a free
+	 * worker, or a pool without ceiling. A task that finds every worker busy is announced with its
+	 * place (counted from {@code 1}); each time a task ahead of it leaves the queue the observer is
+	 * told the new place, and {@code 0} once the task itself has left the queue to run. After that,
+	 * or after {@link #stopWatching(Future)}, it is not told anything any more.
+	 * </p>
+	 *
+	 * <p>
+	 * The observer is called under a lock of this pool, on the submitting thread or on the worker
+	 * that takes the next task. It must answer quickly and must not wait for a task of this pool.
+	 * </p>
+	 *
+	 * @param position
+	 *        Is told the task's place in the queue as it changes; {@code 0} when it no longer waits.
+	 * @return The task's future, see {@link #submit(Callable)}.
+	 * @throws RejectedExecutionException
+	 *         If every worker is busy and the queue has no room either.
+	 */
+	public Future<?> submit(Runnable task, IntConsumer position) {
+		synchronized (_watched) {
+			ThreadPoolExecutor pool = pool();
+			boolean noIdleWorker = pool.getActiveCount() >= pool.getMaximumPoolSize();
+			Future<?> future = pool.submit(task);
+			if (noIdleWorker) {
+				_watched.put(future, new Watch(pool, position));
+				refreshWatched();
+			}
+			return future;
+		}
+	}
+
+	/**
+	 * Stops reporting the place of the given task, which no longer waits for anybody - typically one
+	 * whose run was cancelled before it started.
+	 *
+	 * <p>
+	 * An observer that has been told a place is told {@code 0}, so that it takes its notice down.
+	 * </p>
+	 *
+	 * @param task
+	 *        A future returned by {@link #submit(Runnable, IntConsumer)}.
+	 */
+	public void stopWatching(Future<?> task) {
+		synchronized (_watched) {
+			Watch watch = _watched.remove(task);
+			if (watch != null && watch._last > 0) {
+				watch.tell(0);
+			}
+		}
 	}
 
 	/**
@@ -194,17 +264,48 @@ public final class BoundedWorkerPool {
 	 */
 	public int positionOf(Future<?> task) {
 		Built built = _built;
-		if (built == null) {
-			return 0;
-		}
+		return built == null ? 0 : positionIn(built._pool, task);
+	}
+
+	/**
+	 * The place of the given task in the queue of the given pool, counted from {@code 1}; a task
+	 * already cancelled in the queue takes no place.
+	 */
+	private static int positionIn(ThreadPoolExecutor pool, Future<?> task) {
 		int position = 0;
-		for (Iterator<Runnable> it = built._pool.getQueue().iterator(); it.hasNext();) {
-			position++;
-			if (it.next() == task) {
-				return position;
+		for (Iterator<Runnable> it = pool.getQueue().iterator(); it.hasNext();) {
+			Runnable queued = it.next();
+			if (queued == task) {
+				return position + 1;
+			}
+			if (!(queued instanceof Future<?> future && future.isDone())) {
+				position++;
 			}
 		}
 		return 0;
+	}
+
+	/**
+	 * Tells every observer of a waiting task its place, where it changed, and forgets the tasks
+	 * that left the queue.
+	 */
+	private void refreshWatched() {
+		synchronized (_watched) {
+			if (_watched.isEmpty()) {
+				return;
+			}
+			for (Iterator<Map.Entry<Future<?>, Watch>> it = _watched.entrySet().iterator(); it.hasNext();) {
+				Map.Entry<Future<?>, Watch> entry = it.next();
+				Watch watch = entry.getValue();
+				int position = positionIn(watch._pool, entry.getKey());
+				if (position != watch._last) {
+					watch.tell(position);
+				}
+				if (position == 0) {
+					it.remove();
+				}
+			}
+		}
 	}
 
 	/**
@@ -257,8 +358,7 @@ public final class BoundedWorkerPool {
 	private ThreadPoolExecutor unboundedPool() {
 		Logger.info(_subject + " are not limited in number."
 			+ " Set " + _setting + " in <capacity> of AgentRuntimeService to bound them.", _logCategory);
-		return new ThreadPoolExecutor(0, Integer.MAX_VALUE, IDLE_SECONDS, TimeUnit.SECONDS,
-			new SynchronousQueue<>(), new WorkerThreads());
+		return new Executor(0, Integer.MAX_VALUE, new SynchronousQueue<>());
 	}
 
 	private ThreadPoolExecutor boundedPool(int ceiling, int queueLength) {
@@ -276,13 +376,51 @@ public final class BoundedWorkerPool {
 			queue = new LinkedBlockingQueue<>(queueLength);
 			waiting = "with room for " + queueLength + " waiting";
 		}
-		ThreadPoolExecutor pool = new ThreadPoolExecutor(ceiling, ceiling, IDLE_SECONDS, TimeUnit.SECONDS,
-			queue, new WorkerThreads());
+		ThreadPoolExecutor pool = new Executor(ceiling, ceiling, queue);
 		// The threads are idle far more often than they are busy; letting them go keeps an
 		// installation that is quiet at night from holding the pool's worth of stacks.
 		pool.allowCoreThreadTimeOut(true);
 		Logger.info(_subject + " are bounded to " + ceiling + " at a time, " + waiting + ".", _logCategory);
 		return pool;
+	}
+
+	/** The pool's executor, which reports the places of the waiting tasks as one of them starts. */
+	private final class Executor extends ThreadPoolExecutor {
+
+		Executor(int core, int max, BlockingQueue<Runnable> queue) {
+			super(core, max, IDLE_SECONDS, TimeUnit.SECONDS, queue, new WorkerThreads());
+		}
+
+		@Override
+		protected void beforeExecute(Thread t, Runnable r) {
+			super.beforeExecute(t, r);
+			// The task has left the queue: every task behind it moved up.
+			refreshWatched();
+		}
+	}
+
+	/** A waiting task's observer, and what it was last told. */
+	private static final class Watch {
+
+		final ThreadPoolExecutor _pool;
+
+		final IntConsumer _observer;
+
+		int _last;
+
+		Watch(ThreadPoolExecutor pool, IntConsumer observer) {
+			_pool = pool;
+			_observer = observer;
+		}
+
+		void tell(int position) {
+			_last = position;
+			try {
+				_observer.accept(position);
+			} catch (RuntimeException ex) {
+				Logger.error("The observer of a waiting task failed.", ex, BoundedWorkerPool.class);
+			}
+		}
 	}
 
 	/** A built pool and the configuration it was built from. */

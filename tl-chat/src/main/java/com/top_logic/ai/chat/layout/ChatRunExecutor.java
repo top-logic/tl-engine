@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.layout;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.IntConsumer;
 
 import com.top_logic.tl.ai.core.limits.BoundedWorkerPool;
 import com.top_logic.tl.ai.core.limits.CapacityConfig;
@@ -86,6 +87,34 @@ final class ChatRunExecutor {
 		} catch (RejectedExecutionException ex) {
 			throw new NoRoom(noRoomDescription());
 		}
+	}
+
+	/**
+	 * Runs the given task on a chat worker, or queues it and reports its place in the queue while it
+	 * waits.
+	 *
+	 * @param position
+	 *        Is told the run's place in the queue while it waits, and {@code 0} when it no longer
+	 *        does; told nothing for a run that starts at once. See
+	 *        {@link BoundedWorkerPool#submit(Runnable, IntConsumer)}.
+	 * @return The task's future, for cancellation and for {@link #stopWatching(Future)}.
+	 * @throws NoRoom
+	 *         See {@link #submit(Runnable)}.
+	 */
+	static Future<?> submit(Runnable task, IntConsumer position) {
+		try {
+			return POOL.submit(task, position);
+		} catch (RejectedExecutionException ex) {
+			throw new NoRoom(noRoomDescription());
+		}
+	}
+
+	/**
+	 * Stops reporting the place of a run that waits for nobody any more, see
+	 * {@link BoundedWorkerPool#stopWatching(Future)}.
+	 */
+	static void stopWatching(Future<?> task) {
+		POOL.stopWatching(task);
 	}
 
 	/**

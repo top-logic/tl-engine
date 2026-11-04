@@ -23,6 +23,7 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CitationDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
 import com.top_logic.ai.chat.backend.BackendRun;
 import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
@@ -682,10 +683,14 @@ public class ChatProcessor {
 		// and the new SSE connection may not be established yet when the send arrives.
 
 		// Pass state directly to background task so it is immune to tracker-level overwrites
+		// The notice is worded now, in the language of the user who sent: it is updated from the
+		// worker that takes the next run, which runs for somebody else.
+		Resources resources = Resources.getInstance();
 		Future<?> future;
 		try {
 			future = ChatRunExecutor.submit(
-				new AIBackgroundTask(tracker, state, userMessage, attachments, userSession));
+				new AIBackgroundTask(tracker, state, userMessage, attachments, userSession),
+				position -> announceWaiting(tracker, state, sessionId, resources, position));
 		} catch (ChatRunExecutor.NoRoom ex) {
 			// The pre-check above said there was room and another request took it in between. Rare,
 			// and the only path on which the user's message is already in the conversation - so it is
@@ -698,6 +703,9 @@ public class ChatProcessor {
 			return SendResult.rejected(reason);
 		}
 		state._backgroundTask = future;
+		// A stop while the run waits takes the notice down at once; the run itself ends when a
+		// worker takes it and finds the token cancelled.
+		state.getCancellationToken().onCancel(() -> ChatRunExecutor.stopWatching(future));
 
 		tracker.setLastSend(new LastSend(new WeakReference<>(userSession), state.getRunOptions(), state.getFacts()));
 		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(sessionId);
@@ -706,6 +714,33 @@ public class ChatProcessor {
 		}
 
 		return SendResult.ok(taskId);
+	}
+
+	/**
+	 * Tells the window of a send where its run waits for a free worker, or that it waits no longer.
+	 *
+	 * <p>
+	 * Kept on the run's state as well, so that a window that connects while the run waits finds the
+	 * notice in its {@code run_state} frame.
+	 * </p>
+	 *
+	 * @param position
+	 *        The run's place in the queue, counted from {@code 1}; {@code 0} when it no longer waits.
+	 */
+	private static void announceWaiting(TaskProgressTracker tracker, AIProcessingState state, String sessionId,
+			Resources resources, int position) {
+		RunWaitingEvent event = RunWaitingEvent.create()
+			.setSessionId(sessionId == null ? "" : sessionId)
+			.setPosition(position)
+			.setText(position > 0
+				? resources.getString(
+					com.top_logic.ai.chat.layout.I18NConstants.WAITING_FOR_WORKER__POSITION.fill(Integer.valueOf(position)))
+				: "");
+		state.setWaiting(position > 0 ? event : null);
+		ChatEventHandler handler = ChatEventHandlerRegistry.find(tracker);
+		if (handler != null) {
+			handler.sendRunWaiting(event);
+		}
 	}
 
 	/**
@@ -1450,6 +1485,27 @@ public class ChatProcessor {
 
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
+
+		/** Where the run waits for a free worker; {@code null} when it does not wait. */
+		private volatile RunWaitingEvent _waiting;
+
+		/**
+		 * Where the run waits for a free worker, as last announced to its window; {@code null} when
+		 * it does not wait.
+		 */
+		public RunWaitingEvent getWaiting() {
+			return _waiting;
+		}
+
+		/**
+		 * Records where the run waits for a free worker.
+		 *
+		 * @param waiting
+		 *        The announcement; {@code null} when the run no longer waits.
+		 */
+		void setWaiting(RunWaitingEvent waiting) {
+			_waiting = waiting;
+		}
 
 		/** Whether AI is currently processing (not yet completed). */
 		public boolean isProcessing() {

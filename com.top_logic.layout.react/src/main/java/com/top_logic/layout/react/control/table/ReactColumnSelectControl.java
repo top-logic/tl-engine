@@ -26,13 +26,13 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The locked columns form a block at the start of the list - the columns the table freezes. Locking puts a column at
- * the end of the block, releasing it directly behind; a drop into the block locks, a drop behind it releases. A hidden
- * column keeps its place.
+ * the end of the block, releasing it directly behind; that is the only way from one block to the other, a drag stays
+ * within the block of the column. A hidden column keeps its place: the client lists it apart, under "hidden", but it is
+ * the same position in this list, so showing it again puts it back where it was.
  * </p>
  *
  * <p>
- * A locked column is always displayed: hiding it releases it, and locking a hidden column - by its lock or by a drop
- * into the block - displays it. The table freezes a leading run of displayed columns and keeps no lock for a hidden
+ * A locked column is always displayed: hiding it releases it, and locking a hidden column by its lock displays it. The table freezes a leading run of displayed columns and keeps no lock for a hidden
  * one, so a hidden locked column would be a state the list shows but the table drops.
  * </p>
  *
@@ -240,9 +240,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	 * Handles a drag and drop or an Alt + arrow move of one entry.
 	 *
 	 * <p>
-	 * The position decides the lock: a column dropped into the block is locked, one dropped behind it released. The
-	 * position directly at the line keeps what the column was, so a locked column ends the block and a released one
-	 * starts the rest.
+	 * The column keeps its lock: a drop beyond the line of the block is taken to the nearest place in the block of the
+	 * column - a locked column ends the block, a released one starts the rest. Locking and releasing is what the lock
+	 * is for.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_COLUMN_REORDER)
@@ -255,9 +255,7 @@ public class ReactColumnSelectControl extends ReactControl {
 		Entry entry = _entries.remove(from);
 		int block = lockedCount();
 		int target = Math.min(Math.max(args.getTargetIndex(), 0), _entries.size());
-		boolean locked = entry.locked() ? target <= block : target < block;
-		Entry moved = locked ? entry.withLocked(true).withVisible(true) : entry.withLocked(false);
-		_entries.add(locked ? Math.min(target, block) : Math.max(target, block), moved);
+		_entries.add(entry.locked() ? Math.min(target, block) : Math.max(target, block), entry);
 		afterEdit(before, _groupedColumn);
 	}
 

@@ -18,8 +18,8 @@
 }
 .tl-reorder-list[hidden] { display: none; }
 
-/* Mit Suche davor füllen Suche und Liste den Behälter, der sie trägt (die Spaltenwahl: ein Fenster mit
-   fester Höhe): eine Spalte mit Innenabstand, damit der Fokusring der Suche ganz zu sehen ist; die
+/* Mit Suche davor füllen Suche und Liste den Behälter, der sie trägt (die Spaltenwahl: die Seite im Popover
+   der Ansicht, die ihre Höhe vom Popover bekommt): eine Spalte mit Innenabstand, damit der Fokusring der Suche ganz zu sehen ist; die
    Liste nimmt den Rest und scrollt allein. Vorher war die Liste fest size-popover-max hoch und lief im
    kleineren Fensterkörper über — zwei Scrollbereiche ineinander, die Suche scrollte weg (12.10.).
    Weniger Treffer lassen die Liste leer auslaufen; die Höhe hält der Behälter. */
@@ -49,7 +49,10 @@
   min-block-size: 0;
 }
 
+/* Die Zeile ist die Klickfläche (U42, K3): der Zeiger zeigt es, die Hover-Fläche darunter auch. Wo ein Klick nichts bewirkt
+   (state last, unten), fällt beides weg. */
 .tl-reorder-list__item {
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: var(--tl-space-xs);
@@ -61,6 +64,16 @@
 /* In :where wie jede Fläche eines Ablage-Ziels (drag.css übermalt sie). */
 :where(.tl-reorder-list__item:hover) {
   background: var(--tl-surface-interactive-hover);
+}
+
+/* Die letzte sichtbare Spalte lässt sich nicht ausblenden, ein Klick auf ihre Zeile bewirkt nichts: kein Zeiger, keine
+   Hover-Fläche. Die Zeile trägt den Grund als Tooltip, das Auge darin ist gesperrt. Steht nach der Hover-Regel, beide in
+   :where gleich schwach. */
+.tl-reorder-list__item[data-tl-state~="last"] {
+  cursor: default;
+}
+:where(.tl-reorder-list__item[data-tl-state~="last"]:hover) {
+  background: none;
 }
 
 .tl-reorder-list__handle {

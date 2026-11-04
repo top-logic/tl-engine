@@ -195,6 +195,23 @@ test('Spaltenwahl: die Wurzel trägt tl-reorder-list__host — Flex-Spalte, fül
   assert.match(readComponent('reorder-list', 'reorder-list.spec.html'), /tl-reorder-list__host/);
 });
 
+// Die Zeile der Spaltenwahl klickt (K3): Zeiger, Hover, und die letzte sichtbare Spalte klickt nicht — kein Zeiger, keine Hover-Fläche.
+// Die Liste hat drei Abschnitte in einem Rollbereich (E12): Fixiert, Beweglich, Ausgeblendet; die Zeilen darunter sind Zeilen derselben Liste.
+test('Spaltenwahl: Zeile mit Zeiger, die letzte sichtbare ohne Zeiger und Hover; Abschnitte Fixiert, Beweglich, Ausgeblendet', () => {
+  assert.match(declarationsOf(reorder, '.tl-reorder-list__item') ?? '', /cursor:\s*pointer/);
+  assert.match(declarationsOf(reorder, '.tl-reorder-list__item[data-tl-state~="last"]') ?? '', /cursor:\s*default/);
+  assert.match(declarationsOf(reorder, ':where(.tl-reorder-list__item[data-tl-state~="last"]:hover)') ?? '', /background:\s*none/);
+  const md = readComponent('reorder-list', 'reorder-list.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-reorder-list__section', 'last']), []);
+  for (const w of ['„Beweglich“', '„Ausgeblendet“', 'Gezogen wird nur im eigenen Block']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
+  const html = readComponent('reorder-list', 'reorder-list.spec.html');
+  for (const t of ['>Fixiert<', '>Beweglich<', '>Ausgeblendet<', 'data-tl-state="last"', 'bi-plus', 'tl-reorder-list__section'])
+    assert.ok(html.includes(t), `Specimen zeigt ${t}`);
+  // Eine ausgeblendete Zeile hat keinen Griff: zwischen ihrem Anfang und ihrer Beschriftung steht keiner.
+  const aus = html.match(/<li class="tl-reorder-list__item" data-tl-state="off">[\s\S]*?<\/li>/)?.[0] ?? '';
+  assert.ok(aus.length > 0 && !aus.includes('tl-reorder-list__handle'), 'die ausgeblendete Zeile hat keinen Griff');
+});
+
 test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne Eingabe, Dichte als menuitemradio, Filter-Popover am Trichter', () => {
   const md = readComponent('table', 'table.contract.md');
   assert.deepEqual(missingInContract(md, ['tl-table-view-options__page', 'tl-table-view-options__back', 'tl-reorder-list__host',

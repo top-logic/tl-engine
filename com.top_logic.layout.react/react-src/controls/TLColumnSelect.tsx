@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, ICON_HANDLE, ICON_VISIBLE, ICON_HIDDEN, ICON_LOCK, ICON_UNLOCK, ICON_GROUP } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, tooltipProps, ICON_HANDLE, ICON_VISIBLE, ICON_ADD, ICON_LOCK, ICON_UNLOCK, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 
@@ -15,6 +15,8 @@ const I18N_KEYS = {
   'js.table.columnLockShort': 'Freeze',
   'js.table.columnUnlockShort': 'Unfreeze',
   'js.table.columnsLocked': 'Frozen',
+  'js.table.columnsMovable': 'Movable',
+  'js.table.columnsHidden': 'Hidden',
   'js.table.columnLastVisible': 'At least one column stays visible',
   'js.table.groupBy': 'Group by this column',
   'js.table.ungroup': 'Remove grouping',
@@ -62,9 +64,14 @@ function format(template: string, arg: string): string {
 /**
  * The column selection of a table as a layer panel (design system: tl-reorder-list): each column with its handle at
  * the start, its name, and at the end a lock that freezes it and an eye that shows or hides it. Handle, lock and eye
- * appear on hover or focus; a hidden column keeps its place, dimmed, and shows its closed eye, a frozen one its lock.
- * The frozen columns stand as a block under the heading "Frozen". A frozen column is always shown: the eye of a frozen
- * column also releases it, the lock of a hidden one also shows it, and both say so in their names.
+ * appear on hover or focus; a frozen column shows its lock. The list has up to three sections in one scroll area: the
+ * frozen columns under the heading "Frozen", the movable ones under "Movable" (the heading only where "Frozen" stands
+ * before them) and the hidden ones under "Hidden" (left out where none is hidden). The sections are the display only:
+ * the server keeps each column at its position, so a column shown again is back where it was. A hidden column has no
+ * handle and is not dragged, and shows a plus where the others show the eye. A frozen column is always shown: the eye
+ * of a frozen column also releases it, the lock of a hidden one also shows it, and both say so in their names.
+ *
+ * A column is dragged within its block, the frozen or the movable one; the lock is the way from one to the other.
  *
  * Unless the table is a tree (state `groupable` false), each row also offers a toggle grouping the rows by its column,
  * hidden or shown; choosing another column moves the grouping there, choosing the grouped one removes it. Like lock and
@@ -84,18 +91,21 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const Button = usePart('Button');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
-  const visibleCount = entries.filter((entry) => entry.visible).length;
+  // The shown columns in the order of the server's list: the hook counts positions among them, since the hidden ones
+  // are listed apart and neither dragged nor dropped on.
+  const visibleEntries = React.useMemo(() => entries.filter((entry) => entry.visible), [entries]);
+  const visibleCount = visibleEntries.length;
   const groupable = state.groupable !== false;
 
   // A table over a large type offers a column per attribute, which is a long list to scroll. The search narrows what
-  // is rendered; the full list stays the reference for the drop position, so a row can be dropped next to a row the
-  // search has hidden. Each rendered row therefore carries its position within the full list.
+  // is rendered; the list of the shown columns stays the reference for the drop position, so a row can be dropped next
+  // to a row the search has hidden. Each rendered row therefore carries its position within that list.
   const [search, setSearch] = React.useState('');
   const matches = new Set(filterOptions(entries, search));
-  const shown = entries.map((entry, index) => ({ entry, index })).filter(({ entry }) => matches.has(entry));
-  const lastLockedShown = shown.filter(({ entry }) => entry.locked).pop()?.index;
-  // The line under the block only where something follows it: a search can leave the block alone.
-  const hasUnlockedShown = shown.some(({ entry }) => !entry.locked);
+  const shown = entries.filter((entry) => matches.has(entry));
+  const lockedShown = shown.filter((entry) => entry.visible && entry.locked);
+  const movableShown = shown.filter((entry) => entry.visible && !entry.locked);
+  const hiddenShown = shown.filter((entry) => !entry.visible);
 
   // A click on lock or eye can reorder the list (the column joins or leaves the frozen block; hiding a frozen column
   // releases it), and React then moves the row's node, which takes the focus from the button. The clicked button is
@@ -154,22 +164,123 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_GROUP, { [ARG_COLUMN]: grouped ? '' : name });
   }, [sendCommand]);
 
-  // The moved column is named rather than counted: the server resolves it against its own working copy, which the
-  // client's list is only a picture of. The server also decides the lock from where the column lands.
-  const handleMove = React.useCallback((from: number, targetIndex: number) => {
-    const moved = entries[from];
-    if (moved) {
-      sendCommand(CMD_COLUMN_REORDER, { [ARG_COLUMN]: moved.name, [ARG_TARGET_INDEX]: targetIndex });
+  // The moved column is named rather than counted: the server resolves it against its own list, which the client's
+  // is only a picture of. The hook counts among the shown columns; the server's list holds the hidden ones too, so the
+  // target is the position in front of the column the drop lands before (or behind the last shown one) in that list.
+  // The server keeps the column in its block.
+  const handleMove = React.useCallback((from: number, to: number) => {
+    const moved = visibleEntries[from];
+    if (!moved) {
+      return;
     }
-  }, [entries, sendCommand]);
+    const restVisible = visibleEntries.filter((_, i) => i !== from);
+    const rest = entries.filter((entry) => entry !== moved);
+    const before = restVisible[to];
+    const targetIndex = before !== undefined
+      ? rest.indexOf(before)
+      : restVisible.length > 0 ? rest.indexOf(restVisible[restVisible.length - 1]) + 1 : rest.length;
+    sendCommand(CMD_COLUMN_REORDER, { [ARG_COLUMN]: moved.name, [ARG_TARGET_INDEX]: targetIndex });
+  }, [entries, visibleEntries, sendCommand]);
 
   const reorder = useListReorder({
     axis: 'vertical',
     onMove: handleMove,
-    count: entries.length,
-    labelOf: (i) => entries[i]?.label ?? '',
-    keyOf: (i) => entries[i]?.name ?? String(i),
+    count: visibleEntries.length,
+    labelOf: (i) => visibleEntries[i]?.label ?? '',
+    keyOf: (i) => visibleEntries[i]?.name ?? String(i),
+    // Dragging stays within the block: the frozen columns among themselves, the movable ones among themselves.
+    accepts: (from, to) => !visibleEntries[from]?.locked === !visibleEntries[to]?.locked,
   });
+
+  const renderRow = (entry: ColumnEntry) => {
+    // The position among the shown columns, for the drag; a hidden column has none.
+    const index = visibleEntries.indexOf(entry);
+    // Keep the table from losing its last column: there would be nothing left to click.
+    const lastVisible = entry.visible && visibleCount <= 1;
+    const eyeLabel = lastVisible
+      ? i18n['js.table.columnLastVisible']
+      : format(i18n[!entry.visible ? 'js.table.columnShow'
+        : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
+    // The tooltips of eye and lock stand next to the row and need no column name; the accessible names keep it,
+    // since a screen reader announces a button on its own.
+    const eyeTip = lastVisible
+      ? eyeLabel
+      : i18n[entry.visible ? 'js.table.columnHideShort' : 'js.table.columnShowShort'];
+    const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
+      : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
+    const lockTip = i18n[entry.locked ? 'js.table.columnUnlockShort' : 'js.table.columnLockShort'];
+    const grouped = groupable && entry.grouped === true;
+    const handle = index >= 0 ? reorder.handleProps(index) : null;
+    return (
+      <li
+        key={entry.name}
+        className="tl-reorder-list__item"
+        data-tl-state={stateAttr(
+          index >= 0 && reorderState(reorder.itemState(index)),
+          !entry.visible && 'off',
+          entry.locked && 'locked',
+          grouped && 'grouped',
+          lastVisible && 'last',
+        )}
+        // The row says why a click does nothing, as the disabled eye does.
+        {...(lastVisible ? tooltipProps(i18n['js.table.columnLastVisible']) : {})}
+        // A hidden column is not dragged and not dropped on: it has no place in the order of the shown ones.
+        {...(index >= 0 ? reorder.itemProps(index) : {})}
+        onClick={(event) => handleRowClick(entry, lastVisible, event)}
+      >
+        {handle !== null && (
+          <Button
+            label={handle['aria-label']}
+            image={ICON_HANDLE}
+            display="icon-only"
+            appearance="ghost"
+            small
+            className="tl-reorder-list__handle tl-reveal-on-hover"
+            {...handle}
+          />
+        )}
+        <span className="tl-reorder-list__label">{entry.label}</span>
+        <span className="tl-reorder-list__actions">
+          {groupable && (
+            <Button
+              label={i18n[grouped ? 'js.table.ungroup' : 'js.table.groupBy']}
+              image={ICON_GROUP}
+              display="icon-only"
+              appearance="ghost"
+              small
+              checked={grouped}
+              // The grouped row keeps its toggle in sight; the others show it on hover or focus.
+              className={grouped ? undefined : 'tl-reveal-on-hover'}
+              onClick={() => handleGroup(entry.name, grouped)}
+            />
+          )}
+          <Button
+            ref={buttonRef(`${entry.name}:lock`)}
+            label={lockLabel}
+            tooltip={lockTip}
+            image={entry.locked ? ICON_LOCK : ICON_UNLOCK}
+            display="icon-only"
+            appearance="ghost"
+            small
+            className="tl-reorder-list__lock tl-reveal-on-hover"
+            onClick={(event) => handleLock(entry.name, !entry.locked, event)}
+          />
+          <Button
+            ref={buttonRef(`${entry.name}:eye`)}
+            label={eyeLabel}
+            tooltip={eyeTip}
+            image={entry.visible ? ICON_VISIBLE : ICON_ADD}
+            display="icon-only"
+            appearance="ghost"
+            small
+            disabled={lastVisible}
+            className="tl-reorder-list__eye tl-reveal-on-hover"
+            onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
+          />
+        </span>
+      </li>
+    );
+  };
 
   const searchable = entries.length > 10;
 
@@ -185,91 +296,18 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
         />
       )}
       <ul className="tl-reorder-list tl-type-body">
-        {lastLockedShown !== undefined && (
+        {lockedShown.length > 0 && (
           <li className="tl-reorder-list__section tl-type-label" role="presentation">{i18n['js.table.columnsLocked']}</li>
         )}
-        {shown.map(({ entry, index }) => {
-          // Keep the table from losing its last column: there would be nothing left to click.
-          const lastVisible = entry.visible && visibleCount <= 1;
-          const eyeLabel = lastVisible
-            ? i18n['js.table.columnLastVisible']
-            : format(i18n[!entry.visible ? 'js.table.columnShow'
-              : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
-          // The tooltips of eye and lock stand next to the row and need no column name; the accessible names keep it,
-          // since a screen reader announces a button on its own.
-          const eyeTip = lastVisible
-            ? eyeLabel
-            : i18n[entry.visible ? 'js.table.columnHideShort' : 'js.table.columnShowShort'];
-          const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
-            : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
-          const lockTip = i18n[entry.locked ? 'js.table.columnUnlockShort' : 'js.table.columnLockShort'];
-          const grouped = groupable && entry.grouped === true;
-          const handle = reorder.handleProps(index);
-          return (
-            <li
-              key={entry.name}
-              className="tl-reorder-list__item"
-              data-tl-state={stateAttr(
-                reorderState(reorder.itemState(index)),
-                !entry.visible && 'off',
-                entry.locked && 'locked',
-                grouped && 'grouped',
-                index === lastLockedShown && hasUnlockedShown && 'section-end',
-              )}
-              {...reorder.itemProps(index)}
-              onClick={(event) => handleRowClick(entry, lastVisible, event)}
-            >
-              <Button
-                label={handle['aria-label']}
-                image={ICON_HANDLE}
-                display="icon-only"
-                appearance="ghost"
-                small
-                className="tl-reorder-list__handle tl-reveal-on-hover"
-                {...handle}
-              />
-              <span className="tl-reorder-list__label">{entry.label}</span>
-              <span className="tl-reorder-list__actions">
-                {groupable && (
-                  <Button
-                    label={i18n[grouped ? 'js.table.ungroup' : 'js.table.groupBy']}
-                    image={ICON_GROUP}
-                    display="icon-only"
-                    appearance="ghost"
-                    small
-                    checked={grouped}
-                    // The grouped row keeps its toggle in sight; the others show it on hover or focus.
-                    className={grouped ? undefined : 'tl-reveal-on-hover'}
-                    onClick={() => handleGroup(entry.name, grouped)}
-                  />
-                )}
-                <Button
-                  ref={buttonRef(`${entry.name}:lock`)}
-                  label={lockLabel}
-                  tooltip={lockTip}
-                  image={entry.locked ? ICON_LOCK : ICON_UNLOCK}
-                  display="icon-only"
-                  appearance="ghost"
-                  small
-                  className="tl-reorder-list__lock tl-reveal-on-hover"
-                  onClick={(event) => handleLock(entry.name, !entry.locked, event)}
-                />
-                <Button
-                  ref={buttonRef(`${entry.name}:eye`)}
-                  label={eyeLabel}
-                  tooltip={eyeTip}
-                  image={entry.visible ? ICON_VISIBLE : ICON_HIDDEN}
-                  display="icon-only"
-                  appearance="ghost"
-                  small
-                  disabled={lastVisible}
-                  className="tl-reorder-list__eye tl-reveal-on-hover"
-                  onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
-                />
-              </span>
-            </li>
-          );
-        })}
+        {lockedShown.map(renderRow)}
+        {lockedShown.length > 0 && movableShown.length > 0 && (
+          <li className="tl-reorder-list__section tl-type-label" role="presentation">{i18n['js.table.columnsMovable']}</li>
+        )}
+        {movableShown.map(renderRow)}
+        {hiddenShown.length > 0 && (
+          <li className="tl-reorder-list__section tl-type-label" role="presentation">{i18n['js.table.columnsHidden']}</li>
+        )}
+        {hiddenShown.map(renderRow)}
       </ul>
       {reorder.announcer}
     </div>

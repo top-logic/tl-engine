@@ -243,48 +243,74 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
   const backRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState<ViewPage>('view');
-  // Read by the closing handlers, which a surface keeps from the render that opened it.
+  // Read by the closing handlers, which a surface keeps from the render that opened it, and by the cleanup.
   const pageRef = useRef(page);
   pageRef.current = page;
-  // Set from the press of the entry until the selection has arrived: until then the page has no content yet, and
-  // no content is not the server having released it. A selection that was there at the press - the way back was
-  // pressed a moment ago, and the server has not released it yet - is not the one waited for.
-  const waiting = useRef(false);
-  const staleId = useRef<string | null>(null);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const onColumnsCloseRef = useRef(onColumnsClose);
+  onColumnsCloseRef.current = onColumnsClose;
+
+  // The selections of the server are told apart by their ID. Between a press of the entry and the arrival of what it
+  // asked for, the server may still hold the selection of an earlier press (the way back and the entry again within one
+  // round trip): that one was released - the client said so - and is neither drawn nor waited for. `pending` counts
+  // the presses of the entry whose selection has not arrived; while it is above zero, a release (`null`) is the
+  // server catching up and no reason to go back to the first page.
+  const released = useRef(new Set<string>());
+  const pending = useRef(0);
+  const arrived = useRef<string | null>(null);
+  const currentId = controlIdOf(columnSelection);
+  const selection = currentId !== null && !released.current.has(currentId) ? columnSelection : null;
+
+  const releaseSelection = useCallback(() => {
+    const id = controlIdOf(columnSelection);
+    if (id !== null) {
+      released.current.add(id);
+    }
+  }, [columnSelection]);
 
   const close = useCallback(() => {
     if (pageRef.current === 'columns') {
+      releaseSelection();
       onColumnsClose();
     }
-    waiting.current = false;
+    pending.current = 0;
     setPage('view');
     setOpen(false);
-  }, [onColumnsClose]);
+  }, [onColumnsClose, releaseSelection]);
   const trigger = usePopupTrigger(open, (next) => (next ? setOpen(true) : close()), 'dialog');
 
   const showColumns = useCallback(() => {
-    waiting.current = true;
-    staleId.current = controlIdOf(columnSelection);
+    pending.current++;
     setPage('columns');
     onColumns();
-  }, [onColumns, columnSelection]);
+  }, [onColumns]);
   const showView = useCallback(() => {
+    releaseSelection();
     onColumnsClose();
-    waiting.current = false;
     setPage('view');
-  }, [onColumnsClose]);
+  }, [onColumnsClose, releaseSelection]);
 
   // The server wins: a selection it released - the table left the display, another selection replaced it - takes the
   // popover back to the first page.
   useEffect(() => {
-    if (columnSelection !== null) {
-      if (controlIdOf(columnSelection) !== staleId.current) {
-        waiting.current = false;
+    if (selection !== null) {
+      if (currentId !== arrived.current) {
+        arrived.current = currentId;
+        pending.current = Math.max(0, pending.current - 1);
       }
-    } else if (page === 'columns' && !waiting.current) {
+    } else if (page === 'columns' && pending.current === 0) {
       setPage('view');
     }
-  }, [columnSelection, page]);
+  }, [selection, currentId, page]);
+
+  // The button goes away - the table redraws its heading, the table is closed - while the second page is open: the
+  // server releases the selection nobody shows any more.
+  useEffect(() => () => {
+    if (openRef.current && pageRef.current === 'columns') {
+      onColumnsCloseRef.current();
+    }
+  }, []);
 
   // The focus follows the page: the entry that was pressed is gone with its page.
   const shownPage = useRef(page);
@@ -348,7 +374,7 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
                 />
                 {i18n['js.table.columns']}
               </div>
-              {columnSelection !== null && <TLChild control={columnSelection} />}
+              {selection !== null && <TLChild control={selection} />}
             </div>
           )}
         </PickerPopover>

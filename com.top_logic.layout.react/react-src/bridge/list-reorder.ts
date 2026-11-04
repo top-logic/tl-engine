@@ -141,6 +141,17 @@ export interface ListReorderOptions {
   /** The number of items; a keyboard move stops at both ends. */
   count: number;
 
+  /**
+   * Whether an item may be moved to the position of another one: dragging shows no insertion mark over an item it
+   * does not accept, a drop there moves nothing, and a keyboard move stops there without a word. A list whose items
+   * form blocks that keep their members (the frozen and the movable columns) refuses the position across a block
+   * line. Absent: every position is accepted.
+   *
+   * @param from The position of the moved item.
+   * @param to The position of the item it would move to or over.
+   */
+  accepts?(from: number, to: number): boolean;
+
   /** The name of the item at the given position, for the handle's label and the announcement of a move. */
   labelOf?(index: number): string;
 
@@ -198,7 +209,7 @@ export function reorderState(state: ReorderItemState): 'dragging' | 'drop-before
  *        {@link ListReorderOptions}.
  */
 export function useListReorder(options: ListReorderOptions): ListReorder {
-  const { axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf } = options;
+  const { axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf, accepts } = options;
   const t = useI18N(I18N_KEYS);
   const hintId = useId();
   const [announcement, setAnnouncement] = useState('');
@@ -221,6 +232,8 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   labelOfRef.current = labelOf;
   const keyOfRef = useRef(keyOf);
   keyOfRef.current = keyOf;
+  const acceptsRef = useRef(accepts);
+  acceptsRef.current = accepts;
 
   const setDragIndex = useCallback((index: number | null) => {
     dragIndexRef.current = index;
@@ -298,9 +311,9 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
 
   const handleDragOver = useCallback((index: number, event: React.DragEvent) => {
     const dragged = dragIndexRef.current;
-    if (dragged === null || dragged === index) {
-      // Nothing of this list is being dragged, or the item hovers over itself: no drop here, so the
-      // event keeps its default and the pointer shows that the gesture would do nothing.
+    if (dragged === null || dragged === index || acceptsRef.current?.(dragged, index) === false) {
+      // Nothing of this list is being dragged, the item hovers over itself, or the list does not accept the position:
+      // no drop here, so the event keeps its default and the pointer shows that the gesture would do nothing.
       setDropTarget(null);
       return;
     }
@@ -397,7 +410,7 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     event.stopPropagation();
     const to = index + (event.key === back ? -1 : 1);
     const total = countRef.current;
-    if (to < 0 || to >= total) {
+    if (to < 0 || to >= total || acceptsRef.current?.(index, to) === false) {
       return;
     }
     pendingFocusRef.current = { key: keyOfRef.current ? keyOfRef.current(index) : String(to), to };

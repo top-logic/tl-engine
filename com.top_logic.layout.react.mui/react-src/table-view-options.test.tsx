@@ -429,6 +429,62 @@ describe('the page "Columns" of the view', () => {
     expect(screen.getByRole('radiogroup')).toBeTruthy();
   });
 
+  it('shows no selection the server has released: entry, back and entry again within one round trip', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    const first = childControl('cs1', 'Spaltenwahl eins');
+    const second = childControl('cs2', 'Spaltenwahl zwei');
+    await userEvent.click(screen.getByRole('button', { name: COLUMNS_ENTRY }));
+    patchState({ columnSelection: first });
+    await settle();
+    expect(screen.getByText('Spaltenwahl eins')).toBeTruthy();
+
+    // Back and the entry again, before the server has answered the first of them: it still holds the first selection.
+    await userEvent.click(screen.getByRole('button', { name: BACK }));
+    await userEvent.click(screen.getByRole('button', { name: COLUMNS_ENTRY }));
+    await settle();
+    expect(sent.mock.calls.map((call) => call[0]).filter((name) => name.endsWith('Columns')))
+      .toEqual(['openColumns', 'closeColumns', 'openColumns']);
+    // The released selection is not drawn again, and the page waits for the new one.
+    expect(screen.queryByText('Spaltenwahl eins')).toBeNull();
+    expect(screen.getByRole('button', { name: BACK })).toBeTruthy();
+
+    // The server's answers: it releases the first, then builds the second. The release is no reason to go back.
+    patchState({ columnSelection: null });
+    await settle();
+    expect(screen.getByRole('button', { name: BACK })).toBeTruthy();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    patchState({ columnSelection: second });
+    await settle();
+    expect(screen.getByText('Spaltenwahl zwei')).toBeTruthy();
+  });
+
+  it('tells the server when the button goes away while the page is open', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+    sent.mockClear();
+
+    cleanup();
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+  });
+
+  it('tells the server nothing when the button goes away on the first page', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    sent.mockClear();
+
+    cleanup();
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
   it('keeps the page open between the click and the answer of the server', async () => {
     mountColumns();
     await settle();

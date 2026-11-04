@@ -80,22 +80,33 @@ public class TestReactColumnSelect extends TestCase {
 		assertEquals(List.of("a", "b"), control.lockedColumns());
 	}
 
-	public void testReorderIntoTheBlockLocks() {
+	public void testReorderIntoTheBlockStaysOutside() {
+		// Dragging stays within the own block: a drop into the frozen block lands at its end, the column stays released.
 		ReactColumnSelectControl control = control(Set.of("a", "b"));
 
 		assertTrue(reorder(control, "d", 1));
 
-		assertEquals(List.of("a", "d", "b", "c", "e"), control.order());
-		assertEquals(List.of("a", "d", "b"), control.lockedColumns());
+		assertEquals(List.of("a", "b", "d", "c", "e"), control.order());
+		assertEquals(List.of("a", "b"), control.lockedColumns());
 	}
 
-	public void testReorderOutOfTheBlockUnlocks() {
+	public void testReorderOutOfTheBlockStaysInside() {
+		// A frozen column dropped behind the block lands at the end of the block, it stays frozen.
 		ReactColumnSelectControl control = control(Set.of("a", "b"));
 
 		assertTrue(reorder(control, "a", 3));
 
-		assertEquals(List.of("b", "c", "d", "a", "e"), control.order());
-		assertEquals(List.of("b"), control.lockedColumns());
+		assertEquals(List.of("b", "a", "c", "d", "e"), control.order());
+		assertEquals(List.of("b", "a"), control.lockedColumns());
+	}
+
+	public void testReorderWithinTheBlockMoves() {
+		ReactColumnSelectControl control = control(Set.of("a", "b", "c"));
+
+		assertTrue(reorder(control, "a", 2));
+
+		assertEquals(List.of("b", "c", "a", "d", "e"), control.order());
+		assertEquals(List.of("b", "c", "a"), control.lockedColumns());
 	}
 
 	public void testReorderToTheLineKeepsTheState() {
@@ -135,14 +146,15 @@ public class TestReactColumnSelect extends TestCase {
 		assertTrue(control.visibleColumns().contains("d"));
 	}
 
-	public void testDroppingAHiddenColumnIntoTheBlockShowsIt() {
+	public void testDroppingAHiddenColumnIntoTheBlockKeepsItHiddenAndOutside() {
 		ReactColumnSelectControl control = control(Set.of("a", "b"));
 		assertTrue(visible(control, "d", false));
 
 		assertTrue(reorder(control, "d", 1));
 
-		assertEquals(List.of("a", "d", "b"), control.lockedColumns());
-		assertTrue(control.visibleColumns().contains("d"));
+		assertEquals(List.of("a", "b"), control.lockedColumns());
+		assertFalse(control.visibleColumns().contains("d"));
+		assertEquals(List.of("a", "b", "d", "c", "e"), control.order());
 	}
 
 	public void testDroppingAHiddenColumnBehindTheBlockKeepsItHidden() {
@@ -234,7 +246,7 @@ public class TestReactColumnSelect extends TestCase {
 		assertEquals(1, changes[0]);
 		assertTrue(lock(control, "c", true));
 		assertEquals(2, changes[0]);
-		assertTrue(reorder(control, "e", 0));
+		assertTrue(reorder(control, "e", 2));
 		assertEquals(3, changes[0]);
 		assertTrue(group(control, "c"));
 		assertEquals(4, changes[0]);

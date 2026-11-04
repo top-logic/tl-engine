@@ -323,6 +323,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		// Rebind existing model to the current object.
 		_model.setObject(current);
+		FieldControlService.updateUnit(_innerControl, part, current);
 		_formControl.registerParticipant(this);
 		_chrome.setDirty(_model.isDirty());
 

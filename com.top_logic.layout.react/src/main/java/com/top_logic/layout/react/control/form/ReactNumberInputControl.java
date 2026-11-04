@@ -40,16 +40,23 @@ import com.top_logic.layout.react.state.NumberInputState.InputMode;
  * </p>
  *
  * <p>
- * An optional {@link #setUnit(String) unit} is shown after the value, in
- * {@link NumberInputState#UNIT__PROP}. It is display only: the user does not type it, it is not
- * part of the format, and a typed text is read without it.
+ * An optional unit is shown after the value, in {@link NumberInputState#UNIT__PROP}. It is display
+ * only: the user does not type it, it is not part of the format, and a typed text is read without
+ * it. The unit is the {@link #setFieldUnit(String) unit of the field}, until a
+ * {@link #setUnit(String) unit of the control's own} is set.
  * </p>
  */
-public class ReactNumberInputControl extends ReactFormFieldControl {
+public class ReactNumberInputControl extends ReactFormFieldControl implements FieldUnitDisplay {
 
 	private final Format _format;
 
 	private String _unit;
+
+	/**
+	 * Whether {@link #_unit} is a unit of this control's own, which the unit of the field does not
+	 * replace.
+	 */
+	private boolean _ownUnit;
 
 	/**
 	 * Creates a new {@link ReactNumberInputControl}.
@@ -75,7 +82,7 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 * @param format
 	 *        The format the value is displayed in and entered in.
 	 * @param unit
-	 *        See {@link #setUnit(String)}.
+	 *        The unit of the field, see {@link #setFieldUnit(String)}.
 	 */
 	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format, String unit) {
 		super(context, model, "TLNumberInput");
@@ -104,12 +111,30 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Sets the unit shown after the value (e.g. {@code min} for {@code 120 min}).
+	 * Sets a unit of this control's own, shown after the value (e.g. {@code min} for
+	 * {@code 120 min}) instead of the {@link #setFieldUnit(String) unit of the field}.
 	 *
 	 * @param unit
-	 *        The text of the unit; {@code null} or an empty text shows no unit.
+	 *        The text of the unit; {@code null} or an empty text shows no unit, not even the unit
+	 *        of the field.
 	 */
 	public void setUnit(String unit) {
+		_ownUnit = true;
+		showUnit(unit);
+	}
+
+	/**
+	 * Shows the given unit of the field, unless a {@link #setUnit(String) unit of this control's
+	 * own} is set.
+	 */
+	@Override
+	public void setFieldUnit(String unit) {
+		if (!_ownUnit) {
+			showUnit(unit);
+		}
+	}
+
+	private void showUnit(String unit) {
 		_unit = normalizeUnit(unit);
 		putState(NumberInputState.UNIT__PROP, _unit);
 	}

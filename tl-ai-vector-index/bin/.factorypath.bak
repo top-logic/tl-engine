@@ -1,6 +1,0 @@
-<factorypath>
-    <factorypathentry kind="VARJAR" id="M2_REPO/com/top-logic/tl-build-processor/7.9.6/tl-build-processor-7.9.6-jar-with-dependencies.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/com/top-logic/tl-xref/7.9.6/tl-xref-7.9.6.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/com/top-logic/tl-common-json/7.9.6/tl-common-json-7.9.6.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/com/top-logic/tl-basic-shared/7.9.6/tl-basic-shared-7.9.6.jar" enabled="true" runInBatchMode="false"/>
-</factorypath>

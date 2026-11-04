@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, usePopupTrigger, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, usePopupTrigger, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -1581,38 +1581,51 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The typed term is held locally while a send is pending: the input stays responsive between
   // round-trips, and the echoed server state cannot move the caret while the user is still typing.
   const [searchDraft, setSearchDraft] = React.useState(serverSearch);
-  const searchPendingRef = React.useRef(false);
+  // The term typed and not yet sent; null when nothing waits.
+  const searchPendingRef = React.useRef<string | null>(null);
   const searchTimeoutRef = React.useRef<number | null>(null);
+  const flushSearchRef = React.useRef<() => Promise<void>>(() => Promise.resolve());
+  // Identity-stable wrapper for the command channel: while a term waits, every action command
+  // (also of other controls) sends it first, so a click on a preset chip or a sort header within
+  // the pause cannot overtake the search - the same mechanism the debounced form fields use.
+  const stableFlushSearchRef = React.useRef<() => Promise<void>>(() => flushSearchRef.current());
 
   React.useEffect(() => {
-    if (!searchPendingRef.current) {
+    if (searchPendingRef.current === null) {
       setSearchDraft(serverSearch);
     }
   }, [serverSearch]);
 
-  React.useEffect(() => () => {
-    if (searchTimeoutRef.current !== null) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-  }, []);
-
-  const sendSearch = React.useCallback((term: string) => {
+  const sendSearch = React.useCallback((term: string): Promise<void> => {
     if (searchTimeoutRef.current !== null) {
       clearTimeout(searchTimeoutRef.current);
       searchTimeoutRef.current = null;
     }
-    searchPendingRef.current = false;
-    sendCommand('search', { term });
+    unregisterPendingFlush(stableFlushSearchRef.current);
+    searchPendingRef.current = null;
+    return sendCommand('search', { term });
   }, [sendCommand]);
+
+  // Sends the waiting term, if any: on leaving the field, before another command, and on unmount.
+  flushSearchRef.current = () => {
+    const pending = searchPendingRef.current;
+    return pending === null ? Promise.resolve() : sendSearch(pending);
+  };
+
+  // A table that goes away within the pause still sends what was typed instead of dropping it.
+  React.useEffect(() => () => { void flushSearchRef.current(); }, []);
 
   const handleSearchChange = React.useCallback((term: string) => {
     setSearchDraft(term);
-    searchPendingRef.current = true;
+    searchPendingRef.current = term;
+    registerPendingFlush(stableFlushSearchRef.current);
     if (searchTimeoutRef.current !== null) {
       clearTimeout(searchTimeoutRef.current);
     }
-    searchTimeoutRef.current = window.setTimeout(() => sendSearch(term), SEARCH_DEBOUNCE_MS);
-  }, [sendSearch]);
+    searchTimeoutRef.current = window.setTimeout(() => { void flushSearchRef.current(); }, SEARCH_DEBOUNCE_MS);
+  }, []);
+
+  const handleSearchBlur = React.useCallback(() => { void flushSearchRef.current(); }, []);
 
   const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
@@ -1963,6 +1976,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               sendSearch('');
             }}
             onKeyDown={handleSearchKeyDown}
+            onBlur={handleSearchBlur}
           />
           {filterSaving && (saveName === null ? (
             <Button

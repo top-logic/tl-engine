@@ -27,7 +27,7 @@ export {
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
 export type { CommandOptions } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';

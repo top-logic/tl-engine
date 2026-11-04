@@ -62,6 +62,11 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * The fallback value of an attribute with a {@link com.top_logic.model.fallback.StorageWithFallback}
+ * is shown as placeholder, see {@link FallbackPlaceholder}.
+ * </p>
+ *
+ * <p>
  * The field lives exactly as long as its {@link #createChromeControl() chrome}: disposing the chrome
  * deregisters the field from the {@link FormModel} and releases its model, so a form that outlives
  * the field (e.g. a field inside a switch or a visible-if within the form) no longer reaches it.
@@ -96,6 +101,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private ReactFormFieldChromeControl _chrome;
 
 	private ReactControl _innerControl;
+
+	/** Shows the fallback of the displayed attribute, {@code null} while no value is displayed. */
+	private FallbackPlaceholder _fallback;
 
 	private final AttributeModeTracker _modeTracker;
 
@@ -227,6 +235,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		setupMode(part);
 		applyMode(_formModel.isEditMode());
+		_fallback = new FallbackPlaceholder(_formControl, _model, _innerControl, _chrome);
 
 		return _chrome;
 	}
@@ -301,6 +310,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			setupMode(part);
 			applyMode(source.isEditMode());
+			_fallback = new FallbackPlaceholder(_formControl, _model, _innerControl, _chrome);
 			return;
 		}
 
@@ -311,6 +321,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		setupMode(part);
 		applyMode(source.isEditMode());
+		_fallback.update();
 
 		// Re-wire validation: the overlay changed, so the old listener (bound to the
 		// previous overlay by identity) won't match anymore. Remove it and re-create.
@@ -394,6 +405,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	public void onObjectChanged() {
 		if (_model != null) {
 			_model.followObject();
+			_fallback.update();
 		}
 	}
 
@@ -417,6 +429,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private void clearModel() {
 		unwireValidation();
 		_modeTracker.detach();
+		if (_fallback != null) {
+			_fallback.dispose();
+			_fallback = null;
+		}
 		if (_model != null) {
 			if (_modelListener != null) {
 				_model.removeListener(_modelListener);

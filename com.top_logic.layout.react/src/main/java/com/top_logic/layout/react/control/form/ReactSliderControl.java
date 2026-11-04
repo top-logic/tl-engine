@@ -196,6 +196,11 @@ public class ReactSliderControl extends ReactFormFieldControl {
 		putState(SliderState.VALUE_LABEL__PROP, format(newValue));
 	}
 
+	@Override
+	protected String formatElement(Object value) {
+		return format(value);
+	}
+
 	/**
 	 * The range the handle travels, the text beside it and the bounds written as text are how the
 	 * value is shown, not what it is: the value itself is the number the field holds.

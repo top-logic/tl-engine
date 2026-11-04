@@ -47,6 +47,12 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	private boolean _tooltipInteractive;
 
+	/** The class {@link #setCssClass(String) configured} for this field, {@code null} for none. */
+	private String _configuredCssClass;
+
+	/** The class {@link #setStateCssClass(String) marking the state} of the value, {@code null} for none. */
+	private String _stateCssClass;
+
 	/**
 	 * Creates a form field chrome wrapper.
 	 *
@@ -120,6 +126,49 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		setVisible(visible);
 		putState(FormFieldState.FIELD__PROP, field);
 		followField();
+	}
+
+	/**
+	 * Sets the CSS class configured for this field.
+	 *
+	 * <p>
+	 * The configured class stands beside the class {@link #setStateCssClass(String) marking the
+	 * state} of the displayed value, so that neither replaces the other.
+	 * </p>
+	 */
+	@Override
+	public void setCssClass(String cssClass) {
+		_configuredCssClass = cssClass;
+		updateCssClass();
+	}
+
+	/**
+	 * Sets a CSS class marking the state of the displayed value, e.g. whether it is entered
+	 * explicitly or computed as fallback.
+	 *
+	 * <p>
+	 * The class is put on the field container beside the {@link #setCssClass(String) configured}
+	 * one.
+	 * </p>
+	 *
+	 * @param cssClass
+	 *        The class, or {@code null} for none.
+	 */
+	public void setStateCssClass(String cssClass) {
+		_stateCssClass = cssClass;
+		updateCssClass();
+	}
+
+	private void updateCssClass() {
+		String combined;
+		if (_configuredCssClass == null) {
+			combined = _stateCssClass;
+		} else if (_stateCssClass == null) {
+			combined = _configuredCssClass;
+		} else {
+			combined = _configuredCssClass + ' ' + _stateCssClass;
+		}
+		super.setCssClass(combined);
 	}
 
 	/**

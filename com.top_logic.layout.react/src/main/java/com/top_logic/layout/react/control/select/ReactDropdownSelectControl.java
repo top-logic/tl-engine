@@ -589,6 +589,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		}
 	}
 
+	@Override
+	protected String formatElement(Object value) {
+		return value == null ? null : _labelProvider.getLabel(value);
+	}
+
 	/**
 	 * Handles the {@link #CMD_LOAD_OPTIONS} command from the React client.
 	 *

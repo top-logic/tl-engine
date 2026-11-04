@@ -60,6 +60,16 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 		public static final String STORAGE_ANNOTATION = "storage-annotation";
 
 		/**
+		 * @see #getStorageAttribute()
+		 */
+		public static final String STORAGE_ATTRIBUTE = "storage-attribute";
+
+		/**
+		 * @see #getFallbackAttribute()
+		 */
+		public static final String FALLBACK_ATTRIBUTE = "fallback-attribute";
+
+		/**
 		 * The {@link TLStorage} annotation that uses this implementation.
 		 */
 		@Name(STORAGE_ANNOTATION)
@@ -93,6 +103,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				@Step(TLAttributeAnnotation.ANNOTATED),
 				@Step(value = PartModel.MULTIPLE_PROPERTY, type = PartModel.class) }),
 		})
+		@Name(STORAGE_ATTRIBUTE)
 		@Mandatory
 		String getStorageAttribute();
 
@@ -122,6 +133,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				@Step(TLAttributeAnnotation.ANNOTATED),
 				@Step(value = PartModel.MULTIPLE_PROPERTY, type = PartModel.class) }),
 		})
+		@Name(FALLBACK_ATTRIBUTE)
 		@Mandatory
 		String getFallbackAttribute();
 

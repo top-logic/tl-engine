@@ -62,6 +62,25 @@
 							</storage-algorithm>
 						</annotations>
 					</property>
+					<property name="publicStatus"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<fallback-storage
+									fallback-attribute="statusLabel"
+									storage-attribute="customPublicStatus"
+								/>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="customPublicStatus"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
 					<property name="headline"
 						type="tl.core:String"
 					>

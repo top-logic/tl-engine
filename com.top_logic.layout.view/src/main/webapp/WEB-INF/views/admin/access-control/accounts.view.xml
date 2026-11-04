@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	The account administration. A same-path overlay addresses the panels "list-panel" and
+	"detail-panel", the table "table" and the form "form" by their ids, and the commands of the
+	list panel by their names (new-account, delete-account, reset-password, expire-password,
+	require-mfa, reset-mfa). The commands follow the account in the channel "selectedAccount".
+-->
 <view>
 	<channels>
 		<channel name="selectedAccount"/>
@@ -27,7 +33,7 @@
 						<de>Konten</de>
 					</title>
 					<commands>
-						<generic-command
+						<generic-command name="new-account"
 							image="css:bi bi-plus-lg"
 							placement="TOOLBAR"
 						>
@@ -49,7 +55,7 @@
 								</with-result>
 							</execute-script>
 						</generic-command>
-						<generic-command
+						<generic-command name="delete-account"
 							clique="more"
 							image="css:bi bi-trash"
 							inputs="selectedAccount"
@@ -70,7 +76,7 @@
 								clear="true"
 							/>
 						</generic-command>
-						<generic-command
+						<generic-command name="reset-password"
 							clique="more"
 							image="css:bi bi-key"
 							inputs="selectedAccount"
@@ -102,7 +108,7 @@
 							Expires the selected account's password, forcing the change-password
 							step on that account's next login.
 						-->
-						<generic-command
+						<generic-command name="expire-password"
 							clique="more"
 							image="css:bi bi-hourglass-split"
 							inputs="selectedAccount"
@@ -127,7 +133,7 @@
 							Marks the selected account as MFA-required with no secret, forcing the
 							MFA-enrollment step on that account's next login.
 						-->
-						<generic-command
+						<generic-command name="require-mfa"
 							clique="more"
 							image="css:bi bi-shield-lock"
 							inputs="selectedAccount"
@@ -154,7 +160,7 @@
 							to use a second factor sets up a new one at its next login, one that chose
 							it logs in with the password alone and may set one up again.
 						-->
-						<generic-command
+						<generic-command name="reset-mfa"
 							clique="more"
 							image="css:bi bi-shield-x"
 							inputs="selectedAccount"

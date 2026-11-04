@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.contact.layout.person;
 
+import java.util.List;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -14,6 +16,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.layout.person.ContactPersonManager;
@@ -22,10 +25,13 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLObject;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test for {@link ContactPersonManager#repairAccountsWithoutContact()}.
+ * Test for {@link ContactPersonManager#repairAccountsWithoutContact()} and for the contact passed
+ * to the creation of an account ({@link ContactPersonManager#initUser(Person, TLObject)}).
  */
 public class TestContactPersonManager extends BasicTestCase {
 
@@ -39,6 +45,94 @@ public class TestContactPersonManager extends BasicTestCase {
 	private static final String ACCOUNT_REUSED_CONTACT = "repairReusedContact";
 
 	private static final String ACCOUNT_WITH_CONTACT = "repairWithContact";
+
+	private static final String ACCOUNT_CHOSEN_CONTACT = "chosenContact";
+
+	private static final String ACCOUNT_REMOVED_LOGIN = "removedLogin";
+
+	private static final String ACCOUNT_DUPLICATE = "duplicateLogin";
+
+	/**
+	 * A contact without account passed to the creation of an account is assigned to it, and no
+	 * further contact is created.
+	 */
+	public void testChosenContact() {
+		ThreadContext.withoutSecurityChecks(() -> {
+			PersonContact contact = createContact("Chosen");
+			Person account = null;
+			try {
+				account = createAccount(ACCOUNT_CHOSEN_CONTACT, contact);
+
+				assertSame(contact, account.getUser());
+				assertSame(account, contact.getPerson());
+				assertEquals(ACCOUNT_CHOSEN_CONTACT, contact.tValueByName(ContactFactory.LOGIN_NAME));
+				assertEquals("No further contact for the login.", List.of(contact),
+					contactsWithLogin(ACCOUNT_CHOSEN_CONTACT));
+			} finally {
+				deleteAccount(account);
+				deleteContact(contact);
+			}
+		});
+	}
+
+	/**
+	 * The contact passed to the creation of an account is assigned also when other contacts
+	 * without account remember the same login name, e.g. after the login was removed from them.
+	 */
+	public void testChosenContactAmongContactsOfSameLogin() {
+		ThreadContext.withoutSecurityChecks(() -> {
+			PersonContact former = createContact("Former");
+			PersonContact other = createContact("Other");
+			PersonContact chosen = createContact("Chosen");
+			Person account = null;
+			try {
+				try (Transaction tx = kb().beginTransaction()) {
+					former.tUpdateByName(ContactFactory.LOGIN_NAME, ACCOUNT_REMOVED_LOGIN);
+					other.tUpdateByName(ContactFactory.LOGIN_NAME, ACCOUNT_REMOVED_LOGIN);
+					tx.commit();
+				}
+
+				account = createAccount(ACCOUNT_REMOVED_LOGIN, chosen);
+
+				assertSame(chosen, account.getUser());
+				assertNull(former.getPerson());
+				assertNull(other.getPerson());
+				assertEquals(3, contactsWithLogin(ACCOUNT_REMOVED_LOGIN).size());
+			} finally {
+				deleteAccount(account);
+				deleteContact(former);
+				deleteContact(other);
+				deleteContact(chosen);
+			}
+		});
+	}
+
+	/**
+	 * The creation of an account with a login name already in use is refused and leaves the
+	 * contact passed to it unchanged.
+	 */
+	public void testDuplicateLoginLeavesContactUnchanged() {
+		ThreadContext.withoutSecurityChecks(() -> {
+			Person existing = createAccount(ACCOUNT_DUPLICATE);
+			PersonContact contact = createContact("Duplicate");
+			try {
+				try (Transaction tx = kb().beginTransaction()) {
+					Person.create(kb(), ACCOUNT_DUPLICATE,
+						TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice(), contact);
+					fail("A login name in use must be refused.");
+				} catch (TopLogicException ex) {
+					// Expected.
+				}
+
+				assertNull(contact.getPerson());
+				assertNull(contact.tValueByName(ContactFactory.LOGIN_NAME));
+				assertNotSame(contact, existing.getUser());
+			} finally {
+				deleteAccount(existing);
+				deleteContact(contact);
+			}
+		});
+	}
 
 	/**
 	 * An account whose contact was removed gets a new contact with its login name.
@@ -117,11 +211,38 @@ public class TestContactPersonManager extends BasicTestCase {
 	}
 
 	private static Person createAccount(String name) {
+		return createAccount(name, null);
+	}
+
+	private static Person createAccount(String name, TLObject initialData) {
 		try (Transaction tx = kb().beginTransaction()) {
 			Person result = Person.create(kb(), name,
-				TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice());
+				TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice(), initialData);
 			tx.commit();
 			return result;
+		}
+	}
+
+	private static PersonContact createContact(String name) {
+		try (Transaction tx = kb().beginTransaction()) {
+			PersonContact result = ContactFactory.getInstance().createNewPersonContact(name, null);
+			tx.commit();
+			return result;
+		}
+	}
+
+	private static List<?> contactsWithLogin(String login) {
+		return ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
+			AbstractContact.FKEY_ATTRIBUTE, login, false);
+	}
+
+	private static void deleteContact(PersonContact contact) {
+		if (!contact.tValid()) {
+			return;
+		}
+		try (Transaction tx = kb().beginTransaction()) {
+			contact.tDelete();
+			tx.commit();
 		}
 	}
 
@@ -149,7 +270,7 @@ public class TestContactPersonManager extends BasicTestCase {
 	}
 
 	private static void deleteAccount(Person account) {
-		if (!account.tValid()) {
+		if (account == null || !account.tValid()) {
 			return;
 		}
 		Object contact = account.getUser();

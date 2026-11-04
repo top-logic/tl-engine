@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog creating a person contact without login on the people page
+	(admin/access-control/accounts.view.xml of this module). The channel "model" holds a transient
+	contact, which "Create" stores as a new persistent contact and writes to "selection".
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New contact</en>
+			<de>Neuer Kontakt</de>
+		</title>
+		<form id="form"
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="title"/>
+			<field attribute="firstname"/>
+			<field attribute="name">
+				<label>
+					<en>Last name</en>
+					<de>Nachname</de>
+				</label>
+			</field>
+			<field attribute="email"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Created contact {0}.</en>
+									<de>Kontakt {0} angelegt.</de>
+								</commitMessage>
+								<execute-script function="$result.copy(transient: false)"/>
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</with-transaction>
+							<close-dialog/>
+						</with-result>
+					</store-form-state>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

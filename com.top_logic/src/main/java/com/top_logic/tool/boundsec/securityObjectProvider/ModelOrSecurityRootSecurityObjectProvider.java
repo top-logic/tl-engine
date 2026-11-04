@@ -31,7 +31,7 @@ public class ModelOrSecurityRootSecurityObjectProvider implements SecurityObject
     public static final ModelOrSecurityRootSecurityObjectProvider INSTANCE = new ModelOrSecurityRootSecurityObjectProvider();
 
     /**
-	 * Return model or SecurityRoot
+	 * Return model or the security root, see {@link SecurityRootObjectProvider}.
 	 * 
 	 * @see PathSecurityObjectProvider#getSecurityObject(BoundChecker, Object, BoundCommandGroup)
 	 */

@@ -38,9 +38,9 @@ public class HomepageQuestion extends IconImage {
     }
     
     /** 
-     * Overridden to register the setHomepage Command in my Owner.
+     * Overridden to register the {@code setHomepage} command in my owner.
      * 
-     * @return false when no command handler for "setHomepage" was found
+     * @return false when no command handler for {@code setHomepage} was found
      */
     @Override
 	public boolean componentsResolved(DisplayContext aContext, LayoutComponent anOwner) {

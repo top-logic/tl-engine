@@ -74,6 +74,7 @@ public class DataImportResultStepComponent extends FormComponent {
      */
 	public static class DataImportResultStepCommandHandler extends AbstractCommandHandler {
 
+        /** Command ID of {@link DataImportResultStepCommandHandler}. */
         public final static String COMMAND_ID = "DataImportResultStepCommand";
 
 		/**
@@ -89,6 +90,7 @@ public class DataImportResultStepComponent extends FormComponent {
 
 		}
 
+		/** Singleton {@link DataImportResultStepCommandHandler} instance. */
 		public static final CommandHandler INSTANCE = newInstance(DataImportResultStepCommandHandler.class, COMMAND_ID);
 
         public DataImportResultStepCommandHandler(InstantiationContext context, Config config) {

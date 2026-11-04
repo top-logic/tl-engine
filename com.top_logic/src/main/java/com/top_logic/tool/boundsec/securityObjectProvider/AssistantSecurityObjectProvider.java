@@ -20,6 +20,7 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
  */
 public class AssistantSecurityObjectProvider implements SecurityObjectProvider {
 
+    /** Alias for this provider. */
     public static String ALIAS_NAME = "assistant";
 
     @Override

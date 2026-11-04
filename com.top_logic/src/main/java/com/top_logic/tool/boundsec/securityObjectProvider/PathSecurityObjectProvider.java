@@ -86,11 +86,13 @@ public class PathSecurityObjectProvider extends AbstractConfiguredInstance<PathS
 	/** Model. */
 	public static final String PATH_ELEMENT_MODEL            = "model";
 	/**
-	 * Current {@link BoundObject} from getCurrentObject(BoundCommandGroup). NOTE: do not use plain,
+	 * Current {@link BoundObject} from
+	 * {@link BoundChecker#getSecurityObject(BoundCommandGroup, Object)}. NOTE: do not use plain,
 	 * i.e. on current component.
 	 */
 	public static final String PATH_ELEMENT_CURRENTOBJECT      = "currentobject";
 	
+	/** {@link PathSecurityObjectProvider} using the model of the component as security object. */
 	public static final PathSecurityObjectProvider MODEL_INSTANCE;
 	static {
 		Config config = TypedConfiguration.newConfigItem(Config.class);

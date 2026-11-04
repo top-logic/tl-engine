@@ -16,6 +16,7 @@ import com.top_logic.basic.Logger;
  */
 public class DummyDataImporter extends AbstractDataImporter {
 
+    /** Singleton {@link DummyDataImporter} instance. */
     public static final DummyDataImporter INSTANCE = new DummyDataImporter();
 
     /** Stores the result of the parsing. */

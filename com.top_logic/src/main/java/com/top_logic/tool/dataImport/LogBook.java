@@ -134,7 +134,7 @@ public class LogBook {
 
 
     /**
-     * Sets the logToResult flag.
+     * Sets the {@code logToResult} flag.
      *
      * @param logToResult
      *        the flag to set
@@ -144,7 +144,7 @@ public class LogBook {
     }
 
     /**
-     * Sets the logToGUI flag.
+     * Sets the {@code logToGUI} flag.
      *
      * @param logToGUI
      *        the flag to set
@@ -154,7 +154,7 @@ public class LogBook {
     }
 
     /**
-     * Sets the logToDefaultLogger flag.
+     * Sets the {@code logToDefaultLogger} flag.
      *
      * @param logToDefaultLogger
      *        the flag to set
@@ -174,10 +174,10 @@ public class LogBook {
     }
 
     /**
-     * This method sets the maxMessageCount. Also resets the message counter.
+     * This method sets the maximum message count. Also resets the message counter.
      *
      * @param maxMessageCount
-     *        The maxMessageCount to set.
+     *        The maximum message count to set.
      */
     public void setMaxMessageCount(int maxMessageCount) {
         this.maxMessageCount = maxMessageCount;
@@ -212,7 +212,7 @@ public class LogBook {
     }
 
     /**
-     * Gets the current Resources instance to avoid many Resources.getInstance() calls.
+     * Gets the current Resources instance to avoid many {@link Resources#getInstance()} calls.
      *
      * @return current Resources instance
      */
@@ -333,7 +333,7 @@ public class LogBook {
      *        in that case the given value's string representation will be used as message.
      *        This can be used for logging already translated messages.
      * @param aValue
-     *        the object to insert into the I18Ned message or to use as message if aI18NKey
+     *        the object to insert into the I18Ned message or to use as message if {@code aI18NKey}
      *        is <code>null</code>
      */
     public void info(String aI18NKey, Object aValue) {
@@ -475,7 +475,7 @@ public class LogBook {
      *        in that case the given value's string representation will be used as message.
      *        This can be used for logging already translated messages.
      * @param aValue
-     *        the object to insert into the I18Ned message or to use as message if aI18NKey
+     *        the object to insert into the I18Ned message or to use as message if {@code aI18NKey}
      *        is <code>null</code>
      */
     public void warning(String aI18NKey, Object aValue) {
@@ -617,7 +617,7 @@ public class LogBook {
      *        in that case the given value's string representation will be used as message.
      *        This can be used for logging untranslated messages.
      * @param aValue
-     *        the object to insert into the I18Ned message or to use as message if aI18NKey
+     *        the object to insert into the I18Ned message or to use as message if {@code aI18NKey}
      *        is <code>null</code>
      */
     public void error(String aI18NKey, Object aValue) {
@@ -738,7 +738,7 @@ public class LogBook {
      *        in that case the given value's string representation will be used as message.
      *        This can be used for logging untranslated messages.
      * @param aValue
-     *        the object to insert into the I18Ned message or to use as message if aI18NKey
+     *        the object to insert into the I18Ned message or to use as message if {@code aI18NKey}
      *        is <code>null</code>
      */
     public void fatal(String aI18NKey, Object aValue) {
@@ -864,7 +864,7 @@ public class LogBook {
      *        in that case the given value's string representation will be used as message.
      *        This can be used for logging already translated messages.
      * @param aValue
-     *        the object to insert into the I18Ned message or to use as message if aI18NKey
+     *        the object to insert into the I18Ned message or to use as message if {@code aI18NKey}
      *        is <code>null</code>
      */
     public void log(String aI18NKey, Object aValue) {

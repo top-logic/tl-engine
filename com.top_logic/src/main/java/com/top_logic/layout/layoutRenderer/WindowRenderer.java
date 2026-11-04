@@ -165,6 +165,16 @@ public class WindowRenderer extends LayoutControlRenderer<WindowControl<?>> {
 		out.endTag(DIV);
 	}
 
+	/**
+	 * Writes the title bar of the given window.
+	 * 
+	 * @param context
+	 *        The rendering context.
+	 * @param out
+	 *        The writer to write to.
+	 * @param windowControl
+	 *        The window to write the title bar for.
+	 */
 	protected void writeWindowBarContent(DisplayContext context, TagWriter out, WindowControl<?> windowControl)
 			throws IOException {
 		out.beginBeginTag(TABLE);

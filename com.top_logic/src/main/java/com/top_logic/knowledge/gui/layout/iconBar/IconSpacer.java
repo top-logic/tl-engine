@@ -18,7 +18,7 @@ import com.top_logic.mig.html.layout.Adorner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Provides a space between buttons
+ * Provides a space between buttons.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */

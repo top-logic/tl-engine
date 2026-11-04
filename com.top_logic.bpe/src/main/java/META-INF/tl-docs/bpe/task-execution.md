@@ -1,5 +1,5 @@
 ---
-description: Read before building a user interface for working on processes (tl.bpe.execution:ProcessExecution, tl.bpe.execution:Token) from Java (ProcessExecutions, Decision, GuiEngine, FlowConditions) or TL-Script (bpeTasks, bpeStartEvents, bpeModelType, bpeStart, bpeStartTask, bpeOptions, bpeDefaultOption, bpeOptionLabel, bpeErrors, bpeWarnings, bpeFormType, bpeFinish) - listing the open tasks of a user, starting a process, choosing how to continue after a task and completing it.
+description: Read before building a user interface for working on processes (tl.bpe.execution:ProcessExecution, tl.bpe.execution:Token) from Java (ProcessExecutions, Decision, GuiEngine, FlowConditions) or TL-Script (bpeTasks, bpeStartEvents, bpeStartEvent, bpeStartEventLabel, bpeModelType, bpeStart, bpeStartTask, bpeOptions, bpeDefaultOption, bpeOptionLabel, bpeErrors, bpeWarnings, bpeFormType, bpeFinish) - listing the open tasks of a user, starting a process, choosing how to continue after a task and completing it.
 order: 20
 ---
 
@@ -23,6 +23,8 @@ As for [workflow definitions](doc:bpe/workflow-definitions#transactions), no ope
 |---|---|---|
 | `tasks(person)` | `bpeTasks(person: currentUser())` | the open tasks of a user, over all running processes |
 | `startEvents(person)`, `mayStart(person, event)` | `bpeStartEvents(person: currentUser())` | the manual start events of all released workflows the user may start a process with: the user is an actor of the process or of the lane holding the event |
+| `startEvent(workflowName, eventName, person)` | `bpeStartEvent(workflowName, eventName: null)` | the start event of the released workflow of that name (the event name may be omitted for a single manual start event) the user may start a process with; `null` if there is none, so a command starting a process of that workflow is disabled; refused if several match |
+| `startEventLabel(event)` | `bpeStartEventLabel(event)` | the name of the event's workflow, followed by the event's name if the workflow has several manual start events: the label of a start event in a choice among all |
 | `ExecutionEngine.getModelType(event)` | `bpeModelType(event)` | the type of the execution a start event starts: the participant's `modelType`, `tl.bpe.execution:ProcessExecution` without one |
 | `start(event, process, person)` | `bpeStart(event, process: null)` | makes `process` the execution - a transient object of the model type is made persistent with its values, a persistent one not started yet is taken as it is; without `process` a new one is created -, binds it to the process and runs it to its first task; refused if the user may not start it or `process` is not of the model type, see [starting with a creation form](#starting-with-a-creation-form) |
 | `startTask(execution)` | `bpeStartTask(execution)` | the single active token of a just started process, `null` if there is none or more than one |

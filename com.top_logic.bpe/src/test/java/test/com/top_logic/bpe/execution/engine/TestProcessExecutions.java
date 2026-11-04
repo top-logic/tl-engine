@@ -249,6 +249,33 @@ public class TestProcessExecutions extends BasicTestCase {
 		assertTrue(((List<?>) as(_other, () -> tasks.execute())).isEmpty());
 	}
 
+	public void testStartEventByName() throws ConfigurationException {
+		String name = "Start event by name " + _personCount;
+		inTx(() -> {
+			_workflow.setName(name);
+			return null;
+		});
+		QueryExecutor byName = compile("w -> bpeStartEvent($w)");
+		QueryExecutor byNames = compile("w -> e -> bpeStartEvent($w, $e)");
+		QueryExecutor label = compile("e -> bpeStartEventLabel($e)");
+
+		as(_actor, () -> {
+			assertSame(_start, byName.execute(name));
+			assertSame(_start, byNames.execute(name, "Start"));
+			assertNull(byNames.execute(name, "No such event"));
+			assertNull(byName.execute("No such workflow"));
+			assertEquals(name, label.execute(_start));
+			return null;
+		});
+		assertNull("Not startable by the user.", as(_other, () -> byName.execute(name)));
+
+		inTx(() -> {
+			BPMLDefinitions.revoke(_workflow);
+			return null;
+		});
+		assertNull("Not released.", as(_actor, () -> byName.execute(name)));
+	}
+
 	public void testStartPrepared() {
 		useRequestType();
 

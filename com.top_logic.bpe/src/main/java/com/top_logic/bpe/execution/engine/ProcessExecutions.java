@@ -81,6 +81,58 @@ public final class ProcessExecutions {
 	}
 
 	/**
+	 * The {@link StartEvent} of a released workflow, identified by the names of the workflow and
+	 * the event, the given person may start a process with.
+	 *
+	 * <p>
+	 * A view offering to start a process of one workflow - a button next to the data the process
+	 * is about - finds the start event this way and is disabled while the result is
+	 * <code>null</code>.
+	 * </p>
+	 *
+	 * @param workflowName
+	 *        The {@link Collaboration#getName() name} of the workflow.
+	 * @param eventName
+	 *        The name of the start event, <code>null</code> for the only manual start event of the
+	 *        workflow.
+	 * @return The start event, <code>null</code> if there is no released workflow of that name
+	 *         with such a start event, or the person may not start a process with it.
+	 * @throws TopLogicException
+	 *         If several start events match: the names do not identify the start event.
+	 *
+	 * @see #startEvents(Person)
+	 */
+	public static StartEvent startEvent(String workflowName, String eventName, Person person) {
+		List<StartEvent> matches = startEvents(person).stream()
+			.filter(event -> workflowName.equals(event.getProcess().getCollaboration().getName()))
+			.filter(event -> eventName == null || eventName.equals(event.getName()))
+			.toList();
+		switch (matches.size()) {
+			case 0:
+				return null;
+			case 1:
+				return matches.get(0);
+			default:
+				throw new TopLogicException(
+					I18NConstants.ERROR_AMBIGUOUS_START_EVENT__WORKFLOW_EVENT.fill(workflowName, eventName));
+		}
+	}
+
+	/**
+	 * The label of a {@link StartEvent} among the start events of all workflows: the name of its
+	 * workflow, followed by the name of the event if the workflow can be started at several
+	 * events.
+	 */
+	public static String startEventLabel(StartEvent startEvent) {
+		Collaboration collaboration = startEvent.getProcess().getCollaboration();
+		String workflowName = collaboration.getName();
+		if (ExecutionEngine.getInstance().getManualStartEvents(collaboration).size() > 1) {
+			return workflowName + " – " + name(startEvent);
+		}
+		return workflowName;
+	}
+
+	/**
 	 * Whether the given person may start a process at the given {@link StartEvent}.
 	 */
 	public static boolean mayStart(Person person, StartEvent startEvent) {

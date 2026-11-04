@@ -77,6 +77,40 @@ public class BPEFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The start event of a released workflow the current user may start a process with.
+	 *
+	 * <p>
+	 * A command starting a process of one workflow opens the start dialog with this start event
+	 * and is disabled while there is none.
+	 * </p>
+	 *
+	 * @param workflowName
+	 *        The name of the workflow.
+	 * @param eventName
+	 *        The name of the start event; may be omitted for a workflow with a single manual
+	 *        start event.
+	 * @return The start event, <code>null</code> if there is no released workflow of that name
+	 *         with such a start event, or the current user may not start a process with it.
+	 */
+	@SideEffectFree
+	public static StartEvent startEvent(@Mandatory String workflowName, String eventName) {
+		return ProcessExecutions.startEvent(workflowName, eventName, TLContext.currentUser());
+	}
+
+	/**
+	 * The label of a start event in a list of the start events of all workflows.
+	 *
+	 * @param startEvent
+	 *        The start event.
+	 * @return The name of its workflow, followed by the name of the event if the workflow can be
+	 *         started at several events.
+	 */
+	@SideEffectFree
+	public static String startEventLabel(@Mandatory StartEvent startEvent) {
+		return ProcessExecutions.startEventLabel(startEvent);
+	}
+
+	/**
 	 * Starts a process at a start event.
 	 *
 	 * <p>

@@ -105,6 +105,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_ALREADY_STARTED__EVENT;
 
+	/**
+	 * @en The workflow "{0}" can be started at several events named "{1}"; name the start event to
+	 *     start it with.
+	 */
+	public static ResKey2 ERROR_AMBIGUOUS_START_EVENT__WORKFLOW_EVENT;
+
     static {
         initConstants(I18NConstants.class);
     }

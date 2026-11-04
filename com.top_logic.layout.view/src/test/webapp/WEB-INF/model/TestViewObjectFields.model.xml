@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestViewObjectFields">
+			<types>
+				<class name="Holder">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="detail"
+							type="Detail"
+						/>
+						<reference name="fixedDetail"
+							type="Detail"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+							</annotations>
+						</reference>
+						<reference name="hiddenDetail"
+							type="Detail"
+						>
+							<annotations>
+								<visibility value="hidden"/>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
+				<class name="Detail">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<reference name="holder"
+							inverse-reference="detail"
+							kind="backwards"
+							type="Holder"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

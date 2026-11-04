@@ -171,8 +171,9 @@ public class FieldElement implements UIElement {
 				"FieldElement must be nested inside a FormElement. No FormModel found in ViewContext.");
 		}
 
-		// FormElement always sets a FormControl as the FormModel.
-		FormControl formControl = (FormControl) formModel;
+		// The form whose edit session the field takes part in - the model itself, or the form a
+		// nested model (e.g. the fields of a referenced object) belongs to.
+		FormControl formControl = formModel.getFormControl();
 
 		// 2. Create AttributeFieldControl (self-registers as FormModelListener).
 		AttributeFieldControl fieldControl =

@@ -611,8 +611,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 				// Trigger constraint validation.
 				FormValidationModel validationModel = _formControl.getValidationModel();
-				TLObjectOverlay overlay = _formControl.getOverlay();
-				if (validationModel != null && _model != null && overlay != null) {
+				// The overlay the field edits: the form's own, or that of an object nested into it.
+				TLObject current = _formModel.getCurrentObject();
+				if (validationModel != null && _model != null && current instanceof TLObjectOverlay overlay) {
 					validationModel.onValueChanged(overlay, _model.getPart());
 				}
 

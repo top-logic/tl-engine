@@ -13,6 +13,7 @@ import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLDrawerToggle from '../../../com.top_logic.layout.react/react-src/controls/TLDrawerToggle';
 import MuiButtonAdapter from './MuiButtonAdapter';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
@@ -20,6 +21,8 @@ import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-supp
 import MuiChipAdapter from './MuiChipAdapter';
 
 replacePart('Button', MuiButtonAdapter);
+// The gear of the table is the trigger of its view.
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 // The table looks up the toggle of its tree rows as well.
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 // The table looks up the selection boxes of its rows as well.
@@ -34,7 +37,8 @@ const LABEL_MINIMIZE = 'js.panel.minimize';
 const LABEL_MAXIMIZE = 'js.panel.maximize';
 const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
-const LABEL_COLUMNS = 'js.table.columns';
+const LABEL_VIEW = 'js.table.view';
+const LABEL_CHOOSE_COLUMNS = 'js.table.viewChooseColumns';
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
@@ -119,16 +123,19 @@ describe('the column buttons of a table as MUI icon buttons', () => {
       rows: [],
       totalRowCount: 0,
       columnSelect: true,
+      viewOptions: true,
     });
   }
 
-  it('opens the column selection from the gear', async () => {
+  it('opens the column selection from the view of the gear', async () => {
     const sent = mountTable(false);
     await settle();
 
-    const gear = screen.getByRole('button', { name: LABEL_COLUMNS });
+    const gear = screen.getByRole('button', { name: LABEL_VIEW });
     expectMuiIconButton(gear);
     await userEvent.click(gear);
+    await settle();
+    await userEvent.click(screen.getByRole('button', { name: LABEL_CHOOSE_COLUMNS }));
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMN_SELECT, expect.anything());

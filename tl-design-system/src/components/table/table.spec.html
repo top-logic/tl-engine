@@ -16,6 +16,9 @@
   .specimen__table { height: 24rem; }
   .specimen__table--short { height: 22rem; }
   .specimen__table--fill { height: 14rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+  /* In der Anwendung setzt bridge/popover.ts die Lage (fixed); hier stehen die Popover statisch nebeneinander. */
+  .specimen__view-options { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--tl-space-md); }
+  .specimen__view-options > .tl-popover { position: static; }
 </style>
 </head>
 <body>
@@ -281,6 +284,34 @@
           </div>
           <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-table__columns" aria-label="Spalten" title="Spalten"><i class="tl-icon-sm bi bi-gear tl-button__icon" aria-hidden="true"></i></button>
         </div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Ansicht: das Popover des Zahnrads</p>
+    <p class="tl-type-label">Titel „Ansicht“ in tl-type-label-strong, darunter der leise Kopf „Dichte“, die Segmente und zwei
+      Schalter mit derselben Einrückung wie die Einträge, dann eine sichtbare Trennlinie vor „Spalten …“ und „Zurücksetzen“.
+      Links die Tabelle, die ihre Ansicht speichert; rechts eine ohne Speicher: nur Spalten und Zurücksetzen.</p>
+    <div class="specimen__view-options">
+      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
+        <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
+        <div id="view-density" class="tl-menu__header tl-type-label">Dichte</div>
+        <div role="radiogroup" aria-labelledby="view-density" class="tl-segmented tl-table-view-options__segments">
+          <button type="button" role="radio" aria-checked="true" tabindex="0" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Wie überall</span></button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Normal</span></button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kompakt</span></button>
+        </div>
+        <label class="tl-choice tl-type-body tl-table-view-options__switch"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch"><span>Streifen</span></label>
+        <label class="tl-choice tl-type-body tl-table-view-options__switch"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked><span>Spaltenlinien</span></label>
+        <hr class="tl-divider">
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
+      </div>
+      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
+        <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
+        <hr class="tl-divider">
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
       </div>
     </div>
   </section>

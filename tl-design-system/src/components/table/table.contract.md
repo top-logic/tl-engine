@@ -137,6 +137,23 @@ außen wäre weg. Ebenso innen: der Körper und die Spaltenwahl in der Ecke (`fo
 Cursorzeile ab: `base.css` zeichnet ihn innen auf ihrem `::after`. Ein `aria-activedescendant` auf eine
 Id, die es nicht gibt, ließe den Fokus unsichtbar.
 
+## Ansicht (Popover des Zahnrads)
+
+Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
+`role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`); was dazukommt:
+
+| Element | Aufbau |
+|---|---|
+| `tl-table-view-options__title` | Titel „Ansicht“: `tl-type-label-strong` in Primärtext, kein Abschnittskopf |
+| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
+| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Radiogruppe (`choice.contract.md`), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
+| `tl-table-view-options__switch` | Schalter (`tl-choice` mit `tl-checkbox--switch`) für Streifen und Spaltenlinien, mit derselben Einrückung |
+| `tl-divider` | die Trennlinie vor den Einträgen („Spalten …“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |
+
+Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
+nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur
+„Spalten …“ (falls `columnSelect`) und „Zurücksetzen“; ohne beides steht das Zahnrad nicht da.
+
 ## Stapel
 
 Ring (`::after`, `base.css`) und Einfügemarke (`::before`, `drag.css`) einer Zeile liegen auf

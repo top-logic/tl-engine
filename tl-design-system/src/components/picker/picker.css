@@ -1,5 +1,5 @@
 /* Picker — Spec 2026-10-17 Welle 5a §3. Die Hülle der Popups von Farb- und Icon-Picker: eine Spalte aus Reitern
-   (tl-tabs), Inhalt und Knopfleiste (tl-button-bar) auf einem tl-popover. Keine Breite — das Popup richtet sich nach
+   (tl-tabs), Inhalt und Knopfleiste (tl-button-bar) auf einem tl-popover; statt der Reiter kann ein Rollbereich (tl-picker__scroll) den Inhalt tragen. Keine Breite — das Popup richtet sich nach
    seinem Inhalt. Den Rand der Reiter liefert tl-tabs. */
 
 .tl-picker {
@@ -28,6 +28,16 @@
 .tl-picker__tabs > .tl-tabs__panel:has(.tl-color-picker__mixer) {
   scrollbar-gutter: stable;
 }
+
+/* Der Rollbereich für Inhalt ohne Reiter (die Werteliste des Filters, #30102): er nimmt den Rest der Hülle und schrumpft mit
+   ihr, rollt allein — Suche davor und Fuß dahinter bleiben stehen. Keine Höhe und keine Variable: die Höhe setzt usePopover als
+   maxHeight an der Hülle (Raum bis zum Fensterrand); tl-popover bleibt, wie es ist, .tl-picker ist schon die Flex-Spalte. */
+.tl-picker__scroll {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+}
+.tl-picker__scroll[hidden] { display: none; }
 
 .tl-picker__actions {
   flex-shrink: 0;

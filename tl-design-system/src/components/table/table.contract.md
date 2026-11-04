@@ -140,19 +140,34 @@ Id, die es nicht gibt, ließe den Fokus unsichtbar.
 ## Ansicht (Popover des Zahnrads)
 
 Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
-`role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`); was dazukommt:
+`role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`). Das Popover hat zwei
+Seiten, nie beide zugleich sichtbar (`tl-table-view-options__page`, die andere trägt `hidden`): die Ansicht und die Spalten.
+Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 
 | Element | Aufbau |
 |---|---|
-| `tl-table-view-options__title` | Titel „Ansicht“: `tl-type-label-strong` in Primärtext, kein Abschnittskopf |
+| `tl-table-view-options__page` | eine Seite des Popovers: Flex-Spalte, die das Popover füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); sie rollt nie selbst, auf der Seite „Spalten“ rollt allein die Liste |
+| `tl-table-view-options__title` | Titel der Seite („Ansicht“, „Spalten“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der zweiten Seite der Zurück-Knopf davor steht |
+| `tl-table-view-options__back` | der Zurück-Knopf im Titel der zweiten Seite: `tl-button tl-button--ghost tl-button--sm tl-button--icon` mit `aria-label`, Icon `tl-icon-sm bi bi-chevron-left`; der Fokusring liegt innen, das Popover schneidet |
 | `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
-| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Radiogruppe (`choice.contract.md`), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
-| `tl-table-view-options__switch` | Schalter (`tl-choice` mit `tl-checkbox--switch`) für Streifen und Spaltenlinien, mit derselben Einrückung |
+| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Gruppe (`role="group"`, `aria-labelledby`) von Segmenten mit Rolle `menuitemradio` und `aria-checked` (`menu.contract.md`; `choice.css` liest `aria-checked`, gleich welche Rolle), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
+| `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
 | `tl-divider` | die Trennlinie vor den Einträgen („Spalten …“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |
+| `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der zweiten Seite (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
 
 Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
 nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur
 „Spalten …“ (falls `columnSelect`) und „Zurücksetzen“; ohne beides steht das Zahnrad nicht da.
+
+Die Höhe gibt der Anker: `usePopover` setzt `maxHeight` an der Hülle (Raum bis zum Fensterrand), die Seite gibt nach, die Liste
+rollt (`picker.contract.md`).
+
+### Filter-Popover am Trichter
+
+Der Trichter (`tl-table__filter`) öffnet ein Popover unter der Kopfzelle, ohne die Seite abzudunkeln. Ist der Filter eine Auswahl
+aus Werten, ist es die Werteliste `tl-filter-list` auf `tl-popover tl-picker` (`filter-list.contract.md`); jede Zeile wirkt sofort. Der
+Trichter trägt `aria-haspopup="dialog"` und `aria-expanded` (`true`, solange das Popover offen ist) und bleibt dann sichtbar, auch
+ohne Zeigen (`tl-reveal-on-hover`, `layout.contract.md`).
 
 ## Stapel
 

@@ -19,6 +19,10 @@
   /* In der Anwendung setzt bridge/popover.ts die Lage (fixed); hier stehen die Popover statisch nebeneinander. */
   .specimen__view-options { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--tl-space-md); }
   .specimen__view-options > .tl-popover { position: static; }
+  /* In der Anwendung setzt usePopover maxHeight; hier steht die Seite „Spalten“ gedeckelt, damit nur die Liste rollt. */
+  .specimen__capped { max-height: var(--tl-size-12); }
+  .specimen__filter-anchor { display: grid; justify-items: start; gap: var(--tl-space-xs); }
+  .specimen__filter-anchor > .tl-popover { position: static; }
 </style>
 </head>
 <body>
@@ -289,29 +293,71 @@
   </section>
   <section class="specimen__panel">
     <p class="tl-type-heading-sm">Ansicht: das Popover des Zahnrads</p>
-    <p class="tl-type-label">Titel „Ansicht“ in tl-type-label-strong, darunter der leise Kopf „Dichte“, die Segmente und zwei
-      Schalter mit derselben Einrückung wie die Einträge, dann eine sichtbare Trennlinie vor „Spalten …“ und „Zurücksetzen“.
-      Links die Tabelle, die ihre Ansicht speichert; rechts eine ohne Speicher: nur Spalten und Zurücksetzen.</p>
+    <p class="tl-type-label">Seite „Ansicht“: Titel, der leise Kopf „Dichte“, die Segmente (menuitemradio) und zwei Schalterzeilen —
+      die ganze Zeile klickt, der Schalter rechts ist gezeichnet, ohne Eingabe —, dann eine sichtbare Trennlinie vor „Spalten …“ und
+      „Zurücksetzen“. Daneben die Seite „Spalten“ mit Zurück-Knopf im Titel und der Spaltenwahl. Rechts eine Tabelle ohne Speicher:
+      nur Spalten und Zurücksetzen.</p>
     <div class="specimen__view-options">
       <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
-        <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
-        <div id="view-density" class="tl-menu__header tl-type-label">Dichte</div>
-        <div role="radiogroup" aria-labelledby="view-density" class="tl-segmented tl-table-view-options__segments">
-          <button type="button" role="radio" aria-checked="true" tabindex="0" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Wie überall</span></button>
-          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Normal</span></button>
-          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kompakt</span></button>
+        <div class="tl-table-view-options__page">
+          <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
+          <div id="view-density" class="tl-menu__header tl-type-label">Dichte</div>
+          <div role="group" aria-labelledby="view-density" class="tl-segmented tl-table-view-options__segments">
+            <button type="button" role="menuitemradio" aria-checked="true" tabindex="0" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Wie überall</span></button>
+            <button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Normal</span></button>
+            <button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kompakt</span></button>
+          </div>
+          <button type="button" role="menuitemcheckbox" aria-checked="false" tabindex="-1" class="tl-menu__item tl-menu__item--check tl-type-body"><span class="tl-menu__label">Streifen</span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"></span></button>
+          <button type="button" role="menuitemcheckbox" aria-checked="true" tabindex="-1" class="tl-menu__item tl-menu__item--check tl-type-body"><span class="tl-menu__label">Spaltenlinien</span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"></span></button>
+          <hr class="tl-divider">
+          <button type="button" role="menuitem" tabindex="-1" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
+          <button type="button" role="menuitem" tabindex="-1" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
         </div>
-        <label class="tl-choice tl-type-body tl-table-view-options__switch"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch"><span>Streifen</span></label>
-        <label class="tl-choice tl-type-body tl-table-view-options__switch"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked><span>Spaltenlinien</span></label>
-        <hr class="tl-divider">
-        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
-        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
+      </div>
+      <div class="tl-popover tl-picker tl-menu tl-table-view-options specimen__capped" role="dialog" aria-label="Spalten">
+        <div class="tl-table-view-options__page">
+          <div class="tl-table-view-options__title tl-type-label-strong"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-table-view-options__back" aria-label="Zurück"><i class="tl-icon-sm bi bi-chevron-left tl-button__icon" aria-hidden="true"></i></button>Spalten</div>
+          <div class="tl-reorder-list__host">
+            <span class="tl-field-group tl-reorder-list__search"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+              <input class="tl-field tl-type-body" aria-label="Spalten filtern">
+            </span>
+            <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
+              <li class="tl-reorder-list__item"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Name verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button><span class="tl-reorder-list__label">Name</span></li>
+              <li class="tl-reorder-list__item"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Status verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button><span class="tl-reorder-list__label">Status</span></li>
+              <li class="tl-reorder-list__item"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Region verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button><span class="tl-reorder-list__label">Region</span></li>
+              <li class="tl-reorder-list__item"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Verantwortlich verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button><span class="tl-reorder-list__label">Verantwortlich</span></li>
+              <li class="tl-reorder-list__item"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Fällig am verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button><span class="tl-reorder-list__label">Fällig am</span></li>
+              <li class="tl-reorder-list__item"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Aufwand verschieben"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button><span class="tl-reorder-list__label">Aufwand</span></li>
+            </ul>
+          </div>
+        </div>
       </div>
       <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
-        <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
-        <hr class="tl-divider">
-        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
-        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
+        <div class="tl-table-view-options__page">
+          <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
+          <hr class="tl-divider">
+          <button type="button" role="menuitem" tabindex="-1" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
+          <button type="button" role="menuitem" tabindex="-1" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Filter-Popover am Trichter</p>
+    <p class="tl-type-label">Der Trichter bleibt sichtbar, solange sein Popover offen ist (aria-expanded). Das Popover ist die Werteliste
+      (filter-list.spec.html); jede Zeile wirkt sofort.</p>
+    <div class="specimen__filter-anchor">
+      <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-table__filter tl-reveal-on-hover" aria-label="Filter" aria-haspopup="dialog" aria-expanded="true"><i class="tl-icon-sm bi bi-funnel tl-button__icon" aria-hidden="true"></i></button>
+      <div class="tl-popover tl-picker tl-filter-list" role="dialog" aria-label="Filter Status">
+        <div class="tl-picker__scroll" role="menu" aria-label="Status">
+          <button type="button" class="tl-menu__item tl-menu__item--check tl-filter-list__all tl-type-body" role="menuitemcheckbox" aria-checked="true" tabindex="0"><span class="tl-checkbox" aria-hidden="true"></span><span class="tl-menu__label">Alle</span></button>
+          <button type="button" class="tl-menu__item tl-menu__item--check tl-type-body" role="menuitemcheckbox" aria-checked="true" tabindex="-1"><span class="tl-checkbox" aria-hidden="true"></span><span class="tl-menu__label">Offen</span><span class="tl-filter-list__count tl-type-label tl-nums">4</span></button>
+          <button type="button" class="tl-menu__item tl-menu__item--check tl-type-body" role="menuitemcheckbox" aria-checked="true" tabindex="-1"><span class="tl-checkbox" aria-hidden="true"></span><span class="tl-menu__label">Erledigt</span><span class="tl-filter-list__count tl-type-label tl-nums">230</span></button>
+        </div>
+        <div class="tl-filter-list__footer">
+          <button type="button" class="tl-button tl-button--ghost tl-type-label" disabled>Filter entfernen</button>
+          <button type="button" class="tl-button tl-button--ghost tl-type-label">Auswahl umkehren</button>
+        </div>
       </div>
     </div>
   </section>

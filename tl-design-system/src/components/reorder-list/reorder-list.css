@@ -32,6 +32,18 @@
   padding: var(--tl-space-md) var(--tl-space-md) 0;
 }
 
+/* Die Wurzel der Spaltenwahl (#30102, ReactColumnSelectControl): Suche und Liste in einer Spalte, die den Behälter füllt, der
+   sie trägt — die Seite „Spalten“ im Popover der Ansicht (table.css). min-block-size 0 lässt sie mit dem Popover schrumpfen;
+   gerollt wird allein die Liste (ein Rollbereich), die Wurzel selbst nie. In :where(:has(…)) oben steht ihr Fensterbild
+   (Innenabstand, volle Höhe); wo die Wurzel in einem Popover sitzt, nimmt table.css beides zurück. */
+.tl-reorder-list__host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+.tl-reorder-list__host[hidden] { display: none; }
+
 .tl-reorder-list__search ~ .tl-reorder-list {
   flex: 1 1 auto;
   min-block-size: 0;

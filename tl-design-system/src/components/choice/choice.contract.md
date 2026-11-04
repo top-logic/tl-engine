@@ -7,6 +7,12 @@ dann Funktion, Tastatur und Fokus — nicht das Aussehen. Wer ins Bild passen wi
 Checkbox, Radio und Schalter zeichnen sich selbst (`appearance: none`); gewählt ist, was das Attribut
 sagt, nie eine Klasse.
 
+**Ohne Eingabe.** Eine Zeile des Menüs mit Häkchen oder Schalter (`tl-menu__item--check`, `menu.contract.md`) zeichnet die
+Marke als `<span class="tl-checkbox" aria-hidden="true">` (auch `tl-checkbox--switch`) ohne `<input>`: gewählt ist
+`aria-checked="true"` an der Zeile, gemischt `aria-checked="mixed"`. Dieselben Regeln wie `:checked` und `:indeterminate`, in
+derselben Selektorliste — das Bild ist gleich. Ein Halo gibt es dort nicht: die Zeile trägt das Zeigen, die Marke nimmt keinen
+Zeiger an.
+
 ## Zustand
 
 Vom Server über `useTLState()`. Die Basisschlüssel aus `ReactFormFieldControl` — `value`, `editable`,

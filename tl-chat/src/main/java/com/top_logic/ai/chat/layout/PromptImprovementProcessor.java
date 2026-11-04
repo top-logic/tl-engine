@@ -12,10 +12,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import com.top_logic.ai.chat.layout.TaskProgressTracker.PromptImprovementState;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
@@ -28,15 +32,24 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
+import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
  * Runs prompt improvement independently from the main chat conversation.
+ *
+ * <p>
+ * An improvement is a call to a model and takes seconds. {@link #start} therefore checks the request
+ * and hands the run to a chat worker ({@link ChatRunExecutor}) at once; the result reaches the caller
+ * when the run is done. The caller - a command of the window - is answered without waiting, so the
+ * window's other commands are not held up behind the model.
+ * </p>
  */
 public final class PromptImprovementProcessor {
 
@@ -51,6 +64,15 @@ public final class PromptImprovementProcessor {
 
 	/** A newer prompt-improvement request replaced this request. */
 	public static final String STATUS_STALE = "stale";
+
+	/**
+	 * The acting account may not use what the improver runs with - the model or an MCP server;
+	 * {@link Result#reason()} says why, in the user's language.
+	 */
+	public static final String STATUS_FORBIDDEN = "forbidden";
+
+	/** The improvement failed; the draft stays as it is. */
+	public static final String STATUS_ERROR = "error";
 
 	/** Longest first line still treated as a lead-in rather than as part of the prompt. */
 	private static final int MAX_LEAD_IN_CHARS = 80;
@@ -177,13 +199,87 @@ public final class PromptImprovementProcessor {
 	 *         If the request or the administrator configuration is invalid.
 	 */
 	public static Result improve(TaskProgressTracker tracker, String requestId, String draft) {
-		return improve(tracker, requestId, draft,
-			name -> AgentDefinitionQuery.getInstance().findAgentByName(name) != null,
+		return improve(tracker, requestId, draft, PromptImprovementProcessor::agentExists,
 			PromptImprovementProcessor::runAgent);
 	}
 
 	static Result improve(TaskProgressTracker tracker, String requestId, String draft,
 			Predicate<String> agentExists, AgentInvocation invocation) {
+		return run(tracker, prepare(tracker, requestId, draft, agentExists), invocation);
+	}
+
+	/**
+	 * Starts improving the given draft with the agent configured on the tracker, on a chat worker,
+	 * and returns at once; what {@link #improve(TaskProgressTracker, String, String)} answers is
+	 * handed to {@code done} when the run is over.
+	 *
+	 * <p>
+	 * The run executes in the given sub-session - the window's - so it acts with the rights and in
+	 * the language of the account that asked. A run that fails hands {@code done} a result of
+	 * {@link #STATUS_FORBIDDEN} (with the reason) or {@link #STATUS_ERROR}; {@code done} is called
+	 * exactly once for every improvement that was started.
+	 * </p>
+	 *
+	 * @throws PromptImprovementException
+	 *         If the request or the administrator configuration is invalid, or there is no room for
+	 *         the run right now ({@link Failure#NO_ROOM}); nothing is started then.
+	 */
+	public static void start(TaskProgressTracker tracker, String requestId, String draft,
+			TLSubSessionContext subSession, Consumer<Result> done) {
+		start(tracker, requestId, draft, subSession, done, PromptImprovementProcessor::agentExists,
+			PromptImprovementProcessor::runAgent);
+	}
+
+	static void start(TaskProgressTracker tracker, String requestId, String draft, TLSubSessionContext subSession,
+			Consumer<Result> done, Predicate<String> agentExists, AgentInvocation invocation) {
+		Prepared prepared = prepare(tracker, requestId, draft, agentExists);
+		try {
+			ChatRunExecutor.submit(() -> done.accept(runInContext(tracker, prepared, subSession, invocation)));
+		} catch (ChatRunExecutor.NoRoom ex) {
+			tracker.clearPromptImprovementState(prepared.state());
+			throw new PromptImprovementException(Failure.NO_ROOM, ex.getMessage());
+		}
+	}
+
+	/** Runs a started improvement in the window's sub-session; never throws. */
+	private static Result runInContext(TaskProgressTracker tracker, Prepared prepared,
+			TLSubSessionContext subSession, AgentInvocation invocation) {
+		String requestId = prepared.state().getRequestId();
+		try {
+			return ThreadContextManager.inContext(subSession, () -> {
+				try {
+					return run(tracker, prepared, invocation);
+				} catch (ToolSecurityException ex) {
+					// A refusal, not a failure: it gets a reason the user reads and no ERROR line.
+					// The improver itself is exempt from the agent allowlist (see runAgent), so
+					// reaching this means the model or an MCP server was refused, which is a decision
+					// an administrator made.
+					Logger.info("Prompt improvement refused: " + ex.getMessage(), PromptImprovementProcessor.class);
+					return new Result(requestId, "", STATUS_FORBIDDEN, ex.reason() == null
+						? ex.getMessage() : Resources.getInstance().getString(ex.reason()));
+				}
+			});
+		} catch (Throwable ex) {
+			Logger.error("Prompt improvement failed: " + ex.getMessage(), ex, PromptImprovementProcessor.class);
+			return new Result(requestId, "", STATUS_ERROR);
+		}
+	}
+
+	private static boolean agentExists(String name) {
+		return AgentDefinitionQuery.getInstance().findAgentByName(name) != null;
+	}
+
+	/** A checked request whose state is registered on the tracker, ready to run. */
+	private record Prepared(PromptImprovementState state, String agentName, String draft) {
+		// Pure data.
+	}
+
+	/**
+	 * Checks the request and registers it as the tracker's improvement in progress, cancelling the
+	 * one before.
+	 */
+	private static Prepared prepare(TaskProgressTracker tracker, String requestId, String draft,
+			Predicate<String> agentExists) {
 		String normalizedRequestId = requireRequestId(requestId);
 		String normalizedDraft = requireDraft(draft);
 		String agentName = configuredAgent(tracker);
@@ -199,7 +295,15 @@ public final class PromptImprovementProcessor {
 		if (previous != null) {
 			previous.getCancellationToken().cancel();
 		}
+		return new Prepared(state, agentName, normalizedDraft);
+	}
 
+	private static Result run(TaskProgressTracker tracker, Prepared prepared, AgentInvocation invocation) {
+		PromptImprovementState state = prepared.state();
+		String normalizedRequestId = state.getRequestId();
+		String agentName = prepared.agentName();
+		String normalizedDraft = prepared.draft();
+		CancellationToken cancellationToken = state.getCancellationToken();
 		try {
 			String improved = invocation.run(agentName, normalizedDraft, cancellationToken);
 			if (tracker.getPromptImprovementState() != state) {
@@ -546,11 +650,18 @@ public final class PromptImprovementProcessor {
 	 * @param improvedText
 	 *        Improved prompt, or an empty string when no result must be applied.
 	 * @param status
-	 *        One of {@link #STATUS_COMPLETED}, {@link #STATUS_CANCELLED}, or
-	 *        {@link #STATUS_STALE}.
+	 *        One of {@link #STATUS_COMPLETED}, {@link #STATUS_CANCELLED}, {@link #STATUS_STALE},
+	 *        {@link #STATUS_FORBIDDEN} and {@link #STATUS_ERROR}.
+	 * @param reason
+	 *        Why the improvement was refused, a sentence in the user's language; empty unless the
+	 *        status is {@link #STATUS_FORBIDDEN}.
 	 */
-	public record Result(String requestId, String improvedText, String status) {
-		// Pure data.
+	public record Result(String requestId, String improvedText, String status, String reason) {
+
+		/** A result without a reason. */
+		public Result(String requestId, String improvedText, String status) {
+			this(requestId, improvedText, status, "");
+		}
 	}
 
 	@FunctionalInterface
@@ -567,7 +678,10 @@ public final class PromptImprovementProcessor {
 		DISABLED,
 
 		/** The configured agent does not exist. */
-		MISSING_AGENT
+		MISSING_AGENT,
+
+		/** Every chat worker is busy and the queue has no room either. */
+		NO_ROOM
 	}
 
 	/**

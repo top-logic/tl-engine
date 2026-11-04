@@ -396,7 +396,7 @@ function UserTurn({
 /**
  * Copy, a rating, a regenerate and the time, under a finished answer.
  *
- * The rating is written through to the server (`POST /chat/feedback`) and comes back with the
+ * The rating is written through to the server (the `rate` command) and comes back with the
  * session, so it survives a reload and can be read back for evaluation. A thumbs-down opens a small
  * note field: what was wrong is worth far more than that something was.
  */

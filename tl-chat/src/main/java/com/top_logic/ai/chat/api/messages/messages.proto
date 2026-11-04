@@ -7,72 +7,6 @@ option NoInterfaces;
 option NoXml;
 
 /**
- * One message in the chat.
- */
-message MessageDto {
-	/**
-	 * Message ID.
-	 */
-	string id;
-
-	/**
-	 * "user", "agent", or "system".
-	 */
-	string role;
-
-	/**
-	 * Display name of the user who sent this message.
-	 */
-	string userName;
-
-	/**
-	 * Message text content.
-	 */
-	string content;
-
-	/**
-	 * Pre-rendered HTML for the message content (agent messages only; null for user/system).
-	 */
-	string contentHtml;
-
-	/**
-	 * Formatted timestamp string.
-	 */
-	string time;
-
-	/**
-	 * Attachment metadata (file name, type, size). Binary data is NOT persisted.
-	 */
-	repeated AttachmentDto attachments;
-}
-
-/**
- * Response body for GET /chat/updates.
- */
-message ChatUpdatesResponse {
-	/**
-	 * Whether an AI task is currently in progress.
-	 */
-	boolean processing;
-
-	/**
-	 * All messages in the chat.
-	 */
-	repeated MessageDto messages;
-
-	/**
-	 * The open session's task list as JSON, in the format the <code>task_update</code> SSE frame
-	 * carries (<code>TaskStore.toJson()</code>).
-	 *
-	 * <p>
-	 * The stream replays nothing, so this is how a page that was reloaded in mid-run gets the
-	 * progress it was showing back.
-	 * </p>
-	 */
-	string tasksJson;
-}
-
-/**
  * File attachment metadata and optional binary data.
  */
 message AttachmentDto {
@@ -87,8 +21,7 @@ message AttachmentDto {
 	string mimeType;
 
 	/**
-	 * Base64-encoded file content. Present in {@link ChatSendRequest} (upload); null in persisted
-	 * {@link MessageDto}.
+	 * Base64-encoded file content, as the chat control received the upload; null where only the metadata is kept.
 	 */
 	string base64Data;
 
@@ -99,122 +32,34 @@ message AttachmentDto {
 }
 
 /**
- * Request body for POST /chat/send.
+ * A file the user attached to the message being written, as the composer shows it before the
+ * message is sent.
+ *
+ * <p>
+ * The file itself stays on the server until the message is sent; the browser knows it by
+ * {@link #id}, which is what it names to take the file off the message again.
+ * </p>
  */
-message ChatSendRequest {
+message DraftAttachmentDto {
 	/**
-	 * User message text.
+	 * The server's identifier of the attachment, new for every upload.
 	 */
-	string text;
+	string id;
 
 	/**
-	 * Active session ID; if set, messages will be persisted to this session.
+	 * Original file name.
 	 */
-	string sessionId;
+	string fileName;
 
 	/**
-	 * File attachments (images, PDFs). Max 5, each max 10 MB.
+	 * MIME type (e.g. "image/png", "application/pdf").
 	 */
-	repeated AttachmentDto attachments;
+	string mimeType;
 
 	/**
-	 * Agent to run for this turn. Empty uses the configured chat entry-point agent.
+	 * File size in bytes.
 	 */
-	string agent;
-
-	/**
-	 * Model override for this turn. Empty keeps the agent's assigned model.
-	 */
-	string model;
-
-	/**
-	 * When true, {@link #mcpServers} replaces the agent's configured MCP servers for this turn
-	 * (an empty list means no MCP tools). When false, the agent's defaults are used.
-	 */
-	boolean mcpOverride;
-
-	/**
-	 * MCP servers to attach when {@link #mcpOverride} is true.
-	 */
-	repeated string mcpServers;
-
-	/**
-	 * How hard the model may think for this turn, one of the selected model's
-	 * <code>effortLevels</code>. Empty keeps the agent's assignment; a level the model does not
-	 * offer is ignored with a logged warning rather than failing the run.
-	 */
-	string effort;
-
-	/**
-	 * What the page states about the situation this message is asked in.
-	 *
-	 * <p>
-	 * Computed on the server from the chat element's <code>&lt;context&gt;</code> configuration and
-	 * echoed back here by the browser, because the run happens on a background thread long after the
-	 * page's channels were read. The harness renders the stable ones into the system prompt; the
-	 * message text is never touched.
-	 * </p>
-	 */
-	repeated FactDto facts;
-
-	/**
-	 * The position of the auto-approve switch at the send, <code>AUTO_APPROVE</code> or
-	 * <code>MANUAL</code>. The turn runs with it. Empty keeps the chat's stored mode.
-	 */
-	string approvalMode;
-}
-
-/**
- * One fact a page states about the situation a message is sent in.
- */
-message FactDto {
-	/**
-	 * What the fact is called in front of the model, e.g. "Project".
-	 */
-	string name;
-
-	/**
-	 * The rendered value.
-	 */
-	string value;
-
-	/**
-	 * Whether the value holds for the whole conversation.
-	 *
-	 * <p>
-	 * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
-	 * of one conversation or the provider's prompt cache misses on every one of them. A fact that is
-	 * not stable goes into the per-turn context block, which travels in the turn itself, beside the
-	 * user's text.
-	 * </p>
-	 */
-	boolean stable;
-}
-
-/**
- * Response body for POST /chat/send.
- */
-message ChatSendResponse {
-	/**
-	 * Task ID for polling updates.
-	 */
-	string taskId;
-
-	/**
-	 * e.g. "processing", or "forbidden" for a request the acting account may not make.
-	 */
-	string status;
-
-	/**
-	 * Why the request was refused, in the acting user's language; empty unless it was.
-	 */
-	string reason;
-
-	/**
-	 * Which functions beyond sending the conversation the message was sent in supports. Absent for a
-	 * send that names no conversation.
-	 */
-	ConversationFeaturesDto features;
+	long size;
 }
 
 /**
@@ -253,26 +98,12 @@ message ConversationFeaturesDto {
 }
 
 /**
- * Request body for POST /chat/improve-prompt.
+ * The {@code prompt_improved} frame: the result of an improvement the {@code improvePrompt}
+ * command of a chat control started.
  */
-message ImprovePromptRequest {
+message PromptImprovedEvent {
 	/**
-	 * Draft text to improve.
-	 */
-	string draft;
-
-	/**
-	 * Browser-generated correlation ID.
-	 */
-	string requestId;
-}
-
-/**
- * Response body for POST /chat/improve-prompt.
- */
-message ImprovePromptResponse {
-	/**
-	 * Correlation ID from the request.
+	 * Correlation ID the command named.
 	 */
 	string requestId;
 
@@ -282,8 +113,8 @@ message ImprovePromptResponse {
 	string improvedText;
 
 	/**
-	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
-	 * account may not make.
+	 * Result status: "completed", "cancelled", "stale" (a newer request replaced this one), "error",
+	 * or "forbidden" for a run the acting account may not make.
 	 */
 	string status;
 
@@ -291,84 +122,6 @@ message ImprovePromptResponse {
 	 * Why the request was refused, in the acting user's language; empty unless it was.
 	 */
 	string reason;
-}
-
-/**
- * Request body for POST /chat/improve-prompt/cancel.
- */
-message CancelPromptImprovementRequest {
-	/**
-	 * Correlation ID of the request to cancel.
-	 */
-	string requestId;
-}
-
-/**
- * Request body for POST /chat/regenerate: answer the same message again.
- */
-message RegenerateRequest {
-	/** Session whose last turn is to be answered again. */
-	string sessionId;
-
-	/** Agent for the new run; empty keeps the chat entry point. */
-	string agent;
-
-	/** Model for the new run; empty keeps the agent's assignment. */
-	string model;
-
-	/** Whether the named MCP servers replace the agent's configured ones. */
-	boolean mcpOverride;
-
-	/** MCP servers for the new run. */
-	repeated string mcpServers;
-
-	/** How hard the model may think for the new run. */
-	string effort;
-
-	/**
-	 * What the page states about the situation, as for POST /chat/send.
-	 *
-	 * <p>
-	 * Carried here too because a regenerated turn is a new run with a new system prompt: without the
-	 * facts it would be answered with less context than the turn it replaces.
-	 * </p>
-	 */
-	repeated FactDto facts;
-}
-
-/**
- * Request body for POST /chat/truncate: drop a turn and everything after it.
- */
-message TruncateRequest {
-	/** Session to truncate. */
-	string sessionId;
-
-	/**
-	 * Zero-based index of the first turn to remove. Everything from it to the end goes with it,
-	 * because a conversation is a sequence: what followed was said in reply to what is being
-	 * removed and cannot stand without it.
-	 */
-	int fromTurn;
-}
-
-/**
- * Response body for POST /chat/truncate and POST /chat/regenerate.
- */
-message TruncateResponse {
-	/** "ok", "busy", "error", or "forbidden" for a request the acting account may not make. */
-	string status;
-
-	/** Why the request was refused, in the acting user's language; empty unless it was. */
-	string reason;
-
-	/** Number of turns removed. */
-	int removedTurns;
-
-	/** The user text of the first removed turn, so the client can offer it for editing. */
-	string text;
-
-	/** Task ID of the run started by a regenerate; empty for a plain truncate. */
-	string taskId;
 }
 
 /**
@@ -389,24 +142,11 @@ message MessageFeedbackDto {
 }
 
 /**
- * Request body for POST /chat/feedback.
- */
-message MessageFeedbackRequest {
-	/** Session the rated answer belongs to. */
-	string sessionId;
-
-	/** Zero-based index of the turn whose answer was rated. */
-	int turnIndex;
-
-	/** "up", "down", or empty to withdraw an earlier rating. */
-	string rating;
-
-	/** Free text the user added; optional. */
-	string note;
-}
-
-/**
  * SSE connected event payload.
+ *
+ * <p>
+ * The state of the conversation's run follows in a {@link RunStateEvent} of its own.
+ * </p>
  */
 message ConnectedEvent {
 	/**
@@ -419,15 +159,43 @@ message ConnectedEvent {
 	 */
 	int timelineSeq;
 
+}
+
+/**
+ * SSE run_state event payload: the run of the conversation a window shows, as the server sees it
+ * now.
+ *
+ * <p>
+ * The stream replays nothing, so this is what a window that attaches - a reloaded page, a second
+ * tab, a stream that was attached again after a silence - and a window that opens another chat
+ * learn the run from: whether the agent is still working, the progress it has made, the approvals
+ * and questions waiting for the user, and the background subagents with what they spend from.
+ * </p>
+ */
+message RunStateEvent {
+	/** The chat this state is about; empty while the window shows no saved chat. */
+	string sessionId;
+
 	/**
-	 * Whether an AI task is currently in progress.
+	 * Whether the agent is still working on this chat - in this window or in another window of the
+	 * account.
 	 */
 	boolean processing;
 
 	/**
-	 * Current task ID, or null if none.
+	 * The chat's task list as JSON, in the format the <code>task_update</code> frame carries
+	 * (<code>TaskStore.toJson()</code>); empty when there is none.
 	 */
-	string taskId;
+	string tasksJson;
+
+	/** The approvals and questions of this chat waiting for the acting account, oldest first. */
+	repeated PendingInteractionDto interactions;
+
+	/** Every background subagent the chat's registry knows, whatever its status. */
+	repeated SubagentJobDto subagents;
+
+	/** The budget the subagents share; absent when no subagent's run is bounded. */
+	SubagentBudgetDto budget;
 }
 
 /**
@@ -461,22 +229,12 @@ message ChatSessionDto {
 }
 
 /**
- * Response body for GET /chat/sessions.
- */
-message ChatSessionListResponse {
-	/**
-	 * All sessions for the current user, sorted by {@link ChatSessionDto#lastUpdated} descending.
-	 */
-	repeated ChatSessionDto sessions;
-}
-
-/**
- * A pending human-in-the-loop request (approval/question/choice) awaiting the current user,
- * with the chat session it belongs to so the client can link to it.
+ * A pending human-in-the-loop request (approval/question/choice) awaiting the current user, with
+ * the chat session it belongs to, as a {@link RunStateEvent} lists it.
  */
 message PendingInteractionDto {
 	/**
-	 * Correlation ID of the underlying <code>InteractionRequest</code> (used for /chat/respond).
+	 * Correlation ID of the underlying <code>InteractionRequest</code> (what the {@code respond} command of a chat control names).
 	 */
 	string requestId;
 
@@ -560,44 +318,8 @@ message PendingInteractionDto {
 }
 
 /**
- * Response body for GET /chat/interactions: pending requests across all of the current
- * user's chat sessions, oldest first.
- */
-message PendingInteractionsResponse {
-	/**
-	 * All pending requests awaiting the current user.
-	 */
-	repeated PendingInteractionDto interactions;
-}
-
-/**
- * Request body for POST /chat/sessions.
- */
-message CreateSessionRequest {
-	/**
-	 * Title for the new session.
-	 */
-	string title;
-
-	/**
-	 * The approval mode the new session starts with, as the user set it before the session existed:
-	 * AUTO_APPROVE or MANUAL. Empty starts the session with MANUAL.
-	 */
-	string approvalMode;
-}
-
-/**
- * Request body for PUT /chat/sessions/{id}/title.
- */
-message UpdateTitleRequest {
-	/**
-	 * New title for the session.
-	 */
-	string title;
-}
-
-/**
- * Response body for GET /chat/sessions/{id} (full session load).
+ * One chat as a window shows it when it opens the chat, as a chat control serves it to the
+ * browser; the transcript of a background subagent comes in the same shape.
  */
 message ChatSessionDetailResponse {
 	/**
@@ -609,11 +331,6 @@ message ChatSessionDetailResponse {
 	 * Session title.
 	 */
 	string title;
-
-	/**
-	 * Messages JSON blob (raw string, parsed by client).
-	 */
-	string messagesJson;
 
 	/**
 	 * Turn-based entries (V2 format) as a JSON array of <code>PersistedTurn</code> objects
@@ -1103,31 +820,7 @@ message SubagentStatusEvent {
 	string stopReason;
 }
 
-/**
- * Request body for POST /chat/subagents/{id}/message: the user writes to one running background
- * subagent from its card.
- */
-message SubagentMessageRequest {
-	/** The chat whose lead started the subagent; empty means the chat this window shows. */
-	string sessionId;
-
-	/** The id of the lead's tool call that started the subagent, which tells it from a namesake. */
-	string parentToolCallId;
-
-	/** What the user writes. */
-	string text;
-}
-
-/** Answer of GET /chat/subagents: the subagents of this window's chat, and what they spend from. */
-message SubagentListResponse {
-	/** Every subagent the chat's registry knows, whatever its status. */
-	repeated SubagentJobDto subagents;
-
-	/** The budget the subagents share; absent when no subagent's run is bounded. */
-	SubagentBudgetDto budget;
-}
-
-/** One background subagent, as GET /chat/subagents lists it. */
+/** One background subagent, as a {@link RunStateEvent} lists it. */
 message SubagentJobDto {
 	/** The subagent's id. */
 	string subagentId;
@@ -1146,7 +839,7 @@ message SubagentJobDto {
 
 	/**
 	 * Whether its recorded run is available, so that the client offers a "view transcript"
-	 * affordance only where GET /chat/subagents/{id}/transcript has something to answer.
+	 * affordance only where the subagent's transcript has something to answer.
 	 */
 	bool hasTranscript;
 
@@ -1190,19 +883,6 @@ message SubagentBudgetDto {
 
 	/** The ISO 4217 code of {@link #getMoney()}; empty when the run bounds no money. */
 	string currency;
-}
-
-/** Answer of POST /chat/subagents/{id}/message. */
-message SubagentMessageResponse {
-	/**
-	 * {@code sent} - the subagent reads it at the start of its next turn; {@code ended} - the
-	 * subagent has ended and reads no more messages; {@code unknown} - no such subagent of this
-	 * account; {@code empty} - there is no text.
-	 */
-	string status;
-
-	/** The id of the message sent; the frame that says it was read names it. */
-	string messageId;
 }
 
 /** One message the user wrote to a subagent. */

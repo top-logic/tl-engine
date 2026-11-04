@@ -1415,7 +1415,7 @@ public class AgentLoop {
 	 * <p>
 	 * Only while the thread holds no knowledge-base context. Between two turns the loop has nothing
 	 * open, which makes this the same kind of point as the begin of a request, where
-	 * {@code ChatServlet} moves the view. A run started inside a transaction of its caller - a script
+	 * a chat control moves the view before it reads a transcript. A run started inside a transaction of its caller - a script
 	 * in a command that opened one, a delegated run inside a turn that has written - keeps the caller's
 	 * view: moving it would merge other threads' commits into a transaction that is not the run's.
 	 * </p>

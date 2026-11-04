@@ -55,8 +55,7 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * The servlet's own dispatch is driven directly rather than over HTTP, as
- * {@code TestChatServletOwnership} does: the request is a real one from the servlet test container
+ * The servlet's own dispatch is driven directly rather than over HTTP: the request is a real one from the servlet test container
  * with a real {@code HttpSession} logged in through {@link SessionService}, because that - and not
  * the thread context - is where the servlet reads the acting account from.
  * </p>

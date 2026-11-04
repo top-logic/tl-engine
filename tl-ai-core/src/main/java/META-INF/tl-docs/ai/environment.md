@@ -105,7 +105,7 @@ A host states facts in two places, and a run gets both, the agent's own first.
 </chat-conversation>
 ```
 
-`ChatConversationControl` evaluates them on the server, again whenever an input changes; they travel with `POST /chat/send` and `POST /chat/regenerate` as the request's `facts` (`FactDto`), and `ChatProcessor.sendMessage` binds them for the run through `RunFactsBinding`, which is also how a delegate and a subagent are told the same. A fact that cannot be evaluated is dropped with a log line and does not fail the run. The values are computed on the server in the acting account's context and echoed by the browser; a client that sends something else only tells its own agent something about its own page - every tool still asks the security context.
+`ChatConversationControl` evaluates them on the server when a message is sent or an answer regenerated (the `send` and `regenerate` commands of the chat controls read them from `ChatViewBinding.facts()`), and `ChatProcessor.sendMessage` binds them for the run through `RunFactsBinding`, which is also how a delegate and a subagent are told the same. A fact that cannot be evaluated is dropped with a log line and does not fail the run. The values are computed on the server in the acting account's context, and the browser carries none of them: what a run is told about the page is what the page's own configuration states.
 
 ## Prompt contributors
 

@@ -29,9 +29,9 @@ import com.top_logic.util.model.ModelService;
  * exactly where a send naming the same value would be.
  *
  * <p>
- * The sibling of {@link TestChatRunAccess}, which pins the same rule for {@code /chat/send}. The
+ * The sibling of {@link TestChatRunAccess}, which pins the same rule for the send command. The
  * point of doing it twice is that a channel is a second way in: a host that writes a forbidden model
- * would otherwise leave the composer showing a setting the next send is answered 403 for, which is a
+ * would otherwise leave the composer showing a setting the next send is refused for, which is a
  * refusal the user can neither see nor undo.
  * </p>
  *
@@ -82,7 +82,7 @@ public class TestChatTurnChannels extends BasicTestCase {
 	 *
 	 * <p>
 	 * Not a policy refusal - nothing forbids it, the name is simply wrong, which is what
-	 * {@code /chat/send} answers 404 for. Following it would leave the composer set to an agent that
+	 * the send answers "not found" for. Following it would leave the composer set to an agent that
 	 * cannot answer, and the run would die in the background thread instead of refusing.
 	 * </p>
 	 */

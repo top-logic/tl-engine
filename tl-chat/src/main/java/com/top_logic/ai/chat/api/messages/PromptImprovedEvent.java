@@ -1,19 +1,20 @@
 package com.top_logic.ai.chat.api.messages;
 
 /**
- * Response body for POST /chat/improve-prompt.
+ * The {@code prompt_improved} frame: the result of an improvement the {@code improvePrompt}
+ * command of a chat control started.
  */
-public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
+public class PromptImprovedEvent extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.ImprovePromptResponse} instance.
+	 * Creates a {@link com.top_logic.ai.chat.api.messages.PromptImprovedEvent} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.ImprovePromptResponse create() {
-		return new com.top_logic.ai.chat.api.messages.ImprovePromptResponse();
+	public static com.top_logic.ai.chat.api.messages.PromptImprovedEvent create() {
+		return new com.top_logic.ai.chat.api.messages.PromptImprovedEvent();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.ImprovePromptResponse} type in JSON format. */
-	public static final String IMPROVE_PROMPT_RESPONSE__TYPE = "ImprovePromptResponse";
+	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.PromptImprovedEvent} type in JSON format. */
+	public static final String PROMPT_IMPROVED_EVENT__TYPE = "PromptImprovedEvent";
 
 	/** @see #getRequestId() */
 	public static final String REQUEST_ID__PROP = "requestId";
@@ -36,16 +37,16 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	private String _reason = "";
 
 	/**
-	 * Creates a {@link ImprovePromptResponse} instance.
+	 * Creates a {@link PromptImprovedEvent} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.ImprovePromptResponse#create()
+	 * @see com.top_logic.ai.chat.api.messages.PromptImprovedEvent#create()
 	 */
-	protected ImprovePromptResponse() {
+	protected PromptImprovedEvent() {
 		super();
 	}
 
 	/**
-	 * Correlation ID from the request.
+	 * Correlation ID the command named.
 	 */
 	public final String getRequestId() {
 		return _requestId;
@@ -54,7 +55,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	/**
 	 * @see #getRequestId()
 	 */
-	public com.top_logic.ai.chat.api.messages.ImprovePromptResponse setRequestId(String value) {
+	public com.top_logic.ai.chat.api.messages.PromptImprovedEvent setRequestId(String value) {
 		internalSetRequestId(value);
 		return this;
 	}
@@ -74,7 +75,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	/**
 	 * @see #getImprovedText()
 	 */
-	public com.top_logic.ai.chat.api.messages.ImprovePromptResponse setImprovedText(String value) {
+	public com.top_logic.ai.chat.api.messages.PromptImprovedEvent setImprovedText(String value) {
 		internalSetImprovedText(value);
 		return this;
 	}
@@ -85,8 +86,8 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	}
 
 	/**
-	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
-	 * account may not make.
+	 * Result status: "completed", "cancelled", "stale" (a newer request replaced this one), "error",
+	 * or "forbidden" for a run the acting account may not make.
 	 */
 	public final String getStatus() {
 		return _status;
@@ -95,7 +96,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	/**
 	 * @see #getStatus()
 	 */
-	public com.top_logic.ai.chat.api.messages.ImprovePromptResponse setStatus(String value) {
+	public com.top_logic.ai.chat.api.messages.PromptImprovedEvent setStatus(String value) {
 		internalSetStatus(value);
 		return this;
 	}
@@ -115,7 +116,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	/**
 	 * @see #getReason()
 	 */
-	public com.top_logic.ai.chat.api.messages.ImprovePromptResponse setReason(String value) {
+	public com.top_logic.ai.chat.api.messages.PromptImprovedEvent setReason(String value) {
 		internalSetReason(value);
 		return this;
 	}
@@ -127,7 +128,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 
 	@Override
 	public String jsonType() {
-		return IMPROVE_PROMPT_RESPONSE__TYPE;
+		return PROMPT_IMPROVED_EVENT__TYPE;
 	}
 
 	static final java.util.List<String> PROPERTIES;
@@ -180,8 +181,8 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.ImprovePromptResponse readImprovePromptResponse(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.ImprovePromptResponse result = new com.top_logic.ai.chat.api.messages.ImprovePromptResponse();
+	public static com.top_logic.ai.chat.api.messages.PromptImprovedEvent readPromptImprovedEvent(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.ai.chat.api.messages.PromptImprovedEvent result = new com.top_logic.ai.chat.api.messages.PromptImprovedEvent();
 		result.readContent(in);
 		return result;
 	}

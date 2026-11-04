@@ -172,7 +172,9 @@ public final class ScriptingSession {
 	 *        The command ID (an advertised {@link ScriptingAction#command()}).
 	 * @param arguments
 	 *        The command arguments, or an empty map.
-	 * @return The {@link HandlerResult} of the command.
+	 * @return The {@link HandlerResult} of the command, carrying the
+	 *         {@link com.top_logic.layout.react.control.ReactCommandReply reply} of its handler, if
+	 *         any.
 	 * @throws IllegalArgumentException
 	 *         If the address does not resolve to a control.
 	 */

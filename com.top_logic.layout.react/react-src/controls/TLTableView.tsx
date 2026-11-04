@@ -1403,6 +1403,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu({ element: event.currentTarget as HTMLElement, colIdx });
   }, []);
 
+  // The entries below, as a test: a menu without entries would open as an empty box.
+  const columnMenuHasEntries = (colIdx: number): boolean => {
+    const column = columns[colIdx];
+    return !column?.pinnedEnd || frozenColumnCount > 0 || grouping !== ''
+      || (!!column?.groupable && column.name !== grouping);
+  };
+
   const handleFreezeUpTo = React.useCallback(() => {
     if (!contextMenu) return;
     sendCommand('setFrozenColumnCount', { count: contextMenu.colIdx + 1 });
@@ -2348,8 +2355,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         </PickerPopover>
       )}
 
-      {/* Column context menu */}
-      <Menu open={!!contextMenu} anchor={contextMenu ? ('element' in contextMenu ? contextMenu.element : { x: contextMenu.x, y: contextMenu.y }) : null} onClose={() => setContextMenu(null)}>
+      {/* Column context menu; a column that offers nothing (a pinned one, no grouping) opens none. */}
+      <Menu open={!!contextMenu && columnMenuHasEntries(contextMenu.colIdx)} anchor={contextMenu ? ('element' in contextMenu ? contextMenu.element : { x: contextMenu.x, y: contextMenu.y }) : null} onClose={() => setContextMenu(null)}>
         {contextMenu && contextMenu.colIdx + 1 !== frozenColumnCount && !columns[contextMenu.colIdx]?.pinnedEnd && (
           <MenuItem label={i18n['js.table.freezeUpTo']} onSelect={handleFreezeUpTo} />)}
         {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}

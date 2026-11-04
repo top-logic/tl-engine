@@ -764,7 +764,7 @@ describe('the column menu by keyboard', () => {
 
   function mountColumn(column: Record<string, unknown>) {
     vi.stubGlobal('ResizeObserver', NoResizeObserver);
-    mountAdapter(TLTableView, {
+    return mountAdapter(TLTableView, {
       columns: [{ name: 'name', label: 'Name', width: 120, sortable: false, filterable: false, ...column }],
       rows: [],
       totalRowCount: 0,
@@ -813,17 +813,61 @@ describe('the column menu by keyboard', () => {
     await openAndClose(resizer(), '{Shift>}{F10}{/Shift}');
   });
 
-  it('is anchored at the heading cell, not at a point', async () => {
+  it('is anchored at the heading cell: its rectangle is what the menu is placed by', async () => {
     mountColumn({});
     await settle();
     const cell = screen.getByRole('columnheader', { name: /Name/ });
-    vi.spyOn(cell, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 10, 120, 30));
+    const rect = vi.spyOn(cell, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 10, 120, 30));
     resizer().focus();
+    // Nothing but the placement of the menu asks the cell for its rectangle after this; a point anchor never does.
+    rect.mockClear();
     await userEvent.keyboard('{ContextMenu}');
     await settle();
-    const menu = screen.getByRole('menu');
-    expect(cell.getBoundingClientRect).toHaveBeenCalled();
-    expect(menu).toBeTruthy();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(rect).toHaveBeenCalled();
+  });
+
+  it('keeps the sort on Enter: the command is sent and no menu opens', async () => {
+    const sent = mountColumn({ sortable: true });
+    await settle();
+    screen.getByRole('button', { name: /Name/ }).focus();
+    await userEvent.keyboard('{Enter}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('sort', { column: 'name', direction: 'asc', mode: 'replace' });
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('keeps the arrows of the resizer: the width changes and no menu opens', async () => {
+    mountColumn({});
+    await settle();
+    const handle = resizer();
+    const before = Number(handle.getAttribute('aria-valuenow'));
+    handle.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+    expect(Number(resizer().getAttribute('aria-valuenow'))).toBeGreaterThan(before);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('opens no menu for a heading that offers no entry, by right-click or by keyboard', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: true, filterable: false, pinnedEnd: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const pin = screen.getByRole('columnheader', { name: /Pin/ });
+    fireEvent.contextMenu(pin);
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    within(pin).getByRole('button', { name: /Pin/ }).focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 
   it('leaves other keys alone', async () => {

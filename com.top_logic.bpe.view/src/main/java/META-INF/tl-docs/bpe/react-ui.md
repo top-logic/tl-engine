@@ -1,5 +1,5 @@
 ---
-description: Read before showing or editing the BPMN diagram of a workflow definition (tl.bpe.bpml:Collaboration) in a .view.xml - the <bpmn-editor> element of tl-bpe-view (BpmnEditorElement, BpmnEditorControl), its input, selection and diagram channels, editable, saving with bpmlUpdateFromDiagram, unsaved changes -, before working on the Workflows section of the administration (admin/workflows/workflows.view.xml, its diagram edit mode and properties form), before writing or embedding the step view of a manual task (tl.bpe.bpml:ManualTask#view, the channels token and process, viewParse, bpeDefaultStepView), and before working on or embedding the task screens - the Tasks item of the application shell, bpe/tasks.view.xml (My tasks, Start process), bpe/task.view.xml (the task screen and its Finish command) and bpe/finish-task.view.xml, the creation form of a process in the start dialog (bpeModelType, bpeStart with a draft) and additional data of an option with a form type in the finish dialog (bpeFormType, bpeFinish with additional).
+description: Read before showing or editing the BPMN diagram of a workflow definition (tl.bpe.bpml:Collaboration) in a .view.xml - the <bpmn-editor> element of tl-bpe-view (BpmnEditorElement, BpmnEditorControl), its input, selection and diagram channels, editable, saving with bpmlUpdateFromDiagram, unsaved changes -, before working on the Workflows section of the administration (admin/workflows/workflows.view.xml, its diagram edit mode and properties form), before writing or embedding the step view of a manual task (tl.bpe.bpml:ManualTask#view, the channels token and process, viewParse, bpeDefaultStepView), and before working on or embedding the task screens - the task page an application adds to its navigation (bpe/tasks.view.xml as a nav-item of its app.view.xml), bpe/tasks.view.xml (My tasks, Start process), bpe/task.view.xml (the task screen and its Finish command) and bpe/finish-task.view.xml, the creation form of a process in the start dialog (bpeModelType, bpeStart with a draft, a fixed workflow bound to its channel startEvent with bpeStartEvent - a start button for one workflow) and additional data of an option with a form type in the finish dialog (bpeFormType, bpeFinish with additional).
 order: 30
 ---
 
@@ -172,25 +172,86 @@ configuration with `viewParse(xml)` of `tl-layout-view`, which reads a text like
 into a `ViewElement.Config`, the value of a `tl.view:ViewDefinition` attribute. Storing the step view does
 not change the diagram, so the editor keeps a change of the diagram that is not saved yet.
 
+## Placing the views in an application
+
+`tl-bpe-view` provides views, not places: it contributes no item to the navigation of the
+application shell, and the application decides where its users find their tasks. The usual
+placements:
+
+- **A sidebar item** in the application's own `WEB-INF/views/app.view.xml` (see
+  [the application shell](doc:view-layer/app-shell)). `com.top_logic.demo.react` places it as the
+  last item of its group *Demos*; the id of the item is the path segment of the page, the selected
+  task follows as `task/<id>`:
+
+  ```xml
+  <nav-item id="processes" icon="css:bi bi-list-check">
+  	<view-ref view="bpe/tasks.view.xml"/>
+  	<label>
+  		<en>Processes</en>
+  		<de>Prozesse</de>
+  	</label>
+  </nav-item>
+  ```
+
+- **Embedded into a view of the application**, a tab, say: `<view-ref view="bpe/tasks.view.xml"/>`.
+  An application listing tasks its own way embeds the task screen of one task and binds its channel
+  `token` to its selection:
+
+  ```xml
+  <view-ref view="bpe/task.view.xml">
+  	<bind channel="token" to="selectedTask"/>
+  </view-ref>
+  ```
+
+- **Leading to a task from elsewhere** - a link at the data the process is about - with
+  `<show-view>`, which shows the task page and selects the task in its channel `selectedTask`
+  (see [navigation](doc:view-layer/navigation#entry-points)):
+
+  ```xml
+  <show-view view="bpe/tasks.view.xml">
+  	<bind channel="selectedTask" expr="$token"/>
+  </show-view>
+  ```
+
+- **A start button for one workflow**, opening the start dialog with the start event bound, see
+  [a start button for one workflow](#a-start-button-for-one-workflow).
+
+The administration is different: `tl-bpe-view` adds its section *Workflows* (the tab `workflows` of
+the tab bar `sections`) to the administration of `tl-layout-view` with an overlay of
+`WEB-INF/views/admin/admin.view.xml`. An application moves or removes it with an overlay of the same
+path (see [overlays](doc:view-layer/overlays)):
+
+```xml
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="sections">
+		<tabs>
+			<tab id="workflows" config:operation="remove"/>
+			<!-- or: <tab id="workflows" config:position="before" config:reference="..."/> -->
+		</tabs>
+	</tab-bar>
+</view>
+```
+
+`<bpmn-editor>` is an element like any other and stands in any view of the application, as
+described at the beginning of this article.
+
 ## Working on tasks
 
-`tl-bpe-view` adds the item *Tasks* (`tasks`) to the section `application` of the application shell
-with an overlay of `WEB-INF/views/app.view.xml` (see [the application shell](doc:view-layer/app-shell)),
-so every React application containing the module offers its users their tasks. An application
-places the item among its own ones with `<nav-item id="tasks" config:position="…"/>` in its own
-overlay of the shell, or takes it out with `config:operation="remove"`.
+The task page `bpe/tasks.view.xml` is described below; where an application shows it is the
+application's choice, see [placing the views in an application](#placing-the-views-in-an-application).
 
-The item shows `bpe/tasks.view.xml`, built on the [task execution](doc:bpe/task-execution) functions:
+The task page `bpe/tasks.view.xml` is built on the [task execution](doc:bpe/task-execution) functions:
 
 - **My tasks**, a table of `bpeTasks()` - the task (the token's name), the workflow, the process (its label), the number of the
   process and the time the task is waiting since. The table observes `tl.bpe.execution:Token`, so a task appears and
   disappears while the page is displayed, whoever started or finished it. The selected task is the
-  channel `selectedTask`, carried in the address bar as `task/<id>`; another view leads to a task with
-  `<show-view view="bpe/tasks.view.xml"><bind channel="selectedTask" expr="$token"/></show-view>`
-  (see [navigation](doc:view-layer/navigation#entry-points)).
-- **Start process** opens `bpe/start-process.view.xml`, listing `bpeStartEvents()` with their
-  workflow, and below the list the creation form of the process chosen, see
-  [starting a process](#starting-a-process).
+  channel `selectedTask`, carried in the address bar as `task/<id>`; another view leads to a task with `<show-view>`, see
+  [placing the views](#placing-the-views-in-an-application).
+- **Start process** opens `bpe/start-process.view.xml`: a select field of `bpeStartEvents()`,
+  labeled with the workflow (`bpeStartEventLabel`, adding the event for a workflow with several
+  manual start events) and sorted by label, and below it the creation form of the process chosen,
+  see [starting a process](#starting-a-process). An application adds a button for one workflow, see
+  [a start button for one workflow](#a-start-button-for-one-workflow).
 - **The task screen** `bpe/task.view.xml` of the selected task. It declares the channel `token` and
   can be embedded wherever an application shows a token:
 
@@ -247,6 +308,50 @@ execution and runs it to its first task, in one transaction. The dialog selects 
 (`bpeStartTask`) when the user works on it right away: the start event does not require a review,
 or the user is an actor of the task. Otherwise the task waits in the task lists of its actors.
 
+### A start button for one workflow
+
+The start dialog takes a start event from its opener in the channel `startEvent`. Bound, the dialog
+shows the name of the workflow instead of the select field, and right below it the creation form;
+the user only fills in the form and starts. `bpeStartEvent(workflowName, eventName)` finds the start
+event of a released workflow by name - the event name may be omitted for a workflow with a single
+manual start event - and results in `null` while there is no such released workflow or the current
+user may not start it, so a command taking it as input is disabled then. Several start events
+matching the names are refused with an error, the names do not identify the start event.
+
+`com.top_logic.demo.react` adds such a command, *Urlaubsantrag stellen*, beside *Start process*
+with an overlay of `bpe/tasks.view.xml` (see [overlays](doc:view-layer/overlays)):
+
+```xml
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<derived-channel name="leaveRequestStart"
+			expr="bpeStartEvent('Urlaubsantrag')"
+			observed-types="tl.bpe.bpml:Collaboration"
+		/>
+	</channels>
+	<panel config:ref="list-panel">
+		<commands>
+			<generic-command image="css:bi bi-calendar-plus" inputs="leaveRequestStart" placement="TOOLBAR">
+				<label><en>Request leave</en><de>Urlaubsantrag stellen</de></label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<open-dialog bind-input-to="startEvent" dialog-view="bpe/start-process.view.xml">
+					<bind channel="selection" to="selectedTask"/>
+				</open-dialog>
+			</generic-command>
+		</commands>
+	</panel>
+</view>
+```
+
+The command's input is the start event, so `<open-dialog>` binds it into the dialog
+(`bind-input-to`); the dialog writes the first task to `selection`, here the selected task of the
+task page. `observed-types` evaluates the channel again when a workflow changes, so the command is
+enabled once the workflow is released and disabled once it is revoked. Elsewhere - a toolbar of the
+application's own data - the same command stands in any view; the `selection` binding then names a
+channel of that view, or is left out.
+
 ### Finishing a task
 
 *Finish* in the toolbar of the task screen completes the task with one of its options
@@ -280,7 +385,7 @@ the finished task leaves *My tasks*.
 
 `com.top_logic.demo.react` ships the workflow *Urlaubsantrag* (`WEB-INF/workflow/LeaveRequest.bpmn.xml`,
 imported at startup by `InitialProcessSetup`), released by its `state` extension, so a process of it
-is started from *Tasks* right away: the start dialog asks for the `demo.process:LeaveRequest` with
+is started from *Demos → Prozesse* right away: the start dialog asks for the `demo.process:LeaveRequest` with
 its mandatory name, first and last day (labeled *name: first – last day*), its first task *Antrag
 prüfen* edits it and is finished at a gateway offering *genehmigen* and *ablehnen*. *ablehnen* has
 the form type `demo.process:Rejection` (`<tl:formType value="demo.process:Rejection"/>`): the

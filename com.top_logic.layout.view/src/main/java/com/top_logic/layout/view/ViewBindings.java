@@ -52,7 +52,9 @@ public interface ViewBindings extends ConfigurationItem {
 	 * command) bubble up to the enclosing app bar; the security scope so that command security rules
 	 * in the embedded view default to the enclosing removable unit; the object list scope so that an
 	 * embedded view used as an {@code <object-list>} row keeps {@code <link-element>} /
-	 * {@code <remove-element>} working.
+	 * {@code <remove-element>} working. The form is shared as well: an embedded view inside a
+	 * {@code <form>} fills a part of that form, its fields edit the form's object and its commands
+	 * store the form's state.
 	 * </p>
 	 *
 	 * @param parentContext
@@ -64,6 +66,7 @@ public interface ViewBindings extends ConfigurationItem {
 	 */
 	static ViewContext embeddedContext(ViewContext parentContext, List<ChannelBindingConfig> bindings) {
 		ViewContext childContext = parentContext.withIsolatedChannels();
+		childContext.setFormModel(parentContext.getFormModel());
 		for (ChannelBindingConfig binding : bindings) {
 			ViewChannel parentChannel = parentContext.resolveChannel(binding.getTo());
 			childContext.registerChannel(binding.getChannel(), parentChannel);

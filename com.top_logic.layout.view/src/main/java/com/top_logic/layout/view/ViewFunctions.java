@@ -11,6 +11,10 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.view.element.FieldElement;
+import com.top_logic.layout.view.element.FieldsElement;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -41,6 +45,9 @@ public class ViewFunctions extends TLScriptFunctions {
 	/** Name of the content a parsed text is reported under in an error message. */
 	private static final String SOURCE_NAME = PREFIX + "Parse";
 
+	/** Tag name of the root element of a view. */
+	private static final String VIEW = "view";
+
 	/**
 	 * Reads a view configuration from its XML text.
 	 *
@@ -64,6 +71,38 @@ public class ViewFunctions extends TLScriptFunctions {
 		} catch (ConfigurationException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_VIEW_DEFINITION__PROBLEM.fill(ex.getMessage()), ex);
 		}
+	}
+
+	/**
+	 * A view with an input field for each attribute a type declares itself.
+	 *
+	 * <p>
+	 * The view consists of a <code>&lt;fields&gt;</code> grid with a <code>&lt;field&gt;</code> for
+	 * each attribute the type declares, inherited attributes left out. It is the content of a form
+	 * whose type is known only at runtime: embedded with a <code>&lt;dynamic-view&gt;</code> into a
+	 * <code>&lt;form&gt;</code>, its fields edit the object of that form.
+	 * </p>
+	 *
+	 * <pre>
+	 * &lt;form input="draft"&gt;
+	 *   &lt;dynamic-view inputs="draft" view="$draft == null ? null : viewFields($draft.type())"/&gt;
+	 * &lt;/form&gt;
+	 * </pre>
+	 *
+	 * @param type
+	 *        The type whose attributes are edited.
+	 * @return The view configuration.
+	 */
+	@Label("Fields of a type")
+	@SideEffectFree
+	public static ViewElement.Config fields(@Mandatory TLClass type) {
+		TagWriter out = new TagWriter();
+		out.beginTag(VIEW);
+		out.beginTag(FieldsElement.Config.TAG_NAME);
+		FieldElement.writeFields(out, type);
+		out.endTag(FieldsElement.Config.TAG_NAME);
+		out.endTag(VIEW);
+		return parse(out.toString());
 	}
 
 }

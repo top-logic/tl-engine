@@ -57,6 +57,13 @@ import com.top_logic.util.TLContextManager;
  * layout again costs a lookup in the sub-session's personal configuration, which is already in
  * memory, plus a small JSON parse; the language is the session's locale, read in place.
  * </p>
+ *
+ * <p>
+ * The acting account is not bound once either. A login in a window keeps its sub-session, and so
+ * this binding, while the control tree is built anew for the account that signed in. Whether the
+ * user is signed in and the names shown are therefore read from the account each time the
+ * controls write their state (#30109).
+ * </p>
  */
 public final class ChatViewBinding {
 
@@ -88,12 +95,6 @@ public final class ChatViewBinding {
 
 	private final String _contextPath;
 
-	private final String _userName;
-
-	private final String _welcomeName;
-
-	private final boolean _authenticated;
-
 	/**
 	 * The channels the elements of this chat let an agent write, by name.
 	 *
@@ -121,9 +122,6 @@ public final class ChatViewBinding {
 		storeUser(_tracker);
 		_windowId = windowName;
 		_contextPath = contextPath == null ? "" : contextPath;
-		_userName = valueOr(_tracker.getUserName(), "User");
-		_welcomeName = valueOr(_tracker.getWelcomeName(), "");
-		_authenticated = !TLContext.isAnonymous();
 	}
 
 	/**
@@ -236,14 +234,16 @@ public final class ChatViewBinding {
 		return _conversation;
 	}
 
-	/** User name shown in the chat. */
+	/** User name shown in the chat: the one of the acting account now, read per call. */
 	public String userName() {
-		return _userName;
+		storeUser(_tracker);
+		return valueOr(_tracker.getUserName(), "User");
 	}
 
-	/** First name used in the empty-state greeting. */
+	/** First name used in the empty-state greeting: the one of the acting account now, read per call. */
 	public String welcomeName() {
-		return _welcomeName;
+		storeUser(_tracker);
+		return valueOr(_tracker.getWelcomeName(), "");
 	}
 
 	/** The language tag of the session's locale now, e.g. {@code "de"}; read per render, not at bind time. */
@@ -261,9 +261,15 @@ public final class ChatViewBinding {
 		return _contextPath;
 	}
 
-	/** Whether the session is signed in. */
+	/**
+	 * Whether the window's acting account is signed in now, read per call.
+	 *
+	 * <p>
+	 * A login keeps the window and with it this binding; only the control tree is built anew.
+	 * </p>
+	 */
 	public boolean authenticated() {
-		return _authenticated;
+		return !TLContext.isAnonymous();
 	}
 
 	/**
@@ -471,18 +477,20 @@ public final class ChatViewBinding {
 	 * </p>
 	 *
 	 * <p>
-	 * Everything written here is fixed for the lifetime of the window. The layout preference and
-	 * the session's language are not, so they have {@link #writeRenderState(BiConsumer)} of their
-	 * own; this method writes them too, so that a caller which only ever renders once needs the
-	 * one call.
+	 * Window id and context path are fixed for the lifetime of the window. Whether the user is
+	 * signed in and the user's names are read from the acting account each time: a login keeps the
+	 * window and this binding, and only builds the control tree anew, whose controls call this
+	 * again. The layout preference and the session's language change without a new control tree,
+	 * so they have {@link #writeRenderState(BiConsumer)} of their own; this method writes them too,
+	 * so that a caller which only ever renders once needs the one call.
 	 * </p>
 	 */
 	public void writeSharedState(BiConsumer<String, Object> put) {
-		put.accept("authenticated", Boolean.valueOf(_authenticated));
+		put.accept("authenticated", Boolean.valueOf(authenticated()));
 		put.accept("windowId", _windowId);
 		put.accept("contextPath", _contextPath);
-		put.accept("userName", _userName);
-		put.accept("welcomeName", _welcomeName);
+		put.accept("userName", userName());
+		put.accept("welcomeName", welcomeName());
 		writeRenderState(put);
 	}
 

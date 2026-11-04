@@ -8,6 +8,7 @@ import { chipFocusTargets } from './chip/chipFocus';
 import { TableViewButton } from './table/TableViewOptions';
 import { PickerPopover } from './picker/PickerPopover';
 import { FilterPresets } from './table/FilterPresets';
+import { firstFieldOrFocusable } from './table/TLFilterList';
 import type { TableDensity, TableViewValues } from './table/TableViewOptions';
 
 /**
@@ -2315,7 +2316,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           anchorRef={filterAnchorRef}
           label={filterPopoverLabel}
           className="tl-filter-list"
-          initialFocus="first"
+          initialFocus={firstFieldOrFocusable}
           trapFocus={false}
           onClose={closeFilterPopover}
         >

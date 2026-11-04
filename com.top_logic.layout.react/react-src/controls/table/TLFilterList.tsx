@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useRovingMenu, filterOptions, stateAttr } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useRovingMenu, filterOptions, stateAttr, firstFocusable } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { SearchField } from '../SearchField';
 
@@ -36,6 +36,15 @@ interface FilterEntry {
   count?: number;
   /** Whether the value is checked, i.e. its rows are shown. */
   checked: boolean;
+}
+
+/**
+ * Where the focus goes in the content of a filter popover: its first field - the search of a value list, the first
+ * input of a form -, else its first focusable element - the first row of a value list. A help button in the label of a
+ * field is passed over: it stands before the field, but nobody opens a filter to read its help.
+ */
+export function firstFieldOrFocusable(root: HTMLElement): HTMLElement | null {
+  return firstFocusable(root, true) ?? firstFocusable(root);
 }
 
 /** The state of "All" for the given values: `true` if all are checked, `false` if none is, else `mixed`. */
@@ -78,6 +87,7 @@ const TLFilterList: React.FC<TLCellProps> = ({ controlId }) => {
 
   // The rows are the tab stop one at a time: the one last focused while it is shown, else the first.
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
   const [focusKey, setFocusKey] = useState<string | null>(null);
   const keys = [...(searching ? [] : [ALL_KEY]), ...shown.map(entry => entry.key)];
   const tabStop = focusKey !== null && keys.includes(focusKey) ? focusKey : keys[0];
@@ -90,8 +100,9 @@ const TLFilterList: React.FC<TLCellProps> = ({ controlId }) => {
   }, [all, sendCommand]);
 
   const handleClear = useCallback(() => {
-    // The button is disabled by its own click, and a disabled button drops the focus: it goes to the rows before.
-    menuRef.current?.querySelector<HTMLElement>('[tabindex="0"]')?.focus();
+    // The button is disabled by its own click, and a disabled button drops the focus: it goes to the rows before, or,
+    // while the search shows no row, to the search.
+    (menuRef.current?.querySelector<HTMLElement>('[tabindex="0"]') ?? searchRef.current)?.focus();
     sendCommand(CMD_CLEAR, {});
   }, [sendCommand]);
 
@@ -111,6 +122,7 @@ const TLFilterList: React.FC<TLCellProps> = ({ controlId }) => {
           placeholder={i18n['js.table.filterSearch']}
           value={search}
           onChange={setSearch}
+          inputRef={searchRef}
         />
       )}
       {shown.length === 0 && searching ? (

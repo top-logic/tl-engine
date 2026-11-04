@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, firstFocusable } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { FilterFooter } from './TLFilterList';
+import { FilterFooter, firstFieldOrFocusable } from './TLFilterList';
 
 const { useEffect, useRef, useCallback } = React;
 
@@ -21,10 +21,13 @@ const CMD_CLEAR = 'clear';
  * column is not filtered.
  *
  * <p>The fields of a built-in filter take effect by themselves - a text after a pause or on Enter, a choice at once.
- * The filter UI of an application applies explicitly (state `applies`): its footer offers "Apply" as well.</p>
+ * The filter UI of an application applies explicitly (state `applies`): its footer offers "Apply" at its end, and Enter
+ * in a field of the form applies as well.</p>
  *
- * <p>Removing the filter replaces the form by an empty one. The button removing it is disabled by its own click, and
- * the form it stood under is gone: the focus goes to the first field of the new form.</p>
+ * <p>The scroll area keeps a margin (tl-filter-list__form) that holds the focus rings of the fields at its edges.</p>
+ *
+ * <p>Removing the filter replaces the form by a new one. The button removing it is disabled by its own click, and the
+ * form it stood under is gone: the focus goes to the first field of the new form.</p>
  */
 const TLFilterForm: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -44,7 +47,7 @@ const TLFilterForm: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     refocus.current = false;
-    firstFocusable(scrollRef.current)?.focus();
+    firstFieldOrFocusable(scrollRef.current)?.focus();
   }, [formId]);
 
   const handleClear = useCallback(() => {
@@ -52,9 +55,25 @@ const TLFilterForm: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_CLEAR, {});
   }, [sendCommand]);
 
+  // The filter UI of an application applies on Enter in a field, as the dialog it replaces did - not in a text area,
+  // where Enter is text, nor on a button, which Enter presses, nor where a field has used the key itself (a list
+  // choosing its option).
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!applies || event.key !== 'Enter' || event.defaultPrevented || event.nativeEvent.isComposing
+        || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (target.closest('textarea, button, a[href], [contenteditable="true"]')) {
+      return;
+    }
+    event.preventDefault();
+    sendCommand(CMD_APPLY, {});
+  }, [applies, sendCommand]);
+
   return (
     <>
-      <div ref={scrollRef} id={controlId} className="tl-picker__scroll">
+      <div ref={scrollRef} id={controlId} className="tl-picker__scroll tl-filter-list__form" onKeyDown={handleKeyDown}>
         {form && <TLChild control={form} />}
       </div>
       <FilterFooter active={active} clearLabel={i18n['js.table.clear']} onClear={handleClear}>

@@ -5,7 +5,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { replacePart } from 'tl-react-bridge';
+import { React, register, replacePart } from 'tl-react-bridge';
+import type { TLCellProps } from 'tl-react-bridge';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLFilterList from '../../../com.top_logic.layout.react/react-src/controls/table/TLFilterList';
 import TLFilterForm from '../../../com.top_logic.layout.react/react-src/controls/table/TLFilterForm';
@@ -22,6 +23,26 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 // The table looks up the toggle of its tree rows as well.
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
+
+/**
+ * A form as a filter form builds it: a field whose label carries a help button before the input, a text area, and a
+ * second field.
+ */
+function HelpForm({ controlId }: TLCellProps) {
+  return (
+    <div id={controlId}>
+      <button type="button" aria-label="Hilfe zu Muster">?</button>
+      <input aria-label="Muster" />
+      <textarea aria-label="Notiz" />
+    </div>
+  );
+}
+register('FilterPopoverHelpForm', HelpForm);
+
+/** A form control with a help button before its first field, see {@link HelpForm}. */
+function helpForm(controlId: string) {
+  return { controlId, module: 'FilterPopoverHelpForm', state: {} };
+}
 
 /** The labels: the keys, as the test stub translates each key to itself. */
 const LABEL_FILTER = 'js.table.filter';
@@ -171,6 +192,20 @@ describe('the value list of a column filter', () => {
     expect(screen.getByRole('menu').contains(document.activeElement)).toBe(true);
   });
 
+  it('gives the focus to the search when "Remove filter" disables itself while no value matches', async () => {
+    const many = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
+    mountList({ entries: entries(many, ['Beta']), searchable: true, active: true });
+    await settle();
+    const search = screen.getByRole('searchbox', { name: LABEL_SEARCH });
+    await userEvent.type(search, 'xyz');
+    expect(screen.queryByRole('menu')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: LABEL_CLEAR }));
+    patchState({ entries: entries(many), active: false });
+
+    expect(document.activeElement).toBe(search);
+  });
+
   it('has a search from eight values on that narrows the list, without "All" while it narrows (E3)', async () => {
     const many = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
     mountList({ entries: entries(many), searchable: true });
@@ -252,6 +287,45 @@ describe('the form of a column filter', () => {
 
     expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Muster neu' }));
   });
+
+  it('puts the focus into the first field of the new form, not on a help button before it', async () => {
+    mountAdapter(TLFilterForm, { form: helpForm('f1'), active: true, applies: false });
+    await settle();
+
+    await userEvent.click(screen.getByRole('button', { name: LABEL_CLEAR }));
+    patchState({ form: helpForm('f2'), active: false });
+
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Muster' }));
+  });
+
+  it('lets the form scroll with room for the focus rings of its fields (tl-filter-list__form)', async () => {
+    mountAdapter(TLFilterForm, { form: helpForm('f1'), active: false, applies: false });
+    await settle();
+    const scroll = screen.getByRole('textbox', { name: 'Muster' }).closest('.tl-picker__scroll')!;
+    expect(scroll.classList).toContain('tl-filter-list__form');
+  });
+
+  it('applies the filter UI of an application on Enter in a field, not in a text area (E5)', async () => {
+    const sent = mountAdapter(TLFilterForm, { form: helpForm('f1'), active: false, applies: true });
+    await settle();
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Notiz' }), 'a{Enter}');
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('apply', expect.anything());
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Muster' }), 'a{Enter}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('apply', {});
+  });
+
+  it('sends nothing on Enter in a form whose fields filter by themselves', async () => {
+    const sent = mountAdapter(TLFilterForm, { form: helpForm('f1'), active: false, applies: false });
+    await settle();
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Muster' }), 'a{Enter}');
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('apply', expect.anything());
+  });
 });
 
 describe('the funnel of a column and its filter popover', () => {
@@ -315,6 +389,13 @@ describe('the funnel of a column and its filter popover', () => {
     expect(funnels()[0].getAttribute('aria-expanded')).toBe('true');
     // The focus starts in the content: the search, the first row or the first field.
     expect(document.activeElement).toBe(within(dialog).getByRole('textbox', { name: 'Inhalt' }));
+  });
+
+  it('starts the focus in the first field of a form, not on a help button before it', async () => {
+    mountTable({ column: 'title', content: helpForm('fh') });
+    await settle();
+
+    expect(document.activeElement).toBe(within(popover()!).getByRole('textbox', { name: 'Muster' }));
   });
 
   it('closes on a press outside and tells the server, the filter staying', async () => {

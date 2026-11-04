@@ -15,7 +15,7 @@ import com.top_logic.layout.table.filter.JSONTransformer;
 import com.top_logic.layout.table.filter.TableFilterModel;
 
 /**
- * Serializer for the internal state of a {@link TableFilterModel}
+ * Serializer for the internal state of a {@link TableFilterModel}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

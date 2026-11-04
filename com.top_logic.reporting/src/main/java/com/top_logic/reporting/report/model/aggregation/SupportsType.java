@@ -12,8 +12,8 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 
 
 /**
- * The SupportsType Annotation must be specified for {@link AggregationFunction}s or {@link PartitionFunction}
- * to declare the supported types of MetaElements the function is able to handle 
+ * The {@link SupportsType} Annotation must be specified for {@link AggregationFunction}s or
+ * {@link PartitionFunction} to declare the types of attributes the function is able to handle.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -21,6 +21,7 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 @Deprecated
 public @interface SupportsType {
     // support all types by default 
+    /** The supported attribute types, all types if empty. */
     int[] value() default {};
 }
 

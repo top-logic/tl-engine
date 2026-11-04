@@ -10,6 +10,9 @@ import java.util.Properties;
 import com.top_logic.basic.Logger;
 
 /**
+ * Default {@link LoggerProgressInfo} that writes messages to the application log and collects
+ * them for display in the progress UI.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class LoggerProgressInfoImpl implements LoggerProgressInfo {
@@ -188,6 +191,18 @@ public class LoggerProgressInfoImpl implements LoggerProgressInfo {
         this.appendMessage(aMessage, anException, aCaller, aPrio);
     }
     
+    /**
+     * Appends the given message to the message buffer shown to the user.
+     *
+     * @param aMessage
+     *        The message, may be {@code null} if an exception is given.
+     * @param anException
+     *        The problem to report, may be {@code null}.
+     * @param aCaller
+     *        The class reporting the message.
+     * @param aPrio
+     *        The severity of the message.
+     */
     protected void appendMessage(String aMessage, Throwable anException, Class aCaller, int aPrio) {
         if (anException != null) {
             if (aMessage != null) {
@@ -272,6 +287,9 @@ public class LoggerProgressInfoImpl implements LoggerProgressInfo {
     }
 
     
+    /**
+     * The buffer collecting the reported messages, created on demand.
+     */
     protected final StringBuffer getMessageBuffer() {
         if (this.message == null) {
             this.clearMessageBuffer();

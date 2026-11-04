@@ -303,7 +303,7 @@ public class FormGroup extends AbstractFormContainer {
 	}
 	
 	/**
-	 * Replace a aMember with the same name keeping the order of Members.
+	 * Replaces the member with the same name as the given member keeping the order of members.
 	 * 
 	 * @return The Object replace or null if not found.
 	 */

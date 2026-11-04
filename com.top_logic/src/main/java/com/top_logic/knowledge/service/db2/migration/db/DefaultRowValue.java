@@ -10,7 +10,7 @@ import java.util.Map;
 import com.top_logic.dob.meta.MOStructure;
 
 /**
- * Default implementation of {@link RowValue}
+ * Default implementation of {@link RowValue}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

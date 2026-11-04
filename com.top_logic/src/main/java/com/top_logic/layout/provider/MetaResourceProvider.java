@@ -13,17 +13,20 @@ import com.top_logic.mig.html.DefaultResourceProvider;
 /**
  * {@link ResourceProvider} that looks up its implementation from the {@link LabelProviderService}.
  * 
- * So it dispatches to configured ProxyResourceProviders. It is configured via the
+ * So it dispatches to configured {@link ProxyResourceProvider}s. It is configured via the
  * "ResourceProviderRegistry" entry in the configuration file (top-logic.xml)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class MetaResourceProvider extends AbstractDispatchingResourceProvider {
 
+	/**
+	 * Singleton {@link MetaResourceProvider} instance.
+	 */
 	public static final MetaResourceProvider INSTANCE = 
 		new MetaResourceProvider();
 
-    /** A Renderer based on the MetaResourceProvider.INSTANCE */
+    /** A {@link Renderer} based on the {@link MetaResourceProvider#INSTANCE}. */
 	public static final Renderer<Object> DEFAULT_RENDERER =
 		ResourceRenderer.newResourceRenderer(INSTANCE);
 	

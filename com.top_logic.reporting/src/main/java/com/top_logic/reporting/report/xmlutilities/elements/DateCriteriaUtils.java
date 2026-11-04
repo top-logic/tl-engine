@@ -8,6 +8,8 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 import com.top_logic.reporting.report.xmlutilities.XMLReportTags;
 
 /**
+ * Unused utilities for writing date criteria to XML.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class DateCriteriaUtils implements XMLReportTags{

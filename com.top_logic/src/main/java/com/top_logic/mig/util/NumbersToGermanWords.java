@@ -9,7 +9,7 @@ package com.top_logic.mig.util;
  * Converts (long) Numbers in German Words.
  * 
  * The highest double number to convert is 9.007199254740989E15.
- * Higher double Numbers will result an IllegalArgumentException.
+ * Higher double Numbers will result an {@link IllegalArgumentException}.
  * the Range of long is fully supported. 
  *
  * @author    <a href="mailto:wba@top-logic.com">Wolfgang Badur</a>

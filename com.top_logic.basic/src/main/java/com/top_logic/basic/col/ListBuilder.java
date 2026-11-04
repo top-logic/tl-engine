@@ -32,14 +32,14 @@ public class ListBuilder<T> {
 
 
     /**
-     * Creates a new ListBuilder with a new list.
+     * Creates a new {@link ListBuilder} with a new list.
      */
     public ListBuilder() {
         buffer = new ArrayList<>();
     }
 
     /**
-     * Creates a new ListBuilder with a new list of the given size.
+     * Creates a new {@link ListBuilder} with a new list of the given size.
      *
      * @param size the size of this list builder to avoid resizing operations.
      */
@@ -48,7 +48,7 @@ public class ListBuilder<T> {
     }
 
     /**
-     * Creates a new ListBuilder to append the given list.
+     * Creates a new {@link ListBuilder} to append the given list.
      *
      * @param aList the list to append
      */

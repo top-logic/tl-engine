@@ -24,6 +24,7 @@ public interface NodeRef extends VersionedObjectRef {
 	 * The name of the structure the referenced object is part of.
 	 */
 	String getStructureName();
+	/** Setter for {@link #getStructureName()}. */
 	void setStructureName(String value);
 	
 	/**
@@ -32,6 +33,7 @@ public interface NodeRef extends VersionedObjectRef {
 	 */
 	@ListBinding(format = StringValueProvider.class, tag = "node", attribute = "name")
 	List<String> getStructurePath();
+	/** Setter for {@link #getStructurePath()}. */
 	void setStructurePath(List<String> value);
 
 }

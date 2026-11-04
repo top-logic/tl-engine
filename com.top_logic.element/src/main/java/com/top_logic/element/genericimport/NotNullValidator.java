@@ -15,7 +15,7 @@ import com.top_logic.element.genericimport.interfaces.GenericValidator;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 
 /**
- * The NotNullValidator validates that all provided values are not null and collections
+ * The {@link NotNullValidator} validates that all provided values are not null and collections
  * are not empty.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -34,6 +34,16 @@ public class NotNullValidator extends AbstractGenericDataImportBase implements
         this.allowEmptyValues = Boolean.valueOf(aSomeProps.getProperty("allowNullValues", "false")).booleanValue();
     }
 
+    /**
+     * Checks that all attributes of the given imported data have a value, unless empty values
+     * are allowed.
+     *
+     * @param aDO
+     *        The imported data.
+     * @param aCache
+     *        The cache of already imported objects.
+     * @return The validation result.
+     */
     public ValidationResult validate(GenericValueMap aDO, GenericCache aCache) {
         ValidationResult theResult = new ValidationResult(aDO);
         String[] theAttrs = aDO.getAttributeNames();

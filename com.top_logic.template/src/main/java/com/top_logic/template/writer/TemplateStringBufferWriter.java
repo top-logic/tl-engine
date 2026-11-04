@@ -27,7 +27,7 @@ public class TemplateStringBufferWriter extends TemplateWriter {
 	/**
 	 * Returns the string representation of this writers internal {@link StringBuilder}.
 	 * 
-	 * @return the internal StringBuilder as a {@link String} 
+	 * @return the internal {@link StringBuilder} as a {@link String} 
 	 */
 	public String getBufferAsString() {
 		return buffer.toString();

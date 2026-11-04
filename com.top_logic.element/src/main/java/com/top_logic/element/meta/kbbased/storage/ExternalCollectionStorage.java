@@ -100,6 +100,10 @@ public class ExternalCollectionStorage<C extends ExternalCollectionStorage.Confi
 		return result;
 	}
 
+	/**
+	 * The values to iterate over for the given object, as located by the configured iteration
+	 * locator.
+	 */
 	protected final Collection<String> computeIteration(TLObject object) {
 		return (Collection) _iterationLocator.locateAttributeValue(object);
 	}

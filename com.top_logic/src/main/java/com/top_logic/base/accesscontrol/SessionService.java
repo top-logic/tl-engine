@@ -199,7 +199,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
     /**
      * Returns a valid (in terms of top logic) session or null.
      * That means if there is no valid session, null is returned.
-     * For what means "valid", see the validateSession() - method;
+     * For what means "valid", see {@link #validateSession(HttpServletRequest)}.
      * 
      * You can acquire a Session the directly from the Request
      * as long as your code is called by the 
@@ -522,7 +522,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	}
 
     /**
-     * Returns all SessionIDs which have been stored so far
+     * Returns all session IDs which have been stored so far
      * that means all users logged in ;)
      *
      * @return    All session IDs as Enumeration of Strings
@@ -833,7 +833,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	}
 
 	/**
-	 * Session is invalidated, go and notify the SessionService.
+	 * Session is invalidated, go and notify the {@link SessionService}.
 	 * 
 	 * @param event
 	 *        The thrown event.

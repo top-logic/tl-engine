@@ -32,7 +32,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.util.TLAnnotations;
 
 /**
- * static Functions operating on  {@link StructuredElement} are found here.
+ * Static functions operating on {@link StructuredElement}s.
  * 
  * @author     <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -93,7 +93,7 @@ public abstract class StructuredElementUtil {
     /**
      * Compute the Common Set of {@link StructuredElement#getStructureContext()}. for elements.
      * 
-     * @return EMPTY_SET in case of empty or null elements the RootElement etc.
+     * @return EMPTY_SET in case of empty or null elements, the root element etc.
      *         the returned list may be immutable 
      */
     public static Set<StructuredElement> commonStructureContexts(Collection<StructuredElement> elements) {

@@ -24,7 +24,7 @@ public class SimpleConstantControl<T> extends ConstantControl<T> {
 	private Renderer<? super T> renderer;
 
     /** 
-     * Create a new SimpleConstantControl with Commands.
+     * Create a new {@link SimpleConstantControl} with commands.
      */
 	public SimpleConstantControl(T aModel, Map<String, ControlCommand> commandsByName, Renderer<? super T> aRenderer) {
         super(aModel, commandsByName);
@@ -32,7 +32,7 @@ public class SimpleConstantControl<T> extends ConstantControl<T> {
     }
 
     /** 
-     * Create a new SimpleConstantControl with aModel and some renderer.
+     * Create a new {@link SimpleConstantControl} with the given model and renderer.
      */
 	public SimpleConstantControl(T aModel, Renderer<? super T> aRenderer) {
         super(aModel);
@@ -40,7 +40,8 @@ public class SimpleConstantControl<T> extends ConstantControl<T> {
     }
 
     /** 
-     * Create a new SimpleConstantControl with aModel and the {@link ResourceRenderer#INSTANCE}
+     * Create a new {@link SimpleConstantControl} with the given model and the
+     * {@link ResourceRenderer#INSTANCE}.
      */
     public SimpleConstantControl(T aModel) {
         this(aModel, ResourceRenderer.INSTANCE);

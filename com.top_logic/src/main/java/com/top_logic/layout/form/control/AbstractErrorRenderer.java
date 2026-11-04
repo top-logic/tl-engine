@@ -26,6 +26,7 @@ import com.top_logic.layout.form.FormField;
  */
 public abstract class AbstractErrorRenderer extends AbstractControlRenderer<ErrorDisplay> implements ErrorRenderer {
 
+	/** {@link Mapping} from a {@link FormField} to its error message. */
 	public static final Mapping TO_ERROR_MESSAGE = new Mapping() {
 			@Override
 			public Object map(Object input) {

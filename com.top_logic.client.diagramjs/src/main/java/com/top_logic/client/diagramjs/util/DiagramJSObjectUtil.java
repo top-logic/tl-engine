@@ -21,28 +21,28 @@ import com.top_logic.client.diagramjs.model.util.Position;
 import com.top_logic.client.diagramjs.model.util.Waypoint;
 
 /**
- * Utilities methods for diagramJS objects.
+ * Utilities methods for diagram-js objects.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class DiagramJSObjectUtil {
 
 	/**
-	 * Checks if the given {@link JavaScriptObject} is diagramJS Label.
+	 * Checks if the given {@link JavaScriptObject} is diagram-js Label.
 	 */
 	public static boolean isLabel(JavaScriptObject object) {
 		return JavaScriptObjectUtil.has(object, "labelTarget");
 	}
 
 	/**
-	 * Checks if the given {@link JavaScriptObject} is diagramJS Shape.
+	 * Checks if the given {@link JavaScriptObject} is diagram-js Shape.
 	 */
 	public static boolean isShape(JavaScriptObject object) {
 		return JavaScriptObjectUtil.has(object, "children") && !isConnection(object);
 	}
 
 	/**
-	 * Checks if the given {@link JavaScriptObject} is diagramJS Connection.
+	 * Checks if the given {@link JavaScriptObject} is diagram-js Connection.
 	 */
 	public static boolean isConnection(JavaScriptObject object) {
 		return JavaScriptObjectUtil.has(object, "waypoints");

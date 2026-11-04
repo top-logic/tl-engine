@@ -18,7 +18,7 @@ import org.jfree.data.xy.XYDataset;
 import com.top_logic.base.chart.util.ChartConstants;
 
 /**
- * The ChartConfigurator is an interface to configure charts easier.
+ * The {@link ChartConfigurator} is an interface to configure charts easier.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -29,6 +29,11 @@ public abstract class ChartConfigurator implements ChartConstants{
     private boolean    initPlotKind = false;
     private boolean    categoryPlot = false;
 
+    /**
+     * Index of the dataset used in successive operations.
+     *
+     * @see #useConfigurationDataset(int)
+     */
     protected int configurationDataset = 0;
 
     /**
@@ -103,14 +108,14 @@ public abstract class ChartConfigurator implements ChartConstants{
     }
 
     /**
-     * This method sets the legendPosition. Please use the chart constants
+     * This method sets the legend position. Please use the chart constants
      * ({@link ChartConstants#LEGEND_TOP},
      *  {@link ChartConstants#LEGEND_BOTTOM},
      *  {@link ChartConstants#LEGEND_LEFT} and
      *  {@link ChartConstants#LEGEND_RIGHT}).
      *
      * @param aLegendPosition
-     *        The legendPosition to set. Must not be <code>null</code>.
+     *        The legend position to set. Must not be <code>null</code>.
      */
     public void setLegendPosition(RectangleEdge aLegendPosition) {
         this.chart.getLegend().setPosition(aLegendPosition);

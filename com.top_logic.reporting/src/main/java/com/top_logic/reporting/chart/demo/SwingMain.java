@@ -45,7 +45,7 @@ import com.top_logic.reporting.chart.renderer.SwingRenderer;
 import com.top_logic.reporting.chart.util.SwingToolTipGenerator;
 
 /**
- * The SwingMain shows with simple examples how the 
+ * The {@link SwingMain} shows with simple examples how the 
  * {@link com.top_logic.reporting.chart.renderer.SwingRenderer} and its 
  * {@link com.top_logic.reporting.chart.dataset.SwingDataset} works. 
  * 

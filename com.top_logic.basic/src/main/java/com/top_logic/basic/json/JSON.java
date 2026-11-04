@@ -108,10 +108,24 @@ public class JSON {
 		return toString(DefaultValueAnalyzer.INSTANCE, object);
 	}
 
+	/**
+	 * Serializes the elements of the given list without the enclosing brackets.
+	 *
+	 * @see #toStringListContents(Object, ValueAnalyzer)
+	 */
 	public static String toStringListContents(Object object) {
 		return toStringListContents(object, DefaultValueAnalyzer.INSTANCE);
 	}
 
+	/**
+	 * Serializes the elements of the given list without the enclosing brackets.
+	 *
+	 * @param object
+	 *        The list to serialize.
+	 * @param valueAnalyzer
+	 *        Analyzer for the given values.
+	 * @return The comma separated JSON representations of the list elements.
+	 */
 	public static String toStringListContents(Object object, ValueAnalyzer valueAnalyzer) {
 		StringWriter buffer = new StringWriter();
 		try {
@@ -122,10 +136,24 @@ public class JSON {
 		return buffer.toString();
 	}
 	
+	/**
+	 * Serializes the entries of the given map without the enclosing braces.
+	 *
+	 * @see #toStringMapContents(Object, ValueAnalyzer)
+	 */
 	public static String toStringMapContents(Object object) {
 		return toStringMapContents(object, DefaultValueAnalyzer.INSTANCE);
 	}
 	
+	/**
+	 * Serializes the entries of the given map without the enclosing braces.
+	 *
+	 * @param object
+	 *        The map to serialize.
+	 * @param valueAnalyzer
+	 *        Analyzer for the given values.
+	 * @return The comma separated JSON representations of the map entries.
+	 */
 	public static String toStringMapContents(Object object, ValueAnalyzer valueAnalyzer) {
 		StringWriter buffer = new StringWriter();
 		try {
@@ -149,18 +177,46 @@ public class JSON {
 		return fromString(json, DefaultValueFactory.INSTANCE);
 	}
 	
+	/**
+	 * Parses list elements written without the enclosing brackets.
+	 *
+	 * @see #toStringListContents(Object)
+	 */
 	public static List<?> fromStringListContents(CharSequence json) throws ParseException {
 		return (List<?>) fromStringListContents(json, DefaultValueFactory.INSTANCE);
 	}
 
+	/**
+	 * Parses list elements written without the enclosing brackets.
+	 *
+	 * @param json
+	 *        The comma separated list elements.
+	 * @param valueFactory
+	 *        The factory used to instantiate objects with.
+	 * @return The parsed list.
+	 */
 	public static Object fromStringListContents(CharSequence json, ValueFactory valueFactory) throws ParseException {
 		return parseListContents(valueFactory, new BufferedInputSource(json));
 	}
 
+	/**
+	 * Parses map entries written without the enclosing braces.
+	 *
+	 * @see #toStringMapContents(Object)
+	 */
 	public static Map<?, ?> fromStringMapContents(CharSequence json) throws ParseException {
 		return (Map<?, ?>) fromStringMapContents(json, DefaultValueFactory.INSTANCE);
 	}
 
+	/**
+	 * Parses map entries written without the enclosing braces.
+	 *
+	 * @param json
+	 *        The comma separated map entries.
+	 * @param valueFactory
+	 *        The factory used to instantiate objects with.
+	 * @return The parsed map.
+	 */
 	public static Object fromStringMapContents(CharSequence json, ValueFactory valueFactory) throws ParseException {
 		return parseMapContents(valueFactory, new BufferedInputSource(json));
 	}
@@ -208,22 +264,51 @@ public class JSON {
 		return parseValue(valueFactory, new ReaderInputSource(reader));
 	}
 
+	/**
+	 * Reads list elements written without the enclosing brackets.
+	 *
+	 * @see #fromStringListContents(CharSequence)
+	 */
 	public static List<?> readListContents(Reader reader) throws ParseException {
 		return (List<?>) readListContents(reader, DefaultValueFactory.INSTANCE);
 	}
 	
+	/**
+	 * Reads list elements written without the enclosing brackets.
+	 *
+	 * @see #fromStringListContents(CharSequence, ValueFactory)
+	 */
 	public static Object readListContents(Reader reader, ValueFactory valueFactory) throws ParseException {
 		return parseListContents(valueFactory, new ReaderInputSource(reader));
 	}
 	
+	/**
+	 * Reads map entries written without the enclosing braces.
+	 *
+	 * @see #fromStringMapContents(CharSequence)
+	 */
 	public static Map<?, ?> readMapContents(Reader reader) throws ParseException {
 		return (Map<?, ?>) readMapContents(reader, DefaultValueFactory.INSTANCE);
 	}
 	
+	/**
+	 * Reads map entries written without the enclosing braces.
+	 *
+	 * @see #fromStringMapContents(CharSequence, ValueFactory)
+	 */
 	public static Object readMapContents(Reader reader, ValueFactory valueFactory) throws ParseException {
 		return parseMapContents(valueFactory, new ReaderInputSource(reader));
 	}
 	
+	/**
+	 * Parses a single JSON value from the given input, which must be consumed completely.
+	 *
+	 * @param valueFactory
+	 *        The factory used to instantiate objects with.
+	 * @param input
+	 *        The source to read from.
+	 * @return The parsed value.
+	 */
 	public static Object parseValue(ValueFactory valueFactory, InputSource input) throws ParseException, UnreachableAssertion {
 		Parser parser = new Parser(valueFactory, input);
 		Object result = parser.parse();
@@ -231,6 +316,11 @@ public class JSON {
 		return result;
 	}
 	
+	/**
+	 * Parses map entries written without the enclosing braces from the given input.
+	 *
+	 * @see #parseValue(ValueFactory, InputSource)
+	 */
 	public static Object parseMapContents(ValueFactory valueFactory, InputSource input) throws ParseException, UnreachableAssertion {
 		Parser parser = new Parser(valueFactory, input);
 		Object result = parser.parseMapContents();
@@ -238,6 +328,11 @@ public class JSON {
 		return result;
 	}
 	
+	/**
+	 * Parses list elements written without the enclosing brackets from the given input.
+	 *
+	 * @see #parseValue(ValueFactory, InputSource)
+	 */
 	public static Object parseListContents(ValueFactory valueFactory, InputSource input) throws ParseException, UnreachableAssertion {
 		Parser parser = new Parser(valueFactory, input);
 		Object result = parser.parseListContents();
@@ -444,10 +539,20 @@ public class JSON {
 		}
 	}
 
+	/**
+	 * Writes the elements of the given list without the enclosing brackets.
+	 *
+	 * @see #toStringListContents(Object)
+	 */
 	public static void writeListContents(Appendable out, Object list) throws IOException {
 		writeListContents(out, DefaultValueAnalyzer.INSTANCE, list);
 	}
 	
+	/**
+	 * Writes the elements of the given list without the enclosing brackets.
+	 *
+	 * @see #toStringListContents(Object, ValueAnalyzer)
+	 */
 	public static void writeListContents(Appendable out, ValueAnalyzer valueAnalyzer, Object list) throws IOException {
 		internalWriteListContents(out, valueAnalyzer, list, NO_INDENTATION);
 	}
@@ -507,10 +612,20 @@ public class JSON {
 		}
 	}
 
+	/**
+	 * Writes the entries of the given map without the enclosing braces.
+	 *
+	 * @see #toStringMapContents(Object)
+	 */
 	public static void writeMapContents(Appendable out, Object object) throws IOException {
 		writeMapContents(out, DefaultValueAnalyzer.INSTANCE, object);
 	}
 	
+	/**
+	 * Writes the entries of the given map without the enclosing braces.
+	 *
+	 * @see #toStringMapContents(Object, ValueAnalyzer)
+	 */
 	public static void writeMapContents(Appendable out, ValueAnalyzer valueAnalyzer, Object object) throws IOException {
 		internalWriteMapContents(out, valueAnalyzer, object, NO_INDENTATION);
 	}
@@ -692,6 +807,9 @@ public class JSON {
 	 */
 	public static class DefaultValueAnalyzer implements ValueAnalyzer {
 
+		/**
+		 * Singleton instance of this class.
+		 */
 		public static final ValueAnalyzer INSTANCE = new DefaultValueAnalyzer();
 		
 		protected DefaultValueAnalyzer() {
@@ -1711,6 +1829,9 @@ public class JSON {
 			source.bufferChar(ch);
 		}
 		
+		/**
+		 * Skips all white space at the current position.
+		 */
 		public final void skipWhiteSpace() throws ParseException {
 			while (hasNext()) {
 				switch(peek()) {
@@ -1770,10 +1891,16 @@ public class JSON {
 		
 	}
 	
+	/**
+	 * Creates a {@link ParseException} for a problem at the current position of the given parser.
+	 */
 	protected static ParseException parseProblem(Parser parser, ResKey message) {
 		return parseProblem(parser, message, parser.getSource().getPos());
 	}
 
+	/**
+	 * Creates a {@link ParseException} for a problem at the given position.
+	 */
 	protected static ParseException parseProblem(Parser parser, ResKey message, int pos) {
 		InputSource source = parser.getSource();
 		if (source instanceof BufferedInputSource) {

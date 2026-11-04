@@ -27,11 +27,11 @@ public class CSVFileUploadComponent extends FileUploadComponent  {
     /** The default extensions wil will accept */
     protected static final String[] DEFAULT_EXTENSIONS = new String[] {".csv", ".zip"};
 
-    /** Name where uploaded file is saved in AssistentComponent */
+    /** Name where uploaded file is saved in {@link AssistentComponent} */
     public static final String FILE_ATTR = CSVFileUploadComponent.class.getName() + ".FILE";
     
     /** 
-     * Create a new CSVFileUploadComponent from XML.
+     * Create a new {@link CSVFileUploadComponent} from XML.
      */
     public CSVFileUploadComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -42,7 +42,8 @@ public class CSVFileUploadComponent extends FileUploadComponent  {
     }
 
     /** 
-     * Save aFileItem into a tempFile and store it at an enclosing AssistentComponent.
+     * Save the given file item into a temporary file and store it at an enclosing
+     * {@link AssistentComponent}.
      * 
      * Try to remove the file in case the wizard is canceld etc. 
      */

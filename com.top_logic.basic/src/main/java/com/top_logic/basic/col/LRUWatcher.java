@@ -37,7 +37,7 @@ public class LRUWatcher implements Runnable {
 	}
 
 	/**
-	 * expireLRUs() as long as ther is anything to schedule
+	 * Expires the entries of the watched {@link LRU}s as long as there is anything to schedule.
 	 */
 	@Override
 	public synchronized void run() {
@@ -179,7 +179,7 @@ public class LRUWatcher implements Runnable {
 	}
 
     /**
-     * Get the Singleton LRUMapWatcher.
+     * Get the Singleton {@link LRUWatcher}.
      */
     public static LRUWatcher getLRUWatcher() {
 		return Instance.INSTANCE;

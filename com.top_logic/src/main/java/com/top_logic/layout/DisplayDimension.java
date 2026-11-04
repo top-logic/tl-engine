@@ -156,6 +156,9 @@ public final class DisplayDimension {
 		return equalsDimension(this, (DisplayDimension) obj); 
 	}
 
+	/**
+	 * Whether the given {@link DisplayDimension}s have the same value and unit.
+	 */
 	protected static boolean equalsDimension(DisplayDimension d1, DisplayDimension d2) {
 		return d1.value == d2.value && d1.unit == d2.unit;
 	}

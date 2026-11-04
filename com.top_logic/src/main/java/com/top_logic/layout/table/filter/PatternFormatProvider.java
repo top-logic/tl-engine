@@ -33,6 +33,8 @@ public class PatternFormatProvider implements FormatProvider {
 	}
 
 	/**
+	 * Sets the source of the format pattern for error reporting.
+	 *
 	 * @param patternSource
 	 *        from where this pattern was taken (e.g. xml location).
 	 */

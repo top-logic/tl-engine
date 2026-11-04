@@ -31,7 +31,7 @@ import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDataset;
 
 /**
- * The TotalStackedXYBarRenderer write the totals over the stacked bars.
+ * The {@link TotalStackedXYBarRenderer} write the totals over the stacked bars.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -283,34 +283,42 @@ public class TotalStackedXYBarRenderer extends StackedXYBarRenderer {
         return theResult;
     }
 
+    /** Whether the total of negative values is shown. */
     public boolean isShowNegativeTotal() {
         return this.showNegativeTotal;
     }
     
+    /** Setter for {@link #isShowNegativeTotal()}. */
     public void setShowNegativeTotal(boolean aShowNegativeTotal) {
         this.showNegativeTotal = aShowNegativeTotal;
     }
     
+    /** Whether the total of positive values is shown. */
     public boolean isShowPositiveTotal() {
         return this.showPositiveTotal;
     }
     
+    /** Setter for {@link #isShowPositiveTotal()}. */
     public void setShowPositiveTotal(boolean aShowPositiveTotal) {
         this.showPositiveTotal = aShowPositiveTotal;
     }
     
+    /** The formatter of the total value. */
     public NumberFormat getTotalFormatter() {
         return this.totalFormatter;
     }
     
+    /** Setter for {@link #getTotalFormatter()}. */
     public void setTotalFormatter(NumberFormat aTotalFormatter) {
         this.totalFormatter = aTotalFormatter;
     }
     
+    /** The font of the total label. */
     public Font getTotalLabelFont() {
         return this.totalLabelFont;
     }
     
+    /** Setter for {@link #getTotalLabelFont()}. */
     public void setTotalLabelFont(Font aTotalLabelFont) {
         this.totalLabelFont = aTotalLabelFont;
     }

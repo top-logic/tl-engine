@@ -15,7 +15,7 @@ import com.top_logic.graph.diagramjs.model.DiagramJSEdge;
 import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 
 /**
- * {@link DefaultSharedObject} diagramJS {@link GraphModel} implementation.
+ * {@link DefaultSharedObject} diagram-js {@link GraphModel} implementation.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

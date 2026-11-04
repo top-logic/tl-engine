@@ -16,6 +16,8 @@ import java.util.Vector;
 import com.top_logic.basic.TLID;
 
 /**
+ * Default implementation of {@link SearchResultSetSPI}.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 public class SearchResultSetImpl implements SearchResultSetSPI {
@@ -36,7 +38,7 @@ public class SearchResultSetImpl implements SearchResultSetSPI {
 	private Map<TLID, SearchResult> results = new HashMap<>();
 
     /**
-     * Constructor for SearchResultSetImpl.
+     * Constructor for {@link SearchResultSetImpl}.
      * 
      * The given array must not be <code>null</code> but can be empty (which
      * is not so useful for a search result).
@@ -48,7 +50,7 @@ public class SearchResultSetImpl implements SearchResultSetSPI {
     }
 
     /**
-     * Constructor for SearchResultSetImpl.
+     * Constructor for {@link SearchResultSetImpl}.
      * 
      * The given list must not be <code>null</code> but can be empty (which
      * is not so useful for a search result). If there are any elements within
@@ -187,6 +189,7 @@ public class SearchResultSetImpl implements SearchResultSetSPI {
         return closed;
     }
 
+     /** The values of this result set for {@link #toString()}. */
      protected String toStringValues() {
 		return "closed: " + this.closed +
              ", #engines: " + ((this.engines == null) ? 0 : this.engines.size()) +

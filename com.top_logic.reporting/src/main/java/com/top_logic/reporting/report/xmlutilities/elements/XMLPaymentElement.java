@@ -7,6 +7,8 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 
 
 /**
+ * Unused {@link XMLElement} for payment partitions.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class XMLPaymentElement implements XMLElement {

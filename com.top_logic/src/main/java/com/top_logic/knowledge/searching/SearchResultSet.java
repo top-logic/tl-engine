@@ -68,7 +68,7 @@ public interface SearchResultSet {
     public boolean isClosed();
 
     /**
-     * Wait (maximal) the given amoount of time until the ResultSet is closed.
+     * Wait (maximal) the given amoount of time until the result set is closed.
      * 
      * @param millis time in milliseconds to wait. 
      * 

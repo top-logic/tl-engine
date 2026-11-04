@@ -31,6 +31,15 @@ public class MarkerUtils {
     }
     
     
+    /**
+     * Determine all row objects of marked rows.
+     *
+     * @param theTableModel
+     *        The table model to search.
+     * @param aMarkerColumnName
+     *        The name of the marker column.
+     * @return the row objects of the marked rows, never {@code null}.
+     */
     public static Collection getMarkedObjects(EditableRowTableModel theTableModel, String aMarkerColumnName) {
 		List theRowObjects = theTableModel.getDisplayedRows();
 

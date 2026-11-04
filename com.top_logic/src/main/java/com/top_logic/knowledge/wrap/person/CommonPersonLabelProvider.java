@@ -10,12 +10,13 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.layout.LabelProvider;
 
 /**
- * A {@link LabelProvider} for {@link Person}s
+ * A {@link LabelProvider} for {@link Person}s.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public class CommonPersonLabelProvider implements LabelProvider {
 
+	/** Singleton {@link CommonPersonLabelProvider} instance. */
 	public static final CommonPersonLabelProvider INSTANCE = new CommonPersonLabelProvider();
 
 	/**

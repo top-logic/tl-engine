@@ -11,12 +11,15 @@ import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.util.Resources;
 
 /**
- * Get labels for ExternalContacts
+ * Get labels for {@link ExternalContact}s.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
 public class ExternalContactResourceProvider extends DefaultResourceProvider {
 	
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static final ExternalContactResourceProvider EXTERNAL_CONTACT_INSTANCE = new ExternalContactResourceProvider();
 
 	/** 

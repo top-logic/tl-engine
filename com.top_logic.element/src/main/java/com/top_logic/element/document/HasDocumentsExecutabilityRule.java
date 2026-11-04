@@ -21,12 +21,13 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * No not allow execution in case an {@link TLObject} contains non-empty {@link WebFolder}s.
+ * Do not allow execution in case an {@link TLObject} contains non-empty {@link WebFolder}s.
  * 
  * @author <a href=mailto:klaus.halfmann@top-logic.com>Klaus Halfmann</a>
  */
 public class HasDocumentsExecutabilityRule implements ExecutabilityRule {
 
+    /** Singleton {@link HasDocumentsExecutabilityRule} instance. */
     public static final HasDocumentsExecutabilityRule INSTANCE = new HasDocumentsExecutabilityRule();
     
     private HasDocumentsExecutabilityRule() {
@@ -34,7 +35,7 @@ public class HasDocumentsExecutabilityRule implements ExecutabilityRule {
     }
     
     /** 
-     * Allow only in case the underlying Model has only empty WebFolder.
+     * Allow only in case the underlying Model has only empty {@link WebFolder}.
      */
     @Override
 	public ExecutableState isExecutable(LayoutComponent component,  Object model, Map<String, Object> someValues) {

@@ -14,6 +14,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.layout.form.tag.AbstractTag;
 
 /**
+ * Tag registering a derived type for a path at the enclosing {@link MetaGroupTag}.
+ *
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class DerivedMetaGroupTag extends AbstractTag {
@@ -39,18 +41,30 @@ public class DerivedMetaGroupTag extends AbstractTag {
         return SKIP_BODY;
     }
 
+    /**
+     * Setter for {@link #getMetaElement()}.
+     */
     public void setObject(TLClass aMetaElement) {
         this.metaElement = aMetaElement;
     }
 
+    /**
+     * The derived type to register.
+     */
     public TLClass getMetaElement() {
         return this.metaElement;
     }
 
+    /**
+     * The path for which the {@link #getMetaElement() derived type} is registered.
+     */
     public String getPath() {
         return (this.path);
     }
 
+    /**
+     * Setter for {@link #getPath()}.
+     */
     public void setPath(String aPath) {
         this.path = aPath;
     }

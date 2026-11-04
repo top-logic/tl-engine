@@ -52,10 +52,12 @@ public abstract class TemplateBuilder implements Provider<Document> {
 		return this;
 	}
 
+	/** Appends the begin of the start tag of a layout control. */
 	protected final void layoutBeginBegin() {
 		append("<div class='layoutControl'");
 	}
 
+	/** Appends the end of the start tag of a layout control. */
 	protected final void layoutEndBegin() {
 		append(">");
 	}
@@ -86,6 +88,7 @@ public abstract class TemplateBuilder implements Provider<Document> {
 		layoutEndBegin();
 	}
 
+	/** Appends the layout constraint for a vertical layout with the given size in pixels. */
 	protected final void verticalPixel(int pixel) {
 		append(LayoutControlRenderer.getLayoutConstraintInformation(pixel, DisplayUnit.PIXEL));
 		append(LayoutControlRenderer.getLayoutInformation(Orientation.VERTICAL, 100));
@@ -103,6 +106,7 @@ public abstract class TemplateBuilder implements Provider<Document> {
 		layoutEndBegin();
 	}
 
+	/** Appends the layout constraint for a vertical layout with the given size in percent. */
 	protected final void verticalPercent(int percent) {
 		append(LayoutControlRenderer.getLayoutConstraintInformation(percent, DisplayUnit.PERCENT));
 		append(LayoutControlRenderer.getLayoutInformation(Orientation.VERTICAL, 100));
@@ -120,6 +124,7 @@ public abstract class TemplateBuilder implements Provider<Document> {
 		layoutEndBegin();
 	}
 
+	/** Appends the layout constraint for a horizontal layout with the given size in pixels. */
 	protected final void horizontalPixel(int pixel) {
 		append(LayoutControlRenderer.getLayoutConstraintInformation(pixel, DisplayUnit.PIXEL));
 		append(LayoutControlRenderer.getLayoutInformation(Orientation.HORIZONTAL, 100));
@@ -145,6 +150,7 @@ public abstract class TemplateBuilder implements Provider<Document> {
 		layoutEndBegin();
 	}
 
+	/** Appends the layout constraint for a horizontal layout with the given size in percent. */
 	protected final void horizontalPercent(int percent) {
 		append(LayoutControlRenderer.getLayoutConstraintInformation(percent, DisplayUnit.PERCENT));
 		append(LayoutControlRenderer.getLayoutInformation(Orientation.HORIZONTAL, 100));

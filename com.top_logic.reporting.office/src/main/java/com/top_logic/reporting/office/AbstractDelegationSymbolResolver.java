@@ -22,7 +22,14 @@ import com.top_logic.basic.Logger;
  */
 public abstract class AbstractDelegationSymbolResolver implements StaticSymbolResolver {
 
+    /**
+     * Mapping of static symbol names to the names of the methods resolving them.
+     */
     protected Properties delegationMap;
+
+    /**
+     * Parameter types of a method resolving a static symbol.
+     */
     protected static Class[] METHOD_PARAM = {ExpansionContext.class};
  
     public AbstractDelegationSymbolResolver() {
@@ -37,8 +44,8 @@ public abstract class AbstractDelegationSymbolResolver implements StaticSymbolRe
     
     /**
      * here we delegate to a certain method in the same class
-     * as defined in the delegationMap.
-     * The method must habe the signatur methodName(ExpansionContext):Object
+     * as defined in the {@link #delegationMap}.
+     * The method must have the signature <code>methodName(ExpansionContext):Object</code>.
      *  
      * @see com.top_logic.reporting.office.StaticSymbolResolver#resolveSymbol(com.top_logic.reporting.office.ExpansionContext, com.top_logic.reporting.office.ExpansionObject)
      */
@@ -75,8 +82,11 @@ public abstract class AbstractDelegationSymbolResolver implements StaticSymbolRe
     }
     
     /**
+     * The name of the method resolving the given static symbol.
+     * 
      * @param aStaticSymbol the given symbol name
-     * @return a method name as configured in the delegationMap or <code>null</code> if the symbol does not exist.
+     * @return a method name as configured in the {@link #delegationMap} or <code>null</code> if the
+     *         symbol does not exist.
      */
     protected String getMethodNameForSymbol (String aStaticSymbol) {
         if (delegationMap != null) {

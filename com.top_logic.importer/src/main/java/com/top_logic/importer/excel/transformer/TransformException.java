@@ -48,10 +48,12 @@ public class TransformException extends RuntimeException{
 	    return Resources.getInstance().getMessage(this.getKey(), this.getAllParams());
 	}
 
+	/** The message arguments without row and column. */
 	public Object[] getParams() {
 		return params;
 	}
 
+	/** The message arguments starting with row and column. */
 	public Object[] getAllParams() {
 		if (params == null) {
 			return new Object[] {this.row, this.col};
@@ -67,14 +69,17 @@ public class TransformException extends RuntimeException{
 		return theParams;
 	}
 
+	/** The resource key of the message. */
 	public ResKey getKey() {
 		return key;
 	}
 	
+	/** The row in which the problem occurred. */
 	public int getRow() {
 		return row;
 	}
 	
+	/** The column in which the problem occurred. */
 	public String col() {
 		return col;
 	}

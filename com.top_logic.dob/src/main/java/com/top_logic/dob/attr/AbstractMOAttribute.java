@@ -26,7 +26,7 @@ public abstract class AbstractMOAttribute extends MOPartImpl implements MOAttrib
 	private MOStructure owner;
 
 	/**
-	 * type (which may be a simple or complex MetaObject) of this attribute.
+	 * type (which may be a simple or complex {@link MetaObject}) of this attribute.
 	 */
 	private MetaObject type;
 
@@ -82,6 +82,7 @@ public abstract class AbstractMOAttribute extends MOPartImpl implements MOAttrib
 		setSystem(config.isSystem());
 	}
 
+	/** Initializes this attribute as copy of the given one. */
 	protected final void initFrom(AbstractMOAttribute orig) {
 		setMandatory(orig.isMandatory());
 		setImmutable(orig.isImmutable());
@@ -151,7 +152,7 @@ public abstract class AbstractMOAttribute extends MOPartImpl implements MOAttrib
 	/**
 	 * Returns the type of the return value from this attribute.
 	 *
-	 * @return a MetaObject describing the type.
+	 * @return a {@link MetaObject} describing the type.
 	 */
 	@Override
 	public MetaObject getMetaObject() {

@@ -33,11 +33,15 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.export.ExcelExportHandler;
 
 /**
+ * Dialog offering a choice of export options.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class ExportModalDialogComponent extends FormComponent{
 	
+	/** Name of the field selecting the export option. */
 	public static final String EXPORT_OPTIONS_FIELD  = "exportOptions";
+	/** Name of the normal export option. */
 	public static final String NORMAL_EXPORT         = "normalExport";
 	
 	/**
@@ -79,7 +83,7 @@ public class ExportModalDialogComponent extends FormComponent{
 	}
 
 	/**
-	 * An option in the export dialog
+	 * An option in the export dialog.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -132,6 +136,8 @@ public class ExportModalDialogComponent extends FormComponent{
     }
 	
 	/**
+	 * Excel export of a table chosen in the export dialog.
+	 *
 	 * @deprecated Use {@link com.top_logic.layout.table.export.ExcelExportHandler}
 	 */
 	@Deprecated

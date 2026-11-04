@@ -15,7 +15,7 @@ import java.util.Arrays;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.thread.ThreadContext;
 
-/** This class wrappes the entries used by the FileRepository.
+/** This class wrappes the entries used by the {@link Repository}.
  *
  * It is used internally by the 
  * {@link AbstractRepository} to cache
@@ -26,7 +26,7 @@ import com.top_logic.basic.thread.ThreadContext;
  */
 public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
     
-    /** use to set the inUpdateFlag */
+    /** use to set the in-update flag */
     public static final boolean IN_UPDATE = true;
     
     /** Number of Versions found in the Directory.
@@ -51,10 +51,10 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	protected LeafObject verFile;
     
     
-    /** Array of VersionInfos created on Demand with numVersions size */
+    /** Array of {@link VersionInfo}s created on Demand with {@link #numVersions} size */
     protected BaseVersionInfo versions[];
     
-    /** Construct a FileEntryInfo from a Directory.
+    /** Construct a {@link BaseEntryInfo} from a Directory.
      *
      * Escape processing of directorynames must be done by caller
      * (the file repository).
@@ -72,7 +72,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 		this.lastModified = this.getModifiedFromFile();
     }
 
-    /** Construct a FileEntryInfo for a new File, that may not yet exist.
+    /** Construct a {@link BaseEntryInfo} for a new File, that may not yet exist.
      *
      * Escape processing of directory names must be done by caller
      * (the file repository).
@@ -92,9 +92,9 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 
     /**
      * Equals is based on the path.
-     * It works on other FileEntryInfos and Strings.
+     * It works on other {@link BaseEntryInfo}s and Strings.
      * <br/>
-     *  This could be used the caching mechanisms used by the FileRepository.
+     *  This could be used the caching mechanisms used by the {@link Repository}.
      * <br/>
      * Note: This method is <em>not</em> <i>symmetric</i> as specified
      * in {@link java.lang.Object#equals(java.lang.Object)} when used on
@@ -178,6 +178,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
         
 	}
 
+	/** Reads the version information from the given stream. */
 	protected synchronized void readInfo(DataInputStream aStream) throws IOException {
 		int storedVersions = aStream.readInt();
 		if (storedVersions != numVersions) {
@@ -201,6 +202,11 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 		}
 	}
 
+	/**
+	 * Serializes the version information.
+	 *
+	 * @see #readInfo(DataInputStream)
+	 */
 	protected synchronized byte[] getInfoString() throws IOException {
 		ByteArrayOutputStream theStream = new ByteArrayOutputStream();
 
@@ -334,11 +340,11 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
         }
     }
 
-	/** Used by getVersionInfo to create an FileVersionInfo when needed. 
+	/** Used by {@link #getVersionInfo(int)} to create a {@link VersionInfo} when needed. 
      *
-     * @param num must be the reuslt of a previous getNumVersions() call.
+     * @param num must be the reuslt of a previous {@link #getNumVersions()} call.
      *
-     * @return the FileVersionInfos
+     * @return the {@link VersionInfo}s
      */
 	protected BaseVersionInfo[] createVersionInfos(int num) throws RepositoryException {
         BaseVersionInfo result[] = new BaseVersionInfo[num];
@@ -363,11 +369,11 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 	}
 
 	/**
-     * Return VersionInfo for given revision number.
+     * Return {@link VersionInfo} for given revision number.
      * 
      * @param revision the revision number
      * 
-     * @return VersionInfo for given revision number
+     * @return {@link VersionInfo} for given revision number
      */
 	@Override
 	public synchronized VersionInfo getVersionInfo(int revision) throws RepositoryException {
@@ -458,6 +464,7 @@ public class BaseEntryInfo extends BaseRepositoryInfo implements EntryInfo {
 		this.lastModified = this.getModifiedFromFile();
     }
 
+	/** The time of the last modification of the version file. */
 	protected long getModifiedFromFile() {
 		return verFile.lastModified();
 	}

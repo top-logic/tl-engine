@@ -91,7 +91,7 @@ public interface BoundCommand extends Serializable {
     public boolean isConcurrent();
     
     /**
-	 * Return the command script writer that renders the JavaScriptFunction for this command
+	 * Return the command script writer that renders the JavaScript function for this command
 	 * 
 	 * @param component
 	 *            the component at which this {@link BoundCommand} is registered.

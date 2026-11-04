@@ -38,7 +38,7 @@ public class WarnLogoutDialog extends WarnDialogTemplate {
 	 * @param context
 	 *        the context to open dialog in
 	 * @param hControl
-	 *        the current historyControl
+	 *        the current {@link HistoryControl}
 	 */
 	public static void openDialog(DisplayContext context, final HistoryControl hControl) {
 		WarnMode warnMode = HistoryControl.getConfig().getLogoutWarnMode();

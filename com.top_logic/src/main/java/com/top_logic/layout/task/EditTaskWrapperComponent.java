@@ -20,6 +20,9 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.sched.layout.EditTaskComponent;
 
 /**
+ * {@link EditTaskComponent} that additionally displays the scheduled time of a
+ * {@link TaskWrapper}.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public class EditTaskWrapperComponent extends EditTaskComponent {
@@ -27,6 +30,7 @@ public class EditTaskWrapperComponent extends EditTaskComponent {
 	/** Name of the {@link FormGroup} for {@link TaskWrapper} information. */
 	public static final String NAME_GROUP_WRAPPER = "wrapper";
 
+	/** Name of the field displaying the scheduled time of the {@link TaskWrapper}. */
 	public static final String TIME = "time";
 
     /**

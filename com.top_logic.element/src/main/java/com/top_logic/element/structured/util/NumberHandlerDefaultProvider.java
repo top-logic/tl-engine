@@ -38,7 +38,7 @@ public class NumberHandlerDefaultProvider extends AbstractConfiguredInstance<Num
 		implements DefaultProvider {
 
 	/**
-	 * Configuration of a {@link NumberHandlerDefaultProvider}
+	 * Configuration of a {@link NumberHandlerDefaultProvider}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

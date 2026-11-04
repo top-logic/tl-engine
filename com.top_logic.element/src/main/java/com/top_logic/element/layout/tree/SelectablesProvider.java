@@ -8,9 +8,14 @@ package com.top_logic.element.layout.tree;
 import java.util.Collection;
 
 /**
+ * Provider of the objects that can be selected.
+ * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public interface SelectablesProvider {
 
+    /**
+     * The objects that can be selected.
+     */
     public Collection getSelectableObjects();
 }

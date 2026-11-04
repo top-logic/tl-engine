@@ -99,30 +99,38 @@ public class InternalExpressionFactory {
 		return flex;
 	}
 
+	/** Creates a {@link HasType} expression with the declared type already set. */
 	public static HasType hasTypeTyped(MetaObject type) {
 		HasType hasType = new HasType(context(), type.getName());
 		hasType.setDeclaredType(type);
 		return hasType;
 	}
 
+	/** Creates an {@link InstanceOf} expression with the declared type already set. */
 	public static InstanceOf instanceOfTyped(MetaObject type) {
 		InstanceOf instanceOf = new InstanceOf(context(), type.getName());
 		instanceOf.setDeclaredType(type);
 		return instanceOf;
 	}
 
+	/** Creates an {@link AllOf} expression with the declared type already set. */
 	public static AllOf allOfTyped(MOClass type) {
 		AllOf allOf = new AllOf(type.getName());
 		allOf.setDeclaredType(type);
 		return allOf;
 	}
 
+	/** Creates an {@link AnyOf} expression with the declared type already set. */
 	public static AnyOf anyOfTyped(MOClass type) {
 		AnyOf anyOf = new AnyOf(type.getName());
 		anyOf.setDeclaredType(type);
 		return anyOf;
 	}
 
+	/**
+	 * Creates an expression checking that the value of the given attribute is in the range from
+	 * the given start value (inclusive) to the given stop value (exclusive).
+	 */
 	public static Expression attributeRangeTyped(MOAttribute attr, Comparable startValue, Comparable stopValue) {
 		if (startValue.compareTo(stopValue) < 0) {
 			return 
@@ -133,14 +141,19 @@ public class InternalExpressionFactory {
 		return literal(false);
 	}
 
+	/**
+	 * Creates an expression comparing the value of the given attribute binary with the given value.
+	 */
 	public static Expression attributeEqBinaryTyped(MOAttribute attr, Object value) {
 		return eqBinaryLiteral(attributeTyped(attr), value);
 	}
 
+	/** Binds the given {@link Attribute} expression to the given attribute. */
 	public static void setAttributeImpl(Attribute expr, MOAttribute attribute) {
 		expr.setAttribute(attribute);
 	}
 
+	/** Binds the given {@link Reference} expression to the given reference attribute. */
 	public static void setReferenceAttributeImpl(Reference expr, MOReference referenceAttr) {
 		expr.setAttribute(referenceAttr);
 	}

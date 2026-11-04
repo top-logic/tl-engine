@@ -8,6 +8,8 @@ package com.top_logic.contact.filter;
 import com.top_logic.contact.business.CompanyContact;
 
 /**
+ * Filter accepting companies that act as supplier.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated

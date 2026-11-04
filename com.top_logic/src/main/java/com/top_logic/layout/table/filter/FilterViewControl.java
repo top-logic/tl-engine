@@ -14,7 +14,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormGroup;
 
 /**
- * {@link AbstractControlBase}, that displays and handles a view for a {@link ConfiguredFilter}
+ * {@link AbstractControlBase}, that displays and handles a view for a {@link ConfiguredFilter}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

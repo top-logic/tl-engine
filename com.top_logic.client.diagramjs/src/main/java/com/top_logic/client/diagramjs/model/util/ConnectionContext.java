@@ -13,7 +13,7 @@ import com.top_logic.client.diagramjs.model.Shape;
 import com.top_logic.client.diagramjs.util.DiagramJSObjectUtil;
 
 /**
- * DiagramJS {@link Connection} context.
+ * Diagram-js {@link Connection} context.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

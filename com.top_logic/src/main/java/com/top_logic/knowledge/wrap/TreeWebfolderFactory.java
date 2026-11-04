@@ -15,7 +15,7 @@ import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DatabaseAccessException;
 
 /**
- * COS Specific variant of the WebFolderFactory.
+ * COS Specific variant of the {@link WebFolderFactory}.
  * 
  * @author    <a href=mailto:kha@top-logic.com>kha</a>
  */
@@ -23,7 +23,7 @@ public class TreeWebfolderFactory extends WebFolderFactory {
     
 	private static final String FOLDER_NAME_PREFIX = "topl";
 
-	/** Max depth of folder tree until real WebFolder creation happens. */
+	/** Max depth of folder tree until real {@link WebFolder} creation happens. */
     protected static final int MAX_DEPTH = 4;
     
     /** Max number of sub folders per folder. */ 

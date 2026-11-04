@@ -12,72 +12,73 @@ import com.top_logic.dob.NamedValues;
 import com.top_logic.knowledge.service.FlexDataManager;
 
 /**
- * KnowledgeObject (KOs) live in {@link com.top_logic.knowledge.service.KnowledgeBase}s
+ * {@link KnowledgeObject} (KOs) live in {@link com.top_logic.knowledge.service.KnowledgeBase}s
  * and are related by {@link com.top_logic.knowledge.objects.KnowledgeAssociation}s.
  *<p>
- * If you want define some roles for this KnowledgeObject then 
+ * If you want define some roles for this {@link KnowledgeObject} then 
  * use the attributes defined in the interface ACLAttribute. 
  * As value put a list of the roles separated by comma.
  * For instance 
- *     setAttributeValue(KnowledgeAssociation.READ_ACCESS,"adim,developer")
+ *     {@code setAttributeValue(KnowledgeAssociation.READ_ACCESS,"adim,developer")}
  *</p>
- *                                  added addAssociation method
- *                                  added getAssociatons method
- *                                  added getIncomingAssociations() with associationType.
+ *                                  added method to add an association
+ *                                  added method to get the associations
+ *                                  added {@link #getIncomingAssociations(String)} with association
+ *                                  type.
  *
  * @author  Marco Perra
  */
 public interface KnowledgeObject extends KnowledgeItem {
 
     /**
-     * Returns an iterator over all KnowledgeAssociations for which
+     * Returns an iterator over all {@link KnowledgeAssociation}s for which
 	 * the navigation flag of the association-end belonging to <code>this </code> is true.
 	 * This are all associations, whose source object == this.
      *
      * Use {@link #getIncomingAssociations()} to retrieve Associations going "back".
      *
-     * @return a java.util.Iterator of KnowlegeAssociations
+     * @return a java.util.Iterator of {@link KnowledgeAssociation}s
      */
     public Iterator<KnowledgeAssociation> getOutgoingAssociations ();
 
 
     /**
-     * Returns an iterator over all KnowledgeAssociations for which
+     * Returns an iterator over all {@link KnowledgeAssociation}s for which
 	 * the navigation flag of the association-end belonging to the other object is true.
      * This are all associations, whose destination object == this.
      *
-     * @return a java.util.Iterator of KnowlegeAssociations
+     * @return a java.util.Iterator of {@link KnowledgeAssociation}s
      */
     public Iterator<KnowledgeAssociation> getIncomingAssociations ();
 
     /**
-     * Same as getIncomingAssociations() but return only KAs of given type.
+     * Same as {@link #getIncomingAssociations()} but return only KAs of given type.
      *
-     * @return a java.util.Iterator of KnowlegeAssociations
+     * @return a java.util.Iterator of {@link KnowledgeAssociation}s
      */
     public Iterator<KnowledgeAssociation> getIncomingAssociations (String anAssociationType);
 
     /**
-     * returns an Iterator over KnowledgeAssociations matching to the given
-     * AssociationType starting 
+     * returns an Iterator over {@link KnowledgeAssociation}s matching to the given
+     * association type starting 
      *
      * @param   anAssociationType a java.lang.String with the name of an Association
      *                            class.
-     * @return a java.util.Iterator of KnowledegeAssociations
+     * @return a java.util.Iterator of {@link KnowledgeAssociation}s
      */
     public Iterator<KnowledgeAssociation> getOutgoingAssociations (String anAssociationType);
 
     /**
-     * Returns an iterator over KnowledgeAssociation, i.e. this KnowledgeObject
+     * Returns an iterator over {@link KnowledgeAssociation}, i.e. this {@link KnowledgeObject}
      * represent the KO("Address") of the office WI. Then the projection to the
-     * association-end with anAssociationEndName "employer" and the KnowledgeObject
+     * association-end with {@code anAssociationEndName} "employer" and the {@link KnowledgeObject}
      * KO("mpe") returns an iterator of all different employer phases.
      * TODO comment is bull...
      *      and please explain: why should two KOs have multiple KAs of same type? 
      *
-     * @param   anAssociationType a type of association (MetaObject name)
-     * @param   aKnowledgeObject to which the associations of type 'anAssociationType' points
-     * @return  a java.util.Iterator of KnowledgeAssociations
+     * @param   anAssociationType a type of association (meta object name)
+     * @param   aKnowledgeObject to which the associations of type {@code anAssociationType} points
+     * @return  a java.util.Iterator of {@link KnowledgeAssociation}s
      */
     public Iterator<KnowledgeAssociation> getOutgoingAssociations (String anAssociationType, KnowledgeObject aKnowledgeObject);
 

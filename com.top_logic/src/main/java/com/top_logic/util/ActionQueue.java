@@ -9,7 +9,7 @@ import com.top_logic.mig.html.layout.Action;
 
 /**
  * The class {@link ActionQueue} enqueues {@link Action Actions} of a certain type and dispatches
- * the {@link Action} on demand
+ * the {@link Action} on demand.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -21,16 +21,29 @@ import com.top_logic.tool.boundsec.assistent.BoundAssistentComponent;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Assistant leading the user through a generic data import defined by an import configuration
+ * file.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportAssistentComponent extends BoundAssistentComponent implements GenericDataImportConfigurationAware {
 
+    /**
+     * Configuration options for {@link GenericDataImportAssistentComponent}.
+     */
     public interface Config extends BoundAssistentComponent.Config {
+
+		/**
+		 * The file with the definition of the import.
+		 */
 		@Name(FILE_NAME)
 		@Mandatory
 		String getImportConfigFile();
 	}
 
+	/**
+	 * Configuration name of {@link Config#getImportConfigFile()}.
+	 */
 	public static final String FILE_NAME        = "importConfigFile";
 
     private String filename;
@@ -86,6 +99,15 @@ public class GenericDataImportAssistentComponent extends BoundAssistentComponent
         return false;
     }
 
+    /**
+     * Checks whether the given import configuration can be used by this assistant.
+     *
+     * @param aConfig
+     *        The configuration to check.
+     * @return Whether the configuration is accepted.
+     * @throws Exception
+     *         If the configured importer cannot read uploaded files.
+     */
     public boolean checkImportConfiguration(GenericDataImportConfiguration aConfig) throws Exception {
         GenericImporter theImporter = aConfig.getImporter();
         if (! (theImporter instanceof GenericFileImporter)) {

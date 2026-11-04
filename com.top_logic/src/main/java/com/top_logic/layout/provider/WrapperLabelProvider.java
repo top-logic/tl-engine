@@ -21,6 +21,9 @@ import com.top_logic.layout.LabelProvider;
 @Deprecated
 public class WrapperLabelProvider implements LabelProvider {
 
+    /**
+     * Singleton {@link WrapperLabelProvider} instance.
+     */
     public static WrapperLabelProvider INSTANCE = new WrapperLabelProvider();
 
     protected WrapperLabelProvider() {

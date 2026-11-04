@@ -11,7 +11,7 @@ import com.top_logic.basic.DummyIDFactory;
 
 
 /**
- * A DataObject exporting his own fields as attributes.
+ * A {@link com.top_logic.dob.DataObject} exporting his own fields as attributes.
  * This class should be extended to make sense.
  *
  * @author    <a href="mailto:asc@top-logic.com">asc</a>

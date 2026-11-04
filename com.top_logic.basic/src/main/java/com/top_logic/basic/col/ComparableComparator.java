@@ -41,8 +41,14 @@ import com.top_logic.basic.thread.ThreadContext;
  */
 public class ComparableComparator implements Comparator<Object> {
 
+    /**
+     * Singleton instance comparing in natural (ascending) order.
+     */
     public static final Comparator<Object> INSTANCE = new ComparableComparator();
 
+	/**
+	 * Instance comparing in reverse natural (descending) order.
+	 */
 	public static final Comparator<Object> INSTANCE_DESCENDING = Collections.reverseOrder(INSTANCE);
 
 	/**

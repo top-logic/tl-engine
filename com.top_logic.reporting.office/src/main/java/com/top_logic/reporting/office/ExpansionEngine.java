@@ -22,7 +22,7 @@ public interface ExpansionEngine {
      * 
      * @param aContext the context with environmental information.
      * @param aSymbol the expansion object in its symbol state.
-     * @return the expanded Object (not the ExpansionObject!) or
+     * @return the expanded Object (not the {@link ExpansionObject}!) or
      *         <code>null</code>. The expanded object is the content
      *         evaluated by using the expansion object and the expansion
      *         context.

@@ -18,24 +18,38 @@ import java.io.Writer;
  */
 public interface LeafObject {
 
+	/** Copies the contents of this leaf to the given leaf. */
 	public void copy(LeafObject aDest) throws IOException;
 
+	/** Replaces the contents of this leaf with the data of the given stream. */
 	public void copy(InputStream aStream) throws IOException;
 
+	/**
+	 * Deletes this leaf.
+	 *
+	 * @return Whether the leaf was deleted.
+	 */
 	public boolean delete();
 
+	/** The time of the last modification of this leaf. */
 	public long lastModified();
 
+	/** The size of the contents of this leaf in bytes. */
 	public long length();
 
+	/** The name of this leaf. */
 	public String getName();
 
+	/** The absolute path of this leaf. */
 	public String getAbsolutePath();
 
+	/** Opens a stream for writing the contents of this leaf. */
 	public OutputStream getOutputStream() throws FileNotFoundException, RepositoryException;
 
+	/** Opens a stream for reading the contents of this leaf. */
 	public InputStream getInputStream() throws FileNotFoundException;
 
+	/** Opens a writer for writing the contents of this leaf. */
 	public Writer getWriter() throws IOException;
 }
 

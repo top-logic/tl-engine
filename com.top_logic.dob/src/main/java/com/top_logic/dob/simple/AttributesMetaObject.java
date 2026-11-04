@@ -30,9 +30,9 @@ import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.dob.util.MetaObjectUtils;
 
 /**
- * Extracts and eventually caches MetaData for an Attributes Object.
+ * Extracts and eventually caches meta data for an Attributes Object.
  * 
- * This class <em>can</em> be used by the AttributesDataObject
+ * This class <em>can</em> be used by the {@link AttributesDataObject}
  * buts it use should best be avoided since its implementaion
  * may be to simple.
  *
@@ -45,7 +45,7 @@ public class AttributesMetaObject implements MOStructure {
 	private String definingResource;
 	
 	/** 
-	 * Construct a new AttributesMetaObject for the given Attributes 
+	 * Construct a new {@link AttributesMetaObject} for the given Attributes 
 	 */
 	public AttributesMetaObject(Attributes anAttrs) {
 		attrs = anAttrs;

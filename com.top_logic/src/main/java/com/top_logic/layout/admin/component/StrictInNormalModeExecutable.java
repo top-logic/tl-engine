@@ -14,15 +14,17 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.NegateRule;
 
 /**
- * The StrictInNormalModeExecutable is executable when the system is not in maintenance mode
+ * The {@link StrictInNormalModeExecutable} is executable when the system is not in maintenance mode
  * and is not about to enter maintenance mode.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class StrictInNormalModeExecutable implements ExecutabilityRule {
 
+    /** Singleton {@link StrictInNormalModeExecutable} instance. */
     public static final StrictInNormalModeExecutable INSTANCE = new StrictInNormalModeExecutable();
 
+    /** Negation of {@link #INSTANCE}. */
     public static final ExecutabilityRule NEGATED_INSTANCE = new NegateRule(INSTANCE, true);
 
     private static final ExecutabilityRule EXEC_RULE = CombinedExecutabilityRule.combine(InMaintenanceWindowExecutable.NEGATED_INSTANCE, AboutToEnterMaintenanceWindowExecutable.NEGATED_INSTANCE);

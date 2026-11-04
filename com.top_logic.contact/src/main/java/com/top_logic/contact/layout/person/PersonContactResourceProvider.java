@@ -9,7 +9,7 @@ import com.top_logic.contact.layout.PersonContactLabelProvider;
 import com.top_logic.knowledge.gui.WrapperResourceProvider;
 
 /**
- * The PersonContactResourceProvider
+ * Resource provider for person contacts.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

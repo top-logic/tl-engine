@@ -106,7 +106,7 @@ public class XMLValueDecoder extends DispatchingHandler implements XMLValueConst
     }
     
     /**
-     * Clear finalObject in case {@link #getObject()} was never called
+     * Clear the final object in case {@link #getObject()} was never called
      */
     @Override
 	public void startDocument() throws SAXException {
@@ -115,7 +115,7 @@ public class XMLValueDecoder extends DispatchingHandler implements XMLValueConst
     }
     
     /**
-     * clear the readObjects for the next call.
+     * clear the read objects for the next call.
      */
     @Override
 	public void endDocument() throws SAXException {

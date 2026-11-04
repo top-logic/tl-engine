@@ -79,6 +79,9 @@ public class Logger {
 			this(message, Maybe.toMaybe(exception), caller, priority);
 		}
 
+		/**
+		 * The logged message.
+		 */
 		public String getMessage() {
 			return message;
 		}
@@ -89,10 +92,16 @@ public class Logger {
 			return exception;
 		}
 
+		/**
+		 * The object or class that logged the entry.
+		 */
 		public Object getCaller() {
 			return caller;
 		}
 
+		/**
+		 * The level of the entry.
+		 */
 		public Level getPriority() {
 			return priority;
 		}
@@ -274,7 +283,7 @@ public class Logger {
    }
 
     /**
-     * Returns if debugging for the aCaller is enabled.
+     * Returns if debugging for the {@code aCaller} is enabled.
      *
      * @param aCaller the caller of the method
      *
@@ -474,30 +483,53 @@ public class Logger {
         return aCaller.getClass ().getName ();
     }
 
+	/**
+	 * Whether exceptions are logged for messages of the given level.
+	 */
 	public static boolean isTraceExceptions(Level requestedLevel) {
 		return requestedLevel.ordinal() >= LogConfigurator.getInstance().getExceptionLevel().ordinal();
 	}
 
+	/**
+	 * The name of the minimum level for which exceptions are logged.
+	 */
 	public static String getExceptionLevel() {
 		return LogConfigurator.getInstance().getExceptionLevel().name();
 	}
 
+	/**
+	 * Sets the minimum level for which exceptions are logged.
+	 *
+	 * @see #getExceptionLevel()
+	 */
 	public static void setExceptionLevel(String aNewLevel) {
 		LogConfigurator.getInstance().setExceptionLevel(aNewLevel);
 	}
 
+	/**
+	 * Whether exceptions are logged.
+	 */
 	public static boolean isTraceExceptions() {
 		return LogConfigurator.getInstance().isTraceExceptions();
     }
 
+    /**
+     * Setter for {@link #isTraceExceptions()}.
+     */
     public static void setTraceExceptions(boolean aTraceExceptions) {
 		LogConfigurator.getInstance().setTraceExceptions(aTraceExceptions);
     }
 
+    /**
+     * Whether messages are logged.
+     */
     public static boolean isTraceMessages() {
 		return LogConfigurator.getInstance().isTraceMessages();
     }
 
+    /**
+     * Setter for {@link #isTraceMessages()}.
+     */
     public static void setTraceMessages(boolean aTraceMessages) {
 		LogConfigurator.getInstance().setTraceMessages(aTraceMessages);
     }

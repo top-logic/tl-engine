@@ -13,28 +13,28 @@ package com.top_logic.knowledge.analyze;
 public class AnalyzeException extends RuntimeException {
 
     /**
-     * Constructor for AnalyzeException.
+     * Constructor for {@link AnalyzeException}.
      */
     public AnalyzeException() {
         super();
     }
 
     /**
-     * Constructor for AnalyzeException.
+     * Constructor for {@link AnalyzeException}.
      */
     public AnalyzeException(String arg0) {
         super(arg0);
     }
 
     /**
-     * Constructor for AnalyzeException.
+     * Constructor for {@link AnalyzeException}.
      */
     public AnalyzeException(String arg0, Throwable arg1) {
         super(arg0, arg1);
     }
 
     /**
-     * Constructor for AnalyzeException.
+     * Constructor for {@link AnalyzeException}.
      */
     public AnalyzeException(Throwable arg0) {
         super(arg0);

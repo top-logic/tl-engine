@@ -37,7 +37,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * For creating a new stored query one has to define the name of the new query.
  * 
- * NOTE: This code has been taken over from AbstractStoredQueryComponent.
+ * NOTE: This code has been taken over from the former stored query component.
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -111,16 +111,16 @@ public class NewQueryComponent extends AbstractCreateComponent implements Expand
         /** The ID of this command handler. */
         public static final String COMMAND_ID = "newAttributedQuery";
 
-        /** The name to be used for creating the new StoredQuery. */
+        /** The name to be used for creating the new {@link StoredQuery}. */
         public static final String NAME_ATTRIBUTE = "name";
 
-        /** The flag to be used for direct storing values to new StoredQuery. */
+        /** The flag to be used for direct storing values to new {@link StoredQuery}. */
         public static final String VALUES_ATTRIBUTE = "useValues";
 
-        /** The flag to be used for direct storing values to new StoredQuery. */
+        /** The flag to be used for direct storing values to new {@link StoredQuery}. */
         public static final String CONTEXT_ATTRIBUTE = "outerContext";
 
-        /** The name to be used for creating the new StoredQuery. */
+        /** The name to be used for creating the new {@link StoredQuery}. */
         public static final int NAME_LENGTH = 80;
 
         /** 

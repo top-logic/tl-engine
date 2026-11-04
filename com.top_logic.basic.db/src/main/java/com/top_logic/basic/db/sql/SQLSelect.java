@@ -49,6 +49,9 @@ public class SQLSelect extends AbstractSQLStatement implements SQLSelectionState
 		this._limit = limit;
 	}
 
+	/**
+	 * Whether duplicate result rows are eliminated.
+	 */
 	public boolean isDistinct() {
 		return distinct;
 	}
@@ -58,6 +61,9 @@ public class SQLSelect extends AbstractSQLStatement implements SQLSelectionState
 		this.distinct = distinct;
 	}
 
+	/**
+	 * The table to select from.
+	 */
 	public SQLTableReference getTableReference() {
 		return tableReference;
 	}
@@ -67,20 +73,32 @@ public class SQLSelect extends AbstractSQLStatement implements SQLSelectionState
 		return getTableReference().getInitialTable();
 	}
 
+	/**
+	 * Setter for {@link #getTableReference()}.
+	 */
 	public void setTableReference(SQLTableReference tableReference) {
 		assert tableReference != null;
 		this.tableReference = tableReference;
 	}
 	
+	/**
+	 * The condition the selected rows must match.
+	 */
 	public SQLExpression getWhere() {
 		return where;
 	}
 
+	/**
+	 * Setter for {@link #getWhere()}.
+	 */
 	public void setWhere(SQLExpression where) {
 		assert where != null;
 		this.where = where;
 	}
 
+	/**
+	 * The order of the result rows.
+	 */
 	public List<SQLOrder> getOrderBy() {
 		return orderBy;
 	}
@@ -105,6 +123,9 @@ public class SQLSelect extends AbstractSQLStatement implements SQLSelectionState
 		this._limit = limit;
 	}
 
+	/**
+	 * The columns of the result.
+	 */
 	public List<SQLColumnDefinition> getColumns() {
 		return columns;
 	}

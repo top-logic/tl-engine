@@ -127,7 +127,7 @@ public class TableListControl extends TableControl {
 	 * Factory method to create a new {@link TableListControl}
 	 * @param createButtons
 	 *        Indicates whether buttons should be created or not. Buttons should not be created if
-	 *        the table is not in EditMode (is immutable).
+	 *        the table is not in edit mode (is immutable).
 	 */
 	public static TableListControl createTableListControl(TableData tableData, ITableRenderer tableRenderer,
 			RowObjectCreator rowObjectCreator, RowObjectRemover rowObjectRemover, boolean createButtons,

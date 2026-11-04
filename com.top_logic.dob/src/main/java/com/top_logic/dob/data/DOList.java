@@ -22,11 +22,11 @@ import com.top_logic.dob.simple.ExampleDataObject;
 
 
 /**
- * Implements a typysafe list of DataObjects.
+ * Implements a typysafe list of {@link DataObject}s.
  * 
  * List of Primitives (e.g. MOPrimitive.INTEGER) are not supported.
  *
- *             25.09.2000    mpe    modified ----> isRequiredElement method
+ *             25.09.2000    mpe    modified ----> <code>isRequiredElement</code> method
  *
  * @author  Marco Perra
  */
@@ -40,7 +40,7 @@ public class DOList extends AbstractDOCollection implements List {
 	private TLID identifier;
 
     /**
-     * Create a new DOList with the given MetaObject as class.
+     * Create a new DOList with the given {@link MetaObject} as class.
      */
     public DOList (MOCollection aMetaObject) {
         super (aMetaObject);

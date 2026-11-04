@@ -22,7 +22,13 @@ import com.top_logic.basic.config.xml.MapAttributeBinding;
  */
 public class SimpleMapValueBindingFuture extends AbstractListBindingFuture {
 
+	/**
+	 * Name of the attribute holding the key, if no attribute name is given explicitly.
+	 */
 	public static final String DEFAULT_KEY_ATTRIBUTE_NAME = "key";
+	/**
+	 * Marker value of a key format annotation property that has not been set explicitly.
+	 */
 	public static final Class<?> KEY_FORMAT_CLASS_DEFAULT = VoidValueProvider.class;
 
 	private final MapBinding _binding;
@@ -49,6 +55,17 @@ public class SimpleMapValueBindingFuture extends AbstractListBindingFuture {
 		return DEFAULT_KEY_ATTRIBUTE_NAME;
 	}
 
+	/**
+	 * The {@link ConfigurationValueProvider} to parse the keys with.
+	 *
+	 * @param protocol
+	 *        For reporting problems.
+	 * @param property
+	 *        The property being bound.
+	 * @param formatClass
+	 *        The explicitly given format, or {@link #FORMAT_CLASS_DEFAULT}.
+	 * @return The provider for the given format, or a provider derived from the key type.
+	 */
 	protected ConfigurationValueProvider<?> resolveKeyProvider(Protocol protocol, PropertyDescriptorImpl property,
 			Class<? extends ConfigurationValueProvider<?>> formatClass) {
 		ConfigurationValueProvider<?> valueProvider;

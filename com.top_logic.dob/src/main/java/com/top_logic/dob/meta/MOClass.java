@@ -10,7 +10,7 @@ import com.top_logic.dob.MOAttribute;
 
 
 /**
- * This is a MetaObject for classes, This adds the concept of
+ * This is a {@link com.top_logic.dob.MetaObject} for classes, This adds the concept of
  * a superclass to the MOStructure. other concepts like Methods
  * or associations are not found here anymore
  *
@@ -19,7 +19,8 @@ import com.top_logic.dob.MOAttribute;
 public interface MOClass extends MOStructure {
 
     /** 
-     * Indicates that instances of DataObjects for this MO can be generated.
+     * Indicates that instances of {@link com.top_logic.dob.DataObject}s for this MO can be
+     * generated.
      * 
      * Especially for Databases this does not create a Table, and unneccessary
      * access can be avoided.
@@ -40,12 +41,12 @@ public interface MOClass extends MOStructure {
     public void setAbstract(boolean abstractModifier);
 
     /**
-     * Acessor to set set the (MO)SuperClass for this class.
+     * Acessor to set set the super class for this class.
      */
     public void setSuperclass (MOClass aMOClass);
 
     /**
-     * Acessor to get set the (MO)SuperClass for this class
+     * Acessor to get set the super class for this class
      */
     public MOClass getSuperclass ();
 

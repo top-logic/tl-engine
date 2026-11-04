@@ -46,10 +46,20 @@ public class CompatibilityService extends ManagedClass {
 		super(context, config);
 	}
 
+	/**
+	 * Not supported.
+	 *
+	 * @throws UnsupportedOperationException Always.
+	 */
 	public String getTypeName(Wrapper attributed) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Not supported.
+	 *
+	 * @throws UnsupportedOperationException Always.
+	 */
 	public boolean isAttributed(Wrapper target) {
 		throw new UnsupportedOperationException();
 	}
@@ -71,6 +81,8 @@ public class CompatibilityService extends ManagedClass {
 	}
 
 	/**
+	 * The {@link PreloadContribution} for the given part.
+	 *
 	 * @param part
 	 *        The part to get {@link PreloadContribution} for.
 	 * 

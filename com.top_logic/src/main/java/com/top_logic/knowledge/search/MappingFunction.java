@@ -18,10 +18,12 @@ public abstract class MappingFunction extends Function {
 		this.expr = expr;
 	}
 	
+	/** The expression whose values are aggregated. */
 	public Expression getExpr() {
 		return expr;
 	}
 	
+	/** Setter for {@link #getExpr()}. */
 	public void setExpr(Expression expr) {
 		this.expr = expr;
 	}

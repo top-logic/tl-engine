@@ -12,7 +12,7 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.common.folder.model.FolderNode;
 
 /**
- * TreeBuilder to wrap a FolderDefinition in a tree.
+ * {@link com.top_logic.layout.tree.model.TreeBuilder} to wrap a {@link FolderDefinition} in a tree.
  * 
  * @author <a href="mailto:fma@top-logic.com">fma</a>
  */

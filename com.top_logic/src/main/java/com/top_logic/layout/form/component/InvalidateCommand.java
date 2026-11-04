@@ -69,11 +69,11 @@ public class InvalidateCommand extends AJAXCommandHandler {
 
 	}
 
-    /** The name used to register this command in the CommandHandlerFactory */
+    /** The name used to register this command in the {@link CommandHandlerFactory} */
     public static final String COMMAND = "invalidate";
 
     /** 
-     * Create a new InvalidateCommand as {@link SimpleBoundCommandGroup#READ} command.
+     * Creates a new {@link InvalidateCommand} as {@link SimpleBoundCommandGroup#READ} command.
      */
     public InvalidateCommand(InstantiationContext context, Config config) {
 		super(context, config);

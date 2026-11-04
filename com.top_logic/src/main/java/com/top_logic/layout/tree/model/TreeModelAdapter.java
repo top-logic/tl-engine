@@ -20,6 +20,7 @@ import com.top_logic.layout.WrappedModel;
  */
 public class TreeModelAdapter<N> extends AbstractTreeModelBase<N> implements WrappedModel {
 
+	/** The adapted tree model. */
 	protected final TreeModelBase<N> impl;
 	
 	/**

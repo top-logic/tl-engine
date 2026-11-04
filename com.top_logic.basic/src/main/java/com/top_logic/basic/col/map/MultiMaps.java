@@ -63,8 +63,8 @@ public class MultiMaps {
 	/**
 	 * Adds the given key value pair to the given multi-map.
 	 * <p>
-	 * If the multiMap is a {@link LinkedHashMap}, a {@link LinkedHashSet} will be build if a new
-	 * {@link Set} is necessary.
+	 * If the {@code multiMap} is a {@link LinkedHashMap}, a {@link LinkedHashSet} will be build if
+	 * a new {@link Set} is necessary.
 	 * </p>
 	 * 
 	 * @param <K>
@@ -196,8 +196,8 @@ public class MultiMaps {
 	/**
 	 * Clones the given multi map (including the value sets).
 	 * <p>
-	 * If the multiMap is a {@link LinkedHashMap}, the clone will be a {@link LinkedHashMap} with
-	 * {@link LinkedHashSet} as value {@link Set}s.
+	 * If the {@code multiMap} is a {@link LinkedHashMap}, the clone will be a {@link LinkedHashMap}
+	 * with {@link LinkedHashSet} as value {@link Set}s.
 	 * </p>
 	 * 
 	 * @param <K>
@@ -233,8 +233,8 @@ public class MultiMaps {
 	/**
 	 * Adds all values under the given key to the given multi-map.
 	 * <p>
-	 * If the multiMap is a {@link LinkedHashMap}, a {@link LinkedHashSet} will be build if a new
-	 * {@link Set} is necessary.
+	 * If the {@code multiMap} is a {@link LinkedHashMap}, a {@link LinkedHashSet} will be build if
+	 * a new {@link Set} is necessary.
 	 * </p>
 	 * 
 	 * @param <K>

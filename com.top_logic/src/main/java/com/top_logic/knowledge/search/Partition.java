@@ -23,26 +23,32 @@ public class Partition extends SetExpression {
 		this.representative = representative;
 	}
 	
+	/** The set of objects to partition. */
 	public SetExpression getSource() {
 		return source;
 	}
 	
+	/** Setter for {@link #getSource()}. */
 	public void setSource(SetExpression source) {
 		this.source = source;
 	}
 	
+	/** The expression whose value defines the equivalence classes of the partition. */
 	public Expression getEquivalence() {
 		return equivalence;
 	}
 	
+	/** Setter for {@link #getEquivalence()}. */
 	public void setEquivalence(Expression equivalence) {
 		this.equivalence = equivalence;
 	}
 	
+	/** The function computing the representative of each equivalence class. */
 	public Function getRepresentative() {
 		return representative;
 	}
 	
+	/** Setter for {@link #getRepresentative()}. */
 	public void setRepresentative(Function representative) {
 		this.representative = representative;
 	}

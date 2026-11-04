@@ -24,7 +24,7 @@ import com.top_logic.reporting.chart.dataset.SwingDatasetUtilities;
 import com.top_logic.reporting.chart.info.swing.SwingRenderingInfo;
 
 /**
- * The SwingPlot contains two dataset one manipulated dataset with additional control
+ * The {@link SwingPlot} contains two dataset one manipulated dataset with additional control
  * points to synchronize the y-axes and the normal dataset without the control points.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
@@ -101,7 +101,7 @@ public class SwingPlot extends CategoryPlot {
 	}
 
 	/**
-	 * the number of visible columns with an index less than maxColumn
+	 * The number of visible columns with an index less than {@code maxColumn}.
 	 */
 	public int getNumberOfVisibleColumnsUpToColumn(int maxColumn) {
 		int visibleColumns = 0;

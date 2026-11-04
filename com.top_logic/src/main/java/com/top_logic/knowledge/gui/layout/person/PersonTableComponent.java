@@ -30,13 +30,17 @@ import com.top_logic.util.TLContext;
  */
 public class PersonTableComponent extends TableComponent {
 
+    /** Column displaying the authentication device of the person. */
     public static final String COLUMN_AUTH_DEVICE_ID = Person.AUTHENTICATION_DEVICE_ID;
+    /** Column displaying the country of the person. */
     public static final String COLUMN_COUNTRY = "country";
+    /** Column displaying the language of the person. */
     public static final String COLUMN_LANGUAGE = "language";
+    /** Column displaying the last login of the person. */
     public static final String COLUMN_LAST_LOGIN = "lastLogin";
 
 	/**
-	 * Construct a PersonTable via XML.
+	 * Construct a {@link PersonTableComponent} via XML.
 	 */
 	public PersonTableComponent(InstantiationContext context, Config someAttr) throws ConfigurationException {
 		super(context, someAttr);

@@ -38,8 +38,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
 
 /**
- * Search for user sessions. More precisely passes the search params to the
- * UserMonitorComponent.
+ * Search for user sessions. More precisely passes the search parameters as selection to the
+ * component displaying the user sessions.
  *
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -56,12 +56,26 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 
 	/** Strings for time range selections */
 	public static final String	DAILY	                = "daily";
+
+	/** Time range selection for the last week. */
 	public static final String	WEEKLY	                = "weekly";
+
+	/** Time range selection for the last month. */
 	public static final String	MONTHLY	                = "monthly";
+
+	/** Time range selection for the last quarter. */
 	public static final String	QUARTERLY	            = "quarterly";
+
+	/** Time range selection for the last year. */
 	public static final String	ANNUALLY	            = "annually";
+
+	/** Time range selection with manually entered start and end date. */
 	public static final String	MANUALLY	            = "manually";
+
+	/** Time range selection for the current day. */
 	public static final String	CURRENT	                = "currentDay";
+
+	/** Time range selection with absolute dates. */
 	public static final String	ABSOLUTE	            = "absolute";
 
 	/**
@@ -96,6 +110,14 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 		return theContext;
 	}
 
+	/**
+	 * Adds the fields for selecting the search time range to the given form context.
+	 * 
+	 * @param aContext
+	 *        The form context to add the fields to.
+	 * @param resPrefix
+	 *        The resource prefix for the labels of the time range options.
+	 */
 	public void addTimeRangeSelectionFields(FormContext aContext, ResPrefix resPrefix) {
 		// select field for time range
 		List theTimeRangeOptions = Arrays.asList((new String[] { DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUALLY, MANUALLY }));
@@ -141,6 +163,9 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 	}
 
 	
+	/**
+	 * Command updating the search parameters from the current form input.
+	 */
 	public static class Update extends AbstractCommandHandler {
 		
 		/**
@@ -165,6 +190,9 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 		}
 	}
 	
+	/**
+	 * Sets the search parameters from the current form input as selection of this component.
+	 */
 	public void update() {
 	    FormContext theContext = getFormContext();
 	    ComplexField theStart = (ComplexField)theContext.getMember(START_DATE_FIELD);

@@ -19,6 +19,11 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 
 /**
+ * {@link ValueListener} on a {@link SelectField} that creates a group of fields for each selected
+ * row object and removes it, when the object is deselected.
+ * 
+ * @see RowFormGroupGenerator
+ * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class RowFormGroupHolder implements ValueListener {
@@ -26,7 +31,7 @@ public class RowFormGroupHolder implements ValueListener {
     SelectField           baseField;
     FormComponent         target;
     RowFormGroupGenerator generator;
-    /** Map < String, FormGroup > */
+    /** Map &lt; String, {@link FormGroup} &gt; */
 //    Map                   rowGroupNames;
 
     public RowFormGroupHolder(FormContext aFormContext, SelectField aBaseField, Collection someSelected, FormComponent aTarget, RowFormGroupGenerator aGenerator) {
@@ -74,6 +79,14 @@ public class RowFormGroupHolder implements ValueListener {
         return theResult;
     }
     
+	/**
+	 * Creates the fields for the given selected object.
+	 * 
+	 * @param aFC
+	 *        The context to add the fields to.
+	 * @param aParameter
+	 *        The newly selected object.
+	 */
     protected void createParameterFields(FormContext aFC, Object aParameter) {
         this.generator.addFormFields(this.target, aFC, aParameter);
     }

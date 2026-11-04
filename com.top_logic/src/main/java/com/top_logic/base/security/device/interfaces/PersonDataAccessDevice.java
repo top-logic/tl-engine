@@ -13,7 +13,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
- * Used to access a persons userdata according to PersonAttributes.
+ * Used to access a persons userdata according to the person attributes.
  * 
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
@@ -51,12 +51,17 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	public List<UserInterface> getAllUserData();
 	
 	/**
+	 * Looks up the data of the user with the given name.
+	 *
 	 * @param aName - the internal unique username
-	 * @return the data for the given person as DataObject or null if not found
+	 * @return the data for the given person as {@link com.top_logic.dob.DataObject} or null if not
+	 *         found
 	 */
 	public UserInterface getUserData(String aName);
 
 	/**
+	 * Whether a user with the given name exists in this device.
+	 *
 	 * @param aName - the internal unique username
 	 * @return true if data for this name is available from this device, false otherwise
 	 */

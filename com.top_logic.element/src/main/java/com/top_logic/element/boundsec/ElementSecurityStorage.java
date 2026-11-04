@@ -40,7 +40,7 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
- * The SecurityStorage stores the security permissions respecting rules.
+ * The {@link SecurityStorage} stores the security permissions respecting rules.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
@@ -246,6 +246,17 @@ public class ElementSecurityStorage extends SecurityStorage {
 		computeRoles(invalidRules, true);
 	}
 
+	/**
+	 * Executes all pending deletions and insertions and clears the given buffers.
+	 * 
+	 * @param batchRemoves
+	 *        Entries to remove from the storage.
+	 * @param batchInserts
+	 *        Entries to insert into the storage.
+	 * @param sharedIds
+	 *        Cache of shared identifiers for the entries, see
+	 *        {@link #batchInsert(Object[], List, Map)}.
+	 */
 	protected void flushDeleteAndInsert(List<Object[]> batchRemoves, List<Object[]> batchInserts, Map<?, ?> sharedIds) throws StorageException {
         multiDeleteAndInsert(batchRemoves, batchInserts);
         batchRemoves.clear();
@@ -255,8 +266,8 @@ public class ElementSecurityStorage extends SecurityStorage {
 
     /**
 	 * Prepares an entry to get inserted to the database. Instead of inserting it directly, it is
-	 * added only to the given batchInserts list. Call {@link #multiInsert(List)} to insert all
-	 * entries which were prepared by this method before. See {@link #insert(Object[])} for
+	 * added only to the given {@code batchInserts} list. Call {@link #multiInsert(List)} to insert
+	 * all entries which were prepared by this method before. See {@link #insert(Object[])} for
 	 * parameter details.
 	 * 
 	 * @param aVector

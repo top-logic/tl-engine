@@ -63,6 +63,15 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		super(context, config);
 	}
 
+	/**
+	 * Publishes the given expression to the groups selected in the publishing form group, or
+	 * withdraws the publication, if publishing is not selected.
+	 *
+	 * @param expression
+	 *        The saved search or report.
+	 * @param parent
+	 *        The form containing the publishing form group.
+	 */
 	protected void publish(Wrapper expression, FormContext parent) {
 		FormGroup publishGroup = getPublishGroup(parent);
 		if (!publishGroup.isVisible()) {
@@ -78,6 +87,16 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		}
 	}
 
+	/**
+	 * Updates the groups the given expression is published to.
+	 *
+	 * @param expression
+	 *        The published expression.
+	 * @param currentGroups
+	 *        The groups the expression is currently published to.
+	 * @param selectedGroups
+	 *        The groups the expression should be published to.
+	 */
 	protected void updateGroups(Wrapper expression, List<Group> currentGroups, List<Group> selectedGroups) {
 		List<Group> selected = CollectionUtil.modifiableList(selectedGroups);
 		List<Group> current = CollectionUtil.modifiableList(currentGroups);
@@ -94,10 +113,16 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		deleteGroups(expression, current);
 	}
 
+	/**
+	 * The groups the given expression is currently published to.
+	 */
 	protected List<Group> getAssociatedGroups(Wrapper expression) {
 		return asGroups(MapBasedPersistancySupport.getGroupAssociation(expression));
 	}
 
+	/**
+	 * Publishes the given expression to the given groups.
+	 */
 	public static void addGroups(Wrapper expression, List<Group> groups) {
 		for (int i = 0; i < groups.size(); i++) {
 			Group theGroup = groups.get(i);
@@ -105,6 +130,9 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		}
 	}
 
+	/**
+	 * Withdraws the publication of the given expression from the given groups.
+	 */
 	public static void deleteGroups(Wrapper expression, List<Group> groups) {
 		for (int i = 0; i < groups.size(); i++) {
 			Group theGroup = groups.get(i);
@@ -112,20 +140,32 @@ public abstract class SaveExpressionCommand extends AJAXCommandHandler {
 		}
 	}
 
+	/**
+	 * The publishing form group within the given container.
+	 */
 	public static FormGroup getPublishGroup(FormContainer parent) {
 		return (FormGroup) parent.getMember(QueryUtils.FORM_GROUP);
 	}
 
+	/**
+	 * Whether publishing is selected in the given publishing form group.
+	 */
 	public static boolean shouldPublish(FormGroup publishGroup) {
 		BooleanField shouldPublishField = (BooleanField) publishGroup.getMember(QueryUtils.PUBLISH_QUERY_FIELD);
 		return shouldPublishField.getAsBoolean();
 	}
 
+	/**
+	 * The groups selected for publishing in the given publishing form group.
+	 */
 	public static List<Group> getSelectedGroups(FormGroup publishGroup) {
 		SelectField selectedGroupsField = (SelectField) publishGroup.getMember(QueryUtils.VISIBLE_GROUPS_FIELD);
 		return asGroups(selectedGroupsField.getSelection());
 	}
 
+	/**
+	 * A view of the given list as list of {@link Group}s.
+	 */
 	protected static List<Group> asGroups(List<?> untypedGroups) {
 		return CollectionUtil.dynamicCastView(Group.class, untypedGroups);
 	}

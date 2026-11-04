@@ -11,6 +11,8 @@ import com.top_logic.mail.proxy.I18NConstants;
 import com.top_logic.util.sched.task.result.TaskResult;
 
 /**
+ * {@link Filter} accepting results of the mail fetching task that fetched at least one mail.
+ *
  * @since 5.7.5
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

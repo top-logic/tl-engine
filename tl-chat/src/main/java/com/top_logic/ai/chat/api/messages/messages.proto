@@ -87,7 +87,8 @@ message AttachmentDto {
 	string mimeType;
 
 	/**
-	 * Base64-encoded file content. Present in ChatSendRequest (upload); null in persisted MessageDto.
+	 * Base64-encoded file content. Present in {@link ChatSendRequest} (upload); null in persisted
+	 * {@link MessageDto}.
 	 */
 	string base64Data;
 
@@ -444,7 +445,7 @@ message HeartbeatEvent {
  */
 message ChatSessionDto {
 	/**
-	 * Session ID (KnowledgeObject ID).
+	 * Session ID (ID of the {@link com.top_logic.knowledge.objects.KnowledgeObject}).
 	 */
 	string id;
 
@@ -464,7 +465,7 @@ message ChatSessionDto {
  */
 message ChatSessionListResponse {
 	/**
-	 * All sessions for the current user, sorted by lastUpdated descending.
+	 * All sessions for the current user, sorted by {@link ChatSessionDto#lastUpdated} descending.
 	 */
 	repeated ChatSessionDto sessions;
 }

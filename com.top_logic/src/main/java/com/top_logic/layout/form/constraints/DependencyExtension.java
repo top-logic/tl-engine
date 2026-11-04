@@ -14,7 +14,8 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
 
 /**
- * The DependencyExtension allows to establish additional dependencies for a given constraint.
+ * The {@link DependencyExtension} allows to establish additional dependencies for a given
+ * constraint.
  * 
  * The additional dependencies can reflect implizit dependencies that exist between fields
  * which are not expressed via constraints (e.g. implizit dependencies to fields which have value change listeners setting other field's values) 

@@ -26,8 +26,10 @@ import com.top_logic.mig.html.HTMLUtil;
  */
 public class IconOnlyRenderer implements Renderer<Object> {
 
+    /** Singleton {@link IconOnlyRenderer} instance that also writes a tooltip. */
     public static IconOnlyRenderer INSTANCE = new IconOnlyRenderer(true);
 
+    /** Singleton {@link IconOnlyRenderer} instance that writes no tooltip. */
     public static IconOnlyRenderer INSTANCE_NO_TOOLTIP = new IconOnlyRenderer(false);
 
     private final boolean withTooltip;

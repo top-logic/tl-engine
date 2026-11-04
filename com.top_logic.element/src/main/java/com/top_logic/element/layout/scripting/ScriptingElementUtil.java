@@ -18,18 +18,33 @@ import com.top_logic.element.structured.StructuredElementFactory;
 import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
- * Utilities for the ScriptingFramework that require classes from <code>com.top_logic.element</code>.
+ * Utilities for the scripting framework that require classes from
+ * <code>com.top_logic.element</code>.
  * 
  * @author     <a href="mailto:Jan.Stolzenburg@top-logic.com">Jan.Stolzenburg</a>
  */
 public class ScriptingElementUtil {
 
+	/**
+	 * The type with the given name defined in the structure with the given name.
+	 */
 	public static TLClass getMetaElement(String structureName, String metaElementTypeName) {
 		StructuredElementFactory structure = StructuredElementFactory.getInstanceForStructure(structureName);
 		MetaElementHolder structureRoot = (MetaElementHolder) structure.getRoot();
 		return structureRoot.getMetaElement(metaElementTypeName);
 	}
 
+	/**
+	 * All objects that reference the given object through the given attribute.
+	 * 
+	 * @param metaElement
+	 *        The type defining the attribute.
+	 * @param attributeName
+	 *        The name of the reference attribute.
+	 * @param wrapper
+	 *        The referenced object.
+	 * @return The objects referencing the given object.
+	 */
 	public static Set<Wrapper> navigateBackwards(TLClass metaElement, String attributeName, Wrapper wrapper) {
 		try {
 			TLStructuredTypePart metaAttribute = MetaElementUtil.getMetaAttribute(metaElement, attributeName);

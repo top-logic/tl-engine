@@ -12,6 +12,8 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.assistent.StepAssistantComponent;
 
 /**
+ * Assistant with two steps for security demonstrations.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class DemoSecurityAssistentController extends StepAssistantComponent {
@@ -23,10 +25,12 @@ public class DemoSecurityAssistentController extends StepAssistantComponent {
 	 */
 	public interface Config extends StepAssistantComponent.Config {
 
+		/** The component displayed in the first step. */
 		@Mandatory
 		@Name("firstStep")
 		ComponentName getFirstStep();
 
+		/** The component displayed in the second step. */
 		@Mandatory
 		@Name("secondStep")
 		ComponentName getSecondStep();

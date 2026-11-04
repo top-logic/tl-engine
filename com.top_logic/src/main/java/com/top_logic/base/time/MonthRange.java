@@ -14,7 +14,7 @@ import java.util.Locale;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * A TimeRangeIterator for Month.
+ * A {@link TimeRangeIterator} for Month.
  * 
  * @author    <a href=mailto:kha@top-logic.com>kha</a>
  */
@@ -37,14 +37,14 @@ public class MonthRange extends TimeRangeIterator {
     /**
      * Secondary Constructor to be called by the factory functions.
      * 
-     * The Internal State will be set to the interval just before aStart.
+     * The Internal State will be set to the interval just before {@code aStart}.
      *       
      * @param loc Locale to use for Formatting and for creting the internal
      *        Calendar(s)
      * @param aStart first start for the time Ranges. 
-     *         will be aligned to the very first allowed Date for the TimeRange. 
+     *         will be aligned to the very first allowed Date for the time range. 
      * @param anEnd last date for the Time Ranges, 
-     *         will be aligned to the very last allowed Date for the TimeRange. 
+     *         will be aligned to the very last allowed Date for the time range. 
      */
     @Override
 	public void init(Locale loc, Date aStart, Date anEnd) {
@@ -118,7 +118,7 @@ public class MonthRange extends TimeRangeIterator {
     }
     
     /** 
-     * Return number of month from start- to endDate (inclusive)
+     * Return number of month from start- to end date (inclusive)
      * 
      * Hope this optimization does not hit back.
      */

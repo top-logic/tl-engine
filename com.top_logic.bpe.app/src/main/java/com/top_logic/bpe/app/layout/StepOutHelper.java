@@ -39,6 +39,9 @@ public class StepOutHelper {
 		return container;
 	}
 
+	/**
+	 * Leaves the currently displayed tile by executing the step-out command on the tile root.
+	 */
 	public void stepOut(DisplayContext aContext) {
 		if (_container instanceof RootTileComponent) {
 			_handler.handleCommand(aContext, _container, null, null);

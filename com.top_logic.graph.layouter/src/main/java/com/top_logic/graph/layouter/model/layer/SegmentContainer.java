@@ -152,6 +152,8 @@ public class SegmentContainer {
 	}
 
 	/**
+	 * Setter for {@link #getSegments()}.
+	 * 
 	 * @param segments
 	 *        Segments to replace the old.
 	 */

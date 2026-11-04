@@ -18,6 +18,8 @@ import org.jfree.data.time.TimeSeriesCollection;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
+ * {@link ChartConfigurator} for time series charts.
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class TimeSeriesChartConfigurator extends XYChartConfigurator {

@@ -29,12 +29,24 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  */
 public abstract class LongestPathLayeringFinder extends LayeringFinder {
 
+	/**
+	 * The layer assigned to each node.
+	 */
 	protected Map<LayoutNode, Integer> _nodeLayerMapping = new LinkedHashMap<>();;
 
+	/**
+	 * All nodes already assigned to a layer.
+	 */
 	protected Set<LayoutNode> _allAssignedVertices = new LinkedHashSet<>();
 
+	/**
+	 * The nodes that could be assigned to the current layer.
+	 */
 	protected Set<LayoutNode> _possibleAssignableVertices = new LinkedHashSet<>();
 
+	/**
+	 * The number of the layer currently being filled.
+	 */
 	protected int _currentLayer;
 
 	/**

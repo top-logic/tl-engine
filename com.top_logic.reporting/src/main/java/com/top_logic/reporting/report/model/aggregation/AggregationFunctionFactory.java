@@ -112,6 +112,7 @@ public class AggregationFunctionFactory extends AbstractConfigurationBasedFactor
         return (AggregationFunctionConfiguration) super.createConfiguration(anImplementationClass);
     }
 	
+	/** Creates the function for the given configuration. */
 	public AggregationFunction getAggregationFunction(AggregationFunctionConfiguration aConfig) {
 		return super.createImplementation(aConfig);
     }
@@ -122,6 +123,8 @@ public class AggregationFunctionFactory extends AbstractConfigurationBasedFactor
 	}
 	
 	/**
+	 * The names of the known aggregation functions, sorted alphabetically.
+	 *
 	 * @Deprecated use {@link #getImplementationClasses(ConfigurationDescriptor)} 
 	 */
 	public List getFunctionList() {
@@ -169,6 +172,7 @@ public class AggregationFunctionFactory extends AbstractConfigurationBasedFactor
 		return null;
 	}
 
+	/** The singleton {@link AggregationFunctionFactory} instance. */
 	public static synchronized AggregationFunctionFactory getInstance() {
         if (instance == null) {
             Properties theProps = Configuration.getConfiguration(AggregationFunctionFactory.class).getProperties();

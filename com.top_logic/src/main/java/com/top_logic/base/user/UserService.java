@@ -14,6 +14,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
+ * Service for creating user objects.
+ * 
  * @deprecated noone should need this class anymore, 
  *             but its used in lots of tests and stuff We can remove it later.
  *             

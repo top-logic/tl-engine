@@ -14,7 +14,7 @@ import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * The model for a PopupDialogControl
+ * The model for a {@link PopupDialogControl}.
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */

@@ -93,7 +93,7 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION_BASE =
 		ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_BASE;
 
-    /** KA used to connect MetaElemented KO to the Wrapper KO. */
+    /** KA used to connect the knowledge object of a typed object to the referenced object. */
 	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION = ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION;
 
 	/**
@@ -313,6 +313,19 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 		return item.isInstanceOf(WRAPPER_ATTRIBUTE_ASSOCIATION_BASE);
 	}
 
+	/**
+	 * All objects that have the given value in the given attribute of the given global type.
+	 *
+	 * @param aMEType
+	 *        Name of the global type defining the attribute.
+	 * @param attributeName
+	 *        Name of the attribute.
+	 * @param aValue
+	 *        The value to search for.
+	 * @return The objects referencing the given value in the given attribute.
+	 * @throws NoSuchAttributeException
+	 *         If the type has no attribute with the given name.
+	 */
 	public static Collection getWrappersWithValueFromGlobalME(String aMEType, String attributeName, TLObject aValue)
 			throws NoSuchAttributeException {
         TLClass theME = MetaElementFactory.getInstance().getGlobalMetaElement(aMEType);
@@ -571,8 +584,8 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 	}
 
 	/**
-	 * The order of the arguments is switched compared to #hasWrappersWithValues(Wrapper, Iterable),
-	 * to solve a conflict caused by equal raw-type-signatures of these two methods.
+	 * The order of the arguments is switched compared to {@link #hasWrappersWithValues(TLObject,
+	 * Iterable)}, to solve a conflict caused by equal raw-type-signatures of these two methods.
 	 * <p>
 	 * TODO #6121: Delete TL 5.8.0 deprecation
 	 * </p>
@@ -685,10 +698,10 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 
 
     /**
-     * Get the validity state of the given ValidityCheck for the given timeout date.
+     * Get the validity state of the given {@link ValidityCheck} for the given timeout date.
      *
      * @param aValidityCheck
-     *        the ValidityCheck to use for the state computation
+     *        the {@link ValidityCheck} to use for the state computation
      * @param aTimeout
      *        the date on which the validity times out
      * @return One value out of {@link MetaElementUtil#STATE_MAP}, never <code>null</code>
@@ -722,7 +735,7 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
      * @param aMA
      *        the meta attribute to check
      * @return the next expiration date of the given attribute or <code>null</code>, if
-     *         the attribute doesn't expire (lastTouch of the attribute is INVALID_DATE /
+     *         the attribute doesn't expire (last change of the attribute is INVALID_DATE /
      *         doesn't have an active validity check
      */
     public static Date getNextTimeout(Wrapper aAttributed, TLStructuredTypePart aMA) {

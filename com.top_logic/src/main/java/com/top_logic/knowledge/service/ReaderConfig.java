@@ -15,7 +15,7 @@ import com.top_logic.knowledge.event.ItemEvent;
 
 /**
  * The {@link ReaderConfig} is a configuration of an {@link EventReader} used in
- * {@link KnowledgeBase}
+ * {@link KnowledgeBase}.
  * 
  * @see KnowledgeBase#getChangeSetReader(ReaderConfig)
  * 

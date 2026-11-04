@@ -27,7 +27,7 @@ public class DescriptionContainerControl extends ConstantControl<HTMLFragment> {
 	private String _width;
 
 	/**
-	 * Creates a DescriptionContainer.
+	 * Creates a {@link DescriptionContainerControl}.
 	 * 
 	 * @param model
 	 *        The content.
@@ -37,7 +37,7 @@ public class DescriptionContainerControl extends ConstantControl<HTMLFragment> {
 	}
 
 	/**
-	 * The CSS style to annotate to occupied descriptionContainer.
+	 * The CSS style to annotate to the occupied description container.
 	 * 
 	 * @param style
 	 *        The CSS style.
@@ -47,7 +47,7 @@ public class DescriptionContainerControl extends ConstantControl<HTMLFragment> {
 	}
 
 	/**
-	 * The CSS class(es) to annotate to occupied descriptionContainer.
+	 * The CSS class(es) to annotate to the occupied description container.
 	 * 
 	 * @param cssClass
 	 *        The CSS class(es).

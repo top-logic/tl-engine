@@ -203,6 +203,7 @@ public class SimpleTableDataExport extends AbstractConfiguredInstance<SimpleTabl
 		return getConfig().getTemplateName();
 	}
 
+	/** The path of the folder containing the export templates. */
 	protected String getRelativeTemplatePath() {
 		return "excel";
 	}

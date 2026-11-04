@@ -11,6 +11,8 @@ import com.top_logic.reporting.data.base.description.Description;
 import com.top_logic.reporting.data.base.table.AbstractTableDescriptor;
 
 /**
+ * Default implementation of {@link AbstractTableDescriptor}.
+ *
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class DefaultTableDescriptor extends AbstractTableDescriptor {

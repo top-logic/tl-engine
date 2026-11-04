@@ -183,6 +183,12 @@ public class LayoutModelProcessor extends Operation {
 		super(new SyserrProtocol(), null);
     }
 
+	/**
+	 * Processes the layouts as specified by the given command line arguments.
+	 * 
+	 * @param args
+	 *        Command line arguments, see {@link #main(String[])}.
+	 */
 	public void run(String[] args) throws IOException, XPathExpressionException {
 		// Prevent trash on the console.
 		Logger.configureStdout();
@@ -502,6 +508,9 @@ public class LayoutModelProcessor extends Operation {
 		return sorted;
 	}
 
+	/**
+	 * All values of attributes in the given layout document.
+	 */
 	protected Set<String> allAttributeValues(Document layout) {
 		HashSet<String> attributeValues = new HashSet<>();
 		
@@ -648,6 +657,11 @@ public class LayoutModelProcessor extends Operation {
 		ModuleUtil.INSTANCE.shutDownAll();
 	}
 
+	/**
+	 * The names of all available top-level layouts.
+	 * 
+	 * @see LayoutConfig#getAvailableLayouts()
+	 */
 	public static List<String> getRootLayouts() {
 		return LayoutConfig.getAvailableLayouts();
 	}
@@ -673,6 +687,9 @@ public class LayoutModelProcessor extends Operation {
 		}
 	}
 
+	/**
+	 * Prints the given layout to {@link System#out} for debugging purposes.
+	 */
 	public static void dumpLayout(ConstantLayout layout) {
 		System.out.println("=== " + layout.getLayoutName() + " ===");
 		try {

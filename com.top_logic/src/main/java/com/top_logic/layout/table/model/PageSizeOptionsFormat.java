@@ -17,8 +17,10 @@ import com.top_logic.basic.config.ConfigurationException;
  */
 public class PageSizeOptionsFormat extends AbstractConfigurationValueProvider<int[]> {
 
+	/** Serialized value of the page size option that displays all rows. */
 	public static final String ALL_VALUE = "all";
 
+	/** Singleton {@link PageSizeOptionsFormat} instance. */
 	public static final PageSizeOptionsFormat INSTANCE = new PageSizeOptionsFormat();
 
 	private PageSizeOptionsFormat() {

@@ -49,6 +49,8 @@ import com.top_logic.util.TopLogicDirContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Access to an LDAP directory service, e.g. for looking up users and the members of groups.
+ *
  * @author <a href=mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 @ServiceDependencies(SecretStoreService.Module.class)
@@ -95,6 +97,13 @@ public class LDAPAccessService {
 		@Name(ATTRIB_FILTER_NAME)
 		String getAttribFilter();
 
+		/**
+		 * Distinguished names of the groups whose members are allowed to access the application.
+		 *
+		 * <p>
+		 * If empty, users are determined by the attribute filter alone.
+		 * </p>
+		 */
 		@Name(ACCESS_GROUPS_NAME)
 		@ListBinding(attribute = "name")
 		List<String> getAccessGroups();
@@ -103,10 +112,11 @@ public class LDAPAccessService {
 		 * configure the attributes that will be queried for LDAP objects Attn: Comma separated,
 		 * without spaces. The given names must match the foreign System. If empty, all attributes
 		 * will be queried. If given, this list must be complete (also take technical requirements
-		 * into account, i.e. objectClass), other than those will not be available to the system!
+		 * into account, i.e. <code>objectClass</code>), other than those will not be available to
+		 * the system!
 		 * 
-		 * It is not possible to configure objectClass specific attribute lists. All objects will be
-		 * queried for the same attributes.
+		 * It is not possible to configure object class specific attribute lists. All objects will
+		 * be queried for the same attributes.
 		 */
 		@Format(CommaSeparatedStrings.class)
 		@Name(AVAILABLE_ATTRIBUTES_NAME)
@@ -263,8 +273,8 @@ public class LDAPAccessService {
 	 * Get the context from the LDAP.
 	 * 
 	 * If there is no context usable, the method will create a new one. The created context is a
-	 * subclass of DirContext, to avoid the connection timeout from special LDAP services (like
-	 * ADS).
+	 * subclass of {@link DirContext}, to avoid the connection timeout from special LDAP services
+	 * (like ADS).
 	 * 
 	 * @return The context to be used.
 	 * 
@@ -361,6 +371,7 @@ public class LDAPAccessService {
 		return new ServiceProviderInfo(getServiceProviderInfo());
 	}
 
+	/** The device ID. */
 	public String getDeviceID() {
 		return this.deviceID;
 	}
@@ -394,8 +405,8 @@ public class LDAPAccessService {
 	}
 
 	/**
-	 * get all members of a group either as DataObjects or just as list of their DNs (Strings)
-	 * This method automatically parses all configured groups
+	 * get all members of a group either as {@link DataObject}s or just as list of their DNs
+	 * (Strings) This method automatically parses all configured groups
 	 * @param returnDOs - flag to indicate whether to return the DOs or just the DNs
 	 * @return List of DOs or List of Strings, may be empty but not null
 	 */
@@ -494,12 +505,12 @@ public class LDAPAccessService {
 	}
 
 	/**
-	 * Get the DataObject for an entry as specified by the given DN
+	 * Get the {@link DataObject} for an entry as specified by the given DN
 	 * @param fullUserDN
 	 *            full DN of requested entry
 	 * @param useAttribFilter
 	 *            true if the tpm attribute filter should be applied, that means null is returned, if the object does not match the filter
-	 * @return the queried userDO only if this user is found to be a member of
+	 * @return the queried user {@link DataObject} only if this user is found to be a member of
 	 *         at least one of the groups configured for this device.
 	 */
 	protected DataObject getEntryByDN(String fullUserDN, boolean useAttribFilter) {
@@ -617,8 +628,8 @@ public class LDAPAccessService {
 	}
 
 	/**
-	 * Creates a DataObject out of JNDI Attributes
-	 * @return a DataObject, herby using the implementation LDAPDataObject
+	 * Creates a {@link DataObject} out of JNDI Attributes
+	 * @return a {@link DataObject}, herby using the implementation {@link LDAPDataObject}
 	 */
 	protected LDAPDataObject getLDAPDataObject(Attributes anObject) throws NamingException {
 		if (anObject == null) {
@@ -629,15 +640,15 @@ public class LDAPAccessService {
 	}
 
 	/**
-	 * Return the members of a given group - either as DNs (Strings) or DataObjects
+	 * Return the members of a given group - either as DNs (Strings) or {@link DataObject}s
 	 * 
 	 * @param groupDN     LDAP DN of the group
 	 * @param returnDOs -
 	 *            a boolean flag- true says a list of full Member DOs is
-	 *            returned, false means a List of MemberDN Strings in returned
+	 *            returned, false means a List of member DN Strings in returned
 	 * @param parsedGroups  if true nested group objects will be parsed recursively
 	 * 
-	 * @return all DNs found to be member of the group given by searchPatch and
+	 * @return all DNs found to be member of the group given by search path and
 	 *         Name (Query)
 	 * @throws NamingException
 	 *             Note: The returned DOs do already match the defined
@@ -735,9 +746,9 @@ public class LDAPAccessService {
 	}
 
 	/**
-	 * HelperMethod
+	 * Helper method splitting a DN.
 	 * @return a String Array with the ID part of the DN as first element and the
-	 * searchBase part as second
+	 * search base part as second
 	 */
 	protected String[] splitDNinIDandBase(String aDN) {
 		String[] result = new String[2];
@@ -759,7 +770,7 @@ public class LDAPAccessService {
 
 	/**
 	 * an array containing all attribute names that can be queried for any ldap objects
-	 *         (unified set ignoring the objectClass)
+	 *         (unified set ignoring the object class)
 	 */
 	protected String[] getAvailableAttributeNames() {
 		return this.availableAttrs;

@@ -18,6 +18,8 @@ import com.top_logic.layout.form.format.ColorConfigFormat;
 import com.top_logic.reporting.report.model.accessor.AccessorFactory;
 
 /**
+ * Configuration of an {@link AggregationFunction}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -27,6 +29,7 @@ public interface AggregationFunctionConfiguration extends PolymorphicConfigurati
      * Return the attribute path this function will use
      */
 	String ATTRIBUTE_PATH_NAME = "attributePath";
+    /** The path of the attribute the function computes its value from. */
     @Name(ATTRIBUTE_PATH_NAME)
     String  getAttributePath();
     
@@ -56,6 +59,7 @@ public interface AggregationFunctionConfiguration extends PolymorphicConfigurati
      */
     @BooleanDefault(true)
     boolean isLineVisible();
+    /** Setter for {@link #isLineVisible()}. */
     void    setLineVisible(boolean isVisible);
     
     /**
@@ -66,24 +70,32 @@ public interface AggregationFunctionConfiguration extends PolymorphicConfigurati
      * flag. 
      */
     String IGNORE_NULL_VALUES_PROPERTY_NAME = "ignoreNullValues";
+    /** Whether business objects with an empty attribute value are ignored. */
     @Name(IGNORE_NULL_VALUES_PROPERTY_NAME)
     boolean isIgnoreNullValues();
+    /** Setter for {@link #isIgnoreNullValues()}. */
     void    setIgnoreNullValues(boolean ignoreNullValues);
     
+    /** The divisor the result of the function is divided by. */
     @DoubleDefault(1)
     @Name("divisor")
     double getDivisor();
+    /** Setter for {@link #getDivisor()}. */
     void setDivisor(double aDivisor);
     
+    /** Algorithm accessing the attribute values of the business objects. */
     @FormattedDefault(AccessorFactory.DEFAULT_ACCESSOR)
     @Format(AccessorFactory.class)
     @Name("accessor")
     Accessor getAccessor();
+    /** Setter for {@link #getAccessor()}. */
     void setAccessor(Accessor anAccessor);
     
+    /** Whether the values of the function are accumulated over the partitions. */
     @BooleanDefault(false)
     @Name("accumulated")
     boolean isAccumulated();
+    /** Setter for {@link #isAccumulated()}. */
     void setAccumulated(boolean accumulated);
 }
 

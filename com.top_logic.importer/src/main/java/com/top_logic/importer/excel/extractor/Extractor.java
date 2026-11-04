@@ -14,13 +14,27 @@ import com.top_logic.importer.excel.transformer.Transformer;
 import com.top_logic.importer.logger.ImportLogger;
 
 /**
+ * Extracts values from the current row of an Excel import.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface Extractor {
 
+    /** Configuration options for an {@link Extractor}. */
     public interface Config extends PolymorphicConfiguration<Transformer<?>> {
 	}
 
+	/**
+	 * Extracts values from the current row of the given context.
+	 *
+	 * @param aContext
+	 *        The context positioned at the current row.
+	 * @param aParser
+	 *        The parser performing the import.
+	 * @param aLogger
+	 *        The logger for reporting problems.
+	 * @return The extracted values by their attribute name, may be {@code null}.
+	 */
 	public Map<String, Object> extract(ExcelContext aContext, AbstractExcelFileImportParser<?> aParser, ImportLogger aLogger);
 
 }

@@ -19,11 +19,16 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.form.tag.AbstractTag;
 
 /**
+ * JSP tag displaying a percentage value as text and as an image of a row of shapes.
+ * 
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 public class PercentageTag extends AbstractTag {
 
+	/** Default {@link Paint} of filled shapes. */
 	public static final Paint DEFAULT_FOREGROUND = new GradientPaint(0, 0, new Color(170, 120, 80), 0, 0, Color.WHITE);
+
+	/** Default {@link Paint} of unfilled shapes. */
 	public static final Paint DEFAULT_BACKGROUND = new GradientPaint(0, 0, Color.LIGHT_GRAY, 0, 0, Color.WHITE);
 
 	private double percentage;
@@ -134,6 +139,8 @@ public class PercentageTag extends AbstractTag {
 	}
 
 	/**
+	 * Sets the percentage value to display, a value between 0 and 1.
+	 * 
 	 * @param percentage The percentage to set.
 	 */
 	public void setPercentage(double percentage) {
@@ -141,35 +148,35 @@ public class PercentageTag extends AbstractTag {
 	}
 
 	/**
-	 * @param shapeWidth The shapeWidth to set.
+	 * Sets the width of a single shape in pixels.
 	 */
 	public void setShapeWidth(int shapeWidth) {
 		this.shapeWidth = shapeWidth;
 	}
 
 	/**
-	 * @param shapeHeight The shapeHeight to set.
+	 * Sets the height of a single shape in pixels.
 	 */
 	public void setShapeHeight(int shapeHeight) {
 		this.shapeHeight = shapeHeight;
 	}
 
 	/**
-	 * @param shapeNumber The shapeNumber to set.
+	 * Sets the number of shapes in the image.
 	 */
 	public void setShapeNumber(int shapeNumber) {
 		this.shapeNumber = shapeNumber;
 	}
 
 	/**
-	 * @param spaceWidth The spaceWidth to set.
+	 * Sets the width of the space between two shapes in pixels.
 	 */
 	public void setSpaceWidth(int spaceWidth) {
 		this.spaceWidth = spaceWidth;
 	}
 
 	/**
-	 * @param shapeForegroundPaint The shapeForegroundPaint to set.
+	 * Sets the {@link Paint} of filled shapes.
 	 */
 	public void setShapeForegroundPaint(Paint shapeForegroundPaint) {
 		if (shapeForegroundPaint instanceof Color) {
@@ -180,7 +187,7 @@ public class PercentageTag extends AbstractTag {
 	}
 
 	/**
-	 * @param shapeBackgroundPaint The shapeBackgroundPaint to set.
+	 * Sets the {@link Paint} of unfilled shapes.
 	 */
 	public void setShapeBackgroundPaint(Paint shapeBackgroundPaint) {
 		if (shapeBackgroundPaint instanceof Color) {
@@ -191,7 +198,7 @@ public class PercentageTag extends AbstractTag {
 	}
 
 	/**
-	 * @param spacePaint The spacePaint to set.
+	 * Sets the {@link Paint} of the space between two shapes.
 	 */
 	public void setSpacePaint(Paint spacePaint) {
 		this.spacePaint = spacePaint;

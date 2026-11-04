@@ -12,7 +12,7 @@ import com.top_logic.migrate.tl.util.LazyEventRewriter;
 
 /**
  * {@link LazyEventRewriter} creating a {@link SchemaCompacting}
- * {@link EventRewriter}
+ * {@link EventRewriter}.
  * 
  * @see SchemaCompacting
  * 

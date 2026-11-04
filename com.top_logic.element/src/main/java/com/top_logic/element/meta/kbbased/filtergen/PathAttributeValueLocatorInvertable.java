@@ -171,6 +171,14 @@ public class PathAttributeValueLocatorInvertable extends
 		return null;
 	}
 
+	/**
+	 * Transforms a path in the old syntax to the new syntax, where type names are qualified with
+	 * <code>me:</code>.
+	 *
+	 * @param path
+	 *        The path in old syntax.
+	 * @return The path in new syntax.
+	 */
 	public static String getNewPath(String path) {
 		StringBuilder newPath = new StringBuilder();
 		while (!StringServices.isEmpty(path)) {

@@ -16,7 +16,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.layout.MainLayout;
 
 /**
- * Base class for {@link BodyTag}s
+ * Base class for {@link BodyTag}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

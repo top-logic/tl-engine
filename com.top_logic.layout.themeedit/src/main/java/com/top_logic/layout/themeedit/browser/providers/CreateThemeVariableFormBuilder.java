@@ -47,12 +47,12 @@ public class CreateThemeVariableFormBuilder
 	public interface EditModel extends ConfigurationItem {
 		
 		/**
-		 * Name of config property getThemeSettingConfig.
+		 * Name of config property {@link #getThemeSettingConfig()}.
 		 */
 		public static final String THEME_SETTING_CONFIG = "themeSettingConfig";
 
 		/**
-		 * Selected ThemeSetting.Config to edit.
+		 * Selected {@link ThemeSetting.Config} to edit.
 		 */
 		@Name(THEME_SETTING_CONFIG)
 		@ItemDefault(IconSetting.Config.class)

@@ -48,11 +48,24 @@ import com.top_logic.util.Resources;
  */
 public class AdminElementComponent extends EditAttributedComponent {
 
+    /**
+	 * Configuration options for {@link AdminElementComponent}.
+	 */
     public interface Config extends EditAttributedComponent.Config {
+		/**
+		 * Whether the root element of the structure may be edited.
+		 */
 		@Name(AdminElementComponent.EDIT_ROOT)
 		@BooleanDefault(false)
 		boolean getEditRoot();
 
+		/**
+		 * Name of the structure whose elements are edited in this component.
+		 *
+		 * <p>
+		 * If set, only elements of this structure are accepted as model.
+		 * </p>
+		 */
 		@Name(AdminElementComponent.ELEMENT_STRUCTURE_NAME)
 		String getStructure();
 
@@ -70,13 +83,13 @@ public class AdminElementComponent extends EditAttributedComponent {
 
 	}
 
-	/** FormConstraint/input name for attribute name. */
+	/** Name of the form field for the element name. */
     public static final String ELEMENT_NAME                 = "elementName";
 
-    /** FormConstraint/input name for attribute type. */
+    /** Name of the form field for the element type. */
     public static final String ELEMENT_TYPE                 = "elementType";
 
-    /** FormConstraint/input name for attribute order. */
+    /** Name of the form field for the element order. */
     public static final String ELEMENT_ORDER 				= "elementOrder";
 
     /** Constant for the configuration for defining the name of the structure to be displayed. */
@@ -128,7 +141,7 @@ public class AdminElementComponent extends EditAttributedComponent {
     }
 
     /**
-	 * Automatically create a FormContext based on {@link TLObject} / {@link TLClass}.
+	 * Automatically create a {@link FormContext} based on {@link TLObject} / {@link TLClass}.
 	 * 
 	 * You may wish to override this to add some fixed attributes.
 	 * 
@@ -204,8 +217,8 @@ public class AdminElementComponent extends EditAttributedComponent {
     }
 
     /**
-	 * Create a "elementName" StringField with size constraints
-	 * @return the StringField
+	 * Create a "elementName" {@link StringField} with size constraints
+	 * @return the {@link StringField}
 	 */
 	protected FormMember createNameField(StructuredElement anElement, ResPrefix resPrefix) {
         StringField theField = FormFactory.newStringField(AdminElementComponent.ELEMENT_NAME, /* mandatory */ true, /* immutable */ false, new StringLengthConstraint(1, 255));
@@ -215,7 +228,7 @@ public class AdminElementComponent extends EditAttributedComponent {
     }
 
     /**
-	 * Create a type StringField with a special label provider
+	 * Create a type {@link StringField} with a special label provider
 	 * 
 	 * @return the field
 	 */
@@ -229,7 +242,7 @@ public class AdminElementComponent extends EditAttributedComponent {
     }
 
     /**
-	 * Create an order SelectField for change element sort order
+	 * Create an order {@link SelectField} for change element sort order
 	 * 
 	 * @return the field
 	 */
@@ -271,8 +284,13 @@ public class AdminElementComponent extends EditAttributedComponent {
         return (structureName);
     }
 
+    /**
+	 * {@link SwitchEditCommandHandler} that switches to edit mode only if the displayed element
+	 * is not the root element, or if editing the root element is allowed.
+	 */
     public static class StructuredElementSwitchEditCommandHandler extends SwitchEditCommandHandler {
     	
+        /** ID of this command handler. */
         public static final String COMMAND_ID = "ElementSwitchEditCommand";
         
     	public StructuredElementSwitchEditCommandHandler(InstantiationContext context, Config config) {

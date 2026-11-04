@@ -14,9 +14,10 @@ import org.jfree.data.gantt.TaskSeriesCollection;
 import com.top_logic.reporting.report.dataset.ExtendedTask;
 
 /**
- * The ExtendedTaskSeriesCollectionURLGenerator works together with the {@link TaskSeriesCollection}.
- * The {@link ExtendedTask} stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getURLFor(Object)}. This object is that from the ExtendedTask.
+ * The {@link ExtendedTaskSeriesCollectionURLGenerator} works together with the
+ * {@link TaskSeriesCollection}. The {@link ExtendedTask} stores objects (e.g. goals, risks, ...). A
+ * subclass needs only to implement this method {@link #getURLFor(Object)}. This object is that from
+ * the {@link ExtendedTask}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

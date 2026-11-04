@@ -38,7 +38,7 @@ public abstract class AbstractClassFilter<T> implements Filter<Object>{
 	 * @param anObject
 	 *        The tested object.
 	 * 
-	 * @return true when anObject is != <code>null</code>, assignable from the
+	 * @return true when {@code anObject} is != <code>null</code>, assignable from the
 	 *         {@link #testClass}, and {@link #internalAccept(Object)}
 	 *         successes.
 	 */

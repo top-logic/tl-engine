@@ -49,7 +49,9 @@ public class ObjectValuePartition implements PartitionFunction {
 	 */
 	public interface Aggregator {
 		
-		/** 
+		/**
+		 * Determines the key of the group of the given object.
+		 *
 		 * @param source the input-object to create a group-key for
 		 * @return the key to identify the group the input object should be part of
 		 */
@@ -144,7 +146,7 @@ public class ObjectValuePartition implements PartitionFunction {
 		/**
 		 * Factory method to create an initialized {@link Config}.
 		 * 
-		 * @return a new ConfigItem.
+		 * @return a new {@link Config}.
 		 */
 		public static Config item(Period period) {
 			Config item = TypedConfiguration.newConfigItem(Config.class);
@@ -155,7 +157,7 @@ public class ObjectValuePartition implements PartitionFunction {
 		/**
 		 * Factory method to create an initialized {@link TimePeriodAggregator}.
 		 * 
-		 * @return a new TimePeriodAggregator.
+		 * @return a new {@link TimePeriodAggregator}.
 		 */
 		public static TimePeriodAggregator instance(Period period) {
 			return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(item(period));
@@ -266,7 +268,7 @@ public class ObjectValuePartition implements PartitionFunction {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(String attr, Aggregator aggr) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

@@ -38,13 +38,12 @@ import com.top_logic.reporting.chart.info.swing.SwingRenderingInfo;
 import com.top_logic.reporting.chart.plot.SwingPlot;
 
 /**
- * The SwingRenderer draws swing charts with image maps (urls and tooltips).
+ * The {@link SwingRenderer} draws swing charts with image maps (urls and tooltips).
  * In the com.top_logic_reporting.chart.demo.swing are two examples how a swing 
- * chart looks like. The SwingMain class contains the code for the both examples. 
- * The SwingRenderer needs a 
- * {@link com.top_logic.reporting.chart.dataset.SwingDataset} which contains 
- * {@link com.top_logic.reporting.chart.info.swing.SwingRenderingInfo} to draw a 
- * swing chart.
+ * chart looks like. The {@link com.top_logic.reporting.chart.demo.SwingMain} class contains the
+ * code for the both examples. The {@link SwingRenderer} needs a
+ * {@link com.top_logic.reporting.chart.dataset.SwingDataset} which contains
+ * {@link com.top_logic.reporting.chart.info.swing.SwingRenderingInfo} to draw a swing chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -597,36 +596,36 @@ public class SwingRenderer extends BarRenderer {
     }
     
     /**
-     * This method returns the lineColor.
+     * This method returns the line color.
      * 
-     * @return Returns the lineColor.
+     * @return Returns the line color.
      */
     public Color getLineColor() {
         return this.lineColor;
     }
 
     /**
-     * This method sets the lineColor.
+     * This method sets the line color.
      *
-     * @param aLineColor The lineColor to set.
+     * @param aLineColor The line color to set.
      */
     public void setLineColor(Color aLineColor) {
         this.lineColor = aLineColor;
     }
     
     /**
-     * This method returns the toolTipWithAxes.
+     * This method returns the tool tip with axes.
      * 
-     * @return Returns the toolTipWithAxes.
+     * @return Returns the tool tip with axes.
      */
     public boolean isToolTipWithAxes() {
         return this.toolTipWithAxes;
     }
 
     /**
-     * This method sets the toolTipWithAxes.
+     * This method sets the tool tip with axes.
      *
-     * @param aToolTipWithAxes The toolTipWithAxes to set.
+     * @param aToolTipWithAxes The tool tip with axes to set.
      */
     public void setToolTipWithAxes(boolean aToolTipWithAxes) {
         this.toolTipWithAxes = aToolTipWithAxes;

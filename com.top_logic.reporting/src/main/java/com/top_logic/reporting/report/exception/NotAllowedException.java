@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The NotAllowedException is thrown if something is not allowed.
+ * The {@link NotAllowedException} is thrown if something is not allowed.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

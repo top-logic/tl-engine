@@ -15,6 +15,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class VisibleComponentFilter implements Filter {
 	
+	/**
+	 * Singleton {@link VisibleComponentFilter} instance.
+	 */
 	public static final VisibleComponentFilter INSTANCE = new VisibleComponentFilter();
 	
 	private VisibleComponentFilter() {

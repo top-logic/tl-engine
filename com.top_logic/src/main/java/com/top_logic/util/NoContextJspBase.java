@@ -25,12 +25,12 @@ import com.top_logic.basic.StringServices;
  */
 public abstract class NoContextJspBase extends NoContextServlet implements HttpJspPage {
 
-	/** Default, empty implementation of jspInit */
+	/** Default, empty implementation of {@link #jspInit()}. */
 	@Override
 	public void jspInit() { /* empty */
 	}
 
-	/** Default, empty implementation of jspDestroy */
+	/** Default, empty implementation of {@link #jspDestroy()}. */
 	@Override
 	public void jspDestroy() { /* empty */
 	}
@@ -44,10 +44,10 @@ public abstract class NoContextJspBase extends NoContextServlet implements HttpJ
 	}
 
 	/**
-	 * Tomcat 7 expects that JSP's derive from org.apache.jasper.runtime.HttpJspBase. This class
-	 * defines _jspInit() and _jspDestroy() which are overridden by compiled JSP's. Therefore we
-	 * must declare {@link #_jspInit()} and {@link #_jspDestroy()} to ensure that the overridden
-	 * methods in the JSPs are executed.
+	 * Tomcat 7 expects that JSP's derive from {@code org.apache.jasper.runtime.HttpJspBase}. This
+	 * class defines {@link #_jspInit()} and {@link #_jspDestroy()} which are overridden by compiled
+	 * JSP's. Therefore we must declare {@link #_jspInit()} and {@link #_jspDestroy()} to ensure
+	 * that the overridden methods in the JSPs are executed.
 	 * 
 	 * @see #_jspDestroy()
 	 */
@@ -55,7 +55,7 @@ public abstract class NoContextJspBase extends NoContextServlet implements HttpJ
 		// for JSP's compiled by Tomcat 7
 	}
 
-	/** Re-dispatch to jspDestroy() */
+	/** Re-dispatch to {@link #jspDestroy()}. */
 	@Override
 	public final void destroy() {
 		_jspDestroy();

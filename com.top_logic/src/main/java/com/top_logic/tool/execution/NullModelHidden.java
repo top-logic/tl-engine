@@ -16,6 +16,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class NullModelHidden implements ExecutabilityRule {
 
+	/** Singleton instance of {@link NullModelHidden}. */
 	public static final NullModelHidden INSTANCE = new NullModelHidden();
 	
 	/** 

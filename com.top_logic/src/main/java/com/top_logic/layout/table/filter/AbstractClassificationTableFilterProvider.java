@@ -39,10 +39,13 @@ import com.top_logic.util.TLCollator;
 import com.top_logic.util.Utils;
 
 /**
- * Abstract superclass for filters based on OrderedLists of FastListElements.
- * The standard behaviour is to render a Filter for every entry in the Ordered List.
- * The concrete classes have to define the name of the FastList and the default column, where
- * the Filter provider should be attached.
+ * Abstract superclass for filters based on the classifiers of {@link TLEnumeration}s.
+ * 
+ * <p>
+ * The standard behavior is to render a filter for every classifier of the enumerations. The
+ * concrete classes have to define the enumerations and the default column, where the filter
+ * provider should be attached.
+ * </p>
  * 
  * @author     <a href="mailto:jco@top-logic.com">jco</a>
  */
@@ -90,6 +93,7 @@ public abstract class AbstractClassificationTableFilterProvider implements Table
 		}
 	}
 
+	/** Whether the filtered cells contain multiple classifiers. */
 	protected abstract boolean isMulti();
 
 	/**
@@ -105,9 +109,12 @@ public abstract class AbstractClassificationTableFilterProvider implements Table
 	}
 
 	/**
-	 * The implementation of the builder method for the classification filter assumes that 
-	 * for every entry in the FastList a DPMTableSingleFLElementFilter is build.  
-	 * other behavior may be implemented by overwriting this method.
+	 * The implementation of the builder method for the classification filter assumes that for
+	 * every classifier of the enumerations a single element filter is built.
+	 * 
+	 * <p>
+	 * Other behavior may be implemented by overwriting this method.
+	 * </p>
 	 */
 	protected TableFilter buildClassificationFilters(TableViewModel aTableModel) {
 		// Create table filter
@@ -164,10 +171,17 @@ public abstract class AbstractClassificationTableFilterProvider implements Table
 		return TLModelNamingConvention.enumKey(classification);
 	}
 
+	/** The enumerations whose classifiers are offered as filter options. */
 	protected List<TLEnumeration> getClassificationList() {
 		return _classifications;
 	}
 
+	/**
+	 * Creates the filter option for the given classifier.
+	 *
+	 * @param currentClassification
+	 *        The classifier to filter for, {@code null} for the option matching empty cells.
+	 */
 	protected ConfiguredFilter createElementFilter(TLClassifier currentClassification) {
 		AbstractTableFLElementFilter theFEFilter = null;
 		if (isMulti()) {
@@ -222,6 +236,7 @@ public abstract class AbstractClassificationTableFilterProvider implements Table
 		}
 	}
 
+	/** {@link HistoricPattern} matching a single classifier. */
 	public static class SingleMatcher extends HistoricPattern<TLClassifier> {
 		private final ObjectReference _id;
 
@@ -246,6 +261,7 @@ public abstract class AbstractClassificationTableFilterProvider implements Table
 		}
 	}
 
+	/** {@link HistoricPattern} matching a classifier contained in a given set of classifiers. */
 	public static class MultiMatcher extends HistoricPattern<TLClassifier> {
 		private final Set<ObjectReference> _ids;
 

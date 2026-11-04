@@ -18,8 +18,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * This command handler is aware of two parameters that can be passed on client
- * side through java script. It expects that the LayoutComponent calling the
- * command is a ViewInfoComponent.
+ * side through java script. It expects that the {@link LayoutComponent} calling the
+ * command is a view info component.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */

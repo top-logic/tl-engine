@@ -22,9 +22,9 @@ import com.top_logic.tool.boundsec.wrap.Group;
 public interface BoundObject extends TLObject {
         
     /**
-     * Get the ID for this BoundObject
+     * Get the ID for this {@link BoundObject}
      * 
-     * @return the ID for this BoundObject
+     * @return the ID for this {@link BoundObject}
      *         <code>null</code> if ID could not be retrieved
      */
     public TLID getID();
@@ -32,7 +32,7 @@ public interface BoundObject extends TLObject {
     /**
      * Get the child bound objects for this bound object
      * 
-     * @return a collection of child BoundObjects, <code>null</code> 
+     * @return a collection of child {@link BoundObject}s, <code>null</code> 
      *         or empty collection in case there are no children
      */
 	public Collection<? extends BoundObject> getSecurityChildren();
@@ -60,7 +60,7 @@ public interface BoundObject extends TLObject {
      * Get the {@link com.top_logic.tool.boundsec.BoundRole}s of the given 
      * {@link com.top_logic.knowledge.wrap.person.Person} for this object.
      * 
-     * This will usually fall back to the BoundRoles of the Parent (Global Roles).
+     * This will usually fall back to the {@link BoundRole}s of the Parent (Global Roles).
      * 
      * @param aPerson The person to get the roles for
      * @return a collection of roles the given person has in/for this Object,
@@ -106,7 +106,7 @@ public interface BoundObject extends TLObject {
     /**
 	 * Get all {@link com.top_logic.tool.boundsec.BoundRole}s for this object.
 	 * 
-	 * This will usually fall back to the BoundRoles of the Parent (Global Roles).
+	 * This will usually fall back to the {@link BoundRole}s of the Parent (Global Roles).
 	 * 
 	 * @return a collection of roles for this object,
      *         <code>null</code> or empty collection in case there are no roles
@@ -116,7 +116,7 @@ public interface BoundObject extends TLObject {
     /**
      * Check if the given Person has any role ot this object.
      * 
-     * This will usually fall back to the BoundRoles of the Parent (Global Roles).
+     * This will usually fall back to the {@link BoundRole}s of the Parent (Global Roles).
      * 
      * @param aPerson The person to get the roles for
      * @return true when <code>getRoles(aPerson)</code> == null (or empty)

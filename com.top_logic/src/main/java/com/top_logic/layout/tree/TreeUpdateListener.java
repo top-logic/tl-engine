@@ -23,6 +23,9 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.util.Utils;
 
 /**
+ * Listener on a tree model and its selection that accumulates the updates required in the
+ * client-side tree display.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class TreeUpdateListener extends TreeUIUpdateAccumulator<TreeUIModel> implements Attachable, TreeModelListener, SelectionListener {
@@ -81,6 +84,7 @@ public class TreeUpdateListener extends TreeUIUpdateAccumulator<TreeUIModel> imp
 		return attached;
 	}
 
+	/** Sets the tree model to observe. */
 	public final void setModel(TreeUIModel model) {
 		if (model == null) {
 			throw new IllegalArgumentException("The given " + TreeUIModel.class.getSimpleName()+ " must not be null");
@@ -95,6 +99,7 @@ public class TreeUpdateListener extends TreeUIUpdateAccumulator<TreeUIModel> imp
 		}
 	}
 
+	/** Sets the selection model to observe. */
 	public void setSelectionModel(SelectionModel newSelectionModel) {
 		boolean wasAttached = detach();
 
@@ -238,6 +243,7 @@ public class TreeUpdateListener extends TreeUIUpdateAccumulator<TreeUIModel> imp
 		}
 	}
 
+    /** The observed tree model. */
     public TreeUIModel getModel() {
         return this.model;
     }

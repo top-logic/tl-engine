@@ -10,8 +10,8 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
 
 /**
- * Default command that will switch a Component to {EditModeAware#EDIT_MODE},
- * even if the component has no model.
+ * Default command that will switch a component to edit mode, even if the component has no
+ * model.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */

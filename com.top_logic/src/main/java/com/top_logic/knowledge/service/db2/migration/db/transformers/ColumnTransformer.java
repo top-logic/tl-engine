@@ -22,7 +22,7 @@ public class ColumnTransformer extends AbstractColumnTransformer<ColumnTransform
 	private String _oldValue;
 
 	/**
-	 * Configuration of a {@link ColumnTransformer}
+	 * Configuration of a {@link ColumnTransformer}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

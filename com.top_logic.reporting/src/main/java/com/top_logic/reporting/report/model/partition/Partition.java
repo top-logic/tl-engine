@@ -57,10 +57,10 @@ public interface Partition {
 	/**
 	 * Returns the <code>Objects</code> of this partition in form of a {@link List}. If
 	 * <code>recursive</code> is <code>true</code> it will return the
-	 * <code>Objects</code> of all subPartitions.
+	 * <code>Objects</code> of all sub partitions.
 	 * 
 	 * @param recursive
-	 *            <code>true</code> if all <code>Objects</code> of all subPartitions
+	 *            <code>true</code> if all <code>Objects</code> of all sub partitions
 	 *            shall be returned, <code>false</code> (default) otherwise.
 	 * 
 	 * @return a {@link List} of <code>Objects</code>
@@ -87,24 +87,24 @@ public interface Partition {
 	public void addSubPartitions( Collection<Partition> somePartitions ) throws IllegalStateException;
 
 	/**
-	 * Returns a {@link List} of subPartitions
+	 * Returns a {@link List} of sub partitions
 	 * 
 	 * @return a {@link List} of <code>Partitions</code>
 	 */
 	public List<Partition> getSubPartitions();
 
 	/**
-	 * Checks if this partition has subPartitions.
+	 * Checks if this partition has sub partitions.
 	 * 
-	 * @return <code>true</code> if this partition has at least one subPartition,
+	 * @return <code>true</code> if this partition has at least one sub partition,
 	 *         <code>false</code> otherwise
 	 */
 	public boolean hasSubPartitions();
 
 	/**
-	 * Checks if this partition has BusinessObjects.
+	 * Checks if this partition has business objects.
 	 * 
-	 * @return <code>true</code> if this partition has at least one BusinessObject,
+	 * @return <code>true</code> if this partition has at least one business object,
 	 *         <code>false</code> otherwise
 	 */
 	public boolean hasBusinessObjects();

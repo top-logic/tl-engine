@@ -8,6 +8,8 @@ package com.top_logic.basic.tools.layout;
 import java.util.Set;
 
 /**
+ * Constants and template selection for layout generation.
+ * 
  * @author    <a href="mailto:TEH@top-logic.com">TEH</a>
  */
 public class LayoutConstants {

@@ -45,6 +45,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  */
 public abstract class ValueNamingScheme<M> {
 
+	/** Base configuration of a name built by a {@link ValueNamingScheme}. */
 	@Abstract
 	public interface NameBase extends ConfigurationItem {
 		/**
@@ -77,6 +78,7 @@ public abstract class ValueNamingScheme<M> {
 		 */
 		interface NamePart extends ConfigurationItem {
 
+			/** Configuration name of {@link #getKey()}. */
 			String KEY_PROPERTY_NAME = "key";
 
 			/**

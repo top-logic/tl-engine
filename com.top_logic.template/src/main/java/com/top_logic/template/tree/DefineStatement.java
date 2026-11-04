@@ -46,7 +46,7 @@ public class DefineStatement extends FunctionStatement {
 	}
 
 	/**
-	 * Returns the {@link Expression} used for this ForeachStm.
+	 * Returns the {@link Expression} used for this {@link DefineStatement}.
 	 */
 	public Expression getExpression() {
 		return expression;

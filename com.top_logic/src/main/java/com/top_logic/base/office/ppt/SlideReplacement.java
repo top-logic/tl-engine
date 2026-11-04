@@ -10,7 +10,7 @@ import java.util.List;
 import com.top_logic.tool.export.AbstractOfficeExportHandler.OfficeExportValueHolder;
 
 /**
- * A simple data holder used to replace slides with a {@link SlideReplacer}
+ * A simple data holder used to replace slides with a {@link SlideReplacer}.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -20,7 +20,7 @@ public class SlideReplacement {
 	private final List<OfficeExportValueHolder> holders;
 
 	/**
-	 * Create a new SlideReplacement ...
+	 * Create a new {@link SlideReplacement} ...
 	 * 
 	 * @param aTemplateFilename
 	 *        the template file name
@@ -46,6 +46,10 @@ public class SlideReplacement {
 		return this.templateFilename;
 	}
 
+	/**
+	 * The template file name of the given value holder, falling back to
+	 * {@link #getTemplateFilename()}.
+	 */
 	public final String getTemplateFilename(OfficeExportValueHolder aHolder) {
 		if (aHolder != null && aHolder.templateFileName != null) {
 			return aHolder.templateFileName;

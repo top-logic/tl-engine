@@ -16,15 +16,15 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 
 /**
- * Dataset-builder for {@link PieDataset}
+ * Dataset-builder for {@link PieDataset}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class PieDatasetBuilder extends AbstractDatasetBuilder<PieDataset> {
 
 	/**
-	 * Enum describing options for TableOrder used when mapping a {@link CategoryDataset} to a
-	 * {@link PieDataset}.
+	 * Enum describing options for {@link TableOrder} used when mapping a {@link CategoryDataset} to
+	 * a {@link PieDataset}.
 	 */
 	public enum Order {
 

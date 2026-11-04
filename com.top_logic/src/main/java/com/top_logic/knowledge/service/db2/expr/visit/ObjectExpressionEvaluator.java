@@ -35,7 +35,7 @@ import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Revision;
 
 /**
- * BHU: This class
+ * Base class for interpreters evaluating expressions on a given context object.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -71,10 +71,16 @@ public abstract class ObjectExpressionEvaluator<EC extends ObjectExpressionEvalu
 			this(evaluationRevision, (ObjectContext) baseObject, baseObject, parameterValues);
 		}
 
+		/**
+		 * The object on which the expression is evaluated.
+		 */
 		public Object getContextObject() {
 			return contextObject;
 		}
 		
+		/**
+		 * The {@link ObjectContext} of the evaluation.
+		 */
 		public ObjectContext getObjectContext() {
 			return _objectContext;
 		}
@@ -95,15 +101,38 @@ public abstract class ObjectExpressionEvaluator<EC extends ObjectExpressionEvalu
 			return object;
 		}
 
+		/**
+		 * The values of the query parameters indexed by parameter name.
+		 */
 		protected Map<String, ?> getParameterValues() {
 			return parameterValues;
 		}
 	}
 
+	/**
+	 * Creates a context for evaluating a sub-expression on the given context object.
+	 *
+	 * @param parent
+	 *        The context of the enclosing expression.
+	 * @param contextObject
+	 *        The new context object.
+	 * @return The new context.
+	 */
 	protected EC createContext(EC parent, Object contextObject) {
 		return createContext(parent, parent.getObjectContext(), contextObject);
 	}
 
+	/**
+	 * Creates a context for evaluating a sub-expression on the given context object.
+	 *
+	 * @param parent
+	 *        The context of the enclosing expression.
+	 * @param objectContext
+	 *        The {@link ObjectContext} of the new context.
+	 * @param contextObject
+	 *        The new context object.
+	 * @return The new context.
+	 */
 	protected abstract EC createContext(EC parent, ObjectContext objectContext, Object contextObject);
 	
 	@Override

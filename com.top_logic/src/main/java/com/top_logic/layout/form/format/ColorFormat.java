@@ -201,7 +201,7 @@ public class ColorFormat extends Format {
 	}
 	
 	/** 
-	 * Returns the {@link StringBuffer} toAppendTo lenghtened by the hex code of the given color.
+	 * Returns the given {@link StringBuffer} lengthened by the hex code of the given color.
 	 * @see java.text.Format#format(java.lang.Object, java.lang.StringBuffer, java.text.FieldPosition)
 	 */
 	@Override
@@ -226,8 +226,8 @@ public class ColorFormat extends Format {
 
 	/** 
 	 * Returns the color coded by the hex code in the source beginning from the index of
-	 * the ParsePosition. If the source is to short, the errorIndex of the ParsePosition
-	 * is set to the length of the source
+	 * the {@link ParsePosition}. If the source is to short, the error index of the {@link
+	 * ParsePosition} is set to the length of the source
 	 * 
 	 * @see java.text.Format#parseObject(java.lang.String, java.text.ParsePosition)
 	 */

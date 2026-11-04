@@ -47,7 +47,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
- * Static utilities for {@link ElementAccessManager}
+ * Static utilities for {@link ElementAccessManager}.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
@@ -79,14 +79,14 @@ public class ElementAccessHelper {
     }
 
     /**
-     * Add access to the PersBoundComp using a CommandGroup for a given BoundRole.
+     * Add access to the {@link PersBoundComp} using a command group for a given {@link BoundRole}.
      *
      *
      *
-     * @param   aGroup      The CommandGroups that will require the role.
-     * @param   aRole       the BoundRole to add access for.
+     * @param   aGroup      The command group that will require the role.
+     * @param   aRole       the {@link BoundRole} to add access for.
      *
-     * @return false when an KnowledgeAssociation aRole was already attached,
+     * @return false when an {@link KnowledgeAssociation} to the given role was already attached,
      *         true indicates that you should call commit()
      */
 	public static boolean addAccessRight(TLObject aClassification, String aGroup, BoundedRole aRole) {
@@ -120,6 +120,16 @@ public class ElementAccessHelper {
 		KBUtils.deleteAllKI(ko.getOutgoingAssociations(PersBoundComp.NEEDS_ROLE));
     }
 
+	/**
+	 * Determines the access rights that are granted to the given role by the given classifier.
+	 * 
+	 * @param aClassifier
+	 *        The classifier to inspect.
+	 * @param aBO
+	 *        The role to get the access rights for.
+	 * @return The names of the command groups the given role is required for, or {@code null},
+	 *         if the access rights could not be determined.
+	 */
 	public static Collection<String> getAccessRights(TLClassifier aClassifier, BoundRole aBO) {
 		if (aClassifier == null || aBO == null || !(aBO instanceof TLObject)) {
             return Collections.emptySet();
@@ -145,10 +155,10 @@ public class ElementAccessHelper {
     }
 
     /**
-     * Get the access rights per role
+     * Get the access rights per role.
      *
-     * @return Map < BoundedRole , Set < BoundCommandGroup > >
-     *         Map < role , Set < access right > >
+     * @return Mapping of {@link BoundedRole} to the set of {@link BoundCommandGroup}s (access
+     *         rights) that require this role.
      */
 	public static Map<BoundedRole, Set<BoundCommandGroup>> getAccessRights(TLObject aClassifier) {
         Map<BoundedRole,Set<BoundCommandGroup>> theResult = new HashMap<>();
@@ -174,6 +184,13 @@ public class ElementAccessHelper {
         return theResult;
     }
 
+	/**
+	 * Index of all global classes by their name and by their qualified name.
+	 * 
+	 * <p>
+	 * A name that is used by more than one class is mapped to {@code null}.
+	 * </p>
+	 */
 	public static Map<String, TLClass> getUniqueMetaElements() {
         MetaElementFactory theMEFactory = MetaElementFactory.getInstance();
         Map<String, TLClass> theUniqueMEs = new HashMap<>();
@@ -193,6 +210,9 @@ public class ElementAccessHelper {
 		}
 	}
 
+	/**
+	 * Resolves the classifier with the given name.
+	 */
 	public static TLClassifier getClassifier(String aClassifierName) {
         return FastListElement.getElementByName(aClassifierName);
     }
@@ -240,6 +260,8 @@ public class ElementAccessHelper {
     }
 
     /**
+     * Replaces the access rights of the given classifiers.
+     * 
      * @param someClassifierRoles the classifier roles
      *              Map < String, Map < String, Collection < String > > >
      *              classifier name -> access right -> role name

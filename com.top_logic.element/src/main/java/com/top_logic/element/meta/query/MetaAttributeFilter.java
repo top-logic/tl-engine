@@ -22,7 +22,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.Utils;
 
 /**
- * Filters based on MetaAttributes.
+ * Filters based on attributes.
  *
  * @author    <a href="mailto:kbu@top-logic.com"></a>
  */
@@ -39,7 +39,7 @@ public abstract class MetaAttributeFilter extends BasicCollectionFilter {
 
 	/**
 	 * key for value Map to put in type of attribute. NOTE: ME is NOT stored! Do NOT put in ME in
-	 * getValueMap!
+	 * {@link #getValueMap()}!
 	 */
     public static final String MAP_META_ELEMENT = "_meta_element";
 
@@ -70,14 +70,17 @@ public abstract class MetaAttributeFilter extends BasicCollectionFilter {
 	}
 
 	/**
-     * This method returns the accessPath.
+     * The path to the object whose attribute is filtered, starting at the filtered object.
      *
-     * @return    Returns the accessPath.
+     * @return    The access path, may be <code>null</code>.
      */
     public String getAccessPath() {
         return (this.accessPath);
     }
 
+    /**
+     * Setter for {@link #getAccessPath()}.
+     */
     public void setAccessPath(String anAccessPath) {
         this.accessPath = anAccessPath;
     }
@@ -95,6 +98,13 @@ public abstract class MetaAttributeFilter extends BasicCollectionFilter {
 		this.setUpFromValueMap(aValueMap);
 	}
 
+	/**
+	 * The object whose attribute is filtered.
+	 *
+	 * @param anObject
+	 *        The filtered object.
+	 * @return The object reached from the given object via {@link #getAccessPath()}.
+	 */
 	protected Wrapper getBaseObject(Wrapper anObject) {
 	    if (StringServices.isEmpty(this.accessPath)) {
 	        return anObject;
@@ -132,7 +142,7 @@ public abstract class MetaAttributeFilter extends BasicCollectionFilter {
 	}
 
 	/**
-	 * Add SimpleMetaAttribute ID
+	 * Add the attribute ID.
 	 *
      * @see com.top_logic.element.meta.query.BasicCollectionFilter#getValueMap()
      */
@@ -150,7 +160,7 @@ public abstract class MetaAttributeFilter extends BasicCollectionFilter {
     }
 
     /**
-     * Get SimpleMetaAttribute ID and set SimpleMetaAttribute
+     * Get the attribute ID and set the attribute.
      *
      * @see com.top_logic.element.meta.query.BasicCollectionFilter#setUpFromValueMap(java.util.Map)
      */
@@ -199,14 +209,14 @@ public abstract class MetaAttributeFilter extends BasicCollectionFilter {
     }
 
     /**
-	 * Get an AttributeUpdate with the search value(s) of this filter.
+	 * Get an {@link AttributeUpdate} with the search value(s) of this filter.
 	 * 
 	 * @param updateContainer
 	 *        The {@link AttributeUpdateContainer} to create the {@link AttributeUpdate} in.
 	 * @param domain
 	 *        An identifier for the matched object.
 	 *
-	 * @return an AttributeUpdate with the search value(s) of this filter
+	 * @return an {@link AttributeUpdate} with the search value(s) of this filter
 	 */
 	public abstract AttributeUpdate getSearchValuesAsUpdate(AttributeUpdateContainer updateContainer,
 			TLStructuredType type, String domain);

@@ -18,7 +18,7 @@ import com.top_logic.layout.template.WithProperties;
 
 /**
  * {@link HTMLTemplateFragment} creating a tuple of an icon-label-pair and an element (e.g. a
- * descriptionBox or a fieldSet for the form editor.
+ * description box or a field set) for the form editor.
  * 
  * @see #getElement()
  * @see #getArguments()

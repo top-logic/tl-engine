@@ -17,6 +17,9 @@ import com.top_logic.dob.MetaObject;
  */
 public class ExistsFunction extends AbstractBooleanFunction {
 	
+	/**
+	 * The name of this function in the template language.
+	 */
 	public static final String FUNCTION_NAME = "exists";
 	
 

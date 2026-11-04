@@ -71,10 +71,16 @@ public interface Operator<I extends Operator.Impl<?>> extends SearchPart, Polymo
 			return builder.getRightHandSideBuilder();
 		}
 
+		/**
+		 * Builds the {@link SearchExpression} for the given right-hand side of a comparison.
+		 */
 		protected final SearchExpression buildExpression(ExpressionBuilder builder, RightHandSide value) {
 			return value.visitRightHandSide(getTransformValue(builder), null);
 		}
 
+		/**
+		 * Builds the filter function for the given {@link FilterContainer}.
+		 */
 		protected final SearchExpression filterFunction(ExpressionBuilder builder, FilterContainer filterContainer) {
 			return builder.filterFunction(filterContainer);
 		}

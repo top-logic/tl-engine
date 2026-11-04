@@ -22,7 +22,7 @@ import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * com.top_logic.element variant of {@link CompatibilityService}.
+ * Variant of {@link CompatibilityService} for the module {@code com.top_logic.element}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

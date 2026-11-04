@@ -90,6 +90,9 @@ public class ExportProgressHandler extends AbstractProgressCommandHandler {
 		super(context, config);
 	}
 
+	/**
+	 * Creates an {@link ExportProgressHandler} that prepares the download with the given handler.
+	 */
 	public static ExportProgressHandler newInstance(AbstractDownloadHandler exportHandler) {
 		ExportProgressHandler result = newInstance(ExportProgressHandler.class, null);
 		result._exportHandler = exportHandler;

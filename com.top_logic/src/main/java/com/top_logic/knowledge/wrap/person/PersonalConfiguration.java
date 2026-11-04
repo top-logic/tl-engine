@@ -138,6 +138,8 @@ public interface PersonalConfiguration extends ValueProvider {
     public static final boolean SHOW_SORT_HELP = true;
 
 	/**
+	 * The homepage stored for the given layout.
+	 *
 	 * @param layout
 	 *        The {@link MainLayout} to set homepage for.
 	 * @return The homepage formerly set. May be <code>null</code> when no homepage was set.
@@ -214,6 +216,8 @@ public interface PersonalConfiguration extends ValueProvider {
 	}
 
 	/**
+	 * Sets whether the short help is hidden.
+	 *
 	 * @param aValue
 	 *        Flag, if the short help is visible or not.
 	 */   

@@ -17,6 +17,8 @@ import com.top_logic.base.time.TimePeriod;
 import com.top_logic.basic.DateUtil;
 
 /**
+ * JFreeChart time period representing a half year of the business year.
+ *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class BYHalfYear extends BusinessYearPeriodBase {

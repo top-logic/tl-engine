@@ -19,8 +19,14 @@ import com.top_logic.util.Resources;
  */
 public class StringOptionLabelProvider implements LabelProvider {
 
+    /**
+     * The {@link Resources} used to look up the labels.
+     */
     protected Resources resource;
 
+	/**
+	 * The prefix of the resource keys used for the labels.
+	 */
 	protected ResPrefix prefix;
 
     /**

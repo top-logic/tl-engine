@@ -75,46 +75,63 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class DefaultProducerChartComponent extends AbstractFilterChartComponent implements ExportAware {
 
+    /** Configuration options for {@link DefaultProducerChartComponent}. */
     public interface Config extends AbstractFilterChartComponent.Config {
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/** The algorithm creating the chart. */
 		@Name(LAYOUT_ATTRIBUTE_PRODUCER_CLASS_NAME)
 		@Mandatory
 		@InstanceFormat
 		ChartProducer getChartProducer();
 
+		/**
+		 * Algorithm adjusting the size of the chart. By default, the chart fills the complete area
+		 * of the component.
+		 */
 		@Name(LAYOUT_ATTRIBUTE_CHART_SIZE_CLASS_NAME)
 		@InstanceFormat
 		@InstanceDefault(NoChangeManipulator.class)
 		ChartSizeManipulator getChartSizeClassName();
 
+		/**
+		 * Chart context with additional values for the export. Values of this context override
+		 * values of the context of the component.
+		 */
 		@Name(LAYOUT_ATTRIBUTE_EXPORT_CONTEXT_CLASS_NAME)
 		@InstanceFormat
 		ChartContext getExportContextClassName();
 
+		/** Whether the export button opens the chart in a new window. */
 		@Name(LAYOUT_ATTRIBUTE_EXPORT_AS_WINDOW_BUTTON)
 		@BooleanDefault(true)
 		boolean getExportAsWindowButton();
 
+		/** The ID of the export command handler. */
 		@Name(LAYOUT_ATTRIBUTE_EXPORT_HANDLER_ID)
 		String getExportHandlerId();
 
+		/** The template file for the export, relative to {@code WEB-INF/reportTemplates/}. */
 		@Name(LAYOUT_ATTRIBUTE_TEMPLATE_FILE)
 		String getTemplateFile();
 
+		/** Resource key of the name of the downloaded file, without file suffix. */
 		@Name(LAYOUT_ATTRIBUTE_DOWNLOAD_NAME_KEY)
 		@InstanceFormat
 		ResKey getDownloadNameKey();
 
+		/** The width of the exported chart image. */
 		@Name(LAYOUT_ATTRIBUTE_CHART_WIDTH)
 		@IntDefault(900)
 		int getChartWidth();
 
+		/** The height of the exported chart image. */
 		@Name(LAYOUT_ATTRIBUTE_CHART_HEIGHT)
 		@IntDefault(560)
 		int getChartHeight();
 
+		/** The background color of the exported chart image. */
 		@Name(LAYOUT_ATTRIBUTE_BG_COLOR)
 		@FormattedDefault("white")
 		@Format(ColorConfigFormat.class)
@@ -140,7 +157,7 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
     /** The attribute contains the id of the export command handler. */
     public static final String LAYOUT_ATTRIBUTE_EXPORT_HANDLER_ID         = "exportHandlerId";
     /** The attribute contains the template file (the base directory is
-     *  WEB-INF/reportTemplates/).  */
+     *  {@code WEB-INF/reportTemplates/}).  */
     public static final String LAYOUT_ATTRIBUTE_TEMPLATE_FILE             = "templateFile";
     /** The attribute contains the resource key that is used for the name 
      *  of the download file. The translation doesn't end with a file suffix (e.g. .doc).  */
@@ -162,6 +179,7 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
      *  the complete frame. The manipulator can change the dimension of the chart. 
      */
     public static final String LAYOUT_ATTRIBUTE_CHART_SIZE_CLASS_NAME     = "chartSizeClassName";
+	/** Configuration name of {@link Config#getExportAsWindowButton()}. */
 	public static final String LAYOUT_ATTRIBUTE_EXPORT_AS_WINDOW_BUTTON = "exportAsWindowButton";
 
 	private final ChartProducer chartProducer;
@@ -231,6 +249,7 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
         return createChart(getModelAsChartContext());
     }
     
+    /** Creates the chart for the given context with the configured {@link ChartProducer}. */
     protected JFreeChart createChart(ChartContext chartContext) {
     	return this.getChartProducer().produceChart(chartContext);
     }
@@ -242,6 +261,7 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
         return null;
     }
 
+    /** The algorithm creating the chart. */
     public ChartProducer getChartProducer() {
         return this.chartProducer;
     }
@@ -405,7 +425,7 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
     }
 
 	/**
-     * Returns the exportHandlerId.
+     * Returns the export handler id.
      */
     public String getExportHandlerId() {
     	return (exportHandlerId);
@@ -420,14 +440,17 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
 		return templatePath;
 	}
 
+	/** Resource key of the name of the downloaded file. */
 	public final ResKey getDownloadNameKey() {
 		return downloadNameKey;
 	}
 
+	/** The width of the exported chart image. */
 	public final int getChartWidth() {
 		return chartWidth;
 	}
 
+	/** The height of the exported chart image. */
 	public final int getChartHeight() {
 		return chartHeight;
 	}

@@ -27,6 +27,7 @@ public class JSString implements JSValue {
 		return this;
 	}
 
+	/** The string value. */
 	public String getValue() {
 	    return this.value;
 	}

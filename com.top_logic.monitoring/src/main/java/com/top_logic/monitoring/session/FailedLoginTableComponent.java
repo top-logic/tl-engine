@@ -29,7 +29,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class FailedLoginTableComponent {
 
     /**
-     * ResourceProvider to show dates inclusive timestamp.
+     * Resource provider to show dates including the time.
      */
     public static class FailedLoginDateResourceProvider extends MetaResourceProvider {
 
@@ -71,7 +71,7 @@ public class FailedLoginTableComponent {
 
 
     /**
-     * ModelBuilder searching the failed logins for the given date range.
+     * {@link ListModelBuilder} searching the failed logins for the given date range.
      */
 	public static class FailedLoginsModelBuilder implements ListModelBuilder {
 

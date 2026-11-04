@@ -25,7 +25,7 @@ import com.top_logic.basic.util.ComputationEx2;
  * This is (as of now) used to install a session context
  * in the Thread in some Servlet and to remove it when
  * the Servlet is done. This way all Classes can access 
- * the context without having a HttpSession around.
+ * the context without having a HTTP session around.
  * 
  * @author    <a href="mailto:klaus.halfmann@top-logic.com">Klaus Halfmann</a>
  */
@@ -35,14 +35,14 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	private String currentUserName;
 
 	/**
-	 * Every ThreadContext needs a default CTor.
+	 * Every {@link ThreadContext} needs a default CTor.
 	 */
     public ThreadContext () {
         super ();
     }
 
 	/**
-	 * Extract the {@link ThreadContext} from the perThread context, may return <code>null</code>.
+	 * Extract the {@link ThreadContext} from the per-thread context, may return <code>null</code>.
 	 */
     public static ThreadContext getThreadContext() {
 		if (!ThreadContextManager.Module.INSTANCE.isActive()) {

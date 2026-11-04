@@ -170,6 +170,7 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 
 	}
 
+	/** Hook for opening a dialog when executing the command. */
 	protected HandlerResult openDialog(DisplayContext aContext, LayoutComponent aComponent,
 			Map<String, Object> someArguments) {
 		return HandlerResult.DEFAULT_RESULT;

@@ -37,7 +37,7 @@ import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProvider
 @ServiceCategory.Of(AccessControlCategory.class)
 public class SecurityObjectProviderManager extends ManagedClass {
 
-	/** Prefix to denote path in SecurityObjectProvider configuration. */
+	/** Prefix to denote path in {@link SecurityObjectProvider} configuration. */
     public static final String PATH_SECURITY_OBJECT_PROVIDER = "path:";
     
 	/**

@@ -25,7 +25,8 @@ public class StartsWithFilter implements Filter {
     protected String attributeName;
     
     /** 
-     * Filter will return true when upper case value of attributeName starts with this string.
+     * Filter will return true when upper case value of {@code attributeName} starts with this
+     * string.
      * 
      * This string will always be uppercase only.
      * When null the filter will always return null.
@@ -33,7 +34,7 @@ public class StartsWithFilter implements Filter {
     protected String startsWith;
 
     /**
-     * Create a new StartsWithFilter for given anAttributeName.
+     * Create a new {@link StartsWithFilter} for given {@code anAttributeName}.
      */
     public StartsWithFilter(String anAttributeName) {
         if (anAttributeName == null) 

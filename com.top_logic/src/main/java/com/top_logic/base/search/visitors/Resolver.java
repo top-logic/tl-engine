@@ -38,14 +38,14 @@ import com.top_logic.knowledge.service.KBUtils;
  * <p>
  *  This Resolver does not care about Relevance (as stated in the documentation)
  *  since this would result in a slower and more complex implementation.
- *  By default ift will only throw a QueryException on any unsupported node.
+ *  By default ift will only throw a {@link QueryException} on any unsupported node.
  *  It implents Code for some Nodes in a generic Way. You should in any case
  *  think about optimizing them. 
  * </p>
  *   For a most basic Resolver you mus override {@link #getAllElements()}. 
  *   Top optimize you resolver you should use filters on your realm to 
  *   filter the original obejcts instead of the resultiung dataobjects.
- *   This Resolver allows you to put DataObjectFilters on the stack as
+ *   This Resolver allows you to put {@link DataObject} filters on the stack as
  *   a placeholder for the actual Set of Objects.
  * <p>
  *  For the sake of completeness it must be stated that this is a Postfix
@@ -84,7 +84,7 @@ protected void visitOrder(String anOrderBy[]) {
        // not done here
    }
 
-    /** Override to catch any QueryNode */
+    /** Override to catch any {@link QueryNode} */
     @Override
 	protected void visitQueryNode(QueryNode aNode) 
         throws QueryException
@@ -150,7 +150,7 @@ protected void visitOrder(String anOrderBy[]) {
 
     // Actual Visitor / Resolver Methods
     
-    /** Generic method to resolve an AllNode (which may be a NONE-Node, too) */
+    /** Generic method to resolve an {@link AllNode} (which may be a NONE-Node, too) */
     @Override
 	public void visitNode(AllNode all)  throws QueryException {
         Set result;
@@ -166,7 +166,7 @@ protected void visitOrder(String anOrderBy[]) {
         results.push(result);
     }
 
-    /** Generic method to visit an ExampleNode.
+    /** Generic method to visit an {@link ExampleNode}.
      *<p>
      *  Extract the Example from the method and put it eith TRUE 
      *  relevance into the resulting map.
@@ -183,10 +183,10 @@ protected void visitOrder(String anOrderBy[]) {
         results.push(result);
     }
    
-    /** Generic method to visit an UnaryOperator (!, NOT).
+    /** Generic method to visit an {@link UnaryOper} (!, NOT).
      *<p>
      *  You propably wish to optimize this since it may fall back to
-     *  the getAllElements() method.
+     *  the {@link #getAllElements()} method.
      *</p>
      */
     @Override
@@ -321,9 +321,9 @@ protected void visitOrder(String anOrderBy[]) {
         results.push(result);
     }
 
-    /** return true when the rigt DataObject Matches the Left DataObject.
+    /** return true when the rigt {@link DataObject} Matches the Left {@link DataObject}.
      *
-     * @param attrNames (cached) result from left.getAttributeNames();
+     * @param attrNames (cached) result from <code>left.getAttributeNames()</code>;
      */
     protected boolean matches(DataObject left, String attrNames[], DataObject right) {
         
@@ -411,7 +411,7 @@ protected void visitOrder(String anOrderBy[]) {
         throw new QueryException("ISDEST Query is not supported");
     }
 
-    /** Generic method to visit some BinaryOperator (AND, OR, MATCHES).
+    /** Generic method to visit some {@link BinaryOper} (AND, OR, MATCHES).
      *<p>
      *  You propably wish to optimize this to use some operations on your actual
      *  realm. 
@@ -461,7 +461,7 @@ protected void visitOrder(String anOrderBy[]) {
     }
 
     /** 
-     * Filter allElements() by the given Filter.
+     * Filter {@link #getAllElements()} by the given Filter.
      */
     protected Set doFilter(Filter filter)  
         throws QueryException {
@@ -475,7 +475,7 @@ protected void visitOrder(String anOrderBy[]) {
     }
 
     /** 
-     * Generic method to visit some BinaryFilters (=, &lt;, &gt;,&lt;=, &gt;=, c=, L.).
+     * Generic method to visit some {@link BinaryFilter}s (=, &lt;, &gt;,&lt;=, &gt;=, c=, L.).
      *<p>
      *  You propably wish to optimize this to use some filter on your actual
      *  realm. Note that in this implementation AND and OR are the
@@ -525,7 +525,7 @@ protected void visitOrder(String anOrderBy[]) {
         }
     }
 
-    /** Main resolving Method, Resolve a query for given QueryNode.
+    /** Main resolving Method, Resolve a query for given {@link QueryNode}.
      *
      * @return a Map Sorted by relevance.
      */
@@ -551,8 +551,8 @@ protected void visitOrder(String anOrderBy[]) {
     /** This comparator is needed to implement the ORDER BY Statement.
      * <p>
      *  In addition it cares for a stable sort order.
-     *  You may override this Method in case your DataObjects may
-     *  have some better/faster method than getIdentifier() to compare them.
+     *  You may override this Method in case your {@link DataObject}s may
+     *  have some better/faster method than {@link DataObject#getIdentifier()} to compare them.
      * </p>
      */
     @Override

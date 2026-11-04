@@ -19,7 +19,7 @@ import com.top_logic.reporting.flex.chart.config.chartbuilder.ChartData;
 import com.top_logic.reporting.flex.chart.config.chartbuilder.JFreeChartBuilder;
 
 /**
- * Default {@link AbstractAxisBuilder} for the domain-axis
+ * Default {@link AbstractAxisBuilder} for the domain-axis.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */

@@ -39,10 +39,10 @@ public class JSControlUtil {
 
 	/**
 	 * Calls the init method from UIService which uses the registered factory method for the given
-	 * controlType to create the client-side control.
+	 * control {@code type} to create the client-side control.
 	 *
 	 * Note: The window load event fires before the GWT scripts are loaded and completely
-	 * initialized. Therefore calls to GWT defined code must be delayed until its EntryPoint
+	 * initialized. Therefore calls to GWT defined code must be delayed until its {@code EntryPoint}
 	 * callback has been invoked.
 	 *
 	 * @param out

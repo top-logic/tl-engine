@@ -250,9 +250,10 @@ public class TagWriter extends Writer {
 		 * Within a script section.
 		 * 
 		 * <p>
-		 * In a script section, absolutely no quoting must occur, see
-		 * {@link TagWriter#beginScript()}.
+		 * In a script section, absolutely no quoting must occur.
 		 * </p>
+		 * 
+		 * @implNote See {@link TagWriter#beginScript()}.
 		 */
 		SCRIPT {
 			@Override
@@ -478,11 +479,11 @@ public class TagWriter extends Writer {
     private static final String SPACES = 
         "                                                                                ";
     
-    /** Constant to be used with endTag() */
+    /** Constant to be used with {@link #setIndent(boolean)} to enable indentation. */
     public static final boolean  DOINDENT = true;
 
 	/**
-	 * Constant to be used with #setendTag()
+	 * Constant to be used with {@link #setIndent(boolean)} to disable indentation.
 	 */
     public static final boolean  NOINDENT = ! DOINDENT;
 
@@ -571,7 +572,7 @@ public class TagWriter extends Writer {
 	 */
 	private char _nextToLastCDATAChar;
 
-    /** Helper to fetch potential encoding from aWriter */
+    /** Helper to fetch potential encoding from {@code aWriter} */
     public static String fetchEncoding(Writer aWriter) {
         if (aWriter instanceof OutputStreamWriter) {
             return ((OutputStreamWriter) aWriter).getEncoding();
@@ -580,7 +581,7 @@ public class TagWriter extends Writer {
     }
 
     /** 
-     * Create new TagWriter for the given Writer.
+     * Create new {@link TagWriter} for the given Writer.
      *
      * @param out Writer where the output will be sent to
      */
@@ -630,7 +631,7 @@ public class TagWriter extends Writer {
 	}
     
     /** 
-     * Create new TagWriter using a StringWriter.
+     * Create new {@link TagWriter} using a {@link StringWriter}.
      *
      * You may later use {@link #toString()} to retrive the data
      */
@@ -708,7 +709,7 @@ public class TagWriter extends Writer {
     /**
      * Return accumulated HTML when used with default CTor.
      *
-     * @return    default Object implemenation of toString() 
+     * @return    default Object implemenation of {@link Object#toString()} 
      *            when not created with default CTor.
      */
     @Override
@@ -1346,7 +1347,7 @@ public class TagWriter extends Writer {
     /** 
      * Begin a tag by writing &lt;tag.
      *
-     * You must call endBeginTag after writing the inner part 
+     * You must call {@link #endBeginTag()} after writing the inner part 
      *  (usually the attributes) of the tag.
      */
     public void beginBeginTag(String tag) {
@@ -1535,7 +1536,7 @@ public class TagWriter extends Writer {
 	}
 
     /** 
-     * Close the tag opened by beginBeginTag by writing &gt;
+     * Close the tag opened by {@link #beginBeginTag(String)} by writing &gt;
      */
     public void endBeginTag()  {
     	assert clearAttributes();
@@ -1547,7 +1548,7 @@ public class TagWriter extends Writer {
     }
 
 	/** 
-     * Close an empty tag opened by beginBeginTag by writing /&gt;
+     * Close an empty tag opened by {@link #beginBeginTag(String)} by writing /&gt;
      */
     public void endEmptyTag() {
     	assert clearAttributes();
@@ -1679,7 +1680,7 @@ public class TagWriter extends Writer {
 	 * @param encoding
 	 *        The encoding of the file
 	 * @throws IOException
-	 *         In case initialisation of TagWriter fails.
+	 *         In case initialisation of {@link TagWriter} fails.
 	 */
 	public static TagWriter newTagWriter(File out, String encoding) throws IOException {
 		boolean success = false;
@@ -2092,7 +2093,7 @@ public class TagWriter extends Writer {
 	}
 
 	/**
-	 * This method changes the {@link Writer} this TagWriter is based onto.
+	 * This method changes the {@link Writer} this {@link TagWriter} is based onto.
 	 * 
 	 * @param writer
 	 *            must not be <code>null</code>;

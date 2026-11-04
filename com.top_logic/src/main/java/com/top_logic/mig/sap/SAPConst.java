@@ -78,9 +78,11 @@ public final class SAPConst
 	/**
 	 * two extensions needed for the evaluation of the dataobject
 	 * returned from the sap. see sapdatasourceadaptor method:
-	 * getObjectEntry (jza)
+	 * {@code getObjectEntry} (jza)
 	 */
 	public static final String BAPI_INPUT = ".INPUT";
+	/** Suffix of the output structure of a BAPI call. */
 	public static final String BAPI_OUTPUT = ".OUTPUT";
+	/** Suffix of the return structure in the output of a BAPI call. */
 	public static final String BAPI_OUTPUT_RETURN = ".OUTPUT.BAPIRETURN";   
 }

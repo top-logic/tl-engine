@@ -36,7 +36,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 
 /**
- * Extension of AssistentComponent making it security aware.
+ * Extension of {@link AssistentComponent} making it security aware.
  *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
@@ -115,7 +115,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
     }
     
     /**
-     * Specify if a Null-Model (non BoundObject) should allow access.
+     * Specify if a Null-Model (non {@link BoundObject}) should allow access.
      * 
      * @param aCmdGroup The command group to execute.
      * @return always true here
@@ -124,6 +124,11 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
         return this.supportsInternalModel(null);
     }
     
+    /**
+     * The step components that are displayed in the progress view.
+     * 
+     * @see #firstStepWithoutProgress()
+     */
     public List getProgressRelevantChildren() {
 		List progressChilds = new ArrayList(getChildList());
 		

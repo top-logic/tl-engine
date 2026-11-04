@@ -8,7 +8,8 @@ package com.top_logic.dsa.ex;
 import com.top_logic.dsa.DatabaseAccessException;
 
 /**
- * This exception is thrown when a DataSourceAdaptor implementation doesn't support a method.
+ * This exception is thrown when a {@link com.top_logic.dsa.DataSourceAdaptor} implementation
+ * doesn't support a method.
  *
  * @author  Karsten Buch / Klaus Halfmann
  */
@@ -22,7 +23,7 @@ public class NotSupportedException extends DatabaseAccessException {
     }   
     
     /** 
-     * Construct a DatabaseAccessException from some other Exception.
+     * Construct a {@link DatabaseAccessException} from some other Exception.
      *
      * @param rootCause - original reason for the Exception
      */

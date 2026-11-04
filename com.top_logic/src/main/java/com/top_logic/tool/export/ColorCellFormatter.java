@@ -69,14 +69,14 @@ public class ColorCellFormatter implements ExcelCellFormatter {
 	}
 	
 	/**
-	 * Returns the forgroundColor.
+	 * Returns the foreground color.
 	 */
 	public Color getForgroundColor() {
 		return this.forgroundColor;
 	}
 
 	/**
-	 * Returns the backgroundColor.
+	 * Returns the background color.
 	 */
 	public Color getBackgroundColor() {
 		return this.backgroundColor;

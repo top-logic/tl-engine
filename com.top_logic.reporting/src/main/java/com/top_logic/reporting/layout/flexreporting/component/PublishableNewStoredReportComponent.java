@@ -43,6 +43,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
+ * Dialog component creating a new {@link StoredReport} that can be published to user groups.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 @Deprecated
@@ -122,16 +124,19 @@ public class PublishableNewStoredReportComponent extends AbstractCreateComponent
 //		return false;
 	}
     
+	/** Command creating a new {@link StoredReport} from the current report configuration. */
 	public static class PublishableNewStoredReportCommandHandler extends NewExpressionCommand {
 
 
-		/** The name to be used for creating the new StoredReport. */
+		/** The name to be used for creating the new {@link StoredReport}. */
 		public static final int		NAME_LENGTH		 = 40;
 
 		/** The ID of this command handler. */
 		public static final String	COMMAND_ID		 = "publishabelNewStoredReport";
 
+	    /** Name of the field holding the name of the new report. */
 	    public static final String  NAME_ATTRIBUTE   = "name";
+	    /** Name of the argument holding the report configuration. */
 	    public static final String  REPORT_ATTRIBUTE = "report";
 
 		/**

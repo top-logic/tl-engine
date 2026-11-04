@@ -72,35 +72,47 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 
 /**
- * Base class for {@link FormContext} implementations of a OptionTreeSelector view.
+ * Base class for {@link FormContext} implementations of a view selecting options from a tree.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class TreeSelectorContext extends FormContext implements DynamicRecordable {
 
+	/** Name of the selector context. */
 	public static final String CONTEXT_NAME = "selector";
 	
+	/** Name of the field displaying the options. */
 	public static final String OPTIONS_FIELD_NAME = "options";
+	/** Name of the field displaying the selection. */
 	public static final String SELECTION_FIELD_NAME = "selection";
 
+	/** Name of the field for entering a filter pattern. */
 	public static final String PATTERN_FIELD_NAME = "pattern";
 
 	private static final String MOVE_OPTION_CSS_CLASS = "moveOption";
+	/** Name of the command removing the selected entries from the selection. */
 	public static final String REMOVE_FROM_SELECTION = "removeFromSelection";
+	/** Name of the command removing all entries from the selection. */
 	public static final String REMOVE_ALL_FROM_SELECTION = "removeAllFromSelection";
 
+	/** Name of the command adding the selected options to the selection. */
 	public static final String ADD_TO_SELECTION = "addToSelection";
+	/** Name of the command adding all options to the selection. */
 	public static final String ADD_ALL_TO_SELECTION = "addAllToSelection";
 	
 	private static final String ACCEPT_ON_ENTER_MEMBER = "acceptMember";
 	
+	/** Name of the field displaying the title. */
 	public static final String TITLE_FIELD_NAME = "titleFieldName";
 	
+	/** {@link LabelProvider} for the options. */
 	protected final LabelProvider optionLabels;
 	
 	private final boolean multiSelect;
 	
+	/** The field displaying the options as tree. */
 	protected TreeField optionTree;
+	/** The field displaying the selection. */
 	protected ListField selectionList;
 
 	private StringField pattern;
@@ -245,6 +257,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		return cancelButton;
 	}
 
+	/** Creates the members of this context. */
 	@SuppressWarnings("unchecked")
 	protected void init() {
 		final Filter<Object> selectableOptionsFilter = getSelectableOptionsFilter(targetSelectField);
@@ -435,20 +448,30 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		return FilterFactory.and(fixedOptions, FilterFactory.or(validOptions, selectedOptions));
 	}
 	
+	/** Whether multiple options can be selected. */
 	public final boolean isMultiSelect() {
 		return multiSelect;
 	}
 	
+	/** The field displaying the options as tree. */
 	public TreeField getOptionTree() {
 		return optionTree;
 	}
 
+	/**
+	 * The field displaying the selection.
+	 *
+	 * <p>
+	 * Must only be called in multiple selection.
+	 * </p>
+	 */
 	public ListField getSelection() {
 		assert multiSelect : 
 			"In single selection, the selected options handled by the selection model of the options list.";
 		return selectionList;
 	}
 	
+	/** Adds the given options to the selection. */
 	public void addSelection(List<Object> delta) {
 		
 		unregisterSelectionListeners();
@@ -479,6 +502,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		updateButtonsState();
 	}
 
+	/** Removes the given options from the selection. */
 	public void removeSelection(List<Object> delta) {
 		
 		unregisterSelectionListeners();
@@ -506,6 +530,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		updateButtonsState();
 	}
 	
+	/** Adds all selectable options to the selection. */
 	@SuppressWarnings("unchecked")
 	public void addAllToSelection() {
 		TreeUIModel model = optionTree.getTreeModel();
@@ -540,6 +565,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		}
 	}
 	
+	/** Removes all entries from the selection. */
 	public void removeAllFromSelection() {
 		
 		unregisterSelectionListeners();
@@ -567,6 +593,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		updateButtonsState();
 	}
 	
+	/** The command accepting the selection. */
 	public CommandModel getAcceptCommand() {
 		return (CommandField) getButtons().getMember(SelectorContext.ACCEPT_SELECTION);
 	}
@@ -640,6 +667,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		return !getSelectField().hasValue() || changed;
 	}
 
+	/** The field whose selection is edited. */
 	public SelectField getSelectField() {
 		return targetSelectField;
 	}

@@ -22,6 +22,8 @@ import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.util.Zipper;
 
 /**
+ * {@link CellStreamWriter} writing each table to a CSV file and zipping all files.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ZippedCSVWriter extends AbstractCellStreamWriter {
@@ -34,6 +36,7 @@ public class ZippedCSVWriter extends AbstractCellStreamWriter {
 		tables = new Files(expectedTableCount);
 	}
 
+	/** The stream the current CSV file is written to. */
 	protected Writer getCurrentStream() {
 		return currentStream;
 	}

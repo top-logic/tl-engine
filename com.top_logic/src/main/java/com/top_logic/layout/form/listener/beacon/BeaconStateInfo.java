@@ -22,7 +22,7 @@ public class BeaconStateInfo implements BeaconStateConstants {
 	private Collection formFields;
 
 	/**
-	 * Creates a new BeaconStateInfo.
+	 * Creates a new {@link BeaconStateInfo}.
 	 * 
 	 * @param state
 	 *            A beacon state (see constants).
@@ -47,7 +47,7 @@ public class BeaconStateInfo implements BeaconStateConstants {
 	}
 
 	/**
-	 * Returns the formFields.
+	 * The {@link FormField}s affected by the beacon state.
 	 */
 	public Collection getFormFields() {
 		return this.formFields;

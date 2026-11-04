@@ -9,7 +9,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.contact.layout.ContactApplyHandler;
 
 /**
- * ContactApplyHandler with restricted write command group.
+ * {@link ContactApplyHandler} with restricted write command group.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

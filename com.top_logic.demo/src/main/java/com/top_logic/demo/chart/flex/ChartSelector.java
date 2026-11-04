@@ -51,8 +51,10 @@ import com.top_logic.reporting.flex.search.chart.SearchResultChartConfig;
  */
 public class ChartSelector extends FormComponent implements Selectable {
 
+	/** Name of the field selecting the chart to display. */
 	public static final String CHARTS_FIELD = "charts";
 
+	/** Name of the field displaying the chart configuration content. */
 	public static final String CONTENT_FIELD = "content";
 
 	/**

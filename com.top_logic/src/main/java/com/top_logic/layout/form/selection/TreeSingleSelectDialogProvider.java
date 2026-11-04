@@ -12,7 +12,7 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.ControlProvider;
 
 /**
- * A {@link ControlProvider} used for tree dialogs, which allow single selections
+ * A {@link ControlProvider} used for tree dialogs, which allow single selections.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

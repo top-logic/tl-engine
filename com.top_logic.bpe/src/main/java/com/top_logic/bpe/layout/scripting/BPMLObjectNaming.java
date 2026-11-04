@@ -31,6 +31,9 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 
 /**
+ * Global naming scheme for BPML model elements based on the path of names from the
+ * collaboration to the element.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class BPMLObjectNaming extends AbstractGlobalModelNamingScheme<Named, BPMLObjectNaming.BPMLObjectName> {
@@ -60,6 +63,14 @@ public class BPMLObjectNaming extends AbstractGlobalModelNamingScheme<Named, BPM
 		name.setNodePath(path);
 	}
 
+	/**
+	 * Adds the names of the given element and all its containers to the front of the given path.
+	 *
+	 * @param path
+	 *         The path to add the names to.
+	 * @param model
+	 *         The element to build the path for.
+	 */
 	public static void buildPath(List<String> path, Named model) {
 		String name = model.getName();
 		if (StringServices.isEmpty(name)) {

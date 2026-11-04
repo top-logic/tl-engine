@@ -16,6 +16,8 @@ import com.top_logic.layout.inspector.model.nodes.InspectorTreeNode;
 public class InspectorNodeAccessor {
 
 	/**
+	 * {@link ReadOnlyAccessor} retrieving the static type of an {@link InspectorTreeNode}.
+	 * 
 	 * @see InspectorTreeNode#staticType()
 	 */
 	public static class StaticType extends ReadOnlyAccessor<InspectorTreeNode> {
@@ -26,6 +28,8 @@ public class InspectorNodeAccessor {
 	}
 
 	/**
+	 * {@link ReadOnlyAccessor} retrieving the visibility of an {@link InspectorTreeNode}.
+	 * 
 	 * @see InspectorTreeNode#visibility()
 	 */
 	public static class Visibility extends ReadOnlyAccessor<InspectorTreeNode> {
@@ -36,6 +40,8 @@ public class InspectorNodeAccessor {
 	}
 
 	/**
+	 * {@link ReadOnlyAccessor} retrieving whether an {@link InspectorTreeNode} is static.
+	 * 
 	 * @see InspectorTreeNode#isStatic()
 	 */
 	public static class IsStatic extends ReadOnlyAccessor<InspectorTreeNode> {

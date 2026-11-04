@@ -10,7 +10,7 @@ import com.top_logic.knowledge.wrap.unit.Unit;
 import com.top_logic.layout.ResPrefix;
 
 /**
- * A LabelProvider for UnitWrappers that knows about Currencies.
+ * A {@link com.top_logic.layout.LabelProvider} for units that knows about currencies.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -20,7 +20,8 @@ public class UnitLabelProvider extends ResourcedLabelProvider {
 	public static final ResPrefix I18N_PREFIX = ResPrefix.legacyString(Unit.DISPLAY_NAME_ATTRIBUTE_KEY + '.');
 
 	/** 
-     * Creates a new UnitLabelProvider based on WrapperResourceProvider and prefix "unit.".
+     * Creates a new {@link UnitLabelProvider} based on {@link WrapperResourceProvider} and prefix
+     * "unit.".
      */
     public UnitLabelProvider() {
 		super(WrapperResourceProvider.INSTANCE, I18N_PREFIX);

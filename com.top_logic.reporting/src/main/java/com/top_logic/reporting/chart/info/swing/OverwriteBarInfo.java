@@ -8,7 +8,8 @@ package com.top_logic.reporting.chart.info.swing;
 import java.awt.Color;
 
 /**
- * The OverwriteBarInfo displays a bar overlapping an other bar or over an part of an other bar.
+ * The {@link OverwriteBarInfo} displays a bar overlapping an other bar or over an part of an other
+ * bar.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

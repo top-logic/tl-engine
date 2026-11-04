@@ -115,8 +115,8 @@ public class POIExcelUtil {
 	 * 
 	 * <p>
 	 * The algorithm goes through all header cells (which are contained in the interval
-	 * [aBounds.getFirstColumn(), aBounds.getLastColumn()]) considering potentially merged cells as
-	 * well.
+	 * <code>[bounds.getFirstColumn(), bounds.getLastColumn()]</code>) considering potentially
+	 * merged cells as well.
 	 * </p>
 	 * 
 	 * @param cell
@@ -174,7 +174,8 @@ public class POIExcelUtil {
 	 * 
 	 * <p>
 	 * The algorithm goes through all rows (which are contained in the interval
-	 * [aBounds.getFirstRow(), aBounds.getLastRow()]) considering potentially merged cells as well.
+	 * <code>[bounds.getFirstRow(), bounds.getLastRow()]</code>) considering potentially merged
+	 * cells as well.
 	 * </p>
 	 * 
 	 * @param cell
@@ -452,8 +453,8 @@ public class POIExcelUtil {
 	 *        appropriate excel cell values
 	 * @param maxColumnsPerRow
 	 *        max number of columns to export in one row. If more columns have to be exported the
-	 *        table will be split into chunks of maxColumnsPerRow columns that are exported below
-	 *        each other
+	 *        table will be split into chunks of {@code maxColumnsPerRow} columns that are exported
+	 *        below each other
 	 * @return the number of rows actually written
 	 */
 	public static int exportTable(final TableModel table, final Set<String> ignoredColumnNames,
@@ -486,7 +487,8 @@ public class POIExcelUtil {
 	 *        the {@link POICellValueProvider} which will convert the column (header) names.
 	 * @param maxColumnsPerRow
 	 *        max number of columns to export in one row. If more columns have to be exported the
-	 *        table will be split into chunks of maxCol columns that are exported below each other
+	 *        table will be split into chunks of {@code maxColumnsPerRow} columns that are exported
+	 *        below each other
 	 * @return the number of rows actually written
 	 */
 	public static int exportTable(final TableModel table, final Set<String> ignoredColumnNames,

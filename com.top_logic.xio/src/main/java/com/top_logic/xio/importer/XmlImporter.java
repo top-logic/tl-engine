@@ -38,7 +38,7 @@ import com.top_logic.xio.importer.handlers.DispatchingImporter;
 import com.top_logic.xio.importer.handlers.Handler;
 
 /**
- * Configured importer for BPML
+ * Configured importer for BPML.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -6,7 +6,7 @@
 package com.top_logic.layout.dynamic;
 
 /**
- * Marker interface to make dynamic layout containers
+ * Marker interface to make dynamic layout containers.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */

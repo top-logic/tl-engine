@@ -10,7 +10,7 @@ import com.top_logic.graph.layouter.model.comparator.ConnectedBottomNodePortComp
 import com.top_logic.graph.layouter.model.comparator.ConnectedTopNodePortComparator;
 
 /**
- * Default NodePortOrder which order ports by their horizontal coordinate.
+ * Default {@link NodePortOrderer} which orders ports by their horizontal coordinate.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

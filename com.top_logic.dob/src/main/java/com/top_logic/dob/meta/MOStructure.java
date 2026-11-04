@@ -15,7 +15,7 @@ import com.top_logic.dob.sql.DBTableMetaObject;
 
 
 /**
- * This MetaObject defines a structure (like a struct found in C).
+ * This {@link MetaObject} defines a structure (like a struct found in C).
  *
  * @author  <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

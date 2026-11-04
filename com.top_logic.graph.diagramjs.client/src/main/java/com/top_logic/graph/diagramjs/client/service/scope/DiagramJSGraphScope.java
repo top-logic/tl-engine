@@ -14,7 +14,7 @@ import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSGraphModel;
 
 /**
- * Binding of a DiagramJS graph object to a {@link GraphModel} implemented by
+ * Binding of a diagram-js graph object to a {@link GraphModel} implemented by
  * {@link DefaultSharedObject}s for synchronization over a network.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
@@ -36,7 +36,7 @@ public class DiagramJSGraphScope extends ObjectScope {
 	}
 
 	/**
-	 * the graphModel
+	 * The graph model bound to the diagram-js graph.
 	 */
 	public DiagramJSGraphModel getGraphModel() {
 		return _graphModel;

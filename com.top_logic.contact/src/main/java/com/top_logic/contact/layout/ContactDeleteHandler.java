@@ -29,7 +29,7 @@ public class ContactDeleteHandler extends AbstractDeleteCommandHandler {
     }
 
     /** 
-     * We can focus on the super type AttributedWrapper. 
+     * We can focus on the super type of all attributed objects.
      * @see AbstractDeleteCommandHandler#deleteObject(LayoutComponent, java.lang.Object, Map)
      */
     @Override

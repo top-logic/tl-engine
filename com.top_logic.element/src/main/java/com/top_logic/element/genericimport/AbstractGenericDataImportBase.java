@@ -11,6 +11,9 @@ import com.top_logic.basic.Logger;
 import com.top_logic.element.genericimport.interfaces.GenericDataImportConfigurationAware;
 
 /**
+ * Base class for components of a generic import that keep a reference to their
+ * {@link GenericDataImportConfiguration}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public abstract class AbstractGenericDataImportBase implements GenericDataImportConfigurationAware {
@@ -43,6 +46,17 @@ public abstract class AbstractGenericDataImportBase implements GenericDataImport
         return false;
     }
     
+    /**
+     * Checks whether the given import configuration can be used by this component.
+     *
+     * @param aConfig
+     *        The configuration to check.
+     * @param anInternalType
+     *        The internal type this component is responsible for, may be {@code null}.
+     * @return Whether the configuration is accepted.
+     * @throws Exception
+     *         If checking the configuration fails.
+     */
     protected boolean checkImportConfiguration(GenericDataImportConfiguration aConfig, String anInternalType) throws Exception {
         return true;
     }

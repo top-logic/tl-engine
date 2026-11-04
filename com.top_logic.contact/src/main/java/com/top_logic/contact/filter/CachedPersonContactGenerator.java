@@ -14,7 +14,7 @@ import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
 
 /**
- * Cache the result (PersonContacts)
+ * Cache the result ({@link com.top_logic.contact.business.PersonContact}s).
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */

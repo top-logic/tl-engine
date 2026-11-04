@@ -13,7 +13,7 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentJournalSupport;
 
 /**
- * DownloadHandler with journaling facility
+ * {@link DownloadHandler} with journaling facility.
  * 
  * @author    <a href="mailto:tri@top-logic.com>Thomas Richter</a>
  */

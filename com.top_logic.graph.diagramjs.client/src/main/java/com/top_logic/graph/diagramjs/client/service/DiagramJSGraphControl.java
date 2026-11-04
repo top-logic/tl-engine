@@ -71,7 +71,7 @@ import com.top_logic.graph.diagramjs.client.service.scope.DiagramJSGraphScope;
 import com.top_logic.graph.diagramjs.client.service.scope.listener.DefaultGraphScopeListener;
 
 /**
- * {@link JSControl} for a diagramJS graph display.
+ * {@link JSControl} for a diagram-js graph display.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

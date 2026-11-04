@@ -24,6 +24,8 @@ import com.top_logic.knowledge.journal.MessageJournalAttributeEntry;
 import com.top_logic.knowledge.journal.MessageJournalResultAttributeEntry;
 
 /**
+ * {@link JournalPersistancyHandler} for {@link MessageJournalAttributeEntry}s.
+ *
  * @author    <a href=mailto:tsa@top-logic.com>Theo Sattttteller</a>
  */
 public class MessageJournalPersistancyHandler implements

@@ -23,7 +23,7 @@ public interface ProgressInfo extends Stoppable {
 	/**
 	 * Default Factor used by implementations when checking there alive state.
 	 * 
-	 * When a ProgressInfo was not called for a time longer than STOP_IF_NOT_ALIVE_FACTOR *
+	 * When a {@link ProgressInfo} was not called for a time longer than STOP_IF_NOT_ALIVE_FACTOR *
 	 * {@link #getRefreshSeconds()} it can automatically stop (assuming the Task should run only
 	 * when observed).
 	 * 
@@ -44,7 +44,7 @@ public interface ProgressInfo extends Stoppable {
     /** Total number of things (bytes, objects, ...) expected */ 
     public long getExpected();
 
-    /** actual number of things (bytes, objects, ...) expected [0..getExpected()] */ 
+    /** actual number of things (bytes, objects, ...) expected [0..{@link #getExpected()}] */ 
     public long getCurrent();
 
     /** get Progress as percentage in the range [0.0 .. 100.0] */ 

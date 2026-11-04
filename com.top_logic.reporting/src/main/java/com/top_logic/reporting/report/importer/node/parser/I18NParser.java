@@ -17,6 +17,8 @@ import com.top_logic.reporting.report.model.ReportConfiguration;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
+ * Parser for the {@code i18n} tag.
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  * @deprecated use {@link ReportReader} and {@link ReportConfiguration}
  */

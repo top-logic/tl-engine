@@ -42,7 +42,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * <p>
  * Initially, the root-level (all direct children of the tree's root node) are displayed. If the
- * clicked node is a leaf node, it is selected in the #getSelectionModel()}.
+ * clicked node is a leaf node, it is selected in the {@link #getLeafSelectionModel()}.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

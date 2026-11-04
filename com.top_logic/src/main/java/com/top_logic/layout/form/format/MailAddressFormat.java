@@ -16,7 +16,7 @@ import com.top_logic.layout.form.model.DescriptiveParsePosition;
 import com.top_logic.util.Resources;
 
 /**
- * The MailAddressFormat is a concrete class for parsing e-mail addresses.
+ * The {@link MailAddressFormat} is a concrete class for parsing e-mail addresses.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -6,7 +6,7 @@
 package com.top_logic.graph.common.model;
 
 /**
- * A modification event in a {@link GraphModel}
+ * A modification event in a {@link GraphModel}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

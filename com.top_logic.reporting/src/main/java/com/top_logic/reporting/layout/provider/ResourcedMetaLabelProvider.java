@@ -17,6 +17,8 @@ import com.top_logic.reporting.layout.flexreporting.component.ChartConfiguration
 import com.top_logic.util.Resources;
 
 /**
+ * {@link LabelProvider} translating the names of attributes of a {@link TLClass}.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 @Deprecated

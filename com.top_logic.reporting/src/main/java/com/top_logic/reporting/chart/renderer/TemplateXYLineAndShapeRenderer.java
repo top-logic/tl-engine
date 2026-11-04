@@ -21,6 +21,9 @@ import org.jfree.chart.util.ShapeUtils;
 import org.jfree.data.xy.XYDataset;
 
 /**
+ * {@link XYLineAndShapeRenderer} that draws the items with shapes from an
+ * {@link ItemShapeProvider}.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class TemplateXYLineAndShapeRenderer extends XYLineAndShapeRenderer {
@@ -137,6 +140,11 @@ public class TemplateXYLineAndShapeRenderer extends XYLineAndShapeRenderer {
 		}
 	}
 
+	/**
+	 * The shape of the item in the given row and column.
+	 *
+	 * @return The image from the {@link ItemShapeProvider}, or the default shape of the item.
+	 */
 	public Object getShape(int row, int column) {
 		if(this.shapeProvider.useImage(row, column)) {
 			return this.shapeProvider.getShape(row, column);
@@ -148,54 +156,54 @@ public class TemplateXYLineAndShapeRenderer extends XYLineAndShapeRenderer {
     
     
     /**
-     * This method returns the shapeGradientValue.
+     * This method returns the shape gradient value.
      * 
-     * @return Returns the shapeGradientValue.
+     * @return Returns the shape gradient value.
      */
     public int getShapeGradientValue() {
         return this.shapeGradientValue;
     }
     
     /**
-     * This method sets the shapeGradientValue.
+     * This method sets the shape gradient value.
      *
-     * @param aShapeGradientValue The shapeGradientValue to set.
+     * @param aShapeGradientValue The shape gradient value to set.
      */
     public void setShapeGradientValue(int aShapeGradientValue) {
         this.shapeGradientValue = aShapeGradientValue;
     }
 
     /**
-     * This method returns the shapeMargin.
+     * This method returns the shape margin.
      * 
-     * @return Returns the shapeMargin.
+     * @return Returns the shape margin.
      */
     public double getShapeMargin() {
         return this.shapeMargin;
     }
 
     /**
-     * This method sets the shapeMargin.
+     * This method sets the shape margin.
      *
-     * @param aShapeMargin The shapeMargin to set.
+     * @param aShapeMargin The shape margin to set.
      */
     public void setShapeMargin(double aShapeMargin) {
         this.shapeMargin = aShapeMargin;
     }
 
     /**
-     * This method returns the shapeMinSize.
+     * This method returns the shape min size.
      * 
-     * @return Returns the shapeMinSize.
+     * @return Returns the shape min size.
      */
     public int getShapeMinSize() {
         return this.shapeMinSize;
     }
 
     /**
-     * This method sets the shapeMinSize.
+     * This method sets the shape min size.
      *
-     * @param aShapeMinSize The shapeMinSize to set.
+     * @param aShapeMinSize The shape min size to set.
      */
     public void setShapeMinSize(int aShapeMinSize) {
         this.shapeMinSize = aShapeMinSize;

@@ -27,19 +27,24 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * The class {@link DemoFormulaTables} is the underlying component to show tables in formulas
+ * The class {@link DemoFormulaTables} is the underlying component to show tables in formulas.
  * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DemoFormulaTables extends DummyEditComponent {
 
+	/** Name of the field showing a table whose content is not sorted on replacement. */
 	public static final String FIELD_REPLACE_NO_SORT = "replaceNoSort";
+	/** Name of the field showing a sortable selection table whose content is not replaced. */
 	public static final String FIELD_SELECT_SORT_NO_REPLACE = "selectSortNoReplace";
 
+	/** Name of the table field with hidden selection. */
 	public static final String TABLE_HIDDEN_SELECT = "tableHiddenSelect";
 
+	/** Name of the table field with excluded selection. */
 	public static final String TABLE_EXCLUDED_SELECT = "tableExcludedSelect";
 
+	/** Name of the table field. */
 	public static final String FIELD_TABLE = "tableField";
 
 	public DemoFormulaTables(InstantiationContext context, Config someAttrs) throws ConfigurationException {

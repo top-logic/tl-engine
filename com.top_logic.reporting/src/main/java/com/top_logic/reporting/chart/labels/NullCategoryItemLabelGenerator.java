@@ -11,6 +11,8 @@ import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.data.category.CategoryDataset;
 
 /**
+ * {@link StandardCategoryItemLabelGenerator} that creates an empty label for missing values.
+ *
  * @author     <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
 public class NullCategoryItemLabelGenerator extends StandardCategoryItemLabelGenerator {

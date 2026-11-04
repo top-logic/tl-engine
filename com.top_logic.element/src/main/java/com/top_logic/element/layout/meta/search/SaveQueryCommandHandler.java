@@ -23,10 +23,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
 
 /**
+ * Command saving the current search input to the selected search query.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class SaveQueryCommandHandler extends SaveExpressionCommand {
 
+	/** Command ID under which the {@link SaveQueryCommandHandler} is registered. */
     public static final String COMMAND_ID = "saveAttributedQuery";
 
     public SaveQueryCommandHandler(InstantiationContext context, Config config) {

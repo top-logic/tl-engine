@@ -117,11 +117,13 @@ public class TextFileView extends ConstantControl<File> implements ContentHandle
 		out.flushBuffer();
 	}
 
+	/** Writes the title of the page. */
 	protected void writeTitle(TagWriter out, String fileName) throws IOException {
 		out.writeText("Log File: ");
 		out.writeText(fileName);
 	}
 
+	/** Writes the style sheet references of the page. */
 	protected void writeStyleSheets(DisplayContext context, TagWriter out) throws IOException {
 		String contextPath = context.getContextPath();
 		out.beginBeginTag(LINK);
@@ -131,6 +133,7 @@ public class TextFileView extends ConstantControl<File> implements ContentHandle
 		out.endEmptyTag();
 	}
 
+	/** Writes the heading of the page displaying the given file. */
 	protected void writeHeading(TagWriter out, File file, String fileName) throws IOException {
 		out.beginBeginTag(PARAGRAPH);
 		out.endBeginTag();
@@ -142,6 +145,7 @@ public class TextFileView extends ConstantControl<File> implements ContentHandle
 		out.endTag(PARAGRAPH);
 	}
 
+	/** Writes the content of the given file. */
 	protected void writeContent(TagWriter out, File file) throws IOException, FileNotFoundException {
 		out.beginTag(PRE);
 		{

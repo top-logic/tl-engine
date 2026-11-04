@@ -37,7 +37,7 @@ public abstract class ListPartition {
      *   
 	 * @param aList the list that should to be partitioned. This list has to be ordered.
 	 * @param aPartionSize the expected size of a part. 
-	 * @return a list of NamedIntervall.
+	 * @return a list of {@link NamedIntervall}.
 	 */
 	public List partition(List aList, int aPartionSize){
         List theNamedIntervallList = new ArrayList(30);
@@ -71,7 +71,7 @@ public abstract class ListPartition {
 	}
 	
 	/**
-	 * Create a new NamedIntervall and add it to a list of NamedIntervall.
+	 * Create a new {@link NamedIntervall} and add it to a list of {@link NamedIntervall}.
 	 * 
 	 * @param aList
 	 *        a list that is partitioned.

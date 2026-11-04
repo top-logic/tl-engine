@@ -23,6 +23,9 @@ public class CommaSeparatedEnum<T extends Enum<T>> extends ListConfigValueProvid
 	private static final char SEPARATOR_CHAR = ',';
 	private static final String SEPARATOR = String.valueOf(SEPARATOR_CHAR);
 
+	/**
+	 * The type of the enumeration values.
+	 */
 	protected final Class<T> _enumType;
 
 	/**

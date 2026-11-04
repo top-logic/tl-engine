@@ -52,6 +52,7 @@ public class PopupSelectTag extends AbstractFormFieldControlTag {
 	 */
     public static final String PARAM_TARGET_COMPONENT = "component";
 
+    /** Key under which the popup configuration is stored. */
     public static final Object POPUP_CONFIG_KEY = new NamedConstant("POPUP_CONFIG_KEY");
 
 	/**
@@ -59,8 +60,11 @@ public class PopupSelectTag extends AbstractFormFieldControlTag {
 	 */
 	public static final int NO_COLUMNS = 0;
 
+    /** Whether auto-completion is offered for the text input. */
     public final BooleanAttribute autoCompletion  = new BooleanAttribute(true);
+    /** Whether an input field for entering the selection as text is displayed. */
     public final BooleanAttribute inputField      = new BooleanAttribute(true);
+    /** Whether a button for clearing the selection is displayed. */
     public final BooleanAttribute clearButton     = new BooleanAttribute(true);
 
 	private int columns = NO_COLUMNS;
@@ -69,14 +73,17 @@ public class PopupSelectTag extends AbstractFormFieldControlTag {
     
     // Setters
     
+    /** Setter for {@link #clearButton}. */
     public void setClearButton(String hasClearButton) {
         this.clearButton.set(hasClearButton);
     }
     
+    /** Setter for {@link #inputField}. */
     public void setInputField(String hasInputField) {
     	this.inputField.set(hasInputField);
     }
 
+    /** Setter for {@link #autoCompletion}. */
     public void setAutoCompletion(String useAutoCompletion) {
     	this.autoCompletion.set(useAutoCompletion);
     }
@@ -90,6 +97,7 @@ public class PopupSelectTag extends AbstractFormFieldControlTag {
 		this.columns = value;
     }
 
+	/** Sets the {@link Renderer} for the options. */
 	public void setRenderer(Renderer<?> anOptionRenderer) {
 		this.optionRenderer = anOptionRenderer.generic();
     }

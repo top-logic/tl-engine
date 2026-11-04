@@ -22,9 +22,10 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import com.top_logic.basic.io.FileUtilities;
 
 /**
- * Manager for creating a KeyEntry in a KeyStore 
+ * Manager for creating a key entry in a {@link KeyStore} 
  * from existing certificates and a private key.
  * 
+ * <pre>
  * PREREQUISITES: Steps you have to perform to get a valid certificate from Deutsche Telekom AG
  *	1. Create a private key (if you don't have one already) [use -idea|-des|-des3 cmd line option to generate encrypted keys]
  *		openssl genrsa -out privkey.pem 1024
@@ -61,17 +62,18 @@ import com.top_logic.basic.io.FileUtilities;
  * 		 openssl req -new -outform PEM -out certreq_www.pem -key privkey_www.pem
  *    c) Sign the certificate for the server with the root CA certificate
  * 		 openssl x509 -req -days 3650 -in certreq_www.pem -extensions v3_usr -CA cacert_root_bos.crt -CAkey privkey_root_bos.pem -CAcreateserial -out cert_www.crt
- *    d) Convert the server private key for importing with the KeyEntryManager
+ *    d) Convert the server private key for importing with the {@link KeyEntryManager}
  * 		 openssl pkcs8 -topk8 -outform DER -in privkey_www.pem -out privkey_www.key -nocrypt -v1 PBE-SHA1-DES
  * 
- * REMARK: Steps I performed to create a KeyEntry for the NewsServer:
+ * REMARK: Steps I performed to create a key entry for the NewsServer:
  *	1. Import the certificates user/ca/root.crt [the certificate chain, e.g. B&amp;P->Telekom CA->GTE Root] with the java keytool:
  *	   	keytool -import -v -trustcacerts -file %user/ca/root%.crt -keystore %aKeyStoreFileName% -alias %aUserCrtAlias/aCACrtAlias/aRootAlias%
- *  2. Convert the PrivateKey (privkey.pem) into DER-encoded PKCS#8 format (privkey.key) whith openssl:
+ *  2. Convert the {@link PrivateKey} (privkey.pem) into DER-encoded PKCS#8 format (privkey.key)
+ *  whith openssl:
  *	   	openssl pkcs8 -topk8 -outform DER -in privkey.pem -out privkey.key -nocrypt -v1 PBE-SHA1-DES
- *  3. Use this KeyEntryManager to create a new KeyStore with a KeyEntry that
+ *  3. Use this {@link KeyEntryManager} to create a new {@link KeyStore} with a key entry that
  *     contains the certificate and the private key:
- *		KeyEntryManager theKEM = new KeyEntryManager ();
+ *		{@link KeyEntryManager} theKEM = new {@link KeyEntryManager} ();
  *		theKEM.importKeyEntry (new FileInputStream (%aKeyStoreFileName%),
  *							   %aKeyStorePassword%.toCharArray (),
  *							   new String[]  {%aUserCrtAlias%, %aCACrtAlias%, %aRootAlias%},
@@ -80,6 +82,7 @@ import com.top_logic.basic.io.FileUtilities;
  *							   %aKeyEntryPassword%.toCharArray (),
  *							   new FileOutputStream (%aNewKeyStoreFileName%),
  *							   %aNewKeyStorePassword%.toCharArray ());
+ * </pre>
  *
  * REMARK2:
  *  The recommended way to generate your keystore is with {@link com.top_logic.base.security.util.CertificateManager}
@@ -91,17 +94,23 @@ public class KeyEntryManager  {
 	private static final char[] DEFAULT_PASSWORD = "changeit".toCharArray();
 	
 	/**
-	 * Add a KeyEntry with a given Key and Certificates already in the KeyStore
+	 * Add a key entry with a given Key and Certificates already in the {@link KeyStore}
 	 *
-	 * @param	aKeyStore				InputStream from which the KeyStore (JKS format) is loaded
-	 * @param	aKeyStorePassword		the password protecting the KeyStore, null for DEFAULT_PASSWORD
+	 * @param	aKeyStore				{@link InputStream} from which the {@link KeyStore} (JKS
+	 *        format) is loaded
+	 * @param	aKeyStorePassword		the password protecting the {@link KeyStore}, null for
+	 *        DEFAULT_PASSWORD
 	 * @param	aCertificateNames		Alias names under which the Certificates forming a
-	 *									CertificateChain are known in the KeyStore
-	 * @param	aKey					InputStream from which the DER-encoded PKCS#8-encoded RSA PrivateKey can be read
-	 * @param	anAlias					alias name for the created KeyEntry
-	 * @param	aKeyEntryPassword		the password to protect the KeyEntry, null for DEFAULT_PASSWORD
-	 * @param	aNewKeyStore			OutputStream to which the modified KeyStore will be written
-	 * @param	aNewKeyStorePassword	the password to protect the new KeyStore, null for DEFAULT_PASSWORD
+	 *									certificate chain are known in the {@link KeyStore}
+	 * @param	aKey					{@link InputStream} from which the DER-encoded
+	 *        PKCS#8-encoded RSA {@link PrivateKey} can be read
+	 * @param	anAlias					alias name for the created key entry
+	 * @param	aKeyEntryPassword		the password to protect the key entry, null for
+	 *        DEFAULT_PASSWORD
+	 * @param	aNewKeyStore			{@link OutputStream} to which the modified {@link KeyStore}
+	 *        will be written
+	 * @param	aNewKeyStorePassword	the password to protect the new {@link KeyStore}, null for
+	 *        DEFAULT_PASSWORD
 	 * @return  true, if everything worked, false otherwise
 	 */
 	public boolean importKeyEntry (InputStream aKeyStore,
@@ -212,18 +221,20 @@ public class KeyEntryManager  {
 
 	/**
 	 * TODO KBU make this work via command line!!!
-	 * Use this method to extend a KeyStore with a given certificate with a KeyEntry
+	 * Use this method to extend a {@link KeyStore} with a given certificate with a key entry
 	 * (Certificate/Key pair needed to communicate via SSL with a web server, e.g. Tomcat).
 	 * For prerequisites and general process cf. class documentation above.
 	 * The method accepts the following parameters:
+	 * <pre>
 	 *		-keystorefile		path to the Java keystore file containing the certificate
 	 *		-keystorepass		password for keystore
-	 *		-certalias			alias(es) of the imported certificate (chain) used for creating the KeyEntry
+	 *		-certalias			alias(es) of the imported certificate (chain) for the key entry
 	 *		-keyfile			path to the key file with which the certificate is encrypted
-	 *		-keyentryalias		alias for the KeyEntry in the keystore
-	 *		-keyentrypass		password for the KeyEntry
+	 *		-keyentryalias		alias for the key entry in the keystore
+	 *		-keyentrypass		password for the key entry
 	 *		-newkeystorefile	path to new keystore file (must be different from old one!!!)
 	 *		-newkeystorepass	password for new keystore (DEFAULT_KEY if not specified)
+	 * </pre>
 	 *
 	 * @param aParams the cmd line args (not used currently)
 	 */

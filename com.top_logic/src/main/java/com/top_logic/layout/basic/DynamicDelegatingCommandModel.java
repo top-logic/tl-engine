@@ -14,7 +14,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * {@link DynamicCommandModel} delegating its operative aspect to a simple {@link Command}.
  * 
- * @see DelegatingCommandModel CommandModel for Executable that have constant executability.
+ * <p>
+ * For {@link Command}s that have constant executability, use {@link DelegatingCommandModel}.
+ * </p>
+ * 
+ * @see DelegatingCommandModel
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

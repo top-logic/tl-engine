@@ -37,14 +37,14 @@ public class ExcelLocalLink extends CellSizeFormular {
 	}
 
 	/**
-	 * Returns the sheetName.
+	 * Returns the name of the target sheet.
 	 */
 	public String getSheetName() {
 		return this.sheetName;
 	}
 
 	/**
-	 * Returns the cellName.
+	 * Returns the name of the target cell.
 	 */
 	public String getCellName() {
 		return this.cellName;

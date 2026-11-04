@@ -15,7 +15,7 @@ import org.jfree.chart.block.BlockFrame;
 import org.jfree.chart.title.LegendTitle;
 
 /**
- * The LegendWithDimension stores during the writing process the
+ * The {@link LegendWithDimension} stores during the writing process the
  * width and height of the legend.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

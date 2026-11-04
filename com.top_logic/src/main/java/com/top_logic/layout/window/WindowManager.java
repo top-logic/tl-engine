@@ -69,7 +69,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Management of external windows.
  * 
  * <p>
- * The {@link WindowComponent} cares (via onUnload()) for the other side of the
+ * The {@link WindowComponent} cares (via {@code onUnload()}) for the other side of the
  * (JS-based) communication.
  * </p>
  * 
@@ -372,6 +372,17 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 		}
 	}
 
+	/**
+	 * Opens the window defined by the {@link WindowTemplate} with the given name.
+	 * 
+	 * @param opener
+	 *        The component defining the {@link WindowTemplate}.
+	 * @param templateName
+	 *        Name of the {@link WindowTemplate} of the opener.
+	 * @return The opened window.
+	 * 
+	 * @see #openWindow(DisplayContext, LayoutComponent, WindowTemplate)
+	 */
 	public WindowComponent openWindow(DisplayContext context, LayoutComponent opener, String templateName) {
 		// Get the window template.
 		WindowTemplate template = (WindowTemplate) opener.getWindowTemplate(templateName);
@@ -379,6 +390,20 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 		return openWindow(context, opener, template);
 	}
 
+	/**
+	 * Opens a window defined by the given {@link WindowTemplate}.
+	 * 
+	 * <p>
+	 * If the template does not allow multiple windows and its window is already open, the
+	 * existing window is reused.
+	 * </p>
+	 * 
+	 * @param opener
+	 *        The component that opens the window.
+	 * @param template
+	 *        The definition of the window to open.
+	 * @return The opened window.
+	 */
 	public WindowComponent openWindow(DisplayContext context, LayoutComponent opener, WindowTemplate template) {
 		// Check WindowInfo, if window does reuse existing window.
 
@@ -723,7 +748,7 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	/**
 	 * Appends a reference to come from the window of the document represented by the {@link #_frame
 	 * frame scope} to the window to the document represented by the top level frame scope of the
-	 * given {@link WindowScope} if the windowScope was opened by this {@link WindowManager}.
+	 * given {@link WindowScope} if the window scope was opened by this {@link WindowManager}.
 	 * 
 	 * <p>
 	 * If the given {@link WindowScope} is not the scope of a {@link WindowComponent} opened by this
@@ -777,6 +802,9 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 	public static class OnCloseWindow extends AJAXCommandHandler {
 
 		private static final String NAME_PARAM = "name";
+		/**
+		 * Name of the {@link OnCloseWindow} command.
+		 */
 		public static final String COMMAND_ID = "onWindowClose";
 
 		/**
@@ -827,10 +855,21 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 		return null;
 	}
 	
+	/**
+	 * Writes the JavaScript that must be executed when the main window is unloaded.
+	 */
 	public void writeInOnUnload(DisplayContext context, TagWriter out) throws IOException {
 		HTMLUtil.writeJavaScriptContent(out, "winCloseDelayed(" + WINDOW_CLOSE_TIMEOUT + ");");
 	}
 
+	/**
+	 * Writes the JavaScript that must be executed when the main window is loaded.
+	 * 
+	 * <p>
+	 * The written script closes windows that have been closed on the server and reconnects to
+	 * all open windows.
+	 * </p>
+	 */
 	public void writeInOnload(DisplayContext context, TagWriter out) throws IOException {
 
 		for (int n = 0, cnt = closedWindows.size(); n < cnt; n++) {
@@ -871,6 +910,15 @@ public class WindowManager extends WindowRegistry<WindowHandler> {
 		HTMLUtil.writeJavaScriptContent(out, "winStopClosing();");
 	}
 
+	/**
+	 * Opens the window defined by the global {@link WindowTemplate} with the given name.
+	 * 
+	 * @param opener
+	 *        The component that opens the window.
+	 * @param windowName
+	 *        Name of the {@link WindowTemplate} defined in the global window container.
+	 * @return The opened window.
+	 */
 	public static WindowComponent openGlobalWindow(DisplayContext context, LayoutComponent opener, String windowName) {
 		MainLayout mainLayout = opener.getMainLayout();
 		LayoutComponent globalWindows = mainLayout.getComponentByName(GLOBAL_WINDOW_CONTAINER_NAME);

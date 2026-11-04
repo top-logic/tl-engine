@@ -35,6 +35,12 @@ public interface LayoutConstants {
     public static final String ATTRIBUTE_SUPRESS_HTML_FRAMEWORK =
         "com.top_logic.mig.html.layout.LayoutConstants.ATTRIBUTE_SUPRESS_HTML_FRAMEWORK";
     
+	/**
+	 * Display context property signaling that only the contents of a component are to be written,
+	 * without the surrounding HTML document framework.
+	 * 
+	 * @see #ATTRIBUTE_SUPRESS_HTML_FRAMEWORK
+	 */
 	public static final Property<Boolean> ATTRIBUTE_CONTENTS_ONLY = TypedAnnotatable.property(Boolean.class,
 		"com.top_logic.mig.html.layout.LayoutConstants.ATTRIBUTE_CONTENTS_ONLY", false);
         
@@ -76,7 +82,7 @@ public interface LayoutConstants {
     public static final String PARAM_READ_ONLY_VALUE = "true";
     
     /**
-     * The name of the parameter indicating which LayoutComponent to use. Used
+     * The name of the parameter indicating which {@link LayoutComponent} to use. Used
      * in forms and links.
      */
     public static final String PARAM_LAYOUT = "LAYOUT";

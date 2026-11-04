@@ -29,12 +29,21 @@ public class DataProcessor {
 
 	private static DataProcessor singleton;
 
+	/**
+	 * Processing range for {@link #applyOperator(ReportTable, Operator, int)}: Each row is
+	 * processed.
+	 */
 	public static final int ROWS		= 0;
+	/**
+	 * Processing range for {@link #applyOperator(ReportTable, Operator, int)}: Each column is
+	 * processed.
+	 */
 	public static final int COLUMNS	= 1;
 
     /** private for singleton pattern */
 	private DataProcessor() { /* private for singleton pattern */ }
 	
+	/** The singleton {@link DataProcessor} instance. */
 	public synchronized static DataProcessor getInstance(){
 		if(singleton == null){
 			singleton = new DataProcessor();
@@ -42,10 +51,18 @@ public class DataProcessor {
 		return singleton;
 	}
 
+	/** Transforms the given table with the given {@link TableTransformator}. */
 	public ReportTable applyTransformator(ReportTable aTable, TableTransformator aTransformator){
 		return aTransformator.transform(aTable);	 
 	}
 
+	/**
+	 * Applies the given {@link Operator} to each row or each column of the given table.
+	 *
+	 * @param processingRange
+	 *        Either {@link #ROWS} or {@link #COLUMNS}.
+	 * @return A table with the results of the operator.
+	 */
 	public ReportTable applyOperator(ReportTable aTable, Operator anOperator, int processingRange){
 		List theValueTable = aTable.getTableData();
 		List theResultData = new ArrayList();

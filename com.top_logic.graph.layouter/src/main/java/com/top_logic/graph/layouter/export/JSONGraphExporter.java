@@ -12,6 +12,8 @@ package com.top_logic.graph.layouter.export;
  */
 public interface JSONGraphExporter<G> {
 	/**
+	 * Exports the given graph as JSON.
+	 * 
 	 * @param graph
 	 *        Graph object.
 	 * @return JSON raw data format of the given graph.

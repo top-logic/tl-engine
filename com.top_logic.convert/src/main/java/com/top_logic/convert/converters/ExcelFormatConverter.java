@@ -21,6 +21,7 @@ import com.top_logic.convert.ConverterMapping;
  */
 public class ExcelFormatConverter extends AbstractStringBasedConverter {
 
+    /** The MIME type supported by this converter. */
     public static final String EXCEL_MIMETYPE = "application/vnd.ms-excel";
     
     /**

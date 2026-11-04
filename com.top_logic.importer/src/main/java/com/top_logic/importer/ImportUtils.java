@@ -25,6 +25,7 @@ import com.top_logic.importer.logger.PlainMessageLogger;
  */
 public class ImportUtils {
 
+    /** Singleton {@link ImportUtils} instance. */
     public static final ImportUtils INSTANCE = new ImportUtils();
 
     /**
@@ -51,6 +52,13 @@ public class ImportUtils {
 		return theHost;
 	}
 
+	/**
+	 * Combines the given loggers into a {@link MultiLogger}.
+	 *
+	 * <p>
+	 * If one of the loggers already is a {@link MultiLogger}, the other one is added to it.
+	 * </p>
+	 */
 	public MultiLogger merge(ImportLogger aLogger1, ImportLogger aLogger2) {
 	    if ((aLogger1 == null) || (aLogger2 == null)) {
 	        throw new IllegalArgumentException("Given logger must not be null"
@@ -78,30 +86,37 @@ public class ImportUtils {
 	    }
 	}
 
+	/** The {@link FirstLastLogger} contained in the given logger, or {@code null}. */
 	public FirstLastLogger getFirstLastLogger(ImportLogger logger) {
         return getLogger(logger, FirstLastLogger.class);
     }
 
+	/** The {@link BufferLogger} contained in the given logger, or {@code null}. */
 	public BufferLogger getBufferLogger(ImportLogger logger) {
 	    return getLogger(logger, BufferLogger.class);
 	}
     
+    /** The {@link HasAnyErrorLogger} contained in the given logger, or {@code null}. */
     public HasAnyErrorLogger getHasAnyErrorLogger(ImportLogger logger) {
         return getLogger(logger, HasAnyErrorLogger.class);
     }
 
+    /** The {@link MultiLogger} contained in the given logger, or {@code null}. */
     public MultiLogger getMultiLogger(ImportLogger logger) {
         return getLogger(logger, MultiLogger.class);
     }
 
+    /** The {@link FileLogger} contained in the given logger, or {@code null}. */
     public FileLogger getFileLogger(ImportLogger logger) {
         return getLogger(logger, FileLogger.class);
     }
 
+    /** The {@link ImportMessageLogger} contained in the given logger, or {@code null}. */
     public ImportMessageLogger getImportMessageLogger(ImportLogger logger) {
         return getLogger(logger, ImportMessageLogger.class);
     }
 
+    /** The {@link PlainMessageLogger} contained in the given logger, or {@code null}. */
     public PlainMessageLogger getPlainMessageLogger(ImportLogger logger) {
         return getLogger(logger, PlainMessageLogger.class);
     }

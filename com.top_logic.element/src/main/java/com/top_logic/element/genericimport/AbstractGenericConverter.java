@@ -17,6 +17,9 @@ import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 
 /**
+ * Base class for {@link GenericConverter}s that map the imported columns to attributes
+ * according to the column-attribute mappings of the {@link GenericDataImportConfiguration}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public abstract class AbstractGenericConverter extends AbstractGenericDataImportBase implements GenericConverter {
@@ -44,9 +47,8 @@ public abstract class AbstractGenericConverter extends AbstractGenericDataImport
      * @param aDO               The source values as they were read from file.
      * @param aCache            The cache of imported objects.
      * @return Returns a new {@link GenericValueMap} with values converted according
-     * to the configured mapping. If convertReferences is false this will contain
-     * only mapped simple types, if convertReferences is true is will contain those
-     * Wrappers that the foreign key was pointing to.
+     * to the configured mapping. Values of reference attributes are converted by the
+     * mapping functions, e.g. to the objects the foreign keys point to.
      */
     @Override
 	public GenericValueMap convert(GenericValueMap aDO, GenericCache aCache) throws DataObjectException {
@@ -84,7 +86,7 @@ public abstract class AbstractGenericConverter extends AbstractGenericDataImport
     }
     
     /** 
-     * This method delegates to the actual provided GenericConverterFunction object.
+     * This method delegates to the actual provided {@link GenericConverterFunction} object.
      * 
      * @param anObject  The object to map.
      * @param aFuntion  The mapping function to use.
@@ -110,16 +112,22 @@ public abstract class AbstractGenericConverter extends AbstractGenericDataImport
      */
     protected abstract void postConvert(GenericValueMap aSource, GenericValueMap aResult, GenericCache aCache) throws DataObjectException;
     
+    /**
+     * The internal type of the objects this converter is responsible for.
+     */
     protected final String getType() {
         return this.type;
     }
     
+    /**
+     * The function used for columns without a configured mapping function.
+     */
     protected GenericConverterFunction getDefaultMappingFuncion() {
         return DEFAULT_MAPPING;
     }
     
     /**
-     * The WrappedMapping wraps a single mapping instance and delegates the mapping
+     * The {@link WrappedMapping} wraps a single mapping instance and delegates the mapping
      * function to that instance.
      * 
      * @author    <a href=mailto:TEH@top-logic.com>TEH</a>

@@ -45,7 +45,7 @@ public class URLUtilities {
     
     /**
      * Return the Symbol that is used to concat an URL Parameter to an URL
-     * @param anURLBuffer a StringBuffer to append to.
+     * @param anURLBuffer a {@link StringBuffer} to append to.
      * @return the Symbol
      */
     public static char getConcatSymbol (StringBuffer anURLBuffer) {

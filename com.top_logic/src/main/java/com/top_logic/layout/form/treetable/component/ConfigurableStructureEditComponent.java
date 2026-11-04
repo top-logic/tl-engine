@@ -24,11 +24,14 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class ConfigurableStructureEditComponent<N extends MutableTLTreeNode<N>> extends StructureEditComponent<N> {
 
+	/** Configuration options for {@link ConfigurableStructureEditComponent}. */
 	public interface Config extends StructureEditComponent.Config {
 
+		/** The {@link ModelBuilder} creating the displayed tree. */
 		@Name(TREE_MODEL_BUILDER_ELEMENT)
 		PolymorphicConfiguration<? extends ModelBuilder> getTreeModelBuilder();
 
+		/** The {@link NodeGroupInitializer} creating the fields for the columns of a tree node. */
 		@Name(NODE_GROUP_INITIALIZER_ELEMENT)
 		@InstanceFormat
 		NodeGroupInitializer getNodeGroupInitializer();

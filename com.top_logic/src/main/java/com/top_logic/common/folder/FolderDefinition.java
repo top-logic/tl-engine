@@ -10,7 +10,7 @@ import java.util.Collection;
 import com.top_logic.basic.Named;
 
 /**
- * Represents a folder
+ * Represents a folder.
  * 
  * @author <a href="mailto:fma@top-logic.com">fma</a>
  */

@@ -410,6 +410,10 @@ public abstract class AbstractCommandHandler implements CommandHandler {
     }
     
     // TODO KBU SEC CHECK intermediate code to make DisplayRenderer work with new security
+    /**
+     * Key in the command arguments under which an explicit {@link BoundObject} can be passed on
+     * which the security is checked.
+     */
     public static final String BOUND_OBJECT = "_bound_object_";
     
 	/**
@@ -550,6 +554,12 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		}
 	}
 
+	/**
+	 * The {@link CheckScopeProvider} of the given command.
+	 * 
+	 * @return {@link NoCheckScopeProvider#INSTANCE}, if the given command is no
+	 *         {@link CommandHandler}.
+	 */
 	public static CheckScopeProvider getCheckScopeProvider(BoundCommand command) {
 		if (command instanceof CommandHandler) {
 			return ((CommandHandler) command).checkScopeProvider();
@@ -557,14 +567,34 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		return NoCheckScopeProvider.INSTANCE;
 	}
 
+	/**
+	 * Creates a {@link CommandHandler} of the given class with default configuration.
+	 * 
+	 * @param handlerClass
+	 *        The class of the handler to create.
+	 * @param commandId
+	 *        The command ID of the new handler.
+	 * @see #createConfig(Class, String)
+	 */
 	public static <T extends CommandHandler> T newInstance(Class<T> handlerClass, String commandId) {
 		return newInstance(createConfig(handlerClass, commandId));
 	}
 
+	/**
+	 * Instantiates the {@link CommandHandler} described by the given configuration.
+	 */
 	public static <T extends CommandHandler> T newInstance(CommandHandler.Config config) {
 		return (T) getInstance(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 	}
 
+	/**
+	 * Creates a new configuration for a {@link CommandHandler} of the given class.
+	 * 
+	 * @param handlerClass
+	 *        The implementation class of the handler.
+	 * @param commandId
+	 *        The command ID to set.
+	 */
 	public static <C extends CommandHandler.Config> C createConfig(Class<? extends CommandHandler> handlerClass,
 			String commandId) {
 		try {
@@ -598,10 +628,21 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		return update(config, Config.GROUP_PROPERTY, reference);
 	}
 
+	/**
+	 * Sets {@link CommandHandler.Config#getImage()} to the given value in the given config.
+	 * 
+	 * @return The given configuration, returned for convenience.
+	 */
 	public static <C extends CommandHandler.Config> C updateImage(C config, ThemeImage value) {
 		return update(config, Config.IMAGE_PROPERTY, value);
 	}
 
+	/**
+	 * Sets {@link CommandHandler.Config#getDisabledImage()} to the given value in the given
+	 * config.
+	 * 
+	 * @return The given configuration, returned for convenience.
+	 */
 	public static <C extends CommandHandler.Config> C updateDisabledImage(C config, ThemeImage value) {
 		return update(config, Config.DISABLED_IMAGE_PROPERTY, value);
 	}

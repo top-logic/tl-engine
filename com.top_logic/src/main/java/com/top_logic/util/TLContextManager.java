@@ -44,6 +44,7 @@ public class TLContextManager extends ThreadContextManager {
 		super(context, configuration);
 	}
 
+	/** The {@link TLContextManager} of the application. */
 	public static TLContextManager getManager() {
 		return (TLContextManager) ThreadContextManager.getManager();
 	}
@@ -146,6 +147,9 @@ public class TLContextManager extends ThreadContextManager {
 		}
 	}
 
+	/**
+	 * Creates a new {@link TLInteractionContext} using the application's {@link TLContextManager}.
+	 */
 	protected static TLInteractionContext newInteraction() {
 		return getManager().newInteractionInternal();
 	}
@@ -200,11 +204,30 @@ public class TLContextManager extends ThreadContextManager {
 		return (TLInteractionContext) super.getInteractionInternal();
 	}
 
+	/**
+	 * Executes the given job with the given session context installed in the display context of
+	 * the given request.
+	 *
+	 * @param sessionContext
+	 *        The session context to use while executing the job.
+	 * @param servlet
+	 *        The current servlet context.
+	 * @param req
+	 *        The current request.
+	 * @param resp
+	 *        The current response.
+	 * @param job
+	 *        The job to execute.
+	 */
 	public static void inInteraction(TLSessionContext sessionContext, ServletContext servlet,
 			HttpServletRequest req, HttpServletResponse resp, InContext job) {
 		getManager().inInteractionInternal(sessionContext, servlet, req, resp, job);
 	}
 
+	/**
+	 * Implementation of {@link #inInteraction(TLSessionContext, ServletContext, HttpServletRequest,
+	 * HttpServletResponse, InContext)}.
+	 */
 	protected void inInteractionInternal(TLSessionContext sessionContext, ServletContext servlet,
 			HttpServletRequest req,
 			HttpServletResponse resp, InContext job) {
@@ -237,11 +260,30 @@ public class TLContextManager extends ThreadContextManager {
 		}
 	}
 
+	/**
+	 * Executes the given job with the given sub-session context installed in the display context
+	 * of the given request.
+	 *
+	 * @param sessionContext
+	 *        The sub-session context to use while executing the job.
+	 * @param servlet
+	 *        The current servlet context.
+	 * @param req
+	 *        The current request.
+	 * @param resp
+	 *        The current response.
+	 * @param job
+	 *        The job to execute.
+	 */
 	public static void inInteraction(TLSubSessionContext sessionContext, ServletContext servlet,
 			HttpServletRequest req, HttpServletResponse resp, InContext job) {
 		getManager().inInteractionInternal(sessionContext, servlet, req, resp, job);
 	}
 
+	/**
+	 * Implementation of {@link #inInteraction(TLSubSessionContext, ServletContext,
+	 * HttpServletRequest, HttpServletResponse, InContext)}.
+	 */
 	protected void inInteractionInternal(TLSubSessionContext sessionContext, ServletContext servlet,
 			HttpServletRequest req, HttpServletResponse resp, InContext job) {
 		boolean existingDisplayContext = DefaultDisplayContext.hasDisplayContext(req);

@@ -45,14 +45,16 @@ public class FileNameConstraint extends StringLengthConstraint {
 	}
 
 	/**
-	 * Returns the fileNameStrategy.
+	 * Returns the file name strategy.
 	 */
 	public FileNameStrategy getFileNameStrategy() {
 		return this.fileNameStrategy;
 	}
 
 	/**
-	 * @param aFileNameStrategy The fileNameStrategy to set.
+	 * Setter for {@link #getFileNameStrategy()}.
+	 *
+	 * @param aFileNameStrategy The file name strategy to set.
 	 */
 	public void setFileNameStrategy(FileNameStrategy aFileNameStrategy) {
 		this.fileNameStrategy = aFileNameStrategy;

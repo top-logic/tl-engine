@@ -13,7 +13,7 @@ import java.awt.geom.Rectangle2D;
 import org.jfree.data.category.CategoryDataset;
 
 /**
- * The TemplateInfo contains needed information to generate a chart
+ * The {@link TemplateInfo} contains needed information to generate a chart
  * with the {@link com.top_logic.reporting.chart.renderer.TemplateRenderer}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

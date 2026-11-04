@@ -23,20 +23,20 @@ import com.top_logic.dob.meta.TypeSystem;
 public interface ExpansionModel {
 	
 	/**
-	 * This method returns the type of the object that is specified by the given nameSpace and name.
-	 * In the template these values are specified inside assignments: "$nameSpace:name". "$" and ":"
-	 * are not part of the actual values.
+	 * This method returns the type of the object that is specified by the given name space and
+	 * name. In the template these values are specified inside assignments:
+	 * <code>$nameSpace:name</code>. "$" and ":" are not part of the actual values.
 	 * 
-	 * @param nameSpace a String defining the nameSpace.
+	 * @param nameSpace a String defining the name space.
 	 * @param name a String defining the name.
 	 * @return the {@link MetaObject}.
 	 */
 	public MetaObject getTypeForVariable(String nameSpace, String name);
 	
 	/** 
-	 * Returns the value for an object specified by nameSpace and name.
+	 * Returns the value for an object specified by name space and name.
 	 * 
-	 * @param nameSpace a String defining the nameSpace.
+	 * @param nameSpace a String defining the name space.
 	 * @param name a String defining the name.
 	 * @return the {@link Object}.
 	 */
@@ -53,9 +53,10 @@ public interface ExpansionModel {
 	public Object getValueForAttribute(Object object, String attribute) throws NoSuchAttributeException;
 	
 	/** 
-	 * Returns the {@link TypeSystem} used for the {@link MetaObject}s in this ExpansionModel.
+	 * Returns the {@link TypeSystem} used for the {@link MetaObject}s in this
+	 * {@link ExpansionModel}.
 	 * 
-	 * @return this ExpansionModels {@link TypeSystem}.
+	 * @return this {@link ExpansionModel}s {@link TypeSystem}.
 	 */
 	public TypeSystem getTypeSystem();
 	

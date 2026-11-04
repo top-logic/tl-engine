@@ -197,7 +197,7 @@ public class GanttChartExporter implements HTMLConstants {
 	}
 
 	/**
-	 * Adds a html table containing a centered tempImage-tag to the given {@link StringWriter}.
+	 * Adds a html table containing a centered image tag to the given {@link StringWriter}.
 	 *
 	 * @param stringWriter
 	 *        The {@link StringWriter} to add information to.
@@ -251,7 +251,7 @@ public class GanttChartExporter implements HTMLConstants {
 	 * @param portraitMode
 	 *        Flag indicating whether to use page in portrait mode or not.
 	 * @param fitToOnePage
-	 *        Flag indicating whether all imageDatas have to fit on one page or each of it has its
+	 *        Flag indicating whether all images have to fit on one page or each of it has its
 	 *        own page.
 	 * @return A {@link Float} that can be used as first parameter of a ":1" scaling (e.g. 2:1 which
 	 *         means that 2 pixel of the image are mapped to one pixel in the page, so the image is

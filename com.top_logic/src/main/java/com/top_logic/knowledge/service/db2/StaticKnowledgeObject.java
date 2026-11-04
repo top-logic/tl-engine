@@ -42,7 +42,8 @@ public class StaticKnowledgeObject extends StaticKnowledgeItem implements Knowle
 	private Map<NamedConstant, AbstractAssociationCache<?, ?>> associationCaches;
 
 	/**
-	 * Construct a new empty {@link StaticKnowledgeObject} based on the given MOKnowledgeObject.
+	 * Construct a new empty {@link StaticKnowledgeObject} based on the given
+	 * {@link MOKnowledgeItem}.
 	 */
 	public StaticKnowledgeObject(DBKnowledgeBase kb, MOKnowledgeItem staticType) {
         super(kb, staticType);

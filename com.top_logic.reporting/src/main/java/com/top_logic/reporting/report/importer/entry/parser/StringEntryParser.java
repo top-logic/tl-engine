@@ -6,7 +6,7 @@
 package com.top_logic.reporting.report.importer.entry.parser;
 
 /**
- * The StringEntryParser parses tags with the tag name 'string'.
+ * The {@link StringEntryParser} parses tags with the tag name 'string'.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

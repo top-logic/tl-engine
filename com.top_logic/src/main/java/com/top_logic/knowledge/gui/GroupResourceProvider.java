@@ -17,6 +17,7 @@ import com.top_logic.util.Resources;
  */
 public class GroupResourceProvider extends WrapperResourceProvider {
 
+    /** Singleton {@link GroupResourceProvider} instance. */
     public static final GroupResourceProvider INSTANCE = new GroupResourceProvider();
 
     @Override

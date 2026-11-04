@@ -44,18 +44,33 @@ public class ModelValidator extends DefaultDescendingLayoutVisitor {
         }
     }
 
+	/**
+	 * Prepares this validator for a validation pass in the given context.
+	 */
 	public void init(DisplayContext context) {
 		this.context = context;
 	}
 
+	/**
+	 * Forgets the invalid component detected in a previous validation pass.
+	 */
 	public void reset() {
 		_detectedInvalid = null;
 	}
 
+	/**
+	 * Whether a component that was not valid before has been found in the last validation pass.
+	 * 
+	 * @see #getInvalidComponentExample()
+	 */
 	public boolean detectedInvalidModel() {
 		return _detectedInvalid != null;
 	}
 
+	/**
+	 * One of the components that were not valid before the last validation pass, or {@code null}
+	 * if there is none.
+	 */
 	public LayoutComponent getInvalidComponentExample() {
 		return _detectedInvalid;
 	}

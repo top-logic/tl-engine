@@ -25,6 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class JSSnipplet extends ClientAction {
 	
+	/** The <code>xsi:type</code> of a {@link JSSnipplet}. */
 	public static final String JS_SNIPPLET_XSI_TYPE = "JSSnipplet";
 
 	private DynamicText fragment;

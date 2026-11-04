@@ -11,13 +11,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 
 /**
- * A LayoutResolver determines the layout to be used for a given object.
+ * A {@link LayoutResolver} determines the layout to be used for a given object.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public abstract class LayoutResolver extends AbstractConfiguredInstance<LayoutResolver.Config> {
 
-	/** Configuration of {@link LayoutResolver} */
+	/** Configuration of {@link LayoutResolver}. */
 	public interface Config extends PolymorphicConfiguration<LayoutResolver> {
 		// No specific declaration
 	}

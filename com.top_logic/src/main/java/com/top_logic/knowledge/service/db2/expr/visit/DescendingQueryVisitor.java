@@ -287,7 +287,7 @@ public abstract class DescendingQueryVisitor<RQ, RE extends RQ, RS extends RQ, R
 	 * resulting list.
 	 * 
 	 * @param parent
-	 *        queryPart which defines the given list as content.
+	 *        {@link QueryPart} which defines the given list as content.
 	 * @param expressions
 	 *        the expression to descent into
 	 * @param arg
@@ -304,11 +304,11 @@ public abstract class DescendingQueryVisitor<RQ, RE extends RQ, RS extends RQ, R
 	}
 
 	/**
-	 * Helper method to descend into any OrderSpec in the given list and adds the result to a
-	 * resulting list.
+	 * Helper method to descend into any {@link OrderSpec} in the given list and adds the result to
+	 * a resulting list.
 	 * 
 	 * @param parent
-	 *        queryPart which defines the given list as content.
+	 *        {@link QueryPart} which defines the given list as content.
 	 * @param originalOrderSpecs
 	 *        the {@link Order}s to descent into
 	 * @param arg
@@ -333,7 +333,7 @@ public abstract class DescendingQueryVisitor<RQ, RE extends RQ, RS extends RQ, R
 	 * Descends into the given function.
 	 * 
 	 * @param parent
-	 *        queryPart which defines the given list as content.
+	 *        {@link QueryPart} which defines the given list as content.
 	 * @param fun
 	 *        the {@link Function} to descent into
 	 * @param arg
@@ -349,7 +349,7 @@ public abstract class DescendingQueryVisitor<RQ, RE extends RQ, RS extends RQ, R
 	 * Descends into the given order.
 	 * 
 	 * @param parent
-	 *        queryPart which defines the given list as content.
+	 *        {@link QueryPart} which defines the given list as content.
 	 * @param expr
 	 *        the {@link Expression} to descent into
 	 * @param arg
@@ -373,7 +373,7 @@ public abstract class DescendingQueryVisitor<RQ, RE extends RQ, RS extends RQ, R
 	 * Descends into the given query part.
 	 * 
 	 * @param parent
-	 *        queryPart which defines the given list as content.
+	 *        {@link QueryPart} which defines the given list as content.
 	 * @param expr
 	 *        the {@link QueryPart} to descent into
 	 * @param arg
@@ -390,7 +390,7 @@ public abstract class DescendingQueryVisitor<RQ, RE extends RQ, RS extends RQ, R
 	 * resulting list.
 	 * 
 	 * @param parent
-	 *        queryPart which defines the given list as content.
+	 *        {@link QueryPart} which defines the given list as content.
 	 * @param originalParts
 	 *        the {@link QueryPart}s to descent into
 	 * @param arg

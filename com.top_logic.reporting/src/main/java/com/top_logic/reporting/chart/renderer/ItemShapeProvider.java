@@ -11,6 +11,8 @@ import java.util.Random;
 import javax.swing.ImageIcon;
 
 /**
+ * Provides an image as shape for the items of a {@link TemplateXYLineAndShapeRenderer}.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class ItemShapeProvider {
@@ -22,10 +24,22 @@ public class ItemShapeProvider {
 		image = new ImageIcon(aPath).getImage();
     }
 	
+	/**
+	 * The shape of the item in the given row and column.
+	 *
+	 * @return The image of this provider.
+	 */
 	public Object getShape(int aRow, int aColumn) {
 		return image;
 	}
 
+	/**
+	 * Whether the item in the given row and column is displayed with the image of this provider.
+	 *
+	 * <p>
+	 * Note: The decision is made randomly.
+	 * </p>
+	 */
 	public boolean useImage(int aRow, int aColumn) {
 		if (random.nextInt(2) == 0) {
             return true; 

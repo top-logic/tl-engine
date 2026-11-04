@@ -9,7 +9,7 @@ import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.FormMember;
 
 /**
- * The FieldProvider provides {@link FormMember}s based on an object and a property key.
+ * The {@link FieldProvider} provides {@link FormMember}s based on an object and a property key.
  * 
  * It must not be assumed that successive calls to {@link #createField(Object, Accessor, String)}
  * result in the same object, but rather that each call will provide a new object.

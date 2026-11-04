@@ -32,16 +32,18 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 /**
  * Thread and cluster save task.
  * 
- * This task will try to get an {@link Lock}. If this succeeds, it'll continue 
- * its work by calling {@link #perform()}. If the token context cannot be aquired, the task will
- * pause and restart as defined in {@link TaskImpl}.
+ * This task will try to get an {@link Lock}. If this succeeds, it'll continue its work. If the
+ * token context cannot be acquired, the task will pause and restart as defined in
+ * {@link TaskImpl}.
+ * 
+ * @implNote After the lock is acquired, the work is done by calling {@link #perform()}.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends TaskImpl<C> implements InContext {
 
 	/**
-	 * Special configuration for {@link TokenBasedTask}
+	 * Special configuration for {@link TokenBasedTask}.
 	 * 
 	 * @since 5.7.3
 	 * 

@@ -48,6 +48,9 @@ public class HTMLValueExporter {
     /** Name suffix of the extended template file. */
     public static final String TEMPLATE_FILE_SUFIX  = ".html";
 
+	/**
+	 * Placeholder line in the export template that is replaced by the table of exported values.
+	 */
     public static final Object DATA_WORD = "<export:data />";
 
     private final TLClass metaElement;
@@ -63,7 +66,7 @@ public class HTMLValueExporter {
     }
 
     /** 
-     * Return the OfficeExportValueHolder for an extended / pivot export.
+     * Return the {@link OfficeExportValueHolder} for an extended / pivot export.
      * 
      * @return   The holder with all values for the excel sheet.
      */
@@ -90,6 +93,15 @@ public class HTMLValueExporter {
         return theHolder;
     }
 
+	/**
+	 * Creates a temporary HTML file exporting the given objects using the given template.
+	 *
+	 * @param someObjects
+	 *        The objects to export, one row per object.
+	 * @param aTemplate
+	 *        The name of the template file.
+	 * @return The created temporary file.
+	 */
 	protected File createHTMLExportFile(List<? extends TLObject> someObjects, String aTemplate)
 			throws FileNotFoundException, IOException {
 		File theResult = File.createTempFile("HTMLExportHandler", ".html", Settings.getInstance().getTempDir());
@@ -103,6 +115,17 @@ public class HTMLValueExporter {
         return theResult;
     }
 
+	/**
+	 * Copies the template to the result file and replaces the {@link #DATA_WORD} line by the table
+	 * of exported values.
+	 *
+	 * @param someObjects
+	 *        The objects to export.
+	 * @param aSource
+	 *        The contents of the template.
+	 * @param aResult
+	 *        The file to write the result to.
+	 */
 	protected void exportValues(List<? extends TLObject> someObjects, InputStream aSource, File aResult)
 			throws IOException {
         BufferedReader theReader = new BufferedReader(new InputStreamReader(aSource));
@@ -147,6 +170,14 @@ public class HTMLValueExporter {
         }
     }
 
+	/**
+	 * Writes the HTML table of the given objects.
+	 *
+	 * @param someObjects
+	 *        The objects to export, one row per object.
+	 * @param anOut
+	 *        The writer to write the table to.
+	 */
 	protected void exportValues(List<? extends TLObject> someObjects, TagWriter anOut)
 			throws IOException, NoSuchAttributeException {
         List<String> theColumns = this.getColumnNames();
@@ -162,6 +193,14 @@ public class HTMLValueExporter {
         HTMLUtil.endTable(anOut);
     }
 
+	/**
+	 * Writes the header row of the table.
+	 *
+	 * @param anOut
+	 *        The writer to write to.
+	 * @param someColumns
+	 *        The names of the exported attributes.
+	 */
     protected void exportHeader(TagWriter anOut, List<String> someColumns) throws IOException, NoSuchAttributeException {
         Resources theRes = Resources.getInstance();
         int       thePos = 0;
@@ -181,10 +220,28 @@ public class HTMLValueExporter {
         HTMLUtil.endTr(anOut);
     }
 
+	/**
+	 * The label of the header cell of the given column.
+	 *
+	 * @param aColumn
+	 *        The name of the exported attribute.
+	 */
 	protected ResKey getHeaderName(String aColumn) throws NoSuchAttributeException {
 		return TLModelI18N.getI18NKey(MetaElementUtil.getMetaAttribute(this.metaElement, aColumn));
     }
 
+	/**
+	 * Writes the table row of the given object.
+	 *
+	 * @param aWriter
+	 *        The writer to write to.
+	 * @param anObject
+	 *        The exported object.
+	 * @param someColumns
+	 *        The names of the exported attributes.
+	 * @param aPos
+	 *        The index of the row, used for the CSS class.
+	 */
 	protected void exportRow(TagWriter aWriter, TLObject anObject, List<String> someColumns, int aPos)
 			throws IOException {
         int thePos = 0;
@@ -200,6 +257,18 @@ public class HTMLValueExporter {
         HTMLUtil.endTr(aWriter);
     }
 
+	/**
+	 * Writes the cell of the given attribute value.
+	 *
+	 * @param aWriter
+	 *        The writer to write to.
+	 * @param anObject
+	 *        The exported object.
+	 * @param aColumn
+	 *        The name of the exported attribute.
+	 * @param aPos
+	 *        The index of the column, used for the CSS class.
+	 */
 	protected void exportCell(TagWriter aWriter, TLObject anObject, String aColumn, int aPos) throws IOException {
 		Object theObject = WrapperAccessor.INSTANCE.getValue(anObject, aColumn);
         String theValue  = MetaLabelProvider.INSTANCE.getLabel(theObject);
@@ -214,6 +283,9 @@ public class HTMLValueExporter {
         HTMLUtil.endTd(aWriter);
     }
 
+	/**
+	 * The names of the exported attributes.
+	 */
     protected List<String> getColumnNames() {
         return this.columns;
     }

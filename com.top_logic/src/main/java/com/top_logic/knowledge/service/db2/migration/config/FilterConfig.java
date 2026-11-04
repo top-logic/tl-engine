@@ -23,7 +23,7 @@ import com.top_logic.knowledge.service.db2.migration.rewriters.ReferenceHasTypeF
 import com.top_logic.knowledge.service.db2.migration.rewriters.ReferencesModelElementFilter;
 
 /**
- * {@link ConfigurationItem} holding a list of {@link TypedFilter}
+ * {@link ConfigurationItem} holding a list of {@link TypedFilter}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

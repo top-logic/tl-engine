@@ -20,6 +20,7 @@ public class NullModelDisabled implements ExecutabilityRule {
 	public static final ExecutableState EXEC_STATE_DISABLED =
 		ExecutableState.createDisabledState(I18NConstants.ERROR_NO_MODEL_2);
     
+	/** Singleton instance of {@link NullModelDisabled}. */
 	public static final NullModelDisabled INSTANCE = new NullModelDisabled();
 	
 	/** 

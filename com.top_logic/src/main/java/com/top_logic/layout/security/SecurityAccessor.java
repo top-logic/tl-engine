@@ -45,6 +45,10 @@ public class SecurityAccessor implements Accessor {
 		}
 	}
 
+	/**
+	 * Retrieves the given property of the given object wrapped into a {@link ProtectedValue}
+	 * that holds the access rights of the current group.
+	 */
 	public final ProtectedValue getProtectedValue(Object object, String property) {
 		Set accessRights = securityProvider.getAccessRights(object, property, currentGroup);
 		if (accessRights.isEmpty()) {
@@ -63,6 +67,9 @@ public class SecurityAccessor implements Accessor {
 		valueAccessor.setValue(object, property, value);
 	}
 
+    /**
+     * The {@link Accessor} retrieving the actual values.
+     */
     public Accessor getInnerSecurityProvider() {
         return (this.valueAccessor);
     }

@@ -18,14 +18,14 @@ import com.top_logic.layout.table.component.TableComponent;
 public class SearchResultComponent extends TableComponent {
     
     /**
-     * Create a new SearchResultComponent. 
+     * Create a new {@link SearchResultComponent}. 
      */
     public SearchResultComponent(InstantiationContext context, Config attr, String[] aData) throws ConfigurationException {
         super(context, attr);
     }
     
     /**
-     * Create a new SearchResultComponent.
+     * Create a new {@link SearchResultComponent}.
      */
     public SearchResultComponent(InstantiationContext context, Config attr) throws ConfigurationException {
         super(context, attr);

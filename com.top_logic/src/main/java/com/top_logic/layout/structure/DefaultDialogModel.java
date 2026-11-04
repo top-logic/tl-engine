@@ -50,7 +50,7 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	private final Command closeAction;
 
 	/**
-	 * Create a new DefaultDialogModel with a default close action
+	 * Create a new {@link DefaultDialogModel} with a default close action
 	 * 
 	 * @param layoutData - the dialog layout data
 	 * @param title - the dialog title
@@ -66,7 +66,7 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	
 
 	/**
-	 * Create a new DefaultDialogModel with a user defined close action
+	 * Create a new {@link DefaultDialogModel} with a user defined close action
 	 * 
 	 * @param layoutData - the dialog layout data
 	 * @param title - the dialog title
@@ -85,8 +85,8 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	}
 
 	/**
-	 * Create a new DefaultDialogModel with a default close action and a {@link ConfigKey} for
-	 * {@link PersonalConfiguration}a.
+	 * Create a new {@link DefaultDialogModel} with a default close action and a {@link ConfigKey}
+	 * for {@link PersonalConfiguration}a.
 	 * 
 	 * @param layoutData
 	 *        - the dialog layout data
@@ -108,7 +108,7 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	}
 	
 	/**
-	 * Create a new DefaultDialogModel with a user defined close action
+	 * Create a new {@link DefaultDialogModel} with a user defined close action
 	 * 
 	 * @param layoutData
 	 *        - the dialog layout data

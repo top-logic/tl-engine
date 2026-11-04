@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
 
 /**
- * Extend the StringRangeIterator to translate its keys.
+ * Extend the {@link StringRangeIterator} to translate its keys.
  * 
  * You must not use singletons of this class as the keys
  * are translated directly (with the benefit of a higher speed, later).

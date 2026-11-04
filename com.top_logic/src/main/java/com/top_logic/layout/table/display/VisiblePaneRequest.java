@@ -8,7 +8,7 @@ package com.top_logic.layout.table.display;
 import com.top_logic.layout.table.TableViewModel;
 
 /**
- * Definition of the rows and columns, which will be displayed at least at client side's viewport
+ * Definition of the rows and columns, which will be displayed at least at client side's viewport.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

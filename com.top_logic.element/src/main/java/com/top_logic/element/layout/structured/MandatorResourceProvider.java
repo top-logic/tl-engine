@@ -15,6 +15,7 @@ import com.top_logic.knowledge.gui.WrapperResourceProvider;
  */
 public class MandatorResourceProvider extends WrapperResourceProvider {
 
+    /** Singleton {@link MandatorResourceProvider} instance. */
     public static final MandatorResourceProvider MANDATOR_INSTANCE = new MandatorResourceProvider();
 
     /** 

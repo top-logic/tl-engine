@@ -21,6 +21,7 @@ import com.top_logic.convert.ConverterMapping;
  */
 public class MsWordFormatConverter extends AbstractStringBasedConverter {
 
+    /** The MIME type supported by this converter. */
     public static final String MSWORD_MIMETYPE = "application/msword";
     
     /**

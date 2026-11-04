@@ -28,8 +28,10 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 @SuppressWarnings("javadoc")
 public class TestPageLayoutEdit extends EditComponent {
 
+	/** Name of the select field. */
 	public static final String SELECT_FIELD = "select";
 
+	/** Name of the string field. */
 	public static final String STRING_FIELD = "string";
 
 	/**
@@ -90,6 +92,7 @@ public class TestPageLayoutEdit extends EditComponent {
 	 */
 	public static class Apply extends AbstractApplyCommandHandler {
 
+		/** Identifier of the {@link Apply} command. */
 		public static final String COMMAND_ID = "TestPageLayoutEditApply";
 
 		/**

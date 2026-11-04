@@ -16,7 +16,7 @@ import com.top_logic.dob.DataObjectException;
 public class CreateException extends DataObjectException {
 
     /**
-     * Constructs a new CreateException with the specified
+     * Constructs a new {@link CreateException} with the specified
      * error message.
      */
     public CreateException (String message) {

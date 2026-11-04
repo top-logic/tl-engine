@@ -16,6 +16,9 @@ import com.top_logic.layout.LabelProvider;
  */
 public class PersonContactLabelProvider implements LabelProvider, Matcher{
 
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static final PersonContactLabelProvider INSTANCE = new PersonContactLabelProvider();
 	
 	protected PersonContactLabelProvider() {

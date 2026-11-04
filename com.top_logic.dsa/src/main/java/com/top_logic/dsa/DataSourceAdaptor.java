@@ -15,28 +15,28 @@ import com.top_logic.dsa.ex.DataChangeException;
 import com.top_logic.dsa.ex.NotSupportedException;
 
 /** 
- * DataSource adaptors are gateways into storage areas.
+ * Data source adaptors are gateways into storage areas.
  * 
  *<p>
  *  They are registered using the top-logic.xml file and can be accessed
  *  using a {@link  com.top_logic.dsa.DataAccessProxy} (which
  *  effectively hides the implementation.) There may be any number of
- *  proxies for a single instance of a DataSourceAdaptor (DSA). 
+ *  proxies for a single instance of a {@link DataSourceAdaptor} (DSA). 
  *  The documentation here is mostly a copy from the one found
- *  in the DataAccessProxy. In case the documentation is unclear
+ *  in the {@link DataAccessProxy}. In case the documentation is unclear
  *  or contradictory see there.
  *</p><p>
  *  Historically DSAs where designed to support Filesystems like
  *  structures. So a container is usually seen as a folder and an entry
  *  is seen as a file. With never Implementations this is not always
- *  true and unexpected behavior of isEntry() and isContainer()
+ *  true and unexpected behavior of {@link #isEntry(String)} and {@link #isContainer(String)}
  *  can be found.
  *</p><p>
  *  DSA can be <em>structured</em> or <em>unstructured</em> {@link #isStructured()}
  *  depending on this value they support functions using
  *  {@link com.top_logic.dob.DataObject}s or streams to 
  *  access their content.
- *  BHU: This allows a tree-like view at Attribute value Pairs (DataObjects) 
+ *  BHU: This allows a tree-like view at Attribute value Pairs ({@link DataObject}s) 
  *</p> 
  *
  * @author  Karsten Buch / Klaus Halfmann
@@ -44,7 +44,7 @@ import com.top_logic.dsa.ex.NotSupportedException;
 public interface DataSourceAdaptor {
 
     /** 
-     * This method is called if the DataSourceAdaptor is not needed any more.
+     * This method is called if the {@link DataSourceAdaptor} is not needed any more.
      * 
      * The DSA should then free all its resources. Any further call to any
      * other method may result in an Exception. Calling close() twice should
@@ -57,7 +57,7 @@ public interface DataSourceAdaptor {
      *
      * @param path the name to use; must not be null
      *
-     * @return the MIME type; null exactly when isEntry(aName) == false
+     * @return the MIME type; null exactly when {@link #isEntry(String)} is <code>false</code>
      *
      * @throws DatabaseAccessException if a DatabaseAccessException occurred
      *
@@ -73,9 +73,9 @@ public interface DataSourceAdaptor {
     public boolean isStructured ();
 
     /**
-     * Is the DataSourceAdaptor a repository (supports locking and versioning)?
+     * Is the {@link DataSourceAdaptor} a repository (supports locking and versioning)?
      *
-     * @return  true if the underlying DataSourceAdaptor is a repository, otherwise false
+     * @return  true if the underlying {@link DataSourceAdaptor} is a repository, otherwise false
      */
     public boolean isRepository ();
 
@@ -99,8 +99,8 @@ public interface DataSourceAdaptor {
      * A container is an element that may contain child elements.  
      *
      * A container may still be used to retrieve data.
-     * Implies that getEntryNames() is supported, 
-     * can be different from !isEntry().
+     * Implies that {@link #getEntryNames(String)} is supported, 
+     * can be different from !{@link #isEntry(String)}.
      *
      * @param   path the name of the element
      * @return  true if it is a container
@@ -163,7 +163,7 @@ public interface DataSourceAdaptor {
      *
      * @param       oldPath	the fully qualified name of the element
 	 * @param       newPath 	the path where the new Object will be found
-     * @return  	 path to the new object, not necessary equal to oldPath
+     * @return  	 path to the new object, not necessary equal to <code>oldPath</code>
      */
     public String move (String oldPath, String newPath)
         throws DatabaseAccessException;
@@ -206,16 +206,16 @@ public interface DataSourceAdaptor {
      * Get an entry from a database.
      *
      * @param   path the name of the entry
-     * @return  an InputStream for reading the entry's data
+     * @return  an {@link InputStream} for reading the entry's data
      */
     public InputStream getEntry (String path)
         throws DatabaseAccessException;
 
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
      * @param   path the name of the entry
-     * @return  A dataObect representing the Entry
+     * @return  A {@link DataObject} representing the Entry
      */
     public DataObject getObjectEntry (String path)
         throws DatabaseAccessException;
@@ -225,17 +225,17 @@ public interface DataSourceAdaptor {
      *
      * @param   path the name of the entry
      * @param   version the desired version of the entry (format?)
-     * @return  an InputStream for reading the entry's data
+     * @return  an {@link InputStream} for reading the entry's data
      */
     public InputStream getEntry (String path, String version)
         throws DatabaseAccessException;
 		
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
      * @param   path the name of the entry
      * @param   version the desired version of the entry (format?)
-     * @return  A DataObject representing the Entry
+     * @return  A {@link DataObject} representing the Entry
      */
     public DataObject getObjectEntry (String path, String version)
         throws DatabaseAccessException;
@@ -244,12 +244,12 @@ public interface DataSourceAdaptor {
     /**
      * Put an entry in a database (UPDATE).
      *
-     * The DSA will exhaust and then close the InputStream.
+     * The DSA will exhaust and then close the {@link InputStream}.
      * Will fail in case the element does not exist, or is
      * not an Entry. Structured DSA'S do not need to implement this function.
      *
      * @param       path the name of the element
-     * @param       data the physical data given as an OutputStream
+     * @param       data the physical data given as an {@link OutputStream}
      */
     public void putEntry (String path, InputStream data)
         throws DatabaseAccessException;
@@ -258,7 +258,7 @@ public interface DataSourceAdaptor {
      * Put an entry in a database (UPDATE).
      *
      * @param       path the name of the element
-     * @param       data The DataObejct holding the data.
+     * @param       data The {@link DataObject} holding the data.
      */
     public void putEntry (String path, DataObject data)
         throws DatabaseAccessException;
@@ -268,25 +268,25 @@ public interface DataSourceAdaptor {
      *
      * @param elementName   the name/id for the new entry
      *
-     * @return an OutputStream to the entry
+     * @return an {@link OutputStream} to the entry
      */
     public OutputStream putEntry (String containerPath, String elementName)
                                                 throws DatabaseAccessException;
 
     /**
-     * Get an OutputStream for putting an entry in a database.
+     * Get an {@link OutputStream} for putting an entry in a database.
      *
 	 * @param	path	the name of the element
-     * @return 	an OutputStream to write data into the entry
+     * @return 	an {@link OutputStream} to write data into the entry
      */
     public OutputStream getEntryOutputStream (String path)
             throws DatabaseAccessException;
 
     /**
-     * Get an OutputStream for appending to an existing entry.
+     * Get an {@link OutputStream} for appending to an existing entry.
      *
      * @param   path    the name of the element
-     * @return  an OutputStream to append data to the entry
+     * @return  an {@link OutputStream} to append data to the entry
      */
     public OutputStream getEntryAppendStream (String path)
             throws DatabaseAccessException;
@@ -318,7 +318,7 @@ public interface DataSourceAdaptor {
      * Create a new entry in a container.
      *
      * @param elementName   the name/id for the new entry
-     * @param data the physical data given as an InputStream 
+     * @param data the physical data given as an {@link InputStream} 
      * 			 The stream will be exhausted and close()d.
      */
     public String createEntry (String containerPath, String elementName, InputStream data)
@@ -343,14 +343,15 @@ public interface DataSourceAdaptor {
         throws DatabaseAccessException;
 
     /**
-     * Create a new DataObject as entry for the container.
+     * Create a new {@link DataObject} as entry for the container.
      *<p>
-     *  You must call putEntry() to finally store the object in the database.
+     *  You must call {@link #putEntry(String, DataObject)} to finally store the object in the
+     *  database.
      *</p>
      * @param containerPath  Name of the conat9ner to create the Object in.
      * @param elementName   the name/id for the new entry
      *
-     * @return a DataObject suitable to hold the structured data.
+     * @return a {@link DataObject} suitable to hold the structured data.
      */
     public DataObject createObjectEntry (String containerPath, String elementName)
         throws DatabaseAccessException;
@@ -360,7 +361,7 @@ public interface DataSourceAdaptor {
      *
      * @param elementName   the name/id for the new entry
      *
-     * @return an OutputStream to the new entry
+     * @return an {@link OutputStream} to the new entry
      */
     public OutputStream createEntry (String containerPath, String elementName)
         throws DatabaseAccessException;
@@ -491,7 +492,7 @@ public interface DataSourceAdaptor {
      * Appends a listener to this instance. If something happens (create, 
      * change or delete), this listeners will be notified.
      * 
-     * @return   false when aListener was registered before.
+     * @return   false when the listener was registered before.
      *
      * @param    aListener    The listener to be added.
      */
@@ -501,7 +502,7 @@ public interface DataSourceAdaptor {
      * Removes the listener from this instance.
      *
      * @param    aListener    The listener to be removed.
-     * @return   true when aListener was actually registered.
+     * @return   true when the listener was actually registered.
      */
     public boolean removeDataChangeListener (DataChangeListener aListener);
 
@@ -517,13 +518,13 @@ public interface DataSourceAdaptor {
      * Notifies all listeners, that a change will be executed.
      *
      * If one of the listeners do not agree with the change a
-     * DataChangeException is thrown. If all listeners agree
+     * {@link DataChangeException} is thrown. If all listeners agree
      * or if there are no listeners, true is returned. If the
-     * DataChangeEvent is not valid, false is returned.
+     * {@link DataChangeEvent} is not valid, false is returned.
      *
      * @param    anEvent holding the information about the change.
      * @return   true, if all listeners allow the change,
-     *           or false if anEvent is null.
+     *           or false if the event is <code>null</code>.
      * @throws   DataChangeException    Thrown, when the change is not allowed,
      *                                  the contained message should explain
      *                                  the reason.

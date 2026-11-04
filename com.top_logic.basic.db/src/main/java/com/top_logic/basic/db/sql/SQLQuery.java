@@ -42,6 +42,9 @@ public class SQLQuery<S extends SQLStatement> extends AbstractSQLPart {
 			this.name = name;
 		}
 		
+		/**
+		 * The name by which the parameter is referenced in the statement.
+		 */
 		public String getName() {
 			return name;
 		}
@@ -62,6 +65,9 @@ public class SQLQuery<S extends SQLStatement> extends AbstractSQLPart {
 			_dbType = dbType;
 		}
 
+		/**
+		 * The database type of the parameter value.
+		 */
 		public DBType getDBType() {
 			return _dbType;
 		}
@@ -107,18 +113,30 @@ public class SQLQuery<S extends SQLStatement> extends AbstractSQLPart {
 		this._statement = statement;
 	}
 	
+	/**
+	 * The statement of this query.
+	 */
 	public S getStatement() {
 		return _statement;
 	}
 	
+	/**
+	 * Setter for {@link #getStatement()}.
+	 */
 	public void setStatement(S statement) {
 		this._statement = statement;
 	}
 	
+	/**
+	 * The declarations of the parameters of the {@link #getStatement() statement}.
+	 */
 	public List<Parameter> getParameters() {
 		return _parameters;
 	}
 	
+	/**
+	 * Setter for {@link #getParameters()}.
+	 */
 	public void setParameters(List<Parameter> parameters) {
 		this._parameters = parameters;
 	}

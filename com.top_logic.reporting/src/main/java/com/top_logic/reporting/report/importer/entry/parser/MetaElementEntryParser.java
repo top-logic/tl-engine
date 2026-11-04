@@ -9,7 +9,7 @@ import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.model.TLClass;
 
 /**
- * The MetaElementEntryParser parses tags with the tag name 'meta-element'.
+ * The {@link MetaElementEntryParser} parses tags with the tag name 'meta-element'.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

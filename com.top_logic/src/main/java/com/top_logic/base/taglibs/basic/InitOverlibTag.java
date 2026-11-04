@@ -25,7 +25,7 @@ public class InitOverlibTag extends TagSupport {
     /** Complete JavascriptTag for overlib stuff */
 
     /**
-     * Retrieves the standard PrintWriter object to print the script statement
+     * Retrieves the standard {@link java.io.PrintWriter} object to print the script statement
      * to the JSP page head.
      */
     @Override

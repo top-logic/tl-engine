@@ -74,16 +74,20 @@ public class AttributeValueLocatorFactory extends ManagedClass {
 	}
 
 	/**
-	 * Get the AttributeValueLocator configured for the AttributeValueLocator config
+	 * Get the {@link AttributeValueLocator} configured for the {@link AttributeValueLocator} config
 	 * 
 	 * @param aLocatorConfig
-	 *        the AttributeValueLocator name in the config plus '('attribute path')'
-	 * @return the AttributeValueLocator or <code>null</code> if none was configured or creation fails
+	 *        the {@link AttributeValueLocator} name in the config plus '('attribute path')'
+	 * @return the {@link AttributeValueLocator} or <code>null</code> if none was configured or
+	 *         creation fails
 	 */
     public static AttributeValueLocator configuredLocator(String aLocatorConfig) {
     	return getInstance().internalConfiguredLocator(aLocatorConfig);
     }
 
+    /**
+	 * Implementation of {@link #configuredLocator(String)}.
+	 */
     protected AttributeValueLocator internalConfiguredLocator(String aLocatorConfig) {
         try {
         	int argStartIdx = aLocatorConfig.indexOf('(');
@@ -187,6 +191,9 @@ public class AttributeValueLocatorFactory extends ManagedClass {
     	return getInstance().internalGetLocatorName(locator);
     }
 
+    /**
+	 * Implementation of {@link #getLocatorExpression(AttributeValueLocator)}.
+	 */
     protected String internalGetLocatorName(AttributeValueLocator locator) {
 		String result = exprByInstance.get(locator);
     	if (result == null) {

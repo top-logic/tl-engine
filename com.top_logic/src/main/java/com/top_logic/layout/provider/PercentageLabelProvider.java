@@ -9,7 +9,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
- * LabelProvider to display percentage values. You may add pre- and sufix. You can also
+ * {@link LabelProvider} to display percentage values. You may add pre- and sufix. You can also
  * provide a special prefix for 100%.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>

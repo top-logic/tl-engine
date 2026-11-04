@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
- * ModelBuilder for global roles table.
+ * {@link ListModelBuilder} for global roles table.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */

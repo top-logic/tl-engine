@@ -112,9 +112,9 @@ public abstract class RoleRule implements RoleProvider {
 	public abstract boolean isInherit();
 
     /**
-     * This method returns the resourceKey.
+     * The resource key of this rule.
      *
-     * @return    Returns the resourceKey.
+     * @return    The key for the label and description of this rule.
      */
     public ResKey getResourceKey() {
         return (this.resourceKey);

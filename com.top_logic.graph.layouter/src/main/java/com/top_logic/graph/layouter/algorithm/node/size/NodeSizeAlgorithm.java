@@ -14,6 +14,8 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
  */
 public interface NodeSizeAlgorithm {
 	/**
+	 * Computes the size of the given node.
+	 * 
 	 * @param node
 	 *        {@link LayoutNode} that should be sized.
 	 */

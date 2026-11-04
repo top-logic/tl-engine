@@ -27,6 +27,9 @@ import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilder;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilderUtil;
 
 /**
+ * Data source that retrieves the objects to display from a {@link ListModelBuilder}, to which
+ * the model of another data source is passed.
+ *
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class ProxyListModelBuilderProducer implements ChartDataSource<ComponentDataContext>,
@@ -69,7 +72,7 @@ public class ProxyListModelBuilderProducer implements ChartDataSource<ComponentD
 		public ChartDataSource<DataContext> getDataSource();
 
 		/**
-		 * true if the model should be set to a ProxyComponent acting as master, false if
+		 * true if the model should be set to a {@link ProxyComponent} acting as master, false if
 		 *         the model should be set directly to the new instance.
 		 */
 		@BooleanDefault(true)

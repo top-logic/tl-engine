@@ -14,7 +14,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * An immutable default HandlerResult indicating success. Can be used if
+ * An immutable default {@link HandlerResult} indicating success. Can be used if
  * processing will not fail and creating a new one is too much work.
  * 
  * @author <a href="mailto:dkh@top-logic.com">Dirk K&ouml;hlhoff</a>

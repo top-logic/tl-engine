@@ -49,10 +49,12 @@ public class OnErrorTag extends CompositeControlTag {
 
 	private String name;
 	
+	/** Sets the name of the member whose error state is tested. */
 	public void setName(String name) {
 		this.name = name;
 	}
 	
+	/** The name of the member whose error state is tested. */
 	public String getName() {
 		return name;
 	}

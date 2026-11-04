@@ -10,7 +10,7 @@ import org.jfree.data.category.CategoryDataset;
 
 
 /**
- * ToolTipGenerator for Charts in Reporting.
+ * {@link CategoryToolTipGenerator} for charts in reporting.
  * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */

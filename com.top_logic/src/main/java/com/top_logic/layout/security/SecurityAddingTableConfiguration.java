@@ -110,6 +110,8 @@ public class SecurityAddingTableConfiguration extends NoDefaultColumnAdaption {
 	}
 
 	/**
+	 * Determines the attribute that protects the values of the given column.
+	 * 
 	 * @param column
 	 *        The {@link ColumnConfiguration column} to protect.
 	 * @return The name of the attribute which protects the values in the given column, or

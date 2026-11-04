@@ -36,19 +36,28 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
- * Edit component to change PersonContacts, to create and delete PersonContacts.
+ * Edit component to change {@link PersonContact}s, to create and delete {@link PersonContact}s.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
 public class EditPersonContactComponent extends AbstractEditContactComponent {
 
+	/**
+	 * Name of the field for the representatives.
+	 */
 	public static final String PARAM_REPRESENTATIVES = "paramRepresentatives";
 
     @Deprecated
 	public static final String PARAM_CO_WORKER = "paramCoWorker";
 
+    /**
+     * Name of the field for the persons that are represented.
+     */
     public static final String PARAM_REPRESENTATIVES_FOR = "paramRepresFor";
 
+    /**
+     * Name of the field for the person.
+     */
     public static final String FIELD_PERSON = "person";
 
 	/**
@@ -100,13 +109,13 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 	}
 
     /**
-     * Special handling when PersonContact refers to a Person.
+     * Special handling when {@link PersonContact} refers to a Person.
      * 
 	 * @see com.top_logic.element.meta.form.component.EditAttributedComponent#createFormContext()
      * 
-	 * If the current PersonContact is related to a person, then disable all input fields for
-	 * Attributes which values are supposed to be retrieved from the according person and therefore
-	 * should not be editable
+	 * If the current {@link PersonContact} is related to a person, then disable all input fields
+	 * for Attributes which values are supposed to be retrieved from the according person and
+	 * therefore should not be editable
 	 */
 	@Override
 	public synchronized FormContext createFormContext() {
@@ -175,7 +184,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 	}
 
     /** 
-     * Disable a Constraint in aContext specified by anAttrName.
+     * Disable a Constraint in {@code aContext} specified by {@code anAttrName}.
      */
     protected void disableAttribute(FormContext aContext, String anAttrName, Wrapper anAttributed, TLClass aMeta) throws NoSuchAttributeException {
 		TLStructuredTypePart theAttr = MetaElementUtil.getMetaAttribute(aMeta, anAttrName);

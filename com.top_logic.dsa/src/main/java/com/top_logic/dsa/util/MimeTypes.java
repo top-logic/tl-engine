@@ -37,11 +37,11 @@ public class MimeTypes extends MimeTypesModule {
 	}
 
 	/**
-	 * Returns the mimetype for the given DataAccessProxy.
+	 * Returns the mimetype for the given {@link DataAccessProxy}.
 	 *
 	 * @param aDAP
-	 *        The DataAccessProxy to be checked for mime type.
-	 * @return The mime type for the DataAccessProxy, null if unknown.
+	 *        The {@link DataAccessProxy} to be checked for mime type.
+	 * @return The mime type for the {@link DataAccessProxy}, null if unknown.
 	 */
     public String getMimeType (DataAccessProxy aDAP) {
 		String theType = aDAP.getMimeType();

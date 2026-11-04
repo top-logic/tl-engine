@@ -68,7 +68,7 @@ public abstract class AbstractLayoutControl<I extends AbstractLayoutControl<?>> 
 	private static final String LAYOUT_CONTROL_CSS_CLASS = "layoutControl";
 
 	/**
-	 * Creates a new AbstractLayoutControl.
+	 * Creates a new {@link AbstractLayoutControl}.
 	 * @param commandsByName
 	 *        map of {@link ControlCommand}s accessible by this control
 	 */

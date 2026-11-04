@@ -91,12 +91,14 @@ public abstract class AbstractDBAttribute extends AbstractMOAttribute implements
 		this.dbIndex = index;
 	}
 	
+	/** Initializes this attribute as copy of the given one. */
 	protected final void initFrom(AbstractDBAttribute orig) {
 		super.initFrom(orig);
 		
 		this.dbName = orig.dbName;
 	}
 	
+	/** The number of database columns used by this attribute. */
 	public int getDBSize() {
 		return 1;
 	}

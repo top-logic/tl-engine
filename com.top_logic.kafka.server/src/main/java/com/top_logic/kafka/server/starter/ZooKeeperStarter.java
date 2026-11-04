@@ -30,7 +30,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 /**
- * Starter for the {@link ZooKeeper}
+ * Starter for the {@link ZooKeeper}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

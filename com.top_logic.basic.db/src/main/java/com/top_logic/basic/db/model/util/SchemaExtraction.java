@@ -34,6 +34,9 @@ public class SchemaExtraction {
 	
 	private static final NamedConstant NONE = new NamedConstant("none");
 
+	/**
+	 * Error signaling that the schema could not be extracted from the database.
+	 */
 	public static class ExtractionError extends RuntimeException {
 
 		public ExtractionError() {

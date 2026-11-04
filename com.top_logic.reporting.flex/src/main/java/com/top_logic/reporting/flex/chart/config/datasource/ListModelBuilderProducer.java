@@ -24,7 +24,7 @@ import com.top_logic.reporting.flex.chart.config.gui.ChartContextObserver;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilder;
 
 /**
- * Adapter to use an existing {@link ListModelBuilder} as {@link ChartDataSource}
+ * Adapter to use an existing {@link ListModelBuilder} as {@link ChartDataSource}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */

@@ -20,23 +20,36 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
 
 /**
- * The TOPSFileDataImportStatusComponent displays the last result of the
- * TOPSFileDataImporter.
+ * Component that displays the last result of a data importer.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */
 public class DataImportStatusComponent extends FormComponent {
 
+    /**
+     * Configuration for {@link DataImportStatusComponent}.
+     */
     public interface Config extends FormComponent.Config {
+
+		/**
+		 * The importer whose last result is displayed.
+		 */
 		@Name(DataImportAssistant.XML_ATTR_IMPORTER_CLASS)
 		@Mandatory
 		@InstanceFormat
 		AbstractDataImporter getImporterClass();
 	}
 
+	/** Name of the field displaying the date of the last import run. */
 	public static final String FIELD_LAST_RUN = "field_last_run";
+
+    /** Name of the field displaying the result of the last import run. */
     public static final String FIELD_LAST_RESULT = "field_last_result";
+
+    /** Name of the field displaying the protocol of the last import run. */
     public static final String FIELD_LAST_PROTOCOL = "field_last_protocol";
+
+    /** Name of the field displaying the timestamp of the system data. */
     public static final String FIELD_SYSTEM_DATA_TS = "field_system_data_ts";
 
     /** Stores the importer. */

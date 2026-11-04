@@ -8,7 +8,7 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 import com.top_logic.reporting.report.model.partition.function.ClassificationPartitionFunction;
 
 /**
- * The XMLClassificationElement describes the XML-representation of a
+ * The {@link XMLClassificationElement} describes the XML-representation of a
  * {@link ClassificationPartitionFunction}.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>

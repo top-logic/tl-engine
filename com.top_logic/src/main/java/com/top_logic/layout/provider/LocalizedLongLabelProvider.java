@@ -15,6 +15,9 @@ import com.top_logic.mig.html.HTMLFormatter;
  */
 public class LocalizedLongLabelProvider implements LabelProvider {
 
+    /**
+     * Singleton {@link LocalizedLongLabelProvider} instance.
+     */
     public static final LocalizedLongLabelProvider INSTANCE = new LocalizedLongLabelProvider();
 
     /**

@@ -6,14 +6,21 @@
 package com.top_logic.basic.db.sql;
 
 /**
+ * Part of an SQL statement that is used as table, e.g. a {@link SQLTable} or a {@link SQLJoin}.
+ * 
+ * <pre>
  * {@link SQLTableReference}:
  *     {@link SQLTable}
  *   | {@link SQLJoin}
+ * </pre>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface SQLTableReference extends SQLPart {
 	
+	/**
+	 * The first table referenced by this part.
+	 */
 	public abstract SQLTable getInitialTable();
 
 }

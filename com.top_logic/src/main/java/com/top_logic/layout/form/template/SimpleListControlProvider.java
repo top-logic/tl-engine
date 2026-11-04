@@ -48,6 +48,7 @@ public class SimpleListControlProvider extends DefaultFormFieldControlProvider {
 		return new FormListControl(member, this, createTemplate(), resourcePrefix);
 	}
 
+	/** Creates the template displaying the list as table with a label and a value column. */
 	public static Document createTemplate() {
 		Document document = DOMUtil.newDocument();
 
@@ -81,6 +82,7 @@ public class SimpleListControlProvider extends DefaultFormFieldControlProvider {
 		return document;
 	}
 
+	/** The resource prefix for the labels of the displayed fields. */
 	protected ResPrefix getResPrefix() {
 	    return this.resourcePrefix;
 	}

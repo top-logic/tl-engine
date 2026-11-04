@@ -25,7 +25,7 @@ public class TableUpdateAccumulator extends AbstractAttachable {
 	private List<UpdateRequest> normalizedUpdateQueue;
 
 	/**
-	 * Create a new TableUpdateAccumulator
+	 * Create a new {@link TableUpdateAccumulator}
 	 */
 	public TableUpdateAccumulator() {
 		updateRequestQueue = new LazyListModifyable<>() {
@@ -165,14 +165,14 @@ public class TableUpdateAccumulator extends AbstractAttachable {
 		}
 
 		/**
-		 * Returns the firstRow.
+		 * The first row affected by the update.
 		 */
 		public int getFirstAffectedRow() {
 			return firstRow;
 		}
 
 		/**
-		 * Returns the lastRow.
+		 * The last row affected by the update.
 		 */
 		public int getLastAffectedRow() {
 			return lastRow;

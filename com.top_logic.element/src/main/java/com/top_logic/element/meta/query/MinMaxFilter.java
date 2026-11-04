@@ -15,7 +15,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Filter that allows a serach range (from and to value)
+ * Filter that allows a search range (from and to value).
  *
  * @author    <a href="mailto:fma@top-logic.com"></a>
  */

@@ -259,6 +259,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		return this.modeModel.getMode();
 	}
 	
+	/** Sets the {@link ModeModel} switching this table between view and edit mode. */
 	public void setModeModel(ModeModel newModeModel) {
 		int oldMode = modeModel.getMode();
 		
@@ -282,7 +283,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 	}
 
 	/**
-	 * If this TableControl is currently not selectable due to
+	 * If this {@link TableControl} is currently not selectable due to
 	 * {@link ModeModel#DISABLED_MODE}, {@link ModeModel#IMMUTABLE_MODE}, or
 	 * {@link ModeModel#INVISIBLE_MODE} this method returns <code>false</code>.
 	 * 
@@ -619,6 +620,10 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		
 	}
 
+	/**
+	 * {@link TableCommand} opening the selector popup of the {@link SelectField} displayed by
+	 * a table of a {@link SelectionTableModel}.
+	 */
 	public static class ChooseAction extends TableCommand {
 
 		public ChooseAction(String id) {

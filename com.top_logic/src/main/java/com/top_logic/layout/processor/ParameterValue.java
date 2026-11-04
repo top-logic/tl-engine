@@ -81,6 +81,7 @@ public abstract class ParameterValue {
 	 */
 	protected abstract List<? extends Node> internalExpand(Buffer out) throws ElementInAttributeContextError;
 
+	/** The document the given node belongs to. */
 	protected static Document owner(Node parent) {
 		if (parent.getNodeType() == Node.DOCUMENT_NODE) {
 			return (Document) parent;
@@ -88,18 +89,28 @@ public abstract class ParameterValue {
 		return parent.getOwnerDocument();
 	}
 
+	/**
+	 * Sets the {@link Expansion} in which this value is expanded.
+	 *
+	 * @see #expansion()
+	 */
 	public void initExpansion(Expansion expansion) {
 		_expansion = expansion;
 	}
 
+	/** The {@link Expansion} in which this value is expanded. */
 	public Expansion expansion() {
 		return _expansion;
 	}
 
+	/**
+	 * The value to expand instead, if this value expands to {@link Expansion#NO_NODE_EXPANSION}.
+	 */
 	public ParameterValue fallback() {
 		return _fallback;
 	}
 
+	/** Setter for {@link #fallback()}. */
 	public void setFallback(ParameterValue fallback) {
 		_fallback = fallback;
 	}

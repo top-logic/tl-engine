@@ -17,7 +17,7 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 
 /**
- * For testing!
+ * Name input component for testing.
  * 
  * @author    <a href="mailto:klaus.halfmann@top-logic.com">Klaus Halfmann</a>
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>

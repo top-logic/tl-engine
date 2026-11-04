@@ -20,7 +20,7 @@ import com.top_logic.reporting.report.model.partition.TimeRangeFactory;
 import com.top_logic.util.TLContext;
 
 /**
- * The DateIntervalProvider returns intervals specified by two borders and a granuarity.
+ * The {@link DateIntervalProvider} returns intervals specified by two borders and a granuarity.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -35,7 +35,7 @@ public class DateIntervalProvider extends IntervalProvider{
     }
     
 	/**
-	 * Creates {@link DateInterval}s from a given startDate, endDate and a granularity in hours.
+	 * Creates {@link DateInterval}s from a given start date, end date and a granularity in hours.
 	 * 
 	 * @param aStart
 	 *        the start of the interval that is to be subdivided

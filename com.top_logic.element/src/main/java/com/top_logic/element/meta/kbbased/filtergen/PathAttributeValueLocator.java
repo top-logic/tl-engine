@@ -17,8 +17,10 @@ import com.top_logic.knowledge.wrap.Wrapper;
  */
 public class PathAttributeValueLocator extends CustomSingleSourceValueLocator {
 
+	/** Separator of the parts of the attribute path. */
 	public static final String PATH_SEPARATOR = ".";
 	
+	/** The names of the attributes of the path. */
 	protected String[] pathConfig;
 	
 	/** 
@@ -29,7 +31,7 @@ public class PathAttributeValueLocator extends CustomSingleSourceValueLocator {
 	}
 	
 	/** 
-	 * Create a new PathAttributeValueLocator with attribute path config
+	 * Create a new {@link PathAttributeValueLocator} with attribute path config
 	 * 
 	 * @param aConfig the config
 	 */
@@ -38,6 +40,15 @@ public class PathAttributeValueLocator extends CustomSingleSourceValueLocator {
 		this.pathConfig = this.getPath(aConfig);
 	}
 	
+	/**
+	 * Splits the given path configuration into the names of the attributes of the path.
+	 *
+	 * @param aConfig
+	 *        The attribute names separated by {@link #PATH_SEPARATOR}.
+	 * @return The attribute names, never empty.
+	 * @throws IllegalArgumentException
+	 *         If the configuration is empty.
+	 */
 	protected String[] getPath(String aConfig) {
 		String[] theConfig = StringServices.toArray(aConfig, PATH_SEPARATOR);
 		if (StringServices.isEmpty(theConfig)) {

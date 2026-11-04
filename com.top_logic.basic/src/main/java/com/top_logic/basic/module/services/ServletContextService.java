@@ -68,14 +68,23 @@ public final class ServletContextService extends ManagedClass {
 		return _application;
 	}
 	
+	/**
+	 * The version of the application.
+	 */
 	public Version getVersion() {
 		return Version.getApplicationVersion();
 	}
 
+	/**
+	 * The {@link ServletContext} of the application.
+	 */
 	public ServletContext getServletContext() {
 		return context;
 	}
 
+	/**
+	 * The singleton {@link ServletContextService} instance.
+	 */
 	public static ServletContextService getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
 	}
@@ -124,8 +133,14 @@ public final class ServletContextService extends ManagedClass {
 
 	}
 
+	/**
+	 * Module for instantiation of the {@link ServletContextService}.
+	 */
 	public static final class Module extends BasicRuntimeModule<ServletContextService> {
 
+		/**
+		 * Singleton {@link ServletContextService.Module} instance.
+		 */
 		public static final ServletContextService.Module INSTANCE = new ServletContextService.Module();
 
 		private static final Collection<? extends Class<? extends BasicRuntimeModule<?>>> DEPENDENCIES = NO_DEPENDENCIES;

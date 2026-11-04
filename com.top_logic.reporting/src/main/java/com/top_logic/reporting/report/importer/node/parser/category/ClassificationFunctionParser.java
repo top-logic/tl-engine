@@ -23,8 +23,8 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The ClassificationFunctionParser parses classification functions from a {@link Node}.
- * A ClassificationFunction can be configured in with tree disjoint options:
+ * The {@link ClassificationFunctionParser} parses classification functions from a {@link Node}.
+ * A classification function can be configured in with tree disjoint options:
  *  1. <list-manual>comma,seperated,list,of,Strings,Dates,01.01.2007,or,Numbers,1,2,3</list-manual>
  *  2. <list-fastlist>tl.yesno</list-fastlist>
  *  3. <ranges>
@@ -70,7 +70,7 @@ public class ClassificationFunctionParser extends AbstractPartitionFunctionParse
 	 * 
 	 * @param aNode
 	 *        should be the <code>category-funtion</code> node, will fail otherwise
-	 * @return ClassificationFunction
+	 * @return classification function
 	 * 
 	 * @see com.top_logic.reporting.report.importer.node.NodeParser#parse(org.w3c.dom.Node,
 	 *      com.top_logic.reporting.report.model.Report)

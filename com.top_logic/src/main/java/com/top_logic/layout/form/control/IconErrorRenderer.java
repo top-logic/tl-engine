@@ -28,6 +28,7 @@ import com.top_logic.util.Resources;
  */
 public class IconErrorRenderer extends AbstractErrorRenderer {
 
+	/** Singleton {@link IconErrorRenderer} instance. */
 	public static final AbstractErrorRenderer INSTANCE = new IconErrorRenderer();
 
 	/**

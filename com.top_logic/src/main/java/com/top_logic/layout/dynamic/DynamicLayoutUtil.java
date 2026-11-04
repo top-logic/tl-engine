@@ -29,7 +29,7 @@ public class DynamicLayoutUtil {
     }
     
     /**
-     * Returns the worklist entry as declared in the enclosing TaskLayloutContainer
+     * Returns the worklist entry as declared in the enclosing {@link DynamicFrame}.
      *
      * @see com.top_logic.mig.html.layout.LayoutComponent#getModel()
      */

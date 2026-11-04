@@ -11,7 +11,7 @@ import com.top_logic.util.Utils;
 
 
 /**
- * Implement the assignment extension for ExternalContacts.
+ * Implement the assignment extension for {@link ExternalContact}s.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -834,6 +834,9 @@ public class ModuleUtil {
 		dependentModules.remove(module);
 	}
 
+	/**
+	 * Shuts down all active modules in reverse dependency order.
+	 */
 	public void shutDownAll() {
 		Collection<BasicRuntimeModule<?>> noDependenciesModules = dependentModules.get(null);
 		if (noDependenciesModules != null) {
@@ -892,6 +895,19 @@ public class ModuleUtil {
 		}
 	}
 
+	/**
+	 * Executes the given computation with the given modules being active.
+	 *
+	 * <p>
+	 * Modules that are not active are started before and shut down after the computation.
+	 * </p>
+	 *
+	 * @param computation
+	 *        The computation to run.
+	 * @param neededModules
+	 *        The modules required by the computation.
+	 * @return The result of the computation.
+	 */
 	public <T, E1 extends Throwable, E2 extends Throwable> T inModuleContext(ComputationEx2<T, E1, E2> computation,
 			BasicRuntimeModule<?>... neededModules) throws ModuleRuntimeException, E1, E2 {
 		if (neededModules.length == 0) {
@@ -1273,6 +1289,9 @@ public class ModuleUtil {
 		throw ex;
 	}
 
+	/**
+	 * All currently active modules.
+	 */
 	public Collection<? extends BasicRuntimeModule<?>> getActiveModules() {
 		return Collections.unmodifiableCollection(activeModules);
 	}

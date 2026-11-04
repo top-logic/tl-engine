@@ -42,14 +42,14 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
  * It is intended to be used with files like .js .css or similar that can be concatenated without
  * losing semantics. This class only works with files found in the same {@link Config#getBaseDir()}.
  * 
- * It is bases on Ideas found around the MultiLoaderFileManager.
+ * It is bases on Ideas found around the multi loader file manager.
  * 
  * @author <a href="mailto:kha@top-logic.com">kha</a>
  */
 public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.Config> {
 
 	/**
-	 * Configuration of the {@link FileCompiler}
+	 * Configuration of the {@link FileCompiler}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -427,6 +427,9 @@ public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.C
 		return getConfig().isDeployed();
     }
 
+	/**
+	 * The names of the files to compile.
+	 */
 	protected List<String> getBaseNames() {
 		return _baseNames;
 	}

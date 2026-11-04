@@ -15,7 +15,9 @@ package com.top_logic.layout.scripting.recorder.ref.value;
 @Deprecated
 public interface BooleanValue extends ValueRef {
 
+	/** The value. */
 	boolean getBoolean();
+	/** Setter for {@link #getBoolean()}. */
 	void setBoolean(boolean value);
 
 }

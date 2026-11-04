@@ -12,8 +12,8 @@ import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.TimeSeries;
 
 /**
- * The ExtendedTimeSeries extends the {@link org.jfree.data.time.TimeSeries}. The 
- * ExtendedTimesSeries stores additionally objects.
+ * The {@link ExtendedTimeSeries} extends the {@link org.jfree.data.time.TimeSeries}. The 
+ * {@link ExtendedTimeSeries} stores additionally objects.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

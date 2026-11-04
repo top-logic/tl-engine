@@ -9,14 +9,14 @@ import java.util.Hashtable;
 
 
 /**
- * Used to inherit the TopLogicThreadInfo to child threads.
+ * Used to inherit the thread info to child threads.
  * The different thread get their own copy to allow independent modification.
  *
  * @author   <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
 public class TopLogicInheritableThreadLocal extends InheritableThreadLocal {
 
-    /** Our value in fact is a hashMap */
+    /** Our value in fact is a hash map. */
     @Override
 	protected  Object initialValue()  {
         return new Hashtable ();
@@ -28,8 +28,8 @@ public class TopLogicInheritableThreadLocal extends InheritableThreadLocal {
      * This will be cloend so then changes by the Parent will not influence
      * the child
 	 *
-	 * @param	parentValue		the ThreadLocal content of the parent thread.
-	 * @return	the cloned parentValue
+	 * @param	parentValue		the {@link ThreadLocal} content of the parent thread.
+	 * @return	the cloned {@code parentValue}
 	 */
 	@Override
 	protected Object childValue (Object parentValue) {

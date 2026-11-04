@@ -40,7 +40,7 @@ public class JournalLine extends ArrayList<JournalEntry> {
     }
     
     /**
-     * Getter for the userId
+     * Getter for the user ID.
      * 
      * @return the id of the user who initiated the commit the journal line is for.
      */

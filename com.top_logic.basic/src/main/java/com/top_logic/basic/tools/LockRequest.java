@@ -31,26 +31,44 @@ public class LockRequest {
 		Logger.debug(getThreadDescription() + " is requesting a lock: " + lockName, LockWaitMonitor.class);
 	}
 	
+	/**
+	 * The thread requesting the lock.
+	 */
 	public Thread getThread() {
 		return thread;
 	}
 	
+	/**
+	 * The name of the requested lock.
+	 */
 	public String getLockName() {
 		return lockName;
 	}
 	
+	/**
+	 * The time when the lock was requested.
+	 */
 	public long getTimestamp() {
 		return timestamp;
 	}
 	
+	/**
+	 * Marks that the requesting thread had to wait for the lock.
+	 */
 	public void isWaiting() {
 		wasWaiting = true;
 	}
 	
+	/**
+	 * Whether the requesting thread had to wait for the lock.
+	 */
 	public boolean wasWaiting() {
 		return wasWaiting;
 	}
 	
+	/**
+	 * Whether the request has been waiting longer than its timeout.
+	 */
 	public boolean hasTimedOut() {
 		return System.currentTimeMillis() > (timestamp + timeout);
 	}
@@ -62,6 +80,9 @@ public class LockRequest {
 		return System.currentTimeMillis() - getTimestamp();
 	}
 	
+	/**
+	 * The {@link #getTimeWaiting()} as text.
+	 */
 	public String getTimeWaitingText() {
 		return StopWatch.toStringMillis(getTimeWaiting());
 	}
@@ -73,6 +94,9 @@ public class LockRequest {
 		return getTimeWaiting() > warnTimeout;
 	}
 	
+	/**
+	 * Description of the requesting thread for log messages.
+	 */
 	public String getThreadDescription() {
 		return "Thread '" + thread.getName() + "' (id: " + thread.getId() + ")";
 	}

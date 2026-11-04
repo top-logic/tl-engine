@@ -73,14 +73,14 @@ public abstract class AggregationValueListenerDependency extends AbstractValueLi
     }
 
     /**
-     * This method returns the touchAtAttach flag.
+     * Whether the dependency is touched when it is attached.
      */
     public boolean isTouchAtAttach() {
         return this.touchAtAttach;
     }
 
     /**
-     * This method sets the touchAtAttach flag.
+     * Setter for {@link #isTouchAtAttach()}.
      */
     public void setTouchAtAttach(boolean touchAtAttach) {
         this.touchAtAttach = touchAtAttach;

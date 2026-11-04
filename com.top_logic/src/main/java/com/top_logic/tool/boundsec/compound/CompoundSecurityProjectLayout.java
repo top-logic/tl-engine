@@ -25,18 +25,28 @@ import com.top_logic.tool.boundsec.BoundObject;
  * In addition nodes which can not be viewd in the element view 
  * must not be visible in the tree.
  * 
- * In such a scenario the tree is the primaryChecker, and the element view the secondary.
+ * In such a scenario the tree is the primary checker, and the element view the secondary.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 
  */
 public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
 
+    /**
+     * Configuration of a {@link CompoundSecurityProjectLayout}.
+     */
     public interface Config extends CompoundSecurityLayout.Config {
+		/**
+		 * Name of the component to which the security checks are delegated (e.g. the tree).
+		 */
 		@Name("primaryChecker")
 		@Mandatory
 		ComponentName getPrimaryChecker();
 
+		/**
+		 * Name of the component to which the primary checker delegates its security checks (e.g.
+		 * the element view).
+		 */
 		@Name("secondaryChecker")
 		@Mandatory
 		ComponentName getSecondaryChecker();
@@ -115,7 +125,7 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
     }
     
     /** 
-     * Get the selected object from the primary checker. This must be a BoundObject.
+     * Get the selected object from the primary checker. This must be a {@link BoundObject}.
      * 
      * @return the selected object in the primary checker
      */

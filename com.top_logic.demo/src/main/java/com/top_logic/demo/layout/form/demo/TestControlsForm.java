@@ -290,7 +290,7 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Show / Test several examples of {@link FormMember}s
+ * Show / Test several examples of {@link FormMember}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -299,7 +299,9 @@ public class TestControlsForm extends FormComponent {
 
 	private static final String COLUMN_EXTERNAL_LINK = "link";
 
+	/** Configuration options for {@link TestControlsForm}. */
 	public interface Config extends FormComponent.Config {
+		/** Label of the web folder to display in the form. */
 		@Name(XML_CONF_FOLDER_ID)
 		String getWebFolder();
 	}
@@ -970,6 +972,7 @@ public class TestControlsForm extends FormComponent {
 	private static final boolean SINGLE = ! MULTI;
 	private static final boolean CUSTOM_ORDER = true;
 
+	/** Property annotating the {@link TestControlsForm} to a command model. */
 	protected static final Property<TestControlsForm> COMPONENT = TypedAnnotatable.property(TestControlsForm.class, "component");
 
 	private static final Comparator<Object> NO_ORDER = new Comparator<>() {
@@ -1935,6 +1938,7 @@ public class TestControlsForm extends FormComponent {
 		controlsGroup.addMember(group);
 	}
 
+	/** Adds a select field whose options have a context menu. */
 	protected void addSelectControlWithContextMenu(FormGroup controlsGroup) {
 		SelectField field = FormFactory.newSelectField("selectControlOptionContextMenu", abcdOptions());
 		ContextMenuProvider contextMenu = new ContextMenuProvider() {
@@ -3115,6 +3119,19 @@ public class TestControlsForm extends FormComponent {
 		return tableField;
 	}
 
+	/**
+	 * Creates a table field displaying demo rows.
+	 *
+	 * @param fieldName
+	 *        Name of the field to create.
+	 * @param containerResPrefix
+	 *        Resource prefix of the container the field is added to.
+	 * @param columnCustomization
+	 *        How the user may customize the columns of the table.
+	 * @param useGlobalSelection
+	 *        Whether a selection model is installed that allows to show the selected rows.
+	 * @return The new table field.
+	 */
 	public TableField createTableField(String fieldName, ResourceView containerResPrefix,
 			ColumnCustomization columnCustomization, boolean useGlobalSelection) {
 		final TableField tableField = FormFactory.newTableField(fieldName);

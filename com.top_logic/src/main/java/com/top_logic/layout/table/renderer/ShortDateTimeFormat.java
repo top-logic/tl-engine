@@ -10,6 +10,8 @@ import java.util.Date;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
+ * {@link AbstractDateLabelProvider} formatting a date with date and time in short format.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ShortDateTimeFormat  extends AbstractDateLabelProvider {

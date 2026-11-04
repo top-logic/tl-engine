@@ -20,8 +20,8 @@ import com.top_logic.layout.table.model.EditableRowTableModel;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 
 /**
- * Factory for a Control to displays an editable list as table specified by a TableField
- * with an ObjectTableModel.
+ * Factory for a Control to displays an editable list as table specified by a {@link TableField}
+ * with an {@link com.top_logic.layout.table.model.ObjectTableModel}.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
@@ -41,10 +41,12 @@ public class TableListTag extends TableTag {
 
 
 
+    /** Sets the {@link RowObjectCreator} creating new rows. */
     public void setRowObjectCreator(RowObjectCreator rowObjectCreator) {
         this.rowObjectCreator = rowObjectCreator;
     }
 
+    /** Sets the {@link RowObjectRemover} removing rows. */
     public void setRowObjectRemover(RowObjectRemover rowObjectRemover) {
         this.rowObjectRemover = rowObjectRemover;
     }
@@ -54,22 +56,27 @@ public class TableListTag extends TableTag {
         this.renderer = renderer;
     }
 
+    /** Sets whether the creation of a new row is always offered. */
     public void setAppendAlways(boolean appendAlways) {
         this.appendAlways = appendAlways;
     }
 
+    /** Sets the index of the column by which the table is initially sorted. */
     public void setInitialSortColumn(int aInitialSortColumn) {
         this.initialSortColumn = aInitialSortColumn;
     }
 
+    /** Sets the {@link Comparator}s for the columns. */
     public void setComparators(Comparator[] someComparators) {
         this.comparators = someComparators;
     }
 
+    /** Sets whether the table is initially sorted in ascending order. */
     public void setAscending(boolean aAscending) {
         this.ascending = aAscending;
     }
 
+    /** Sets whether the table can be sorted. */
     public void setSortable(boolean aSortable) {
         this.sortable = aSortable;
     }

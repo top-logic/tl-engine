@@ -71,14 +71,20 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     public static final long LATENCY_TIME = 0;
 
     // maintenance states of the application
+    /** Mode: the application is in maintenance mode. */
     public static final int IN_MAINTENANCE_MODE = 0;
+    /** Mode: the maintenance mode is announced and will be entered soon. */
     public static final int ABOUT_TO_ENTER_MAINTENANCE_MODE = 1;
+    /** Mode: the application is in normal operation. */
     public static final int DEFAULT_MODE = 2;
 
 
     /* Properties for cluster manager */
+    /** Cluster property transporting the message announcing the maintenance mode. */
     public static final String PROPERTY_MESSAGE = "mwm_message";
+    /** Cluster property transporting the user who changed the maintenance mode. */
     public static final String PROPERTY_USER = "mwm_user";
+    /** Cluster property transporting changes of the maintenance mode. */
     public static final String PROPERTY_STATE_CHANGE = "mwm_state_change";
 
 	/**
@@ -89,7 +95,9 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 	 */
 	public static final String PROPERTY_ALLOW_LOGIN = "mwm_allow_login";
 
+    /** Value of {@link #PROPERTY_STATE_CHANGE} for leaving the maintenance mode. */
     public static final Long CM_STATE_DEFAULT_MODE = Long.valueOf(-1);
+    /** Value of {@link #PROPERTY_STATE_CHANGE} for entering the maintenance mode immediately. */
     public static final Long CM_STATE_MAINTENANCE_MODE = Long.valueOf(0);
 
 	private static final Property<NamedConstant> TOKEN_KEY = TypedAnnotatable.property(NamedConstant.class, "tokenKey");
@@ -837,8 +845,10 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 		super.shutDown();
     }
 
+	/** Module for the {@link MaintenanceWindowManager} service. */
 	public static final class Module extends TypedRuntimeModule<MaintenanceWindowManager> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

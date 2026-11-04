@@ -15,7 +15,7 @@ import jakarta.servlet.jsp.tagext.TagSupport;
 
 
 /**
- * This TagHandler classextracts the parameters from the current request and
+ * This tag handler class extracts the parameters from the current request and
  * writes them into hidden fields; to be passed on with the response.
  *
  * @author    Dr. Bettina Hofstaetter
@@ -28,7 +28,7 @@ public class ExtractParamTag extends TagSupport {
     }
 
     /**
-     * Retrieves the standard PrintWriter object to print the hidden parameters into
+     * Retrieves the standard {@link java.io.PrintWriter} object to print the hidden parameters into
      * the page body.
      */
     @Override

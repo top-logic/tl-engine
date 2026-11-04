@@ -99,7 +99,7 @@ public class DnDFileUtilities {
 	 * Key to determine the info message to show if the client failed an upload because of unsupported folder uploads.
 	 * 
 	 * <p>
-	 * This key is also used in /com.top_logic/webapp/script/tl/DragAndDropFile.js.
+	 * This key is also used in {@code /com.top_logic/webapp/script/tl/DragAndDropFile.js}.
 	 * </p>
 	 */
 	final public static String FOLDER_DROP_NOT_SUPPORTED = "folderDropNotSupported";
@@ -109,8 +109,8 @@ public class DnDFileUtilities {
 	 * uploaded files exceeded the configured maximum size.
 	 * 
 	 * <p>
-	 * This key is also used in /com.top_logic/webapp/script/tl/DragAndDropFile.js. The allowed
-	 * maximum size will be added to this key by the client. It will be separated by ":".
+	 * This key is also used in {@code /com.top_logic/webapp/script/tl/DragAndDropFile.js}. The
+	 * allowed maximum size will be added to this key by the client. It will be separated by ":".
 	 * </p>
 	 */
 	final public static String MAX_SIZE_EXCEEDED = "maxSizeExceeded";

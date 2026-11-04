@@ -109,12 +109,16 @@ public interface ImageUploadAction extends ApplicationAction {
 	ModelName getImage();
 
 	/**
+	 * Setter for {@link #getField()}.
+	 * 
 	 * @param field
 	 *        The {@link FormField} used for structured text.
 	 */
 	void setField(ModelName field);
 
 	/**
+	 * Setter for {@link #getImage()}.
+	 * 
 	 * @param image
 	 *        The {@link BinaryData} that should be uploaded.
 	 */

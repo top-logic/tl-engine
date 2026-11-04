@@ -36,14 +36,23 @@ public class SQLTable extends AbstractSQLTableReference {
 		this.tableAlias = tableAlias;
 	}
 	
+	/**
+	 * The alias through which the table is accessed in the statement.
+	 */
 	public String getTableAlias() {
 		return tableAlias;
 	}
 	
+	/**
+	 * Setter for {@link #getTableAlias()}.
+	 */
 	public void setTableAlias(String tableAlias) {
 		this.tableAlias = tableAlias;
 	}
 	
+	/**
+	 * The name of the table in the database.
+	 */
 	public String getTableName() {
 		return tableName;
 	}

@@ -33,8 +33,13 @@ import com.top_logic.layout.basic.ThemeImage;
  */
 public class DefaultButtonRenderer extends AbstractButtonRenderer<DefaultButtonRenderer.Config> {
 
+	/** Default {@link DefaultButtonRenderer} instance. */
 	public static final AbstractButtonRenderer<?> INSTANCE = newDefaultButtonRenderer(true);
 
+	/**
+	 * {@link DefaultButtonRenderer} instance that does not display the reason for a disabled
+	 * button in its tooltip.
+	 */
 	public static final AbstractButtonRenderer<?> NO_REASON_INSTANCE = newDefaultButtonRenderer(false);
 
 	private static AbstractButtonRenderer<?> newDefaultButtonRenderer(boolean execStateInTooltip) {
@@ -112,6 +117,7 @@ public class DefaultButtonRenderer extends AbstractButtonRenderer<DefaultButtonR
 		out.endTag(SPAN);
 	}
 
+	/** Writes the label of the given button. */
 	protected void writeLabel(TagWriter out, AbstractButtonControl<?> button) throws IOException {
         out.beginBeginTag(SPAN);
         out.writeAttribute(ID_ATTR, getLabelId(button));

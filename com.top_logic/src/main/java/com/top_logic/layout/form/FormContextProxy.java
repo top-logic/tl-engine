@@ -8,7 +8,7 @@ package com.top_logic.layout.form;
 import com.top_logic.layout.form.model.FormContext;
 
 /**
- * Able to get a FormContext
+ * Able to get a {@link FormContext}.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */

@@ -6,7 +6,7 @@
 package com.top_logic.knowledge.search;
 
 /**
- * Substraction of two {@link SetExpression}s
+ * Substraction of two {@link SetExpression}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

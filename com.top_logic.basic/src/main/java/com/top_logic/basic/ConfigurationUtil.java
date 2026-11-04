@@ -10,15 +10,17 @@ import java.awt.Color;
 import com.top_logic.basic.config.ConfigUtil;
 
 /**
- * The ConfigurationUtil contains useful static methods to read 
+ * The {@link ConfigurationUtil} contains useful static methods to read 
  * one or two attributes from the configuration.
  *  
  * Note, don't use this class to read many attributes from the 
  * configuration (performance problems). In this case try to 
  * something like that: 
+ * <pre>
  * Configuration.getConfiguration(ConfigurationUtil.class).getProperties();
  * Boolean.valueOf(theProperties.getProperty("attributeName")).booleanValue()
  * ...
+ * </pre>
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

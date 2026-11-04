@@ -32,7 +32,8 @@ public class SourceIterator extends KAIterator {
     }
 
     /**
-     * Overridden to return the getSourceObject() of {@link #currentKA()}.
+     * Overridden to return the {@link KnowledgeAssociation#getSourceObject()} of {@link
+     * #currentKA()}.
      */
     @Override
 	public KnowledgeObject getSide() throws DataObjectException {

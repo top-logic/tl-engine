@@ -16,11 +16,11 @@ import com.top_logic.knowledge.wrap.WebFolder;
 /**
  * Interface for objects being document aware.
  * 
- * That is Object that in someway contain a WebFolder and want its content displayed.
+ * That is Object that in someway contain a {@link WebFolder} and want its content displayed.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  * 
- * @deprecated getting a WebFolder and writing it, does not fit in one interface. use
+ * @deprecated getting a {@link WebFolder} and writing it, does not fit in one interface. use
  *             WebFolderAware.
  */
 @Deprecated
@@ -48,7 +48,7 @@ public interface DocumentAware {
      */
     public void setWebFolderDirty();
     
-    /** Write the actual WebFolder (as Table) in some HTML Page */
+    /** Write the actual {@link WebFolder} (as Table) in some HTML Page */
     public void writeFolder(HttpServletRequest aRequest, HttpServletResponse aResponse) 
         throws IOException, ServletException;
     

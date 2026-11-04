@@ -38,7 +38,7 @@ import com.top_logic.basic.util.Computation;
 public abstract class TypedRuntimeModule<M extends ManagedClass> extends BasicRuntimeModule<M> {
 
 	/**
-	 * Configuration of a {@link TypedRuntimeModule}
+	 * Configuration of a {@link TypedRuntimeModule}.
 	 * 
 	 * @since 5.7.3
 	 * 

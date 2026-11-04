@@ -18,6 +18,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class DefaultApplyAttributedCommandHandler extends AbstractApplyAttributedCommandHandler {
 
+	/** Default ID of this command handler. */
 	public static final String COMMAND_ID = "storeAttributes";
 
     public DefaultApplyAttributedCommandHandler(InstantiationContext context, Config config) {

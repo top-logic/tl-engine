@@ -19,10 +19,24 @@ import com.top_logic.mig.html.layout.Expandable;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
+ * Utilities for adding the fields for publishing a query to the groups of the application.
+ * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class PublishableFieldSupport {
 	
+	/**
+	 * Adds the form group for publishing a query to the given form context.
+	 *
+	 * @param aComp
+	 *        The component displaying the form. The publishing group is only visible, if the
+	 *        component is expanded.
+	 * @param aCtx
+	 *        The form context to add the group to.
+	 * @param aResPrefix
+	 *        The resource prefix for the labels of the group.
+	 * @return The given form context.
+	 */
 	public static FormContext createFormContext(Expandable aComp, FormContext aCtx, ResPrefix aResPrefix) {
 		FormContext theCtx = aCtx;
 		FormGroup theGroup = new FormGroup(QueryUtils.FORM_GROUP, aResPrefix);

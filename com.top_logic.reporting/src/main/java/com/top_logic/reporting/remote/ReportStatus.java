@@ -6,6 +6,8 @@
 package com.top_logic.reporting.remote;
 
 /**
+ * Status of the creation of a report.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface ReportStatus {

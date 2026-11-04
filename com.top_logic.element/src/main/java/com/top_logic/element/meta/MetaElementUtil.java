@@ -92,8 +92,8 @@ public class MetaElementUtil {
     /**
 	 * Copies all attribute values from the given source object to the given target object. Only
 	 * attributes, which are existing in both objects are copied (only name matching, not type
-	 * matching). Attributes in the given excludeAttributeNames list and technical attributes (see
-	 * {@link KBUtils#KA_SYSTEM_ATTRIBUTES}) are not copied.
+	 * matching). Attributes in the given {@code excludeAttributeNames} list and technical
+	 * attributes (see {@link KBUtils#KA_SYSTEM_ATTRIBUTES}) are not copied.
 	 * 
 	 * @param aSource
 	 *        the source object to copy attribute values from
@@ -269,15 +269,42 @@ public class MetaElementUtil {
 		return false;
 	}
 
+	/**
+	 * The root of the structure whose module defines the type of the given attribute.
+	 *
+	 * @param attribute
+	 *        The attribute whose type is a class of a structure module.
+	 * @return The root element of that structure.
+	 */
 	public static StructuredElement getRoot(TLStructuredTypePart attribute) {
 		String structureType = ((TLClass) attribute.getType()).getModule().getName();
 		return StructuredElementFactory.getInstanceForStructure(structureType).getRoot();
 	}
 
+	/**
+	 * The names of the types that can be created as children of the given type.
+	 *
+	 * @param moduleName
+	 *        The name of the module defining the type.
+	 * @param typeName
+	 *        The name of the type.
+	 * @return The names of the types of the composition references of the given type.
+	 *
+	 * @see #getContainmentNodeNames(TLClass)
+	 */
 	public static List<String> getContainmentNodeTypes(String moduleName, String typeName) {
 		return getContainmentNodeNames(getGlobalType(moduleName, typeName));
 	}
 
+	/**
+	 * Resolves a global class by its module and type name.
+	 *
+	 * @param moduleName
+	 *        The name of the module, must not be {@code null}.
+	 * @param typeName
+	 *        The name of the type in the module, must not be {@code null}.
+	 * @return The class with the given name.
+	 */
 	public static TLClass getGlobalType(String moduleName, String typeName) {
 		if (moduleName == null) {
 			throw new IllegalArgumentException("Module name must not be null.");
@@ -288,6 +315,13 @@ public class MetaElementUtil {
 		return MetaElementFactory.getInstance().getGlobalMetaElement(moduleName, typeName);
 	}
 
+	/**
+	 * The names of the types that can be created as children of the given type.
+	 *
+	 * @param type
+	 *        The parent type.
+	 * @return The names of the types of all composition references of the given type.
+	 */
 	public static List<String> getContainmentNodeNames(TLClass type) {
 		ArrayList<String> result = new ArrayList<>();
 		for (TLStructuredTypePart attribute : getContainments(type)) {
@@ -299,6 +333,18 @@ public class MetaElementUtil {
 		return result;
 	}
 
+	/**
+	 * Whether the given type is the given potential generalization or one of its specializations.
+	 *
+	 * <p>
+	 * For non-class types, only identity is checked.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @param potentialGeneralization
+	 *        The potential (reflexive) generalization of the given type.
+	 */
 	public static boolean hasGeneralization(TLStructuredType type, TLStructuredType potentialGeneralization) {
 		if (type.getModelKind() == ModelKind.CLASS && potentialGeneralization.getModelKind() == ModelKind.CLASS) {
 			return hasGeneralization((TLClass) type, (TLClass) potentialGeneralization);
@@ -307,6 +353,16 @@ public class MetaElementUtil {
 		}
 	}
 
+	/**
+	 * Whether one of the given classes is a (reflexive) generalization of the given type.
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @param potentialGeneralizations
+	 *        The potential generalizations of the given type.
+	 *
+	 * @see #hasGeneralization(TLStructuredType, TLStructuredType)
+	 */
 	public static boolean hasGeneralization(TLStructuredType type, Set<? extends TLClass> potentialGeneralizations) {
 		for (TLClass searchType : potentialGeneralizations) {
 			if (hasGeneralization(type, searchType)) {
@@ -316,10 +372,30 @@ public class MetaElementUtil {
 		return false;
 	}
 
+	/**
+	 * Whether the given class is the given potential generalization or one of its specializations.
+	 *
+	 * @param type
+	 *        The class to check.
+	 * @param potentialGeneralization
+	 *        The potential (reflexive) generalization of the given class.
+	 */
 	public static boolean hasGeneralization(TLClass type, TLClass potentialGeneralization) {
 		return TLModelUtil.isGeneralization(potentialGeneralization, type);
 	}
 
+	/**
+	 * Whether the given type has a (reflexive) generalization with the given name.
+	 *
+	 * <p>
+	 * For non-class types, only the name of the type itself is checked.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @param generalizationName
+	 *        The name of the potential generalization.
+	 */
 	public static boolean hasGeneralization(TLStructuredType type, String generalizationName) {
 		if (type.getModelKind() == ModelKind.CLASS) {
 			return hasGeneralization((TLClass) type, generalizationName);
@@ -328,6 +404,14 @@ public class MetaElementUtil {
 		}
 	}
 
+	/**
+	 * Whether the given class has a (reflexive) generalization with the given name.
+	 *
+	 * @param type
+	 *        The class to check.
+	 * @param generalizationName
+	 *        The name of the potential generalization.
+	 */
 	public static boolean hasGeneralization(TLClass type, String generalizationName) {
 		for (TLClass tlClass : TLModelUtil.getReflexiveTransitiveGeneralizations(type)) {
 			if (tlClass.getName().equals(generalizationName)) {
@@ -555,18 +639,18 @@ public class MetaElementUtil {
 	}
 
 	/**
-	 * Get all MetaAttributes of the given type. If specified the MetaAttributes of the the super
-	 * and sub MetaElements will be added as well.
+	 * Get all attributes of the given type. If specified the attributes of the the super and sub
+	 * types will be added as well.
 	 * 
 	 * TODO #6121: Delete TL 5.8.0 deprecation
 	 * 
 	 * @param aMetaAttributeType
 	 *        the legacy attribute type to be returned.
 	 * @param includeSuperMetaElements
-	 *        if <code>true</code> search in super MetaAttributes as well
+	 *        if <code>true</code> search in super types as well
 	 * @param includeSubMetaElements
-	 *        if <code>true</code> search in sub MetaAttributes as well
-	 * @return a set of all MetaAttributes that match the params. May be empty but must not be
+	 *        if <code>true</code> search in sub types as well
+	 * @return a set of all attributes that match the params. May be empty but must not be
 	 *         <code>null</code>.
 	 * 
 	 * @deprecated Use query based on {@link TLStructuredTypePart#getType()} /
@@ -677,9 +761,9 @@ public class MetaElementUtil {
 	 * @param aName
 	 *        the name of the attribute
 	 * @param includeSuperMetaElements
-	 *        if <code>true</code> search in super MetaAttributes as well
+	 *        if <code>true</code> search in super types as well
 	 * @param includeSubMetaElements
-	 *        if <code>true</code> search in sub MetaAttributes as well
+	 *        if <code>true</code> search in sub types as well
 	 * @return the attribute
 	 * @throws NoSuchAttributeException
 	 *         if the attribute does not exist.
@@ -726,9 +810,9 @@ public class MetaElementUtil {
 	}
 
 	/**
-	 * Get the MetaElementHolder.
+	 * Get the {@link MetaElementHolder}.
 	 * 
-	 * @return the MetaElementHolder. May be <code>null</code>.
+	 * @return the {@link MetaElementHolder}. May be <code>null</code>.
 	 * @throws MetaElementException
 	 *         is getting the holder fails
 	 */
@@ -863,11 +947,21 @@ public class MetaElementUtil {
 		}
 	}
 
+	/** Common prefix of the validity state resource keys. */
 	public static final String STATE_PREFIX = "element.state.";
+
+	/** Validity state: the object has no validity information. */
 	public static final String STATE_WHITE = STATE_PREFIX + "white";
+
+	/** Validity state: the object is valid. */
 	public static final String STATE_GREEN = STATE_PREFIX + "green";
+
+	/** Validity state: the validity of the object expires soon. */
 	public static final String STATE_YELLOW = STATE_PREFIX + "yellow";
+
+	/** Validity state: the validity of the object has expired. */
 	public static final String STATE_RED = STATE_PREFIX + "red";
+
 	/** The possible states of a supplier. */
 	public static final String[] STATE_MAP = new String[] { STATE_RED, STATE_YELLOW, STATE_GREEN, STATE_WHITE };
 

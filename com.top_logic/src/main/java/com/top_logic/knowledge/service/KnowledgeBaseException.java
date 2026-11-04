@@ -28,7 +28,7 @@ public class KnowledgeBaseException extends DataObjectException {
     }
     
     /**
-     * Constructor with a Message and a KnowledgeBase.
+     * Constructor with a Message and a {@link KnowledgeBase}.
      */
     public KnowledgeBaseException (String aMessage, KnowledgeBase aKBase) {
         super(aMessage);

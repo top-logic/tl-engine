@@ -18,7 +18,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 
 /**
- * A {@link FormComponent} for selecting the script that should be edited in the ScriptingGui.
+ * A {@link FormComponent} for selecting the script that should be edited in the scripting GUI.
  * <p>
  * Model: null. This component has no model.
  * </p>

@@ -12,7 +12,7 @@ import com.top_logic.reporting.report.control.producer.ChartContext;
 import com.top_logic.reporting.report.view.component.AbstractFilterComponent;
 
 /**
- * The PostChartCreationHandler handles additional operations
+ * The {@link PostChartCreationHandler} handles additional operations
  * after a chart is created by the {@link AbstractFilterComponent}.
  * 
  * All instances that implement this interface must have a default 
@@ -24,6 +24,18 @@ import com.top_logic.reporting.report.view.component.AbstractFilterComponent;
  */
 public interface PostChartCreationHandler {
 
+    /**
+     * Performs additional operations after the given chart was created.
+     *
+     * @param aLayoutComponent
+     *        The component that created the chart.
+     * @param aChartContext
+     *        The context the chart was created for.
+     * @param aChart
+     *        The created chart.
+     * @param sendEvent
+     *        Whether events may be sent to other components.
+     */
     public void handle(LayoutComponent aLayoutComponent, ChartContext aChartContext, JFreeChart aChart, boolean sendEvent);
    
 }

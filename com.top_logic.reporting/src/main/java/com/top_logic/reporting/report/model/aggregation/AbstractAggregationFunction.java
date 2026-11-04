@@ -77,14 +77,17 @@ public abstract class AbstractAggregationFunction implements AggregationFunction
 	    }
 	}
 
+	/** The configuration of this function. */
 	protected AggregationFunctionConfiguration getConfiguraion() {
         return (this.config);
     }
 	
+	/** The value of the reported attribute of the given object. */
 	protected final Object getAttribute(Object anObject) {
 		return this.config.getAccessor().getValue(anObject, this.getAttributePath());
 	}
 
+	/** Whether objects with {@code null} as attribute value are ignored. */
 	public final boolean ignoreNullValues() {
 		return this.getConfiguraion().isIgnoreNullValues();
 	}
@@ -104,10 +107,12 @@ public abstract class AbstractAggregationFunction implements AggregationFunction
 	    this.getConfiguraion().setAccessor(anAccessor);
 	}
 
+	/** The divisor the result of this function is divided by. */
 	protected final double getDivisor() {
 	    return this.getConfiguraion().getDivisor();
 	}
 	
+	/** Computes the value of this function for the given objects. */
 	protected abstract Number calculateResult(Collection someObjects);
 
 	@Override

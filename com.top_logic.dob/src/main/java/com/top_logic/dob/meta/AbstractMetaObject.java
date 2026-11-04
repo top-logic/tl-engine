@@ -16,7 +16,7 @@ import com.top_logic.dob.attr.MOPrimitive;
 
 /**
  * This class implements the method that describe the meta-data of
- * MetaObjects.
+ * {@link MetaObject}s.
  *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
@@ -25,7 +25,7 @@ public abstract class AbstractMetaObject extends MOPartImpl implements MetaObjec
 	private String definingResource;
     
    /**
-     * Creates a new AbstractMetaObject with a given name.
+     * Creates a new {@link AbstractMetaObject} with a given name.
      *
      * @param name the name resp. type of this {@link MetaObject}
      */
@@ -60,12 +60,12 @@ public abstract class AbstractMetaObject extends MOPartImpl implements MetaObjec
     }
 
     /**
-     * Return the type of value represented by a MetaObject, i.e. value is a String
-     * then typeOfValue() returns MOPrimitive.STRING or value is a instance of
-     * DataObject then value return the type of the DataObject.
-     * If value is of no known type the typeOfValue() returns null.
+     * Return the type of value represented by a {@link MetaObject}, i.e. value is a String
+     * then this method returns {@link MOPrimitive#STRING} or value is a instance of
+     * {@link DataObject} then value return the type of the {@link DataObject}.
+     * If value is of no known type this method returns null.
      *
-     * @param   value the object to get corresponding MetaObject for
+     * @param   value the object to get corresponding {@link MetaObject} for
      */
     public static MetaObject typeOfValue (Object value) {
         if (value instanceof DataObject) {

@@ -34,32 +34,53 @@ import com.top_logic.importer.text.TextFileImportParser;
 public abstract class AbstractExcelStructureExtractor<C extends AbstractExcelStructureExtractor.ColumnConfig>
 		implements Extractor {
 
+    /** Configuration options for {@link AbstractExcelStructureExtractor}. */
     public interface Config<C extends AbstractExcelStructureExtractor.ColumnConfig> extends Extractor.Config {
 
+        /**
+         * Name of the column containing the unique ID of a node.
+         *
+         * <p>
+         * Used, if the column configuration of the node defines no own ID column.
+         * </p>
+         */
         @Mandatory
 		@Name(TextFileImportParser.Config.UID)
         String getUID();
 
     }
 
+    /** Configuration of a column identifying a level of the structure. */
     public interface ColumnConfig extends NamedConfiguration {
         
+        /** Configuration name of {@link #getLevel()}. */
         public static final String LEVEL_ATTRIBUTE = "level";
 
+        /** Type of the nodes created for this column. */
         @Mandatory
         String getType();
 
+		/**
+		 * Name of the column containing the unique ID of the node.
+		 *
+		 * <p>
+		 * If not given, the ID column of the extractor is used.
+		 * </p>
+		 */
 		@Name(TextFileImportParser.Config.UID)
 		String getUID();
 
+        /** Level of the nodes created for this column. */
         @Name(LEVEL_ATTRIBUTE)
         @Mandatory
         Integer getLevel();
 
+        /** Name of the column containing the title of the node. */
         @Mandatory
         String getTitle();
     }
 
+    /** Key of the {@link NodeInfo} in the extracted values. */
     public static final String NODE_INFO = "_nodeInfo";
 
     private final String id;
@@ -78,6 +99,7 @@ public abstract class AbstractExcelStructureExtractor<C extends AbstractExcelStr
                 .toMap();
     }
 
+	/** The column configurations of this extractor. */
 	public abstract Map<Object, C> getColumns();
 
     /** 
@@ -161,10 +183,18 @@ public abstract class AbstractExcelStructureExtractor<C extends AbstractExcelStr
         }
     }
 
+    /** The {@link NodeInfo} stored in the given row values. */
     public static NodeInfo getNodeInfo(Map<String, Object> someValues) {
         return (NodeInfo) someValues.get(AbstractExcelStructureExtractor.NODE_INFO);
     }
 
+    /**
+     * Whether the given row values contain a {@link NodeInfo}.
+     *
+     * <p>
+     * Reports a warning for the given row, if the values contain no {@link NodeInfo}.
+     * </p>
+     */
     public static boolean hasNodeInfo(Map<String, Object> someValues, int aRow, ImportLogger aLogger) {
         if (someValues != null) { 
             if (someValues.get(AbstractExcelStructureExtractor.NODE_INFO) instanceof NodeInfo) {
@@ -187,9 +217,13 @@ public abstract class AbstractExcelStructureExtractor<C extends AbstractExcelStr
 
         // Attributes
 
+        /** The level of the node in the structure. */
         public final int level;
+        /** The unique ID of the node. */
         public final String id;
+        /** The title of the node. */
         public final String title;
+        /** The type of the node. */
         public final String type;
 
         // Constructors

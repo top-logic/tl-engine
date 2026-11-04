@@ -31,6 +31,9 @@ public class DoubleCheckCommandHandler extends OpenModalDialogCommandHandler {
 		super(context, config);
     }
 
+	/**
+	 * The resource prefix for error messages of this handler.
+	 */
 	protected ResPrefix getErrorPrefix() {
 		return ResPrefix.legacyString("error_code_" + DoubleCheckCommandHandler.class.getName());
 	}
@@ -53,6 +56,15 @@ public class DoubleCheckCommandHandler extends OpenModalDialogCommandHandler {
 		return super.handleCommand(aContext, aComponent, model, someArguments);
     }
 
+    /**
+     * Validates the given {@link FormContext} before the dialog is opened.
+     * 
+     * @param aContext
+     *        The form context of the given component.
+     * @param aComponent
+     *        The component the command is executed on.
+     * @return Whether the dialog may be opened.
+     */
     protected boolean validateContext(FormContext aContext, LayoutComponent aComponent) {
         return aContext.checkAll();
     }

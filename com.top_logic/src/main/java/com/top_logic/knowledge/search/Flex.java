@@ -21,6 +21,7 @@ public class Flex extends TypedExpression {
 		this.name = attributeName;
 	}
 	
+	/** The name of the accessed flex attribute. */
 	public String getAttributeName() {
 		return name;
 	}

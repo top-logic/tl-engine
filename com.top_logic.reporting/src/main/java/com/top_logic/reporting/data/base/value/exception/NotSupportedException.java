@@ -12,7 +12,7 @@ package com.top_logic.reporting.data.base.value.exception;
  */
 public class NotSupportedException extends RuntimeException {
 	/**
-	 * Constructor NotSupportedException.
+	 * Constructor {@link NotSupportedException}.
 	 */
 	public NotSupportedException(String string) {
 		super(string);

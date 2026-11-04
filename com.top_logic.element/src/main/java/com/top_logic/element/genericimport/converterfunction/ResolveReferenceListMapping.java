@@ -14,7 +14,7 @@ import com.top_logic.element.genericimport.GenericDataImportConfiguration.Column
 import com.top_logic.element.genericimport.interfaces.GenericCache;
 
 /**
- * The ResolveReferenceListMapping performs the foreign key resolution for
+ * The {@link ResolveReferenceListMapping} performs the foreign key resolution for
  * lists of references.
  * 
  * @author    <a href=mailto:TEH@top-logic.com>TEH</a>

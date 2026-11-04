@@ -16,10 +16,13 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class TL5Types {
 
+	/** Protocol of a reference to a structure node type. */
 	public static final String NODE_PROTOCOL = "node";
 
+	/** Protocol of a reference to a meta element type. */
 	public static final String CLASS_PROTOCOL = "me";
 
+	/** Protocol of a reference to an enumeration type. */
 	public static final String ENUM_PROTOCOL = "enum";
 
 	/**

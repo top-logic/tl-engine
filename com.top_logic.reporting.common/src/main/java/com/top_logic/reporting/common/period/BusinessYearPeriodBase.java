@@ -18,6 +18,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
 
 /**
+ * Base class for JFreeChart time periods based on the business year.
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public abstract class BusinessYearPeriodBase extends RegularTimePeriod {
@@ -29,8 +31,17 @@ public abstract class BusinessYearPeriodBase extends RegularTimePeriod {
     /** The last millisecond. */
     private long lastMillisecond;
 
+    /**
+     * The period of the business year this instance represents.
+     */
     protected TimePeriod period;
+    /**
+     * The time zone for computing the period.
+     */
     protected final TimeZone timezone;
+    /**
+     * The locale for computing the period.
+     */
     protected final Locale   locale;
     
     
@@ -41,6 +52,10 @@ public abstract class BusinessYearPeriodBase extends RegularTimePeriod {
 		peg(createCalendar(time));
     }
 
+	/**
+	 * Creates a calendar in the {@link #timezone} and {@link #locale} of this period, set to the
+	 * given time.
+	 */
 	protected final Calendar createCalendar(Date time) {
 		Calendar calendar = CalendarUtil.createCalendar(timezone, locale);
         calendar.setTime(time);
@@ -58,6 +73,9 @@ public abstract class BusinessYearPeriodBase extends RegularTimePeriod {
         this(time, zone, TLContext.getLocale());
     }
     
+    /**
+     * Creates the period of the business year containing the given time.
+     */
     protected abstract TimePeriod createPeriod(Date time);
 
     @Override

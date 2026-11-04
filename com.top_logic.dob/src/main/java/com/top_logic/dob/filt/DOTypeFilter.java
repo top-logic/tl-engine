@@ -10,7 +10,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.MetaObject;
 
-/** Filter to select Objects by matching MetaObject (= Type).
+/** Filter to select Objects by matching {@link MetaObject} (= Type).
  * <p>
  *  For better performance this is done using a == test and no
  *  (slow) equals Test,
@@ -19,11 +19,11 @@ import com.top_logic.dob.MetaObject;
  */
 public class DOTypeFilter implements Filter {
 
-    /** The MetaObject used to filter the dataObjects */
+    /** The {@link MetaObject} used to filter the dataObjects */
     MetaObject  meta;
 
     /** 
-     * Create a Filter using the given MetaObject.
+     * Create a Filter using the given {@link MetaObject}.
      */
     public DOTypeFilter(MetaObject aMeta) {
        meta = aMeta;
@@ -31,8 +31,8 @@ public class DOTypeFilter implements Filter {
 
     /** Check if the Metaobject of the given Dataobject is the same.
      *
-     * @param  theObject DataObject where MeatObject will be taken from.
-     * @return true in case the MeatObjects are the same (not equals)...
+     * @param  theObject {@link DataObject} where the meta object will be taken from.
+     * @return true in case the meta objects are the same (not equals)...
      */
     @Override
 	public boolean accept(Object theObject) {

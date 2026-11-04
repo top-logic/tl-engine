@@ -21,10 +21,18 @@ import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.table.model.ObjectTableModel;
 
 /**
+ * Dialog displaying the message journal of an object in a table.
+ * 
+ * @implNote Subclasses define the journal entries to display by overriding
+ *           {@link #getJournalIdentifier()}, {@link #getJournalAttribute()},
+ *           {@link #getJournalAttributeType()}, {@link #getJournalCause()}, and
+ *           {@link #getColumns()}.
+ * 
  * @author    <a href=mailto:tbe@top-logic.com>Bill Tenz</a>
  */
 public class ShowHistoryDialog extends FormComponent {
 
+	/** Name of the table field displaying the journal. */
 	public static final String JOURNAL_FIELD         = "journal";
 	
 	public ShowHistoryDialog(InstantiationContext context, Config atts) throws ConfigurationException {
@@ -61,22 +69,39 @@ public class ShowHistoryDialog extends FormComponent {
 				getJournalCause());
 	}
 	
+	/**
+	 * Identifier of the object whose journal is displayed.
+	 */
 	protected TLID getJournalIdentifier() {
 		return null;
 	}
 	
+	/**
+	 * Name of the attribute whose journal is displayed.
+	 */
 	protected String getJournalAttribute() {
 		return null;
 	}
 	
+	/**
+	 * Type of the attribute whose journal is displayed.
+	 */
 	protected String getJournalAttributeType() {
 		return null;
 	}
 	
+	/**
+	 * The cause of the journal entries to display.
+	 */
 	protected String getJournalCause() {
 		return null;
 	}
 	
+	/**
+	 * The columns of the journal table.
+	 * 
+	 * @see MessageJournalAccessor
+	 */
 	protected String[] getColumns() {
 	    return null;
 	}

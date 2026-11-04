@@ -15,12 +15,13 @@ import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The DeleteSimpleWrapperCommandHandler just deletes a Wrapper.
+ * The {@link DeleteSimpleWrapperCommandHandler} just deletes a Wrapper.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class DeleteSimpleWrapperCommandHandler extends AbstractDeleteCommandHandler {
 
+    /** Default command ID of this handler. */
     public static final String COMMAND = "DeleteSimpleWrapper";
 
     public DeleteSimpleWrapperCommandHandler(InstantiationContext context, Config config) {

@@ -10,7 +10,7 @@ import com.top_logic.basic.MessageEnhancingLog;
 import com.top_logic.knowledge.event.ChangeSet;
 
 /**
- * Implementation of {@link Migration}
+ * Implementation of {@link Migration}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

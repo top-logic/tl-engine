@@ -68,6 +68,14 @@ public class MailFolderListModelBuilder implements ListModelBuilder {
 		return MailServer.isActivated() && ((aModel instanceof MailFolderAware) || (aModel instanceof MailFolder));
     }
 
+    /**
+     * The {@link MailFolder} of the given model.
+     * 
+     * @param aModel
+     *        Either a {@link MailFolder} or a {@link MailFolderAware}.
+     * @return The given folder, the folder of the given {@link MailFolderAware}, or
+     *         <code>null</code> for a <code>null</code> model.
+     */
     public static MailFolder getMailFolder(Object aModel) {
         
         if (aModel == null) {

@@ -35,6 +35,9 @@ public class MigrateTicket20846 extends LayoutRewrite {
 
 	boolean _complete = false;
 
+	/**
+	 * Command line entry point.
+	 */
 	public static void main(String[] args) throws Exception {
 		new MigrateTicket20846().runMain(args);
 	}

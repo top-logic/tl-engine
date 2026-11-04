@@ -15,12 +15,31 @@ import com.top_logic.element.genericimport.interfaces.GenericTypeResolver;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 
 /**
+ * Base class for {@link GenericTypeResolver}s mapping external type names to internal types.
+ *
+ * <p>
+ * The mapping is configured by properties of the form {@code externalType:<external>} with the
+ * internal type as value. The mapping for {@link #DEFAULT_TYPE} is mandatory and used for all
+ * external types without explicit mapping.
+ * </p>
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public abstract class TypeResolverBase implements GenericTypeResolver {
 
+    /**
+     * External type name whose mapping is used for all external types without explicit mapping.
+     */
     public static final String DEFAULT_TYPE         = "default";
+
+    /**
+     * Prefix of the properties defining the mapping of an external type.
+     */
     public static final String PREFIX_EXTERNAL_TYPE = "externalType:";
+
+    /**
+     * Length of {@link #PREFIX_EXTERNAL_TYPE}.
+     */
     public static final int    PREFIX_EXTERNAL_TYPE_LENGTH = "externalType:".length();
     
     private final Map<String, String> typeMapping = new HashMap<>();
@@ -51,6 +70,15 @@ public abstract class TypeResolverBase implements GenericTypeResolver {
         }
     }
 
+    /**
+     * Checks the configured internal type for an external type.
+     *
+     * @param externalType
+     *        The external type name.
+     * @param internalType
+     *        The configured internal type.
+     * @return The internal type to use, or {@code null} if the configured type is invalid.
+     */
     protected abstract String checkTypeConfiguration(String externalType, String internalType);
     
     @Override

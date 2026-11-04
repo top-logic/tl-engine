@@ -11,14 +11,20 @@ import com.top_logic.dob.DataObject;
 import com.top_logic.dob.data.DOList;
 
 /**
- * Get DAP config from default value on the Mandator of the Contract
+ * Locates a value by following a path of attribute names through {@link DataObject}s.
+ *
+ * <p>
+ * The path parts are separated by dots.
+ * </p>
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
 public class DOPathAttributeValueLocator extends CustomSingleSourceValueLocator {
 
+	/** Separator of the parts of the attribute path. */
 	public static final String PATH_SEPARATOR = ".";
 	
+	/** The names of the attributes of the path. */
 	protected String[] pathConfig;
 	
 	/** 
@@ -29,7 +35,7 @@ public class DOPathAttributeValueLocator extends CustomSingleSourceValueLocator 
 	}
 	
 	/** 
-	 * Create a new DOPathAttributeValueLocator with attribute path config
+	 * Create a new {@link DOPathAttributeValueLocator} with attribute path config
 	 * 
 	 * @param aConfig the config
 	 */

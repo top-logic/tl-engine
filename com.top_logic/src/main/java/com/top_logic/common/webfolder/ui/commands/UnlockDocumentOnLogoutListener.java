@@ -25,7 +25,7 @@ public class UnlockDocumentOnLogoutListener implements SubSessionListener {
 	private final Document _document;
 
 	/**
-	 * Creates an UnlockDocumentOnLogoutListener.
+	 * Creates an {@link UnlockDocumentOnLogoutListener}.
 	 * 
 	 * @param document
 	 *        Is not allowed to be null.

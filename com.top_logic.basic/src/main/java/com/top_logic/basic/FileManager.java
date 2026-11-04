@@ -134,7 +134,7 @@ public abstract class FileManager {
 	 * 
 	 * @param name
 	 *            The name of the file (including its path).
-	 * @return An InputStream for the requested file, or null
+	 * @return An {@link InputStream} for the requested file, or null
 	 * 
 	 * @see #getStream(String)
 	 */
@@ -396,17 +396,18 @@ public abstract class FileManager {
     /**
 	 * Returns a file using the {@link #getIDEPaths()} setting.
 	 * 
-	 * In case aName starts with {@value #DIRECT_FILE_RESOLVING_PREFIX} it will be resolved directly
-	 * using whatever name is given, the <code>ignoreExistence</code> will not have any effect.
+	 * In case {@code aName} starts with {@value #DIRECT_FILE_RESOLVING_PREFIX} it will be resolved
+	 * directly using whatever name is given, the <code>ignoreExistence</code> will not have any
+	 * effect.
 	 * 
 	 * If <code>ignoreExistence</code> is set the potential file will be found in the very first
-	 * path known to the FileManager.
+	 * path known to the {@link FileManager}.
 	 * 
 	 * @param aName
 	 *        The name of the requested file.
 	 * @param ignoreExistence
-	 *        Returns the file found in the very first path known to the FileManager, even if it
-	 *        does not exist
+	 *        Returns the file found in the very first path known to the {@link FileManager}, even
+	 *        if it does not exist
 	 * @return The requested file or <code>null</code>, if no file could be found.
 	 * 
 	 * @deprecated Use {@link #getData(String)} or {@link #getDataOrNull(String)} depending on the
@@ -424,17 +425,18 @@ public abstract class FileManager {
 	/**
 	 * Returns a file using the {@link #getIDEPaths()} setting.
 	 * 
-	 * In case aName starts with {@value #DIRECT_FILE_RESOLVING_PREFIX} it will be resolved directly
-	 * using whatever name is given, the <code>ignoreExistence</code> will not have any effect.
+	 * In case {@code aName} starts with {@value #DIRECT_FILE_RESOLVING_PREFIX} it will be resolved
+	 * directly using whatever name is given, the <code>ignoreExistence</code> will not have any
+	 * effect.
 	 * 
 	 * If <code>ignoreExistence</code> is set the potential file will be found in the very first
-	 * path known to the FileManager.
+	 * path known to the {@link FileManager}.
 	 * 
 	 * @param aName
 	 *        The name of the requested file.
 	 * @param ignoreExistence
-	 *        Returns the file found in the very first path known to the FileManager, even if it
-	 *        does not exist
+	 *        Returns the file found in the very first path known to the {@link FileManager}, even
+	 *        if it does not exist
 	 * @return The requested file or <code>null</code>, if no file could be found.
 	 * 
 	 * @deprecated Use {@link #getData(String)} or {@link #getDataOrNull(String)} or
@@ -489,7 +491,7 @@ public abstract class FileManager {
     }
 
     /**
-     * Return the instance of the FileManager.
+     * Return the instance of the {@link FileManager}.
      * 
      * If there is no instance defined, this method will create a default
      * variant, which will use the filesystem for getting files and images.
@@ -524,7 +526,7 @@ public abstract class FileManager {
     }
 
 	/**
-	 * Ensures that the file with the given pathName relative to the top most path exists.
+	 * Ensures that the file with the given path name relative to the top most path exists.
 	 * 
 	 * In case name starts with {@value #DIRECT_FILE_RESOLVING_PREFIX} it will be resolved directly
 	 * using whatever name is given.

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The NumberUtil contains useful static methods for numbers.
+ * The {@link NumberUtil} contains useful static methods for numbers.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -22,7 +22,7 @@ public class NumberUtil {
 
     /** 
      * Convenience method to get double values from wrapper number
-     * attributes (e.g. NumberUtil.getDoubleValue(wrapper.getValue("budget"))).
+     * attributes (e.g. <code>NumberUtil.getDoubleValue(wrapper.getValue("budget"))</code>).
      */
     public static double getDoubleValue(Object aNumber) {
         return getDoubleValue((Number) aNumber);
@@ -30,7 +30,7 @@ public class NumberUtil {
     
     /** 
      * Convenience method to get int values from wrapper number
-     * attributes (e.g. NumberUtil.getIntValue(wrapper.getValue("budget"))).
+     * attributes (e.g. <code>NumberUtil.getIntValue(wrapper.getValue("budget"))</code>).
      */
     public static int getIntValue(Object aNumber) {
         return getIntValue((Number) aNumber);

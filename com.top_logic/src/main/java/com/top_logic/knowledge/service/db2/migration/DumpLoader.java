@@ -572,6 +572,12 @@ public class DumpLoader extends Tool {
 		_canceled = new Date();
 	}
 
+	/**
+	 * Command line entry point loading a dump.
+	 *
+	 * @param args
+	 *        Command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new DumpLoader().runMainCommandLine(args);
 	}

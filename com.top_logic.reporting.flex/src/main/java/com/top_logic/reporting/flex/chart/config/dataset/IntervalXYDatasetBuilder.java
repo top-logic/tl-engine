@@ -26,7 +26,7 @@ import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree.DataKey;
 
 /**
- * Dataset-builder for {@link XYSeriesCollection}
+ * Dataset-builder for {@link XYSeriesCollection}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -41,9 +41,15 @@ public class IntervalXYDatasetBuilder extends AbstractDatasetBuilder<IntervalXYD
 		@ClassDefault(IntervalXYDatasetBuilder.class)
 		public Class<IntervalXYDatasetBuilder> getImplementationClass();
 
+		/**
+		 * Name of the attribute of the displayed objects that contains the start of the interval.
+		 */
 		@StringDefault("start")
 		public String getStartAttribute();
 
+		/**
+		 * Name of the attribute of the displayed objects that contains the end of the interval.
+		 */
 		@StringDefault("end")
 		public String getEndAttribute();
 	}
@@ -166,7 +172,7 @@ public class IntervalXYDatasetBuilder extends AbstractDatasetBuilder<IntervalXYD
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -175,7 +181,7 @@ public class IntervalXYDatasetBuilder extends AbstractDatasetBuilder<IntervalXYD
 	/**
 	 * Factory method to create an initialized {@link IntervalXYDatasetBuilder}.
 	 * 
-	 * @return a new IntervalXYDatasetBuilder.
+	 * @return a new {@link IntervalXYDatasetBuilder}.
 	 */
 	public static IntervalXYDatasetBuilder newInstance() {
 		return (IntervalXYDatasetBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY

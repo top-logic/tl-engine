@@ -218,7 +218,7 @@ public final class Query {
     }
 
     /**
-     * Return a FullText query for the given parameters.
+     * Return a full text query for the given parameters.
      * 
      * @param    someWords    A list of words (separated by spaces) to be used 
      *                        in the query.

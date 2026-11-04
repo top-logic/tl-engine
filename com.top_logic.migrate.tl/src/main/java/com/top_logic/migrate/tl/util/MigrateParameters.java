@@ -18,7 +18,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
- * Holder class for parameter used in migration
+ * Holder class for parameter used in migration.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

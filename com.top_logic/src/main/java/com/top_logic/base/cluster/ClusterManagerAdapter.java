@@ -6,7 +6,7 @@
 package com.top_logic.base.cluster;
 
 /**
- * An adapter class for the ClusterMessageListener interface.
+ * An adapter class for the {@link ClusterManagerListener} interface.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

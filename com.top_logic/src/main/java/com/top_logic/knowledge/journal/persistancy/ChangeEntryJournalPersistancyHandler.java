@@ -42,15 +42,25 @@ import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 public class ChangeEntryJournalPersistancyHandler implements
         JournalPersistancyHandler {
     
+    /** Type code of a string value. */
     protected static final byte STRING_TYPE   = 's';
+    /** Type code of an integer value. */
     protected static final byte INTEGER_TYPE  = 'i';
+    /** Type code of a long value. */
     protected static final byte LONG_TYPE     = 'l';
+    /** Type code of a float value. */
     protected static final byte FLOAT_TYPE    = 'f';
+    /** Type code of a double value. */
     protected static final byte DOUBLE_TYPE   = 'd';
+    /** Code of the boolean value <code>true</code>. */
     protected static final byte BOOLEAN_TRUE  = 'T';
+    /** Code of the boolean value <code>false</code>. */
     protected static final byte BOOLEAN_FALSE = 'F';
+    /** Type code of a date value. */
     protected static final byte DATE_TYPE     = 'D';
+    /** Type code of a link value. */
     protected static final byte LINK_TYPE     = 'L';
+    /** Type code of an unknown value. */
     protected static final byte UNKNOWN_TYPE  = 'U';
     
     /** Used by subclasses only, but for completeness found here */

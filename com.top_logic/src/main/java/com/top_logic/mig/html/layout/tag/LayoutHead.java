@@ -25,10 +25,10 @@ import com.top_logic.mig.html.layout.MainLayout;
  */
 public class LayoutHead implements Tag, LayoutConstants, TryCatchFinally {
 
-    /** Our parent must be a LayoutHtml tag. */
+    /** Our parent must be a {@link LayoutHtml} tag. */
     protected LayoutHtml parent;
 
-    /** Needed for set/get PageContext. */
+    /** Needed for set/get {@link PageContext}. */
     protected PageContext pageContext;
 
 	private int tagDepth;
@@ -36,7 +36,7 @@ public class LayoutHead implements Tag, LayoutConstants, TryCatchFinally {
     /**
      * Start the rendering of the layout aware page.
      * 
-     * Will create a TagWriter and save it at the request using
+     * Will create a {@link TagWriter} and save it at the request using
      * the {@link com.top_logic.base.services.simpleajax.RequestUtil#ATTRIBUTE_HTML_WRITER}.
      * 
      * Will call back into its component to write an XHTML-Header and whatever
@@ -93,7 +93,7 @@ public class LayoutHead implements Tag, LayoutConstants, TryCatchFinally {
     }
 
     /**
-     * the parent, is always of type LayoutHtml.
+     * the parent, is always of type {@link LayoutHtml}.
      */
     @Override
 	public Tag getParent() {
@@ -118,7 +118,7 @@ public class LayoutHead implements Tag, LayoutConstants, TryCatchFinally {
     }
 
     /**
-     * Will die with a <code>ClassCastException</code> in case parent is no LayoutHtml.
+     * Will die with a <code>ClassCastException</code> in case parent is no {@link LayoutHtml}.
      */
     @Override
 	public void setParent(Tag aParent) {

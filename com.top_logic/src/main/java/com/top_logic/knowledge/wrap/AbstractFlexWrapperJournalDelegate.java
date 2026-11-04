@@ -21,7 +21,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.util.WrapperUtil;
 
 /**
- * Delegate to proviede journalling functionality for flex wrappers
+ * Delegate to proviede journalling functionality for flex wrappers.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  */
@@ -65,6 +65,7 @@ abstract public class AbstractFlexWrapperJournalDelegate implements JournalEntry
         }
     }
     
+    /** The journal type of the given wrapper, which is the name of its table. */
     public static String getJournalType(Wrapper aWrapper) {
     	return aWrapper.tTable().getName();
     }

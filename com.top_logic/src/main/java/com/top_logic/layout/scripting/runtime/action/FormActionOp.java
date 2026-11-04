@@ -25,6 +25,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 @Deprecated
 public abstract class FormActionOp<S extends FormAction> extends AbstractApplicationActionOp<S> {
 
+	/** {@link ValueResolver} for resolving the field values of the action. */
 	protected static final ValueResolver VALUE_RESOLVER = new ValueResolver();
 
 	public FormActionOp(InstantiationContext context, S config) {

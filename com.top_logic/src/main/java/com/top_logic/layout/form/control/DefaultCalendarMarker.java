@@ -77,36 +77,39 @@ public class DefaultCalendarMarker implements CalendarMarker {
 	 * Gets the CSS-Classes for a {@link CalendarControl} field
 	 * <p>
 	 * Returns the CSS-Classes to mark a specific field (day, month, year etc.) in a date picker by
-	 * comparing calStart and calEnd with {@link #_lowerBound} and {@link #_upperBound}.
+	 * comparing {@code calStart} and {@code calEnd} with {@link #_lowerBound} and {@link
+	 * #_upperBound}.
 	 * </p>
 	 * <p>
 	 * If the compared {@link Calendar} and the bound have the same size there are two cases: If the
-	 * {@link Calendar} is the start of the range (calStart) of the {@link CalendarControl} field
-	 * and the bound to compare with is the {@link #_upperBound} or the {@link Calendar} is the end
-	 * of the range (calEnd) of the {@link CalendarControl} field and the bound to compare with is
-	 * the {@link #_lowerBound} an equality between the Calendars will result as out of range.
+	 * {@link Calendar} is the start of the range ({@code calStart}) of the {@link CalendarControl}
+	 * field and the bound to compare with is the {@link #_upperBound} or the {@link Calendar} is
+	 * the end of the range ({@code calEnd}) of the {@link CalendarControl} field and the bound to
+	 * compare with is the {@link #_lowerBound} an equality between the Calendars will result as out
+	 * of range.
 	 * </p>
 	 * <p>
-	 * If the {@link Calendar} is the start of the range (calStart) of the {@link CalendarControl}
-	 * field and the bound to compare with is the {@link #_lowerBound} or the {@link Calendar} is
-	 * the end of the range (calEnd) of the {@link CalendarControl} field and the bound to compare
-	 * with is the {@link #_upperBound} an equality between the Calendars will result as in range.
+	 * If the {@link Calendar} is the start of the range ({@code calStart}) of the {@link
+	 * CalendarControl} field and the bound to compare with is the {@link #_lowerBound} or the
+	 * {@link Calendar} is the end of the range ({@code calEnd}) of the {@link CalendarControl}
+	 * field and the bound to compare with is the {@link #_upperBound} an equality between the
+	 * Calendars will result as in range.
 	 * </p>
 	 * <p>
-	 * Explanation: {@link #_upperBound} and calEnd are not defined as the last moment of the end of
-	 * the {@link CalendarControl} but as the first moment after. So they are exclusive and not in
-	 * range. When comparing calStart with {@link #_upperBound} results in equality, calStart is out
-	 * of range because {@link #_upperBound} is out of range itself. The same happens when calEnd is
-	 * compared with {@link #_lowerBound} as calEnd is already out of range of the
-	 * {@link CalendarControl} field that has to be marked.
+	 * Explanation: {@link #_upperBound} and {@code calEnd} are not defined as the last moment of
+	 * the end of the {@link CalendarControl} but as the first moment after. So they are exclusive
+	 * and not in range. When comparing {@code calStart} with {@link #_upperBound} results in
+	 * equality, {@code calStart} is out of range because {@link #_upperBound} is out of range
+	 * itself. The same happens when {@code calEnd} is compared with {@link #_lowerBound} as {@code
+	 * calEnd} is already out of range of the {@link CalendarControl} field that has to be marked.
 	 * </p>
 	 * <p>
-	 * If calStart and {@link #_lowerBound} are compared and it turns out they are the same, the
-	 * field is in range. That's because the value of calStart is inclusive and defines the first
-	 * moment in the range between calStart and calEnd. The same applies to {@link #_lowerBound} in
-	 * the range between both bounds. If calStart == {@link #_lowerBound} it means the field is in
-	 * the range between the bounds and has to be marked accordingly. The same applies to comparing
-	 * calEnd and {@link #_upperBound}.
+	 * If {@code calStart} and {@link #_lowerBound} are compared and it turns out they are the same,
+	 * the field is in range. That's because the value of {@code calStart} is inclusive and defines
+	 * the first moment in the range between {@code calStart} and {@code calEnd}. The same applies
+	 * to {@link #_lowerBound} in the range between both bounds. If {@code calStart} == {@link
+	 * #_lowerBound} it means the field is in the range between the bounds and has to be marked
+	 * accordingly. The same applies to comparing {@code calEnd} and {@link #_upperBound}.
 	 * </p>
 	 * 
 	 * 

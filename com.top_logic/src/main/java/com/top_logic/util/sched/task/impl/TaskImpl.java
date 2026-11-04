@@ -61,10 +61,10 @@ import com.top_logic.util.sched.task.schedule.legacy.LegacyWeeklySchedule;
  * <p>
  * Commits in this class have to be retried in most cases, if they fail. The reason is, that the
  * different schedulers of the cluster nodes are synchronized and communicating via the
- * KnowledgeBase. Therefore, concurrent write accesses can happen. Example: A task which is not node
- * local is told to stop from a user that is logged in on a different cluster node. But at the same
- * time the task is storing a warning. If they happen "concurrently" one of them will fail and has
- * to be retried.
+ * {@link com.top_logic.knowledge.service.KnowledgeBase}. Therefore, concurrent write accesses can
+ * happen. Example: A task which is not node local is told to stop from a user that is logged in on
+ * a different cluster node. But at the same time the task is storing a warning. If they happen
+ * "concurrently" one of them will fail and has to be retried.
  * </p>
  * 
  * <p>
@@ -439,8 +439,8 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 	 * Is called in the legacy constructors for creating the {@link SchedulingAlgorithm}.
 	 * <p>
 	 * Hook for subclasses that use the legacy constructors and had overridden one of the deleted
-	 * calcFoo methods. That code has to be put to a custom {@link SchedulingAlgorithm} which the
-	 * subclass can create by overriding this method.
+	 * {@code calcFoo} methods. That code has to be put to a custom {@link SchedulingAlgorithm}
+	 * which the subclass can create by overriding this method.
 	 * </p>
 	 * 
 	 * TODO #6121: Delete TL 5.8.0 deprecation

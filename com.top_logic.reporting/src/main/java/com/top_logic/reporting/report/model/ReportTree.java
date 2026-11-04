@@ -19,10 +19,10 @@ import com.top_logic.reporting.report.model.partition.criteria.Criteria;
 import com.top_logic.reporting.report.model.partition.function.PartitionFunction;
 
 /**
- * A ReportTree represents the result of a {@link RevisedReport} after its initialization. Its nodes
- * are of type {@link ReportNode}. The root node holds all BusinessObjects. An inner node represents
- * a {@link Partition}, each leaf node holds a {@link ReportNode#value} that represents the result
- * of an {@link AggregationFunction} on the BusinessObjects of its parent node.
+ * A {@link ReportTree} represents the result of a {@link RevisedReport} after its initialization.
+ * Its nodes are of type {@link ReportNode}. The root node holds all business objects. An inner node
+ * represents a {@link Partition}, each leaf node holds a {@link ReportNode#value} that represents
+ * the result of an {@link AggregationFunction} on the business objects of its parent node.
  * 
  * @author <a href=mailto:tbe@top-logic.com>tbe</a>
  */
@@ -92,6 +92,7 @@ public class ReportTree extends AbstractTreeModel<ReportNode> {
 		return false;
 	}
 
+	/** Prints this tree to the standard output, for debugging only. */
 	public void printTree() {
 		printNode(this.root, this.root.getChildren(), "");
 	}
@@ -133,6 +134,7 @@ public class ReportTree extends AbstractTreeModel<ReportNode> {
         	this.config   = aConfig;
         }
         
+        /** Whether this node is a leaf node. */
         public boolean isLeaf() {
         	return this.children == null;
         }
@@ -156,6 +158,7 @@ public class ReportTree extends AbstractTreeModel<ReportNode> {
             aNode.setParent(this);
         }
         
+        /** Whether this node has children. */
         public boolean hasChildren() {
         	return !CollectionUtil.isEmptyOrNull(this.children);
         }

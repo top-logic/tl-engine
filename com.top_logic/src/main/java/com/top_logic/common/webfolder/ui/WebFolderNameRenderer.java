@@ -29,6 +29,7 @@ import com.top_logic.layout.tree.model.TLTreeNodeResourceProvider;
  */
 public class WebFolderNameRenderer extends ResourceRenderer<ResourceRenderer.Config<WebFolderNameRenderer>> {
 
+	/** {@link ProxyResourceProvider} that creates no links for folders and documents. */
 	public static class WebFolderNameResourceProvider extends ProxyResourceProvider {
 
 		@Override

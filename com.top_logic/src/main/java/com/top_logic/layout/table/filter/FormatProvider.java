@@ -17,6 +17,8 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 public interface FormatProvider {
 
 	/**
+	 * The {@link Format} for the values of the given column.
+	 *
 	 * @param column
 	 *        The table column for which the format should be retrieved.
 	 * 

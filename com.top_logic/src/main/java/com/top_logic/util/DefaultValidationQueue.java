@@ -22,7 +22,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Default implementation of {@link ValidationQueue} storing the {@link ToBeValidated} and
  * {@link Action} in two separate {@link Queue} and process them during
- * {@link #runValidation(DisplayContext)}
+ * {@link #runValidation(DisplayContext)}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

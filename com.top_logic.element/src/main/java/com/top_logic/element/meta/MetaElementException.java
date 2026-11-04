@@ -6,7 +6,7 @@
 package com.top_logic.element.meta;
 
 /**
- * Super class of Exceptions thrown when using MetaElements.
+ * Super class of Exceptions thrown when using types.
  * 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */

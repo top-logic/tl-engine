@@ -1413,6 +1413,7 @@ public class TestLayoutProblems extends FormComponent {
 		removeFormContext();
 	}
 	
+	/** Command that takes five seconds to complete. */
 	public static final class Ticket2725_Command extends AbstractCommandHandler {
 		
 		public Ticket2725_Command(InstantiationContext context, Config config) {

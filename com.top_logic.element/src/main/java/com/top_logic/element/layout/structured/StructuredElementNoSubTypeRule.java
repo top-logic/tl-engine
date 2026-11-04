@@ -14,7 +14,7 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InViewModeExecutable;
 
 /**
- * The StructuredElementNoSubTypeRule works for {@link LayoutComponent}s which
+ * The {@link StructuredElementNoSubTypeRule} works for {@link LayoutComponent}s which
  * have a {@link StructuredElement} as model.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

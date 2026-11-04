@@ -14,15 +14,17 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.NegateRule;
 
 /**
- * The AboutToEnterMaintenanceWindowExecutable is executable when the system is about to
+ * The {@link AboutToEnterMaintenanceWindowExecutable} is executable when the system is about to
  * enter a maintenance window (only users within specified groups are allowed to log in).
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class AboutToEnterMaintenanceWindowExecutable implements ExecutabilityRule {
 
+    /** Singleton {@link AboutToEnterMaintenanceWindowExecutable} instance. */
     public static final AboutToEnterMaintenanceWindowExecutable INSTANCE = new AboutToEnterMaintenanceWindowExecutable();
 
+    /** Negation of {@link #INSTANCE}. */
     public static final ExecutabilityRule NEGATED_INSTANCE = new NegateRule(INSTANCE, true);
 
     @Override

@@ -43,7 +43,7 @@ import com.top_logic.util.Utils;
  * The queries may be bound to an owner (Person)
  * and a query area (an arbitrary Wrapper).
  *
- * The CollectionFilters are created by fetching Flex-Attributes,
+ * The {@link CollectionFilter}s are created by fetching Flex-Attributes,
  * containing the classname of the filter. Any additional attributes
  * ar then interpreted by the Filter itself.
  *
@@ -68,7 +68,7 @@ public class StoredQuery extends AttributedWrapper {
 
 
     /**
-     * CTor for WrapperFactory ONLY
+     * CTor for the wrapper factory ONLY
      *
      * @param ko       the KO
      */
@@ -107,7 +107,8 @@ public class StoredQuery extends AttributedWrapper {
     }
 
     /**
-     * Get the StoredQueries that match the given owner and apply to the given meta element.
+     * Get the {@link StoredQuery queries} that match the given owner and apply to the given meta
+     * element.
      *
      * @param    aME        The meta element to return the queries for, may be <code>null</code>.
      * @param    anOwner    The owner. May be <code>null</code>.
@@ -131,6 +132,21 @@ public class StoredQuery extends AttributedWrapper {
         return theStoredQueries;
     }
 
+	/**
+	 * Get the {@link StoredQuery queries} visible to the given owner that apply to the given type.
+	 *
+	 * <p>
+	 * An administrator sees all queries.
+	 * </p>
+	 *
+	 * @param aME
+	 *        The type to return the queries for, may be <code>null</code> for all types.
+	 * @param anOwner
+	 *        The owner.
+	 * @param checkGroups
+	 *        Whether queries published to groups of the owner are also returned.
+	 * @return The sorted list of queries.
+	 */
 	public static List getStoredQueries(TLClass aME, Person anOwner, boolean checkGroups) {
 		List theStoredQueries;
 		{
@@ -165,7 +181,7 @@ public class StoredQuery extends AttributedWrapper {
 	}
 
     /**
-	 * Get the StoredQueries that match the given owner.
+	 * Get the {@link StoredQuery queries} that match the given owner.
 	 *
 	 * @param anOwner
 	 *            The owner, may be <code>null</code>.
@@ -177,10 +193,10 @@ public class StoredQuery extends AttributedWrapper {
     }
 
     /**
-     * Get all StoredQueries of the given KB
+     * Get all {@link StoredQuery queries} of the given KB.
      *
      * @param aKB the KB. If it is <code>null</code> the default KB will be used.
-     * @return a List of the StoredQueries. Never <code>null</code>.
+     * @return a List of the queries. Never <code>null</code>.
      */
 	public static List getAllStoredQueries(KnowledgeBase aKB) {
         if (aKB == null) {
@@ -242,10 +258,10 @@ public class StoredQuery extends AttributedWrapper {
     }
 
     /**
-	 * Set the filtes for this StoredQuery
+	 * Set the filtes for this {@link StoredQuery}
 	 *
 	 * @param someFilters
-	 *        the filtes for this StoredQuery
+	 *        the filtes for this {@link StoredQuery}
 	 */
 	public void setFilters(Collection someFilters) {
 		MapBasedPersistancySupport.setObjects(someFilters, tHandle());

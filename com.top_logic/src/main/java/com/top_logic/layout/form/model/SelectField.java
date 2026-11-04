@@ -109,10 +109,18 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	 *   value       CDATA          #IMPLIED
 	 *   >
   	 */
+
+	/** Global configuration options for {@link SelectField}s. */
 	public interface Config extends ConfigurationItem {
 		
+		/** Default value of the separator between multiple selected options in a textual input. */
 		public static final String DEFAULT_MULTI_SELECTION_SEPARATOR = ";";
+		/** Name of the attribute configuring the separator between multiple selected options. */
 		public static final String MULTI_SELECTION_SEPARATOR_ATTRIBUTE = "multi-selection-separator";
+		/**
+		 * Name of the attribute configuring the format of the separator between multiple selected
+		 * options.
+		 */
 		public static final String MULTI_SELECTION_SEPARATOR_FORMAT_ATTRIBUTE = "multi-selection-separator-format";
 
 		/**
@@ -326,12 +334,18 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 		optionsBasedSelectionConstraint = new OptionsBasedSelectionConstraint(this);
 	}
 
+	/** Adds the constraint that only options of this field may be selected. */
 	public final void enableOptionsBasedSelectionConstraint() {
 		if (!getConstraints().contains(optionsBasedSelectionConstraint)) {
 			addConstraint(optionsBasedSelectionConstraint);
 		}
 	}
 
+	/**
+	 * Removes the constraint that only options of this field may be selected.
+	 *
+	 * @see #enableOptionsBasedSelectionConstraint()
+	 */
 	public final void disableOptionsBasedSelectionConstraint() {
 		if (getConstraints().contains(optionsBasedSelectionConstraint)) {
 			removeConstraint(optionsBasedSelectionConstraint);
@@ -381,7 +395,7 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	}
 
     /**
-     * Call #setFixedOptions() with a {@link SetFilter} based on toFix.
+     * Calls {@link #setFixedOptions(Filter)} with a {@link SetFilter} based on the given options.
      * 
      * @param toFix may be null or empty indicating no (more) fixed options.
      */
@@ -1119,18 +1133,18 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	}
 
     /**
-     * This method returns the customOrder.
+     * Whether the options are displayed in a custom order.
      * 
-     * @return    Returns the customOrder.
+     * @return    Whether a custom order is used.
      */
     public boolean hasCustomOrder() {
         return (this.customOrder);
     }
 
     /**
-     * This method sets the customOrder.
+     * Setter for {@link #hasCustomOrder()}.
      *
-     * @param    aCustomOrder    The customOrder to set.
+     * @param    aCustomOrder    Whether a custom order is used.
      */
     public void setCustomOrder(boolean aCustomOrder) {
         this.customOrder = aCustomOrder;
@@ -1146,9 +1160,9 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	 * </p>
 	 * 
 	 * <p>
-	 * If tryPerfect is <code>true</code>, the result is narrowed down to the matching options whose
-	 * label equals the given 'toMatch' (a perfect match). If no perfect match was found the normal
-	 * matches are returned.
+	 * If {@code tryPerfect} is <code>true</code>, the result is narrowed down to the matching
+	 * options whose label equals the given {@code toMatch} (a perfect match). If no perfect match
+	 * was found the normal matches are returned.
 	 * </p>
 	 * 
 	 * @param toMatch
@@ -1336,10 +1350,12 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 		return result;
 	}
 
+	/** The {@link ConfigKey} for storing personal settings of this field. */
 	public ConfigKey getConfigKey() {
 		return ConfigKey.field(getConfigNameMapping(), this);
 	}
 
+	/** The {@link Mapping} computing the name of this field used in {@link #getConfigKey()}. */
 	public Mapping<FormMember, String> getConfigNameMapping() {
 		Mapping<FormMember, String> customNameMapping = get(CONFIG_NAME_MAPPING);
 		if (customNameMapping != null) {
@@ -1348,6 +1364,7 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 		return QUALIFIED_NAME_MAPPING;
 	}
 
+	/** Setter for {@link #getConfigNameMapping()}. */
 	public void setConfigNameMapping(Mapping<FormMember, String> nameMapping) {
 		set(CONFIG_NAME_MAPPING, nameMapping);
 	}

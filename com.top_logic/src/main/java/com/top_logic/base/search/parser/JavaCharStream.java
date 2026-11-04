@@ -8,7 +8,7 @@
 package com.top_logic.base.search.parser;
 
 /**
- * An implementation of interface CharStream, where the stream is assumed to
+ * An implementation of interface {@code CharStream}, where the stream is assumed to
  * contain only ASCII characters (with java-like unicode escape processing).
  */
 public final class JavaCharStream

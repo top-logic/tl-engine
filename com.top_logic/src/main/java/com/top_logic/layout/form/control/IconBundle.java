@@ -14,7 +14,7 @@ import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
- * A bundle of icons and a mapping of IconDescription#get
+ * A bundle of {@link IconDescription}s and a mapping of their styles to theme image infixes.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
@@ -25,7 +25,7 @@ public class IconBundle {
 	private Map<String, String> _mapping;
 
 	/**
-	 * Create a new IconBundle.
+	 * Creates a new {@link IconBundle}.
 	 * 
 	 * @param mapping
 	 *        The mapping of style and infix.
@@ -36,7 +36,7 @@ public class IconBundle {
 
 	/**
 	 * Reads one json entry after the other and creates a new {@link IconBundle} containing a list
-	 * of IconDescription.
+	 * of {@link IconDescription}.
 	 * 
 	 * @param reader
 	 *        The reader for the json.

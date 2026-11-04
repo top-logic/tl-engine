@@ -10,6 +10,8 @@ import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ModelBuilder} that passes a {@link WebFolder} business model unchanged to the component.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class WebFolderModelBuilder implements ModelBuilder {

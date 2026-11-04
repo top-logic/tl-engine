@@ -28,8 +28,13 @@ import com.top_logic.layout.form.FormConstants;
  */
 public class ImageButtonRenderer extends AbstractButtonRenderer<ImageButtonRenderer.Config> {
 
+	/** Default {@link ImageButtonRenderer} instance. */
 	public static final AbstractButtonRenderer<?> INSTANCE = newImageButtonRenderer(true);
 
+	/**
+	 * {@link ImageButtonRenderer} instance that does not display the reason for a disabled button
+	 * in its tooltip.
+	 */
 	public static final AbstractButtonRenderer<?> NO_REASON_INSTANCE = newImageButtonRenderer(false);
 
 	private static ImageButtonRenderer newImageButtonRenderer(boolean execStateInTooltip) {

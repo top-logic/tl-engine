@@ -43,7 +43,7 @@ public class SearchFilterSupport {
     public static final String RELEVANTANDNEGATE_CONSTRAINT_NAME = "isNegative";
 
     /**
-	 * Get the filters for the given AttributeFormContext
+	 * Get the filters for the given {@link AttributeFormContext}
 	 *
 	 * @param formContext
 	 *        The form context to get the filters from, must not be <code>null</code>.

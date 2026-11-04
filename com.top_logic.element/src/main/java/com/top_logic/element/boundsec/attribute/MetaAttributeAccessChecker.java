@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.TLContext;
 
 /**
- * The MetaAttributeAccessChecker determines the access to a given attribute
+ * The {@link MetaAttributeAccessChecker} determines the access to a given attribute
  * assuming the object to check is an attributed and the given attribute name identifies a meta attribute.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>

@@ -9,14 +9,14 @@ package com.top_logic.dob.ex;
 import com.top_logic.dob.DataObjectException;
 
 /**
- * Thrown when a (Metabject) Type is not found somewhere
+ * Thrown when a (Metabject) Type is not found somewhere.
  *
  * @author  Klaus Halfmann / Marco Perra
  */
 public class UnknownTypeException extends DataObjectException {
 
     /**
-     * Constructs a new UnknownTypeException with the specified
+     * Constructs a new {@link UnknownTypeException} with the specified
      * error message.
      */
     public UnknownTypeException (String message) {
@@ -24,7 +24,7 @@ public class UnknownTypeException extends DataObjectException {
     }
 
     /**
-     * Constructs a new UnknownTypeException from some other Exception.
+     * Constructs a new {@link UnknownTypeException} from some other Exception.
      */
     public UnknownTypeException (Throwable th) {
         super (th);

@@ -43,7 +43,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 /**
  * This class allows importing of Knowledgebases via an XML-File.
  *
- * It can be used to import MetaObjects only. Or to import data into
+ * It can be used to import {@link MetaObject}s only. Or to import data into
  * an Existing (DB)Knowledgebase.
  *
  * @author  Klaus Halfmann
@@ -62,23 +62,23 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
     /** true - Use IDs as found in file, false crate new IDs */
     protected boolean       useIds;
 
-    /** Maps old KO-IDs to new IDs in case useIDs is false */
+    /** Maps old KO-IDs to new IDs in case {@link #useIds} is false */
 	protected Map<String, KnowledgeObject> knowledgeObjectMap;
     
-    /** The KnowledgeBase to store the imported Objects */
+    /** The {@link KnowledgeBase} to store the imported Objects */
     protected KnowledgeBase kBase;
 
     // static functions
     
     /**
-     * parse a document and creates MetaObjects, KnowledgeObjects
-     * and KnowledgeAssociations.
+     * parse a document and creates {@link MetaObject}s, {@link KnowledgeObject}s
+     * and {@link KnowledgeAssociation}s.
      *
      * In case you want to import more that one file in a row,
      * consider creating an instance of this class directly.
      *
-     * @param   aKnowledgeBase a KnowledgeBase to store the Objects.
-     * @param 	aResource a DatasourceName used to fetcxh the XML-File
+     * @param   aKnowledgeBase a {@link KnowledgeBase} to store the Objects.
+     * @param 	aResource a data source name used to fetch the XML-File
      * @param   useIds  when set use the IDs (names) as found in file.
      */
     public static void importObjects (
@@ -88,9 +88,9 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
 		kbi.doImport(aResource);
     }
 
-    /** Create a new KnowledgeBaseImporter for a given KnowledgeBase 
+    /** Create a new {@link KnowledgeBaseImporter} for a given {@link KnowledgeBase} 
      *
-     * @param   aKnowledgeBase a KnowledgeBase to store the Objects.
+     * @param   aKnowledgeBase a {@link KnowledgeBase} to store the Objects.
      * @param   useIds  when set use the IDs (names) as found in file.
      * @param protocol The {@link Protocol} to report import status to.
      */
@@ -118,7 +118,8 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
 		doImport(is, dsn);
     }
     
-    /** Handler that cares about importing of DataObjects (superclass for KO and KA Handler) 
+    /** Handler that cares about importing of {@link DataObject}s (superclass for KO and KA Handler).
+     * 
      * Syntax is:<pre>
      * &lt;tagname object_type="aType" object_name="aName"&gt;
      *      &lt;ko_attribute att_name="someName" att_value="someValue" /&gt;
@@ -131,6 +132,15 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
         /** The object currently created */
         protected DataObject current;
 
+		/**
+		 * Looks up the {@link KnowledgeObject} that was imported under the given ID.
+		 * 
+		 * @param id
+		 *        The ID of the object as found in the imported file.
+		 * @return The imported object, never <code>null</code>.
+		 * @throws SAXException
+		 *         If no object was imported with the given ID.
+		 */
 		protected KnowledgeObject lookupCachedKO(String id) throws SAXException {
 			KnowledgeObject cachedItem = knowledgeObjectMap.get(id);
 			if (cachedItem == null) {
@@ -139,7 +149,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
 			return cachedItem;
 		}
 
-        /** Special handling for Date based AttributeValues here */
+        /** Special handling for Date based attribute values here */
         protected java.util.Date buildDateAttributeValue (MetaObject type, String value)
             throws SAXException  {
             
@@ -301,7 +311,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
         }
     }
 
-    /** Handler that cares about importing of KnowledgeObjects.
+    /** Handler that cares about importing of {@link KnowledgeObject}s.
       * Syntax is:<pre>
       * &lt;knowledgeobject object_type="aType" object_name="aName"&gt;
       *      &lt;ko_attribute att_name="someName" att_value="someValue" /&gt;
@@ -330,7 +340,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
          * @param type  type of the KO to fetch/create
          * @param id    id of the KO to fetch/create
          * 
-         * @return a KnowledgeObject with given type and evtually the ID
+         * @return a {@link KnowledgeObject} with given type and evtually the ID
          */
         protected KnowledgeObject getKO(String type, String id) throws SAXException {
             
@@ -346,7 +356,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
             return result;
         }
 
-        /** Create the KnowledeObject on start of the tag */
+        /** Create the {@link KnowledgeObject} on start of the tag */
         protected void startKnowledgeObject(Attributes attributes) throws SAXException {
 
             String type = XMLAttributeHelper.getAsStringOptional(attributes, OBJECT_TYPE_ATTRIBUTE);
@@ -377,7 +387,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
             	report.fatal("Unexpected Element '" + qName + "' in startElement()");
         }
         
-        /** Store the given KnowledgeObject (when needed) */
+        /** Store the given {@link KnowledgeObject} (when needed) */
         protected void putKnowledgeObject(KnowledgeObject ko) {
             // store the generated identifier in the lookup table only when needed
 			if (!StringServices.isEmpty(currentId)) {
@@ -385,7 +395,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
             }
         }
     
-        /** Store the current KnowledgeObject on end of "knowledgeobject" tag. */
+        /** Store the current {@link KnowledgeObject} on end of "knowledgeobject" tag. */
         @Override
 		public void endElement(String namespaceURI, String localName, String qName) {
 
@@ -400,7 +410,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
     }
     
     /**
-	 * Handler that cares about importing of KnowledgeAssociations. Syntax is:
+	 * Handler that cares about importing of {@link KnowledgeAssociation}s. Syntax is:
 	 * 
 	 * <pre>
 	 * &lt;knowledgeobject object_type="someTyoe" object_name="someID" &gt;
@@ -410,18 +420,18 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
 	 * &lt;/knowledgeassociation&gt;
 	 * </pre>
 	 * 
-	 * Creation of the actual KnowledgeAssociation is deferred until ka_dest. is parsed so order of
-	 * tags is important and must not be changed .
+	 * Creation of the actual {@link KnowledgeAssociation} is deferred until ka_dest. is parsed so
+	 * order of tags is important and must not be changed .
 	 */
     protected class KnowledgeAssociationHandler extends DataObjectHandler {
     
 		/**
-		 * Name of KnowledgeAssociation to be created. May be <code>null</code>. In this case the
-		 * object can not be referenced.
+		 * Name of {@link KnowledgeAssociation} to be created. May be <code>null</code>. In this
+		 * case the object can not be referenced.
 		 */
 		protected String currName;
         
-        /** Type of KnowledgeAssociation to be created */
+        /** Type of {@link KnowledgeAssociation} to be created */
         protected String            currType;
 
 		private Map<String, String> _cachedAttributes = new HashMap<>();
@@ -433,7 +443,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
             // allow subclassing
         }
         
-        /** Handle start of KnowledgeAssociation tag.
+        /** Handle start of {@link KnowledgeAssociation} tag.
          *
          * The actual creation is deferred until "ka_dest" is found.
          */
@@ -463,7 +473,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
          * @param source    The new source object
          * @param dest      The new destination object
          * 
-         * @return a KnowledgeAssociation with given type and evtually the ID.
+         * @return a {@link KnowledgeAssociation} with given type and evtually the ID.
          */
         protected KnowledgeAssociation getKA(String type, 
                                              String id,
@@ -533,7 +543,7 @@ public class KnowledgeBaseImporter extends MORepositoryImporter {
             }
         }
 
-        /** Store the current KnowledgeAssociation on end of "knowledgeobject" tag. */
+        /** Store the current {@link KnowledgeAssociation} on end of "knowledgeobject" tag. */
         @Override
 		public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
 

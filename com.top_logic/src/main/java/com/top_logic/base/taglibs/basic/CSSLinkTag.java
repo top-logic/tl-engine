@@ -11,7 +11,7 @@ import java.io.IOException;
 import jakarta.servlet.jsp.JspWriter;
 
 /**
- * This TagHandler class writes a HTML link to the stylesheet file specified
+ * This tag handler class writes a HTML link to the stylesheet file specified
  * by the JSP author.
  *
  * @author    Dr. Bettina Hofstaetter
@@ -35,6 +35,7 @@ public class CSSLinkTag extends AbstractLinkTag {
         setReload (false);
     }
 
+    /** Sets whether a time stamp is appended to the stylesheet URL to force a reload. */
     public void setReload (boolean isReload) {
     	reload = isReload;
     }

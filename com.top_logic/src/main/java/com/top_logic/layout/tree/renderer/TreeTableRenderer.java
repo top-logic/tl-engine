@@ -93,6 +93,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 		}
 	}
 
+	/** The {@link TableDeclaration} describing the columns of the rendered tree table. */
 	public final TableDeclaration getTableDeclaration() {
 	    return this.tableDeclaration;
 	}
@@ -110,6 +111,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 		writeTreeContents(context, out, new NodeContext(tree));
 	}
 
+	/** Writes the header row of the table. */
 	protected void writeHeader(DisplayContext context, TagWriter out) throws IOException {
         List<String> columnNames = getHeaderNames(tableDeclaration);
 
@@ -162,6 +164,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
         out.endTag(TR);
     }
 
+	/** Writes the attributes of the header cell of the given column. */
 	protected void writeHeaderAttributes(TagWriter out, ColumnDeclaration column) throws IOException {
 		CssUtil.writeCombinedStyle(out, column.getWidthStyle(), column.getHeaderStyle());
 	}
@@ -179,6 +182,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
     	// no special attributes here
 	}
 
+	/** The names of the columns to write a header cell for. */
 	protected List<String> getHeaderNames(TableDeclaration declaration) {
 		return declaration.getColumnNames();
 	}
@@ -193,6 +197,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 		}
 	}
 
+	/** Renderer writing a tree node as a table row with a cell for each column. */
 	@Deprecated
 	public static class TableRowRenderer extends LegacyTreeContentRenderer {
 
@@ -214,6 +219,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 			return treeImages;
 		}
 
+	    /** The {@link TableDeclaration} describing the columns of the row. */
 	    protected final TableDeclaration getTableDeclaration() {
 	        return this.tableDeclaration;
 	    }
@@ -319,6 +325,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 			}
 		}
 
+		/** Writes the type image and the label of the current node. */
 		protected void writeBusinessNodeContent(DisplayContext context, TagWriter out, NodeContext nodeContext) throws IOException {
 		    writeTypeImage(context, out, nodeContext);
 			writeNodeText(context, out, nodeContext);
@@ -346,6 +353,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 
 		}
 
+		/** Writes the attributes of the cell of the given column. */
 		protected void writeColumnAttributes(TagWriter out, NodeContext nodeContext, ColumnDeclaration column) throws IOException {
 			out.writeAttribute(ID_ATTR, getCurrentNodeId(nodeContext));
 		}
@@ -362,6 +370,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 			return tree.getNodeId(node);
 		}
 
+		/** Writes the style attribute of the cell of the given column. */
 		protected void writeCellStyle(TagWriter out, ColumnDeclaration column) throws IOException {
 			out.beginAttribute(STYLE_ATTR);
 			CssUtil.appendStyleOptional(out, column.getWidthStyle());
@@ -374,7 +383,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 		 * Returns the list of column names which have to be written
 		 * 
 		 * @param declaration
-		 *        the tableDeclaration of the written table
+		 *        the {@link TableDeclaration} of the written table
 		 * @param nodeContext
 		 *        the context of the currently written node to get additional
 		 *        informations

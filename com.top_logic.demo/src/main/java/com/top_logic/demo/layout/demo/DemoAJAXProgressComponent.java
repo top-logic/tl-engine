@@ -21,7 +21,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Demo implementation of a the AJAXProgressComponent. 
+ * Demo implementation of a the {@link AJAXProgressComponent}. 
  * 
  * @author    <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -46,7 +46,7 @@ public class DemoAJAXProgressComponent extends AJAXProgressComponent {
 
 	}
 
-	/** Use this a ProgressInfo  */
+	/** Use this a {@link com.top_logic.layout.progress.ProgressInfo}. */
     protected transient ThreadedProgressInfo model;
 
     public DemoAJAXProgressComponent(InstantiationContext context, Config atts) throws ConfigurationException {
@@ -69,8 +69,7 @@ public class DemoAJAXProgressComponent extends AJAXProgressComponent {
     }
 
     /**
-     * called by the resetProgressBar-Command to reset the state
-     * of the DemoProgressBar and invalidate the component. 
+     * Command resetting the state of the progress bar and invalidating the component.
      */
     public static class ResetProgressBar extends AbstractCommandHandler {
 

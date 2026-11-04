@@ -68,5 +68,13 @@ public abstract class FieldActionOp extends FormActionOp<FormAction> {
 		return (FormField) fieldResolver.resolveFormMember(formContext, fieldPath);
 	}
 
+	/**
+	 * Performs the action on the given active field.
+	 *
+	 * @param field
+	 *        The field the action applies to.
+	 * @param value
+	 *        The resolved value of the action for the field.
+	 */
 	protected abstract void processField(FormField field, Object value);
 }

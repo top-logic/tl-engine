@@ -19,7 +19,7 @@ import com.top_logic.element.meta.form.component.EditAttributedComponent;
 public abstract class AbstractEditContactComponent extends EditAttributedComponent {
 
 	/**
-	 * Configuration of the {@link AbstractEditContactComponent}
+	 * Configuration of the {@link AbstractEditContactComponent}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

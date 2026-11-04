@@ -140,6 +140,7 @@ public class CryptSupport extends ManagedClass {
 	 */
     public static final class Module extends BasicRuntimeModule<CryptSupport> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

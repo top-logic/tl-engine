@@ -54,6 +54,7 @@ import com.top_logic.util.Utils;
 @Deprecated
 public class ReportSelectorComponent extends FormComponent implements ReportConstants{
 
+	/** The type of the objects the reports of this component are created for. */
 	public static final String BOTYPE = "PaymentReport";
 	
 	/**
@@ -83,6 +84,7 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
 
 	}
 
+	/** Whether changes of the report configuration disable the report selection. */
 	public boolean monitorChanges;
 
 	private Collection                  lastReport;
@@ -131,7 +133,7 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
 	}
 	
    /**
-	 * Returns the FormGroup for publishing details.
+	 * Returns the {@link FormGroup} for publishing details.
 	 */
 	protected FormGroup getPublishingFormGroup() {
 		ValueListener theListener = new HasChangedListener();
@@ -144,47 +146,52 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
     }
 
 	/**
-     * Returns the storedReport.
+     * Returns the stored report.
      */
     public StoredReport getStoredReport() {
 		return (StoredReport) getModel();
     }
 
 	/**
-     * Returns the lastReport.
+     * Returns the last report.
      */
     public Collection getLastReport() {
     	return (lastReport);
     }
 
 	/**
-     * @param    lastReport    The lastReport to set.
+     * Setter for {@link #getLastReport()}.
+     *
+     * @param    lastReport    The last report to set.
      */
     public void setLastReport(Collection lastReport) {
     	this.lastReport = lastReport;
     }
 
 	/**
-     * Returns the chartComponent.
+     * Returns the chart component.
      */
     public ChartConfigurationComponent getChartConfigurationComponent() {
     	return chartComponent;
     }
 
 	/**
-     * Returns the hasChanged.
+     * Returns the has changed.
      */
     public boolean hasChanged() {
     	return (hasChanged);
     }
 
 	/**
-     * @param    hasChanged    The hasChanged to set.
+     * Setter for {@link #hasChanged()}.
+     *
+     * @param    hasChanged    The has changed to set.
      */
     public void setChanged(boolean hasChanged) {
     	this.hasChanged = hasChanged;
     }
     
+    /** The type of the objects the reports of this component are created for. */
     public String getObjectType() {
     	return BOTYPE;
     }
@@ -193,7 +200,7 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
      * Updates the component to reflect the settings of the given {@link StoredReport}
      * 
      * @param aReport a {@link StoredReport} with some saved values
-     * @return <code>true</code> if aReport was accepted, <code>false</code> otherwise.
+     * @return <code>true</code> if {@code aReport} was accepted, <code>false</code> otherwise.
      */
     public boolean acceptStoredReport(StoredReport aReport) {
 		FormGroup   thePublishGroup   = (FormGroup) getFormContext().getMember(QueryUtils.FORM_GROUP);

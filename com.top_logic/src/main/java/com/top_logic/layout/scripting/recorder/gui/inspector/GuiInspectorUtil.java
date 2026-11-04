@@ -26,6 +26,7 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
  */
 public class GuiInspectorUtil {
 
+	/** Whether the GUI inspector is enabled, if its configuration cannot be accessed. */
 	public static final boolean DEFAULT_ENABLED_STATE = false;
 
 	/** Failsafe (Catches every {@link Throwable} and returns the {@link #DEFAULT_ENABLED_STATE}.) */

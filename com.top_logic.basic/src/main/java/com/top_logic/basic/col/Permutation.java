@@ -43,11 +43,11 @@ public class Permutation {
     /** 
      * This describes the forward part of the permutation.
      * 
-     * Every Integer must be contained in permuteArray exactly one.
-     * When no filters are applied all values from [0..baseSize} must
+     * Every Integer must be contained in {@link #permuteArray} exactly one.
+     * When no filters are applied all values from [0..{@link #baseSize}} must
      * be contained.
      * 
-     * permuteArray.size() is always LE baseSize.
+     * <code>permuteArray.size()</code> is always LE {@link #baseSize}.
      */
 	protected ArrayList<Integer> permuteArray;
 	
@@ -59,7 +59,7 @@ public class Permutation {
 	}
 	
 	/**
-	 * Create a new Identity Permutation with given baseSize.
+	 * Create a new Identity Permutation with given {@code baseSize}.
 	 */
 	public Permutation(int baseSize) {
 	    this.baseSize = baseSize;
@@ -114,7 +114,7 @@ public class Permutation {
 	}
 	
     /**
-     * Take given inList and reset it to an Identy-List of given size.
+     * Take given {@code inList} and reset it to an Identy-List of given size.
      */
     public static final void resetIdentity(ArrayList<Integer> inList, int size) {
         inList.clear();
@@ -152,7 +152,7 @@ public class Permutation {
 		permuteArray.set(indexTwo, intOne);
 	}
 
-	/** Return a read only View of aBase via this Permutation */
+	/** Return a read only View of {@code aBase} via this Permutation */
 	public <T> List<T> map(List<T> aBase) {
 	    return new PermuteList<>(aBase);
 	}
@@ -168,8 +168,8 @@ public class Permutation {
 	}
 
 	/**
-	 * After this call applying the permutation to aBase will result in a sort
-	 * according to aComparator.
+	 * After this call applying the permutation to {@code aBase} will result in a sort
+	 * according to {@code aComparator}.
 	 * 
 	 * @param aBase
 	 *            will not be modified.
@@ -187,7 +187,7 @@ public class Permutation {
 	}
 
     /**
-     * Reduce Permutation to all values in aBase matched by Filter.
+     * Reduce Permutation to all values in {@code aBase} matched by Filter.
      * 
      * @param aBase  will not be modified.
      */
@@ -216,10 +216,17 @@ public class Permutation {
         return permuteArray.isEmpty();
     }
 
+    /**
+     * The size of the underlying list.
+     */
     public int getBaseSize() {
         return baseSize;
     }
 
+    /**
+     * The number of elements in this permutation (may be less than {@link #getBaseSize()} if
+     * filtered).
+     */
     public int getSize() {
         return permuteArray.size();
     }
@@ -279,7 +286,8 @@ public class Permutation {
 	    List<T>        baseList;
 
 		/**
-		 * By creating a new PermuteList we need the BaseList and the Permutation that will be applied to it.
+		 * By creating a new {@link PermuteList} we need the base list and the Permutation that will
+		 * be applied to it.
 		 * 
 		 */
 		public PermuteList(List<T> aList) {

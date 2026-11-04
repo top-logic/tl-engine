@@ -35,7 +35,7 @@ public class Selection extends JavaScriptObject {
 	}-*/;
 
 	/**
-	 * Select the given elements to the already selected elements if #addToSelected is true,
+	 * Select the given elements to the already selected elements if {@code addToSelected} is true,
 	 * otherwise replace the already selected elements with the given elements.
 	 */
 	public final void select(Collection<Base> elements, boolean addToSelected) {

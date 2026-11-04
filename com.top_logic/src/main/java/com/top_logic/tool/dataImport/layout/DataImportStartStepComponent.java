@@ -31,14 +31,19 @@ import com.top_logic.tool.dataImport.AbstractDataImporter;
 import com.top_logic.tool.execution.ExecutabilityRule;
 
 /**
- * The DataImportStartStepComponent is the first step of the DataImportAssistant.
+ * The {@link DataImportStartStepComponent} is the first step of the {@link DataImportAssistant}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class DataImportStartStepComponent extends FormComponent {
 
+    /** Name of the field displaying the date of the last import run. */
     public static final String FIELD_LAST_RUN = "field_last_run";
+
+    /** Name of the field displaying the timestamp of the system data. */
     public static final String FIELD_SYSTEM_DATA_TS = "field_system_data_ts";
+
+    /** Name of the field displaying the timestamp of the import data. */
     public static final String FIELD_IMPORT_DATA_TS = "field_import_data_ts";
 
 
@@ -115,12 +120,13 @@ public class DataImportStartStepComponent extends FormComponent {
     }
 
     /**
-     * The DataImportStartStepCommandHandler starts the data import parsing.
+     * The {@link DataImportStartStepCommandHandler} starts the data import parsing.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */
 	public static class DataImportStartStepCommandHandler extends AbstractCommandHandler {
 
+        /** Command ID of {@link DataImportStartStepCommandHandler}. */
         public final static String COMMAND_ID = "DataImportStartStepCommand";
 
 		/**
@@ -136,6 +142,7 @@ public class DataImportStartStepComponent extends FormComponent {
 
 		}
 
+		/** Singleton {@link DataImportStartStepCommandHandler} instance. */
 		public static final CommandHandler INSTANCE = newInstance(DataImportStartStepCommandHandler.class, COMMAND_ID);
 
         public DataImportStartStepCommandHandler(InstantiationContext context, Config config) {

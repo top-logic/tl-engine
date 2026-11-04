@@ -15,6 +15,8 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 
 /**
+ * Default {@link GenericValueMap} implementation based on a {@link LinkedHashMap}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericValueMapImpl extends LinkedHashMap implements GenericValueMap {

@@ -13,6 +13,8 @@ import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.model.FormContext;
 
 /**
+ * Component displaying the role rules of a type.
+ * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class RoleRulesComponent extends EditComponent {

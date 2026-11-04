@@ -35,6 +35,9 @@ public class FilteredListModel extends AbstractListModelView {
 		this.filter = FilterFactory.trueFilter();
 	}
 
+	/**
+	 * Whether the given filter accepts at least one element of the base model.
+	 */
 	public boolean hasMatch(Filter testedFilter) {
 		checkAttachException();
 		for (int cnt = base.getSize(), baseIndex = 0; baseIndex < cnt; baseIndex++) {
@@ -46,6 +49,10 @@ public class FilteredListModel extends AbstractListModelView {
 		return false;
 	}
 
+	/**
+	 * Sets the {@link Filter} that decides which elements of the base model are visible in this
+	 * view.
+	 */
 	public void setFilter(Filter newFilter) {
 		this.filter = newFilter;
 		

@@ -6,7 +6,7 @@
 package com.top_logic.graph.common.model.layout;
 
 /**
- * Enumeration of the possible label positions
+ * Enumeration of the possible label positions.
  * 
  * @see InteriorLabelLayout#getPosition()
  * 

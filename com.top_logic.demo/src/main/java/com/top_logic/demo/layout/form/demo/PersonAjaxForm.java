@@ -109,8 +109,10 @@ public class PersonAjaxForm extends EditComponent {
 		return TypedConfigUtil.createInstance(config);
 	}
 
+    /** Apply command of the person form. */
     public static class ApplyCommandHandler extends AbstractApplyCommandHandler {
         
+        /** Identifier of the {@link ApplyCommandHandler} command. */
         public static final String  COMMAND = "PersonAjaxForm_Apply";
         
         public ApplyCommandHandler(InstantiationContext context, Config config) {

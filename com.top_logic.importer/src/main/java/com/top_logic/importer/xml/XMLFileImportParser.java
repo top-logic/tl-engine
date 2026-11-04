@@ -74,7 +74,7 @@ public class XMLFileImportParser<C extends XMLFileImportParser.Config> extends A
     }
 
     /**
-     * Configuration for all DOImportHandler.
+     * Configuration for all {@link AbstractDOImportHandler}s.
      * 
      * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
      */
@@ -84,6 +84,7 @@ public class XMLFileImportParser<C extends XMLFileImportParser.Config> extends A
         @Mandatory
         String getType();
 
+        /** Post processor called for every imported object. */
         @InstanceFormat
         @InstanceDefault(NoImportPerformerPostProcessor.class)
         ImportPerformerPostProcessor getPostProcessor();

@@ -68,22 +68,41 @@ public class TableReplacerConfig {
 		_tableValues = values;
 	}
 
+	/**
+	 * Whether columns are added, if the table in the template contains less columns than the given
+	 * values.
+	 */
 	public boolean isAddColumns() {
 		return (_addColumns);
 	}
 
+	/**
+	 * Whether rows are added, if the table in the template contains less rows than the given
+	 * values.
+	 */
 	public boolean isAddRows() {
 		return (_addRows);
 	}
 
+	/**
+	 * Whether columns are removed, if the table in the template contains more columns than the
+	 * given values.
+	 */
 	public boolean isRemoveColumns() {
 		return (_removeColumns);
 	}
 
+	/**
+	 * Whether rows are removed, if the table in the template contains more rows than the given
+	 * values.
+	 */
 	public boolean isRemoveRows() {
 		return (_removeRows);
 	}
 
+	/**
+	 * The values to fill the table with.
+	 */
 	public Object[][] getTableValues() {
 		return (_tableValues);
 	}

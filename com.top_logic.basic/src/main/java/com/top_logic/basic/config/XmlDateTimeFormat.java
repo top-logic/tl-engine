@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Thread-safe {@link Format} implementation that parsed XML dateTime strings.
+ * Thread-safe {@link Format} implementation that parsed XML <code>dateTime</code> strings.
  * 
  * @see "http://www.w3.org/TR/xmlschema-2/#dateTime"
  * 

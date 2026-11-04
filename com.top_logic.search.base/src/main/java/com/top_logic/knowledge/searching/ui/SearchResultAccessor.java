@@ -25,12 +25,14 @@ import com.top_logic.mig.html.HTMLFormatter;
  */
 public class SearchResultAccessor extends ReadOnlyAccessor<Object> {
 
+    /** Name of the search result attribute holding the ranking. */
     public static final String RANKING_KEY = "ranking";
     
+    /** Name of the property holding the modification date of a search result. */
     public static final String MODIFIED_KEY = "modified";
     
     /**
-     * Create a new SearchResultAccessor.
+     * Create a new {@link SearchResultAccessor}.
      */
     public SearchResultAccessor() {
     super();

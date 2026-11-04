@@ -43,6 +43,8 @@ import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * {@link FolderFieldProvider} for the command columns of a web folder table.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class WebFolderFieldProvider extends FolderFieldProvider {
@@ -95,6 +97,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 		return DocumentAccessor.DOCUMENT_MAPPING.map(businessObject);
 	}
 
+	/** Creates the command showing the keywords of the document of the given node. */
 	protected FormMember createKeywordsField(String fieldName, FolderNode node) {
 		Object userObject = node.getBusinessObject();
 		if (userObject instanceof Document) {
@@ -118,6 +121,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 		return showKeywordsCommand;
 	}
 
+	/** Creates the command showing documents similar to the document of the given node. */
 	protected FormMember createSimilarDocsField(String fieldName, FolderNode node) {
 		Object userObject = node.getBusinessObject();
 		if (userObject instanceof Document) {
@@ -172,6 +176,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 		return this.createHiddenField(name);
 	}
 
+	/** Creates the command adding the given object to the clipboard. */
 	protected FormMember createAdd2ClipboardField(String name, final Object businessObject, ExecutableState allowAdd) {
 		CommandField field = ModifyClipboardExecutable.createField((Wrapper) businessObject, name, allowAdd);
 		field.setInheritDeactivation(false);
@@ -187,6 +192,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 		return WebFolderUIFactory.getInstance();
 	}
     
+	/** Creates the field for locking or updating the document of the given node. */
 	protected FormMember createLockField(String name, FolderNode node) {
 		if (!(node.getBusinessObject() instanceof Document)) {
 			return createHiddenField(name);
@@ -265,6 +271,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 			com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT_DISABLED);
 	}
 
+	/** Creates the command showing the version history of the given document. */
 	protected FormMember createVersionField(String name, Object userObject) {
 		if (userObject instanceof Document) {
 			Document document = (Document) userObject;
@@ -294,6 +301,18 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 		return theField;
 	}
 
+    /**
+     * Creates a {@link CommandField} with the given images.
+     *
+     * @param aName
+     *        Name of the field.
+     * @param anExecutable
+     *        The command to execute.
+     * @param anImage
+     *        The image of the executable command.
+     * @param aDisabled
+     *        The image of the command, if it is not executable.
+     */
     public static CommandField createField(String aName, Command anExecutable, ThemeImage anImage, ThemeImage aDisabled) {
         CommandField theField = FormFactory.newCommandField(aName, anExecutable);
         

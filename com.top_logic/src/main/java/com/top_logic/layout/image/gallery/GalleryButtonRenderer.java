@@ -30,6 +30,9 @@ public class GalleryButtonRenderer extends AbstractButtonRenderer<GalleryButtonR
 
 	private static final String INACTIVE_GALLERY_MANAGEMENT_BUTTON_CLASS = "inactiveGalleryManagementButton";
 
+	/**
+	 * Creates a {@link GalleryButtonRenderer} with the given button width.
+	 */
 	public static GalleryButtonRenderer newGalleryButtonRenderer(DisplayDimension width) {
 		Config config = TypedConfiguration.newConfigItem(GalleryButtonRenderer.Config.class);
 		config.setButtonWidth(width);
@@ -43,8 +46,14 @@ public class GalleryButtonRenderer extends AbstractButtonRenderer<GalleryButtonR
 	 */
 	public interface Config extends AbstractButtonRenderer.Config<GalleryButtonRenderer> {
 
+		/**
+		 * The width of the rendered button.
+		 */
 		DisplayDimension getButtonWidth();
 
+		/**
+		 * @see #getButtonWidth()
+		 */
 		void setButtonWidth(DisplayDimension width);
 	}
 

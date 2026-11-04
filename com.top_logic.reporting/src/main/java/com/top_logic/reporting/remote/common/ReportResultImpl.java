@@ -11,6 +11,8 @@ import com.top_logic.reporting.remote.ReportResult;
 import com.top_logic.reporting.remote.ReportStatus;
 
 /**
+ * Serializable default implementation of {@link ReportResult}.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ReportResultImpl implements ReportResult, Serializable {

@@ -21,6 +21,8 @@ import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilder;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilderUtil;
 
 /**
+ * Data source that transforms the objects of another data source with a {@link Transformer}.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class TransformedDataSourceBuilder implements

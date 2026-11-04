@@ -21,8 +21,10 @@ import com.top_logic.layout.form.model.StringField;
  */
 public class DemoTabbingComponent extends FormComponent {
 
+	/** Name of the first input field. */
 	public static final String FIELD1 = "field1";
 
+	/** Name of the second input field. */
 	public static final String FIELD2 = "field2";
 
 	public DemoTabbingComponent(InstantiationContext context, Config atts) throws ConfigurationException {

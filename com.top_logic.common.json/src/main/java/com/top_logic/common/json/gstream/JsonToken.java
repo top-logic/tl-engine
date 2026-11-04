@@ -25,33 +25,43 @@ package com.top_logic.common.json.gstream;
 public enum JsonToken {
 
   /**
-   * The opening of a JSON array. Written using {@link JsonWriter#beginArray}
-   * and read using {@link JsonReader#beginArray}.
+   * The opening of a JSON array.
+   *
+   * @implNote Written using {@link JsonWriter#beginArray} and read using
+   *           {@link JsonReader#beginArray}.
    */
   BEGIN_ARRAY,
 
   /**
-   * The closing of a JSON array. Written using {@link JsonWriter#endArray}
-   * and read using {@link JsonReader#endArray}.
+   * The closing of a JSON array.
+   *
+   * @implNote Written using {@link JsonWriter#endArray} and read using
+   *           {@link JsonReader#endArray}.
    */
   END_ARRAY,
 
   /**
-   * The opening of a JSON object. Written using {@link JsonWriter#beginObject}
-   * and read using {@link JsonReader#beginObject}.
+   * The opening of a JSON object.
+   *
+   * @implNote Written using {@link JsonWriter#beginObject} and read using
+   *           {@link JsonReader#beginObject}.
    */
   BEGIN_OBJECT,
 
   /**
-   * The closing of a JSON object. Written using {@link JsonWriter#endObject}
-   * and read using {@link JsonReader#endObject}.
+   * The closing of a JSON object.
+   *
+   * @implNote Written using {@link JsonWriter#endObject} and read using
+   *           {@link JsonReader#endObject}.
    */
   END_OBJECT,
 
   /**
    * A JSON property name. Within objects, tokens alternate between names and
-   * their values. Written using {@link JsonWriter#name} and read using {@link
-   * JsonReader#nextName}
+   * their values.
+   *
+   * @implNote Written using {@link JsonWriter#name} and read using
+   *           {@link JsonReader#nextName}.
    */
   NAME,
 
@@ -77,9 +87,10 @@ public enum JsonToken {
   NULL,
 
   /**
-   * The end of the JSON stream. This sentinel value is returned by {@link
-   * JsonReader#peek()} to signal that the JSON-encoded value has no more
-   * tokens.
+   * The end of the JSON stream, signaling that the JSON-encoded value has no
+   * more tokens.
+   *
+   * @implNote This sentinel value is returned by {@link JsonReader#peek()}.
    */
   END_DOCUMENT
 }

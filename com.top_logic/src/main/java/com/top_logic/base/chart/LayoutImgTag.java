@@ -18,7 +18,7 @@ import com.top_logic.layout.form.tag.AbstractTag;
 import com.top_logic.layout.form.tag.ControlTagUtil;
 
 /**
- * A simple tag to glue ImageComponent and JSP-Page togehter.
+ * A simple tag to glue {@link ImageComponent} and JSP-Page togehter.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -45,7 +45,7 @@ public class LayoutImgTag extends AbstractTag {
 	private Boolean _waitingSlider = null;
 
     /**
-     * Overriden to access the surrounding FormComponent.
+     * Overriden to access the surrounding {@link ImageComponent}.
      */
     @Override
 	public void setParent(Tag myParent) {
@@ -58,7 +58,7 @@ public class LayoutImgTag extends AbstractTag {
     }
     
     /**
-     * Write out an Image tag refering to the LayoutImgServlet.
+     * Write out an Image tag refering to the {@link ImageControl}.
      */
     @Override
 	protected int startElement() throws JspException, IOException {
@@ -123,6 +123,8 @@ public class LayoutImgTag extends AbstractTag {
 	}
 
 	/**
+	 * Setter for the ID of the image.
+	 *
 	 * @param anId
 	 *        the ID of the Image to write.
 	 */
@@ -131,6 +133,8 @@ public class LayoutImgTag extends AbstractTag {
     }
     
     /**
+     * Setter for the width of the image.
+     *
      * @param aWidth width of the image to write.
      */
     public void setWidth(int aWidth) {
@@ -138,6 +142,8 @@ public class LayoutImgTag extends AbstractTag {
     }
 
     /**
+     * Setter for the height of the image.
+     *
      * @param aHeight height of the image to write.
      */
     public void setHeight(int aHeight) {
@@ -145,6 +151,8 @@ public class LayoutImgTag extends AbstractTag {
     }
 
 	/**
+	 * Setter for whether no image map is written.
+	 *
 	 * @param noImageMap
 	 *        Whether the image map must <b>not</b> be written.
 	 */

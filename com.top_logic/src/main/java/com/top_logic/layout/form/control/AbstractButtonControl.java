@@ -62,8 +62,11 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		VisibilityListener, CSSClassListener, TooltipChangedListener, ExecutableListener, Focusable.FocusRequestedListener,
 		ButtonImageListener, LabelChangedListener, AltTextChangedListener, Link {
 
+	/** Identifier of the disabled property passed to a {@link IButtonRenderer}. */
 	public static final int DISABLED_PROPERTY = 0;
+	/** Identifier of the disabled image property passed to a {@link IButtonRenderer}. */
 	public static final int DISABLED_IMAGE_PROPERTY = 1;
+	/** Identifier of the image property passed to a {@link IButtonRenderer}. */
 	public static final int IMAGE_PROPERTY = 2;
 
 	/**
@@ -75,8 +78,8 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 
 	/**
 	 * {@link Property} to use as key for a property of a {@link CommandModel}. The value for this
-	 * key must be an {@link IButtonRenderer} which will be used as renderer for a ButtonControl if
-	 * no renderer is given explicit.
+	 * key must be an {@link IButtonRenderer} which will be used as renderer for a {@link
+	 * ButtonControl} if no renderer is given explicit.
 	 */
 	public static final Property<IButtonRenderer> BUTTON_RENDERER =
 		TypedAnnotatable.property(IButtonRenderer.class, "buttonRenderer");
@@ -97,6 +100,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 
 	private final IButtonRenderer view;
 
+	/** The displayed button model. */
 	protected M model;
 
 	private boolean hasTabindex;
@@ -129,6 +133,9 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		return renderer == null ? ButtonRenderer.INSTANCE : renderer;
 	}
 
+	/**
+	 * Creates a command map containing the inherited commands and the given additional commands.
+	 */
 	protected static Map<String, ControlCommand> addCommands(Map<String, ControlCommand> inheritedCommands,
 			ControlCommand... commands) {
 		Map<String, ControlCommand> result = new HashMap<>(inheritedCommands);
@@ -172,21 +179,31 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		super.internalDetach();
 	}
 
+	/** Whether an explicit tab index is set. */
 	public boolean hasTabindex() {
 		return hasTabindex;
 	}
 
+	/**
+	 * The explicit tab index of this button.
+	 *
+	 * <p>
+	 * Must only be called if {@link #hasTabindex()}.
+	 * </p>
+	 */
 	public int getTabindex() {
 		assert hasTabindex();
 
 		return tabindex;
 	}
 
+	/** Sets an explicit tab index for this button. */
 	public void setTabindex(int tabindex) {
 		this.hasTabindex = true;
 		this.tabindex = tabindex;
 	}
 
+	/** Removes the explicit tab index of this button. */
 	public void removeTabindex() {
 		this.hasTabindex = false;
 	}
@@ -215,22 +232,32 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		return this.model.getAltText();
 	}
 
+	/** Sets the label of the button model. */
 	public void setLabel(String label) {
 		model.setLabel(label);
 	}
 
+	/** Sets the visibility of the button model. */
 	public void setVisible(boolean aLocallyVisible) {
 		model.setVisible(aLocallyVisible);
 	}
 
+	/** Makes the button model executable. */
 	public void enable() {
 		model.setExecutable();
 	}
 
+	/**
+	 * Makes the button model not executable.
+	 *
+	 * @param disabledReason
+	 *        The reason why the button can not be executed.
+	 */
 	public void disable(ResKey disabledReason) {
 		model.setNotExecutable(disabledReason);
 	}
 
+	/** Whether the button model has an image. */
 	public boolean hasImage() {
 		return model.getImage() != null;
 	}
@@ -240,6 +267,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		return this.model.getImage();
 	}
 
+	/** Sets the image of the button model. */
 	public void setImage(ThemeImage newValue) {
 		model.setImage(newValue);
 	}
@@ -366,6 +394,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		}
 	}
 
+	/** Writes the JavaScript executed when the button is clicked. */
 	public void writeOnClickContent(DisplayContext context, Appendable out) throws IOException {
 		InvokeExpressionProvider provider = getModel().get(INVOKE_EXPRESSION_PROVIDER);
 		if (provider != null) {

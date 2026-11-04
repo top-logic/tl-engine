@@ -17,8 +17,8 @@ import com.top_logic.template.tools.CheckUtils;
 import com.top_logic.util.Resources;
 
 /**
- * A TemplateProblem describes any kind of problem that occurred during the parsing and checking
- * process of a template.
+ * A {@link TemplateProblem} describes any kind of problem that occurred during the parsing and
+ * checking process of a template.
  * 
  * @author <a href=mailto:tbe@top-logic.com>tbe</a>
  */
@@ -32,6 +32,9 @@ public class TemplateProblem {
 	private final String   name;
 	private final Type     type;
 	
+	/**
+	 * Classification of a {@link TemplateProblem}.
+	 */
 	public enum Type {
 		/**
 		 * A SYNTAX_ERROR denotes a fatal problem in the given template.
@@ -108,7 +111,7 @@ public class TemplateProblem {
 	}
 	
 	/** 
-	 * Create a new TemplateProblem from a caught {@link ParseException}
+	 * Create a new {@link TemplateProblem} from a caught {@link ParseException}
 	 * 
 	 * @param aPE a {@link ParseException}
 	 */
@@ -131,7 +134,7 @@ public class TemplateProblem {
 	}
 
 	/** 
-	 * Create a new TemplateProblem from a caught {@link TokenMgrError}.
+	 * Create a new {@link TemplateProblem} from a caught {@link TokenMgrError}.
 	 * 
 	 * @param err a {@link TokenMgrError}
 	 */
@@ -159,6 +162,9 @@ public class TemplateProblem {
 		}
 	}
 	
+	/**
+	 * The resource key of the message describing the problem.
+	 */
 	public final ResKey getResKey() {
 		return this.resKey;
 	}
@@ -200,6 +206,9 @@ public class TemplateProblem {
 		return this.rowEnd;
 	}
 
+	/**
+	 * The name of the node the problem occurred in.
+	 */
 	public final String getName() {
 		return this.name;
 	}

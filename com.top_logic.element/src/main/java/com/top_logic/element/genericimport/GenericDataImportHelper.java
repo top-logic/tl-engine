@@ -21,6 +21,9 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.progress.ProgressInfo;
 
 /**
+ * Performs the steps of a generic import (reading and storing the data) and reports the
+ * progress.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportHelper extends AbstractGenericDataImportBase implements ProgressInfo {
@@ -46,6 +49,11 @@ public class GenericDataImportHelper extends AbstractGenericDataImportBase imple
         message  = new StringBuffer(256);
     }
 
+    /**
+     * Reads the raw data with the configured importer.
+     *
+     * @return The list of imported {@link GenericValueMap}s.
+     */
     public List getImportedObjects() {
         this.resetProgress();
         try {

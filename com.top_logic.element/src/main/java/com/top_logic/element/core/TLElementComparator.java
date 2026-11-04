@@ -20,6 +20,7 @@ import com.top_logic.element.structured.StructuredElement;
  */
 public class TLElementComparator implements Comparator {
 
+	/** Singleton {@link TLElementComparator} instance. */
 	public final static TLElementComparator INSTANCE = new TLElementComparator();
 	
     /**
@@ -41,7 +42,7 @@ public class TLElementComparator implements Comparator {
     }
 
     /**
-     * Compare the given StructuredElements by name.
+     * Compare the given {@link StructuredElement}s by name.
      */
     protected int compareName(StructuredElement anElement1, StructuredElement anElement2) {
         String theName1 = anElement1.getName();

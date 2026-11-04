@@ -22,7 +22,9 @@ import com.top_logic.knowledge.service.Revision;
  */
 public class KnowledgeBaseCopy implements Runnable {
 
+	/** The {@link KnowledgeBase} to copy from. */
 	protected final KnowledgeBase sourceKb;
+	/** The {@link KnowledgeBase} to copy to. */
 	protected final KnowledgeBase destKb;
 
 	/**

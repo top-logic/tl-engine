@@ -21,6 +21,8 @@ import com.top_logic.layout.Drop.DropException;
 public interface DropAcceptor<T> {
 
 	/**
+	 * Inserts the dropped objects into the given list model.
+	 * 
 	 * @param businessObjects
 	 *        the T's whose client side representation was moved.
 	 * @param listModel

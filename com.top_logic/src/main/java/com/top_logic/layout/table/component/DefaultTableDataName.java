@@ -17,8 +17,10 @@ import com.top_logic.layout.table.TableDataOwner;
  */
 public interface DefaultTableDataName extends ModelName {
 
+	/** The {@link ModelName} of the {@link TableDataOwner} of the {@link DefaultTableData}. */
 	ModelName getDefaultTableDataOwner();
 
+	/** @see #getDefaultTableDataOwner() */
 	void setDefaultTableDataOwner(ModelName defaultTableDataOwner);
 
 }

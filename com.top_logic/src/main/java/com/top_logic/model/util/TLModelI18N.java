@@ -25,6 +25,12 @@ import com.top_logic.util.Resources;
  */
 public class TLModelI18N {
 
+	/**
+	 * Get the internationalized name of the given {@link TLStructuredTypePart} using
+	 * {@link Resources#getInstance()} as resources.
+	 *
+	 * @see #getI18NKey(TLStructuredType, String, TLStructuredTypePart)
+	 */
 	public static String getI18NName(TLStructuredType aME, String anAccessPath, TLStructuredTypePart part) {
 		return resolveKey(Resources.getInstance(), getI18NKey(aME, anAccessPath, part));
 	}
@@ -60,6 +66,19 @@ public class TLModelI18N {
 		return resources.getString(i18nKey);
 	}
 
+	/**
+	 * Gets the {@link ResKey} for the given part of the given type, optionally qualified by an
+	 * access path.
+	 *
+	 * @param type
+	 *        The type the part belongs to.
+	 * @param accessPath
+	 *        Optional access path that qualifies the key. If empty, the key is the same as in
+	 *        {@link #getI18NKey(TLStructuredType, TLStructuredTypePart)}.
+	 * @param part
+	 *        The part to get the key for.
+	 * @return The key with a fallback to the part name.
+	 */
 	public static ResKey getI18NKey(TLStructuredType type, String accessPath, TLStructuredTypePart part) {
 		ResKey result;
 		if (StringServices.isEmpty(accessPath)) {

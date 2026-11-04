@@ -6,7 +6,7 @@
 package com.top_logic.element.meta.form.tag;
 
 /**
- * Create input fields for MetaAttributes in a meta group.
+ * Create input fields for attributes in a meta group.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

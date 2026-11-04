@@ -6,6 +6,8 @@
 package com.top_logic.base.office;
 
 /**
+ * Thrown when the office application is busy and cannot process a request.
+ *
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class OfficeNotReadyException extends RuntimeException {

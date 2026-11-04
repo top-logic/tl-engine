@@ -10,7 +10,7 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 
 /**
- * The WrapperTimeSeriesURLGenerator generates tooltips for {@link Wrapper}s.
+ * The {@link WrapperTimeSeriesURLGenerator} generates tooltips for {@link Wrapper}s.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

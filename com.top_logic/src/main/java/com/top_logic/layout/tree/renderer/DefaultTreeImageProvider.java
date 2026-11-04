@@ -15,10 +15,14 @@ import com.top_logic.layout.tree.NodeContext;
  */
 public class DefaultTreeImageProvider implements TreeImageProvider {
 
+    /** Singleton {@link DefaultTreeImageProvider} instance. */
     public static final TreeImageProvider INSTANCE = new DefaultTreeImageProvider();
     
+    /** Image index of a collapsed node with children. */
     protected static final int CLOSED = 0;
+	/** Image index of an expanded node with children. */
 	protected static final int OPEN = 1;
+	/** Image index of a node without children. */
 	protected static final int LEAF = 2;
 
 

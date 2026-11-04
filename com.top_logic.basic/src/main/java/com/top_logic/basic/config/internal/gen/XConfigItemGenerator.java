@@ -131,6 +131,12 @@ public class XConfigItemGenerator extends XMain {
 		return slashByDot.substring(0, slashByDot.length() - 6);
 	}
 
+	/**
+	 * Main entry point.
+	 *
+	 * @param args
+	 *        The command line arguments.
+	 */
 	public static void main(String args[]) throws Exception {
 		new XConfigItemGenerator().runMainCommandLine(args);
 	}

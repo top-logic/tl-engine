@@ -213,7 +213,7 @@ message HeartbeatEvent {
  */
 message ChatSessionDto {
 	/**
-	 * Session ID (KnowledgeObject ID).
+	 * Session ID (ID of the {@link com.top_logic.knowledge.objects.KnowledgeObject}).
 	 */
 	string id;
 

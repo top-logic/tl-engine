@@ -288,7 +288,7 @@ public class SpiderChartBuilder extends AbstractJFreeChartBuilder<CategoryDatase
 	}
 
 	/**
-	 * URL-generator for a spider-chart that ignores the special-series
+	 * URL-generator for a spider-chart that ignores the special-series.
 	 */
 	public static class SpiderURLGenerator extends JFreeChartURLGenerator {
 

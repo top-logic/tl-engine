@@ -13,8 +13,8 @@ import com.top_logic.reporting.report.model.aggregation.AggregationFunction;
 import com.top_logic.reporting.report.model.partition.Partition;
 
 /**
- * A DataSet is the result of a report. It contains a {@link List} of {@link DataSeries} each
- * representing the result of an evaluation of a {@link AggregationFunction} on {@link List} of
+ * A {@link DataSet} is the result of a report. It contains a {@link List} of {@link DataSeries}
+ * each representing the result of an evaluation of a {@link AggregationFunction} on {@link List} of
  * {@link Partition}s.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
@@ -22,7 +22,7 @@ import com.top_logic.reporting.report.model.partition.Partition;
 @Deprecated
 public class DataSet {
 	/**
-	 * The {@link List} of {@link DataSeries} this DataSet is composed of.
+	 * The {@link List} of {@link DataSeries} this {@link DataSet} is composed of.
 	 */
 	private List	dataSeries;
 
@@ -45,14 +45,14 @@ public class DataSet {
 	}
 
 	/**
-	 * Adds a new {@link DataSeries} to this DataSet.
+	 * Adds a new {@link DataSeries} to this {@link DataSet}.
 	 */
 	public void addDataSeries(DataSeries aDataSerie) {
 		this.dataSeries.add(aDataSerie);
 	}
 
 	/**
-	 * Removes all {@link DataSeries} from this DataSet.
+	 * Removes all {@link DataSeries} from this {@link DataSet}.
 	 * 
 	 */
 	public void resetDataSet() {
@@ -60,14 +60,15 @@ public class DataSet {
 	}
 
 	/**
-	 * This method returns the dataSeries.
+	 * This method returns the data series.
 	 * 
-	 * @return Returns the (unmodifiable) dataSeries.
+	 * @return Returns the (unmodifiable) data series.
 	 */
 	public List getDataSeries() {
 		return (Collections.unmodifiableList(this.dataSeries));
 	}
 
+	/** The item of the given series in the given category. */
 	public ItemVO getItemVOAt(int aSeries, int aCategory) {
 	    int size = this.dataSeries.size();
 	    if (aCategory > size) {
@@ -87,6 +88,7 @@ public class DataSet {
 		return (this.label);
 	}
 
+	/** Setter for the label of this data set. */
 	public void setLabel(String aName) {
 		this.label = aName;
 	}

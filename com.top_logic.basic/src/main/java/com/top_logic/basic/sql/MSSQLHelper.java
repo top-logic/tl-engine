@@ -220,7 +220,7 @@ public class MSSQLHelper extends DBHelper {
     /**
      * Return if some type needs a size.
      * 
-     * This implemtantion currently was tested with MySQL and MSSQL.
+     * This implemtantion currently was tested with <i>MySQL</i> and MSSQL.
      * 
      * @param   sqlType a type as defined in java.sql.Types
      * @return  true when size is needed.
@@ -332,7 +332,7 @@ public class MSSQLHelper extends DBHelper {
 	}
 
     /**
-     * OverWritten to get the correct MSSQL drop index statement
+     * Overwritten to get the correct MSSQL drop index statement.
 	 */
 	@Override
 	public void appendDropIndex(Appendable sql, String idxName, String tableName) throws IOException {

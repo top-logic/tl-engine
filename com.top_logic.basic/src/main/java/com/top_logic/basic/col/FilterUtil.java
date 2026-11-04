@@ -20,7 +20,7 @@ import com.top_logic.basic.CollectionUtil;
 
 
 /**
- * The FilterUtil useful static methods for {@link com.top_logic.basic.col.Filter}s.
+ * The {@link FilterUtil} useful static methods for {@link com.top_logic.basic.col.Filter}s.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

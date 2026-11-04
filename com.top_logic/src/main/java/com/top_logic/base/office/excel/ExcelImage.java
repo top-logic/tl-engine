@@ -8,6 +8,8 @@ package com.top_logic.base.office.excel;
 import java.io.File;
 
 /**
+ * An image to be placed into an Excel cell.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ExcelImage {
@@ -35,14 +37,14 @@ public class ExcelImage {
     }
 
     /**
-     * Returns the centerX.
+     * Returns the horizontal center.
      */
     public boolean isCenterX() {
         return (centerX);
     }
 
     /**
-     * Returns the centerY.
+     * Returns the vertical center.
      */
     public boolean isCenterY() {
         return (centerY);

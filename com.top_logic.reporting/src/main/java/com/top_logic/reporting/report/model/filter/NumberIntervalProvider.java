@@ -11,8 +11,8 @@ import java.util.List;
 import com.top_logic.reporting.report.exception.ReportingException;
 
 /**
- * The NumberIntervalProvider returns intervals specified by two borders and a
- * granuarity
+ * The {@link NumberIntervalProvider} returns intervals specified by two borders and a
+ * granularity.
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */

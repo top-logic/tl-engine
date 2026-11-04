@@ -17,7 +17,7 @@ import com.top_logic.model.TLStructuredTypePart;
  */
 public abstract class ConfiguredAttributeImpl extends KBBasedMetaAttribute {
 
-	/** See definition of {@link KBBasedMetaAttribute#OBJECT_NAME} in ElementMeta.xml */
+	/** See definition of {@link KBBasedMetaAttribute#OBJECT_NAME} in {@code ElementMeta.xml} */
 	public static final String VALIDITY_CHECK_ATTRIBUTE = "validityCheck";
 
 	private static final String STORAGE_IMPLEMENTATION_ATTRIBUTE = "storageImplementation";

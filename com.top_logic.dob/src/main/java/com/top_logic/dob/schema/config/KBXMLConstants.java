@@ -15,16 +15,16 @@ import com.top_logic.dob.xml.DOXMLConstants;
  */
 public interface KBXMLConstants extends DOXMLConstants {
 
-	/** tag designating a KnowledgeObject definition */
+	/** tag designating a knowledge object definition */
     public static final String KNOWLEDGE_OBJECT_ELEMENT        = "knowledgeobject";
 
-    /** tag designating a KnowledgeObject definition */
+    /** tag designating a knowledge object definition */
     public static final String KNOWLEDGE_ASSOCIATION_ELEMENT   = "knowledgeassociation";
 
     /** Value for MO_TYPE_ATTRIB describing an knowledge object type */
     public static final String MO_KNOWLEDGE_OBJECT_TYPE_VALUE      = "MOKnowledgeObject";
 
-    /** Name of Tag for an KnowledgeObject Attribute */
+    /** Name of Tag for a knowledge object attribute */
     public final static String  KO_ATTRIBUTE_ELEMENT     = "ko_attribute";
     
 	/**

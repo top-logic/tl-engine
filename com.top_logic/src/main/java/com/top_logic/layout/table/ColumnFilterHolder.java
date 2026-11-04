@@ -9,8 +9,8 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.layout.table.filter.CellExistenceTester;
 
 /**
- * Holds a {@link TableFilter} and the {@link Mapping} of the raw value to the value the TableFilter
- * shall process.
+ * Holds a {@link TableFilter} and the {@link Mapping} of the raw value to the value the
+ * {@link TableFilter} shall process.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
@@ -34,6 +34,8 @@ public class ColumnFilterHolder {
 	}
 
 	/**
+	 * The position of the filter.
+	 *
 	 * @return column name, or global filter id, {@link #getFilter()} belongs to.
 	 */
 	public String getFilterPosition() {
@@ -41,6 +43,8 @@ public class ColumnFilterHolder {
 	}
 
 	/**
+	 * The filter at the filter position.
+	 *
 	 * @return {@link TableFilter} of {@link #getFilterPosition()}.
 	 */
 	public TableFilter getFilter() {
@@ -48,6 +52,8 @@ public class ColumnFilterHolder {
 	}
 
 	/**
+	 * The mapping from the cell value to the value to filter.
+	 *
 	 * @return {@link Mapping Cell value mapping} of {@link #getFilterPosition()}.
 	 */
 	public Mapping<? super Object, ? super Object> getFilterValueMapping() {
@@ -55,6 +61,8 @@ public class ColumnFilterHolder {
 	}
 
 	/**
+	 * Decides whether a row has a cell at the filter position.
+	 *
 	 * @return {@link CellExistenceTester} of {@link #getFilterPosition()}.
 	 */
 	public CellExistenceTester getCellExistenceTester() {

@@ -11,16 +11,16 @@ import com.top_logic.knowledge.wrap.Wrapper;
  * Interface for accessing the mail folder component.
  * 
  * Note: this is still a bit difficult to implement / understand
- * When implementing the getMailFolder() methodm the implementor (theAware)
- * is supposed to dispatch this call to the PosMailServer to retrieve its folder.
+ * When implementing the {@link #getMailFolder()} method the implementor
+ * is supposed to dispatch this call to the {@link MailServer} to retrieve its folder.
  * 
- * This invitites theAware to do the same when implementing the getMailFolderName() method.
- * It can be dispatched to the PosMailServer just as well. However, when doing so this will create
- * a StackOverFlow.
+ * This invites the implementor to do the same when implementing the {@link #getMailFolderName()}
+ * method. It can be dispatched to the {@link MailServer} just as well. However, when doing so this
+ * will create a {@link StackOverflowError}.
  * 
- * So while one method should be dispatched to the PosMailServer, the other must not.
+ * So while one method should be dispatched to the {@link MailServer}, the other must not.
  * But technically no difference between the both is visible when looking at the interface
- * and at the methods provided by PosMailServer
+ * and at the methods provided by {@link MailServer}
  * 
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
@@ -37,7 +37,7 @@ public interface MailFolderAware extends Wrapper {
     /** 
      * Return the name of the mail folder.
      * 
-     * This name has to be unique and will be used by the MailServer to get
+     * This name has to be unique and will be used by the {@link MailServer} to get
      * the name of the folder on the attached mail server.
      * 
      * @return    The requested name, never <code>null</code> or empty.

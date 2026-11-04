@@ -30,6 +30,7 @@ public class SelectableOptionFilterProvider extends AbstractTableFilterProvider 
 	/** Static instance of {@link SelectableOptionFilterProvider} for collection based values */
 	public static final SelectableOptionFilterProvider INSTANCE_MULTI = new SelectableOptionFilterProvider(true, false);
 
+	/** Configuration options for {@link SelectableOptionFilterProvider}. */
 	@SuppressWarnings("javadoc")
 	public interface Config extends AbstractTableFilterProvider.Config {
 

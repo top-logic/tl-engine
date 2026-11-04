@@ -44,7 +44,20 @@ public interface Export {
 	 *          2016) $
 	 */
 	public enum State {
-		INITIALIZED, QUEUED, RUNNING, FINISHED, FAILED
+		/** The export has never been done. */
+		INITIALIZED,
+
+		/** The export is queued and waits for execution. */
+		QUEUED,
+
+		/** The export is currently performed. */
+		RUNNING,
+
+		/** The last export run was successful. */
+		FINISHED,
+
+		/** The last export run ended with a failure. */
+		FAILED
 	}
 
 	/**

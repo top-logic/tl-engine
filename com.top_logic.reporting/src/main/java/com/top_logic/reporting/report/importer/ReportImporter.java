@@ -11,7 +11,7 @@ import com.top_logic.reporting.report.model.Report;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The ReportImporter imports {@link Report}s from report description files (xml). 
+ * The {@link ReportImporter} imports {@link Report}s from report description files (xml). 
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

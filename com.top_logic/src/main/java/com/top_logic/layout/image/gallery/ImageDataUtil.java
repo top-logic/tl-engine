@@ -40,7 +40,7 @@ public class ImageDataUtil {
 	/**
 	 * Creates a {@link BinaryData} of requested mime type out of an image name and a corresponding
 	 * {@link BinaryData}. The image name must contain the suffix of requested mime type (e.g.
-	 * 'imageName.jpg'). The suffix must match the mime type encoding of the image data.
+	 * {@code imageName.jpg}). The suffix must match the mime type encoding of the image data.
 	 */
 	public static BinaryData castMimeType(String imageName, BinaryData imageData) {
 		return new DefaultDataItem(imageName, imageData, MimeTypes.getInstance().getMimeType(imageName));
@@ -49,8 +49,8 @@ public class ImageDataUtil {
 	/**
 	 * Creates a {@link BinaryDataSource} of requested mime type out of an image name and a
 	 * corresponding {@link BinaryDataSource}. The image name must contain the suffix of requested
-	 * mime type (e.g. 'imageName.jpg'). The suffix must match the mime type encoding of the image
-	 * data.
+	 * mime type (e.g. {@code imageName.jpg}). The suffix must match the mime type encoding of the
+	 * image data.
 	 */
 	public static BinaryDataSource castMimeType(String imageName, BinaryDataSource imageData) {
 		return new BinaryDataSourceProxy(imageData) {

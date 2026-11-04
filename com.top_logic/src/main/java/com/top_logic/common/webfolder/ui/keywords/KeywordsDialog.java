@@ -28,7 +28,7 @@ import com.top_logic.layout.table.model.Enabled;
 import com.top_logic.layout.table.model.TableConfiguration;
 
 /**
- * The {@link KeywordsDialog} shows some keywords
+ * The {@link KeywordsDialog} shows some keywords.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

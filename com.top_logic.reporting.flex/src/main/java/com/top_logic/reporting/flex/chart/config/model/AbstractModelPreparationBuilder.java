@@ -20,6 +20,9 @@ import com.top_logic.reporting.flex.chart.config.partition.PartitionFunction;
 import com.top_logic.reporting.flex.chart.config.util.MetaElementProvider;
 
 /**
+ * Base class for builders of a {@link ModelPreparation} for objects of a configured type, which
+ * the user can adjust interactively.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public abstract class AbstractModelPreparationBuilder implements

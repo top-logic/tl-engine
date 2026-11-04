@@ -15,6 +15,9 @@ import com.top_logic.layout.table.filter.AbstractClassificationTableFilterProvid
 import com.top_logic.model.TLClassifier;
 
 /**
+ * Filter accepting cell values containing a collection of classifiers, if at least one of them
+ * matches the filter pattern.
+ *
  * @author     <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class TableMultiFLElementFilter extends AbstractTableFLElementFilter{

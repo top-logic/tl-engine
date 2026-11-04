@@ -71,9 +71,9 @@ public class SecuritySelectionFilter extends SecurityFilter {
 	 * Handles deletion of the given models.
 	 * 
 	 * @param models
-	 *        see AbstractTreeComponent#receiveModelDeletedEvent(Object, Object)
+	 *        see {@link TreeComponent#receiveModelDeletedEvent(Set, Object)}
 	 * @param changedBy
-	 *        see AbstractTreeComponent#receiveModelDeletedEvent(Object, Object)
+	 *        see {@link TreeComponent#receiveModelDeletedEvent(Set, Object)}
 	 * 
 	 * @see TreeComponent#receiveModelDeletedEvent(Set, Object)
 	 */
@@ -85,9 +85,9 @@ public class SecuritySelectionFilter extends SecurityFilter {
 	 * Handles internal change of the given model.
 	 * 
 	 * @param model
-	 *        see AbstractTreeComponent#receiveModelChangedEvent(Object, Object)
+	 *        see {@link TreeComponent#receiveModelChangedEvent(Object, Object)}
 	 * @param changedBy
-	 *        see AbstractTreeComponent#receiveModelChangedEvent(Object, Object)
+	 *        see {@link TreeComponent#receiveModelChangedEvent(Object, Object)}
 	 * 
 	 * @see TreeComponent#receiveModelChangedEvent(Object, Object)
 	 */
@@ -99,9 +99,9 @@ public class SecuritySelectionFilter extends SecurityFilter {
 	 * Handles creation of the given model.
 	 * 
 	 * @param model
-	 *        see AbstractTreeComponent#receiveModelCreatedEvent(Object, Object)
+	 *        see {@link TreeComponent#receiveModelCreatedEvent(Object, Object)}
 	 * @param changedBy
-	 *        see AbstractTreeComponent#receiveModelCreatedEvent(Object, Object)
+	 *        see {@link TreeComponent#receiveModelCreatedEvent(Object, Object)}
 	 * 
 	 * @see TreeComponent#receiveModelCreatedEvent(Object, Object)
 	 */

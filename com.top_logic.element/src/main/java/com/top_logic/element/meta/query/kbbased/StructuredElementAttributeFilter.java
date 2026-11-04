@@ -28,8 +28,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Filter for TypedWrapperAttributes with a StructuredElement as value.
- * Allows specification of a single StructuredElement but to use the
+ * Filter for reference attributes with a {@link StructuredElement} as value.
+ * Allows specification of a single {@link StructuredElement} but to use the
  * sub tree elements as passible values as well.
  *
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
@@ -37,8 +37,13 @@ import com.top_logic.model.TLStructuredTypePart;
 public class StructuredElementAttributeFilter extends
         KBBasedWrapperValuedAttributeFilter {
 
+	/** Start level: The given elements themselves. */
 	public static final int START_LEVEL_ELEMENT = 0;
+
+	/** Start level: The context elements of the given elements. */
 	public static final int START_LEVEL_CONTEXT = 1;
+
+	/** Start level: The root elements of the given elements. */
 	public static final int START_LEVEL_ROOT    = 2;
 	
 	/** key for value Map to store wrapper ids. */
@@ -64,9 +69,9 @@ public class StructuredElementAttributeFilter extends
 	 * @param anAttribute
 	 *        the attribute to be searched
 	 * @param aWrapper
-	 *        the Wrapper that should match as values of anAttribute
+	 *        the element that should match as value of the attribute
 	 * @param subTree
-	 *        if true take the sub-trees of someWrapper into account
+	 *        if true take the sub-tree of the element into account
 	 * @param doNegate
 	 *        if true the element that do not match will match
 	 * @param isRelevant
@@ -87,9 +92,9 @@ public class StructuredElementAttributeFilter extends
 	 * @param anAttribute
 	 *        the attribute to be searched
 	 * @param someWrappers
-	 *        the Wrappers that should match as values of anAttribute
+	 *        the elements that should match as values of the attribute
 	 * @param subTree
-	 *        if true take the sub-trees of someWrapper into account
+	 *        if true take the sub-trees of the elements into account
 	 * @param doNegate
 	 *        if true the element that do not match will match
 	 * @param isRelevant
@@ -209,7 +214,7 @@ public class StructuredElementAttributeFilter extends
     /**
      * Get the Wrappers that are allowed values in filtering
      *
-     * @param    aWrapper         The StructuredElement to start from.
+     * @param    aWrapper         The {@link StructuredElement} to start from.
      * @param    doSearchSubTree    If true include all elements of the sub tree of aWrapper
      * @return   The list of allowed {@link com.top_logic.knowledge.wrap.Wrapper wrappers}, never <code>null</code>.
      */

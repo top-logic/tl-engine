@@ -17,7 +17,7 @@ import com.top_logic.knowledge.searching.SearchAttribute;
 import com.top_logic.knowledge.searching.SearchService;
 
 /**
- * The search model for the searching GUI
+ * The search model for the searching GUI.
  *
  * @author    <a href="mailto:DRO@top-logic.com">Dieter Rothb&auml;cher</a>
  */
@@ -48,7 +48,7 @@ public class SearchModel implements Serializable {
     private transient LinkedList recentTerms;
 
     /**
-     * Constructor for SearchModel.
+     * Constructor for {@link SearchModel}.
      */
     public SearchModel() {
         super();

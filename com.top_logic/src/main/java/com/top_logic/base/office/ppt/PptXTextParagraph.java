@@ -16,7 +16,7 @@ import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
 
 /**
- * Represents a {@link XSLFTextParagraph}
+ * Represents a {@link XSLFTextParagraph}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -49,14 +49,14 @@ public class PptXTextParagraph {
 	private List<PptXTextRun> textRuns;
 
 	/**
-	 * Create a new PptXTextParagraph
+	 * Create a new {@link PptXTextParagraph}
 	 */
 	public PptXTextParagraph() {
 		this.textRuns = new ArrayList<>();
 	}
 
 	/**
-	 * Create a new PptXTextParagraph from a powerpoint text paragraph
+	 * Create a new {@link PptXTextParagraph} from a powerpoint text paragraph
 	 * 
 	 * @param aPara
 	 *        the powerpoint text paragraph

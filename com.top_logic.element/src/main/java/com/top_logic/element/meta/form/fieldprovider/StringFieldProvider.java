@@ -128,6 +128,8 @@ public class StringFieldProvider extends AbstractFieldProvider {
 	}
 
 	/**
+	 * Creates the constraint checking the length of the entered string.
+	 *
 	 * @param minLength
 	 *        Minimal length the string should have.
 	 * @param maxLength

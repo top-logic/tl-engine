@@ -96,7 +96,7 @@ public class EditSecurityProfileComponent extends EditComponent
 		implements ExportAware, ControlRepresentable, TableConfigurationProvider {
 
 	/**
-	 * Configuration interface for {@link EditSecurityProfileComponent}
+	 * Configuration interface for {@link EditSecurityProfileComponent}.
 	 */
 	public interface Config extends EditComponent.Config {
 
@@ -597,6 +597,9 @@ public class EditSecurityProfileComponent extends EditComponent
 		return null;
 	}
 
+	/**
+	 * The configuration trees of all layouts that can be edited in this component.
+	 */
 	public Collection<LayoutConfigTree> getAvailableLayoutTrees() {
 		return Collections.unmodifiableCollection(_layoutTrees.values());
 	}

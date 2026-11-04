@@ -12,7 +12,7 @@ import com.top_logic.dob.meta.TypeContext;
 
 
 /**
- * DBTableMetaObject <em>can</em> be implemented by classes also implementing
+ * {@link DBTableMetaObject} <em>can</em> be implemented by classes also implementing
  * {@link com.top_logic.dob.meta.MOStructure} .
  * <p>
  * In fact our implementations do implement this interface. All methods are implemented using lazy
@@ -34,7 +34,7 @@ public interface DBTableMetaObject extends MOStructure {
 	 * <p>
 	 * Order of the List is important since the layout of the table will be derived from it. It can
 	 * return other values than {@link #getAttribute(String)} does (e.g. a primary key derived for
-	 * the getUniqueId method(). )
+	 * the unique ID).
 	 * </p>
 	 */
     public List<DBAttribute> getDBAttributes();

@@ -34,14 +34,14 @@ import org.jfree.data.time.TimePeriod;
 import com.top_logic.util.Utils;
 
 /**
- * Extend the GanttRenderer to draw Subintervals as Milestones.
+ * Extend the {@link GanttRenderer} to draw Subintervals as Milestones.
  *
  * <code>&gt;------&lt;&gt;------&lt;&gt;-------&lt;</code>
  */
 public class MSAwareGanttRenderer extends GanttRenderer {
 
     /** 
-     * Create a new MSAwareGanttRenderer.
+     * Create a new {@link MSAwareGanttRenderer}.
      */
     public MSAwareGanttRenderer() {
         super();
@@ -65,7 +65,7 @@ public class MSAwareGanttRenderer extends GanttRenderer {
     /**
      * Overridden to draw Subintervals as Milestones.
      * 
-     * This will ignore the percentComplete value for now.
+     * This will ignore the percent complete value for now.
      */
     @Override
 	protected void drawTasks(Graphics2D g2, CategoryItemRendererState state,
@@ -327,21 +327,35 @@ public class MSAwareGanttRenderer extends GanttRenderer {
     }
 
 
+    /**
+     * The message format of the tooltip of a milestone.
+     *
+     * <p>
+     * The arguments are the name, start date and end date of the milestone.
+     * </p>
+     */
     public String getMsLabel() {
         return (this.msLabel);
     }
 
 
+    /** Setter for {@link #getMsLabel()}. */
     public void setMsLabel(String aMsLabel) {
         this.msLabel = aMsLabel;
     }
 
 
+    /**
+     * The format for the dates in the tooltip of a milestone.
+     *
+     * @see #getMsLabel()
+     */
     public DateFormat getMsFormat() {
         return (this.msFormat);
     }
 
 
+    /** Setter for {@link #getMsFormat()}. */
     public void setMsFormat(DateFormat aMsFormat) {
         this.msFormat = aMsFormat;
     }

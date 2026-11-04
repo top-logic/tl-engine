@@ -9,12 +9,15 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.form.control.AbstractCompositeControl;
 import com.top_logic.layout.form.control.BlockControl;
 /**
+ * Tag creating a {@link com.top_logic.layout.form.control.BlockControl}.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class BlockTag extends CompositeControlTag {
 
 	private boolean initiallyVisible = true;
 	
+	/** Sets whether the block is visible initially. */
 	public void setInitiallyVisible(boolean initiallyVisible) {
 		this.initiallyVisible = initiallyVisible;
 	}

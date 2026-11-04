@@ -42,8 +42,13 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class EditRoleComponent extends EditComponent {
 
+    /** Name of the field for the name of the role. */
     public static final String FIELD_NAME = BoundedRole.NAME_ATTRIBUTE;
+
+    /** Name of the field for the description of the role. */
     public static final String FIELD_DESC = BoundedRole.ATTRIBUTE_DESCRIPTION;
+
+    /** Name of the field for the system flag of the role. */
     public static final String FIELD_SYSTEM = BoundedRole.ROLE_SYSTEM;
 
 	/**
@@ -107,6 +112,7 @@ public class EditRoleComponent extends EditComponent {
      */
 	public static class ApplyRoleCommand extends AbstractApplyCommandHandler {
 
+        /** The ID of this command. */
         public static final String COMMAND_ID = "applyRole";
 
         public ApplyRoleCommand(InstantiationContext context, Config config) {
@@ -177,10 +183,11 @@ public class EditRoleComponent extends EditComponent {
 
 
     /**
-     * DeleteHandler for roles.
+     * Delete handler for roles.
      */
     public static class DeleteRoleCommand extends AbstractDeleteCommandHandler {
 
+        /** The ID of this command. */
         public static final String COMMAND_ID = "deleteRole";
 
         public DeleteRoleCommand(InstantiationContext context, Config config) {

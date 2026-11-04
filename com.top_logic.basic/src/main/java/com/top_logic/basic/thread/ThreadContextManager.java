@@ -635,7 +635,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	}
 
 	/**
-	 * Module for instantiation of {@link ThreadContextManager}
+	 * Module for instantiation of {@link ThreadContextManager}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

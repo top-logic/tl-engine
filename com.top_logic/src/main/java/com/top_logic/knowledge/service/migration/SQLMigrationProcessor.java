@@ -92,9 +92,9 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 
 		/**
 		 * File name prefix of the SQL file. The actual file name has the form <i>
-		 * 'fileNamePrefix'.'sqlDialect'.sql</i>, where 'fileNamePrefix' is value of
-		 * {@link #getFileNamePrefix()}, and 'sqlDialect' something like 'mysql', 'oracle', or
-		 * 'mssql'.
+		 * {@code fileNamePrefix}.{@code sqlDialect}.sql</i>, where {@code fileNamePrefix} is
+		 * value of {@link #getFileNamePrefix()}, and {@code sqlDialect} something like 'mysql',
+		 * 'oracle', or 'mssql'.
 		 */
 		@Mandatory
 		String getFileNamePrefix();

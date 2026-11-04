@@ -346,6 +346,7 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 		return error;
 	}
 
+	/** Creates an error stating that the given document already exists. */
 	public static HandlerResult errorDocumentExists(DisplayContext aContext, BinaryData theItem) {
 		HandlerResult theResult = new HandlerResult();
 		theResult.addError(I18NConstants.ERROR_DOCUMENT_EXISTS__NAME.fill(theItem.getName()));

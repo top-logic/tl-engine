@@ -48,7 +48,7 @@ public class BasicExpansionEngine implements ExpansionEngine {
     }
 
     /**
-     * Expand static symbols by using the configured StaticSymbolResolver
+     * Expand static symbols by using the configured {@link StaticSymbolResolver}
      * 
      * @param aContext  the expansion context to use
      * @param aSymbol   the symbol to expand

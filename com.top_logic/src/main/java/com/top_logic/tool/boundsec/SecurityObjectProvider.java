@@ -17,10 +17,10 @@ import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProv
 import com.top_logic.util.model.ModelService;
 
 /**
- * The DefaultSecurityObjectProvider provides the object at which the security should be
+ * The {@link SecurityObjectProvider} provides the object at which the security should be
  * checked.
  * 
- * SecurityObjectProviders must be stateless as a single instance is cached by the 
+ * {@link SecurityObjectProvider}s must be stateless as a single instance is cached by the 
  * {@link SecurityObjectProviderManager}
  * 
  * @extends {@link Serializable} in order to allow serialization of components

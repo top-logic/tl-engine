@@ -62,11 +62,14 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.Utils;
 
 /**
- * At scheduled times, the AbstractMailServerDaemon takes a look at the INBOX
- * of a mail server. The Daemon itself only invokes the MailDaemonCountListener by
- * sending a MessageCountEvent. The MailDaemonCountListener then converts the {@link Message}s to
- * {@link MailServerMessage}s and calls back AbstractMailServerDaemon#processMail(MailMessage)
- * resp.AbstractMailServerDaemon#processMeeting(ExchangeMeeting) to handle these mails.
+ * At scheduled times, the {@link AbstractMailServerDaemon} takes a look at the INBOX
+ * of a mail server and processes the received mails.
+ *
+ * @implNote The daemon itself only invokes the {@link MailDaemonCountListener} by sending a
+ *           {@link MessageCountEvent}. The {@link MailDaemonCountListener} then converts the
+ *           {@link Message}s to {@link MailServerMessage}s and calls back
+ *           {@link #processMail(MailMessage)} resp. {@link #processMeeting(ExchangeMeeting)} to
+ *           handle these mails.
  *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -794,8 +797,8 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	}
 
 	/**
-	 * Move a {@link MailMessage} to the {@link MailFolder} named aFoldername If the Folder does not
-	 * exists, it will be created. After the operation, the folder will be closed and must be
+	 * Move a {@link MailMessage} to the {@link MailFolder} with the given name. If the Folder does
+	 * not exists, it will be created. After the operation, the folder will be closed and must be
 	 * reconnected.
 	 */
 	protected boolean moveMailToFolder(MailMessage aMail, String aFoldername) {
@@ -803,7 +806,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	}
 
 	/**
-	 * Create a {@link MailFolder} named aFoldername
+	 * Create a {@link MailFolder} with the given name, if it does not exist.
 	 */
 	protected MailFolder getOrCreateMailFolder(String aFoldername) {
 		MailServer theServer = MailServer.getInstance();

@@ -114,13 +114,21 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     public static final String TABLE_NAME = "SECURITY_STORAGE";
 
     /* The attributes of the security storage. */
+
+    /** Column of the group (or person) that has the role. */
     public static final String ATTRIBUTE_GROUP = "TARGET";
+    /** Column of the business object on which the role is granted. */
     public static final String ATTRIBUTE_BUSINESS_OBJECT = "BUSINESS_OBJECT";
+    /** Column of the granted role. */
     public static final String ATTRIBUTE_ROLE = "ROLE";
+    /** Column of the reason why the role is granted. */
     public static final String ATTRIBUTE_REASON = "REASON";
 
     /* Properties for cluster manager */
+
+    /** Cluster property storing whether the security storage is updated automatically. */
     public static final String PROPERTY_AUTOUPDATE = "sec_store_autoupdate";
+    /** Cluster property storing whether the security storage is currently being rebuilt. */
     public static final String PROPERTY_REBUILDING = "sec_store_rebuilding";
 
     /** The default index of the security storage. */
@@ -129,7 +137,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     /** The attributes of the security storage. */
     public static final String[] ATTRIBUTES = new String[] { ATTRIBUTE_GROUP, ATTRIBUTE_BUSINESS_OBJECT, ATTRIBUTE_ROLE, ATTRIBUTE_REASON };
 
-    /** Special ID for hasRole association reason. */
+    /** Special ID for {@code hasRole} association reason. */
 	public static final Short REASON_HAS_ROLE = Short.valueOf((short) -1);
 
 	/** Special ID for reason indicating a dirty storage. */
@@ -226,19 +234,19 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 	}
 
     /**
-     * Returns the AccessManager which uses this {@link SecurityStorage}.
+     * Returns the {@link AccessManager} which uses this {@link SecurityStorage}.
      */
 	protected AccessManager getAccessManager() {
     	return accessManager;
     }
 
     /**
-     * Creates the SecurityStorageExecutor to use to execute SQL statements. Hook for
-     * subclasses to create own SecurityStorageExecutors.
+     * Creates the {@link SecurityStorageExecutor} to use to execute SQL statements. Hook for
+     * subclasses to create own {@link SecurityStorageExecutor}s.
      *
      * @param connectionPool
      *        The connection pool to borrow DB connections from
-     * @return the SecurityStorageExecutor to use
+     * @return the {@link SecurityStorageExecutor} to use
      * @throws SQLException
      *         if creation of the executor fails
      */
@@ -356,7 +364,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
      *
      * @param aVector
      *            the parameter array, must be of length 4 or <code>null</code>
-     * @return a (possible empty) list of BoundedRoles, the given group has on the given
+     * @return a (possible empty) list of {@link BoundedRole}s, the given group has on the given
      *         business object for the given reason
      * @throws StorageException
      *             if some error occurs while requesting the database
@@ -378,7 +386,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
      *            the list of group IDs to get the roles for
      * @param aBusinessObjectIDList
      *            the list of business object IDs to get the roles for
-     * @return a (possible empty) list of BoundedRoles, the given groups have on the given
+     * @return a (possible empty) list of {@link BoundedRole}s, the given groups have on the given
      *         business objects
      * @throws StorageException
      *             if some error occurs while requesting the database
@@ -656,8 +664,8 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
      *        a list of vectors as required by the {@link #remove(Object[])} method.
      * @param insertVectors
      *        a list of vectors as required by the {@link #insert(Object[])} method.
-     * @return the amount of entries that have been changed (= deleteVectors.size() +
-     *         insertVectors.size())
+     * @return the amount of entries that have been changed (= {@code deleteVectors.size()} +
+     *         {@code insertVectors.size()})
      * @throws StorageException
      *         if some error occurs while requesting the database
      */
@@ -1145,7 +1153,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
 
     /**
-     * Creates the database entries with hasRole reason. Subclasses may extend this method
+     * Creates the database entries with {@code hasRole} reason. Subclasses may extend this method
      * to create further entries. This method requires that the table is empty.
      *
      * @throws StorageException
@@ -1182,7 +1190,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
 
     /**
-     * Creates the database entries with hasRole reason. Subclasses may extend this method
+     * Creates the database entries with {@code hasRole} reason. Subclasses may extend this method
      * to create further entries. This method requires that the table is empty.
      *
      * @throws StorageException
@@ -1267,19 +1275,19 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     }
 
     /**
-     * Gets the enabled state of the autoUpdate function.
+     * Gets the enabled state of the automatic update function.
      *
-     * @return the enabled state of the autoUpdate function
+     * @return the enabled state of the automatic update function
      */
     public boolean isAutoUpdate() {
         return autoUpdate;
     }
 
     /**
-     * Switches the autoUpdate function on or off.
+     * Switches the automatic update function on or off.
      *
      * @param autoUpdate
-     *            the new state of the autoUpdate function.
+     *            the new state of the automatic update function.
      */
     public void setAutoUpdate(boolean autoUpdate) {
         this.autoUpdate = autoUpdate;
@@ -1366,15 +1374,15 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
 
     /**
-     * The SecurityStorageExecutor executes SQL statements on the database. This class uses no
-     * database specific performance tunings.
+     * The {@link SecurityStorageExecutor} executes SQL statements on the database. This class uses
+     * no database specific performance tunings.
      *
      * @author <a href=mailto:CBR@top-logic.com>CBR</a>
      */
     public static class SecurityStorageExecutor extends ThreadLocalCommitable {
 
         /**
-         * Creates a new SecurityStorageDBExecutor. Used internally only.
+         * Creates a new {@link SecurityStorageExecutor}. Used internally only.
          *
          * @param connectionPool
          *            the prepared statement cache to use for read operations
@@ -1442,11 +1450,12 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         }
 
 		/**
-		 * Creates the WHERE part of a SQL statement. All parameters except aBuffer may be
+		 * Creates the WHERE part of a SQL statement. All parameters except {@code aBuffer} may be
 		 * <code>null</code> to indicate that a result of all objects of this type is desired.
 		 * 
 		 * @param aBuffer
-		 *        the StringBuilder to write the WHERE part into; must not be <code>null</code>
+		 *        the {@link StringBuilder} to write the WHERE part into; must not be
+		 *        <code>null</code>
 		 * @param aVector
 		 *        the parameter vector, must be of length 4 or <code>null</code>
 		 */
@@ -1511,23 +1520,38 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         public static final int MAX_LENGTH = 70;
 
         /* The SQL statements used by this class. */
+
+        /** SQL keyword starting a select statement. */
         protected final String SQL_SELECT_PREFIX = "SELECT ";
 
+        /**
+         * SQL fragment selecting a constant from the security table, used to check for existing
+         * rows.
+         */
         protected final String SQL_HAS_ROLE_INFIX;
 
+        /** SQL statement selecting all distinct roles, without conditions. */
         protected final String SQL_GET_ROLES_PREFIX;
 
+        /** SQL statement selecting all distinct reasons, without conditions. */
         protected final String SQL_GET_REASONS_PREFIX;
 
+        /** SQL statement selecting all distinct business objects, without conditions. */
         protected final String SQL_GET_BUSINESS_OBJECTS_PREFIX;
 
+        /** SQL statement selecting all distinct groups, without conditions. */
         protected final String SQL_GET_GROUPS_PREFIX;
 
+        /**
+         * SQL statement selecting all distinct pairs of business object and group, without
+         * conditions.
+         */
         protected final String SQL_GET_GROUPS_BY_OBJECTS_PREFIX;
 
 		/** Selection of all columns of the entries, see {@link #getEntries(Collection, Collection, Collection)}. */
 		protected final String SQL_GET_ENTRIES_PREFIX;
 
+        /** SQL statement deleting rows from the security table, without conditions. */
         protected final String SQL_REMOVE_PREFIX;
 
 		/**
@@ -1557,35 +1581,80 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		 */
         protected final int SQL_REMOVE_STATEMENT_PARAMETERS = 4;
 
+        /**
+         * SQL statement removing the rows for a business object, role and reason for all groups.
+         */
         protected final String SQL_REMOVE_FOR_ALL_TARGETS_STATEMENT;
 
+        /** SQL statement removing the rows of a set of business objects (the set is appended). */
         protected final String SQL_REMOVE_OBJECTS_PART_1;
 
 		/** SQL statement to remove all rows with one of the given reasons. */
 		protected final String SQL_REMOVE_REASONS;
 
+        /**
+         * First part of the SQL statement checking for a role from collections of groups, business
+         * objects and roles, followed by the group set.
+         */
         protected final String SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_1;
 
+        /**
+         * Second part of the SQL statement checking for a role from collections, followed by the
+         * business object set.
+         */
         protected final String SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_2;
 
+        /**
+         * Third part of the SQL statement checking for a role from collections, followed by the
+         * role set.
+         */
         protected final String SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_3;
 
+        /**
+         * First part of the SQL statement retrieving the roles from collections of groups and
+         * business objects, followed by the group set.
+         */
         protected final String SQL_GET_ROLES_FROM_COLLECTION_STATEMENT_PART_1;
 
+        /**
+         * Second part of the SQL statement retrieving the roles from collections, followed by the
+         * business object set.
+         */
         protected final String SQL_GET_ROLES_FROM_COLLECTION_STATEMENT_PART_2;
 
+        /**
+         * First part of the SQL statement retrieving the business objects from collections of
+         * groups, roles and business objects, followed by the group set.
+         */
         protected final String SQL_GET_BOS_FROM_COLLECTION_STATEMENT_PART_1;
 
+        /**
+         * Second part of the SQL statement retrieving the business objects from collections,
+         * followed by the role set.
+         */
         protected final String SQL_GET_BOS_FROM_COLLECTION_STATEMENT_PART_2;
 
+        /**
+         * Third part of the SQL statement retrieving the business objects from collections,
+         * followed by the business object set.
+         */
         protected final String SQL_GET_BOS_FROM_COLLECTION_STATEMENT_PART_3;
 
+        /** SQL statement creating the default index of the security table. */
         protected final String SQL_CREATE_DEFAULT_INDEX;
 
+        /** Database specific hint appended to the table in update statements. */
         protected String updateHint() {
             return "";
         }
 
+		/**
+		 * Whether there is a row matching the given vector.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 */
 		public boolean hasRole(Object[] aVector) throws SQLException {
             checkVector(aVector);
 			StringBuilder sb = new StringBuilder(1024);
@@ -1598,6 +1667,13 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             return DBUtil.executeQueryAsBoolean(sb.toString(), nonNullStorageValues(aVector));
         }
 
+		/**
+		 * The roles of all rows matching the given vector.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 */
 		public List<BoundedRole> getRoles(Object[] aVector) throws SQLException {
             checkVector(aVector);
 			StringBuilder sb = new StringBuilder(1024);
@@ -1607,6 +1683,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 				BoundedRole.class);
         }
 
+		/** Whether there is a row with one of the given groups, business objects and roles. */
 		public boolean hasRoleFromCollection(Collection<TLID> aGroupIDList, Collection<TLID> aBusinessObjectIDList,
 				Collection<TLID> aRoleIDList) throws SQLException {
 			StringBuilder sb = new StringBuilder(1024);
@@ -1642,6 +1719,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeQueryAsBoolean(sb.toString());
 		}
 
+		/** The roles of all rows with one of the given groups and business objects. */
 		public List<BoundedRole> getRolesFromCollection(Collection<TLID> aGroupIDList,
 				Collection<TLID> aBusinessObjectIDList) throws SQLException {
 			StringBuilder sb = new StringBuilder(1024);
@@ -1652,6 +1730,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeQueryAsWrapperList(sb.toString(), BoundedRole.OBJECT_NAME, BoundedRole.class);
         }
 
+		/** The business objects of all rows with one of the given groups and roles. */
 		public List<TLID> getBusinessObjectIdsFromCollection(Collection<TLID> aGroupIDList,
 				Collection<TLID> aRoleIDList)
 				throws SQLException {
@@ -1663,6 +1742,12 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeQueryAsIdList(sb.toString());
         }
 
+		/**
+		 * The business objects of all rows with one of the given groups, roles and business
+		 * objects.
+		 *
+		 * The given business objects are queried in chunks of the maximum set size of the database.
+		 */
 		public List<TLID> getBusinessObjectsIdsFromCollection(Collection<TLID> aGroupIDList,
 				Collection<TLID> aRoleIDList, List<TLID> aBusinessObjectIDList) throws SQLException {
 			List<TLID> result = null;
@@ -1738,6 +1823,13 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return true;
 		}
 
+		/**
+		 * The reasons of all rows matching the given vector.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 */
 		public List<Integer> getReasons(Object[] aVector) throws SQLException {
             checkVector(aVector);
 			StringBuilder sb = new StringBuilder(1024);
@@ -1746,6 +1838,13 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeQueryAsIntList(sb.toString(), nonNullStorageValues(aVector));
         }
 
+		/**
+		 * The business objects of all rows matching the given vector.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 */
 		public List<TLID> getBusinessObjectIds(Object[] aVector) throws SQLException {
             checkVector(aVector);
 			StringBuilder sb = new StringBuilder(1024);
@@ -1754,6 +1853,13 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeQueryAsIdList(sb.toString(), nonNullStorageValues(aVector));
         }
 
+		/**
+		 * The groups of all rows matching the given vector.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 */
 		public List<Group> getGroups(Object[] aVector) throws SQLException {
             checkVector(aVector);
 			StringBuilder sb = new StringBuilder(1024);
@@ -1848,6 +1954,11 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             }
         }
 
+        /**
+         * Inserts the given vectors as rows into the security table.
+         *
+         * @return The number of inserted rows.
+         */
         public int multiInsert(List<Object[]> vectors) throws SQLException {
         	Connection writeConnection = getWriteCache().getConnection();
 			try (PreparedStatement pstm = writeConnection.prepareStatement(SQL_INSERT_STATEMENT)) {
@@ -1871,6 +1982,11 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             }
         }
 
+        /**
+         * Deletes the rows given as vectors from the security table.
+         *
+         * @return The number of deleted rows.
+         */
         public int multiDelete(List<Object[]> vectors) throws SQLException {
             Connection writeConnection = getWriteCache().getConnection();
 			try (PreparedStatement pstm = writeConnection.prepareStatement(SQL_REMOVE_STATEMENT)) {
@@ -1894,6 +2010,12 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             }
         }
 
+        /**
+         * Drops all indices of the security table.
+         *
+         * @return The dropped indices.
+         * @see #enableIndex()
+         */
         public Collection<DBIndex> disableIndex() throws SQLException {
             Connection writeConnection = getWriteConnection();
             DBTable table = new SchemaExtraction(writeConnection.getMetaData(), dbHelper).addTable(DBSchemaFactory.createDBSchema(), SecurityStorage.TABLE_NAME);
@@ -1905,10 +2027,23 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             return indices;
         }
 
+        /**
+         * Creates the default index of the security table.
+         *
+         * @see #disableIndex()
+         */
         public void enableIndex() throws SQLException {
             DBUtil.executeUpdate(getWriteConnection(), SQL_CREATE_DEFAULT_INDEX);
         }
 
+		/**
+		 * Removes all rows matching the given vector.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 * @return The number of removed rows.
+		 */
 		public int remove(Object[] aVector) throws SQLException {
             checkVector(aVector);
 			StringBuilder sb = new StringBuilder(1024);
@@ -1917,11 +2052,25 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             return DBUtil.executeUpdate(getWriteConnection(), sb.toString(), nonNullStorageValues(aVector));
         }
 
+		/**
+		 * Removes the rows with the business object, role and reason of the given vector for all
+		 * groups.
+		 *
+		 * @param aVector
+		 *        The search vector (group, business object, role, reason), <code>null</code>
+		 *        entries match any value.
+		 * @return The number of removed rows.
+		 */
 		public int removeForAllTargets(Object[] aVector) throws SQLException {
             checkVector(aVector);
             return DBUtil.executeUpdate(getWriteConnection(), SQL_REMOVE_FOR_ALL_TARGETS_STATEMENT, nonNullStorageValues(aVector));
         }
 
+		/**
+		 * Removes all rows of the given business objects.
+		 *
+		 * @return The number of removed rows.
+		 */
 		public int removeObjects(Collection<TLID> aBusinessObjectIDList) throws SQLException {
 			StringBuilder sb = new StringBuilder(1024);
             sb.append(SQL_REMOVE_OBJECTS_PART_1);
@@ -1929,6 +2078,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             return DBUtil.executeUpdate(getWriteConnection(), sb.toString());
         }
 
+        /** Whether the security table is empty. */
         public boolean isEmpty() throws SQLException {
 			StringBuilder sb = new StringBuilder(1024);
 			dbHelper.limitStart(sb, 1);
@@ -1939,10 +2089,12 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             return !DBUtil.executeQueryAsBoolean(sb.toString());
         }
 
+        /** Removes all rows from the security table. */
         public void clearStorage() throws SQLException {
             DBUtil.executeUpdate(getWriteConnection(), SQL_REMOVE_PREFIX);
         }
 
+        /** Analyzes the security table to optimize database access. */
         public void optimize() throws SQLException {
             PooledConnection statementCache = this.borrowWriteConnection();
             try {
@@ -1984,18 +2136,22 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
     }
 
+	/** The value identifying the given object in the security storage. */
 	protected static Object securityId(BoundObject obj) {
 		return storageValue(obj.getID());
 	}
 
+	/** The value identifying the given role in the security storage. */
 	protected static Object securityId(BoundRole obj) {
 		return storageValue(obj.getID());
 	}
 
+	/** The value identifying the given business object in the security storage. */
 	protected static Object objectId(TLObject obj) {
 		return storageValue(KBUtils.getWrappedObjectName(obj));
 	}
 
+	/** The value identifying the business object with the given key in the security storage. */
 	protected static Object objectId(ObjectKey obj) {
 		return storageValue(obj.getObjectName());
 	}

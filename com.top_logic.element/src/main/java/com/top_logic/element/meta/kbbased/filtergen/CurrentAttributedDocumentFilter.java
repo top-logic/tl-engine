@@ -15,7 +15,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
- * Check that Document lies in a WebFolder of the current object.
+ * Check that Document lies in a {@link WebFolder} of the current object.
  * 
  * @author <a href=mailto:kbu@top-logic.com>kbu</a>
  */
@@ -23,7 +23,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 public class CurrentAttributedDocumentFilter extends AbstractAttributedValueFilter {
 
 	/** 
-	 *Create a new CurrentAttributedDocumentFilter
+	 *Create a new {@link CurrentAttributedDocumentFilter}
 	 */
 	public CurrentAttributedDocumentFilter() {
 		super();

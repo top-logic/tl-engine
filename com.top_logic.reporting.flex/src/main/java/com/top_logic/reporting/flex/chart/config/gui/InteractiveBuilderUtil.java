@@ -32,9 +32,10 @@ import com.top_logic.layout.form.model.FormGroup;
 public class InteractiveBuilderUtil {
 
 	/**
-	 * Builds the UI by recursively calling fillContainer for all properties with return type
-	 * {@link InteractiveBuilder}.
-	 * 
+	 * Builds the UI by recursively calling
+	 * {@link #fillContainer(FormContainer, ConfigurationItem, ChartContextObserver, ResPrefix)} for
+	 * all properties with return type {@link InteractiveBuilder}.
+	 *
 	 * @param container
 	 *        the container to fill
 	 * @param item
@@ -47,7 +48,7 @@ public class InteractiveBuilderUtil {
 	}
 
 	/**
-	 * Builds the UI by recursively calling fillContainer for all properties with return type
+	 * Builds the UI by recursively calling this method for all properties with return type
 	 * {@link InteractiveBuilder}.
 	 * 
 	 * @param container
@@ -125,7 +126,7 @@ public class InteractiveBuilderUtil {
 	 *        the name of the new {@link FormContainer}
 	 * @param item
 	 *        the item to be displayed in this container used to create an adequate res-prefix
-	 * @return a new FormContainer with the given name added to the given parent
+	 * @return a new {@link FormContainer} with the given name added to the given parent
 	 */
 	public static FormContainer addContainer(FormContainer parent, String name, ConfigurationItem item) {
 		return addContainer(parent, name, item, ResPrefix.legacyString(item.getConfigurationInterface().getName()));
@@ -142,7 +143,7 @@ public class InteractiveBuilderUtil {
 	 *        the item to be displayed in this container used to create an adequate res-prefix
 	 * @param resView
 	 *        the resource prefix for the new container
-	 * @return a new FormContainer with the given name added to the given parent
+	 * @return a new {@link FormContainer} with the given name added to the given parent
 	 */
 	public static FormContainer addContainer(FormContainer parent, String name, ConfigurationItem item, ResPrefix resView) {
 		FormContainer group = new FormGroup(name, resView);

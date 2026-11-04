@@ -33,6 +33,14 @@ public interface ImportParserPostProcessor {
      */
     void postProcessMap(Map<String, Object> someValues, ExcelContext aContext, ImportLogger aLogger);
 
+	/**
+	 * Check all read rows for problems.
+	 *
+	 * @param allRows
+	 *        The value maps of all read rows.
+	 * @param aLogger
+	 *        the {@link ImportLogger}. Must not be <code>null</code>.
+	 */
 	void postProcessGlobal(List<Map<String, Object>> allRows, ImportLogger aLogger);
 
     /**
@@ -42,6 +50,7 @@ public interface ImportParserPostProcessor {
      */
     public static class SimpleImportParserPostProcessor<C extends SimpleImportParserPostProcessor.Config> implements ImportParserPostProcessor {
 
+        /** Configuration options for {@link SimpleImportParserPostProcessor}. */
         @SuppressWarnings("javadoc")
         public interface Config extends PolymorphicConfiguration<SimpleImportParserPostProcessor<?>> {
             
@@ -49,6 +58,7 @@ public interface ImportParserPostProcessor {
 
         // Attributes
 
+        /** The configuration of this instance. */
         protected final C config;
 
         // Constructors

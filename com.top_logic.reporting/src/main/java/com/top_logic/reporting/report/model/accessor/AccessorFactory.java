@@ -26,10 +26,14 @@ public class AccessorFactory extends AbstractConfigurationValueProvider<Accessor
 	/** singleton */
 	public static final AccessorFactory	INSTANCE		     	= new AccessorFactory();
 
+	/** Name of the {@link Accessor} for wrapper attributes. */
 	public static final String			WRAPPER_ACCESSOR	    = "wrapper";
+	/** Name of the default {@link Accessor}. */
 	public static final String			DEFAULT_ACCESSOR	    = "default";
+	/** Name of the {@link Accessor} for payment plans. */
 	public static final String			PAYMENT_ACCESSOR	    = "paymentplan";
 
+	/** The known {@link Accessor}s by their lower case names. */
 	public HashMap						accessors;
 
 	private AccessorFactory() {
@@ -40,6 +44,14 @@ public class AccessorFactory extends AbstractConfigurationValueProvider<Accessor
 		this.accessors.put(PAYMENT_ACCESSOR, WrapperAccessor.INSTANCE);
 	}
 
+	/**
+	 * The {@link Accessor} with the given name.
+	 *
+	 * @param anAccessorName
+	 *        Name of a known accessor or class name of an accessor.
+	 * @param returnDefaultAccessor
+	 *        Whether the default accessor is returned if no accessor with the given name exists.
+	 */
 	public Accessor getAccessor(String anAccessorName, boolean returnDefaultAccessor) {
 
 		// return cached accessor

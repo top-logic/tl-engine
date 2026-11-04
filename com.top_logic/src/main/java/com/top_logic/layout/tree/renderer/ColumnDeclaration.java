@@ -16,7 +16,7 @@ import com.top_logic.layout.form.template.ControlProvider;
  */
 public interface ColumnDeclaration {
 
-    /** Will result in rendering the TreePart and some Label */
+    /** Will result in rendering the tree part and some label. */
 	int DEFAULT_COLUMN  = 0;
 
 	/** Will render a Control based on {@link #getControlProvider()} */
@@ -28,12 +28,22 @@ public interface ColumnDeclaration {
 	/** NYI , do not use */
 	int TEMPLATE_COLUMN = 3;
 
+	/** Header type: No header is rendered. */
 	int NO_HEADER          = -1;
+	/**
+	 * Header type: The header text is the column name resolved with the resource prefix of the
+	 * table.
+	 */
 	int DEFAULT_HEADER     = 0;
+	/** Header type: The header is the plain text of {@link #getHeaderKey()}. */
 	int STRING_HEADER      = 1;
+	/** Header type: The header is the HTML content of {@link #getHeaderKey()}. */
 	int HTML_HEADER        = 2;
+	/** Header type: The header is a control, not supported. */
 	int CONTROL_HEADER     = 3;
+	/** Header type: The header is rendered by {@link #getHeaderRenderer()}. */
 	int RENDERED_HEADER    = 4;
+	/** Header type: The header is created from a template, not supported. */
 	int TEMPLATE_HEADER    = 5;
 
 	/**

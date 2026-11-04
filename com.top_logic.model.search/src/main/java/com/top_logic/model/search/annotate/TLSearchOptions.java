@@ -66,7 +66,14 @@ public interface TLSearchOptions extends TLTypeAnnotation {
 	 */
 	class ConfiguredOperators extends AbstractConfiguredInstance<ConfiguredOperators.Config>
 			implements Provider<List<Operator<?>>> {
+
+		/**
+		 * Configuration options for {@link ConfiguredOperators}.
+		 */
 		public interface Config extends PolymorphicConfiguration<ConfiguredOperators>, DummyValueContext {
+			/**
+			 * The operators offered in the search editor.
+			 */
 			@DefaultContainer
 			List<Operator<?>> getOperators();
 		}
@@ -94,7 +101,13 @@ public interface TLSearchOptions extends TLTypeAnnotation {
 	class ConfiguredLiterals extends AbstractConfiguredInstance<ConfiguredLiterals.Config>
 			implements Provider<List<RightHandSide>> {
 
+		/**
+		 * Configuration options for {@link ConfiguredLiterals}.
+		 */
 		public interface Config extends PolymorphicConfiguration<ConfiguredLiterals>, DummyValueContext {
+			/**
+			 * The literals offered in the search editor.
+			 */
 			@DefaultContainer
 			List<RightHandSide> getLiterals();
 		}

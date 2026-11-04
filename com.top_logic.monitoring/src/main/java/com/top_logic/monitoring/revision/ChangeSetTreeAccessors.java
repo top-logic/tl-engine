@@ -163,7 +163,7 @@ public class ChangeSetTreeAccessors {
 	}
 
 	/**
-	 * {@link TypeSafeAccessor} for {@link ChangeSet}
+	 * {@link TypeSafeAccessor} for {@link ChangeSet}s.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

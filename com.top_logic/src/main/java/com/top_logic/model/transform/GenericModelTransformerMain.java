@@ -65,6 +65,7 @@ public class GenericModelTransformerMain extends ModelTransformerMain {
 			.transform();
 	}
 	
+	/** Command line entry point. */
 	public static void main(String[] args) throws Exception {
 		new GenericModelTransformerMain().runMainCommandLine(args);
 	}

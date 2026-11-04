@@ -18,6 +18,11 @@ import com.top_logic.layout.form.util.FormFieldConstants;
 import com.top_logic.util.Utils;
 
 /**
+ * {@link ValueListener} that sets the mandatory, disabled and immutable state of form fields
+ * depending on the beacon state selected in the observed field.
+ *
+ * @see BeaconStateInfo
+ *
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 public class BeaconMandatoryValueListener implements ValueListener, BeaconStateConstants, FormFieldConstants {
@@ -29,7 +34,7 @@ public class BeaconMandatoryValueListener implements ValueListener, BeaconStateC
 	private Map beaconInfos;
 	
 	/** 
-	 * Creates a new BeaconMandatoryValueListener. 
+	 * Creates a new {@link BeaconMandatoryValueListener}.
 	 * 
 	 * @param beaconInfos See {@link #beaconInfos}.
 	 */
@@ -62,7 +67,7 @@ public class BeaconMandatoryValueListener implements ValueListener, BeaconStateC
 	}
 	
 	/**
-	 * Creates a new BeaconMandatoryValueListener with the given
+	 * Creates a new {@link BeaconMandatoryValueListener} with the given
 	 * {@link BeaconStateInfo}s. Min one of the {@link BeaconStateInfo} must be
 	 * NOT <code>null</code>. This constructor can be used to set all beacon
 	 * states.
@@ -149,7 +154,7 @@ public class BeaconMandatoryValueListener implements ValueListener, BeaconStateC
 	}
 	
 	/**
-	 * Returns the beaconInfos.
+	 * The {@link BeaconStateInfo}s indexed by beacon state.
 	 */
 	protected Map getBeaconInfos() {
 		return this.beaconInfos;

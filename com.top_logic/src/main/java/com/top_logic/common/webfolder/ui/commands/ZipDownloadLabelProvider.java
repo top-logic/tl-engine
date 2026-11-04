@@ -12,7 +12,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 
 /**
- * The ZipDownloadLabelProvider provides the file name for the zip download file
+ * The {@link ZipDownloadLabelProvider} provides the file name for the zip download file.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */

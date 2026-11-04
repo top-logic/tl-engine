@@ -13,6 +13,8 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.Resources;
 
 /**
+ * Utilities for rendering values of journal entries.
+ * 
  * @author    <a href=mailto:kha@top-logic.com>tHEO sATTLER</a>
  */
 public class JournalRenderHelper {
@@ -22,6 +24,18 @@ public class JournalRenderHelper {
         // TODO Auto-generated constructor stub
     }
     
+    /**
+     * Converts the given attribute value of a journal entry to a display string.
+     * 
+     * @param aJRE
+     *        The journal entry the value belongs to.
+     * @param anAttributeName
+     *        The name of the attribute (currently not used).
+     * @param aValue
+     *        The value to convert.
+     * @return The display string for the value. Dates are formatted, strings are interpreted as
+     *         resource keys.
+     */
     public static String encodeAttributeValue(JournalResultEntry aJRE, String anAttributeName, Object aValue) {
         if (aJRE == null) {
             return aValue.toString();

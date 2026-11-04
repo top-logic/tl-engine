@@ -104,6 +104,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object references an object matching a condition.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param targetCondition
@@ -122,6 +124,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object references one of the given objects.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param targets
@@ -149,6 +153,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object references an element of the given structure.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param target
@@ -167,6 +173,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object references the given object.
+	 * 
 	 * @param attribute
 	 *        the wrapper valued {@link TLStructuredTypePart} defining the reference to be checked
 	 * @param target
@@ -183,6 +191,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object references an object of the given type.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param targetMOType
@@ -199,6 +209,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * The identifiers of the given objects.
+	 * 
 	 * @param values
 	 *        A {@link Collection} of {@link Wrapper}s to be converted to identifiers.
 	 * @return A {@link Set} of {@link KnowledgeObject#getObjectName() version independent
@@ -215,6 +227,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object is referenced by an object matching a condition.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param sourceCondition
@@ -233,6 +247,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object is referenced by one of the given objects.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param sources
@@ -256,6 +272,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object is referenced by an element of the given structure.
+	 * 
 	 * @param attribute
 	 *        The wrapper valued {@link TLStructuredTypePart} defining the reference to be checked.
 	 * @param source
@@ -274,6 +292,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object is referenced by the given object.
+	 * 
 	 * @param attribute
 	 *        the wrapper valued {@link TLStructuredTypePart} defining the reference to be checked
 	 * @param source
@@ -290,6 +310,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Expression checking whether an object is referenced by an object of the given type.
+	 * 
 	 * @param attribute
 	 *        the wrapper valued {@link TLStructuredTypePart} defining the reference to be checked
 	 * @param sourceMOType
@@ -306,6 +328,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Resolves an attribute of a global type.
+	 * 
 	 * @param meType
 	 *        the global {@link TLClass}'s name
 	 * @param attribute
@@ -325,6 +349,8 @@ public class ElementExpressionFactory {
 	}
 
 	/**
+	 * Resolves a global type by its name.
+	 * 
 	 * @param meType
 	 *        the global {@link TLClass}'s name
 	 * @return the global {@link TLClass} with the given name

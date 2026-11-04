@@ -20,6 +20,9 @@ import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
  */
 public class ButtonComponentButtonsControlProvider extends DefaultFormFieldControlProvider {
 
+	/**
+	 * Singleton {@link ButtonComponentButtonsControlProvider} instance.
+	 */
 	public static ButtonComponentButtonsControlProvider INSTANCE = new ButtonComponentButtonsControlProvider();
 
 	@Override

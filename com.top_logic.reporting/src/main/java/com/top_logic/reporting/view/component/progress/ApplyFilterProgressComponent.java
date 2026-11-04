@@ -15,10 +15,13 @@ import com.top_logic.reporting.view.component.AbstractProgressFilterComponent;
 
 
 /**
+ * Progress component displayed while a filter is applied.
+ *
  * @author    <a href=mailto:olb@top-logic.com>olb</a>
  */
 public class ApplyFilterProgressComponent extends AbstractProgressComponent {
 	
+	/** The name of the {@link ApplyFilterProgressComponent} in the progress dialog layout. */
 	public static final ComponentName COMPONENT_ID =
 		ComponentName.newName("dialogs/progressDialog.layout.xml", "ApplyFilterProgressComponent");
 	private AbstractProgressFilterComponent<FilterVO> openerComp;
@@ -52,6 +55,7 @@ public class ApplyFilterProgressComponent extends AbstractProgressComponent {
 		}
 	}
 
+	/** Sets the filter component that opened the progress dialog. */
 	public void setOpener(AbstractProgressFilterComponent<FilterVO> anOpenerComp) {
 		this.openerComp = anOpenerComp;
 	}

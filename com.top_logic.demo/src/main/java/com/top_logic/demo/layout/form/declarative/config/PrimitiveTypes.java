@@ -125,27 +125,35 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	/** @see #getResKeyHtmlPrimitive() */
 	String RESKEY_HTML_PRIMITIVE = "reskey-html-primitive";
 
+	/** Demo property of the primitive type {@code boolean}. */
 	@Name(BOOLEAN_PRIMITIVE)
 	boolean getBooleanPrimitive();
 
+	/** Demo property of the primitive type {@code byte}. */
 	@Name(BYTE_PRIMITIVE)
 	byte getBytePrimitive();
 
+	/** Demo property of the primitive type {@code short}. */
 	@Name(SHORT_PRIMITIVE)
 	short getShortPrimitive();
 
+	/** Demo property of the primitive type {@code int}. */
 	@Name(INTEGER_PRIMITIVE)
 	int getIntegerPrimitive();
 
+	/** Demo property of the primitive type {@code long}. */
 	@Name(LONG_PRIMITIVE)
 	long getLongPrimitive();
 
+	/** Demo property of the primitive type {@code char}. */
 	@Name(CHARACTER_PRIMITIVE)
 	char getCharacterPrimitive();
 
+	/** Demo property of the primitive type {@code float}. */
 	@Name(FLOAT_PRIMITIVE)
 	float getFloatPrimitive();
 
+	/** Demo property of the primitive type {@code double}. */
 	@Name(DOUBLE_PRIMITIVE)
 	double getDoublePrimitive();
 

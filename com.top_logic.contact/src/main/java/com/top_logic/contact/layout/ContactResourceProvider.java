@@ -105,7 +105,7 @@ public class ContactResourceProvider extends WrapperResourceProvider
 	}
 
     /** 
-     * Return the tool tip Text for a CompanyContact.
+     * Return the tool tip Text for a {@link CompanyContact}.
      */
 	protected ResKey getTooltipForCompany(CompanyContact aCompany) {
 		String theText = quote(aCompany.getName());
@@ -115,7 +115,7 @@ public class ContactResourceProvider extends WrapperResourceProvider
     }
 
     /** 
-     * Return the tool tip Text for a PersonContact.
+     * Return the tool tip Text for a {@link PersonContact}.
      */
 	protected ResKey getTooltipForPerson(PersonContact aPersonContact) {
 		String theText = quote(this.getLabel(aPersonContact));
@@ -149,7 +149,7 @@ public class ContactResourceProvider extends WrapperResourceProvider
     }
 
 	/** 
-     * Return the Label for a CompanyContact.
+     * Return the Label for a {@link CompanyContact}.
      */
     protected String getLabelForCompany(CompanyContact aCompany) {
         try {
@@ -161,7 +161,7 @@ public class ContactResourceProvider extends WrapperResourceProvider
     }
 
     /** 
-     * Return the Label for a PersonContact.
+     * Return the Label for a {@link PersonContact}.
      */
 	protected ResKey getLabelForPerson(PersonContact contact) {
 		String name = contact.getName();

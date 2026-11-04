@@ -14,7 +14,7 @@ import com.top_logic.reporting.chart.dataset.SwingDataset;
 import com.top_logic.reporting.chart.info.swing.SwingRenderingInfo;
 
 /**
- * The SwingToolTipGenerator generates the tooltips for the 
+ * The {@link SwingToolTipGenerator} generates the tooltips for the 
  * {@link com.top_logic.reporting.chart.renderer.SwingRenderer}. 
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

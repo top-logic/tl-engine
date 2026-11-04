@@ -11,7 +11,7 @@ import java.sql.ResultSet;
 /**
  * Helper for building custom SQL statements in a manageable way.
  *
- * see TestStatementScope for an example
+ * see <code>test.com.top_logic.basic.sql.TestStatementScope</code> for an example
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

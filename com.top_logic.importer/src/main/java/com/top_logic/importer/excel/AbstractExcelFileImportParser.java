@@ -128,6 +128,14 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
         @BooleanDefault(true)
         boolean isExceptionTolerated();
 
+		/**
+		 * Optional channel to store the value in.
+		 *
+		 * <p>
+		 * If given, the value is not stored directly in the result map of the row but in a separate
+		 * map for this channel.
+		 * </p>
+		 */
 		String getChannel();
     }
 
@@ -206,6 +214,7 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
 		return _config;
     }
 
+	/** The post processor called for every read row and for the complete result. */
 	public ImportParserPostProcessor getPostProcessor() {
 		return _postProcessor;
 	}
@@ -259,6 +268,9 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
         return Collections.emptyList();
     }
 
+    /**
+     * Extracts the values of the current row according to the configured mappings and extractors.
+     */
     protected Map<String, Object> extractValues(ExcelContext aContext, ImportLogger aLogger) {
 		return ExcelImportUtils.INSTANCE.doExtractValues(aContext, aLogger, getConfig().getMappings(),
 			getConfig().getExtractors(), this);
@@ -287,22 +299,47 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
 		getPostProcessor().postProcessMap(someValues, aContext, aLogger);
     }
 
+    /**
+     * Hook called for every parsed row to collect information for checking constraints.
+     *
+     * @see #checkConstraints(ImportLogger)
+     */
     protected void constraintsAware(ExcelContext aContext, ImportLogger aLogger) {
         // hook to be overwritten.
     }
 
+    /**
+     * Hook called after all rows have been parsed to check constraints across rows.
+     *
+     * @see #constraintsAware(ExcelContext, ImportLogger)
+     */
     protected void checkConstraints(ImportLogger aLogger) {
         // hook to be overwritten.
     }
 
+    /**
+     * The configured row containing the header names.
+     *
+     * @see Config#getHeaderRow()
+     */
     protected int getHeaderRow() {
 		return getConfig().getHeaderRow();
     }
 
+    /**
+     * The configured first row to be imported.
+     *
+     * @see Config#getFirstRow()
+     */
     protected int getFirstRow() {
 		return getConfig().getFirstRow();
     }
 
+    /**
+     * The configured key word identifying the header row.
+     *
+     * @see Config#getHeaderKeyWord()
+     */
     protected String getHeaderKeyWord() {
 		return getConfig().getHeaderKeyWord();
     }
@@ -373,6 +410,16 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
         }
     }
 
+	/**
+	 * Initializes the given provider with the given source.
+	 *
+	 * @param aProvider
+	 *        The provider to initialize.
+	 * @param aSource
+	 *        The source to read, a {@link File}, {@link InputStream} or {@link BinaryContent}.
+	 * @param aLogger
+	 *        The logger for reporting problems.
+	 */
 	protected void initProvider(ExcelContextProvider<?> aProvider, Object aSource, ImportLogger aLogger)
 			throws OfficeException, IOException {
 		if (aSource instanceof BinaryContent) {

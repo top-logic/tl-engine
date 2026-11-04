@@ -29,8 +29,10 @@ import com.top_logic.util.Utils;
  */
 public class MarkerFormMemberProvider implements FormMemberProvider {
 
+    /** Name of the column displaying the marker check boxes. */
     public static final String MARKER_COLUMN_NAME = "marker";
 
+    /** Name of the field in the header of the marker column that marks or unmarks all rows. */
     public static final String MARKER_COLUMN_HEAD_FIELD_NAME = "markerHead";
 
     /**

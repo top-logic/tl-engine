@@ -19,8 +19,8 @@ import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 
 /**
- * The WrapperTreeNode is a special {@link InspectorTreeNode}. The user object of this
- * <tt>ObjectTreeNode</tt> is a {@link TLObject} and the children of this node are nodes based on
+ * The {@link InspectorTLObjectNode} is a special {@link InspectorTreeNode}. The user object of
+ * this node is a {@link TLObject} and the children of this node are nodes based on
  * the attributes and the value of the attributes of the wrapper.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -77,7 +77,7 @@ public class InspectorTLObjectNode extends InspectorTreeNode {
 		 * Creates a {@link PartProperty}.
 		 *
 		 * @param part
-		 *        See #getPart()
+		 *        See {@link #getPart()}
 		 */
 		public PartProperty(TLStructuredTypePart part) {
 			_part = part;

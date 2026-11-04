@@ -31,7 +31,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 public class KafkaExportImportConfiguration extends ManagedClass {
 
 	/**
-	 * Configuration of the {@link KafkaExportImportConfiguration}
+	 * Configuration of the {@link KafkaExportImportConfiguration}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

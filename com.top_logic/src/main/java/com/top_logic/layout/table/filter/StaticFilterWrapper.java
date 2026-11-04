@@ -30,7 +30,7 @@ public class StaticFilterWrapper extends AbstractConfiguredFilter {
 	private SingleOptionMatchCounter counter;
 
 	/**
-	 * Create a new StaticFilterWrapper with a {@link StaticFilterWrapperView}.
+	 * Create a new {@link StaticFilterWrapper} with a {@link StaticFilterWrapperView}.
 	 * 
 	 * @param staticFilter - the static filter, must not be null
 	 * @param filterDescription - the name of the filter
@@ -41,7 +41,7 @@ public class StaticFilterWrapper extends AbstractConfiguredFilter {
 	}
 	
 	/**
-	 * Create a new StaticFilterWrapper.
+	 * Create a new {@link StaticFilterWrapper}.
 	 * 
 	 * @param staticFilter - the static filter, must not be null
 	 * @param filterDescription - the name of the filter

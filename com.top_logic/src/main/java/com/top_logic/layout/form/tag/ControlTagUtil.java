@@ -22,10 +22,12 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
  */
 public class ControlTagUtil {
 
+	/** Writes the given control in the context of the given tag. */
 	public static void writeControl(AbstractTag self, PageContext pageContext, Control control) throws IOException {
 		writeControl(self.getOut(), self, pageContext, control);
 	}
 
+	/** Writes the given control to the given writer in the context of the given tag. */
 	public static void writeControl(TagWriter out, Tag self, PageContext pageContext, Control control)
 			throws IOException {
 		ControlBodyTag compositeTag = 

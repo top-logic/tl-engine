@@ -53,15 +53,22 @@ public final class JSObject extends AbstractJSValue {
 	    return "JSObject " + properties;
 	}
 
+	/** Whether this object has a property with the given name. */
 	public boolean hasProperty(String propertyName) {
 		return properties.containsKey(propertyName);
 	}
 
+	/**
+	 * Adds a property to this object.
+	 *
+	 * @return This object for call chaining.
+	 */
 	public JSObject addProperty(String propertyName, JSValue propertyValue) {
 		properties.put(propertyName, propertyValue);
 		return this;
 	}
 
+	/** The properties of this object. */
 	public Map<String, Object> getProperties() {
         return Collections.unmodifiableMap(properties);
     }
@@ -120,6 +127,7 @@ public final class JSObject extends AbstractJSValue {
 		return result;
 	}
 
+	/** The Java representation of the properties of this object. */
 	public final Map<String, Object> getPropertiesToObject() {
 		return toObject();
 	}

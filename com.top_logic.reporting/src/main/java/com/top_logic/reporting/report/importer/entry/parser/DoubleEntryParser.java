@@ -6,7 +6,7 @@
 package com.top_logic.reporting.report.importer.entry.parser;
 
 /**
- * The DoubleEntryParser parses tags with the tag name 'double'.
+ * The {@link DoubleEntryParser} parses tags with the tag name 'double'.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

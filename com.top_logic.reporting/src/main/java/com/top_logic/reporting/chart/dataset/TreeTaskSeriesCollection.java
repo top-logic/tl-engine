@@ -14,14 +14,14 @@ import org.jfree.data.gantt.TaskSeriesCollection;
 import com.top_logic.reporting.chart.axis.TreeTaskAxis;
 
 /**
- * Extend the TaskSeriesCollectio to use the TreeTask as keys.
+ * Extend the {@link TaskSeriesCollection} to use the {@link TreeTask} as keys.
  * 
  * This in turn is needen by the {@link TreeTaskAxis} later.
  */
 public class TreeTaskSeriesCollection extends TaskSeriesCollection {
     
     /**
-     * Overriden to add the TreeTasks as keys
+     * Overriden to add the {@link TreeTask}s as keys
      */
     @Override
 	public void add(TaskSeries series) {

@@ -40,9 +40,18 @@ public class OpenWindowCommand extends AJAXCommandHandler {
     /** key to use for translations */
 	private ResKey i18NKey;
 
+	/**
+	 * Configuration options for {@link OpenWindowCommand}.
+	 */
 	public interface Config extends AJAXCommandHandler.Config {
+		/**
+		 * Name of the layout of the window that is opened by this command.
+		 */
 		public String getWindowTemplateName();
 
+		/**
+		 * @see #getWindowTemplateName()
+		 */
 		public void setWindowTemplateName(String value);
 	}
 
@@ -62,9 +71,9 @@ public class OpenWindowCommand extends AJAXCommandHandler {
 	}
 
     /**
-     * Execution of the AjaxCommand.
+     * Execution of the AJAX command.
      *     
-     * @return the ClientActions that will result in opening the window.
+     * @return the client actions that will result in opening the window.
      */
     @Override
 	public HandlerResult handleCommand(DisplayContext context, LayoutComponent opener, Object model, Map<String, Object> someArguments) {

@@ -8,7 +8,7 @@ package com.top_logic.knowledge.service;
 import com.top_logic.basic.sql.CommitContext;
 
 /**
- * A CommitHandler is a container for 
+ * A {@link CommitHandler} is a container for 
  *  {@link com.top_logic.knowledge.service.Committable} objects.
  * 
  * This tries to support a complete way of handling Transactions
@@ -23,7 +23,7 @@ public interface CommitHandler {
     public static final boolean CREATE = true;
 
     /**
-     * Add the given aCommitable to this container for the next commit().
+     * Add the given {@link Committable} to this container for the next commit().
      * 
      * Do not call during commit handling, result will be unpredictable.
      * 
@@ -35,14 +35,14 @@ public interface CommitHandler {
     public boolean addCommittable(Committable aCommittable);
 
     /**
-     * Add the given aCommitable to this container for delete on next commit().
+     * Add the given {@link Committable} to this container for delete on next commit().
      * 
-     * In case addCommitable() was called before removeCommitable() 
-     * will be called (resp. a similar action taken)
+     * In case {@link #addCommittable(Committable)} was called before,
+     * {@link #removeCommittable(Committable)} will be called (resp. a similar action taken)
      * 
      * Do not call during commit handling, result will be unpredictable.
      * 
-     * @param aCommitable the Object to be commitDelted() on next commit().
+     * @param aCommitable the Object to be deleted on next commit().
      * 
      * @return true indicates that committable was added.
      *         false should only happen in case a committable is added twice.

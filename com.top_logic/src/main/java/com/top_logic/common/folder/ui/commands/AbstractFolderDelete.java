@@ -107,12 +107,16 @@ public abstract class AbstractFolderDelete extends AbstractFolderAction {
 	}
 
 
+	/** Whether the given content is locked. */
 	protected abstract boolean isLocked(BinaryDataSource contentObject);
 
+	/** The command deleting the given content from the given folder. */
 	protected abstract Command getCommand(final Named aContent, final FolderDefinition aFolder);
 
+	/** Whether the given content is linked into the given folder. */
 	protected abstract boolean isLink(Named content, FolderDefinition folder);
 
+	/** Whether the given content is still valid. */
 	protected abstract boolean isValid(Named content);
 
 }

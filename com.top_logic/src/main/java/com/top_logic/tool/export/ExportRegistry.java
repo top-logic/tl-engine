@@ -8,7 +8,7 @@ package com.top_logic.tool.export;
 import com.top_logic.tool.export.Export.State;
 
 /**
- * The ExportRegistry provides access to {@link Export}s.
+ * The {@link ExportRegistry} provides access to {@link Export}s.
  * 
  * @author <a href=mailto:fsc@top-logic.com>fsc</a>
  */

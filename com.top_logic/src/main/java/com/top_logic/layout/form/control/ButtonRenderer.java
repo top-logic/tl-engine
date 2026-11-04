@@ -20,6 +20,9 @@ import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.link.Link;
 
 /**
+ * Renderer that displays a button as command link, or as image button if the button has an
+ * image.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config> {
@@ -28,6 +31,7 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 	private static final String CSS_CLASS_CMD_LINK_DISABLED = "cmdLinkDisabled";
 	private static final String CSS_CLASS_CMD_LINK_ACTIVE = "cmdLinkActive";
    
+	/** Default {@link ButtonRenderer} instance. */
 	public static final ButtonRenderer INSTANCE = newButtonRenderer(Config.EXEC_STATE_IN_TTOLTIP_DEFAULT);
 
 	/**
@@ -39,6 +43,12 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 		// configuration interface definition
 	}
 
+	/**
+	 * Creates a new {@link ButtonRenderer}.
+	 *
+	 * @param someExecStateInTooltip
+	 *        See {@link Config#getExecStateInTooltip()}.
+	 */
 	public static ButtonRenderer newButtonRenderer(boolean someExecStateInTooltip) {
 		Config config = TypedConfiguration.newConfigItem(ButtonRenderer.Config.class);
 		config.setExecStateInTooltip(someExecStateInTooltip);
@@ -128,6 +138,7 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
         }
     }
 
+    /** The label to display for the given button. */
     protected String getLabel(AbstractButtonControl<?> aButtonControl) {
         if (aButtonControl.isDisabled() && ! execStateInTooltip) {
 			return aButtonControl.getLabel() + " (" + aButtonControl.getDisabledReason() + ")";

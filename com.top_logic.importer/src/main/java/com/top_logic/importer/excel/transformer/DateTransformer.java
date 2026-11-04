@@ -20,6 +20,12 @@ import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 
 /**
+ * Transforms a cell value into a date.
+ *
+ * <p>
+ * Besides date cells, text cells with a date, time stamp or calendar week are supported.
+ * </p>
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class DateTransformer implements Transformer<Date> {
@@ -32,9 +38,25 @@ public class DateTransformer implements Transformer<Date> {
 	
     private final DateFormat DATE_FORMAT_STD = CalendarUtil.newSimpleDateFormat("dd.MM.yy");
 
+	/** Configuration options for {@link DateTransformer}. */
 	public interface Config extends Transformer.Config {
+	    /**
+	     * Pattern for parsing dates given as text.
+	     *
+	     * <p>
+	     * If not given, a set of built-in formats is used.
+	     * </p>
+	     */
 	    String getFormat();
+	    /**
+	     * Day of the week the read date is moved to, e.g. 2 for Monday.
+	     *
+	     * <p>
+	     * Only used together with a format.
+	     * </p>
+	     */
 	    Integer getDayOfWeek();
+	    /** Text that is interpreted as an empty date. */
 	    String getEmptyString();
 	}
 
@@ -71,10 +93,20 @@ public class DateTransformer implements Transformer<Date> {
 		return theDate;
 	}
 	
+	/**
+	 * Reads the date from the given column.
+	 *
+	 * @return The read date, or {@code null}, if the cell is empty or the column does not exist.
+	 */
 	public Date getDate(ExcelContext aContext, String columnName, ImportLogger logger) {
 	    return this.getDateAsCWOrDate(aContext, columnName, logger);
 	}
 
+	/**
+	 * Reads the date from the given column, supporting dates and calendar weeks.
+	 *
+	 * @see #getDate(ExcelContext, String, ImportLogger)
+	 */
 	protected Date getDateAsCWOrDate(ExcelContext aContext, String columnName, ImportLogger logger) {
         if (!aContext.hasColumn(columnName)) {
             return null;
@@ -111,6 +143,11 @@ public class DateTransformer implements Transformer<Date> {
         }
 	}
 
+    /**
+     * Moves the given date to the configured day of the week.
+     *
+     * @see Config#getDayOfWeek()
+     */
     protected Date toDayOfWeek(Date aDate) {
         if (this.dayOfWeek != null) {
 			Calendar theCal = CalendarUtil.createCalendar(aDate);
@@ -124,6 +161,12 @@ public class DateTransformer implements Transformer<Date> {
         }
     }
 	
+    /**
+     * Parses the given cell value with the built-in date formats.
+     *
+     * @throws TransformException
+     *         If the value cannot be parsed.
+     */
     protected Date getDate(Object theValue, ExcelContext aContext, String columnName, ImportLogger logger) {
         if (theValue instanceof String) {
             try {
@@ -143,6 +186,7 @@ public class DateTransformer implements Transformer<Date> {
         }
     }
 
+	/** Parses a time stamp or a calendar week. */
 	protected Date parseDate(String aString) throws ParseException {
         try {
             Date     theDate = DATE_TS_FORMAT.parse(aString);

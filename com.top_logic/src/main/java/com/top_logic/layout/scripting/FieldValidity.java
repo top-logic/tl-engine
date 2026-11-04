@@ -8,7 +8,8 @@ package com.top_logic.layout.scripting;
 import com.top_logic.layout.form.FormField;
 
 /**
- * Represents the three validity states of a {@link FormField}:
+ * The validity states of a {@link FormField} that a script can check.
+ * 
  * <ul>
  * <li>{@link #VALID}</li>
  * <li>{@link #WARNING}</li>
@@ -37,6 +38,7 @@ public enum FieldValidity {
 	 */
 	ERROR;
 
+	/** The {@link FieldValidity} of the given field. */
 	public static FieldValidity getValidity(FormField field) {
 		assert field.hasError() != field.isValid();
 		if (field.hasError()) {

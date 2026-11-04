@@ -10,14 +10,14 @@ import com.top_logic.base.search.QueryNode;
 import com.top_logic.base.search.QueryVisitor;
 
 /**
- * The only currently known UnaryOperator is '!' (NOT).
+ * The only currently known unary operator is '!' (NOT).
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 public class UnaryOper extends UnaryNode {
 
     /** 
-     * Construct a UnaryOper Node with the given subnode 
+     * Construct a {@link UnaryOper} Node with the given subnode 
      *
      * @param aKind One of the Values found in 
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants }

@@ -83,6 +83,12 @@ public abstract class LogConfigurator {
 		return INSTANCE;
 	}
 
+	/**
+	 * Configures the logging subsystem from the given configuration file.
+	 * 
+	 * @param configuration
+	 *        The location of the logging configuration.
+	 */
 	public abstract void configure(URL configuration);
 
 	private static boolean getBooleanValue(Properties properties, String name, boolean defaultValue) {
@@ -101,8 +107,20 @@ public abstract class LogConfigurator {
 		return Level.valueOf(value);
 	}
 
+	/**
+	 * Configures logging to the standard output with the given level.
+	 * 
+	 * @param aLevel
+	 *        Name of the minimum level of messages written to the standard output.
+	 */
 	public abstract void configureStdout(String aLevel);
 
+	/**
+	 * Configures logging to the standard output with the level from the system property
+	 * {@link #STDOUT_LEVEL_PROPERTY} (defaults to {@code ERROR}).
+	 * 
+	 * @see #configureStdout(String)
+	 */
 	public void configureStdout() {
 		String theLevel = System.getProperty(STDOUT_LEVEL_PROPERTY);
 		if (theLevel == null) {
@@ -112,20 +130,38 @@ public abstract class LogConfigurator {
 		configureStdout(theLevel);
 	}
 
+	/**
+	 * Resets the logging subsystem to its default configuration.
+	 */
 	public abstract void reset();
 
+	/**
+	 * Whether exceptions are logged with their stack trace.
+	 */
 	public final boolean isTraceExceptions() {
 		return traceExceptions;
 	}
 
+	/**
+	 * Setter for {@link #isTraceExceptions()}.
+	 */
 	public void setTraceExceptions(boolean value) {
 		traceExceptions = value;
 	}
 
+	/**
+	 * Minimum log level for which stack traces are logged.
+	 */
 	public Level getExceptionLevel() {
 		return exceptionLevel;
 	}
 
+	/**
+	 * Setter for {@link #getExceptionLevel()}.
+	 * 
+	 * @param level
+	 *        Name of the new {@link Level}.
+	 */
 	public void setExceptionLevel(String level) {
 		exceptionLevel = Level.valueOf(level);
 	}
@@ -180,10 +216,16 @@ public abstract class LogConfigurator {
 		return List.of("OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
 	}
 
+	/**
+	 * Whether all messages are logged with their stack trace.
+	 */
 	public final boolean isTraceMessages() {
 		return traceMessages;
 	}
 
+	/**
+	 * Setter for {@link #isTraceMessages()}.
+	 */
 	public void setTraceMessages(boolean value) {
 		traceMessages = value;
 	}

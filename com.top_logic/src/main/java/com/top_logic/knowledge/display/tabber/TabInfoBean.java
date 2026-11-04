@@ -14,10 +14,14 @@ import java.util.ArrayList;
  */
 public class TabInfoBean extends ArrayList {
 
+    /** Index of the currently selected tab, <code>0</code> for the default. */
     protected int currentTabIndex;
+    /** Height (in px) of the tab bar. */
     protected int barHeight;
 
+    /** Name of the tab style. */
     protected String tabStyle;
+    /** CSS class for displaying the tab text. */
     protected String textClass  = "";
 
     /**
@@ -71,6 +75,11 @@ public class TabInfoBean extends ArrayList {
         tabStyle = aStyleName;
     }
     
+    /**
+     * The style used for the tabs.
+     *
+     * @see #setTabStyle(String)
+     */
     public String getTabStyle() {
         return tabStyle;
     }
@@ -83,6 +92,11 @@ public class TabInfoBean extends ArrayList {
         textClass = aClassName;
     }
     
+    /**
+     * The (CSS) class used for displaying the tab text.
+     *
+     * @see #setTextClass(String)
+     */
     public String getTextClass() {
         return textClass;
     }
@@ -94,6 +108,11 @@ public class TabInfoBean extends ArrayList {
         barHeight = aHeight;
     }
     
+    /**
+     * The height (in px) of the tab bar.
+     *
+     * @see #setBarHeight(int)
+     */
     public int getBarHeight() {
         return barHeight;
     }
@@ -129,7 +148,7 @@ public class TabInfoBean extends ArrayList {
     }
 
     /**
-     * Returns the TabEntry at the given index position.
+     * Returns the {@link TabEntry} at the given index position.
      */
     public TabEntry getTabEntry(int index) {
         try {
@@ -180,7 +199,7 @@ public class TabInfoBean extends ArrayList {
     }
 
     /**
-     * Returns the TabEntry for the given tabber name. Returns null
+     * Returns the {@link TabEntry} for the given tabber name. Returns null
      * if not found.
      */
     public TabEntry getTabEntryForName(String aTabName) {
@@ -194,7 +213,7 @@ public class TabInfoBean extends ArrayList {
     }
 
     /**
-     * Returns the TabEntry for the given tabber URL. Returns null
+     * Returns the {@link TabEntry} for the given tabber URL. Returns null
      * if not found.
      */
     public TabEntry getTabEntryForLink(String aTabLink) {
@@ -237,7 +256,7 @@ public class TabInfoBean extends ArrayList {
         private String tabTip;
         
         /**
-         * Overwritten from TabInfoBean#TabEntry to fill tabTip with default value.
+         * Creates a {@link TabEntry} using the tab name as tool tip.
          */
         public TabEntry (String aTabName, String aTabLink) {
             this (aTabName, aTabLink, aTabName);
@@ -251,25 +270,31 @@ public class TabInfoBean extends ArrayList {
         }
         
     
+        /** Setter for {@link #getTabName()}. */
         public final void setTabName(String aTabName) {
             tabName = aTabName;
         }
         
+        /** Setter for {@link #getTabLink()}. */
         public final void setTabLink(String aTabLink) {
             tabLink = aTabLink;
         }
         
+        /** Setter for {@link #getTabTip()}. */
         public final void setTabTip (String aTabTip) {
             tabTip = aTabTip;
         }
+        /** The name of the tab. */
         public final String getTabName() {
             return tabName;
         }
         
+        /** The URL displayed in the tab. */
         public final String getTabLink() {
             return tabLink;
         }
         
+        /** The tool tip of the tab. */
         public final String getTabTip () {
             return tabTip;
         }

@@ -15,25 +15,61 @@ import java.util.Set;
 import com.top_logic.basic.StringServices;
 
 /**
- * Contains information for a single entry of a level in a layout
+ * Contains information for a single entry of a level in a layout.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  */
 public class InfoLine extends HashMap {
 
+    /**
+     * Key of the level of the entry.
+     */
     public static final String LEVEL = "level";
+    /**
+     * Key of the name of the entry.
+     */
     public static final String NAME  = "name";
+    /**
+     * Key of the resource key of the entry.
+     */
     public static final String KEY   = "key";
+    /**
+     * Key of the image of the entry.
+     */
     public static final String IMAGE = "image"; 
+    /**
+     * Key of the layout file of the entry.
+     */
     public static final String FILE  = "file"; 
+    /**
+     * Key of the types of the entry, separated by <code>&amp;</code>.
+     */
     public static final String TYPE  = "type"; 
+    /**
+     * Key of the template of the entry.
+     */
     public static final String TEMPLATE  = "template"; 
+    /**
+     * Key of the master of the entry.
+     */
     public static final String MASTER  = "master"; 
+    /**
+     * Key of the flag whether the default checker is used.
+     */
     public static final String USE_DEFAULT_CHECKER  = "defaultChecker"; 
+    /**
+     * Key of the domain of the entry.
+     */
     public static final String DOMAIN  = "domain"; 
 
+	/**
+	 * Key of the project the entry is generated into.
+	 */
 	public static final String TARGET_PROJECT = "targetProject";
 
+	/**
+	 * Key of the path the entry is generated into.
+	 */
 	public static final String TARGET_PATH = "path";
     
 	private final List<InfoLine> _children = new ArrayList<>();
@@ -61,6 +97,15 @@ public class InfoLine extends HashMap {
         super(someValues);
     }
     
+    /**
+     * The value of the given key in the given line.
+     *
+     * @param infoLine
+     *        The line to look up, may be <code>null</code>.
+     * @param aKey
+     *        The key of the value.
+     * @return The value, or <code>null</code> if no line is given.
+     */
     public static String value(InfoLine infoLine, String aKey) {
     	if (infoLine == null) {
     		return null;
@@ -73,26 +118,46 @@ public class InfoLine extends HashMap {
         return "InfoLine: " + super.toString();
     }
     
+    /**
+     * Adds an entry on the next level.
+     */
     public void addChild(InfoLine line) {
 		_children.add(line);
 	}
 
+	/**
+	 * Whether there are entries on the next level.
+	 */
 	public boolean hasChildren() {
 		return ! _children.isEmpty();
 	}
 	
+	/**
+	 * The entries on the next level.
+	 */
 	public List<InfoLine> getChildren() {
 		return _children;
 	}
 
+	/**
+	 * Setter for {@link #getNextSibbling()}.
+	 */
 	public void setNextSibbling(InfoLine nextLine) {
 		_nextLine = nextLine;
 	}
 
+	/**
+	 * The next entry on the same level.
+	 */
 	public InfoLine getNextSibbling() {
 		return _nextLine;
 	}
 
+	/**
+	 * The types of the given line.
+	 *
+	 * @see #TYPE
+	 */
 	public static Set<String> getTypes(InfoLine aLine) {
 		if (aLine == null) {
 			return Collections.emptySet();

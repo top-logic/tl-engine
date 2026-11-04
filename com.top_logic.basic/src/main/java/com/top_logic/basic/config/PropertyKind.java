@@ -97,8 +97,8 @@ public enum PropertyKind {
 	 * <li>it is one of Java's primitive types. In this case, the implicit default value is
 	 * used.</li>
 	 * <li>it has an explicit default value annotation.</li>
-	 * <li>it has a format or value binding annotation. In this case
-	 * {@link ConfigurationValueProvider#defaultValue()} is used.</li>
+	 * <li>it has a format or value binding annotation. In this case the default value of the
+	 * {@link ConfigurationValueProvider} is used.</li>
 	 * </ul>
 	 * <b>This means, even types that normally have implicit defaults in the
 	 * {@link TypedConfiguration} can be null, when they are derived.</b>
@@ -107,6 +107,9 @@ public enum PropertyKind {
 	 * {@link Container} properties store the container of a {@link ConfigPart} and have this
 	 * {@link PropertyKind}, too, as they are not set-able, just like normal derived properties.
 	 * </p>
+	 * 
+	 * @implNote The default value of a format or value binding is taken from
+	 *           {@link ConfigurationValueProvider#defaultValue()}.
 	 * 
 	 * @see Derived
 	 * @see DerivedRef

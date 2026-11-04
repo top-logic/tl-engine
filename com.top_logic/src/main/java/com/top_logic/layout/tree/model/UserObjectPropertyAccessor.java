@@ -21,7 +21,9 @@ import com.top_logic.layout.PropertyAccessor;
  */
 public class UserObjectPropertyAccessor implements PropertyAccessor<TLTreeNode> {
 
+	/** Configuration of {@link UserObjectPropertyAccessor}. */
 	public interface Config extends PolymorphicConfiguration<PropertyAccessor<?>> {
+		/** The accessor that is applied to the business object of a tree node. */
 		@Name(INNER_ACCESSOR_CONFIG_PARAM)
 		@Mandatory
 		@InstanceFormat

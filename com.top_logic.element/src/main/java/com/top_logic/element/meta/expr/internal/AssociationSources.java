@@ -25,7 +25,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 public final class AssociationSources extends AssociationNavigation {
 
 	/**
-	 * Configuration options for {@link AssociationSources}
+	 * Configuration options for {@link AssociationSources}.
 	 */
 	@TagName("association-sources")
 	public interface Config extends AssociationNavigation.Config<AssociationSources> {

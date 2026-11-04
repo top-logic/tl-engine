@@ -26,6 +26,7 @@ public class CardTag extends CompositeControlTag implements FormContainerTag {
 
 	private FormContainer member;
 
+	/** Sets the name of the card. */
 	public void setName(String name) {
 		if (!getDeckPaneTag().getDeckField().hasMember(name)) {
 			throw new IllegalArgumentException(" There is no member with name '" + name + "' in the DeckField");

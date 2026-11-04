@@ -30,7 +30,7 @@ public class PptXTableContainer {
 	private List<String> indexMapping;
     
 	/**
-	 * Create a new PptXTableContainer
+	 * Create a new {@link PptXTableContainer}
 	 * 
 	 * @param name
 	 *        the container name
@@ -77,7 +77,7 @@ public class PptXTableContainer {
     }
     
     /**
-     * Adds a new cell to this container. If useIndexMapping is
+     * Adds a new cell to this container. If {@code useIndexMapping} is
      * <code>true</code> the cell will be accessible via
      * {@link #getCellByIndex(int)}.
      * 
@@ -85,7 +85,7 @@ public class PptXTableContainer {
      *            the {@link PptCell} to add.
      * @param useIndexMapping
      *            If <code>true</code> this cell will be added to the
-     *            indexMapping.
+     *            index mapping.
      */
 	public void addCell(PptXTableCell aCell, boolean useIndexMapping) {
 		this.cells.put(aCell.getShapeName(), aCell);

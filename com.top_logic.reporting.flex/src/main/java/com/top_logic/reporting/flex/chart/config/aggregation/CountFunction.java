@@ -71,7 +71,7 @@ public class CountFunction extends AttributeAggregationFunction {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item() {
 		return TypedConfiguration.newConfigItem(Config.class);

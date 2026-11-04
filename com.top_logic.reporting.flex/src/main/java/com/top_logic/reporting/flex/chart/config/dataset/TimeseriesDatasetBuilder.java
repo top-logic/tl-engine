@@ -38,7 +38,7 @@ import com.top_logic.reporting.flex.chart.config.util.ToStringText;
 import com.top_logic.reporting.flex.chart.config.util.ToStringText.NotSetText;
 
 /**
- * Dataset-builder for {@link TimeSeriesCollection}
+ * Dataset-builder for {@link TimeSeriesCollection}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -188,7 +188,7 @@ public class TimeseriesDatasetBuilder extends AbstractDatasetBuilder<TimeSeriesC
 	}
 
 	/**
-	 * {@link DataKey}-implementation used for {@link TimeSeriesCollection}
+	 * {@link DataKey}-implementation used for {@link TimeSeriesCollection}.
 	 */
 	public static class TimeseriesDataKey extends AbstractDataKey<UniqueName, RegularTimePeriod> {
 

@@ -35,6 +35,7 @@ public class VersionedDocumentProperty {
 			.put(VersionDialog.VERSION_DESCRIPTION, VersionDescriptionProperty.INSTANCE)
 			.toMap();
 
+	/** {@link Accessor} for the columns of the version table of a document. */
 	public static final Accessor<DocumentVersion> INSTANCE = new DispatchingAccessor<>(PROPERTIES);
 
 }

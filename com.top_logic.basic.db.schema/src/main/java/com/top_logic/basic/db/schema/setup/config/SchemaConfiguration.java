@@ -100,7 +100,7 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	List<NamedResource> getSchemas();
 
 	/**
-	 * Indexed access to #getSchemas()
+	 * Indexed access to {@link #getSchemas()}.
 	 */
 	@Indexed(collection = SCHEMAS_ATTRIBUTE)
 	NamedResource getSchema(String string);

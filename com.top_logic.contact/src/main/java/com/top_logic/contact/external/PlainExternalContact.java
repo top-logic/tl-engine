@@ -78,6 +78,9 @@ public class PlainExternalContact implements ExternalContact {
 		return equalsContact((ExternalContact) obj);
 	}
 
+	/**
+	 * Whether the given contact has the same values as this one.
+	 */
 	public boolean equalsContact(ExternalContact contact) {
 		boolean isEqual = 
             Utils.equals(uNumber,contact.getUNumber()) && 

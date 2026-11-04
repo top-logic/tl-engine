@@ -15,8 +15,13 @@ import com.top_logic.util.Utils;
  */
 public class BorderCellFormatter implements ExcelCellFormatter {
 
+	/** Dotted border style. */
 	public static final String BORDER_DOT = ExcelValue.BORDER_DOTTED;
+
+	/** Thin solid border style. */
 	public static final String BORDER_NORMAL = ExcelValue.BORDER_THIN;
+
+	/** Dashed border style. */
 	public static final String BORDER_DASHED = ExcelValue.BORDER_DASHED;
 	
 	private String borderTop;
@@ -64,28 +69,28 @@ public class BorderCellFormatter implements ExcelCellFormatter {
 	}
 
 	/**
-	 * Returns the borderTop.
+	 * Returns the style of the top border.
 	 */
 	public String getBorderTop() {
 		return this.borderTop;
 	}
 
 	/**
-	 * Returns the borderRight.
+	 * Returns the style of the right border.
 	 */
 	public String getBorderRight() {
 		return this.borderRight;
 	}
 
 	/**
-	 * Returns the borderBottom.
+	 * Returns the style of the bottom border.
 	 */
 	public String getBorderBottom() {
 		return this.borderBottom;
 	}
 
 	/**
-	 * Returns the borderLeft.
+	 * Returns the style of the left border.
 	 */
 	public String getBorderLeft() {
 		return this.borderLeft;

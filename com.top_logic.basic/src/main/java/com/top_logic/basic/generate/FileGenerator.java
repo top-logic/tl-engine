@@ -58,6 +58,9 @@ public abstract class FileGenerator {
 
 	private final StringBuilder _nextLine = new StringBuilder();
 
+	/**
+	 * The name of the generated file.
+	 */
 	public abstract String fileName();
 	
 	
@@ -65,6 +68,13 @@ public abstract class FileGenerator {
 		this.fileType = fileType;
 	}
 	
+	/**
+	 * Generates the given file.
+	 *
+	 * <p>
+	 * Version control tags of an existing file are kept, see {@link #getExistingTag(String)}.
+	 * </p>
+	 */
 	public final void generate(File sourceFile) throws IOException {
 		Pattern vcsTagPattern = Pattern.compile("\\$(\\w+)\\:([^\\$]*)\\$");
 		
@@ -114,17 +124,30 @@ public abstract class FileGenerator {
 		}
 	}
 	
+	/**
+	 * The value of the version control tag with the given name in the previous version of the
+	 * generated file.
+	 */
 	protected String getExistingTag(String name) {
 		return tags.get(name);
 	}
 	
+	/**
+	 * Writes the complete file.
+	 */
 	protected void writeFile() {
 		writeFileHeader();
 		writeContents();
 	}
 	
+	/**
+	 * Writes the contents of the file after the header.
+	 */
 	protected abstract void writeContents();
 
+	/**
+	 * Writes the copyright header of the file.
+	 */
 	protected void writeFileHeader() {
 		fileType.commentStart(out);
 
@@ -161,6 +184,9 @@ public abstract class FileGenerator {
 	}
 	
 
+	/**
+	 * Writes an indented line.
+	 */
 	protected void line(String line) {
 		printIndent();
 		out.println(line);
@@ -171,14 +197,23 @@ public abstract class FileGenerator {
 		out.print(indent);
 	}
 
+	/**
+	 * Decrements the indentation for following lines.
+	 */
 	protected void unindent() {
 		indent.setLength(indent.length() - 1);
 	}
 
+	/**
+	 * Increments the indentation for following lines.
+	 */
 	protected void indent() {
 		indent.append('\t');
 	}
 	
+	/**
+	 * Writes an empty line.
+	 */
 	protected void nl() {
 		out.println();
 	}

@@ -31,17 +31,24 @@ import com.top_logic.reporting.flex.chart.component.ChartConfigComponent;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveChartBuilder;
 
 /**
+ * Component offering a selection of predefined chart configurations that are loaded into an
+ * interactive chart component.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class DemoInteractiveChartSelector extends FormComponent {
 
+	/** Directory in which the chart configuration files are looked up. */
 	public static final String BASE_DIR = "/WEB-INF/charts";
 
+	/** Configuration options for {@link DemoInteractiveChartSelector}. */
 	public interface Config extends FormComponent.Config {
 
+		/** The chart component into which the selected chart configuration is loaded. */
 		@Mandatory
 		ComponentName getTarget();
 
+		/** The chart configuration files the user can choose from. */
 		public List<ChartRef> getCharts();
 
 		@BooleanDefault(true)
@@ -82,10 +89,26 @@ public class DemoInteractiveChartSelector extends FormComponent {
 		return result;
 	}
 
+	/**
+	 * Reads the chart configuration with the given file name from {@link #BASE_DIR}.
+	 *
+	 * @param filename
+	 *        Name of the chart configuration file.
+	 * @return The read configuration, or {@code null} if reading failed.
+	 */
 	protected InteractiveChartBuilder.Config readFile(String filename) {
 		return readFile(BASE_DIR, filename);
 	}
 
+	/**
+	 * Reads a chart configuration file.
+	 *
+	 * @param baseDir
+	 *        The directory containing the file.
+	 * @param filename
+	 *        Name of the chart configuration file.
+	 * @return The read configuration, or {@code null} if reading failed.
+	 */
 	public static InteractiveChartBuilder.Config readFile(String baseDir, String filename) {
 		try {
 			BinaryData content = FileManager.getInstance().getData(baseDir + '/' + filename);
@@ -101,6 +124,11 @@ public class DemoInteractiveChartSelector extends FormComponent {
 		}
 	}
 
+	/**
+	 * The interactive chart component that displays the selected chart configuration.
+	 *
+	 * @see Config#getTarget()
+	 */
 	public ChartConfigComponent getTarget() {
 		return (ChartConfigComponent) getMainLayout().getComponentByName(getConfig().getTarget());
 	}

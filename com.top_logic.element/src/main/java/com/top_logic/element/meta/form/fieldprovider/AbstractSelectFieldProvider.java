@@ -69,6 +69,35 @@ public abstract class AbstractSelectFieldProvider extends AbstractFieldProvider 
 			isMandatoryDefault, mandatoryCheckerDefault, isDisabled, aLabelProvider, isForList);
 	}
 
+	/**
+	 * Creates a new {@link SelectField} with the given options.
+	 *
+	 * <p>
+	 * For a search, a multiple selection is created even for single valued attributes.
+	 * </p>
+	 *
+	 * @param name
+	 *        The name of the field.
+	 * @param options
+	 *        The options of the field.
+	 * @param isMultipleDefault
+	 *        Whether multiple values can be selected.
+	 * @param isOrdered
+	 *        Whether the selection is ordered.
+	 * @param isSearch
+	 *        Whether the field is used in a search.
+	 * @param isMandatoryDefault
+	 *        Whether a value is required.
+	 * @param mandatoryCheckerDefault
+	 *        The constraint checking the mandatory state, may be {@code null}.
+	 * @param isDisabled
+	 *        Whether the field is disabled.
+	 * @param aLabelProvider
+	 *        The label provider for the options, may be {@code null}.
+	 * @param isForList
+	 *        Whether the field is displayed in a list.
+	 * @return The new field.
+	 */
 	protected SelectField newSelectField(String name, OptionModel<?> options, boolean isMultipleDefault,
 			boolean isOrdered,
 			boolean isSearch,

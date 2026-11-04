@@ -16,36 +16,47 @@ import com.top_logic.layout.table.display.VisiblePaneRequest;
  */
 public class RangeProviderUtil {
 
+	/** Whether the given table has rows to display. */
 	public static boolean hasRows(TableViewModel viewModel) {
 		return viewModel.getRowCount() > 0;
 	}
 
+	/**
+	 * Whether a visible pane is requested for the given table, either for columns or for rows of
+	 * the current page.
+	 */
 	public static boolean hasDefinedPaneRequest(TableViewModel viewModel) {
 		return paneColumnRequestIsDefined(viewModel)
 			|| hasDefinedPaneRowRequestForPage(viewModel);
 	}
 
+	/** Whether a visible pane is requested for rows of the current page. */
 	public static boolean hasDefinedPaneRowRequestForPage(TableViewModel viewModel) {
 		return paneRowRequestIsDefined(viewModel) && paneRowRequestHasIntersectionWithPage(viewModel);
 	}
 
+	/** Whether the requested visible pane defines a row range. */
 	public static boolean paneRowRequestIsDefined(TableViewModel viewModel) {
 		return getPaneRequestRowRange(viewModel) != IndexRange.undefined();
 	}
 
+	/** Whether the requested visible pane defines a column range. */
 	public static boolean paneColumnRequestIsDefined(TableViewModel viewModel) {
 		return getPaneRequestColumnRange(viewModel) != IndexRange.undefined();
 	}
 
+	/** Whether the row range of the requested visible pane intersects the current page. */
 	public static boolean paneRowRequestHasIntersectionWithPage(TableViewModel viewModel) {
 		return getPaneRequestRowRange(viewModel).getLastIndex() >= viewModel.getPagingModel().getFirstRowOnCurrentPage() &&
 			getPaneRequestRowRange(viewModel).getFirstIndex() <= viewModel.getPagingModel().getLastRowOnCurrentPage();
 	}
 
+	/** The row range of the requested visible pane. */
 	public static IndexRange getPaneRequestRowRange(TableViewModel viewModel) {
 		return getVisiblePaneRequest(viewModel).getRowRange();
 	}
 
+	/** The column range of the requested visible pane. */
 	public static IndexRange getPaneRequestColumnRange(TableViewModel viewModel) {
 		return getVisiblePaneRequest(viewModel).getColumnRange();
 	}

@@ -23,10 +23,18 @@ public class DecorationValueProviderDelegate implements Serializable {
 		this.listerners = new HashSet<>();
     }
 
+	/**
+	 * Registers the given listener.
+	 * 
+	 * @see DecorationValueProvider#registerDecorationValueListener(DecorationValueListener)
+	 */
     public void registerDecorationValueListener(DecorationValueListener aListener) {
         this.listerners.add(aListener);
     }
     
+	/**
+	 * Informs all registered listeners that the decoration values of the given provider changed.
+	 */
     public void fireDecorationValueChanged(DecorationValueProvider aProvider) {
 		int cnt = listerners.size();
 		if (cnt > 0) {
@@ -37,6 +45,13 @@ public class DecorationValueProviderDelegate implements Serializable {
         }
     }
 
+	/**
+	 * Unregisters the given listener.
+	 * 
+	 * @return Whether the listener was registered before.
+	 * 
+	 * @see DecorationValueProvider#unregisterDecorationValueListener(DecorationValueListener)
+	 */
 	public boolean unregisterDecorationValueListener(DecorationValueListener aListener) {
 		return this.listerners.remove(aListener);
 	}

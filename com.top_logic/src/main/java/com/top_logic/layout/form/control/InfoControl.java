@@ -44,6 +44,7 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 		super.deregisterListener(member);
 	}
 
+	/** Sets the displayed image. */
 	public void setImage(ThemeImage image) {
 		if (image != this.image) {
 			this.image = image;

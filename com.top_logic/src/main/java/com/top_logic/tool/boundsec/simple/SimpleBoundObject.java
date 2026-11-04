@@ -50,22 +50,22 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 	/** {@link Set} of {@link BoundRole}s for a specific {@link Person} or {@link Group}. */
 	protected Map<TLObject, Set<BoundRole>> rolesForPersons;
 
-    /** Create a default SimpleBoundObject */
+    /** Create a default {@link SimpleBoundObject} */
 	public SimpleBoundObject(String anID) {
 		this(StringID.valueOf(anID));
     }
 
-	/** Create a default SimpleBoundObject */
+	/** Create a default {@link SimpleBoundObject} */
 	public SimpleBoundObject() {
 		this(DummyIDFactory.createId());
 	}
 
-	/** Create a default SimpleBoundObject */
+	/** Create a default {@link SimpleBoundObject} */
 	public SimpleBoundObject(TLID id) {
 		this(id, 0);
 	}
 
-    /** Create a SimpleBoundObject with some Flags */
+    /** Create a {@link SimpleBoundObject} with some Flags */
 	public SimpleBoundObject(String anID, int flags) {
 		this(StringID.valueOf(anID), flags);
     }
@@ -86,7 +86,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
     /**
      * Get the child bound objects for this bound object.
      * 
-     * @return a collection of child BoundObjects, null or 
+     * @return a collection of child {@link BoundObject}s, null or 
      *         empty collection in case there are no children.
      */
     @Override
@@ -125,7 +125,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
      * Get the {@link com.top_logic.tool.boundsec.BoundRole}s of the given 
      * person for this object.
      * 
-     * This may fall back to the BoundRoles of the Parent (Global Roles).
+     * This may fall back to the {@link BoundRole}s of the Parent (Global Roles).
      * 
      * @param   aPerson     The person to get the roles for
      * @return a collection of roles the given person has in/for this Object.
@@ -154,7 +154,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
     /**
      * Check if the given person has any role ot this object.
      * 
-     * This will usually fall back to the BoundRoles of the Parent (Global Roles).
+     * This will usually fall back to the {@link BoundRole}s of the Parent (Global Roles).
      * 
      * @param aPerson The person to get the roles for
      * @return true when <code>getRoles(aPerson)</code> == null (or empty)
@@ -177,7 +177,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
    /**
      * Make the given person have the given Role for this Objects
      * 
-     * This may fall back to the BoundRoles of the Parent (Global Roles).
+     * This may fall back to the {@link BoundRole}s of the Parent (Global Roles).
      * 
      * @param   aPerson     The person to get the roles for
      */
@@ -197,7 +197,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
     /**
      * Make the given person have the given Role for this Objects
      * 
-     * This may fall back to the BoundRoles of the Parent (Global Roles).
+     * This may fall back to the {@link BoundRole}s of the Parent (Global Roles).
      * 
      * @param   aPerson     The person to get the roles for
      */

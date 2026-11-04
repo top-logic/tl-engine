@@ -11,12 +11,13 @@ import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * The HiddenInEditMode is used to hide something if the component is in edit mode.
+ * The {@link HiddenInEditMode} is used to hide something if the component is in edit mode.
  * 
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class HiddenInEditMode implements ExecutabilityRule {
 
+    /** Singleton instance of {@link HiddenInEditMode}. */
     public static final HiddenInEditMode INSTANCE = new HiddenInEditMode();
 
     /**

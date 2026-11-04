@@ -20,6 +20,9 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.util.TLContext;
 
 /**
+ * {@link ListOptionProvider} delivering all available languages sorted by their label in the
+ * current user's language.
+ *
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class LanguageOptionProvider implements ListOptionProvider {

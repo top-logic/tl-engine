@@ -29,7 +29,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Optimized implementation for WrapperValuedAttributeFilter
+ * Optimized implementation for {@link WrapperValuedAttributeFilter}
  * that uses implementation details to speed up search.
  *
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
@@ -182,7 +182,7 @@ public class KBBasedWrapperValuedAttributeFilter extends
 	}
 
 	/**
-     * Overridden to check for Check TypedWrapperMetaAttribute or WrapperSetMetaAttribute.
+     * Overridden to check for a reference attribute.
      */
     @Override
 	public void setUpFromValueMap(Map aValueMap)

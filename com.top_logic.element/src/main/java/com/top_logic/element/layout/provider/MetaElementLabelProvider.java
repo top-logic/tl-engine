@@ -16,6 +16,9 @@ import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.util.Resources;
 
 /**
+ * {@link LabelProvider} that labels attribute names with the label of the corresponding attribute
+ * of a given type.
+ * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class MetaElementLabelProvider implements LabelProvider {
@@ -34,7 +37,7 @@ public class MetaElementLabelProvider implements LabelProvider {
     }
 	 
 	/**
-	 * Try so use object as MetaAttributeName.
+	 * Try to use object as attribute name.
 	 * 
 	 * In case object is not a String or {@link #me} has no such attribute fall back to
 	 * {@link #base}.

@@ -6,16 +6,18 @@
 package com.top_logic.reporting.remote;
 
 /**
+ * Service creating office reports from templates and values.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface Reporter {
 
 	/**
 	 * Initiates the creation of a report for the template and map given in the
-	 * ReportDescriptor
+	 * {@link ReportDescriptor}
 	 * 
 	 * @param description : contains information about the report to create
-	 * @return ReportTicket : contains initial information about how long it will
+	 * @return {@link ReportTicket} : contains initial information about how long it will
 	 * approximately take for the report to be finished and a unique ID to fetch,
 	 * cancel or poll information about the progress of the report
 	 */
@@ -24,18 +26,18 @@ public interface Reporter {
     /**
      * Returns information about how long it will approximately take for the
      * report to be finished
-     * @param reportID : the unique ID gotten with the ReportTicket when initiated
+     * @param reportID : the unique ID gotten with the {@link ReportTicket} when initiated
      * the report
-     * @return ReportStatus : contains information about state of the progress 
+     * @return {@link ReportStatus} : contains information about state of the progress 
      * (e.g. time till finish or error)
      */
 	public ReportStatus getStatus(String reportID);
 	
 	/**
-	 * Returns the report for aReportID if the creation is finished successfully.
+	 * Returns the report for {@code aReportID} if the creation is finished successfully.
 	 *  
-	 * @return ReportResult : A result containing information about how to get
-	 * the finished report, a Result with an Error status in case of an invalid reportID.
+	 * @return {@link ReportResult} : A result containing information about how to get
+	 * the finished report, a Result with an Error status in case of an invalid report ID.
 	 */
 	public ReportResult getReport(String aReportID);
 
@@ -47,12 +49,12 @@ public interface Reporter {
 	public void cancelReport(String reportID);
 	
 	/**
-	 * Return a ReporterState describing the state of this reporter
+	 * Return a {@link ReporterState} describing the state of this reporter
 	 */
 	public ReporterState getReporterState();
 	
 	/**
-	 * If this is some kind of remote-Reporter, isValid checks if its settings are valid.
+	 * If this is some kind of remote reporter, {@link #isValid()} checks if its settings are valid.
 	 * Even if the settings are valid, it might happen that no connection can be established! 
 	 * @return true if configuration is valid, false if not (e.g. a given port is not a number)
 	 */

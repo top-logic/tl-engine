@@ -30,7 +30,9 @@ public class FileLogger extends AbstractLogger implements Closeable {
 	/** Alias for the logging directory */
 	public static final String IMPORT_LOG_PATH = "%IMPORT_LOG_PATH%";
 
+	/** Configuration options for {@link FileLogger}. */
 	public interface Config extends ImportLogger.Config {
+		/** Prefix of the name of the log file. */
 		String getFilePrefix();
 	}
 

@@ -18,10 +18,16 @@ import com.top_logic.layout.DisplayValue;
  */
 public class ConstantDisplayValue implements DisplayValue {
 	
+	/** {@link DisplayValue} of the empty string. */
 	public static DisplayValue EMPTY_STRING = new ConstantDisplayValue("");
 
+	/** {@link DisplayValue} of a single space. */
 	public static DisplayValue SPACE = new ConstantDisplayValue(" ");
+
+	/** {@link DisplayValue} of the string {@code true}. */
 	public static DisplayValue TRUE = new ConstantDisplayValue("true");
+
+	/** {@link DisplayValue} of the string {@code false}. */
 	public static DisplayValue FALSE = new ConstantDisplayValue("false");
 
 	private final String value;

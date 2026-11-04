@@ -149,7 +149,7 @@ public final class QueryInfix implements QueryInfixConstants {
     throw new Error("Missing return statement in function");
   }
 
-/** Parse an ExampleNode as list of Attribute/VAlue pairs */
+/** Parse an {@link ExampleNode} as list of Attribute/VAlue pairs */
   final public ExampleNode example() throws ParseException, QueryException {
     HashMap map = new HashMap();
     examplePair(map);

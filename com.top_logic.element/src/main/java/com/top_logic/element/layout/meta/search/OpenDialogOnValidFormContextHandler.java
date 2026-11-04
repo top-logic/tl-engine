@@ -15,7 +15,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 
 /**
- * Open a Dialog only when some underlying FormComponent has a valid FormContext.
+ * Open a Dialog only when some underlying {@link FormComponent} has a valid
+ * {@link com.top_logic.layout.form.model.FormContext}.
  * 
  * @author     <a href="mailto:kha@top-logic.com">kha</a>
  */

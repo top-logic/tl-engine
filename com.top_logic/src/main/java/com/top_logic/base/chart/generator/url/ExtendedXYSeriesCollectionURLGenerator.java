@@ -13,9 +13,10 @@ import org.jfree.data.xy.XYSeriesCollection;
 import com.top_logic.base.chart.dataset.ExtendedXYSeries;
 
 /**
- * The AbstractExtendedXYSeriesCollectionURLGenerator works together with the {@link com.top_logic.base.chart.dataset.ExtendedXYSeries}.
- * The ExtendedXYSeries stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getURLFor(Object)}. This object is that from the ExtendedXYSeries.
+ * The {@link ExtendedXYSeriesCollectionURLGenerator} works together with the {@link
+ * com.top_logic.base.chart.dataset.ExtendedXYSeries}. The {@link ExtendedXYSeries} stores objects
+ * (e.g. goals, risks, ...). A subclass needs only to implement this method {@link
+ * #getURLFor(Object)}. This object is that from the {@link ExtendedXYSeries}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

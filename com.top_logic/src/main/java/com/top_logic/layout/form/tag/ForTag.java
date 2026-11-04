@@ -26,10 +26,12 @@ public class ForTag extends AbstractTag implements IterationTag {
 	
 	int index = 0;
 	
+	/** Sets the name of the variable holding the current value. */
 	public void setVar(String varName) {
 		this.varName = varName;
 	}
 
+	/** Sets the values to iterate over as whitespace separated list. */
 	public void setIn(String valuesString) {
 		values = new ArrayList();
 		

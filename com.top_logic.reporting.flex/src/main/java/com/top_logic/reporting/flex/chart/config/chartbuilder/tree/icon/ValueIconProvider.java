@@ -24,6 +24,8 @@ public interface ValueIconProvider {
 	public Map<Integer, Image> getIcons();
 
 	/**
+	 * Determines the icon for the value of the given node.
+	 *
 	 * @param node
 	 *        the chart-node identifying the position in the chart
 	 * @return the icon to visualize the value

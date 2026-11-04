@@ -28,6 +28,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * Search filter for attributes holding {@link ExternalContact}s.
+ * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 public class ExternalContactAttributeFilter extends MetaAttributeFilter {
@@ -129,7 +131,7 @@ public class ExternalContactAttributeFilter extends MetaAttributeFilter {
 	}
 
 	/**
-	 * Add ExternalContact list
+	 * Add {@link ExternalContact} list
 	 *
      * @see com.top_logic.element.meta.query.MetaAttributeFilter#getValueMap()
      */
@@ -162,7 +164,7 @@ public class ExternalContactAttributeFilter extends MetaAttributeFilter {
     }
     
     /**
-     * Set up ExternalContact list
+     * Set up {@link ExternalContact} list
      *
      * @see com.top_logic.element.meta.query.MetaAttributeFilter#setUpFromValueMap(java.util.Map)
      */

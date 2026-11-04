@@ -16,7 +16,7 @@ import com.top_logic.reporting.report.model.partition.PartitionFunctionConfigura
 import com.top_logic.reporting.report.model.partition.criteria.Criteria;
 
 /**
- * The StringPartitionFunction creates partitions from String values.
+ * The {@link StringPartitionFunction} creates partitions from String values.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

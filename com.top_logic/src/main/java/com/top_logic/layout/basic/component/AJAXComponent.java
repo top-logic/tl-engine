@@ -34,10 +34,21 @@ public abstract class AJAXComponent extends LayoutComponent {
 		super(context, attr);
 	}
     
+    /**
+     * Whether incremental updates are available that bring the view in sync with the server
+     * model.
+     * 
+     * @see AJAXSupport#isRevalidateRequested()
+     */
     public boolean isRevalidateRequested() {
     	return ajaxSupport().isRevalidateRequested();
     }
 
+    /**
+     * Adds the incremental updates of this component to the given {@link UpdateWriter}.
+     * 
+     * @see AJAXSupport#revalidate(DisplayContext, com.top_logic.layout.UpdateQueue)
+     */
     public void revalidate(DisplayContext context, UpdateWriter actions) {
 		LayoutComponent currentTargetComponent = actions.getTargetComponent();
 		actions.setTargetComponent(this);
@@ -73,6 +84,9 @@ public abstract class AJAXComponent extends LayoutComponent {
 		invalidateAJAXSupport();
 	}
 
+	/**
+	 * Invalidates the AJAX mixin implementation, see {@link AJAXSupport#invalidate()}.
+	 */
 	public void invalidateAJAXSupport() {
 		ajaxSupport().invalidate();
 	}

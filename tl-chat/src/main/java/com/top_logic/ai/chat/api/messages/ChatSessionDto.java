@@ -40,7 +40,7 @@ public class ChatSessionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	}
 
 	/**
-	 * Session ID (KnowledgeObject ID).
+	 * Session ID (ID of the {@link com.top_logic.knowledge.objects.KnowledgeObject}).
 	 */
 	public final String getId() {
 		return _id;

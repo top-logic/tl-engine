@@ -31,13 +31,16 @@ import com.top_logic.layout.table.TableRenderer.Cell;
  */
 public class CellControlRenderer extends AbstractCellRenderer {
 
+	/** Configuration options for {@link CellControlRenderer}. */
 	public interface Config extends PolymorphicConfiguration<CellRenderer> {
 
+		/** The {@link ControlProvider} creating the control that displays the cell value. */
 		@Name(ATTRIBUTE_CONTROL_PROVIDER)
 		@InstanceFormat
 		@InstanceDefault(DefaultFormFieldControlProvider.class)
 		ControlProvider getControlProvider();
 
+		/** The renderer used for the cell value, if no control can be created for it. */
 		@Name(ATTRIBUTE_FALLBACK_RENDERER)
 		@InstanceFormat
 		@InstanceDefault(ResourceRenderer.class)

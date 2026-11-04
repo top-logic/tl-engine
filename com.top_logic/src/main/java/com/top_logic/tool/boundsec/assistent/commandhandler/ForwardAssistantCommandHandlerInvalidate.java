@@ -14,10 +14,14 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 /**
+ * Switches the assistant to the next step and invalidates the new step, so that it is always
+ * displayed with freshly computed content.
+ * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class ForwardAssistantCommandHandlerInvalidate extends ForwardAssistentCommandHandler {
 
+	/** The ID of this command. */
 	public static final String COMMAND = "switchAssistentForwardInvalidate";
 
 	/**

@@ -9,7 +9,7 @@ package com.top_logic.reporting.office;
 /**
  * This interface defines a resolver for static symbols. 
  * This resolving may be complicated so the implementing class may be the 
- * ReportHandler itself!
+ * {@link ReportHandler} itself!
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */

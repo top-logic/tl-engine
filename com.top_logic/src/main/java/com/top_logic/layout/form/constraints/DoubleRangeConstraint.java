@@ -58,7 +58,7 @@ public class DoubleRangeConstraint extends RangeConstraint {
 	}
 
     /**
-     * Convert aValue to double in case of a Number, then call super.
+     * Converts the given value to double in case of a Number, then call super.
      */
 	@Override
 	public boolean check(Object aValue) throws CheckException {

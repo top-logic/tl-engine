@@ -197,6 +197,7 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		deregisterListener(model);
 	}
 
+	/** Removes the listeners of this control from the given model. */
 	protected void deregisterListener(FormMember member) {
 		member.removeListener(FormMember.REMOVED_FROM_PARENT, this);
 		member.removeListener(FormMember.CLASS_PROPERTY, this);
@@ -204,6 +205,10 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	}
 	
 
+	/**
+	 * Whether an event from the given sender is ignored, because it is not sent by the model of
+	 * this control.
+	 */
 	protected final boolean skipEvent(Object sender) {
 		return sender != getModel();
 	}
@@ -229,6 +234,11 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		return repaintOnEvent(sender);
 	}
 
+	/**
+	 * Requests a repaint of this control, if the given sender is the model of this control.
+	 *
+	 * @return Always {@link Bubble#BUBBLE}.
+	 */
 	protected Bubble repaintOnEvent(Object sender) {
 		if (!skipEvent(sender)) {
 			requestRepaint();
@@ -259,6 +269,7 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		appendMemberControlClasses(out, getModel());
 	}
 	
+	/** Appends the CSS classes reflecting the state of the given member. */
 	public static void appendMemberControlClasses(Appendable out, final FormMember model)
 			throws IOException {
 		String customCss = model.getCssClasses();

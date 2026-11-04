@@ -16,21 +16,21 @@ import java.io.Serializable;
  */
 public class StringHolder implements Serializable {
     
-    /** The String value held by this StringHolder  object.*/
+    /** The String value held by this {@link StringHolder}  object.*/
     public String value;
 
     /**
-     * Constructs a new StringHolder object with its value field initialized to
+     * Constructs a new {@link StringHolder} object with its value field initialized to
      * null.
      */
     public StringHolder() {
     }
     
     /**
-     * Constructs a new StringHolder object with its value field initialized to
+     * Constructs a new {@link StringHolder} object with its value field initialized to
      * the given String.
      * @param initial the String with which to initialize the value field of the
-     * newly-created StringHolder object
+     * newly-created {@link StringHolder} object
      */
     public StringHolder(String initial){
         value = initial;

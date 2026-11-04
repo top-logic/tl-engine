@@ -32,7 +32,9 @@ public interface FormConstants {
 	 */
 	public static final String IS_INFO_CSS_CLASS   = "is-info";
 	
+	/** CSS class marking a radio button input. */
 	public static final String IS_RADIO_CSS_CLASS   = "is-radio";
+	/** CSS class marking a checkbox input. */
 	public static final String IS_CHECKBOX_CSS_CLASS   = "is-checkbox";
 
 	/**
@@ -45,6 +47,7 @@ public interface FormConstants {
 	 */
 	public static final String TYPE_IMAGE_CSS_CLASS = "type-image";
 
+	/** CSS class of the type image displayed in front of a tree node. */
 	public static final String TREE_TYPE_IMAGE_CSS_CLASS = "treeType";
 
     /** Prefix for the {@link IntegerInputControl}'s plus button style class */
@@ -149,6 +152,7 @@ public interface FormConstants {
 	 */
 	public static final String ERROR_ANNOTATION_CSS_CLASS = "error-annotation";
 
+	/** CSS class for {@link FormField}s that have warnings. */
 	public static final String WARNING_CSS_CLASS = "warning";
 
 	/**
@@ -207,9 +211,11 @@ public interface FormConstants {
 	 */
 	public static final String ACTIVE_CSS_CLASS = "active";
 
+	/** CSS class of a collapsed element. */
 	public static final String COLLAPSED_CLASS = "collapsed";
 
 
+	/** CSS class of an expanded element. */
 	public static final String EXPANDED_CLASS = "expanded";
 
 	/**
@@ -279,14 +285,19 @@ public interface FormConstants {
 	 */
 	String TABLE_HANDLER_CLASS = FORM_PACKAGE + ".TableControl";
 
+	/** JavaScript class of a select control. */
 	public static final String SELECT_CONTROL_CLASS = FORM_PACKAGE + ".SelectControl";
 
+	/** JavaScript class of a choice control. */
 	public static final String CHOICE_CONTROL_CLASS = FORM_PACKAGE + ".ChoiceControl";
 
+	/** JavaScript class of an icon select control. */
 	public static final String ICON_SELECT_CONTROL_CLASS = FORM_PACKAGE + ".IconSelectControl";
 
+	/** JavaScript class of a select option control. */
 	public static final String SELECT_OPTION_CONTROL_CLASS = FORM_PACKAGE + ".SelectOptionControl";
 
+	/** JavaScript class of a selection part control. */
 	public static final String SELECTION_PART_CONTROL_CLASS = FORM_PACKAGE + ".SelectionPartControl";
 
 	/**

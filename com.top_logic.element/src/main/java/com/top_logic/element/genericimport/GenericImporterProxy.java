@@ -15,12 +15,16 @@ import com.top_logic.element.genericimport.interfaces.GenericImporter;
 import com.top_logic.element.genericimport.interfaces.GenericImporter.GenericFileImporter;
 
 /**
- * The GenericImporterProxy caches {@link #getColumns()} and {@link #getPlainObjects()} from an proxied GenericImporter
+ * The {@link GenericImporterProxy} caches {@link #getColumns()} and {@link #getPlainObjects()}
+ * from a proxied {@link GenericImporter}.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericImporterProxy implements GenericFileImporter {
 
+    /**
+     * Name of the property holding the class of the proxied {@link GenericImporter}.
+     */
     public static final String PROXY_IMPORTER = "proxyImporter";
     
     private GenericImporter importer;

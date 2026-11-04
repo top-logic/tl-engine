@@ -28,6 +28,7 @@ import com.top_logic.basic.UnreachableAssertion;
  */
 public abstract class DOMVisitor {
 	
+	/** Dispatches to the visit method of the given node's type. */
 	public final Object visit(Node node, Object arg) {
 		short nodeType = node.getNodeType();
 		switch (nodeType) {
@@ -73,53 +74,66 @@ public abstract class DOMVisitor {
 		}
 	}
 
+	/** Visits a {@link ProcessingInstruction} node. */
 	protected Object visitProcessingInstruction(ProcessingInstruction node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link Notation} node. */
 	protected Object visitNotation(Notation node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits an {@link EntityReference} node. */
 	protected Object visitEntityReference(EntityReference node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits an {@link Entity} node. */
 	protected Object visitEntity(Entity node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits an {@link Element} node. */
 	protected Object visitElement(Element node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link DocumentType} node. */
 	protected Object visitDocument(DocumentType node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link Document} node. */
 	protected Object visitDocument(Document node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link DocumentFragment} node. */
 	protected Object visitFragment(DocumentFragment node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link Comment} node. */
 	protected Object visitComment(Comment node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link CharacterData} node. */
 	protected Object visitCData(CharacterData node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Visits a {@link Text} node. */
 	protected Object visitText(Text node, Object arg) {
 		return visitCData(node, arg);
 	}
 
+	/** Visits an {@link Attr} node. */
 	protected Object visitAttribute(Attr node, Object arg) {
 		return visitNode(node, arg);
 	}
 
+	/** Fallback for all node types without a more specific visit method. */
 	protected abstract Object visitNode(Node node, Object arg);
 }

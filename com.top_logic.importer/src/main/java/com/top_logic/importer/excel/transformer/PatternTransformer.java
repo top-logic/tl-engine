@@ -19,12 +19,23 @@ import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.util.Resources;
 
 /**
+ * Creates a text from a message pattern filled with values of other columns.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class PatternTransformer implements Transformer<String> {
 
+	/** Configuration options for {@link PatternTransformer}. */
 	public interface Config extends Transformer.Config {
+		/** The mappings providing the values for the message arguments. */
 		List<MappingConfig> getMappings();
+		/**
+		 * Resource key of the message pattern.
+		 *
+		 * <p>
+		 * For every argument that has a value, its index is appended to the key.
+		 * </p>
+		 */
 		String getKey();
 	}
 

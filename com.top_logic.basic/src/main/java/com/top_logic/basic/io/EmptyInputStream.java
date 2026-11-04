@@ -15,6 +15,9 @@ import java.io.InputStream;
  */
 public class EmptyInputStream extends InputStream {
 
+    /**
+     * Singleton instance of this class.
+     */
     public static final InputStream INSTANCE = new EmptyInputStream ();
 
     /** You can use the Shared INSTANCE.

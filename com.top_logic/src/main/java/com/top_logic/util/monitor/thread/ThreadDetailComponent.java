@@ -46,7 +46,7 @@ import com.top_logic.util.Resources;
 public class ThreadDetailComponent extends FormComponent implements Runnable {
 	
 	/**
-	 * Configuration options of {@link ThreadDetailComponent}
+	 * Configuration options of {@link ThreadDetailComponent}.
 	 */
 	public interface Config extends FormComponent.Config {
 		/**

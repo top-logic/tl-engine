@@ -458,7 +458,7 @@ public class ExecutionEngine extends ManagedClass {
 	 * of the evaluation is a {@link Boolean}, the boolean value of it is returned If the value is
 	 * not a {@link Boolean}, false is returned
 	 * 
-	 * @return the booleaValue of the evaluation of the rule
+	 * @return the boolean value of the evaluation of the rule
 	 */
 	public boolean calculateBoolean(SearchExpression rule, ProcessExecution processExecution) {
 		Object result = calculate(rule, processExecution);
@@ -646,8 +646,8 @@ public class ExecutionEngine extends ManagedClass {
 	 * inits the new created {@link ProcessExecution}
 	 * 
 	 * Creates a token for the first {@link Task}, i.e. the task after the start event. If more than
-	 * one start events exist, a context for the initialization of the ProcessExecution must be
-	 * provided. This is not covered here.
+	 * one start events exist, a context for the initialization of the {@link ProcessExecution} must
+	 * be provided. This is not covered here.
 	 */
 	public void init(ProcessExecution execution, StartEvent startEvent) {
 		// set token on start event

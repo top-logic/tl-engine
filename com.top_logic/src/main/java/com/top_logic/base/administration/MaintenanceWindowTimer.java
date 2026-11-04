@@ -12,7 +12,7 @@ import com.top_logic.util.TLContextManager;
 
 
 /**
- * Timer for the MaintenanceWindowManager.
+ * Timer for the {@link MaintenanceWindowManager}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

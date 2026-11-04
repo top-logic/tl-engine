@@ -98,19 +98,39 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class AttributedSearchComponent extends FormComponent {
 
+	/**
+	 * Configuration options for {@link AttributedSearchComponent}.
+	 */
 	public interface Config extends FormComponent.Config, ColumnsChannel.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/**
+		 * The name of the type to search for.
+		 * <p>
+		 * A comma separated list of type names may be given. In that case, the user can choose
+		 * the type to search for, the first type is selected initially.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_META_ELEMENT)
 		@Mandatory
 		String getMetaElement();
 
+		/**
+		 * Whether the user can save, load, and delete search queries.
+		 */
 		@Name(XML_CONFIG_QUERY_SUPPORT)
 		@BooleanDefault(true)
 		boolean getQuerySupport();
 
+		/**
+		 * Whether the user can edit the search input.
+		 * <p>
+		 * If not set, only the search command is offered, the commands for resetting the search,
+		 * switching the search scope, and managing search queries are not available.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_INPUT_SUPPORT)
 		@BooleanDefault(true)
 		boolean getInputSupport();
@@ -131,22 +151,47 @@ public class AttributedSearchComponent extends FormComponent {
 		@Name(XML_CONFIG_RESULT_COLUMNS)
 		String getResultColumns();
 
+		/**
+		 * Comma separated list of additional attribute paths the user can select as result
+		 * columns.
+		 * <p>
+		 * Each entry is a dot separated path of attribute names starting at the searched type.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_ADDITIONAL_RESULT_COLUMN_OPTIONS)
 		@StringDefault("")
 		String getAdditionalResultColumnOptions();
 
+		/**
+		 * Provider of additional derived attributes that can be searched in.
+		 */
 		@Name(XML_CONFIG_DERIVED_ATTRIBUTE_DESCRIPTION_PROVIDER)
 		@InstanceFormat
 		DerivedAttributeDescriptionProvider getDerivedAttributeDescriptionProviderClass();
 
+		/**
+		 * Whether the full text search initially requires all entered words to match.
+		 * <p>
+		 * If not set, an object matches if any of the entered words matches.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_FULLTEXT_MODE_IS_AND)
 		@BooleanDefault(FulltextFilter.MODE_AND)
 		boolean getFulltextIsAnd();
 
+		/**
+		 * Whether the full text search initially only finds exact word matches.
+		 * <p>
+		 * If not set, also words containing the search text are found.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_FULLTEXT_EXACT_MATCH)
 		@BooleanDefault(FulltextFilter.EXACT_MATCH)
 		boolean getFulltextExactMatch();
 
+		/**
+		 * Support class that creates the search filters from the user input.
+		 */
 		@Name(XML_CONFIG_SEARCH_FILTER_SUPPORT)
 		@InstanceDefault(SecuritySearchFilterSupport.class)
 		@InstanceFormat
@@ -183,6 +228,16 @@ public class AttributedSearchComponent extends FormComponent {
 			FormComponent.Config.super.modifyIntrinsicCommands(registry);
 		}
 
+		/**
+		 * Registers the buttons for saving and deleting search queries.
+		 * 
+		 * <p>
+		 * Only called, if {@link #getInputSupport()} and {@link #getQuerySupport()} are set.
+		 * </p>
+		 *
+		 * @param registry
+		 *        The registry to add the commands to.
+		 */
 		default void registerHandlersForQuerySupport(CommandRegistry registry) {
 			registry.registerButton(PublishableSaveQueryCommandHandler.COMMAND_ID);
 			registry.registerButton(DeleteQueryCommandHandler.COMMAND_ID);
@@ -202,32 +257,54 @@ public class AttributedSearchComponent extends FormComponent {
 	 */
 	public static final String XML_CONF_KEY_IGNORED    = "IGNORED!";
 
+	/** Configuration name of {@link Config#getMetaElement()}. */
 	public static final String XML_CONFIG_META_ELEMENT = "metaElement";
 
+	/** Name of the (no longer used) configuration attribute for the model builder class. */
     public static final String XML_CONFIG_BUILDER_CLASS = "builderClass";
 
+	/** Configuration name of {@link Config#getQuerySupport()}. */
     public static final String XML_CONFIG_QUERY_SUPPORT = "querySupport";
 
+	/** Configuration name of {@link Config#getInputSupport()}. */
     public static final String XML_CONFIG_INPUT_SUPPORT = "inputSupport";
 
+	/** Configuration name of {@link Config#getResultColumns()}. */
     public static final String XML_CONFIG_RESULT_COLUMNS = "resultColumns";
 
+	/** Configuration name of {@link Config#getFulltextIsAnd()}. */
     public static final String XML_CONFIG_FULLTEXT_MODE_IS_AND = "fulltextIsAnd";
     
+	/** Configuration name of {@link Config#getFulltextExactMatch()}. */
     public static final String XML_CONFIG_FULLTEXT_EXACT_MATCH = "fulltextExactMatch";
 
+	/** Configuration name of {@link Config#getAdditionalResultColumnOptions()}. */
     public static final String XML_CONFIG_ADDITIONAL_RESULT_COLUMN_OPTIONS = "additionalResultColumnOptions";
 
+	/** Configuration name of {@link Config#getDerivedAttributeDescriptionProviderClass()}. */
     public static final String XML_CONFIG_DERIVED_ATTRIBUTE_DESCRIPTION_PROVIDER = "derivedAttributeDescriptionProviderClass";
 
+	/** Configuration name of {@link Config#getSearchFilterSupportClass()}. */
     public static final String XML_CONFIG_SEARCH_FILTER_SUPPORT = "searchFilterSupportClass";
 
+	/** Configuration name of {@link Config#getSearchResultComponent()}. */
 	public static final String XML_CONFIG_SEARCH_RESULT_COMPONENT = "search-result-component";
 
+	/**
+	 * Value of {@link #getSearchScope()} for the normal search, which offers only the search
+	 * fields themselves.
+	 */
     public static final String NORMAL_SCOPE = "normalScope";
 
+	/**
+	 * Value of {@link #getSearchScope()} for the extended search, which additionally allows to
+	 * mark search fields as relevant and to negate them.
+	 */
     public static final String EXTENDED_SCOPE = "extendedScope";
 
+	/**
+	 * Name of the hidden form field holding the currently searched type.
+	 */
     public static final String CURRENT_META_ELEMENT = "currentMetaElement";
     
 	/**
@@ -366,6 +443,10 @@ public class AttributedSearchComponent extends FormComponent {
 		gotoTarget(resultSet, _searchResultComponent);
 	}
 
+	/**
+	 * The {@link #getBuilder() model builder} of this component, which must be a
+	 * {@link SearchModelBuilder}.
+	 */
     protected final SearchModelBuilder getSearchModelBuilder() {
 		return (SearchModelBuilder) getBuilder();
     }
@@ -466,6 +547,10 @@ public class AttributedSearchComponent extends FormComponent {
 		return fc;
     }
 
+	/**
+	 * The globally registered command for switching between {@link #NORMAL_SCOPE} and
+	 * {@link #EXTENDED_SCOPE}.
+	 */
     public SwitchSearchScopeCommandHandler getSwitchSearchScopeCommand() {
 		return (SwitchSearchScopeCommandHandler) CommandHandlerFactory.getInstance()
 			.getHandler(SwitchSearchScopeCommandHandler.COMMAND_ID);
@@ -477,7 +562,7 @@ public class AttributedSearchComponent extends FormComponent {
     }
 
     /**
-	 * Create a FormContext from the given query.
+	 * Create a {@link FormContext} from the given query.
 	 *
 	 * @param aQuery
 	 *        The query. May be <code>null</code>. In that case an empty search form will be created
@@ -488,6 +573,16 @@ public class AttributedSearchComponent extends FormComponent {
         return createFormContext(aQuery, true);
     }
 
+	/**
+	 * Create a {@link FormContext} from the given query.
+	 *
+	 * @param aQuery
+	 *        The query. May be <code>null</code>. In that case an empty search form will be created
+	 *        from the type.
+	 * @param skipAttributes
+	 *        Currently ignored.
+	 * @return The requested instance of {@link AttributeFormContext}.
+	 */
     public FormContext createFormContext(StoredQuery aQuery, boolean skipAttributes) {
 		initResultColumns();
         AttributeFormContext theContext = new AttributeFormContext(this.getResPrefix());
@@ -537,6 +632,11 @@ public class AttributedSearchComponent extends FormComponent {
         return AttributedSearchComponent.EXTENDED_SCOPE.equals(this.getSearchScope());
     }
 
+	/**
+	 * The currently selected {@link StoredQuery}, which is the model of this component.
+	 * 
+	 * @return The query, or <code>null</code> if no query is selected.
+	 */
     public StoredQuery getStoredQuery() {
 		return (StoredQuery) getModel();
     }
@@ -588,6 +688,15 @@ public class AttributedSearchComponent extends FormComponent {
 		return Collections.emptySet();
 	}
 
+	/**
+	 * Sets the type to search for.
+	 * <p>
+	 * If the type changes, the search form is rebuilt and the search result is reset.
+	 * </p>
+	 *
+	 * @param aMetaElement
+	 *        The new type to search for. A <code>null</code> value is ignored.
+	 */
     public void setSearchMetaElement(TLClass aMetaElement) {
         if ((aMetaElement != null) && (aMetaElement != this.metaElement)) {
             this.metaElement = aMetaElement;
@@ -603,10 +712,17 @@ public class AttributedSearchComponent extends FormComponent {
         }
     }
 
+	/**
+	 * The configured {@link SearchFilterSupport} creating the search filters from the input.
+	 */
     public SearchFilterSupport getSearchFilterSupport() {
         return searchFilterSupport;
     }
 
+	/**
+	 * The {@link SearchFieldSupport} creating the search fields, created lazily with
+	 * {@link #initSearchFieldSupport()}.
+	 */
     public SearchFieldSupport getSearchFieldSupport() {
         if (this.searchFieldSupport == null) {
             this.searchFieldSupport = this.initSearchFieldSupport();
@@ -614,6 +730,12 @@ public class AttributedSearchComponent extends FormComponent {
         return this.searchFieldSupport;
     }
 
+	/**
+	 * Creates the {@link SearchFieldSupport} of this component.
+	 * <p>
+	 * Hook for subclasses that need a specialized {@link SearchFieldSupport}.
+	 * </p>
+	 */
     protected SearchFieldSupport initSearchFieldSupport() {
         return new SearchFieldSupport();
     }
@@ -655,6 +777,14 @@ public class AttributedSearchComponent extends FormComponent {
         aContext.addMember(FormFactory.newHiddenField(CURRENT_META_ELEMENT, this.getSearchMetaElement()));
     }
     
+	/**
+	 * Adds the full text search field to the given form context.
+	 *
+	 * @param context
+	 *        The search form to add the field to.
+	 * @param query
+	 *        The query to take the initial value from, may be <code>null</code>.
+	 */
     protected void addFullTextField(AttributeFormContext context, StoredQuery query) {
         SearchFieldSupport support = this.getSearchFieldSupport();
         support.addFullTextField(context, query, getRelevantAndNegate(), this.fullTextModeIsAndDefault, this.fullTextExactMatchDefault);
@@ -707,6 +837,11 @@ public class AttributedSearchComponent extends FormComponent {
         return (theFilter);
     }
 
+	/**
+	 * Creates the field for selecting the result columns.
+	 * 
+	 * @return The field, or <code>null</code> if no column selection is offered.
+	 */
     protected FormField getColumnSelectField() {
 		return getSearchFieldSupport().getColumnSelectField(getResultColumns(), getSearchMetaElement(),
 			getAdditionalResultColumnOptions(), getExcludeSetForColumns());
@@ -787,7 +922,7 @@ public class AttributedSearchComponent extends FormComponent {
     }
 
     /**
-     * Returns the FormGroup for publishing details.
+     * Returns the {@link FormGroup} for publishing details.
      */
     protected FormGroup getPublishingFormGroup() {
     	return this.getSearchFieldSupport().getPublishingFormGroup(this, this.getResPrefix());
@@ -903,20 +1038,37 @@ public class AttributedSearchComponent extends FormComponent {
 			+ ", builder: " + getBuilder();
     }
 
+	/**
+	 * Whether the user can save, load, and delete search queries.
+	 * 
+	 * @see Config#getQuerySupport()
+	 */
 	public final boolean getQuerySupport() {
 		// Final because property is used in configuration.
 		return ((Config) getConfig()).getQuerySupport();
     }
 
+	/**
+	 * Whether the {@link #getSearchScope() search scope} is {@link #EXTENDED_SCOPE}.
+	 */
     public boolean isExtendedSearch() {
         return AttributedSearchComponent.EXTENDED_SCOPE.equals(this.getSearchScope());
     }
 
+	/**
+	 * The current search scope, either {@link #NORMAL_SCOPE} or {@link #EXTENDED_SCOPE}.
+	 */
     public String getSearchScope() {
 
         return this.searchScope;
     }
 
+	/**
+	 * Sets the {@link #getSearchScope() search scope} and rebuilds the search form.
+	 *
+	 * @param aScope
+	 *        Either {@link #NORMAL_SCOPE} or {@link #EXTENDED_SCOPE}, other values are ignored.
+	 */
     public void setSearchScope(String aScope) {
         if (AttributedSearchComponent.NORMAL_SCOPE.equals(aScope) || AttributedSearchComponent.EXTENDED_SCOPE.equals(aScope)) {
             if (!aScope.equals(this.searchScope)) {
@@ -1065,10 +1217,27 @@ public class AttributedSearchComponent extends FormComponent {
 
     }
 
+	/**
+	 * Additional CSS style information for the search field with the given name.
+	 *
+	 * @param aMemberName
+	 *        The name of the search field.
+	 * @param aCheckboxName
+	 *        The name of the corresponding checkbox for "relevant and negate".
+	 * @return The CSS style to use, the default implementation returns the empty string.
+	 */
     public String getStyleInformation(String aMemberName, String aCheckboxName) {
     	return "";
     }
 
+	/**
+	 * The result columns selected in the given search form.
+	 *
+	 * @param aContext
+	 *        The search form.
+	 * @return The names of the columns selected by the user, or {@link #getResultColumns()}, if
+	 *         the form has no column selection field.
+	 */
     public List<String> getResultColumns(FormContext aContext) {
 		SelectField tableColumnsFields = SearchFieldSupport.getTableColumnsFields(aContext);
 		if (tableColumnsFields != null) {
@@ -1173,6 +1342,9 @@ public class AttributedSearchComponent extends FormComponent {
 		return true;
 	}
 	
+	/**
+	 * Description of an attribute that is reached from the searched type via an access path.
+	 */
 	public static class DerivedAttributeDescription {
 
 	    /** Used to fetch values from a {@link StoredQuery} and defines the domain in {@link AttributeUpdate#getDomain()} */ 
@@ -1180,32 +1352,66 @@ public class AttributedSearchComponent extends FormComponent {
 
         private TLStructuredTypePart  target;
 
+		/**
+		 * Creates a {@link DerivedAttributeDescription}.
+		 *
+		 * @param aPath
+		 *        The access path as list of attribute names.
+		 * @param aTargetMA
+		 *        The attribute at the end of the path.
+		 */
         public DerivedAttributeDescription(List<String> aPath, TLStructuredTypePart aTargetMA) {
             this.path   = StringServices.toString(aPath, ".");
             this.target = aTargetMA;
         }
 
+		/**
+		 * Creates a {@link DerivedAttributeDescription}.
+		 *
+		 * @param aPath
+		 *        The dot separated access path.
+		 * @param aTargetMA
+		 *        The attribute at the end of the path.
+		 */
         public DerivedAttributeDescription(String aPath, TLStructuredTypePart aTargetMA) {
             this.path   = aPath;
             this.target = aTargetMA;
         }
 
+		/**
+		 * The attribute at the end of the {@link #getAccessPath() access path}.
+		 */
         public TLStructuredTypePart getTarget() {
             return (this.target);
         }
         
+		/**
+		 * The dot separated access path, also used as domain of the search field.
+		 */
         public String getAccessPath() {
             return this.path;
         }
         
+		/**
+		 * The name of the "relevant and negate" checkbox of the search field.
+		 */
         public String getRelAndUseName() {
             return SearchFilterSupport.getRelevantAndNegateMemberName(this.getTarget(), this.getAccessPath());
         }
         
+		/**
+		 * The name of the search field for this attribute.
+		 */
         public String getFieldName() {
 			return MetaAttributeGUIHelper.getAttributeIDCreate(this.getTarget(), this.getAccessPath());
         }
         
+		/**
+		 * The label of the search field for this attribute.
+		 *
+		 * @param aME
+		 *        The searched type.
+		 */
         public String getLabel(TLClass aME) {
             return TLModelI18N.getI18NName(aME, this.getAccessPath(), this.getTarget());
         }
@@ -1214,7 +1420,7 @@ public class AttributedSearchComponent extends FormComponent {
     /**
      * Suppress the {@link InputListener} and {@link InputColorListener} when set.
      * 
-     * This is needed by Subclass that must update the FormFields later and
+     * This is needed by Subclass that must update the {@link FormField}s later and
      * will be hindered by these listeners do do so.
      */
     public boolean supressListeners() {
@@ -1222,7 +1428,7 @@ public class AttributedSearchComponent extends FormComponent {
     }
 
 	/**
-	 * A Delegate used to create {@link DerivedAttributeDescription}s
+	 * A delegate used to create {@link DerivedAttributeDescription}s.
 	 */
     public static interface DerivedAttributeDescriptionProvider {
         

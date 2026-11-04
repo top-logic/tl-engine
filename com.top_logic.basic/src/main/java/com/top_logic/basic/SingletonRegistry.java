@@ -40,6 +40,9 @@ public abstract class SingletonRegistry<T> extends KeyStorage<T> {
     	assert checkConfiguration() : "Not all configured classes could be loaded.";
     }
     
+    /**
+     * Whether all configured classes can be loaded.
+     */
     protected boolean checkConfiguration() {
 		boolean result = true;
 

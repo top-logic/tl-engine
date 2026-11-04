@@ -222,10 +222,12 @@ public class ComparisonDependency implements Constraint {
 		return value == FormField.EMPTY_INPUT || (value instanceof Collection && ((Collection<?>) value).isEmpty());  
 	}
 
+	/** Compares the given values. */
 	protected int compareObjects(Object value, Object otherValue) {
 	    return valueComparator.compare(value, otherValue);
 	}
 
+	/** Converts the given value for use in an error message. */
 	protected Object formatForMessage(Object value) {
 	    return value;
 	}

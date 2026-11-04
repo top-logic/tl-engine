@@ -532,6 +532,15 @@ public class Theme {
 		return _styleSheet;
     }
 
+	/**
+	 * Compiles the single given CSS file into a theme specific style sheet.
+	 *
+	 * @param aName
+	 *        Name of the CSS file, also used as name template for the result file.
+	 * @return A global reference to the created CSS file.
+	 *
+	 * @see #getStyleSheet(String, String[])
+	 */
 	public final String getStyleSheet(String aName) {
 		return getStyleSheet(aName, new String[] { aName });
     }
@@ -585,7 +594,7 @@ public class Theme {
     }
 
 	/**
-	 * Write the stylesheets to the given TagWriter.
+	 * Write the stylesheets to the given {@link TagWriter}.
 	 * 
 	 * @param out
 	 *        The writer to write to.
@@ -708,10 +717,23 @@ public class Theme {
         return (theResult);
     }
     
+    /**
+     * The cached link for the given file name, or <code>null</code> if none has been cached yet.
+     *
+     * @see #addCachedFileLink(String, String)
+     */
     protected final String getCachedFileLink(String aFileName) {
         return this.fileLinks.getProperty(aFileName);
     }
     
+    /**
+     * Caches the resolved link for the given file name.
+     *
+     * @param aFileName
+     *        The requested file name.
+     * @param aResult
+     *        The resolved link of the file.
+     */
     protected final void addCachedFileLink(String aFileName, String aResult) {
         this.fileLinks.put(aFileName, aResult);
     }
@@ -754,6 +776,10 @@ public class Theme {
 				+ templateName.substring(templateName.lastIndexOf('/') + 1);
 	}
 
+	/**
+	 * Whether the given value is a reference to another theme value, i.e. has the form
+	 * <code>%name%</code>.
+	 */
 	public static boolean isThemeValueReference(String value) {
 		int length = value.length();
 	

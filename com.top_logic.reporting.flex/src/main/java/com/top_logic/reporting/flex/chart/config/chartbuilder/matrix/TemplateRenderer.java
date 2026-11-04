@@ -34,9 +34,9 @@ import org.jfree.data.category.CategoryDataset;
 
 
 /**
- * The TemplateRenderer is an abstract Renderer to draw diagrams. The
- * TemplateRenderer draws for each entry from a dataset an item into the diagram.
- * The color, size and form gets the renderer by delegation of its TemplateInfo.
+ * The {@link TemplateRenderer} is an abstract Renderer to draw diagrams. The
+ * {@link TemplateRenderer} draws for each entry from a dataset an item into the diagram.
+ * The color, size and form gets the renderer by delegation of its {@link TemplateInfo}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -204,72 +204,56 @@ public abstract class TemplateRenderer extends BarRenderer {
     }
     
     /**
-     * This method returns the renderingInfo.
-     * 
-     * @return Returns the renderingInfo.
+     * The {@link TemplateInfo} providing color, size and form of the drawn items.
      */
     public TemplateInfo getRenderingInfo() {
         return this.renderingInfo;
     }
 
     /**
-     * This method sets the renderingInfo.
-     *
-     * @param aRenderingInfo The renderingInfo to set.
+     * Setter for {@link #getRenderingInfo()}.
      */
     public void setRenderingInfo(TemplateInfo aRenderingInfo) {
         this.renderingInfo = aRenderingInfo;
     }
     
     /**
-     * This method returns the shapeGradientValue.
-     * 
-     * @return Returns the shapeGradientValue.
+     * The value by which the color of the shape is darkened for its gradient.
      */
     public int getShapeGradientValue() {
         return this.shapeGradientValue;
     }
     
     /**
-     * This method sets the shapeGradientValue.
-     *
-     * @param aShapeGradientValue The shapeGradientValue to set.
+     * Setter for {@link #getShapeGradientValue()}.
      */
     public void setShapeGradientValue(int aShapeGradientValue) {
         this.shapeGradientValue = aShapeGradientValue;
     }
 
     /**
-     * This method returns the shapeMargin.
-     * 
-     * @return Returns the shapeMargin.
+     * The margin around a shape.
      */
     public double getShapeMargin() {
         return this.shapeMargin;
     }
 
     /**
-     * This method sets the shapeMargin.
-     *
-     * @param aShapeMargin The shapeMargin to set.
+     * Setter for {@link #getShapeMargin()}.
      */
     public void setShapeMargin(double aShapeMargin) {
         this.shapeMargin = aShapeMargin;
     }
 
     /**
-     * This method returns the shapeMinSize.
-     * 
-     * @return Returns the shapeMinSize.
+     * The minimum size of a shape.
      */
     public int getShapeMinSize() {
         return this.shapeMinSize;
     }
 
     /**
-     * This method sets the shapeMinSize.
-     *
-     * @param aShapeMinSize The shapeMinSize to set.
+     * Setter for {@link #getShapeMinSize()}.
      */
     public void setShapeMinSize(int aShapeMinSize) {
         this.shapeMinSize = aShapeMinSize;

@@ -31,8 +31,10 @@ public class SetModelActionOp extends ComponentActionOp<SetModelActionOp.Config>
 		@ClassDefault(SetModelActionOp.class)
 		Class<SetModelActionOp> getImplementationClass();
 
+		/** Reference to the model to set to the component. */
 		ModelName getModel();
 
+		/** Setter for {@link #getModel()}. */
 		void setModel(ModelName modelRef);
 		
 	}

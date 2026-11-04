@@ -25,9 +25,15 @@ import com.top_logic.basic.col.ComparableComparator;
  */
 public class MatrixChartInfo implements TemplateInfo {
 
-    public static final MatrixChartInfo RED_YELLOW_GREEN = new MatrixChartInfo(0.0f);
+    /**
+	 * Color scheme from red over yellow to green.
+	 */
+	public static final MatrixChartInfo RED_YELLOW_GREEN = new MatrixChartInfo(0.0f);
 
-    public static final MatrixChartInfo GREEN_YELLOW_RED = new MatrixChartInfo(1.0f / 3.0f);
+    /**
+	 * Color scheme from green over yellow to red.
+	 */
+	public static final MatrixChartInfo GREEN_YELLOW_RED = new MatrixChartInfo(1.0f / 3.0f);
 
     private final float factor;
 

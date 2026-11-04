@@ -9,10 +9,19 @@ import com.top_logic.layout.progress.DefaultProgressInfo;
 import com.top_logic.reporting.report.model.FilterVO;
 
 /**
+ * Model builder computing its model from filter settings.
+ *
  * @author     <a href="mailto:olb@top-logic.com">olb</a>
  */
 public interface FilterAwareModelBuilder {
+	/**
+	 * Computes the model for the given filter settings.
+	 *
+	 * @param progressInfo
+	 *        Progress information to update during the computation.
+	 */
 	public void prepareModel(FilterVO filter, DefaultProgressInfo progressInfo);
 	
+	/** The filter settings the model was computed for. */
 	public FilterVO getFilterVO();
 }

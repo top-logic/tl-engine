@@ -74,9 +74,9 @@ public class DeviceMapping extends Properties {
 	}
 
 	/**
-	 * Merge this DeviceMapping with the given one
+	 * Merge this {@link DeviceMapping} with the given one
 	 * 
-	 * @param aMapping the other DeviceMapping
+	 * @param aMapping the other {@link DeviceMapping}
 	 * @param override if true the other mappings override the current ones
 	 */
 	public void mergeWith(DeviceMapping aMapping, boolean override) {

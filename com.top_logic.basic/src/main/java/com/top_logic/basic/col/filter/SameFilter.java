@@ -25,7 +25,7 @@ public class SameFilter extends AbstractReplaceableSearchObjectFilter {
     }
 
     /**
-     * true when object same as anObject.
+     * true when object same as {@code anObject}.
      */
     @Override
 	public boolean accept(Object anObject) {

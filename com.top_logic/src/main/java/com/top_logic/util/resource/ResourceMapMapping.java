@@ -18,8 +18,10 @@ import com.top_logic.util.Resources;
  */
 public class ResourceMapMapping<T> implements Mapping<T, String> {
 
+	/** The mapping of objects to resource keys. */
 	protected final Map<? super T, ResKey> keyMapping;
     
+    /** The {@link Resources} to translate the resource keys with. */
     protected final Resources res;
 
 	/**

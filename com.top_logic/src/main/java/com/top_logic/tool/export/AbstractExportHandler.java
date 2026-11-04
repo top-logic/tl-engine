@@ -9,7 +9,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * The AbstractExportHandler provides basic security features.
+ * The {@link AbstractExportHandler} provides basic security features.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */

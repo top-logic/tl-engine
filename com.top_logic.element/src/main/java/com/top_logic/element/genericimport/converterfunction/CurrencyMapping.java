@@ -10,6 +10,8 @@ import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.knowledge.wrap.currency.Currency;
 
 /**
+ * {@link GenericConverterFunction} resolving an imported currency name to its currency.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class CurrencyMapping implements GenericConverterFunction {

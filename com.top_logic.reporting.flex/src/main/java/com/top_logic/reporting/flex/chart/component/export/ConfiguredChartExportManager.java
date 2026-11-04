@@ -70,7 +70,7 @@ public class ConfiguredChartExportManager extends AbstractExportManager<Configur
 	public static final String GENERIC_COLUMNS = "_generic";
 
 	/**
-	 * Enum describing which detail-object should be exported additionally to a chart
+	 * Enum describing which detail-object should be exported additionally to a chart.
 	 */
 	public enum ExportObjects {
 		/**
@@ -284,7 +284,7 @@ public class ConfiguredChartExportManager extends AbstractExportManager<Configur
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(String handler, String path, ResKey label, ConfiguredChartExportManager.ExportObjects objects) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);
@@ -306,7 +306,7 @@ public class ConfiguredChartExportManager extends AbstractExportManager<Configur
 	/**
 	 * Factory method to create an initialized {@link ConfiguredChartExportManager}.
 	 * 
-	 * @return a new ConfiguredChartExportManager.
+	 * @return a new {@link ConfiguredChartExportManager}.
 	 */
 	public static ConfiguredChartExportManager instance(String handler, String path, ResKey label, ConfiguredChartExportManager.ExportObjects objects) {
 		return (ConfiguredChartExportManager) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
@@ -321,6 +321,8 @@ public class ConfiguredChartExportManager extends AbstractExportManager<Configur
 	public interface AdditionalChartValueProvider {
 
 		/**
+		 * Adds additional values for the export of the given component to the given map.
+		 *
 		 * @param valueMap
 		 *        - the {@link Map}, to which the export result shall be added to
 		 * @param component

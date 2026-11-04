@@ -19,7 +19,7 @@ public class DefaultListOptionModel<T> implements ListOptionModel<T> {
 	private List<? extends T> options;
 	
 	/**
-	 * Create a new DefaultListOptionModel
+	 * Creates a new {@link DefaultListOptionModel}.
 	 *  
 	 * @param options - the select field options
 	 */

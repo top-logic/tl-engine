@@ -508,7 +508,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
     }
     
     /**
-     * Create a Linechart of someMemoryUsageEntries with someAttributes as Y-values
+     * Create a line chart of {@code someMemoryUsageEntries} with {@code someAttributes} as Y-values
      */
     public static JFreeChart createMemoryUsageChart(List<? extends MemoryUsageEntry> someMemoryUsageEntries, List<?> someAttributes) {
 		TimeSeriesCollection theTSC = new TimeSeriesCollection(TimeZones.systemTimeZone());
@@ -536,7 +536,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
     }
     
     /**
-     * The MemoryUsageEntry holds memory usage data 
+     * The {@link MemoryUsageEntry} holds memory usage data.
      * 
      * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
      */
@@ -645,10 +645,13 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
         }
     }
     
+	/** {@link Accessor} for the values of a {@link MemoryUsageEntry} (memory values in MB). */
 	public static class MemoryUsageEntryAccessor implements Accessor<MemoryUsageEntry> {
         
+        /** Singleton {@link MemoryUsageEntryAccessor} instance. */
         public static final MemoryUsageEntryAccessor INSTANCE = new MemoryUsageEntryAccessor();
         
+        /** Property name of the date of the entry. */
         public static final String DATE  = "date";
 
 		/** Maximum number of bytes available to VM */
@@ -780,7 +783,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
         }
         
         /**
-         * Adds all entries from aBuffer to this buffer.
+         * Adds all entries from {@code aBuffer} to this buffer.
          */
         public void add(ObjectBuffer<? extends E> aBuffer) {
             List<? extends E> theNew = aBuffer.getAll();
@@ -794,18 +797,18 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
     }
 
 	/**
-	 * This method returns the logInterval.
+	 * This method returns the log interval.
 	 * 
-	 * @return Returns the logInterval.
+	 * @return Returns the log interval.
 	 */
 	public long getLoggingInterval() {
 		return getConfig().getLoggingInterval();
 	}
 
 	/**
-	 * This method returns the logPeriod.
+	 * This method returns the log period.
 	 * 
-	 * @return Returns the logPeriod.
+	 * @return Returns the log period.
 	 */
 	public long getLoggingPeriod() {
 		return getConfig().getLoggingPeriod();

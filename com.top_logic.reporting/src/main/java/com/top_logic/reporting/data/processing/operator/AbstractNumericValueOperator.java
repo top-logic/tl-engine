@@ -79,7 +79,7 @@ public abstract class AbstractNumericValueOperator implements Operator {
      * the definition.
      * 
      * @param    aValueArray    The values which should be processed.
-     * @return   The result value or a NullValue
+     * @return   The result value or a {@link NullValue}
      * @see      com.top_logic.reporting.data.base.value.common.NumericValue
      * @throws   ClassCastException    If the given array contains at least
      *                                 one none NumericValue.

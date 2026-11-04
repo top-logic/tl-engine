@@ -66,11 +66,13 @@ public abstract class AbstractFolderTreeBuilder<C extends AbstractFolderTreeBuil
 	}
 
 	/**
+	 * Whether the given user object is linked into the given parent.
+	 *
 	 * @param parent
-	 *        the parent of the node of userObject
+	 *        the parent of the node of the given user object
 	 * @param userObject
 	 *        the object to examine
-	 * @return is the userObject a link in parent?
+	 * @return Whether the given user object is a link in the given parent.
 	 */
 	protected abstract boolean isLink(FolderNode parent, Object userObject);
 

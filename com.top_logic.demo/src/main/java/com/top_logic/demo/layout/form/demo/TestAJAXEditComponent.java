@@ -123,7 +123,7 @@ public class TestAJAXEditComponent extends EditComponent implements ModelProvide
 	}
 
 	/**
-	 * "Configuration" frontend for {@link TestAJAXEditComponent.StoreCommand}
+	 * Configuration frontend for {@link TestAJAXEditComponent.StoreCommand}
 	 * that makes it an "apply command".
 	 * 
 	 * Is configured in top-logic.local.xml
@@ -137,8 +137,8 @@ public class TestAJAXEditComponent extends EditComponent implements ModelProvide
 	}
 
 	/**
-	 * "Configuration" frontend for {@link TestAJAXEditComponent.StoreCommand}
-	 * that makes it an "save command".
+	 * Configuration frontend for {@link TestAJAXEditComponent.StoreCommand}
+	 * that makes it a "save command".
 	 * 
 	 * Is configured in top-logic.local.xml
 	 */
@@ -184,6 +184,7 @@ public class TestAJAXEditComponent extends EditComponent implements ModelProvide
 		}
 	}
 
+	/** Fills the fields of the given form context with the values of the given search model. */
 	protected static void loadModel(FormContext context, SearchModel model) {
 		FormContainer dateContainer = context.getContainer(DATE_NAME);
 		dateContainer.getField(BEGIN_NAME).setValue(model.beginDate);

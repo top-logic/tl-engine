@@ -12,15 +12,15 @@ import com.top_logic.reporting.office.StaticSymbolResolver;
 
 
 /**
- * This default implementation uses the AliasManager to resolve the 
- * given ExpansionObject.
+ * This default implementation uses the {@link AliasManager} to resolve the 
+ * given {@link ExpansionObject}.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
 public class AliasSymbolResolver implements StaticSymbolResolver {
 
     /**
-     * Try to expand the symbol by using the AliasManager :)
+     * Try to expand the symbol by using the {@link AliasManager} :)
      * 
      * @see com.top_logic.reporting.office.StaticSymbolResolver#resolveSymbol(com.top_logic.reporting.office.ExpansionContext,
      *      com.top_logic.reporting.office.ExpansionObject)

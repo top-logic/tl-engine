@@ -31,6 +31,16 @@ public interface ResourceView {
 	 */
 	public String getStringResource(String resourceKey);
 
+	/**
+	 * Looks up the resource with the given key.
+	 * 
+	 * @param resourceKey
+	 *        The key that identifies the resource.
+	 * @param defaultValue
+	 *        The value to return if there is no resource for the given key.
+	 * @return The resource of type {@link String}, or the given default value if there is no
+	 *         resource associated with the given key.
+	 */
 	public String getStringResource(String resourceKey, String defaultValue);
 
 	/**

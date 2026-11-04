@@ -10,6 +10,9 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.ExpandableTextInputControl;
 
 /**
+ * {@link TextInputFormFieldControlProvider} that creates {@link ExpandableTextInputControl}s for
+ * {@link com.top_logic.layout.form.model.ExpandableStringField}s.
+ *
  * @author <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class ExpandableTextInputFormFieldControlProvider extends TextInputFormFieldControlProvider {

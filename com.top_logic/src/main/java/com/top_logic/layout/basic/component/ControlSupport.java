@@ -59,6 +59,9 @@ public class ControlSupport implements AJAXSupport, ControlScope {
         this.component = component;
     }
 
+	/**
+	 * The {@link LayoutComponent} whose controls are managed by this {@link ControlSupport}.
+	 */
 	public LayoutComponent getComponent() {
 		return this.component;
 	}

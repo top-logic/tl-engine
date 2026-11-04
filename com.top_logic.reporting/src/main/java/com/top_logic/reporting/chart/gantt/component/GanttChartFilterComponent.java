@@ -57,28 +57,37 @@ import com.top_logic.util.Utils;
 public abstract class GanttChartFilterComponent extends AbstractGanttFilterComponent implements
 		GanttChartConstants {
 
+	/** Configuration options for {@link GanttChartFilterComponent}. */
 	public interface Config extends AbstractGanttFilterComponent.Config {
 
+		/** Number of months before today that are used as initial start date of the filter. */
 		@Name(XML_PARAM_MONTH_DIFF_START)
 		@IntDefault(1)
 		int getMonthsBack();
 
+		/** Number of months after today that are used as initial end date of the filter. */
 		@Name(XML_PARAM_MONTH_DIFF_END)
 		@IntDefault(60)
 		int getMonthsForward();
 
+		/** Initial depth of the displayed tree. */
 		@Name(XML_PARAM_DEPTH)
 		@IntDefault(3)
 		int getDepth();
 
+		/** Maximum depth of the displayed tree that can be selected in the filter. */
 		@Name(XML_PARAM_MAX_DEPTH)
 		@IntDefault(10)
 		int getMaxDepth();
 
+		/** Minimum depth of the displayed tree that can be selected in the filter. */
 		@Name(XML_PARAM_MIN_DEPTH)
 		@IntDefault(0)
 		int getMinDepth();
 
+		/**
+		 * Comma separated list of the names of the additional columns that are initially selected.
+		 */
 		@Name(XML_PARAM_INITIAL_COLUMNS)
 		@StringDefault(COLUMN_START_DATE + ',' + COLUMN_END_DATE)
 		String getColumns();
@@ -331,7 +340,7 @@ public abstract class GanttChartFilterComponent extends AbstractGanttFilterCompo
 
 
 	/**
-	 * a new collection with the new FilterProperties used by this filter
+	 * A new collection with the new {@link FilterProperty properties} used by this filter.
 	 */
 	@Override
 	protected List<FilterProperty> createNewProperties() {
@@ -394,7 +403,7 @@ public abstract class GanttChartFilterComponent extends AbstractGanttFilterCompo
 	}
 
 	/**
-	 * Gets the available TimeInterval options.
+	 * Gets the available {@link TimeGranularity} options.
 	 */
 	protected List<TimeGranularity> getTimeIntervals() {
 		TimeGranularity[] timeIntervals = TimeGranularity.values();
@@ -404,7 +413,7 @@ public abstract class GanttChartFilterComponent extends AbstractGanttFilterCompo
 	}
 
 	/**
-	 * Gets the initial selected TimeInterval.
+	 * Gets the initially selected {@link TimeGranularity}.
 	 */
 	protected TimeGranularity getInitialTimeInterval() {
 		return TimeGranularity.QUARTER;
@@ -488,8 +497,8 @@ public abstract class GanttChartFilterComponent extends AbstractGanttFilterCompo
 		/**
 		 * Creates a new {@link ShowHideFieldListener}. This listener is meant to be bound on a boolean
 		 * field. Dependend to this boolean fields value, this listener will toggle the visibility of the
-		 * given targetField, so it becomes visible when the boolean field is set to true and gets hidden,
-		 * if the boolean field is set to false
+		 * given {@code targetField}, so it becomes visible when the boolean field is set to true
+		 * and gets hidden, if the boolean field is set to false
 		 * 
 		 * @param targetField
 		 *        the target field to set the visibility for

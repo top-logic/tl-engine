@@ -44,7 +44,7 @@ public class SearchComponent extends ScriptComponent {
 		ComponentName getTabbarComponentName();
 
 		/**
-		 * Name of the SearchSelector component.
+		 * Name of the component selecting the search expression.
 		 */
 		@Name(SEARCH_EXPRESSION_SELECTOR_NAME)
 		ComponentName getSearchExpressionSelectorName();

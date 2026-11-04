@@ -12,14 +12,17 @@ import com.top_logic.layout.form.control.AbstractFormFieldControlBase;
 import com.top_logic.util.FormFieldHelper;
 
 /**
- * The FormFieldControlComparator compares {@link AbstractFormFieldControlBase}s 
- * by the values of their attached FormFields. Therefore it uses a given Comparator or 
- * the {@link ComparableComparator} as fall back.
+ * The {@link FormFieldControlComparator} compares {@link AbstractFormFieldControlBase}s 
+ * by the values of their attached {@link com.top_logic.layout.form.FormField}s. Therefore it uses a
+ * given Comparator or the {@link ComparableComparator} as fall back.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class FormFieldControlComparator implements Comparator<Object> {
 
+	/**
+	 * Default instance comparing in ascending order using the {@link ComparableComparator}.
+	 */
 	public static final FormFieldControlComparator INSTANCE = new FormFieldControlComparator();
 	
     private Comparator<Object> comparator;

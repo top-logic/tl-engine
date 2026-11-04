@@ -6,7 +6,7 @@
 package com.top_logic.reporting.common.tree;
 
 /**
- * The TreeInfo contains all information which is needed from the 
+ * The {@link TreeInfo} contains all information which is needed from the 
  * {@link com.top_logic.reporting.common.tree.TreeAxis}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
@@ -115,54 +115,54 @@ public class TreeInfo {
     }
     
     /**
-     * This method returns the iconIndex.
+     * This method returns the icon index.
      * 
-     * @return Returns the iconIndex.
+     * @return Returns the icon index.
      */
     public int getIconIndex() {
         return this.iconIndex;
     }
 
     /**
-     * This method sets the iconIndex.
+     * This method sets the icon index.
      *
-     * @param aIconIndex The iconIndex to set.
+     * @param aIconIndex The icon index to set.
      */
     public void setIconIndex(int aIconIndex) {
         this.iconIndex = aIconIndex;
     }
 
     /**
-     * This method returns the iconTooltip.
+     * This method returns the icon tooltip.
      * 
-     * @return Returns the iconTooltip.
+     * @return Returns the icon tooltip.
      */
     public String getIconTooltip() {
         return this.iconTooltip;
     }
     
     /**
-     * This method sets the iconTooltip.
+     * This method sets the icon tooltip.
      *
-     * @param aIconTooltip The iconTooltip to set.
+     * @param aIconTooltip The icon tooltip to set.
      */
     public void setIconTooltip(String aIconTooltip) {
         this.iconTooltip = aIconTooltip;
     }
     
     /**
-     * This method returns the iconUrl.
+     * This method returns the icon URL.
      * 
-     * @return Returns the iconUrl.
+     * @return Returns the icon URL.
      */
     public String getIconUrl() {
         return this.iconUrl;
     }
     
     /**
-     * This method sets the iconUrl.
+     * This method sets the icon URL.
      *
-     * @param aIconUrl The iconUrl to set.
+     * @param aIconUrl The icon URL to set.
      */
     public void setIconUrl(String aIconUrl) {
         this.iconUrl = aIconUrl;
@@ -187,36 +187,36 @@ public class TreeInfo {
     }
 
     /**
-     * This method returns the labelTooltip.
+     * This method returns the label tooltip.
      * 
-     * @return Returns the labelTooltip.
+     * @return Returns the label tooltip.
      */
     public String getLabelTooltip() {
         return this.labelTooltip;
     }
     
     /**
-     * This method sets the labelTooltip.
+     * This method sets the label tooltip.
      *
-     * @param aLabelTooltip The labelTooltip to set.
+     * @param aLabelTooltip The label tooltip to set.
      */
     public void setLabelTooltip(String aLabelTooltip) {
         this.labelTooltip = aLabelTooltip;
     }
     
     /**
-     * This method returns the labelUrl.
+     * This method returns the label URL.
      * 
-     * @return Returns the labelUrl.
+     * @return Returns the label URL.
      */
     public String getLabelUrl() {
         return this.labelUrl;
     }
     
     /**
-     * This method sets the labelUrl.
+     * This method sets the label URL.
      *
-     * @param aLabelUrl The labelUrl to set.
+     * @param aLabelUrl The label URL to set.
      */
     public void setLabelUrl(String aLabelUrl) {
         this.labelUrl = aLabelUrl;

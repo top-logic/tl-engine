@@ -8,6 +8,8 @@ package com.top_logic.knowledge.analyze;
 import com.top_logic.basic.Logger;
 
 /**
+ * {@link SearchResult} holding a found text.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 public class TextResult implements SearchResult {

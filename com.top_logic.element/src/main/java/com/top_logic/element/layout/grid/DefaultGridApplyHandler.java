@@ -16,12 +16,14 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.model.TLObject;
 
 /**
- * Default {@link GridApplyHandler}, which stores the changes of the used AttributeUpdateContainer.
+ * Default {@link GridApplyHandler}, which stores the changes of the used
+ * {@link com.top_logic.element.meta.AttributeUpdateContainer}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class DefaultGridApplyHandler implements GridApplyHandler {
 
+	/** Singleton {@link DefaultGridApplyHandler} instance. */
 	public static final DefaultGridApplyHandler INSTANCE = new DefaultGridApplyHandler();
 
 	@Override

@@ -22,9 +22,9 @@ public abstract class TableDeclarationBase implements TableDeclaration {
     protected Accessor accessor;
     /** When <code>true</code> headers will be render on top of the table */
     private boolean hasHeader;
-    /** Used to render labels and icons for the TreeeNodes */
+    /** Used to render labels and icons for the tree nodes. */
     protected ResourceProvider resourceProvider;
-    /** Used to translate things like the HeaderNames */
+    /** Used to translate things like the header names. */
 	protected ResPrefix resourcePrefix = ResPrefix.GLOBAL;
 
     /** 
@@ -40,6 +40,7 @@ public abstract class TableDeclarationBase implements TableDeclaration {
     	return accessor;
     }
 
+    /** Sets the {@link Accessor} that retrieves the column values from a row object. */
     public void setAccessor(Accessor accessor) {
     	this.accessor = accessor;
     }
@@ -49,6 +50,7 @@ public abstract class TableDeclarationBase implements TableDeclaration {
     	return resourcePrefix;
     }
 
+	/** Setter for {@link #getResourcePrefix()}. */
 	public void setResourcePrefix(ResPrefix resourcePrefix) {
     	this.resourcePrefix = resourcePrefix;
     }
@@ -58,6 +60,7 @@ public abstract class TableDeclarationBase implements TableDeclaration {
     	return resourceProvider;
     }
 
+    /** Setter for {@link #getResourceProvider()}. */
     public void setResourceProvider(ResourceProvider resourceProvider) {
     	this.resourceProvider = resourceProvider;
     }
@@ -67,6 +70,7 @@ public abstract class TableDeclarationBase implements TableDeclaration {
     	return hasHeader;
     }
 
+    /** Setter for {@link #hasHeader()}. */
     public void setHasHeader(boolean hasHeader) {
     	this.hasHeader = hasHeader;
     }

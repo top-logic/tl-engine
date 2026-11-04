@@ -51,7 +51,7 @@ public interface Repository {
     public RepositoryInfo getInformation (String aPath) throws RepositoryException;
 
     /**
-     * Lock the document described by aPath and file name.
+     * Lock the document described by the given path and file name.
      *
      * The lock will fail in case some other user has already locked the file.
      *
@@ -160,7 +160,7 @@ public interface Repository {
      *                             use null to indicate a top-level file
      * @param aFilename            the name of the file
      *
-     * @return   an OputputStream you can use to write to the new revision.
+     * @return   an {@link java.io.OutputStream} you can use to write to the new revision.
      *           Please close this stream as soon as possible.
      *
      * @throws   RepositoryException  If there is a problem with the repository 
@@ -180,7 +180,7 @@ public interface Repository {
      * @param user      the User creating the entry
      * @param aPath     the path to the file including the file name
      *
-     * @return   an OputputStream you can use to write to the new revision.
+     * @return   an {@link java.io.OutputStream} you can use to write to the new revision.
      *           Please close this stream as soon as possible.
      *
      * @throws   RepositoryException  If there is a problem with the repository 
@@ -200,7 +200,7 @@ public interface Repository {
      *
      * @throws RepositoryException If there is a problem with the repository 
      *
-     * @return   an InputStream with the actual version of the document 
+     * @return   an {@link InputStream} with the actual version of the document 
      *           (please close() after usage).
      */
     public InputStream get (String aUser, String aPathIncludingFileName) throws
@@ -219,7 +219,7 @@ public interface Repository {
      *
      * @throws NoEntryException   If there is no document in the Repository.
      *
-     * @return    an InputStream with the requested version of the document
+     * @return    an {@link InputStream} with the requested version of the document
      *           (please close() it after usage).
      */
     public InputStream get (String aPathIncludingFileName, int aVersion) throws
@@ -289,11 +289,11 @@ public interface Repository {
 	public boolean existsEntry(String aPath) throws RepositoryException;
 
     /**
-     * Returns a Collection of EntryInfos for the given Directory.
+     * Returns a Collection of {@link EntryInfo}s for the given Directory.
      *
      * @param    aPathOfDirectory    the path to the directory
      *
-     * @return   a Collection with the VersionInfo of all the top-Level
+     * @return   a Collection with the {@link VersionInfo} of all the top-Level
      *           entries or Directories.
      *
      * @throws   RepositoryException If there is a problem with the repository 

@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 /**
  * Create a folder in another folder.
  * 
- * This handler will use the folder from the component ot its dialogParent, if it's an instance of
+ * This handler will use the folder from the component or its dialog parent, if it's an instance of
  * {@link com.top_logic.knowledge.gui.layout.webfolder.WebFolderAware}. 
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
@@ -55,7 +55,7 @@ public class CreateFolderHandler extends AbstractCommandHandler {
     }
 
     /**
-     * Handle the createFolder command.
+     * Handle the {@link #COMMAND} command.
      */
     @Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent,

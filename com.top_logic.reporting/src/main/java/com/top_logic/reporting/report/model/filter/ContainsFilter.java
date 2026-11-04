@@ -13,7 +13,7 @@ import com.top_logic.basic.col.filter.SetFilter;
 import com.top_logic.reporting.report.importer.AbstractXMLImporter;
 
 /**
- * Extend {@link SetFilter} with  AbstractXMLImporter specific features.
+ * Extend {@link SetFilter} with  {@link AbstractXMLImporter} specific features.
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */

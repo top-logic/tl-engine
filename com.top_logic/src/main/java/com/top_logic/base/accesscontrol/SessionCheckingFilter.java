@@ -38,7 +38,7 @@ public class SessionCheckingFilter implements Filter {
         // Do nothing at the moment.
     }
 
-    /** Theow ServletException when there is no TLContext int the Session is invalid */
+    /** Theow {@link ServletException} when there is no TLContext int the Session is invalid */
     @Override
 	public void doFilter(ServletRequest aRequest,
                          ServletResponse aResponse,

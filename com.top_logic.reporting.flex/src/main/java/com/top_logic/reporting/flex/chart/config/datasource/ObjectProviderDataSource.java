@@ -24,6 +24,8 @@ import com.top_logic.knowledge.wrap.WrapperValueAnalyzer;
 import com.top_logic.knowledge.wrap.WrapperValueFactory;
 
 /**
+ * Data source that provides a fixed list of configured objects.
+ *
  * @author     <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class ObjectProviderDataSource extends AbstractConfiguredInstance<ObjectProviderDataSource.Config>
@@ -105,7 +107,7 @@ public class ObjectProviderDataSource extends AbstractConfiguredInstance<ObjectP
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(List<? extends Object> objects) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);
@@ -116,7 +118,7 @@ public class ObjectProviderDataSource extends AbstractConfiguredInstance<ObjectP
 	/**
 	 * Factory method to create an initialized {@link ObjectProviderDataSource}.
 	 * 
-	 * @return a new ObjectProviderDataSource.
+	 * @return a new {@link ObjectProviderDataSource}.
 	 */
 	public static ObjectProviderDataSource instance(List<? extends Object> objects) {
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(item(objects));

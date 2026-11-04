@@ -10,9 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/** A PreparedQuery Can be used to specify positional parmeters.
+/** A {@link PreparedQuery} Can be used to specify positional parmeters.
  *<p>
- *  You must call executeQuery() before you can use the ResultSet.
+ *  You must call {@link #executeQuery()} before you can use the {@link ResultSet}.
  *</p>
  *
  * @author  Klaus Halfmann
@@ -21,7 +21,7 @@ public class PreparedQuery extends SQLQuery
 {
     PreparedStatement  pstm;
 
-      /** Create a new PreparedQuery, with given sql statemet.
+      /** Create a new {@link PreparedQuery}, with given sql statemet.
        *<p>
        *  You usually shoud proceed as follows:<pre>
        *   PreparedQuery q = new PreparedQuery(" .... WHERE X=? AND Y=? ...");
@@ -48,7 +48,7 @@ public class PreparedQuery extends SQLQuery
     	}  
     }
   
-    /** Creates new PreparedQuery from datasource */
+    /** Creates new {@link PreparedQuery} from datasource */
     /*
     public PreparedQuery(DataSource ds, String sql)
         throws SQLException
@@ -112,7 +112,7 @@ public class PreparedQuery extends SQLQuery
         super.close();
     }
   
-    /** acessor fot the PreparedStatement */
+    /** acessor fot the {@link PreparedStatement} */
     public PreparedStatement getPreparedStatement()
     {
         return pstm;

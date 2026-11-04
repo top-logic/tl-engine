@@ -21,6 +21,7 @@ public class GetEntry extends ContextExpression {
 		this.index = index;
 	}
 	
+	/** The index of the accessed tuple entry. */
 	public int getIndex() {
 		return index;
 	}

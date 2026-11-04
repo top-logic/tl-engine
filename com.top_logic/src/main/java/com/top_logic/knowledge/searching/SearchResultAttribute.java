@@ -25,7 +25,7 @@ public class SearchResultAttribute {
     protected Object value;
 
     /**
-     * Constructor for SearchResultAttribute.
+     * Constructor for {@link SearchResultAttribute}.
      * 
      * @param    aKey      The key of the attribute.
      * @param    aValue    The value of the attribute.

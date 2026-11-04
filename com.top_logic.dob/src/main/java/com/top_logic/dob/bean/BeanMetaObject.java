@@ -51,13 +51,13 @@ public class BeanMetaObject implements MOClass {
 	/** Map of Attributes indexed by name lazy extracted form the Info */
 	protected Map<String, MOAttribute> attrMap;
 
-	/** Map of PropertyDescriptors indexed by name lazy extracted form the Info */
+	/** Map of {@link PropertyDescriptor}s indexed by name lazy extracted form the Info */
 	protected Map<String, PropertyDescriptor> propertyMap;
 
 	/** Array of Attribute names lazy extracted form the Info */
 	protected String attrnames[];
 	
-	/** Construct a BeanMetaObject fro a given (Bean)-Class */
+	/** Construct a {@link BeanMetaObject} fro a given (Bean)-Class */
 	public BeanMetaObject(Class aClass) throws IntrospectionException
 	{
 		if (aClass.isInterface()) // mhh, will not care for superinterfaces
@@ -66,7 +66,7 @@ public class BeanMetaObject implements MOClass {
             info = Introspector.getBeanInfo(aClass, Object.class);
 	}
 
-	/** Construct a BeanMetaObject fro a given BeanInfo */
+	/** Construct a {@link BeanMetaObject} fro a given {@link BeanInfo} */
 	public BeanMetaObject(BeanInfo anInfo)
 	{
 		info = anInfo;	
@@ -77,7 +77,7 @@ public class BeanMetaObject implements MOClass {
 		return Kind.item;
 	}
 
-	/** Not implemented since the classHierarchy predicts the superclass
+	/** Not implemented since the class hierarchy predicts the superclass
 	 */
 	@Override
 	public void setSuperclass(MOClass aMOClass) {
@@ -103,7 +103,7 @@ public class BeanMetaObject implements MOClass {
         return null;
 	}
 
-	/** The declared Attributes are generated from the PropertyDescriptors as needed.
+	/** The declared Attributes are generated from the {@link PropertyDescriptor}s as needed.
 	 */
 	@Override
 	public List<MOAttribute> getDeclaredAttributes() {
@@ -114,7 +114,7 @@ public class BeanMetaObject implements MOClass {
 		return attributes;
 	}
 	
-	/** Create the declared Attributes  from the PropertyDescriptors */
+	/** Create the declared Attributes  from the {@link PropertyDescriptor}s */
     protected void createDeclaredAttributes(PropertyDescriptor[] descs) {
         ArrayList<String> attrnamesList = new ArrayList<>();
         int size = descs.length;
@@ -170,7 +170,7 @@ public class BeanMetaObject implements MOClass {
 	}
 
 	/**
-	 * Check if some {@link BeanMetaObject} identified by superName is a superclass of this.
+	 * Check if some {@link BeanMetaObject} identified by the given name is a superclass of this.
 	 */
 	public boolean isInherited(String superName) {
 		BeanMetaObject bmo = null;
@@ -244,7 +244,7 @@ public class BeanMetaObject implements MOClass {
 		return this.getAttributes().size();
 	}
 	
-	/** Equal to createDeclaredAttributes() since we cannot really distinguish these.
+	/** Equal to {@link #createDeclaredAttributes(java.beans.PropertyDescriptor[])} since we cannot really distinguish these.
 	 * 
 	 *  This may become a problem in the future, mmh.
 	 */
@@ -330,7 +330,7 @@ public class BeanMetaObject implements MOClass {
 		return attrnames;
 	}
 
-	/** Create a new, empty BeanDataObject based on an empty Bean.
+	/** Create a new, empty {@link BeanDataObject} based on an empty Bean.
 	 */
 	public DataObject createEmptyObject() throws UnknownTypeException {
 		try {

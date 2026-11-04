@@ -19,7 +19,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.util.Resources;
 
 /**
- * The BlockTextInputControl renders text in block format.
+ * The {@link BlockTextInputControl} renders text in block format.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -46,7 +46,7 @@ public class BlockTextInputControl extends ExpandableTextInputControl {
 	 * Creates a {@link BlockTextInputControl}.
 	 * 
 	 * @param aModel
-	 *        the FormField this {@link TextInputControl} renders.
+	 *        the {@link FormField} this {@link TextInputControl} renders.
 	 */
     public BlockTextInputControl(FormField aModel, int colsCollaped, int rowsCollaped) {
         super(aModel, -1);
@@ -59,18 +59,22 @@ public class BlockTextInputControl extends ExpandableTextInputControl {
     }
 
     
+    /** Sets the number of columns in collapsed state. */
     public void setBlockColsCollapsed(int aBlockColsCollapsed) {
         this.blockColsCollapsed = aBlockColsCollapsed;
     }
     
+    /** Sets the number of columns in expanded state. */
     public void setBlockColsExpanded(int aBlockColsExpanded) {
         this.blockColsExpanded = aBlockColsExpanded;
     }
     
+    /** Sets the number of rows in collapsed state. */
     public void setBlockRowsCollapsed(int aBlockRowsCollapsed) {
         this.blockRowsCollapsed = aBlockRowsCollapsed;
     }
     
+    /** Sets the number of rows in expanded state. */
     public void setBlockRowsExpanded(int aBlockRowsExpanded) {
         this.blockRowsExpanded = aBlockRowsExpanded;
     }
@@ -200,7 +204,7 @@ public class BlockTextInputControl extends ExpandableTextInputControl {
      * @param aString   the string the format
      * @param blockSize number of characters per line
      * @param maxRows   maximum number of rows shown in the block.
-     *                  if maxRows < 0, all text will be shown,
+     *                  if {@code maxRows < 0}, all text will be shown,
      *                  otherwise the text is shorten and "..." will be 
      *                  appended at the end.
      * @param aLineSeparator a separator to split the lines

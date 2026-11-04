@@ -17,7 +17,7 @@ import java.util.Set;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
- * {@link FileManager} that delegates all functionality to some other FileManager.
+ * {@link FileManager} that delegates all functionality to some other {@link FileManager}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

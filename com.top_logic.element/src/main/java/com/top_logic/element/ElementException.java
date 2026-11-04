@@ -6,14 +6,14 @@
 package com.top_logic.element;
 
 /**
- * Super class for exceptions in the handling of StructuredElements
+ * Super class for exceptions in the handling of structured elements.
  * 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
 public class ElementException extends RuntimeException {
 
 	/**
-	 * ElementException with a message.
+	 * {@link ElementException} with a message.
 	 * 
 	 * @param aMessage the error message
 	 */
@@ -22,7 +22,7 @@ public class ElementException extends RuntimeException {
 	}
 
 	/**
-	 * ElementException with a message and a cause.
+	 * {@link ElementException} with a message and a cause.
 	 * @param aMessage 	the massage
 	 * @param aCause	the cause
 	 */

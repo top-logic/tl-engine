@@ -33,21 +33,36 @@ public class Region {
 		isChanged = changed;
 	}
 	
+	/**
+	 * Whether this region contains changed lines.
+	 */
 	public boolean isChanged(){
 		return isChanged;
 	}
 
+	/**
+	 * Appends a line of the source text to this region.
+	 */
 	public void addSourceLine(AbstractLine line) {
 		sourceLines.add(line);
 	}
 	
+	/**
+	 * Appends a line of the destination text to this region.
+	 */
 	public void addDestLine(AbstractLine line) {
 		destLines.add(line);
 	}
 		
+	/**
+	 * A copy of the source text lines of this region.
+	 */
 	public List<AbstractLine> getSourceLines() {
 		return new ArrayList<>(sourceLines);
 	}
+	/**
+	 * A copy of the destination text lines of this region.
+	 */
 	public List<AbstractLine> getDestLines() {
 		return new ArrayList<>(destLines);
 	}

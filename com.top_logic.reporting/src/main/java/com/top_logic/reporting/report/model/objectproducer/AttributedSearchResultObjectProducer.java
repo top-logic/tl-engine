@@ -21,10 +21,13 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundHelper;
 
 /**
+ * {@link ObjectProducer} providing the result of the search of a component.
+ *
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 @Deprecated
 public class AttributedSearchResultObjectProducer extends AbstractObjectProducer {
+	/** The type of the produced objects. */
 	public static final String OBJECT_TYPE = "Wrapper";
 	
 	private Collection objects;
@@ -53,6 +56,7 @@ public class AttributedSearchResultObjectProducer extends AbstractObjectProducer
 		}
 	}
     
+    /** Configuration of an {@link AttributedSearchResultObjectProducer}. */
     public interface AttributedSearchResultProducerConfiguration extends ObjectProducerConfiguration {
     	@Override
 		@ClassDefault(AttributedSearchResultObjectProducer.class)
@@ -62,8 +66,10 @@ public class AttributedSearchResultObjectProducer extends AbstractObjectProducer
 		@StringDefault("defaultValue")
     	String getObjectType();
     	
+		/** Format resolving a component by its name. */
 		public static final class MyValueFormat extends AbstractConfigurationValueProvider<LayoutComponent> {
     		
+    		/** Singleton {@link MyValueFormat} instance. */
     		public static final MyValueFormat INSTANCE = new MyValueFormat();
 			
 			private MyValueFormat() {
@@ -82,8 +88,10 @@ public class AttributedSearchResultObjectProducer extends AbstractObjectProducer
 			}
 		}
     	
+    	/** The component providing the search result. */
     	@Format(MyValueFormat.class)
     	AttributedSearchResultSetAware getLayoutComponent();
+ 	    /** Setter for {@link #getLayoutComponent()}. */
  	    void setLayoutComponent(AttributedSearchResultSetAware aComponent);
     }
 }

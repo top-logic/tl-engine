@@ -8,7 +8,7 @@ package com.top_logic.layout.table.component;
 /**
  * Interface for flexible defining of columns displayed by an implementing component.
  *
- * This interface will be used by the AttributedSearchFormComponent.
+ * This interface will be used by the {@code AttributedSearchFormComponent}.
  *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */

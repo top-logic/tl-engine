@@ -30,6 +30,9 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLClass;
 
 /**
+ * {@link GenericCache} that is filled with the existing objects of the imported types, indexed
+ * by the value of their foreign key attribute.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class MetaElementBasedCache extends AbstractGenericDataImportBase implements GenericCache {
@@ -171,6 +174,14 @@ public class MetaElementBasedCache extends AbstractGenericDataImportBase impleme
         }
     }
     
+    /**
+     * Fills the given cache with the existing objects of the given type.
+     *
+     * @param aCache
+     *        The cache to fill, mapping foreign key values to objects.
+     * @param aType
+     *        The internal type name.
+     */
     protected void initCache(Map<Object, Object> aCache, String aType) {
         
         String theOrigin = this.typeOfElementType.get(aType);

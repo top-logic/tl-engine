@@ -29,23 +29,38 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class LayoutGeneratorMain extends XMain {
     
+    /** Long command line option for the prefix of the generated files. */
     public static final String LONG_OPTION_FILE_NAME_PREFIX = "fileNamePrefix";
+    /** Long command line option for the name of the master frame file. */
     public static final String LONG_OPTION_MASTER_FRAME_FILE_NAME = "masterFrameFileName";
+    /** Long command line option for the destination directory. */
     public static final String LONG_OPTION_DETINATION_DIR = "destinationDir";
+    /** Long command line option for the template directory. */
     public static final String LONG_OPTION_TEMPLATE_DIR = "templateDir";
+    /** Long command line option for the source file. */
     public static final String LONG_OPTION_SOURCE_FILE = "sourceFile";
     
+    /** Short command line option for the prefix of the generated files. */
     public static final String SHORT_OPTION_FILE_NAME_PREFIX = "f";
+    /** Short command line option for the name of the master frame file. */
     public static final String SHORT_OPTION_MASTER_FRAME_FILE_NAME = "m";
+    /** Short command line option for the destination directory. */
     public static final String SHORT_OPTION_DETINATION_DIR = "d";
+    /** Short command line option for the template directory. */
     public static final String SHORT_OPTION_TEMPLATE_DIR = "t";
+    /** Short command line option for the source file. */
     public static final String SHORT_OPTION_SOURCE_FILE = "s";
     
+    /** The prefix for the generated files, {@code null} for the default. */
     protected String fileNamePrefix;
+    /** The name of the generated master frame file, {@code null} for none. */
     protected String masterFrameFileName;
+    /** The directory to write the generated files to, {@code null} for the default. */
     protected String destinationDir;
+    /** The directory containing the templates. */
     protected String templateDir;
     
+    /** The name of the file containing the layout configuration. */
     protected String sourceFileName = "WEB-INF/conf/layout.xls";
 
     /** 
@@ -99,6 +114,17 @@ public class LayoutGeneratorMain extends XMain {
     
     
     
+	/**
+	 * Reads the {@link InfoLine}s from the given CSV file.
+	 *
+	 * The first line contains headings and is skipped.
+	 *
+	 * @param aFileName
+	 *        The name of the CSV file.
+	 * @return The lines read.
+	 * @throws IOException
+	 *         If reading the file fails.
+	 */
 	protected static List<InfoLine> readCSVLines(String aFileName) throws IOException {
 		try (FileReader fileReader = new FileReader(aFileName);
 				BufferedReader theReader = new BufferedReader(new FileReader(aFileName))) {
@@ -154,7 +180,7 @@ public class LayoutGeneratorMain extends XMain {
     }
     
     /**
-     * Generate the layout from given fileName. 
+     * Generate the layout from the given file. 
      */
     public void generateLayout(String aFileName) throws Exception {
 		List<InfoLine> theLines;
@@ -259,6 +285,12 @@ public class LayoutGeneratorMain extends XMain {
     }
 
 
+    /**
+     * Starts the layout generator from the command line.
+     *
+     * @param args
+     *        The command line arguments, see {@link #showHelp()}.
+     */
     public static void main (String args[]) throws Exception {
         new LayoutGeneratorMain ().runMainCommandLine (args);
     }

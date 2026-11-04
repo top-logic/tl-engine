@@ -18,6 +18,15 @@ public final class DiffBuilder {
 	
 	private Region current;
 
+	/**
+	 * Groups the given lines into {@link Region}s of changed and unchanged lines.
+	 *
+	 * @param sourceLines
+	 *         The lines of the source text.
+	 * @param destLines
+	 *         The lines of the destination text.
+	 * @return The {@link FileDiff} consisting of the computed {@link Region}s.
+	 */
 	public FileDiff createDiff(final List<Line> sourceLines, List<Line> destLines) {
 		regions = new ArrayList<>();
 		current = null;
@@ -99,7 +108,10 @@ public final class DiffBuilder {
 		return current;
 	}
 
-	protected boolean isFirst() {
+	/**
+	 * Whether no {@link Region} has been created yet.
+	 */
+	private boolean isFirst() {
 		return current == null;
 	}
 

@@ -19,7 +19,7 @@ public class TableFilterEvent {
 	private TableFilter sourceFilter;
 	
 	/**
-	 * Create a new TableFilterEvent
+	 * Create a new {@link TableFilterEvent}
 	 * 
 	 * @param source - the {@link TableFilter}, which fires the event
 	 * @param eventType - the event type of the table filter event
@@ -53,9 +53,13 @@ public class TableFilterEvent {
 	 * @author    <a href=mailto:sts@top-logic.com>sts</a>
 	 */
 	public enum FilterEventTypes {
+		/** The configuration of the filter has changed. */
 		CONFIGURATION_UPDATE,
+		/** The filter shall be applied again. */
 		RE_APPLIANCE,
+		/** The filter has been deactivated. */
 		DEACTIVATION,
+		/** An error occurred in the filter. */
 		ERROR
 	}
 }

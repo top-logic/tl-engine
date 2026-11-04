@@ -18,6 +18,8 @@ import com.top_logic.importer.base.ObjectProvider;
 import com.top_logic.importer.text.TextImportParser;
 
 /**
+ * {@link ObjectProvider} delivering all person contacts.
+ *
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public class PersonContactObjectProvider implements ObjectProvider {
@@ -39,6 +41,7 @@ public class PersonContactObjectProvider implements ObjectProvider {
      */
     public static class PersonContactParser extends TextImportParser<PersonContact> {
 
+        /** Configuration options for {@link PersonContactParser}. */
         public interface Config extends TextImportParser.Config {
         }
 

@@ -23,8 +23,10 @@ import com.top_logic.tool.execution.ExecutabilityRule;
  */
 public final class NothingCommand extends AbstractCommandHandler {
 
+	/** Name of the {@link NothingCommand}. */
 	public static final String COMMAND = "noOpAJAXCommand";
 
+	/** Singleton {@link NothingCommand} instance. */
 	public static final NothingCommand INSTANCE = newInstance(NothingCommand.class, COMMAND);
 
 	public NothingCommand(InstantiationContext context, Config config) {

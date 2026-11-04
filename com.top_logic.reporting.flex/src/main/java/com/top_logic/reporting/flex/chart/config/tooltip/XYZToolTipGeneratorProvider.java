@@ -13,6 +13,8 @@ import com.top_logic.reporting.flex.chart.config.chartbuilder.ChartContext;
 import com.top_logic.reporting.flex.chart.config.chartbuilder.ChartData;
 
 /**
+ * Provider of the tooltip generator for charts based on an {@link org.jfree.data.xy.XYZDataset}.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface XYZToolTipGeneratorProvider {

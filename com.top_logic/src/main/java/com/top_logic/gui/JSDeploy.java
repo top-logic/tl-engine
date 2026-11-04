@@ -49,7 +49,7 @@ public class JSDeploy extends XMain {
     }
     
     /** 
-     * Call XMain#runMainCommandLine to get thing going.
+     * Call {@link XMain#runMainCommandLine(String[])} to get thing going.
      */
     public static void main(String[] args) throws Exception {
         new JSDeploy().runMainCommandLine (args);

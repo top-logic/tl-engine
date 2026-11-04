@@ -13,7 +13,7 @@ import com.top_logic.dob.DataObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 
 /**
- * Compares two DataObjects according a list of given Attributes.
+ * Compares two {@link DataObject}s according a list of given Attributes.
  *
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -25,10 +25,10 @@ public class DOAttributeComparator implements Comparator<DataObject> {
     /** Constant indicating descending order */
     public static final boolean DESCENDING  = false;
 
-     /** The DatatObjects are compared according to these attributes. */
+     /** The {@link DataObject}s are compared according to these attributes. */
     protected String [] attributes;
 
-    /** The DatatObjects are compared ascending / Descending according to these values */
+    /** The {@link DataObject}s are compared ascending / Descending according to these values */
     protected boolean [] ascendings;
 
     /** 
@@ -158,10 +158,11 @@ public class DOAttributeComparator implements Comparator<DataObject> {
     }
 
     /** 
-     * Compare two DataObjects according to the given attributes.
+     * Compare two {@link DataObject}s according to the given attributes.
      *<p>
      * Note: this comparator imposes orderings that are 
-     * inconsistent with DataObject.equals
+     * inconsistent with {@link Object#equals(Object) equals()} of the {@link
+     * com.top_logic.dob.DataObject}s
      *</p>
      * @return a negative integer, zero, or a positive integer 
      *         as the first argument is less than, equal to, or greater than the second.

@@ -42,6 +42,7 @@ public enum ColumnCustomization implements ExternallyNamed {
 		return _externalName;
 	}
 
+	/** {@link EnumDefaultValue} providing {@link #SELECTION} as default value. */
 	public static class SelectionDefaultValueProvider extends EnumDefaultValue {
 		@Override
 		public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {

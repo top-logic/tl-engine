@@ -18,28 +18,28 @@ public interface Operator {
 	 * Executes this operation on a set of given values.
      * 
      * The given data must not be <code>null</code>, nevertheless
-     * some values in the array can be NullValues, which
-     * results in a call for the {@link #getNeutralValue()}
-     * for this operation. A neutral value can differ from operation
-     * to operation (e.g. Neutral for SUM and DIFF is '0', whereas neutral for DIV
-     * and MULTIPLY is '1').The values themself can also contain <code>null</code>, 
-     * if they represent a set of data. But this should be handled in the
-     * operating methods of the Values themself
+     * some values in the array can be
+     * {@link com.top_logic.reporting.data.base.value.common.NullValue}s, which results in a call
+     * for the {@link #getNeutralValue()} for this operation. A neutral value can differ from
+     * operation to operation (e.g. Neutral for SUM and DIFF is '0', whereas neutral for DIV and
+     * MULTIPLY is '1').The values themself can also contain <code>null</code>, if they represent a
+     * set of data. But this should be handled in the operating methods of the Values themself
      * 
      * The returning value must not be <code>null</code>, because
      * the reporting engine has to visualizise the result in some 
      * (generic) way
      * So if processing is not possible and it becomes neccessary that this
-     * method returns null for whatever reason, return a new NullValue instead.
-     * Such a value is threatened as null with the exception that it can be
-     * displayed in the proper way
-     * Also this method has to take care of the entrynames of the result
-     * It can retrieve the names of arguments and then is responsible to set the entry
-     * names of the result Value. However, those names are just used for display, 
-     * so setting them is not mandatory.
+     * method returns null for whatever reason, return a new
+     * {@link com.top_logic.reporting.data.base.value.common.NullValue} instead. Such a value is
+     * threatened as null with the exception that it can be displayed in the proper way Also this
+     * method has to take care of the entrynames of the result It can retrieve the names of
+     * arguments and then is responsible to set the entry names of the result Value. However, those
+     * names are just used for display, so setting them is not mandatory.
      * 
 	 * @param    anValueArray    The values which should be processed.
-	 * @return   The result value. or a NullValue if processing was not possible
+	 * @return The result value. or a
+	 *         {@link com.top_logic.reporting.data.base.value.common.NullValue} if processing was
+	 *         not possible
      * @see       #getNeutralValue()
      * @see 	  com.top_logic.reporting.data.base.value.common.NullValue
 	 */

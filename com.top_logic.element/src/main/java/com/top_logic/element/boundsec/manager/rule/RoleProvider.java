@@ -15,14 +15,14 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
- * The RoleProvider represents one reason to grant a role to groups on bound objects.
+ * The {@link RoleProvider} represents one reason to grant a role to groups on bound objects.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public interface RoleProvider {
 
 	/**
-	 * The Type classifies the {@link RoleProvider}s 
+	 * The type classifies the {@link RoleProvider}s.
 	 * 
 	 * @author    <a href=mailto:tsa@top-logic.com>tsa</a>
 	 */
@@ -33,9 +33,10 @@ public interface RoleProvider {
 		 */
 	    reference, 
 	    /**
-	     * The {@link RoleProvider} grants roles based on roles granted on other objects;
-	     * in this case {@link RoleProvider#getBaseObjects(Object)} and {@link RoleProvider#getSourceRole()}
-	     * must provide a proper implementation.
+	     * The {@link RoleProvider} grants roles based on roles granted on other objects.
+	     * 
+	     * @implNote In this case {@link RoleProvider#getBaseObjects(Object)} and
+	     *           {@link RoleProvider#getSourceRole()} must provide a proper implementation.
 	     */
 	    inheritance;
 	}

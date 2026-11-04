@@ -91,7 +91,7 @@ public final class ShortAttributeIdParser extends AttributeIdParser {
 	/**
 	 * The attribute id from the attribute field name.
 	 * 
-	 * @return Is never <code>null</code>. Throws an assertion if AttributeFieldName is not
+	 * @return Is never <code>null</code>. Throws an assertion if the attribute field name is not
 	 *         parsable.
 	 */
 	@Override
@@ -103,7 +103,7 @@ public final class ShortAttributeIdParser extends AttributeIdParser {
 	/**
 	 * The object id from the attribute field name.
 	 * 
-	 * @return Is never <code>null</code>. Throws an assertion if AttributeFieldName is not
+	 * @return Is never <code>null</code>. Throws an assertion if the attribute field name is not
 	 *         parsable.
 	 */
 	@Override

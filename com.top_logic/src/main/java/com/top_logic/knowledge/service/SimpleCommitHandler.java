@@ -26,7 +26,7 @@ import com.top_logic.basic.sql.PooledConnection;
  * generation commit numbers.
  * </p>
  * <p>
- * A SimpleCommitHandler should not be reused. After the end of all
+ * A {@link SimpleCommitHandler} should not be reused. After the end of all
  * operations, {@link SimpleCommitHandler#close()} must be called to release
  * the requested connection.
  * </p>

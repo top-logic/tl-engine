@@ -25,6 +25,8 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
+ * Creates the types of the configured application model in a given (transient) {@link TLModel}.
+ * 
  * @since 5.8.0
  * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -65,6 +67,9 @@ public class TransientModelCreator {
 		throw new ConfigurationException("Configuration of ModelService is not a " + Config.class.getName());
 	}
 
+	/**
+	 * Creates the modules and types of the configured model in the target model.
+	 */
 	public void fillModel() {
 		// Build model.
 		setupModules();

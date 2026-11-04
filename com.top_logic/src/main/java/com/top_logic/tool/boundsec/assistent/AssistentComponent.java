@@ -54,9 +54,9 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Implementation of a assistant (wizard). All steps are based on LayoutComponent.
+ * Implementation of a assistant (wizard). All steps are based on {@link LayoutComponent}.
  * 
- * Access to the DataMap is not synchronized, as this concurrent access is
+ * Access to the data map is not synchronized, as this concurrent access is
  * not expected. 
  * 
  * TODO FSC/KHA fix erode executability rules by some Kind of 
@@ -69,27 +69,48 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class AssistentComponent extends LayoutList implements Selectable {
 
+	/**
+	 * Configuration of an {@link AssistentComponent}.
+	 */
 	public interface Config extends LayoutList.Config, Selectable.SelectableConfig {
+		/**
+		 * Name of the command that switches to the next step of the assistant.
+		 */
 		@Name(XML_ATTR_FORWARD_COMMAND_NAME)
 		@StringDefault(FORWARD_COMMAND_KEY)
 		String getForwardCommand();
 
+		/**
+		 * Name of the command that switches back to the previous step of the assistant.
+		 */
 		@Name(XML_ATTR_BACK_COMMAND_NAME)
 		@StringDefault(BACKWARD_COMMAND_KEY)
 		String getBackCommand();
 
+		/**
+		 * Name of the command that cancels the assistant.
+		 */
 		@Name(XML_ATTR_CANCEL_COMMAND_NAME)
 		@StringDefault(CANCEL_COMMAND_KEY)
 		String getCancelCommand();
 
+		/**
+		 * Name of the command that opens the assistant.
+		 */
 		@Name(XML_ATTR_SHOW_COMMAND_NAME)
 		@StringDefault(SHOW_COMMAND_KEY)
 		String getShowCommand();
 
+		/**
+		 * The controller that decides about the sequence of steps of the assistant.
+		 */
 		@Name(AssistentComponent.XML_ATTR_CONTROLLER_CLASS)
 		@Mandatory
 		PolymorphicConfiguration<? extends AbstractAssistentController> getController();
 
+		/**
+		 * Setter for {@link #getController()}.
+		 */
 		void setController(PolymorphicConfiguration<? extends AbstractAssistentController> aController);
 
 	}
@@ -132,19 +153,19 @@ public class AssistentComponent extends LayoutList implements Selectable {
     /** The controller of this assistant. */
     private AbstractAssistentController controller;
     
-    /** key for CommandHandlerFactory */
+    /** key for {@link CommandHandlerFactory} */
     public static final String FORWARD_COMMAND_KEY  = ForwardAssistentCommandHandler.COMMAND;
 
-    /** key for CommandHandlerFactory */
+    /** key for {@link CommandHandlerFactory} */
     public static final String BACKWARD_COMMAND_KEY = BackwardAssistentCommandHandler.COMMAND;
 
-    /** key for CommandHandlerFactory */
+    /** key for {@link CommandHandlerFactory} */
     private static final String CANCEL_COMMAND_KEY  = CancelAssistentCommandHandler.COMMAND;
 
-    /** key for CommandHandlerFactory */
+    /** key for {@link CommandHandlerFactory} */
     public static final String FINISH_COMMAND_KEY  = FinishAssistentCommandHandler.COMMAND;
 
-    /** key for CommandHandlerFactory */
+    /** key for {@link CommandHandlerFactory} */
     public static final String SHOW_COMMAND_KEY    = ShowAssistentCommandHandler.COMMAND;
     
     private boolean modelValid;
@@ -177,10 +198,10 @@ public class AssistentComponent extends LayoutList implements Selectable {
 
     /**
      * If a component is used inn assistant step, this method will return the controller of the 
-     * AisstentComponent.
+     * {@link AssistentComponent}.
      * 
      * @param aComponent a component used in a assistant step.
-     * @return the controller of the assistentComponent.
+     * @return the controller of the {@link AssistentComponent}.
      */
     public static AbstractAssistentController getAssistentController(LayoutComponent aComponent) {
         AssistentComponent theAssistent = getEnclosingAssistentComponent(aComponent);
@@ -203,6 +224,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
 		controller.initAssistant(this);
     }
 
+    /**
+     * The {@link AssistentStepInfo} of the currently displayed step.
+     */
     public AssistentStepInfo getCurrentStepInfo() {
         return this.getStepInfo(this.getSelectedIndex());
     }
@@ -214,6 +238,11 @@ public class AssistentComponent extends LayoutList implements Selectable {
 		return AssistentStepInfo.getName(getCurrentStepInfo());
 	}
 
+    /**
+     * The {@link AssistentStepInfo} of the step at the given position.
+     * 
+     * @return {@code null} if the position is out of range.
+     */
     public AssistentStepInfo getStepInfo(int aPos) {
 		if (aPos > this._stepConfigs.size() || aPos < 0) {
             return null;
@@ -221,22 +250,37 @@ public class AssistentComponent extends LayoutList implements Selectable {
 		return (AssistentStepInfo) this._stepConfigs.get(aPos);
     }
 
+    /**
+     * The component of the currently displayed step.
+     */
     public LayoutComponent getCurrentStep() {
         return this.getCurrentChild();
     }
 
+    /**
+     * The controller that decides about the sequence of steps.
+     */
     public AbstractAssistentController getController() {
         return this.controller;
     }
     
+    /**
+     * The stack of the {@link AssistentStepInfo}s of the steps visited so far.
+     */
     public Stack getStepStack() {
         return this.stepStack;
     }
 
+    /**
+     * The command group required to use this assistant.
+     */
     public BoundCommandGroup getDefaultCommandGroup() {
         return SimpleBoundCommandGroup.READ;
     }
     
+    /**
+     * Switches the assistant to the step with the given index.
+     */
     public void setSelectedIndex(int anIndex) {
         
         int theIndex = this.getSelectedIndex();
@@ -465,6 +509,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
         }
     }
 
+    /**
+     * The handler of the {@link Config#getBackCommand() back command}.
+     */
     protected synchronized CommandHandler getBackHandler() {
 
         if(this.backwardHandler == null) {
@@ -474,6 +521,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
         return this.backwardHandler;
     }
 
+    /**
+     * The handler of the {@link Config#getForwardCommand() forward command}.
+     */
     protected synchronized CommandHandler getForwardHandler() {
 
         if(this.forwardHandler == null) {
@@ -483,6 +533,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
         return this.forwardHandler;
     }
 
+    /**
+     * The handler of the {@link Config#getCancelCommand() cancel command}.
+     */
     protected synchronized CommandHandler getCancelHandler() {
         
         if(this.cancelHandler == null) {
@@ -492,6 +545,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
         return this.cancelHandler;
     }
 
+    /**
+     * The handler of the {@link Config#getShowCommand() show command}.
+     */
     protected synchronized CommandHandler getShowHandler() {
         
         if(this.showHandler == null) {
@@ -706,10 +762,10 @@ public class AssistentComponent extends LayoutList implements Selectable {
     }
     
     /**
-     * Sets the value for dataKey to data.
+     * Sets the value for {@code dataKey} to data.
      * 
      * @param dataKey   Arbitrary key for the internal map.
-     * @param data      if null, dataKey is removed from the map
+     * @param data      if null, {@code dataKey} is removed from the map
      */
     public void setData(String dataKey, Object data) {
         Map<String, Object> theMap = this.getDataMap();
@@ -720,19 +776,35 @@ public class AssistentComponent extends LayoutList implements Selectable {
         }
     }
     
+    /**
+     * The value stored for the given key.
+     * 
+     * @return {@code null} if no value is stored.
+     * @see #setData(String, Object)
+     */
     public Object getData(String dataKey) {
         return this.getDataMap().get(dataKey);
     }
     
+    /**
+     * All keys for which values are stored.
+     * 
+     * @see #setData(String, Object)
+     */
     public Set<String> getDataKeys() {
         return this.getDataMap().keySet();
     }
 
+    /**
+     * Removes all stored values.
+     */
     public void resetData() {
         this.getDataMap().clear();        
     }
     
     /**
+     * The value stored for the given key encoded as HTML.
+     * 
      * @param dataKey the key of the data
      * @return an HTML representation of the data belonging to the given key
      * An empty String is returned when no data for the key exists.
@@ -813,7 +885,8 @@ public class AssistentComponent extends LayoutList implements Selectable {
 	}
 
     /** 
-     * Recursivly put all {@link FormField#getValue()} from aCtxt into {@link #setData(String, Object)}.
+     * Recursivly put all {@link FormField#getValue()} from {@code aCtxt} into
+     * {@link #setData(String, Object)}.
      * 
      * @param    aCtxt    The form context to transfer the data from.
      */

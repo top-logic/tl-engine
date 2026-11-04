@@ -27,7 +27,7 @@ import com.top_logic.reporting.report.jfc.JFCSimpleDateFormat;
 import com.top_logic.reporting.report.jfc.TickMarkPeriodAxis;
 
 /**
- * The PeriodAxisUtil contains useful static methods for {@link PeriodAxis}.
+ * The {@link PeriodAxisUtil} contains useful static methods for {@link PeriodAxis}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  * @deprecated use your own methods with the help of {@link ReportUtilities}
@@ -35,9 +35,13 @@ import com.top_logic.reporting.report.jfc.TickMarkPeriodAxis;
 @Deprecated
 public class PeriodAxisUtil {
 
+    /** Default date pattern for months. */
     public static final String DEFAULT_PATTERN_MONTH_STR      = "MMM";
+    /** Default date pattern for quarters. */
     public static final String DEFAULT_PATTERN_QUARTER_STR    = JFCSimpleDateFormat.PATTERN_QUARTER;
+    /** Default date pattern for half years. */
     public static final String DEFAULT_PATTERN_HALF_YEAR_STR  = JFCSimpleDateFormat.PATTERN_HALF_YEAR;
+    /** Default date pattern for years. */
     public static final String DEFAULT_PATTERN_YEAR_STR       = "yyyy";
 
     private PeriodAxisUtil() {
@@ -98,6 +102,7 @@ public class PeriodAxisUtil {
         setLabelInfosTo(aPeriodAxis, ReportUtilities.getQuarterPeriodClass(false), aQuarterPatternString, aYearPatternString);
     }
 
+    /** Sets the label infos of the given axis to show quarters and years. */
     public static void setQuarterYearPeriodAxis(PeriodAxis aPeriodAxis, DateFormat aQuarterFormat, DateFormat aYearFormat) {
     	setLabelInfosTo(aPeriodAxis, ReportUtilities.getQuarterPeriodClass(false), aQuarterFormat, aYearFormat);
     }
@@ -154,6 +159,7 @@ public class PeriodAxisUtil {
         aPeriodAxis.setLabelInfo(info);
     }
     
+    /** Sets the label infos of the given axis for the given time period class. */
     public static void setPeriodAxisfor(PeriodAxis aPeriodAxis, Class aRegularTimePeriodClass) {
         if (aRegularTimePeriodClass.equals(Month.class)) {
             setMonthYearPeriodAxis(aPeriodAxis, DEFAULT_PATTERN_MONTH_STR, DEFAULT_PATTERN_YEAR_STR);
@@ -232,6 +238,16 @@ public class PeriodAxisUtil {
         return null;
     }
     
+    /**
+     * Adds a {@link PeriodAxis} for the given time interval to the given chart.
+     *
+     * @param aRegularPeriodClass
+     *        The time period of the ticks of the axis.
+     * @param isDomainAxis
+     *        Whether the axis is added as domain axis, otherwise as range axis.
+     * @param aIntervalColor
+     *        The color of the interval markers.
+     */
     public static void addPeriodAxis(JFreeChart aChart, Date aStartDate, Date aEndDate, Class aRegularPeriodClass, boolean isDomainAxis, Color aIntervalColor) {
         long startTime = aStartDate.getTime();
         long endTime   = aEndDate.getTime();

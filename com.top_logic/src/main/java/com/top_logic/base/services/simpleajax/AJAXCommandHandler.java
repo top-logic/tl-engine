@@ -59,9 +59,12 @@ import com.top_logic.util.Resources;
  */
 public abstract class AJAXCommandHandler extends AbstractCommandHandler {
 
+	/** Value for using the wait pane while the command executes. */
 	public static final String USE_WAIT_PANE = String.valueOf(true);
+	/** Value for not using the wait pane while the command executes. */
 	public static final String DONT_USE_WAIT_PANE = String.valueOf(false);
 
+	/** Name of the argument marking a command as system command. */
 	public static final String SYSTEM_COMMAND_ID = "isSystemCommand";
 
 	/**
@@ -72,13 +75,21 @@ public abstract class AJAXCommandHandler extends AbstractCommandHandler {
 	static final String NO_SERVER_RESONSE_CALLBACK = "null";
 	static final String NO_CONTEXT_INFORMATION = "null";
 
+	/** Configuration options for {@link AJAXCommandHandler}. */
 	public interface Config extends AbstractCommandHandler.Config {
+		/** Configuration name of {@link #getReadOnly()}. */
 		String READ_ONLY_PROPERTY = "read-only";
+		/** Configuration name of {@link #isConcurrent()}. */
 		String CONCURRENT_PROPERTY = "concurrent";
 
+		/**
+		 * Whether this command does not modify any server state and therefore requires no
+		 * transaction sequence number.
+		 */
 		@Name(READ_ONLY_PROPERTY)
 		boolean getReadOnly();
 
+		/** Whether this command allows concurrent user interactions while it is executing. */
 		@Name(CONCURRENT_PROPERTY)
 		boolean isConcurrent();
 	}
@@ -121,10 +132,15 @@ public abstract class AJAXCommandHandler extends AbstractCommandHandler {
     	return this.concurrent;
     }
 
+	/** Appends a JavaScript expression invoking this command with the given arguments. */
 	public void appendInvokeExpression(Appendable out, JSObject argumentObject) throws IOException {
 		appendInvokeExpression(out, getID(), argumentObject);
 	}
 
+	/**
+	 * Appends a JavaScript expression invoking the command with the given ID with the given
+	 * arguments.
+	 */
 	public static void appendInvokeExpression(Appendable out, String aCommand, JSObject argumentObject)
 			throws IOException {
 		out.append("services.ajax.execute('");
@@ -268,6 +284,7 @@ public abstract class AJAXCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/** Writes the script includes of the browser abstraction layer for the given user agent. */
 	public static void writeBALInclude(TagWriter writer, String contextPath, UserAgent userAgent) throws IOException {
 		HTMLUtil.writeJavascriptRef(writer, contextPath, "/script/tl/bal.js");
 		if (userAgent.is_ie6up()) {
@@ -288,10 +305,12 @@ public abstract class AJAXCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/** Sets {@link Config#isConcurrent()} in the given configuration. */
 	public static <C extends Config> C updateConcurrent(C config, boolean concurrent) {
 		return update(config, Config.CONCURRENT_PROPERTY, concurrent);
 	}
 
+	/** Sets {@link Config#getReadOnly()} in the given configuration. */
 	public static <C extends Config> C updateReadOnly(C config, boolean value) {
 		return update(config, Config.READ_ONLY_PROPERTY, value);
 	}

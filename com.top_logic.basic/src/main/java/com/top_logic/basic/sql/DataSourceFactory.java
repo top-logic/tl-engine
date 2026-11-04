@@ -14,7 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig;
 
 /**
- * Factory for instantiation of {@link DataSourceConfig}s
+ * Factory for instantiation of {@link DataSourceConfig}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

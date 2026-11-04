@@ -32,7 +32,7 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 		implements PasswordValidation {
 
 	/**
-	 * Configuration options for {@link PasswordValidator}
+	 * Configuration options for {@link PasswordValidator}.
 	 */
 	public interface Config extends PolymorphicConfiguration<PasswordValidator> {
 

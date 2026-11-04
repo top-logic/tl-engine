@@ -12,6 +12,9 @@ import com.top_logic.reporting.flex.chart.config.model.Partition;
 import com.top_logic.reporting.flex.chart.config.partition.Criterion;
 
 /**
+ * Function computing a number from the objects of a {@link Partition}, e.g. the count of the
+ * objects or the sum of an attribute.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public interface AggregationFunction extends Comparable<AggregationFunction> {

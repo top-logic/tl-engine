@@ -24,7 +24,7 @@ import com.top_logic.mig.html.I18NResourceProvider;
 import com.top_logic.util.FormFieldHelper;
 
 /**
- * The RangeAxisChartConfigurator is an interface to configure charts with range axes
+ * The {@link RangeAxisChartConfigurator} is an interface to configure charts with range axes
  * easier.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
@@ -236,7 +236,7 @@ public abstract class RangeAxisChartConfigurator extends ChartConfigurator {
     }
 
     /**
-     * Computes the range for the {@link #RANGE_CLIP} range type, respecting all DataSets.
+     * Computes the range for the {@link #RANGE_CLIP} range type, respecting all data sets.
      *
      * @return the range for the {@link #RANGE_CLIP} range type
      */
@@ -259,10 +259,10 @@ public abstract class RangeAxisChartConfigurator extends ChartConfigurator {
     }
 
     /**
-     * Computes the range for the {@link #RANGE_CLIP} range type for the given DataSet.
+     * Computes the range for the {@link #RANGE_CLIP} range type for the given data set.
      *
      * @param aIndex
-     *            the index of the DataSet to compute the range for
+     *            the index of the data set to compute the range for
      * @return the range for the {@link #RANGE_CLIP} range type
      */
     public Range computeRange(int aIndex) {

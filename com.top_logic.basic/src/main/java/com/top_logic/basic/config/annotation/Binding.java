@@ -32,6 +32,9 @@ import com.top_logic.basic.config.ConfigurationValueBinding;
 @TagName("value-binding")
 public @interface Binding {
 
+	/**
+	 * The {@link ConfigurationValueBinding} to use for the annotated property.
+	 */
 	Class<? extends ConfigurationValueBinding<?>> value();
 	
 }

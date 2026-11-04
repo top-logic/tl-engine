@@ -36,7 +36,7 @@ import com.top_logic.reporting.flex.chart.config.util.MetaAttributeProvider;
 import com.top_logic.reporting.flex.chart.config.util.ToStringText.NotSetText;
 
 /**
- * Base-class for {@link PartitionFunction}
+ * Base-class for {@link PartitionFunction}.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
@@ -79,13 +79,31 @@ public abstract class AbstractAttributeBasedPartition implements PartitionFuncti
 		}
 	}
 
+	/**
+	 * Algorithm retrieving the value of an object to partition by.
+	 */
 	public interface ValueProvider {
 
+		/**
+		 * Retrieves the value of the given object to partition by.
+		 *
+		 * @param att
+		 *        The object to partition.
+		 * @param function
+		 *        The partition function asking for the value.
+		 * @return The value that determines the partition of the given object.
+		 */
 		public Object getValue(TLObject att, AbstractAttributeBasedPartition function);
 	}
 
+	/**
+	 * {@link ValueProvider} retrieving the value of the attribute of the partition function.
+	 */
 	public static class DefaultValueProvider implements ValueProvider {
 
+		/**
+		 * Singleton instance of {@link DefaultValueProvider}.
+		 */
 		public static DefaultValueProvider INSTANCE = new DefaultValueProvider();
 
 		@Override
@@ -141,11 +159,17 @@ public abstract class AbstractAttributeBasedPartition implements PartitionFuncti
 		 */
 		public void setAddEmpty(boolean addEmpty);
 
+		/**
+		 * Algorithm retrieving the value of an object to partition by.
+		 */
 		@Hidden
 		@InstanceFormat
 		@InstanceDefault(DefaultValueProvider.class)
 		public ValueProvider getValueProvider();
 
+		/**
+		 * Setter for {@link #getValueProvider()}.
+		 */
 		public void setValueProvider(ValueProvider provider);
 	}
 
@@ -264,6 +288,8 @@ public abstract class AbstractAttributeBasedPartition implements PartitionFuncti
 	protected abstract void handleEmpty(Partition aParent, Map<Object, Partition> map, TLObject att);
 
 	/**
+	 * Whether the given attribute value counts as empty.
+	 *
 	 * @param value
 	 *        the value to check
 	 * @return true if value is null or an empty string or an empty collection.
@@ -344,6 +370,8 @@ public abstract class AbstractAttributeBasedPartition implements PartitionFuncti
 	}
 
 	/**
+	 * The keys of the sub-partitions that are expected, even if they are empty.
+	 *
 	 * @param aParent
 	 *        the parent to get the expected sub-partition-keys for
 	 * @return a list of expected partition-keys. May be empty

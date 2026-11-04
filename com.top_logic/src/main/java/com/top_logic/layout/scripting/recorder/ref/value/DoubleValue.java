@@ -15,7 +15,9 @@ package com.top_logic.layout.scripting.recorder.ref.value;
 @Deprecated
 public interface DoubleValue extends NumberValue {
 
+	/** The value. */
 	double getDouble();
+	/** Setter for {@link #getDouble()}. */
 	void setDouble(double value);
 	
 }

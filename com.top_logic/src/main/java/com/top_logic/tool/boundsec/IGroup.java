@@ -12,7 +12,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.tool.boundsec.wrap.GroupMember;
 
 /**
- * A Group of members that are BoundObjects (normally Persons).
+ * A Group of members that are {@link BoundObject}s (normally Persons).
  * 
  * @author    <a href="mailto:kbu@top-logic.com>Karschten Busch</a>
  */

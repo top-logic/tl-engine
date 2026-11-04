@@ -11,7 +11,7 @@ import com.top_logic.basic.TLID;
 
 /**
  * Holds the change information for a single knowledge object.
- * (Multiple KO's may be commited together, these are held together by JournalResult)
+ * (Multiple KO's may be commited together, these are held together by {@link JournalResult})
  *
  * @author   <a href="mailto:dkh@top-logic.com">Dirk K&ouml;hlhoff</a>
  */

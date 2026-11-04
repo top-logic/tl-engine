@@ -41,10 +41,10 @@ import com.top_logic.mig.html.layout.MainLayout;
  */
 public class LayoutBody implements Tag, LayoutConstants, TryCatchFinally {
 
-	/** Our parent must be a LayoutHtml tag */
+	/** Our parent must be a {@link LayoutHtml} tag */
     protected LayoutHtml parent;
 
-    /** Needed for set/get PageContext */
+    /** Needed for set/get {@link PageContext} */
     protected PageContext pageContext;
 
 	private String _frmBodyClass = FormConstants.FORM_BODY_CSS_CLASS;
@@ -137,7 +137,7 @@ public class LayoutBody implements Tag, LayoutConstants, TryCatchFinally {
 	}
 
     /**
-     * the parent, is always of type LayoutHtml
+     * the parent, is always of type {@link LayoutHtml}
      */
     @Override
 	public Tag getParent() {
@@ -172,7 +172,7 @@ public class LayoutBody implements Tag, LayoutConstants, TryCatchFinally {
     }
 
     /**
-     * Will die with a <code>ClassCastException</code> in case parent is no LayoutHtml.
+     * Will die with a <code>ClassCastException</code> in case parent is no {@link LayoutHtml}.
      */
     @Override
 	public void setParent(Tag aParent) {

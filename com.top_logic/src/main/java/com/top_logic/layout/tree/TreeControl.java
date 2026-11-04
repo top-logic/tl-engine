@@ -195,6 +195,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 	 */
 	public static final String NODE_EXPANDED_CSS_CLASS = "tcrExpanded";
 
+	/** The {@link ControlCommand}s supported by a {@link TreeControl}, indexed by their ID. */
 	protected static final Map<String, ControlCommand> TREE_COMMANDS = createCommandMap(new ControlCommand[] {
 		ToggleExpansion.INSTANCE,
 		NodeSelectAction.INSTANCE,
@@ -262,16 +263,19 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		setDblClickAction(null);
 	}
 
+	/** Creates the listener that collects updates of the tree model. */
 	protected TreeUpdateListener initUpdateListener(TreeNodeIdentification aTreeNodeIdentification) {
 		return new TreeUpdateListener(aTreeNodeIdentification, this);
 	}
 
+	/** Registers this control and its helpers at the given new tree model. */
 	protected void initTreeModel(TreeUIModel newModel) {
 		newModel.addTreeModelListener(this);
 		this.updateListener.setModel(newModel);
 		this.nodeIds.setModel(newModel);
 	}
 
+	/** Registers the update listener at the given new selection model. */
 	protected void initSelectionModel(SelectionModel newSelection) {
 		this.updateListener.setSelectionModel(newSelection);
 	}
@@ -407,6 +411,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		this.updateListener.clear();
 	}
 
+	/** The visitor that translates accumulated tree updates into client-side update actions. */
 	protected UpdateVisitor<Void, UpdateQueue, TreeControl> getUpdateVisitor() {
 		return new UpdateVisitor<>() {
 			@Override
@@ -557,6 +562,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		}
 	}
 
+	/** The client-side ID of the given tree node. */
 	public final String getNodeId(Object node) {
 		return nodeIds.getObjectId(node);
 	}
@@ -740,6 +746,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 	 */
 	public abstract static class TreeAction extends ControlCommand {
 
+		/** Name of the parameter that holds the ID of the node, the action applies to. */
 		public static final String ID_PARAM = "id";
 
 		protected TreeAction(String id) {
@@ -794,6 +801,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		protected abstract HandlerResult execute(DisplayContext context, TreeControl treeControl, Object node,
 				Map<String, Object> arguments);
 
+		/** Writes the JavaScript expression invoking this action for the node with the given ID. */
 		public void writeInvokeExpression(TagWriter out, TreeControl tree, String nodeID) throws IOException {
 			writeInvokeExpression(out, tree, new JSObject(ID_PARAM, new JSString(nodeID)));
 		}
@@ -813,6 +821,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		 */
 		public static final String COMMAND_NAME = "toggleExpand";
 
+		/** Singleton {@link ToggleExpansion} instance. */
 		public static final ToggleExpansion INSTANCE = new ToggleExpansion();
 
 		/**
@@ -827,6 +836,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 			return toggleExpansion(treeControl, node);
 		}
 
+		/** Toggles the expansion state of the given node and records the change for scripting. */
 		protected HandlerResult toggleExpansion(final TreeControl tree, final Object toggleNode) {
 			boolean expand = !tree.getModel().isExpanded(toggleNode);
 			recordToggle(tree, toggleNode, expand);
@@ -854,6 +864,12 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		/**
+		 * Records the expansion change of the given node, if a script is currently recorded.
+		 *
+		 * @param expand
+		 *        Whether the node was expanded or collapsed.
+		 */
 		protected static void recordToggle(TreeControl treeControl, Object node, boolean expand) {
 			if (ScriptingRecorder.isRecordingActive()) {
 				ScriptingRecorder.recordExpand(treeControl.getData(), node, expand);
@@ -884,6 +900,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		 */
 		public static final String COMMAND_NAME = "selectTree";
 
+		/** Singleton {@link NodeSelectAction} instance. */
 		public static final NodeSelectAction INSTANCE = new NodeSelectAction();
 
 		/**
@@ -1004,6 +1021,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		}
 	}
 
+	/** {@link TreeAction} handling a double click on a tree node. */
 	@SuppressWarnings("javadoc")
 	protected static class NodeDblClickAction extends TreeAction {
 
@@ -1243,6 +1261,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		return titleBar;
 	}
 
+	/** The {@link TreeData} displayed by this control. */
 	public TreeData getData() {
 		return data;
 	}

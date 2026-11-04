@@ -30,6 +30,7 @@ public class ExcelImportUtils extends ImportUtils {
 	 */
 	private static final String CHANNEL_KEY_PREFIX = "_@";
 
+    /** Singleton {@link ExcelImportUtils} instance. */
     public static final ExcelImportUtils INSTANCE = new ExcelImportUtils();
 
     /**
@@ -119,10 +120,16 @@ public class ExcelImportUtils extends ImportUtils {
 		return new StringBuilder(CHANNEL_KEY_PREFIX).append(channelId).toString();
 	}
 
+	/**
+	 * The values stored in the given channel of the given row values.
+	 *
+	 * @see MappingConfig#getChannel()
+	 */
 	public final Map<String, Object> getValuesOnChannel(Map<String, Object> someValues, String channelId) {
 		return (Map<String, Object>) someValues.get(buildChannelKey(channelId));
 	}
 
+    /** Evaluates the given extractors and collects their results in a single map. */
     public Map<String, Object> evaluateExtractors(ExcelContext aContext, ImportLogger aLogger, Collection<Extractor> someExtractors, AbstractExcelFileImportParser<?> aHandler) {
         Map<String, Object> theMap = new HashMap<>();
 

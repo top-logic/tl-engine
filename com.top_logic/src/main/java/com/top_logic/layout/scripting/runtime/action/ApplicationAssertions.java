@@ -72,12 +72,28 @@ public class ApplicationAssertions {
 		return result.toString();
 	}
 
+	/**
+	 * Fails, if the given value is <code>true</code>.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 */
 	public static void assertFalse(ConfigurationItem context, String message, boolean value) {
 		if (value) {
 			throw createFailure(context, message);
 		}
 	}
 
+	/**
+	 * Fails, if the given value is <code>false</code>.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 */
 	public static void assertTrue(ConfigurationItem context, String message, boolean value) {
 		if (! value) {
 			throw createFailure(context, message);
@@ -237,6 +253,14 @@ public class ApplicationAssertions {
 		}
 	}
 
+	/**
+	 * Fails, if the given object is not an instance of the expected class.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 */
 	public static void assertInstanceOf(ConfigurationItem context, String message, Class<?> expectedClass, Object actual) {
 		if (!expectedClass.isInstance(actual)) {
 			throw createFailure(context, message + " Expected instance of: " + expectedClass.getName() + "; Actual : "
@@ -244,22 +268,58 @@ public class ApplicationAssertions {
 		}
 	}
 
+	/**
+	 * Fails, if the given value is <code>null</code>.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 */
 	public static void assertNotNull(ConfigurationItem context, String message, Object value) {
 		if (value == null) {
 			throw createFailure(context, message);
 		}
 	}
 	
+	/**
+	 * Fails, if the given value is not <code>null</code>.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 */
 	public static void assertNull(ConfigurationItem context, String message, Object value) {
 		if (value != null) {
 			throw createFailure(context, message);
 		}
 	}
 
+	/**
+	 * Fails unconditionally.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 * @return Never returns normally, the return type allows writing <code>throw fail(...)</code>.
+	 */
 	public static RuntimeException fail(ConfigurationItem context, String message) {
 		throw createFailure(context, message);
 	}
 
+	/**
+	 * Fails unconditionally because of the given problem.
+	 *
+	 * @param context
+	 *        The action configuration for error reporting.
+	 * @param message
+	 *        The failure message.
+	 * @param cause
+	 *        The problem that caused the failure.
+	 * @return Never returns normally, the return type allows writing <code>throw fail(...)</code>.
+	 */
 	public static RuntimeException fail(ConfigurationItem context, String message, Throwable cause) {
 		throw createFailure(context, withCause(message, cause), cause);
 	}

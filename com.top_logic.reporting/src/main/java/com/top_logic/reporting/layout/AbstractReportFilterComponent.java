@@ -24,8 +24,11 @@ import com.top_logic.mig.html.layout.ModelEventListener;
  * Abstract Filter component for reports.
  * 
  * This component holds the result, which will be calculated, when the
- * {@link AbstractRefreshReportHandler} command is called. The {@link AbstractReportTableComponent}
- * is requesting the result via {@link #getResultList()} and display that.
+ * {@link AbstractRefreshReportHandler} command is called. The result is displayed by a
+ * {@link AbstractReportTableComponent}.
+ * 
+ * @implNote The {@link AbstractReportTableComponent} requests the result via
+ *           {@link #getResultList()}.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */

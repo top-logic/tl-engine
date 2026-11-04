@@ -13,30 +13,30 @@ import jakarta.activation.DataSource;
 import com.top_logic.dsa.DataAccessProxy;
 
 /** 
- * An activation DataSource based on an DataAccessProxy objects.
+ * An activation {@link DataSource} based on an {@link DataAccessProxy} objects.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  * @author    Andreas Röse
  */
 public class DataAccessProxyDataSource implements DataSource {
 
-    /** the DataAccessProxy that act as the data source */
+    /** the {@link DataAccessProxy} that act as the data source */
     private DataAccessProxy dataAccessProxy;
     
     /** the name of the object this is represented by this dataSource. */
     private String name;
                
     /**
-     * This DataSource must be initialized with a DataAccessProxy,
+     * This {@link DataSource} must be initialized with a {@link DataAccessProxy},
      * 
-     * @param aDataAccessProxy the object to act as DataSource. 
+     * @param aDataAccessProxy the object to act as {@link DataSource}. 
      */
     public DataAccessProxyDataSource(DataAccessProxy aDataAccessProxy){
         this.dataAccessProxy = aDataAccessProxy;
     }
     
     /**
-     * A constructor to initialize the DataSource and use a different Name.
+     * A constructor to initialize the {@link DataSource} and use a different Name.
      */
     public DataAccessProxyDataSource(DataAccessProxy aDataAccessProxy, String aName) {
         this(aDataAccessProxy);
@@ -54,9 +54,9 @@ public class DataAccessProxyDataSource implements DataSource {
     }
 
     /**
-     * Gets the entry of the underlying DataAccessProxy.
-     * If a DatabaseAccessException is thrown by the DataAccessProxy,
-     * null will be returned.
+     * Gets the entry of the underlying {@link DataAccessProxy}.
+     * If a {@link com.top_logic.dsa.DatabaseAccessException} is thrown by the {@link
+     * DataAccessProxy}, null will be returned.
      * 
      * @return the entry of the  
      */
@@ -66,13 +66,13 @@ public class DataAccessProxyDataSource implements DataSource {
     }
     
     /**
-     * Gets the full qualified name of the underlying DataAccessProxy.
+     * Gets the full qualified name of the underlying {@link DataAccessProxy}.
      * e.g.: file-protocol://folder/filename
      *       mail-protocol://folder/message-id
      * 
      * KHA: the semantic of this fucntion may be wrong.
      *  
-     * @return the full qualified name of the underlying DataAccessProxy.
+     * @return the full qualified name of the underlying {@link DataAccessProxy}.
      * 
      */
     @Override
@@ -85,12 +85,12 @@ public class DataAccessProxyDataSource implements DataSource {
     }
     
     /**
-     * Gets the entry output stream of the underlying DataAccessProxy.
+     * Gets the entry output stream of the underlying {@link DataAccessProxy}.
      * 
-     * If a DatabaseAccessException is thrown by the DataAccessProxy,
-     * null will be returned.
+     * If a {@link com.top_logic.dsa.DatabaseAccessException} is thrown by the {@link
+     * DataAccessProxy}, null will be returned.
      * 
-     * @return the entry output stream of the DataAccessProxy.
+     * @return the entry output stream of the {@link DataAccessProxy}.
      * 
      */
     @Override
@@ -99,9 +99,9 @@ public class DataAccessProxyDataSource implements DataSource {
     }
         
     /**
-     * Gets the held DataAccessProxy object.
+     * Gets the held {@link DataAccessProxy} object.
      *  
-     * @return the held DataAccessProxy.
+     * @return the held {@link DataAccessProxy}.
      */
     public DataAccessProxy getDataAccessProxy(){
         return this.dataAccessProxy;    

@@ -15,14 +15,16 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
 
 /**
- * Allow a GOTO from {@link ChartGotoAware} via a {@link CategoryURLGenerator} and a {@link AttributedSearchResultSet}
+ * Allow a GOTO from {@link ChartGotoAware} via a {@link CategoryURLGenerator} and a
+ * {@link AttributedSearchResultSet}.
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ChartGotoAwareGotoHandler extends AbstractChartButtonCommandHandler {
 
     /** 
-     * Create a new ChartGotoAwareGotoHandler which will #showEmptyResult
+     * Create a new {@link ChartGotoAwareGotoHandler} which respects
+     * {@link Config#getShowEmptyResult()}
      */
     public ChartGotoAwareGotoHandler(InstantiationContext context, Config config) {
 		super(context, config);

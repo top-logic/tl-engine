@@ -45,7 +45,7 @@ public class SystemPropertyUtil {
 	 * </ul>
 	 * 
 	 * <p>
-	 * The log messages are logged with the given logCaller as "caller" parameter.
+	 * The log messages are logged with the given {@code logCaller} as "caller" parameter.
 	 * </p>
 	 */
 	public static boolean getSystemPropertyBoolean(String propertyName, boolean defaultValue, Class<?> logCaller) {
@@ -72,7 +72,7 @@ public class SystemPropertyUtil {
 	 * It is not checked whether the file exists. It's just given to <code>new File(...)</code>.
 	 * If that or anything else fails (Exception thrown), the default value is used and an error message is logged.
 	 * If it is empty (null or ""), the default value is used and a debug message logged.
-	 * The log messages are logged with the given logCaller as "caller" parameter.
+	 * The log messages are logged with the given {@code logCaller} as "caller" parameter.
 	 * 
 	 * @see #getSystemPropertyFile(String, Class)
 	 */
@@ -95,7 +95,7 @@ public class SystemPropertyUtil {
 	 * It is not checked whether the file exists. It's just given to <code>new File(...)</code>.
 	 * If that or anything else fails (Exception thrown), an error message is logged.
 	 * If it is empty (null or ""), a debug message logged.
-	 * The log messages are logged with the given logCaller as "caller" parameter.
+	 * The log messages are logged with the given {@code logCaller} as "caller" parameter.
 	 * 
 	 * @see #getSystemPropertyFile(String, File, Class)
 	 */

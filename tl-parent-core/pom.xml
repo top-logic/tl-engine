@@ -253,6 +253,15 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<skipTests>${skipTests}</skipTests>
+
+					<!--
+						The application renders images (charts, diagrams, office and PDF documents) on a
+						server without a display, so its tests do the same: without the headless mode a
+						test drawing an image tries to reach the display named by DISPLAY and fails
+						where that display is not reachable.
+					-->
+					<argLine>-Djava.awt.headless=true</argLine>
+
 					<dependenciesToScan>
 						<dependency>com.top-logic:tl-basic</dependency>
 					</dependenciesToScan>

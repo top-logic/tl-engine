@@ -66,6 +66,18 @@ public class TLAppWar extends AbstractMojo {
 	 */
 	public static final String META_CONF_ADDONS_PREFIX = META_CONF_ADDONS + ".";
 
+	/**
+	 * Name of the class in the application that creates the layouts of the application WAR, see
+	 * {@link #CREATE_LAYOUTS_METHOD}.
+	 */
+	private static final String LAYOUT_CREATOR_CLASS = "com.top_logic.layout.component.LayoutCreator";
+
+	/**
+	 * Name of the static method of {@link #LAYOUT_CREATOR_CLASS} that creates the layouts, taking
+	 * the resource paths of the application and the target web application directory.
+	 */
+	private static final String CREATE_LAYOUTS_METHOD = "createLayouts";
+
 	@Parameter(defaultValue = "${project}", readonly = true)
 	private MavenProject project;
 	
@@ -541,9 +553,12 @@ public class TLAppWar extends AbstractMojo {
 		Thread.currentThread().setContextClassLoader(appClassLoader);
 
 		try {
-			Class<?> clazz = appClassLoader.loadClass("com.top_logic.layout.component.LayoutCreator");
-			clazz.getMethod("createLayouts", List.class, File.class).invoke(null, resourcePath, webappDirectory);
-		} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+			Class<?> clazz = appClassLoader.loadClass(LAYOUT_CREATOR_CLASS);
+			clazz.getMethod(CREATE_LAYOUTS_METHOD, List.class, File.class).invoke(null, resourcePath, webappDirectory);
+		} catch (InvocationTargetException exception) {
+			// Report the failure of the layout creation itself, not its reflective wrapper.
+			throw error("Could not create layouts for the application war.", exception.getCause());
+		} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException
 				| NoSuchMethodException | SecurityException exception) {
 			throw error("Could not create layouts for the application war.", exception);
 		}

@@ -17,6 +17,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class ChildrenCheckScopeProvider implements CheckScopeProvider {
 
+	/**
+	 * Singleton {@link ChildrenCheckScopeProvider} instance.
+	 */
 	public static final ChildrenCheckScopeProvider INSTANCE = new ChildrenCheckScopeProvider();
 
 	private ChildrenCheckScopeProvider() {

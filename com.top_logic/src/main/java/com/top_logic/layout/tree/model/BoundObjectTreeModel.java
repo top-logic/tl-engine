@@ -21,7 +21,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 /**
  * Implementation of {@link TreeModel} for {@link com.top_logic.tool.boundsec.BoundObject}s.
  *
- * Implements ModelBuilder to suppoert a simple Demo, too
+ * Implements {@link ModelBuilder} to suppoert a simple Demo, too
  *
  * @author    <a href="mailto:khaa@top-logic.com">Klaus Halfmann</a>
  * @author    Dieter Rothb&auml;cher
@@ -163,7 +163,7 @@ public class BoundObjectTreeModel implements TreeModel  {
     }
 
     /**
-     * Create a simple DemoModel from some {@link SimpleBoundObject}s.
+     * Create a simple demo model from some {@link SimpleBoundObject}s.
      */
     public static class DemoModelBuilder implements ModelBuilder {
         
@@ -177,7 +177,7 @@ public class BoundObjectTreeModel implements TreeModel  {
 		}
 
         /**
-         * Create a simple DemoModel from some {@link SimpleBoundObject}s.
+         * Create a simple demo model from some {@link SimpleBoundObject}s.
          */
         @Override
 		public Object getModel(Object businessModel, LayoutComponent aComponent) {

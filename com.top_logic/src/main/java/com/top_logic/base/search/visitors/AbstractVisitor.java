@@ -36,7 +36,7 @@ public abstract class AbstractVisitor implements QueryVisitor {
     /** Do something with the ORDER BY part of the query */
     protected abstract void visitOrder(String orderBy[]) throws QueryException;
     
-    /** Override to catch any QueryNode */
+    /** Override to catch any {@link QueryNode} */
     protected void visitQueryNode(QueryNode aNode) throws QueryException {
         // catch all, but do nothing
     }
@@ -51,43 +51,43 @@ public abstract class AbstractVisitor implements QueryVisitor {
         visitQueryNode(aNode);
     }
     
-    /** Visit an AllNode */
+    /** Visit an {@link AllNode} */
     @Override
 	public void visitNode(AllNode all) throws QueryException {
         visitQueryNode(all);
     }
 
-    /** Visit an ExampleNode */
+    /** Visit an {@link ExampleNode} */
     @Override
 	public void visitNode(ExampleNode example) throws QueryException {
         visitQueryNode(example);
     }
 
-    /** Visit a LiteralNode */
+    /** Visit a {@link LiteralNode} */
     @Override
 	public void visitNode(LiteralNode aLiteral) throws QueryException {
         visitQueryNode(aLiteral);
     }
 
-    /** Visit a UnaryOperator */
+    /** Visit a {@link UnaryOper}. */
     @Override
 	public void visitNode(UnaryOper anOper) throws QueryException {
         visitUnaryNode(anOper);
     }
 
-    /** Visit a UnaryFilter */
+    /** Visit a {@link UnaryFilter} */
     @Override
 	public void visitNode(UnaryFilter aFilter) throws QueryException {
         visitUnaryNode(aFilter);
     }
     
-    /** Visit a BinaryOperator */
+    /** Visit a {@link BinaryOper}. */
     @Override
 	public void visitNode(BinaryOper anOper) throws QueryException {
         visitBinaryNode(anOper);
     }
 
-    /** Visit a BinaryFilter */
+    /** Visit a {@link BinaryFilter} */
     @Override
 	public void visitNode(BinaryFilter aFilter) throws QueryException {
         visitBinaryNode(aFilter);

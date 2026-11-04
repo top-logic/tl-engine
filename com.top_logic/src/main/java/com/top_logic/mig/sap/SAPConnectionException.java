@@ -6,14 +6,14 @@
 package com.top_logic.mig.sap;
 
 
-/** This Exception is thrown by MetaObject on appropriate circumstances.
+/** This Exception is thrown when the connection to SAP fails.
  *
  * @author 	Dierk Kogge
  */
 public class SAPConnectionException extends SAPException
 {
 
-    /** Constructs a new SAPConnectionException with the specified
+    /** Constructs a new {@link SAPConnectionException} with the specified
       * error message.
       */
     public SAPConnectionException (String message)

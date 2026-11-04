@@ -52,7 +52,7 @@ public class CellObject implements Comparable {
     }
 
     /**
-     * Creates a new CellObject around the given object and no tooltip.
+     * Creates a new {@link CellObject} around the given object and no tooltip.
      *
      * @param aValue
      *            the object to encapsulate
@@ -62,7 +62,7 @@ public class CellObject implements Comparable {
     }
 
     /**
-     * Creates a new CellObject around the given object with the given tooltip.
+     * Creates a new {@link CellObject} around the given object with the given tooltip.
      *
      * @param aValue
      *            the object to encapsulate
@@ -74,7 +74,7 @@ public class CellObject implements Comparable {
     }
 
     /**
-     * Creates a new CellObject around the given object with the given tooltip.
+     * Creates a new {@link CellObject} around the given object with the given tooltip.
      *
      * @param aValue
      *            the object to encapsulate
@@ -88,7 +88,7 @@ public class CellObject implements Comparable {
     }
 
     /**
-     * Creates a new CellObject around the given object with the given tooltip.
+     * Creates a new {@link CellObject} around the given object with the given tooltip.
      *
      * @param aValue
      *            the object to encapsulate
@@ -107,10 +107,10 @@ public class CellObject implements Comparable {
     }
 
     /**
-     * Creates a {@link CellObject} with the values of the given CellObject.
+     * Creates a {@link CellObject} with the values of the given {@link CellObject}.
      *
      * @param aCellObject
-     *        the CellObject to copy the values from
+     *        the {@link CellObject} to copy the values from
      */
     public CellObject(CellObject aCellObject) {
         this(aCellObject.value, aCellObject.tooltip, aCellObject.style, aCellObject.image);
@@ -121,66 +121,82 @@ public class CellObject implements Comparable {
 
 
 
+    /** The wrapped value. */
     public Object getValue() {
         return value;
     }
 
+    /** Setter for {@link #getValue()}. */
     public void setValue(Object aValue) {
         value = aValue;
     }
 
+    /** The tooltip for the value. */
     public String getTooltip() {
         return tooltip;
     }
 
+    /** Setter for {@link #getTooltip()}. */
     public void setTooltip(String aTooltip) {
         tooltip = aTooltip;
     }
 
+	/** The CSS class for the value. */
 	public String getCssClass() {
 		return cssClass;
 	}
 
+	/** Setter for {@link #getCssClass()}. */
 	public void setCssClass(String cssClass) {
 		this.cssClass = cssClass;
 	}
 
+    /** The style for the value. */
     public String getStyle() {
         return style;
     }
 
+    /** Setter for {@link #getStyle()}. */
     public void setStyle(String aStyle) {
         style = aStyle;
     }
 
+	/** The image to display for the value. */
 	public ThemeImage getImage() {
         return image;
     }
 
+	/** Setter for {@link #getImage()}. */
 	public void setImage(ThemeImage aImage) {
         image = aImage;
     }
 
+    /** Whether the link display of the wrapped value is disabled. */
     public boolean isLinkDisabled() {
         return disableLink;
     }
 
+    /** Setter for {@link #isLinkDisabled()}. */
     public void setDisableLink(boolean disableLink) {
         this.disableLink = disableLink;
     }
 
+    /** Whether the image display of the wrapped value is disabled. */
     public boolean isImageDisabled() {
         return disableImage;
     }
 
+    /** Setter for {@link #isImageDisabled()}. */
     public void setDisableImage(boolean disableImage) {
         this.disableImage = disableImage;
     }
 
+    /** Whether the tooltip display of the wrapped value is disabled. */
     public boolean isTooltipDisabled() {
         return disableTooltip;
     }
 
+    /** Setter for {@link #isTooltipDisabled()}. */
     public void setDisableTooltip(boolean disableTooltip) {
         this.disableTooltip = disableTooltip;
     }

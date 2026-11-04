@@ -16,11 +16,13 @@ import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.layout.form.FormField;
 
 /**
- * Annotation adding an algorithm to a property computing its {@link FormField#isMandatory()} state.
+ * Annotation adding an algorithm to a property computing whether its input field is mandatory.
  * 
  * <p>
  * The annotation can be specified at the property or at its value type.
  * </p>
+ * 
+ * @implNote The computed value is set as {@link FormField#isMandatory()} state of the input field.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

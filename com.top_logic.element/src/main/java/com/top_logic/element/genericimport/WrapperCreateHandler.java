@@ -18,6 +18,9 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
+ * {@link GenericCreateHandler} creating a new object of the configured knowledge base type and
+ * filling its attributes from the imported data.
+ *
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class WrapperCreateHandler extends WrapperUpdateHandler implements

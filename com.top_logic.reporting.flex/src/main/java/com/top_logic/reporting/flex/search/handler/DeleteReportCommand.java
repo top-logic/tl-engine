@@ -33,7 +33,7 @@ import com.top_logic.tool.execution.InViewModeExecutable;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link CommandHandler} to delete the currently selected {@link FlexReport}
+ * {@link CommandHandler} to delete the currently selected {@link FlexReport}.
  * 
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */

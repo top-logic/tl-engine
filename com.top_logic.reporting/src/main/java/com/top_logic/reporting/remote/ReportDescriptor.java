@@ -8,6 +8,8 @@ package com.top_logic.reporting.remote;
 import java.util.Map;
 
 /**
+ * Description of a report to create: template, values, type and mode.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface ReportDescriptor {

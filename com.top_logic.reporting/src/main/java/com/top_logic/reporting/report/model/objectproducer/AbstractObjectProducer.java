@@ -11,6 +11,8 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 
 /**
+ * Base class for {@link ObjectProducer}s.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
 @Deprecated
@@ -24,6 +26,7 @@ public abstract class AbstractObjectProducer implements ObjectProducer {
         this.config = aConfig;
     }
     
+    /** Retrieves the business objects. */
     protected abstract Collection _getObjectsInternal();
     
     @Override
@@ -35,10 +38,12 @@ public abstract class AbstractObjectProducer implements ObjectProducer {
         return _getObjectsInternal();
     }
 
+    /** The name of the type of the produced objects. */
     public final String getObjectType() {
         return this.config.getObjectType();
     }
     
+    /** The configuration of this producer. */
     protected final ObjectProducerConfiguration getConfiguration() {
         return this.config;
     }

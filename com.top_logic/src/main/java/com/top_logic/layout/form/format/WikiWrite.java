@@ -17,7 +17,7 @@ import com.top_logic.basic.xml.TagWriter;
  * Formatter that translates wiki text to HTML fragments.
  * 
  * <p>
- * The wiki format understood by this formatter is similar to the MediaWiki format. The following
+ * The wiki format understood by this formatter is similar to the Media Wiki format. The following
  * formattings are understood:
  * </p>
  * 

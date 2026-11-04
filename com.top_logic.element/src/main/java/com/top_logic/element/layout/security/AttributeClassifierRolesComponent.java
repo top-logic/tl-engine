@@ -151,6 +151,9 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 		return super.validateModel(context);
     }
 
+    /**
+     * The generator for the rows of the table field with the given name.
+     */
     public RowFormGroupGenerator getRowFormGroupGenerator(String aFieldName) {
         return (RowFormGroupGenerator) this.generators.get(aFieldName);
     }
@@ -252,10 +255,16 @@ public class AttributeClassifierRolesComponent extends EditComponent {
         return null;
     }
 
+    /**
+     * The names of the classification attributes displayed in this component.
+     */
     public Collection getClassificationAttributeNames() {
         return this.generators.keySet();
     }
 
+    /**
+     * The declaration of the table columns for the classification attribute with the given name.
+     */
     public String getTableColumnNamesDeclaration(String aCalssificationAttributeName) {
         return ((AttClassRolesFormGroupGenerator) this.generators.get(aCalssificationAttributeName)).getColumnNameDeclaration();
     }
@@ -264,8 +273,12 @@ public class AttributeClassifierRolesComponent extends EditComponent {
         return (Collection) this.rightOptions.get(aRightOption);
     }
 
+    /**
+     * Command storing the roles required for the classifiers.
+     */
     public static class AttributeClassifirRolesApplyHandler extends AbstractApplyCommandHandler {
 
+        /** Default ID of this command. */
         public static final String COMMAND_ID = "attributeClassifierRolesApply";
 
         
@@ -315,10 +328,17 @@ public class AttributeClassifierRolesComponent extends EditComponent {
         doRemoveFormContext();
     }
 
+    /**
+     * Resets the state that was built together with the form context.
+     */
     protected void doRemoveFormContext() {
         this.generators = null;
     }
 
+    /**
+     * {@link RowFormGroupGenerator} creating the fields for selecting the access rights of a role
+     * for each classifier of a classification list.
+     */
     public class AttClassRolesFormGroupGenerator implements RowFormGroupGenerator {
 
         FastList fastList;
@@ -342,6 +362,9 @@ public class AttributeClassifierRolesComponent extends EditComponent {
             this.columnNameDeclaration = theSB.toString();
         }
 
+        /**
+         * The declaration of the table columns, one column per classifier.
+         */
         public String getColumnNameDeclaration() {
             return this.columnNameDeclaration;
         }

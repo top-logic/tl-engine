@@ -100,22 +100,22 @@ public class TestBoxesComponentReactive extends FormComponent {
 	public static final String GROUP14_GROUP = "group14";
 
 	/**
-	 * Group with wholeLine-attribute inside of a columns layout.
+	 * Group with {@code wholeLine} attribute inside of a columns layout.
 	 */
 	public static final String GROUP15_GROUP = "group15";
 
 	/**
-	 * Inner group of a group with wholeLine-attribute in a columns layout.
+	 * Inner group of a group with {@code wholeLine} attribute in a columns layout.
 	 */
 	public static final String GROUP16_GROUP = "group16";
 
 	/**
-	 * Group with wholeLine-attribute and 3 columns inside of a columns layout.
+	 * Group with {@code wholeLine} attribute and 3 columns inside of a columns layout.
 	 */
 	public static final String GROUP17_GROUP = "group17";
 
 	/**
-	 * Inner group of a group with wholeLine-attribute and 3 columns in a columns layout.
+	 * Inner group of a group with {@code wholeLine} attribute and 3 columns in a columns layout.
 	 */
 	public static final String GROUP18_GROUP = "group18";
 

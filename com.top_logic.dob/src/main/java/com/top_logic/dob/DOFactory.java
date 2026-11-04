@@ -7,11 +7,11 @@ package com.top_logic.dob;
 
 
 /** 
- * Base interface for a DataObject Factory.
+ * Base interface for a {@link DataObject} Factory.
  * 
  * Factories are not used much any more these days. The Container
  * housing the Datobject usually has some method of creating a Datatobject.
- * It may ore may not use a factory to create the final DataObject
+ * It may ore may not use a factory to create the final {@link DataObject}
  *
  * @deprecated This concept did not really work and was never used widely.
  * 
@@ -21,9 +21,9 @@ package com.top_logic.dob;
 public interface DOFactory {
 
     /**
-     * Creates an empty DataObject this MOClass is well
+     * Creates an empty {@link DataObject} this MOClass is well
      *
-     * @return  an empty DataObject without any set attributes.
+     * @return  an empty {@link DataObject} without any set attributes.
      *
      * @throws DataObjectException when creating the Object fails.
      */

@@ -29,6 +29,7 @@ public interface LabelPath extends ContextRef {
 	 */
 	@ListBinding(format = StringValueProvider.class, tag = "label", attribute = "name")
 	List<String> getLabelPath();
+	/** Setter for {@link #getLabelPath()}. */
 	void setLabelPath(List<String> labels);
 
 }

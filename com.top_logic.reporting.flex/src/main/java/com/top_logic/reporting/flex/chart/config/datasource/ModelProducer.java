@@ -26,7 +26,7 @@ public class ModelProducer implements ChartDataSource<ComponentDataContext>,
 		InteractiveBuilder<ModelProducer, ChartContextObserver>, ConfiguredInstance<ModelProducer.Config> {
 
 	/**
-	 * Config-interface for {@link ModelProducer}
+	 * Config-interface for {@link ModelProducer}.
 	 */
 	public interface Config extends PolymorphicConfiguration<ModelProducer> {
 

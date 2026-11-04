@@ -196,6 +196,8 @@ public class KafkaConsumerService extends ConfiguredManagedClass<KafkaConsumerSe
     }
 
 	/**
+	 * Looks up a {@link ConsumerDispatcher} by its name.
+	 * 
 	 * @param name
 	 *        the name of the {@link ConsumerDispatcher} to lookup
 	 * @return the {@link ConsumerDispatcher} registered with this service under the given name or

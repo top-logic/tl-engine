@@ -503,13 +503,6 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
-	 * Lookup {@link DemoTypesA#COMMENTS_ATTR} of {@link DemoTypesA}.
-	 */
-	public static com.top_logic.model.TLReference getCommentsDemoTypesAAttr() {
-		return (com.top_logic.model.TLReference) getDemoTypesAType().getPart(DemoTypesA.COMMENTS_ATTR);
-	}
-
-	/**
 	 * Lookup {@link DemoTypesA#COMPLEX_COUNTRY_ATTR} of {@link DemoTypesA}.
 	 */
 	public static com.top_logic.model.TLProperty getComplexCountryDemoTypesAAttr() {
@@ -1466,13 +1459,6 @@ public class DemoTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public static com.top_logic.model.TLProperty getCollectionDemoTypesXAttr() {
 		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.COLLECTION_ATTR);
-	}
-
-	/**
-	 * Lookup {@link DemoTypesX#COMMENTS_ATTR} of {@link DemoTypesX}.
-	 */
-	public static com.top_logic.model.TLProperty getCommentsDemoTypesXAttr() {
-		return (com.top_logic.model.TLProperty) getDemoTypesXType().getPart(DemoTypesX.COMMENTS_ATTR);
 	}
 
 	/**

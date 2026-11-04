@@ -12,6 +12,8 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeException;
 
 /**
+ * {@link CollectionFilter} that accepts all objects.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class TrueCollectionFilter extends BasicCollectionFilter {

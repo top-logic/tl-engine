@@ -148,6 +148,9 @@ public class TSElement extends TSNode implements Element {
     	}
     }
 
+	/**
+	 * Whether the given node has the given tag name (or the tag name is a wildcard) and namespace.
+	 */
 	protected boolean matchesTagName(Node node, String aTagName, boolean useNS, String nsURI) {
 		boolean tagNameMatches = StringServices.equals(node.getLocalName(), aTagName) || TAG_NAME_WILDCARD.equals(aTagName);
 		if (useNS) {

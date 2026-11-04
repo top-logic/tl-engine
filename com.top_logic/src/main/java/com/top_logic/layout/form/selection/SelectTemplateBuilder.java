@@ -114,6 +114,8 @@ public abstract class SelectTemplateBuilder extends TemplateBuilder {
 	protected abstract void appendContent();
 
 	/**
+	 * Appends a horizontal spacer with the given width in pixels.
+	 *
 	 * @param spacerPixel
 	 *        - space amount in pixel
 	 */
@@ -123,6 +125,8 @@ public abstract class SelectTemplateBuilder extends TemplateBuilder {
 	}
 
 	/**
+	 * Appends a horizontal spacer with the given width in percent.
+	 *
 	 * @param spacerPercent
 	 *        - space amount in percent
 	 */

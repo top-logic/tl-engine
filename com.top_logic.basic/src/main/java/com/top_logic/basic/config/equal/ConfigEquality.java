@@ -25,7 +25,7 @@ import com.top_logic.basic.config.PropertyKind;
 
 /**
  * Compares {@link ConfigurationItem}s by their values, with control how different
- * {@link PropertyKind kinds of properties} should be compared: {@link CompareMode}
+ * {@link PropertyKind kinds of properties} should be compared: {@link CompareMode}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -50,7 +50,7 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 	 */
 	private static final int HASH_LOOP = 257;
 
-	/** How should {@link ConfigurationItem}s be compared? */
+	/** How {@link ConfigurationItem}s should be compared. */
 	@SuppressWarnings("synthetic-access")
 	public enum CompareMode {
 

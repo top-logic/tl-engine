@@ -87,12 +87,17 @@ public class diff_match_patch {
   private short Match_MaxBits = 32;
 
   /**
-   * Internal class for returning results from diff_linesToChars().
+   * Internal class for returning results from {@link #diff_linesToChars(String, String)}.
    * Other less paranoid languages just use a three-element array.
    */
   protected static class LinesToCharsResult {
+    /** The first text encoded with one character per line. */
     protected String chars1;
+
+    /** The second text encoded with one character per line. */
     protected String chars2;
+
+    /** The unique lines, indexed by their encoding character. */
     protected List<String> lineArray;
 
     protected LinesToCharsResult(String chars1, String chars2,
@@ -114,7 +119,14 @@ public class diff_match_patch {
    * which means: delete "Hello", add "Goodbye" and keep " world."
    */
   public enum Operation {
-    DELETE, INSERT, EQUAL
+    /** The text is only contained in the first text. */
+    DELETE,
+
+    /** The text is only contained in the second text. */
+    INSERT,
+
+    /** The text is contained in both texts. */
+    EQUAL
   }
 
 
@@ -364,7 +376,7 @@ public class diff_match_patch {
    * @param text1 Old string to be diffed.
    * @param text2 New string to be diffed.
    * @param deadline Time at which to bail if not yet complete.
-   * @return LinkedList of Diff objects.
+   * @return {@link LinkedList} of Diff objects.
    */
   protected LinkedList<Diff> diff_bisect(String text1, String text2,
       long deadline) {
@@ -488,7 +500,7 @@ public class diff_match_patch {
    * @param x Index of split point in text1.
    * @param y Index of split point in text2.
    * @param deadline Time at which to bail if not yet complete.
-   * @return LinkedList of Diff objects.
+   * @return {@link LinkedList} of Diff objects.
    */
   private LinkedList<Diff> diff_bisectSplit(String text1, String text2,
                                             int x, int y, long deadline) {
@@ -571,7 +583,7 @@ public class diff_match_patch {
   /**
    * Rehydrate the text in a diff from a string of line hashes to real lines of
    * text.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    * @param lineArray List of unique strings.
    */
   protected void diff_charsToLines(LinkedList<Diff> diffs,
@@ -764,7 +776,7 @@ public class diff_match_patch {
 
   /**
    * Reduce the number of edits by eliminating semantically trivial equalities.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    */
   public void diff_cleanupSemantic(LinkedList<Diff> diffs) {
     if (diffs.isEmpty()) {
@@ -893,7 +905,7 @@ public class diff_match_patch {
    * Look for single edits surrounded on both sides by equalities
    * which can be shifted sideways to align the edit to a word boundary.
    * e.g: The c<ins>at c</ins>ame. -> The <ins>cat </ins>came.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    */
   public void diff_cleanupSemanticLossless(LinkedList<Diff> diffs) {
     String equality1, edit, equality2;
@@ -1027,7 +1039,7 @@ public class diff_match_patch {
 
   /**
    * Reduce the number of edits by eliminating operationally trivial equalities.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    */
   public void diff_cleanupEfficiency(LinkedList<Diff> diffs) {
     if (diffs.isEmpty()) {
@@ -1136,7 +1148,7 @@ public class diff_match_patch {
   /**
    * Reorder and merge like edit sections.  Merge equalities.
    * Any edit section can move as long as it doesn't cross an equality.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    */
   public void diff_cleanupMerge(LinkedList<Diff> diffs) {
     diffs.add(new Diff(Operation.EQUAL, ""));  // Add a dummy entry at the end.
@@ -1288,7 +1300,7 @@ public class diff_match_patch {
    * loc is a location in text1, compute and return the equivalent location in
    * text2.
    * e.g. "The cat" vs "The big cat", 1->1, 5->8
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    * @param loc Location within text1.
    * @return Location within text2.
    */
@@ -1326,7 +1338,7 @@ public class diff_match_patch {
 
   /**
    * Convert a Diff list into a pretty HTML report.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    * @return HTML representation.
    */
   public String diff_prettyHtml(LinkedList<Diff> diffs) {
@@ -1358,7 +1370,7 @@ public class diff_match_patch {
 
   /**
    * Compute and return the source text (all equalities and deletions).
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    * @return Source text.
    */
   public String diff_text1(LinkedList<Diff> diffs) {
@@ -1374,7 +1386,7 @@ public class diff_match_patch {
 
   /**
    * Compute and return the destination text (all equalities and insertions).
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    * @return Destination text.
    */
   public String diff_text2(LinkedList<Diff> diffs) {
@@ -1391,7 +1403,7 @@ public class diff_match_patch {
   /**
    * Compute the Levenshtein distance; the number of inserted, deleted or
    * substituted characters.
-   * @param diffs LinkedList of Diff objects.
+   * @param diffs {@link LinkedList} of Diff objects.
    * @return Number of changes.
    */
   public int diff_levenshtein(LinkedList<Diff> diffs) {
@@ -1720,7 +1732,7 @@ public class diff_match_patch {
 
   /**
    * Increase the context until it is unique,
-   * but don't let the pattern expand beyond Match_MaxBits.
+   * but don't let the pattern expand beyond {@link #Match_MaxBits}.
    * @param patch The patch to grow.
    * @param text Source text.
    */
@@ -1769,7 +1781,7 @@ public class diff_match_patch {
    * A set of diffs will be computed.
    * @param text1 Old text.
    * @param text2 New text.
-   * @return LinkedList of Patch objects.
+   * @return {@link LinkedList} of Patch objects.
    */
   public LinkedList<Patch> patch_make(String text1, String text2) {
     if (text1 == null || text2 == null) {
@@ -1789,7 +1801,7 @@ public class diff_match_patch {
    * Compute a list of patches to turn text1 into text2.
    * text1 will be derived from the provided diffs.
    * @param diffs Array of diff tuples for text1 to text2.
-   * @return LinkedList of Patch objects.
+   * @return {@link LinkedList} of Patch objects.
    */
   public LinkedList<Patch> patch_make(LinkedList<Diff> diffs) {
     if (diffs == null) {
@@ -1807,8 +1819,8 @@ public class diff_match_patch {
    * @param text1 Old text
    * @param text2 Ignored.
    * @param diffs Array of diff tuples for text1 to text2.
-   * @return LinkedList of Patch objects.
-   * @deprecated Prefer patch_make(String text1, LinkedList<Diff> diffs).
+   * @return {@link LinkedList} of Patch objects.
+   * @deprecated Prefer {@link #patch_make(String, LinkedList)}.
    */
   public LinkedList<Patch> patch_make(String text1, String text2,
       LinkedList<Diff> diffs) {
@@ -1821,7 +1833,7 @@ public class diff_match_patch {
    * text2 is not provided, diffs are the delta between text1 and text2.
    * @param text1 Old text.
    * @param diffs Array of diff tuples for text1 to text2.
-   * @return LinkedList of Patch objects.
+   * @return {@link LinkedList} of Patch objects.
    */
   public LinkedList<Patch> patch_make(String text1, LinkedList<Diff> diffs) {
     if (text1 == null || diffs == null) {
@@ -2105,7 +2117,7 @@ public class diff_match_patch {
    * Look through the patches and break up any which are longer than the
    * maximum limit of the match algorithm.
    * Intended to be called only from within patch_apply.
-   * @param patches LinkedList of Patch objects.
+   * @param patches {@link LinkedList} of Patch objects.
    */
   public void patch_splitMax(LinkedList<Patch> patches) {
     short patch_size = Match_MaxBits;
@@ -2384,10 +2396,19 @@ public class diff_match_patch {
    * Class representing one patch operation.
    */
   public static class Patch {
+    /** The diffs of this patch, including context. */
     public LinkedList<Diff> diffs;
+
+    /** The start index of this patch in the first text. */
     public int start1;
+
+    /** The start index of this patch in the second text. */
     public int start2;
+
+    /** The length of the text covered by this patch in the first text. */
     public int length1;
+
+    /** The length of the text covered by this patch in the second text. */
     public int length2;
 
 

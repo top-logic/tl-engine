@@ -16,7 +16,7 @@ public class TransientIdFactory implements IdFactory {
 
 	private long _nextId;
 
-	/** Creates a TransientIdFactory which returns the given id as the next id. */
+	/** Creates a {@link TransientIdFactory} which returns the given id as the next id. */
 	public TransientIdFactory(long nextId) {
 		_nextId = nextId;
 	}

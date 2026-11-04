@@ -32,9 +32,10 @@ import com.top_logic.util.TopLogicServlet;
  *
  * <p>
  * Sits on {@link TopLogicServlet}, the framework's "a valid session is required" base. A request
- * carrying no login is answered 401 - except for the framework's one-time cookie probe, which
- * redirects a request with no cookie at all to the start page before the route ever sees it (see
- * {@link #handleNoSession}). Whom the content belongs to is the subclass's question, asked in its
+ * carrying no login is answered 401 - except for the framework's one-time cookie probe, which this
+ * route keeps (see {@link #isCookieCheckRequired()}) and which redirects a request with no cookie
+ * at all to the start page before the route ever sees it (see {@link #handleNoSession}). Whom the
+ * content belongs to is the subclass's question, asked in its
  * {@code doGet} against {@link #account(HttpServletRequest)}.
  * </p>
  */
@@ -82,10 +83,11 @@ public abstract class SignedInContentServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * {@link TopLogicServlet} sends such a request to the start page once to find out whether the
-	 * client takes a cookie; it arrives here only when it came back without one. That probe is
-	 * {@code private} and {@code final} in the framework, so the first cookie-less request is a 302
-	 * whatever this class says; the second one is answered here, and 401 rather than another
-	 * redirect, which an image tag could only fail on.
+	 * client takes a cookie; it arrives here only when it came back without one. This route keeps
+	 * that probe ({@link #isCookieCheckRequired()} stays switched on): its content is loaded by the
+	 * browser, e.g. through an image tag, after a page that already has a session. The first
+	 * cookie-less request is therefore a 302; the second one is answered here, and 401 rather than
+	 * another redirect, which an image tag could only fail on.
 	 * </p>
 	 */
 	@Override

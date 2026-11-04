@@ -26,9 +26,8 @@ import com.top_logic.model.TLStructuredTypePart;
 public class WebFolderAttributeOperations {
 
 	/**
-	 * Simple class that holds the Wrapper to which a WebFolder is attached as the value 
-	 * of a WebFolderMetaAttribute and the WebFolder type
-	 * of that attribute 
+	 * Simple class that holds the object to which a {@link WebFolder} is attached as the value
+	 * of a folder attribute and the {@link WebFolder} type of that attribute.
 	 * 
 	 * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
 	 */
@@ -44,22 +43,40 @@ public class WebFolderAttributeOperations {
 	        this.setWebFolderType(aType);
 	    }
 
+		/**
+		 * Setter for {@link #getResponsibleObject()}.
+		 */
 		public void setResponsibleObject(TLObject responsibleObject) {
 			this.responsibleObject = responsibleObject;
 		}
 
+		/**
+		 * The object to which the folder is attached.
+		 */
 		public TLObject getResponsibleObject() {
 			return responsibleObject;
 		}
+		/**
+		 * Setter for {@link #getWebFolderType()}.
+		 */
 		public void setWebFolderType(String webFolderType) {
 			this.webFolderType = webFolderType;
 		}
+		/**
+		 * The folder type of the attribute.
+		 */
 		public String getWebFolderType() {
 			return webFolderType;
 		}
+		/**
+		 * Setter for {@link #getMetaAttribute()}.
+		 */
 		public void setMetaAttribute(TLStructuredTypePart metaAttribute) {
 			this.metaAttribute = metaAttribute;
 		}
+		/**
+		 * The attribute via which the folder is connected to the responsible object.
+		 */
 		public TLStructuredTypePart getMetaAttribute() {
 			return metaAttribute;
 		}
@@ -74,12 +91,12 @@ public class WebFolderAttributeOperations {
 	/**
 	 * Get the responsibility data of the given folder,
 	 * i.e. the Wrapper to which it is attached as the value 
-	 * of a WebFolderMetaAttribute and the WebFolder type
+	 * of a folder attribute and the {@link WebFolder} type
 	 * of that attribute 
 	 * 
-	 * @param aValue    the WebFolder. Must not be <code>null</code>.
+	 * @param aValue    the {@link WebFolder}. Must not be <code>null</code>.
 	 * @return the responsibility data or <code>null</code> if exceptions
-	 * occur or the folder does not belong to a WebFolderMetaAttribute.
+	 * occur or the folder does not belong to a folder attribute.
 	 */
 	public static WebFolderAttributeOperations.ResponsibilityData getResponsibilityData(WebFolder aValue) {
 	    // Get the top level WebFolder
@@ -121,12 +138,12 @@ public class WebFolderAttributeOperations {
 	/**
 	 * Get the responsibility data of the given folder,
 	 * i.e. the Wrapper to which it is attached as the value 
-	 * of a WebFolderMetaAttribute and the WebFolder type
+	 * of a folder attribute and the {@link WebFolder} type
 	 * of that attribute 
 	 * 
-	 * @param aValue    the WebFolder. Must not be <code>null</code>.
+	 * @param aValue    the {@link WebFolder}. Must not be <code>null</code>.
 	 * @return the responsibility data or <code>null</code> if exceptions
-	 * occur or the folder does not belong to a WebFolderMetaAttribute.
+	 * occur or the folder does not belong to a folder attribute.
 	 */
 	public static ResponsibilityData getResponsibilityData(Document aValue) {
 		// Handling via WebFolder is the default

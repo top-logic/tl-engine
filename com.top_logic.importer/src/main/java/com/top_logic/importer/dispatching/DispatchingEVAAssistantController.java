@@ -41,7 +41,7 @@ import com.top_logic.util.TLContextManager;
 public class DispatchingEVAAssistantController extends EVAAssistantController {
 
 	/**
-	 * Configuration for a DispatchingEVAAssistantController.
+	 * Configuration for a {@link DispatchingEVAAssistantController}.
 	 * 
 	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
@@ -85,18 +85,22 @@ public class DispatchingEVAAssistantController extends EVAAssistantController {
         return (this.getImporterName() != null) ? this.getParser().getExtensions() : Collections.<String>emptyList();
     }
 
+    /** The parser of the selected importer. */
     public AbstractImportParser getParser() {
 		return _parser;
     }
 
+    /** The performer of the selected importer. */
     public AbstractImportPerformer getImporter() {
 		return _performer;
     }
 
+    /** The name of the selected importer. */
     public String getImporterName() {
         return this.importerName;
     }
 
+    /** Selects the importer with the given name and creates its parser and performer. */
     public void setImporterName(String aName) {
         this.importerName = aName;
 		initParserAndPerformer();
@@ -116,10 +120,15 @@ public class DispatchingEVAAssistantController extends EVAAssistantController {
 		}
 	}
 
+    /**
+     * The names of the importers configured for this assistant, or {@code null} if all importers
+     * of the {@link ImporterService} are available.
+     */
     public List<String> getImporterNames() {
         return this.importerNames;
     }
 
+    /** The {@link ImporterService} providing the importers. */
     protected ImporterService getImporterService() {
         return ImporterService.getInstance();
     }

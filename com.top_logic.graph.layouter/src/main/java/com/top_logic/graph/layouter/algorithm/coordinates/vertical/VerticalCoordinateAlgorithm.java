@@ -16,6 +16,8 @@ import com.top_logic.graph.layouter.model.layer.DefaultAlternatingLayer;
  */
 public interface VerticalCoordinateAlgorithm {
 	/**
+	 * Sets the vertical coordinates of all nodes of the given layering.
+	 * 
 	 * @param ordering
 	 *        Ordered layering of a graph.
 	 */

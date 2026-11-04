@@ -15,6 +15,9 @@ import com.top_logic.reporting.office.ExpansionObject;
 
 
 /**
+ * {@link ExpansionObject} containing further inner {@link ExpansionObject}s, e.g. for a field
+ * with multiple symbols.
+ *
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
 public class StackedExpansionObject extends ExpansionObject {
@@ -26,14 +29,23 @@ public class StackedExpansionObject extends ExpansionObject {
         innerExpansionObjects = new ArrayList(5);
     }
 
+    /**
+     * Whether this object has inner {@link ExpansionObject}s.
+     */
     public boolean hasInnerExpansionObjects () {
         return !innerExpansionObjects.isEmpty();
     }
     
+    /**
+     * Adds an inner {@link ExpansionObject}.
+     */
     public void addExpansionObject (ExpansionObject anExpansionObject) {
         innerExpansionObjects.add(anExpansionObject);
     }
     
+    /**
+     * The inner {@link ExpansionObject}s of this object.
+     */
     public List getInnerExpansionObjects() {
         return innerExpansionObjects;
     }

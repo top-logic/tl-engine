@@ -39,10 +39,19 @@ import com.top_logic.basic.config.VoidValueProvider;
 @TagName("list-binding")
 public @interface ListBinding {
 
+	/**
+	 * Name of the element of a single entry.
+	 */
 	String tag() default AbstractListBindingFuture.STRING_DEFAULT;
 
+	/**
+	 * Name of the attribute holding the value of an entry.
+	 */
 	String attribute() default AbstractListBindingFuture.STRING_DEFAULT;
 
+	/**
+	 * The {@link ConfigurationValueProvider} to parse the entry values with.
+	 */
 	Class<? extends ConfigurationValueProvider<?>> format() default VoidValueProvider.class;
 
 }

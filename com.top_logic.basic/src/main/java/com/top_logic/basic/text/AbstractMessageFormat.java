@@ -1165,7 +1165,7 @@ public class AbstractMessageFormat extends Format {
          *
          * @throws InvalidObjectException if the constant could not be
          *         resolved.
-         * @return resolved MessageFormat.Field constant
+         * @return resolved {@link Field} constant
          */
 		@Override
 		protected Object readResolve() throws InvalidObjectException {

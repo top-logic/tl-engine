@@ -8,6 +8,8 @@ package com.top_logic.mail.base;
 import com.top_logic.mail.proxy.MailMessage;
 
 /**
+ * Preprocessor of mails received by the mail server daemon.
+ * 
  * @author     <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
 public interface MailPreprocessor {

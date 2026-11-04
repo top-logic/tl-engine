@@ -68,7 +68,7 @@ public class DeleteMailsCommand extends AbstractCommandHandler {
 	}
 
 	/**
-	 * Configuration of the {@link DeleteMailsCommand}
+	 * Configuration of the {@link DeleteMailsCommand}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

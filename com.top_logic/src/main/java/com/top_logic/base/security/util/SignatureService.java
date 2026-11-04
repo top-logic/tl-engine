@@ -229,7 +229,7 @@ public abstract class SignatureService extends ManagedClass {
     }
     
 	/**
-	 * {@link BasicRuntimeModule} for the service {@link SignatureService}
+	 * {@link BasicRuntimeModule} for the service {@link SignatureService}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

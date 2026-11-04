@@ -24,6 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
  */
 public class ReverseMetaAttributeLocator extends BackReferenceAttributeValueLocator {
 
+    /** Separator between the type name and the attribute name in the configuration. */
     public static final char ME_SEPARATOR = '#';
 
     private final String maName;

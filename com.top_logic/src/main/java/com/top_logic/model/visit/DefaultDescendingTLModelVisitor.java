@@ -118,6 +118,11 @@ public class DefaultDescendingTLModelVisitor<A> extends DefaultTLModelVisitor<Vo
 		return none;
 	}
 	
+	/**
+	 * Visits all given parts.
+	 *
+	 * @see #descend(TLModelPart, Object)
+	 */
 	protected Void descend(Iterable<? extends TLModelPart> parts, A arg) {
 		for (TLModelPart part : parts) {
 			descend(part, arg);
@@ -125,6 +130,7 @@ public class DefaultDescendingTLModelVisitor<A> extends DefaultTLModelVisitor<Vo
 		return none;
 	}
 
+	/** Visits the given part with this visitor. */
 	protected void descend(TLModelPart part, A arg) {
 		part.visit(this, arg);
 	}

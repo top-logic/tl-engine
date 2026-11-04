@@ -14,7 +14,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.dob.simple.AttributesMetaObject;
 
 /**
- * Extends the AttributesMetaObject with LDAP-specific class handling.
+ * Extends the {@link AttributesMetaObject} with LDAP-specific class handling.
  * 
  * @author <a href="mailto:kbu@top-logic.com">Karsten Buch </a>
  */
@@ -41,7 +41,7 @@ public class LDAPMetaObject extends AttributesMetaObject {
      * 
      * @param aClass				a classes string (classes separated by '.')
      * @param aPotentialSuperClass	a potential super classes string
-     * @return true if all classes of aClass are found in aPotentialSuperClass
+     * @return true if all classes of {@code aClass} are found in {@code aPotentialSuperClass}
      */
     public static boolean isInstanceOf(String aClass, String aPotentialSuperClass) {
     	List theClasses      = getClasses(aClass, false);

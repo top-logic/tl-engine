@@ -13,6 +13,8 @@ import java.util.Map;
 import com.top_logic.basic.UnreachableAssertion;
 
 /**
+ * Utilities for constant interfaces describing the elements of an XML namespace.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class NamespaceUtil {
@@ -23,6 +25,19 @@ public class NamespaceUtil {
 	
 	private static final int    CONSTANT_MODIFIERS      = Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL;
 
+	/**
+	 * Creates a map from element names to element IDs.
+	 *
+	 * <p>
+	 * For each constant {@code X_ELEMENT} of the given class that has a corresponding integer
+	 * constant {@code X_ELEMENT_ID}, the value of the first is mapped to the value of the second. A
+	 * lookup of an unknown element name results in {@code -1}.
+	 * </p>
+	 *
+	 * @param namespaceConstants
+	 *        The class defining the element constants.
+	 * @return The map from element names to their IDs.
+	 */
 	public static Map elementMap(Class namespaceConstants) {
 		HashMap result = new HashMap() {
 			@Override

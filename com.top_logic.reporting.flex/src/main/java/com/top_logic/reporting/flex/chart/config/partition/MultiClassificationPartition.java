@@ -22,6 +22,9 @@ import com.top_logic.reporting.flex.chart.config.model.Partition;
 import com.top_logic.reporting.flex.chart.config.util.MetaAttributeProvider;
 
 /**
+ * {@link PartitionFunction} that partitions by the values of a multi-valued classification
+ * attribute.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class MultiClassificationPartition extends MultiValuePartition {
@@ -88,7 +91,7 @@ public class MultiClassificationPartition extends MultiValuePartition {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(TLStructuredTypePart ma) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

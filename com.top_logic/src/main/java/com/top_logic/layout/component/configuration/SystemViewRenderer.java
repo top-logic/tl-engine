@@ -26,7 +26,13 @@ import com.top_logic.layout.form.control.DefaultSimpleCompositeControlRenderer;
 public class SystemViewRenderer extends DefaultSimpleCompositeControlRenderer
 		implements ConfiguredInstance<SystemViewRenderer.Config> {
 
+	/**
+	 * Configuration options for {@link SystemViewRenderer}.
+	 */
 	public interface Config extends PolymorphicConfiguration<SystemViewRenderer> {
+		/**
+		 * Additional HTML attributes written to the element containing the system views.
+		 */
 		@MapBinding
 		Map<String, String> getAttributes();
 	}

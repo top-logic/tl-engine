@@ -15,15 +15,20 @@ import com.top_logic.layout.progress.DefaultProgressInfo;
 import com.top_logic.layout.progress.ProgressResult;
 
 /**
- * The AbstractDataImporter is an abstract superclass for data importer which divides the
+ * The {@link AbstractDataImporter} is an abstract superclass for data importer which divides the
  * import process into the three steps preparing, parsing and committing.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public abstract class AbstractDataImporter {
 
+    /** Name of the thread that prepares the import. */
     public static final String PREPARE_THREAD = "DataImporter_Preparing";
+
+    /** Name of the thread that parses the import data. */
     public static final String PARSE_THREAD = "DataImporter_Parsing";
+
+    /** Name of the thread that commits the import. */
     public static final String COMMIT_THREAD = "DataImporter_Committing";
 
     /** Result key for unexpected error. Type: Throwable. */
@@ -42,13 +47,29 @@ public abstract class AbstractDataImporter {
     public static final String RESULT_IMPORT_DATA_NEWER = "RESULT_IMPORT_DATA_NEWER";
 
     // The available status modes of the importer:
+
+    /** Mode: The importer is idle, nothing has been done yet. */
     public static final int MODE_IDLE        = 0;
+
+    /** Mode: The importer is currently preparing the import. */
     public static final int MODE_PREPARING   = 1;
+
+    /** Mode: The import has been prepared. */
     public static final int MODE_PREPARED    = 2;
+
+    /** Mode: The importer is currently parsing the import data. */
     public static final int MODE_PARSING     = 3;
+
+    /** Mode: The import data has been parsed. */
     public static final int MODE_PARSED      = 4;
+
+    /** Mode: The importer is currently committing the import. */
     public static final int MODE_COMMITTING  = 5;
+
+    /** Mode: The import has been committed. */
     public static final int MODE_COMMITTED   = 6;
+
+    /** Mode: The importer is currently cleaning up. */
     public static final int MODE_CLEANUP     = 7;
 
 
@@ -147,7 +168,7 @@ public abstract class AbstractDataImporter {
     }
 
     /**
-	 * Gets a new SimpleTokenContextHandler for locking the importer for exclusive use.
+	 * Gets a new {@link Lock} for locking the importer for exclusive use.
 	 */
 	public Lock getNewTokenHandler() {
 		return new NoLock();
@@ -195,7 +216,7 @@ public abstract class AbstractDataImporter {
     }
 
     /**
-     * Checks whether a cleanup can be started and there is something to cleanUp.
+     * Checks whether a cleanup can be started and there is something to clean up.
      */
     public boolean needCleanUp() {
         return canStartCleanUp() && mode > MODE_PREPARED; //MODE_IDLE;
@@ -252,7 +273,8 @@ public abstract class AbstractDataImporter {
     /**
      * Prepares the import.
      *
-     * @return the result of the prepare, which can got by the getPrepareResult() method also.
+     * @return the result of the prepare, which can also be retrieved by
+     *         {@link #getPrepareResult()}.
      * @exception IllegalStateException if {@link #canStartPreparing()} returns <code>false</code>
      */
     public final ProgressResult prepareImport() {
@@ -281,7 +303,8 @@ public abstract class AbstractDataImporter {
     /**
      * Parses the import data ("simulates" the import).
      *
-     * @return the result of the parse, which can got by the getParseResult() method also.
+     * @return the result of the parse, which can also be retrieved by
+     *         {@link #getParseResult()}.
      * @exception IllegalStateException if {@link #canStartParsing()} returns <code>false</code>
      */
     public final ProgressResult parseImport() {
@@ -314,7 +337,8 @@ public abstract class AbstractDataImporter {
     /**
      * Commits the import (really create and manipulates objects).
      *
-     * @return the result of the commit, which can got by the getCommitResult() method also.
+     * @return the result of the commit, which can also be retrieved by
+     *         {@link #getCommitResult()}.
      * @exception IllegalStateException if {@link #canStartCommitting()} returns <code>false</code>
      */
     public final ProgressResult commitImport() {
@@ -422,14 +446,14 @@ public abstract class AbstractDataImporter {
     protected abstract void doParseImport();
 
     /**
-     * In this method the import gets done. The objects collected in the doParseImport
-     * method gets now really created / updated / removed and committed.
+     * In this method the import gets done. The objects collected in the
+     * {@link #doParseImport()} method get now really created / updated / removed and committed.
      */
     protected abstract void doCommitImport();
 
 
     /**
-     * In this method cleanUp work gets done. This includes removing results of parsing and
+     * In this method clean-up work gets done. This includes removing results of parsing and
      * committing and releasing potentially reserved resources.
      */
     protected abstract void doCleanUpImporter();

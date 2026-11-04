@@ -37,7 +37,7 @@ public abstract class AbstractLinkTag extends TagSupport {
     }
 
     /**
-     * Retrieves the standard PrintWriter object to print the stylesheet link
+     * Retrieves the standard {@link java.io.PrintWriter} object to print the stylesheet link
      * to the JSP page head.
      */
     @Override
@@ -86,14 +86,17 @@ public abstract class AbstractLinkTag extends TagSupport {
 		return this.contextPath;
     }
     
+    /** Whether the link target refers to a style resource. */
     protected boolean hasPathPrefix () {
         return (getHref ().indexOf ("style") > -1);
     }
     
     
+    /** Writes the start of the link tag. */
     protected abstract void writePrefix (JspWriter out) throws IOException;
     
     
+    /** Writes the end of the link tag. */
     protected abstract void writeSuffix (JspWriter out)throws IOException ;
 
 }

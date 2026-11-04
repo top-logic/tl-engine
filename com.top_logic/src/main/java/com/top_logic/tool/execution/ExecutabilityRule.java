@@ -9,7 +9,8 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
- * The rule calculates if a command is executable within the given LayoutComponents context.
+ * The rule calculates if a command is executable within the given
+ * {@link com.top_logic.mig.html.layout.LayoutComponent}'s context.
  * 
  * @author    <a href=mailto:fsc@top-logic.com>Friedemann Schneider</a>
  */

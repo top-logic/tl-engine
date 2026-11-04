@@ -21,6 +21,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * {@link GenericValidator} checking the imported values against the attributes of the
+ * configured {@link TLClass}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class MetaElementBasedValidator extends MetaElementBasedImportBase implements
@@ -37,6 +40,17 @@ public class MetaElementBasedValidator extends MetaElementBasedImportBase implem
         this.allowEmptyValues = Boolean.valueOf(aSomeProps.getProperty("allowNullValues", "false")).booleanValue();
     }
 
+    /**
+     * Validates the given imported data.
+     *
+     * @param aDO
+     *        The imported data.
+     * @param aCache
+     *        The cache of already imported objects.
+     * @param validateReferences
+     *        Whether reference attributes are validated, otherwise only the other attributes.
+     * @return The validation result.
+     */
     public ValidationResult validate(GenericValueMap aDO, GenericCache aCache, boolean validateReferences) {
         ValidationResult theResult = new ValidationResult(aDO);
         

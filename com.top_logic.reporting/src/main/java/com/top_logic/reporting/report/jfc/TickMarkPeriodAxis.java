@@ -19,7 +19,7 @@ import org.jfree.data.time.RegularTimePeriod;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 
 /**
- * The TickMarkPeriodAxis is a normal {@link PeriodAxis} but it fixed 
+ * The {@link TickMarkPeriodAxis} is a normal {@link PeriodAxis} but it fixed 
  * the always visible tick marks problem.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

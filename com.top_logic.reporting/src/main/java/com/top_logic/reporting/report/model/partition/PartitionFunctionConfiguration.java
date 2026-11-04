@@ -18,6 +18,8 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 import com.top_logic.reporting.report.model.partition.function.PartitionFunctionFactory;
 
 /**
+ * Configuration of a {@link PartitionFunction}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -32,9 +34,11 @@ public interface PartitionFunctionConfiguration extends PolymorphicConfiguration
      * flag. 
      */
 	String IGNORE_NULL_VALUES_NAME = "ignoreNullValues";
+	/** Whether business objects with an empty attribute value are ignored. */
 	@BooleanDefault(false)
     @Name(IGNORE_NULL_VALUES_NAME)
     boolean isIgnoreNullValues();
+    /** Setter for {@link #isIgnoreNullValues()}. */
     void    setIgnoreNullValues(boolean ignoreNullValues);
     
     /**
@@ -45,26 +49,35 @@ public interface PartitionFunctionConfiguration extends PolymorphicConfiguration
      * flag. 
      */
     String IGNORE_EMPTY_PARTITIONS_VALUES_NAME = "ignoreEmtpyPartitions";
+    /** Whether partitions without business objects are omitted. */
     @Name(IGNORE_EMPTY_PARTITIONS_VALUES_NAME)
     @BooleanDefault(false)
     boolean isIgnoreEmptyPartitions();
+    /** Setter for {@link #isIgnoreEmptyPartitions()}. */
     void setIgnoreEmptyPartitions(boolean ignoreEmtpyPartitions);
     
+    /** Configuration name of {@link #getAttribute()}. */
     String ATTRIBUTE_PROPERTY_NAME = "attribute";
     
+    /** The path of the attribute to partition by. */
     @Name(ATTRIBUTE_PROPERTY_NAME)
     String getAttribute();
+    /** Setter for {@link #getAttribute()}. */
     void setAttribute(String anAtrributePath);
     
+    /** Algorithm accessing the attribute values of the business objects. */
     @Format(AccessorFactory.class)
     @FormattedDefault(AccessorFactory.DEFAULT_ACCESSOR)
     @Name("accessor")
     Accessor getAccessor();
+    /** Setter for {@link #getAccessor()}. */
     void setAccessor(Accessor anAccessor);
     
+    /** Function partitioning each partition further. */
     @ImplClasses(PartitionFunctionFactory.class)
     @Name("partition")
     PartitionFunctionConfiguration  getPartitionConfiguration();
+    /** Setter for {@link #getPartitionConfiguration()}. */
     void setPartitionConfiguration(PartitionFunctionConfiguration aFunction);
 }
 

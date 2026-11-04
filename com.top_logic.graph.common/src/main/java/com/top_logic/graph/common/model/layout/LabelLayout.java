@@ -8,7 +8,7 @@ package com.top_logic.graph.common.model.layout;
 import com.top_logic.graph.common.model.Label;
 
 /**
- * Layout algorithm for rendering {@link Label}s
+ * Layout algorithm for rendering {@link Label}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

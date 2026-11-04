@@ -20,7 +20,7 @@ import com.top_logic.reporting.flex.chart.config.util.Configs;
 public class StaticChartComponent extends AbstractChartComponent {
 
 	/**
-	 * Configuration options for {@link StaticChartComponent}
+	 * Configuration options for {@link StaticChartComponent}.
 	 */
 	public interface Config extends AbstractChartComponent.Config {
 

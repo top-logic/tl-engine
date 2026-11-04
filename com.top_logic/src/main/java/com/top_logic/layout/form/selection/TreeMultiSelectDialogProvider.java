@@ -25,7 +25,7 @@ import com.top_logic.layout.tree.dnd.DropFromTreeAcceptor;
 import com.top_logic.layout.tree.dnd.DropSelectDialog;
 
 /**
- * A {@link ControlProvider} used for tree dialogs, which allow multiple selections
+ * A {@link ControlProvider} used for tree dialogs, which allow multiple selections.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

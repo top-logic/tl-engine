@@ -19,12 +19,12 @@ import com.top_logic.reporting.report.model.filter.FilterEntry;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The AbstractRangeParser is the super class for all range parsers. These parsers should be
+ * The {@link AbstractRangeParser} is the super class for all range parsers. These parsers should be
  * obtained from the {@link RangeParserFactory}.
  * 
- * This Class provides common attributes and methods for all RangeParsers.
+ * This Class provides common attributes and methods for all range parsers.
  * 
- * It is invoked by a PartitionFunctionParser and parses a &lt;range> tree
+ * It is invoked by a partition function parser and parses a &lt;range> tree
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  * @deprecated use {@link ReportReader} and {@link ReportConfiguration}

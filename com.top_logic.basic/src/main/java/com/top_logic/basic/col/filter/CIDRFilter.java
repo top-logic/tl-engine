@@ -108,6 +108,12 @@ public class CIDRFilter implements Filter<String> {
 		return address != null && matches(address.getAddress());
 	}
 
+    /**
+     * Whether the given raw address is in the range of this filter.
+     *
+     * @param address
+     *        The raw address bytes, see {@link InetAddress#getAddress()}. May be <code>null</code>.
+     */
     public boolean matches(byte[] address) {
 		if (address == null || address.length != pattern.length) return false;
 		for (int cnt = pattern.length, n = 0; n < cnt; n++) {

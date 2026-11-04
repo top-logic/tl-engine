@@ -32,6 +32,7 @@ public class CrossProduct extends SetExpression {
 		return expressions;
 	}
 	
+	/** Setter for {@link #getExpressions()}. */
 	public void setExpressions(List<SetExpression> expressions) {
 		this.expressions = expressions;
 	}

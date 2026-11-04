@@ -32,7 +32,7 @@ public final class DefaultTabBarRenderer extends AbstractControlRenderer<TabBarC
 	public static final TabBarRenderer INSTANCE =
 		TypedConfigUtil.createInstance(TypedConfiguration.newConfigItem(Config.class));
 
-	/** Configuration interface of {@link DefaultTabBarRenderer} */
+	/** Configuration interface of {@link DefaultTabBarRenderer}. */
 	public interface Config extends PolymorphicConfiguration<DefaultTabBarRenderer> {
 
 		/** Configuration name for {@link #getTabBarClass()}. */

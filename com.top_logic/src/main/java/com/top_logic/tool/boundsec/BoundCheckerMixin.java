@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * The BoundCheckerMixin provides implementations for the {@link BoundChecker} interface
+ * The {@link BoundCheckerMixin} provides implementations for the {@link BoundChecker} interface.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */

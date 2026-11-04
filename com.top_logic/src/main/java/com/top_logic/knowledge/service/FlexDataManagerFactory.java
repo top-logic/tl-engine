@@ -27,7 +27,7 @@ import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 public class FlexDataManagerFactory extends ManagedClass {
 
 	/**
-	 * Configuration of a {@link FlexDataManagerFactory}
+	 * Configuration of a {@link FlexDataManagerFactory}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

@@ -10,25 +10,25 @@ import org.jfree.data.category.CategoryDataset;
 
 
 /**
- * Die DemoURLGenerator is a dummy tooltip generator which returns
+ * Die {@link DemoURLGenerator} is a dummy tooltip generator which returns
  * every time the <i>TopLogic</i>-URL.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class DemoURLGenerator implements CategoryURLGenerator{
     
-    /** constant url to return for all CategoryDatasets */
+    /** constant url to return for all {@link CategoryDataset}s */
     protected String url;
     
     /** 
-     * Create a new DemoURLGenerator for given URL.
+     * Create a new {@link DemoURLGenerator} for given URL.
      */
     public DemoURLGenerator(String aUrl) {
         this.url = aUrl;
     }
 
     /** 
-     * Create a new DemoURLGenerator for "http://www.top-logic.com"
+     * Create a new {@link DemoURLGenerator} for "http://www.top-logic.com"
      */
     public DemoURLGenerator() {
         this("http://www.top-logic.com");
@@ -37,8 +37,7 @@ public class DemoURLGenerator implements CategoryURLGenerator{
     /**
      * This is a dummy implementation which always returns the same url.
      * 
-     * @see org.jfree.chart.urls.CategoryURLGenerator#generateURL
-     *      (org.jfree.data.category.CategoryDataset, int, int)
+     * @see org.jfree.chart.urls.CategoryURLGenerator#generateURL(CategoryDataset, int, int)
      */
     @Override
 	public String generateURL(CategoryDataset arg0, int arg1, int arg2) {

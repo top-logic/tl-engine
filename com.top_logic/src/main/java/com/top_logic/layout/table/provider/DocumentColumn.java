@@ -18,7 +18,7 @@ import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.model.util.TLTypeContext;
 
 /**
- * {@link ColumnInfo} configuring a column displaying a {@link Document}
+ * {@link ColumnInfo} configuring a column displaying a {@link Document}.
  * 
  * @since 5.8.0
  * 

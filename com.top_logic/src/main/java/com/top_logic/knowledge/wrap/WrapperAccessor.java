@@ -27,6 +27,7 @@ public final class WrapperAccessor implements Accessor<Object> {
 	 */
 	public static final String IDENTIFIER_PROPERTY = BasicTypes.IDENTIFIER_ATTRIBUTE_NAME;
 
+    /** Pseudo property name that accesses the object itself. */
     public static final String SELF = "_self";
 
 	/**

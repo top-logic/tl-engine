@@ -18,7 +18,7 @@ import com.top_logic.knowledge.service.DBSetupAction;
 import com.top_logic.knowledge.service.DropTablesContext;
 
 /**
- * {@link DBSetupAction} installing the correct database versions into the {@link DBProperties}
+ * {@link DBSetupAction} installing the correct database versions into the {@link DBProperties}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -15,7 +15,7 @@ import com.top_logic.util.Utils;
 
 /**
  * This class represents a company (thus a legal entity).
- * A CompanyContact may refer to a number of PersonContacts.
+ * A {@link CompanyContact} may refer to a number of {@link PersonContact}s.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
@@ -32,14 +32,29 @@ public class CompanyContact extends AbstractContact {
     public static final String META_ELEMENT = "Contact.Company";
 
     /**
-     * Reverse resolution of PersonContact.company
+     * Reverse resolution of the company of a {@link PersonContact}.
      */
 	public static final String ATTRIBUTE_STAFF = "staff";
 
+	/**
+	 * Name of the e-mail attribute.
+	 */
 	public static final String ATT_MAIL = "email";
+	/**
+	 * Name of the department attribute.
+	 */
 	public static final String ATT_DEPARTMENT = "department";
+	/**
+	 * Name of the sector attribute.
+	 */
 	public static final String ATT_SECTOR = "sector";
+	/**
+	 * Name of the attribute marking a supplier.
+	 */
 	public static final String ATT_SUPPLIER = "supplier";
+	/**
+	 * Name of the attribute marking a client.
+	 */
 	public static final String ATT_CLIENT = "client";
 
     /**
@@ -49,6 +64,9 @@ public class CompanyContact extends AbstractContact {
         super(ko);
     }
 
+    /**
+     * Sets the address values of this company.
+     */
     public void setAddress (AddressHolder anAddress) {
         setValue (AddressHolder.STREET,anAddress.getProperty(AddressHolder.STREET));
         setValue (AddressHolder.ZIP_CODE,anAddress.getProperty(AddressHolder.ZIP_CODE));
@@ -68,6 +86,9 @@ public class CompanyContact extends AbstractContact {
 		setValue(AddressHolder.CLIENT, isClient);
     }
     
+    /**
+     * The address values of this company.
+     */
     public AddressHolder getAddress () {
         AddressHolder theAddress = new AddressHolder();
         theAddress.setProperty(AddressHolder.STREET,(String)this.getValue(AddressHolder.STREET));

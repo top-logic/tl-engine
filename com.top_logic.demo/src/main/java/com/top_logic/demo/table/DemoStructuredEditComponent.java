@@ -11,7 +11,7 @@ import com.top_logic.element.layout.table.AttributedStructureEditComponent;
 import com.top_logic.layout.form.treetable.component.TableDeclarationProvider;
 
 /**
- * {@link AttributedStructureEditComponent}, with a enhanced {@link TableDeclarationProvider}
+ * {@link AttributedStructureEditComponent}, with an enhanced {@link TableDeclarationProvider}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

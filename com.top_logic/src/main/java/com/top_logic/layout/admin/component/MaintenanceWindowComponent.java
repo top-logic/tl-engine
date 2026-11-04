@@ -43,7 +43,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The MaintenanceWindowComponent manages the maintenance window system mode.
+ * The {@link MaintenanceWindowComponent} manages the maintenance window system mode.
  *
  * @author <a href=mailto:CBR@top-logic.com>CBR</a>
  */
@@ -151,7 +151,7 @@ public class MaintenanceWindowComponent extends FormComponent {
 		}
 
         /**
-         * Creates a new EnterMaintenanceWindowDialog.
+         * Creates a new {@link EnterMaintenanceWindowDialog}.
          */
         public EnterMaintenanceWindowDialog(InstantiationContext context, Config aSomeAttrs) throws ConfigurationException {
             super(context, aSomeAttrs);
@@ -194,6 +194,7 @@ public class MaintenanceWindowComponent extends FormComponent {
      */
     public static class EnterMaintenanceWindowDelayedCommandHandler extends CloseModalDialogCommandHandler {
 
+        /** Name of the {@link EnterMaintenanceWindowDelayedCommandHandler} command. */
         public static final String COMMAND = "EnterMaintenanceWindowDelayed";
 
 		/**
@@ -210,7 +211,7 @@ public class MaintenanceWindowComponent extends FormComponent {
 		}
 
 		/**
-		 * Creates a new EnterMaintenanceWindowDelayedCommandHandler.
+		 * Creates a new {@link EnterMaintenanceWindowDelayedCommandHandler}.
 		 */
         public EnterMaintenanceWindowDelayedCommandHandler(InstantiationContext context, Config config) {
 			super(context, config);
@@ -284,10 +285,11 @@ public class MaintenanceWindowComponent extends FormComponent {
 
 		}
 
+        /** Name of the {@link EnterMaintenanceWindowCommandHandler} command. */
         public static final String COMMAND = "EnterMaintenanceWindow";
 
         /**
-         * Creates a new EnterMaintenanceWindowCommandHandler.
+         * Creates a new {@link EnterMaintenanceWindowCommandHandler}.
          */
         public EnterMaintenanceWindowCommandHandler(InstantiationContext context, Config config) {
 			super(context, config);
@@ -326,10 +328,11 @@ public class MaintenanceWindowComponent extends FormComponent {
 
 		}
 
+        /** Name of the {@link LeaveMaintenanceWindowCommandHandler} command. */
         public static final String COMMAND = "LeaveMaintenanceWindow";
 
         /**
-         * Creates a new LeaveMaintenanceWindowCommandHandler.
+         * Creates a new {@link LeaveMaintenanceWindowCommandHandler}.
          */
         public LeaveMaintenanceWindowCommandHandler(InstantiationContext context, Config config) {
 			super(context, config);
@@ -373,10 +376,11 @@ public class MaintenanceWindowComponent extends FormComponent {
 
 		}
 
+        /** Name of the {@link AbortEnteringMaintenanceWindowCommandHandler} command. */
         public static final String COMMAND = "AbortEnteringMaintenanceWindow";
 
         /**
-         * Creates a new AbortEnteringMaintenanceWindowCommandHandler.
+         * Creates a new {@link AbortEnteringMaintenanceWindowCommandHandler}.
          */
         public AbortEnteringMaintenanceWindowCommandHandler(InstantiationContext context, Config config) {
 			super(context, config);

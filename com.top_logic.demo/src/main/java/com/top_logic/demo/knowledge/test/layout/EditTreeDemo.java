@@ -64,6 +64,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class EditTreeDemo extends DummyEditComponent {
 
+    /** Prefix of the names of newly created nodes. */
     public static final String NODE_NAME_PREFIX = "Node_";
 
 
@@ -72,9 +73,11 @@ public class EditTreeDemo extends DummyEditComponent {
                 "A", "B", "C", "D" , "E", "F", "G"});
 
 
+	/** Name of the field editing the node name. */
 	public static final String NODE_NAME_FIELD = "nodeName";
 
 
+	/** {@link TreeBuilder} creating an infinite tree with a random number of children per node. */
 	public static final TreeBuilder INFINITE_TREE = new AbstractTLTreeNodeBuilder() {
 
 		@Override
@@ -101,7 +104,7 @@ public class EditTreeDemo extends DummyEditComponent {
 	};
 
     /**
-     * Create a new EditTreeComponent from XML.
+     * Create a new {@link EditTreeDemo} from XML.
      */
     public EditTreeDemo(InstantiationContext context, Config aAtts) throws ConfigurationException {
         super(context, aAtts);
@@ -363,10 +366,24 @@ public class EditTreeDemo extends DummyEditComponent {
 		}
 	}
 
+	/**
+	 * Finds the node with the given business object in the given tree model.
+	 *
+	 * @see #findNode(String, DefaultMutableTLTreeNode)
+	 */
 	protected static TLTreeNode findNode(TLTreeModel treeModel, String value) {
 		return findNode(value, (DefaultMutableTLTreeNode) treeModel.getRoot());
 	}
 
+	/**
+	 * Searches the node with the given business object in the subtree of the given root node.
+	 *
+	 * @param value
+	 *        The business object of the node to find.
+	 * @param root
+	 *        The root of the subtree to search.
+	 * @return The found node, or {@code null} if none was found.
+	 */
 	public static DefaultMutableTLTreeNode findNode(String value, DefaultMutableTLTreeNode root) {
 		if (root.getBusinessObject().equals(value)) {
 			return root;
@@ -416,7 +433,8 @@ public class EditTreeDemo extends DummyEditComponent {
 	}
 
     /**
-     * Setup a NodeGroup with a Checkbox, StringField and SelectField.
+     * Setup a node group with a Checkbox, {@link StringField} and
+     * {@link com.top_logic.layout.form.model.SelectField}.
      */
     public final class SimpleGroupInitializer implements NodeGroupInitializer {
 

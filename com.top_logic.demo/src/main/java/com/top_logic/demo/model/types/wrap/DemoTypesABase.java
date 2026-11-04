@@ -306,15 +306,6 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	String COLOR_ATTR = "color";
 
 	/**
-	 * Part <code>comments</code> of <code>DemoTypes.A</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.comments:Comment</code> in configuration.
-	 * </p>
-	 */
-	String COMMENTS_ATTR = "comments";
-
-	/**
 	 * Part <code>complexCountry</code> of <code>DemoTypes.A</code>
 	 * 
 	 * <p>
@@ -1750,49 +1741,6 @@ public interface DemoTypesABase extends com.top_logic.demo.model.types.DemoTypes
 	 */
 	default void setColor(java.awt.Color newValue) {
 		tUpdateByName(COLOR_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #COMMENTS_ATTR}.
-	 */
-	@SuppressWarnings("unchecked")
-	default java.util.Set<? extends com.top_logic.element.comment.wrap.Comment> getComments() {
-		return (java.util.Set<? extends com.top_logic.element.comment.wrap.Comment>) tValueByName(COMMENTS_ATTR);
-	}
-
-	/**
-	 * Live view of the {@link #COMMENTS_ATTR} part.
-	 * <p>
-	 * Changes to this {@link java.util.Collection} change directly the attribute value.
-	 * The caller has to take care of the transaction handling.
-	 * </p>
-	 */
-	default java.util.Set<com.top_logic.element.comment.wrap.Comment> getCommentsModifiable() {
-		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(COMMENTS_ATTR);
-		@SuppressWarnings("unchecked")
-		java.util.Set<com.top_logic.element.comment.wrap.Comment> result = (java.util.Set<com.top_logic.element.comment.wrap.Comment>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
-		return result;
-	}
-
-	/**
-	 * Setter for part {@link #COMMENTS_ATTR}.
-	 */
-	default void setComments(java.util.Set<com.top_logic.element.comment.wrap.Comment> newValue) {
-		tUpdateByName(COMMENTS_ATTR, newValue);
-	}
-
-	/**
-	 * Adds a value to the {@link #COMMENTS_ATTR} reference.
-	 */
-	default void addComment(com.top_logic.element.comment.wrap.Comment newValue) {
-		tAddByName(COMMENTS_ATTR, newValue);
-	}
-
-	/**
-	 * Removes the given value from the {@link #COMMENTS_ATTR} reference.
-	 */
-	default void removeComment(com.top_logic.element.comment.wrap.Comment oldValue) {
-		tRemoveByName(COMMENTS_ATTR, oldValue);
 	}
 
 	/**

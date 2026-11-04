@@ -17,7 +17,7 @@ import com.top_logic.mig.html.UserAgent;
 import com.top_logic.mig.html.layout.MainLayout;
 
 /**
- * Include all JavaScripts required for the Browser Abstraction Layer depending
+ * Include all JavaScript files required for the Browser Abstraction Layer depending
  * on the current user agent.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

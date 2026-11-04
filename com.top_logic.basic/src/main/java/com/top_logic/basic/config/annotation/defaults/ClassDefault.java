@@ -38,6 +38,9 @@ import com.top_logic.basic.config.annotation.TagName;
 @TagName("class-default")
 public @interface ClassDefault {
 
+	/**
+	 * The default value.
+	 */
 	Class<?> value();
 
 }

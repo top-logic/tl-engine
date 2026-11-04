@@ -55,7 +55,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.util.Utils;
 
 /**
- * The class {@link DefaultTableData} is the
+ * Default implementation of {@link TableData}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

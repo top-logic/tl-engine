@@ -22,7 +22,7 @@ public class SimpleRange implements Range {
 	private Comparable comparable;
 
 	/**
-	 * Constructs a new RangeObject.
+	 * Constructs a new range object.
      * 
 	 * @param    aComparable    The comparable wich should be wrapped.
 	 */

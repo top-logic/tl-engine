@@ -19,7 +19,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.I18NConstants;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 
 /**
- * Has the {@link FormField} the given {@link FieldValidity}?
+ * Plugin creating an assertion that the {@link FormField} has the given {@link FieldValidity}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

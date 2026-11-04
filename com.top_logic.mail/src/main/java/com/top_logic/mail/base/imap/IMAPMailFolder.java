@@ -502,9 +502,9 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
         this.message = aMessage;
     }
     /**
-     * This method returns the messageIDs.
+     * This method returns the message IDs.
      * 
-     * @return    Returns the messageIDs.
+     * @return    Returns the message IDs.
      */
 	public Set<String> getMessageIDs() {
         if (this.messageIDs == null) {

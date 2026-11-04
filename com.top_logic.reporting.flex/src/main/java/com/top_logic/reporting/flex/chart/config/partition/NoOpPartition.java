@@ -95,7 +95,7 @@ public class NoOpPartition implements PartitionFunction, ConfiguredInstance<NoOp
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(String key) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

@@ -31,7 +31,7 @@ import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * {@link ApplicationActionOp} that executes a given command and checks for a potential
- * noExecutability reason.
+ * reason why the command is not executable.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

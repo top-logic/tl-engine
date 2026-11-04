@@ -35,13 +35,14 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 /**
  * Wrapper for the knowledge object "PersBoundComp".
  *
- * (The name PersistantBoundComponenent would eventually be to
+ * (The name "Persistent Bound Component" would eventually be to
  *  long for the name of a KO, so forgive me this abbreviation.)
  *
- * A PersBoundComp is a Helper Object for a BoundChecker (especially
- * for the BoundComponent). PersBoundComps are created dynamically.
- * They are used for Security reasons
- * only and carry <em>no</em> Layout/HTML/User specific information
+ * A {@link PersBoundComp} is a Helper Object for a
+ * {@link com.top_logic.tool.boundsec.BoundChecker} (especially for the
+ * {@link com.top_logic.tool.boundsec.BoundComponent}). {@link PersBoundComp}s are created
+ * dynamically. They are used for Security reasons only and carry <em>no</em> Layout/HTML/User
+ * specific information
  *
  * @see com.top_logic.tool.boundsec.BoundMainLayout#initPersBoundComps(KnowledgeBase, List)
  * @see SecurityComponentCache
@@ -60,7 +61,7 @@ public class PersBoundComp extends AbstractWrapper {
     /** The name of the Association we have to (Bound)Roles. */
     public static final String NEEDS_ROLE = "needsRole";
 
-    /** The name of attribute for CommandGroups in the needsRole KA */
+    /** The name of attribute for {@link BoundCommandGroup}s in the {@link #NEEDS_ROLE} KA */
     public static final String ATTRIBUTE_CMDGRP = "cmdGrp";
 
 	private static final Map<String, AssociationSetQuery<KnowledgeAssociation>> NEEDS_ROLE_QUERY_BY_GROUP_ID =
@@ -70,10 +71,11 @@ public class PersBoundComp extends AbstractWrapper {
      * Construct an instance wrapped around the specified
      * {@link com.top_logic.knowledge.objects.KnowledgeObject}.
      *
-     * This CTor is only for the WrapperFactory! <b>DO NEVER USE THIS
-     * CONSTRUCTOR!</b> Use always the getInstance() method of the wrappers.
+     * This CTor is only for the {@link com.top_logic.knowledge.wrap.WrapperFactory}! <b>DO NEVER
+     * USE THIS CONSTRUCTOR!</b> Use always the
+     * {@link #getInstance(KnowledgeBase, ComponentName)} method of the wrappers.
      *
-     * @param    ko    The KnowledgeObject, must never be <code>null</code>.
+     * @param    ko    The {@link KnowledgeObject}, must never be <code>null</code>.
      */
     public PersBoundComp(KnowledgeObject ko) {
         super(ko);
@@ -148,14 +150,13 @@ public class PersBoundComp extends AbstractWrapper {
 	}
 
     /**
-     * Add access to the PersBoundComp using a CommandGroup for a given BoundRole.
+     * Add access to the {@link PersBoundComp} using a {@link BoundCommandGroup} for a given
+     * {@link BoundedRole}.
      *
+     * @param   aGroup      The {@link BoundCommandGroup}s that will require the role.
+     * @param   aRole       the {@link BoundedRole} to add access for.
      *
-     *
-     * @param   aGroup      The CommandGroups that will require the role.
-     * @param   aRole       the BoundRole to add access for.
-     *
-     * @return false when an KnowledgeAssociation aRole was already attached,
+     * @return false when an {@link KnowledgeAssociation} {@code aRole} was already attached,
      *         true indicates that you should call commit()
      */
     public boolean addAccess (BoundCommandGroup aGroup, BoundedRole aRole) {
@@ -182,10 +183,11 @@ public class PersBoundComp extends AbstractWrapper {
 	}
 
     /**
-     * Remove access to the PersBoundComp for a given BoundedRole.
+     * Remove access to the {@link PersBoundComp} for a given {@link BoundedRole}.
      *
-     * @param   aGroup      The CommandGroups that will require the role. If <code>null</code> remove any access for the role
-     * @param   aRole       the BoundRole to add access for.
+     * @param   aGroup      The {@link BoundCommandGroup}s that will require the role. If
+     *                      <code>null</code> remove any access for the role
+     * @param   aRole       the {@link BoundedRole} to add access for.
      *
      * @return true when something was actually removed (you must call commit() to finlaize this).
      */
@@ -234,7 +236,7 @@ public class PersBoundComp extends AbstractWrapper {
 	}
 
 	/**
-	 * Remove all access to the PersBoundComp for a any BoundedRole.
+	 * Remove all access to the {@link PersBoundComp} for a any {@link BoundedRole}.
 	 *
 	 * @return true when something was actually removed (you should call commit() then !)
 	 */
@@ -243,9 +245,9 @@ public class PersBoundComp extends AbstractWrapper {
     }
 
     /**
-     * Return the Set of Roles that need the given CommandGroup
+     * Return the Set of Roles that need the given {@link BoundCommandGroup}
      *
-     * @param   aGroup      The CommandGroups that will require the roles.
+     * @param   aGroup      The {@link BoundCommandGroup}s that will require the roles.
      */
 	public Set<? extends BoundedRole> rolesForCommandGroup(BoundCommandGroup aGroup) {
     	String grpId = aGroup.getID();

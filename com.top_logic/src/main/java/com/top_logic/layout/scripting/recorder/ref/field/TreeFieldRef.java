@@ -19,9 +19,11 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
  */
 public interface TreeFieldRef extends FieldRef {
 
+	/** References to the nodes on the path from the root (exclusive) to the field. */
 	@EntryTag("node")
 	List<ModelName> getPath();
 
+	/** Setter for {@link #getPath()}. */
 	void setPath(List<? extends ModelName> treePath);
 
 }

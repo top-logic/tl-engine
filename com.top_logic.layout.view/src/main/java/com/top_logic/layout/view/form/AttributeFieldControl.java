@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;

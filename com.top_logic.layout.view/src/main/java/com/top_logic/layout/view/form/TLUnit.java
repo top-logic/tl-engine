@@ -67,7 +67,9 @@ public interface TLUnit extends TLAttributeAnnotation, TLTypeAnnotation {
 	 *
 	 * <p>
 	 * The unit is computed when the field showing the value is created, and again when the field
-	 * switches to another object. Where no object owns
+	 * switches to another object. While a form is edited, the function reads the values entered in
+	 * the form and the unit is computed again when one of the values it read changes, so the unit
+	 * follows the entries before they are stored. Where no object owns
 	 * the value - a field outside of a form, for example - a function is not called and no unit is
 	 * written, while a constant still is. The expression is evaluated without access checks: the
 	 * unit is part of how a value is written, not data the user reads.

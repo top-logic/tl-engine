@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -82,11 +83,14 @@ import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
 import com.top_logic.model.annotate.util.ValueNormalizer;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.query.QueryExecutorCache;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
@@ -844,14 +848,31 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @param control
 	 *        The control created by
 	 *        {@link #createFieldControl(ReactContext, TLStructuredTypePart, FieldModel, PolymorphicConfiguration)}.
+	 * <p>
+	 * The unit is computed in a {@link TracingScope} over the given overlays: a function reading
+	 * an attribute of an object the form edits reads the value entered there, and each read is
+	 * reported to the given trace, so the caller computes the unit again when one of these values
+	 * changes.
+	 * </p>
+	 *
 	 * @param part
 	 *        The attribute the control edits.
 	 * @param object
-	 *        The object owning the value the control now shows.
+	 *        The object owning the value the control now shows: the form's overlay of it while the
+	 *        form is edited.
+	 * @param trace
+	 *        Receives the attributes the computation of the unit reads.
+	 * @param overlays
+	 *        The overlays holding the values entered in the form.
 	 */
-	public static void updateUnit(ReactControl control, TLStructuredTypePart part, Object object) {
+	public static void updateUnit(ReactControl control, TLStructuredTypePart part, Object object,
+			Sink<Pointer> trace, OverlayLookup overlays) {
 		if (control instanceof FieldUnitDisplay display) {
-			display.setFieldUnit(unit(part, part.getType(), object));
+			String unit;
+			try (TracingScope scope = TracingScope.open(trace, overlays)) {
+				unit = unit(part, part.getType(), object);
+			}
+			display.setFieldUnit(unit);
 		}
 	}
 

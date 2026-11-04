@@ -26,6 +26,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -131,6 +133,27 @@ public class TestNumberUnit extends AbstractModelAccessTest {
 
 		assertSame("The field keeps its control.", control, input());
 		assertEquals("otherProject", control.getUnit());
+	}
+
+	/**
+	 * While the form is edited, a unit computed from the object follows the values entered in the
+	 * form before they are stored; cancelling the edit shows the unit of the stored object again.
+	 */
+	public void testAFunctionUnitFollowsAnEntryBeforeSave() throws Exception {
+		createField(DISTANCE, null);
+		AttributeFieldControl name =
+			new AttributeFieldControl(_form.getReactContext(), _form, _form, NAME, null, false, null, null, null);
+		name.createChromeControl();
+		assertTrue(_form.enterEditMode());
+		assertEquals("project", input().getUnit());
+
+		name.getInnerControl().executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldValueArguments.VALUE, "kg"));
+		assertEquals("The unit follows the entered value.", "kg", input().getUnit());
+		assertEquals("Nothing is stored yet.", "project", _project.tValueByName(NAME));
+
+		_form.executeCancel();
+		assertEquals("Cancelling shows the unit of the stored object.", "project", input().getUnit());
 	}
 
 	/** The unit of the number input of a form field stays when the form switches objects. */

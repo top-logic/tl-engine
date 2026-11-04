@@ -264,7 +264,11 @@ that differs per object.
   nothing or an empty text writes no unit.
 - **When it is computed.** A function is called with the object of the form when the field is
   created and again when the form switches to another object; it is evaluated without access
-  checks. A field no object owns (a `<value-input>`) writes a constant unit, but calls no function.
+  checks. While the form is edited - also in a create dialog -, the function reads the values
+  entered in the form, like the other scripts of a form (see [derived fields](#derived-fields)),
+  and the unit follows them before anything is saved: entering `g` in the `weightUnit` of the
+  demo changes the unit of its `weight`. Cancel shows the unit of the stored object again. A field
+  no object owns (a `<value-input>`) writes a constant unit, but calls no function.
 - **The shortest representation.** The pattern `0.###` writes a number with as many decimal places
   as it has, up to three: `120 min`, `0,5 min` for a German user. A number typed into a field of
   fractional numbers is a fractional number also without a fraction - `45` stores `45.0`.

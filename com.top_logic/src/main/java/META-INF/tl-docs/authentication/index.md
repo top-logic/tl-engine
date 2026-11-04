@@ -127,7 +127,11 @@ account and needs no Java. A module adds it with a configuration fragment of its
   carries the account logging in, and derives what it shows from it (e.g. with a
   `<derived-channel>`).
 - `condition` is a TL-Script function over the account; without it the step applies to every
-  account. A condition that fails refuses the login.
+  account. A condition that fails refuses the login. It is evaluated without access checks: it is
+  application configuration and decides before the account has a session, when the window still
+  belongs to the anonymous user. The dialog itself runs for the anonymous user, with its checks: a
+  dialog showing model objects the anonymous user may not read receives them from a function that
+  renders them on the server, as the login messages of `tl-addons-loginmessages-view` do.
 - The dialog ends with the action `<continue-login/>` (`ContinueLoginAction`), typically after the
   actions recording what the user confirmed, which finishes the step and runs the next one. Closing
   the dialog cancels the login.

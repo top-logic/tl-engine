@@ -18,6 +18,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResourcesModule;
@@ -101,9 +102,13 @@ public class TestLoadViews extends TestCase {
 	 * @param testForView
 	 *        Creates the test of a view from its full path, as {@link ViewLoader#fullPath(String)}
 	 *        produces it.
+	 * @param services
+	 *        Further services the tests of the views need, beside those parsing and instantiating
+	 *        a view.
 	 * @return The suite, set up with the services parsing and instantiating a view needs.
 	 */
-	public static Test viewSuite(Class<?> owner, Function<String, Test> testForView) {
+	public static Test viewSuite(Class<?> owner, Function<String, Test> testForView,
+			BasicRuntimeModule<?>... services) {
 		TestSuite suite = new TestSuite(owner.getName());
 		File viewsDir = new File(VIEWS_DIR);
 		for (String viewRef : viewRefs(viewsDir)) {
@@ -112,8 +117,11 @@ public class TestLoadViews extends TestCase {
 		if (suite.testCount() == 0) {
 			suite.addTest(TestSuite.warning("No views found in '" + viewsDir.getAbsolutePath() + "'."));
 		}
-		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(suite,
-			TypeIndex.Module.INSTANCE, ThemeFactory.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+		List<BasicRuntimeModule<?>> modules = new ArrayList<>(
+			List.of(TypeIndex.Module.INSTANCE, ThemeFactory.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+		modules.addAll(List.of(services));
+		return TLTestSetup.createTLTestSetup(
+			ServiceTestSetup.createSetup(suite, modules.toArray(new BasicRuntimeModule<?>[modules.size()])));
 	}
 
 	private static List<String> viewRefs(File viewsDir) {

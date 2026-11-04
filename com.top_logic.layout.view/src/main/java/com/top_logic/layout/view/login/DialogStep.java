@@ -78,6 +78,13 @@ public class DialogStep extends AbstractConfiguredInstance<DialogStep.Config<?>>
 		 * <p>
 		 * Without a condition, the step applies to every account.
 		 * </p>
+		 *
+		 * <p>
+		 * The condition is evaluated without access checks: it is part of the application
+		 * configuration and runs before the account has a session, on behalf of the anonymous user,
+		 * who may read nothing of the model. It decides only whether the step applies; what the
+		 * dialog shows runs with the checks of the anonymous user.
+		 * </p>
 		 */
 		@Name(CONDITION)
 		Expr getCondition();
@@ -92,6 +99,10 @@ public class DialogStep extends AbstractConfiguredInstance<DialogStep.Config<?>>
 	public DialogStep(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_condition = QueryExecutor.compileOptional(config.getCondition());
+		if (_condition != null) {
+			// Trusted configuration deciding before the account has a session, see Config#getCondition().
+			_condition.disableSecurity();
+		}
 	}
 
 	@Override

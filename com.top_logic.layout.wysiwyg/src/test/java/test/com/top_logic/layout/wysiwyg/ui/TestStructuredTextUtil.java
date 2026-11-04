@@ -5,7 +5,17 @@
  */
 package test.com.top_logic.layout.wysiwyg.ui;
 
+import java.io.StringReader;
+import java.util.Base64;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import junit.framework.TestCase;
+
+import org.xml.sax.InputSource;
+
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
@@ -43,6 +53,23 @@ public class TestStructuredTextUtil extends TestCase {
 		StructuredText text = StructuredTextUtil.fromCommonMark("*emphasis*");
 
 		assertTrue(text.getSourceCode().contains("<em>"));
+	}
+
+	/**
+	 * An image of a text written as HTML, with its void elements unclosed as the editor writes
+	 * them, is inlined, and the result is well-formed XHTML.
+	 */
+	public void testInlinedImagesOfHtml() throws Exception {
+		StructuredText text = new StructuredText(
+			"<p>Line<br>break <img src=\"ref:pic.png\" alt=\"Pic\"></p><p>after</p>",
+			Map.of("pic.png", BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "image/png", "pic.png")));
+
+		String html = StructuredTextUtil.getCodeWithInlinedImages(text);
+
+		assertTrue(html, html.contains("src=\"data:image/png;base64," + Base64.getEncoder().encodeToString(new byte[] { 1, 2, 3 }) + "\""));
+		assertTrue(html, html.contains("<p>after</p>"));
+		DocumentBuilderFactory.newInstance().newDocumentBuilder()
+			.parse(new InputSource(new StringReader("<div>" + html + "</div>")));
 	}
 
 }

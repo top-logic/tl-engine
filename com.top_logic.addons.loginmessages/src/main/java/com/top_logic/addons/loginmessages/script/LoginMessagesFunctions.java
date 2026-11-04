@@ -31,6 +31,12 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
  * user, whose personal configuration is not the account's.
  * </p>
  *
+ * <p>
+ * The account is taken as given, without checking that it is the current user's: a script may ask
+ * which messages any account has not confirmed yet, and confirm the messages displayed to it. This
+ * affects nothing but which login messages the account is shown.
+ * </p>
+ *
  * @implNote The confirmations are kept in the persistent personal configuration of the account
  *           ({@link PersonalConfigurationWrapper}), under the names of
  *           {@link LoginMessagesUtil#getConfirmName(LoginMessage)}, where the classic login hook
@@ -52,8 +58,14 @@ public class LoginMessagesFunctions extends TLScriptFunctions {
 	 * <p>
 	 * A message is shown when it is active, today lies between its start and its end date, and the
 	 * account has not confirmed it yet, or its confirmation has expired. A view shows them with
-	 * <code>loginMessagesDue($account)</code> and records their confirmation with
-	 * <code>loginMessagesConfirm($account, $messages)</code>.
+	 * <code>loginMessagesDisplay($account)</code> and records their confirmation with
+	 * <code>loginMessagesConfirm($display)</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * The messages are model objects: a script running for a user who may not read them - the
+	 * anonymous user of a login that has not completed - does not receive them, see
+	 * {@link #display(Person)}.
 	 * </p>
 	 *
 	 * @param account
@@ -76,22 +88,49 @@ public class LoginMessagesFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Records that the given account has confirmed the given login messages now.
+	 * The login messages due for the given account, as the login shows them.
+	 *
+	 * <p>
+	 * The result is displayed as HTML, e.g. with <code>&lt;html input="..."/&gt;</code>: the text of
+	 * each due message in the current language with its images (as <code>data:</code> URIs), or its
+	 * name where it has no text, one below the other. The result also says which messages were
+	 * shown: <code>loginMessagesConfirm($display)</code> confirms exactly these, for the given
+	 * account.
+	 * </p>
+	 *
+	 * <p>
+	 * The result is no model object, so a script of a login that has not completed - running for the
+	 * anonymous user, who may not read the login messages - receives it as well.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account logging in.
+	 * @return The display of the messages {@link #due(Person) due} for the account; empty when none
+	 *         is due.
+	 */
+	@Label("Display of the due login messages")
+	@SideEffectFree
+	public static LoginMessagesDisplay display(@Mandatory Person account) {
+		return new LoginMessagesDisplay(account, due(account));
+	}
+
+	/**
+	 * Records that the account of the given display has confirmed the messages shown in it now.
 	 *
 	 * <p>
 	 * A confirmed message is not shown again until its confirmation expires.
 	 * </p>
 	 *
-	 * @param account
-	 *        The account that has confirmed the messages.
-	 * @param messages
-	 *        The confirmed messages, e.g. the result of <code>loginMessagesDue($account)</code>.
+	 * @param display
+	 *        The messages shown to the account, the result of
+	 *        <code>loginMessagesDisplay($account)</code>.
 	 */
 	@Label("Confirm login messages")
-	public static void confirm(@Mandatory Person account, List<LoginMessage> messages) {
-		if (messages == null || messages.isEmpty()) {
+	public static void confirm(@Mandatory LoginMessagesDisplay display) {
+		if (display.isEmpty()) {
 			return;
 		}
+		Person account = display.getAccount();
 		try (Transaction tx = account.getKnowledgeBase()
 			.beginTransaction(I18NConstants.CONFIRMED_LOGIN_MESSAGES__USER.fill(account.getName()))) {
 			PersonalConfigurationWrapper configuration =
@@ -101,7 +140,7 @@ public class LoginMessagesFunctions extends TLScriptFunctions {
 					"No personal configuration could be created for '" + account.getName() + "'.");
 			}
 			Date now = new Date();
-			for (LoginMessage message : messages) {
+			for (LoginMessage message : display.getMessages()) {
 				LoginMessagesUtil.setConfirmDate(configuration, message, now);
 			}
 			tx.commit();

@@ -44,6 +44,19 @@
 	inset-block-start: var(--tl-space-sm);
 }
 
+/*
+ * The viewer of a read-only diagram has no bendpoints that mark a selected connection. It is
+ * highlighted along its path instead: its hit area (an invisible stroke of 15px along the
+ * connection) gets the translucent selection color. diagram-js writes the stroke of the hit area as
+ * inline style, which only an important declaration overrides.
+ */
+.tlBpmnEditor--readOnly .djs-connection.selected > .djs-hit-stroke {
+	stroke: var(--tl-border-interactive) !important;
+	stroke-opacity: 0.3 !important;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
 .tlBpmnEditor .bio-theme-parent {
 	--bio-surface: var(--tl-surface-layer);
 	--bio-surface-overlay: var(--tl-surface-overlay);

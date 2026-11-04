@@ -234,7 +234,7 @@ const TLBpmnEditor: React.FC<TLCellProps> = ({ controlId }) => {
   }, [selected, imported]);
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlBpmnEditor', fillClass)}>
+    <div id={controlId} className={rootClassName(state, 'tlBpmnEditor', !editable && 'tlBpmnEditor--readOnly', fillClass)}>
       <div ref={canvasRef} className="tlBpmnEditor__canvas" />
     </div>
   );

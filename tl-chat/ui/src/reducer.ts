@@ -200,7 +200,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
       // A card the transcript already carries is completed, not repeated. A restored conversation
       // brings the pending approval with it, in its place under the turn that asked for it, and
       // what only the waiting run knows - the tool's mode, how long is left to answer - arrives
-      // afterwards from `/chat/interactions` (#512). Appending it a second time would put the same
+      // afterwards in the `run_state` frame (#512). Appending it a second time would put the same
       // question twice on screen, at the bottom and out of its turn.
       const shown = messages.find(
         (m): m is ApprovalRequest =>

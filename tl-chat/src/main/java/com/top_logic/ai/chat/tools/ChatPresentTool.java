@@ -11,9 +11,11 @@ import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.scripting.WindowAccess;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.PresentTool;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
@@ -38,7 +40,9 @@ import com.top_logic.util.TLContextManager;
  * of this window named can be written, and only while that element is displayed. The model need not
  * know its name - a page offering exactly one is written without one - and a name the page does not
  * offer is refused with the list of the ones it does. See
- * {@link ChatViewBinding#presentable(com.top_logic.basic.col.TypedAnnotatable, String)}.</li>
+ * {@link ChatViewBinding#presentable(com.top_logic.basic.col.TypedAnnotatable, String, Person)}. Only
+ * the chats of the run's own account count: a run of the person signed in to the window before
+ * writes nothing into the page of the person signed in now.</li>
  * <li><b>The window.</b> The value is written in the sub-session of the browser window the run
  * belongs to and within that window's interaction, through
  * {@link ChatWindowService#inWindow(TLSubSessionContext, Runnable)}. A run without a window -
@@ -85,10 +89,22 @@ public class ChatPresentTool extends PresentTool {
 		if (!ChatWindowService.hasWindow(window)) {
 			return NO_PAGE;
 		}
-		if (ChatViewBinding.presentableNames(window).isEmpty()) {
+		if (ChatViewBinding.presentableNames(window, runAccount(context)).isEmpty()) {
 			return NO_PLACE;
 		}
 		return null;
+	}
+
+	/**
+	 * The account the run acts for, <code>null</code> for a context that names none (a test seam),
+	 * which asks the chats of every account of the window.
+	 */
+	private static Person runAccount(ToolExecutionContext context) {
+		if (!(context instanceof ToolContext toolContext)) {
+			return null;
+		}
+		RunPrincipal principal = toolContext.security().principal();
+		return principal == null ? null : principal.account();
 	}
 
 	@Override
@@ -99,7 +115,8 @@ public class ChatPresentTool extends PresentTool {
 		}
 		// Read once, and asked again rather than taken from the offer: the elements of a page come and
 		// go while the run works.
-		Set<String> allowed = ChatViewBinding.presentableNames(window);
+		Person account = runAccount(context);
+		Set<String> allowed = ChatViewBinding.presentableNames(window, account);
 		if (allowed.isEmpty()) {
 			return NO_PLACE;
 		}
@@ -111,7 +128,7 @@ public class ChatPresentTool extends PresentTool {
 			}
 			name = allowed.iterator().next();
 		}
-		ViewChannel target = ChatViewBinding.presentable(window, name);
+		ViewChannel target = ChatViewBinding.presentable(window, name, account);
 		if (target == null) {
 			return "Nothing was presented: channel '" + name + "' cannot be written here. This page offers: "
 				+ String.join(", ", allowed) + ".";

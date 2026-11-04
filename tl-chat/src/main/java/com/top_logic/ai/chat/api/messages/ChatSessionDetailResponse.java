@@ -1,7 +1,8 @@
 package com.top_logic.ai.chat.api.messages;
 
 /**
- * Response body for GET /chat/sessions/{id} (full session load).
+ * One chat as a window shows it when it opens the chat, as a chat control serves it to the
+ * browser; the transcript of a background subagent comes in the same shape.
  */
 public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -20,9 +21,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 
 	/** @see #getTitle() */
 	public static final String TITLE__PROP = "title";
-
-	/** @see #getMessagesJson() */
-	public static final String MESSAGES_JSON__PROP = "messagesJson";
 
 	/** @see #getTurnsJson() */
 	public static final String TURNS_JSON__PROP = "turnsJson";
@@ -60,8 +58,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private String _id = "";
 
 	private String _title = "";
-
-	private String _messagesJson = "";
 
 	private String _turnsJson = "";
 
@@ -132,26 +128,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** Internal setter for {@link #getTitle()} without chain call utility. */
 	protected final void internalSetTitle(String value) {
 		_title = value;
-	}
-
-	/**
-	 * Messages JSON blob (raw string, parsed by client).
-	 */
-	public final String getMessagesJson() {
-		return _messagesJson;
-	}
-
-	/**
-	 * @see #getMessagesJson()
-	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setMessagesJson(String value) {
-		internalSetMessagesJson(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getMessagesJson()} without chain call utility. */
-	protected final void internalSetMessagesJson(String value) {
-		_messagesJson = value;
 	}
 
 	/**
@@ -471,7 +447,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
 			TITLE__PROP, 
-			MESSAGES_JSON__PROP, 
 			TURNS_JSON__PROP, 
 			LAST_PROMPT_USAGE__PROP, 
 			CONTEXT_WINDOW__PROP, 
@@ -509,7 +484,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		switch (field) {
 			case ID__PROP: return getId();
 			case TITLE__PROP: return getTitle();
-			case MESSAGES_JSON__PROP: return getMessagesJson();
 			case TURNS_JSON__PROP: return getTurnsJson();
 			case LAST_PROMPT_USAGE__PROP: return getLastPromptUsage();
 			case CONTEXT_WINDOW__PROP: return getContextWindow();
@@ -530,7 +504,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
 			case TITLE__PROP: internalSetTitle((String) value); break;
-			case MESSAGES_JSON__PROP: internalSetMessagesJson((String) value); break;
 			case TURNS_JSON__PROP: internalSetTurnsJson((String) value); break;
 			case LAST_PROMPT_USAGE__PROP: internalSetLastPromptUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
 			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
@@ -564,8 +537,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		out.value(getId());
 		out.name(TITLE__PROP);
 		out.value(getTitle());
-		out.name(MESSAGES_JSON__PROP);
-		out.value(getMessagesJson());
 		out.name(TURNS_JSON__PROP);
 		out.value(getTurnsJson());
 		if (hasLastPromptUsage()) {
@@ -611,7 +582,6 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case MESSAGES_JSON__PROP: setMessagesJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TURNS_JSON__PROP: setTurnsJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LAST_PROMPT_USAGE__PROP: setLastPromptUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;

@@ -16,7 +16,6 @@ import com.top_logic.ai.chat.view.ChatRailElement.Config;
 import com.top_logic.ai.chat.view.ChatRailElement.Section;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -45,12 +44,10 @@ import com.top_logic.util.Resources;
  * element configured there.
  * </p>
  */
-public class ChatRailControl extends ReactControl {
+public class ChatRailControl extends ChatControl {
 
 	/** State key for the section badge numbers, keyed by section name. */
 	private static final String SECTION_BADGES = "sectionBadges";
-
-	private final ChatViewBinding _binding;
 
 	private final PresentationPane _pane;
 
@@ -67,15 +64,12 @@ public class ChatRailControl extends ReactControl {
 	 *        The configured sections with their content elements.
 	 */
 	public ChatRailControl(ViewContext context, Config config, List<Section> sections) {
-		super(context, null, blankToDefault(config.getReactElement(), "TLChatRail"));
+		// The rail's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
+		// "default".
+		super(context, blankToDefault(config.getReactElement(), "TLChatRail"),
+			ChatScope.resolve(context, config.getChatId()), "chat-rail");
 		setCssClass(config.getCssClass());
 
-		// The rail's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
-		// "default". The browser keys its store by what we push here, so it must be the resolved id.
-		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId, "chat-rail");
-		_binding.writeSharedState(this::putState);
-		putState("chatId", chatId);
 		putState("strip", Boolean.valueOf(config.getStrip()));
 		putState("open", Boolean.valueOf(config.getOpen()));
 		putState("drawerBelow", Integer.valueOf(config.getDrawerBelow()));
@@ -103,21 +97,6 @@ public class ChatRailControl extends ReactControl {
 		_pane = new PresentationPane(context, context.resolveChannel(inputRef), this, this::applyPane);
 		addCleanupAction(_pane::dispose);
 		applyPane();
-	}
-
-	/**
-	 * Re-reads the user's stored layout.
-	 *
-	 * <p>
-	 * A browser reload re-renders the control tree the window already holds, so this hook is the
-	 * only place that runs again. Writing the layout in the constructor would replay the first
-	 * render's rail state for the life of the window (Gitea #423).
-	 * </p>
-	 */
-	@Override
-	protected void onBeforeWrite() {
-		super.onBeforeWrite();
-		_binding.writeRenderState(this::putState);
 	}
 
 	/** Closes the pane, which is writing {@code null} back to the channel that opened it. */
@@ -203,13 +182,5 @@ public class ChatRailControl extends ReactControl {
 		}
 		String label = resources.getString(key, null);
 		return label == null || label.isEmpty() ? fallback : label;
-	}
-
-	private static String blankToDefault(String value, String fallback) {
-		if (value == null) {
-			return fallback;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? fallback : trimmed;
 	}
 }

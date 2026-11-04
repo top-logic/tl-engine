@@ -127,7 +127,7 @@ public class TestPresentTool extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
+		ChatViewBinding.bind(subSession(), "main").denyPresenting(PANE, _channel);
 		if (_window != null) {
 			_window.close();
 			_window = null;
@@ -175,23 +175,23 @@ public class TestPresentTool extends BasicTestCase {
 		Tool tool = toolOf(_tool);
 		ToolContext run = context(ModelSecurity.UNCHECKED);
 		try {
-			assertEquals("Built but not displayed yet.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+			assertEquals("Built but not displayed yet.", Set.of(), ChatViewBinding.presentableNames(subSession(), null));
 			assertSays("offers no place", tool.unavailableReason(run));
 
 			conversation.attach();
-			assertEquals(Set.of(PANE), ChatViewBinding.presentableNames(subSession()));
+			assertEquals(Set.of(PANE), ChatViewBinding.presentableNames(subSession(), null));
 			assertNull(tool.unavailableReason(run));
 
 			conversation.detach();
-			assertEquals("Left, not gone.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+			assertEquals("Left, not gone.", Set.of(), ChatViewBinding.presentableNames(subSession(), null));
 			assertSays("offers no place", tool.unavailableReason(run));
 
 			conversation.attach();
-			assertEquals("Displayed again.", Set.of(PANE), ChatViewBinding.presentableNames(subSession()));
+			assertEquals("Displayed again.", Set.of(PANE), ChatViewBinding.presentableNames(subSession(), null));
 		} finally {
 			conversation.cleanupTree();
 		}
-		assertEquals("Gone.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+		assertEquals("Gone.", Set.of(), ChatViewBinding.presentableNames(subSession(), null));
 	}
 
 	/** A run with no browser window has no page, and says so rather than blaming the allow list. */
@@ -221,7 +221,7 @@ public class TestPresentTool extends BasicTestCase {
 		withWindow();
 		allow();
 		ViewChannel other = new DefaultViewChannel("dockPane");
-		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").allowPresenting("dockPane", other);
+		ChatViewBinding.bind(subSession(), "main").allowPresenting("dockPane", other);
 		try {
 			String result = present(List.of(tid(first)), "");
 
@@ -230,7 +230,7 @@ public class TestPresentTool extends BasicTestCase {
 			assertSays("dockPane", result);
 			assertEquals(List.of(), _written);
 		} finally {
-			ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting("dockPane", other);
+			ChatViewBinding.bind(subSession(), "main").denyPresenting("dockPane", other);
 		}
 	}
 
@@ -528,7 +528,7 @@ public class TestPresentTool extends BasicTestCase {
 
 	/** Opens the fixture's channel to the agent, as {@code <chat-conversation present="…">} does. */
 	private void allow() {
-		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").allowPresenting(PANE, _channel);
+		ChatViewBinding.bind(subSession(), "main").allowPresenting(PANE, _channel);
 	}
 
 	private String present(List<String> ids, String channel) {

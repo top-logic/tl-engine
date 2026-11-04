@@ -33,8 +33,8 @@ import com.top_logic.basic.thread.ThreadContextManager;
  *
  * <p>
  * It used to be where the <b>one conversation per window</b> rule was checked as well, because
- * every {@code /chat/*} call carried a {@code windowId} and nothing else and two chat ids that each
- * showed a transcript in one window then took each other's turns. Every call now names its
+ * every chat request was keyed by the window alone, and two chat ids that each
+ * showed a transcript in one window then took each other's turns. Every command now goes to its
  * conversation and the server holds a tracker for each (Gitea #502), so that is an ordinary page
  * and this log says nothing about it. What remains is the spelling check below, which is about an
  * element that joined nobody.

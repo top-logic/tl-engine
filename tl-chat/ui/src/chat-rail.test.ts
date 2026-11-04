@@ -22,7 +22,6 @@ const INVOICES = { controlId: 'c3', module: 'TLDataList', state: {} }
 function railState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     chatId: 'render-test',
-    windowId: 'w1',
     authenticated: true,
     language: 'en',
     // The bootstrap the control writes: the user's remembered rail state, and the collapse seed.
@@ -145,7 +144,7 @@ describe('the rendered rail', () => {
    */
   it('leaves the sign-in note to the conversation in a session that is not signed in', () => {
     const chatId = 'signed-out-page'
-    const signedOut = { chatId, windowId: 'w1', authenticated: false, language: 'en' }
+    const signedOut = { chatId, authenticated: false, language: 'en' }
     setTLState(signedOut)
     const conversation = renderToStaticMarkup(
       React.createElement(TLChatConversation, { controlId: 'conversation', state: signedOut }),

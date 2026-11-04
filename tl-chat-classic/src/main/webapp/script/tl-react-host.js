@@ -292,8 +292,8 @@
 		var graph = modules.map(function(src) {
 			return 'import ' + JSON.stringify(src) + ';';
 		}).join('\n');
-		// Classic scripts first, as on a React page, where they come before the import map: one of
-		// them (tl-window-stream.js, #940) has to be in place before the bridge opens its stream.
+		// Classic scripts first, as on a React page, where they come before the import map: a classic
+		// script may have to be in place before the bridge opens its stream.
 		return classic.reduce(function(previous, src) {
 			return previous.then(function() {
 				return loadClassicScript(src);

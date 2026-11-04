@@ -28,7 +28,7 @@ import com.top_logic.tl.ai.core.security.RunAuthorization;
  * <p>
  * The measurement the ticket reports: the fixture writes {@code <agent-access default="all">} and
  * names only {@code ticketReader} in it, so {@link #ANNA} - who holds {@code projectPartner} - falls
- * to the default and may run every agent. Under that policy {@code POST /chat/send} naming the
+ * to the default and may run every agent. Under that policy a chat send naming the
  * prompt improver was accepted, and the improver answered as a persona. The refusal now comes from
  * what the agent <em>is</em>, so the most permissive policy this repository ships cannot lift it.
  * </p>

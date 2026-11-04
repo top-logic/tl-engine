@@ -11,7 +11,6 @@ import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.SendRefusal;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -83,7 +82,9 @@ public final class ChatStart {
 					throw new TopLogicException(I18NConstants.ERROR_NOT_SENT__REASON.fill(refusal.reason()));
 				}
 			}
-			TaskProgressTracker tracker = tracker(window, conversation, owner);
+			// The window's chat of that name for the owner, registered for the chat elements of that
+			// name when the window has not displayed one yet.
+			TaskProgressTracker tracker = ChatSessionRegistry.tracker(window, conversation, owner);
 			String sessionId = session.tHandle().getObjectName().toExternalForm();
 			if (!tracker.setActiveSessionId(sessionId, owner)) {
 				throw new TopLogicException(I18NConstants.ERROR_CHAT_NOT_CREATED);
@@ -101,24 +102,6 @@ public final class ChatStart {
 				ChatHistoryService.deleteSession(session);
 			}
 		}
-	}
-
-	/**
-	 * The chat {@code conversation} of the window, registered for the chat elements of that name
-	 * when the window has not displayed one yet.
-	 */
-	private static TaskProgressTracker tracker(TLSubSessionContext window, String conversation, Person owner) {
-		TaskProgressTracker tracker = ChatSessionRegistry.tracker(window, conversation);
-		if (tracker == null) {
-			tracker = new TaskProgressTracker();
-			TLSessionContext session = window.getSessionContext();
-			tracker.setWindowId(ChatSessionRegistry.windowId(session, window));
-			ChatSessionRegistry.register(window, conversation, tracker);
-		}
-		if (tracker.getUserName() == null) {
-			tracker.setUserName(owner.getName());
-		}
-		return tracker;
 	}
 
 	/** The title of a chat named after its first message, as the browser names a chat it creates. */

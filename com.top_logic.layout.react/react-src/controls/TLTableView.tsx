@@ -4,6 +4,7 @@ import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
+import { isContextMenuKey } from './contextMenuKey';
 import { chipFocusTargets } from './chip/chipFocus';
 import { TableViewButton } from './table/TableViewOptions';
 import { PickerPopover } from './picker/PickerPopover';
@@ -632,9 +633,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const hintMoveRef = React.useRef<((at: HintAnchor) => void) | null>(null);
 
   // -- Column context menu state --
-  const [contextMenu, setContextMenu] = React.useState<{
-    x: number; y: number; colIdx: number;
-  } | null>(null);
+  // At the pointer (right-click) or at the heading cell (keyboard).
+  const [contextMenu, setContextMenu] = React.useState<
+    ({ x: number; y: number } | { element: HTMLElement }) & { colIdx: number }
+  | null>(null);
 
   // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
   const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
@@ -1389,6 +1391,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu({ x: event.clientX, y: event.clientY, colIdx });
   }, []);
 
+  // The keyboard reaches the same menu as the pointer, hanging off the heading cell itself: it stays with the
+  // column when the table scrolls, and the focus returns to what had it (sort button, funnel or resizer) on
+  // closing. The cell takes no focus, so the key arrives from one of those by bubbling.
+  const handleColumnContextKey = React.useCallback((colIdx: number, event: React.KeyboardEvent) => {
+    if (!isContextMenuKey(event) || !event.currentTarget.contains(event.target as Node)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({ element: event.currentTarget as HTMLElement, colIdx });
+  }, []);
+
   const handleFreezeUpTo = React.useCallback(() => {
     if (!contextMenu) return;
     sendCommand('setFrozenColumnCount', { count: contextMenu.colIdx + 1 });
@@ -2051,6 +2065,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }}
                 {...(isPinned ? {} : columnReorder.itemProps(colIdx))}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
+                onKeyDown={(e) => handleColumnContextKey(colIdx, e)}
               >
                 {col.sortable ? (
                   <button
@@ -2334,7 +2349,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       )}
 
       {/* Column context menu */}
-      <Menu open={!!contextMenu} anchor={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null} onClose={() => setContextMenu(null)}>
+      <Menu open={!!contextMenu} anchor={contextMenu ? ('element' in contextMenu ? contextMenu.element : { x: contextMenu.x, y: contextMenu.y }) : null} onClose={() => setContextMenu(null)}>
         {contextMenu && contextMenu.colIdx + 1 !== frozenColumnCount && !columns[contextMenu.colIdx]?.pinnedEnd && (
           <MenuItem label={i18n['js.table.freezeUpTo']} onSelect={handleFreezeUpTo} />)}
         {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}

@@ -757,3 +757,81 @@ describe('the gear in a heading', () => {
     expect(screen.getAllByRole('menu')).toHaveLength(2);
   });
 });
+
+describe('the column menu by keyboard', () => {
+  // The first entry of the menu of an unfrozen column.
+  const FIRST_ENTRY = 'js.table.freezeUpTo';
+
+  function mountColumn(column: Record<string, unknown>) {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false, filterable: false, ...column }],
+      rows: [],
+      totalRowCount: 0,
+    });
+  }
+
+  /** The resizer of the first column, not the splitter of the frozen columns. */
+  function resizer(): HTMLElement {
+    return screen.getByRole('separator', { name: /columnWidth/ });
+  }
+
+  async function openAndClose(focused: HTMLElement, key: Parameters<typeof userEvent.keyboard>[0]) {
+    focused.focus();
+    await userEvent.keyboard(key);
+    await settle();
+    // The menu hangs off the heading cell, its first entry has the focus.
+    const entry = screen.getByRole('menuitem', { name: FIRST_ENTRY });
+    expect(document.activeElement).toBe(entry);
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(focused);
+  }
+
+  it('opens from the sort button with Shift+F10 and returns the focus on Escape', async () => {
+    mountColumn({ sortable: true });
+    await settle();
+    await openAndClose(screen.getByRole('button', { name: /Name/ }), '{Shift>}{F10}{/Shift}');
+  });
+
+  it('opens from the sort button with the ContextMenu key', async () => {
+    mountColumn({ sortable: true });
+    await settle();
+    await openAndClose(screen.getByRole('button', { name: /Name/ }), '{ContextMenu}');
+  });
+
+  it('opens from the funnel', async () => {
+    mountColumn({ filterable: true });
+    await settle();
+    await openAndClose(screen.getByRole('button', { name: 'js.table.filter' }), '{ContextMenu}');
+  });
+
+  it('opens from the resizer, the only focus of a column without sort and filter', async () => {
+    mountColumn({});
+    await settle();
+    await openAndClose(resizer(), '{Shift>}{F10}{/Shift}');
+  });
+
+  it('is anchored at the heading cell, not at a point', async () => {
+    mountColumn({});
+    await settle();
+    const cell = screen.getByRole('columnheader', { name: /Name/ });
+    vi.spyOn(cell, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 10, 120, 30));
+    resizer().focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    const menu = screen.getByRole('menu');
+    expect(cell.getBoundingClientRect).toHaveBeenCalled();
+    expect(menu).toBeTruthy();
+  });
+
+  it('leaves other keys alone', async () => {
+    mountColumn({});
+    await settle();
+    resizer().focus();
+    await userEvent.keyboard('{ArrowRight}{F10}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});

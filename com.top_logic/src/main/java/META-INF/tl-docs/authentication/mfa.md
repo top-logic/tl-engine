@@ -74,9 +74,10 @@ In the React view UI the second factor is pluggable. A method is a `SecondFactor
 - `enroll(context, account)` - opens the dialog in which the account sets it up during the login;
 - `getLabel()`, `getIcon()` - shown when the user chooses among several methods.
 
-The dialogs replace the login dialog (`LoginAction.replaceDialog(context, view, channels)`), get the
+The dialogs replace the login dialog (`LoginFlow.replaceDialog(context, view, channels)`), get the
 account on the dialog channel `account` (`LoginAction.ACCOUNT_CHANNEL`) and end with
-`LoginAction.completeLogin(context, userName)` once the account has proven itself; cancelling one
+`LoginFlow.finish(context, SecondFactorLoginStep.class, account)` once the account has proven
+itself, which runs the further [login steps](doc:authentication#login-steps); cancelling one
 cancels the login. `AbstractSecondFactor` takes label and icon from the configuration
 (`SecondFactor.Config`: `name`, `label`, `image`).
 
@@ -130,15 +131,15 @@ unless the requirement is `disabled`; it verifies in `otp.view.xml` and sets up 
 
 ### The decision: `SecondFactorStep`
 
-After the password (and a forced password change), `LoginAction` lets
-`SecondFactorStep.decide(account)` choose over the configured methods
+In the login step `second-factor` (`SecondFactorLoginStep`, after a forced password change),
+`SecondFactorStep.decide(account)` chooses over the configured methods
 (`SecondFactorStep.configured()`):
 
 | Situation | `SecondFactorStep.Kind` | What happens |
 |---|---|---|
 | The account has methods set up | `VERIFY` | It confirms itself with one of them, whatever its requirement. |
 | None set up, requirement `required` | `ENROLL` | It sets up one of the methods it may set up; without such a method the login is refused (`ERROR_NO_SECOND_FACTOR__USER`). |
-| Otherwise | `COMPLETE` | The password alone completes the login. |
+| Otherwise | `COMPLETE` | The password alone suffices; the step does not apply. |
 
 With a single method the step opens its dialog directly. With several, the login dialog is replaced
 by `second-factor-choice.view.xml`, whose `<second-factor-choice input="account"/>`

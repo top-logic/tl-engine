@@ -69,7 +69,7 @@ public class TotpSecondFactor extends AbstractSecondFactor<TotpSecondFactor.Conf
 		channels.put(LoginAction.MODEL_CHANNEL, LoginAction.newOtpEntry());
 		channels.put(LoginAction.ACCOUNT_CHANNEL, account);
 		channels.put(LoginAction.SECRET_CHANNEL, account.getMFASecret());
-		LoginAction.replaceDialog(context, LoginAction.OTP_VIEW, channels);
+		LoginFlow.replaceDialog(context, LoginAction.OTP_VIEW, channels);
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class TotpSecondFactor extends AbstractSecondFactor<TotpSecondFactor.Conf
 	 */
 	@Override
 	public void enroll(ReactContext context, Person account) {
-		LoginAction.replaceDialog(context, LoginAction.MFA_ENROLL_VIEW, enrollmentChannels(account));
+		LoginFlow.replaceDialog(context, LoginAction.MFA_ENROLL_VIEW, enrollmentChannels(account));
 	}
 
 	/**

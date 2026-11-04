@@ -115,11 +115,24 @@ public class CheckPasswordChangeAction implements ViewAction {
 	 * being changed from an established session.
 	 *
 	 * <p>
-	 * The distinguishing mark is {@link LoginAction#ACCOUNT_CHANNEL}, which only
-	 * {@link LoginAction} puts in scope.
+	 * A login waits for the change when the due step of the window's {@link LoginFlow} is the
+	 * {@link ChangePasswordStep}; the account is the one of the flow. The dialog of that step names
+	 * the account on its {@link LoginAction#ACCOUNT_CHANNEL} channel, for what it shows only: a
+	 * dialog naming an account without a login waiting for the change is refused.
 	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         When the dialog names an account but no login waits for the change.
 	 */
 	static Person pendingLogin(ReactContext context) {
+		Person pending = LoginFlow.pendingAccount(ChangePasswordStep.class);
+		if (pending == null && channelAccount(context) != null) {
+			throw new TopLogicException(I18NConstants.LOGIN_FAILED);
+		}
+		return pending;
+	}
+
+	private static Object channelAccount(ReactContext context) {
 		if (!(context instanceof ViewContext)) {
 			return null;
 		}
@@ -127,8 +140,7 @@ public class CheckPasswordChangeAction implements ViewAction {
 		if (!viewContext.hasChannel(LoginAction.ACCOUNT_CHANNEL)) {
 			return null;
 		}
-		Object value = viewContext.resolveChannel(new ChannelRef(LoginAction.ACCOUNT_CHANNEL)).get();
-		return value instanceof Person ? (Person) value : null;
+		return viewContext.resolveChannel(new ChannelRef(LoginAction.ACCOUNT_CHANNEL)).get();
 	}
 
 	/**

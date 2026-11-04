@@ -47,7 +47,7 @@ import com.top_logic.table.impl.DefaultColumn;
  * </p>
  *
  * <p>
- * The filter integrates its own column and dialog by implementing {@link ColumnBinding}: the column
+ * The filter integrates its own column and filter form by implementing {@link ColumnBinding}: the column
  * cell carries a {@link ScriptedCell} (value + row), so the filter sees both without knowing where
  * the value comes from, and the filter registers its own {@link ScriptedFilterUI} form.
  * </p>
@@ -103,7 +103,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 		Expr getMatch();
 
 		/**
-		 * The dialog title / column-filter label.
+		 * The label of the column filter.
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
@@ -149,7 +149,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	}
 
 	/**
-	 * The dialog / filter label, or {@code null}.
+	 * The label of the column filter, or {@code null}.
 	 */
 	public ResKey label() {
 		return _label;

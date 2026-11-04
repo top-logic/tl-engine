@@ -1102,6 +1102,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private void buildFullState() {
 		refreshColumns();
 		refreshFilterBar();
+		refreshFilterPopover();
 		putState(TOTAL_ROW_COUNT, Integer.valueOf(_view.rowCount()));
 		updateViewport(_viewportStart, _viewportCount);
 		refreshSelectionCounts();
@@ -1738,7 +1739,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Filters a column by the given state and shows the result: the rows, the funnel of the column
-	 * and, in an open filter form of the column, whether there is a filter to remove.
+	 * and the open filter popover (see {@link #refreshFilterPopover()}).
 	 *
 	 * @param column
 	 *        The name of the column.
@@ -1753,8 +1754,39 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} finally {
 			commitUpdate(update);
 		}
-		if (column.equals(filterPopoverColumn()) && filterPopoverContent() instanceof ReactFilterFormControl form) {
+	}
+
+	/**
+	 * Shows in the open filter popover what is filtered now: the rows were rebuilt, so the filter of
+	 * its column may have changed elsewhere - the filter bar clears every filter, a named filter
+	 * replaces them -, and the other criteria or the data may have changed the counts of a value
+	 * list.
+	 */
+	private void refreshFilterPopover() {
+		String column = filterPopoverColumn();
+		if (column == null) {
+			return;
+		}
+		ReactControl content = filterPopoverContent();
+		if (content instanceof ReactFilterListControl list) {
+			ColumnFilter<?> filter = _view.columnFilter(column);
+			MatchCounts counts =
+				filter != null && filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
+			list.refresh(counts, _view.state().getFilters().get(column));
+		} else if (content instanceof ReactFilterFormControl form) {
 			form.setActive(isFilterActive(column));
+		}
+	}
+
+	/**
+	 * Closes the filter popover when the table leaves the display: displayed again, the table shows
+	 * no popover nobody opened, and the content is released with it.
+	 */
+	@Override
+	protected void onDetach() {
+		super.onDetach();
+		if (filterPopoverContent() != null) {
+			showFilterPopover(null);
 		}
 	}
 

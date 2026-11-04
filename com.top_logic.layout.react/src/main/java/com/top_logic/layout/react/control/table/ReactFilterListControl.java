@@ -13,9 +13,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.Option;
@@ -81,12 +83,18 @@ public class ReactFilterListControl extends ReactControl {
 
 	private final List<Option> _options;
 
-	private final MatchCounts _counts;
+	private MatchCounts _counts;
 
 	private final Consumer<FilterState> _apply;
 
 	/** The values checked now. */
 	private final Set<Object> _checked;
+
+	/** The entries last sent, to send them again only when they change. */
+	private List<Map<String, Object>> _entries;
+
+	/** The {@link #ACTIVE} state last sent, {@code null} before the first. */
+	private Boolean _active;
 
 	/**
 	 * Creates a {@link ReactFilterListControl}.
@@ -112,7 +120,7 @@ public class ReactFilterListControl extends ReactControl {
 		_apply = apply;
 		_checked = new LinkedHashSet<>(OptionChecks.checked(_options, current));
 		putState(SEARCHABLE, Boolean.valueOf(_options.size() >= SEARCH_THRESHOLD));
-		putState(ACTIVE, Boolean.valueOf(isActive(current)));
+		pushActive(isActive(current));
 		pushEntries();
 	}
 
@@ -122,6 +130,45 @@ public class ReactFilterListControl extends ReactControl {
 	 */
 	public void setLabel(String label) {
 		putState(LABEL, label);
+	}
+
+	/**
+	 * Shows the filter of the column as it is now, and the counts of the values under the other
+	 * criteria now: called whenever the rows of the table were rebuilt - the filter may have been
+	 * changed elsewhere (the filter bar clearing every filter), and the other criteria or the data
+	 * may have changed the counts.
+	 *
+	 * @param counts
+	 *        The number of rows each value matches, or {@link MatchCounts#NONE}.
+	 * @param current
+	 *        The filter of the column now, {@code null} for none.
+	 */
+	public void refresh(MatchCounts counts, FilterState current) {
+		_counts = counts;
+		_checked.clear();
+		_checked.addAll(OptionChecks.checked(_options, current));
+		pushActive(isActive(current));
+		pushEntries();
+	}
+
+	/**
+	 * Records a click on a value with the label of the value besides its key: the step reads by the
+	 * label and replays by the key.
+	 */
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if (CMD_TOGGLE.equals(command) && arguments != null) {
+			Object key = arguments.get(FilterToggleArguments.KEY);
+			int index = key instanceof String text ? indexOf(text) : -1;
+			if (index >= 0) {
+				FilterToggleArguments recorded = TypedConfiguration.newConfigItem(FilterToggleArguments.class);
+				recorded.setName(CMD_TOGGLE);
+				recorded.setKey((String) key);
+				recorded.setLabel(Resources.getInstance().getString(_options.get(index).label()));
+				return new RecordedCommand(recorded);
+			}
+		}
+		return super.recordCommand(command, arguments);
 	}
 
 	/**
@@ -178,8 +225,18 @@ public class ReactFilterListControl extends ReactControl {
 	private void apply() {
 		FilterState state = OptionChecks.state(_options, _checked);
 		pushEntries();
-		putState(ACTIVE, Boolean.valueOf(isActive(state)));
+		pushActive(isActive(state));
+		// The table filters and rebuilds its rows, which refreshes this list with the stored filter:
+		// the same check marks, so nothing is sent twice.
 		_apply.accept(state);
+	}
+
+	private void pushActive(boolean active) {
+		Boolean value = Boolean.valueOf(active);
+		if (!value.equals(_active)) {
+			_active = value;
+			putState(ACTIVE, value);
+		}
 	}
 
 	private static boolean isActive(FilterState state) {
@@ -219,7 +276,10 @@ public class ReactFilterListControl extends ReactControl {
 			entry.put(ENTRY_CHECKED, Boolean.valueOf(_checked.contains(option.value())));
 			entries.add(entry);
 		}
-		putState(ENTRIES, entries);
+		if (!entries.equals(_entries)) {
+			_entries = entries;
+			putState(ENTRIES, entries);
+		}
 	}
 
 }

@@ -25,6 +25,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -414,6 +415,100 @@ public class TestTableFilterPopover extends TestCase {
 		content().executeClientCommand(CMD_APPLY, Map.of());
 		assertEquals("mm", ((TextFilterState) _view.state().getFilters().get(COLUMN_NAME)).pattern());
 		assertEquals(1, _view.rowCount());
+	}
+
+	/**
+	 * Tests that a click on a value is recorded with the label of the value for the reader of the
+	 * script, and replays by the key - the position of the value among the options, the identity the
+	 * options filter itself persists a selection by.
+	 */
+	public void testToggleRecordedWithLabel() {
+		openFilter(COLUMN_STATUS);
+		Object key = entry(CLOSED).get(ENTRY_KEY);
+
+		RecordedCommand recorded =
+			filterList().recordCommand(CMD_TOGGLE, Map.of(FilterToggleArguments.KEY, key));
+
+		FilterToggleArguments args = (FilterToggleArguments) recorded.command();
+		assertEquals(CMD_TOGGLE, args.getName());
+		assertEquals(key, args.getKey());
+		assertEquals(CLOSED.toUpperCase(), args.getLabel());
+
+		filterList().executeClientCommand(CMD_TOGGLE,
+			Map.of(FilterToggleArguments.KEY, key, FilterToggleArguments.LABEL, CLOSED.toUpperCase()));
+		assertEquals(hidden(CLOSED), _view.state().getFilters().get(COLUMN_STATUS));
+	}
+
+	/**
+	 * Tests that an open value list follows a filter removed elsewhere - the chip of the filter bar
+	 * clearing every filter: every value is checked again and there is nothing left to remove.
+	 */
+	public void testValueListFollowsClearFilter() {
+		openFilter(COLUMN_STATUS);
+		toggle(CLOSED);
+
+		_table.executeClientCommand("clearFilter", Map.of());
+
+		assertNull(_view.state().getFilters().get(COLUMN_STATUS));
+		for (Map<?, ?> entry : entries()) {
+			assertEquals(Boolean.TRUE, entry.get(ENTRY_CHECKED));
+		}
+		assertEquals(Boolean.FALSE, list().scriptingScalarState().get(ACTIVE));
+	}
+
+	/**
+	 * Tests that the counts of an open value list follow the other criteria when the rows are
+	 * rebuilt: a filter of another column set from outside, then the data refreshed.
+	 */
+	public void testValueListCountsFollowRefresh() {
+		openFilter(COLUMN_STATUS);
+		assertEquals(Integer.valueOf(2), entry(OPEN).get(ENTRY_COUNT));
+
+		_view.filter(COLUMN_NAME, TextFilterState.contains("mm"));
+		_table.refreshData();
+
+		assertEquals(Integer.valueOf(1), entry(OPEN).get(ENTRY_COUNT));
+		assertEquals(Integer.valueOf(0), entry(CLOSED).get(ENTRY_COUNT));
+		assertEquals("The own filter is unchanged.", Boolean.FALSE, list().scriptingScalarState().get(ACTIVE));
+	}
+
+	/** Tests that an open filter form follows a filter removed elsewhere: nothing left to remove. */
+	public void testFilterFormFollowsClearFilter() {
+		openFilter(COLUMN_NAME);
+		valueChanged(find(content(), ReactTextInputControl.class).get(0), "mm");
+		assertEquals(Boolean.TRUE, content().scriptingScalarState().get(ACTIVE));
+
+		_table.clearFilter();
+
+		assertEquals(Boolean.FALSE, content().scriptingScalarState().get(ACTIVE));
+	}
+
+	/**
+	 * Tests that a table leaving the display closes its filter popover and releases the content, so
+	 * that the popover does not open again when the table is displayed again.
+	 */
+	public void testDetachClosesPopover() {
+		_table.attach();
+		openFilter(COLUMN_STATUS);
+		ReactControl content = content();
+
+		_table.detach();
+
+		assertNull(_table.clientState(STATE_FILTER_POPOVER));
+		assertTrue(content.isDisposed());
+	}
+
+	/** Tests that disposing the table disposes the content of its open filter popover. */
+	public void testDisposeReleasesPopover() {
+		_table.attach();
+		openFilter(COLUMN_NAME);
+		ReactControl content = content();
+		ReactTextInputControl field = find(content, ReactTextInputControl.class).get(0);
+
+		_table.cleanupTree();
+
+		assertTrue(content.isDisposed());
+		assertTrue(field.isDisposed());
 	}
 
 	/** Tests that a column without a filter opens nothing. */

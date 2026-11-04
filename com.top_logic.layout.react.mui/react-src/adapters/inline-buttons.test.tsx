@@ -20,6 +20,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
+import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
 
@@ -75,6 +76,23 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+
+/**
+ * Answers the given keys of the next translation requests with English texts instead of the keys themselves, so that
+ * an announcement composed from them can be read.
+ */
+function englishTexts(texts: Record<string, string>) {
+  const answer = globalThis.fetch;
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    const response = await answer(url, init);
+    if (!/react-api\/i18n/.test(url)) {
+      return response;
+    }
+    const data = await response.json() as Record<string, string>;
+    Object.keys(data).filter(key => key in texts).forEach(key => { data[key] = texts[key]; });
+    return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  });
+}
 
 /** Asserts that the given button is an icon button of Material UI and none of TopLogic. */
 function expectMuiIconButton(button: HTMLElement) {
@@ -357,7 +375,7 @@ describe('the lock and the eye of the column selection as MUI icon buttons', () 
   it('draws lock and eye as icon buttons in the row, named by what a click does', async () => {
     // Two shown columns, so that the eye of the first one is not the last eye and stays enabled.
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, false), entry('b', false, false), entry('c', true, false)] });
+      { revision: 0, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, false)] });
     await settle();
 
     const hide = screen.getAllByRole('button', { name: LABEL_COLUMN_HIDE })[0];
@@ -403,14 +421,14 @@ describe('the row of the column selection', () => {
   }
 
   it('is the root that fills the popover: the host of the list', async () => {
-    mountAdapter(TLColumnSelect, { entries: ENTRIES });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: ENTRIES });
     await settle();
 
     expect(document.getElementById(CONTROL_ID)!.classList).toContain('tl-reorder-list__host');
   });
 
   it('hides a shown column on a click anywhere in its row', async () => {
-    const sent = mountAdapter(TLColumnSelect, { groupable: true, entries: ENTRIES });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, groupable: true, entries: ENTRIES });
     await settle();
 
     await userEvent.click(screen.getByText('Spalte a'));
@@ -424,7 +442,7 @@ describe('the row of the column selection', () => {
   });
 
   it('shows a hidden column on a click in its row', async () => {
-    const sent = mountAdapter(TLColumnSelect, { groupable: true, entries: ENTRIES });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, groupable: true, entries: ENTRIES });
     await settle();
 
     await userEvent.click(screen.getByText('Spalte b'));
@@ -434,7 +452,7 @@ describe('the row of the column selection', () => {
   });
 
   it('sends only the command of a button that is pressed in the row, not the one of the row as well', async () => {
-    const sent = mountAdapter(TLColumnSelect, { groupable: true, entries: ENTRIES });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, groupable: true, entries: ENTRIES });
     await settle();
 
     await userEvent.click(within(row('a')).getByRole('button', { name: LABEL_GROUP_BY }));
@@ -460,7 +478,7 @@ describe('the row of the column selection', () => {
   });
 
   it('does not hide the last shown column on a click in its row', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', false)] });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('b', false)] });
     await settle();
 
     await userEvent.click(screen.getByText('Spalte a'));
@@ -471,7 +489,7 @@ describe('the row of the column selection', () => {
 
   it('keeps the dragged row where it is while the pointer moves, and releases it on the drop', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true), entry('b', true), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true), entry('b', true), entry('c', true)] });
     await settle();
     const dataTransfer = { effectAllowed: '', dropEffect: '', setData() {} };
     const first = row('a');
@@ -564,7 +582,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('lists the frozen, the movable and the hidden columns under their headings in one list', async () => {
     mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true), entry('h', false), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true), entry('h', false), entry('c', true)] });
     await settle();
 
     // A hidden column keeps its place on the server; the list shows it apart, below the others.
@@ -576,18 +594,20 @@ describe('the sections of the column selection as drop zones', () => {
   });
 
   it('always lists all three sections: an empty one shows a quiet row to drop on', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', true)] });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('b', true)] });
     await settle();
 
     expect(listed()).toEqual([SECTION_LOCKED, DROP_LOCKED, SECTION_MOVABLE, 'Spalte a', 'Spalte b', SECTION_HIDDEN, DROP_HIDDEN]);
     for (const placeholder of [element(DROP_LOCKED), element(DROP_HIDDEN)]) {
       expect(placeholder.classList).toContain('tl-reorder-list__empty');
       expect(placeholder.getAttribute('data-tl-state')).toBeNull();
+      // Like a heading, the quiet row is no item of the list: a screen reader counts the columns alone.
+      expect(placeholder.getAttribute('role')).toBe('presentation');
     }
   });
 
   it('gives "Movable" its quiet row as well where all shown columns are frozen', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', true, true), entry('h', false)] });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true, true), entry('h', false)] });
     await settle();
 
     expect(listed()).toEqual([SECTION_LOCKED, 'Spalte a', SECTION_MOVABLE, DROP_MOVABLE, SECTION_HIDDEN, 'Spalte h']);
@@ -595,7 +615,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('leaves the empty sections out while a search narrows the list', async () => {
     const names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
-    mountAdapter(TLColumnSelect, { entries: names.map((name, i) => entry(name, true, i === 0)) });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: names.map((name, i) => entry(name, true, i === 0)) });
     await settle();
     expect(listed()).toContain(DROP_HIDDEN);
 
@@ -605,7 +625,7 @@ describe('the sections of the column selection as drop zones', () => {
   });
 
   it('draws a hidden column with handle, draggable, with a plus instead of the closed eye', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('h', false)] });
     await settle();
 
     const hidden = row('h');
@@ -619,7 +639,7 @@ describe('the sections of the column selection as drop zones', () => {
   });
 
   it('shows and freezes a hidden column with its lock, in one command', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('h', false)] });
     await settle();
 
     await userEvent.click(within(row('h')).getByRole('button', { name: 'js.table.columnShowLock' }));
@@ -635,7 +655,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('counts the position of a drop among the shown columns and names it in the whole list', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true), entry('b', true), entry('h', false), entry('c', true), entry('d', true)] });
+      { revision: 0, entries: [entry('a', true), entry('b', true), entry('h', false), entry('c', true), entry('d', true)] });
     await settle();
 
     // d before c: in the list of the server c stands behind the hidden h, at 3.
@@ -648,7 +668,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('freezes a movable column dropped among the frozen ones, at the dropped place', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
     await settle();
 
     // c behind a: an insertion mark there, and "Frozen" is the target, not "Movable".
@@ -665,7 +685,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('releases a frozen column dropped among the movable ones, at the dropped place', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
     await settle();
 
     await drag(row('a'), row('c'), 'before');
@@ -679,7 +699,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('takes the section of the row a drop at the line lands on, though the position stays the same', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
     await settle();
 
     // The first movable column behind the last frozen one: the same position, frozen now.
@@ -692,7 +712,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('takes a drop within the block', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('c', true)] });
     await settle();
 
     await drag(row('a'), row('b'), 'after');
@@ -705,7 +725,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('sends nothing for a drop that leaves the column where it is, in its section', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true), entry('b', true), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true), entry('b', true), entry('c', true)] });
     await settle();
 
     // b before c: b stays where it is.
@@ -716,9 +736,47 @@ describe('the sections of the column selection as drop zones', () => {
     expect(sent).not.toHaveBeenCalled();
   });
 
+  it('sends nothing for a drop that changes nothing shown, though a hidden column stands in between on the server',
+    async () => {
+      // On the server, the hidden h stands between a and b; the list shows a, b and below them h.
+      const sent = mountAdapter(TLColumnSelect,
+        { revision: 0, entries: [entry('a', true), entry('h', false), entry('b', true)] });
+      await settle();
+
+      // b behind a: where it is shown already; only the place of b relative to the hidden h would change.
+      await drag(row('b'), row('a'), 'after');
+      fireEvent.drop(row('a'), { dataTransfer });
+      await settle();
+
+      expect(sent).not.toHaveBeenCalled();
+      expect(listed()).toEqual([SECTION_LOCKED, DROP_LOCKED, SECTION_MOVABLE, 'Spalte a', 'Spalte b', SECTION_HIDDEN,
+        'Spalte h']);
+    });
+
+  it('counts a drop during a search in the whole list: next to a row the search leaves out', async () => {
+    // Twelve shown columns behind a hidden one; the search finds a and c, b between them is left out.
+    const names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm'];
+    const shown = names.map(name => ({ ...entry(name, true), label: (name === 'a' || name === 'c' ? 'Treffer ' : 'Spalte ')
+      + name }));
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('h', false), ...shown] });
+    await settle();
+    await userEvent.type(screen.getByRole('searchbox', { name: 'js.table.columnSearch' }), 'Treffer');
+    const found = (name: string) => screen.getByText('Treffer ' + name).closest('.tl-reorder-list__item') as HTMLElement;
+    expect(listed()).toEqual([SECTION_MOVABLE, 'Treffer a', 'Treffer c']);
+
+    // c behind a: in front of b, which the search does not show - position 1 among the shown columns, which is 2 in
+    // the list of the server behind the hidden h.
+    await drag(found('c'), found('a'), 'after');
+    fireEvent.drop(found('a'), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledTimes(1);
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 2, locked: false, visible: true });
+  });
+
   it('shows a hidden column dropped between two movable ones exactly there', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true), entry('b', true), entry('h', false), entry('c', true), entry('d', true)] });
+      { revision: 0, entries: [entry('a', true), entry('b', true), entry('h', false), entry('c', true), entry('d', true)] });
     await settle();
 
     await drag(row('h'), row('d'), 'before');
@@ -733,7 +791,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('hides and releases a frozen column dropped into "Hidden": no insertion mark, the section is the target', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('h', false)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('h', false)] });
     await settle();
 
     const refused = await dragOnto(row('a'), row('h'));
@@ -752,7 +810,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('takes a drop on the heading of a section like one into the section', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true), entry('c', true), entry('h', false)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true), entry('c', true), entry('h', false)] });
     await settle();
 
     // A hidden column on "Frozen": shown and frozen, at the start of the block.
@@ -776,7 +834,7 @@ describe('the sections of the column selection as drop zones', () => {
   });
 
   it('refuses "Hidden" for the last shown column: no target, no drop', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('h', false)] });
     await settle();
 
     // The event keeps its default, so the browser shows that nothing would happen.
@@ -792,7 +850,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('shows "Frozen" without frozen columns with its quiet row, which takes a column', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true), entry('b', true), entry('h', false)] });
+      { revision: 0, entries: [entry('a', true), entry('b', true), entry('h', false)] });
     await settle();
 
     expect(await dragOnto(row('b'), element(DROP_LOCKED))).toBe(false);
@@ -806,7 +864,7 @@ describe('the sections of the column selection as drop zones', () => {
 
   it('releases a column dropped on the quiet row of "Movable" at the start of the rest', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('h', false)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('h', false)] });
     await settle();
 
     await dragOnto(row('a'), element(DROP_MOVABLE));
@@ -819,7 +877,7 @@ describe('the sections of the column selection as drop zones', () => {
   });
 
   it('marks the last shown column: no pointer row, and the reason as tooltip on the row', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('h', false)] });
     await settle();
 
     expect(row('a').getAttribute('data-tl-state')).toContain('last');
@@ -829,7 +887,7 @@ describe('the sections of the column selection as drop zones', () => {
   });
 
   it('marks no column as the last one while two are shown', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', true)] });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('b', true)] });
     await settle();
 
     expect(row('a').getAttribute('data-tl-state') ?? '').not.toContain('last');
@@ -875,7 +933,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('moves within a section past a hidden column, with the position among the shown columns', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true), entry('h', false), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true), entry('h', false), entry('c', true)] });
     await settle();
 
     // Down from b: over c, which stands behind the hidden h.
@@ -888,7 +946,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('freezes the first movable column by Alt + up, at the end of "Frozen", and says so', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true), entry('c', true)] });
     await settle();
 
     step('b', 'ArrowUp');
@@ -902,7 +960,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('releases the last frozen column by Alt + down, at the same position', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('c', true)] });
     await settle();
 
     step('b', 'ArrowDown');
@@ -916,7 +974,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('releases the last frozen column by Alt + down where "Movable" is empty', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true, true), entry('h', false)] });
+      { revision: 0, entries: [entry('a', true, true), entry('b', true, true), entry('h', false)] });
     await settle();
 
     step('b', 'ArrowDown');
@@ -928,7 +986,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('hides the last movable column by Alt + down', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true), entry('b', true), entry('h', false)] });
+      { revision: 0, entries: [entry('a', true), entry('b', true), entry('h', false)] });
     await settle();
 
     step('b', 'ArrowDown');
@@ -942,7 +1000,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('shows a hidden column by Alt + up at the end of "Movable"', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('h', false), entry('b', true), entry('i', false)] });
+      { revision: 0, entries: [entry('a', true, true), entry('h', false), entry('b', true), entry('i', false)] });
     await settle();
 
     step('i', 'ArrowUp');
@@ -955,7 +1013,7 @@ describe('the keyboard across the sections of the column selection', () => {
 
   it('does nothing and says nothing at the ends: down in "Hidden", up on the first frozen, down on the last shown', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('h', false), entry('i', false)] });
+      { revision: 0, entries: [entry('a', true, true), entry('h', false), entry('i', false)] });
     await settle();
 
     step('h', 'ArrowDown');
@@ -967,7 +1025,7 @@ describe('the keyboard across the sections of the column selection', () => {
   });
 
   it('does not hide the last shown column by Alt + down', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('h', false)] });
     await settle();
 
     step('a', 'ArrowDown');
@@ -975,6 +1033,48 @@ describe('the keyboard across the sections of the column selection', () => {
 
     expect(sent).not.toHaveBeenCalled();
     expect(announced()).toBe('');
+  });
+
+  describe('with the texts of the announcements', () => {
+    afterEach(() => {
+      // The English texts must not reach the next test; the list is unmounted first, so that no hook of it answers
+      // the cleared cache.
+      cleanup();
+      clearI18NCache();
+    });
+
+    it('names the column, its position among the shown columns and their number', async () => {
+      clearI18NCache();
+      mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true, true), entry('b', true), entry('c', true),
+        entry('d', true), entry('h', false)] });
+      englishTexts({
+        [MOVED]: '{0}, position {1} of {2}',
+        [MOVED_LOCKED]: '{0}, frozen, position {1} of {2}',
+        [MOVED_MOVABLE]: '{0}, movable, position {1} of {2}',
+        [MOVED_HIDDEN]: '{0}, hidden',
+      });
+      await settle();
+
+      // Within "Movable": c behind d, the last of the four shown columns; the hidden h does not count.
+      step('c', 'ArrowDown');
+      await settle();
+      expect(announced()).toBe('Spalte c, position 4 of 4');
+
+      // Across the line: b frozen behind a.
+      step('b', 'ArrowUp');
+      await settle();
+      expect(announced()).toBe('Spalte b, frozen, position 2 of 4');
+
+      // And back: b released at the same position.
+      step('b', 'ArrowDown');
+      await settle();
+      expect(announced()).toBe('Spalte b, movable, position 2 of 4');
+
+      // Into "Hidden": no position.
+      step('c', 'ArrowDown');
+      await settle();
+      expect(announced()).toBe('Spalte c, hidden');
+    });
   });
 });
 
@@ -1024,6 +1124,20 @@ describe('the predicted list of the column selection', () => {
     expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 0, locked: false, visible: true });
     // A patch without a new revision is no answer to the move.
     patchState({ entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+    expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
+  });
+
+  it('shows no prediction while the state carries no revision: nothing would end it', async () => {
+    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    await dropBefore('c', 'a');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 0, locked: false, visible: true });
+    expect(rows()).toEqual(['Spalte a', 'Spalte b', 'Spalte c']);
+    patchState({ entries: [entry('c'), entry('a'), entry('b')] });
     await settle();
     expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
   });
@@ -1094,6 +1208,63 @@ describe('the predicted list of the column selection', () => {
     await settle();
 
     expect(document.activeElement).toBe(handle('c'));
+  });
+});
+
+describe('a list the server pushes while a column of the selection is dragged', () => {
+  const CMD_COLUMN_MOVE = 'columnMove';
+  const dataTransfer = { effectAllowed: '', dropEffect: '', setData() {} };
+
+  function entry(name: string, visible = true) {
+    return { name, label: 'Spalte ' + name, visible, locked: false, grouped: false };
+  }
+
+  function row(name: string): HTMLElement {
+    return screen.getByText('Spalte ' + name).closest('.tl-reorder-list__item') as HTMLElement;
+  }
+
+  /** Picks the given row up. */
+  async function pick(name: string) {
+    fireEvent.dragStart(row(name), { dataTransfer });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+
+  it('drops the column picked up, at the place it is dropped in the new list', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { revision: 0, entries: ['a', 'b', 'c', 'd', 'e'].map(name => entry(name)) });
+    await settle();
+
+    await pick('a');
+    // Meanwhile a moved to the end, by the header of the table: b stands where a stood.
+    patchState({ entries: ['b', 'c', 'd', 'e', 'a'].map(name => entry(name)) });
+    await settle();
+    const target = row('d');
+    target.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
+    const over = createEvent.dragOver(target, { dataTransfer });
+    Object.defineProperty(over, 'clientY', { value: 2 });
+    fireEvent(target, over);
+    fireEvent.drop(target, { dataTransfer });
+    await settle();
+
+    // a in front of d: position 2 of b, c, a, d, e.
+    expect(sent).toHaveBeenCalledTimes(1);
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 2, locked: false, visible: true });
+  });
+
+  it('hides the column picked up, dropped into "Hidden"', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { revision: 0, entries: [entry('a'), entry('b'), entry('c'), entry('h', false)] });
+    await settle();
+
+    await pick('a');
+    patchState({ entries: [entry('b'), entry('c'), entry('a'), entry('h', false)] });
+    await settle();
+    fireEvent.dragOver(row('h'), { dataTransfer });
+    fireEvent.drop(row('h'), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledTimes(1);
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 2, locked: false, visible: false });
   });
 });
 
@@ -1178,7 +1349,7 @@ describe('the group toggle of the column selection', () => {
 
   it('offers grouping on every row, also a hidden one, and moves the grouping to the chosen column', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { groupable: true, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, true)] });
+      { revision: 0, groupable: true, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, true)] });
     await settle();
 
     const groupBy = screen.getAllByRole('button', { name: LABEL_GROUP_BY });
@@ -1196,7 +1367,7 @@ describe('the group toggle of the column selection', () => {
 
   it('keeps the toggle of the grouped row in sight, pressed, and removes the grouping', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { groupable: true, entries: [entry('a', true, false), entry('c', true, true)] });
+      { revision: 0, groupable: true, entries: [entry('a', true, false), entry('c', true, true)] });
     await settle();
 
     const ungroup = screen.getByRole('button', { name: LABEL_UNGROUP });
@@ -1210,7 +1381,7 @@ describe('the group toggle of the column selection', () => {
   });
 
   it('offers no grouping for a tree', async () => {
-    mountAdapter(TLColumnSelect, { groupable: false, entries: [entry('a', true, false)] });
+    mountAdapter(TLColumnSelect, { revision: 0, groupable: false, entries: [entry('a', true, false)] });
     await settle();
 
     expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();

@@ -177,13 +177,15 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const Button = usePart('Button');
 
   const serverEntries = (state.entries as ColumnEntry[] | undefined) ?? NO_ENTRIES;
-  const revision = typeof state.revision === 'number' ? state.revision : 0;
+  // A state without a revision would never end a prediction: then the list shown is always the server's.
+  const counted = typeof state.revision === 'number';
+  const revision = counted ? state.revision as number : 0;
   const revisionRef = React.useRef(revision);
   revisionRef.current = revision;
 
   const [sync, setSync] = React.useState<Sync | null>(null);
   const current = sync !== null && sync.controlId === controlId ? sync : null;
-  const predicted = current !== null && revision < current.expected ? current.predicted : null;
+  const predicted = counted && current !== null && revision < current.expected ? current.predicted : null;
   // The list shown and read by every gesture: the predicted one while the server has not answered, else the server's.
   const entries = predicted ?? serverEntries;
 
@@ -199,14 +201,14 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const matches = new Set(filterOptions(display, search));
 
   // Every command counts towards the revision the server answers with, the move carries the list it leads to.
-  const send = React.useCallback((command: string, args: Record<string, unknown>, expected?: readonly ColumnEntry[]) => {
+  const send = React.useCallback((command: string, args: Record<string, unknown>, prediction?: readonly ColumnEntry[]) => {
     setSync((prev) => {
       const sent = prev !== null && prev.controlId === controlId ? prev : null;
       const open = sent !== null && revisionRef.current < sent.expected;
       return {
         controlId,
         expected: (open ? sent.expected : revisionRef.current) + 1,
-        predicted: expected ?? (open ? sent.predicted : null),
+        predicted: prediction ?? (open ? sent.predicted : null),
       };
     });
     sendCommand(command, args);
@@ -274,11 +276,12 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     send(CMD_GROUP, { [ARG_COLUMN]: grouped ? '' : name });
   }, [send]);
 
-  // Sends a move of a drag or an Alt + arrow and shows the list it leads to; `null` where the move changes nothing,
-  // which sends nothing. The moved column is named rather than counted: the server resolves it against its own list.
+  // Sends a move of a drag or an Alt + arrow and shows the list it leads to; `null` where the move changes nothing
+  // shown, which sends nothing - also a move that would only change the place of a column relative to a hidden one on
+  // the server. The moved column is named rather than counted: the server resolves it against its own list.
   const commit = (name: string, move: ColumnMove): readonly ColumnEntry[] | null => {
     const next = applyColumnMove(entries, move);
-    if (sameList(next, entries)) {
+    if (sameList(displayOrder(next), display)) {
       return null;
     }
     const handleKey = `${name}:handle`;
@@ -292,20 +295,46 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     return next;
   };
 
+  // The dragged column by name, taken when the drag starts. A list pushed during the drag - a move of the table's
+  // header, an answer differing from the prediction - shows other columns at the positions, so by the time of the
+  // drop the position the drag started from may name another column.
+  const draggedName = React.useRef<string | null>(null);
+
+  // The dragged column and its position in the list shown now; `undefined` where it is gone. Without a name taken at
+  // the start of the drag, the column at the position the drag started from.
+  const draggedAt = (from: number): { entry: ColumnEntry; index: number } | undefined => {
+    const name = draggedName.current ?? display[from]?.name;
+    const index = display.findIndex((entry) => entry.name === name);
+    return index < 0 ? undefined : { entry: display[index], index };
+  };
+
   // A drop on a shown row: the section of that row decides the state. The place after the last frozen column and the
-  // place before the first movable one are the same position, so the side of the drop tells the section.
+  // place before the first movable one are the same position, so the side of the drop tells the section. The position
+  // is counted from where the dragged column stands now, as the row dropped on is.
   const handleMove = (from: number, to: number, target?: ReorderDropTarget) => {
-    const moved = display[from];
-    const onto = target !== undefined ? display[target.index] : moved;
-    if (moved === undefined || onto === undefined) {
+    const dragged = draggedAt(from);
+    if (dragged === undefined) {
       return;
     }
-    commit(moved.name, showAt(entries, moved.name, to, onto.visible ? onto.locked : moved.locked));
+    const moved = dragged.entry;
+    const onto = target !== undefined ? display[target.index] : moved;
+    if (onto === undefined) {
+      return;
+    }
+    let position = to;
+    if (target !== undefined) {
+      position = target.side === 'before' ? target.index : target.index + 1;
+      // The column leaves its position before it is inserted again, so a place behind it moves up by one.
+      if (dragged.index < position) {
+        position--;
+      }
+    }
+    commit(moved.name, showAt(entries, moved.name, position, onto.visible ? onto.locked : moved.locked));
   };
 
   // "Hidden" takes every shown column but the last one; it holds no order, so a hidden column dropped there stays.
   const acceptsZone = (from: number, zone: string) => {
-    const moved = display[from];
+    const moved = draggedAt(from)?.entry;
     if (moved === undefined) {
       return false;
     }
@@ -315,7 +344,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // A drop on a heading, on a placeholder or among the hidden rows: frozen at the start of the block, released at the
   // start of the rest, or hidden at its place.
   const handleZoneDrop = (from: number, zone: string) => {
-    const moved = display[from];
+    const moved = draggedAt(from)?.entry;
     if (moved === undefined) {
       return;
     }
@@ -419,6 +448,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     // The hook registers the handle for the focus after a keyboard move, the list for the focus after the server's answer.
     const { ref: handleRef, ...handle } = reorder.handleProps(index);
     const handleKey = `${entry.name}:handle`;
+    const drag = reorder.itemProps(index);
     return (
       <li
         key={'column-' + entry.name}
@@ -433,7 +463,16 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         // The row says why a click does nothing, as the disabled eye does.
         {...(lastVisible ? tooltipProps(i18n['js.table.columnLastVisible']) : {})}
-        {...reorder.itemProps(index)}
+        {...drag}
+        // The drag takes the column by name, see draggedAt.
+        onDragStart={drag.onDragStart && ((event: React.DragEvent) => {
+          draggedName.current = entry.name;
+          drag.onDragStart!(event);
+        })}
+        onDragEnd={drag.onDragEnd && ((event: React.DragEvent) => {
+          draggedName.current = null;
+          drag.onDragEnd!(event);
+        })}
         onClick={(event) => handleRowClick(entry, lastVisible, event)}
       >
         <Button
@@ -523,6 +562,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
         <li
           key={'empty-' + section.zone}
           className="tl-reorder-list__empty"
+          role="presentation"
           data-tl-state={targetState}
           {...reorder.zoneProps(section.zone)}
         >

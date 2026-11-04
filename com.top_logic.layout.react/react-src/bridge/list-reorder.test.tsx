@@ -19,6 +19,9 @@ let latest: ListReorder;
 /** Shows the list under test in a new order, as a control does when the server's order arrives. */
 let setOrder: (items: string[]) => void;
 
+/** The items of the list under test, by name, in the order of its last render. */
+let currentItems: string[];
+
 interface ListProps {
 
   /** The items, by name, in their order at mount time. */
@@ -41,6 +44,7 @@ interface ListProps {
 function List({ initial, zones = [], keyed = true, options = {} }: ListProps) {
   const [items, setItems] = useState(initial);
   setOrder = setItems;
+  currentItems = items;
   const reorder = useListReorder({
     onMove: () => {},
     count: items.length,
@@ -60,6 +64,50 @@ function List({ initial, zones = [], keyed = true, options = {} }: ListProps) {
         {zones.map((zone) => (
           <li key={'zone-' + zone} data-zone={zone} {...reorder.zoneProps(zone)}>{zone}</li>
         ))}
+      </ul>
+      {reorder.announcer}
+    </div>
+  );
+}
+
+/** The items of a list in two sections and the number of items in the first one. */
+interface Split {
+  items: string[];
+  split: number;
+}
+
+/** The list in two sections under test, as of its last render. */
+let currentSplit: Split;
+
+/** Shows the list in two sections under test with new items or a new line between its sections. */
+let setSplit: (next: Split) => void;
+
+/**
+ * A list in two sections, each an element of its own, keyed by name: an item moved across the line between them is a
+ * new element in the other section, as in a control listing its sections one after the other.
+ */
+function Sections({ initial, options = {} }: { initial: Split; options?: Partial<ListReorderOptions> }) {
+  const [state, setState] = useState(initial);
+  currentSplit = state;
+  setSplit = setState;
+  const reorder = useListReorder({
+    onMove: () => {},
+    count: state.items.length,
+    labelOf: (index) => state.items[index],
+    keyOf: (index) => state.items[index],
+    ...options,
+  });
+  latest = reorder;
+  const row = (name: string, index: number) => (
+    <li key={name} data-item={name} {...reorder.itemProps(index)}>
+      <button type="button" data-handle={name} {...reorder.handleProps(index)}>{name}</button>
+    </li>
+  );
+  return (
+    <div {...reorder.containerProps}>
+      <ul data-section="first">{state.items.slice(0, state.split).map((name, index) => row(name, index))}</ul>
+      <ul data-section="second">
+        {state.items.slice(state.split).map((name, index) => row(name, index + state.split))}
       </ul>
       {reorder.announcer}
     </div>
@@ -383,6 +431,26 @@ describe('zones', () => {
     expect(latest.dropZone).toBeNull();
   });
 
+  it('lets the zone decide on its own item dragged over itself', async () => {
+    let taken = false;
+    const acceptsZone = vi.fn(() => taken);
+    render({ initial: ['a', 'h'], options: { zoneOf: (index) => (index === 1 ? 'hidden' : null), acceptsZone,
+      onZoneDrop: () => {} } });
+    const data = transfer();
+
+    await pickUp('h', data);
+    const refused = over(item('h'), data);
+    expect(acceptsZone).toHaveBeenCalledWith(1, 'hidden');
+    expect(refused.defaultPrevented).toBe(false);
+    expect(latest.dropZone).toBeNull();
+
+    taken = true;
+    const accepted = over(item('h'), data);
+    expect(accepted.defaultPrevented).toBe(true);
+    expect(latest.dropZone).toBe('hidden');
+    expect(latest.dropTarget).toBeNull();
+  });
+
   it('gives an element standing for a zone nothing while the list is not arranged', () => {
     render({ initial, zones: ['locked'], options: { enabled: false, zoneOf, onZoneDrop: () => {} } });
 
@@ -498,5 +566,71 @@ describe('keyboard step of the control', () => {
     act(() => setOrder(['a', 'c', 'd', 'b']));
     expect(calls).toEqual([[1, 1], [2, 1]]);
     expect(document.activeElement).toBe(handle('b'));
+  });
+
+  it('asks the control for each press at once while the control shows each step at once, across a section line too',
+    () => {
+      const calls: [number, number][] = [];
+      const onStep = (index: number, direction: -1 | 1) => {
+        calls.push([index, direction]);
+        const { items, split } = currentSplit;
+        if (direction === 1 && index === split - 1) {
+          // Down from the last of the first section: the first of the second one, at the same position.
+          setSplit({ items, split: split - 1 });
+          return { to: index, announcement: `${items[index]}, second section` };
+        }
+        setSplit({ items: moved(items, index, index + direction), split });
+        return { to: index + direction, announcement: `${items[index]}, position ${index + direction + 1}` };
+      };
+      act(() => root.render(<Sections initial={{ items: ['a', 'b', 'c', 'd'], split: 2 }} options={{ onStep }} />));
+
+      handle('b').focus();
+      press('b', 'ArrowDown');
+      // The item is a new element in the other section; the focus has followed it there.
+      expect(container.querySelector('[data-section="second"] [data-item="b"]')).not.toBeNull();
+      expect(document.activeElement).toBe(handle('b'));
+      expect(announced()).toBe('b, second section');
+
+      // No answer of a server in between: each press is asked from where the step before showed the item.
+      press('b', 'ArrowDown');
+      expect(document.activeElement).toBe(handle('b'));
+      press('b', 'ArrowDown');
+
+      expect(calls).toEqual([[1, 1], [1, 1], [2, 1]]);
+      expect(currentSplit.items).toEqual(['a', 'c', 'd', 'b']);
+      expect(announced()).toBe('b, position 4');
+      expect(document.activeElement).toBe(handle('b'));
+    });
+
+  it('asks the control for the queued steps one by one, until it makes none', () => {
+    const calls: [number, number][] = [];
+    // The first step waits for the server; from its answer on, the control shows each step at once.
+    let showAtOnce = false;
+    const onStep = (index: number, direction: -1 | 1) => {
+      calls.push([index, direction]);
+      if (index + direction >= currentItems.length) {
+        return null;
+      }
+      if (showAtOnce) {
+        setOrder(moved(currentItems, index, index + direction));
+      }
+      return { to: index + direction, announcement: `moved to ${index + direction + 1}` };
+    };
+    render({ initial: ['a', 'b', 'c', 'd', 'e'], options: { onStep } });
+
+    handle('a').focus();
+    // One step sent, four queued - the last one beyond the end of the list.
+    for (let n = 0; n < 5; n++) {
+      press('a', 'ArrowDown');
+    }
+    expect(calls).toEqual([[0, 1]]);
+
+    showAtOnce = true;
+    act(() => setOrder(['b', 'a', 'c', 'd', 'e']));
+
+    expect(calls).toEqual([[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]]);
+    expect(shown()).toEqual(['b', 'c', 'd', 'e', 'a']);
+    expect(announced()).toBe('moved to 5');
+    expect(document.activeElement).toBe(handle('a'));
   });
 });

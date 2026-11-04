@@ -182,8 +182,8 @@ export interface ListReorderOptions {
   /**
    * Whether an item may be moved to the position of another one: dragging shows no insertion mark over an item it
    * does not accept, a drop there moves nothing, and a keyboard move stops there without a word. A list whose items
-   * form blocks that keep their members (the frozen and the movable columns) refuses the position across a block
-   * line. Absent: every position is accepted.
+   * form blocks that keep their members refuses the position across a block line. Absent: every position is
+   * accepted.
    *
    * @param from The position of the moved item.
    * @param to The position of the item it would move to or over.
@@ -247,7 +247,9 @@ export interface ListReorderOptions {
    * more than swap two neighbours (across a section line, into or out of a zone).
    *
    * Asked for every Alt + arrow before the hook checks the position itself, so it decides on the ends of the list
-   * and on positions {@link accepts} refuses as well:
+   * and on positions {@link accepts} refuses as well. In a list keyed by value ({@link keyOf}), a press while the
+   * item still waits to stand at the position of the step before is queued, and asked later, from the position the
+   * item has reached by then:
    * - a {@link ReorderStep}: the control has made the move (sent its command); the hook announces its text and
    *   returns the focus to the handle at the position it names, as for a move of its own;
    * - `null`: no step; nothing is moved or announced;
@@ -299,6 +301,9 @@ export interface ListReorder {
   /**
    * The drag properties of an element standing for the given zone rather than an item - the placeholder of an empty
    * zone, the heading of a section: the pointer over it makes the zone the target, as over an item of the zone.
+   *
+   * Such an element contains no items: the dragover of an item bubbles up to it, and the zone would clear the
+   * insertion mark the item has just set.
    */
   zoneProps(zone: string): ReorderZoneProps;
 

@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition.
 order: 15
 ---
 
@@ -254,6 +254,24 @@ A bound channel is not a copy: the channel object of the enclosing view is regis
 ```
 
 The referenced view is loaded when the `<view-ref>` builds its control, not when the enclosing view is parsed. A view can therefore reference itself - each instance gets a scope of its own - as long as the self-reference sits in content that is built on demand (a dialog, a tab, an item of a list); an unconditional self-reference recurses while the control is built. A referenced view that cannot be loaded renders an error placeholder in its place, so the enclosing application stays usable.
+
+### A view stored on a model object: `<dynamic-view>`
+
+A view can also be data: the datatype `tl.view:ViewDefinition` (module `tl.view`, in `tl-layout-view`) stores a view configuration (`ViewElement.Config`) in an attribute; a stored value reads like a `.view.xml` file with the root element `<view>`. `<dynamic-view>` (`DynamicViewElement`) embeds such a view: its `view` expression computes the configuration from the `inputs`, and `<bind>` children connect it like in a `<view-ref>`.
+
+```xml
+<dynamic-view
+	inputs="task"
+	view="$task.get(`my.app:Task#view`)"
+>
+	<bind
+		channel="item"
+		to="task"
+	/>
+</dynamic-view>
+```
+
+The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). Only another configuration replaces the embedded view; the replaced one is disposed after the channel notification has unwound. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
 
 A dialog is connected the same way: `<open-dialog dialog-view="…">` creates the dialog view with a scope of its own, writes the value it processes - the default argument of the chain, or the argument its `value` names (see [commands](doc:view-layer/commands#actions-processing-one-value-value)) - into the dialog channel named by `bind-input-to` (`model` by default), and takes `<bind channel="…" to="…"/>` elements with the same meaning as in `<view-ref>`:
 

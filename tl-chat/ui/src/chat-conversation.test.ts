@@ -210,7 +210,6 @@ describe('where the prompt cards are rendered', () => {
   function render(chatId: string): string {
     const state = {
       chatId,
-      windowId: 'w1',
       authenticated: true,
       language: 'en',
       prompts: [{ label: 'Summarise', icon: '', text: 'Please summarise the newest invoices.' }],
@@ -238,7 +237,6 @@ describe('where the prompt cards are rendered', () => {
   it('writes the css-class of the element on its root, after its own classes', () => {
     setTLState({
       chatId: 'css-class-test',
-      windowId: 'w1',
       authenticated: true,
       language: 'en',
       cssClass: 'appChat',

@@ -127,7 +127,7 @@ public class TestPresentTool extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
+		ChatViewBinding.bind(subSession(), "main").denyPresenting(PANE, _channel);
 		if (_window != null) {
 			_window.close();
 			_window = null;
@@ -221,7 +221,7 @@ public class TestPresentTool extends BasicTestCase {
 		withWindow();
 		allow();
 		ViewChannel other = new DefaultViewChannel("dockPane");
-		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").allowPresenting("dockPane", other);
+		ChatViewBinding.bind(subSession(), "main").allowPresenting("dockPane", other);
 		try {
 			String result = present(List.of(tid(first)), "");
 
@@ -230,7 +230,7 @@ public class TestPresentTool extends BasicTestCase {
 			assertSays("dockPane", result);
 			assertEquals(List.of(), _written);
 		} finally {
-			ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting("dockPane", other);
+			ChatViewBinding.bind(subSession(), "main").denyPresenting("dockPane", other);
 		}
 	}
 
@@ -528,7 +528,7 @@ public class TestPresentTool extends BasicTestCase {
 
 	/** Opens the fixture's channel to the agent, as {@code <chat-conversation present="…">} does. */
 	private void allow() {
-		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").allowPresenting(PANE, _channel);
+		ChatViewBinding.bind(subSession(), "main").allowPresenting(PANE, _channel);
 	}
 
 	private String present(List<String> ids, String channel) {

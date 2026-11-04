@@ -235,7 +235,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 	 * @param registry
 	 *        The window registry of the session the window belongs to.
 	 * @param window
-	 *        The window's name, the {@code windowId} the chat sends with every request.
+	 *        The window's name, which every React request of the window carries.
 	 * @param queue
 	 *        The window's event queue, as the registry hands it out now.
 	 * @param token

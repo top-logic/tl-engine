@@ -1028,7 +1028,7 @@ public class ChatProcessor {
 		// their model access rights which objects those tools may touch. An interactive run always
 		// has a human who can answer an approval prompt, so it is not a background run; a scheduled
 		// one says so on its tracker and is bounded by the policy's <background-allowlist> instead.
-		// ChatSessionFilter has already rejected an unauthenticated caller on /chat/*, so there is a
+		// Every command of the chat controls refuses a window nobody is signed in to, so there is a
 		// user here; the factory refuses if there is not, rather than running unchecked.
 		// Which context that is, is the installation's decision (Gitea #381): the default answers
 		// approval by the tool's mode, an application that configured its own factory answers it from
@@ -1209,9 +1209,8 @@ public class ChatProcessor {
 			_state = state;
 			_userMessage = userMessage;
 			_attachments = attachments;
-			// The originating application-window sub-session (resolved by ChatServlet from the
-			// client's window id), so the agent's tools act on the user's UI - not the servlet
-			// thread's throwaway sub-session.
+			// The sub-session of the application window the message was sent in, so the agent's tools
+			// act on the user's UI.
 			_userSession = userSession;
 		}
 

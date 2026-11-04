@@ -366,7 +366,7 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	 */
 	protected TaskProgressTracker newTracker(Person account) {
 		TaskProgressTracker tracker = new TaskProgressTracker();
-		tracker.setUserName(account.getName());
+		tracker.claim(account);
 		tracker.setApprovalMode(getConfig().getApprovalMode());
 		// Only AUTO_APPROVE is truly unattended. MANUAL says the operator expects to answer, and
 		// since #393 any window of this account can: the run is then an ordinary attended one that

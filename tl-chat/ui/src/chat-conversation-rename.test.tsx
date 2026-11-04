@@ -25,7 +25,7 @@ let listed: { id: string; title: string }[]
 let requested: string[]
 
 function state(chatId: string, extra: Record<string, unknown>): Record<string, unknown> {
-  return { chatId, hasInput: true, authenticated: true, windowId: 'w1', language: 'de', ...extra }
+  return { chatId, hasInput: true, authenticated: true, language: 'de', ...extra }
 }
 
 async function render(chatId: string, extra: Record<string, unknown>): Promise<void> {

@@ -23,7 +23,8 @@ write one.
    ControlRepresentable`. Its `view` attribute names a `.view.xml` below `/WEB-INF/views/`. On its
    first rendering in a window it builds that view's control tree, as `ViewServlet` would.
 2. **The React window is the classic window.** The tree is registered in `ReactWindowRegistry`
-   under the name of the classic window's sub-session (`ChatSessionRegistry.windowId`). That is what
+   under the name of the classic window, which its sub-session is registered under in the session
+   (`LayoutContext.getWindowId().getWindowName()` of the sub-session). That is what
    makes the two update paths meet in one page:
    - A React command (`/react-api/command`) carries that window name. `ReactServlet` resolves it to
      the classic sub-session *and* to the classic `MainLayout` (`ReactWindowReplay.installSubSession`

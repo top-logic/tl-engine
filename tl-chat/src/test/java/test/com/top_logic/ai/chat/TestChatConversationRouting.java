@@ -26,7 +26,6 @@ import com.top_logic.ai.chat.view.ChatControl;
 import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -77,14 +76,8 @@ public class TestChatConversationRouting extends BasicTestCase {
 		_subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the trackers on.", _subSession);
 		_subSession.setPerson(user);
-		// A window id is the key a sub-session is registered under in its session, which in the
-		// application a layout window does on login. Nothing here starts one, so the test registers
-		// its own sub-session under a name of its own.
-		TLSessionContext session = TLContextManager.getSession();
+		// The name of the window the conversations are rendered in.
 		_windowId = "test-window-" + System.identityHashCode(this);
-		session.setIfAbsent(_windowId, _subSession);
-		assertSame("The window id must resolve back to the sub-session the trackers hang on.",
-			_subSession, ChatSessionRegistry.resolveSubSession(session, _windowId));
 	}
 
 	@Override
@@ -206,7 +199,6 @@ public class TestChatConversationRouting extends BasicTestCase {
 
 	private TaskProgressTracker register(String conversation) {
 		TaskProgressTracker tracker = new TaskProgressTracker();
-		tracker.setWindowId(_windowId);
 		ChatSessionRegistry.register(_subSession, conversation, tracker);
 		return tracker;
 	}

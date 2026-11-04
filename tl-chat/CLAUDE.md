@@ -8,7 +8,7 @@ Real-time agentic chat interface for TopLogic applications. Connects users to th
 
 ### Commands and push
 
-The browser component reaches the server only through the chat controls of its window - their state, their React commands, their data route and their upload - and receives the frames of its conversation on the window's event stream. `ChatServlet` stays mapped to `/chat/*` but serves no endpoint.
+The browser component reaches the server only through the chat controls of its window - their state, their React commands, their data route and their upload - and receives the frames of its conversation on the window's event stream. The module maps no servlet of its own: a request to `/chat/*` is answered 404.
 
 1. **The run's gestures** are React commands of the chat controls (`ChatControl`), so they travel the window's FIFO command channel like every other command. Every chat control answers them - the store sends through whichever of its elements joined last - and each names its arguments, reply fields and status values with constants (`CMD_*`, `ARG_*`, `FIELD_*`, `STATUS_*`; the browser's copies in `api.ts` and `preferences.ts` say "Must match ..."). What reaches a run of the account rather than of the window lives in `AccountRuns` (see "a pending interaction belongs to the account" below).
    - **`respond`** (`CMD_RESPOND`): `requestId`, `response` (`APPROVED`, `APPROVED_FOR_SESSION`, `REJECTED` or the answer), `toolName`, `comment`, `ownWords`; answered `status` `ok`, or `ignored` when no run of the account waits for the request - which a request of another account is answered with too. The approval and question cards (`prompts.tsx`) and the store's auto-approve paths send it.
@@ -60,6 +60,16 @@ browser component, which shows a sign-in note rather than a composer. The note i
 conversation's alone - a `<chat-rail>` and a `<chat-dock>` render nothing at all, so a page states
 it once (#643).
 
+**Signing in within the window.** A login through the page's login dialog keeps the window's
+sub-session and changes its person (`SessionService.loginUserInWindow`), and the window's tree is
+built anew. Nothing of the chat that depends on the person is therefore held across renders:
+`authenticated`, `userName` and `welcomeName` are written by `ChatViewBinding.writeRenderState`
+(`STATE_*`) on every render, beside the language and the layout. And a conversation's binding and
+tracker serve one account: `ChatViewBinding.bind` replaces a binding made for another person, and
+`ChatSessionRegistry.tracker(subSession, conversation, account)` closes and replaces a tracker that
+serves another account (`TaskProgressTracker.claim`), so the open chat, the run and the attached
+files of the person before are never the next one's (`TestChatLoginInWindow`).
+
 ### Processing Flow
 
 1. User sends a message through the `send` command of a chat control (`ChatControl.CMD_SEND`), or a run is started on the server (`ChatStart`, the scheduler)
@@ -94,7 +104,7 @@ the developer article `ai/security/administration` (approval decided from the ca
 A run that needs a tool approval, or that asks a question through `askUser`, parks its agent thread
 on a future in the `UserInteractionStore` of its own `AIProcessingState`. That state hangs on the
 `TaskProgressTracker` of **one** conversation of one browser window, which the chat transport
-addresses one at a time (`windowId` + `conversation` → sub-session → tracker). The request itself, though, is addressed to an
+addresses one at a time (the chat control's window and `chat-id` → tracker). The request itself, though, is addressed to an
 **account**: `InteractionRecorder` persists it as a `tl.ai.execution:InteractionRequest` with a
 `responder`, and that is the rule this module follows everywhere.
 
@@ -193,7 +203,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
 - **`ChatEventHandlerRegistry`** – Interface-typed lookup of the chat UI observing a `TaskProgressTracker`;
-  `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register.
+  `ChatProcessor` resolves the handler here per event, so a UI other than `ChatSSEHandler` can register.
   `findOthers` is the account-wide direction: every *other* window of one account, for news that is
   the account's rather than one run's
 - **`PendingInteractionRegistry`** – The chat runs in flight, keyed by task id and named by the account
@@ -210,8 +220,8 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
-- **`ChatSessionRegistry`** – The trackers of a window's conversations, keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one. Published API: `tl-chat-classic` reads a classic window's id here, and `Consulting`'s own control registers here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. It also holds the conversation's stream and the chat controls of the conversation the window displays, and stops the stream when the last of them goes. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeRenderState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`ChatSessionRegistry`** – The trackers of a window's conversations, keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one. A tracker serves one account: `tracker(subSession, conversation, account)` replaces one that serves another, after a login in the window. Published API: `ChatStart` and an application's own control register here from outside the chat controls, and `ChatWindowService` reaches every tracker of a window through `trackers`.
+- **`ChatViewBinding`** – Once per (sub-session, conversation) and account: tracker, stream, attached files, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. It also holds the conversation's stream and the chat controls of the conversation the window displays, and stops the stream when the last of them goes. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. What depends on the person or the session - `authenticated`, the user's names, the language, the layout preference, the auto-approve choice - is not held: it is read whenever `writeRenderState` is asked for it, which every chat control does from its constructor and from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`ChatWindowService`** – Connects agent runs to the browser windows the chat is displayed in. It installs the `RunWindow` of tl-ai-core over the engine's `ReactWindowReplay.inWindow(subSession, action)`; it offers `inWindow` / `hasWindow`, through which a tool writes into the window of its run and tells "this run is headless" from "this page allows nothing" (a write waits at most `write-timeout-millis`, 5 s, for a browser command in progress and answers `BUSY` otherwise); and on `AgentExecutionStore.ChangeListener.onSessionDeleted` it drops the deleted chat out of every live window of its owner (`ReactWindowRegistry.windowSubSessions()`, filtered by the sub-session's person). Following commits is not its job: the engine's `WindowModelEventService` delivers commits of other threads, such as an agent run's, to every browser window whose model listeners they affect.
 - **`ChatPresentTool`** – The `present` tool of a chat page (`com.top_logic.ai.chat.tools`), over the base `PresentTool` in tl-ai-core: the agent shows objects - found by a TL-Script query or named by id - as a table, a chart or a form on a channel of the page it is on. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default), and a run whose page displays no such channel is not offered the tool at all (#649). See "the agent writes a channel" below.
 - **`PresentationPane`** – The pane of a `<chat-rail input="…">`: renders what stands on that channel for any type, and keeps the history "Zurück" walks. See "the rail's pane" below.
@@ -339,7 +349,7 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 The chat is composed from view elements: `<chat-conversation>` (transcript, composer, pickers),
 `<chat-rail>` and `<chat-dock>`, all joined by their `chat-id`. Each control registers the
 per-window `TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state
-(`windowId`, `userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`, `placeholder`) the
+(`authenticated`, `userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`, `placeholder`) the
 browser component reads. The one-element `<agent-chat/>` form was removed with #487: no application
 used it, and the empty chat-id it needed was a special case in three live code paths.
 The shipped browser component is registered as `TLAgentChat` in `ui/src/main.tsx`.
@@ -848,8 +858,8 @@ conversation.
 A browser reload does **not** rebuild the control tree: `ViewServlet` re-renders the tree the window
 already holds, deliberately, so that a table keeps its selection. A control constructor therefore
 runs once per window, not once per page load. Everything the chat wants a reload to restore has to
-be read at **render** time, and every chat control reads the layout in `onBeforeWrite`
-(`ChatViewBinding.writeRenderState`).
+be read at **render** time, and every chat control reads the layout - and who is signed in - in
+`onBeforeWrite` (`ChatViewBinding.writeRenderState`).
 
 | | |
 |--|--|

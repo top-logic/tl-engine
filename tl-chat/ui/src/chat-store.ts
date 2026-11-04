@@ -322,8 +322,7 @@ function mergeSubagent(
  * `GET` for the preferences - see `preferences.ts`.
  */
 export interface ChatBootstrap {
-  windowId: string
-  /** False in a session that is not signed in; the servlet refuses every call such a session makes. */
+  /** False in a window nobody is signed in to; the chat controls refuse every command it sends. */
   authenticated: boolean
   userName: string
   welcomeName: string
@@ -365,7 +364,6 @@ export interface ChatBootstrap {
 export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
   const prefs = parsePreferences(state)
   return {
-    windowId: (state.windowId as string) || '',
     authenticated: state.authenticated !== false,
     userName: (state.userName as string) || 'User',
     welcomeName: (state.welcomeName as string) || '',
@@ -455,7 +453,6 @@ export function chatIdOf(state: Record<string, unknown>, controlId: string): str
 /** Everything one chat shows, as one immutable snapshot. */
 export interface ChatState {
   // Bootstrap.
-  windowId: string
   authenticated: boolean
   userName: string
   welcomeName: string
@@ -1090,7 +1087,6 @@ export class ChatStore {
       sections: boot.sectionChoices,
     }
     this.snapshot = this.derive({
-      windowId: boot.windowId,
       authenticated: boot.authenticated,
       userName: boot.userName,
       welcomeName: boot.welcomeName,
@@ -1244,12 +1240,11 @@ export class ChatStore {
    * Takes the bootstrap a mounting element brought, and runs whatever that started.
    *
    * Idempotent: a second element on the same `chat-id` brings the same values, so nothing changes
-   * and no effect re-runs. Values that really differ - a window id arriving late, a sign-in - are
+   * and no effect re-runs. Values that really differ - a sign-in, a language switch - are
    * what the effect dependencies below react to, exactly as the component's did.
    */
   attach = (boot: ChatBootstrap): void => {
     this.patch({
-      windowId: boot.windowId,
       authenticated: boot.authenticated,
       userName: boot.userName,
       welcomeName: boot.welcomeName,
@@ -1345,7 +1340,6 @@ export class ChatStore {
       {
         deps: (s) => [
           s.authenticated,
-          s.windowId,
           s.railDecided,
           s.sideOpen,
           s.paneWidth,
@@ -1353,8 +1347,7 @@ export class ChatStore {
           s.sectionChoices,
         ],
         run: () => {
-          const { authenticated, windowId } = this.state
-          if (!authenticated || !windowId) return
+          if (!this.state.authenticated) return
           const next = this.layout
           // What the page booted with is what the server already holds. Writing it back would make
           // every reload store the layout the page happened to start with, which is how the stored
@@ -1369,7 +1362,7 @@ export class ChatStore {
         run: () => writeActiveSession(this.chatId, this.state.sessionId),
       },
       {
-        deps: (s) => [s.authenticated, s.windowId],
+        deps: (s) => [s.authenticated],
         run: () => this.connect(),
       },
       // The ring must be readable before the first run, and must follow a model change at once, so
@@ -2819,8 +2812,8 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   useEffect(
     () => store.attach(boot),
     // The fields, not the object: a host that rebuilds the bootstrap on every render must not
-    // re-run what a sign-in or a late window id is what really changes.
-    [store, boot.windowId, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
+    // re-run what only a sign-in or a language switch really changes.
+    [store, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
   )
   // The state's own values: they change only when the server sends new ones.
   useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])

@@ -551,7 +551,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	protected ChatControl(ReactContext context, String reactModule, String chatId, String element) {
 		super(context, null, reactModule);
 		_binding = ChatViewBinding.bind(context, chatId, element);
-		_binding.writeSharedState(this::putState);
+		_binding.writeRenderState(this::putState);
 		// The browser keys its store by what is pushed here, so it must be the resolved id.
 		putState(STATE_CHAT_ID, chatId);
 
@@ -579,12 +579,12 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/**
-	 * Re-reads the user's stored layout.
+	 * Re-reads who is signed in, the session's language and the user's stored layout.
 	 *
 	 * <p>
 	 * A browser reload re-renders the control tree the window already holds, so this hook is the
-	 * only place that runs again. Writing the layout in the constructor would replay the first
-	 * render's layout for the life of the window (Gitea #423).
+	 * only place that runs again. Writing them in the constructor alone would replay the first
+	 * render's values for the life of the window (Gitea #423).
 	 * </p>
 	 */
 	@Override
@@ -838,7 +838,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		tracker.setEffort(effort);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, TLContextManager.getSubSession(),
-			userName(tracker, person), message, ChatAttachments.contentOf(attached), options, _binding.facts(),
+			userName(person), message, ChatAttachments.contentOf(attached), options, _binding.facts(),
 			spendReading);
 		ReactCommandReply reply = sendResult(result);
 		if (fromTurn != null) {
@@ -916,7 +916,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		tracker.setEffort(effort);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, TLContextManager.getSubSession(),
-			userName(tracker, person), removed.text(), List.of(), options, _binding.facts(), spendReading);
+			userName(person), removed.text(), List.of(), options, _binding.facts(), spendReading);
 		return sendResult(result)
 			.put(FIELD_REMOVED_TURNS, Integer.valueOf(removed.turns()))
 			.put(FIELD_TEXT, removed.text())
@@ -1234,18 +1234,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			effort);
 	}
 
-	/** The display name of the acting account, resolved once and remembered on the tracker. */
-	private static String userName(TaskProgressTracker tracker, Person person) {
-		String stored = tracker.getUserName();
-		if (stored != null) {
-			return stored;
-		}
+	/** The display name of the acting account. */
+	private static String userName(Person person) {
 		String name = person.getName();
-		if (name == null) {
-			return ANONYMOUS_NAME;
-		}
-		tracker.setUserName(name);
-		return name;
+		return name == null ? ANONYMOUS_NAME : name;
 	}
 
 	/** What a truncation took away. */

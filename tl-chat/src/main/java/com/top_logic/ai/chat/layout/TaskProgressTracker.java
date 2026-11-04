@@ -52,27 +52,18 @@ public class TaskProgressTracker {
 	 */
 	private final ConcurrentHashMap<String, AIProcessingState> _processingStates = new ConcurrentHashMap<>();
 
-	/** User display name resolved from TLContext (set where context is available, used as fallback elsewhere). */
-	private volatile String _userName = null;
-
-	/** User's first name for the welcome screen greeting. */
-	private volatile String _welcomeName = null;
+	/**
+	 * The account this window's chat acts for, <code>null</code> while nobody signed in has used it.
+	 *
+	 * @see #claim(Person)
+	 */
+	private Person _account;
 
 	/** Configured prompt-improver agent name, or {@code null} when the feature is disabled. */
 	private volatile String _promptImproverAgentName = null;
 
 	/** Current prompt-improvement run, independent of the main chat processing states. */
 	private final AtomicReference<PromptImprovementState> _promptImprovementState = new AtomicReference<>();
-
-	/**
-	 * Registry key ({@code windowName}) of the sub-session this tracker's chat UI was rendered in.
-	 *
-	 * <p>
-	 * Rendered into the client as {@code data-window-id} and echoed back by the client so the
-	 * {@code ChatServlet} can resolve the originating sub-session. See {@link ChatSessionRegistry}.
-	 * </p>
-	 */
-	private volatile String _windowId = null;
 
 	/** Whether the runs of this tracker have nobody to ask. Only a scheduled run sets it. */
 	private volatile boolean _unattended = false;
@@ -269,42 +260,34 @@ public class TaskProgressTracker {
 	}
 
 	/**
-	 * Returns the user display name stored on this tracker, or null if not yet set.
+	 * The account this chat acts for, <code>null</code> while nobody signed in has used it.
+	 *
+	 * @see #claim(Person)
+	 */
+	public synchronized Person getAccount() {
+		return _account;
+	}
+
+	/**
+	 * Makes this the chat of the given account, unless it already serves another one.
 	 *
 	 * <p>
-	 * Set from contexts where {@code TLContext} is available (e.g. during component creation). Used
-	 * as fallback in contexts where {@code TLContext} is not available (e.g. {@code ChatServlet}).
+	 * A tracker belongs to the first account that acts through it. A login in the window keeps the
+	 * window's sub-session and changes its person; the tracker then serves another account, and
+	 * the window's chat needs a new one (see
+	 * {@link ChatSessionRegistry#tracker(com.top_logic.base.context.TLSubSessionContext, String, Person)}).
 	 * </p>
-	 */
-	public String getUserName() {
-		return _userName;
-	}
-
-	/**
-	 * Stores the user display name on this tracker for cross-context resolution.
 	 *
-	 * @param userName
-	 *        The display name of the current user.
+	 * @param account
+	 *        The acting account; <code>null</code> (nobody signed in) claims nothing.
+	 * @return Whether this tracker serves the given account now - for <code>null</code>, whether
+	 *         it serves nobody.
 	 */
-	public void setUserName(String userName) {
-		_userName = userName;
-	}
-
-	/**
-	 * Returns the welcome name (first name) for the welcome screen greeting, or null if not set.
-	 */
-	public String getWelcomeName() {
-		return _welcomeName;
-	}
-
-	/**
-	 * Stores the welcome name (first name) for the welcome screen greeting.
-	 *
-	 * @param welcomeName
-	 *        The first name to display in the welcome greeting.
-	 */
-	public void setWelcomeName(String welcomeName) {
-		_welcomeName = welcomeName;
+	public synchronized boolean claim(Person account) {
+		if (_account == null) {
+			_account = account;
+		}
+		return _account == account || (_account != null && _account.equals(account));
 	}
 
 	/**
@@ -362,28 +345,6 @@ public class TaskProgressTracker {
 		}
 		state.getCancellationToken().cancel();
 		return true;
-	}
-
-	/**
-	 * Returns the window id ({@code windowName}) of the sub-session this tracker belongs to, or
-	 * {@code null} if the chat UI has not been rendered yet.
-	 *
-	 * @see ChatSessionRegistry#windowId(com.top_logic.base.context.TLSessionContext,
-	 *      com.top_logic.base.context.TLSubSessionContext)
-	 */
-	public String getWindowId() {
-		return _windowId;
-	}
-
-	/**
-	 * Stores the window id of the sub-session this tracker belongs to (set while rendering the chat
-	 * component).
-	 *
-	 * @param windowId
-	 *        The sub-session registry key.
-	 */
-	public void setWindowId(String windowId) {
-		_windowId = windowId;
 	}
 
 	/**

@@ -70,7 +70,7 @@ public class TestChatScope extends TestCase {
 	}
 
 	private static ChatViewBinding bind(TypedAnnotatable window, String chatId) {
-		return ChatViewBinding.bind(window, "w1", "/app", chatId);
+		return ChatViewBinding.bind(window, chatId);
 	}
 
 	private static ViewContext root() {

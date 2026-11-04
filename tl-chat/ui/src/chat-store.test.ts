@@ -232,7 +232,6 @@ class FakeStream {
 }
 
 const BOOT: ChatBootstrap = {
-  windowId: 'w1',
   authenticated: true,
   userName: 'Sandra',
   welcomeName: 'Sandra',
@@ -432,8 +431,8 @@ describe('one store per chat id', () => {
    * transcript - silently, and only for the host that has two.
    */
   it('testTwoAppsInOneWindowDoNotShareATranscript', async () => {
-    const left = chatIdOf({ windowId: 'w1' }, 'copilot-left')
-    const right = chatIdOf({ windowId: 'w1' }, 'copilot-right')
+    const left = chatIdOf({}, 'copilot-left')
+    const right = chatIdOf({}, 'copilot-right')
     expect(left).not.toBe(right)
     expect([left, right]).not.toContain('default')
 
@@ -1764,7 +1763,6 @@ describe('the bootstrap', () => {
   it('is what the control put into its state', () => {
     expect(
       readBootstrap({
-        windowId: 'w9',
         userName: 'Sandra',
         welcomeName: 'Sandra',
         language: 'de-DE',
@@ -1776,7 +1774,6 @@ describe('the bootstrap', () => {
         approvalMode: 'AUTO_APPROVE',
       }),
     ).toEqual({
-      windowId: 'w9',
       authenticated: true,
       userName: 'Sandra',
       welcomeName: 'Sandra',
@@ -1796,7 +1793,6 @@ describe('the bootstrap', () => {
 
   it('falls back to a readable chat when the state says nothing', () => {
     expect(readBootstrap({})).toEqual({
-      windowId: '',
       authenticated: true,
       userName: 'User',
       welcomeName: '',
@@ -2467,7 +2463,7 @@ describe('the composer seam', () => {
  * elements - and the server holds an active session, a run and an event stream for each. It used to
  * hold one per window, so the second conversation to send took the first one's stream and the first
  * waited for an answer that never came. Every command therefore goes to a chat control of its own
- * conversation, and no request goes to `/chat/*`.
+ * conversation.
  */
 describe('every request names its conversation', () => {
   it('sends the layout and attaches through a control of its own conversation', async () => {

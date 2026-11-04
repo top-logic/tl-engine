@@ -98,8 +98,8 @@ public class TestChatConversationSubject extends BasicTestCase {
 		TLObject first = session("shown first");
 		TLObject second = session("shown later");
 		TypedAnnotatable window = new LazyTypedAnnotatable();
-		ChatViewBinding binding = ChatViewBinding.bind(window, "w1", "/app", CHAT);
-		ChatViewBinding other = ChatViewBinding.bind(window, "w1", "/app", "other");
+		ChatViewBinding binding = ChatViewBinding.bind(window, CHAT);
+		ChatViewBinding other = ChatViewBinding.bind(window, "other");
 		ViewChannel channel = new DefaultViewChannel("project");
 
 		assertNull("No element offers a subject.", binding.subject());
@@ -127,7 +127,7 @@ public class TestChatConversationSubject extends BasicTestCase {
 		TypedAnnotatable window = new LazyTypedAnnotatable();
 		ViewChannel channel = new DefaultViewChannel("project");
 		channel.set(project);
-		ChatViewBinding binding = ChatViewBinding.bind(window, "w1", "/app", CHAT);
+		ChatViewBinding binding = ChatViewBinding.bind(window, CHAT);
 		binding.offerSubject(channel);
 
 		AgentSession stamped = (AgentSession) ChatHistoryService.createSession("about that object", user,

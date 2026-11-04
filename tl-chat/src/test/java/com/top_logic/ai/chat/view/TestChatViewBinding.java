@@ -41,16 +41,16 @@ public class TestChatViewBinding extends TestCase {
 	/** Two binds with the same scope and chat-id return one object. */
 	public void testBindIsIdempotentPerScopeAndChatId() {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
-		ChatViewBinding first = ChatViewBinding.bind(scope, "w1", "/app", "main");
-		ChatViewBinding second = ChatViewBinding.bind(scope, "w1", "/app", "main");
+		ChatViewBinding first = ChatViewBinding.bind(scope, "main");
+		ChatViewBinding second = ChatViewBinding.bind(scope, "main");
 		assertSame(first, second);
 	}
 
 	/** A second chat-id on the same window is a second binding. */
 	public void testDifferentChatIdsAreDifferentBindings() {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
-		ChatViewBinding main = ChatViewBinding.bind(scope, "w1", "/app", "main");
-		ChatViewBinding other = ChatViewBinding.bind(scope, "w1", "/app", "other");
+		ChatViewBinding main = ChatViewBinding.bind(scope, "main");
+		ChatViewBinding other = ChatViewBinding.bind(scope, "other");
 		assertNotSame(main, other);
 	}
 
@@ -62,8 +62,8 @@ public class TestChatViewBinding extends TestCase {
 			return ChatPreferencesDto.create();
 		};
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
-		ChatViewBinding.bind(scope, "w1", "/app", "main");
-		ChatViewBinding.bind(scope, "w1", "/app", "other");
+		ChatViewBinding.bind(scope, "main");
+		ChatViewBinding.bind(scope, "other");
 		assertEquals("Binding reads no preference.", 0, loads.get());
 	}
 
@@ -80,7 +80,7 @@ public class TestChatViewBinding extends TestCase {
 		AtomicBoolean railOpen = new AtomicBoolean(false);
 		ChatViewBinding.preferenceSource =
 			chatId -> ChatPreferencesDto.create().setRailOpen(Boolean.valueOf(railOpen.get()));
-		ChatViewBinding binding = ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main");
+		ChatViewBinding binding = ChatViewBinding.bind(new LazyTypedAnnotatable(), "main");
 
 		Map<String, Object> first = new HashMap<>();
 		binding.writeRenderState(first::put);
@@ -102,9 +102,9 @@ public class TestChatViewBinding extends TestCase {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 
 		Map<String, Object> main = new HashMap<>();
-		ChatViewBinding.bind(scope, "w1", "/app", "main").writeRenderState(main::put);
+		ChatViewBinding.bind(scope, "main").writeRenderState(main::put);
 		Map<String, Object> other = new HashMap<>();
-		ChatViewBinding.bind(scope, "w1", "/app", "other").writeRenderState(other::put);
+		ChatViewBinding.bind(scope, "other").writeRenderState(other::put);
 
 		assertEquals("main", main.get("layoutKey"));
 		assertEquals(Boolean.TRUE, main.get("railOpen"));
@@ -116,7 +116,7 @@ public class TestChatViewBinding extends TestCase {
 	public void testUndecidedRailIsWrittenAsNull() {
 		ChatViewBinding.preferenceSource = chatId -> ChatPreferencesDto.create();
 		Map<String, Object> state = new HashMap<>();
-		ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main").writeRenderState(state::put);
+		ChatViewBinding.bind(new LazyTypedAnnotatable(), "main").writeRenderState(state::put);
 
 		assertTrue("The key is written, so a patch can clear a stale value.", state.containsKey("railOpen"));
 		assertNull("Null, not false: nothing decided is not 'closed'.", state.get("railOpen"));
@@ -124,8 +124,8 @@ public class TestChatViewBinding extends TestCase {
 
 	/** Two windows do not share a binding even when they use the same chat-id. */
 	public void testDifferentScopesDoNotShare() {
-		ChatViewBinding left = ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main");
-		ChatViewBinding right = ChatViewBinding.bind(new LazyTypedAnnotatable(), "w2", "/app", "main");
+		ChatViewBinding left = ChatViewBinding.bind(new LazyTypedAnnotatable(), "main");
+		ChatViewBinding right = ChatViewBinding.bind(new LazyTypedAnnotatable(), "main");
 		assertNotSame(left, right);
 	}
 
@@ -134,7 +134,7 @@ public class TestChatViewBinding extends TestCase {
 	/** A window whose elements named no channel offers the agent nothing. */
 	public void testNothingIsPresentableByDefault() {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
-		ChatViewBinding.bind(scope, "w1", "/app", "main");
+		ChatViewBinding.bind(scope, "main");
 
 		assertNull("Deny by default.", ChatViewBinding.presentable(scope, "paneObject"));
 		assertEquals(Set.of(), ChatViewBinding.presentableNames(scope));
@@ -151,7 +151,7 @@ public class TestChatViewBinding extends TestCase {
 	public void testARegisteredChannelIsReachableByName() {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 		ViewChannel channel = new DefaultViewChannel("paneObject");
-		ChatViewBinding.bind(scope, "w1", "/app", "main").allowPresenting("paneObject", channel);
+		ChatViewBinding.bind(scope, "main").allowPresenting("paneObject", channel);
 
 		assertSame(channel, ChatViewBinding.presentable(scope, "paneObject"));
 		assertNull("Another name is another channel.", ChatViewBinding.presentable(scope, "somethingElse"));
@@ -167,8 +167,8 @@ public class TestChatViewBinding extends TestCase {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 		ViewChannel left = new DefaultViewChannel("paneObject");
 		ViewChannel right = new DefaultViewChannel("detail");
-		ChatViewBinding.bind(scope, "w1", "/app", "main").allowPresenting("paneObject", left);
-		ChatViewBinding.bind(scope, "w1", "/app", "other").allowPresenting("detail", right);
+		ChatViewBinding.bind(scope, "main").allowPresenting("paneObject", left);
+		ChatViewBinding.bind(scope, "other").allowPresenting("detail", right);
 
 		assertSame(left, ChatViewBinding.presentable(scope, "paneObject"));
 		assertSame(right, ChatViewBinding.presentable(scope, "detail"));
@@ -179,7 +179,7 @@ public class TestChatViewBinding extends TestCase {
 	public void testDenyRemovesTheChannelAgain() {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 		ViewChannel channel = new DefaultViewChannel("paneObject");
-		ChatViewBinding binding = ChatViewBinding.bind(scope, "w1", "/app", "main");
+		ChatViewBinding binding = ChatViewBinding.bind(scope, "main");
 		binding.allowPresenting("paneObject", channel);
 
 		binding.denyPresenting("paneObject", channel);
@@ -199,7 +199,7 @@ public class TestChatViewBinding extends TestCase {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 		ViewChannel old = new DefaultViewChannel("paneObject");
 		ViewChannel current = new DefaultViewChannel("paneObject");
-		ChatViewBinding binding = ChatViewBinding.bind(scope, "w1", "/app", "main");
+		ChatViewBinding binding = ChatViewBinding.bind(scope, "main");
 		binding.allowPresenting("paneObject", old);
 		binding.allowPresenting("paneObject", current);
 
@@ -212,9 +212,9 @@ public class TestChatViewBinding extends TestCase {
 	public void testAnotherWindowIsNotReachable() {
 		TypedAnnotatable mine = new LazyTypedAnnotatable();
 		TypedAnnotatable theirs = new LazyTypedAnnotatable();
-		ChatViewBinding.bind(mine, "w1", "/app", "main")
+		ChatViewBinding.bind(mine, "main")
 			.allowPresenting("paneObject", new DefaultViewChannel("paneObject"));
-		ChatViewBinding.bind(theirs, "w2", "/app", "main");
+		ChatViewBinding.bind(theirs, "main");
 
 		assertNull("A run in one window does not reach another's page.",
 			ChatViewBinding.presentable(theirs, "paneObject"));

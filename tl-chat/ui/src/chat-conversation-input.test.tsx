@@ -22,7 +22,7 @@ let container: HTMLElement | null = null
 
 /** The control state of the element; `authenticated: false` keeps the store off the network. */
 function state(extra: Record<string, unknown>): Record<string, unknown> {
-  return { chatId: CHAT, hasInput: true, authenticated: false, windowId: 'w1', ...extra }
+  return { chatId: CHAT, hasInput: true, authenticated: false, ...extra }
 }
 
 async function render(extra: Record<string, unknown>): Promise<void> {
@@ -117,7 +117,7 @@ describe('the input channel of a conversation', () => {
 
   it('does not reopen the chat this tab had on another page when the channel is empty', async () => {
     // A signed-in page that lists the remembered chat, so the store would restore it.
-    const signedIn = { authenticated: true, windowId: 'w2', sessions: [{ id: 'previous-page', title: 'A' }] }
+    const signedIn = { authenticated: true, sessions: [{ id: 'previous-page', title: 'A' }] }
     const opened: string[] = []
     globalThis.fetch = vi.fn(async (url: string) => {
       const id = transcriptOf(url)

@@ -51,6 +51,11 @@ public final class ChatCommandDriver {
 		public Object state(String key) {
 			return getState(key);
 		}
+
+		/** Writes the state again as a render does - what a browser reload of the window causes. */
+		public void render() {
+			onBeforeWrite();
+		}
 	}
 
 	private final ReactWindowRegistry _registry;
@@ -106,6 +111,24 @@ public final class ChatCommandDriver {
 				CharacterContents.newContent("<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 					+ " config:interface='" + ChatConversationElement.Config.class.getName() + "'"
 					+ " chat-id='" + _chatId + "-" + person.getName() + "'>" + content + "</chat-conversation>")));
+		control.attach();
+		return control;
+	}
+
+	/**
+	 * The conversation of the driver's chat id, rendered and displayed for whoever is signed in to
+	 * the window - what the window's tree shows again after a login in it.
+	 *
+	 * @param person
+	 *        The account signed in to the window; <code>null</code> for a visitor.
+	 */
+	public Conversation window(Person person) throws Exception {
+		TLContextManager.getSubSession().setPerson(person);
+		Conversation control = new Conversation(_view,
+			(ChatConversationElement.Config) TypedConfiguration.parse(
+				CharacterContents.newContent("<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+					+ " config:interface='" + ChatConversationElement.Config.class.getName() + "'"
+					+ " chat-id='" + _chatId + "'/>")));
 		control.attach();
 		return control;
 	}

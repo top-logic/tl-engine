@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +29,6 @@ import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.layout.WelcomeName;
-import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -49,25 +49,67 @@ import com.top_logic.util.TLContextManager;
  * Per-window, per-{@code chat-id} server binding for the chat view elements.
  *
  * <p>
- * Every chat control used to bind the tracker, the user and the layout preferences in every
- * constructor. Four elements on one chat would then load {@link ChatPreferencesStore} four times
- * and race on one {@code PersonalConfiguration} key. This class does that work once per
- * (sub-session, conversation), and the tracker with it: a window that shows two conversations has a
- * tracker for each, registered in {@link ChatSessionRegistry}, which the commands of the chat
- * controls of that conversation act on.
+ * What the chat controls of one conversation share in a window: the tracker, the stream, the
+ * attached files, the channels the agent may write and what the page states about the situation.
+ * It exists once per (sub-session, conversation) and account: a window that shows two
+ * conversations has a tracker for each, registered in {@link ChatSessionRegistry}, which the
+ * commands of the chat controls of that conversation act on.
  * </p>
  *
  * <p>
- * The layout preference and the session's language are the things here that are <em>not</em> bound
- * once: they are read whenever {@link #writeRenderState(BiConsumer)} is asked for them. A browser
- * reload re-renders the control tree the window already holds instead of rebuilding it, so a value
- * captured in a constructor would replay the first render's layout for as long as the window lives
- * (Gitea #423) - and the first render's language, until the next login (Gitea #662). Reading the
- * layout again costs a lookup in the sub-session's personal configuration, which is already in
- * memory, plus a small JSON parse; the language is the session's locale, read in place.
+ * <b>A binding serves the account it was made for.</b> A login in a window keeps the window's
+ * sub-session and changes its person, and the window's tree is built anew for the new person. The
+ * chat controls of that tree get a binding of their own then, with the tracker of the new account
+ * (see {@link ChatSessionRegistry#tracker(TLSubSessionContext, String, Person)}), so that nothing
+ * the previous person had in the window - the open chat, the run, the attached files - is the new
+ * one's.
+ * </p>
+ *
+ * <p>
+ * <b>What depends on the person or the session is not held here.</b> Whether somebody is signed
+ * in, the user's names, the language, the stored layout and the auto-approve choice are read
+ * whenever {@link #writeRenderState(BiConsumer)} is asked for them. A browser reload re-renders
+ * the control tree the window already holds instead of rebuilding it, so a value captured once
+ * would replay the first render's layout for as long as the window lives (Gitea #423), the first
+ * render's language until the next login (Gitea #662), and a visitor's sign-in note after the
+ * visitor signed in. Reading the layout again costs a lookup in the sub-session's personal
+ * configuration, which is already in memory, plus a small JSON parse; the rest is read in place.
  * </p>
  */
 public final class ChatViewBinding {
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: whether somebody is signed in. */
+	public static final String STATE_AUTHENTICATED = "authenticated";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the name of the signed-in account. */
+	public static final String STATE_USER_NAME = "userName";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the first name the greeting uses. */
+	public static final String STATE_WELCOME_NAME = "welcomeName";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the language tag of the session. */
+	public static final String STATE_LANGUAGE = "language";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the key the layout is stored under. */
+	public static final String STATE_LAYOUT_KEY = "layoutKey";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: whether the user left the rail open. */
+	public static final String STATE_RAIL_OPEN = "railOpen";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the width the user gave the pane. */
+	public static final String STATE_PANE_WIDTH = "paneWidth";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the badge count the user has seen. */
+	public static final String STATE_BADGE_SEEN = "badgeSeen";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the rail sections the user left open. */
+	public static final String STATE_SECTION_CHOICES = "sectionChoices";
+
+	/** State entry of {@link #writeRenderState(BiConsumer)}: the person's last auto-approve choice. */
+	public static final String STATE_APPROVAL_MODE = "approvalMode";
+
+	/** The {@link #STATE_USER_NAME} of a window nobody is signed in to. */
+	private static final String DEFAULT_USER_NAME = "User";
 
 	@SuppressWarnings("unchecked")
 	private static final Property<Map<String, ChatViewBinding>> BINDINGS =
@@ -93,15 +135,10 @@ public final class ChatViewBinding {
 	 */
 	private final String _conversation;
 
-	private final String _windowId;
-
-	private final String _contextPath;
-
-	private final String _userName;
-
-	private final String _welcomeName;
-
-	private final boolean _authenticated;
+	/**
+	 * The person this binding serves, <code>null</code> for a window nobody is signed in to.
+	 */
+	private final Person _account;
 
 	/**
 	 * The channels the elements of this chat let an agent write, by name.
@@ -152,25 +189,19 @@ public final class ChatViewBinding {
 	 */
 	private ChatSSEHandler _stream;
 
-	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId,
-			String conversation) {
+	private ChatViewBinding(TLSubSessionContext subSession, String chatId, String conversation, Person account) {
 		_chatId = chatId;
 		_conversation = conversation;
-		_tracker = bindTracker(subSession, windowName, conversation);
-		storeUser(_tracker);
-		_windowId = windowName;
-		_contextPath = contextPath == null ? "" : contextPath;
-		_userName = valueOr(_tracker.getUserName(), "User");
-		_welcomeName = valueOr(_tracker.getWelcomeName(), "");
-		_authenticated = !TLContext.isAnonymous();
+		_account = account;
+		_tracker = ChatSessionRegistry.tracker(subSession, conversation, account);
 	}
 
 	/**
 	 * The binding for {@code chatId} in the current window, created on first use.
 	 *
 	 * <p>
-	 * Idempotent per (sub-session, chat-id): a second element that joins the same chat reuses the
-	 * tracker and the user.
+	 * Idempotent per (sub-session, chat-id) and account: a second element that joins the same chat
+	 * reuses the tracker.
 	 * </p>
 	 */
 	private static ChatViewBinding bind(ReactContext context, String chatId) {
@@ -189,8 +220,7 @@ public final class ChatViewBinding {
 	 * </p>
 	 */
 	private static ChatViewBinding bindConversation(ReactContext context, String chatId, String conversation) {
-		return bind(TLContextManager.getSubSession(), context.getWindowName(), context.getContextPath(), chatId,
-			conversation);
+		return bind(TLContextManager.getSubSession(), chatId, conversation);
 	}
 
 	/**
@@ -217,8 +247,8 @@ public final class ChatViewBinding {
 	 * Package-visible so a test can pass a {@link TypedAnnotatable} without a live window.
 	 * </p>
 	 */
-	static ChatViewBinding bind(TypedAnnotatable scope, String windowName, String contextPath, String chatId) {
-		return bind(scope, windowName, contextPath, chatId, chatId);
+	static ChatViewBinding bind(TypedAnnotatable scope, String chatId) {
+		return bind(scope, chatId, chatId);
 	}
 
 	/**
@@ -228,25 +258,31 @@ public final class ChatViewBinding {
 	 * <p>
 	 * Package-visible so a test can pass a {@link TypedAnnotatable} without a live window.
 	 * </p>
+	 *
+	 * <p>
+	 * A binding of the scope made for another person than the one acting now - the window's person
+	 * before a login in it - is replaced: the chat controls built for the new person act for the
+	 * new person.
+	 * </p>
 	 */
-	static ChatViewBinding bind(TypedAnnotatable scope, String windowName, String contextPath, String chatId,
-			String conversation) {
+	static ChatViewBinding bind(TypedAnnotatable scope, String chatId, String conversation) {
 		String layoutKey = ChatSessionRegistry.key(chatId);
 		// Keyed by the conversation, not by the layout key. The two are the same string today; they
 		// are read apart so that a chat keyed by something other than its chat-id still gets a
 		// tracker and a run of its own.
 		String key = ChatSessionRegistry.key(conversation);
+		Person account = currentPerson();
 		if (scope == null) {
-			return new ChatViewBinding(null, windowName, contextPath, layoutKey, key);
+			return new ChatViewBinding(null, layoutKey, key, account);
 		}
 		Map<String, ChatViewBinding> map = scope.mkMap(BINDINGS);
 		synchronized (map) {
 			ChatViewBinding existing = map.get(key);
-			if (existing != null) {
+			if (existing != null && Objects.equals(existing._account, account)) {
 				return existing;
 			}
 			TLSubSessionContext subSession = scope instanceof TLSubSessionContext session ? session : null;
-			ChatViewBinding created = new ChatViewBinding(subSession, windowName, contextPath, layoutKey, key);
+			ChatViewBinding created = new ChatViewBinding(subSession, layoutKey, key, account);
 			map.put(key, created);
 			return created;
 		}
@@ -275,34 +311,9 @@ public final class ChatViewBinding {
 		return _conversation;
 	}
 
-	/** User name shown in the chat. */
-	public String userName() {
-		return _userName;
-	}
-
-	/** First name used in the empty-state greeting. */
-	public String welcomeName() {
-		return _welcomeName;
-	}
-
-	/** The language tag of the session's locale now, e.g. {@code "de"}; read per render, not at bind time. */
-	public String language() {
-		return currentLanguage();
-	}
-
-	/** Registry key of the sub-session this chat was rendered in. */
-	public String windowId() {
-		return _windowId;
-	}
-
-	/** Webapp context path. */
-	public String contextPath() {
-		return _contextPath;
-	}
-
-	/** Whether the session is signed in. */
-	public boolean authenticated() {
-		return _authenticated;
+	/** The person this binding serves, <code>null</code> for a window nobody is signed in to. */
+	public Person account() {
+		return _account;
 	}
 
 	/**
@@ -632,84 +643,44 @@ public final class ChatViewBinding {
 	}
 
 	/**
-	 * Writes the bootstrap every chat element needs into the control's state.
+	 * Writes what every chat element of this conversation needs and has to be read again on every
+	 * render into the control's state: whether somebody is signed in and who, the session's
+	 * language, the user's stored layout and auto-approve choice.
 	 *
 	 * <p>
-	 * Each control still has its own state map. The values are the same for every element on this
-	 * chat because they come from this binding.
-	 * </p>
-	 *
-	 * <p>
-	 * Everything written here is fixed for the lifetime of the window. The layout preference and
-	 * the session's language are not, so they have {@link #writeRenderState(BiConsumer)} of their
-	 * own; this method writes them too, so that a caller which only ever renders once needs the
-	 * one call.
-	 * </p>
-	 */
-	public void writeSharedState(BiConsumer<String, Object> put) {
-		put.accept("authenticated", Boolean.valueOf(_authenticated));
-		put.accept("windowId", _windowId);
-		put.accept("contextPath", _contextPath);
-		put.accept("userName", _userName);
-		put.accept("welcomeName", _welcomeName);
-		writeRenderState(put);
-	}
-
-	/**
-	 * Writes what has to be read again on every render into the control's state: the user's stored
-	 * layout and auto-approve choice, and the session's language.
-	 *
-	 * <p>
-	 * Every chat control calls this from its {@code onBeforeWrite} hook, because that is the one
-	 * moment that happens again when the browser is reloaded. The constructor does not: the engine
+	 * Every chat control calls this from its constructor and from its {@code onBeforeWrite} hook,
+	 * because that is the one moment that happens again when the browser is reloaded. The engine
 	 * re-renders the control tree the window already holds, deliberately, so that a table keeps its
 	 * selection - which means a value captured at construction time is the value of the first
-	 * render forever (Gitea #423). The language is written here for the same reason (Gitea #662):
-	 * a user who switches it in the account menu is answered in the new language from the next
-	 * render on, without a new login.
+	 * render forever (Gitea #423). The language follows a switch in the account menu from the next
+	 * render on, without a new login (Gitea #662).
 	 * </p>
 	 */
 	public void writeRenderState(BiConsumer<String, Object> put) {
+		Person person = TLContext.isAnonymous() ? null : currentPerson();
+		// The browser shows a sign-in note instead of a composer while nobody is signed in.
+		put.accept(STATE_AUTHENTICATED, Boolean.valueOf(person != null));
+		put.accept(STATE_USER_NAME, person == null || person.getName() == null ? DEFAULT_USER_NAME : person.getName());
+		put.accept(STATE_WELCOME_NAME, person == null ? "" : valueOr(WelcomeName.of(person), ""));
 		// The session's language now, not the one of the first render (Gitea #662).
-		put.accept("language", currentLanguage());
+		put.accept(STATE_LANGUAGE, currentLanguage());
 		ChatPreferencesDto preferences = preferences();
 		// The key the browser puts the layout back under. Not the same as the store's own chat key,
 		// which falls back to the control id so that two elements of one chat-id stay one chat.
-		put.accept("layoutKey", _chatId);
+		put.accept(STATE_LAYOUT_KEY, _chatId);
 		// Null, not false, while the user has decided nothing: the element's configured default is
 		// what applies then.
-		put.accept("railOpen", preferences.getRailOpen());
-		put.accept("paneWidth", Integer.valueOf(preferences.getPaneWidth()));
-		put.accept("badgeSeen", Integer.valueOf(preferences.getBadgeSeen()));
-		put.accept("sectionChoices", new LinkedHashMap<>(preferences.getSections()));
+		put.accept(STATE_RAIL_OPEN, preferences.getRailOpen());
+		put.accept(STATE_PANE_WIDTH, Integer.valueOf(preferences.getPaneWidth()));
+		put.accept(STATE_BADGE_SEEN, Integer.valueOf(preferences.getBadgeSeen()));
+		put.accept(STATE_SECTION_CHOICES, new LinkedHashMap<>(preferences.getSections()));
 		// The person's last position of the auto-approve switch, which a new chat starts with.
-		put.accept("approvalMode", ApprovalChoice.load().name());
-	}
-
-	private static TaskProgressTracker bindTracker(TLSubSessionContext subSession, String windowName,
-			String conversation) {
-		TLSessionContext session = subSession == null ? null : subSession.getSessionContext();
-		TaskProgressTracker tracker = ChatSessionRegistry.resolveTracker(session, windowName, conversation);
-		if (tracker == null) {
-			tracker = new TaskProgressTracker();
-		}
-		tracker.setWindowId(windowName);
-		ChatSessionRegistry.register(subSession, conversation, tracker);
-		return tracker;
+		put.accept(STATE_APPROVAL_MODE, ApprovalChoice.load().name());
 	}
 
 	private static Person currentPerson() {
 		TLContext tlContext = TLContext.getContext();
 		return tlContext == null ? null : tlContext.getPerson();
-	}
-
-	private static void storeUser(TaskProgressTracker tracker) {
-		Person person = currentPerson();
-		if (person == null) {
-			return;
-		}
-		tracker.setUserName(person.getName());
-		tracker.setWelcomeName(WelcomeName.of(person));
 	}
 
 	/**

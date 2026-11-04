@@ -271,7 +271,7 @@ A view can also be data: the datatype `tl.view:ViewDefinition` (module `tl.view`
 </dynamic-view>
 ```
 
-The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). Only another configuration replaces the embedded view; the replaced one is disposed after the channel notification has unwound. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
+The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). The embedded view is replaced only by a configuration that differs by value - an attribute parses its stored view on every read, so an edit of another attribute of the object keeps the embedded view and its state; the replaced one is disposed after the channel notification has unwound. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
 
 A stored view is edited in the View Designer: the action `<open-view-designer attribute="…"/>` opens the designer on the view in that attribute of the object it processes, and the designer's *Apply* stores the edited view there, which the `<dynamic-view>` then shows (see [the View Designer](doc:view-layer/diagnostics#the-view-designer-side-window)):
 

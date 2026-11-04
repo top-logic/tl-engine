@@ -10,9 +10,9 @@ import java.util.List;
 
 import junit.framework.Test;
 
-import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.view.model.CommittedModelChanges;
+import test.com.top_logic.layout.view.model.CommittedModelChanges.ScopedReactContext;
+import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -20,9 +20,9 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
@@ -37,18 +37,22 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.element.ReactSwitchControl;
 import com.top_logic.layout.view.element.SwitchElement;
+import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Tests the datatype {@code tl.view:ViewDefinition} storing view configurations and the element
  * {@link DynamicViewElement &lt;dynamic-view&gt;} showing them.
+ *
+ * <p>
+ * A view stored in an attribute is tested with the attribute {@value #VIEW} of the task of the
+ * test model of {@link AbstractModelAccessTest}.
+ * </p>
  */
-public class TestDynamicViewElement extends BasicTestCase {
+public class TestDynamicViewElement extends AbstractModelAccessTest {
 
 	/**
 	 * A stored view whose {@code <switch>} shows content only while its channel {@code item} holds
@@ -72,6 +76,11 @@ public class TestDynamicViewElement extends BasicTestCase {
 		<view>
 			<stack/>
 		</view>
+		""";
+
+	/** A {@code <dynamic-view>} showing the view stored in the task on the channel {@code task}. */
+	private static final String STORED_DYNAMIC_VIEW = """
+		<dynamic-view inputs="task" view="$task.get(`TestViewModelAccess:Task#view`)"/>
 		""";
 
 	private static final String DYNAMIC_VIEW = """
@@ -163,6 +172,62 @@ public class TestDynamicViewElement extends BasicTestCase {
 			find(content(control), ReactAlertControl.class));
 	}
 
+	/**
+	 * Tests that a view stored in an attribute of the input object is replaced only when the stored
+	 * view changes: the attribute is parsed anew on every read, so an edit of another attribute of
+	 * the object hands out an equal but new configuration, which keeps the embedded view.
+	 */
+	public void testStoredView() throws Exception {
+		// The responsible of the project may read and write the task.
+		becomeUser(_responsible);
+		storeView(VIEW_WITH_STACK);
+
+		GlobalModelEventForwarder scope = CommittedModelChanges.modelScope();
+		ViewContext context = new DefaultViewContext(new ScopedReactContext(scope));
+		DefaultViewChannel task = new DefaultViewChannel("task");
+		context.registerChannel("task", task);
+		task.set(_task);
+
+		ReactControl control = (ReactControl) dynamicView(STORED_DYNAMIC_VIEW).createControl(context);
+		control.attach();
+		assertFalse("The stored view is shown.", control.isHidden());
+		ReactControl shown = content(control);
+		assertNotSame("Every read of the attribute yields a configuration of its own.",
+			_task.tValueByName(VIEW), _task.tValueByName(VIEW));
+
+		try (Transaction tx = kb().beginTransaction()) {
+			_task.tUpdateByName(NAME, "renamed task");
+			tx.commit();
+		}
+		scope.synthesizeModelEvents();
+		assertSame("An edit of another attribute keeps the embedded view.", shown, content(control));
+
+		storeView("""
+			<view>
+				<stack>
+					<stack/>
+				</stack>
+			</view>
+			""");
+		scope.synthesizeModelEvents();
+		ReactControl replaced = content(control);
+		assertNotSame("Another stored view replaces the embedded view.", shown, replaced);
+
+		storeView(null);
+		scope.synthesizeModelEvents();
+		assertTrue("Without a stored view, nothing is shown.", control.isHidden());
+
+		control.detach();
+	}
+
+	private void storeView(String xml) throws Exception {
+		ViewElement.Config view = xml == null ? null : parseView(xml);
+		try (Transaction tx = kb().beginTransaction()) {
+			_task.tUpdateByName(VIEW, view);
+			tx.commit();
+		}
+	}
+
 	private static StorageMapping<?> viewDefinitionStorage() throws Exception {
 		ModelConfig model = DefinitionReader.readElementConfig(
 			FileManager.getInstance().getData("/WEB-INF/model/tl.view.model.xml"));
@@ -182,11 +247,15 @@ public class TestDynamicViewElement extends BasicTestCase {
 	}
 
 	private static UIElement dynamicView() throws Exception {
+		return dynamicView(DYNAMIC_VIEW);
+	}
+
+	private static UIElement dynamicView(String xml) throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestDynamicViewElement.class);
 		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(
 			DynamicViewElement.Config.TAG_NAME,
 			TypedConfiguration.getConfigurationDescriptor(DynamicViewElement.Config.class)));
-		reader.setSource(CharacterContents.newContent(DYNAMIC_VIEW));
+		reader.setSource(CharacterContents.newContent(xml));
 		PolymorphicConfiguration<?> config = (PolymorphicConfiguration<?>) reader.read();
 		context.checkErrors();
 		UIElement result = (UIElement) context.getInstance(config);
@@ -226,11 +295,9 @@ public class TestDynamicViewElement extends BasicTestCase {
 	}
 
 	/**
-	 * Test suite with a knowledge base, in which the expressions are evaluated.
+	 * Test suite with the test model of {@link AbstractModelAccessTest}.
 	 */
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(TestDynamicViewElement.class,
-			ServiceTestSetup.createStarterFactoryForModules(
-				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE));
+		return suite(TestDynamicViewElement.class);
 	}
 }

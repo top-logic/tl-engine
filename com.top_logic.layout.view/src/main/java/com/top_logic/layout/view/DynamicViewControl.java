@@ -11,6 +11,8 @@ import java.util.Set;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
@@ -30,8 +32,9 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <p>
  * The expression is evaluated again on a new value of an input channel and on a change of an input
  * object (observed by a {@link ChannelObjectObserver}). The embedded view is rebuilt only when the
- * resulting configuration is another one than the shown one: a stored configuration is not changed
- * in place, an edit of the attribute holding it stores a new one. The previously shown view is
+ * resulting configuration differs from the shown one by value: an attribute holding a view parses
+ * the stored text anew on every read, so an unchanged view comes back as another, equal
+ * configuration instance, see {@link #isShown(Object)}. The previously shown view is
  * {@link ContentControls#retire(ReactControl) retired}, so that its disposal waits until the
  * channel notification that caused the switch has unwound.
  * </p>
@@ -109,7 +112,7 @@ public class DynamicViewControl extends ReactControl {
 			return;
 		}
 		Object view = _view.execute(ChannelInputs.arguments(_inputs));
-		if (_current != null && view == _shownView) {
+		if (_current != null && isShown(view)) {
 			// The same configuration is shown; its content updates itself from its channels.
 			return;
 		}
@@ -130,6 +133,24 @@ public class DynamicViewControl extends ReactControl {
 		if (old != null) {
 			ContentControls.retire(old);
 		}
+	}
+
+	/**
+	 * Whether the given result of the expression is the configuration already shown.
+	 *
+	 * <p>
+	 * Compares by identity first, which decides an expression handing out the same instance (a
+	 * configuration held by a channel, for instance) without looking into it, and otherwise by the
+	 * values of the configurations: a configuration read from an attribute is a fresh instance on
+	 * every read.
+	 * </p>
+	 */
+	private boolean isShown(Object view) {
+		if (view == _shownView) {
+			return true;
+		}
+		return view instanceof ConfigurationItem config && _shownView instanceof ConfigurationItem shown
+			&& ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(config, shown);
 	}
 
 	private ReactControl build(Object view) {
